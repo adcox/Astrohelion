@@ -9,6 +9,7 @@
 
 #include <gsl/gsl_matrix.h>
 #include <string>
+#include <vector>
 
 class adtk_matrix{
 
@@ -17,6 +18,7 @@ class adtk_matrix{
 		// Constructors
 		adtk_matrix(int r, int c);
 		adtk_matrix(int r, int c, double data[]);
+		adtk_matrix(int r, int c, std::vector<double> data);
 		adtk_matrix(const adtk_matrix &b);	// copy constructor
 		~adtk_matrix();
 
@@ -55,7 +57,7 @@ class adtk_matrix{
 		gsl_matrix *a;
 		int rows, cols;
 
-		void initBasicMatrix(int, int);
+		void initBasicMatrix(int r, int c);
 };
 
 #endif

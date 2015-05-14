@@ -6,7 +6,7 @@
 #include <math.h>
 
 #include "adtk_body_data.hpp"
-#include "adtk_integrators.hpp"
+#include "adtk_calculations.hpp"
 
 using namespace std;
 

@@ -1,9 +1,9 @@
 /**
-* 	Header file for calculations library
+* 	Header file for integrator library
 */
 
-#ifndef __H_CALCULATIONS__
-#define __H_CALCULATIONS__
+#ifndef __H_INTEGRATORS__
+#define __H_INTEGRATORS__
 
 // #include <vector>
 

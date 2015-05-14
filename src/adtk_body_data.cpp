@@ -1,6 +1,7 @@
 /**
 *	Data class that holds data about orbitRad body
 */
+#include <exception>
 #include <iostream>
 #include <math.h>
 
@@ -195,7 +196,8 @@ adtk_body_data::adtk_body_data(string n){
     }
 
     // Function should have returned by this point if the body was found
-    cout << "Error: Could not locate body " << n << "\n";
+    cout << "adtk_body_data constructor :: Could not locate body " << n << "\n";
+    throw;
 }// END of constructor using body name -------------------------------------
 
 /**

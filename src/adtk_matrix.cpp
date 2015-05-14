@@ -22,12 +22,12 @@ using namespace std;
  *	be added, subtracted, or multiplied because they do not have the
  *	appropriate dimensions
  */
-class sizeMismatch: public exception{
+class sizeMismatch: public std::exception{
   virtual const char* what() const throw()
   {
     return "Matrix dimensions do not match!";
   }
-} matSizeMismatch;
+} adtk_matSizeMismatch;
 
 //---------------------------------------------------------------------------
 //    	Constructors and Destructor
@@ -38,7 +38,7 @@ class sizeMismatch: public exception{
  *	@param r number of rows
  *	@param c number of columns
  */
-adtk_matrix::adtk_matrix(int r, int c){
+adtk_matrix::adtk_matrix(const int r, const int c){
 	initBasicMatrix(r, c);
 }
 
@@ -58,6 +58,23 @@ adtk_matrix::adtk_matrix(int r, int c, double data[]){
 	    }
 	}
 }//==============================================
+
+/**
+ *	Construct a matrix from an array of data
+ *	@param r number of rows
+ *	@param c number of columns
+ *	@param data a vector containint data with r*c elements; the vector holds the data by row,
+ *	e.g. if we create an nx3 matrix, the first 3 elements of data are the first row, the next three
+ *	elements are the second row, etc.
+ */
+adtk_matrix::adtk_matrix(int r, int c, vector<double> data){
+	initBasicMatrix(r, c);
+	for (int i = 0; i < rows; i++){
+	    for (int j = 0; j < cols; j++){
+	    	gsl_matrix_set(a, i, j, data[i*cols+j]);
+	    }
+	}
+}
 
 /**
  *	Destructor: called when the matrix is deleted or goes out of scope
@@ -89,7 +106,7 @@ adtk_matrix::adtk_matrix(const adtk_matrix &b){
  *	@return an identiy matrix
  */
 adtk_matrix adtk_matrix::Identity(int size){
-	double data[size*size];
+	vector<double> data(size*size);
 	for(int i = 0; i < size*size; i += size+1){
 		data[i] = 1;
 	}
@@ -145,7 +162,7 @@ adtk_matrix& adtk_matrix::operator =(const adtk_matrix &b){
 
 adtk_matrix adtk_matrix::operator +(const adtk_matrix &b){
 	if(rows == b.rows && cols == b.cols){
-		double q[rows*cols];
+		vector<double> q(rows*cols);
 		for(int r = 0; r<rows; r++){
 			for(int c = 0; c<cols; c++){
 				q[r*cols+c] = gsl_matrix_get(a, r, c) + gsl_matrix_get(b.a, r, c);
@@ -155,7 +172,7 @@ adtk_matrix adtk_matrix::operator +(const adtk_matrix &b){
 		return adtk_matrix(rows, cols, q);
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw matSizeMismatch;
+		throw adtk_matSizeMismatch;
 	}
 }//==============================================
 
@@ -165,13 +182,13 @@ adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 		return *this;
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw matSizeMismatch;
+		throw adtk_matSizeMismatch;
 	}
 }//==============================================
 
 adtk_matrix adtk_matrix::operator -(const adtk_matrix &b){
 	if(rows == b.rows && cols == b.cols){
-		double q[rows*cols];
+		vector<double> q(rows*cols);
 		for(int r = 0; r<rows; r++){
 			for(int c = 0; c<cols; c++){
 				q[r*cols+c] = gsl_matrix_get(a, r, c) - gsl_matrix_get(b.a, r, c);
@@ -180,7 +197,7 @@ adtk_matrix adtk_matrix::operator -(const adtk_matrix &b){
 		return adtk_matrix(rows, cols, q);
 	}else{
 		cout << "Matrices must be the same size to apply subtraction!" << endl;
-		throw matSizeMismatch;
+		throw adtk_matSizeMismatch;
 	}
 }//==============================================
 
@@ -190,7 +207,7 @@ adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
 		return *this;
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw matSizeMismatch;
+		throw adtk_matSizeMismatch;
 	}
 }//==============================================
 
@@ -204,7 +221,7 @@ adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
  */
 adtk_matrix adtk_matrix::operator *(const adtk_matrix &b){
 	if(cols != b.rows){
-		throw matSizeMismatch;
+		throw adtk_matSizeMismatch;
 	}
 
 	// Get the arrays of doubles from both matrix objects
@@ -212,7 +229,7 @@ adtk_matrix adtk_matrix::operator *(const adtk_matrix &b){
 	double *B = b.a->data;
 
 	// Create a new array that will hold the data from the mulitplication
-	double C[rows * b.cols];
+	double *C = new double[rows * b.cols];
 
 	/*
 	This function multiplies two double-precision matrices: C <- alpha*A*B + beta*C
@@ -228,7 +245,9 @@ adtk_matrix adtk_matrix::operator *(const adtk_matrix &b){
 		1.0, A, cols, B, b.cols, 0.0, C, b.cols);
 
 	// Create a new matrix object from the array we just computed
-	return adtk_matrix(rows, b.cols, C);
+	adtk_matrix ans(rows, b.cols, C);
+	delete[] C;
+	return ans;
 }//==============================================
 
 /**
@@ -241,7 +260,7 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 		// Get the arrays of doubles from both matrix objects
 		double *A = a->data;
 		double *B = b.a->data;
-		double C[rows * b.cols];
+		double *C = new double[rows * b.cols];
 
 		// Do the multiplication, 
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, rows, cols, cols,
@@ -254,9 +273,10 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 		    }
 		}
 
+		delete[] C;
 		return *this;
 	}else{
-		throw matSizeMismatch;
+		throw adtk_matSizeMismatch;
 	}
 }//=============================================
 
@@ -266,7 +286,7 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
  *	@return the matrix alpha*A
  */
 adtk_matrix adtk_matrix::operator *(const double &alpha){
-	double b[rows*cols];
+	vector<double> b(rows*cols);
 	for(int r = 0; r<rows; r++){
 		for(int c = 0; c<rows; c++){
 			b[r*cols + c] = alpha*gsl_matrix_get(a, r, c);

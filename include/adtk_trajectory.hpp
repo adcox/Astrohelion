@@ -7,32 +7,46 @@
 #ifndef __H_TRAJECTORY_
 #define __H_TRAJECTORY_
 
+#include "adtk_sys_data.hpp"
+#include "adtk_matrix.hpp"
+
+#include <vector>
+
 class adtk_trajectory{
-	static const int STATE_WIDTH = 10;
+	static const int STATE_WIDTH = 9;
 
-	private:
-		/** Holds state info: [time, pos, vel, accel] */
-		double state[][STATE_WIDTH];
+	protected:
+		/** Number of points along integrated path */
+		int numPoints;
 
-		/** A 3D array containing the STM at each step of the integration */
-		double STM[][6][6];
+		/** Holds state info: [pos, vel, accel] in 1D form, so every 9 elements
+		 * 	constitutes a new "row" 
+		 */
+		std::vector<double> state;
 
-		/** An array of Jacobi values at each step of the integration;
-		only applies for autonomous systems like the CR3BP
-		*/
-		double Jacobi[];
+		/** Holds time info */
+		std::vector<double> times;
 
+		/** An array containing the STM at each step of the integration */
+		std::vector<adtk_matrix> allSTM;
 	public:
 
 		adtk_trajectory();
-		adtk_trajectory(double *state);
+		adtk_trajectory(int);
 
-		double* getState(int);
-		double* getAllStates();
-		double getJacobi(int);
-		double* getAllJacobi();
-		double* getSTM(int);
-		double* getAllSTM();
+		adtk_trajectory& operator= (const adtk_trajectory&);
+
+		double getLength();
+		std::vector<double> getState(int);
+		std::vector<double>* getState();
+		double getTime(int);
+		std::vector<double>* getTime();
+		adtk_matrix getSTM(int);
+		std::vector<adtk_matrix>* getSTM();
+
+		void setState(std::vector<double>);
+		void setTime(std::vector<double>);
+		void setSTMs(std::vector<adtk_matrix>);
 };
 
 #endif

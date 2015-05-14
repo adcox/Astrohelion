@@ -3,13 +3,19 @@
 */
 
 #include <iostream>
+#include <string>
+#include <cstdio>
 
 #include "adtk_matrix.hpp"
+#include "adtk_ascii_output.hpp"
 
 using namespace std;
 
+static const char* PASS = BOLDGREEN "PASS" RESET;
+static const char* FAIL = BOLDRED "FAIL" RESET;
+
 static int I_r = 2, I_c = 2;
-static int B_r = 2, B_c = 2;
+// static int B_r = 2, B_c = 2;
 static int C_r = 2, C_c = 3;
 static double I_data[] = {1,0,0,1};
 static double B_data[] = {1,1,0,1};
@@ -121,10 +127,10 @@ bool test_matSubtract(adtk_matrix C){
 
 bool test_identity(adtk_matrix I){
 	adtk_matrix I2 = adtk_matrix::Identity(2);
-	cout << endl;
-	I2.print();
+	// cout << endl;
+	// I2.print();
 	adtk_matrix Q = I - I2;
-	Q.print("%12.3e");
+	// Q.print("%12.3e");
 
 	return I2 == I;
 }//===========================================
@@ -135,26 +141,26 @@ int main(void){
 	adtk_matrix B(2, 2, B_data);
 	adtk_matrix C(2, 3, C_data);
 
-	cout << "Test: getRows()... " << (C.getRows() == C_r ? "PASS" : "FAIL") << endl;
-	cout << "Test: getColss()... " << (C.getCols() == C_c ? "PASS" : "FAIL") << endl;
-	cout << "Test: Constructor... " << (test_constructor(C) ? "PASS" : "FAIL") << endl;
+	cout << "Test: getRows()... " << (C.getRows() == C_r ? PASS : FAIL) << endl;
+	cout << "Test: getColss()... " << (C.getCols() == C_c ? PASS : FAIL) << endl;
+	cout << "Test: Constructor... " << (test_constructor(C) ? PASS : FAIL) << endl;
 
 	cout << "\nIf any of the above tests failed, all the following tests cannot be trusted!\n" <<endl;
 
-	cout << "Test: operator A == B ... " << ( ((I == I) == 1 && (I == B) == 0) ? "PASS" : "FAIL") << endl;
-	cout << "Test: operator A != B ... " << ( ((I != I) == 0 && (I != B) == 1) ? "PASS" : "FAIL") << endl;
+	cout << "Test: operator A == B ... " << ( ((I == I) == 1 && (I == B) == 0) ? PASS : FAIL) << endl;
+	cout << "Test: operator A != B ... " << ( ((I != I) == 0 && (I != B) == 1) ? PASS : FAIL) << endl;
 
 	cout << "\nIf any of the above tests failed, all the following tests cannot be trusted!\n" <<endl;
 
-	cout << "Test: operator A+B ... " << ( test_matAdd(B) ? "PASS" : "FAIL") << endl;
-	cout << "Test: operator A-B ... " << ( test_matSubtract(C) ? "PASS" : "FAIL") << endl;
-	cout << "Test: operator A*B ... " << ( test_matMult(I, B, C) ? "PASS" : "FAIL") << endl;
-	cout << "Test: operator A*q ... " << ( test_multScalar(I) ? "PASS" : "FAIL") << endl;
+	cout << "Test: operator A+B ... " << ( test_matAdd(B) ? PASS : FAIL) << endl;
+	cout << "Test: operator A-B ... " << ( test_matSubtract(C) ? PASS : FAIL) << endl;
+	cout << "Test: operator A*B ... " << ( test_matMult(I, B, C) ? PASS : FAIL) << endl;
+	cout << "Test: operator A*q ... " << ( test_multScalar(I) ? PASS : FAIL) << endl;
 	cout << "Test: operator A+=B ... " << "NOT IMPLEMENTED" << endl;
 	cout << "Test: operator A-=B ... " << "NOT IMPLEMENTED" << endl;
-	cout << "Test: operator A*=B ... " << ( test_matMult_inPlace(I, B, C) ? "PASS" : "FAIL") << endl;
-	cout << "Test: operator A*=q ... " << ( test_multScalar_inPlace() ? "PASS" : "FAIL") << endl;
+	cout << "Test: operator A*=B ... " << ( test_matMult_inPlace(I, B, C) ? PASS : FAIL) << endl;
+	cout << "Test: operator A*=q ... " << ( test_multScalar_inPlace() ? PASS : FAIL) << endl;
 
-	cout << "Test: Create Identity... " << (test_identity(I) ? "PASS" : "FAIL") << endl;
+	cout << "Test: Create Identity... " << (test_identity(I) ? PASS : FAIL) << endl;
 	return 0;
 }

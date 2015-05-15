@@ -45,7 +45,8 @@ class adtk_simulation_engine{
 		bool verbose;
 		double absTol, relTol, dtGuess;
 
-		std::vector<double> cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
+		void cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
+		void saveIntegratedData(double *y, double t);
 };
 
 #endif

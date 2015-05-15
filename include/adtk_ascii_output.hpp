@@ -24,4 +24,4 @@
 #define BOLDCYAN    "\033[1m\033[36m"		/**< Make ASCII text bold and cyan */
 #define BOLDWHITE   "\033[1m\033[37m"		/**< Make ASCII text bold and white */
 
- #endif
+#endif

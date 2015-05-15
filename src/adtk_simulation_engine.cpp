@@ -138,17 +138,16 @@ void adtk_simulation_engine::runSim(double ic[], double tf){
  *	@param tf
  */
 void adtk_simulation_engine::runSim(double ic[], double t0, double tf){
-	// Instantiate empty vector for state data
-	vector<double> simData;
-
 	// Create time span using revTime to adjust limits
 	double t_span[2] = {t0, 0};
 	t_span[1] = revTime ? t0 - tf : t0 + tf;
 
+    cout << "Running sim..." << endl;
 	switch(sysData->getType()){
 		case adtk_sys_data::CR3BP_SYS:
-			//do cr3bp simulation
-			simData = cr3bp_integrate(ic, t_span, sysData->getMu(), 2);
+			// Initialize trajectory (will only have one set of values)
+            traj = new adtk_cr3bp_traj();
+			cr3bp_integrate(ic, t_span, sysData->getMu(), 2);
 			break;
 		case adtk_sys_data::BCR4BPR_SYS:
 			//do bcr4bp simulation
@@ -156,83 +155,6 @@ void adtk_simulation_engine::runSim(double ic[], double t0, double tf){
 			cout << "Cannnot simulate with system type: " << sysData->getTypeStr() << endl;
 			return;
 	}
-
-	// Compute number of integration steps, break data into different vectors for state and time
-	int steps = (int)(simData.size()/42);
-	if(verbose)
-		cout << "Integration took " << steps << " steps"<<endl;
-
-    switch(sysData->getType()){
-        case adtk_sys_data::CR3BP_SYS:
-            traj = new adtk_cr3bp_traj(steps);
-            break;
-        case adtk_sys_data::BCR4BPR_SYS:
-            //do stuff for BCR4BP
-            break;
-        default:
-            break;
-    }
-
-    // Get pointers to the state, time, and STM elements
-    // state vector contains 9 elements in each row: pos, vel, accel
-    vector<double>* state = traj->getState();
-    vector<double>* t = traj->getTime();
-    vector<adtk_matrix>* allSTM = traj->getSTM();
-
-	// For now, save data to file
-	// ofstream dataFile;
-	// dataFile.open("data.csv", ios::out);
-
-	for(int n = 0; n < steps; n++){
-
-		state->at(n*9) = simData[n*43];
-		state->at(n*9 + 1) = simData[n*43 + 1];
-		state->at(n*9 + 2) = simData[n*43 + 2];
-		state->at(n*9 + 3) = simData[n*43 + 3];
-		state->at(n*9 + 4) = simData[n*43 + 4];
-		state->at(n*9 + 5) = simData[n*43 + 5];
-
-        t->at(n) = simData[(n+1)*43 - 1];   // Time is appended to the end of the 42 states
-
-		// Compute acceleration
-		double s[6] = {0}, dsdt[6] = {0};
-		copy(simData.begin()+n*43, simData.begin()+n*43+6, s);
-
-		switch(sysData->getType()){
-			case adtk_sys_data::CR3BP_SYS:
-				// Use the simple EOMs to compute the velocity/acceleration. 
-				// Note that the time t is not used in computations, and mu may need to be a pointer...
-				cr3bp_simple_EOMs(s, dsdt, sysData->getMu());
-
-                // TODO Compute Jacobi Constant - put that function in adtk_calculations
-				break;
-			case adtk_sys_data::BCR4BPR_SYS:
-				// Compute acceleration for BCR4BP
-				break;
-			default:
-				cout << "Unknown sim type " << sysData->getTypeStr() << endl;
-		}
-
-		// Copy acceleration into state vector
-		state->at(n*9 + 6) = dsdt[3];
-		state->at(n*9 + 7) = dsdt[4];
-		state->at(n*9 + 8) = dsdt[5];
-
-		// char dataStr[256];
-		// sprintf(dataStr, "%.20f %.20f, %.20f, %.20f, %.20f, %.20f, %.20f, %.20f, %.20f, %.20f",
-		// 	t[n], state[n][0], state[n][1], state[n][2], state[n][3], state[n][4], state[n][5], state[n][6], 
-		// 	state[n][7], state[n][8]);
-		// dataFile << dataStr << endl;
-
-		// Copy STM elements into a sub-array, turn it into a matrix, insert into vector of STMs
-		double stmElm[36];
-		copy(simData.begin()+n*43+7, simData.begin()+(n+1)*43-2, stmElm);
-		adtk_matrix STM(6,6, stmElm);
-        allSTM->at(n) = STM;
-
-	}
-
-	// dataFile.close();
 }
 
 //-----------------------------------------------------
@@ -250,8 +172,7 @@ void adtk_simulation_engine::runSim(double ic[], double t0, double tf){
  *
  *  @return a vector containing all 42 states with a column of time valeus appended to the end
  */
-vector<double> adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu, int t_dim){
-
+void adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu, int t_dim){
     // Construct the full 42-element IC from the state ICs plus the STM ICs
     const int ic_dim = 42;
     double fullIC[ic_dim] = {0};
@@ -263,9 +184,8 @@ vector<double> adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], 
     fullIC[34] = 1;
     fullIC[41] = 1;
 
-    int steps = 0;                          // count number of integration steps
-    vector<double> state;                   // hold the entire integrated state
-    double *y = new double[ic_dim];         // hold ONE integrated state; resets every step 
+    int steps = 0;                                  // count number of integration steps
+    double *y = new double[ic_dim];                 // hold ONE integrated state; resets every step 
 
     // Define the step type (or, which integrator are we using?)
     const gsl_odeiv2_step_type *stepType = gsl_odeiv2_step_msadams;
@@ -291,10 +211,8 @@ vector<double> adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], 
     // Set y equal to the initial state
     copy(fullIC, fullIC+ic_dim, y);
 
-    // put initial state vector [ic, t(0)] into the state vector
-    for(int i = 0; i < ic_dim+1; i++){
-        state.push_back(i < ic_dim ? y[i] : t[0]);
-    }
+    // Save the initial state, time, and STM
+    saveIntegratedData(y, t[0]);
     steps++;    // We've put in the IC, next step will be a new state
 
     if(t_dim == 2){
@@ -312,10 +230,7 @@ vector<double> adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], 
             }
 
             // Put newly integrated state and time into state vector
-            for (int i = 0; i < ic_dim + 1; i++){
-                state.push_back(i < ic_dim ? y[i] : t0);
-            }
-
+            saveIntegratedData(y, t0);
             steps++;
         }
     }else{
@@ -332,10 +247,7 @@ vector<double> adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], 
             }
 
             // Add the newly integrated state and current time fo the state vector
-            for (int i = 0; i < ic_dim + 1; i++){
-                state.push_back(i < ic_dim ? y[i] : t0);
-            }
-
+            saveIntegratedData(y, t0);
             steps++;
         }
     }
@@ -346,10 +258,57 @@ vector<double> adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], 
     gsl_odeiv2_control_free(c);
     gsl_odeiv2_step_free(s);
     delete(y);
-
-    cout << "Size of state: " << state.size() << endl;
-    state.shrink_to_fit();
-    cout << "Size of state: " << state.size() << endl;
     
-    return state;   // return the array of states
-}//END of cr3bp_integrate
+    // Check lengths of vectors and set the numPoints value in traj
+    traj->setLength();
+}//================================END of cr3bp_integrate
+
+/**
+ *  Take an integrated state and the time, and save those variables into the 
+ *  appropriate vectors in the trajectory data object
+ *
+ *  @param y a pointer to the 42-element state array computed by the integrator
+ *  @param t the time at which the integrated state occurs
+ */
+void adtk_simulation_engine::saveIntegratedData(double *y, double t){
+
+    // Grab pointers to the trajectory object's vectors
+    vector<double>* state = traj->getState();       // hold the entire integrated state
+    vector<double>* times = traj->getTime();        // hold all times along trajectory
+    vector<adtk_matrix>* allSTM = traj->getSTM();   // hold all STM along trajectory
+
+    // Save the position and velocity states
+    for(int i = 0; i < 6; i++){
+        state->push_back(y[i]);
+    }
+
+    // Save time
+    times->push_back(t);
+
+    // Save STM
+    double stmElm[36];
+    copy(y+6, y+42, stmElm);
+    allSTM->push_back(adtk_matrix(6,6,stmElm));
+
+    // Compute acceleration
+    double dsdt[6] = {0};
+    switch(sysData->getType()){
+        case adtk_sys_data::CR3BP_SYS:
+            // Use the simple EOMs to compute the velocity/acceleration. 
+            // Note that the time t is not used in computations, and mu may need to be a pointer...
+            cr3bp_simple_EOMs(y, dsdt, sysData->getMu());
+
+            // TODO Compute Jacobi Constant - put that function in adtk_calculations
+            break;
+        case adtk_sys_data::BCR4BPR_SYS:
+            // Compute acceleration for BCR4BP
+            break;
+        default:
+            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
+    }
+
+    // Save the accelerations
+    state->push_back(dsdt[3]);
+    state->push_back(dsdt[4]);
+    state->push_back(dsdt[5]);
+}//=========================================

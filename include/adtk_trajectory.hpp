@@ -33,10 +33,11 @@ class adtk_trajectory{
 
 		adtk_trajectory();
 		adtk_trajectory(int);
+		~adtk_trajectory();
 
 		adtk_trajectory& operator= (const adtk_trajectory&);
 
-		double getLength();
+		int getLength();
 		std::vector<double> getState(int);
 		std::vector<double>* getState();
 		double getTime(int);
@@ -44,6 +45,7 @@ class adtk_trajectory{
 		adtk_matrix getSTM(int);
 		std::vector<adtk_matrix>* getSTM();
 
+		void setLength();
 		void setState(std::vector<double>);
 		void setTime(std::vector<double>);
 		void setSTMs(std::vector<adtk_matrix>);

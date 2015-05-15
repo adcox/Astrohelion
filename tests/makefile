@@ -15,7 +15,8 @@ SRC = ../src
 OBJ = ../obj
 BIN = ../bin
 
-COMP = g++ -W -Wall -Wextra -pedantic -std=c++0x
+# COMP = clang++ -W -Wall -Wextra -pedantic -std=c++0x
+COMP = clang++ -W -Wall -Wextra -pedantic -std=c++11
 GSL_FLAGS = -lgsl -lgslcblas
 
 ############################################################

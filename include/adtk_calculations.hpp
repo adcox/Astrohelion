@@ -14,6 +14,6 @@ const double relTol = 1e-14;
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params);
 int cr3bp_simple_EOMs(const double s[], double sdot[], double);
 void cr3bp_getUDDots(double, double, double, double, double*);
-// std::vector<double> adtk_cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
 
 #endif
+//END

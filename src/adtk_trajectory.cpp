@@ -40,6 +40,15 @@ adtk_trajectory::adtk_trajectory(int n){
 	allSTM.assign(n, adtk_matrix::Identity(6));
 }
 
+/**
+ *	Destructor
+ */
+adtk_trajectory::~adtk_trajectory(){
+	state.clear();
+	times.clear();
+	allSTM.clear();
+}//==================================
+
 //-----------------------------------------------------
 // 		Operators
 //-----------------------------------------------------
@@ -64,7 +73,7 @@ adtk_trajectory& adtk_trajectory::operator= (const adtk_trajectory& t){
 /**
  *	@return the number of points along this trajectory
  */
-double adtk_trajectory::getLength(){ return numPoints; }
+int adtk_trajectory::getLength(){ return numPoints; }
 
 /**
  *	@return a pointer to the beginning of the state array.
@@ -108,6 +117,24 @@ adtk_matrix adtk_trajectory::getSTM(int n){ return allSTM[n]; }
  *	@return a pointer to the beginning of the vector of STMs
  */
 vector<adtk_matrix>* adtk_trajectory::getSTM(){ return &allSTM;}
+
+/**
+ *	Set the number of points by checking the number of data in 
+ *	the state, time, and STM vectors.
+ */
+void adtk_trajectory::setLength(){
+	int sL = state.size()/9;	// row-major format, 9 elements per row
+	int tL = times.size();
+	int pL = allSTM.size();
+
+	if(sL == tL && tL == pL){
+		numPoints = sL;
+	}else{
+		cout << "Warning: trajectory has vectors with different lengths:" << endl;
+		cout << " state: " << sL << "\n time: " << tL << "\n STM: " << pL<< endl;
+		numPoints = sL;
+	}
+}//=======================================
 
 /** 
  *	Set the state vector by copying a vector

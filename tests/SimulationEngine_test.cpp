@@ -22,10 +22,13 @@ int main(void){
 	simEngine.setAbsTol(1e-14);
 	simEngine.setRelTol(1e-16);
 	simEngine.runSim(ic, 2.77);
+	cout << "Extracting trajectory" << endl;
 	adtk_cr3bp_traj traj = simEngine.getCR3BPTraj();
 
+	cout << "Trajectory contains " << traj.getLength() << " points" << endl;
 	cout << "Final STM is:" << endl;
-	adtk_matrix lastSTM = traj.getSTM(traj.getLength()-50);
+	
+	adtk_matrix lastSTM = traj.getSTM(traj.getLength()-1);
 	lastSTM.print("%12.4f");
 
 	return 0;

@@ -10,8 +10,8 @@
 #include "adtk_simulation_engine.hpp"
 #include "adtk_cr3bp_traj.hpp"
 
-// #include <fstream>
-// #include <cstdio>
+#include <fstream>
+#include <cstdio>
 
 #include <cstdlib>
 #include <iostream>
@@ -125,22 +125,23 @@ void adtk_simulation_engine::setRelTol(double t){ relTol = t; }
  *	Run a simulation given a set of initial conditions and run time. It is
  *	assumed that t0 = 0
  *	@param ic a 6-element array containting the non-dimensional initial state
- *	@param tf the total integration time
+ *	@param tof the total integration time, or time-of-flight
  */
-void adtk_simulation_engine::runSim(double ic[], double tf){
-	this->runSim(ic, 0, tf);
+void adtk_simulation_engine::runSim(double *ic, double tof){
+	this->runSim(ic, 0, tof);
 }//=======================================================
 
 /**
- *	
- *	@param ic
- *	@param t0
- *	@param tf
+ *	Run a simulation in the specified system starting with a set of initial conditions,
+ *  at a specified initial time, and integrating for a specified time-of-flight
+ *	@param ic a 6-element array of non-dimensional initial states
+ *	@param t0 the time at the start of the integration, non-dimensional units
+ *	@param tof time-of-flight, non-dimensional time units
  */
-void adtk_simulation_engine::runSim(double ic[], double t0, double tf){
+void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
 	// Create time span using revTime to adjust limits
 	double t_span[2] = {t0, 0};
-	t_span[1] = revTime ? t0 - tf : t0 + tf;
+	t_span[1] = revTime ? t0 - tof : t0 + tof;
 
     cout << "Running sim..." << endl;
 	switch(sysData->getType()){
@@ -212,7 +213,8 @@ void adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu,
     copy(fullIC, fullIC+ic_dim, y);
 
     // Save the initial state, time, and STM
-    saveIntegratedData(y, t[0]);
+    saveIntegratedData(y, t[0], true);
+
     steps++;    // We've put in the IC, next step will be a new state
 
     if(t_dim == 2){
@@ -230,7 +232,7 @@ void adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu,
             }
 
             // Put newly integrated state and time into state vector
-            saveIntegratedData(y, t0);
+            saveIntegratedData(y, t0, false);
             steps++;
         }
     }else{
@@ -247,7 +249,7 @@ void adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu,
             }
 
             // Add the newly integrated state and current time fo the state vector
-            saveIntegratedData(y, t0);
+            saveIntegratedData(y, t0, false);
             steps++;
         }
     }
@@ -269,8 +271,10 @@ void adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu,
  *
  *  @param y a pointer to the 42-element state array computed by the integrator
  *  @param t the time at which the integrated state occurs
+ *  @param first a flag telling the function if this is the first data point or not.
+ *  A value of true indicates it IS the first, false indicates it is NOT
  */
-void adtk_simulation_engine::saveIntegratedData(double *y, double t){
+void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first){
 
     // Grab pointers to the trajectory object's vectors
     vector<double>* state = traj->getState();       // hold the entire integrated state
@@ -279,27 +283,48 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t){
 
     // Save the position and velocity states
     for(int i = 0; i < 6; i++){
-        state->push_back(y[i]);
+        if(first)
+            state->at(i) = y[i];
+        else
+            state->push_back(y[i]);
     }
 
+    printf("t=%5.2f :: %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f\n", t, y[0], y[1], y[2], y[3], y[4], y[5]);
+
     // Save time
-    times->push_back(t);
+    if(first)
+        times->at(0) = t;
+    else
+        times->push_back(t);
 
     // Save STM
     double stmElm[36];
     copy(y+6, y+42, stmElm);
-    allSTM->push_back(adtk_matrix(6,6,stmElm));
+    if(first)
+        allSTM->at(0) = adtk_matrix(6,6,stmElm);
+    else
+        allSTM->push_back(adtk_matrix(6,6,stmElm));
 
     // Compute acceleration
+    double s[6] = {0};
+    copy(y, y+6, s);
     double dsdt[6] = {0};
     switch(sysData->getType()){
         case adtk_sys_data::CR3BP_SYS:
+        {
             // Use the simple EOMs to compute the velocity/acceleration. 
             // Note that the time t is not used in computations, and mu may need to be a pointer...
             cr3bp_simple_EOMs(y, dsdt, sysData->getMu());
 
-            // TODO Compute Jacobi Constant - put that function in adtk_calculations
+            // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
+            adtk_cr3bp_traj *cr3bpTraj = static_cast<adtk_cr3bp_traj*>(traj);
+            
+            if(first)
+                cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, sysData->getMu());
+            else
+                cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, sysData->getMu()));
             break;
+        }
         case adtk_sys_data::BCR4BPR_SYS:
             // Compute acceleration for BCR4BP
             break;
@@ -308,7 +333,18 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t){
     }
 
     // Save the accelerations
-    state->push_back(dsdt[3]);
-    state->push_back(dsdt[4]);
-    state->push_back(dsdt[5]);
+    if(first){
+        printf("1st Accel: %12.4f %12.4f %12.4f\n", dsdt[3], dsdt[4], dsdt[5]);
+        state->at(6) = dsdt[3];
+        state->at(7) = dsdt[4];
+        state->at(8) = dsdt[5];
+    }else{
+        state->push_back(dsdt[3]);
+        state->push_back(dsdt[4]);
+        state->push_back(dsdt[5]);
+    }
 }//=========================================
+
+//-----------------------------------------------------
+//      Utility Functions
+//-----------------------------------------------------

@@ -1,7 +1,33 @@
 /**
- *	Simulation Engine Header
+ *	The simulation engine is the workhorse object for the ATDK. It
+ *	holds functions to integrate equations of motion, compute
+ *	zero-velocity surfaces, manifold arcs, and other useful
+ *	structures
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
  */
 
+/*
+ *	Astrodynamics Toolkit 
+ *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of the Astrodynamics Toolkit (ADTK).
+ *
+ *  ADTK is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  ADTK is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef __H_SIMENGINE_
 #define __H_SIMENGINE_
 
@@ -20,7 +46,6 @@ class adtk_simulation_engine{
 		~adtk_simulation_engine();
 
 		// Set and get functions
-		adtk_sys_data* getSysData();
 		bool usesRevTime();
 		bool isVerbose();
 		double getAbsTol();
@@ -37,6 +62,8 @@ class adtk_simulation_engine{
 		void runSim(double *ic, double tf);
 		void runSim(double *ic, double t0, double tf);
 
+		// Utility Functions
+
 	private:
 		adtk_sys_data *sysData;
 		adtk_trajectory *traj;
@@ -46,7 +73,7 @@ class adtk_simulation_engine{
 		double absTol, relTol, dtGuess;
 
 		void cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
-		void saveIntegratedData(double *y, double t);
+		void saveIntegratedData(double *y, double t, bool);
 };
 
 #endif

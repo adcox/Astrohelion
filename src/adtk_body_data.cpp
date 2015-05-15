@@ -15,8 +15,8 @@ using namespace std;
 */
 
 /**
-* Default constructor; sets all fields to 0
-*/
+ * Default constructor; sets all fields to 0
+ */
 adtk_body_data::adtk_body_data(){
 	radius = 0;
 	mass = 0;
@@ -28,10 +28,10 @@ adtk_body_data::adtk_body_data(){
 }//------------------------
 
 /**
-*	Construct a body by specifying its name; the other parameters are loaded from memory
-*	@param n the name of the body; NOTE: USE ALL LOWERCASE
-*/
-adtk_body_data::adtk_body_data(string n){
+ *	Construct a body by specifying its name; the other parameters are loaded from memory
+ *	@param n the name of the body; NOTE: USE ALL LOWERCASE
+ */
+adtk_body_data::adtk_body_data(std::string n){
 	name = n;
 	minFlyByAlt = 0;
 
@@ -209,7 +209,7 @@ adtk_body_data::adtk_body_data(string n){
 * 	@param n name of the body
 *	@param p name of the body"s parent
 */
-adtk_body_data::adtk_body_data(double m, double R, double r, double mu, string n, string p){
+adtk_body_data::adtk_body_data(double m, double R, double r, double mu, std::string n, std::string p){
 	mass = m;
 	orbitRad = R;
 	radius = r;
@@ -285,11 +285,11 @@ void adtk_body_data::setGravParam(double mu){gravParam = mu;}
 *	Set the name of the body
 *	@param s the name the body
 */
-void adtk_body_data::setName(string s){name = s;}
+void adtk_body_data::setName(std::string s){name = s;}
 
 /**
 *	Set the mean radius of the body
 *	@param s the name of this body"s parent. For example, Earth"s parent body is the Sun,
 *	and the Moon"s parent body is Earth
 */
-void adtk_body_data::setParent(string s){parent = s;}
+void adtk_body_data::setParent(std::string s){parent = s;}

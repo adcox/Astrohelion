@@ -1,0 +1,29 @@
+/** \mainpage Astrodynamics Toolkit
+
+<h2>Introduction</h2>
+<p>
+	This API details the C++ code developed to perform astrodynamics research.
+</p>
+
+<h2>Software Dependencies</h2>
+<p>Our software is dependent on a few libraries:</p>
+<ul>
+	<li>
+		GNU Science Library (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
+	</li>
+	<li>
+		Mat I/O Library: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
+	</li>
+</ul>
+
+
+<h2>To-Do List</h2>
+<ul>
+	<li> Finish fleshing out the CR3BP trajectory saveToMat function so that it saves all the same info as the matlab simNL routines do </li>
+	<li> Figure out how to do something like an event function in C++ </li>
+	<li> Add single/multiple shooting functionality </li>
+	<li> Add EOMs for the BCR4BP; will require linking SPICE libraries and headers </li>
+	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
+</ul>
+
+*/

@@ -18,6 +18,7 @@ BIN = ../bin
 # COMP = clang++ -W -Wall -Wextra -pedantic -std=c++0x
 COMP = clang++ -W -Wall -Wextra -pedantic -std=c++11
 GSL_FLAGS = -lgsl -lgslcblas
+MATIO_FLAGS = -lmatio
 
 ############################################################
 ## Macros to make dependency lists shorter (don't have to put)
@@ -30,6 +31,9 @@ SIM_ENGINE_DEP = bodyData.o calculations.o cr3bpSysData.o matrix.o simEngine.o s
 SYS_DATA_DEP = sysData.o cr3bpSysData.o bodyData.o
 # dependencies for trajTest
 TRAJ_TEST_DEP = bodyData.o matrix.o sysData.o cr3bpSysData.o cr3bpTraj.o trajectory.o
+
+# Where MATLAB is located on this system
+MAT_ROOT = /Applications/MATLAB_R2014a.app
 
 ############################################################
 
@@ -52,13 +56,16 @@ precisionTest:
 	$(COMP) NumericalPrecision_test.cpp -o $(BIN)/$@
 
 simEngineTest: $(patsubst %.o,$(OBJ)/%.o, $(SIM_ENGINE_DEP))
-	$(COMP) -I $(INC) $^ $(GSL_FLAGS) SimulationEngine_test.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(GSL_FLAGS) $(MATIO_FLAGS) SimulationEngine_test.cpp -o $(BIN)/$@
 
 sysDataTest: $(patsubst %.o,$(OBJ)/%.o, $(SYS_DATA_DEP))
 	$(COMP) -I $(INC) $^ CR3BPSysData_Test.cpp -o $(BIN)/$@
 
 trajTest: $(patsubst %.o,$(OBJ)/%.o, $(TRAJ_TEST_DEP))
-	$(COMP) -I $(INC) $^ $(GSL_FLAGS) Trajectory_test.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(GSL_FLAGS) $(MATIO_FLAGS) Trajectory_test.cpp -o $(BIN)/$@
+
+matIOTest:
+	$(COMP) $(MATIO_FLAGS) MatIO_test.cpp -o $(BIN)/$@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory

@@ -128,3 +128,18 @@ void cr3bp_getUDDots(double mu, double x, double y, double z, double* ddots){
     ddots[5] = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5);
 }//========================================================
 
+/**
+ *  Compute the Jacobi Constant for the CR3BP
+ *
+ *  @param s the state vector; only the position and velocity states are required
+ *  @para mu the non-dimensional system mass ratio
+ *
+ *  @return the Jacobi Constant at this specific state and system
+ */
+double cr3bp_getJacobi(double s[], double mu){
+    double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
+    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
+    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
+    return 2*U - v*v;
+}//================================================

@@ -14,7 +14,7 @@
 using namespace std;
 
 /**
- *	Create a new system data object
+ *	Create a new system data object and initialize all values to zero.
  */
 adtk_sys_data::adtk_sys_data(){
 	numPrimaries = 0;
@@ -26,6 +26,9 @@ adtk_sys_data::adtk_sys_data(){
 
 /**
  *	Copy the system data object
+ *
+ *	@param d a system data object
+ *	@return this data object, set to equal the input object
  */
 adtk_sys_data& adtk_sys_data::operator= (const adtk_sys_data &d){
 	charL = d.charL;

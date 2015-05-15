@@ -67,7 +67,7 @@ adtk_matrix::adtk_matrix(int r, int c, double data[]){
  *	e.g. if we create an nx3 matrix, the first 3 elements of data are the first row, the next three
  *	elements are the second row, etc.
  */
-adtk_matrix::adtk_matrix(int r, int c, vector<double> data){
+adtk_matrix::adtk_matrix(int r, int c, std::vector<double> data){
 	initBasicMatrix(r, c);
 	for (int i = 0; i < rows; i++){
 	    for (int j = 0; j < cols; j++){
@@ -148,6 +148,11 @@ double adtk_matrix::get(int r, int c){return gsl_matrix_get(a, r, c);}
 //   	Overloaded Operators
 //---------------------------------------------------------------------------
 
+/**
+ *	Copy Operator; copy a matrix into this one
+ *	@param b a constant matrix
+ *	@return this matrix
+ */
 adtk_matrix& adtk_matrix::operator =(const adtk_matrix &b){
 	rows = b.rows;
 	cols = b.cols;
@@ -160,6 +165,11 @@ adtk_matrix& adtk_matrix::operator =(const adtk_matrix &b){
 	return *this;
 }//================================================
 
+/**
+ *	Add two matrices; they must have the same size.
+ *	@param b a matrix to add to this one
+ *	@return a new matrix that is the sum of this one and b
+ */
 adtk_matrix adtk_matrix::operator +(const adtk_matrix &b){
 	if(rows == b.rows && cols == b.cols){
 		vector<double> q(rows*cols);
@@ -176,6 +186,11 @@ adtk_matrix adtk_matrix::operator +(const adtk_matrix &b){
 	}
 }//==============================================
 
+/**
+ *	Add a matrix to this one; perform operation in place
+ *	@param b a matrix, must be the same size as this matrix
+ *	@return this matrix
+ */
 adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 	if(rows == b.rows && cols == b.cols){
 		gsl_matrix_add(a, b.a);
@@ -186,6 +201,11 @@ adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 	}
 }//==============================================
 
+/**
+ *	Subtract a matrix from this one; both matrices must be the same size
+ *	@param b a matrix to subtract from this one
+ *	@return a new matrix
+ */
 adtk_matrix adtk_matrix::operator -(const adtk_matrix &b){
 	if(rows == b.rows && cols == b.cols){
 		vector<double> q(rows*cols);
@@ -201,6 +221,11 @@ adtk_matrix adtk_matrix::operator -(const adtk_matrix &b){
 	}
 }//==============================================
 
+/**
+ *	In place subtraction; subtract a matrix from this one
+ *	@param b a matrix to subtract from this
+ *	@return this matrix
+ */
 adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
 	if(rows == b.rows && cols == b.cols){
 		gsl_matrix_sub(a, b.a);
@@ -251,8 +276,13 @@ adtk_matrix adtk_matrix::operator *(const adtk_matrix &b){
 }//==============================================
 
 /**
+ * 	Multiplies this matrix, A ( m x m ) with an input matrix B (m x m) and sets A = AB
+ *
  *	This operation only works for square matrices (non-square doesn't make any sense,
  *	because you can't assign the new product back to the old matrix)
+ *
+ *	@param b a square matrix the same size as this one
+ *	@return this matrix, modified
  */
 adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 
@@ -305,12 +335,25 @@ adtk_matrix& adtk_matrix::operator *=(const double &alpha){
 	return *this;
 }//==============================================
 
-bool adtk_matrix::operator ==(const adtk_matrix &b){
-	return gsl_matrix_equal(a, b.a);
+/**
+ *	Compare this matrix to another; note that only EXACT equivalence will
+ *	return true.
+ *
+ *	@param B a matrix
+ *	@return whether or not this matrix contains the same elements as B
+ */
+bool adtk_matrix::operator ==(const adtk_matrix &B){
+	return gsl_matrix_equal(a, B.a);
 }//==============================================
 
-bool adtk_matrix::operator !=(const adtk_matrix &b){
-	return !gsl_matrix_equal(a, b.a);
+/**
+ *	Compare this matrix to another
+ *
+ *	@param B a matrix
+ *	@return whether or not this matrix is NOT equal to B
+ */
+bool adtk_matrix::operator !=(const adtk_matrix &B){
+	return !gsl_matrix_equal(a, B.a);
 }//==============================================
 
 //---------------------------------------------------------------------------

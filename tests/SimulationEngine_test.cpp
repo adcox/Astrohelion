@@ -31,5 +31,6 @@ int main(void){
 	adtk_matrix lastSTM = traj.getSTM(traj.getLength()-1);
 	lastSTM.print("%12.4f");
 
+	traj.saveToMat("HaloTest.mat");
 	return 0;
 }

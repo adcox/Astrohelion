@@ -30,7 +30,7 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data() : adtk_sys_data(){
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary; P2 must orbit P1
  */
-adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(string P1, string P2){
+adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(std::string P1, std::string P2){
 	numPrimaries = 2;
 	type = adtk_sys_data::CR3BP_SYS;
 	
@@ -53,6 +53,11 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(string P1, string P2){
 	}
 }//===================================================
 
+/**
+ *	Copy operator; makes a clean copy of a data object into this one
+ *	@param d a CR3BP system data object
+ *	@return this system data object
+ */
 adtk_cr3bp_sys_data& adtk_cr3bp_sys_data::operator= (const adtk_cr3bp_sys_data &d){
 	adtk_sys_data::operator= (d);
 	P1 = d.P1;
@@ -67,9 +72,9 @@ adtk_cr3bp_sys_data& adtk_cr3bp_sys_data::operator= (const adtk_cr3bp_sys_data &
 double adtk_cr3bp_sys_data::getMu(){ return mu; }
 
 /**
- *	@param the index of the primary (0 for P1, 1 for P2)
+ *	@param n the index of the primary (0 for P1, 1 for P2)
  *	@return the name of the primary
  */
-string adtk_cr3bp_sys_data::getPrimary(int n){
+std::string adtk_cr3bp_sys_data::getPrimary(int n){
 	return n == 0 ? P1 : P2;
 }

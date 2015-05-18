@@ -33,9 +33,10 @@
 
 #include "adtk_sys_data.hpp"
 #include "adtk_trajectory.hpp"
-#include "adtk_cr3bp_traj.hpp"
-
-#include <vector>
+ 
+// Forward declarations
+class adtk_bcr4bpr_traj;
+class adtk_cr3bp_traj;
 
 class adtk_simulation_engine{
 	public:
@@ -51,6 +52,7 @@ class adtk_simulation_engine{
 		double getAbsTol();
 		double getRelTol();
 		adtk_cr3bp_traj getCR3BPTraj();
+		adtk_bcr4bpr_traj getBCR4BPRTraj();
 
 		void setSysData(adtk_sys_data *d);
 		void setRevTime(bool b);
@@ -70,9 +72,11 @@ class adtk_simulation_engine{
 
 		bool revTime;
 		bool verbose;
+		bool simpleIntegration;
 		double absTol, relTol, dtGuess;
 
-		void cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
+		// void cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
+		void integrate(double ic[], double t[], int t_dim);
 		void saveIntegratedData(double *y, double t, bool);
 };
 

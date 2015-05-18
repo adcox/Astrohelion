@@ -26,9 +26,11 @@ MATIO_FLAGS = -lmatio
 ############################################################
 
 # dependencies for simEngineTest
-SIM_ENGINE_DEP = bodyData.o calculations.o cr3bpSysData.o matrix.o simEngine.o sysData.o trajectory.o cr3bpTraj.o
+SIM_ENGINE_DEP = bodyData.o sysData.o matrix.o trajectory.o cr3bpSysData.o bcr4bpSysData.o calculations.o cr3bpTraj.o simEngine.o
 # dependencies for sysDataTest
 SYS_DATA_DEP = sysData.o cr3bpSysData.o bodyData.o
+# dependencies for bcr4bprSysDataTest
+BCR_SYS_DATA_DEP = sysData.o bcr4bpSysData.o bodyData.o
 # dependencies for trajTest
 TRAJ_TEST_DEP = bodyData.o matrix.o sysData.o cr3bpSysData.o cr3bpTraj.o trajectory.o
 
@@ -43,6 +45,9 @@ all: bodyDataTest
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
 
+bcr4bprSysDataTest: $(patsubst %.o,$(OBJ)/%.o, $(BCR_SYS_DATA_DEP))
+	$(COMP) -I $(INC) $^ BCR4BPRSysData_test.cpp -o $(BIN)/$@
+	
 bodyDataTest: $(OBJ)/bodyData.o
 	$(COMP) -I $(INC) $(SRC)/adtk_body_data.cpp BodyData_test.cpp -o $(BIN)/$@
 
@@ -70,6 +75,9 @@ matIOTest:
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
+
+$(OBJ)/bcr4bpSysData.o: $(SRC)/adtk_bcr4bpr_sys_data.cpp $(INC)/adtk_bcr4bpr_sys_data.hpp
+	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
 
 $(OBJ)/bodyData.o: $(SRC)/adtk_body_data.cpp $(INC)/adtk_body_data.hpp
 	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@

@@ -1,4 +1,6 @@
 /**
+ *	@file adtk_matrix.cpp
+ *
  * 	Matrix object that employs GSL's Matrix and CBLAS functionality
  *
  *	The matrix is double precision, rectangular, and real. No other
@@ -7,13 +9,12 @@
  *	Author: Andrew Cox
  *	Version: May 6, 2015
  */
+#include "adtk_matrix.hpp"
 
 #include <exception>
-#include <iostream>
-
 #include <gsl/gsl_cblas.h>
-
-#include "adtk_matrix.hpp"
+#include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -50,13 +51,9 @@ adtk_matrix::adtk_matrix(const int r, const int c){
  *	e.g. if we create an nx3 matrix, the first 3 elements of data are the first row, the next three
  *	elements are the second row, etc.
  */
-adtk_matrix::adtk_matrix(int r, int c, double data[]){
+adtk_matrix::adtk_matrix(int r, int c, double *data){
 	initBasicMatrix(r, c);
-	for (int i = 0; i < rows; i++){
-	    for (int j = 0; j < cols; j++){
-	    	gsl_matrix_set(a, i, j, data[i*cols+j]);
-	    }
-	}
+	copyDataIntoGSL_Matrix(data);
 }//==============================================
 
 /**
@@ -69,12 +66,34 @@ adtk_matrix::adtk_matrix(int r, int c, double data[]){
  */
 adtk_matrix::adtk_matrix(int r, int c, std::vector<double> data){
 	initBasicMatrix(r, c);
-	for (int i = 0; i < rows; i++){
-	    for (int j = 0; j < cols; j++){
-	    	gsl_matrix_set(a, i, j, data[i*cols+j]);
-	    }
+	copyDataIntoGSL_Matrix(data);
+}//==================================
+
+/**
+ *	Construct a matrix from a <tt>gsl_matrix</tt> object
+ *	@param m a pointer to a <tt>gsl_matrix</tt>
+ */
+adtk_matrix::adtk_matrix(gsl_matrix *m){
+	// Copy data from gsl_matrix pointer
+	rows = m->size1;
+	cols = m->size2;
+	a = m;
+}//===================================
+
+/**
+ *	Construct a 1-D matrix (or vector) from a <tt>gsl_vector</tt>
+ *	@param v a pointer to a <tt>gsl_vector</tt>
+ *	@param isRow whether or not the matrix is a row-vector. If not, it is a column vector
+ */
+adtk_matrix::adtk_matrix(gsl_vector *v, bool isRow){
+	if(isRow){
+		initBasicMatrix(1, v->size);
+	}else{
+		initBasicMatrix(v->size, 1);
 	}
-}
+
+	copyDataIntoGSL_Matrix(v->data);
+}//====================================
 
 /**
  *	Destructor: called when the matrix is deleted or goes out of scope
@@ -123,9 +142,32 @@ adtk_matrix adtk_matrix::Identity(int size){
 int adtk_matrix::getRows(){return rows;}
 
 /**
+ *	Get a row from this matrix
+ *	@param i the row index (begins with zero)
+ *	@return a 1-D matrix (row vector) that contains the data from row <tt>i</tt>
+ */
+adtk_matrix adtk_matrix::getRow(int i){
+	// Retrieve the row data
+	gsl_vector *v = gsl_vector_alloc(static_cast<size_t>(cols));
+	gsl_matrix_get_row(v, a, static_cast<size_t>(i));
+	return adtk_matrix(v, true); 	// Haven't freed the vector memory
+}
+
+/**
  * 	@return the number of columns in this matrix
  */
 int adtk_matrix::getCols(){return cols;}
+
+/**
+ *	Get a column from this matrix
+ *	@param j the column index (begins with zero)
+ *	@return a 1-D matrix (column vector) that contains the data from column <tt>j</tt>
+ */
+adtk_matrix adtk_matrix::getCol(int j){
+	gsl_vector *v = gsl_vector_alloc(static_cast<size_t>(rows));
+	gsl_matrix_get_col(v, a, static_cast<size_t>(j));
+	return adtk_matrix(v, false);	// Haven't freed the vector memory
+}
 
 /**
  *	@return the total number of elements in the matrix
@@ -167,24 +209,23 @@ adtk_matrix& adtk_matrix::operator =(const adtk_matrix &b){
 
 /**
  *	Add two matrices; they must have the same size.
- *	@param b a matrix to add to this one
- *	@return a new matrix that is the sum of this one and b
+ *	@return a new matrix that is the sum of lhs and rhs
  */
-adtk_matrix adtk_matrix::operator +(const adtk_matrix &b){
-	if(rows == b.rows && cols == b.cols){
-		vector<double> q(rows*cols);
-		for(int r = 0; r<rows; r++){
-			for(int c = 0; c<cols; c++){
-				q[r*cols+c] = gsl_matrix_get(a, r, c) + gsl_matrix_get(b.a, r, c);
+adtk_matrix operator +(const adtk_matrix &lhs, const adtk_matrix &rhs){
+	if(lhs.rows == rhs.rows && lhs.cols == rhs.cols){
+		vector<double> q(lhs.rows * lhs.cols);
+		for (int r = 0; r < lhs.rows; r++){
+			for (int c = 0; c < lhs.cols; c++){
+				q[r * lhs.cols + c] = gsl_matrix_get(lhs.a, r, c) + gsl_matrix_get(rhs.a, r, c);
 			}
 		}
-		// Return a new matrix (do not modify this one)
-		return adtk_matrix(rows, cols, q);
+		// Return a new matrix
+		return adtk_matrix(lhs.rows, lhs.cols, q);
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
 		throw adtk_matSizeMismatch;
 	}
-}//==============================================
+}
 
 /**
  *	Add a matrix to this one; perform operation in place
@@ -201,24 +242,9 @@ adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 	}
 }//==============================================
 
-/**
- *	Subtract a matrix from this one; both matrices must be the same size
- *	@param b a matrix to subtract from this one
- *	@return a new matrix
- */
-adtk_matrix adtk_matrix::operator -(const adtk_matrix &b){
-	if(rows == b.rows && cols == b.cols){
-		vector<double> q(rows*cols);
-		for(int r = 0; r<rows; r++){
-			for(int c = 0; c<cols; c++){
-				q[r*cols+c] = gsl_matrix_get(a, r, c) - gsl_matrix_get(b.a, r, c);
-			}
-		}
-		return adtk_matrix(rows, cols, q);
-	}else{
-		cout << "Matrices must be the same size to apply subtraction!" << endl;
-		throw adtk_matSizeMismatch;
-	}
+
+adtk_matrix operator -(const adtk_matrix &lhs, const adtk_matrix &rhs){
+	return operator +(lhs, -1*rhs);
 }//==============================================
 
 /**
@@ -310,21 +336,26 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 	}
 }//=============================================
 
-/**
- *	Multiply the matrix by a scalar and return the product (does not modify this matrix)
- *	@param alpha a real scalar
- *	@return the matrix alpha*A
- */
-adtk_matrix adtk_matrix::operator *(const double &alpha){
-	vector<double> b(rows*cols);
-	for(int r = 0; r<rows; r++){
-		for(int c = 0; c<rows; c++){
-			b[r*cols + c] = alpha*gsl_matrix_get(a, r, c);
+adtk_matrix operator *(const double &lhs, const adtk_matrix &rhs){
+	int rows = rhs.rows;
+	int cols = rhs.cols;
+	vector<double> b(rows * cols);
+	for(int r = 0; r< rows; r++){
+		for(int c = 0; c< cols; c++){
+			b[r * cols + c] = lhs *gsl_matrix_get(rhs.a, r, c);
 		}
 	}
 
 	return adtk_matrix(rows, cols, b);
-}//==============================================
+}//=============================================
+
+adtk_matrix operator *(const adtk_matrix &lhs, const double &rhs){
+	return operator *(rhs, lhs);
+}//=============================================
+
+adtk_matrix operator /(const adtk_matrix &lhs, const double &rhs){
+	return operator *(lhs, 1/rhs);
+}
 
 /**
  *	Multiply this matrix by a scalar (in place, DOES modify this matrix)
@@ -335,26 +366,14 @@ adtk_matrix& adtk_matrix::operator *=(const double &alpha){
 	return *this;
 }//==============================================
 
-/**
- *	Compare this matrix to another; note that only EXACT equivalence will
- *	return true.
- *
- *	@param B a matrix
- *	@return whether or not this matrix contains the same elements as B
- */
-bool adtk_matrix::operator ==(const adtk_matrix &B){
-	return gsl_matrix_equal(a, B.a);
-}//==============================================
 
-/**
- *	Compare this matrix to another
- *
- *	@param B a matrix
- *	@return whether or not this matrix is NOT equal to B
- */
-bool adtk_matrix::operator !=(const adtk_matrix &B){
-	return !gsl_matrix_equal(a, B.a);
-}//==============================================
+bool operator ==(const adtk_matrix &lhs, const adtk_matrix &rhs){
+	return gsl_matrix_equal(lhs.a, rhs.a);
+}
+
+bool operator !=(const adtk_matrix &lhs, const adtk_matrix &rhs){
+	return !operator==(lhs, rhs);
+}
 
 //---------------------------------------------------------------------------
 //    	Matrix Operation Functions
@@ -371,6 +390,22 @@ adtk_matrix adtk_matrix::trans(){
 	return adtk_matrix(cols, rows, b->data);
 }//==============================================
 
+/** 
+ *	Get the norm of this "matrix;" only applies for 1-D matrices (vectors)
+ *	@return the 2-norm (sqrt of sum of squared elements) of the matrix
+ */
+double adtk_matrix::norm(){
+	if(rows == 1 || cols == 1){
+		double sumSquares = 0;
+		for(int i = 0; i < rows*cols; i++){
+			sumSquares += (a->data[i])*(a->data[i]);
+		}
+		return sqrt(sumSquares);
+	}else{
+		cout << "adtk_matrix :: Cannot take norm of a 2-D matrix" << endl;
+		throw;
+	}
+}//==========================================
 
 //---------------------------------------------------------------------------
 //    	Utilities
@@ -386,6 +421,32 @@ void adtk_matrix::initBasicMatrix(int r, int c){
 	rows = r;
 	cols = c;
 	gsl_matrix_set_zero(a);
+}//============================================
+
+/**
+ *	Utility to copy data from an array of doubles into the gsl_matrix object that
+ *	contains the data for this matrix. NOTE: the <tt>rows</tt> and <tt>cols</tt>
+ *	variabls MUST be initialized and set to the correct values before running
+ *	this function.
+ *	@param data an array (row-major order) containing data for this matrix
+ */
+void adtk_matrix::copyDataIntoGSL_Matrix(double *data){
+	for (int i = 0; i < rows; i++){
+	    for (int j = 0; j < cols; j++){
+	    	gsl_matrix_set(a, i, j, data[i*cols+j]);
+	    }
+	}
+}//============================================
+
+/**
+ * 	Utility to copy data from a vector into the gsl_matrix object that
+ *	contains the data for this matrix. NOTE: the <tt>rows</tt> and <tt>cols</tt>
+ *	variabls MUST be initialized and set to the correct values before running
+ *	this function.
+ *	@param v a vector (row-major order) containing data for this matrix
+ */
+void adtk_matrix::copyDataIntoGSL_Matrix(std::vector<double> v){
+	copyDataIntoGSL_Matrix(&(v[0]));
 }//============================================
 
 /**

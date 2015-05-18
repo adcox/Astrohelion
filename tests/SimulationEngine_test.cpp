@@ -2,8 +2,10 @@
  *	Test the simulation engine
  */
 
-#include "adtk_simulation_engine.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
+#include "adtk_cr3bp_traj.hpp"
+#include "adtk_matrix.hpp"
+#include "adtk_simulation_engine.hpp"
 
 #include <iostream>
 
@@ -16,7 +18,6 @@ int main(void){
 
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
-	
 	simEngine.setSysData(&sys);
 	simEngine.setVerbose(true);
 	simEngine.setAbsTol(1e-14);

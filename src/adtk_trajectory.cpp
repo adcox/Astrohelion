@@ -1,11 +1,16 @@
 /**
+ *	@file adtk_trajectory.cpp
+ *
  *	Trajectory Class: contains info about a trajectory
  */
 
 #include "adtk_trajectory.hpp"
 
-#include <iostream>
+#include "adtk_matrix.hpp"
+#include "adtk_sys_data.hpp"
+
 #include <cstdlib>
+#include <iostream>
 
 using namespace std;
 

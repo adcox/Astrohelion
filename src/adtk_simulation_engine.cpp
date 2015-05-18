@@ -1,24 +1,26 @@
 /**
+ *  @file adtk_simulation_engine.cpp
+ *
  * 	Simulation Engine
  *
  *	This object handles all simulation tasks.
  *
  */
-
-#include "adtk_calculations.hpp"
-#include "adtk_matrix.hpp"
 #include "adtk_simulation_engine.hpp"
-#include "adtk_cr3bp_traj.hpp"
 
-#include <fstream>
-#include <cstdio>
+#include "adtk_bcr4bpr_sys_data.hpp"
+#include "adtk_bcr4bpr_traj.hpp"
+#include "adtk_calculations.hpp"
+#include "adtk_cr3bp_sys_data.hpp"
+#include "adtk_cr3bp_traj.hpp"
+#include "adtk_matrix.hpp"
 
 #include <cstdlib>
-#include <iostream>
-#include <math.h>
-
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
+#include <iostream>
+#include <math.h>
+#include <vector>
 
 using namespace std;
 
@@ -29,6 +31,7 @@ using namespace std;
 adtk_simulation_engine::adtk_simulation_engine(){
 	revTime = false;
 	verbose = false;
+    simpleIntegration = false;
 	absTol = 1e-12;
 	relTol = 1e-14;
 	dtGuess = absTol;
@@ -80,10 +83,27 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj(){
          */
         return *( static_cast<adtk_cr3bp_traj*>(traj) );
     else{
-        cout << "This trajectory was not propagated in CR3BP";
+        cout << "This trajectory was not propagated in CR3BP" << endl;
         throw;
     }
 }//==============================================
+
+/**
+ *  Retrieve the trajectory. To avoid static casts in driver programs,
+ *  we create several different getTraj() type functions that will perform
+ *  the static cast and return the specific type of trajectory object rather
+ *  than a generic one.
+ *
+ *  @return a BCR4BP, Rotating Coordinate Trajectory object
+ */
+adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj(){
+    if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS)
+        return *( static_cast<adtk_bcr4bpr_traj *>(traj) );
+    else{
+        cout << "This trajectory was not propagated in BCR4BP, Rot. Coord." << endl;
+        throw;
+    }
+}//=====================================
 
 /**
  *	Specify the system the engine will be using for integration
@@ -146,53 +166,103 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
     cout << "Running sim..." << endl;
 	switch(sysData->getType()){
 		case adtk_sys_data::CR3BP_SYS:
-			// Initialize trajectory (will only have one set of values)
+		{
+            // Initialize trajectory (will only have one set of values)
             traj = new adtk_cr3bp_traj();
-			cr3bp_integrate(ic, t_span, sysData->getMu(), 2);
 			break;
+        }
 		case adtk_sys_data::BCR4BPR_SYS:
-			//do bcr4bp simulation
+            traj = new adtk_bcr4bpr_traj();
+			break;
 		default:
 			cout << "Cannnot simulate with system type: " << sysData->getTypeStr() << endl;
 			return;
 	}
-}
+
+    // Run the simulation
+    integrate(ic, t_span, 2);
+}//============================================
 
 //-----------------------------------------------------
 // 		Numerical Integration
 //-----------------------------------------------------
 
 /**
- *  Integrate the 6 state EOMs and 36 STM EOMs for the CR3BP
+ *  Integrate the 6 state EOMs and 36 STM EOMs with additional integration as required by 
+ *  specific systems.
+ *
  *  This function uses GSL's explicity embedded Runge-Kutta Dormand-Prince (8,9) method
  *
  *  @param ic a 6-element initial state for the trajectory
  *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
- *  @param mu the non-dimensional mass ratio of the system begin integrated
  *  @param t_dim the dimension of t
- *
- *  @return a vector containing all 42 states with a column of time valeus appended to the end
  */
-void adtk_simulation_engine::cr3bp_integrate(double ic[], double t[], double mu, int t_dim){
+void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
+    // Default IC dimension
+    const int maxICDim = 48;
+    int ic_dim = 42;
+
+    if(simpleIntegration){
+        ic_dim = 6;
+    }else{
+        if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS){
+            ic_dim = 48;    // requires 6 extra states for numerically integrated epoch dependencies
+        }
+    }
+
     // Construct the full 42-element IC from the state ICs plus the STM ICs
-    const int ic_dim = 42;
-    double fullIC[ic_dim] = {0};
-    copy(ic, ic+6, fullIC);
-    fullIC[6] = 1;          // Make the identity matrix
-    fullIC[13] = 1;
-    fullIC[20] = 1;
-    fullIC[27] = 1;
-    fullIC[34] = 1;
-    fullIC[41] = 1;
+    double fullIC[maxICDim] = {0};  // store extra spots (only takes up a few bytes anyway)
+    copy(ic, ic+6, fullIC);         // Copy in the 6 position & velocity states
+
+    if(ic_dim > 6){
+        fullIC[6] = 1;          // Make the identity matrix
+        fullIC[13] = 1;
+        fullIC[20] = 1;
+        fullIC[27] = 1;
+        fullIC[34] = 1;
+        fullIC[41] = 1;
+    }
 
     int steps = 0;                                  // count number of integration steps
-    double *y = new double[ic_dim];                 // hold ONE integrated state; resets every step 
+    double *y = new double[maxICDim];                 // hold ONE integrated state; resets every step 
 
     // Define the step type (or, which integrator are we using?)
     const gsl_odeiv2_step_type *stepType = gsl_odeiv2_step_msadams;
 
-	// Create a system to integrate; we don't include a Jacobian (NULL)
-    gsl_odeiv2_system sys = {cr3bp_EOMs, NULL, ic_dim, &mu};
+    int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
+    void *params = 0;   // Pointer to additional parameters
+    // Choose EOM function based on system type and simplicity
+    switch(sysData->getType()){
+        case adtk_sys_data::CR3BP_SYS:
+        {
+            eomFcn = simpleIntegration ? &cr3bp_simple_EOMs : &cr3bp_EOMs;
+            
+            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
+            double mu = cr3bpData->getMu();
+            params = &mu;
+            break;
+        }
+        case adtk_sys_data::BCR4BPR_SYS:
+        {
+            eomFcn = &bcr4bpr_EOMs;
+
+            // Cast sys data to the specific system type
+            adtk_bcr4bpr_sys_data thisSysData = *(static_cast<adtk_bcr4bpr_sys_data *>(sysData));
+
+            double theta0 = 0;  // TODO make initializing these more intelligent
+            double phi0 = 0;
+            double gamma = 0;
+            adtk_bcr4bpr_eomData eomData(thisSysData, theta0, phi0, gamma);
+            
+            params = &eomData;
+            break;
+        }
+        default:
+            throw;
+    }
+
+    // Create a system to integrate; we don't include a Jacobian (NULL)
+    gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), params};
     
     // Create the driver
     gsl_odeiv2_driver *d = gsl_odeiv2_driver_alloc_y_new(&sys, stepType, dtGuess, absTol, relTol);
@@ -313,16 +383,17 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
         case adtk_sys_data::CR3BP_SYS:
         {
             // Use the simple EOMs to compute the velocity/acceleration. 
-            // Note that the time t is not used in computations, and mu may need to be a pointer...
-            cr3bp_simple_EOMs(y, dsdt, sysData->getMu());
+            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
+            double mu = cr3bpData->getMu();
+            cr3bp_simple_EOMs(0, y, dsdt, &mu);
 
             // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
             adtk_cr3bp_traj *cr3bpTraj = static_cast<adtk_cr3bp_traj*>(traj);
             
             if(first)
-                cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, sysData->getMu());
+                cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, mu);
             else
-                cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, sysData->getMu()));
+                cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, mu));
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:

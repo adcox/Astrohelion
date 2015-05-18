@@ -125,6 +125,32 @@ bool test_matSubtract(adtk_matrix C){
 	return true;
 }//===========================================
 
+bool test_plusEquals(){
+	double d[] = {1,2,3,4};
+	adtk_matrix D = adtk_matrix(2,2,d);
+	adtk_matrix I = adtk_matrix::Identity(2);
+
+	D+=I;
+
+	double sol[] = {2,2,3,5};
+	adtk_matrix Sol(2,2,sol);
+
+	return D == Sol;
+}//===========================================
+
+bool test_minusEquals(){
+	double d[] = {1,2,3,4};
+	adtk_matrix D = adtk_matrix(2,2,d);
+	adtk_matrix I = adtk_matrix::Identity(2);
+
+	D-=I;
+
+	double sol[] = {0,2,3,3};
+	adtk_matrix Sol(2,2,sol);
+
+	return D == Sol;
+}//===========================================
+
 bool test_identity(adtk_matrix I){
 	adtk_matrix I2 = adtk_matrix::Identity(2);
 	// cout << endl;
@@ -134,6 +160,20 @@ bool test_identity(adtk_matrix I){
 
 	return I2 == I;
 }//===========================================
+
+bool test_getRow(adtk_matrix C){
+	double sol[] = {1,2,3};
+	adtk_matrix Sol(1,3,sol);
+
+	return Sol == C.getRow(0);
+}
+
+bool test_getCol(adtk_matrix C){
+	double sol[] = {1,4};
+	adtk_matrix Sol(2,1,sol);
+
+	return Sol == C.getCol(0);
+}
 
 int main(void){
 
@@ -156,11 +196,13 @@ int main(void){
 	cout << "Test: operator A-B ... " << ( test_matSubtract(C) ? PASS : FAIL) << endl;
 	cout << "Test: operator A*B ... " << ( test_matMult(I, B, C) ? PASS : FAIL) << endl;
 	cout << "Test: operator A*q ... " << ( test_multScalar(I) ? PASS : FAIL) << endl;
-	cout << "Test: operator A+=B ... " << "NOT IMPLEMENTED" << endl;
-	cout << "Test: operator A-=B ... " << "NOT IMPLEMENTED" << endl;
+	cout << "Test: operator A+=B ... " << ( test_plusEquals() ? PASS : FAIL) << endl;
+	cout << "Test: operator A-=B ... " << ( test_minusEquals() ? PASS : FAIL) << endl;
 	cout << "Test: operator A*=B ... " << ( test_matMult_inPlace(I, B, C) ? PASS : FAIL) << endl;
 	cout << "Test: operator A*=q ... " << ( test_multScalar_inPlace() ? PASS : FAIL) << endl;
 
 	cout << "Test: Create Identity... " << (test_identity(I) ? PASS : FAIL) << endl;
+	cout << "Test: Get Row ... " << ( test_getRow(C) ? PASS : FAIL) << endl;
+	cout << "Test: Get Column ... " << ( test_getCol(C) ? PASS : FAIL) << endl;
 	return 0;
 }

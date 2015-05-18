@@ -26,39 +26,43 @@
  *  You should have received a copy of the GNU General Public License
  *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_CR3BP_TRAJ_
-#define __H_CR3BP_TRAJ_
+#ifndef __H_BCR4BPR_TRAJ_
+#define __H_BCR4BPR_TRAJ_
 
-#include "adtk_cr3bp_sys_data.hpp"
+#include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_trajectory.hpp"
 
-class adtk_cr3bp_traj : public adtk_trajectory{
+class adtk_bcr4bpr_traj : public adtk_trajectory{
 	private:
-		/** Vector to hold jacobi constants along the path */
-		std::vector<double> jacobi;
 
-		/** A system data object specific to the CR3BP */
-		adtk_cr3bp_sys_data sysData;
-		
-		void saveJacobi(mat_t*);
+		/** Angle (radians) between the P1/P2 line and the inertial x-axis at time t = 0 */
+		double theta0;
+
+		/** Angle (radians) between the P2/P3 line (projected onto the inertial XY plane) and
+		 the inertial x-axis at time t = 0 */
+		double phi0;
+
+		/** Inclination (radians) of P2/P3 orbital plane relative to the P1/P2 orbital plane;
+		 Gamma is constant during the integration */
+		double gamma;
+
+		/** A system data object specific to the BCR4BPR */
+		adtk_bcr4bpr_sys_data sysData;
 
 	public:
-		// *structors
-		adtk_cr3bp_traj();
-		adtk_cr3bp_traj(int);
-		
-		// Operators
-		adtk_cr3bp_traj& operator= (const adtk_cr3bp_traj&);
+		adtk_bcr4bpr_traj();
+		adtk_bcr4bpr_traj(int);
 
 		// Set and Get Functions
-		double getJC(int);
-		std::vector<double>* getJC();
-		void setJC(std::vector<double>);
-		adtk_cr3bp_sys_data getSysData();
-		void setSysData(adtk_cr3bp_sys_data);
+		double getTheta0();
+		double getPhi0();
+		double getGamma();
+		adtk_bcr4bpr_sys_data getSysData();
 
-		// Utility functions
-		void saveToMat(const char*);
+		void setTheta0(double t);
+		void setPhi0(double p);
+		void setGamma(double g);
+		void setSysData(adtk_bcr4bpr_sys_data);
 };
 
 #endif

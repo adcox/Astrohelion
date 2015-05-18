@@ -1,12 +1,16 @@
 /**
-*	Data class that holds data about orbitRad body
-*/
+ *	@file adtk_body_data.cpp
+ *
+ *	Data class that holds data about orbitRad body
+ */
+#include "adtk_body_data.hpp"
+
+#include "adtk_constants.hpp"
+
 #include <exception>
 #include <iostream>
 #include <math.h>
 
-#include "adtk_constants.hpp"
-#include "adtk_body_data.hpp"
 
 using namespace std;
 

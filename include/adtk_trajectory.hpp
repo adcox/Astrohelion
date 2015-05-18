@@ -36,11 +36,12 @@
 #ifndef __H_TRAJECTORY_
 #define __H_TRAJECTORY_
 
-#include "adtk_sys_data.hpp"
-#include "adtk_matrix.hpp"
 #include "matio.h"
-
+ 
 #include <vector>
+
+// Forward Declarations
+class adtk_matrix;
 
 class adtk_trajectory{
 	static const int STATE_WIDTH = 9;

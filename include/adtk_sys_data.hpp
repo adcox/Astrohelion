@@ -34,76 +34,58 @@
 
 #include <string>
 
-	class adtk_sys_data{
+class adtk_sys_data{
 
- 		public:
- 			/**
- 			 *	System Type - Enumerated Type
- 			 *	
- 			 *	Describes the type of system described by this data object. This
- 			 *	is useful when a function or object specifies only the super-class
- 			 *	adtk_sys_data and the user needs to determine which derivative
- 			 *	data type to use. Each derivative type will set its type variable to
- 			 *	one of the type values.
- 			 *
- 			 *	Values:
- 			 *		UNDEF_SYS 	-	System type is undefined; no derivative type defined.
- 			 *		CR3BP_SYS 	- 	Circular Restricted 3-Body Problem; applies to adtk_cr3bp_sys_data
- 			 *		BCR4BPR_SYS - 	Bi-Circular Restricted 4-Body Problem, rotating frame; applies
- 			 *						to adtk_bcr4bpr_sys
- 			 */
- 			enum system_t {UNDEF_SYS, CR3BP_SYS, BCR4BPR_SYS};
+	public:
+		/**
+		 *	System Type - Enumerated Type
+		 *	
+		 *	Describes the type of system described by this data object. This
+		 *	is useful when a function or object specifies only the super-class
+		 *	adtk_sys_data and the user needs to determine which derivative
+		 *	data type to use. Each derivative type will set its type variable to
+		 *	one of the type values.
+		 *
+		 *	Values:
+		 *		UNDEF_SYS 	-	System type is undefined; no derivative type defined.
+		 *		CR3BP_SYS 	- 	Circular Restricted 3-Body Problem; applies to adtk_cr3bp_sys_data
+		 *		BCR4BPR_SYS - 	Bi-Circular Restricted 4-Body Problem, rotating frame; applies
+		 *						to adtk_bcr4bpr_sys
+		 */
+		enum system_t {UNDEF_SYS, CR3BP_SYS, BCR4BPR_SYS};
 
- 			adtk_sys_data();
+		adtk_sys_data();
 
- 			adtk_sys_data& operator= (const adtk_sys_data&);
+		adtk_sys_data& operator= (const adtk_sys_data&);
 
- 			double getCharL();
- 			double getCharT();
- 			double getCharM();
- 			system_t getType();
- 			std::string getTypeStr();
+		double getCharL();
+		double getCharT();
+		double getCharM();
+		system_t getType();
+		std::string getTypeStr();
 
- 			/**
- 			 *	Each derivative class must define this function to provide the name of each primary
- 			 *	@param n the "index" of the primary, starts at 0
- 			 *	@return the name of the n'th primary
- 			 */
- 			virtual std::string getPrimary(int n) = 0;
+		/**
+		 *	Each derivative class must define this function to provide the name of each primary
+		 *	@param n the "index" of the primary, starts at 0
+		 *	@return the name of the n'th primary
+		 */
+		virtual std::string getPrimary(int n) = 0;
 
- 			/**
- 			 *	Each derivative class must define this function
- 			 *	@return the non-dimensional system mass ratio
- 			 */
- 			virtual double getMu() = 0;
+	protected:
 
- 			/**
- 			 *	Only the BCR4BP need define this function;
- 			 *	@return zero unless otherwise overwritten
- 			 */	
- 			virtual double getNu(){return 0;}
+		/** Number of primaries that exist in this system */
+		int numPrimaries;
 
- 			/**
- 			 *	Only the BCR4BP need define this function;
- 			 *	@return zero unless otherwise overwritten
- 			 */
- 			virtual double getK(){return 0;}
+		/** Characteristic length (km) */
+		double charL;
 
- 		protected:
+		/** Characteristic time (sec) */
+		double charT;
 
- 			/** Number of primaries that exist in this system */
- 			int numPrimaries;
+		/** Characteristic mass (kg) */
+		double charM;
 
- 			/** Characteristic length (km) */
- 			double charL;
-
- 			/** Characteristic time (sec) */
- 			double charT;
-
- 			/** Characteristic mass (kg) */
- 			double charM;
-
- 			/** The type of system this data object describes */
- 			system_t type;
- 	};
+		/** The type of system this data object describes */
+		system_t type;
+};
 #endif

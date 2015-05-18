@@ -32,8 +32,11 @@
 #define __ADTK_MATRIX__
 
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
 #include <string>
 #include <vector>
+
+// Forward Declarations
 
 class adtk_matrix{
 
@@ -41,8 +44,10 @@ class adtk_matrix{
 
 		// Constructors
 		adtk_matrix(int r, int c);
-		adtk_matrix(int r, int c, double data[]);
+		adtk_matrix(int r, int c, double *data);
 		adtk_matrix(int r, int c, std::vector<double> data);
+		adtk_matrix(gsl_matrix*);
+		adtk_matrix(gsl_vector*, bool);
 		adtk_matrix(const adtk_matrix &b);	// copy constructor
 		~adtk_matrix();
 
@@ -51,20 +56,25 @@ class adtk_matrix{
 
 		// Operator Overloading
 		adtk_matrix& operator =(const adtk_matrix&);
-		adtk_matrix operator +(const adtk_matrix&);
-		adtk_matrix operator -(const adtk_matrix&);
-		adtk_matrix operator *(const double&);
+		friend adtk_matrix operator +(const adtk_matrix&, const adtk_matrix&);
+		friend adtk_matrix operator -(const adtk_matrix&, const adtk_matrix&);
+		friend adtk_matrix operator *(const double&, const adtk_matrix&);
+		friend adtk_matrix operator *(const adtk_matrix&, const double&);
+		friend adtk_matrix operator /(const adtk_matrix&, const double&);
+		
 		adtk_matrix operator *(const adtk_matrix&);
+
 		adtk_matrix& operator +=(const adtk_matrix&);
 		adtk_matrix& operator -=(const adtk_matrix&);
 		adtk_matrix& operator *=(const double&);
 		adtk_matrix& operator *=(const adtk_matrix&);
 		
-		bool operator ==(const adtk_matrix&);
-		bool operator !=(const adtk_matrix&);
+		friend bool operator ==(const adtk_matrix&, const adtk_matrix&);
+		friend bool operator !=(const adtk_matrix&, const adtk_matrix&);
 
 		// Matrix operations
 		adtk_matrix trans();
+		double norm();
 
 		// Set and Gets
 		int getLength();
@@ -72,6 +82,8 @@ class adtk_matrix{
 		int getCols();
 		gsl_matrix* getGSLMat();
 		double get(int, int);
+		adtk_matrix getRow(int);
+		adtk_matrix getCol(int);
 
 		// Utility functions
 		void print();
@@ -82,6 +94,8 @@ class adtk_matrix{
 		int rows, cols;
 
 		void initBasicMatrix(int r, int c);
+		void copyDataIntoGSL_Matrix(double*);
+		void copyDataIntoGSL_Matrix(std::vector<double>);
 };
 
 #endif

@@ -177,14 +177,41 @@ int adtk_matrix::getLength(){return rows*cols;}
 /**
  *	@return a pointer to the gsl_matrix object that represents this matrix
  */
-gsl_matrix* adtk_matrix::getGSLMat(){return a;}
+// gsl_matrix* adtk_matrix::getGSLMat(){return a;}
+
+/**
+ *	@return a pointer to the array of doubles that represents this matrix;
+ *	values are stored in row-major order
+ */
+double* adtk_matrix::getDataPtr(){ return a->data; }
 
 /**
  *	@param r the row
  *	@param c the column
  *	@return the value in the specified row and column
  */
-double adtk_matrix::get(int r, int c){return gsl_matrix_get(a, r, c);}
+double adtk_matrix::at(int r, int c){
+	if(r >= 0 && r < rows && c >= 0 && c < cols){
+		return gsl_matrix_get(a, r, c);
+	}else{
+		throw std::out_of_range("Index out of range");
+	}
+}//=================================
+
+/**
+ *	Retrive a value from a 1D matrix. If the matrix is not 1D, a value from the first row
+ *	is returned.
+ */
+double adtk_matrix::at(int i){
+	if(i < rows*cols){
+		if(rows != 1 && cols != 1){
+			cout << "adtk_matrix :: Warning - matrix is not 1D; returning element from storage array" << endl;
+		}
+		return a->data[i];
+	}else{
+		throw std::out_of_range("Index out of range");
+	}
+}//===============================
 
 //---------------------------------------------------------------------------
 //   	Overloaded Operators
@@ -365,7 +392,6 @@ adtk_matrix& adtk_matrix::operator *=(const double &alpha){
 	gsl_matrix_scale(a, alpha);
 	return *this;
 }//==============================================
-
 
 bool operator ==(const adtk_matrix &lhs, const adtk_matrix &rhs){
 	return gsl_matrix_equal(lhs.a, rhs.a);

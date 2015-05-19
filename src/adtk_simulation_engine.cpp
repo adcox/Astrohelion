@@ -28,19 +28,24 @@ using namespace std;
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *  Construct a new simulation engine. Most variables will be intiailized, but
+ *  you MUST set the system data via <tt>setSysData()</tt>
+ */
 adtk_simulation_engine::adtk_simulation_engine(){
-	revTime = false;
-	verbose = false;
-    simpleIntegration = false;
-	absTol = 1e-12;
-	relTol = 1e-14;
-	dtGuess = absTol;
+}//===========================================
+
+/**
+ *  Construct a simulation engine for a specific dynamical system
+ *  @param data a pointer to a system data object
+ */
+adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
+    sysData = data;
 }//===========================================
 
 adtk_simulation_engine::~adtk_simulation_engine(){
-    try{
-        delete(traj);
-    }catch(...){}
+    delete traj;
+    delete sysData;
 }//===========================================
 
 //-----------------------------------------------------
@@ -83,7 +88,7 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj(){
          */
         return *( static_cast<adtk_cr3bp_traj*>(traj) );
     else{
-        cout << "This trajectory was not propagated in CR3BP" << endl;
+        printf("Wrong system type: %s\n", sysData->getTypeStr().c_str());
         throw;
     }
 }//==============================================
@@ -100,7 +105,7 @@ adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj(){
     if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS)
         return *( static_cast<adtk_bcr4bpr_traj *>(traj) );
     else{
-        cout << "This trajectory was not propagated in BCR4BP, Rot. Coord." << endl;
+        printf("Wrong system type: %s\n", sysData->getTypeStr().c_str());
         throw;
     }
 }//=====================================
@@ -159,21 +164,32 @@ void adtk_simulation_engine::runSim(double *ic, double tof){
  *	@param tof time-of-flight, non-dimensional time units
  */
 void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
+
+    if(!isClean){
+        cleanEngine();
+    }
+
 	// Create time span using revTime to adjust limits
-	double t_span[2] = {t0, 0};
+	double t_span[] = {t0, 0};
 	t_span[1] = revTime ? t0 - tof : t0 + tof;
 
+    printf("Set time span from %.4f to %.4f\n", t_span[0], t_span[1]);
     cout << "Running sim..." << endl;
 	switch(sysData->getType()){
 		case adtk_sys_data::CR3BP_SYS:
 		{
             // Initialize trajectory (will only have one set of values)
-            traj = new adtk_cr3bp_traj();
+            adtk_cr3bp_sys_data *data = static_cast<adtk_cr3bp_sys_data *>(sysData);
+            traj = new adtk_cr3bp_traj(*data);
 			break;
         }
 		case adtk_sys_data::BCR4BPR_SYS:
-            traj = new adtk_bcr4bpr_traj();
+        {
+            adtk_bcr4bpr_sys_data *data = static_cast<adtk_bcr4bpr_sys_data *>(sysData);
+            traj = new adtk_bcr4bpr_traj(*data);
+            cout << "System Type (before run): " << sysData->getTypeStr() << endl;
 			break;
+        }
 		default:
 			cout << "Cannnot simulate with system type: " << sysData->getTypeStr() << endl;
 			return;
@@ -181,6 +197,8 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
 
     // Run the simulation
     integrate(ic, t_span, 2);
+
+    isClean = false;
 }//============================================
 
 //-----------------------------------------------------
@@ -199,7 +217,6 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
  */
 void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     // Default IC dimension
-    const int maxICDim = 48;
     int ic_dim = 42;
 
     if(simpleIntegration){
@@ -210,59 +227,49 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
         }
     }
 
-    // Construct the full 42-element IC from the state ICs plus the STM ICs
-    double fullIC[maxICDim] = {0};  // store extra spots (only takes up a few bytes anyway)
-    copy(ic, ic+6, fullIC);         // Copy in the 6 position & velocity states
+    // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
+    vector<double> fullIC(ic_dim, 0);
+    copy(ic, ic+6, &(fullIC.front()));
 
     if(ic_dim > 6){
-        fullIC[6] = 1;          // Make the identity matrix
-        fullIC[13] = 1;
-        fullIC[20] = 1;
-        fullIC[27] = 1;
-        fullIC[34] = 1;
-        fullIC[41] = 1;
+        fullIC.at(6) = 1;       // STM initial condition: 6x6 identity matrix
+        fullIC.at(13) = 1;
+        fullIC.at(20) = 1;
+        fullIC.at(27) = 1;
+        fullIC.at(34) = 1;
+        fullIC.at(41) = 1;      // Elements 42-48 for BCR4BPR ICs are all zero
     }
 
-    int steps = 0;                                  // count number of integration steps
-    double *y = new double[maxICDim];                 // hold ONE integrated state; resets every step 
+    int steps = 0;                      // count number of integration steps
+    double *y = &(fullIC.front());      // double "array" that is passed to the integrator
 
     // Define the step type (or, which integrator are we using?)
     const gsl_odeiv2_step_type *stepType = gsl_odeiv2_step_msadams;
 
-    int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
-    void *params = 0;   // Pointer to additional parameters
+    // set the parameters that will be given to the EOM function
+    setEOMParams();
+
     // Choose EOM function based on system type and simplicity
+    int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
     switch(sysData->getType()){
         case adtk_sys_data::CR3BP_SYS:
         {
             eomFcn = simpleIntegration ? &cr3bp_simple_EOMs : &cr3bp_EOMs;
-            
-            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
-            double mu = cr3bpData->getMu();
-            params = &mu;
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:
         {
-            eomFcn = &bcr4bpr_EOMs;
-
-            // Cast sys data to the specific system type
-            adtk_bcr4bpr_sys_data thisSysData = *(static_cast<adtk_bcr4bpr_sys_data *>(sysData));
-
-            double theta0 = 0;  // TODO make initializing these more intelligent
-            double phi0 = 0;
-            double gamma = 0;
-            adtk_bcr4bpr_eomData eomData(thisSysData, theta0, phi0, gamma);
-            
-            params = &eomData;
+            cout << "Initializing BCR4BPR EOM data" << endl;
+            eomFcn = simpleIntegration ? &bcr4bpr_simple_EOMs : &bcr4bpr_EOMs;
             break;
         }
         default:
+            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
             throw;
     }
 
     // Create a system to integrate; we don't include a Jacobian (NULL)
-    gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), params};
+    gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
     
     // Create the driver
     gsl_odeiv2_driver *d = gsl_odeiv2_driver_alloc_y_new(&sys, stepType, dtGuess, absTol, relTol);
@@ -279,9 +286,6 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_evolve *e = gsl_odeiv2_evolve_alloc(ic_dim);
     gsl_odeiv2_evolve_set_driver(e, d);
 
-    // Set y equal to the initial state
-    copy(fullIC, fullIC+ic_dim, y);
-
     // Save the initial state, time, and STM
     saveIntegratedData(y, t[0], true);
 
@@ -297,7 +301,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             int status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
 
             if(status != GSL_SUCCESS){
-                printf("GSL did not succeed; Ending integration\n");
+                printf("Integration did not succeed:\n\t%s\n", gsl_strerror(status));
                 break;
             }
 
@@ -315,7 +319,10 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
 
             while(sgn*t0 < sgn*tf){
                 int status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
-                if(status != GSL_SUCCESS){ break; }
+                if(status != GSL_SUCCESS){
+                    printf("Integration did not succeed:\n\t%s\n", gsl_strerror(status));
+                    break;
+                }
             }
 
             // Add the newly integrated state and current time fo the state vector
@@ -329,7 +336,6 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_evolve_free(e);
     gsl_odeiv2_control_free(c);
     gsl_odeiv2_step_free(s);
-    delete(y);
     
     // Check lengths of vectors and set the numPoints value in traj
     traj->setLength();
@@ -383,12 +389,11 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
         case adtk_sys_data::CR3BP_SYS:
         {
             // Use the simple EOMs to compute the velocity/acceleration. 
-            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
-            double mu = cr3bpData->getMu();
-            cr3bp_simple_EOMs(0, y, dsdt, &mu);
+            cr3bp_simple_EOMs(0, y, dsdt, eomParams);
 
             // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
             adtk_cr3bp_traj *cr3bpTraj = static_cast<adtk_cr3bp_traj*>(traj);
+            double mu = *(static_cast<double *>(eomParams));
             
             if(first)
                 cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, mu);
@@ -397,8 +402,25 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:
-            // Compute acceleration for BCR4BP
+        {
+            bcr4bpr_simple_EOMs(t, y, dsdt, &eomParams);
+
+            // Cast the trajectory to a BCR4BPR guy and save the dqdT data
+            adtk_bcr4bpr_traj *bcrTraj = static_cast<adtk_bcr4bpr_traj*>(traj);
+            if(first){
+                vector<double>* vecPtr = bcrTraj->get_dqdT();
+                copy(&(vecPtr->front()), &(vecPtr->front())+6, y+42);
+            }
+            else{
+                bcrTraj->get_dqdT()->push_back(y[42]);
+                bcrTraj->get_dqdT()->push_back(y[43]);
+                bcrTraj->get_dqdT()->push_back(y[44]);
+                bcrTraj->get_dqdT()->push_back(y[45]);
+                bcrTraj->get_dqdT()->push_back(y[46]);
+                bcrTraj->get_dqdT()->push_back(y[47]);
+            }
             break;
+        }
         default:
             cout << "Unknown sim type " << sysData->getTypeStr() << endl;
     }
@@ -406,9 +428,10 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
     // Save the accelerations
     if(first){
         printf("1st Accel: %12.4f %12.4f %12.4f\n", dsdt[3], dsdt[4], dsdt[5]);
-        state->at(6) = dsdt[3];
-        state->at(7) = dsdt[4];
-        state->at(8) = dsdt[5];
+        copy(dsdt+3, dsdt+6, &(state->front())+6);
+        // state->at(6) = dsdt[3];
+        // state->at(7) = dsdt[4];
+        // state->at(8) = dsdt[5];
     }else{
         state->push_back(dsdt[3]);
         state->push_back(dsdt[4]);
@@ -416,6 +439,65 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
     }
 }//=========================================
 
+/**
+ *  Set the pointer for EOM Parameters for each type of system
+ */
+void adtk_simulation_engine::setEOMParams(){
+    switch(sysData->getType()){
+        case adtk_sys_data::CR3BP_SYS:
+        {
+            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
+            double mu = cr3bpData->getMu();
+            eomParams = &mu;
+            break;
+        }
+        case adtk_sys_data::BCR4BPR_SYS:
+        {
+            // Cast sys data to the specific system type
+            adtk_bcr4bpr_sys_data thisSysData = *(static_cast<adtk_bcr4bpr_sys_data *>(sysData));
+
+            double theta0 = 0;  // TODO make initializing these more intelligent
+            double phi0 = 0;
+            double gamma = 0;
+            adtk_bcr4bpr_eomData eomData(thisSysData, theta0, phi0, gamma);
+            
+            eomParams = &eomData;
+            break;
+        }
+        default:
+            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
+    }
+}//==============================================
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
+
+/**
+ *  Clean out the trajectory storage variable so a new simulation can be run and store its data
+ */
+void adtk_simulation_engine::cleanEngine(){
+    delete traj;   // de-allocate the memory
+    traj = 0;       // set pointer to 0 (null pointer)
+    eomParams = 0;
+
+    isClean = true;
+}
+
+/**
+ *  Completely resets the simulation engine, reverting all variables (including ones the user
+ *  has modified with set() functions) to their default values.
+ */
+void adtk_simulation_engine::reset(){
+    if(!isClean)
+        cleanEngine();
+
+    delete sysData;
+    sysData = 0;
+
+    revTime = false;
+    verbose = false;
+    absTol = 1e-12;
+    relTol = 1e-14;
+    dtGuess = absTol;
+}

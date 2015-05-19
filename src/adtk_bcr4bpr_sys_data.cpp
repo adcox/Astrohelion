@@ -19,7 +19,7 @@ using namespace std;
  *	Default constructor
  */
 adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data() : adtk_sys_data(){
-	numPrimaries = 2;
+	numPrimaries = 3;
 	type = adtk_sys_data::BCR4BPR_SYS;
 	P1 = "P1";
 	P2 = "P2";

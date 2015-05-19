@@ -56,19 +56,21 @@ class adtk_matrix{
 
 		// Operator Overloading
 		adtk_matrix& operator =(const adtk_matrix&);
+
 		friend adtk_matrix operator +(const adtk_matrix&, const adtk_matrix&);
+		adtk_matrix& operator +=(const adtk_matrix&);
+
 		friend adtk_matrix operator -(const adtk_matrix&, const adtk_matrix&);
+		adtk_matrix& operator -=(const adtk_matrix&);
+
 		friend adtk_matrix operator *(const double&, const adtk_matrix&);
 		friend adtk_matrix operator *(const adtk_matrix&, const double&);
-		friend adtk_matrix operator /(const adtk_matrix&, const double&);
-		
 		adtk_matrix operator *(const adtk_matrix&);
-
-		adtk_matrix& operator +=(const adtk_matrix&);
-		adtk_matrix& operator -=(const adtk_matrix&);
 		adtk_matrix& operator *=(const double&);
 		adtk_matrix& operator *=(const adtk_matrix&);
-		
+
+		friend adtk_matrix operator /(const adtk_matrix&, const double&);
+
 		friend bool operator ==(const adtk_matrix&, const adtk_matrix&);
 		friend bool operator !=(const adtk_matrix&, const adtk_matrix&);
 
@@ -80,8 +82,10 @@ class adtk_matrix{
 		int getLength();
 		int getRows();
 		int getCols();
-		gsl_matrix* getGSLMat();
-		double get(int, int);
+		// gsl_matrix* getGSLMat();
+		double* getDataPtr();
+		double at(int, int);
+		double at(int);
 		adtk_matrix getRow(int);
 		adtk_matrix getCol(int);
 

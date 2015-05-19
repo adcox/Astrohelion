@@ -20,6 +20,11 @@ adtk_cr3bp_traj::adtk_cr3bp_traj() : adtk_trajectory(){
 	jacobi.assign(1,0);
 }
 
+adtk_cr3bp_traj::adtk_cr3bp_traj(adtk_cr3bp_sys_data data){
+	jacobi.assign(1,0);
+	sysData = data;
+}
+
 /**
  *	Initialize all vectors to have size n; fill each vector with zeros.
  */

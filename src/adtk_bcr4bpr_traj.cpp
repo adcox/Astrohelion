@@ -15,12 +15,22 @@ adtk_bcr4bpr_traj::adtk_bcr4bpr_traj() : adtk_trajectory() {
 	theta0 = 0;
 	phi0 = 0;
 	gamma = 0;
+	dqdT.assign(1,0);
+}
+
+adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
+	theta0 = 0;
+	phi0 = 0;
+	gamma = 0;
+	dqdT.assign(1,0);
+	sysData = data;
 }
 
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(int n) : adtk_trajectory(n){
 	theta0 = 0;
 	phi0 = 0;
 	gamma = 0;
+	dqdT.assign(n,0);
 }
 
 //-----------------------------------------------------
@@ -48,6 +58,13 @@ double adtk_bcr4bpr_traj::getGamma(){ return gamma; }
  *	@return the system data object describing this system
  */
 adtk_bcr4bpr_sys_data adtk_bcr4bpr_traj::getSysData(){ return sysData; }
+
+/**
+ *	Retrieve a pointer to the dqdT array for in-place editing.
+ *	
+ *	@return a pointer to the vector of dqdT values;
+ */
+vector<double>* adtk_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
 
 /**
  *	Set <tt>theta0</tt> to <tt>t</tt>

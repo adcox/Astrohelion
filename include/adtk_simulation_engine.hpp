@@ -42,6 +42,7 @@ class adtk_simulation_engine{
 	public:
 		// Constructors
 		adtk_simulation_engine();
+		adtk_simulation_engine(adtk_sys_data*);
 
 		//Destructor
 		~adtk_simulation_engine();
@@ -65,19 +66,44 @@ class adtk_simulation_engine{
 		void runSim(double *ic, double t0, double tf);
 
 		// Utility Functions
-
+		void reset();
 	private:
-		adtk_sys_data *sysData;
-		adtk_trajectory *traj;
+		/** Pointer to a system data object; contains characteristic quantities, among other things */
+		adtk_sys_data *sysData = 0;	// set null pointers for now
 
-		bool revTime;
-		bool verbose;
-		bool simpleIntegration;
-		double absTol, relTol, dtGuess;
+		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
+		adtk_trajectory *traj = 0;
 
-		// void cr3bp_integrate(double ic[], double t[], double mu, int t_dim);
+		/** a void pointer to some data object that contains data for the EOM function */
+		void *eomParams = 0;
+
+		/** Whether or not to run the simulation in reverse time */
+		bool revTime = false;
+
+		/** Whether or not to print out lots of messages */
+		bool verbose = false;
+
+		/** Whether or not to use "simple" integration; simple means no STM or other quantites are integrated
+		 with the EOMs */
+		bool simpleIntegration = false;
+
+		/** "Clean" means there is no data in the trajectory object. Once a simulation has been
+		 run, the engine is no longer clean and will need to be cleaned before running another sim */
+		bool isClean = true;
+
+		/** Absolute tolerance for integrated data, units are same as integrated data */
+		double absTol = 1e-12;
+
+		/** Relative tolerance for integrated data, units are same as integrated data */
+		double relTol = 1e-14;
+
+		/** Initial guess for time step size, set equal to absTol */
+		double dtGuess = 1e-12;
+
 		void integrate(double ic[], double t[], int t_dim);
 		void saveIntegratedData(double *y, double t, bool);
+		void setEOMParams();
+		void cleanEngine();
 };
 
 #endif

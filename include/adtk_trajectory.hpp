@@ -68,7 +68,7 @@ class adtk_trajectory{
 		// *structors
 		adtk_trajectory();
 		adtk_trajectory(int);
-		~adtk_trajectory();
+		virtual ~adtk_trajectory();
 
 		// Operators
 		adtk_trajectory& operator= (const adtk_trajectory&);

@@ -46,6 +46,7 @@ class adtk_cr3bp_traj : public adtk_trajectory{
 		// *structors
 		adtk_cr3bp_traj();
 		adtk_cr3bp_traj(int);
+		adtk_cr3bp_traj(adtk_cr3bp_sys_data);
 		
 		// Operators
 		adtk_cr3bp_traj& operator= (const adtk_cr3bp_traj&);

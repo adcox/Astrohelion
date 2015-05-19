@@ -47,13 +47,10 @@ adtk_trajectory::adtk_trajectory(int n){
 }
 
 /**
- *	Destructor; clear all the data vectors and deallocate memory as required
+ *	Destructor; clear all the data vectors and deallocate memory as required. Function
+ *	is virtual so that calling <tt>delete</tt> on derived classes will still free memory properly
  */
-adtk_trajectory::~adtk_trajectory(){
-	state.clear();
-	times.clear();
-	allSTM.clear();
-}//==================================
+adtk_trajectory::~adtk_trajectory(){}
 
 //-----------------------------------------------------
 // 		Operators
@@ -280,7 +277,7 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
 		// and it's currently in row-major order
 		adtk_matrix P = (allSTM[n]).trans();
 		// Retrieve the data from the matrix
-		double *matData = P.getGSLMat()->data;
+		double *matData = P.getDataPtr();
 		// Store that data in our huge vector
 		copy(matData, matData+36, &(allSTMEl[0]) + n*36);
 	}

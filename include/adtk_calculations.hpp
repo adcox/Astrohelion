@@ -51,6 +51,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params);
 int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params);
 
 int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params);
+int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params);
 
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);

@@ -63,7 +63,7 @@ adtk_sys_data::system_t adtk_sys_data::getType(){ return type; }
 /**
  *	@return a string (human-readable) version of the system type
  */
-string adtk_sys_data::getTypeStr(){
+std::string adtk_sys_data::getTypeStr(){
 	switch (type){
 		case adtk_sys_data::UNDEF_SYS:
 			return "Undefined System Type";

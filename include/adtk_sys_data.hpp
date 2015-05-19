@@ -55,6 +55,7 @@ class adtk_sys_data{
 		enum system_t {UNDEF_SYS, CR3BP_SYS, BCR4BPR_SYS};
 
 		adtk_sys_data();
+		virtual ~adtk_sys_data() {}
 
 		adtk_sys_data& operator= (const adtk_sys_data&);
 

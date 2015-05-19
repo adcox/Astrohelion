@@ -46,18 +46,23 @@ class adtk_bcr4bpr_traj : public adtk_trajectory{
 		 Gamma is constant during the integration */
 		double gamma;
 
+		std::vector<double> dqdT;
+
 		/** A system data object specific to the BCR4BPR */
 		adtk_bcr4bpr_sys_data sysData;
 
 	public:
 		adtk_bcr4bpr_traj();
 		adtk_bcr4bpr_traj(int);
-
+		adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data);
+		
 		// Set and Get Functions
 		double getTheta0();
 		double getPhi0();
 		double getGamma();
 		adtk_bcr4bpr_sys_data getSysData();
+
+		std::vector<double>* get_dqdT();
 
 		void setTheta0(double t);
 		void setPhi0(double p);

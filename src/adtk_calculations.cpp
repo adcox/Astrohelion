@@ -11,6 +11,7 @@
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_matrix.hpp"
 
+#include <iostream>
 #include <math.h>
 
 
@@ -72,7 +73,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
     
     // Compute derivative of STM
     adtk_matrix phiDot = A*phi;
-    double *phiDotData = phiDot.getGSLMat()->data;
+    double *phiDotData = phiDot.getDataPtr();
 
     // Copy the elements of phiDot into the derivative array
     copy(phiDotData, phiDotData+36, sdot+6);
@@ -131,6 +132,149 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     adtk_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
+    double r_data[3] = {0};
+    copy(s, s+3, r_data);
+    adtk_matrix r(3,1,r_data);
+
+    // Put velocity states into a 3-element column vector
+    double v_data[3] = {0};
+    copy(s+3, s+6, v_data);
+    adtk_matrix v(3,1,v_data);
+
+    // Create relative position vectors between s/c and primaries
+    adtk_matrix r_p1 = r - primPos.getRow(0).trans();
+    adtk_matrix r_p2 = r - primPos.getRow(1).trans();
+    adtk_matrix r_p3 = r - primPos.getRow(2).trans();
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
+    
+    // Save constants to short variables for readability
+    double k = sysData.getK();
+    double mu = sysData.getMu();
+    double nu = sysData.getNu();
+
+    // Create C-matrix
+    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
+    adtk_matrix C(3,3,c);
+
+    // truncated position vector used in EOMs
+    double r_trunc_data[3] = {0};
+    copy(s, s+1, r_trunc_data);
+    adtk_matrix r_trunc(3,1,r_trunc_data);
+
+    // Compute acceleration using matrix math
+    adtk_matrix accel(3,1);
+    accel = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
+            nu*r_p3/pow(d3, 3);
+
+    // Compute psuedo-potential
+    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 3*pow(r_p3.at(0),2)/pow(d3,5));
+    double dxdy = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) + (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
+            nu*3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);
+    double dxdz = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) + (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
+            nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);
+    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 3*pow(r_p3.at(1),2)/pow(d3,5));
+    double dydz = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) + (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
+            nu*3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);
+    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(2),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 3*pow(r_p3.at(2),2)/pow(d3,5));
+
+    // Create A matrix for STM derivative
+    double aData[] = {  0, 0, 0, 1, 0, 0,
+                        0, 0, 0, 0, 1, 0,
+                        0, 0, 0, 0, 0, 1, 
+                        dxdx, dxdy, dxdz, c[0], c[1], c[2],
+                        dxdy, dydy, dydz, c[3], c[4], c[5],
+                        dxdz, dydz, dzdz, c[6], c[7], c[8]};
+    adtk_matrix A(6,6, aData);
+    
+    // Compute the STM derivative
+    double phiData[36];
+    copy(s+6, s+42, phiData);
+    adtk_matrix Phi(6, 6, phiData);
+    adtk_matrix PhiDot = A*Phi;
+
+    // Compute partials of state w.r.t. primary positions; dont' compute partials
+    // for P1 because its velocity is zero in the rotating frame
+    double dfdr2[18] = {0};   double dfdr3[18] = {0};
+
+    dfdr2[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
+    dfdr2[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
+    dfdr2[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
+    dfdr2[13] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);       //dydy2
+    dfdr2[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
+    dfdr2[17] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);       //dzdz2
+
+    dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
+    dfdr2[15] = dfdr2[11];
+    dfdr2[16] = dfdr2[14];
+
+    dfdr3[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
+    dfdr3[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
+    dfdr3[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
+    dfdr3[13] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);       //dydy3
+    dfdr3[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
+    dfdr3[17] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);       //dzdz3
+
+    dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
+    dfdr3[15] = dfdr3[11];
+    dfdr3[16] = dfdr3[14];
+
+    adtk_matrix DfDr2(6,3, dfdr2);
+    adtk_matrix DfDr3(6,3, dfdr3);
+
+    // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
+    double dqdT_data[6] = {0};
+    copy(s+42,s+48, dqdT_data);
+    adtk_matrix dqdT(6,1, dqdT_data);
+
+    // Get the velocity of the primaries
+    double primVelData[9] = {0};
+    bcr4bpr_getPrimaryVel(t, sysData, eomData.theta0, eomData.phi0, eomData.gamma, primVelData);
+    adtk_matrix primVel(3,3, primVelData);
+
+    // Compute derivative of dqdT
+    adtk_matrix dot_dqdT = A*dqdT + DfDr2*(primVel.getRow(1).trans()) + DfDr3*(primVel.getRow(2).trans());
+
+    // Save derivatives to output vector
+    double *accelPtr = accel.getDataPtr();
+    double *phiDotPtr = PhiDot.getDataPtr();
+    double *dqdtDotPtr = dot_dqdT.getDataPtr();
+
+    copy(s+3, s+6, sdot);
+    copy(accelPtr, accelPtr+3, sdot+3);
+    copy(phiDotPtr, phiDotPtr+36, sdot+6);
+    copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
+
+    // printf("sdot: [%.4f %.4f %.4f %.4f %.4f %.4f]\n", sdot[0], sdot[1], sdot[2], sdot[3], sdot[4], sdot[5]);
+    return GSL_SUCCESS;
+}//============== END OF BCR4BPR EOMs ======================
+
+/**
+ *   Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *
+ *   @param t time at integration step (unused)
+ *   @param s the 6-d state vector
+ *   @param sdot the 6-d state derivative vector
+ *   @param params points to additional integration parameters wrapped in an 
+ *  <tt>adtk_bcr4bpr_eomData</tt> data object.
+ */
+int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params){
+    // Dereference the eom data object
+    adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
+
+    // Pull out the system data object
+    adtk_bcr4bpr_sys_data sysData = eomData.sysData;
+
+    // Put the positions of the three primaries in a 3x3 matrix
+    double primPosData[9] = {0};
+    bcr4bpr_getPrimaryPos(t, sysData, eomData.theta0, eomData.phi0, eomData.gamma, primPosData);
+    adtk_matrix primPos(3, 3, primPosData);
+
+    // Put the position states into a 3-element column vector
     double tmp[3] = {0};
     copy(s, s+3, tmp);
     adtk_matrix r(3,1,tmp);
@@ -143,7 +287,9 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     adtk_matrix r_p1 = r - primPos.getRow(0).trans();
     adtk_matrix r_p2 = r - primPos.getRow(1).trans();
     adtk_matrix r_p3 = r - primPos.getRow(2).trans();
-
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
     
     // Save constants to short variables for readability
     double k = sysData.getK();
@@ -158,40 +304,16 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     tmp[0] = s[0]; tmp[1] = s[1]; tmp[2] = 0;
     adtk_matrix r_trunc(3,1,tmp);
 
+    // Compute acceleration using matrix math
     adtk_matrix accel(3,1);
-    accel = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(r_p1.norm(), 3) - (mu - nu)*r_p2/pow(r_p2.norm(), 3) - 
-            nu*r_p3/pow(r_p3.norm(), 3);
-
-    // TODO Put in computations for these!
-    double dxdx = 0;
-    double dxdy = 0;
-    double dxdz = 0;
-    double dydy = 0;
-    double dydz = 0;
-    double dzdz = 0;
-
-    double aData[] = {  0, 0, 0, 1, 0, 0,
-                        0, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1, 
-                        dxdx, dxdy, dxdz, c[0], c[1], c[2],
-                        dxdy, dydy, dydz, c[3], c[4], c[5],
-                        dxdz, dydz, dzdz, c[6], c[7], c[8]};
-
-    adtk_matrix A(6,6, aData);
-    
-    double phiData[36];
-    copy(s+6, s+42, phiData);
-    adtk_matrix Phi(6,6, phiData);
-
-    adtk_matrix PhiDot = A*Phi;
+    accel = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
+            nu*r_p3/pow(d3, 3);
 
     // Save derivatives to output vector
-    double *accelPtr = accel.getGSLMat()->data;
-    double *phiDotPtr = PhiDot.getGSLMat()->data;
+    double *accelPtr = accel.getDataPtr();
 
     copy(s+3, s+6, sdot);
     copy(accelPtr, accelPtr+3, sdot+3);
-    copy(phiDotPtr, phiDotPtr+36, sdot+6);
 
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================

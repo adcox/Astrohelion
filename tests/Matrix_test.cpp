@@ -25,7 +25,7 @@ bool test_constructor(adtk_matrix C){
 	// Check the elements are correct
 	for(int r=0; r<C_r; r++){
 		for(int c=0; c<C_c; c++){
-			if(gsl_matrix_get(C.getGSLMat(), r, c) != C_data[r*C_c + c])
+			if(C.at(r,c) != C_data[r*C_c + c])
 				return false;
 		}
 	}

@@ -26,7 +26,7 @@ MATIO_FLAGS = -lmatio
 ############################################################
 
 # dependencies for simEngineTest
-SIM_ENGINE_DEP = bodyData.o sysData.o matrix.o trajectory.o cr3bpSysData.o bcr4bpSysData.o calculations.o cr3bpTraj.o simEngine.o
+SIM_ENGINE_DEP = bodyData.o sysData.o matrix.o trajectory.o cr3bpSysData.o bcr4bpSysData.o calculations.o cr3bpTraj.o bcr4bpTraj.o simEngine.o
 # dependencies for sysDataTest
 SYS_DATA_DEP = sysData.o cr3bpSysData.o bodyData.o
 # dependencies for bcr4bprSysDataTest
@@ -77,31 +77,34 @@ matIOTest:
 ############################################################
 
 $(OBJ)/bcr4bpSysData.o: $(SRC)/adtk_bcr4bpr_sys_data.cpp $(INC)/adtk_bcr4bpr_sys_data.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
+
+$(OBJ)/bcr4bpTraj.o: $(SRC)/adtk_bcr4bpr_traj.cpp $(INC)/adtk_bcr4bpr_traj.hpp
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/bodyData.o: $(SRC)/adtk_body_data.cpp $(INC)/adtk_body_data.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/cr3bpSysData.o: $(SRC)/adtk_cr3bp_sys_data.cpp $(INC)/adtk_cr3bp_sys_data.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/cr3bpTraj.o: $(SRC)/adtk_cr3bp_traj.cpp $(INC)/adtk_cr3bp_traj.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/calculations.o: $(SRC)/adtk_calculations.cpp $(INC)/adtk_calculations.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@ 
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/matrix.o: $(SRC)/adtk_matrix.cpp $(INC)/adtk_matrix.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/simEngine.o: $(SRC)/adtk_simulation_engine.cpp $(INC)/adtk_simulation_engine.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/sysData.o: $(SRC)/adtk_sys_data.cpp $(INC)/adtk_sys_data.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/trajectory.o: $(SRC)/adtk_trajectory.cpp $(INC)/adtk_trajectory.hpp
-	$(COMP) -I $(INC) -c $< -o $(OBJ)/$@
+	$(COMP) -I $(INC) -c $< -o $@
 
 ## UTILITY
 

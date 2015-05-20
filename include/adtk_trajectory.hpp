@@ -46,24 +46,6 @@ class adtk_matrix;
 class adtk_trajectory{
 	static const int STATE_WIDTH = 9;
 
-	protected:
-		/** Number of points along integrated path */
-		int numPoints;
-
-		/** Holds state info: [pos, vel, accel] in 1D form, so every 9 elements
-		 * 	constitutes a new "row" 
-		 */
-		std::vector<double> state;
-
-		/** Holds time info */
-		std::vector<double> times;
-
-		/** An array containing the STM at each step of the integration */
-		std::vector<adtk_matrix> allSTM;
-
-		void saveState(mat_t*);
-		void saveTime(mat_t*);
-		void saveSTMs(mat_t*);
 	public:
 		// *structors
 		adtk_trajectory();
@@ -89,6 +71,26 @@ class adtk_trajectory{
 
 		// Utility functions
 		void saveToMat(const char*);
+
+	protected:
+		/** Number of points along integrated path */
+		int numPoints;
+
+		/** Holds state info: [pos, vel, accel] in 1D form, so every 9 elements
+		 * 	constitutes a new "row" 
+		 */
+		std::vector<double> state;
+
+		/** Holds time info */
+		std::vector<double> times;
+
+		/** An array containing the STM at each step of the integration */
+		std::vector<adtk_matrix> allSTM;
+
+		void saveState(mat_t*);
+		void saveTime(mat_t*);
+		void saveSTMs(mat_t*);
+		void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 };
 
 #endif

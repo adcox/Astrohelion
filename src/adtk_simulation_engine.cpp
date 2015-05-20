@@ -34,6 +34,7 @@ using namespace std;
  *  you MUST set the system data via <tt>setSysData()</tt>
  */
 adtk_simulation_engine::adtk_simulation_engine(){
+    printMessage("Created Simulation Engine\n");
 }//===========================================
 
 /**
@@ -42,9 +43,11 @@ adtk_simulation_engine::adtk_simulation_engine(){
  */
 adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
     sysData = data;
+    printMessage("Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
 }//===========================================
 
 adtk_simulation_engine::~adtk_simulation_engine(){
+    printMessage("Destroying simulation engine...\n");
     reset();    // Function handles deallocation and resetting of data
 }//===========================================
 
@@ -63,6 +66,11 @@ bool adtk_simulation_engine::usesRevTime(){return revTime;}
 bool adtk_simulation_engine::isVerbose(){return verbose;}
 
 /**
+ *  @return whether or not the engine uses variable step size
+ */
+bool adtk_simulation_engine::usesVarStepSize(){ return varStepSize; }
+
+/**
  *	@return the absolute tolerance for the engine, non-dimensional units
  */
 double adtk_simulation_engine::getAbsTol(){return absTol;}
@@ -71,6 +79,13 @@ double adtk_simulation_engine::getAbsTol(){return absTol;}
  *	@return the relative tolerance for the engine, non-dimensional units
  */
 double adtk_simulation_engine::getRelTol(){return relTol;}
+
+/**
+ *  @return the number of steps the integrator will be forced to take.
+ *  The integrator may take intermediate steps between those enforced
+ *  by the algorithm, but only <tt>numSteps</tt> data points will be output.
+ */
+int adtk_simulation_engine::getNumSteps(){ return numSteps; }
 
 /**
  *  Retrieve the trajectory. To avoid static casts in driver programs,
@@ -129,6 +144,12 @@ void adtk_simulation_engine::setRevTime(bool b){ revTime = b; }
 void adtk_simulation_engine::setVerbose(bool b){ verbose = b; }
 
 /**
+ *  Specify whether or not the engine should use variable step size.
+ *  @param b whether or not the engine should use variable step size
+ */
+void adtk_simulation_engine::setVarStepSize(bool b){ varStepSize = b; }
+
+/**
  *	Specify the absolute integration tolerance, non-dimensional units.
  *	The default value is 1e-12
  *	@param t the tolerance
@@ -141,6 +162,14 @@ void adtk_simulation_engine::setAbsTol(double t){ absTol = t; }
  *	@param t the tolerance
  */
 void adtk_simulation_engine::setRelTol(double t){ relTol = t; }
+
+/**
+ *  Specify the number of steps the integrator must take during the 
+ *  the integration. Only these points will be output to the 
+ *  trajectory object, although the GSL driver may take steps in between
+ *  those specified to maintain numerical accuracy.
+ */
+void adtk_simulation_engine::setNumSteps(int n){ numSteps = n; }
 
 //-----------------------------------------------------
 // 		Simulation Functions
@@ -164,7 +193,7 @@ void adtk_simulation_engine::runSim(double *ic, double tof){
  *	@param tof time-of-flight, non-dimensional time units
  */
 void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
-
+    printMessage("Running simulation...\n");
     if(!isClean){
         cleanEngine();
     }
@@ -172,7 +201,8 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
     vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = revTime ? t0 - tof : t0 + tof;
-    
+    printMessage("  time will span from %.4f to %.4f\n", t0, tf);
+
     if(varStepSize){
         t_span.reserve(2);
         t_span.push_back(t0);
@@ -186,21 +216,20 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
         }
     }
 
-    printf("Set time span from %.4f to %.4f\n", t_span[0], t_span[1]);
-    cout << "Running sim..." << endl;
 	switch(sysData->getType()){
 		case adtk_sys_data::CR3BP_SYS:
 		{
             // Initialize trajectory (will only have one set of values)
+            printMessage("  initializing CR3BP trajectory\n");
             adtk_cr3bp_sys_data *data = static_cast<adtk_cr3bp_sys_data *>(sysData);
             traj = new adtk_cr3bp_traj(*data);
 			break;
         }
 		case adtk_sys_data::BCR4BPR_SYS:
         {
+            printMessage("  initializing BCR4BPR trajectory\n");
             adtk_bcr4bpr_sys_data *data = static_cast<adtk_bcr4bpr_sys_data *>(sysData);
             traj = new adtk_bcr4bpr_traj(*data);
-            cout << "System Type (before run): " << sysData->getTypeStr() << endl;
 			break;
         }
 		default:
@@ -239,6 +268,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             ic_dim = 48;    // requires 6 extra states for numerically integrated epoch dependencies
         }
     }
+    printMessage("  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     vector<double> fullIC(ic_dim, 0);
@@ -260,6 +290,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     setEOMParams();
 
     // Choose EOM function based on system type and simplicity
+    printMessage("  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
     switch(sysData->getType()){
         case adtk_sys_data::CR3BP_SYS:
@@ -269,7 +300,6 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
         }
         case adtk_sys_data::BCR4BPR_SYS:
         {
-            cout << "Initializing BCR4BPR EOM data" << endl;
             eomFcn = simpleIntegration ? &bcr4bpr_simple_EOMs : &bcr4bpr_EOMs;
             break;
         }
@@ -288,6 +318,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_driver *d;
 
     if(varStepSize){
+        printMessage("  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
         // Allocate space for the stepping object; use the rkck algorithm (doesn't require driver)
         s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
         // Define a control that will keep the error in the state y within the specified tolerances
@@ -295,6 +326,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
+        printMessage("  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         // Allocate space for a driver; the msadams algorithm requires access to the driver
         d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, dtGuess, absTol, relTol);
         // Allocate space for the stepping object
@@ -321,7 +353,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             }
 
             if(status != GSL_SUCCESS){
-                printf("Integration did not succeed:\n\t%s\n", gsl_strerror(status));
+                printf("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
                 break;
             }
 
@@ -346,7 +378,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 }
 
                 if(status != GSL_SUCCESS){
-                    printf("Integration did not succeed:\n\t%s\n", gsl_strerror(status));
+                    printf("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
                     break;
                 }
             }
@@ -367,6 +399,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
+    printMessage("  **Integration complete**\n  Total: %d data points\n", steps);
     traj->setLength();
 }//================================END of cr3bp_integrate
 
@@ -394,7 +427,7 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
             state->push_back(y[i]);
     }
 
-    printf("t=%5.2f :: %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f\n", t, y[0], y[1], y[2], y[3], y[4], y[5]);
+    // printf("t=%5.2f :: %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f\n", t, y[0], y[1], y[2], y[3], y[4], y[5]);
 
     // Save time
     if(first)
@@ -454,11 +487,8 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
 
     // Save the accelerations
     if(first){
-        printf("1st Accel: %14.8f %14.8f %14.8f\n", dsdt[3], dsdt[4], dsdt[5]);
+        // printf("1st Accel: %14.8f %14.8f %14.8f\n", dsdt[3], dsdt[4], dsdt[5]);
         copy(dsdt+3, dsdt+6, &(state->front())+6);
-        // state->at(6) = dsdt[3];
-        // state->at(7) = dsdt[4];
-        // state->at(8) = dsdt[5];
     }else{
         state->push_back(dsdt[3]);
         state->push_back(dsdt[4]);
@@ -505,6 +535,7 @@ void adtk_simulation_engine::setEOMParams(){
  *  Clean out the trajectory storage variable so a new simulation can be run and store its data
  */
 void adtk_simulation_engine::cleanEngine(){
+    printMessage("Cleaning the engine...\n");
     delete traj;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
 
@@ -526,6 +557,18 @@ void adtk_simulation_engine::cleanEngine(){
 }//====================================================
 
 /**
+ *  A wrapper function to print a message
+ */
+void adtk_simulation_engine::printMessage(const char * format, ...){
+    if(verbose){
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+    }
+}
+
+/**
  *  Completely resets the simulation engine, reverting all variables (including ones the user
  *  has modified with set() functions) to their default values.
  */
@@ -535,7 +578,9 @@ void adtk_simulation_engine::reset(){
 
     revTime = false;
     verbose = false;
+    varStepSize = true;
     absTol = 1e-12;
     relTol = 1e-14;
-    dtGuess = absTol;
+    dtGuess = 1e-6;
+    numSteps = 1000;
 }

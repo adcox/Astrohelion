@@ -50,16 +50,20 @@ class adtk_simulation_engine{
 		// Set and get functions
 		bool usesRevTime();
 		bool isVerbose();
+		bool usesVarStepSize();
 		double getAbsTol();
 		double getRelTol();
+		int getNumSteps();
 		adtk_cr3bp_traj getCR3BPTraj();
 		adtk_bcr4bpr_traj getBCR4BPRTraj();
 
 		void setSysData(adtk_sys_data *d);
 		void setRevTime(bool b);
 		void setVerbose(bool b);
+		void setVarStepSize(bool b);
 		void setAbsTol(double t);
 		void setRelTol(double t);
+		void setNumSteps(int n);
 
 		// Simulation Methods
 		void runSim(double *ic, double tf);
@@ -84,7 +88,7 @@ class adtk_simulation_engine{
 		bool verbose = false;
 
 		/** Whether or not to use variable step size when integrating */
-		bool varStepSize = false;
+		bool varStepSize = true;
 
 		/** Whether or not to use "simple" integration; simple means no STM or other quantites are integrated
 		 with the EOMs */
@@ -110,6 +114,7 @@ class adtk_simulation_engine{
 		void saveIntegratedData(double *y, double t, bool);
 		void setEOMParams();
 		void cleanEngine();
+		void printMessage(const char*,...);
 };
 
 #endif

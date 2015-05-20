@@ -33,15 +33,6 @@
 #include "adtk_trajectory.hpp"
 
 class adtk_cr3bp_traj : public adtk_trajectory{
-	private:
-		/** Vector to hold jacobi constants along the path */
-		std::vector<double> jacobi;
-
-		/** A system data object specific to the CR3BP */
-		adtk_cr3bp_sys_data sysData;
-		
-		void saveJacobi(mat_t*);
-
 	public:
 		// *structors
 		adtk_cr3bp_traj();
@@ -60,6 +51,15 @@ class adtk_cr3bp_traj : public adtk_trajectory{
 
 		// Utility functions
 		void saveToMat(const char*);
+	private:
+		/** Vector to hold jacobi constants along the path */
+		std::vector<double> jacobi;
+
+		/** A system data object specific to the CR3BP */
+		adtk_cr3bp_sys_data sysData;
+		
+		void saveJacobi(mat_t*);
+		void saveSysData(mat_t*);
 };
 
 #endif

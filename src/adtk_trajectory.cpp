@@ -231,22 +231,12 @@ void adtk_trajectory::saveState(mat_t *matFile){
 	 */
 	size_t dims[2] = {static_cast<size_t>(numPoints), 6};
 	matvar_t *matvar = Mat_VarCreate("State", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
-	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'State'\n");
-	}else{
-		Mat_VarWrite(matFile, matvar, MAT_COMPRESSION_NONE);
-		Mat_VarFree(matvar);
-	}
+	saveVar(matFile, matvar, "State", MAT_COMPRESSION_NONE);
 
 	// Repeat the procedure with the accelerations
 	dims[1] = 3;
 	matvar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel[0]), MAT_F_DONT_COPY_DATA);
-	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'Accel'\n");
-	}else{
-		Mat_VarWrite(matFile, matvar, MAT_COMPRESSION_NONE);
-		Mat_VarFree(matvar);
-	}
+	saveVar(matFile, matvar, "Accel", MAT_COMPRESSION_NONE);
 }//==================================================
 
 /**
@@ -256,12 +246,7 @@ void adtk_trajectory::saveState(mat_t *matFile){
 void adtk_trajectory::saveTime(mat_t *matFile){
 	size_t dims[2] = {static_cast<size_t>(numPoints), 1};
 	matvar_t *matvar = Mat_VarCreate("Time", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(times[0]), MAT_F_DONT_COPY_DATA);
-	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'Time'\n");
-	}else{
-		Mat_VarWrite(matFile, matvar, MAT_COMPRESSION_NONE);
-		Mat_VarFree(matvar);
-	}
+	saveVar(matFile, matvar, "Time", MAT_COMPRESSION_NONE);
 }//=================================================
 
 /**
@@ -284,10 +269,28 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
 
 	size_t dims[3] = {6, 6, static_cast<size_t>(numPoints)};
 	matvar_t *matvar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, matvar, "STM", MAT_COMPRESSION_NONE);
+}//=========================================
+
+/**
+ *	Save a variable to a .mat file, performing error checks along the way
+ *
+ *	@param matFile a pointer to the matlab output file
+ *	@param matvar a pointer to the matlab variable object
+ *	@param varName a literal string that describes the variable; only used in error message output
+ *	@param comp an enum that describes the compression strategy. Options are:
+ *		MAT_COMPRESSION_NONE - no compression
+ *		MAT_COMPRESSION_ZLIB - zlib compression
+ */
+void adtk_trajectory::saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compression comp){
 	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'STM'\n");
+		fprintf(stderr, "Error creating variable for '%s'\n", varName);
 	}else{
-		Mat_VarWrite(matFile, matvar, MAT_COMPRESSION_NONE);
+		Mat_VarWrite(matFile, matvar, comp);
 		Mat_VarFree(matvar);
 	}
-}//=========================================
+}//==============================
+
+
+
+

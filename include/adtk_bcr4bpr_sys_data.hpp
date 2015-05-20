@@ -32,6 +32,17 @@
 #include "adtk_sys_data.hpp"
 
 class adtk_bcr4bpr_sys_data : public adtk_sys_data{
+	public:
+		adtk_bcr4bpr_sys_data();
+		adtk_bcr4bpr_sys_data(std::string, std::string, std::string);
+
+		adtk_bcr4bpr_sys_data& operator=(const adtk_bcr4bpr_sys_data&);
+		
+		double getMu();
+		double getNu();
+		double getK();
+		double getCharLRatio();
+		std::string getPrimary(int n);	//We override this function, so re-declare it
 	private:
 		/** Mass ratio between P2 + P3 and total*/
 		double mu;
@@ -53,17 +64,6 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 
 		/** Name of P3 */
 		std::string P3;
-	public:
-		adtk_bcr4bpr_sys_data();
-		adtk_bcr4bpr_sys_data(std::string, std::string, std::string);
-
-		adtk_bcr4bpr_sys_data& operator=(const adtk_bcr4bpr_sys_data&);
-		
-		double getMu();
-		double getNu();
-		double getK();
-		double getCharLRatio();
-		std::string getPrimary(int n);	//We override this function, so re-declare it
 };
 
 #endif

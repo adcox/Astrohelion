@@ -11,6 +11,7 @@
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_bcr4bpr_traj.hpp"
 #include "adtk_calculations.hpp"
+#include "adtk_constants.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
 #include "adtk_cr3bp_traj.hpp"
 #include "adtk_matrix.hpp"
@@ -44,8 +45,7 @@ adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
 }//===========================================
 
 adtk_simulation_engine::~adtk_simulation_engine(){
-    delete traj;
-    delete sysData;
+    reset();    // Function handles deallocation and resetting of data
 }//===========================================
 
 //-----------------------------------------------------
@@ -169,9 +169,22 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
         cleanEngine();
     }
 
-	// Create time span using revTime to adjust limits
-	double t_span[] = {t0, 0};
-	t_span[1] = revTime ? t0 - tof : t0 + tof;
+    vector<double> t_span;
+    // Compute the final time based on whether or not we're using reverse time integration
+    double tf = revTime ? t0 - tof : t0 + tof;
+    
+    if(varStepSize){
+        t_span.reserve(2);
+        t_span.push_back(t0);
+        t_span.push_back(tf);
+    }else{
+        t_span.reserve(numSteps);
+        double dt = (tf - t0)/(numSteps - 1);
+
+        for(int n = 0; n < numSteps; n++){
+            t_span.push_back(t0 + dt*n);
+        }
+    }
 
     printf("Set time span from %.4f to %.4f\n", t_span[0], t_span[1]);
     cout << "Running sim..." << endl;
@@ -196,7 +209,7 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
 	}
 
     // Run the simulation
-    integrate(ic, t_span, 2);
+    integrate(ic, &(t_span.front()), varStepSize ? 2 : numSteps);
 
     isClean = false;
 }//============================================
@@ -243,9 +256,6 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     int steps = 0;                      // count number of integration steps
     double *y = &(fullIC.front());      // double "array" that is passed to the integrator
 
-    // Define the step type (or, which integrator are we using?)
-    const gsl_odeiv2_step_type *stepType = gsl_odeiv2_step_msadams;
-
     // set the parameters that will be given to the EOM function
     setEOMParams();
 
@@ -271,26 +281,32 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     // Create a system to integrate; we don't include a Jacobian (NULL)
     gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
     
-    // Create the driver
-    gsl_odeiv2_driver *d = gsl_odeiv2_driver_alloc_y_new(&sys, stepType, dtGuess, absTol, relTol);
+    // Define ODE objects, define them conditionaly based on varStepSize
+    gsl_odeiv2_step *s;
+    gsl_odeiv2_control *c;
+    gsl_odeiv2_evolve *e;
+    gsl_odeiv2_driver *d;
 
-    // Pointer to time-stepping function
-    gsl_odeiv2_step *s = gsl_odeiv2_step_alloc(stepType, ic_dim);
-    gsl_odeiv2_step_set_driver(s, d);
-
-    // Define a control that will keep the error in the state y within the specified tolerances
-    gsl_odeiv2_control *c = gsl_odeiv2_control_y_new (absTol, relTol);
-    gsl_odeiv2_control_set_driver(c, d);
-
-    // Allocate space for the integrated solution to evolve in
-    gsl_odeiv2_evolve *e = gsl_odeiv2_evolve_alloc(ic_dim);
-    gsl_odeiv2_evolve_set_driver(e, d);
+    if(varStepSize){
+        // Allocate space for the stepping object; use the rkck algorithm (doesn't require driver)
+        s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
+        // Define a control that will keep the error in the state y within the specified tolerances
+        c = gsl_odeiv2_control_y_new (absTol, relTol);
+        // Allocate space for the integrated solution to evolve in
+        e = gsl_odeiv2_evolve_alloc(ic_dim);
+    }else{
+        // Allocate space for a driver; the msadams algorithm requires access to the driver
+        d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, dtGuess, absTol, relTol);
+        // Allocate space for the stepping object
+        s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
+        gsl_odeiv2_step_set_driver(s, d);
+    }
 
     // Save the initial state, time, and STM
     saveIntegratedData(y, t[0], true);
 
     steps++;    // We've put in the IC, next step will be a new state
-
+    int status; // integrator status
     if(t_dim == 2){
         double t0 = t[0], tf = t[1];            // start and finish times for integration
         double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
@@ -298,7 +314,11 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
 
         while (sgn*t0 < sgn*tf){
             // apply integrator for one step; new state and time are stored in y and t0
-            int status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
+            if(varStepSize){
+                status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
+            }else{
+                status = gsl_odeiv2_driver_apply(d, &t0, tf, y);
+            }
 
             if(status != GSL_SUCCESS){
                 printf("Integration did not succeed:\n\t%s\n", gsl_strerror(status));
@@ -318,7 +338,13 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             int sgn = tf > t0 ? 1 : -1;
 
             while(sgn*t0 < sgn*tf){
-                int status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
+
+                if(varStepSize){
+                    status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
+                }else{
+                    status = gsl_odeiv2_driver_apply(d, &t0, tf, y);
+                }
+
                 if(status != GSL_SUCCESS){
                     printf("Integration did not succeed:\n\t%s\n", gsl_strerror(status));
                     break;
@@ -331,10 +357,13 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
         }
     }
 
-    // Clean Up
-    gsl_odeiv2_driver_free(d);
-    gsl_odeiv2_evolve_free(e);
-    gsl_odeiv2_control_free(c);
+    // Clean Up - some have been allocated, some have not
+    if(varStepSize){
+        gsl_odeiv2_evolve_free(e);
+        gsl_odeiv2_control_free(c);
+    }else{
+        gsl_odeiv2_driver_free(d);
+    }
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
@@ -382,8 +411,6 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
         allSTM->push_back(adtk_matrix(6,6,stmElm));
 
     // Compute acceleration
-    double s[6] = {0};
-    copy(y, y+6, s);
     double dsdt[6] = {0};
     switch(sysData->getType()){
         case adtk_sys_data::CR3BP_SYS:
@@ -393,17 +420,17 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
 
             // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
             adtk_cr3bp_traj *cr3bpTraj = static_cast<adtk_cr3bp_traj*>(traj);
-            double mu = *(static_cast<double *>(eomParams));
+            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
             
             if(first)
-                cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, mu);
+                cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, cr3bpData->getMu());
             else
-                cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, mu));
+                cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, cr3bpData->getMu()));
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:
         {
-            bcr4bpr_simple_EOMs(t, y, dsdt, &eomParams);
+            bcr4bpr_simple_EOMs(t, y, dsdt, eomParams);
 
             // Cast the trajectory to a BCR4BPR guy and save the dqdT data
             adtk_bcr4bpr_traj *bcrTraj = static_cast<adtk_bcr4bpr_traj*>(traj);
@@ -427,7 +454,7 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
 
     // Save the accelerations
     if(first){
-        printf("1st Accel: %12.4f %12.4f %12.4f\n", dsdt[3], dsdt[4], dsdt[5]);
+        printf("1st Accel: %14.8f %14.8f %14.8f\n", dsdt[3], dsdt[4], dsdt[5]);
         copy(dsdt+3, dsdt+6, &(state->front())+6);
         // state->at(6) = dsdt[3];
         // state->at(7) = dsdt[4];
@@ -447,8 +474,8 @@ void adtk_simulation_engine::setEOMParams(){
         case adtk_sys_data::CR3BP_SYS:
         {
             adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
-            double mu = cr3bpData->getMu();
-            eomParams = &mu;
+            double *mu = new double(cr3bpData->getMu());
+            eomParams = mu;
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:
@@ -458,10 +485,11 @@ void adtk_simulation_engine::setEOMParams(){
 
             double theta0 = 0;  // TODO make initializing these more intelligent
             double phi0 = 0;
-            double gamma = 0;
-            adtk_bcr4bpr_eomData eomData(thisSysData, theta0, phi0, gamma);
+            double gamma = 5.14*PI/180;
+            // Create a NEW object so that it isn't deleted once we exit this scope
+            adtk_bcr4bpr_eomData *eomData = new adtk_bcr4bpr_eomData(thisSysData, theta0, phi0, gamma);
             
-            eomParams = &eomData;
+            eomParams = eomData;
             break;
         }
         default:
@@ -479,10 +507,23 @@ void adtk_simulation_engine::setEOMParams(){
 void adtk_simulation_engine::cleanEngine(){
     delete traj;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
+
+    // Free eomParams; MUST cast to correct type before freeing so that the appropriate
+    // destructor is called
+    switch(sysData->getType()){
+        case adtk_sys_data::CR3BP_SYS:
+            delete (double *)eomParams;
+            break;
+        case adtk_sys_data::BCR4BPR_SYS:
+            delete (adtk_bcr4bpr_eomData *)eomParams;
+            break;
+        default:
+            cout << "Unrecongized system type; cannot free eomParams!!" << endl;
+    }
     eomParams = 0;
 
     isClean = true;
-}
+}//====================================================
 
 /**
  *  Completely resets the simulation engine, reverting all variables (including ones the user
@@ -491,9 +532,6 @@ void adtk_simulation_engine::cleanEngine(){
 void adtk_simulation_engine::reset(){
     if(!isClean)
         cleanEngine();
-
-    delete sysData;
-    sysData = 0;
 
     revTime = false;
     verbose = false;

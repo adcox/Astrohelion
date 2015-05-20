@@ -15,7 +15,8 @@
 #include <gsl/gsl_cblas.h>
 #include <iostream>
 #include <math.h>
-
+#include <stdexcept>
+ 
 using namespace std;
 
 /**

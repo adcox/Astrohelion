@@ -121,14 +121,15 @@ int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
  */
 int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
-    adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
+    adtk_bcr4bpr_eomData *eomData = static_cast<adtk_bcr4bpr_eomData *>(params);
+    // adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
 
     // Pull out the system data object
-    adtk_bcr4bpr_sys_data sysData = eomData.sysData;
+    adtk_bcr4bpr_sys_data sysData = eomData->sysData;
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, sysData, eomData.theta0, eomData.phi0, eomData.gamma, primPosData);
+    bcr4bpr_getPrimaryPos(t, sysData, eomData->theta0, eomData->phi0, eomData->gamma, primPosData);
     adtk_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
@@ -160,7 +161,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // truncated position vector used in EOMs
     double r_trunc_data[3] = {0};
-    copy(s, s+1, r_trunc_data);
+    copy(s, s+2, r_trunc_data);
     adtk_matrix r_trunc(3,1,r_trunc_data);
 
     // Compute acceleration using matrix math
@@ -233,7 +234,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Get the velocity of the primaries
     double primVelData[9] = {0};
-    bcr4bpr_getPrimaryVel(t, sysData, eomData.theta0, eomData.phi0, eomData.gamma, primVelData);
+    bcr4bpr_getPrimaryVel(t, sysData, eomData->theta0, eomData->phi0, eomData->gamma, primVelData);
     adtk_matrix primVel(3,3, primVelData);
 
     // Compute derivative of dqdT
@@ -264,24 +265,26 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
  */
 int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
-    adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
+    adtk_bcr4bpr_eomData *eomData = static_cast<adtk_bcr4bpr_eomData *>(params);
+    // adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
 
     // Pull out the system data object
-    adtk_bcr4bpr_sys_data sysData = eomData.sysData;
+    adtk_bcr4bpr_sys_data sysData = eomData->sysData;
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, sysData, eomData.theta0, eomData.phi0, eomData.gamma, primPosData);
+    bcr4bpr_getPrimaryPos(t, sysData, eomData->theta0, eomData->phi0, eomData->gamma, primPosData);
     adtk_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
-    double tmp[3] = {0};
-    copy(s, s+3, tmp);
-    adtk_matrix r(3,1,tmp);
+    double r_data[3] = {0};
+    copy(s, s+3, r_data);
+    adtk_matrix r(3,1,r_data);
 
     // Put velocity states into a 3-element column vector
-    copy(s+3, s+6, tmp);
-    adtk_matrix v(3,1,tmp);
+    double v_data[3] = {0};
+    copy(s+3, s+6, v_data);
+    adtk_matrix v(3,1,v_data);
 
     // Create relative position vectors between s/c and primaries
     adtk_matrix r_p1 = r - primPos.getRow(0).trans();
@@ -301,8 +304,9 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     adtk_matrix C(3,3,c);
 
     // truncated position vector used in EOMs
-    tmp[0] = s[0]; tmp[1] = s[1]; tmp[2] = 0;
-    adtk_matrix r_trunc(3,1,tmp);
+    double r_trunc_data[3] = {0};
+    copy(s, s+2, r_trunc_data);
+    adtk_matrix r_trunc(3,1,r_trunc_data);
 
     // Compute acceleration using matrix math
     adtk_matrix accel(3,1);

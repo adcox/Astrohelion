@@ -75,13 +75,16 @@ class adtk_simulation_engine{
 		adtk_trajectory *traj = 0;
 
 		/** a void pointer to some data object that contains data for the EOM function */
-		void *eomParams = 0;
+		void *eomParams;
 
 		/** Whether or not to run the simulation in reverse time */
 		bool revTime = false;
 
 		/** Whether or not to print out lots of messages */
 		bool verbose = false;
+
+		/** Whether or not to use variable step size when integrating */
+		bool varStepSize = false;
 
 		/** Whether or not to use "simple" integration; simple means no STM or other quantites are integrated
 		 with the EOMs */
@@ -97,8 +100,11 @@ class adtk_simulation_engine{
 		/** Relative tolerance for integrated data, units are same as integrated data */
 		double relTol = 1e-14;
 
-		/** Initial guess for time step size, set equal to absTol */
-		double dtGuess = 1e-12;
+		/** Initial guess for time step size */
+		double dtGuess = 1e-6;
+
+		/** Number of steps to take (only applies when varStepSize = false) */
+		double numSteps = 1000;
 
 		void integrate(double ic[], double t[], int t_dim);
 		void saveIntegratedData(double *y, double t, bool);

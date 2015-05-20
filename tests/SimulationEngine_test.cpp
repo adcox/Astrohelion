@@ -52,7 +52,8 @@ int main(void){
 
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
-	adtk_bcr4bpr_traj bcTraj = simEngine.getBCR4BPRTraj();
+	adtk_bcr4bpr_traj bcTraj = bcEngine.getBCR4BPRTraj();
+	cout << "Trajectory contains " << bcTraj.getLength() << " points" << endl;
 	bcTraj.saveToMat("bcHaloManifoldProp.mat");
 
 	return 0;

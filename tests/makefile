@@ -16,10 +16,15 @@ OBJ = ../obj
 BIN = ../bin
 
 # COMP = clang++ -W -Wall -Wextra -pedantic -std=c++0x
-COMP = clang++ -W -Wall -Wextra -pedantic -std=c++11
+COMP = clang++ -W -Wall -Wextra -pedantic -std=c++11 -g
 GSL_FLAGS = -lgsl -lgslcblas
 MATIO_FLAGS = -lmatio
 
+# Options that are platform dependent
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S), Linux)
+	MATIO_FLAGS += -L /usr/local/lib
+endif
 ############################################################
 ## Macros to make dependency lists shorter (don't have to put)
 ## OBJ in front of all the files, use a macro to do the substitution

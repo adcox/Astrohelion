@@ -13,6 +13,9 @@
 	</li>
 	<li>
 		Mat I/O Library: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
+		<ul>
+			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>
+		</ul>
 	</li>
 </ul>
 

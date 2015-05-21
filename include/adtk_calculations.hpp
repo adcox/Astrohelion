@@ -32,20 +32,6 @@
 
 #include "adtk_bcr4bpr_sys_data.hpp"
 
-/**
- *  Simple data wrapper to pass variables in to the BCR4BP EOMs
- */
-class adtk_bcr4bpr_eomData{
-    public:
-        adtk_bcr4bpr_sys_data sysData;
-        double theta0;
-        double phi0;
-        double gamma;
-
-        adtk_bcr4bpr_eomData(adtk_bcr4bpr_sys_data s, double t, double p, 
-                double g) : sysData(s), theta0(t), phi0(p), gamma(g){}
-};
-
 // Equations of motion
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params);
 int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params);

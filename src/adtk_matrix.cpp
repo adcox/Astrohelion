@@ -151,7 +151,9 @@ adtk_matrix adtk_matrix::getRow(int i){
 	// Retrieve the row data
 	gsl_vector *v = gsl_vector_alloc(static_cast<size_t>(cols));
 	gsl_matrix_get_row(v, a, static_cast<size_t>(i));
-	return adtk_matrix(v, true); 	// Haven't freed the vector memory
+	adtk_matrix temp(v, true);
+	gsl_vector_free(v);
+	return temp;
 }
 
 /**
@@ -167,7 +169,9 @@ int adtk_matrix::getCols() const {return cols;}
 adtk_matrix adtk_matrix::getCol(int j){
 	gsl_vector *v = gsl_vector_alloc(static_cast<size_t>(rows));
 	gsl_matrix_get_col(v, a, static_cast<size_t>(j));
-	return adtk_matrix(v, false);	// Haven't freed the vector memory
+	adtk_matrix temp(v, false);
+	gsl_vector_free(v);
+	return temp;
 }
 
 /**
@@ -414,7 +418,9 @@ bool operator !=(const adtk_matrix &lhs, const adtk_matrix &rhs){
 adtk_matrix adtk_matrix::trans() const{
 	gsl_matrix *b = gsl_matrix_alloc(cols, rows);
 	gsl_matrix_transpose_memcpy(b, a);
-	return adtk_matrix(cols, rows, b->data);
+	adtk_matrix temp(cols, rows, b->data);
+	gsl_matrix_free(b);
+	return temp;
 }//==============================================
 
 /** 

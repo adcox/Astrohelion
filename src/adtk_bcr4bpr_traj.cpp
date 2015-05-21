@@ -13,16 +13,16 @@ using namespace std;
 //-----------------------------------------------------
 
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj() : adtk_trajectory() {
-	dqdT.assign(1,0);
+	dqdT.assign(6,0);
 }
 
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
-	dqdT.assign(1,0);
+	dqdT.assign(6,0);
 	sysData = data;
 }
 
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(int n) : adtk_trajectory(n){
-	dqdT.assign(n,0);
+	dqdT.assign(n*6,0);
 }
 
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(const adtk_bcr4bpr_traj &t) : adtk_trajectory(t){

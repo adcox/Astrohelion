@@ -6,6 +6,8 @@
 
 #include "adtk_cr3bp_traj.hpp"
 
+#include <cstring>
+ 
 using namespace std;
 
 //-----------------------------------------------------

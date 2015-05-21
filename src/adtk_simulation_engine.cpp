@@ -507,7 +507,7 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
             adtk_bcr4bpr_traj *bcrTraj = static_cast<adtk_bcr4bpr_traj*>(traj);
             if(first){
                 vector<double>* vecPtr = bcrTraj->get_dqdT();
-                copy(&(vecPtr->front()), &(vecPtr->front())+6, y+42);
+                copy(vecPtr->begin(), vecPtr->begin()+6, y+42);
             }
             else{
                 bcrTraj->get_dqdT()->push_back(y[42]);

@@ -27,8 +27,8 @@
  *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_NOTESET__
-#define __H_NOTESET__
+#ifndef __H_NODESET__
+#define __H_NODESET__
 
 #include "adtk_constraint.hpp"
 
@@ -36,27 +36,23 @@
 
 class adtk_nodeset{
 	public:
-		adtk_nodeset();
+		adtk_nodeset(const int);
 		adtk_nodeset(const adtk_nodeset&);
 
 		adtk_nodeset& operator =(const adtk_nodeset&);
 
-		std::vector<double> getNode(int);
-		double getTOF(int);
-		double getNumNodes();
-		int getNodeSize();
+		std::vector<double> getNode(int) const;
+		double getTOF(int) const;
+		double getNumNodes() const;
+		int getNodeSize() const;
 
 		void appendNode(std::vector<double>);
 		void appendTOF(double);
 
 	protected:
-		int nodeSize = 6;
+		const int nodeSize;
 		std::vector<double> nodes;
 		std::vector<double> tofs;
-
-		adtk_constraint velCont;
-		std::vector<adtk_constraint> constraints;
-
 };
 
 #endif

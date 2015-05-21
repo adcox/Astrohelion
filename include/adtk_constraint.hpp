@@ -29,6 +29,7 @@
 #ifndef __H_CONSTRAINT__
 #define __H_CONSTRAINT__
  
+#include <string>
 #include <vector>
 
 class adtk_constraint{
@@ -70,11 +71,11 @@ class adtk_constraint{
 		adtk_constraint(int);
 		adtk_constraint(int, constraint_t);
 		adtk_constraint(int, constraint_t, int, std::vector<double>);
-
+		adtk_constraint(int, constraint_t, int, double*);
 		adtk_constraint(const adtk_constraint&);
 
 		adtk_constraint& operator =(const adtk_constraint&);
-		
+
 		constraint_t getType() const;
 		int getNode() const;
 		std::vector<double> getData() const;
@@ -82,6 +83,9 @@ class adtk_constraint{
 		void setType(constraint_t);
 		void setNode(int);
 		void setData(std::vector<double>);
+
+		void print();
+		const char* getTypeStr(constraint_t);
 	private:
 		const int nodeSize;
 

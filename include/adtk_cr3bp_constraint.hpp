@@ -28,11 +28,14 @@
 #ifndef __H_CR3BP_CONSTRAINT__
 #define __H_CR3BP_CONSTRAINT__
 
+#include "adtk_constraint.hpp"
+
 class adtk_cr3bp_constraint : public adtk_constraint{
 	public:
 		adtk_cr3bp_constraint() : adtk_constraint(6){}
 		adtk_cr3bp_constraint(constraint_t t) : adtk_constraint(6, t){}
 		adtk_cr3bp_constraint(constraint_t t, int i, std::vector<double> d) : adtk_constraint(6, t, i, d){}
+		adtk_cr3bp_constraint(constraint_t t, int i, double d[6]) : adtk_constraint(6, t, i, d){}
 };
 
 #endif

@@ -38,7 +38,8 @@ SYS_DATA_DEP = sysData.o cr3bpSysData.o bodyData.o
 BCR_SYS_DATA_DEP = sysData.o bcr4bpSysData.o bodyData.o
 # dependencies for trajTest
 TRAJ_TEST_DEP = bodyData.o matrix.o sysData.o cr3bpSysData.o cr3bpTraj.o trajectory.o
-
+# dependencies for nodesetTest
+NODESET_TEST_DEP = nodeset.o cr3bpNodeset.o bcr4bpNodeset.o constraint.o
 # Where MATLAB is located on this system
 MAT_ROOT = /Applications/MATLAB_R2014a.app
 
@@ -62,7 +63,7 @@ cr3bpTest: $(OBJ)/bodyData.o $(OBJ)/calculations.o $(OBJ)/matrix.o
 matrixTest: $(OBJ)/matrix.o
 	$(COMP) -I $(INC) $^ $(GSL_FLAGS) Matrix_test.cpp -o $(BIN)/$@
 
-nodesetTest: $(OBJ)/nodeset.o
+nodesetTest: $(patsubst %.o,$(OBJ)/%.o, $(NODESET_TEST_DEP))
 	$(COMP) -I $(INC) $^ Nodeset_test.cpp -o $(BIN)/$@
 
 precisionTest:
@@ -84,6 +85,9 @@ matIOTest:
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
+$(OBJ)/bcr4bpNodeset.o: $(SRC)/adtk_bcr4bpr_nodeset.cpp $(INC)/adtk_bcr4bpr_nodeset.hpp
+	$(COMP) -I $(INC) -c $< -o $@
+
 $(OBJ)/bcr4bpSysData.o: $(SRC)/adtk_bcr4bpr_sys_data.cpp $(INC)/adtk_bcr4bpr_sys_data.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
@@ -94,6 +98,12 @@ $(OBJ)/bodyData.o: $(SRC)/adtk_body_data.cpp $(INC)/adtk_body_data.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/calculations.o: $(SRC)/adtk_calculations.cpp $(INC)/adtk_calculations.hpp
+	$(COMP) -I $(INC) -c $< -o $@
+
+$(OBJ)/constraint.o: $(SRC)/adtk_constraint.cpp $(INC)/adtk_constraint.hpp
+	$(COMP) -I $(INC) -c $< -o $@
+
+$(OBJ)/cr3bpNodeset.o: $(SRC)/adtk_cr3bp_nodeset.cpp $(INC)/adtk_cr3bp_nodeset.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/cr3bpSysData.o: $(SRC)/adtk_cr3bp_sys_data.cpp $(INC)/adtk_cr3bp_sys_data.hpp

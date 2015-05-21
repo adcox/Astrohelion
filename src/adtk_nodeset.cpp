@@ -18,6 +18,9 @@ adtk_nodeset::adtk_nodeset(const int n) : nodeSize(n){
 	tofs.reserve(1);
 }//========================================================
 
+/**
+ *	Copy constructor
+ */
 adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 	if(nodeSize == n.nodeSize){
 		nodes = n.nodes;

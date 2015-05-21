@@ -38,13 +38,10 @@
 class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 	public:
 		adtk_bcr4bpr_nodeset() : adtk_nodeset(7){}
-		adtk_bcr4bpr_nodeset(const adtk_bcr4bpr_nodeset&);
-
-		adtk_bcr4bpr_nodeset& operator =(const adtk_bcr4bpr_nodeset&);
 
 		adtk_bcr4bpr_constraint getConstraint(int);
 		void addConstraint(adtk_bcr4bpr_constraint);
-		
+
 	private:
 		std::vector<adtk_bcr4bpr_constraint> constraints;
 };

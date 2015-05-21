@@ -36,13 +36,10 @@
 class adtk_cr3bp_nodeset : public adtk_nodeset{
 	public:
 		adtk_cr3bp_nodeset() : adtk_nodeset(6){}
-		adtk_cr3bp_nodeset(const adtk_cr3bp_nodeset&);
-
-		adtk_cr3bp_nodeset& operator =(const adtk_cr3bp_nodeset&);
 
 		adtk_cr3bp_constraint getConstraint(int);
 		void addConstraint(adtk_cr3bp_constraint);
-		
+
 	private:
 		std::vector<adtk_cr3bp_constraint> constraints;
 };

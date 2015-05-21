@@ -28,11 +28,14 @@
 #ifndef __H_BCR4BPR_CONSTRAINT__
 #define __H_BCR4BPR_CONSTRAINT__
 
+#include "adtk_constraint.hpp"
+
 class adtk_bcr4bpr_constraint : public adtk_constraint{
 	public:
-		adtk_bcr4bpr_constraint() : adtk_constraint(6){}
-		adtk_bcr4bpr_constraint(constraint_t t) : adtk_constraint(6, t){}
-		adtk_bcr4bpr_constraint(constraint_t t, int i, std::vector<double> d) : adtk_constraint(6, t, i, d){}
+		adtk_bcr4bpr_constraint() : adtk_constraint(7){}
+		adtk_bcr4bpr_constraint(constraint_t t) : adtk_constraint(7, t){}
+		adtk_bcr4bpr_constraint(constraint_t t, int i, std::vector<double> d) : adtk_constraint(7, t, i, d){}
+		adtk_bcr4bpr_constraint(constraint_t t, int i, double d[7]) : adtk_constraint(7, t, i, d){}
 };
 
 #endif

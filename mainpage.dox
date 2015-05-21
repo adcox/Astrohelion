@@ -22,11 +22,9 @@
 
 <h2>To-Do List</h2>
 <ul>
-	<li> Finish fleshing out the CR3BP trajectory saveToMat function so that it saves all the same info as the matlab simNL routines do </li>
+	<li> Debug the strange "sometimes it works, sometimes it doesn't" BCR4BPR integration - memory leak?</li>
 	<li> Figure out how to do something like an event function in C++ </li>
 	<li> Add single/multiple shooting functionality </li>
-	<li> Finish adding computations for BCR4BPR EOMs (Omegas, extra derivatives for epoch dependencies) </li>
-	<li> Find a way to pass in "integration parameters" like theta0, phi0, etc. to the simulation engine in a general format </li>
 	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
 </ul>
 

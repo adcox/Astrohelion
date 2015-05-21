@@ -31,6 +31,8 @@
 
 #include "adtk_sys_data.hpp"
 
+#include "adtk_constants.hpp"
+
 class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 	public:
 		adtk_bcr4bpr_sys_data();
@@ -38,32 +40,51 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 
 		adtk_bcr4bpr_sys_data& operator=(const adtk_bcr4bpr_sys_data&);
 		
-		double getMu();
-		double getNu();
-		double getK();
-		double getCharLRatio();
-		std::string getPrimary(int n);	//We override this function, so re-declare it
+		double getMu() const;
+		double getNu() const;
+		double getK() const;
+		double getCharLRatio() const;
+		std::string getPrimary(int n) const;	//We override this function, so re-declare it
+
+		double getTheta0() const;
+		double getPhi0() const;
+		double getGamma() const;
+
+		void setTheta0(double t);
+		void setPhi0(double p);
+		void setGamma(double g);
 	private:
 		/** Mass ratio between P2 + P3 and total*/
-		double mu;
+		double mu = 0;
 
 		/** Mass ratio between P3 and total */
-		double nu;
+		double nu = 0;
 
 		/** Scaling constant, non-dim */
-		double k;
+		double k = 1/100;
 
 		/** Ratio between P3's orbital radius and P2's orbital radius */
-		double charLRatio;
+		double charLRatio = 0;
+
+		/** Angle between the P1/P2 line and the inertial x-axis, radians */
+		double theta0 = 0;
+
+		/** Angle between the P2/P3 line (projected into inertial XY plane) and the
+		x-axis, radians */
+		double phi0 = 0;
+
+		/** Inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane;
+		This angle does not change over time; radians */
+		double gamma = 5.14*PI/180;
 
 		/** Name of P1 */
-		std::string P1;
+		std::string P1 = "P1";
 
 		/** Name of P2 */
-		std::string P2;
+		std::string P2 = "P2";
 
 		/** Name of P3 */
-		std::string P3;
+		std::string P3 = "P3";
 };
 
 #endif

@@ -33,41 +33,35 @@
 #include "adtk_trajectory.hpp"
 
 class adtk_bcr4bpr_traj : public adtk_trajectory{
-	private:
-
-		/** Angle (radians) between the P1/P2 line and the inertial x-axis at time t = 0 */
-		double theta0;
-
-		/** Angle (radians) between the P2/P3 line (projected onto the inertial XY plane) and
-		 the inertial x-axis at time t = 0 */
-		double phi0;
-
-		/** Inclination (radians) of P2/P3 orbital plane relative to the P1/P2 orbital plane;
-		 Gamma is constant during the integration */
-		double gamma;
-
-		std::vector<double> dqdT;
-
-		/** A system data object specific to the BCR4BPR */
-		adtk_bcr4bpr_sys_data sysData;
 
 	public:
 		adtk_bcr4bpr_traj();
 		adtk_bcr4bpr_traj(int);
 		adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data);
-		
+		adtk_bcr4bpr_traj(const adtk_bcr4bpr_traj&);
+
+		// Operators
+		adtk_bcr4bpr_traj& operator= (const adtk_bcr4bpr_traj&);
+		friend adtk_bcr4bpr_traj operator +(const adtk_bcr4bpr_traj&, const adtk_bcr4bpr_traj&);
+
 		// Set and Get Functions
 		double getTheta0();
 		double getPhi0();
 		double getGamma();
 		adtk_bcr4bpr_sys_data getSysData();
+		adtk_sys_data::system_t getType() const;
 
 		std::vector<double>* get_dqdT();
 
-		void setTheta0(double t);
-		void setPhi0(double p);
-		void setGamma(double g);
 		void setSysData(adtk_bcr4bpr_sys_data);
+
+	private:
+		/** Derivatives of the state variables (pos, vel) with respect to Epoch Time; 
+			used in corrections processes */
+		std::vector<double> dqdT;
+
+		/** A system data object specific to the BCR4BPR */
+		adtk_bcr4bpr_sys_data sysData;
 };
 
 #endif

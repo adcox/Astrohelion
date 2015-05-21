@@ -9,6 +9,7 @@
 #include "adtk_calculations.hpp"
 
 #include "adtk_bcr4bpr_sys_data.hpp"
+#include "adtk_cr3bp_sys_data.hpp"
 #include "adtk_matrix.hpp"
 
 #include <iostream>
@@ -27,11 +28,12 @@ using namespace std;
 *   @param s the 42-d state vector
 *   @param sdot the 42-d state derivative vector
 *   @param *params pointer to extra parameters required for integration. For this
-*   function, the only extra parameter is mu
+*   function, the pointer points to a cr3bp system data object
 */
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
-    // Extract mu from params by casting it to a dobule
-    double mu = *(double *)params;
+    // Extract mu from params
+    adtk_cr3bp_sys_data *sysData = static_cast<adtk_cr3bp_sys_data *>(params);
+    double mu = sysData->getMu();
 
     double x = s[0];    double y = s[1];    double z = s[2];
     double xdot = s[3]; double ydot = s[4];
@@ -86,11 +88,12 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
  *   @param t time at integration step (unused)
  *   @param s the 6-d state vector
  *   @param sdot the 6-d state derivative vector
- *   @param params points to a double that contains the value of mu
+ *   @param params points to a cr3bp system data object
  */
 int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
-    // Extract mu from params by casting it to a dobule
-    double mu = *(double *)params;
+    // Extract mu from params
+    adtk_cr3bp_sys_data *sysData = static_cast<adtk_cr3bp_sys_data *>(params);
+    double mu = sysData->getMu();
 
     double x = s[0];    double y = s[1];    double z = s[2];
     double xdot = s[3]; double ydot = s[4];
@@ -117,19 +120,15 @@ int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
  *   @param s the 48-d state vector
  *   @param sdot the 48-d state derivative vector
  *   @param params points to additional integration parameters wrapped in an 
- *  <tt>adtk_bcr4bpr_eomData</tt> data object.
+ *  <tt>adtk_bcr4bpr_sys_data</tt> data object.
  */
 int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
-    adtk_bcr4bpr_eomData *eomData = static_cast<adtk_bcr4bpr_eomData *>(params);
-    // adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
-
-    // Pull out the system data object
-    adtk_bcr4bpr_sys_data sysData = eomData->sysData;
+    adtk_bcr4bpr_sys_data *sysData = static_cast<adtk_bcr4bpr_sys_data *>(params);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, sysData, eomData->theta0, eomData->phi0, eomData->gamma, primPosData);
+    bcr4bpr_getPrimaryPos(t, *sysData, primPosData);
     adtk_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
@@ -151,9 +150,9 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     double d3 = r_p3.norm();
     
     // Save constants to short variables for readability
-    double k = sysData.getK();
-    double mu = sysData.getMu();
-    double nu = sysData.getNu();
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
 
     // Create C-matrix
     double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
@@ -234,7 +233,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Get the velocity of the primaries
     double primVelData[9] = {0};
-    bcr4bpr_getPrimaryVel(t, sysData, eomData->theta0, eomData->phi0, eomData->gamma, primVelData);
+    bcr4bpr_getPrimaryVel(t, *sysData, primVelData);
     adtk_matrix primVel(3,3, primVelData);
 
     // Compute derivative of dqdT
@@ -261,19 +260,15 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
  *   @param s the 6-d state vector
  *   @param sdot the 6-d state derivative vector
  *   @param params points to additional integration parameters wrapped in an 
- *  <tt>adtk_bcr4bpr_eomData</tt> data object.
+ *  <tt>adtk_bcr4bpr_sys_data</tt> data object.
  */
 int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
-    adtk_bcr4bpr_eomData *eomData = static_cast<adtk_bcr4bpr_eomData *>(params);
-    // adtk_bcr4bpr_eomData eomData = *(adtk_bcr4bpr_eomData *)params;
-
-    // Pull out the system data object
-    adtk_bcr4bpr_sys_data sysData = eomData->sysData;
+    adtk_bcr4bpr_sys_data *sysData = static_cast<adtk_bcr4bpr_sys_data *>(params);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, sysData, eomData->theta0, eomData->phi0, eomData->gamma, primPosData);
+    bcr4bpr_getPrimaryPos(t, *sysData, primPosData);
     adtk_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
@@ -295,9 +290,9 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     double d3 = r_p3.norm();
     
     // Save constants to short variables for readability
-    double k = sysData.getK();
-    double mu = sysData.getMu();
-    double nu = sysData.getNu();
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
 
     // Create C-matrix
     double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
@@ -386,18 +381,16 @@ double cr3bp_getJacobi(double s[], double mu){
  *
  *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi9
  *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param theta0 the angle between the P1/P2 system and the inertial x-axis, in radians
- *  @param phi0 the angle between the P2/P3 system and inertial x-axis (projected into XY plane), in radians
- *  @param gamma inclination of the P2/P3 system relative to the P1/P2 plane, in radians. This inclination
- *  will remain constant.
  *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
  *  row-major order. The first three elements are the position of P1, etc.
  */
-void bcr4bpr_getPrimaryPos(double t, adtk_bcr4bpr_sys_data sysData, double theta0, double phi0, double gamma, 
-        double *primPos){
+void bcr4bpr_getPrimaryPos(double t, adtk_bcr4bpr_sys_data sysData, double *primPos){
     double k = sysData.getK();
     double mu = sysData.getMu();
     double nu = sysData.getNu();
+    double theta0 = sysData.getTheta0();
+    double phi0 = sysData.getPhi0();
+    double gamma = sysData.getGamma();
 
     // Compute the angles for the system at the specified time
     double theta = theta0 + k*t;
@@ -425,19 +418,17 @@ void bcr4bpr_getPrimaryPos(double t, adtk_bcr4bpr_sys_data sysData, double theta
  *
  *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi9
  *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param theta0 the angle between the P1/P2 system and the inertial x-axis, in radians
- *  @param phi0 the angle between the P2/P3 system and inertial x-axis (projected into XY plane), in radians
- *  @param gamma inclination of the P2/P3 system relative to the P1/P2 plane, in radians. This inclination
- *  will remain constant.
  *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
  *  row-major order. The first three elements hold the velocity of P1, etc.
  */
-void bcr4bpr_getPrimaryVel(double t, adtk_bcr4bpr_sys_data sysData, double theta0, double phi0, double gamma,
-    double *primVel){
+void bcr4bpr_getPrimaryVel(double t, adtk_bcr4bpr_sys_data sysData, double *primVel){
 
     double k = sysData.getK();
     double mu = sysData.getMu();
     double nu = sysData.getNu();
+    double theta0 = sysData.getTheta0();
+    double phi0 = sysData.getPhi0();
+    double gamma = sysData.getGamma();
 
     double thetaDot = k;
     double phiDot = sqrt(mu/pow(sysData.getCharLRatio(), 3));

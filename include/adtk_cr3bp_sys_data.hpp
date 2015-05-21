@@ -44,8 +44,8 @@ class adtk_cr3bp_sys_data : public adtk_sys_data{
 
 		adtk_cr3bp_sys_data& operator=(const adtk_cr3bp_sys_data&);
 		
-		double getMu();
-		std::string getPrimary(int n);	//We override this function, so re-declare it
+		double getMu() const;
+		std::string getPrimary(int n) const;	//We override this function, so re-declare it
 };
 
 #endif

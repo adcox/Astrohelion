@@ -39,8 +39,6 @@ int main(void){
 
 	// Do a simulation in the BCR4BP
 	adtk_bcr4bpr_sys_data bcSys("sun", "earth", "moon");
-	cout << "System type: " << bcSys.getTypeStr() << endl;
-	
 	adtk_simulation_engine bcEngine( &bcSys );
 
 	double haloCross177_IC[] = {100.0359099212, 	0, 					285.85225655914e-05, 
@@ -49,6 +47,7 @@ int main(void){
 	
 	bcEngine.setVarStepSize(false);
 	bcEngine.setNumSteps(500);
+	bcEngine.setVerbose(true);
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
 	adtk_bcr4bpr_traj bcTraj = bcEngine.getBCR4BPRTraj();

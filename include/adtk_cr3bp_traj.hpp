@@ -38,9 +38,11 @@ class adtk_cr3bp_traj : public adtk_trajectory{
 		adtk_cr3bp_traj();
 		adtk_cr3bp_traj(int);
 		adtk_cr3bp_traj(adtk_cr3bp_sys_data);
-		
+		adtk_cr3bp_traj(const adtk_cr3bp_traj&);
+
 		// Operators
 		adtk_cr3bp_traj& operator= (const adtk_cr3bp_traj&);
+		friend adtk_cr3bp_traj operator +(const adtk_cr3bp_traj &lhs, const adtk_cr3bp_traj &rhs);
 
 		// Set and Get Functions
 		double getJC(int);
@@ -48,6 +50,7 @@ class adtk_cr3bp_traj : public adtk_trajectory{
 		void setJC(std::vector<double>);
 		adtk_cr3bp_sys_data getSysData();
 		void setSysData(adtk_cr3bp_sys_data);
+		adtk_sys_data::system_t getType() const;
 
 		// Utility functions
 		void saveToMat(const char*);

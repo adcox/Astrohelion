@@ -62,6 +62,9 @@ cr3bpTest: $(OBJ)/bodyData.o $(OBJ)/calculations.o $(OBJ)/matrix.o
 matrixTest: $(OBJ)/matrix.o
 	$(COMP) -I $(INC) $^ $(GSL_FLAGS) Matrix_test.cpp -o $(BIN)/$@
 
+nodesetTest: $(OBJ)/nodeset.o
+	$(COMP) -I $(INC) $^ Nodeset_test.cpp -o $(BIN)/$@
+
 precisionTest:
 	$(COMP) NumericalPrecision_test.cpp -o $(BIN)/$@
 
@@ -90,16 +93,19 @@ $(OBJ)/bcr4bpTraj.o: $(SRC)/adtk_bcr4bpr_traj.cpp $(INC)/adtk_bcr4bpr_traj.hpp
 $(OBJ)/bodyData.o: $(SRC)/adtk_body_data.cpp $(INC)/adtk_body_data.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
+$(OBJ)/calculations.o: $(SRC)/adtk_calculations.cpp $(INC)/adtk_calculations.hpp
+	$(COMP) -I $(INC) -c $< -o $@
+
 $(OBJ)/cr3bpSysData.o: $(SRC)/adtk_cr3bp_sys_data.cpp $(INC)/adtk_cr3bp_sys_data.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/cr3bpTraj.o: $(SRC)/adtk_cr3bp_traj.cpp $(INC)/adtk_cr3bp_traj.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
-$(OBJ)/calculations.o: $(SRC)/adtk_calculations.cpp $(INC)/adtk_calculations.hpp
+$(OBJ)/matrix.o: $(SRC)/adtk_matrix.cpp $(INC)/adtk_matrix.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
-$(OBJ)/matrix.o: $(SRC)/adtk_matrix.cpp $(INC)/adtk_matrix.hpp
+$(OBJ)/nodeset.o: $(SRC)/adtk_nodeset.cpp $(INC)/adtk_nodeset.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/simEngine.o: $(SRC)/adtk_simulation_engine.cpp $(INC)/adtk_simulation_engine.hpp

@@ -21,13 +21,6 @@ using namespace std;
 adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data() : adtk_sys_data(){
 	numPrimaries = 3;
 	type = adtk_sys_data::BCR4BPR_SYS;
-	P1 = "P1";
-	P2 = "P2";
-	P3 = "P3";
-	mu = 0;
-	nu = 0;
-	charLRatio = 0;
-	k = 1;
 }//========================================
 
 /**
@@ -84,28 +77,28 @@ adtk_bcr4bpr_sys_data& adtk_bcr4bpr_sys_data::operator= (const adtk_bcr4bpr_sys_
 /**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */
-double adtk_bcr4bpr_sys_data::getMu(){ return mu; }
+double adtk_bcr4bpr_sys_data::getMu() const { return mu; }
 
 /**
  *	@return the non-dimensional mass ratio for P3
  */
-double adtk_bcr4bpr_sys_data::getNu(){ return nu; }
+double adtk_bcr4bpr_sys_data::getNu() const { return nu; }
 
 /**
  *	@return the ratio between P3's orbital radius and P2's orbital radius, non-dimensional units
  */
-double adtk_bcr4bpr_sys_data::getCharLRatio(){ return charLRatio; }
+double adtk_bcr4bpr_sys_data::getCharLRatio() const { return charLRatio; }
 
 /**
  *	@return the scaling constant for this system
  */
-double adtk_bcr4bpr_sys_data::getK(){ return k; }
+double adtk_bcr4bpr_sys_data::getK() const { return k; }
 
 /**
  *	@param n the index of the primary (0 for P1, 1 for P2, 2 for P3)
  *	@return the name of the primary
  */
-std::string adtk_bcr4bpr_sys_data::getPrimary(int n){
+std::string adtk_bcr4bpr_sys_data::getPrimary(int n) const {
 	switch(n){
 		case 0:
 			return P1;
@@ -117,4 +110,45 @@ std::string adtk_bcr4bpr_sys_data::getPrimary(int n){
 			cout << "adtk_bcr4bpr_sys_data :: Cannot get name of primary #" << n << endl;
 			throw;
 	}
-}
+}//=======================================
+
+/**
+ *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
+ *	angle in radians
+ */
+double adtk_bcr4bpr_sys_data::getTheta0() const { return theta0; }
+
+/**
+ *	@return the angle between the P2/P3 line (projected onto inertial XY plane) and the 
+ *	x-axis at time t = 0, angle in radians
+ */
+double adtk_bcr4bpr_sys_data::getPhi0() const { return phi0; }
+
+/**
+ *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane, radians.
+ */
+double adtk_bcr4bpr_sys_data::getGamma() const { return gamma; }
+
+/**
+ *	Set the angle theta0
+ *	@param t angle in radians
+ */
+void adtk_bcr4bpr_sys_data::setTheta0(double t){ theta0 = t; }
+
+/**
+ *	Set the angle phi0
+ *	@param t angle in radians
+ */
+void adtk_bcr4bpr_sys_data::setPhi0(double t){ phi0 = t; }
+
+/**
+ *	Set the angle gamma
+ *	@param t angle in radians
+ */
+void adtk_bcr4bpr_sys_data::setGamma(double t){ gamma = t; }
+
+
+
+
+
+

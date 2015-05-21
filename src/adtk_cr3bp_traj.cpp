@@ -32,6 +32,11 @@ adtk_cr3bp_traj::adtk_cr3bp_traj(int n) : adtk_trajectory(n){
 	jacobi.assign(n, 0);
 }
 
+adtk_cr3bp_traj::adtk_cr3bp_traj(const adtk_cr3bp_traj &t) : adtk_trajectory(t){
+	sysData = t.sysData;
+	jacobi = t.jacobi;
+}
+
 //-----------------------------------------------------
 // 		Operators
 //-----------------------------------------------------
@@ -46,6 +51,57 @@ adtk_cr3bp_traj& adtk_cr3bp_traj::operator= (const adtk_cr3bp_traj& t){
 	jacobi = t.jacobi;
 	return *this;
 }//=====================================
+
+/**
+ *	Sum two CR3BP trajectories
+ *
+ *	Both trajectories must be propagated in the same system, or else an error will be thrown.
+ *	The states from both trajectories are appended [lhs, rhs] without any modification, as is 
+ *	the vector of Jacobi Constant values. The time vectors are appended such that time is 
+ *	continuous throughout the trajectory; this doesn't affect the motion because the CR3BP is
+ *	autonomous. Only the STMs from <tt>lhs</tt> are copied to the new trajectory since the 
+ *	<tt>rhs</tt> STMs will have no meaning in the new, combined trajectory.
+ *
+ *	@param lhs a trajectory
+ *	@param rhs a trajectory
+ *	@return a new trajectory
+ */
+adtk_cr3bp_traj operator +(const adtk_cr3bp_traj &lhs, const adtk_cr3bp_traj &rhs){
+	if(lhs.sysData.getPrimary(0).compare(rhs.sysData.getPrimary(0)) != 0 ||
+			lhs.sysData.getPrimary(1).compare(rhs.sysData.getPrimary(1)) != 0){
+		fprintf(stderr, "Cannot sum two CR3BP trajectories from different systems!\n");
+		throw;
+	}
+
+	// create a new trajectory object with space for both sets of data to be combined
+	adtk_cr3bp_traj newTraj(lhs.numPoints + rhs.numPoints);
+	newTraj.setSysData(lhs.sysData);
+
+	// Copy the states and times from the LHS into the new guy
+	copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
+	copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
+	
+	// Append the rhs state to the end of the new guy's state vector
+	copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
+
+	// Append the rhs times, adjusted for continuity, to the new guy's time vector; adjustments
+	// don't affect the result because system is autonomous
+	double *newTimes = &(newTraj.getTime()->at(lhs.numPoints));
+	for (int n = 0; n < rhs.numPoints; n++){
+		*newTimes = lhs.times.back() + rhs.times.at(n) - rhs.times.at(0);
+		newTimes++;
+	}
+
+	// Copy only the lhs STMs, because there is no gaurantee the two summed trajectories
+	// will be continuous and smooth in time and state
+	copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
+
+	// Copy Jacobi constant
+	copy(lhs.jacobi.begin(), lhs.jacobi.end(), newTraj.getJC()->begin());
+	copy(rhs.jacobi.begin(), rhs.jacobi.end(), newTraj.getJC()->begin() + lhs.numPoints);
+
+	return newTraj;
+}//========================================
 
 //-----------------------------------------------------
 // 		Set and Get Functions
@@ -73,16 +129,20 @@ void adtk_cr3bp_traj::setJC(std::vector<double> j){ jacobi = j; }
 
 /**
  *	Retrieve data about the system this trajectory was propagated in
- *	@return 
+ *	@return the system data object
  */
 adtk_cr3bp_sys_data adtk_cr3bp_traj::getSysData(){ return sysData; }
 
 
 /**
  *	Set the system data for this trajectory
- *	@param d
+ *	@param d a system data object
  */
 void adtk_cr3bp_traj::setSysData(adtk_cr3bp_sys_data d){ sysData = d; }
+
+adtk_sys_data::system_t adtk_cr3bp_traj::getType() const{
+	return sysData.getType();
+}
 
 //-----------------------------------------------------
 // 		Utility Functions

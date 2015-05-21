@@ -72,12 +72,12 @@ adtk_cr3bp_sys_data& adtk_cr3bp_sys_data::operator= (const adtk_cr3bp_sys_data &
 /**
  *	@return the non-dimensional mass ratio for the system
  */
-double adtk_cr3bp_sys_data::getMu(){ return mu; }
+double adtk_cr3bp_sys_data::getMu() const { return mu; }
 
 /**
  *	@param n the index of the primary (0 for P1, 1 for P2)
  *	@return the name of the primary
  */
-std::string adtk_cr3bp_sys_data::getPrimary(int n){
+std::string adtk_cr3bp_sys_data::getPrimary(int n) const {
 	return n == 0 ? P1 : P2;
 }

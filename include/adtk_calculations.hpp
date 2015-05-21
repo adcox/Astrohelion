@@ -58,8 +58,8 @@ void cr3bp_getUDDots(double, double, double, double, double*);
 double cr3bp_getJacobi(double s[], double);
 
 // BCR4BPR Utility Functions
-void bcr4bpr_getPrimaryPos(double, adtk_bcr4bpr_sys_data, double, double, double, double*);
-void bcr4bpr_getPrimaryVel(double, adtk_bcr4bpr_sys_data, double, double, double, double*);
+void bcr4bpr_getPrimaryPos(double, adtk_bcr4bpr_sys_data, double*);
+void bcr4bpr_getPrimaryVel(double, adtk_bcr4bpr_sys_data, double*);
 
 #endif
 //END

@@ -140,7 +140,7 @@ adtk_matrix adtk_matrix::Identity(int size){
 /**
  * 	@return the number of rows in this matrix
  */
-int adtk_matrix::getRows(){return rows;}
+int adtk_matrix::getRows() const {return rows;}
 
 /**
  *	Get a row from this matrix
@@ -157,7 +157,7 @@ adtk_matrix adtk_matrix::getRow(int i){
 /**
  * 	@return the number of columns in this matrix
  */
-int adtk_matrix::getCols(){return cols;}
+int adtk_matrix::getCols() const {return cols;}
 
 /**
  *	Get a column from this matrix
@@ -173,7 +173,7 @@ adtk_matrix adtk_matrix::getCol(int j){
 /**
  *	@return the total number of elements in the matrix
  */
-int adtk_matrix::getLength(){return rows*cols;}
+int adtk_matrix::getLength() const {return rows*cols;}
 
 /**
  *	@return a pointer to the gsl_matrix object that represents this matrix
@@ -191,7 +191,7 @@ double* adtk_matrix::getDataPtr(){ return a->data; }
  *	@param c the column
  *	@return the value in the specified row and column
  */
-double adtk_matrix::at(int r, int c){
+double adtk_matrix::at(int r, int c) const {
 	if(r >= 0 && r < rows && c >= 0 && c < cols){
 		return gsl_matrix_get(a, r, c);
 	}else{
@@ -203,7 +203,7 @@ double adtk_matrix::at(int r, int c){
  *	Retrive a value from a 1D matrix. If the matrix is not 1D, a value from the first row
  *	is returned.
  */
-double adtk_matrix::at(int i){
+double adtk_matrix::at(int i) const {
 	if(i < rows*cols){
 		if(rows != 1 && cols != 1){
 			cout << "adtk_matrix :: Warning - matrix is not 1D; returning element from storage array" << endl;
@@ -298,7 +298,7 @@ adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
  *
  *	@return C = A*B where C is an m x n matrix
  */
-adtk_matrix adtk_matrix::operator *(const adtk_matrix &b){
+adtk_matrix adtk_matrix::operator *(const adtk_matrix &b) const{
 	if(cols != b.rows){
 		throw adtk_matSizeMismatch;
 	}
@@ -411,7 +411,7 @@ bool operator !=(const adtk_matrix &lhs, const adtk_matrix &rhs){
  *	Transpose this matrix (does not change the original copy of the matrix)
  *	@return the transpose (NOT the complex conjugate transpose)
  */
-adtk_matrix adtk_matrix::trans(){
+adtk_matrix adtk_matrix::trans() const{
 	gsl_matrix *b = gsl_matrix_alloc(cols, rows);
 	gsl_matrix_transpose_memcpy(b, a);
 	return adtk_matrix(cols, rows, b->data);
@@ -421,7 +421,7 @@ adtk_matrix adtk_matrix::trans(){
  *	Get the norm of this "matrix;" only applies for 1-D matrices (vectors)
  *	@return the 2-norm (sqrt of sum of squared elements) of the matrix
  */
-double adtk_matrix::norm(){
+double adtk_matrix::norm() const{
 	if(rows == 1 || cols == 1){
 		double sumSquares = 0;
 		for(int i = 0; i < rows*cols; i++){
@@ -479,7 +479,7 @@ void adtk_matrix::copyDataIntoGSL_Matrix(std::vector<double> v){
 /**
  * 	Print the matrix to standard output via printf
  */
-void adtk_matrix::print(){
+void adtk_matrix::print() const{
 	print("%8.4f");		// Use the more advanced function
 }//============================================
 
@@ -487,7 +487,7 @@ void adtk_matrix::print(){
  *	Print the matrix to standard output with the specified format
  *	@param format a format string for the std::printf function
  */
-void adtk_matrix::print(const char *format){
+void adtk_matrix::print(const char *format) const{
 	for (int r = 0; r < rows; r++){
 	    for (int c = 0; c < cols; c++){
 	    	printf(format, gsl_matrix_get(a, r, c));

@@ -46,10 +46,45 @@ adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
     printMessage("Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
 }//===========================================
 
+adtk_simulation_engine::adtk_simulation_engine(const adtk_simulation_engine& s){
+    sysData = s.sysData;    // Copies ADDRESS of a system data object
+    traj = s.traj;          // Copies ADDRESS of a trajectory object
+    eomParams = s.eomParams;// Copies ADDRESS (it's a pointer)
+    revTime = s.revTime;
+    verbose = s.verbose;
+    varStepSize = s.varStepSize;
+    simpleIntegration = s.simpleIntegration;
+    isClean = s.isClean;
+    absTol = s.absTol;
+    relTol = s.relTol;
+    dtGuess = s.dtGuess;
+    numSteps = s.numSteps;
+}//=====================================
+
 adtk_simulation_engine::~adtk_simulation_engine(){
     printMessage("Destroying simulation engine...\n");
     reset();    // Function handles deallocation and resetting of data
 }//===========================================
+
+//-----------------------------------------------------
+//      Operator Functions
+//-----------------------------------------------------
+
+adtk_simulation_engine& adtk_simulation_engine::operator =(const adtk_simulation_engine& s){
+    sysData = s.sysData;    // Copies ADDRESS of a system data object
+    traj = s.traj;          // Copies ADDRESS of a trajectory object
+    eomParams = s.eomParams;// Copies ADDRESS (it's a pointer)
+    revTime = s.revTime;
+    verbose = s.verbose;
+    varStepSize = s.varStepSize;
+    simpleIntegration = s.simpleIntegration;
+    isClean = s.isClean;
+    absTol = s.absTol;
+    relTol = s.relTol;
+    dtGuess = s.dtGuess;
+    numSteps = s.numSteps;
+    return *this;
+}//=====================================
 
 //-----------------------------------------------------
 // 		Set and Get Functions
@@ -58,34 +93,34 @@ adtk_simulation_engine::~adtk_simulation_engine(){
 /**
  *	@return whether or not the simulation will run time in reverse
  */
-bool adtk_simulation_engine::usesRevTime(){return revTime;}
+bool adtk_simulation_engine::usesRevTime() const {return revTime;}
 
 /**
  *	@return whether or not the engine will be verbose in its outputs
  */
-bool adtk_simulation_engine::isVerbose(){return verbose;}
+bool adtk_simulation_engine::isVerbose() const {return verbose;}
 
 /**
  *  @return whether or not the engine uses variable step size
  */
-bool adtk_simulation_engine::usesVarStepSize(){ return varStepSize; }
+bool adtk_simulation_engine::usesVarStepSize() const { return varStepSize; }
 
 /**
  *	@return the absolute tolerance for the engine, non-dimensional units
  */
-double adtk_simulation_engine::getAbsTol(){return absTol;}
+double adtk_simulation_engine::getAbsTol() const {return absTol;}
 
 /**
  *	@return the relative tolerance for the engine, non-dimensional units
  */
-double adtk_simulation_engine::getRelTol(){return relTol;}
+double adtk_simulation_engine::getRelTol() const {return relTol;}
 
 /**
  *  @return the number of steps the integrator will be forced to take.
  *  The integrator may take intermediate steps between those enforced
  *  by the algorithm, but only <tt>numSteps</tt> data points will be output.
  */
-int adtk_simulation_engine::getNumSteps(){ return numSteps; }
+int adtk_simulation_engine::getNumSteps() const { return numSteps; }
 
 /**
  *  Retrieve the trajectory. To avoid static casts in driver programs,
@@ -117,8 +152,11 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj(){
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
  */
 adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj(){
-    if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS)
-        return *( static_cast<adtk_bcr4bpr_traj *>(traj) );
+    if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS){
+        adtk_bcr4bpr_traj temp = *( static_cast<adtk_bcr4bpr_traj *>(traj) );
+        return temp;
+        // return *( static_cast<adtk_bcr4bpr_traj *>(traj) );
+    }
     else{
         printf("Wrong system type: %s\n", sysData->getTypeStr().c_str());
         throw;
@@ -503,23 +541,12 @@ void adtk_simulation_engine::setEOMParams(){
     switch(sysData->getType()){
         case adtk_sys_data::CR3BP_SYS:
         {
-            adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
-            double *mu = new double(cr3bpData->getMu());
-            eomParams = mu;
+            eomParams = sysData;
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:
         {
-            // Cast sys data to the specific system type
-            adtk_bcr4bpr_sys_data thisSysData = *(static_cast<adtk_bcr4bpr_sys_data *>(sysData));
-
-            double theta0 = 0;  // TODO make initializing these more intelligent
-            double phi0 = 0;
-            double gamma = 5.14*PI/180;
-            // Create a NEW object so that it isn't deleted once we exit this scope
-            adtk_bcr4bpr_eomData *eomData = new adtk_bcr4bpr_eomData(thisSysData, theta0, phi0, gamma);
-            
-            eomParams = eomData;
+            eomParams = sysData;
             break;
         }
         default:
@@ -538,19 +565,6 @@ void adtk_simulation_engine::cleanEngine(){
     printMessage("Cleaning the engine...\n");
     delete traj;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
-
-    // Free eomParams; MUST cast to correct type before freeing so that the appropriate
-    // destructor is called
-    switch(sysData->getType()){
-        case adtk_sys_data::CR3BP_SYS:
-            delete (double *)eomParams;
-            break;
-        case adtk_sys_data::BCR4BPR_SYS:
-            delete (adtk_bcr4bpr_eomData *)eomParams;
-            break;
-        default:
-            cout << "Unrecongized system type; cannot free eomParams!!" << endl;
-    }
     eomParams = 0;
 
     isClean = true;

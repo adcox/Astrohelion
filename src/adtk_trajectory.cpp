@@ -46,11 +46,12 @@ adtk_trajectory::adtk_trajectory(int n){
 	allSTM.assign(n, adtk_matrix::Identity(6));
 }
 
-/**
- *	Destructor; clear all the data vectors and deallocate memory as required. Function
- *	is virtual so that calling <tt>delete</tt> on derived classes will still free memory properly
- */
-adtk_trajectory::~adtk_trajectory(){}
+adtk_trajectory::adtk_trajectory(const adtk_trajectory& t){
+	numPoints = t.numPoints;
+	state = t.state;
+	times = t.times;
+	allSTM = t.allSTM;
+}//=========================================
 
 //-----------------------------------------------------
 // 		Operators
@@ -76,7 +77,7 @@ adtk_trajectory& adtk_trajectory::operator= (const adtk_trajectory& t){
 /**
  *	@return the number of points along this trajectory
  */
-int adtk_trajectory::getLength(){ return numPoints; }
+int adtk_trajectory::getLength() const{ return numPoints; }
 
 /**
  *	@return a pointer to the beginning of the state array.
@@ -89,7 +90,7 @@ vector<double>* adtk_trajectory::getState(){ return &state;}
  *	@param n the index of the state (0 is the first state, or IC)
  *	@return a vector representing the full state (pos, vel, accel)
  */
-vector<double> adtk_trajectory::getState(int n){
+vector<double> adtk_trajectory::getState(int n) const{
 	vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
 	vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH - 1;
 	vector<double> oneState(first, last);
@@ -101,7 +102,7 @@ vector<double> adtk_trajectory::getState(int n){
  *	@param n the index of the point (starts at 0)
  *	@return the non-dimensional time along the trajectory
  */
-double adtk_trajectory::getTime(int n){ return times[n]; }
+double adtk_trajectory::getTime(int n) const { return times[n]; }
 
 /**
  *	@return a pointer to the begining of the time vector
@@ -113,7 +114,7 @@ vector<double>* adtk_trajectory::getTime(){ return &times; }
  *	@param n the index of the point (starts at 0)
  *	@return the STM
  */
-adtk_matrix adtk_trajectory::getSTM(int n){ return allSTM[n]; }
+adtk_matrix adtk_trajectory::getSTM(int n) const { return allSTM[n]; }
 
 /**
  *	Useful for setting the STM (in place) after the trajectory has been initialized

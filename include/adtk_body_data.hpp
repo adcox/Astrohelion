@@ -58,7 +58,7 @@ class adtk_body_data{
 	public:
 
 		// Constructors
-		adtk_body_data();
+		adtk_body_data();	// Copy constructor is defined by compiler, should be fine
 		adtk_body_data(std::string);
 		adtk_body_data(double m, double R, double r, double mu, std::string name, std::string parent);
 

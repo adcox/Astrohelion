@@ -24,7 +24,7 @@ adtk_sys_data::adtk_sys_data(){
 	charT = 0;
 	charM = 0;
 	type = UNDEF_SYS;
-}
+}//=====================================
 
 /**
  *	Copy the system data object
@@ -43,27 +43,27 @@ adtk_sys_data& adtk_sys_data::operator= (const adtk_sys_data &d){
 /**
  *	@return the characteristic length (km) associated with this system
  */
-double adtk_sys_data::getCharL(){ return charL; }
+double adtk_sys_data::getCharL() const { return charL; }
 
 /**
  *	@return the charactersitic mass (kg) associated with this system
  */
-double adtk_sys_data::getCharM(){ return charM; }
+double adtk_sys_data::getCharM() const { return charM; }
 
 /**
  *	@return the characteristic time (s) associated with this system
  */
-double adtk_sys_data::getCharT(){ return charT; }
+double adtk_sys_data::getCharT() const { return charT; }
 
 /**
  *	@return the system_t type associated with this system
  */
-adtk_sys_data::system_t adtk_sys_data::getType(){ return type; }
+adtk_sys_data::system_t adtk_sys_data::getType() const { return type; }
 
 /**
  *	@return a string (human-readable) version of the system type
  */
-std::string adtk_sys_data::getTypeStr(){
+std::string adtk_sys_data::getTypeStr() const{
 	switch (type){
 		case adtk_sys_data::UNDEF_SYS:
 			return "Undefined System Type";

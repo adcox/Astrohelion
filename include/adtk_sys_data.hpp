@@ -54,23 +54,23 @@ class adtk_sys_data{
 		 */
 		enum system_t {UNDEF_SYS, CR3BP_SYS, BCR4BPR_SYS};
 
-		adtk_sys_data();
+		adtk_sys_data();	// Copy constructor is defined by compiler, should be fine
 		virtual ~adtk_sys_data() {}
 
 		adtk_sys_data& operator= (const adtk_sys_data&);
 
-		double getCharL();
-		double getCharT();
-		double getCharM();
-		system_t getType();
-		std::string getTypeStr();
+		double getCharL() const;
+		double getCharT() const;
+		double getCharM() const;
+		system_t getType() const;
+		std::string getTypeStr() const;
 
 		/**
 		 *	Each derivative class must define this function to provide the name of each primary
 		 *	@param n the "index" of the primary, starts at 0
 		 *	@return the name of the n'th primary
 		 */
-		virtual std::string getPrimary(int n) = 0;
+		virtual std::string getPrimary(int n) const = 0;
 
 	protected:
 

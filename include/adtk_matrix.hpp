@@ -65,7 +65,7 @@ class adtk_matrix{
 
 		friend adtk_matrix operator *(const double&, const adtk_matrix&);
 		friend adtk_matrix operator *(const adtk_matrix&, const double&);
-		adtk_matrix operator *(const adtk_matrix&);
+		adtk_matrix operator *(const adtk_matrix&) const;
 		adtk_matrix& operator *=(const double&);
 		adtk_matrix& operator *=(const adtk_matrix&);
 
@@ -75,23 +75,23 @@ class adtk_matrix{
 		friend bool operator !=(const adtk_matrix&, const adtk_matrix&);
 
 		// Matrix operations
-		adtk_matrix trans();
-		double norm();
+		adtk_matrix trans() const;
+		double norm() const;
 
 		// Set and Gets
-		int getLength();
-		int getRows();
-		int getCols();
+		int getLength() const;
+		int getRows() const;
+		int getCols() const;
 		// gsl_matrix* getGSLMat();
 		double* getDataPtr();
-		double at(int, int);
-		double at(int);
+		double at(int, int) const;
+		double at(int) const;
 		adtk_matrix getRow(int);
 		adtk_matrix getCol(int);
 
 		// Utility functions
-		void print();
-		void print(const char *format);
+		void print() const;
+		void print(const char *format) const;
 
 	private:
 		gsl_matrix *a;

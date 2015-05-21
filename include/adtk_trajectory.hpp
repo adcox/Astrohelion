@@ -36,12 +36,12 @@
 #ifndef __H_TRAJECTORY_
 #define __H_TRAJECTORY_
 
+#include "adtk_matrix.hpp"
+#include "adtk_sys_data.hpp"
+
 #include "matio.h"
- 
 #include <vector>
 
-// Forward Declarations
-class adtk_matrix;
 
 class adtk_trajectory{
 	static const int STATE_WIDTH = 9;
@@ -50,18 +50,21 @@ class adtk_trajectory{
 		// *structors
 		adtk_trajectory();
 		adtk_trajectory(int);
-		virtual ~adtk_trajectory();
+		adtk_trajectory(const adtk_trajectory&);
+		virtual ~adtk_trajectory(){}
 
 		// Operators
 		adtk_trajectory& operator= (const adtk_trajectory&);
 
 		// Set and Get functions
-		int getLength();
-		std::vector<double> getState(int);
+		int getLength() const;
+		virtual adtk_sys_data::system_t getType() const = 0;
+
+		std::vector<double> getState(int) const;
 		std::vector<double>* getState();
-		double getTime(int);
+		double getTime(int) const;
 		std::vector<double>* getTime();
-		adtk_matrix getSTM(int);
+		adtk_matrix getSTM(int) const;
 		std::vector<adtk_matrix>* getSTM();
 
 		void setLength();

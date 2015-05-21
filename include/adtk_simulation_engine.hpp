@@ -43,17 +43,21 @@ class adtk_simulation_engine{
 		// Constructors
 		adtk_simulation_engine();
 		adtk_simulation_engine(adtk_sys_data*);
+		adtk_simulation_engine(const adtk_simulation_engine&);	//copy constructor
 
 		//Destructor
 		~adtk_simulation_engine();
 
+		//Operators
+		adtk_simulation_engine& operator =(const adtk_simulation_engine&);
+
 		// Set and get functions
-		bool usesRevTime();
-		bool isVerbose();
-		bool usesVarStepSize();
-		double getAbsTol();
-		double getRelTol();
-		int getNumSteps();
+		bool usesRevTime() const;
+		bool isVerbose() const;
+		bool usesVarStepSize() const;
+		double getAbsTol() const;
+		double getRelTol() const;
+		int getNumSteps() const;
 		adtk_cr3bp_traj getCR3BPTraj();
 		adtk_bcr4bpr_traj getBCR4BPRTraj();
 
@@ -71,6 +75,7 @@ class adtk_simulation_engine{
 
 		// Utility Functions
 		void reset();
+		
 	private:
 		/** Pointer to a system data object; contains characteristic quantities, among other things */
 		adtk_sys_data *sysData = 0;	// set null pointers for now
@@ -79,7 +84,7 @@ class adtk_simulation_engine{
 		adtk_trajectory *traj = 0;
 
 		/** a void pointer to some data object that contains data for the EOM function */
-		void *eomParams;
+		void *eomParams = 0;
 
 		/** Whether or not to run the simulation in reverse time */
 		bool revTime = false;

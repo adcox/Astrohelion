@@ -75,18 +75,18 @@ class adtk_sys_data{
 	protected:
 
 		/** Number of primaries that exist in this system */
-		int numPrimaries;
+		int numPrimaries = 0;
 
 		/** Characteristic length (km) */
-		double charL;
+		double charL = 0;
 
 		/** Characteristic time (sec) */
-		double charT;
+		double charT = 0;
 
 		/** Characteristic mass (kg) */
-		double charM;
+		double charM = 0;
 
 		/** The type of system this data object describes */
-		system_t type;
+		system_t type = UNDEF_SYS;
 };
 #endif

@@ -58,20 +58,21 @@ class adtk_simulation_engine{
 		double getAbsTol() const;
 		double getRelTol() const;
 		int getNumSteps() const;
-		adtk_cr3bp_traj getCR3BPTraj();
-		adtk_bcr4bpr_traj getBCR4BPRTraj();
+		adtk_trajectory getTraj() const;
+		adtk_cr3bp_traj getCR3BPTraj() const;
+		adtk_bcr4bpr_traj getBCR4BPRTraj() const;
 
-		void setSysData(adtk_sys_data *d);
-		void setRevTime(bool b);
-		void setVerbose(bool b);
-		void setVarStepSize(bool b);
-		void setAbsTol(double t);
-		void setRelTol(double t);
-		void setNumSteps(int n);
+		void setSysData(adtk_sys_data*);
+		void setRevTime(bool);
+		void setVerbose(bool);
+		void setVarStepSize(bool);
+		void setAbsTol(double);
+		void setRelTol(double);
+		void setNumSteps(int);
 
 		// Simulation Methods
-		void runSim(double *ic, double tf);
-		void runSim(double *ic, double t0, double tf);
+		void runSim(double*, double);
+		void runSim(double*, double, double);
 
 		// Utility Functions
 		void reset();

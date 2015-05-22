@@ -58,7 +58,7 @@ class adtk_trajectory{
 
 		// Set and Get functions
 		int getLength() const;
-		virtual adtk_sys_data::system_t getType() const = 0;
+		virtual adtk_sys_data::system_t getType() const;
 
 		std::vector<double> getState(int) const;
 		std::vector<double>* getState();

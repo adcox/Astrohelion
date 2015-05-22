@@ -9,9 +9,9 @@
 #include "adtk_body_data.hpp"
 #include "adtk_constants.hpp"
 
+#include <cmath>
 #include <exception>
 #include <iostream>
-#include <math.h>
 
 using namespace std;
 

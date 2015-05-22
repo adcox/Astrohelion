@@ -30,18 +30,33 @@
 
 #include "adtk_nodeset.hpp"
 #include "adtk_cr3bp_constraint.hpp"
+#include "adtk_cr3bp_sys_data.hpp"
 
 #include <vector>
 
+// Forward declarations
+class adtk_cr3bp_sys_data;
+
 class adtk_cr3bp_nodeset : public adtk_nodeset{
 	public:
-		adtk_cr3bp_nodeset() : adtk_nodeset(6){}
+		// *structors
+		adtk_cr3bp_nodeset(adtk_cr3bp_sys_data data);
+		adtk_cr3bp_nodeset(double[6], adtk_cr3bp_sys_data, double, int, node_distro_t);
 
+		adtk_cr3bp_nodeset(const adtk_cr3bp_nodeset&);
+
+		// Operators
+		adtk_cr3bp_nodeset& operator =(const adtk_cr3bp_nodeset&);
+
+		// Set and Gets
 		adtk_cr3bp_constraint getConstraint(int);
 		void addConstraint(adtk_cr3bp_constraint);
 
+
 	private:
 		std::vector<adtk_cr3bp_constraint> constraints;
+
+		adtk_cr3bp_sys_data sysData;
 };
 
 #endif

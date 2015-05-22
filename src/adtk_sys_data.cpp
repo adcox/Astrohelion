@@ -18,13 +18,7 @@ using namespace std;
 /**
  *	Create a new system data object and initialize all values to zero.
  */
-adtk_sys_data::adtk_sys_data(){
-	numPrimaries = 0;
-	charL = 0;
-	charT = 0;
-	charM = 0;
-	type = UNDEF_SYS;
-}//=====================================
+adtk_sys_data::adtk_sys_data(){}
 
 /**
  *	Copy the system data object

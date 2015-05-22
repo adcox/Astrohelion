@@ -123,6 +123,11 @@ adtk_matrix adtk_trajectory::getSTM(int n) const { return allSTM[n]; }
 vector<adtk_matrix>* adtk_trajectory::getSTM(){ return &allSTM;}
 
 /**
+ *	@return the system data type
+ */
+adtk_sys_data::system_t adtk_trajectory::getType() const { return adtk_sys_data::UNDEF_SYS; }
+
+/**
  *	Set the number of points by checking the number of data in 
  *	the state, time, and STM vectors.
  */

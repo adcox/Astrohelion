@@ -1,7 +1,6 @@
 /**
- *	This derivative of the adtk_nodeset option forces the node size to be 7 states;
- *	the first 6 are the usual position and velocity states, but the final is the epoch
- *	at each node
+ *	This derivative of the adtk_nodeset object contains additional information
+ *	for the BCR4BP
  *
  *	Author: Andrew Cox
  *	Version: May 21, 2015
@@ -35,15 +34,21 @@
 
 #include <vector>
 
+// Forward declarations
+class adtk_bcr4bpr_sys_data;
+
 class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 	public:
-		adtk_bcr4bpr_nodeset() : adtk_nodeset(7){}
+		adtk_bcr4bpr_nodeset() : adtk_nodeset(6){}
+		adtk_bcr4bpr_nodeset(double[6], adtk_bcr4bpr_sys_data, double, double, int,
+			node_distro_t);
 
 		adtk_bcr4bpr_constraint getConstraint(int);
 		void addConstraint(adtk_bcr4bpr_constraint);
 
 	private:
 		std::vector<adtk_bcr4bpr_constraint> constraints;
+		std::vector<double> epochs;
 };
 
 #endif

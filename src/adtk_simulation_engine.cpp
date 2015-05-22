@@ -16,11 +16,11 @@
 #include "adtk_cr3bp_traj.hpp"
 #include "adtk_matrix.hpp"
 
+#include <cmath>
 #include <cstdlib>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
 #include <iostream>
-#include <math.h>
 #include <vector>
 
 using namespace std;
@@ -123,6 +123,11 @@ double adtk_simulation_engine::getRelTol() const {return relTol;}
 int adtk_simulation_engine::getNumSteps() const { return numSteps; }
 
 /**
+ *  Retrieve the trajectory as a generic trajectory object
+ */
+adtk_trajectory adtk_simulation_engine::getTraj() const { return *traj; }
+
+/**
  *  Retrieve the trajectory. To avoid static casts in driver programs,
  *  we create several different getTraj() type functions that will perform
  *  the static cast and return the specific type of trajectory object rather
@@ -130,7 +135,7 @@ int adtk_simulation_engine::getNumSteps() const { return numSteps; }
  *
  *  @return a CR3BP Trajectory object
  */
-adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj(){
+adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj() const{
     if(sysData->getType() == adtk_sys_data::CR3BP_SYS)
         /* Use a static cast to convert the general trajectory pointer
          * into a specific CR3BP trajectory pointer, then dereference
@@ -151,7 +156,7 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj(){
  *
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
  */
-adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj(){
+adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj() const{
     if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS){
         adtk_bcr4bpr_traj temp = *( static_cast<adtk_bcr4bpr_traj *>(traj) );
         return temp;

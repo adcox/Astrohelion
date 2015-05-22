@@ -39,7 +39,7 @@ BCR_SYS_DATA_DEP = sysData.o bcr4bpSysData.o bodyData.o
 # dependencies for trajTest
 TRAJ_TEST_DEP = bodyData.o matrix.o sysData.o cr3bpSysData.o cr3bpTraj.o trajectory.o
 # dependencies for nodesetTest
-NODESET_TEST_DEP = nodeset.o cr3bpNodeset.o bcr4bpNodeset.o constraint.o
+NODESET_TEST_DEP = nodeset.o cr3bpNodeset.o bcr4bpNodeset.o constraint.o $(SIM_ENGINE_DEP)
 # Where MATLAB is located on this system
 MAT_ROOT = /Applications/MATLAB_R2014a.app
 
@@ -64,7 +64,7 @@ matrixTest: $(OBJ)/matrix.o
 	$(COMP) -I $(INC) $^ $(GSL_FLAGS) Matrix_test.cpp -o $(BIN)/$@
 
 nodesetTest: $(patsubst %.o,$(OBJ)/%.o, $(NODESET_TEST_DEP))
-	$(COMP) -I $(INC) $^ Nodeset_test.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(GSL_FLAGS) $(MATIO_FLAGS) Nodeset_test.cpp -o $(BIN)/$@
 
 precisionTest:
 	$(COMP) NumericalPrecision_test.cpp -o $(BIN)/$@

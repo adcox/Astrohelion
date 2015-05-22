@@ -34,8 +34,28 @@
 
 #include <vector>
 
+// Forward Declarations
+class adtk_sys_data;
+
 class adtk_nodeset{
 	public:
+		/**
+		 *	Node Distribution Type
+		 *
+		 *	This type describes how nodes are distributed, or how they are chosen
+		 *	from a trajectory. Values are:
+		 *
+		 *	NONE 		- 	There is no organizational method; nodes may be input by
+		 *					user.
+		 *
+		 *	TIME 		- 	nodes spread evenly in time
+		 *
+		 *	ARCLENGTH 	- 	nodes spread evenly along trajectory by arclength; this
+		 *					method is approximate, so not all legs will be exactly 
+		 *					the same length, but should be close.
+		 */
+		enum node_distro_t {NONE, TIME, ARCLENGTH};
+
 		adtk_nodeset(const int);
 		adtk_nodeset(const adtk_nodeset&);
 
@@ -43,16 +63,29 @@ class adtk_nodeset{
 
 		std::vector<double> getNode(int) const;
 		double getTOF(int) const;
-		double getNumNodes() const;
+		int getNumNodes() const;
 		int getNodeSize() const;
+		node_distro_t getNodeDistro() const;
+		adtk_sys_data* getSysData() const;
 
 		void appendNode(std::vector<double>);
 		void appendTOF(double);
+		void setNodeDistro(node_distro_t);
 
 	protected:
+		/** The number of states in one node */
 		const int nodeSize;
+
+		/** How nodes are distributed */
+		node_distro_t nodeDistro = NONE;
+
+		/** A vector of nodes; organized in row-major order */
 		std::vector<double> nodes;
+
+		/** A vector of TOFs between nodes */
 		std::vector<double> tofs;
+
+		void initSetFromICs(double[], adtk_sys_data*, double, double, int, node_distro_t);
 };
 
 #endif

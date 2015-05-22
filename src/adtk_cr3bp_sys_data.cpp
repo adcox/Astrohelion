@@ -11,9 +11,9 @@
 #include "adtk_body_data.hpp"
 #include "adtk_constants.hpp"
 
+#include <cmath>
 #include <exception>
 #include <iostream>
-#include <math.h>
 
 using namespace std;
 
@@ -23,9 +23,6 @@ using namespace std;
 adtk_cr3bp_sys_data::adtk_cr3bp_sys_data() : adtk_sys_data(){
 	numPrimaries = 2;
 	type = adtk_sys_data::CR3BP_SYS;
-	P1 = "P1";
-	P2 = "P2";
-	mu = 0;
 }//========================================
 
 /**

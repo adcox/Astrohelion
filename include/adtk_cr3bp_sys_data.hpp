@@ -31,12 +31,14 @@
 
 #include "adtk_sys_data.hpp"
 
+#include <string>
+ 
 class adtk_cr3bp_sys_data : public adtk_sys_data{
 	private:
 		/** Mass ratio between two primaries*/
-		double mu;
-		std::string P1;
-		std::string P2;
+		double mu = 0;
+		std::string P1 = "P1";
+		std::string P2 = "P2";
 
 	public:
 		adtk_cr3bp_sys_data();

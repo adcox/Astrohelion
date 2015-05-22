@@ -12,8 +12,8 @@
 #include "adtk_cr3bp_sys_data.hpp"
 #include "adtk_matrix.hpp"
 
+#include <cmath>
 #include <iostream>
-#include <math.h>
 
 
 using namespace std;

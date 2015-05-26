@@ -5,7 +5,7 @@
  *	Version: May 21, 2015
  */
 
- /*
+/*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
@@ -40,6 +40,7 @@ class adtk_cr3bp_sys_data;
 class adtk_cr3bp_nodeset : public adtk_nodeset{
 	public:
 		// *structors
+		adtk_cr3bp_nodeset();
 		adtk_cr3bp_nodeset(adtk_cr3bp_sys_data data);
 		adtk_cr3bp_nodeset(double[6], adtk_cr3bp_sys_data, double, int, node_distro_t);
 
@@ -49,10 +50,11 @@ class adtk_cr3bp_nodeset : public adtk_nodeset{
 		adtk_cr3bp_nodeset& operator =(const adtk_cr3bp_nodeset&);
 
 		// Set and Gets
-		adtk_cr3bp_constraint getConstraint(int);
+		adtk_cr3bp_constraint getConstraint(int) const;
 		void addConstraint(adtk_cr3bp_constraint);
-
-
+		int getNumCons() const;
+		adtk_sys_data* getSysData();
+		
 	private:
 		std::vector<adtk_cr3bp_constraint> constraints;
 

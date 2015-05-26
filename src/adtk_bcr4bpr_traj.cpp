@@ -121,6 +121,15 @@ adtk_bcr4bpr_sys_data adtk_bcr4bpr_traj::getSysData(){ return sysData; }
  */
 vector<double>* adtk_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
 
+/**
+ *	@param the index of the dqdT vector to retrieve
+ *	@return the i'th 6-element dqdT vector
+ */
+vector<double> adtk_bcr4bpr_traj::get_dqdT(int i){
+	vector<double> temp(dqdT.begin()+i*6, dqdT.begin()+(i+1)*6);
+	return temp;
+}//===============================================
+
 adtk_sys_data::system_t adtk_bcr4bpr_traj::getType() const{
 	return sysData.getType();
 }

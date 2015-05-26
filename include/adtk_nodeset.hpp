@@ -58,20 +58,25 @@ class adtk_nodeset{
 
 		adtk_nodeset(const int);
 		adtk_nodeset(const adtk_nodeset&);
-
+		virtual ~adtk_nodeset(){}
+		
 		adtk_nodeset& operator =(const adtk_nodeset&);
+
+		std::vector<double>* getNodes();
+		std::vector<double>* getTOFs();
 
 		std::vector<double> getNode(int) const;
 		double getTOF(int) const;
 		int getNumNodes() const;
 		int getNodeSize() const;
 		node_distro_t getNodeDistro() const;
-		adtk_sys_data* getSysData() const;
+		virtual adtk_sys_data* getSysData() = 0;
 
 		void appendNode(std::vector<double>);
 		void appendTOF(double);
 		void setNodeDistro(node_distro_t);
 
+		virtual int getNumCons() const = 0;
 	protected:
 		/** The number of states in one node */
 		const int nodeSize;

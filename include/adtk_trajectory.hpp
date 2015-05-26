@@ -44,9 +44,9 @@
 
 
 class adtk_trajectory{
-	static const int STATE_WIDTH = 9;
-
 	public:
+		static const int STATE_WIDTH = 9;
+		
 		// *structors
 		adtk_trajectory();
 		adtk_trajectory(int);

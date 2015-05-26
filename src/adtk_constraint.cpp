@@ -14,18 +14,18 @@ using namespace std;
 
 adtk_constraint::adtk_constraint(int n) : nodeSize(n){
 	data.assign(n, NAN);
-}
+}//============================================
 
 adtk_constraint::adtk_constraint(int n, constraint_t t) : nodeSize(n){
 	type = t;
 	data.assign(n, NAN);
-}
+}//============================================
 
 adtk_constraint::adtk_constraint(int n, constraint_t t, int i, std::vector<double> d) : nodeSize(n){
 	type = t;
 	node = i;
 	data = d;
-}
+}//============================================
 
 adtk_constraint::adtk_constraint(int n, constraint_t t, int i, double* d) : nodeSize(n){
 	type = t;
@@ -34,7 +34,7 @@ adtk_constraint::adtk_constraint(int n, constraint_t t, int i, double* d) : node
 	for(int j = 0; j < n; j++){
 		data.push_back(d[j]);
 	}
-}
+}//============================================
 
 adtk_constraint::adtk_constraint(const adtk_constraint& c) : nodeSize(c.nodeSize){
 	type = c.type;
@@ -60,6 +60,15 @@ adtk_constraint& adtk_constraint::operator =(const adtk_constraint& c){
 adtk_constraint::constraint_t adtk_constraint::getType() const { return type; }
 int adtk_constraint::getNode() const { return node; }
 std::vector<double> adtk_constraint::getData() const { return data; }
+int adtk_constraint::getNodeSize() const {return nodeSize; }
+
+int adtk_constraint::countConstrainedStates() const{
+	int count = 0;
+	for(int n = 0; n < ((int)data.size()); n++){
+		count += !std::isnan(data.at(n));
+	}
+	return count;
+}//============================================
 
 void adtk_constraint::setType(adtk_constraint::constraint_t t){ type = t; }
 void adtk_constraint::setNode(int n){ node = n; }

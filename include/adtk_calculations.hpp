@@ -30,7 +30,10 @@
 #ifndef __H_CALCULATIONS__
 #define __H_CALCULATIONS__
 
-#include "adtk_bcr4bpr_sys_data.hpp"
+// #include "adtk_bcr4bpr_sys_data.hpp"
+
+// Forward declarations
+class adtk_bcr4bpr_sys_data;
 
 // Equations of motion
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params);

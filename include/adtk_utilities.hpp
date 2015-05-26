@@ -30,5 +30,13 @@
 #ifndef __H_UTILITIES_
 #define __H_UTILITIES_
 
+template<class T> T adtk_sum(T* data, int length){
+	T total = 0;
+	for(int n = 0; n < length; n++){
+		total += data[n];
+	}
+
+	return total;
+}
 
 #endif

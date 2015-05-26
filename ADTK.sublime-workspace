@@ -1,0 +1,501 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"MATCH",
+				"MATCH_ALL"
+			],
+			[
+				"adtk_",
+				"adtk_constraint"
+			],
+			[
+				"adtk",
+				"adtk_bcr4bpr_traj"
+			],
+			[
+				"ad",
+				"adtk_nodeset"
+			],
+			[
+				"test",
+				"test_createBCR4BPRNodeset"
+			],
+			[
+				"test_c",
+				"test_createCR3BPNodeset"
+			],
+			[
+				"getCon",
+				"getConstraint"
+			],
+			[
+				"adt",
+				"adtk_sys_data"
+			],
+			[
+				"gsl_ve",
+				"gsl_vector_free"
+			],
+			[
+				"var",
+				"varStepSize"
+			],
+			[
+				"BCR4",
+				"BCR4BPR_SYS"
+			],
+			[
+				"adtk_cr",
+				"adtk_cr3bp_sys_data"
+			],
+			[
+				"adk",
+				"adtk_matrix"
+			],
+			[
+				"num",
+				"numPoints"
+			],
+			[
+				"save",
+				"saveIntegratedData"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "tests/UtilitiesTest.cpp",
+			"settings":
+			{
+				"buffer_size": 602,
+				"line_ending": "Unix",
+				"name": "/**"
+			}
+		},
+		{
+			"file": "include/adtk_utilities.hpp",
+			"settings":
+			{
+				"buffer_size": 1140,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "tests/Nodeset_test.cpp",
+			"settings":
+			{
+				"buffer_size": 3119,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/adtk_nodeset.cpp",
+			"settings":
+			{
+				"buffer_size": 6564,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/adtk_nodeset.hpp",
+			"settings":
+			{
+				"buffer_size": 2776,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "tests/makefile",
+			"settings":
+			{
+				"buffer_size": 5204,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/adtk_correction_engine.cpp",
+			"settings":
+			{
+				"buffer_size": 12954,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_constraint.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_constraint.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_correction_engine.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_nodeset.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_bcr4bpr_nodeset.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_bcr4bpr_traj.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_traj.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_nodeset.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_cr3bp_nodeset.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_corrections_engine.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_corrections_engine.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_utilities.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_utilities.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/tests/Nodeset_test.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_trajectory.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_simulation_engine.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_nodeset.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_nodeset.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_calculations.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/tests/makefile",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_trajectory.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/ADTK.sublime-project",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_traj.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_sys_data.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_sys_data.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/tests/SimulationEngine_test.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_bcr4bpr_sys_data.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_body_data.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_calculations.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_cr3bp_sys_data.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_cr3bp_traj.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_matrix.cpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_constraint.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_ascii_output.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_simulation_engine.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_matrix.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_sys_data.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_constraint.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_constants.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_body_data.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_sys_data.hpp",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/Matlab/_Tools/custom/targeting/bcr4bpR_multShoot.m",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/mainpage.dox",
+		"/home/andrew/Programming/MyProjects/PHP/OfAndrewAndStuff/photo/photography_files/withoutWatermarks/addWatermarks.sh",
+		"/home/andrew/Projects/Astrodynamics_Research/ATD/CPP_fcns/GslInteg_STM_events.cpp",
+		"/home/andrew/Downloads/sitemap.xml",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_integrators.hpp",
+		"/home/andrew/Games/Critter-1.0.0/runCritter.sh",
+		"/home/andrew/Projects/Astrodynamics_Research/ATD/lunar_phasing_gui_v3.fig",
+		"/home/andrew/Projects/Astrodynamics_Research/ATD/lunar_phasing_gui_v3.m",
+		"/home/andrew/Programming/MyProjects/PHP/OfAndrewAndStuff/photography_files/withoutWatermarks/processImages.php",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/Matlab/LPF/HaloManifolds_MatchResIC_Map.m",
+		"/home/andrew/Projects/Astrodynamics_Research/Code/Matlab/LPF/SystemConnection_ResAtEpochs_PlotData.m",
+		"/usr/lib/pymodules/python2.7/f.lux_indicator_applet-1.1.8.egg-info",
+		"/usr/lib/pymodules/python2.7/fluxgui/fluxgui.py",
+		"/media/andrew/FAT STORAGE/Goddard Internship/Code and Data/spinning_thermal_testing/generalCommLib.c",
+		"/home/andrew/Projects/Astrodynamics_Research/DocWiki/Family History.md",
+		"/home/andrew/Downloads/MATLAB File Help: simNL.html",
+		"/home/andrew/Projects/Astrodynamics_Research/Documentation/ResearchJournal/tex/template.tex",
+		"/home/andrew/Projects/Astrodynamics_Research/Documentation/ResearchJournal/tex/2014-11-13.tex",
+		"/home/andrew/Games/KSP Mods/KW Release Package v2.6d2 (Open this, don't extract it)/Extras/ReduceClampSounds (Recommended)/GameData/Squad/Parts/Utility/launchClamp1/launchClamp1.cfg"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"adtk_corrections_engine"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"adtk_correction_engine"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 6,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "tests/UtilitiesTest.cpp",
+					"settings":
+					{
+						"buffer_size": 602,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								589,
+								589
+							]
+						],
+						"settings":
+						{
+							"auto_name": "/**",
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "include/adtk_utilities.hpp",
+					"settings":
+					{
+						"buffer_size": 1140,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1021,
+								1021
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "tests/Nodeset_test.cpp",
+					"settings":
+					{
+						"buffer_size": 3119,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2853,
+								2853
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 816.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/adtk_nodeset.cpp",
+					"settings":
+					{
+						"buffer_size": 6564,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4793,
+								4793
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 411.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "include/adtk_nodeset.hpp",
+					"settings":
+					{
+						"buffer_size": 2776,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2228,
+								2228
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 765.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "tests/makefile",
+					"settings":
+					{
+						"buffer_size": 5204,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1558,
+								1558
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Makefile/Makefile.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 153.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/adtk_correction_engine.cpp",
+					"settings":
+					{
+						"buffer_size": 12954,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								12626,
+								12626
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 6177.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 204.0,
+	"status_bar_visible": true
+}

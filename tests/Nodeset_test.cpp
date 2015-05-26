@@ -1,7 +1,27 @@
 /**
  *	Test the nodeset object
  */
+/*
+ *	Astrodynamics Toolkit 
+ *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of the Astrodynamics Toolkit (ADTK).
+ *
+ *  ADTK is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  ADTK is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
+#include "adtk_correction_engine.hpp"
 #include "adtk_cr3bp_constraint.hpp"
 #include "adtk_bcr4bpr_constraint.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
@@ -13,23 +33,67 @@
 
 using namespace std;
 
-int main(void){
+adtk_cr3bp_nodeset *crSet;
+adtk_bcr4bpr_nodeset *bcSet;
+
+void test_createCR3BPNodeset(){
 	// Define system and IC
 	adtk_cr3bp_sys_data sysData("earth", "moon");
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	adtk_cr3bp_nodeset crSet(ic, sysData, 2.77, 5, adtk_nodeset::TIME);
+	crSet = new adtk_cr3bp_nodeset(ic, sysData, 2.77, 5, adtk_nodeset::TIME);
 	
 	// Add a constraint
 	double data[] = {1,1,1,NAN,NAN,NAN};
-	adtk_cr3bp_constraint crCon1(adtk_constraint::MATCH_ALL, 3, data);
-	crSet.addConstraint(crCon1);
+	adtk_cr3bp_constraint crCon1(adtk_constraint::MATCH_CUST, 3, data);
+	crSet->addConstraint(crCon1);
 
-	adtk_bcr4bpr_nodeset bcSet;
+	printf("CR3BP Nodeset:\n Nodes: %d\n", crSet->getNumNodes());
+	for (int n = 0; n < crSet->getNumNodes(); n++){
+		vector<double> node = crSet->getNode(n);
+		printf("  %02d: %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f\n", n+1,
+			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
+	}
+	cout << " Constraints:" << endl;
+	for(int n = 0; n < crSet->getNumCons(); n++){
+		crSet->getConstraint(n).print();
+	}
+}//==============================================
 
-	cout << "CR3BP Node set has nodes with " << crSet.getNodeSize() << " states"<<endl;
-	crSet.getConstraint(0).print();
-	cout << "BCR4BPR Node set has nodes with " << bcSet.getNodeSize() << " states"<<endl;
+void test_createBCR4BPRNodeset(){
+	adtk_bcr4bpr_sys_data semData("sun", "earth", "moon");
+	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
+
+	bcSet = new adtk_bcr4bpr_nodeset(ic2, semData, 0, 40, 5, adtk_nodeset::TIME);
+	printf("BCR4BPR Nodeset:\n Nodes: %d\n", bcSet->getNumNodes());
+	for (int n = 0; n < bcSet->getNumNodes(); n++){
+		vector<double> node = bcSet->getNode(n);
+		printf("  %02d: %9.4f -- %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f\n", n+1,
+			bcSet->getEpoch(n), node.at(0), node.at(1), node.at(2), node.at(3),
+			node.at(4), node.at(5));
+	}
+	cout << " Constraints:" << endl;
+	for(int n = 0; n < bcSet->getNumCons(); n++){
+		bcSet->getConstraint(n).print();
+	}
+}//==============================================
+
+
+int main(void){
+	
+	test_createCR3BPNodeset();
+	test_createBCR4BPRNodeset();
+	cout << "Main scope: numNodes = " << crSet->getNumNodes() << endl;
+
+	adtk_correction_engine corrector;
+	corrector.correct_cr3bp(crSet);
+
+	corrector.correct_bcr4bpr(bcSet);
+
+	// Memory clean-up
+	delete crSet;
+	delete bcSet;
+
 	return 0;
 }

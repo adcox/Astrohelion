@@ -9,6 +9,8 @@
 #include <cmath>
 #include <iostream>
 
+adtk_cr3bp_nodeset::adtk_cr3bp_nodeset() : adtk_nodeset(6){}
+
 adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(adtk_cr3bp_sys_data data) : adtk_nodeset(6){
 	sysData = data;
 }
@@ -35,6 +37,7 @@ adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(const adtk_cr3bp_nodeset& n) : adtk_nodes
 }
 
 adtk_cr3bp_nodeset& adtk_cr3bp_nodeset::operator =(const adtk_cr3bp_nodeset& n){
+	adtk_nodeset::operator =(n);
 	sysData = n.sysData;
 	return *this;
 }
@@ -44,10 +47,19 @@ adtk_cr3bp_nodeset& adtk_cr3bp_nodeset::operator =(const adtk_cr3bp_nodeset& n){
  *	@param i consraint index (begins with zero)
  *	@return a constraint
  */
-adtk_cr3bp_constraint adtk_cr3bp_nodeset::getConstraint(int i){ return constraints.at(i); }
+adtk_cr3bp_constraint adtk_cr3bp_nodeset::getConstraint(int i) const{ 
+	return constraints.at(i);
+}
 
 /**
  *	Add a constraint to the nodeset
  *	@param c a constraint to add
  */
 void adtk_cr3bp_nodeset::addConstraint(adtk_cr3bp_constraint c){ constraints.push_back(c); }
+
+/**
+ *	@return the number of constraints stored in this nodeset
+ */
+int adtk_cr3bp_nodeset::getNumCons() const { return constraints.size(); }
+
+adtk_sys_data* adtk_cr3bp_nodeset::getSysData() { return &sysData; }

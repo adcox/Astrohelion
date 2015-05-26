@@ -58,6 +58,9 @@ adtk_nodeset& adtk_nodeset::operator =(const adtk_nodeset &n){
 //      Set and Get Functions
 //-----------------------------------------------------
 
+std::vector<double>* adtk_nodeset::getNodes(){ return &nodes; }
+std::vector<double>* adtk_nodeset::getTOFs(){ return &tofs; }
+
 /**
  *	@param i the index of the node (begins at zero)
  *	@return the node specified by <tt>i</tt>
@@ -129,6 +132,7 @@ void adtk_nodeset::initSetFromICs(double IC[6], adtk_sys_data *sysData, double t
 		node_distro_t type){
 	// Set up the simulation engine
 	adtk_simulation_engine engine(sysData);
+	engine.setVerbose(true);
 	switch(type){
 		default:
 		case adtk_nodeset::NONE:
@@ -160,22 +164,23 @@ void adtk_nodeset::initSetFromICs(double IC[6], adtk_sys_data *sysData, double t
 
 	double sumArclen = 0;
 	double desiredArclen = 0;
+	const int k = adtk_trajectory::STATE_WIDTH;
 
-	if(nodeDistro == adtk_nodeset::ARCLENGTH){
-		// Compute the total length of the trajectory (approx.)
-		for (int n = 0; n < traj.getLength(); n++){
-			double dx = trajState->at(n*6) - trajState->at((n-1)*6);
-			double dy = trajState->at(n*6+1) - trajState->at((n-1)*6+1);
-			double dz = trajState->at(n*6+2) - trajState->at((n-1)*6+2);
+	for (int n = 0; n < traj.getLength(); n++){
+		if(nodeDistro == adtk_nodeset::ARCLENGTH){
+			// Compute the total length of the trajectory (approx.)
+			double dx = trajState->at(n*k) - trajState->at((n-1)*k);
+			double dy = trajState->at(n*k+1) - trajState->at((n-1)*k+1);
+			double dz = trajState->at(n*k+2) - trajState->at((n-1)*k+2);
 			sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
+		}else{
+			// if TIME is the type, every state on the trajectory is a node, so just copy them over
+			nodes.insert(nodes.end(), trajState->begin()+n*k, trajState->begin()+n*k+6);
 		}
-
-		desiredArclen = sumArclen/(numNodes-1);
-		sumArclen = 0;
-	}else{
-		// if TIME is the type, every state on the trajectory is a node, so just copy them over
-		nodes.insert(nodes.end(), trajState->begin(), trajState->end());
 	}
+
+	desiredArclen = sumArclen/(numNodes-1);
+	sumArclen = 0;
 
 	int lastNode = 0;
 	for (int n = 0; n < traj.getLength(); n++){
@@ -184,14 +189,14 @@ void adtk_nodeset::initSetFromICs(double IC[6], adtk_sys_data *sysData, double t
 				nodes.insert(nodes.end(), trajState->begin(), trajState->begin()+6);
 			}else{
 				// Use linear approximation to compute distance between points
-				double dx = trajState->at(n*6) - trajState->at((n-1)*6);
-				double dy = trajState->at(n*6+1) - trajState->at((n-1)*6+1);
-				double dz = trajState->at(n*6+2) - trajState->at((n-1)*6+2);
+				double dx = trajState->at(n*k) - trajState->at((n-1)*k);
+				double dy = trajState->at(n*k+1) - trajState->at((n-1)*k+1);
+				double dz = trajState->at(n*k+2) - trajState->at((n-1)*k+2);
 				sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
 
 				if(sumArclen > desiredArclen){
 					// Save this state as a node
-					nodes.insert(nodes.end(), trajState->begin()+n*6, trajState->begin()+(n+1)*6);
+					nodes.insert(nodes.end(), trajState->begin()+n*k, trajState->begin()+ n*k + 6);
 					tofs.push_back(trajTime->at(n) - trajTime->at(lastNode));
 					lastNode = n;	// update
 					sumArclen = 0;	// reset

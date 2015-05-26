@@ -46,7 +46,9 @@ class adtk_constraint{
 		 *	MATCH_ALL 	- 	Make one node match another in all states.
 		 *					The <tt>node</tt> value represents the source node, and the
 		 *					first value in <tt>data</tt> represents the node that will
-		 *					be matched to the first.
+		 *					be matched to the first. Note that, for non-autonomous systems,
+		 *					the corrector will not attempt to match epoch time because it
+		 *					doesn't make sense to make two nodes occur at the same time.
 		 *
 		 *	MATCH_CUST 	-	Make one node match another in the specified states.
 		 *					The <tt>node</tt> value represents the source node; place the
@@ -57,7 +59,8 @@ class adtk_constraint{
 		 *
 		 *	MAX_DELTA_V	- 	Constrain total delta V to be less than the specified amount
 		 *					The <tt>node</tt> value is unused in this constraint; make the
-		 *					first value in the data vector be the maximum delta-V in km/s
+		 *					first value in the data vector be the maximum delta-V in 
+		 *					non-dimensional velocity units
 		 *
 		 *	DELTA_V 	- 	Constrain delta V to be exactly the specified amount
 		 *					Data is input in the same format as MAX_DELTA_V
@@ -78,7 +81,9 @@ class adtk_constraint{
 
 		constraint_t getType() const;
 		int getNode() const;
+		int getNodeSize() const;
 		std::vector<double> getData() const;
+		int countConstrainedStates() const;
 
 		void setType(constraint_t);
 		void setNode(int);

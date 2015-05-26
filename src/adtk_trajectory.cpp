@@ -3,7 +3,25 @@
  *
  *	Trajectory Class: contains info about a trajectory
  */
-
+/*
+ *	Astrodynamics Toolkit 
+ *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of the Astrodynamics Toolkit (ADTK).
+ *
+ *  ADTK is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  ADTK is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "adtk_trajectory.hpp"
 
 #include "adtk_matrix.hpp"
@@ -132,7 +150,7 @@ adtk_sys_data::system_t adtk_trajectory::getType() const { return adtk_sys_data:
  *	the state, time, and STM vectors.
  */
 void adtk_trajectory::setLength(){
-	int sL = state.size()/9;	// row-major format, 9 elements per row
+	int sL = state.size()/STATE_WIDTH;	// row-major format, 9 elements per row
 	int tL = times.size();
 	int pL = allSTM.size();
 

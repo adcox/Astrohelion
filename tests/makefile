@@ -39,7 +39,7 @@ BCR_SYS_DATA_DEP = sysData.o bcr4bpSysData.o bodyData.o
 # dependencies for trajTest
 TRAJ_TEST_DEP = bodyData.o matrix.o sysData.o cr3bpSysData.o cr3bpTraj.o trajectory.o
 # dependencies for nodesetTest
-NODESET_TEST_DEP = nodeset.o cr3bpNodeset.o bcr4bpNodeset.o constraint.o $(SIM_ENGINE_DEP)
+NODESET_TEST_DEP = nodeset.o cr3bpNodeset.o bcr4bpNodeset.o constraint.o corrector.o $(SIM_ENGINE_DEP)
 # Where MATLAB is located on this system
 MAT_ROOT = /Applications/MATLAB_R2014a.app
 
@@ -81,6 +81,9 @@ trajTest: $(patsubst %.o,$(OBJ)/%.o, $(TRAJ_TEST_DEP))
 matIOTest:
 	$(COMP) $(MATIO_FLAGS) MatIO_test.cpp -o $(BIN)/$@
 
+utilityTest: $(OBJ)/utilities.o
+	$(COMP) -I $(INC) $^ UtilitiesTest.cpp -o $(BIN)/$@
+
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
@@ -98,6 +101,9 @@ $(OBJ)/bodyData.o: $(SRC)/adtk_body_data.cpp $(INC)/adtk_body_data.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/calculations.o: $(SRC)/adtk_calculations.cpp $(INC)/adtk_calculations.hpp
+	$(COMP) -I $(INC) -c $< -o $@
+
+$(OBJ)/corrector.o: $(SRC)/adtk_correction_engine.cpp $(INC)/adtk_correction_engine.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/constraint.o: $(SRC)/adtk_constraint.cpp $(INC)/adtk_constraint.hpp
@@ -127,8 +133,10 @@ $(OBJ)/sysData.o: $(SRC)/adtk_sys_data.cpp $(INC)/adtk_sys_data.hpp
 $(OBJ)/trajectory.o: $(SRC)/adtk_trajectory.cpp $(INC)/adtk_trajectory.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
-## UTILITY
+$(OBJ)/utilities.o: $(SRC)/adtk_utilities.cpp $(INC)/adtk_utilities.hpp
+	$(COMP) -I $(INC) -c $< -o $@
 
+## UTILITY
 clean:
 	rm $(OBJ)/*.o
 

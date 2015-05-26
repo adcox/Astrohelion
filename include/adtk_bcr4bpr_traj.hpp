@@ -52,7 +52,8 @@ class adtk_bcr4bpr_traj : public adtk_trajectory{
 		adtk_sys_data::system_t getType() const;
 
 		std::vector<double>* get_dqdT();
-
+		std::vector<double> get_dqdT(int);
+		
 		void setSysData(adtk_bcr4bpr_sys_data);
 
 	private:

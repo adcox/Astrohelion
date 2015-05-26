@@ -110,7 +110,7 @@ vector<double>* adtk_trajectory::getState(){ return &state;}
  */
 vector<double> adtk_trajectory::getState(int n) const{
 	vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
-	vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH - 1;
+	vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH;
 	vector<double> oneState(first, last);
 	return oneState;
 }

@@ -1,12 +1,3 @@
-/**
- *	A derivative class of the adtk_sys_data super-class. This class
- *	contains information specific to the CR3BP
- *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -32,7 +23,15 @@
 #include "adtk_sys_data.hpp"
 
 #include <string>
- 
+
+/**
+ *	A derivative class of the adtk_sys_data super-class. This class
+ *	contains information specific to the CR3BP
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
+ */
 class adtk_cr3bp_sys_data : public adtk_sys_data{
 	private:
 		/** Mass ratio between two primaries*/

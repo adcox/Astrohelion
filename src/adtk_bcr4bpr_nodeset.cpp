@@ -34,6 +34,9 @@ adtk_bcr4bpr_nodeset::adtk_bcr4bpr_nodeset(double IC[6], adtk_bcr4bpr_sys_data d
 	}
 }//======================================================================
 
+/**
+ *	@return a pointer to the beginning of the epochs vector
+ */
 std::vector<double>* adtk_bcr4bpr_nodeset::getEpochs(){ return &epochs; }
 
 /**
@@ -62,6 +65,9 @@ double adtk_bcr4bpr_nodeset::getEpoch(int i) const {
 	return epochs.at(i);
 }//=====================================
 
+/**
+ *	@return a vector to the system data object for this nodeset
+ */
 adtk_sys_data* adtk_bcr4bpr_nodeset::getSysData() { return &sysData; }
 
 /**

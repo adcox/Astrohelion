@@ -67,6 +67,10 @@ adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
     printMessage("Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
 }//===========================================
 
+/**
+ *  Copy constructor
+ *  @param s a simulation engine 
+ */
 adtk_simulation_engine::adtk_simulation_engine(const adtk_simulation_engine& s){
     sysData = s.sysData;    // Copies ADDRESS of a system data object
     traj = s.traj;          // Copies ADDRESS of a trajectory object
@@ -82,6 +86,9 @@ adtk_simulation_engine::adtk_simulation_engine(const adtk_simulation_engine& s){
     numSteps = s.numSteps;
 }//=====================================
 
+/**
+ *  Free memory and clean up
+ */
 adtk_simulation_engine::~adtk_simulation_engine(){
     printMessage("Destroying simulation engine...\n");
     reset();    // Function handles deallocation and resetting of data
@@ -91,6 +98,10 @@ adtk_simulation_engine::~adtk_simulation_engine(){
 //      Operator Functions
 //-----------------------------------------------------
 
+/**
+ *  Assignment operator; make this engine equal another by copying its data
+ *  @param s another simulation engine
+ */
 adtk_simulation_engine& adtk_simulation_engine::operator =(const adtk_simulation_engine& s){
     sysData = s.sysData;    // Copies ADDRESS of a system data object
     traj = s.traj;          // Copies ADDRESS of a trajectory object

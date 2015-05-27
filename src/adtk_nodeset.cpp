@@ -18,6 +18,10 @@ using namespace std;
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *	Create a nodeset with space for one node and TOF
+ *	@param n the size of a node (i.e. number of states)
+ */
 adtk_nodeset::adtk_nodeset(const int n) : nodeSize(n){
 	// Reserve space for one node and TOF
 	nodes.reserve(n);
@@ -26,6 +30,7 @@ adtk_nodeset::adtk_nodeset(const int n) : nodeSize(n){
 
 /**
  *	Copy constructor
+ *	@param n a nodeset
  */
 adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 	if(nodeSize == n.nodeSize){
@@ -43,6 +48,11 @@ adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 //      Operator Functions
 //-----------------------------------------------------
 
+/**
+ *	Assignment operator
+ *	@param n a different nodeset
+ *	@return this nodeset, modified to be equal to n
+ */
 adtk_nodeset& adtk_nodeset::operator =(const adtk_nodeset &n){
 	if(nodeSize == n.nodeSize){
 		nodes = n.nodes;
@@ -60,7 +70,14 @@ adtk_nodeset& adtk_nodeset::operator =(const adtk_nodeset &n){
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@return a pointer to the beginning of the node array; useful for in-place editing
+ */
 std::vector<double>* adtk_nodeset::getNodes(){ return &nodes; }
+
+/**
+ *	@return a pointer to the beginning of the TOF array; useful for in-place editing
+ */
 std::vector<double>* adtk_nodeset::getTOFs(){ return &tofs; }
 
 /**
@@ -73,7 +90,7 @@ std::vector<double> adtk_nodeset::getNode(int i) const {
 }
 
 /**
- *	@oaram i the index of the TOF; note that if there are n nodes, there will be n-1 TOFs.
+ *	@param i the index of the TOF; note that if there are n nodes, there will be n-1 TOFs.
  *	@return the TOF between nodes <tt>i</tt> and <tt>i+1</tt>
  */
 double adtk_nodeset::getTOF(int i) const { return tofs.at(i); }
@@ -166,6 +183,7 @@ void adtk_nodeset::setVelConNodes_allBut(std::vector<int> notCont){
  *	integrated trajectory into pieces (nodes).
  *
  *	@param IC a set of initial conditions, non-dimensional units
+ *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC

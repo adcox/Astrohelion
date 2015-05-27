@@ -1,12 +1,3 @@
-/**
- *	A derivative class of the adtk_sys_data super-class. This class
- *	contains information specific to the BCR4BP, rotating coordinates
- *
- *	Author: Andrew Cox
- *
- *	Version: May 18, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -33,6 +24,14 @@
 
 #include "adtk_constants.hpp"
 
+/**
+ *	A derivative class of the adtk_sys_data super-class. This class
+ *	contains information specific to the BCR4BP, rotating coordinates
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 18, 2015
+ */
 class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 	public:
 		adtk_bcr4bpr_sys_data();

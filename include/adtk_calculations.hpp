@@ -7,7 +7,7 @@
  *
  *	Version: May 15, 2015
  */
-
+ 
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0

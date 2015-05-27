@@ -1,13 +1,3 @@
-/**
- *	A data object that represents a matrix. This class defines functions that 
- *	allow for easy-to-read matrix operations in code. Some of the functionality
- *	is based on GSL's matrix and CBLAS functions, but some is also hand-coded.
- *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -36,8 +26,15 @@
 #include <string>
 #include <vector>
 
-// Forward Declarations
-
+/**
+ *	A data object that represents a matrix. This class defines functions that 
+ *	allow for easy-to-read matrix operations in code. Some of the functionality
+ *	is based on GSL's matrix and CBLAS functions, but some is also hand-coded.
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
+ */
 class adtk_matrix{
 
 	public:

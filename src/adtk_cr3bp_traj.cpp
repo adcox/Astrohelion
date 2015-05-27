@@ -22,6 +22,10 @@ adtk_cr3bp_traj::adtk_cr3bp_traj() : adtk_trajectory(){
 	jacobi.assign(1,0);
 }
 
+/**
+ *	Create a CR3BP trajectory object for the specified system
+ *	@param data a system data object describing the system
+ */
 adtk_cr3bp_traj::adtk_cr3bp_traj(adtk_cr3bp_sys_data data){
 	jacobi.assign(1,0);
 	sysData = data;
@@ -34,6 +38,10 @@ adtk_cr3bp_traj::adtk_cr3bp_traj(int n) : adtk_trajectory(n){
 	jacobi.assign(n, 0);
 }
 
+/**
+ *	Copy the specified trajectory
+ *	@param t trajectory
+ */
 adtk_cr3bp_traj::adtk_cr3bp_traj(const adtk_cr3bp_traj &t) : adtk_trajectory(t){
 	sysData = t.sysData;
 	jacobi = t.jacobi;
@@ -146,6 +154,10 @@ adtk_sys_data::system_t adtk_cr3bp_traj::getType() const{
 	return sysData.getType();
 }
 
+/**
+ *	Calls the basic trajectory setLength() method and implements extra catches
+ *	specific to the CR3BP trajectory object
+ */
 void adtk_cr3bp_traj::setLength(){
 	adtk_trajectory::setLength();
 	

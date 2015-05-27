@@ -1,19 +1,3 @@
-/**
- *	This object holds information about a trajectory in one package to
- *	make passing the data between engines and analysis tools symple.
- *	This class acts as a template for derivative classes that apply
- *	to specific systems. For example, the CR3BP has a specific
- *	trajectory class which includes additional information specific
- *	to the CR3BP, like Jacobi constant.
- *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
- *
- *	TODO:
- *		- Overload +, += operators for concatenating trajectories
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -43,8 +27,24 @@
 #include <vector>
 
 
+/**
+ *	This object holds information about a trajectory in one package to
+ *	make passing the data between engines and analysis tools symple.
+ *	This class acts as a template for derivative classes that apply
+ *	to specific systems. For example, the CR3BP has a specific
+ *	trajectory class which includes additional information specific
+ *	to the CR3BP, like Jacobi constant.
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
+ *
+ *	TODO:
+ *		- Overload +, += operators for concatenating trajectories
+ */
 class adtk_trajectory{
 	public:
+		/** The width of one row of the state vector (state vector stored in row-major order) */
 		static const int STATE_WIDTH = 9;
 		
 		// *structors

@@ -1,13 +1,4 @@
-/**
- *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
- *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
- *	into smaller pieces, which can improve the corrector's performance.
- *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
- */
-
- /*
+/*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
@@ -37,6 +28,14 @@
 // Forward Declarations
 class adtk_sys_data;
 
+/**
+ *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
+ *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
+ *	into smaller pieces, which can improve the corrector's performance.
+ *
+ *	Author: Andrew Cox
+ *	Version: May 21, 2015
+ */
 class adtk_nodeset{
 	public:
 		/**
@@ -71,6 +70,11 @@ class adtk_nodeset{
 		int getNodeSize() const;
 		node_distro_t getNodeDistro() const;
 		std::vector<int> getVelConNodes();
+
+		/**
+		 *	Extend this function to return a system data object from derivative classes
+		 *	@return a pointer to the system data object
+		 */
 		virtual adtk_sys_data* getSysData() = 0;
 
 		void appendNode(std::vector<double>);
@@ -79,6 +83,10 @@ class adtk_nodeset{
 		void setVelConNodes(std::vector<int>);
 		void setVelConNodes_allBut(std::vector<int>);
 
+		/**
+		 *	Extend this function to retrieve the number of stored constraints
+		 *	@return number of stored constraints
+		 */	
 		virtual int getNumCons() const = 0;
 	protected:
 		/** The number of states in one node */

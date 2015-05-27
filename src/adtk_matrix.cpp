@@ -275,7 +275,12 @@ adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 	}
 }//==============================================
 
-
+/**
+ *	Subtract two matrices: A = L - R
+ *	@param lhs the left-hand matrix L
+ *	@param rhs the right-hand matrix R
+ *	@return the difference L - R
+ */
 adtk_matrix operator -(const adtk_matrix &lhs, const adtk_matrix &rhs){
 	return operator +(lhs, -1*rhs);
 }//==============================================
@@ -369,6 +374,12 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 	}
 }//=============================================
 
+/**
+ *	Multiply a scalar and a matrix: A = l*R
+ *	@param lhs the scalar l
+ *	@param rhs the matrix R
+ *	@return the product l*R (same as R*l)
+ */
 adtk_matrix operator *(const double &lhs, const adtk_matrix &rhs){
 	int rows = rhs.rows;
 	int cols = rhs.cols;
@@ -382,10 +393,22 @@ adtk_matrix operator *(const double &lhs, const adtk_matrix &rhs){
 	return adtk_matrix(rows, cols, b);
 }//=============================================
 
+/**
+ *	Multiply a scalar and a matrix: A = L*r
+ *	@param lhs the matrix L
+ *	@param rhs the scalar r
+ *	@return the product L*r (same as r*L)
+ */
 adtk_matrix operator *(const adtk_matrix &lhs, const double &rhs){
 	return operator *(rhs, lhs);
 }//=============================================
 
+/**
+ *	Multiply a scalar and a matrix: A = L/r
+ *	@param lhs the matrix L
+ *	@param rhs the scalar r
+ *	@return the quotient L/r (same as 1/r * L)
+ */
 adtk_matrix operator /(const adtk_matrix &lhs, const double &rhs){
 	return operator *(lhs, 1/rhs);
 }
@@ -399,10 +422,22 @@ adtk_matrix& adtk_matrix::operator *=(const double &alpha){
 	return *this;
 }//==============================================
 
+/**
+ *	Compare two matrices
+ *	@param lhs the left-hand matrix L
+ *	@param rhs the right-hand matrix R
+ *	@return whether or not L and R contain the same values
+ */
 bool operator ==(const adtk_matrix &lhs, const adtk_matrix &rhs){
 	return gsl_matrix_equal(lhs.a, rhs.a);
 }
 
+/**
+ *	Compare two matrices
+ *	@param lhs the left-hand matrix L
+ *	@param rhs the right-hand matrix R
+ *	@return whether or not L and R do NOT contain the same values
+ */
 bool operator !=(const adtk_matrix &lhs, const adtk_matrix &rhs){
 	return !operator==(lhs, rhs);
 }
@@ -503,6 +538,10 @@ void adtk_matrix::print(const char *format) const{
 	}
 }//==============================================
 
+/**
+ *	Write the matrix data out to a CSV file (must specify the extension)
+ *	@param filename the filename or filepath, including file extension
+ */
 void adtk_matrix::toCSV(const char *filename) const{
 	ofstream outFile;
 	outFile.open(filename, ios::out);

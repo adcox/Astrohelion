@@ -1,12 +1,3 @@
-/**
- *	The body data object provides a way to store and retrieve information about different
- *	celestial bodies. This may be supplemented/usurped by calls to SPICE in the future.
- *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -31,6 +22,14 @@
 
 #include <string>
 
+/**
+ *	The body data object provides a way to store and retrieve information about different
+ *	celestial bodies. This may be supplemented/usurped by calls to SPICE in the future.
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
+ */
 class adtk_body_data{
 	private:
 		/** Mean radius of the body, km */

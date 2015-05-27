@@ -64,6 +64,10 @@ adtk_trajectory::adtk_trajectory(int n){
 	allSTM.assign(n, adtk_matrix::Identity(6));
 }
 
+/**
+ *	Create a copy of the input trajectory
+ *	@param t a trajectory
+ */
 adtk_trajectory::adtk_trajectory(const adtk_trajectory& t){
 	numPoints = t.numPoints;
 	state = t.state;

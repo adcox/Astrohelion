@@ -1,12 +1,4 @@
-/**
- *	The constraint object contains information about how a particular node should be 
- *	constrained during a corrections process
- *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
- */
-
- /*
+/*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
@@ -32,6 +24,13 @@
 #include <string>
 #include <vector>
 
+/**
+ *	The constraint object contains information about how a particular node should be 
+ *	constrained during a corrections process
+ *
+ *	Author: Andrew Cox
+ *	Version: May 21, 2015
+ */
 class adtk_constraint{
 	public:
 		/**

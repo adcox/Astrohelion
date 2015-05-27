@@ -1,11 +1,3 @@
-/**
- *	An engine objecto to perform corrections, such as single-shooting
- *	and multiple shooting algorithms
- *
- *	Author: Andrew Cox
- *	Version: May 25, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -35,6 +27,13 @@
 class adtk_cr3bp_nodeset;
 class adtk_bcr4bpr_nodeset;
 
+/**
+ *	An engine objecto to perform corrections, such as single-shooting
+ *	and multiple shooting algorithms
+ *
+ *	Author: Andrew Cox
+ *	Version: May 25, 2015
+ */
 class adtk_correction_engine{
 	public:
 		

@@ -1,12 +1,4 @@
-/**
- *	This derivative of the adtk_nodeset object contains additional information
- *	for the BCR4BP
- *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
- */
-
- /*
+/*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
@@ -35,6 +27,13 @@
 
 #include <vector>
 
+/**
+ *	This derivative of the adtk_nodeset object contains additional information
+ *	for the BCR4BP
+ *
+ *	Author: Andrew Cox
+ *	Version: May 21, 2015
+ */
 class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 	public:
 		adtk_bcr4bpr_nodeset() : adtk_nodeset(6){}

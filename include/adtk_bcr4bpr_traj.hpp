@@ -1,12 +1,3 @@
-/**
- *	A derivative class of the adtk_trajectory super-class. This object
- *	contains trajectory information specific to the CR3BP
- *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -32,6 +23,14 @@
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_trajectory.hpp"
 
+/**
+ *	A derivative class of the adtk_trajectory super-class. This object
+ *	contains trajectory information specific to the CR3BP
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
+ */
 class adtk_bcr4bpr_traj : public adtk_trajectory{
 
 	public:

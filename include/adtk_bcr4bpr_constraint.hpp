@@ -1,11 +1,4 @@
-/**
- *	This derivative constraint class specifies the size of the node to be 7
- *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
- */
-
- /*
+/*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
@@ -30,11 +23,40 @@
 
 #include "adtk_constraint.hpp"
 
+/**
+ *	This derivative constraint class specifies the size of the node to be 7: the
+ *	first 6 states are the usual guys, the seventh is epoch time
+ *
+ *	Author: Andrew Cox
+ *	Version: May 21, 2015
+ */
 class adtk_bcr4bpr_constraint : public adtk_constraint{
 	public:
+		/**
+		 *	Create a generic BCR4BPR constraint
+		 */
 		adtk_bcr4bpr_constraint() : adtk_constraint(7){}
+
+		/**
+		 *	Create a BCR4BPR constraint with specified type
+		 *	@param t constraint type
+		 */
 		adtk_bcr4bpr_constraint(constraint_t t) : adtk_constraint(7, t){}
+
+		/**
+		 *	Create a BCR4BPR constraint with specified type, node, and data
+		 *	@param t constraint type
+		 *	@param i node index
+		 *	@param d data (7 elements)
+		 */
 		adtk_bcr4bpr_constraint(constraint_t t, int i, std::vector<double> d) : adtk_constraint(7, t, i, d){}
+		
+		/**
+		 *	Create a BCR4BPR constraint with specified type, node, and data
+		 *	@param t constraint type
+		 *	@param i node index
+		 *	@param d data (7 elements)
+		 */
 		adtk_bcr4bpr_constraint(constraint_t t, int i, double d[7]) : adtk_constraint(7, t, i, d){}
 };
 

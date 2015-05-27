@@ -12,19 +12,34 @@ using namespace std;
 // 		Constructor Functions
 //-----------------------------------------------------
 
+/**
+ *	Construct a basic BCR4BPR trajectory object
+ */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj() : adtk_trajectory() {
 	dqdT.assign(6,0);
 }
 
+/**
+ *	Construct a BCR4BPR trajectory object for the specified system
+ *	@param data a system data object describing the BCR4BPR system
+ */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
 	dqdT.assign(6,0);
 	sysData = data;
 }
 
+/**
+ *	Construct a BCR4BPR trajectory object with room for a specified number of states
+ *	@param n the number of states this trajectory will contain
+ */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(int n) : adtk_trajectory(n){
 	dqdT.assign(n*6,0);
 }
 
+/**
+ *	Copy the specified trajectory
+ *	@param t a BCR4BPR trajectory object
+ */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(const adtk_bcr4bpr_traj &t) : adtk_trajectory(t){
 	sysData = t.sysData;
 	dqdT = t.dqdT;
@@ -122,7 +137,7 @@ adtk_bcr4bpr_sys_data adtk_bcr4bpr_traj::getSysData(){ return sysData; }
 vector<double>* adtk_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
 
 /**
- *	@param the index of the dqdT vector to retrieve
+ *	@param i the index of the dqdT vector to retrieve
  *	@return the i'th 6-element dqdT vector
  */
 vector<double> adtk_bcr4bpr_traj::get_dqdT(int i){
@@ -144,6 +159,10 @@ void adtk_bcr4bpr_traj::setSysData(adtk_bcr4bpr_sys_data data){ sysData = data; 
 // 		Utility Functions
 //-----------------------------------------------------
 
+/**
+ *	Calls the basic trajectory setLength() method and implements extra catches
+ *	specific to the BCR4BPR trajectory object
+ */
 void adtk_bcr4bpr_traj::setLength(){
 	adtk_trajectory::setLength();
 

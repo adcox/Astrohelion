@@ -9,8 +9,15 @@
 #include <cmath>
 #include <iostream>
 
+/**
+ *	Create a general CR3BP nodeset
+ */
 adtk_cr3bp_nodeset::adtk_cr3bp_nodeset() : adtk_nodeset(6){}
 
+/**
+ *	Create a nodeset with specified system data
+ *	@param data system data object
+ */
 adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(adtk_cr3bp_sys_data data) : adtk_nodeset(6){
 	sysData = data;
 }
@@ -32,10 +39,18 @@ adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(double IC[6], adtk_cr3bp_sys_data data, d
 	initSetFromICs(IC, &sysData, 0, tof, numNodes, type);
 }//======================================================================
 
+/**
+ *	Copy input nodeset
+ *	@param n a nodeset
+ */
 adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(const adtk_cr3bp_nodeset& n) : adtk_nodeset(6){
 	sysData = n.sysData;
 }
 
+/**
+ *	Make this nodeset equal to the input nodeset
+ *	@param n a nodeset
+ */
 adtk_cr3bp_nodeset& adtk_cr3bp_nodeset::operator =(const adtk_cr3bp_nodeset& n){
 	adtk_nodeset::operator =(n);
 	sysData = n.sysData;
@@ -63,4 +78,7 @@ void adtk_cr3bp_nodeset::addConstraint(adtk_cr3bp_constraint c){ constraints.pus
  */
 int adtk_cr3bp_nodeset::getNumCons() const { return constraints.size(); }
 
+/**
+ *	@return a pointer to the system data object stored in this nodeset
+ */
 adtk_sys_data* adtk_cr3bp_nodeset::getSysData() { return &sysData; }

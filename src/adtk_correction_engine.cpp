@@ -51,31 +51,78 @@ using namespace std;
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@return whether or not the corrector uses variable time (as opposed
+ * 	to fixed time)
+ */
 bool adtk_correction_engine::usesVarTime() const { return varTime; }
+
+/**
+ *	@return whether or not the corrector will be verbose
+ */
 bool adtk_correction_engine::isVerbose() const { return verbose; }
+
+/**
+ *	@return the maximum number of iterations to attempt before giving up
+ */
 int adtk_correction_engine::getMaxIts() const { return maxIts; }
+
+/**
+ *	@return the minimum error tolerance (non-dimensional units); errors
+ *	less than this value are considered negligible
+ */
 double adtk_correction_engine::getTol() const { return tol; }
 
+/**
+ *	Set varTime
+ *	@param b whether or not the corrector should use variable time
+ */
 void adtk_correction_engine::setVarTime(bool b){ varTime = b; }
+
+/**
+ *	Set verbosity
+ *	@param b whether or not the corrector should be verbose in its outputs
+ */
 void adtk_correction_engine::setVerbose(bool b){ verbose = b; }
+
+/**
+ *	Set maximum iterations
+ *	@param i the maximum number of iterations to attempt before giving up
+ */
 void adtk_correction_engine::setMaxIts(int i){ maxIts = i; }
+
+/**
+ *	Set the error tolerance
+ *	@param d errors below this value will be considered negligible
+ */
 void adtk_correction_engine::setTol(double d){ tol = d; }
 
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
 
-
+/**
+ *	Correct a CR3BP nodeset
+ *	@param set a pointer to a nodeset
+ */
 void adtk_correction_engine::correct_cr3bp(adtk_cr3bp_nodeset* set){
 	nodeset = set;
 	correct(nodeset);
 }
 
+/**
+ *	Correct a BCR4BP nodeset
+ *	@param set a pointer to a nodeset
+ */
 void adtk_correction_engine::correct_bcr4bpr(adtk_bcr4bpr_nodeset* set){
 	nodeset = set;
 	correct(nodeset);
 }
 
+/**
+ *	Correct a generic nodeset; equipped to handle any type
+ *	@param set a pointer to a nodeset
+ */
 void adtk_correction_engine::correct(adtk_nodeset *set){
 	cout << "Corrector:" << endl;
 

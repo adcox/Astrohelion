@@ -1,10 +1,3 @@
-/**
- *	This derivative of the adtk_nodeset enforces a node size of 6
- *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -37,6 +30,12 @@
 // Forward declarations
 class adtk_cr3bp_sys_data;
 
+/**
+ *	This derivative of the adtk_nodeset enforces a node size of 6
+ *
+ *	Author: Andrew Cox
+ *	Version: May 21, 2015
+ */
 class adtk_cr3bp_nodeset : public adtk_nodeset{
 	public:
 		// *structors

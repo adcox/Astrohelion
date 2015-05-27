@@ -1,14 +1,3 @@
-/**
- *	The simulation engine is the workhorse object for the ATDK. It
- *	holds functions to integrate equations of motion, compute
- *	zero-velocity surfaces, manifold arcs, and other useful
- *	structures
- *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -38,6 +27,16 @@
 class adtk_bcr4bpr_traj;
 class adtk_cr3bp_traj;
 
+/**
+ *	The simulation engine is the workhorse object for the ATDK. It
+ *	holds functions to integrate equations of motion, compute
+ *	zero-velocity surfaces, manifold arcs, and other useful
+ *	structures
+ *
+ *	Author: Andrew Cox
+ *
+ *	Version: May 15, 2015
+ */
 class adtk_simulation_engine{
 	public:
 		// Constructors

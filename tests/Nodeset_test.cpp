@@ -44,16 +44,26 @@ void test_createCR3BPNodeset(){
 	// Create a node set from the IC and sysDdata
 	crSet = new adtk_cr3bp_nodeset(ic, sysData, 2.77, 5, adtk_nodeset::TIME);
 	
+	int nodes[] = {3,4};
+	vector<int> velCon(nodes, nodes+2);
+	// crSet->setVelConNodes_allBut(velCon);
+
 	// Add a constraint
-	double data[] = {1,1,1,NAN,NAN,NAN};
-	adtk_cr3bp_constraint crCon1(adtk_constraint::MATCH_CUST, 3, data);
-	crSet->addConstraint(crCon1);
+	// double data[] = {1,1,1,NAN,NAN,NAN};
+	double data[] = {1.5};
+	adtk_cr3bp_constraint crCon1(adtk_constraint::MAX_DELTA_V, 0, data);
+	// crSet->addConstraint(crCon1);
 
 	printf("CR3BP Nodeset:\n Nodes: %d\n", crSet->getNumNodes());
 	for (int n = 0; n < crSet->getNumNodes(); n++){
 		vector<double> node = crSet->getNode(n);
-		printf("  %02d: %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f\n", n+1,
+		printf("  %02d: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1,
 			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
+		if(n < crSet->getNumNodes()-1){
+			printf("   TOF = %.8f\n", crSet->getTOF(n));
+		}else{
+			printf("\n");
+		}
 	}
 	cout << " Constraints:" << endl;
 	for(int n = 0; n < crSet->getNumCons(); n++){
@@ -66,6 +76,18 @@ void test_createBCR4BPRNodeset(){
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
 	bcSet = new adtk_bcr4bpr_nodeset(ic2, semData, 0, 40, 5, adtk_nodeset::TIME);
+
+	// Add a constraint
+	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
+	// double data[] = {5,5,5,NAN,NAN,NAN,NAN};
+	double data[] = {1.5, NAN, NAN, NAN, NAN, NAN, NAN};
+	adtk_bcr4bpr_constraint bcCon1(adtk_constraint::MAX_DELTA_V, 0, data);
+	bcSet->addConstraint(bcCon1);
+
+	int nodes[] = {2,3};
+	vector<int> velCon(nodes, nodes+2);
+	bcSet->setVelConNodes_allBut(velCon);
+
 	printf("BCR4BPR Nodeset:\n Nodes: %d\n", bcSet->getNumNodes());
 	for (int n = 0; n < bcSet->getNumNodes(); n++){
 		vector<double> node = bcSet->getNode(n);
@@ -82,12 +104,11 @@ void test_createBCR4BPRNodeset(){
 
 int main(void){
 	
-	test_createCR3BPNodeset();
+	// test_createCR3BPNodeset();
 	test_createBCR4BPRNodeset();
-	cout << "Main scope: numNodes = " << crSet->getNumNodes() << endl;
 
 	adtk_correction_engine corrector;
-	corrector.correct_cr3bp(crSet);
+	// corrector.correct_cr3bp(crSet);
 
 	corrector.correct_bcr4bpr(bcSet);
 

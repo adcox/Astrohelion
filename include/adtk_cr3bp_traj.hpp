@@ -54,6 +54,7 @@ class adtk_cr3bp_traj : public adtk_trajectory{
 
 		// Utility functions
 		void saveToMat(const char*);
+		void setLength();
 	private:
 		/** Vector to hold jacobi constants along the path */
 		std::vector<double> jacobi;

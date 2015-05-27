@@ -527,6 +527,7 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
         }
         case adtk_sys_data::BCR4BPR_SYS:
         {
+            // Use simple EOMs to compute acceleration, stored in dsdt
             bcr4bpr_simple_EOMs(t, y, dsdt, eomParams);
 
             // Cast the trajectory to a BCR4BPR guy and save the dqdT data

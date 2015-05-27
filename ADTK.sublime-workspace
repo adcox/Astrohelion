@@ -4,16 +4,32 @@
 		"selected_items":
 		[
 			[
-				"MATCH",
-				"MATCH_ALL"
+				"adtk",
+				"adtk_sys_data"
 			],
 			[
-				"adtk_",
+				"slac",
+				"slackCol"
+			],
+			[
+				"slack",
+				"slackAssignCon"
+			],
+			[
+				"sla",
+				"slackAssignCon"
+			],
+			[
+				"adt",
 				"adtk_constraint"
 			],
 			[
-				"adtk",
-				"adtk_bcr4bpr_traj"
+				"adtk_",
+				"adtk_matrix"
+			],
+			[
+				"MATCH",
+				"MATCH_ALL"
 			],
 			[
 				"ad",
@@ -30,10 +46,6 @@
 			[
 				"getCon",
 				"getConstraint"
-			],
-			[
-				"adt",
-				"adtk_sys_data"
 			],
 			[
 				"gsl_ve",
@@ -120,7 +132,7 @@
 			"file": "src/adtk_correction_engine.cpp",
 			"settings":
 			{
-				"buffer_size": 12954,
+				"buffer_size": 16856,
 				"line_ending": "Unix"
 			}
 		}
@@ -149,6 +161,8 @@
 	},
 	"file_history":
 	[
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/tests/temp.cpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_trajectory.cpp",
 		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/src/adtk_constraint.cpp",
 		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_constraint.hpp",
 		"/home/andrew/Projects/Astrodynamics_Research/Code/C++/include/adtk_correction_engine.hpp",
@@ -220,6 +234,7 @@
 		"height": 93.0,
 		"where_history":
 		[
+			"adtk_correc*",
 			""
 		]
 	},
@@ -228,6 +243,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"newSegObj",
+			"newSeg->",
+			"endState",
 			"adtk_corrections_engine"
 		],
 		"highlight": true,
@@ -236,6 +254,9 @@
 		"regex": false,
 		"replace_history":
 		[
+			"newSeg",
+			"newSegObj.",
+			"lastState",
 			"adtk_correction_engine"
 		],
 		"reverse": false,
@@ -325,7 +346,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 816.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -369,8 +390,8 @@
 						"selection":
 						[
 							[
-								2228,
-								2228
+								2201,
+								2214
 							]
 						],
 						"settings":
@@ -379,7 +400,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 765.0,
+						"translation.y": 393.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -415,15 +436,15 @@
 					"file": "src/adtk_correction_engine.cpp",
 					"settings":
 					{
-						"buffer_size": 12954,
+						"buffer_size": 16856,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								12626,
-								12626
+								6818,
+								6818
 							]
 						],
 						"settings":
@@ -431,8 +452,8 @@
 							"syntax": "Packages/C++/C++.tmLanguage",
 							"translate_tabs_to_spaces": false
 						},
-						"translation.x": 0.0,
-						"translation.y": 6177.0,
+						"translation.x": 5.0,
+						"translation.y": 3177.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"

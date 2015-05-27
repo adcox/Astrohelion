@@ -13,6 +13,7 @@
 
 #include <cmath>
 #include <exception>
+#include <fstream>
 #include <gsl/gsl_cblas.h>
 #include <iostream>
 #include <stdexcept>
@@ -182,7 +183,7 @@ int adtk_matrix::getLength() const {return rows*cols;}
 /**
  *	@return a pointer to the gsl_matrix object that represents this matrix
  */
-// gsl_matrix* adtk_matrix::getGSLMat(){return a;}
+gsl_matrix* adtk_matrix::getGSLMat(){return a;}
 
 /**
  *	@return a pointer to the array of doubles that represents this matrix;
@@ -501,3 +502,21 @@ void adtk_matrix::print(const char *format) const{
 	    printf("\n");
 	}
 }//==============================================
+
+void adtk_matrix::toCSV(const char *filename) const{
+	ofstream outFile;
+	outFile.open(filename, ios::out);
+	for (int r = 0; r < rows; r++){
+	    for (int c = 0; c < cols; c++){
+	    	char buffer[64];
+	    	if(c < cols-1)
+	    		sprintf(buffer, "%.14f, ", gsl_matrix_get(a,r,c));
+	    	else
+	    		sprintf(buffer, "%.14f\n", gsl_matrix_get(a,r,c));
+
+	    	outFile << buffer;
+	    }
+	}
+
+	outFile.close();
+}

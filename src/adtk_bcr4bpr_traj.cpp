@@ -143,3 +143,11 @@ void adtk_bcr4bpr_traj::setSysData(adtk_bcr4bpr_sys_data data){ sysData = data; 
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
+
+void adtk_bcr4bpr_traj::setLength(){
+	adtk_trajectory::setLength();
+
+	if(dqdT.size()/6 != times.size()){
+		fprintf(stderr, "Warning: dqdT vector has different length than time vector!\n");
+	}
+}//================================

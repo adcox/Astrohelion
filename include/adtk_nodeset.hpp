@@ -70,11 +70,14 @@ class adtk_nodeset{
 		int getNumNodes() const;
 		int getNodeSize() const;
 		node_distro_t getNodeDistro() const;
+		std::vector<int> getVelConNodes();
 		virtual adtk_sys_data* getSysData() = 0;
 
 		void appendNode(std::vector<double>);
 		void appendTOF(double);
 		void setNodeDistro(node_distro_t);
+		void setVelConNodes(std::vector<int>);
+		void setVelConNodes_allBut(std::vector<int>);
 
 		virtual int getNumCons() const = 0;
 	protected:
@@ -89,6 +92,12 @@ class adtk_nodeset{
 
 		/** A vector of TOFs between nodes */
 		std::vector<double> tofs;
+
+		/** List of node indices; the nodes included in this list should have continuous velocity */
+		std::vector<int>velConNodes;
+
+		/** Whether or not velocity continuity nodes have been initiailized or set by user */
+		bool velConSet = false;
 
 		void initSetFromICs(double[], adtk_sys_data*, double, double, int, node_distro_t);
 };

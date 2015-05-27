@@ -67,14 +67,13 @@ class adtk_trajectory{
 		adtk_matrix getSTM(int) const;
 		std::vector<adtk_matrix>* getSTM();
 
-		void setLength();
 		void setState(std::vector<double>);
 		void setTime(std::vector<double>);
 		void setSTMs(std::vector<adtk_matrix>);
 
 		// Utility functions
 		void saveToMat(const char*);
-
+		virtual void setLength();
 	protected:
 		/** Number of points along integrated path */
 		int numPoints;

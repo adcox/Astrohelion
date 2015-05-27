@@ -42,7 +42,8 @@ std::vector<double>* adtk_bcr4bpr_nodeset::getEpochs(){ return &epochs; }
  *	@return a constraint
  */
 adtk_bcr4bpr_constraint adtk_bcr4bpr_nodeset::getConstraint(int i) const {
-	return constraints.at(i);
+	adtk_bcr4bpr_constraint temp(constraints.at(i));
+	return temp;
 }//=====================================
 
 /**

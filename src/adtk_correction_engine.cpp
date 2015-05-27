@@ -1,6 +1,7 @@
 /**
  *	@file adtk_correction_engine.cpp
  */
+
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -35,6 +36,7 @@
 #include "adtk_trajectory.hpp"
 
 #include <cmath>
+#include <gsl/gsl_linalg.h>
 #include <iostream>
 #include <vector>
 
@@ -95,7 +97,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			break;
 		default:
 			cout << "Unrecognized system type " << set->getSysData()->getTypeStr() << endl;
-			throw;
+			return;
 	}
 
 	// Create the initial state vector
@@ -114,11 +116,10 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		}
 	}
 
-	//TODO: determine velocity continuity; for now, assume all nodes continuous
-	vector<int> velConNodes(numNodes-1, 0);
-	for(int n = 1; n < numNodes; n++){
-		velConNodes.at(n-1) = n;	// First node is not continuous
-	}
+	// Get the indices of the nodes that are continuous in velocity
+	vector<int> velConNodes = set->getVelConNodes();
+
+	printf("  Velocity-Continuous Nodes: %d\n", ((int)velConNodes.size()));
 
 	// Compute number of position and velocity continuity constraints
 	int posVelCons = 3*(numNodes - 1) + 3*velConNodes.size();
@@ -152,10 +153,16 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				extraCons += con.countConstrainedStates();
 				break;
 			case adtk_constraint::SP:
-				extraCons += 3;
+				// extraCons += 3;
+				break;
 			case adtk_constraint::MAX_DELTA_V:
 			case adtk_constraint::DELTA_V:
 				if(!foundDVCon){
+					if(((int)velConNodes.size()) == numNodes-1){
+						fprintf(stderr, "No velocity discontinuities are allowed, but a delta-V requirement is present.\n");
+						fprintf(stderr, "The gramm matrix will likely be singular...\n");
+					}
+
 					extraCons += 1;
 					foundDVCon = true;
 
@@ -178,14 +185,14 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 
 		if(con.getNode() < 0 || con.getNode() > numNodes){
 			fprintf(stderr, "Constraint #%d applies to a non-existsant node!\n", c);
-			throw;
+			return;
 		}
 	}// end of loop through constraints
 
 	// Loop and correct until we reach maxIts or the error falls below tolerance
 	double err = 1000000000;
 	int count = 0;
-	cout << "X0 size: " << X0.size() << endl;
+	cout << "  X0 size: " << X0.size() << endl;
 
 	// Copy X0 into vector X, which will be updated each iteration
 	vector<double> X(X0);
@@ -208,7 +215,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		printf("There are more constraints than free variables\n");
 	}
 
-	printf("Corrections:\n  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
+	printf("  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
 		posVelCons, timeCons);
 	printf("  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
 		extraCons, totalFree, totalCons);
@@ -222,7 +229,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	vector<double> deltaVs;
 	vector<double> lastState;
 	adtk_trajectory newSeg;
-	adtk_bcr4bpr_traj *bcNewSeg;
+	adtk_bcr4bpr_traj bcNewSeg;
 	adtk_matrix lastSTM(6,6);
 	vector<double> last_dqdT;
 
@@ -257,7 +264,6 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				lastState.clear();
 				last_dqdT.clear();
 				lastSTM = adtk_matrix::Identity(6);
-				bcNewSeg = 0;
 				
 				// Determine TOF and t0
 				tof = varTime ? X[6*numNodes+n] : set->getTOF(n);
@@ -275,7 +281,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				newSeg = simEngine.getTraj();
 				
 				if(sysType == adtk_sys_data::BCR4BPR_SYS){
-					bcNewSeg = static_cast<adtk_bcr4bpr_traj *>(&newSeg);
+					bcNewSeg = simEngine.getBCR4BPRTraj();
 				}
 
 				int segEnd = newSeg.getLength() - 1;
@@ -283,14 +289,14 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				lastSTM = newSeg.getSTM(segEnd);
 
 				// Add the default position constraint for this node
-				FX[pvConCount+0] = lastState[0] - X[6*n+0];
-				FX[pvConCount+1] = lastState[1] - X[6*n+1];
-				FX[pvConCount+2] = lastState[2] - X[6*n+2];
+				FX[pvConCount+0] = lastState[0] - X[6*(n+1)+0];
+				FX[pvConCount+1] = lastState[1] - X[6*(n+1)+1];
+				FX[pvConCount+2] = lastState[2] - X[6*(n+1)+2];
 
 				// Record delta-V info
-				deltaVs[n*3+0] = lastState[3] - X[6*n+3];
-				deltaVs[n*3+1] = lastState[4] - X[6*n+4];
-				deltaVs[n*3+2] = lastState[5] - X[6*n+5];
+				deltaVs[n*3+0] = lastState[3] - X[6*(n+1)+3];
+				deltaVs[n*3+1] = lastState[4] - X[6*(n+1)+4];
+				deltaVs[n*3+2] = lastState[5] - X[6*(n+1)+5];
 
 				// Add velocity constraint if applicable; we just integrated
 				// from node n to where (hopefully) node n+1 is. If node n+1 has
@@ -307,22 +313,23 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				// Create the partials for the default constraints. Rows correspond
 				// to constraints, columns to free variables
 				for(int r = 0; r < maxRowCol; r++){
-					for(int c = 0; c < maxRowCol; c++){
+					for(int c = 0; c < 6; c++){
 						// put STM elements into DF matrix
 						DF[totalFree*(pvConCount+r) + 6*n+c] = lastSTM.at(r,c);
 						// Negative identity matrix
 						if(r == c)
-							DF[totalFree*(pvConCount+r) + 6*n+c] = -1;
+							DF[totalFree*(pvConCount+r) + 6*(n+1)+c] = -1;
 					}
 
 					// Columns of DF based on time constraints
 					if(varTime){
 						// Column of state derivatives: [vel; accel]
-						DF[totalFree*(pvConCount+r) + 6*(numNodes-1)+n] = lastState[r+3];
+						DF[totalFree*(pvConCount+r) + 6*numNodes+n] = lastState[r+3];
 
 						if(sysType == adtk_sys_data::BCR4BPR_SYS){
-							if(r == 0)
-								last_dqdT = bcNewSeg->get_dqdT(segEnd);
+							if(r == 0){
+								last_dqdT = bcNewSeg.get_dqdT(segEnd);
+							}
 
 							DF[totalFree*(pvConCount+r) + 7*numNodes-1+n] = last_dqdT[r];
 						}
@@ -362,6 +369,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 
 					switch(con.getType()){
 						case adtk_constraint::STATE:
+							// Allow user to constrain all 7 states
 							for(int s = 0; s < con.getNodeSize(); s++){
 								if(!isnan(conData[s])){
 									if(s < 6){
@@ -375,7 +383,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 											conCount++;
 										}else{
 											fprintf(stderr, "State constraints must have <= 7 elements\n");
-											throw;
+											return;
 										}
 									}
 								}
@@ -383,6 +391,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 							break;
 						case adtk_constraint::MATCH_ALL:
 						{
+							// Only allow matching 6 states, not epoch time (state 7)
 							int cn = conData[0];
 							for(int row = 0; row < 6; row++){
 								// Constrain the states of THIS node to be equal to the node 
@@ -400,6 +409,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 						}
 						case adtk_constraint::MATCH_CUST:
 						{
+							// Only allow matching 6 states, not epoch time (state 7)
 							for(int s = 0; s < 6; s++){
 								if(!isnan(conData[s])){
 									int cn = conData[0];
@@ -419,44 +429,47 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 						case adtk_constraint::SP:
 							// TODO: implement
 							fprintf(stderr, "SP constraint not implemented!\n");
-							throw;
+							return;
+						case adtk_constraint::DELTA_V:
+						case adtk_constraint::MAX_DELTA_V:
+							// handled outside this loop
+							break;
 						default:
 							fprintf(stderr, "Unrecognized consraint type\n");
-							throw;
+							return;
 					}// End switch/case
 				}// End if(con.getNode() == n)
 
 				/* If this node allows velocity discontinuity AND this constraint is the
 				delta-V constraint; force the delta-V constraing to be the final one 
 				(last row of FX and DF)*/
-				if(n < numNodes && 
+				if(n < numNodes-1 && 
 					std::find(velConNodes.begin(), velConNodes.end(), n+1) == velConNodes.end() &&
 					(con.getType() == adtk_constraint::DELTA_V || 
 						con.getType() == adtk_constraint::MAX_DELTA_V)){
-
+					
 					// Compute deltaV magnitude, add to constraint function
-					vector<double> dv(3,0);
-					dv[0] = lastState[3] - X[6*(n+1)+3];
-					dv[1] = lastState[4] - X[6*(n+1)+4];
-					dv[2] = lastState[5] - X[6*(n+1)+5];
-					double dvMag = sqrt(dv[0]*dv[0] + dv[1]*dv[1] + dv[2]*dv[2]);
+					double dvMag = sqrt(deltaVs[n*3]*deltaVs[n*3] + deltaVs[n*3+1]*deltaVs[n*3+1] + 
+						deltaVs[n*3+2]*deltaVs[n*3+2]);
 					FX[totalCons-1] += dvMag;
 
 					// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
-					double dFdq_ndf_data[] = {0, 0, 0, -dv[0]/dvMag, -dv[1]/dvMag, -dv[2]/dvMag};
+					double dFdq_ndf_data[] = {0, 0, 0, -1*deltaVs[n*3]/dvMag, 
+						-1*deltaVs[n*3+1]/dvMag, -1*deltaVs[n*3+2]/dvMag};
 					adtk_matrix dFdq_n2(1, 6, dFdq_ndf_data);
 
 					// Partial w.r.t. integrated path (newSeg) from node n
 					adtk_matrix dFdq_nf = -1*dFdq_n2*lastSTM;
 
 					// Compute partial w.r.t. integration time n
-					adtk_matrix state_dot(6, 1, &(lastState[0])+3);
+					adtk_matrix state_dot(6, 1, &(lastState[3]));
 					adtk_matrix dFdt_n = -1*dFdq_n2 * state_dot;
 
 					for(int i = 0; i < 6; i++){
 						DF[totalFree*(totalCons-1) + 6*(n+1) + i] = dFdq_n2.at(0, i);
-						DF[totalFree*(totalCons-1) + 6*n + i] = dFdq_nf.at(0,i);
+						DF[totalFree*(totalCons-1) + 6*n + i] = dFdq_nf.at(0, i);
 					}
+
 					DF[totalFree*(totalCons-1) + 6*numNodes+n] = dFdt_n.at(0,0);
 
 					if(sysType == adtk_sys_data::BCR4BPR_SYS){
@@ -469,7 +482,6 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			}// End of loop through constraints
 
 			//clean-up
-			// delete newSeg;
 			simEngine.reset();
 		}// end of loop through nodes
 
@@ -513,23 +525,73 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			}
 		}
 
-		// Use the update equation to find new initial states
-		adtk_matrix oldX(totalFree-1, 1, X);
-		adtk_matrix DF_mat(totalCons-1, totalFree-1, DF);
-		adtk_matrix FX_mat(totalCons-1, 1, FX);
+		// Create matrices for X, Jacobian matrix DF, and constraint vector FX
+		adtk_matrix oldX(totalFree, 1, X);
+		adtk_matrix J(totalCons, totalFree, DF);
+		adtk_matrix FX_mat(totalCons, 1, FX);
+		
+		// change sign for matrix multiplication
+		FX_mat*=-1;
 
-		adtk_matrix Q = DF_mat * DF_mat.trans();
+		// Create vector out of constraint vector FX
+		gsl_vector_view b = gsl_vector_view_array(FX_mat.getDataPtr(), FX_mat.getRows());
+		
+		// Allocate memory for intermediate vector w
+		gsl_vector *w = gsl_vector_alloc(totalCons);
 
-		// TODO: Invert the matrix/solve matrix equation
+		// Compute Gramm matrix
+		adtk_matrix G = J*J.trans();
 
+		// Save matrices to CSV files for inspection; debugging
+		// if(count == 0){
+		// 	J.toCSV("J.csv");
+		// 	Q.toCSV("Q.csv");
+		// 	FX_mat.toCSV("FX.csv");
+		// 	oldX.toCSV("oldX.csv");
+		// }
+
+		/* Use LU decomposition to invert the Gramm matrix and find a vector
+		w. Multiplying J^T by w yields the minimum-norm solution x, where x 
+		lies in the column-space of J^T, or in the orthogonal complement of
+		the nullspace of J.
+		Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
+		 */
+		// Solve the system Gw = b for w
+		int s;
+		gsl_permutation *perm = gsl_permutation_alloc(G.getRows());
+		gsl_linalg_LU_decomp(G.getGSLMat(), perm, &s);
+		gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
+
+		// Compute the optimal x from w
+		adtk_matrix W(w, false);	// create column vector
+		adtk_matrix X_diff = J.trans()*W;	//X_diff = X_new - X_old
+
+		// Solve for X_new and copy into working vector X
+		adtk_matrix newX = X_diff + oldX;
+		X.clear();
+		X.insert(X.begin(), newX.getDataPtr(), newX.getDataPtr()+totalFree);
+
+		// Free up memory used to invert G
+		gsl_permutation_free(perm);
+		gsl_vector_free(w);
+
+		// Compute error; norm of constraint vector
 		err = FX_mat.norm();
+
+		// save newly computed X to CSV for debugging
+		// if(count == 0){
+		// 	newX.toCSV("newX.csv");
+		// }
+
 		count++;
 		printf("Iteration %02d: ||F|| = %.4e\n", count, err);
 	}// end of corrections loop
 
 	if(err > tol){
 		fprintf(stderr, "Corrections process did not converge\n");
-		throw;
+		// throw;
+	}else{
+		printf("Corrections processes SUCCEEDED\n");
 	}
 
 	// TODO: Output data

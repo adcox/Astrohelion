@@ -47,8 +47,9 @@ adtk_cr3bp_nodeset& adtk_cr3bp_nodeset::operator =(const adtk_cr3bp_nodeset& n){
  *	@param i consraint index (begins with zero)
  *	@return a constraint
  */
-adtk_cr3bp_constraint adtk_cr3bp_nodeset::getConstraint(int i) const{ 
-	return constraints.at(i);
+adtk_cr3bp_constraint adtk_cr3bp_nodeset::getConstraint(int i) const{
+	adtk_cr3bp_constraint temp(constraints.at(i)); 
+	return temp;
 }
 
 /**

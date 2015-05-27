@@ -132,7 +132,10 @@ vector<double>* adtk_trajectory::getTime(){ return &times; }
  *	@param n the index of the point (starts at 0)
  *	@return the STM
  */
-adtk_matrix adtk_trajectory::getSTM(int n) const { return allSTM[n]; }
+adtk_matrix adtk_trajectory::getSTM(int n) const { 
+	adtk_matrix temp(allSTM[n]);
+	return temp;
+}
 
 /**
  *	Useful for setting the STM (in place) after the trajectory has been initialized
@@ -144,24 +147,6 @@ vector<adtk_matrix>* adtk_trajectory::getSTM(){ return &allSTM;}
  *	@return the system data type
  */
 adtk_sys_data::system_t adtk_trajectory::getType() const { return adtk_sys_data::UNDEF_SYS; }
-
-/**
- *	Set the number of points by checking the number of data in 
- *	the state, time, and STM vectors.
- */
-void adtk_trajectory::setLength(){
-	int sL = state.size()/STATE_WIDTH;	// row-major format, 9 elements per row
-	int tL = times.size();
-	int pL = allSTM.size();
-
-	if(sL == tL && tL == pL){
-		numPoints = sL;
-	}else{
-		cout << "Warning: trajectory has vectors with different lengths:" << endl;
-		cout << " state: " << sL << "\n time: " << tL << "\n STM: " << pL<< endl;
-		numPoints = sL;
-	}
-}//=======================================
 
 /** 
  *	Set the state vector by copying a vector
@@ -186,6 +171,24 @@ void adtk_trajectory::setSTMs(std::vector<adtk_matrix> phi){ allSTM = phi; }
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
+
+/**
+ *	Set the number of points by checking the number of data in 
+ *	the state, time, and STM vectors.
+ */
+void adtk_trajectory::setLength(){
+	int sL = state.size()/STATE_WIDTH;	// row-major format, 9 elements per row
+	int tL = times.size();
+	int pL = allSTM.size();
+
+	if(sL == tL && tL == pL){
+		numPoints = sL;
+	}else{
+		cout << "Warning: trajectory has vectors with different lengths:" << endl;
+		cout << " state: " << sL << "\n time: " << tL << "\n STM: " << pL<< endl;
+		numPoints = sL;
+	}
+}//=======================================
 
 /**
  *	Save the trajectory to a file

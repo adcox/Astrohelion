@@ -146,6 +146,13 @@ adtk_sys_data::system_t adtk_cr3bp_traj::getType() const{
 	return sysData.getType();
 }
 
+void adtk_cr3bp_traj::setLength(){
+	adtk_trajectory::setLength();
+	
+	if(jacobi.size() != times.size()){
+		fprintf(stderr, "Warning: Jacobi vector has different length than time vector!\n");
+	}
+}
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------

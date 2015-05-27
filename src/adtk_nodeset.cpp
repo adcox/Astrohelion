@@ -31,6 +31,7 @@ adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 	if(nodeSize == n.nodeSize){
 		nodes = n.nodes;
 		tofs = n.tofs;
+		velConNodes = n.velConNodes;
 	}else{
 		fprintf(stderr, "Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
 			nodeSize, n.nodeSize);
@@ -46,6 +47,7 @@ adtk_nodeset& adtk_nodeset::operator =(const adtk_nodeset &n){
 	if(nodeSize == n.nodeSize){
 		nodes = n.nodes;
 		tofs = n.tofs;
+		velConNodes = n.velConNodes;
 		return *this;
 	}else{
 		fprintf(stderr, "Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
@@ -66,8 +68,8 @@ std::vector<double>* adtk_nodeset::getTOFs(){ return &tofs; }
  *	@return the node specified by <tt>i</tt>
  */
 std::vector<double> adtk_nodeset::getNode(int i) const {
-	vector<double> node(nodes.begin()+i*nodeSize, nodes.begin()+(i+1)*nodeSize);
-	return node;
+	vector<double> temp(nodes.begin()+i*nodeSize, nodes.begin()+(i+1)*nodeSize);
+	return temp;
 }
 
 /**
@@ -92,6 +94,23 @@ int adtk_nodeset::getNodeSize() const { return nodeSize; }
 adtk_nodeset::node_distro_t adtk_nodeset::getNodeDistro() const { return nodeDistro; }
 
 /**
+ *	@return the indices of nodes that are continuous in velocity with arcs beforehand.
+ */
+std::vector<int> adtk_nodeset::getVelConNodes() {
+	// If the user hasn't set which nodes are continuous, automatically
+	// initialize the list so ALL nodes are continuous
+	if(!velConSet){
+		velConNodes.reserve(getNumNodes());
+		// The first node isn't continuous since it has no preceding arc
+		for(int n = 1; n < getNumNodes(); n++){
+			velConNodes.push_back(n);
+		}
+		velConSet = true;
+	}
+	return velConNodes; 
+}//=========================================
+
+/**
  *	Append a new node to the end of the nodes vector
  *	@param node a new node; should have <tt>nodeSize</tt> non-dimensional states
  */
@@ -113,6 +132,30 @@ void adtk_nodeset::appendTOF(double tof){
  *	@param type the type of node distribution
  */
 void adtk_nodeset::setNodeDistro(node_distro_t type){ nodeDistro = type; }
+
+/**
+ *	Set the specified nodes to be continuous in velocity
+ *	@param n indices of the nodes that are continuous in velocity
+ */
+void adtk_nodeset::setVelConNodes(std::vector<int> n){
+	velConNodes = n;
+	velConSet = true;
+}
+
+/**
+ *	Set all nodes to be continuous in velocity except for those specified
+ *	@param notCont the indices of the nodes that are NOT continuous in velocity
+ */
+void adtk_nodeset::setVelConNodes_allBut(std::vector<int> notCont){
+	velConNodes.clear();
+	// Don't ever include node 0 (there is no segment with which it should be continuous)
+	for(int n = 1; n < ((int)nodes.size()/nodeSize); n++){
+		if(std::find(notCont.begin(), notCont.end(), n) == notCont.end()){
+			velConNodes.push_back(n);
+		}
+	}
+	velConSet = true;
+}//================================================
 
 //-----------------------------------------------------
 //      Utility Functions

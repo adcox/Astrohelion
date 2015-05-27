@@ -82,7 +82,7 @@ class adtk_matrix{
 		int getLength() const;
 		int getRows() const;
 		int getCols() const;
-		// gsl_matrix* getGSLMat();
+		gsl_matrix* getGSLMat();
 		double* getDataPtr();
 		double at(int, int) const;
 		double at(int) const;
@@ -92,7 +92,8 @@ class adtk_matrix{
 		// Utility functions
 		void print() const;
 		void print(const char *format) const;
-
+		void toCSV(const char *filename) const;
+		
 	private:
 		gsl_matrix *a;
 		int rows, cols;

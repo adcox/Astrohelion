@@ -55,7 +55,7 @@ class adtk_bcr4bpr_traj : public adtk_trajectory{
 		std::vector<double> get_dqdT(int);
 		
 		void setSysData(adtk_bcr4bpr_sys_data);
-
+		void setLength();
 	private:
 		/** Derivatives of the state variables (pos, vel) with respect to Epoch Time; 
 			used in corrections processes */

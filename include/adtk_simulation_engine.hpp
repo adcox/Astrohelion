@@ -20,9 +20,12 @@
 #ifndef __H_SIMENGINE_
 #define __H_SIMENGINE_
 
+#include "adtk_event.hpp"
 #include "adtk_sys_data.hpp"
 #include "adtk_trajectory.hpp"
  
+#include <vector>
+
 // Forward declarations
 class adtk_bcr4bpr_traj;
 class adtk_cr3bp_traj;
@@ -61,6 +64,7 @@ class adtk_simulation_engine{
 		adtk_cr3bp_traj getCR3BPTraj() const;
 		adtk_bcr4bpr_traj getBCR4BPRTraj() const;
 
+		void addEvent(adtk_event::event_t, int, bool);
 		void setSysData(adtk_sys_data*);
 		void setRevTime(bool);
 		void setVerbose(bool);
@@ -82,6 +86,9 @@ class adtk_simulation_engine{
 
 		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
 		adtk_trajectory *traj = 0;
+
+		/** Vector of events to consider during integration */
+		std::vector<adtk_event> events;
 
 		/** a void pointer to some data object that contains data for the EOM function */
 		void *eomParams = 0;

@@ -23,12 +23,13 @@
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_trajectory.hpp"
 
+#include "matio.h"
+ 
 /**
  *	A derivative class of the adtk_trajectory super-class. This object
  *	contains trajectory information specific to the CR3BP
  *
  *	Author: Andrew Cox
- *
  *	Version: May 15, 2015
  */
 class adtk_bcr4bpr_traj : public adtk_trajectory{
@@ -55,6 +56,7 @@ class adtk_bcr4bpr_traj : public adtk_trajectory{
 		
 		void setSysData(adtk_bcr4bpr_sys_data);
 		void setLength();
+		void saveToMat(const char*);
 	private:
 		/** Derivatives of the state variables (pos, vel) with respect to Epoch Time; 
 			used in corrections processes */
@@ -62,6 +64,9 @@ class adtk_bcr4bpr_traj : public adtk_trajectory{
 
 		/** A system data object specific to the BCR4BPR */
 		adtk_bcr4bpr_sys_data sysData;
+
+		void save_dqdT(mat_t*);
+		void saveSysData(mat_t*);
 };
 
 #endif

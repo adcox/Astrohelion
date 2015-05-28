@@ -21,9 +21,8 @@
 
 <h2>To-Do List</h2>
 <ul>
-	<li> Add system info outputs to mat file for BCR4BPR </li>
 	<li> Figure out how to do something like an event function in C++ </li>
-	<li> Add single/multiple shooting functionality </li>
+	<li> Saddle point computation and targeting </li>
 	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
 </ul>
 

@@ -30,16 +30,35 @@ endif
 ## OBJ in front of all the files, use a macro to do the substitution
 ############################################################
 
+# Base objects and stand-alone classes
+BASE_OBJ = bodyData.o calculations.o constraint.o event.o matrix.o nodeset.o sysData.o\
+trajectory.o utilities.o
+
+# Objects derived from base objects
+DERIV_OBJ = bcr4bpNodeset.o bcr4bpSysData.o bcr4bpTraj.o cr3bpNodeset.o cr3bpSysData.o\
+cr3bpTraj.o
+
+# Heavy lifters
+ENGINES = corrector.o simEngine.o
+
+# List of all possible dependencies
+ALL = $(BASE_OBJ) $(DERIV_OBJ) $(ENGINES)
+
 # dependencies for simEngineTest
-SIM_ENGINE_DEP = bodyData.o sysData.o matrix.o trajectory.o cr3bpSysData.o bcr4bpSysData.o calculations.o cr3bpTraj.o bcr4bpTraj.o simEngine.o
+SIM_ENGINE_DEP = $(ALL)
+
 # dependencies for sysDataTest
 SYS_DATA_DEP = sysData.o cr3bpSysData.o bodyData.o
+
 # dependencies for bcr4bprSysDataTest
 BCR_SYS_DATA_DEP = sysData.o bcr4bpSysData.o bodyData.o
+
 # dependencies for trajTest
 TRAJ_TEST_DEP = bodyData.o matrix.o sysData.o cr3bpSysData.o cr3bpTraj.o trajectory.o
+
 # dependencies for nodesetTest
-NODESET_TEST_DEP = nodeset.o cr3bpNodeset.o bcr4bpNodeset.o constraint.o corrector.o $(SIM_ENGINE_DEP)
+NODESET_TEST_DEP = $(ALL)
+
 # Where MATLAB is located on this system
 MAT_ROOT = /Applications/MATLAB_R2014a.app
 
@@ -116,6 +135,9 @@ $(OBJ)/cr3bpSysData.o: $(SRC)/adtk_cr3bp_sys_data.cpp $(INC)/adtk_cr3bp_sys_data
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/cr3bpTraj.o: $(SRC)/adtk_cr3bp_traj.cpp $(INC)/adtk_cr3bp_traj.hpp
+	$(COMP) -I $(INC) -c $< -o $@
+
+$(OBJ)/event.o: $(SRC)/adtk_event.cpp $(INC)/adtk_event.hpp
 	$(COMP) -I $(INC) -c $< -o $@
 
 $(OBJ)/matrix.o: $(SRC)/adtk_matrix.cpp $(INC)/adtk_matrix.hpp

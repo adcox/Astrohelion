@@ -23,6 +23,8 @@
 #include "adtk_cr3bp_sys_data.hpp"
 #include "adtk_trajectory.hpp"
 
+#include "matio.h"
+ 
 /**
  *	A derivative class of the adtk_trajectory super-class. This object
  *	contains trajectory information specific to the CR3BP

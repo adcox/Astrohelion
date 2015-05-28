@@ -82,3 +82,15 @@ int adtk_cr3bp_nodeset::getNumCons() const { return constraints.size(); }
  *	@return a pointer to the system data object stored in this nodeset
  */
 adtk_sys_data* adtk_cr3bp_nodeset::getSysData() { return &sysData; }
+
+void adtk_cr3bp_nodeset::print() {
+	printf("CR3BP Nodeset:\n  Nodes:\n");
+	for(int n = 0; n < getNumNodes(); n++){
+		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]\n", n,
+			nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
+			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
+	}
+	for(int c = 0; c < getNumCons(); c++){
+		constraints[c].print();
+	}
+}

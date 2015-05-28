@@ -46,6 +46,69 @@ using namespace std;
 //      *structors
 //-----------------------------------------------------
 
+adtk_correction_engine::adtk_correction_engine(const adtk_correction_engine &e){
+	verbose = e.verbose;
+	varTime = e.varTime;
+	maxIts = e.maxIts;
+	tol = e.tol;
+	receivedNodesetIn = e.receivedNodesetIn;
+	createdNodesetOut = e.createdNodesetOut;
+	findEvent = e.findEvent;
+	nodeset_in = e.nodeset_in;		//POINTER, COPYING ADDRESS - passed in, so should point to same parent object
+
+	if(createdNodesetOut){
+		adtk_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
+		switch(type){
+			case adtk_sys_data::CR3BP_SYS:
+				nodeset_out = new adtk_cr3bp_nodeset (* static_cast<adtk_cr3bp_nodeset *>(e.nodeset_out));
+				break;
+			case adtk_sys_data::BCR4BPR_SYS:
+				nodeset_out = new adtk_bcr4bpr_nodeset (*static_cast<adtk_bcr4bpr_nodeset *>(e.nodeset_out));
+				break;
+			default: nodeset_out = 0;
+		}
+	}else{
+		nodeset_out = 0;
+	}
+}//=======================================================
+
+adtk_correction_engine::~adtk_correction_engine(){
+	if(createdNodesetOut){
+		delete nodeset_out;
+	}
+}//=================================================
+
+//-----------------------------------------------------
+//      Operator Functions
+//-----------------------------------------------------
+
+adtk_correction_engine adtk_correction_engine::operator =(const adtk_correction_engine &e){
+	verbose = e.verbose;
+	varTime = e.varTime;
+	maxIts = e.maxIts;
+	tol = e.tol;
+	receivedNodesetIn = e.receivedNodesetIn;
+	createdNodesetOut = e.createdNodesetOut;
+	findEvent = e.findEvent;
+	nodeset_in = e.nodeset_in;		//POINTER, COPYING ADDRESS - passed in, so should point to same parent object
+
+	if(createdNodesetOut){
+		adtk_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
+		switch(type){
+			case adtk_sys_data::CR3BP_SYS:
+				nodeset_out = new adtk_cr3bp_nodeset (* static_cast<adtk_cr3bp_nodeset *>(e.nodeset_out));
+				break;
+			case adtk_sys_data::BCR4BPR_SYS:
+				nodeset_out = new adtk_bcr4bpr_nodeset (*static_cast<adtk_bcr4bpr_nodeset *>(e.nodeset_out));
+				break;
+			default: nodeset_out = 0;
+		}
+	}else{
+		nodeset_out = 0;
+	}
+
+	return *this;
+}//====================================
 
 //-----------------------------------------------------
 //      Set and Get Functions
@@ -63,6 +126,11 @@ bool adtk_correction_engine::usesVarTime() const { return varTime; }
 bool adtk_correction_engine::isVerbose() const { return verbose; }
 
 /**
+ *	@return whether or not the algorithm will optimize the process to find an event
+ */
+bool adtk_correction_engine::isFindingEvent() const { return findEvent; }
+
+/**
  *	@return the maximum number of iterations to attempt before giving up
  */
 int adtk_correction_engine::getMaxIts() const { return maxIts; }
@@ -72,6 +140,46 @@ int adtk_correction_engine::getMaxIts() const { return maxIts; }
  *	less than this value are considered negligible
  */
 double adtk_correction_engine::getTol() const { return tol; }
+
+/**
+ *	Retrieve the output nodeset (after corrections). Node that this method will throw an
+ *	error if the corrections process has not been run or failed to produce an output.
+ *
+ *	@return a CR3BP nodeset object with the corrected trajectory data stored inside
+ */
+adtk_cr3bp_nodeset adtk_correction_engine::getCR3BPOutput(){
+	if(createdNodesetOut && receivedNodesetIn){
+		if(nodeset_in->getSysData()->getType() == adtk_sys_data::CR3BP_SYS){
+			return *(static_cast<adtk_cr3bp_nodeset *>(nodeset_out));
+		}else{
+			fprintf(stderr, "Wrong system type!\n");
+			throw;
+		}
+	}else{
+		fprintf(stderr, "Output nodeset has not been created, cannot return CR3BP output\n");
+		throw;
+	}
+}//=========================================
+
+/**
+ *	Retrieve the output nodeset (after corrections). Node that this method will throw an
+ *	error if the corrections process has not been run or failed to produce an output.
+ *
+ *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
+ */
+adtk_bcr4bpr_nodeset adtk_correction_engine::getBCR4BPROutput(){
+	if(createdNodesetOut && receivedNodesetIn){
+		if(nodeset_in->getSysData()->getType() == adtk_sys_data::BCR4BPR_SYS){
+			return *(static_cast<adtk_bcr4bpr_nodeset *>(nodeset_out));
+		}else{
+			fprintf(stderr, "Wrong system type!\n");
+			throw;
+		}
+	}else{
+		fprintf(stderr, "Output nodeset has not been created, cannot return CR3BP output\n");
+		throw;
+	}
+}//=========================================
 
 /**
  *	Set varTime
@@ -97,6 +205,12 @@ void adtk_correction_engine::setMaxIts(int i){ maxIts = i; }
  */
 void adtk_correction_engine::setTol(double d){ tol = d; }
 
+/**
+ *	Set the findEven flag
+ *	@param b whether or not the algorithm will be looking for an event
+ */
+void adtk_correction_engine::setFindEvent(bool b){ findEvent = b; }
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
@@ -106,8 +220,9 @@ void adtk_correction_engine::setTol(double d){ tol = d; }
  *	@param set a pointer to a nodeset
  */
 void adtk_correction_engine::correct_cr3bp(adtk_cr3bp_nodeset* set){
-	nodeset = set;
-	correct(nodeset);
+	nodeset_in = set;
+	receivedNodesetIn = true;
+	correct(nodeset_in);
 }
 
 /**
@@ -115,8 +230,9 @@ void adtk_correction_engine::correct_cr3bp(adtk_cr3bp_nodeset* set){
  *	@param set a pointer to a nodeset
  */
 void adtk_correction_engine::correct_bcr4bpr(adtk_bcr4bpr_nodeset* set){
-	nodeset = set;
-	correct(nodeset);
+	nodeset_in = set;
+	receivedNodesetIn = true;
+	correct(nodeset_in);
 }
 
 /**
@@ -124,13 +240,13 @@ void adtk_correction_engine::correct_bcr4bpr(adtk_bcr4bpr_nodeset* set){
  *	@param set a pointer to a nodeset
  */
 void adtk_correction_engine::correct(adtk_nodeset *set){
-	cout << "Corrector:" << endl;
+	printMessage("Corrector:\n");
 
 	int numNodes = set->getNumNodes();
-	printf("  numNodes = %d\n", numNodes);
+	printMessage("  numNodes = %d\n", numNodes);
 
 	adtk_sys_data::system_t sysType = set->getSysData()->getType();
-	printf("  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
+	printMessage("  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	adtk_bcr4bpr_nodeset *bcSet;
 	adtk_cr3bp_nodeset *crSet;
@@ -166,7 +282,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	// Get the indices of the nodes that are continuous in velocity
 	vector<int> velConNodes = set->getVelConNodes();
 
-	printf("  Velocity-Continuous Nodes: %d\n", ((int)velConNodes.size()));
+	printMessage("  Velocity-Continuous Nodes: %d\n", ((int)velConNodes.size()));
 
 	// Compute number of position and velocity continuity constraints
 	int posVelCons = 3*(numNodes - 1) + 3*velConNodes.size();
@@ -239,7 +355,6 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	// Loop and correct until we reach maxIts or the error falls below tolerance
 	double err = 1000000000;
 	int count = 0;
-	cout << "  X0 size: " << X0.size() << endl;
 
 	// Copy X0 into vector X, which will be updated each iteration
 	vector<double> X(X0);
@@ -259,17 +374,26 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	int totalCons = posVelCons + timeCons + extraCons;
 
 	if(totalCons > totalFree){
-		printf("There are more constraints than free variables\n");
+		printMessage("There are more constraints than free variables\n");
 	}
 
-	printf("  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
+	printMessage("  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
 		posVelCons, timeCons);
-	printf("  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
+	printMessage("  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
 		extraCons, totalFree, totalCons);
 
 	// create a simulation engine
 	adtk_sys_data *sysData = set->getSysData();
 	adtk_simulation_engine simEngine(sysData);
+	simEngine.setVerbose(verbose);
+	// TODO: Should I set the tolerance or use the default?
+
+	// If i'm looking for an event, I only need the first (fixed) node a final state
+	if(findEvent){
+		// To avoid using several steps, use fixed step size and only two steps
+		simEngine.setVarStepSize(false);
+		simEngine.setNumSteps(2);
+	}
 
 	vector<double> FX;
 	vector<double> DF;
@@ -527,9 +651,6 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 					}
 				}
 			}// End of loop through constraints
-
-			//clean-up
-			simEngine.reset();
 		}// end of loop through nodes
 
 		for(int c = 0; c < set->getNumCons(); c++){
@@ -631,15 +752,118 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		// }
 
 		count++;
-		printf("Iteration %02d: ||F|| = %.4e\n", count, err);
+		printMessage("Iteration %02d: ||F|| = %.4e\n", count, err);
 	}// end of corrections loop
 
 	if(err > tol){
-		fprintf(stderr, "Corrections process did not converge\n");
+		printMessage("Corrections process did not converge\n");
 		// throw;
 	}else{
-		printf("Corrections processes SUCCEEDED\n");
+		printMessage("Corrections processes SUCCEEDED\n");
 	}
 
 	// TODO: Output data
+	createOutput(X, simEngine);
 }//==========================================================
+
+/**
+ *	Take the final, corrected free variable vector <tt>X</tt> and the simulation engine and create
+ * 	an output nodeset. If <tt>findEvent</tt> is set to true, the
+ *	output nodeset will contain extra information for the simulation engine to use. Rather than
+ *	returning only the position and velocity states, the output nodeset will contain the STM 
+ *	and dqdT (if non-autonomous) values for the final node; this information will be appended to 
+ *	the end of the regular n x 6 vector of nodes.
+ *
+ *	@param X the final, corrected free variable vector
+ *	@param engine the simulation engine used to perform corrections, which must still contain
+ *	the final integrated trajectory so the full state data can be saved for event function use.
+ *
+ */
+void adtk_correction_engine::createOutput(std::vector<double> X, adtk_simulation_engine engine){
+
+	// get objects for the system type
+	adtk_sys_data::system_t sysType = nodeset_in->getSysData()->getType();
+
+	switch(sysType){
+		case adtk_sys_data::CR3BP_SYS:
+		{
+			// Cast input nodeset to its specific type
+			adtk_cr3bp_nodeset *nodeInCast = static_cast<adtk_cr3bp_nodeset *>(nodeset_in);
+			// Copy that nodeset into the output guy
+			nodeset_out = new adtk_cr3bp_nodeset(*nodeInCast);
+			// nodeset_out = new adtk_cr3bp_nodeset();
+			createdNodesetOut = true;
+			break;
+		}
+		case adtk_sys_data::BCR4BPR_SYS:
+		{
+			// Cast input nodeset to its specific type
+			adtk_bcr4bpr_nodeset *nodeInCast = static_cast<adtk_bcr4bpr_nodeset *>(nodeset_in);
+			// Copy that nodeset into the output guy
+			nodeset_out = new adtk_bcr4bpr_nodeset(*nodeInCast);
+			createdNodesetOut = true;
+			break;
+		}
+		default: break;
+	}
+
+	nodeset_out->setNodeDistro(adtk_nodeset::NONE);
+	int numNodes = nodeset_in->getNumNodes();
+
+	// Get pointers to relevant data vectors
+	vector<double> *nodes = nodeset_out->getNodes();
+	vector<double> *tofs = nodeset_out->getTOFs();
+
+	// Clear nodes and TOF and repopulate using data from output free variable vector
+	nodes->clear();
+	tofs->clear();
+	nodes->insert(nodes->begin(), X.begin(), X.begin() + numNodes*6);
+	tofs->insert(tofs->begin(), X.begin() + numNodes*6, X.begin() + numNodes*7 - 1);
+
+	// To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
+	// state for the last node. We do this by appending the STM elements and dqdT elements to the
+	// end of the node array. This output nodeset should have two "nodes": the first 6 elements
+	// are the first node, the final 42 or 48 elements are the second node with STM and dqdT information
+	if(findEvent){
+
+		// Get an object containing data about the final segment
+		adtk_trajectory lastSeg = engine.getTraj();
+		int lastSegLen = lastSeg.getLength() - 1;	// number of data points in that segment
+		adtk_matrix lastSTM = lastSeg.getSTM(lastSegLen);	// final STM
+
+		// Append the 36 STM elements to the node vector
+		nodes->insert(nodes->end(), lastSTM.getDataPtr(), lastSTM.getDataPtr()+36);
+
+		if(sysType == adtk_sys_data::BCR4BPR_SYS){
+			// Grab a specific BCR4BPR trajectory object so I can append the dqdT data
+			adtk_bcr4bpr_traj bcLastSeg = engine.getBCR4BPRTraj();
+			vector<double> last_dqdT = bcLastSeg.get_dqdT(lastSegLen);
+			nodes->insert(nodes->end(), last_dqdT.begin(), last_dqdT.end());
+		}
+	}
+
+	// Clear the epoch vector and copy in the final, corrected epochs (if applicable)
+	if(sysType == adtk_sys_data::BCR4BPR_SYS){
+		adtk_bcr4bpr_nodeset *nodeOutCast = static_cast<adtk_bcr4bpr_nodeset *>(nodeset_out);
+		vector<double> *epochs = nodeOutCast->getEpochs();
+		epochs->clear();
+		epochs->insert(epochs->begin(), X.begin() + 7*numNodes-1, X.begin() + 8*numNodes-1);
+	}
+}//===========================
+
+/**
+ *  A wrapper function to print a message
+ */
+void adtk_correction_engine::printMessage(const char * format, ...){
+    if(verbose){
+        va_list args;
+        va_start(args, format);
+        vprintf(format, args);
+        va_end(args);
+    }
+}//==========================================
+
+
+
+
+

@@ -26,6 +26,7 @@
 // Forward declarations
 class adtk_cr3bp_nodeset;
 class adtk_bcr4bpr_nodeset;
+class adtk_simulation_engine;
 
 /**
  *	An engine objecto to perform corrections, such as single-shooting
@@ -36,20 +37,32 @@ class adtk_bcr4bpr_nodeset;
  */
 class adtk_correction_engine{
 	public:
-		
-		void correct_cr3bp(adtk_cr3bp_nodeset*);
-		void correct_bcr4bpr(adtk_bcr4bpr_nodeset*);
+		// *structors
+		adtk_correction_engine(){}	// Default, do-nothing constructor
+		adtk_correction_engine(const adtk_correction_engine&);
+		~adtk_correction_engine();
+
+		// Operators
+		adtk_correction_engine operator =(const adtk_correction_engine &e);
 
 		// Set and get functions
 		bool usesVarTime() const;
 		int getMaxIts() const;
 		double getTol() const;
 		bool isVerbose() const;
+		bool isFindingEvent() const;
+		adtk_cr3bp_nodeset getCR3BPOutput();
+		adtk_bcr4bpr_nodeset getBCR4BPROutput();
 
 		void setVarTime(bool);
 		void setMaxIts(int);
 		void setTol(double);
 		void setVerbose(bool);
+		void setFindEvent(bool);
+
+		// Utility/Action functions
+		void correct_cr3bp(adtk_cr3bp_nodeset*);
+		void correct_bcr4bpr(adtk_bcr4bpr_nodeset*);
 
 	private:
 		/** Whether or not to spit out lots of messages */
@@ -64,10 +77,22 @@ class adtk_correction_engine{
 		/** Maximum acceptable error value, non-dimensional units */
 		double tol = 1e-12;
 
+		/** Whether or not an input nodeset was supplied and corrected */
+		bool receivedNodesetIn = false;
+
+		/** Whether or not space has been dynamically allocated for nodeset_out */
+		bool createdNodesetOut = false;
+
+		/** Flag to turn on when this algorithm is being used to locate an event */
+		bool findEvent = false;
+
 		/** */
-		adtk_nodeset *nodeset;
+		adtk_nodeset *nodeset_in = 0;
+		adtk_nodeset *nodeset_out = 0;
 
 		void correct(adtk_nodeset*);
+		void createOutput(std::vector<double>, adtk_simulation_engine);
+		void printMessage(const char*,...);
 };
 
 #endif

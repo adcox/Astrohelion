@@ -304,7 +304,8 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
 }//=========================================
 
 /**
- *	Save a variable to a .mat file, performing error checks along the way
+ *	Save a variable to a .mat file, performing error checks along the way. Once the variable is written
+ *	to file, it is freed from memory
  *
  *	@param matFile a pointer to the matlab output file
  *	@param matvar a pointer to the matlab variable object

@@ -15,7 +15,7 @@
 
 using namespace std;
 
-int main(void){
+void test_cr3bp_sim(){
 	adtk_simulation_engine simEngine;
 
 	adtk_cr3bp_sys_data sys("earth", "moon");
@@ -35,8 +35,9 @@ int main(void){
 	lastSTM.print("%12.4f");
 
 	traj.saveToMat("HaloTest.mat");
+}
 
-
+void test_bcr4bpr_sim(){
 	// Do a simulation in the BCR4BP
 	adtk_bcr4bpr_sys_data bcSys("sun", "earth", "moon");
 	adtk_simulation_engine bcEngine( &bcSys );
@@ -53,6 +54,24 @@ int main(void){
 	adtk_bcr4bpr_traj bcTraj = bcEngine.getBCR4BPRTraj();
 	cout << "Trajectory contains " << bcTraj.getLength() << " points" << endl;
 	bcTraj.saveToMat("bcHaloManifoldProp.mat");
+}
+
+void test_cr3bp_events(){
+	adtk_cr3bp_sys_data sys("earth", "moon");
+	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
+
+	adtk_simulation_engine engine(&sys);
+	engine.setVerbose(false);
+	engine.addEvent(adtk_event::XZ_PLANE, 0, true);
+	engine.runSim(ic, 2.77);
+}
+
+int main(void){
+	
+	// test_cr3bp_sim();
+	// test_bcr4bpr_sim();
+	
+	test_cr3bp_events();
 
 	return 0;
 }

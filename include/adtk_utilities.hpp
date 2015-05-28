@@ -39,4 +39,5 @@ template<class T> T adtk_sum(T* data, int length){
 	return total;
 }
 
+void waitForUser();
 #endif

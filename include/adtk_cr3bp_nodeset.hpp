@@ -53,7 +53,7 @@ class adtk_cr3bp_nodeset : public adtk_nodeset{
 		void addConstraint(adtk_cr3bp_constraint);
 		int getNumCons() const;
 		adtk_sys_data* getSysData();
-		
+		void print();
 	private:
 		std::vector<adtk_cr3bp_constraint> constraints;
 

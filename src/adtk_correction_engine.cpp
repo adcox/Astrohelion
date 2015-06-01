@@ -24,6 +24,7 @@
 
 #include "adtk_correction_engine.hpp"
 
+#include "adtk_ascii_output.hpp"
 #include "adtk_constraint.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_traj.hpp"
@@ -34,6 +35,7 @@
 #include "adtk_simulation_engine.hpp"
 #include "adtk_sys_data.hpp"
 #include "adtk_trajectory.hpp"
+#include "adtk_utilities.hpp"
 
 #include <cmath>
 #include <gsl/gsl_linalg.h>
@@ -46,7 +48,24 @@ using namespace std;
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *	@brief Copy constructor - create this engine by copying the input engine
+ *	@param e input correction engine
+ */
 adtk_correction_engine::adtk_correction_engine(const adtk_correction_engine &e){
+	copyEngine(e);
+}//=======================================================
+
+/**
+ *	@brief Destructor
+ */
+adtk_correction_engine::~adtk_correction_engine(){
+	if(createdNodesetOut){
+		delete nodeset_out;
+	}
+}//=================================================
+
+void adtk_correction_engine::copyEngine(const adtk_correction_engine &e){
 	verbose = e.verbose;
 	varTime = e.varTime;
 	maxIts = e.maxIts;
@@ -69,12 +88,6 @@ adtk_correction_engine::adtk_correction_engine(const adtk_correction_engine &e){
 		}
 	}else{
 		nodeset_out = 0;
-	}
-}//=======================================================
-
-adtk_correction_engine::~adtk_correction_engine(){
-	if(createdNodesetOut){
-		delete nodeset_out;
 	}
 }//=================================================
 
@@ -82,31 +95,15 @@ adtk_correction_engine::~adtk_correction_engine(){
 //      Operator Functions
 //-----------------------------------------------------
 
-adtk_correction_engine adtk_correction_engine::operator =(const adtk_correction_engine &e){
-	verbose = e.verbose;
-	varTime = e.varTime;
-	maxIts = e.maxIts;
-	tol = e.tol;
-	receivedNodesetIn = e.receivedNodesetIn;
-	createdNodesetOut = e.createdNodesetOut;
-	findEvent = e.findEvent;
-	nodeset_in = e.nodeset_in;		//POINTER, COPYING ADDRESS - passed in, so should point to same parent object
-
-	if(createdNodesetOut){
-		adtk_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
-		switch(type){
-			case adtk_sys_data::CR3BP_SYS:
-				nodeset_out = new adtk_cr3bp_nodeset (* static_cast<adtk_cr3bp_nodeset *>(e.nodeset_out));
-				break;
-			case adtk_sys_data::BCR4BPR_SYS:
-				nodeset_out = new adtk_bcr4bpr_nodeset (*static_cast<adtk_bcr4bpr_nodeset *>(e.nodeset_out));
-				break;
-			default: nodeset_out = 0;
-		}
-	}else{
-		nodeset_out = 0;
-	}
-
+/**
+ *	@brief Copy operator; make a copy of the input correction engine. The dynamically allocated
+ *	<tt>nodeset_out</tt> is copied, if possible, or set to 0 (it's a pointer) otherwise.
+ *
+ *	@param e
+ *	@return this correction engine
+ */
+adtk_correction_engine& adtk_correction_engine::operator =(const adtk_correction_engine &e){
+	copyEngine(e);
 	return *this;
 }//====================================
 
@@ -142,7 +139,9 @@ int adtk_correction_engine::getMaxIts() const { return maxIts; }
 double adtk_correction_engine::getTol() const { return tol; }
 
 /**
- *	Retrieve the output nodeset (after corrections). Node that this method will throw an
+ *	@brief Retrieve the output CR3BP nodeset (after corrections). 
+ *
+ *	Note that this method will throw an
  *	error if the corrections process has not been run or failed to produce an output.
  *
  *	@return a CR3BP nodeset object with the corrected trajectory data stored inside
@@ -150,19 +149,23 @@ double adtk_correction_engine::getTol() const { return tol; }
 adtk_cr3bp_nodeset adtk_correction_engine::getCR3BPOutput(){
 	if(createdNodesetOut && receivedNodesetIn){
 		if(nodeset_in->getSysData()->getType() == adtk_sys_data::CR3BP_SYS){
-			return *(static_cast<adtk_cr3bp_nodeset *>(nodeset_out));
+			// Create a copy of the nodeset, return it
+			adtk_cr3bp_nodeset temp( *(static_cast<adtk_cr3bp_nodeset *>(nodeset_out)) );
+			return temp;
 		}else{
-			fprintf(stderr, "Wrong system type!\n");
+			printErr("Wrong system type!\n");
 			throw;
 		}
 	}else{
-		fprintf(stderr, "Output nodeset has not been created, cannot return CR3BP output\n");
+		printErr("Output nodeset has not been created, cannot return CR3BP output\n");
 		throw;
 	}
 }//=========================================
 
 /**
- *	Retrieve the output nodeset (after corrections). Node that this method will throw an
+ *	@brief Retrieve the output BCR4BPR nodeset (after corrections). 
+ *
+ *	Note that this method will throw an
  *	error if the corrections process has not been run or failed to produce an output.
  *
  *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
@@ -170,43 +173,45 @@ adtk_cr3bp_nodeset adtk_correction_engine::getCR3BPOutput(){
 adtk_bcr4bpr_nodeset adtk_correction_engine::getBCR4BPROutput(){
 	if(createdNodesetOut && receivedNodesetIn){
 		if(nodeset_in->getSysData()->getType() == adtk_sys_data::BCR4BPR_SYS){
-			return *(static_cast<adtk_bcr4bpr_nodeset *>(nodeset_out));
+			// Create a copy of the nodeset, return it
+			adtk_bcr4bpr_nodeset temp( *(static_cast<adtk_bcr4bpr_nodeset *>(nodeset_out)) );
+			return temp;
 		}else{
-			fprintf(stderr, "Wrong system type!\n");
+			printErr("Wrong system type!\n");
 			throw;
 		}
 	}else{
-		fprintf(stderr, "Output nodeset has not been created, cannot return CR3BP output\n");
+		printErr("Output nodeset has not been created, cannot return CR3BP output\n");
 		throw;
 	}
 }//=========================================
 
 /**
- *	Set varTime
+ *	@brief Set varTime
  *	@param b whether or not the corrector should use variable time
  */
 void adtk_correction_engine::setVarTime(bool b){ varTime = b; }
 
 /**
- *	Set verbosity
+ *	@brief Set verbosity
  *	@param b whether or not the corrector should be verbose in its outputs
  */
 void adtk_correction_engine::setVerbose(bool b){ verbose = b; }
 
 /**
- *	Set maximum iterations
+ *	@brief Set maximum iterations
  *	@param i the maximum number of iterations to attempt before giving up
  */
 void adtk_correction_engine::setMaxIts(int i){ maxIts = i; }
 
 /**
- *	Set the error tolerance
+ *	@brief Set the error tolerance
  *	@param d errors below this value will be considered negligible
  */
 void adtk_correction_engine::setTol(double d){ tol = d; }
 
 /**
- *	Set the findEven flag
+ *	@brief Set the findEven flag
  *	@param b whether or not the algorithm will be looking for an event
  */
 void adtk_correction_engine::setFindEvent(bool b){ findEvent = b; }
@@ -216,7 +221,7 @@ void adtk_correction_engine::setFindEvent(bool b){ findEvent = b; }
 //-----------------------------------------------------
 
 /**
- *	Correct a CR3BP nodeset
+ *	@brief Correct a CR3BP nodeset
  *	@param set a pointer to a nodeset
  */
 void adtk_correction_engine::correct_cr3bp(adtk_cr3bp_nodeset* set){
@@ -226,7 +231,7 @@ void adtk_correction_engine::correct_cr3bp(adtk_cr3bp_nodeset* set){
 }
 
 /**
- *	Correct a BCR4BP nodeset
+ *	@brief Correct a BCR4BP nodeset
  *	@param set a pointer to a nodeset
  */
 void adtk_correction_engine::correct_bcr4bpr(adtk_bcr4bpr_nodeset* set){
@@ -236,21 +241,22 @@ void adtk_correction_engine::correct_bcr4bpr(adtk_bcr4bpr_nodeset* set){
 }
 
 /**
- *	Correct a generic nodeset; equipped to handle any type
+ *	@brief Correct a generic nodeset; equipped to handle any type
  *	@param set a pointer to a nodeset
  */
 void adtk_correction_engine::correct(adtk_nodeset *set){
-	printMessage("Corrector:\n");
 
+	// Get some basic data from the input nodeset
 	int numNodes = set->getNumNodes();
-	printMessage("  numNodes = %d\n", numNodes);
-
 	adtk_sys_data::system_t sysType = set->getSysData()->getType();
-	printMessage("  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
+	
+	printVerb(verbose, "Corrector:\n");
+	printVerb(verbose, "  numNodes = %d\n", numNodes);
+	printVerb(verbose, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
+	// Create specific nodeset objects using static_cast
 	adtk_bcr4bpr_nodeset *bcSet;
 	adtk_cr3bp_nodeset *crSet;
-
 	switch(sysType){
 		case adtk_sys_data::CR3BP_SYS:
 			crSet = static_cast<adtk_cr3bp_nodeset *>(set);
@@ -269,11 +275,10 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	// Copy in the state vectors
 	X0.insert(X0.begin(), set->getNodes()->begin(), set->getNodes()->end());
 	
+	// Append the TOF and (if applicable) node epochs
 	if(varTime){
-		// Append the TOF values
 		X0.insert(X0.end(), set->getTOFs()->begin(), set->getTOFs()->end());
 
-		// for non-autonomous systems, append epoch at each node
 		if(sysType == adtk_sys_data::BCR4BPR_SYS){
 			X0.insert(X0.end(), bcSet->getEpochs()->begin(), bcSet->getEpochs()->end());
 		}
@@ -282,7 +287,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	// Get the indices of the nodes that are continuous in velocity
 	vector<int> velConNodes = set->getVelConNodes();
 
-	printMessage("  Velocity-Continuous Nodes: %d\n", ((int)velConNodes.size()));
+	printVerb(verbose, "  Velocity-Continuous Nodes: %d\n", ((int)velConNodes.size()));
 
 	// Compute number of position and velocity continuity constraints
 	int posVelCons = 3*(numNodes - 1) + 3*velConNodes.size();
@@ -293,17 +298,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	vector<int> slackAssignCon;
 	bool foundDVCon = false;
 	for(int c = 0; c < set->getNumCons(); c++){
-		adtk_constraint con(6);
-
-		switch(sysType){
-			case adtk_sys_data::CR3BP_SYS:
-				con = crSet->getConstraint(c);
-				break;
-			case adtk_sys_data::BCR4BPR_SYS:
-				con = bcSet->getConstraint(c);
-				break;
-			default: break;
-		}
+		adtk_constraint con = set->getConstraint(c);
 
 		switch(con.getType()){
 			case adtk_constraint::STATE:
@@ -322,8 +317,8 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			case adtk_constraint::DELTA_V:
 				if(!foundDVCon){
 					if(((int)velConNodes.size()) == numNodes-1){
-						fprintf(stderr, "No velocity discontinuities are allowed, but a delta-V requirement is present.\n");
-						fprintf(stderr, "The gramm matrix will likely be singular...\n");
+						printErr("No velocity discontinuities are allowed, but a delta-V requirement is present.\n");
+						printErr("The gramm matrix will likely be singular...\n");
 					}
 
 					extraCons += 1;
@@ -339,7 +334,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 						slackAssignCon.push_back(c);
 					}
 				}else{
-					fprintf(stderr, "You can only apply ONE delta-V constraint!\n");
+					printErr("You can only apply ONE delta-V constraint!\n");
 					throw;
 				}
 				break;
@@ -347,22 +342,19 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		}
 
 		if(con.getNode() < 0 || con.getNode() > numNodes){
-			fprintf(stderr, "Constraint #%d applies to a non-existsant node!\n", c);
+			printErr("Constraint #%d applies to a non-existsant node!\n", c);
 			return;
 		}
 	}// end of loop through constraints
 
-	// Loop and correct until we reach maxIts or the error falls below tolerance
+	// Define values for use in corrections loop
 	double err = 1000000000;
 	int count = 0;
-
-	// Copy X0 into vector X, which will be updated each iteration
-	vector<double> X(X0);
-	
-	int totalFree = 0;
-	int timeCons = 0;
+	vector<double> X(X0);	// Copy X0 into vector X, which will be updated each iteration
 
 	// Determine the number of free variables and time constraints based on the system type
+	int totalFree = 0;
+	int timeCons = 0;
 	if(sysType == adtk_sys_data::CR3BP_SYS){
 		totalFree = varTime ? (7*numNodes - 1 + numSlack) : (6*numNodes + numSlack);
 		timeCons = 0;	// Autonomous system, no need to constrain time
@@ -373,13 +365,9 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 
 	int totalCons = posVelCons + timeCons + extraCons;
 
-	if(totalCons > totalFree){
-		printMessage("There are more constraints than free variables\n");
-	}
-
-	printMessage("  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
+	printVerb(verbose, "  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
 		posVelCons, timeCons);
-	printMessage("  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
+	printVerb(verbose, "  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
 		extraCons, totalFree, totalCons);
 
 	// create a simulation engine
@@ -388,13 +376,13 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	simEngine.setVerbose(verbose);
 	// TODO: Should I set the tolerance or use the default?
 
-	// If i'm looking for an event, I only need the first (fixed) node a final state
 	if(findEvent){
 		// To avoid using several steps, use fixed step size and only two steps
 		simEngine.setVarStepSize(false);
 		simEngine.setNumSteps(2);
 	}
 
+	// Create containers for matrices/vectors that I need to access inside/outside the loop
 	vector<double> FX;
 	vector<double> DF;
 	vector<double> deltaVs;
@@ -408,12 +396,10 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	int conCount;		// rolling count of extra constraint (their rows)
 
 	while( err > tol && count < maxIts){
-		FX.clear();
+		FX.clear();					// Clear vectors each iteration
 		DF.clear();
 		deltaVs.clear();
-
-		// Create FX and D(F(X)) vector and matrix
-		FX.assign(totalCons, 0);
+		FX.assign(totalCons, 0);	// Size the vectors and fill with zeros
 		DF.assign(totalCons*totalFree, 0);
 		deltaVs.assign(3*numNodes, 0);
 
@@ -422,14 +408,14 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		// printf("X contains %d elements\n", ((int)X.size()));
 		// printf("DeltaVs contains %d elements\n", ((int)deltaVs.size()));
 
-		conCount = posVelCons + timeCons;
-		pvConCount = 0;
+		conCount = posVelCons + timeCons;	// row where extra constraints will begin
+		pvConCount = 0;		// reset to zero every iteration
 
-		//Integrate from each node, grab the final STM and state
 		for(int n = 0; n < numNodes; n++){
 			double tof = 0;
 			double t0 = 0;
 
+			// For all but the final node, integrate for the specified time
 			if(n < numNodes-1){
 				// Clear old variables to avoid any potential issues
 				lastState.clear();
@@ -444,17 +430,18 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				else
 					t0 = varTime ? X[7*numNodes-1+n] : bcSet->getEpoch(n);
 			
-
+				// Copy initial conditions from free variable vector and run the sim
 				double *ic = &(X[6*n]);
 				simEngine.setRevTime(tof < 0);
 				simEngine.runSim(ic, t0, tof);
-
 				newSeg = simEngine.getTraj();
 				
+				// Extract specific trajectory type for access to system-specific data
 				if(sysType == adtk_sys_data::BCR4BPR_SYS){
 					bcNewSeg = simEngine.getBCR4BPRTraj();
 				}
 
+				// Determine the final state and final STM on the integrated segment
 				int segEnd = newSeg.getLength() - 1;
 				lastState = newSeg.getState(segEnd);
 				lastSTM = newSeg.getSTM(segEnd);
@@ -469,10 +456,10 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				deltaVs[n*3+1] = lastState[4] - X[6*(n+1)+4];
 				deltaVs[n*3+2] = lastState[5] - X[6*(n+1)+5];
 
-				// Add velocity constraint if applicable; we just integrated
-				// from node n to where (hopefully) node n+1 is. If node n+1 has
-				// a velocity constraint, we match the velocity at the end of newSeg
-				// to that node's velocity states
+				/* Add velocity constraint if applicable; we just integrated
+				from node n to where (hopefully) node n+1 is. If node n+1 has
+				a velocity constraint, we match the velocity at the end of newSeg
+				to that node's velocity states */
 				int maxRowCol = 3;	// if no vel constraint, we only need to loop through position values below
 				if(std::find(velConNodes.begin(), velConNodes.end(), n+1) != velConNodes.end()){	// then node n+1 has a velocity constraint
 					FX[pvConCount+3] = deltaVs[n*3+0];
@@ -498,10 +485,10 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 						DF[totalFree*(pvConCount+r) + 6*numNodes+n] = lastState[r+3];
 
 						if(sysType == adtk_sys_data::BCR4BPR_SYS){
-							if(r == 0){
+							if(r == 0){	// only extract dqdT once for each node
 								last_dqdT = bcNewSeg.get_dqdT(segEnd);
 							}
-
+							// Epoch dependencies
 							DF[totalFree*(pvConCount+r) + 7*numNodes-1+n] = last_dqdT[r];
 						}
 					}
@@ -517,23 +504,11 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 					DF[totalFree*(posVelCons+n) + 7*numNodes-1+n] = -1;
 					DF[totalFree*(posVelCons+n) + 7*numNodes-1+n+1] = 1;
 				}
-
-				// TODO: Save the STM for this segment
 			}// End of if(n < numNodes-1)
 			
 			// Add extra constraints and form the partials for those constraints
 			for(int c = 0; c < set->getNumCons(); c++){
-				adtk_constraint con(6);
-
-				switch(sysType){
-					case adtk_sys_data::CR3BP_SYS:
-						con = crSet->getConstraint(c);
-						break;
-					case adtk_sys_data::BCR4BPR_SYS:
-						con = bcSet->getConstraint(c);
-						break;
-					default: break;
-				}
+				adtk_constraint con = set->getConstraint(c);
 
 				if(con.getNode() == n){
 					vector<double> conData = con.getData();
@@ -553,7 +528,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 											DF[totalFree*conCount + 7*numNodes-1+n] = 1;
 											conCount++;
 										}else{
-											fprintf(stderr, "State constraints must have <= 7 elements\n");
+											printErr("State constraints must have <= 7 elements\n");
 											return;
 										}
 									}
@@ -599,14 +574,14 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 						}
 						case adtk_constraint::SP:
 							// TODO: implement
-							fprintf(stderr, "SP constraint not implemented!\n");
+							printErr("SP constraint not implemented!\n");
 							return;
 						case adtk_constraint::DELTA_V:
 						case adtk_constraint::MAX_DELTA_V:
 							// handled outside this loop
 							break;
 						default:
-							fprintf(stderr, "Unrecognized consraint type\n");
+							printErr("Unrecognized consraint type\n");
 							return;
 					}// End switch/case
 				}// End if(con.getNode() == n)
@@ -653,19 +628,10 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			}// End of loop through constraints
 		}// end of loop through nodes
 
+		// Once all nodes have been integrated, finish computing Delta-V constraints
 		for(int c = 0; c < set->getNumCons(); c++){
 
-			adtk_constraint con(6);
-
-			switch(sysType){
-				case adtk_sys_data::CR3BP_SYS:
-					con = crSet->getConstraint(c);
-					break;
-				case adtk_sys_data::BCR4BPR_SYS:
-					con = bcSet->getConstraint(c);
-					break;
-				default: break;
-			}
+			adtk_constraint con = set->getConstraint(c);
 
 			switch(con.getType()){
 				case adtk_constraint::DELTA_V:
@@ -705,70 +671,83 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		gsl_vector_view b = gsl_vector_view_array(FX_mat.getDataPtr(), FX_mat.getRows());
 		
 		// Allocate memory for intermediate vector w
-		gsl_vector *w = gsl_vector_alloc(totalCons);
+		gsl_vector *w;
+		gsl_permutation *perm;
+		adtk_matrix X_diff(totalFree, 1);
+		int permSign;	// store sign (even/odd) of permutation matrix
+		if(totalCons == totalFree){	// J is square, use regular inverse
+			if(count == 0){
+				J.toCSV("J.csv");
+			}
 
-		// Compute Gramm matrix
-		adtk_matrix G = J*J.trans();
+			// Solve the system Jw = b
+			w = gsl_vector_alloc(totalFree);
+			perm = gsl_permutation_alloc(J.getRows());
+			gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
+			gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
 
-		// Save matrices to CSV files for inspection; debugging
-		// if(count == 0){
-		// 	J.toCSV("J.csv");
-		// 	Q.toCSV("Q.csv");
-		// 	FX_mat.toCSV("FX.csv");
-		// 	oldX.toCSV("oldX.csv");
-		// }
+			// w, in this case, is X_diff
+			X_diff = adtk_matrix(w, false);
+		}else{
+			if(totalCons < totalFree){	// Under-constrained
+				// Compute Gramm matrix
+				adtk_matrix G = J*J.trans();
 
-		/* Use LU decomposition to invert the Gramm matrix and find a vector
-		w. Multiplying J^T by w yields the minimum-norm solution x, where x 
-		lies in the column-space of J^T, or in the orthogonal complement of
-		the nullspace of J.
-		Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
-		 */
-		// Solve the system Gw = b for w
-		int s;
-		gsl_permutation *perm = gsl_permutation_alloc(G.getRows());
-		gsl_linalg_LU_decomp(G.getGSLMat(), perm, &s);
-		gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
+				/* Use LU decomposition to invert the Gramm matrix and find a vector
+				w. Multiplying J^T by w yields the minimum-norm solution x, where x 
+				lies in the column-space of J^T, or in the orthogonal complement of
+				the nullspace of J.
+				Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
+				 */
+				// Solve the system Gw = b
+				w = gsl_vector_alloc(totalCons);
+				perm = gsl_permutation_alloc(G.getRows());
+				gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
+				gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
 
-		// Compute the optimal x from w
-		adtk_matrix W(w, false);	// create column vector
-		adtk_matrix X_diff = J.trans()*W;	//X_diff = X_new - X_old
+				// Compute the optimal x from w
+				adtk_matrix W(w, false);	// create column vector
+				X_diff = J.trans()*W;	//X_diff = X_new - X_old
+			}else{	// Over-constrained
+				// dummy allocations to avoid errors when cleaning up
+				perm = gsl_permutation_alloc(J.getRows());
+				w = gsl_vector_alloc(J.getRows());
+				printVerb(verbose, "System is over constrained... No solution implemented!\n");
+			}
+		}
 
 		// Solve for X_new and copy into working vector X
 		adtk_matrix newX = X_diff + oldX;
 		X.clear();
 		X.insert(X.begin(), newX.getDataPtr(), newX.getDataPtr()+totalFree);
 
-		// Free up memory used to invert G
+		// Free up memory used to invert G or J
 		gsl_permutation_free(perm);
 		gsl_vector_free(w);
 
 		// Compute error; norm of constraint vector
 		err = FX_mat.norm();
 
-		// save newly computed X to CSV for debugging
-		// if(count == 0){
-		// 	newX.toCSV("newX.csv");
-		// }
-
 		count++;
-		printMessage("Iteration %02d: ||F|| = %.4e\n", count, err);
+		printVerb(verbose, "Iteration %02d: ||F|| = %.4e\n", count, err);
 	}// end of corrections loop
 
 	if(err > tol){
-		printMessage("Corrections process did not converge\n");
+		printVerb(verbose, "Corrections process did not converge\n");
 		// throw;
 	}else{
-		printMessage("Corrections processes SUCCEEDED\n");
+		printVerb(verbose, "Corrections processes SUCCEEDED\n");
 	}
 
-	// TODO: Output data
 	createOutput(X, simEngine);
 }//==========================================================
 
+
 /**
- *	Take the final, corrected free variable vector <tt>X</tt> and the simulation engine and create
- * 	an output nodeset. If <tt>findEvent</tt> is set to true, the
+ *	@brief Take the final, corrected free variable vector <tt>X</tt> and the simulation engine and create
+ * 	an output nodeset. 
+ *
+ *	If <tt>findEvent</tt> is set to true, the
  *	output nodeset will contain extra information for the simulation engine to use. Rather than
  *	returning only the position and velocity states, the output nodeset will contain the STM 
  *	and dqdT (if non-autonomous) values for the final node; this information will be appended to 
@@ -791,7 +770,6 @@ void adtk_correction_engine::createOutput(std::vector<double> X, adtk_simulation
 			adtk_cr3bp_nodeset *nodeInCast = static_cast<adtk_cr3bp_nodeset *>(nodeset_in);
 			// Copy that nodeset into the output guy
 			nodeset_out = new adtk_cr3bp_nodeset(*nodeInCast);
-			// nodeset_out = new adtk_cr3bp_nodeset();
 			createdNodesetOut = true;
 			break;
 		}
@@ -804,7 +782,9 @@ void adtk_correction_engine::createOutput(std::vector<double> X, adtk_simulation
 			createdNodesetOut = true;
 			break;
 		}
-		default: break;
+		default: 
+			printErr("System type not supported\n");
+			return;
 	}
 
 	nodeset_out->setNodeDistro(adtk_nodeset::NONE);
@@ -820,10 +800,11 @@ void adtk_correction_engine::createOutput(std::vector<double> X, adtk_simulation
 	nodes->insert(nodes->begin(), X.begin(), X.begin() + numNodes*6);
 	tofs->insert(tofs->begin(), X.begin() + numNodes*6, X.begin() + numNodes*7 - 1);
 
-	// To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
-	// state for the last node. We do this by appending the STM elements and dqdT elements to the
-	// end of the node array. This output nodeset should have two "nodes": the first 6 elements
-	// are the first node, the final 42 or 48 elements are the second node with STM and dqdT information
+	/* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
+	state for the last node. We do this by appending the STM elements and dqdT elements to the
+	end of the node array. This output nodeset should have two "nodes": the first 6 elements
+	are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
+	information*/
 	if(findEvent){
 
 		// Get an object containing data about the final segment
@@ -850,18 +831,6 @@ void adtk_correction_engine::createOutput(std::vector<double> X, adtk_simulation
 		epochs->insert(epochs->begin(), X.begin() + 7*numNodes-1, X.begin() + 8*numNodes-1);
 	}
 }//===========================
-
-/**
- *  A wrapper function to print a message
- */
-void adtk_correction_engine::printMessage(const char * format, ...){
-    if(verbose){
-        va_list args;
-        va_start(args, format);
-        vprintf(format, args);
-        va_end(args);
-    }
-}//==========================================
 
 
 

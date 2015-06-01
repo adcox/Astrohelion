@@ -23,7 +23,7 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
-*   Integrate the equations of motion for the CR3BP
+*   @brief Integrate the equations of motion for the CR3BP
 *   @param t the current time of the integration
 *   @param s the 42-d state vector
 *   @param sdot the 42-d state derivative vector
@@ -84,7 +84,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
 }//===============================================================
 
 /**
- *   Integrate the equations of motion for the CR3BP without the STM
+ *   @brief Integrate the equations of motion for the CR3BP without the STM
  *   @param t time at integration step (unused)
  *   @param s the 6-d state vector
  *   @param sdot the 6-d state derivative vector
@@ -114,7 +114,7 @@ int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
 }//=====================================================
 
 /**
- *   Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
  *   @param t time at integration step (unused)
  *   @param s the 48-d state vector
@@ -254,7 +254,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 }//============== END OF BCR4BPR EOMs ======================
 
 /**
- *   Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
  *   @param t time at integration step (unused)
  *   @param s the 6-d state vector
@@ -324,7 +324,7 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
 
 
 /**
- *  Compute the second derivatives of the pseudo-potential function
+ *  @brief Compute the second derivatives of the pseudo-potential function
  *
  *  @param mu the mass ratio of the system, non-dimensional
  *  @param x coordinate, non-dimensional units 
@@ -355,7 +355,7 @@ void cr3bp_getUDDots(double mu, double x, double y, double z, double* ddots){
 }//========================================================
 
 /**
- *  Compute the Jacobi Constant for the CR3BP
+ *  @brief Compute the Jacobi Constant for the CR3BP
  *
  *  @param s the state vector; only the position and velocity states are required
  *  @param mu the non-dimensional system mass ratio
@@ -377,7 +377,7 @@ double cr3bp_getJacobi(double s[], double mu){
 
 
 /**
- *  Compute the location of the three primaries in the BCR4BP (rotating coord.)
+ *  @brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
  *
  *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi9
  *  @param sysData a system data object containing information about the BCR4BP primaries
@@ -414,7 +414,7 @@ void bcr4bpr_getPrimaryPos(double t, adtk_bcr4bpr_sys_data sysData, double *prim
 }//================================================
 
 /**
- *  Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
+ *  @brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
  *
  *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi9
  *  @param sysData a system data object containing information about the BCR4BP primaries

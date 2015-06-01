@@ -25,12 +25,12 @@
 #include <string>
 
 /**
- *	A derivative class of the adtk_sys_data super-class. This class
+ *	@brief A derivative class of the adtk_sys_data object which
  *	contains information specific to the CR3BP
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_cr3bp_sys_data : public adtk_sys_data{
 	private:

@@ -29,6 +29,8 @@
 
 #include "adtk_simulation_engine.hpp"
 
+#include "adtk_ascii_output.hpp"
+#include "adtk_bcr4bpr_nodeset.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_bcr4bpr_traj.hpp"
 #include "adtk_calculations.hpp"
@@ -55,31 +57,61 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
- *  Construct a new simulation engine. Most variables will be intiailized, but
+ *  @brief Construct a new simulation engine. 
+ *
+ *  Most variables will be intiailized, but
  *  you MUST set the system data via <tt>setSysData()</tt>
  */
 adtk_simulation_engine::adtk_simulation_engine(){
     events.clear();
-    printMessage("Created Simulation Engine\n");
+    printVerb(verbose, "Created Simulation Engine\n");
 }//===========================================
 
 /**
- *  Construct a simulation engine for a specific dynamical system
+ *  @brief Construct a simulation engine for a specific dynamical system
  *  @param data a pointer to a system data object
  */
 adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
     events.clear();
     sysData = data;
-    printMessage("Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
+    printVerb(verbose, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
 }//===========================================
 
 /**
- *  Copy constructor
+ *  @brief Copy constructor
  *  @param s a simulation engine 
  */
 adtk_simulation_engine::adtk_simulation_engine(const adtk_simulation_engine& s){
+    copyEngine(s);
+}//=====================================
+
+/**
+ *  @brief Free memory and clean up
+ */
+adtk_simulation_engine::~adtk_simulation_engine(){
+    printVerb(verbose, "Destroying simulation engine...\n");
+    reset();    // Function handles deallocation and resetting of data
+}//===========================================
+
+/**
+ *  Copy data from an input engine to this one
+ *  @param s an input simulation engine
+ */
+void adtk_simulation_engine::copyEngine(const adtk_simulation_engine &s){
     sysData = s.sysData;                        // Copies ADDRESS of a system data object
-    traj = new adtk_trajectory(*(s.traj));      // Copy trajectory object
+
+    // Copy the trajectory object using the correct casting
+    switch(sysData->getType()){
+        case adtk_sys_data::CR3BP_SYS:
+            traj = new adtk_cr3bp_traj(*(static_cast<adtk_cr3bp_traj *>(s.traj)));
+            break;
+        case adtk_sys_data::BCR4BPR_SYS:
+            traj = new adtk_bcr4bpr_traj(*(static_cast<adtk_bcr4bpr_traj *>(s.traj)));
+            break;
+        default:
+            traj = new adtk_trajectory(*(s.traj));
+    }
+
     eomParams = 0;                              // void*, will get set again by the runSim() method
     revTime = s.revTime;
     verbose = s.verbose;
@@ -93,36 +125,16 @@ adtk_simulation_engine::adtk_simulation_engine(const adtk_simulation_engine& s){
     events = s.events;
 }//=====================================
 
-/**
- *  Free memory and clean up
- */
-adtk_simulation_engine::~adtk_simulation_engine(){
-    printMessage("Destroying simulation engine...\n");
-    reset();    // Function handles deallocation and resetting of data
-}//===========================================
-
 //-----------------------------------------------------
 //      Operator Functions
 //-----------------------------------------------------
 
 /**
- *  Assignment operator; make this engine equal another by copying its data
+ *  @brief Assignment operator; make this engine equal another by copying its data
  *  @param s another simulation engine
  */
 adtk_simulation_engine& adtk_simulation_engine::operator =(const adtk_simulation_engine& s){
-    sysData = s.sysData;                        // Copies ADDRESS of a system data object
-    traj = new adtk_trajectory(*(s.traj));      // Copy trajectory object
-    eomParams = 0;                              // void*, will get set again by the runSim() method
-    revTime = s.revTime;
-    verbose = s.verbose;
-    varStepSize = s.varStepSize;
-    simpleIntegration = s.simpleIntegration;
-    isClean = s.isClean;
-    absTol = s.absTol;
-    relTol = s.relTol;
-    dtGuess = s.dtGuess;
-    numSteps = s.numSteps;
-    events = s.events;
+    copyEngine(s);
     return *this;
 }//=====================================
 
@@ -163,7 +175,8 @@ double adtk_simulation_engine::getRelTol() const {return relTol;}
 int adtk_simulation_engine::getNumSteps() const { return numSteps; }
 
 /**
- *  Retrieve the trajectory as a generic trajectory object
+ *  @brief Retrieve the trajectory as a generic trajectory object
+ *  @return a trajectory object
  */
 adtk_trajectory adtk_simulation_engine::getTraj() const {
     // Make a copy and return that
@@ -172,7 +185,9 @@ adtk_trajectory adtk_simulation_engine::getTraj() const {
 }
 
 /**
- *  Retrieve the trajectory. To avoid static casts in driver programs,
+ *  @brief Retrieve the CR3BP trajectory. 
+ *
+ *  To avoid static casts in driver programs,
  *  we create several different getTraj() type functions that will perform
  *  the static cast and return the specific type of trajectory object rather
  *  than a generic one.
@@ -194,7 +209,9 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj() const{
 }//==============================================
 
 /**
- *  Retrieve the trajectory. To avoid static casts in driver programs,
+ *  @brief Retrieve the BCR4BPR trajectory. 
+ *
+ *  To avoid static casts in driver programs,
  *  we create several different getTraj() type functions that will perform
  *  the static cast and return the specific type of trajectory object rather
  *  than a generic one.
@@ -204,7 +221,7 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj() const{
 adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj() const{
     if(sysData->getType() == adtk_sys_data::BCR4BPR_SYS){
         // Make a copy and return it
-        adtk_bcr4bpr_traj temp = *( static_cast<adtk_bcr4bpr_traj *>(traj) );
+        adtk_bcr4bpr_traj temp( *( static_cast<adtk_bcr4bpr_traj *>(traj) ) );
         return temp;
     }
     else{
@@ -214,57 +231,59 @@ adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj() const{
 }//=====================================
 
 /**
- *  Add an event for this integration
+ *  @brief Add an event for this integration
  *  @param type the event type
  *  @param dir -1 for negative direction, +1 for positive, 0 for both
  *  @param stop whether or not to stop integration when this event occurs
  */
 void adtk_simulation_engine::addEvent(adtk_event::event_t type, int dir, bool stop){
-    adtk_event temp(type, dir, stop, ((int)events.size()));
+    adtk_event temp(type, dir, stop);
     events.push_back(temp);
 }//======================================
 
 /**
- *	Specify the system the engine will be using for integration
+ *	@brief Specify the system the engine will be using for integration
  *	@param d a pointer to the system data object (use &sys)
  */
 void adtk_simulation_engine::setSysData(adtk_sys_data *d){ sysData = d; }
 
 /**
- *	Specify whether or not the engine should run in reverse time
+ *	@brief Specify whether or not the engine should run in reverse time
  *	@param b whether or not the engine should run in reverse time
  */
 void adtk_simulation_engine::setRevTime(bool b){ revTime = b; }
 
 /**
- *	Specify the verbosity of the engine
+ *	@brief Specify the verbosity of the engine
  *	@param b whether or not the engine should output verbose statements
  */
 void adtk_simulation_engine::setVerbose(bool b){ verbose = b; }
 
 /**
- *  Specify whether or not the engine should use variable step size.
+ *  @brief Specify whether or not the engine should use variable step size.
  *  @param b whether or not the engine should use variable step size
  */
 void adtk_simulation_engine::setVarStepSize(bool b){ varStepSize = b; }
 
 /**
- *	Specify the absolute integration tolerance, non-dimensional units.
+ *	@brief Specify the absolute integration tolerance, non-dimensional units.
  *	The default value is 1e-12
  *	@param t the tolerance
  */
 void adtk_simulation_engine::setAbsTol(double t){ absTol = t; }
 
 /**
- *	Specify the absolute integration tolerance, non-dimensional units
+ *	@brief Specify the absolute integration tolerance, non-dimensional units
  *	The default value is 1e-14
  *	@param t the tolerance
  */
 void adtk_simulation_engine::setRelTol(double t){ relTol = t; }
 
 /**
- *  Specify the number of steps the integrator must take during the 
- *  the integration. Only these points will be output to the 
+ *  @brief Specify the number of steps the integrator must take during the 
+ *  the integration. 
+ *
+ *  Only these points will be output to the 
  *  trajectory object, although the GSL driver may take steps in between
  *  those specified to maintain numerical accuracy.
  */
@@ -275,8 +294,9 @@ void adtk_simulation_engine::setNumSteps(int n){ numSteps = n; }
 //-----------------------------------------------------
 
 /**
- *	Run a simulation given a set of initial conditions and run time. It is
- *	assumed that t0 = 0
+ *	@brief Run a simulation given a set of initial conditions and run time. 
+ *
+ *  It is assumed that t0 = 0
  *	@param ic a 6-element array containting the non-dimensional initial state
  *	@param tof the total integration time, or time-of-flight
  */
@@ -285,14 +305,14 @@ void adtk_simulation_engine::runSim(double *ic, double tof){
 }//=======================================================
 
 /**
- *	Run a simulation in the specified system starting with a set of initial conditions,
+ *	@brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
  *	@param ic a 6-element array of non-dimensional initial states
  *	@param t0 the time at the start of the integration, non-dimensional units
  *	@param tof time-of-flight, non-dimensional time units
  */
 void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
-    printMessage("Running simulation...\n");
+    printVerbColor(verbose, GREEN, "Running simulation...\n");
     if(!isClean){
         cleanEngine();
     }
@@ -300,7 +320,7 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
     vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = revTime ? t0 - tof : t0 + tof;
-    printMessage("  time will span from %.4f to %.4f\n", t0, tf);
+    printVerb(verbose, "  time will span from %.4f to %.4f\n", t0, tf);
 
     if(varStepSize){
         t_span.reserve(2);
@@ -319,14 +339,14 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
 		case adtk_sys_data::CR3BP_SYS:
 		{
             // Initialize trajectory (will only have one set of values)
-            printMessage("  initializing CR3BP trajectory\n");
+            printVerb(verbose, "  initializing CR3BP trajectory\n");
             adtk_cr3bp_sys_data *data = static_cast<adtk_cr3bp_sys_data *>(sysData);
             traj = new adtk_cr3bp_traj(*data);
 			break;
         }
 		case adtk_sys_data::BCR4BPR_SYS:
         {
-            printMessage("  initializing BCR4BPR trajectory\n");
+            printVerb(verbose, "  initializing BCR4BPR trajectory\n");
             adtk_bcr4bpr_sys_data *data = static_cast<adtk_bcr4bpr_sys_data *>(sysData);
             traj = new adtk_bcr4bpr_traj(*data);
 			break;
@@ -347,7 +367,7 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
 //-----------------------------------------------------
 
 /**
- *  Integrate the 6 state EOMs and 36 STM EOMs with additional integration as required by 
+ *  @brief Integrate the 6 state EOMs and 36 STM EOMs with additional integration as required by 
  *  specific systems.
  *
  *  This function uses values stored in object-wide variables to determine the direction time flows,
@@ -369,7 +389,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             ic_dim = 48;    // requires 6 extra states for numerically integrated epoch dependencies
         }
     }
-    printMessage("  IC has %d initial states\n", ic_dim);
+    printVerb(verbose, "  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     vector<double> fullIC(ic_dim, 0);
@@ -391,7 +411,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     setEOMParams();
 
     // Choose EOM function based on system type and simplicity
-    printMessage("  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    printVerb(verbose, "  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
     switch(sysData->getType()){
         case adtk_sys_data::CR3BP_SYS:
@@ -415,7 +435,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_driver *d;
 
     if(varStepSize){
-        printMessage("  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
+        printVerb(verbose, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
         // Allocate space for the stepping object; use the rkck algorithm (doesn't require driver)
         s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
         // Define a control that will keep the error in the state y within the specified tolerances
@@ -423,7 +443,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
-        printMessage("  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
+        printVerb(verbose, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         // Allocate space for a driver; the msadams algorithm requires access to the driver
         d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, dtGuess, absTol, relTol);
         // Allocate space for the stepping object
@@ -435,10 +455,10 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     saveIntegratedData(y, t[0], true);
 
     // Update all event functions with IC
-    printMessage("  sim will use %d event functions:\n", ((int)events.size()));
+    printVerb(verbose, "  sim will use %d event functions:\n", ((int)events.size()));
     for(int ev = 0; ev < ((int)events.size()); ev++){
         events.at(ev).updateDist(y);
-        printMessage("  >>%s\n", events.at(ev).getTypeStr());
+        printVerb(verbose, "  >>%s\n", events.at(ev).getTypeStr());
     }
 
     steps++;    // We've put in the IC, next step will be a new state
@@ -463,83 +483,12 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 break;
             }
 
-            // Check to see if distance to event has changed
-            for(int ev = 0; ev < ((int)events.size()); ev++){
-                if(events.at(ev).crossedEvent(y)){
-                    waitForUser();
-
-                    // Create a nodeset from the previous state (stored in the event) and
-                    // integrating forwards for half the time between this state and the last one
-                    // double tof = 0.5*(t0 - traj->getTime()->back());
-                    double tof = 1.0*(t0 - traj->getTime()->back());
-                    int stateSize = traj->getState()->size();
-                    double *eventNodeIC = &(traj->getState()->at(stateSize-adtk_trajectory::STATE_WIDTH));
-
-                    switch(sysData->getType()){
-                        case adtk_sys_data::CR3BP_SYS:
-                        {
-                            printMessage("  Event %d detected; searching for exact crossing\n", ev);
-                            
-                            // Copy system data object
-                            adtk_cr3bp_sys_data crSysData(*static_cast<adtk_cr3bp_sys_data *>(sysData));
-
-                            // Create a nodeset for this particular type of system
-                            printMessage("  Creating nodeset for event location\n");
-                            adtk_cr3bp_nodeset eventNodeset(eventNodeIC, crSysData, tof, 2, adtk_nodeset::TIME);
-
-                            // Constraint to keep first node unchanged
-                            adtk_cr3bp_constraint fixFirstCon(adtk_constraint::STATE,
-                                0, eventNodeIC);
-
-                            // Constraint based on event
-                            adtk_cr3bp_constraint eventCon(events.at(ev).getConType(),
-                                events.at(ev).getConNode(), events.at(ev).getConData());
-
-                            eventNodeset.addConstraint(fixFirstCon);
-                            eventNodeset.addConstraint(eventCon);
-
-                            eventNodeset.print();
-
-                            printMessage("  Applying corrections process to locate event\n");
-                            adtk_correction_engine corrector;
-                            corrector.setVarTime(true);
-                            corrector.setTol(relTol);
-                            corrector.setVerbose(verbose);
-                            corrector.setFindEvent(true);   // apply special settings to minimize computations
-                            corrector.correct_cr3bp(&eventNodeset);
-
-                            // Because we set findEvent to true, this output nodeset should contain
-                            // the full (42 or 48 element) final state
-                            // adtk_cr3bp_nodeset correctedNodes = corrector.getCR3BPOutput();
-                            // vector<double> *nodes = correctedNodes.getNodes();
-
-                            // // event time is the TOF of corrected path + time at the state we integrated from
-                            // double eventTime = correctedNodes.getTOF(1) + traj->getTime()->back();
-
-                            // // Use the data stored in nodes and save the state and time of the event occurence
-                            // saveIntegratedData(&(nodes->at(6)), eventTime, false);
-                            break;
-                        }
-                        case adtk_sys_data::BCR4BPR_SYS:
-                            // Make sure you fix the epoch of the first node as well as the states
-                            cout << "BCR4BPR Events not yet implemented!";
-                            break;
-                        default:
-                            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
-                            throw;
-                    }
-
-                    if(events.at(ev).stopOnEvent()){
-                        killSim = true;
-                    }
-                }else{
-                    // Save the distance and current state to the event
-                    events.at(ev).updateDist(y);
-                }
-            }
+            killSim = locateEvents(y, t0);
 
             // Put newly integrated state and time into state vector
-            saveIntegratedData(y, t0, false);
+            if(!killSim)
+                saveIntegratedData(y, t0, false);
+            
             steps++;
         }
     }else{
@@ -562,14 +511,16 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
                     printf("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
                     break;
                 }
+
+                killSim = locateEvents(y, t0);
             }
+
+            if(killSim)
+                break;
 
             // Add the newly integrated state and current time fo the state vector
             saveIntegratedData(y, t0, false);
             steps++;
-
-            if(killSim)
-                break;
         }
     }
 
@@ -583,12 +534,12 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
-    printMessage("  **Integration complete**\n  Total: %d data points\n", steps);
+    printVerb(verbose, "  **Integration complete**\n  Total: %d data points\n", steps);
     traj->setLength();
 }//================================END of cr3bp_integrate
 
 /**
- *  Take an integrated state and the time, and save those variables into the 
+ *  @brief Take an integrated state and the time, and save those variables into the 
  *  appropriate vectors in the trajectory data object
  *
  *  @param y a pointer to the 42-element state array computed by the integrator
@@ -682,7 +633,7 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
 }//=========================================
 
 /**
- *  Set the pointer for EOM Parameters for each type of system
+ *  @brief Set the pointer for EOM Parameters for each type of system
  */
 void adtk_simulation_engine::setEOMParams(){
     switch(sysData->getType()){
@@ -701,15 +652,163 @@ void adtk_simulation_engine::setEOMParams(){
     }
 }//==============================================
 
+/**
+ *  @brief Locate event occurences as exactly as possible and determine if the simulation 
+ *  should end because of the event.
+ *
+ *  Look through the list of events and check each one to see if it has occured. This 
+ *  initial check is not highly accurate, but if an event is determined to have occured,
+ *  a Newton-Raphson process is begun to locate the exact state and time of the event.
+ *
+ *  The initial check compares the current integrated state (passed in as <tt>y</tt>) with
+ *  the previous integrated state (stored in the event object). If the sign (+/-) of the 
+ *  distance to the event function changes, the the trajectory has triggered the event. This
+ *  check is performed in the event objects <tt>crossedEvent()</tt> function.
+ *
+ *  Once an event has triggered the initial check, we create a 2-node nodeset beginning
+ *  with the previous state and integrating for a time interval that should end near the 
+ *  exact event state/time. The nodeset is constrained such that the first node cannot change
+ *  and the final node is constrained to enforce the event condition. A correction engine
+ *  is created and applied to the nodest to determine the exact location of the event.
+ *
+ *  Once the event is located (exactly), the full state (42 or 48 elements) is retrieved from
+ *  the correction engine and saved to the trajectory data vectors like a regularly integrated
+ *  state would be.
+ *
+ *  @param y the most recent state on the integrated arc.
+ *  @param t the time associated with y
+ *  @return whether or not the simulation should end (an event triggers killSim)
+ *
+ *  TODO: Implement a way to save information about which event is fired at which state
+ */
+bool adtk_simulation_engine::locateEvents(double *y, double t){
+    for(int ev = 0; ev < ((int)events.size()); ev++){
+        if(events.at(ev).crossedEvent(y)){
+
+            printVerb(verbose, "  Event %d detected; searching for exact crossing\n", ev);
+
+            // Create a nodeset from the previous state (stored in the event) and
+            // integrating forwards for half the time between this state and the last one
+            double t0 = traj->getTime()->back();
+            double tof = 0.5*(t - t0);
+
+            // Copy 6-element IC into vector
+            vector<double> generalIC(events.at(ev).getState()->begin(),
+                events.at(ev).getState()->begin()+6);
+
+            adtk_correction_engine corrector;
+            corrector.setVarTime(true);
+            corrector.setTol(relTol);
+            corrector.setVerbose(verbose);
+            corrector.setFindEvent(true);   // apply special settings to minimize computations
+
+            switch(sysData->getType()){
+                case adtk_sys_data::CR3BP_SYS:
+                {
+                    // Get the address of the IC
+                    double *ic = &(generalIC[0]);
+
+                    // Copy system data object
+                    adtk_cr3bp_sys_data crSysData(*static_cast<adtk_cr3bp_sys_data *>(sysData));
+
+                    // Create a nodeset for this particular type of system
+                    printVerb(verbose, "  Creating nodeset for event location\n");
+                    adtk_cr3bp_nodeset eventNodeset(ic, crSysData, tof, 2, adtk_nodeset::TIME);
+
+                    // Constraint to keep first node unchanged
+                    adtk_cr3bp_constraint fixFirstCon(adtk_constraint::STATE, 0, ic);
+
+                    // Constraint to enforce event
+                    adtk_cr3bp_constraint eventCon(events.at(ev).getConType(),
+                        events.at(ev).getConNode(), events.at(ev).getConData());
+
+                    eventNodeset.addConstraint(fixFirstCon);
+                    eventNodeset.addConstraint(eventCon);
+
+                    eventNodeset.print();
+
+                    printVerb(verbose, "  Applying corrections process to locate event\n");
+                    corrector.correct_cr3bp(&eventNodeset);
+
+                    // Because we set findEvent to true, this output nodeset should contain
+                    // the full (42 or 48 element) final state
+                    adtk_cr3bp_nodeset correctedNodes = corrector.getCR3BPOutput();
+                    vector<double> *nodes = correctedNodes.getNodes();
+
+                    // event time is the TOF of corrected path + time at the state we integrated from
+                    double eventTime = correctedNodes.getTOF(0) + t0;
+
+                    // Use the data stored in nodes and save the state and time of the event occurence
+                    saveIntegratedData(&(nodes->at(6)), eventTime, false);
+                    break;
+                }
+                case adtk_sys_data::BCR4BPR_SYS:
+                {
+                    // **** Make sure you fix the epoch of the first node as well as the states
+                    generalIC.push_back(t0);
+                    double *ic = &(generalIC[0]);
+
+                    // Copy system data object
+                    adtk_bcr4bpr_sys_data bcSysData(*static_cast<adtk_bcr4bpr_sys_data *>(sysData));
+
+                    // Create a nodeset for this particular type of system
+                    printVerb(verbose, "  Creating nodeset for event location\n");
+                    adtk_bcr4bpr_nodeset eventNodeset(ic, bcSysData, t0,
+                        tof, 2, adtk_nodeset::TIME);
+
+                    // Constraint to keep first node unchanged
+                    adtk_bcr4bpr_constraint fixFirstCon(adtk_constraint::STATE, 0, ic);
+
+                    // Constraint to enforce event
+                    adtk_bcr4bpr_constraint eventCon(events.at(ev).getConType(),
+                        events.at(ev).getConNode(), events.at(ev).getConData());
+
+                    eventNodeset.addConstraint(fixFirstCon);
+                    eventNodeset.addConstraint(eventCon);
+
+                    eventNodeset.print();
+
+                    printVerb(verbose, "  Applying corrections process to locate event\n");
+                    corrector.correct_bcr4bpr(&eventNodeset);
+
+                    // Because we set findEvent to true, this output nodeset should contain
+                    // the full (42 or 48 element) final state
+                    adtk_bcr4bpr_nodeset correctedNodes = corrector.getBCR4BPROutput();
+                    vector<double> *nodes = correctedNodes.getNodes();
+
+                    // event time is the TOF of corrected path + time at the state we integrated from
+                    double eventTime = correctedNodes.getTOF(0) + t0;
+
+                    // Use the data stored in nodes and save the state and time of the event occurence
+                    saveIntegratedData(&(nodes->at(6)), eventTime, false);
+                    break;
+                }
+                default:
+                    cout << "Unknown sim type " << sysData->getTypeStr() << endl;
+                    throw;
+            }
+
+            if(events.at(ev).stopOnEvent()){
+                return true;    // Tell the simulation to stop
+            }
+        }else{
+            // Save the distance and current state to the event
+            events.at(ev).updateDist(y);
+        }
+    }
+
+    return false;
+}//========================================
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
 
 /**
- *  Clean out the trajectory storage variable so a new simulation can be run and store its data
+ *  @brief Clean out the trajectory storage variable so a new simulation can be run and store its data
  */
 void adtk_simulation_engine::cleanEngine(){
-    printMessage("Cleaning the engine...\n");
+    printVerb(verbose, "Cleaning the engine...\n");
     delete traj;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
     eomParams = 0;
@@ -718,18 +817,8 @@ void adtk_simulation_engine::cleanEngine(){
 }//====================================================
 
 /**
- *  A wrapper function to print a message
- */
-void adtk_simulation_engine::printMessage(const char * format, ...){
-    if(verbose){
-        va_list args;
-        va_start(args, format);
-        vprintf(format, args);
-        va_end(args);
-    }
-}//==========================================
-
-/**
+ *  @brief Reset all variables and options
+ *
  *  Completely resets the simulation engine, reverting all variables (including ones the user
  *  has modified with set() functions) to their default values.
  */

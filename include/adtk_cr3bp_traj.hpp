@@ -26,12 +26,12 @@
 #include "matio.h"
  
 /**
- *	A derivative class of the adtk_trajectory super-class. This object
+ *	@brief A derivative class of the adtk_trajectory object, which
  *	contains trajectory information specific to the CR3BP
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ * 	@copyright GNU GPL v3.0
  */
 class adtk_cr3bp_traj : public adtk_trajectory{
 	public:

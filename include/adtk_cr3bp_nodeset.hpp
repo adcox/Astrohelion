@@ -31,10 +31,14 @@
 class adtk_cr3bp_sys_data;
 
 /**
- *	This derivative of the adtk_nodeset enforces a node size of 6
+ *	@brief This derivative of the adtk_nodeset contains additional information for 
+ *	the BCR4BPR
  *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
+ *	enforces a node size of 6
+ *
+ *	@author Andrew Cox
+ *	@version May 21, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_cr3bp_nodeset : public adtk_nodeset{
 	public:
@@ -49,14 +53,9 @@ class adtk_cr3bp_nodeset : public adtk_nodeset{
 		adtk_cr3bp_nodeset& operator =(const adtk_cr3bp_nodeset&);
 
 		// Set and Gets
-		adtk_cr3bp_constraint getConstraint(int) const;
-		void addConstraint(adtk_cr3bp_constraint);
-		int getNumCons() const;
 		adtk_sys_data* getSysData();
-		void print();
+		void print() const;
 	private:
-		std::vector<adtk_cr3bp_constraint> constraints;
-
 		adtk_cr3bp_sys_data sysData;
 };
 

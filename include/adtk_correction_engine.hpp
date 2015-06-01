@@ -29,21 +29,23 @@ class adtk_bcr4bpr_nodeset;
 class adtk_simulation_engine;
 
 /**
- *	An engine objecto to perform corrections, such as single-shooting
+ *	@brief An engine object to perform corrections, such as single-shooting
  *	and multiple shooting algorithms
  *
- *	Author: Andrew Cox
- *	Version: May 25, 2015
+ *	@author Andrew Cox
+ *	@version May 25, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_correction_engine{
 	public:
 		// *structors
-		adtk_correction_engine(){}	// Default, do-nothing constructor
+		/** Default, do-nothing constructor */
+		adtk_correction_engine(){}
 		adtk_correction_engine(const adtk_correction_engine&);
 		~adtk_correction_engine();
 
 		// Operators
-		adtk_correction_engine operator =(const adtk_correction_engine &e);
+		adtk_correction_engine& operator =(const adtk_correction_engine &e);
 
 		// Set and get functions
 		bool usesVarTime() const;
@@ -86,13 +88,15 @@ class adtk_correction_engine{
 		/** Flag to turn on when this algorithm is being used to locate an event */
 		bool findEvent = false;
 
-		/** */
+		/** The input nodeset, not modified*/
 		adtk_nodeset *nodeset_in = 0;
+
+		/** The output nodeset, constructed from the corrected arcs */
 		adtk_nodeset *nodeset_out = 0;
 
+		void copyEngine(const adtk_correction_engine&);
 		void correct(adtk_nodeset*);
 		void createOutput(std::vector<double>, adtk_simulation_engine);
-		void printMessage(const char*,...);
 };
 
 #endif

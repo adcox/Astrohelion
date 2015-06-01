@@ -25,11 +25,12 @@
 #include <vector>
 
 /**
- *	The constraint object contains information about how a particular node should be 
+ *	@brief Contains information about how a particular node should be 
  *	constrained during a corrections process
  *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
+ *	@author Andrew Cox
+ *	@version May 21, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_constraint{
 	public:
@@ -88,8 +89,8 @@ class adtk_constraint{
 		void setNode(int);
 		void setData(std::vector<double>);
 
-		void print();
-		const char* getTypeStr(constraint_t);
+		void print() const;
+		const char* getTypeStr(constraint_t) const;
 	private:
 		const int nodeSize;
 

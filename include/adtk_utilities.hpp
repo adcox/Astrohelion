@@ -1,10 +1,10 @@
 /**
- *	This file contains miscellaneous utility functions that make 
+ *	@brief Contains miscellaneous utility functions that make 
  *	coding in C++ easier
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 
 /*
@@ -40,4 +40,11 @@ template<class T> T adtk_sum(T* data, int length){
 }
 
 void waitForUser();
+
+void printErr(const char*, ...);
+void printWarn(const char*, ...);
+void printVerb(bool, const char*, ...);
+void printColor(const char*, const char*, ...);
+void printVerbColor(bool, const char*, const char*, ...);
+
 #endif

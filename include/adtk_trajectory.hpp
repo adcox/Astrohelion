@@ -28,6 +28,8 @@
 
 
 /**
+ *	@brief Contains a vector of states and times that fully describe a trajectory
+ *
  *	This object holds information about a trajectory in one package to
  *	make passing the data between engines and analysis tools symple.
  *	This class acts as a template for derivative classes that apply
@@ -35,9 +37,9 @@
  *	trajectory class which includes additional information specific
  *	to the CR3BP, like Jacobi constant.
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  *
  *	TODO:
  *		- Overload +, += operators for concatenating trajectories

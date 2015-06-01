@@ -4,6 +4,9 @@
  */
 
 #include "adtk_bcr4bpr_traj.hpp"
+
+ #include "adtk_utilities.hpp"
+ 
 #include <iostream>
 
 using namespace std;
@@ -13,14 +16,14 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
- *	Construct a basic BCR4BPR trajectory object
+ *	@brief Construct a basic BCR4BPR trajectory object
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj() : adtk_trajectory() {
 	dqdT.assign(6,0);
 }
 
 /**
- *	Construct a BCR4BPR trajectory object for the specified system
+ *	@brief Construct a BCR4BPR trajectory object for the specified system
  *	@param data a system data object describing the BCR4BPR system
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
@@ -29,7 +32,7 @@ adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
 }
 
 /**
- *	Construct a BCR4BPR trajectory object with room for a specified number of states
+ *	@brief Construct a BCR4BPR trajectory object with room for a specified number of states
  *	@param n the number of states this trajectory will contain
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(int n) : adtk_trajectory(n){
@@ -37,7 +40,7 @@ adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(int n) : adtk_trajectory(n){
 }
 
 /**
- *	Copy the specified trajectory
+ *	@brief Copy the specified trajectory
  *	@param t a BCR4BPR trajectory object
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(const adtk_bcr4bpr_traj &t) : adtk_trajectory(t){
@@ -50,7 +53,7 @@ adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(const adtk_bcr4bpr_traj &t) : adtk_trajecto
 //-----------------------------------------------------
 
 /**
- *	Copy operator; copy a trajectory object into this one.
+ *	@brief Copy operator; copy a trajectory object into this one.
  *	@param t a trajectory object
  *	@return this trajectory object
  */
@@ -62,7 +65,7 @@ adtk_bcr4bpr_traj& adtk_bcr4bpr_traj::operator= (const adtk_bcr4bpr_traj& t){
 }//=====================================
 
 /**
- *	Sum two BCR4BPR trajectories
+ *	@brief Sum two BCR4BPR trajectories
  *
  *	Both trajectories must be propagated in the same system, or else an error will be thrown.
  *	The states from both trajectories are appended [lhs, rhs] without any modification, as is 
@@ -79,7 +82,7 @@ adtk_bcr4bpr_traj operator +(const adtk_bcr4bpr_traj &lhs, const adtk_bcr4bpr_tr
 	if(lhs.sysData.getPrimary(0).compare(rhs.sysData.getPrimary(0)) != 0 ||
 			lhs.sysData.getPrimary(1).compare(rhs.sysData.getPrimary(1)) != 0 || 
 			lhs.sysData.getPrimary(2).compare(rhs.sysData.getPrimary(2)) != 0){
-		fprintf(stderr, "Cannot sum two BCR4BPR trajectories from different systems!\n");
+		printErr("Cannot sum two BCR4BPR trajectories from different systems!\n");
 		throw;
 	}
 
@@ -130,7 +133,7 @@ double adtk_bcr4bpr_traj::getGamma(){ return sysData.getGamma(); }
 adtk_bcr4bpr_sys_data adtk_bcr4bpr_traj::getSysData(){ return sysData; }
 
 /**
- *	Retrieve a pointer to the dqdT array for in-place editing.
+ *	@brief Retrieve a pointer to the dqdT array for in-place editing.
  *	
  *	@return a pointer to the vector of dqdT values;
  */
@@ -150,7 +153,7 @@ adtk_sys_data::system_t adtk_bcr4bpr_traj::getType() const{
 }
 
 /**
- *	Set the system data object
+ *	@brief Set the system data object
  *	@param data a data object describing the BCR4BP
  */
 void adtk_bcr4bpr_traj::setSysData(adtk_bcr4bpr_sys_data data){ sysData = data; }
@@ -160,19 +163,19 @@ void adtk_bcr4bpr_traj::setSysData(adtk_bcr4bpr_sys_data data){ sysData = data; 
 //-----------------------------------------------------
 
 /**
- *	Calls the basic trajectory setLength() method and implements extra catches
+ *	@brief Calls the basic trajectory setLength() method and implements extra catches
  *	specific to the BCR4BPR trajectory object
  */
 void adtk_bcr4bpr_traj::setLength(){
 	adtk_trajectory::setLength();
 
 	if(dqdT.size()/6 != times.size()){
-		fprintf(stderr, "Warning: dqdT vector has different length than time vector!\n");
+		printErr("Warning: dqdT vector has different length than time vector!\n");
 	}
 }//================================
 
 /**
- *	Save the trajectory to a file
+ *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
 void adtk_bcr4bpr_traj::saveToMat(const char* filename){
@@ -185,11 +188,11 @@ void adtk_bcr4bpr_traj::saveToMat(const char* filename){
 	 *	the file. Arguments are:
 	 *	const char *matname 	- 	the name of the file
 	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file version: MAT_FT_MAT5 or MAT_FT_MAT4
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
 	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		fprintf(stderr, "Error creating MAT file\n");
+		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
 		saveTime(matfp);
@@ -202,7 +205,7 @@ void adtk_bcr4bpr_traj::saveToMat(const char* filename){
 }//========================================
 
 /**
- *	Save the Jacobi vector to a file
+ *	@brief Save the Jacobi vector to a file
  * 	@param matFile a pointer to the destination matlab file 
  */
 void adtk_bcr4bpr_traj::save_dqdT(mat_t *matFile){
@@ -212,7 +215,7 @@ void adtk_bcr4bpr_traj::save_dqdT(mat_t *matFile){
 }//=================================================
 
 /**
- *	Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
 void adtk_bcr4bpr_traj::saveSysData(mat_t *matFile){

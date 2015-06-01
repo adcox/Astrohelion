@@ -23,15 +23,17 @@
 #include <string>
 
 /**
+ *	@brief Contains information about a system, like mass ratio, primary names, etc.
+ *
  *	This object is a super-class for system data objects, "system" being
  *	a dynamical system or model. This class is an abstract base class
  *	with pure virtual functions and cannot be instantiated as a standalone
  *	object. Other derivative classes can be instantiated as objects and have
  *	variables and functions specific to different dynamical systems.
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_sys_data{
 

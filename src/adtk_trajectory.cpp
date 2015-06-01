@@ -26,7 +26,8 @@
 
 #include "adtk_matrix.hpp"
 #include "adtk_sys_data.hpp"
-
+#include "adtk_utilities.hpp"
+ 
 #include <cstdlib>
 #include <iostream>
 
@@ -37,7 +38,9 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
- *	Default constructor. Sets the number of points to 1 and initializes all vectors
+ *	@brief Default constructor. 
+ *
+ *	Sets the number of points to 1 and initializes all vectors
  *	to have one point of data with all values set to zero.
  */
 adtk_trajectory::adtk_trajectory(){
@@ -48,7 +51,9 @@ adtk_trajectory::adtk_trajectory(){
 }
 
 /**
- *	Create a trajectory to hold a specific number of points. The state, time, and STM
+ *	@brief Create a trajectory to hold a specific number of points. 
+ *
+ *	The state, time, and STM
  *	vectors are all initialized with enough space to hold the number of points
  *	specified. State and Time are filled with zeros, the STMs are filled with identity
  *	matrices. If initializing the trajectory this way (recommended), use the in-place
@@ -65,7 +70,7 @@ adtk_trajectory::adtk_trajectory(int n){
 }
 
 /**
- *	Create a copy of the input trajectory
+ *	@brief Create a copy of the input trajectory
  *	@param t a trajectory
  */
 adtk_trajectory::adtk_trajectory(const adtk_trajectory& t){
@@ -80,7 +85,7 @@ adtk_trajectory::adtk_trajectory(const adtk_trajectory& t){
 //-----------------------------------------------------
 
 /**
- *	Copy operator. Directly copy the vectors from one trajectory into this one
+ *	@brief Assignment operator. Directly copy the vectors from one trajectory into this one
  */
 adtk_trajectory& adtk_trajectory::operator= (const adtk_trajectory& t){
 	numPoints = t.numPoints;
@@ -107,7 +112,7 @@ int adtk_trajectory::getLength() const{ return numPoints; }
 vector<double>* adtk_trajectory::getState(){ return &state;}
 
 /**
- *	Retrieve a single state along the trajectory
+ *	@brief Retrieve a single state along the trajectory
  *
  *	@param n the index of the state (0 is the first state, or IC)
  *	@return a vector representing the full state (pos, vel, accel)
@@ -120,7 +125,7 @@ vector<double> adtk_trajectory::getState(int n) const{
 }
 
 /**
- *	Retrieve the time at a specific point along the trajectory
+ *	@brief Retrieve the time at a specific point along the trajectory
  *	@param n the index of the point (starts at 0)
  *	@return the non-dimensional time along the trajectory
  */
@@ -132,7 +137,7 @@ double adtk_trajectory::getTime(int n) const { return times[n]; }
 vector<double>* adtk_trajectory::getTime(){ return &times; }
 
 /**
- *	Retrieve the STM at a specific point along the trajectory
+ *	@brief Retrieve the STM at a specific point along the trajectory
  *	@param n the index of the point (starts at 0)
  *	@return the STM
  */
@@ -142,7 +147,7 @@ adtk_matrix adtk_trajectory::getSTM(int n) const {
 }
 
 /**
- *	Useful for setting the STM (in place) after the trajectory has been initialized
+ *	@brief Useful for setting the STM (in place) after the trajectory has been initialized
  *	@return a pointer to the beginning of the vector of STMs
  */
 vector<adtk_matrix>* adtk_trajectory::getSTM(){ return &allSTM;}
@@ -153,21 +158,21 @@ vector<adtk_matrix>* adtk_trajectory::getSTM(){ return &allSTM;}
 adtk_sys_data::system_t adtk_trajectory::getType() const { return adtk_sys_data::UNDEF_SYS; }
 
 /** 
- *	Set the state vector by copying a vector
+ *	@brief Set the state vector by copying a vector
  *	@param s a vector of non-dimensional states. The vector should be 1D in Row-Major
  *	format; all units are non-dimensional
  */
 void adtk_trajectory::setState(std::vector<double> s){ state = s; }
 
 /** 
- *	Set the time vector by copying a vector
+ *	@brief Set the time vector by copying a vector
  *	@param t a vector of non-dimensional times along the trajectory. Length
  *	must match the length of the state vector
  */
 void adtk_trajectory::setTime(std::vector<double> t){ times = t; }
 
 /** 
- *	Set the STM vector by copying a vector
+ *	@brief Set the STM vector by copying a vector
  *	@param phi a vector of STMs, one for every point along the trajectory.
  */
 void adtk_trajectory::setSTMs(std::vector<adtk_matrix> phi){ allSTM = phi; }
@@ -177,7 +182,7 @@ void adtk_trajectory::setSTMs(std::vector<adtk_matrix> phi){ allSTM = phi; }
 //-----------------------------------------------------
 
 /**
- *	Set the number of points by checking the number of data in 
+ *	@brief Set the number of points by checking the number of data in 
  *	the state, time, and STM vectors.
  */
 void adtk_trajectory::setLength(){
@@ -195,7 +200,7 @@ void adtk_trajectory::setLength(){
 }//=======================================
 
 /**
- *	Save the trajectory to a file
+ *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
 void adtk_trajectory::saveToMat(const char* filename){
@@ -208,11 +213,11 @@ void adtk_trajectory::saveToMat(const char* filename){
 	 *	the file. Arguments are:
 	 *	const char *matname 	- 	the name of the file
 	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file version: MAT_FT_MAT5 or MAT_FT_MAT4
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
 	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		fprintf(stderr, "Error creating MAT file\n");
+		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
 		saveTime(matfp);
@@ -223,7 +228,7 @@ void adtk_trajectory::saveToMat(const char* filename){
 }//========================================
 
 /**
- *	Save the state vector [pos, vel, accel] to a file
+ *	@brief Save the state vector [pos, vel, accel] to a file
  *	@param matFile a pointer to the destination matlab file 
  */
 void adtk_trajectory::saveState(mat_t *matFile){
@@ -271,7 +276,7 @@ void adtk_trajectory::saveState(mat_t *matFile){
 }//==================================================
 
 /**
- *	Save the time vector to a file
+ *	@brief Save the time vector to a file
  * 	@param matFile a pointer to the destination matlab file 
  */
 void adtk_trajectory::saveTime(mat_t *matFile){
@@ -281,7 +286,7 @@ void adtk_trajectory::saveTime(mat_t *matFile){
 }//=================================================
 
 /**
- *	Save the STMs to a file; STMs are stored in a 6x6xn array for 
+ *	@brief Save the STMs to a file; STMs are stored in a 6x6xn array for 
  *	compatibility with existing MATLAB scripts
  *	@param matFile a pointer to the destination matlab file 
  */
@@ -304,8 +309,9 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
 }//=========================================
 
 /**
- *	Save a variable to a .mat file, performing error checks along the way. Once the variable is written
- *	to file, it is freed from memory
+ *	@brief Save a variable to a .mat file, performing error checks along the way. 
+ *
+ *	Once the variable is written to file, it is freed from memory
  *
  *	@param matFile a pointer to the matlab output file
  *	@param matvar a pointer to the matlab variable object
@@ -316,7 +322,7 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
  */
 void adtk_trajectory::saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compression comp){
 	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for '%s'\n", varName);
+		printErr("Error creating variable for '%s'\n", varName);
 	}else{
 		Mat_VarWrite(matFile, matvar, comp);
 		Mat_VarFree(matvar);

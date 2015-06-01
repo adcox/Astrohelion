@@ -21,12 +21,12 @@ using namespace std;
 adtk_sys_data::adtk_sys_data(){}
 
 /**
- *	Copy the system data object
+ *	@brief Copy the system data object
  *
  *	@param d a system data object
  *	@return this data object, set to equal the input object
  */
-adtk_sys_data& adtk_sys_data::operator= (const adtk_sys_data &d){
+adtk_sys_data& adtk_sys_data::operator =(const adtk_sys_data &d){
 	charL = d.charL;
 	charT = d.charT;
 	charM = d.charM;

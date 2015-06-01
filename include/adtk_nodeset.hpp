@@ -21,7 +21,9 @@
 #ifndef __H_NODESET__
 #define __H_NODESET__
 
+#include "adtk_bcr4bpr_constraint.hpp"
 #include "adtk_constraint.hpp"
+#include "adtk_cr3bp_constraint.hpp"
 
 #include <vector>
 
@@ -29,12 +31,15 @@
 class adtk_sys_data;
 
 /**
+ *	@brief Similar to adtk_trajectory, but only holds state data at specific "nodes"
+ * 
  *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
  *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
  *	into smaller pieces, which can improve the corrector's performance.
  *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
+ *	@author Andrew Cox
+ *	@version May 21, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_nodeset{
 	public:
@@ -70,6 +75,8 @@ class adtk_nodeset{
 		int getNodeSize() const;
 		node_distro_t getNodeDistro() const;
 		std::vector<int> getVelConNodes();
+		int getNumCons() const;
+		adtk_constraint getConstraint(int) const;
 
 		/**
 		 *	Extend this function to return a system data object from derivative classes
@@ -77,17 +84,15 @@ class adtk_nodeset{
 		 */
 		virtual adtk_sys_data* getSysData() = 0;
 
+		void addConstraint(adtk_constraint);
 		void appendNode(std::vector<double>);
 		void appendTOF(double);
 		void setNodeDistro(node_distro_t);
 		void setVelConNodes(std::vector<int>);
 		void setVelConNodes_allBut(std::vector<int>);
 
-		/**
-		 *	Extend this function to retrieve the number of stored constraints
-		 *	@return number of stored constraints
-		 */	
-		virtual int getNumCons() const = 0;
+
+		virtual void print() const = 0;
 	protected:
 		/** The number of states in one node */
 		const int nodeSize;
@@ -100,6 +105,9 @@ class adtk_nodeset{
 
 		/** A vector of TOFs between nodes */
 		std::vector<double> tofs;
+
+		/** Vector of constraints to be applied to this nodeset*/
+		std::vector<adtk_constraint> constraints;
 
 		/** List of node indices; the nodes included in this list should have continuous velocity */
 		std::vector<int>velConNodes;

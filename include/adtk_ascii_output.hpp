@@ -1,9 +1,9 @@
 /**
- *	This class contains macros for fancy ASCII outputs
+ *	@brief This class contains macros for fancy ASCII outputs
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 
 /*

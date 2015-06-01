@@ -1,11 +1,13 @@
 /**
+ *	@brief Primarily contains functions used in numerical integration, like EOMs
+ *
  *	This file contains functions used by the simulation_engine object 
  *	(and possibly others), like EOMs and other very "math-y" computations.
  *	Think of this file as a utility library for other classes
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
  
 /*

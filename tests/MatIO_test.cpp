@@ -2,6 +2,8 @@
  *  Test out the matio tools
  */
 
+#include "adtk_utilities.hpp"
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include "matio.h"
@@ -17,14 +19,14 @@ int main(int argc, char **argv){
 	// Create the .mat file
 	matfp = Mat_CreateVer("Test.mat", NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		fprintf(stderr, "Error creating MAT File\n");
+		printErr("Error creating MAT File\n");
 		return EXIT_FAILURE;
 	}
 
 	// Save the x vector to the file
 	matvar = Mat_VarCreate("x", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, x, 0);
 	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'x'\n");
+		printErr("Error creating variable for 'x'\n");
 	}else{
 		Mat_VarWrite(matfp, matvar, MAT_COMPRESSION_NONE);
 		Mat_VarFree(matvar);
@@ -33,7 +35,7 @@ int main(int argc, char **argv){
 	// Save the y vector to the file
 	matvar = Mat_VarCreate("y", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, y, 0);
 	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'y'\n");
+		printErr("Error creating variable for 'y'\n");
 	}else{
 		Mat_VarWrite(matfp, matvar, MAT_COMPRESSION_NONE);
 		Mat_VarFree(matvar);
@@ -42,7 +44,7 @@ int main(int argc, char **argv){
 	// Save a variable z that has real parts x and imaginary parts y
 	matvar = Mat_VarCreate("z", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &z, MAT_F_COMPLEX);
 	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'z'\n");
+		printErr("Error creating variable for 'z'\n");
 	}else{
 		Mat_VarWrite(matfp, matvar, MAT_COMPRESSION_NONE);
 		Mat_VarFree(matvar);
@@ -53,7 +55,7 @@ int main(int argc, char **argv){
 	size_t dims3D[3] = {2,2,3};
 	matvar = Mat_VarCreate("I", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims3D, q, 0);
 	if(NULL == matvar){
-		fprintf(stderr, "Error creating variable for 'q'\n");
+		printErr("Error creating variable for 'q'\n");
 	}else{
 		Mat_VarWrite(matfp, matvar, MAT_COMPRESSION_NONE);
 		Mat_VarFree(matvar);

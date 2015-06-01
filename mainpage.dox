@@ -2,64 +2,28 @@
 
 <h2>Introduction</h2>
 <p>
-	This API details the C++ code developed to perform astrodynamics research.
+	The Astrodynamics Toolkit (not a very original name, I know) is a collection of C++ functions and libraries that facilitate fast and accurate trajectory design. Originally, these functions and libraries were all implemented within MATLAB, but they have been translated to C++ for several reasons. First, C++ provides higher levels of numerical accuracy. Although not a huge improvement over MATLAB, C++ does often offer several orders of magnitude improvement in accuracy. Second, C++ performs the complex math required to propagate trajectories <i>much</i> faster than MATLAB. This reason alone is sufficient to motivate any developer to shift from MATLAB to C++ (or C). Finally, MATLAB is proprietary software; a license is required to download and install the program. Licenses can cost several thousands of dollars, and C++ is free... You see why we've moved away from MATLAB.
 </p>
 
-<h2>Software Dependencies</h2>
-<p>Our software is dependent on a few libraries:</p>
+<p>
+	This toolkit contains three different types of objects. The first are data objects that provide containers for information that is typically grouped together. For example, the trajectory object stores states along a trajectory, times associated with each state, the type of system the trajectory was propagated in, etc. All of this data is packed into one bundle and can easily be passed between functions that "operate" on the data, such as numerical integrators and correction processes. Speaking of which, the second type of object contained in this toolkit is an "engine," like the simulation engine and corrector engine. These objects' primary purpose is to generate or modify data and they are complex enough to justify being an object in and of themselves. This complexity means engines store relavent data like integration tolerances, lists of event functions, or sets of simpler data objects like trajectories. The engines then operate on and with this data to create new data objects. The final type of object is a ``library'' of sorts, which contains only functions and is not really an object at all. These files, like the utilities and calculations libraries, are not created as objects, their functions are simply included and called in other functions. Computations such as Equations of Motion (EOMs) are included in these types of libraries.
+</p>
+
+<h2>Supported Systems and Models</h2>
 <ul>
-	<li>
-		GNU Science Library (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
-	</li>
-	<li>
-		Mat I/O Library: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
-		<ul>
-			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>
-		</ul>
-	</li>
+	<li>Circular Restricted 3-Body Problem (CR3BP)</li>
+	<li>Bi-Circular Restricted 4-Body Problem, rotating coordinates (BCR4BPR)</li>
 </ul>
 
-<h2>To-Do List</h2>
-<ul>
-	<li> Figure out how to do something like an event function in C++ </li>
-	<li> Saddle point computation and targeting </li>
-	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
-</ul>
-
-<h2>Debugging</h2>
-<h3>In General</h3>
-Run the executable using the graphic debugging library:
+<h2>Typical Use</h2>
+<h3>Generating a trajectory</h3>
+Since this toolkit is primarily for propagating and investigating trajectories, we begin with an explanation of how to generate one. First, choose the system you wish to use. For this example, we'll use the CR3BP in the Earth-Moon system. The basic process is this: define a system, then create an engine for that system by providing it with the system data object. Next, define a set of initial conditions and run the simulation for a specific amount of time. In the example below, we integrate ICs that will produce an L1 northern halo with a period of 2.77 non-dimensional time units. Finally, retrieve the inegrated trajectory from the simulation engine.
 <pre>
-	ddd simEngineTest
+	adtk_cr3bp_sys_data sys("earth", "moon");			// Create system
+	adtk_simulation_engine sim(&sys);					// Create engine to integrate in sys
+	double ic[] = {0.8258, 0, 0.08, 0, 0.1937, 0};		// Define initial conditions
+	sim.runSim(ic, 2.77);								// Run the simulation
+	adtk_cr3bp_traj traj = sim.getCR3BPTraj(); 			// Retrieve the simulated trajectory
 </pre>
-For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler.
-
-<h3>Checking for Dependency Issues</h3>
-Run doxygen with the inheritance/dependency plots turned on (this is already set for this project).
-
-<h3>Checking for Memory Leaks</h3>
-Use valgrind to check for leaks:
-<pre>
-	valgrind --tool=memcheck --leak-check=yes simEngineTest
-</pre>
-
-<h2>Coding Practice Notes for Me</h2>
-<h3>"Right Way" to include</h3>
-Whether or not to include or use forward declaration:
-<ul>
-	<li> do nothing if: A makes no references at all to B </li>
-	<li> do nothing if: The only reference to B is in a friend declaration </li>
-	<li> forward declare B if: A contains a B pointer or reference: B* myb; </li>
-	<li> forward declare B if: one or more functions has a B object/pointer/reference
-	as a parementer, or as a return type: B MyFunction(B myb); </li>
-	<li> #include "b.h" if: B is a parent class of A </li>
-	<li> #include "b.h" if: A contains a B object: B myb; </li>
-</ul>
-
-Include Order (my convention:)
-<ol>
-	<li> Header file for this class </li>
-	<li> Local header files - ones I've written, in alphabetical order </li>
-	<li> Global header files, like string, vector, etc. </li>
-</ol>
+We can save the <code>traj</code> object to a </code>.mat</code> file using the </code>saveToMat</code> function, where the trajectory can easily be visualized and manipulated. The output MATLAB file is produced in such a way that it can easily be imported as a data structure and used with the pre-existing, afore-mentioned MATLAB tools.
 */

@@ -24,10 +24,14 @@
 #include "adtk_constraint.hpp"
 
 /**
- *	This derivative constraint class specifies the size of the node to be 6
+ *	@brief This derivative of the adtk_constraint class applies specifically to 
+ *	CR3BP corrections processes
  *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
+ *	specifies the size of the node to be 6
+ *
+ *	@author Andrew Cox
+ *	@version May 21, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_cr3bp_constraint : public adtk_constraint{
 	public:

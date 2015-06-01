@@ -25,12 +25,12 @@
 #include "adtk_constants.hpp"
 
 /**
- *	A derivative class of the adtk_sys_data super-class. This class
- *	contains information specific to the BCR4BP, rotating coordinates
+ *	@brief This derivative class of the adtk_sys_data super-class
+ *	contains information specific to the BCR4BPR
  *
- *	Author: Andrew Cox
- *
- *	Version: May 18, 2015
+ *	@author Andrew Cox
+ *	@version May 18, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 	public:

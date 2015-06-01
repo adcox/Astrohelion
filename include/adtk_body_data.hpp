@@ -23,12 +23,14 @@
 #include <string>
 
 /**
- *	The body data object provides a way to store and retrieve information about different
- *	celestial bodies. This may be supplemented/usurped by calls to SPICE in the future.
+ *	@brief The body data object provides a way to store and retrieve information about different
+ *	celestial bodies. 
  *
- *	Author: Andrew Cox
+ *	This may be supplemented/usurped by calls to SPICE in the future.
  *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_body_data{
 	private:

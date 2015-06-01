@@ -10,12 +10,12 @@
 #include <iostream>
 
 /**
- *	Create a general CR3BP nodeset
+ *	@brief Create a general CR3BP nodeset
  */
 adtk_cr3bp_nodeset::adtk_cr3bp_nodeset() : adtk_nodeset(6){}
 
 /**
- *	Create a nodeset with specified system data
+ *	@brief Create a nodeset with specified system data
  *	@param data system data object
  */
 adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(adtk_cr3bp_sys_data data) : adtk_nodeset(6){
@@ -23,7 +23,7 @@ adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(adtk_cr3bp_sys_data data) : adtk_nodeset(
 }
 
 /**
- *	Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
  *	@param IC a set of initial conditions, non-dimensional units
@@ -40,50 +40,35 @@ adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(double IC[6], adtk_cr3bp_sys_data data, d
 }//======================================================================
 
 /**
- *	Copy input nodeset
+ *	@brief Copy input nodeset. 
+ *
+ *	This function calls the base-class copy constructor to
+ *	handle copying the generic fields like state and tofs
  *	@param n a nodeset
  */
-adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(const adtk_cr3bp_nodeset& n) : adtk_nodeset(6){
+adtk_cr3bp_nodeset::adtk_cr3bp_nodeset(const adtk_cr3bp_nodeset& n) : adtk_nodeset(n){
 	sysData = n.sysData;
 }
 
 /**
- *	Make this nodeset equal to the input nodeset
+ *	@brief Make this nodeset equal to the input nodeset
  *	@param n a nodeset
  */
 adtk_cr3bp_nodeset& adtk_cr3bp_nodeset::operator =(const adtk_cr3bp_nodeset& n){
 	adtk_nodeset::operator =(n);
 	sysData = n.sysData;
 	return *this;
-}
-
-/**
- *	Retrieve a specific constraint
- *	@param i consraint index (begins with zero)
- *	@return a constraint
- */
-adtk_cr3bp_constraint adtk_cr3bp_nodeset::getConstraint(int i) const{
-	adtk_cr3bp_constraint temp(constraints.at(i)); 
-	return temp;
-}
-
-/**
- *	Add a constraint to the nodeset
- *	@param c a constraint to add
- */
-void adtk_cr3bp_nodeset::addConstraint(adtk_cr3bp_constraint c){ constraints.push_back(c); }
-
-/**
- *	@return the number of constraints stored in this nodeset
- */
-int adtk_cr3bp_nodeset::getNumCons() const { return constraints.size(); }
+}//==============================
 
 /**
  *	@return a pointer to the system data object stored in this nodeset
  */
 adtk_sys_data* adtk_cr3bp_nodeset::getSysData() { return &sysData; }
 
-void adtk_cr3bp_nodeset::print() {
+/**
+ *	@brief Print a textual representation of this object to the standard output
+ */
+void adtk_cr3bp_nodeset::print() const{
 	printf("CR3BP Nodeset:\n  Nodes:\n");
 	for(int n = 0; n < getNumNodes(); n++){
 		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]\n", n,

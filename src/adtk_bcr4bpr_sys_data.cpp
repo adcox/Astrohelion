@@ -16,7 +16,7 @@
 using namespace std;
 
 /**
- *	Default constructor
+ *	@brief Default constructor
  */
 adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data() : adtk_sys_data(){
 	numPrimaries = 3;
@@ -24,7 +24,7 @@ adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data() : adtk_sys_data(){
 }//========================================
 
 /**
- *	Create a system data object using data from the two primaries
+ *	@brief Create a system data object using data from the two primaries
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the medium primary; P2 must orbit P1
  *	@param P3 the name of the smallest primary; P3 must orbit P2
@@ -58,7 +58,7 @@ adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data(std::string P1, std::string P2, std
 }//===================================================
 
 /**
- *	Copy operator; makes a clean copy of a data object into this one
+ *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a BCR4BPR system data object
  *	@return this system data object
  */
@@ -130,19 +130,19 @@ double adtk_bcr4bpr_sys_data::getPhi0() const { return phi0; }
 double adtk_bcr4bpr_sys_data::getGamma() const { return gamma; }
 
 /**
- *	Set the angle theta0
+ *	@brief Set the angle theta0
  *	@param t angle in radians
  */
 void adtk_bcr4bpr_sys_data::setTheta0(double t){ theta0 = t; }
 
 /**
- *	Set the angle phi0
+ *	@brief Set the angle phi0
  *	@param t angle in radians
  */
 void adtk_bcr4bpr_sys_data::setPhi0(double t){ phi0 = t; }
 
 /**
- *	Set the angle gamma
+ *	@brief Set the angle gamma
  *	@param t angle in radians
  */
 void adtk_bcr4bpr_sys_data::setGamma(double t){ gamma = t; }

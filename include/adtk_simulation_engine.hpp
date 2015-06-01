@@ -31,14 +31,17 @@ class adtk_bcr4bpr_traj;
 class adtk_cr3bp_traj;
 
 /**
+ *	@brief performs numerical integration on any system type and produces an
+ *	adtk_trajectory object
+ *
  *	The simulation engine is the workhorse object for the ATDK. It
  *	holds functions to integrate equations of motion, compute
  *	zero-velocity surfaces, manifold arcs, and other useful
  *	structures
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_simulation_engine{
 	public:
@@ -125,8 +128,9 @@ class adtk_simulation_engine{
 		void integrate(double ic[], double t[], int t_dim);
 		void saveIntegratedData(double *y, double t, bool);
 		void setEOMParams();
+		bool locateEvents(double*, double);
 		void cleanEngine();
-		void printMessage(const char*,...);
+		void copyEngine(const adtk_simulation_engine&);
 };
 
 #endif

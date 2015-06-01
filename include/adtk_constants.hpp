@@ -1,8 +1,9 @@
 /**
- *	Contains values for physical constants like pi, G, etc.
+ *	@brief Contains values for physical constants like pi, G, etc.
  *
- *	Author: Andrew Cox
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 
 /*

@@ -6,6 +6,8 @@
 
 #include "adtk_cr3bp_traj.hpp"
 
+#include "adtk_utilities.hpp"
+ 
 #include <cstring>
  
 using namespace std;
@@ -15,7 +17,7 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
- *	Default constructor; calls constructor for super-class adtk_trajectory
+ *	@brief Default constructor; calls constructor for super-class adtk_trajectory
  *	and additionall initializes the jacobi matrix
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj() : adtk_trajectory(){
@@ -23,7 +25,7 @@ adtk_cr3bp_traj::adtk_cr3bp_traj() : adtk_trajectory(){
 }
 
 /**
- *	Create a CR3BP trajectory object for the specified system
+ *	@brief Create a CR3BP trajectory object for the specified system
  *	@param data a system data object describing the system
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj(adtk_cr3bp_sys_data data){
@@ -32,14 +34,14 @@ adtk_cr3bp_traj::adtk_cr3bp_traj(adtk_cr3bp_sys_data data){
 }
 
 /**
- *	Initialize all vectors to have size n; fill each vector with zeros.
+ *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj(int n) : adtk_trajectory(n){
 	jacobi.assign(n, 0);
 }
 
 /**
- *	Copy the specified trajectory
+ *	@brief Copy the specified trajectory
  *	@param t trajectory
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj(const adtk_cr3bp_traj &t) : adtk_trajectory(t){
@@ -52,7 +54,7 @@ adtk_cr3bp_traj::adtk_cr3bp_traj(const adtk_cr3bp_traj &t) : adtk_trajectory(t){
 //-----------------------------------------------------
 
 /**
- *	Copy operator; copy a trajectory object into this one.
+ *	@brief Copy operator; copy a trajectory object into this one.
  *	@param t a trajectory object
  *	@return this trajectory object
  */
@@ -63,7 +65,7 @@ adtk_cr3bp_traj& adtk_cr3bp_traj::operator= (const adtk_cr3bp_traj& t){
 }//=====================================
 
 /**
- *	Sum two CR3BP trajectories
+ *	@brief Sum two CR3BP trajectories
  *
  *	Both trajectories must be propagated in the same system, or else an error will be thrown.
  *	The states from both trajectories are appended [lhs, rhs] without any modification, as is 
@@ -79,7 +81,7 @@ adtk_cr3bp_traj& adtk_cr3bp_traj::operator= (const adtk_cr3bp_traj& t){
 adtk_cr3bp_traj operator +(const adtk_cr3bp_traj &lhs, const adtk_cr3bp_traj &rhs){
 	if(lhs.sysData.getPrimary(0).compare(rhs.sysData.getPrimary(0)) != 0 ||
 			lhs.sysData.getPrimary(1).compare(rhs.sysData.getPrimary(1)) != 0){
-		fprintf(stderr, "Cannot sum two CR3BP trajectories from different systems!\n");
+		printErr("Cannot sum two CR3BP trajectories from different systems!\n");
 		throw;
 	}
 
@@ -118,34 +120,34 @@ adtk_cr3bp_traj operator +(const adtk_cr3bp_traj &lhs, const adtk_cr3bp_traj &rh
 //-----------------------------------------------------
 
 /**
- *	Get the value of Jacobi constant at a particular point on the trajectory
+ *	@brief Get the value of Jacobi constant at a particular point on the trajectory
  *	@param n the index of the point
  *	@return the Jacobi constant (non-dimensional)
  */
 double adtk_cr3bp_traj::getJC(int n){ return jacobi[n]; }
 
 /**
- *	Retrieve a pointer to the Jacobi array for in-place editing.
+ *	@brief Retrieve a pointer to the Jacobi array for in-place editing.
  *	
  *	@return a pointer to the vector of Jacobi constants;
  */
 vector<double>* adtk_cr3bp_traj::getJC(){ return &jacobi; }
 
 /**
- *	Set the vector of Jacobi constant values for this trajectory
+ *	@brief Set the vector of Jacobi constant values for this trajectory
  *	@param j a vector of Jacobi constants
  */
 void adtk_cr3bp_traj::setJC(std::vector<double> j){ jacobi = j; }
 
 /**
- *	Retrieve data about the system this trajectory was propagated in
+ *	@brief Retrieve data about the system this trajectory was propagated in
  *	@return the system data object
  */
 adtk_cr3bp_sys_data adtk_cr3bp_traj::getSysData(){ return sysData; }
 
 
 /**
- *	Set the system data for this trajectory
+ *	@brief Set the system data for this trajectory
  *	@param d a system data object
  */
 void adtk_cr3bp_traj::setSysData(adtk_cr3bp_sys_data d){ sysData = d; }
@@ -155,14 +157,14 @@ adtk_sys_data::system_t adtk_cr3bp_traj::getType() const{
 }
 
 /**
- *	Calls the basic trajectory setLength() method and implements extra catches
+ *	@brief Calls the basic trajectory setLength() method and implements extra catches
  *	specific to the CR3BP trajectory object
  */
 void adtk_cr3bp_traj::setLength(){
 	adtk_trajectory::setLength();
 	
 	if(jacobi.size() != times.size()){
-		fprintf(stderr, "Warning: Jacobi vector has different length than time vector!\n");
+		printErr("Warning: Jacobi vector has different length than time vector!\n");
 	}
 }
 //-----------------------------------------------------
@@ -170,7 +172,7 @@ void adtk_cr3bp_traj::setLength(){
 //-----------------------------------------------------
 
 /**
- *	Save the trajectory to a file
+ *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
 void adtk_cr3bp_traj::saveToMat(const char* filename){
@@ -183,11 +185,11 @@ void adtk_cr3bp_traj::saveToMat(const char* filename){
 	 *	the file. Arguments are:
 	 *	const char *matname 	- 	the name of the file
 	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file version: MAT_FT_MAT5 or MAT_FT_MAT4
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
 	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		fprintf(stderr, "Error creating MAT file\n");
+		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
 		saveTime(matfp);
@@ -200,7 +202,7 @@ void adtk_cr3bp_traj::saveToMat(const char* filename){
 }//========================================
 
 /**
- *	Save the Jacobi vector to a file
+ *	@brief Save the Jacobi vector to a file
  * 	@param matFile a pointer to the destination matlab file 
  */
 void adtk_cr3bp_traj::saveJacobi(mat_t *matFile){
@@ -210,7 +212,7 @@ void adtk_cr3bp_traj::saveJacobi(mat_t *matFile){
 }//=================================================
 
 /**
- *	Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
 void adtk_cr3bp_traj::saveSysData(mat_t *matFile){

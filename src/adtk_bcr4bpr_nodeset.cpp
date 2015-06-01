@@ -6,7 +6,7 @@
 #include "adtk_bcr4bpr_sys_data.hpp"
 
 /**
- *	Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
  *	@param IC a set of initial conditions, non-dimensional units
@@ -35,29 +35,34 @@ adtk_bcr4bpr_nodeset::adtk_bcr4bpr_nodeset(double IC[6], adtk_bcr4bpr_sys_data d
 }//======================================================================
 
 /**
+ *	@brief Copy constructor - calls base class copy constructor to handle basic copy
+ *	@param n a BCR4BPR nodeset
+ */
+adtk_bcr4bpr_nodeset::adtk_bcr4bpr_nodeset(const adtk_bcr4bpr_nodeset &n) : adtk_nodeset(n){
+	sysData = n.sysData;
+	epochs = n.epochs;
+}//=========================================
+
+/**
+ *	@brief Assignment operator - calls base class assignment operator to handle basic assignment
+ *	@param n an input BCR4BPR nodeset
+ *	@return this nodeset, made equal to the input nodeset
+ */
+adtk_bcr4bpr_nodeset& adtk_bcr4bpr_nodeset::operator =(const adtk_bcr4bpr_nodeset &n){
+	adtk_nodeset::operator =(n);
+	sysData = n.sysData;
+	epochs = n.epochs;
+	return *this;
+}//=========================================
+
+/**
+ *	@brief Retrieve a pointer to the vector of epochs
  *	@return a pointer to the beginning of the epochs vector
  */
 std::vector<double>* adtk_bcr4bpr_nodeset::getEpochs(){ return &epochs; }
 
 /**
- *	Retrieve a specific constraint
- *	@param i consraint index (begins with zero)
- *	@return a constraint
- */
-adtk_bcr4bpr_constraint adtk_bcr4bpr_nodeset::getConstraint(int i) const {
-	adtk_bcr4bpr_constraint temp(constraints.at(i));
-	return temp;
-}//=====================================
-
-/**
- *	@return the number of constraints stored in this nodeset
- */
-int adtk_bcr4bpr_nodeset::getNumCons() const{
-	return constraints.size();
-}//=====================================
-
-/**
- *	Retrieve a specifi epoch
+ *	@brief Retrieve a specifi epoch
  *	@param i epoch index (begins with zero)
  *	@return the epoch, non-dimensional units
  */
@@ -66,22 +71,30 @@ double adtk_bcr4bpr_nodeset::getEpoch(int i) const {
 }//=====================================
 
 /**
- *	@return a vector to the system data object for this nodeset
+ *	@brief  Retrieve a pointer to the system data object
+ *	@return a pointer to the system data object for this nodeset
  */
 adtk_sys_data* adtk_bcr4bpr_nodeset::getSysData() { return &sysData; }
 
 /**
- *	Add a constraint to the nodeset
- *	@param c a constraint to add
- */
-void adtk_bcr4bpr_nodeset::addConstraint(adtk_bcr4bpr_constraint c){
-	constraints.push_back(c);
-}//=====================================
-
-/**
- *	Add an epoch to the nodeset
+ *	@brief Add an epoch to the nodeset
  *	@param d an epoch (non-dimensional time) to add
  */
 void adtk_bcr4bpr_nodeset::appendEpoch(double d){
 	epochs.push_back(d);
 }//=====================================
+
+/**
+ *	@brief Print a textual representation of this object to the standard output
+ */
+void adtk_bcr4bpr_nodeset::print() const {
+	printf("BCR4BPR Nodeset:\n  Nodes:\n");
+	for(int n = 0; n < getNumNodes(); n++){
+		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]\n", n,
+			nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
+			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
+	}
+	for(int c = 0; c < getNumCons(); c++){
+		constraints[c].print();
+	}
+}

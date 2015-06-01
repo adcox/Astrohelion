@@ -18,7 +18,7 @@
 using namespace std;
 
 /**
- *	Default constructor
+ *	@brief Default constructor
  */
 adtk_cr3bp_sys_data::adtk_cr3bp_sys_data() : adtk_sys_data(){
 	numPrimaries = 2;
@@ -26,7 +26,7 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data() : adtk_sys_data(){
 }//========================================
 
 /**
- *	Create a system data object using data from the two primaries
+ *	@brief Create a system data object using data from the two primaries
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary; P2 must orbit P1
  */
@@ -54,7 +54,7 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(std::string P1, std::string P2){
 }//===================================================
 
 /**
- *	Copy operator; makes a clean copy of a data object into this one
+ *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a CR3BP system data object
  *	@return this system data object
  */

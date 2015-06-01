@@ -24,11 +24,15 @@
 #include "adtk_constraint.hpp"
 
 /**
- *	This derivative constraint class specifies the size of the node to be 7: the
+ *	@brief This derivative of the adtk_constraint class is specifically for 
+ * 	BCR4BPR corrections
+ *
+ *	This class specifies the size of the node to be 7: the
  *	first 6 states are the usual guys, the seventh is epoch time
  *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
+ *	@author Andrew Cox
+ *	@version May 21, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_bcr4bpr_constraint : public adtk_constraint{
 	public:

@@ -7,7 +7,8 @@
 #include "adtk_simulation_engine.hpp"
 #include "adtk_sys_data.hpp"
 #include "adtk_trajectory.hpp"
-
+#include "adtk_utilities.hpp"
+ 
 #include <cstdio>
 #include <iostream>
 #include <cmath>
@@ -19,7 +20,7 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
- *	Create a nodeset with space for one node and TOF
+ *	@brief Create a nodeset with space for one node and TOF
  *	@param n the size of a node (i.e. number of states)
  */
 adtk_nodeset::adtk_nodeset(const int n) : nodeSize(n){
@@ -29,7 +30,7 @@ adtk_nodeset::adtk_nodeset(const int n) : nodeSize(n){
 }//========================================================
 
 /**
- *	Copy constructor
+ *	@brief Copy constructor
  *	@param n a nodeset
  */
 adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
@@ -37,8 +38,9 @@ adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 		nodes = n.nodes;
 		tofs = n.tofs;
 		velConNodes = n.velConNodes;
+		constraints = n.constraints;
 	}else{
-		fprintf(stderr, "Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
+		printErr("Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
 			nodeSize, n.nodeSize);
 		throw;
 	}
@@ -49,7 +51,7 @@ adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 //-----------------------------------------------------
 
 /**
- *	Assignment operator
+ *	@brief Assignment operator
  *	@param n a different nodeset
  *	@return this nodeset, modified to be equal to n
  */
@@ -58,9 +60,10 @@ adtk_nodeset& adtk_nodeset::operator =(const adtk_nodeset &n){
 		nodes = n.nodes;
 		tofs = n.tofs;
 		velConNodes = n.velConNodes;
+		constraints = n.constraints;
 		return *this;
 	}else{
-		fprintf(stderr, "Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
+		printErr("Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
 			nodeSize, n.nodeSize);
 		throw;
 	}
@@ -128,7 +131,28 @@ std::vector<int> adtk_nodeset::getVelConNodes() {
 }//=========================================
 
 /**
- *	Append a new node to the end of the nodes vector
+ *	@brief Retrieve a specific constraint
+ *	@param i consraint index (begins with zero)
+ *	@return a constraint
+ */
+adtk_constraint adtk_nodeset::getConstraint(int i) const{
+	adtk_constraint temp(constraints.at(i)); 
+	return temp;
+}
+
+/**
+ *	@return the number of constraints stored in this nodeset
+ */
+int adtk_nodeset::getNumCons() const{ return constraints.size(); }
+
+/**
+ *	@brief Add a constraint to the nodeset
+ *	@param c a constraint to add
+ */
+void adtk_nodeset::addConstraint(adtk_constraint c){ constraints.push_back(c); }
+
+/**
+ *	@brief Append a new node to the end of the nodes vector
  *	@param node a new node; should have <tt>nodeSize</tt> non-dimensional states
  */
 void adtk_nodeset::appendNode(std::vector<double> node){
@@ -136,7 +160,7 @@ void adtk_nodeset::appendNode(std::vector<double> node){
 }
 
 /**
- *	Append a new TOF to the end of the TOF vector
+ *	@brief Append a new TOF to the end of the TOF vector
  *	@param tof a new TOF, non-dimensional units
  */
 void adtk_nodeset::appendTOF(double tof){
@@ -144,14 +168,14 @@ void adtk_nodeset::appendTOF(double tof){
 }
 
 /**
- *	Set the node distribution type; this will not perform any calculations, it is for 
+ *	@brief Set the node distribution type; this will not perform any calculations, it is for 
  *	informational purposes only.
  *	@param type the type of node distribution
  */
 void adtk_nodeset::setNodeDistro(node_distro_t type){ nodeDistro = type; }
 
 /**
- *	Set the specified nodes to be continuous in velocity
+ *	@brief Set the specified nodes to be continuous in velocity
  *	@param n indices of the nodes that are continuous in velocity
  */
 void adtk_nodeset::setVelConNodes(std::vector<int> n){
@@ -160,7 +184,7 @@ void adtk_nodeset::setVelConNodes(std::vector<int> n){
 }
 
 /**
- *	Set all nodes to be continuous in velocity except for those specified
+ *	@brief Set all nodes to be continuous in velocity except for those specified
  *	@param notCont the indices of the nodes that are NOT continuous in velocity
  */
 void adtk_nodeset::setVelConNodes_allBut(std::vector<int> notCont){
@@ -179,7 +203,7 @@ void adtk_nodeset::setVelConNodes_allBut(std::vector<int> notCont){
 //-----------------------------------------------------
 
 /**
- *	Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
  *	@param IC a set of initial conditions, non-dimensional units

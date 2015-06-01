@@ -25,6 +25,16 @@
 
 #include <vector>
 
+/**
+ *	@brief A data object containing information about an event that may
+ *	occur during simulation
+ *
+ *	TODO: The time variable isn't used. should it be? How?
+ *
+ *	@author Andrew Cox
+ *	@version May 29, 2015
+ *	@copyright GNU GPL v3.0
+ */
 class adtk_event{
 	public:
 		/**
@@ -44,7 +54,7 @@ class adtk_event{
 
 		// *structors
 		adtk_event();
-		adtk_event(event_t, int, bool, int);
+		adtk_event(event_t, int, bool);
 
 		// Get and Set Functions
 		int getDir() const;
@@ -52,7 +62,6 @@ class adtk_event{
 		const char* getTypeStr();
 		double getTime() const;
 		std::vector<double>* getState();
-		int getIndex() const;
 		bool stopOnEvent() const;
 
 		adtk_constraint::constraint_t getConType() const;
@@ -60,11 +69,9 @@ class adtk_event{
 		int getConNode() const;
 
 		void setDir(int);
-		void setType(event_t);
-		void setIndex(int);
 
 		// Computations, etc.
-		bool crossedEvent(double[6]);
+		bool crossedEvent(double[6]) const;
 		void updateDist(double[6]);
 	private:
 		/** The type of event this is */
@@ -86,18 +93,14 @@ class adtk_event{
 		updateDist() is called so we can determine the direction */
 		std::vector<double> state;
 
-		/** A unique index assigned to this event by the integrator (in case
-		 there are multiple similar events) */
-		int index = -1;
-
 		/** Type of constraint used by the shooting algorithm to locate this event */
 		adtk_constraint::constraint_t conType;
 
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData;
 
-		double getDist(double[6]);
-		int getDir(double[6]);
+		double getDist(double[6]) const;
+		int getDir(double[6]) const;
 };
 
 #endif

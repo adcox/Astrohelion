@@ -6,8 +6,8 @@
  *	The matrix is double precision, rectangular, and real. No other
  *	characteristics are assumed (e.g. banded, symmetric, etc.)
  *
- *	Author: Andrew Cox
- *	Version: May 6, 2015
+ *	@author Andrew Cox
+ *	@version May 6, 2015
  */
 #include "adtk_matrix.hpp"
 
@@ -21,7 +21,10 @@
 using namespace std;
 
 /**
- * 	Exception class for matrices: size mismatch means two matrices cannot
+ *	@brief Exception class for matrices, fired when the dimension of matrices
+ *	makes a function impossible.
+ *
+ * 	Size mismatch means two matrices cannot
  *	be added, subtracted, or multiplied because they do not have the
  *	appropriate dimensions
  */
@@ -37,7 +40,7 @@ class sizeMismatch: public std::exception{
 //---------------------------------------------------------------------------
 
 /**
- *	Construct a matrix full of zeros
+ *	@brief Construct a matrix full of zeros
  *	@param r number of rows
  *	@param c number of columns
  */
@@ -46,7 +49,7 @@ adtk_matrix::adtk_matrix(const int r, const int c){
 }
 
 /**
- *	Construct a matrix from an array of data
+ *	@brief Construct a matrix from an array of data
  *	@param r number of rows
  *	@param c number of columns
  *	@param data a pointer to an array of data with r*c elements; the array holds the data by row,
@@ -59,7 +62,7 @@ adtk_matrix::adtk_matrix(int r, int c, double *data){
 }//==============================================
 
 /**
- *	Construct a matrix from an array of data
+ *	@brief Construct a matrix from an array of data
  *	@param r number of rows
  *	@param c number of columns
  *	@param data a vector containint data with r*c elements; the vector holds the data by row,
@@ -72,7 +75,7 @@ adtk_matrix::adtk_matrix(int r, int c, std::vector<double> data){
 }//==================================
 
 /**
- *	Construct a matrix from a <tt>gsl_matrix</tt> object
+ *	@brief Construct a matrix from a <tt>gsl_matrix</tt> object
  *	@param m a pointer to a <tt>gsl_matrix</tt>
  */
 adtk_matrix::adtk_matrix(gsl_matrix *m){
@@ -83,7 +86,7 @@ adtk_matrix::adtk_matrix(gsl_matrix *m){
 }//===================================
 
 /**
- *	Construct a 1-D matrix (or vector) from a <tt>gsl_vector</tt>
+ *	@brief Construct a 1-D matrix (or vector) from a <tt>gsl_vector</tt>
  *	@param v a pointer to a <tt>gsl_vector</tt>
  *	@param isRow whether or not the matrix is a row-vector. If not, it is a column vector
  */
@@ -98,7 +101,7 @@ adtk_matrix::adtk_matrix(gsl_vector *v, bool isRow){
 }//====================================
 
 /**
- *	Destructor: called when the matrix is deleted or goes out of scope
+ *	@brief Destructor: called when the matrix is deleted or goes out of scope
  *	Primary concern is to de-allocate the memory taken up by the gsl_matrix
  */
 adtk_matrix::~adtk_matrix(){
@@ -110,7 +113,7 @@ adtk_matrix::~adtk_matrix(){
 }//==============================================
 
 /**
- *	Copy constructor: creates a new matrix from this one without using the same memory!
+ *	@brief Copy constructor: creates a new matrix from this one without using the same memory!
  */
 adtk_matrix::adtk_matrix(const adtk_matrix &b){
 	initBasicMatrix(b.rows, b.cols);
@@ -122,7 +125,7 @@ adtk_matrix::adtk_matrix(const adtk_matrix &b){
 }//=================================================
 
 /**
- * 	Create an identity matrix
+ * 	@brief Create an identity matrix
  *	@param size the number of rows or columns the (square) matrix has
  *	@return an identiy matrix
  */
@@ -144,7 +147,7 @@ adtk_matrix adtk_matrix::Identity(int size){
 int adtk_matrix::getRows() const {return rows;}
 
 /**
- *	Get a row from this matrix
+ *	@brief Get a row from this matrix
  *	@param i the row index (begins with zero)
  *	@return a 1-D matrix (row vector) that contains the data from row <tt>i</tt>
  */
@@ -163,7 +166,7 @@ adtk_matrix adtk_matrix::getRow(int i){
 int adtk_matrix::getCols() const {return cols;}
 
 /**
- *	Get a column from this matrix
+ *	@brief Get a column from this matrix
  *	@param j the column index (begins with zero)
  *	@return a 1-D matrix (column vector) that contains the data from column <tt>j</tt>
  */
@@ -205,7 +208,7 @@ double adtk_matrix::at(int r, int c) const {
 }//=================================
 
 /**
- *	Retrive a value from a 1D matrix. If the matrix is not 1D, a value from the first row
+ *	@brief Retrive a value from a 1D matrix. If the matrix is not 1D, a value from the first row
  *	is returned.
  */
 double adtk_matrix::at(int i) const {
@@ -224,7 +227,7 @@ double adtk_matrix::at(int i) const {
 //---------------------------------------------------------------------------
 
 /**
- *	Copy Operator; copy a matrix into this one
+ *	@brief Copy Operator; copy a matrix into this one
  *	@param b a constant matrix
  *	@return this matrix
  */
@@ -241,7 +244,7 @@ adtk_matrix& adtk_matrix::operator =(const adtk_matrix &b){
 }//================================================
 
 /**
- *	Add two matrices; they must have the same size.
+ *	@brief Add two matrices; they must have the same size.
  *	@return a new matrix that is the sum of lhs and rhs
  */
 adtk_matrix operator +(const adtk_matrix &lhs, const adtk_matrix &rhs){
@@ -261,7 +264,7 @@ adtk_matrix operator +(const adtk_matrix &lhs, const adtk_matrix &rhs){
 }
 
 /**
- *	Add a matrix to this one; perform operation in place
+ *	@brief Add a matrix to this one; perform operation in place
  *	@param b a matrix, must be the same size as this matrix
  *	@return this matrix
  */
@@ -276,7 +279,7 @@ adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 }//==============================================
 
 /**
- *	Subtract two matrices: A = L - R
+ *	@brief Subtract two matrices: A = L - R
  *	@param lhs the left-hand matrix L
  *	@param rhs the right-hand matrix R
  *	@return the difference L - R
@@ -286,7 +289,7 @@ adtk_matrix operator -(const adtk_matrix &lhs, const adtk_matrix &rhs){
 }//==============================================
 
 /**
- *	In place subtraction; subtract a matrix from this one
+ *	@brief In place subtraction; subtract a matrix from this one
  *	@param b a matrix to subtract from this
  *	@return this matrix
  */
@@ -301,7 +304,7 @@ adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
 }//==============================================
 
 /**
- *	Multiply this matrix by another.
+ *	@brief Multiply this matrix by another.
  *	@param b a matrix
  *	
  *	Let this matrix be A, and the input matrix be B; A is m x k, B is k x n;
@@ -340,7 +343,7 @@ adtk_matrix adtk_matrix::operator *(const adtk_matrix &b) const{
 }//==============================================
 
 /**
- * 	Multiplies this matrix, A ( m x m ) with an input matrix B (m x m) and sets A = AB
+ * 	@brief Multiplies this matrix, A ( m x m ) with an input matrix B (m x m) and sets A = AB
  *
  *	This operation only works for square matrices (non-square doesn't make any sense,
  *	because you can't assign the new product back to the old matrix)
@@ -375,7 +378,7 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 }//=============================================
 
 /**
- *	Multiply a scalar and a matrix: A = l*R
+ *	@brief Multiply a scalar and a matrix: A = l*R
  *	@param lhs the scalar l
  *	@param rhs the matrix R
  *	@return the product l*R (same as R*l)
@@ -394,7 +397,7 @@ adtk_matrix operator *(const double &lhs, const adtk_matrix &rhs){
 }//=============================================
 
 /**
- *	Multiply a scalar and a matrix: A = L*r
+ *	@brief Multiply a scalar and a matrix: A = L*r
  *	@param lhs the matrix L
  *	@param rhs the scalar r
  *	@return the product L*r (same as r*L)
@@ -404,7 +407,7 @@ adtk_matrix operator *(const adtk_matrix &lhs, const double &rhs){
 }//=============================================
 
 /**
- *	Multiply a scalar and a matrix: A = L/r
+ *	@brief Multiply a scalar and a matrix: A = L/r
  *	@param lhs the matrix L
  *	@param rhs the scalar r
  *	@return the quotient L/r (same as 1/r * L)
@@ -414,7 +417,7 @@ adtk_matrix operator /(const adtk_matrix &lhs, const double &rhs){
 }
 
 /**
- *	Multiply this matrix by a scalar (in place, DOES modify this matrix)
+ *	@brief Multiply this matrix by a scalar (in place, DOES modify this matrix)
  * 	@param alpha a real scalar
  */
 adtk_matrix& adtk_matrix::operator *=(const double &alpha){
@@ -423,7 +426,7 @@ adtk_matrix& adtk_matrix::operator *=(const double &alpha){
 }//==============================================
 
 /**
- *	Compare two matrices
+ *	@brief Compare two matrices
  *	@param lhs the left-hand matrix L
  *	@param rhs the right-hand matrix R
  *	@return whether or not L and R contain the same values
@@ -433,7 +436,7 @@ bool operator ==(const adtk_matrix &lhs, const adtk_matrix &rhs){
 }
 
 /**
- *	Compare two matrices
+ *	@brief Compare two matrices
  *	@param lhs the left-hand matrix L
  *	@param rhs the right-hand matrix R
  *	@return whether or not L and R do NOT contain the same values
@@ -448,7 +451,7 @@ bool operator !=(const adtk_matrix &lhs, const adtk_matrix &rhs){
 
 
 /**
- *	Transpose this matrix (does not change the original copy of the matrix)
+ *	@brief Transpose this matrix (does not change the original copy of the matrix)
  *	@return the transpose (NOT the complex conjugate transpose)
  */
 adtk_matrix adtk_matrix::trans() const{
@@ -460,7 +463,7 @@ adtk_matrix adtk_matrix::trans() const{
 }//==============================================
 
 /** 
- *	Get the norm of this "matrix;" only applies for 1-D matrices (vectors)
+ *	@brief Get the norm of this "matrix;" only applies for 1-D matrices (vectors)
  *	@return the 2-norm (sqrt of sum of squared elements) of the matrix
  */
 double adtk_matrix::norm() const{
@@ -481,7 +484,7 @@ double adtk_matrix::norm() const{
 //---------------------------------------------------------------------------
 
 /**
- *	Initialize basic matrix and set all values to zero
+ *	@brief Initialize basic matrix and set all values to zero
  *	@param r number of rows
  *	@param c number of columns
  */
@@ -493,8 +496,10 @@ void adtk_matrix::initBasicMatrix(int r, int c){
 }//============================================
 
 /**
- *	Utility to copy data from an array of doubles into the gsl_matrix object that
- *	contains the data for this matrix. NOTE: the <tt>rows</tt> and <tt>cols</tt>
+ *	@brief Utility to copy data from an array of doubles into the gsl_matrix object that
+ *	contains the data for this matrix. 
+ *
+ *	NOTE: the <tt>rows</tt> and <tt>cols</tt>
  *	variabls MUST be initialized and set to the correct values before running
  *	this function.
  *	@param data an array (row-major order) containing data for this matrix
@@ -508,8 +513,10 @@ void adtk_matrix::copyDataIntoGSL_Matrix(double *data){
 }//============================================
 
 /**
- * 	Utility to copy data from a vector into the gsl_matrix object that
- *	contains the data for this matrix. NOTE: the <tt>rows</tt> and <tt>cols</tt>
+ * 	@brief Utility to copy data from a vector into the gsl_matrix object that
+ *	contains the data for this matrix. 
+ *
+ *	NOTE: the <tt>rows</tt> and <tt>cols</tt>
  *	variabls MUST be initialized and set to the correct values before running
  *	this function.
  *	@param v a vector (row-major order) containing data for this matrix
@@ -519,14 +526,14 @@ void adtk_matrix::copyDataIntoGSL_Matrix(std::vector<double> v){
 }//============================================
 
 /**
- * 	Print the matrix to standard output via printf
+ * 	@brief Print the matrix to standard output via printf
  */
 void adtk_matrix::print() const{
 	print("%8.4f");		// Use the more advanced function
 }//============================================
 
 /**
- *	Print the matrix to standard output with the specified format
+ *	@brief Print the matrix to standard output with the specified format
  *	@param format a format string for the std::printf function
  */
 void adtk_matrix::print(const char *format) const{
@@ -539,7 +546,7 @@ void adtk_matrix::print(const char *format) const{
 }//==============================================
 
 /**
- *	Write the matrix data out to a CSV file (must specify the extension)
+ *	@brief Write the matrix data out to a CSV file (must specify the extension)
  *	@param filename the filename or filepath, including file extension
  */
 void adtk_matrix::toCSV(const char *filename) const{

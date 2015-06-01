@@ -27,13 +27,15 @@
 #include <vector>
 
 /**
- *	A data object that represents a matrix. This class defines functions that 
+ *	@brief A data object that represents a matrix. 
+ *
+ *	This class defines functions that 
  *	allow for easy-to-read matrix operations in code. Some of the functionality
  *	is based on GSL's matrix and CBLAS functions, but some is also hand-coded.
  *
- *	Author: Andrew Cox
- *
- *	Version: May 15, 2015
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class adtk_matrix{
 

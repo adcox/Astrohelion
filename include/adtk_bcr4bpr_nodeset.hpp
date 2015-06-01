@@ -28,11 +28,12 @@
 #include <vector>
 
 /**
- *	This derivative of the adtk_nodeset object contains additional information
+ *	@brief This derivative of the adtk_nodeset object contains additional information
  *	for the BCR4BP
  *
- *	Author: Andrew Cox
- *	Version: May 21, 2015
+ *	@author Andrew Cox
+ *	@version May 21, 2015
+ * 	@copyright GNU GPL v3.0
  */
 class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 	public:
@@ -40,17 +41,18 @@ class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 		adtk_bcr4bpr_nodeset(double[6], adtk_bcr4bpr_sys_data, double, double, int,
 			node_distro_t);
 
+		adtk_bcr4bpr_nodeset(const adtk_bcr4bpr_nodeset&);
+
+		adtk_bcr4bpr_nodeset& operator =(const adtk_bcr4bpr_nodeset&);
+		
 		std::vector<double>* getEpochs();
 		
-		adtk_bcr4bpr_constraint getConstraint(int) const;
-		int getNumCons() const;
 		double getEpoch(int) const;
 		adtk_sys_data* getSysData();
 
-		void addConstraint(adtk_bcr4bpr_constraint);
 		void appendEpoch(double);
+		void print() const;
 	private:
-		std::vector<adtk_bcr4bpr_constraint> constraints;
 		std::vector<double> epochs;
 
 		adtk_bcr4bpr_sys_data sysData;

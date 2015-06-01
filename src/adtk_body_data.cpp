@@ -6,6 +6,7 @@
 #include "adtk_body_data.hpp"
 
 #include "adtk_constants.hpp"
+#include "adtk_utilities.hpp"
 
 #include <cmath>
 #include <exception>
@@ -39,6 +40,8 @@ adtk_body_data::adtk_body_data(std::string n){
 	name = n;
 	minFlyByAlt = 0;
 
+	transform(n.begin(), n.end(), n.begin(), ::tolower);
+	
 	// Begin the behomoth of if statements...
 	if(n.compare("earth") == 0){
 		name = "Earth";
@@ -200,7 +203,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
 
     // Function should have returned by this point if the body was found
-    cout << "adtk_body_data constructor :: Could not locate body " << n << "\n";
+    printErr("adtk_body_data constructor :: Could not locate body %s\n", n.c_str());
     throw;
 }// END of constructor using body name -------------------------------------
 

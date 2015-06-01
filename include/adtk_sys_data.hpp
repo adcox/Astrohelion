@@ -60,6 +60,7 @@ class adtk_sys_data{
 
 		adtk_sys_data& operator= (const adtk_sys_data&);
 
+		int getNumPrimaries() const;
 		double getCharL() const;
 		double getCharT() const;
 		double getCharM() const;

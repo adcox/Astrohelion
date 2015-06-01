@@ -57,6 +57,21 @@ class adtk_constraint{
 		 *					node 2 in x and z position, the data vector would contain
 		 *					the following values: {5, NAN, 5, NAN, NAN, NAN}
 		 *
+		 *	DIST 		- 	Constrain a node to be at a specific distance from a primmary.
+		 *					The <tt>node</tt> field identifies the constrained node, the 
+		 *					first value in the <tt>data</tt> field (i.e. <tt>data[0]</tt>) 
+		 *					identifies the primary number (index 0) and the second value in 
+		 *					<tt>data</tt> gives the desired distance from the primary's center
+		 *					in non-dimensional units
+		 *
+		 *	MIN_DIST 	- 	Constrain a node to be at or above a specific distance relative
+		 *					to a specific primary. Data is input in the same way as the DIST
+		 *					consraint described above.
+		 *
+		 *	MAX_DIST 	- 	Constrain a node to be at or below a specific distance relative to 
+		 *					specific primary. Data is input in the same way as the DIST constraint
+		 *					described above.
+		 *
 		 *	MAX_DELTA_V	- 	Constrain total delta V to be less than the specified amount
 		 *					The <tt>node</tt> value is unused in this constraint; make the
 		 *					first value in the data vector be the maximum delta-V in 
@@ -69,7 +84,8 @@ class adtk_constraint{
 		 *					Place the index of the node you want to constrain in the <tt>node</tt>
 		 *					variable; <tt>data</tt> is unused in this constraint.
 		 */
-		enum constraint_t {NONE, STATE, MATCH_ALL, MATCH_CUST, MAX_DELTA_V, DELTA_V, SP};
+		enum constraint_t {NONE, STATE, MATCH_ALL, MATCH_CUST, DIST, MIN_DIST, MAX_DIST, 
+			DELTA_V, MAX_DELTA_V, SP};
 		
 		adtk_constraint(int);
 		adtk_constraint(int, constraint_t);

@@ -1,10 +1,6 @@
 /**
  *  @file adtk_simulation_engine.cpp
  *
- * 	Simulation Engine
- *
- *	This object handles all simulation tasks.
- *
  */
  
 /*
@@ -33,6 +29,7 @@
 #include "adtk_bcr4bpr_nodeset.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_bcr4bpr_traj.hpp"
+#include "adtk_body_data.hpp"
 #include "adtk_calculations.hpp"
 #include "adtk_constants.hpp"
 #include "adtk_correction_engine.hpp"
@@ -69,11 +66,15 @@ adtk_simulation_engine::adtk_simulation_engine(){
 
 /**
  *  @brief Construct a simulation engine for a specific dynamical system
+ *
+ *  This constructor will also create the default crash event detectors
+ *
  *  @param data a pointer to a system data object
  */
 adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
     events.clear();
     sysData = data;
+    createCrashEvents();
     printVerb(verbose, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
 }//===========================================
 
@@ -123,6 +124,27 @@ void adtk_simulation_engine::copyEngine(const adtk_simulation_engine &s){
     dtGuess = s.dtGuess;
     numSteps = s.numSteps;
     events = s.events;
+}//=====================================
+
+/**
+ *  Create default crash events for the system
+ */
+void adtk_simulation_engine::createCrashEvents(){
+    if(!madeCrashEvents){
+        for(int p = 0; p < sysData->getNumPrimaries(); p++){
+            // Get body data, compute crash distance
+            adtk_body_data primData(sysData->getPrimary(p));
+            double maxDist = primData.getRadius() + primData.getMinFlyBy();
+            // Put primary index # and maxDist into an array, create event
+            double evtData[] = {(double)p, maxDist};
+            adtk_event crashEvt(adtk_event::CRASH, -1, true, evtData);
+            // Add event to list by default
+            addEvent(crashEvt);
+        }
+        madeCrashEvents = true;
+    }else{
+        printWarn("Crash events have already been created!\n");
+    }
 }//=====================================
 
 //-----------------------------------------------------
@@ -239,6 +261,14 @@ adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj() const{
 void adtk_simulation_engine::addEvent(adtk_event::event_t type, int dir, bool stop){
     adtk_event temp(type, dir, stop);
     events.push_back(temp);
+}//======================================
+
+/**
+ *  @breif Add an event for this integration
+ *  @param evt an event
+ */
+void adtk_simulation_engine::addEvent(adtk_event evt){
+    events.push_back(evt);
 }//======================================
 
 /**
@@ -834,4 +864,12 @@ void adtk_simulation_engine::reset(){
     relTol = 1e-14;
     dtGuess = 1e-6;
     numSteps = 1000;
+    madeCrashEvents = false;
+}//==========================================
+
+/**
+ *  Clear all events from the simulation, including any created by default.
+ */
+void adtk_simulation_engine::clearEvents(){
+    events.clear();
 }//==========================================

@@ -42,19 +42,23 @@ class adtk_event{
 		 *
 		 *	NONE 		- 	No type has been specified; cannot be used in integration
 		 *
-		 *	YZ-Plane 	- 	Event occurs when trajectory crosses the YZ-plane (x = 0)
+		 *	YZ_Plane 	- 	Event occurs when trajectory crosses the YZ-plane (x = 0)
 		 *					In 2D, this is equivalent to a y-axis crossing
 		 *
-		 *	XZ-PLANE 	- 	Event occurs when trajectory crosses the XZ-plane (y = 0)
+		 *	XZ_PLANE 	- 	Event occurs when trajectory crosses the XZ-plane (y = 0)
 		 *					In 2D, this is equivalent to an x-axis crossing
 		 *
-		 *	XY-Plane	- 	Event occurs when trajectory crosses the XY-plane (z = 0)
+		 *	XY_PLANE	- 	Event occurs when trajectory crosses the XY-plane (z = 0)
+		 *
+		 *	CRASH		- 	Event occurs when trajectory falls below minimum acceptable
+		 *					altitude or the surface of one of the system primaries.
 		 */
-		enum event_t {NONE, YZ_PLANE, XZ_PLANE, XY_PLANE};
+		enum event_t {NONE, YZ_PLANE, XZ_PLANE, XY_PLANE, CRASH};
 
 		// *structors
 		adtk_event();
 		adtk_event(event_t, int, bool);
+		adtk_event(event_t, int, bool, double*);
 
 		// Get and Set Functions
 		int getDir() const;
@@ -99,6 +103,7 @@ class adtk_event{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData;
 
+		void initEvent(event_t, int, bool, double*);
 		double getDist(double[6]) const;
 		int getDir(double[6]) const;
 };

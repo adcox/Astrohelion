@@ -35,6 +35,11 @@ adtk_sys_data& adtk_sys_data::operator =(const adtk_sys_data &d){
 }//==========================================
 
 /**
+ *	@return the number of primaries this system models
+ */
+int adtk_sys_data::getNumPrimaries() const { return numPrimaries; }
+
+/**
  *	@return the characteristic length (km) associated with this system
  */
 double adtk_sys_data::getCharL() const { return charL; }

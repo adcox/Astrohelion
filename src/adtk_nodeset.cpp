@@ -198,6 +198,13 @@ void adtk_nodeset::setVelConNodes_allBut(std::vector<int> notCont){
 	velConSet = true;
 }//================================================
 
+/**
+ *	Clear all constraints from the constraint vector; useful to remove default constraints
+ */
+void adtk_nodeset::clearConstraints(){
+	constraints.clear();
+}//=====================================
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------

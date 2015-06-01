@@ -157,6 +157,9 @@ const char* adtk_constraint::getTypeStr(constraint_t t) const{
 		case STATE: { return "STATE"; break; }
 		case MATCH_ALL: { return "MATCH_ALL"; break; }
 		case MATCH_CUST: { return "MATCH_CUST"; break; }
+		case DIST: { return "DIST"; break; }
+		case MIN_DIST: { return "MIN_DIST"; break; }
+		case MAX_DIST: { return "MAX_DIST"; break; }
 		case MAX_DELTA_V: { return "MAX_DELTA_V"; break; }
 		case DELTA_V: { return "DELTA_V"; break; }
 		case SP: { return "SP"; break; }

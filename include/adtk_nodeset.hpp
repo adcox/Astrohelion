@@ -91,6 +91,7 @@ class adtk_nodeset{
 		void setVelConNodes(std::vector<int>);
 		void setVelConNodes_allBut(std::vector<int>);
 
+		void clearConstraints();
 
 		virtual void print() const = 0;
 	protected:

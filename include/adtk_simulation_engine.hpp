@@ -31,16 +31,29 @@ class adtk_bcr4bpr_traj;
 class adtk_cr3bp_traj;
 
 /**
- *	@brief performs numerical integration on any system type and produces an
+ *	@brief Performs numerical integration on any system type and produces an
  *	adtk_trajectory object
  *
  *	The simulation engine is the workhorse object for the ATDK. It
- *	holds functions to integrate equations of motion, compute
- *	zero-velocity surfaces, manifold arcs, and other useful
- *	structures
+ *	holds functions to integrate equations of motion and is called by the 
+ *	<tt>adtk_correction_engine</tt> to compute arcs between nodes.
+ *
+ *	Creating a simulation engine is simple; it can either be instantiated with no
+ *	arguments, or by specifying a system data object. Further settings can be applied
+ *	via the "set and get" methods, and the <tt>runSim()</tt> method can be called to 
+ *	integrate a trajectory for a specific amount of time. The integration will most likely
+ *	run for the specified interval, but crash-detecting event functions are included by default
+ *	and will end the integration if triggered. To run a simulation without these events,
+ *	call the <tt>clearEvents()</tt> function before running the simulation. Alternatively, 
+ *	more event functions can be added to the simulation to end (or simply flag) the simulation
+ *	at different event occurrences.
+ *
+ * 	Once the integration has completed, a trajectory object can be obtained by calling one of the
+ *	<tt>get_*Traj()</tt> functions. To reuse the simulation engine, call the <tt>reset()</tt>
+ *  function and re-run the simulation with different initial conditions and time-of-flight.
  *
  *	@author Andrew Cox
- *	@version May 15, 2015
+ *	@version June 1, 2015
  *	@copyright GNU GPL v3.0
  */
 class adtk_simulation_engine{
@@ -49,7 +62,8 @@ class adtk_simulation_engine{
 		adtk_simulation_engine();
 		adtk_simulation_engine(adtk_sys_data*);
 		adtk_simulation_engine(const adtk_simulation_engine&);	//copy constructor
-
+		void createCrashEvents();
+		
 		//Destructor
 		~adtk_simulation_engine();
 
@@ -68,6 +82,7 @@ class adtk_simulation_engine{
 		adtk_bcr4bpr_traj getBCR4BPRTraj() const;
 
 		void addEvent(adtk_event::event_t, int, bool);
+		void addEvent(adtk_event);
 		void setSysData(adtk_sys_data*);
 		void setRevTime(bool);
 		void setVerbose(bool);
@@ -82,7 +97,8 @@ class adtk_simulation_engine{
 
 		// Utility Functions
 		void reset();
-		
+		void clearEvents();
+
 	private:
 		/** Pointer to a system data object; contains characteristic quantities, among other things */
 		adtk_sys_data *sysData = 0;	// set null pointers for now
@@ -112,6 +128,9 @@ class adtk_simulation_engine{
 		/** "Clean" means there is no data in the trajectory object. Once a simulation has been
 		 run, the engine is no longer clean and will need to be cleaned before running another sim */
 		bool isClean = true;
+
+		/** Whether or not the default crash events have been created */
+		bool madeCrashEvents = false;
 
 		/** Absolute tolerance for integrated data, units are same as integrated data */
 		double absTol = 1e-12;

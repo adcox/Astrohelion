@@ -4,12 +4,24 @@
 		"selected_items":
 		[
 			[
-				"adtk_bc",
-				"adtk_bcr4bpr_traj"
+				"adtk",
+				"adtk_event"
 			],
 			[
-				"adtk",
-				"adtk_nodeset"
+				"adtk_bc",
+				"adtk_bcr4bpr_sys_data"
+			],
+			[
+				"adtk_cr",
+				"adtk_cr3bp_sys_data"
+			],
+			[
+				"adtk_c",
+				"adtk_constraint"
+			],
+			[
+				"adtk_",
+				"adtk_cr3bp_constraint"
 			],
 			[
 				"adk",
@@ -52,14 +64,6 @@
 				"adtk_correction_engine"
 			],
 			[
-				"adtk_",
-				"adtk_cr3bp_traj"
-			],
-			[
-				"adtk_cr",
-				"adtk_cr3bp_nodeset"
-			],
-			[
 				"simulation",
 				"adtk_simulation_engine"
 			],
@@ -69,10 +73,6 @@
 			],
 			[
 				"ad",
-				"adtk_correction_engine"
-			],
-			[
-				"adtk_c",
 				"adtk_correction_engine"
 			],
 			[
@@ -148,34 +148,10 @@
 	"buffers":
 	[
 		{
-			"file": "tests/SimulationEngine_test.cpp",
+			"file": "src/adtk_constraint.cpp",
 			"settings":
 			{
-				"buffer_size": 2488,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/adtk_simulation_engine.cpp",
-			"settings":
-			{
-				"buffer_size": 31323,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "include/adtk_nodeset.hpp",
-			"settings":
-			{
-				"buffer_size": 3602,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "include/adtk_bcr4bpr_nodeset.hpp",
-			"settings":
-			{
-				"buffer_size": 1899,
+				"buffer_size": 5145,
 				"line_ending": "Unix"
 			}
 		},
@@ -183,15 +159,87 @@
 			"file": "src/adtk_correction_engine.cpp",
 			"settings":
 			{
-				"buffer_size": 30414,
+				"buffer_size": 31321,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "devNotes.dox",
+			"file": "src/adtk_event.cpp",
 			"settings":
 			{
-				"buffer_size": 3765,
+				"buffer_size": 8030,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/adtk_simulation_engine.cpp",
+			"settings":
+			{
+				"buffer_size": 32725,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/adtk_sys_data.cpp",
+			"settings":
+			{
+				"buffer_size": 2029,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/adtk_body_data.cpp",
+			"settings":
+			{
+				"buffer_size": 6692,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/adtk_simulation_engine.hpp",
+			"settings":
+			{
+				"buffer_size": 5414,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/adtk_bcr4bpr_traj.hpp",
+			"settings":
+			{
+				"buffer_size": 2164,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/Matlab/_Tools/custom/orbitGeneration/bcr4bpI_event_crash.m",
+			"settings":
+			{
+				"buffer_size": 1346,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/adtk_constraint.hpp",
+			"settings":
+			{
+				"buffer_size": 4545,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/adtk_event.hpp",
+			"settings":
+			{
+				"buffer_size": 3306,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/adtk_nodeset.hpp",
+			"settings":
+			{
+				"buffer_size": 3714,
 				"line_ending": "Unix"
 			}
 		}
@@ -220,28 +268,35 @@
 	},
 	"file_history":
 	[
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_sys_data.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_simulation_engine.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_nodeset.cpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/tests/SimulationEngine_test.cpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_correction_engine.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_nodeset.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_nodeset.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_simulation_engine.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_bcr4bpr_nodeset.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/doxygen_config",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_cr3bp_nodeset.cpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_correction_engine.cpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_nodeset.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_sys_data.cpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_constraint.hpp",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_constraint.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/devNotes.dox",
+		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/doxygen_config",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/mainpage.dox",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_constraint.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_nodeset.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_sys_data.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_bcr4bpr_traj.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_body_data.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_calculations.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_constants.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_constraint.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_correction_engine.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_constraint.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_nodeset.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_sys_data.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_cr3bp_traj.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_event.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_matrix.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_nodeset.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_simulation_engine.hpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_sys_data.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_trajectory.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_utilities.hpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/include/adtk_ascii_output.hpp",
@@ -250,19 +305,12 @@
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_event.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_matrix.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_bcr4bpr_traj.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_nodeset.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_simulation_engine.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_sys_data.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_trajectory.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_utilities.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_cr3bp_nodeset.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_correction_engine.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_calculations.cpp",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_constraint.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_body_data.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/src/adtk_bcr4bpr_sys_data.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/Matlab/_Tools/custom/orbitGeneration/bcr4bpI_event_crash.m",
-		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/tests/SimulationEngine_test.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/ATD/CPP_fcns/GslInteg_CR3BP_events.cpp",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/Matlab/_Tools/custom/targeting/bcr4bpR_multShoot.m",
 		"/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/tests/MatIO_test.cpp",
@@ -342,7 +390,7 @@
 	},
 	"find_in_files":
 	{
-		"height": 93.0,
+		"height": 0.0,
 		"where_history":
 		[
 			"",
@@ -402,23 +450,23 @@
 	"groups":
 	[
 		{
-			"selected": 4,
+			"selected": 2,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "tests/SimulationEngine_test.cpp",
+					"file": "src/adtk_constraint.cpp",
 					"settings":
 					{
-						"buffer_size": 2488,
+						"buffer_size": 5145,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2218,
-								2218
+								4638,
+								4638
 							]
 						],
 						"settings":
@@ -427,25 +475,79 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 484.0,
+						"translation.y": 1555.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "src/adtk_simulation_engine.cpp",
+					"file": "src/adtk_correction_engine.cpp",
 					"settings":
 					{
-						"buffer_size": 31323,
+						"buffer_size": 31321,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								29079,
-								29091
+								9819,
+								9819
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/adtk_event.cpp",
+					"settings":
+					{
+						"buffer_size": 8030,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7876,
+								7876
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 3016.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/adtk_simulation_engine.cpp",
+					"settings":
+					{
+						"buffer_size": 32725,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4574,
+								4574
 							]
 						],
 						"settings":
@@ -455,79 +557,25 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 10900.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "include/adtk_nodeset.hpp",
-					"settings":
-					{
-						"buffer_size": 3602,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2960,
-								2960
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 826.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "include/adtk_bcr4bpr_nodeset.hpp",
-					"settings":
-					{
-						"buffer_size": 1899,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1762,
-								1762
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 31.0,
+						"translation.y": 7178.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
 				},
 				{
 					"buffer": 4,
-					"file": "src/adtk_correction_engine.cpp",
+					"file": "src/adtk_sys_data.cpp",
 					"settings":
 					{
-						"buffer_size": 30414,
+						"buffer_size": 2029,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								26374,
-								26374
+								973,
+								973
 							]
 						],
 						"settings":
@@ -536,7 +584,33 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 11251.0,
+						"translation.y": 151.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/adtk_body_data.cpp",
+					"settings":
+					{
+						"buffer_size": 6692,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								865,
+								865
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 1.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -544,32 +618,165 @@
 			]
 		},
 		{
-			"selected": 0,
 			"sheets":
 			[
 				{
-					"buffer": 5,
-					"file": "devNotes.dox",
+					"buffer": 6,
+					"file": "include/adtk_simulation_engine.hpp",
 					"settings":
 					{
-						"buffer_size": 3765,
+						"buffer_size": 5414,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1736,
-								1736
+								2684,
+								2684
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"syntax": "Packages/C++/C++.tmLanguage",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
+						"translation.y": 729.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "include/adtk_bcr4bpr_traj.hpp",
+					"settings":
+					{
+						"buffer_size": 2164,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 86.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "/Users/Andrew/Documents/Purdue/Astrodynamics_Research/Code/Matlab/_Tools/custom/orbitGeneration/bcr4bpI_event_crash.m",
+					"settings":
+					{
+						"buffer_size": 1346,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Matlab/Matlab.tmLanguage"
+						},
+						"translation.x": 0.0,
 						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "include/adtk_constraint.hpp",
+					"settings":
+					{
+						"buffer_size": 4545,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3814,
+								3814
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 575.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "include/adtk_event.hpp",
+					"settings":
+					{
+						"buffer_size": 3306,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3227,
+								3227
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 661.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "include/adtk_nodeset.hpp",
+					"settings":
+					{
+						"buffer_size": 3714,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2922,
+								2922
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 841.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -605,7 +812,7 @@
 		"cols":
 		[
 			0.0,
-			0.585777291918,
+			0.515253366896,
 			1.0
 		],
 		"rows":

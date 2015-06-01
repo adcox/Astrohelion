@@ -25,6 +25,7 @@
 #include "adtk_correction_engine.hpp"
 
 #include "adtk_ascii_output.hpp"
+#include "adtk_calculations.hpp"
 #include "adtk_constraint.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_traj.hpp"
@@ -313,6 +314,13 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			case adtk_constraint::SP:
 				// extraCons += 3;
 				break;
+			case adtk_constraint::MIN_DIST:
+				numSlack++;
+				X0.push_back(1e-4);
+				slackAssignCon.push_back(c);
+			case adtk_constraint::DIST:
+				extraCons += 1;
+				break;
 			case adtk_constraint::MAX_DELTA_V:
 			case adtk_constraint::DELTA_V:
 				if(!foundDVCon){
@@ -430,7 +438,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				else
 					t0 = varTime ? X[7*numNodes-1+n] : bcSet->getEpoch(n);
 			
-				// Copy initial conditions from free variable vector and run the sim
+				// Copy IC for node n from free variable vector
 				double *ic = &(X[6*n]);
 				simEngine.setRevTime(tof < 0);
 				simEngine.runSim(ic, t0, tof);
@@ -562,23 +570,93 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 									FX[conCount] = X[6*n+s] - X[6*cn+s];
 
 									// partial of this constraint wrt THIS node = 1
-									DF[totalFree*(conCount) + 6*n+s] = 1;
+									DF[totalFree*conCount + 6*n+s] = 1;
 
 									// partial of this constraint wrt other node = -1
-									DF[totalFree*(conCount) + 6*cn+s] = -1;
+									DF[totalFree*conCount + 6*cn+s] = -1;
 
 									conCount++;
 								}
 							}
 							break;
 						}
+						case adtk_constraint::MAX_DIST:
+						case adtk_constraint::MIN_DIST:
+						case adtk_constraint::DIST:
+						{
+							int Pix = (int)(conData[0]);	// index of primary
+							// Compute primary positions
+							double primPos[9] = {0};
+							switch(sysType){
+								case adtk_sys_data::CR3BP_SYS:
+								{
+									adtk_cr3bp_sys_data *crSysData = static_cast<adtk_cr3bp_sys_data *>(sysData);
+									primPos[0] = -1*crSysData->getMu();
+									primPos[3] = 1 - crSysData->getMu();
+									break;
+								}
+								case adtk_sys_data::BCR4BPR_SYS:
+								{
+									adtk_bcr4bpr_sys_data *bcSysData = static_cast<adtk_bcr4bpr_sys_data *>(sysData);
+									bcr4bpr_getPrimaryPos(t0, *(bcSysData), primPos);
+									break;
+								}
+								default:
+									printErr("Cannot compute primary position for system type %s",
+										sysData->getTypeStr().c_str());
+							}
+
+							// Get distance between node and primary in x, y, and z-coordinates
+							double dx = X[6*n+0] - primPos[Pix+0];
+							double dy = X[6*n+1] - primPos[Pix+1];
+							double dz = X[6*n+2] - primPos[Pix+2];
+
+							double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true altitude
+
+							// Compute difference between desired altitude and true altitude
+							FX[conCount] = h - conData[1];
+
+							// Partials with respect to node position states
+							DF[totalFree*conCount + 6*n + 0] = dx/h;
+							DF[totalFree*conCount + 6*n + 1] = dy/h;
+							DF[totalFree*conCount + 6*n + 2] = dz/h;
+
+							// Extra stuff for inequality constraints
+							if(con.getType() == adtk_constraint::MIN_DIST || 
+								con.getType() == adtk_constraint::MAX_DIST ){
+								// figure out which of the slack variables correspond to this constraint
+								vector<int>::iterator slackIx = std::find(slackAssignCon.begin(), 
+									slackAssignCon.end(), c);
+
+								// which column of the DF matrix the slack variable is in
+								int slackCol = totalFree - numSlack + (*slackIx);
+								int sign = con.getType() == adtk_constraint::MAX_DIST ? 1 : -1;
+
+								// Subtract squared slack variable from constraint
+								FX[conCount] += sign*X[slackCol]*X[slackCol];
+
+								// Partial with respect to slack variable
+								DF[totalFree*conCount + slackCol] = sign*2*X[slackCol];
+
+								// Epoch dependencies from primary positions
+								if(sysType == adtk_sys_data::BCR4BPR_SYS){
+									double dhdr_data[] = {-dx/h, -dy/h, -dz/h};
+									double primVel[9] = {0};
+
+									adtk_bcr4bpr_sys_data *bcSysData = static_cast<adtk_bcr4bpr_sys_data *>(sysData);
+									bcr4bpr_getPrimaryVel(t0, *(bcSysData), primVel);
+									adtk_matrix dhdr(1, 3, dhdr_data);
+									adtk_matrix vel(3, 1, &(primVel[Pix*3]) );
+									DF[totalFree*conCount + 7*numNodes - 1 + n];
+								}
+							}
+							break;
+						}// End Min, Max, Equal DIST constraints
 						case adtk_constraint::SP:
-							// TODO: implement
 							printErr("SP constraint not implemented!\n");
 							return;
-						case adtk_constraint::DELTA_V:
+						case adtk_constraint::DELTA_V:	// handled outside this loop
 						case adtk_constraint::MAX_DELTA_V:
-							// handled outside this loop
 							break;
 						default:
 							printErr("Unrecognized consraint type\n");
@@ -831,8 +909,4 @@ void adtk_correction_engine::createOutput(std::vector<double> X, adtk_simulation
 		epochs->insert(epochs->begin(), X.begin() + 7*numNodes-1, X.begin() + 8*numNodes-1);
 	}
 }//===========================
-
-
-
-
 

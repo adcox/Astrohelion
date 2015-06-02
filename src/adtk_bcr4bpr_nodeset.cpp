@@ -26,7 +26,7 @@ adtk_bcr4bpr_nodeset::adtk_bcr4bpr_nodeset(double IC[6], adtk_bcr4bpr_sys_data d
 	// Compute epoch times for each node
 	epochs.reserve(numNodes);
 
-	double ellapsed = 0;
+	double ellapsed = t0;
 	epochs.push_back(t0);
 	for(int n = 0; n < numNodes-1; n++){
 		ellapsed += tofs.at(n);

@@ -379,7 +379,7 @@ double cr3bp_getJacobi(double s[], double mu){
 /**
  *  @brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
  *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi9
+ *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
  *  @param sysData a system data object containing information about the BCR4BP primaries
  *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
  *  row-major order. The first three elements are the position of P1, etc.
@@ -416,7 +416,7 @@ void bcr4bpr_getPrimaryPos(double t, adtk_bcr4bpr_sys_data sysData, double *prim
 /**
  *  @brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
  *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi9
+ *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
  *  @param sysData a system data object containing information about the BCR4BP primaries
  *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
  *  row-major order. The first three elements hold the velocity of P1, etc.

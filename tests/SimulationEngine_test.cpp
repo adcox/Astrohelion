@@ -73,23 +73,24 @@ void test_cr3bp_events(){
 void test_bcr4bpr_events(){
 	adtk_bcr4bpr_sys_data sys("sun", "earth", "moon");
 	double ic[] = {100.0359099212, 	0, 					285.85225655914e-05, 
-					0.0405130514527453, 0.1, 	0.0310985198400586};
+					0.0405130514527453, 0, 	0.0310985198400586};
 	double t0 = 2.57;
 
 	adtk_simulation_engine engine(&sys);
 	engine.setVerbose(true);
-	engine.addEvent(adtk_event::XY_PLANE, 0, true);
-	engine.runSim(ic, t0, 6*PI);
+	// engine.addEvent(adtk_event::XY_PLANE, 0, true);
+	engine.runSim(ic, t0, 2*PI);
 
 	adtk_bcr4bpr_traj traj = engine.getBCR4BPRTraj();
 	traj.saveToMat("BC_HaloManifold.mat");
 }
+
 int main(void){
 	
-	test_cr3bp_sim();
-	test_bcr4bpr_sim();
+	// test_cr3bp_sim();
+	// test_bcr4bpr_sim();
 
-	test_cr3bp_events();
+	// test_cr3bp_events();
 	test_bcr4bpr_events();
 
 	return 0;

@@ -224,7 +224,9 @@ void adtk_nodeset::initSetFromICs(double IC[6], adtk_sys_data *sysData, double t
 		node_distro_t type){
 	// Set up the simulation engine
 	adtk_simulation_engine engine(sysData);
-	engine.setVerbose(true);
+	engine.setVerbose(false);
+	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
+
 	switch(type){
 		default:
 		case adtk_nodeset::NONE:

@@ -109,6 +109,12 @@ class adtk_simulation_engine{
 		/** Vector of events to consider during integration */
 		std::vector<adtk_event> events;
 
+		/** Contains data recording which events happened and at which step in the 
+		 integration. Data is stored in sets of two, with the first value representing the 
+		 step # along the integration and the second representing the index of the event
+		 in the events vector */
+		std::vector<int> eventOccurs;
+
 		/** a void pointer to some data object that contains data for the EOM function */
 		void *eomParams = 0;
 

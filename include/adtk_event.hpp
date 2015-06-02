@@ -22,6 +22,7 @@
 #define __H_EVENT_
 
 #include "adtk_constraint.hpp"
+#include "adtk_sys_data.hpp"
 
 #include <vector>
 
@@ -57,13 +58,17 @@ class adtk_event{
 
 		// *structors
 		adtk_event();
-		adtk_event(event_t, int, bool);
-		adtk_event(event_t, int, bool, double*);
+		adtk_event(adtk_sys_data*, event_t, int, bool);
+		adtk_event(adtk_sys_data*, event_t, int, bool, double*);
+		adtk_event(const adtk_event&);
+
+		// Operators
+		adtk_event& operator =(const adtk_event&);
 
 		// Get and Set Functions
 		int getDir() const;
 		event_t getType() const;
-		const char* getTypeStr();
+		const char* getTypeStr() const;
 		double getTime() const;
 		std::vector<double>* getState();
 		bool stopOnEvent() const;
@@ -73,22 +78,26 @@ class adtk_event{
 		int getConNode() const;
 
 		void setDir(int);
+		void setSysData(adtk_sys_data*);
 
 		// Computations, etc.
-		bool crossedEvent(double[6]) const;
-		void updateDist(double[6]);
+		bool crossedEvent(double[6], double) const;
+		void updateDist(double[6], double);
+
+		void printStatus() const;
 	private:
 		/** The type of event this is */
 		event_t type = NONE;
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */
-		int direction = 0;
+		int triggerDir = 0;
 
 		/** Whether or not to stop integration when this event occurs */
 		bool stop = true;
 
 		/** Distance to the event; must be able to change sign */
-		double dist = 100;
+		double dist = 100000;
+		double lastDist = 100000;
 
 		/** Time at which the even occurs */
 		double theTime = 0;
@@ -103,9 +112,13 @@ class adtk_event{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData;
 
+		/** Copy of the system data pointer */
+		adtk_sys_data* sysData;
+
+		void copyEvent(const adtk_event&);
 		void initEvent(event_t, int, bool, double*);
-		double getDist(double[6]) const;
-		int getDir(double[6]) const;
+		double getDist(double[6], double) const;
+		int getDir(double[6], double) const;
 };
 
 #endif

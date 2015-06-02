@@ -61,6 +61,7 @@ using namespace std;
  */
 adtk_simulation_engine::adtk_simulation_engine(){
     events.clear();
+    eventOccurs.clear();
     printVerb(verbose, "Created Simulation Engine\n");
 }//===========================================
 
@@ -73,6 +74,7 @@ adtk_simulation_engine::adtk_simulation_engine(){
  */
 adtk_simulation_engine::adtk_simulation_engine(adtk_sys_data *data){
     events.clear();
+    eventOccurs.clear();
     sysData = data;
     createCrashEvents();
     printVerb(verbose, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
@@ -124,6 +126,7 @@ void adtk_simulation_engine::copyEngine(const adtk_simulation_engine &s){
     dtGuess = s.dtGuess;
     numSteps = s.numSteps;
     events = s.events;
+    eventOccurs = s.eventOccurs;
 }//=====================================
 
 /**
@@ -132,12 +135,9 @@ void adtk_simulation_engine::copyEngine(const adtk_simulation_engine &s){
 void adtk_simulation_engine::createCrashEvents(){
     if(!madeCrashEvents){
         for(int p = 0; p < sysData->getNumPrimaries(); p++){
-            // Get body data, compute crash distance
-            adtk_body_data primData(sysData->getPrimary(p));
-            double maxDist = primData.getRadius() + primData.getMinFlyBy();
-            // Put primary index # and maxDist into an array, create event
-            double evtData[] = {(double)p, maxDist};
-            adtk_event crashEvt(adtk_event::CRASH, -1, true, evtData);
+            // Put primary index # into an array, create event
+            double Pix = (double)p;
+            adtk_event crashEvt(sysData, adtk_event::CRASH, -1, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }
@@ -259,7 +259,7 @@ adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj() const{
  *  @param stop whether or not to stop integration when this event occurs
  */
 void adtk_simulation_engine::addEvent(adtk_event::event_t type, int dir, bool stop){
-    adtk_event temp(type, dir, stop);
+    adtk_event temp(sysData, type, dir, stop);
     events.push_back(temp);
 }//======================================
 
@@ -487,8 +487,8 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     // Update all event functions with IC
     printVerb(verbose, "  sim will use %d event functions:\n", ((int)events.size()));
     for(int ev = 0; ev < ((int)events.size()); ev++){
-        events.at(ev).updateDist(y);
         printVerb(verbose, "  >>%s\n", events.at(ev).getTypeStr());
+        events.at(ev).updateDist(y, t[0]);
     }
 
     steps++;    // We've put in the IC, next step will be a new state
@@ -564,7 +564,13 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
-    printVerb(verbose, "  **Integration complete**\n  Total: %d data points\n", steps);
+    printVerbColor(verbose, GREEN, "  **Integration complete**\n  Total: %d data points\n", steps);
+
+    // Summarize event occurrences
+    for(int ev = 0; ev < (int)(eventOccurs.size())-1; ev+=2){
+        printVerb(verbose, "  Event %d (%s) occured at step %d\n", eventOccurs[ev+1],
+            events[eventOccurs[ev+1]].getTypeStr(), eventOccurs[ev]);
+    }
     traj->setLength();
 }//================================END of cr3bp_integrate
 
@@ -713,9 +719,11 @@ void adtk_simulation_engine::setEOMParams(){
  */
 bool adtk_simulation_engine::locateEvents(double *y, double t){
     for(int ev = 0; ev < ((int)events.size()); ev++){
-        if(events.at(ev).crossedEvent(y)){
+        if(events.at(ev).crossedEvent(y, t)){
 
             printVerb(verbose, "  Event %d detected; searching for exact crossing\n", ev);
+            events.at(ev).updateDist(y,t);
+            events.at(ev).printStatus();
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
@@ -817,15 +825,23 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     cout << "Unknown sim type " << sysData->getTypeStr() << endl;
                     throw;
             }
+            
+            // Remember that this event has occured; step # is one less than the current size
+            // of the trajectory's time vector
+            int timeSize = traj->getTime()->size();
+            eventOccurs.push_back(timeSize - 1);
+            eventOccurs.push_back(ev);
 
             if(events.at(ev).stopOnEvent()){
                 return true;    // Tell the simulation to stop
             }
-        }else{
-            // Save the distance and current state to the event
-            events.at(ev).updateDist(y);
-        }
-    }
+        }// end of If(hasCrossed)
+        // Save the distance and current state to the event
+        events.at(ev).updateDist(y, t);
+    }// end of loop
+
+    // Pause ever step of the integration
+    // waitForUser();
 
     return false;
 }//========================================
@@ -857,6 +873,7 @@ void adtk_simulation_engine::reset(){
         cleanEngine();
 
     events.clear();
+    eventOccurs.clear();
     revTime = false;
     verbose = false;
     varStepSize = true;
@@ -871,5 +888,6 @@ void adtk_simulation_engine::reset(){
  *  Clear all events from the simulation, including any created by default.
  */
 void adtk_simulation_engine::clearEvents(){
+    printVerb(verbose, "Clearing all events...\n");
     events.clear();
 }//==========================================

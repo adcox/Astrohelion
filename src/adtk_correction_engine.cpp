@@ -257,18 +257,8 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 
 	// Create specific nodeset objects using static_cast
 	adtk_bcr4bpr_nodeset *bcSet;
-	adtk_cr3bp_nodeset *crSet;
-	switch(sysType){
-		case adtk_sys_data::CR3BP_SYS:
-			crSet = static_cast<adtk_cr3bp_nodeset *>(set);
-			break;
-		case adtk_sys_data::BCR4BPR_SYS:
-			bcSet = static_cast<adtk_bcr4bpr_nodeset *>(set);
-			break;
-		default:
-			cout << "Unrecognized system type " << set->getSysData()->getTypeStr() << endl;
-			return;
-	}
+	if(sysType == adtk_sys_data::BCR4BPR_SYS)
+		bcSet = static_cast<adtk_bcr4bpr_nodeset *>(set);
 
 	// Create the initial state vector
 	vector<double> X0;
@@ -296,8 +286,12 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	// Compute number of extra consraint functions to add
 	int extraCons = 0;
 	int numSlack = 0;
-	vector<int> slackAssignCon;
 	bool foundDVCon = false;
+
+	// Each entry holds the index of a constraint for later reference, the index of 
+	// the entry itself tells which slack variable is associated with the constraint
+	vector<int> slackAssignCon;
+	
 	for(int c = 0; c < set->getNumCons(); c++){
 		adtk_constraint con = set->getConstraint(c);
 
@@ -314,10 +308,12 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			case adtk_constraint::SP:
 				// extraCons += 3;
 				break;
+			case adtk_constraint::MAX_DIST:
 			case adtk_constraint::MIN_DIST:
-				numSlack++;
 				X0.push_back(1e-4);
 				slackAssignCon.push_back(c);
+				numSlack++;
+				// do NOT break here, continue on to do stuff for DIST as well
 			case adtk_constraint::DIST:
 				extraCons += 1;
 				break;
@@ -377,6 +373,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		posVelCons, timeCons);
 	printVerb(verbose, "  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
 		extraCons, totalFree, totalCons);
+	printVerb(verbose, "  -> # Slack Variables: %d\n", numSlack);
 
 	// create a simulation engine
 	adtk_sys_data *sysData = set->getSysData();
@@ -388,6 +385,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		// To avoid using several steps, use fixed step size and only two steps
 		simEngine.setVarStepSize(false);
 		simEngine.setNumSteps(2);
+		simEngine.clearEvents();	// don't use crash events when searching for an event
 	}
 
 	// Create containers for matrices/vectors that I need to access inside/outside the loop
@@ -585,6 +583,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 						case adtk_constraint::DIST:
 						{
 							int Pix = (int)(conData[0]);	// index of primary
+
 							// Compute primary positions
 							double primPos[9] = {0};
 							switch(sysType){
@@ -607,13 +606,13 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 							}
 
 							// Get distance between node and primary in x, y, and z-coordinates
-							double dx = X[6*n+0] - primPos[Pix+0];
-							double dy = X[6*n+1] - primPos[Pix+1];
-							double dz = X[6*n+2] - primPos[Pix+2];
+							double dx = X[6*n+0] - primPos[Pix*3+0];
+							double dy = X[6*n+1] - primPos[Pix*3+1];
+							double dz = X[6*n+2] - primPos[Pix*3+2];
 
-							double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true altitude
+							double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
-							// Compute difference between desired altitude and true altitude
+							// Compute difference between desired distance and true distance
 							FX[conCount] = h - conData[1];
 
 							// Partials with respect to node position states
@@ -629,7 +628,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 									slackAssignCon.end(), c);
 
 								// which column of the DF matrix the slack variable is in
-								int slackCol = totalFree - numSlack + (*slackIx);
+								int slackCol = totalFree - numSlack + (slackIx - slackAssignCon.begin());
 								int sign = con.getType() == adtk_constraint::MAX_DIST ? 1 : -1;
 
 								// Subtract squared slack variable from constraint
@@ -650,6 +649,8 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 									DF[totalFree*conCount + 7*numNodes - 1 + n];
 								}
 							}
+
+							conCount++;
 							break;
 						}// End Min, Max, Equal DIST constraints
 						case adtk_constraint::SP:
@@ -721,7 +722,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 					vector<int>::iterator slackIx = std::find(slackAssignCon.begin(), slackAssignCon.end(), c);
 
 					// which column of the DF matrix the slack variable is in
-					int slackCol = totalFree - numSlack + (*slackIx);
+					int slackCol = totalFree - numSlack + (slackIx - slackAssignCon.begin());
 
 					/* FIRST ITERATION ONLY (before the targeter computes a value for beta)
 					Set the slack variable such that the constraint will evaluate to zero if 
@@ -754,10 +755,6 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		adtk_matrix X_diff(totalFree, 1);
 		int permSign;	// store sign (even/odd) of permutation matrix
 		if(totalCons == totalFree){	// J is square, use regular inverse
-			if(count == 0){
-				J.toCSV("J.csv");
-			}
-
 			// Solve the system Jw = b
 			w = gsl_vector_alloc(totalFree);
 			perm = gsl_permutation_alloc(J.getRows());
@@ -768,6 +765,11 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 			X_diff = adtk_matrix(w, false);
 		}else{
 			if(totalCons < totalFree){	// Under-constrained
+				if(count == 0){
+					J.toCSV("J.csv");
+					FX_mat.toCSV("FX.csv");
+					oldX.toCSV("X.csv");
+				}
 				// Compute Gramm matrix
 				adtk_matrix G = J*J.trans();
 
@@ -807,7 +809,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		err = FX_mat.norm();
 
 		count++;
-		printVerb(verbose, "Iteration %02d: ||F|| = %.4e\n", count, err);
+		printVerbColor(verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", count, err);
 	}// end of corrections loop
 
 	if(err > tol){

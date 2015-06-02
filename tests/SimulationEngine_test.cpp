@@ -24,7 +24,7 @@ void test_cr3bp_sim(){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	simEngine.setSysData(&sys);
-	simEngine.setVerbose(true);
+	simEngine.setVerbose(false);
 	simEngine.setAbsTol(1e-14);
 	simEngine.setRelTol(1e-16);
 	simEngine.runSim(ic, 2.77);
@@ -49,7 +49,7 @@ void test_bcr4bpr_sim(){
 	
 	bcEngine.setVarStepSize(false);
 	bcEngine.setNumSteps(500);
-	bcEngine.setVerbose(true);
+	bcEngine.setVerbose(false);
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
 	adtk_bcr4bpr_traj bcTraj = bcEngine.getBCR4BPRTraj();
@@ -62,7 +62,7 @@ void test_cr3bp_events(){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	adtk_simulation_engine engine(&sys);
-	engine.setVerbose(true);
+	engine.setVerbose(false);
 	engine.addEvent(adtk_event::XZ_PLANE, 0, true);
 	engine.runSim(ic, 2.77);
 
@@ -77,8 +77,8 @@ void test_bcr4bpr_events(){
 	double t0 = 2.57;
 
 	adtk_simulation_engine engine(&sys);
-	engine.setVerbose(true);
-	// engine.addEvent(adtk_event::XY_PLANE, 0, true);
+	engine.setVerbose(false);
+	engine.addEvent(adtk_event::XY_PLANE, 0, true);
 	engine.runSim(ic, t0, 2*PI);
 
 	adtk_bcr4bpr_traj traj = engine.getBCR4BPRTraj();
@@ -87,10 +87,10 @@ void test_bcr4bpr_events(){
 
 int main(void){
 	
-	// test_cr3bp_sim();
-	// test_bcr4bpr_sim();
+	test_cr3bp_sim();
+	test_bcr4bpr_sim();
 
-	// test_cr3bp_events();
+	test_cr3bp_events();
 	test_bcr4bpr_events();
 
 	return 0;

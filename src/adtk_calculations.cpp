@@ -226,6 +226,10 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     adtk_matrix DfDr2(6,3, dfdr2);
     adtk_matrix DfDr3(6,3, dfdr3);
 
+    // Scale by constants
+    DfDr2 *= -1*(mu-nu);
+    DfDr3 *= -1*nu;
+    
     // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
     double dqdT_data[6] = {0};
     copy(s+42,s+48, dqdT_data);

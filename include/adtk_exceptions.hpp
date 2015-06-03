@@ -68,6 +68,12 @@ class adtk_diverge : public adtk_exception{
 		}
 };
 
+/** 
+ *	@brief Exception class for linear algebra errors
+ *
+ *	This exception should be thrown for cases like trying to factor singular
+ *	matrices, taking the deteriminant of a non-square matrix, etc.
+ */
 class adtk_linalg_err : public adtk_exception{
 	public:
 		const char* what() const throw(){

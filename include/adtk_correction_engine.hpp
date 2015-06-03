@@ -22,11 +22,16 @@
 #define __H_CORRECTIONS_
 
 #include "adtk_nodeset.hpp"
+#include "adtk_sys_data.hpp"
 
 // Forward declarations
-class adtk_cr3bp_nodeset;
 class adtk_bcr4bpr_nodeset;
+class adtk_bcr4bpr_sys_data;
+class adtk_constraint;
+class adtk_cr3bp_nodeset;
+class adtk_matrix;
 class adtk_simulation_engine;
+class iterationData;
 
 /**
  *	@brief An engine object to perform corrections, such as single-shooting
@@ -96,7 +101,19 @@ class adtk_correction_engine{
 
 		void copyEngine(const adtk_correction_engine&);
 		void correct(adtk_nodeset*);
-		void createOutput(std::vector<double>, adtk_simulation_engine);
+		void createOutput(iterationData*, adtk_simulation_engine);
+
+		void createPosVelCons(iterationData*, adtk_sys_data::system_t, int);
+		void targetState(iterationData*, adtk_constraint, int);
+		void targetMatchAll(iterationData*, adtk_constraint, int);
+		void targetMatchCust(iterationData*, adtk_constraint, int);
+		void targetDist(iterationData*, adtk_constraint, adtk_sys_data*, int, int);
+		void targetSP(iterationData*, adtk_bcr4bpr_sys_data*, int);
+		void updateDeltaVCon(iterationData*, adtk_sys_data*, int);
+		void updatePrimPos(iterationData*, adtk_sys_data*, double);
+		void updatePrimVel(iterationData*, adtk_sys_data*, double);
+
+		adtk_matrix solveUpdateEq(iterationData*);
 };
 
 #endif

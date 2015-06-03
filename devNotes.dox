@@ -24,7 +24,12 @@ This software has been tested on (and <i>should</i> work on) the following syste
 
 <h2>To-Do List</h2>
 <ul>
-	<li> Saddle point computation and targeting </li>
+	<li> Create a few scripts that do meaningful things, like compute a family of orbits - I want to see how fast
+		C++ can be! OOH MAKE SOME MAPS
+	</li>
+	<li> Eigenvalue/Eigenvector computation for monodromy matrices </li>
+	<li> Eigenvalue sorting </li>
+	<li> Compute manifolds </li>
 	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
 </ul>
 

@@ -19,18 +19,19 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with ADTK.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "adtk_correction_engine.hpp"
 
 #include "adtk_ascii_output.hpp"
+#include "adtk_bcr4bpr_nodeset.hpp"
+#include "adtk_bcr4bpr_traj.hpp"
 #include "adtk_calculations.hpp"
 #include "adtk_constraint.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_traj.hpp"
-#include "adtk_bcr4bpr_nodeset.hpp"
-#include "adtk_bcr4bpr_traj.hpp"
+#include "adtk_exceptions.hpp"
 #include "adtk_matrix.hpp"
 #include "adtk_nodeset.hpp"
 #include "adtk_simulation_engine.hpp"
@@ -85,7 +86,7 @@ void adtk_correction_engine::copyEngine(const adtk_correction_engine &e){
 			case adtk_sys_data::BCR4BPR_SYS:
 				nodeset_out = new adtk_bcr4bpr_nodeset (*static_cast<adtk_bcr4bpr_nodeset *>(e.nodeset_out));
 				break;
-			default: nodeset_out = 0;
+			default: nodeset_out = 0; break;
 		}
 	}else{
 		nodeset_out = 0;
@@ -155,11 +156,11 @@ adtk_cr3bp_nodeset adtk_correction_engine::getCR3BPOutput(){
 			return temp;
 		}else{
 			printErr("Wrong system type!\n");
-			throw;
+			throw adtk_exception();
 		}
 	}else{
 		printErr("Output nodeset has not been created, cannot return CR3BP output\n");
-		throw;
+		throw adtk_exception();
 	}
 }//=========================================
 
@@ -179,11 +180,11 @@ adtk_bcr4bpr_nodeset adtk_correction_engine::getBCR4BPROutput(){
 			return temp;
 		}else{
 			printErr("Wrong system type!\n");
-			throw;
+			throw adtk_exception();
 		}
 	}else{
 		printErr("Output nodeset has not been created, cannot return CR3BP output\n");
-		throw;
+		throw adtk_exception();
 	}
 }//=========================================
 
@@ -754,22 +755,31 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		gsl_permutation *perm;
 		adtk_matrix X_diff(totalFree, 1);
 		int permSign;	// store sign (even/odd) of permutation matrix
+		int status;		// status for GSL functions
 		if(totalCons == totalFree){	// J is square, use regular inverse
 			// Solve the system Jw = b
 			w = gsl_vector_alloc(totalFree);
 			perm = gsl_permutation_alloc(J.getRows());
-			gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
-			gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
-
+			status = gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
+			if(status){
+				printErr("Unable to decompose J into L and U; GSL ERR: %s\n", gsl_strerror(status));
+				throw adtk_linalg_err();
+			}
+			status = gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
+			if(status){
+				printErr("Unable to invert J, likely singular; GSL ERR: %s\n", gsl_strerror(status));
+				throw adtk_linalg_err();
+			}
 			// w, in this case, is X_diff
 			X_diff = adtk_matrix(w, false);
 		}else{
 			if(totalCons < totalFree){	// Under-constrained
-				if(count == 0){
-					J.toCSV("J.csv");
-					FX_mat.toCSV("FX.csv");
-					oldX.toCSV("X.csv");
-				}
+				// if(count == 0){
+				// 	J.toCSV("J.csv");
+				// 	FX_mat.toCSV("FX.csv");
+				// 	oldX.toCSV("X.csv");
+				// }
+
 				// Compute Gramm matrix
 				adtk_matrix G = J*J.trans();
 
@@ -782,8 +792,18 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				// Solve the system Gw = b
 				w = gsl_vector_alloc(totalCons);
 				perm = gsl_permutation_alloc(G.getRows());
-				gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
-				gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
+				status = gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
+				if(status){
+					printErr("Unable to decompose J into L and U; GSL ERR: %s\n",
+						gsl_strerror(status));
+					throw adtk_linalg_err();
+				}
+				status = gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
+				if(status){
+					printErr("Unable to invert G = JJ', likely singular; GSL ERR: %s\n",
+						gsl_strerror(status));
+					throw adtk_linalg_err();
+				}
 
 				// Compute the optimal x from w
 				adtk_matrix W(w, false);	// create column vector
@@ -792,7 +812,8 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				// dummy allocations to avoid errors when cleaning up
 				perm = gsl_permutation_alloc(J.getRows());
 				w = gsl_vector_alloc(J.getRows());
-				printVerb(verbose, "System is over constrained... No solution implemented!\n");
+				printErr("System is over constrained... No solution implemented!\n");
+				throw adtk_linalg_err();
 			}
 		}
 
@@ -813,10 +834,8 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 	}// end of corrections loop
 
 	if(err > tol){
-		printVerb(verbose, "Corrections process did not converge\n");
-		// throw;
-	}else{
-		printVerb(verbose, "Corrections processes SUCCEEDED\n");
+		printErr("adtk_correction_engine - Corrections process did not converge\n");
+		throw adtk_diverge();
 	}
 
 	createOutput(X, simEngine);

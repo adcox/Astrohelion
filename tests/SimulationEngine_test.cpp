@@ -12,6 +12,7 @@
 #include "adtk_simulation_engine.hpp"
 #include "adtk_utilities.hpp"
 
+#include <gsl/gsl_errno.h>
 #include <iostream>
 
 using namespace std;
@@ -62,7 +63,7 @@ void test_cr3bp_events(){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	adtk_simulation_engine engine(&sys);
-	engine.setVerbose(false);
+	engine.setVerbose(true);
 	engine.addEvent(adtk_event::XZ_PLANE, 0, true);
 	engine.runSim(ic, 2.77);
 
@@ -77,7 +78,7 @@ void test_bcr4bpr_events(){
 	double t0 = 2.57;
 
 	adtk_simulation_engine engine(&sys);
-	engine.setVerbose(false);
+	engine.setVerbose(true);
 	engine.addEvent(adtk_event::XY_PLANE, 0, true);
 	engine.runSim(ic, t0, 2*PI);
 
@@ -86,6 +87,8 @@ void test_bcr4bpr_events(){
 }
 
 int main(void){
+	
+	gsl_set_error_handler_off();
 	
 	test_cr3bp_sim();
 	test_bcr4bpr_sim();

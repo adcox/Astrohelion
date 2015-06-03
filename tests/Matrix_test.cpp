@@ -1,13 +1,17 @@
 /**
 *	Test the matrix object and its operations
 */
-
-#include <iostream>
-#include <string>
-#include <cstdio>
-
 #include "adtk_matrix.hpp"
+
 #include "adtk_ascii_output.hpp"
+#include "adtk_exceptions.hpp"
+#include "adtk_utilities.hpp"
+
+#include <cstdio>
+#include <exception>
+#include <iostream>
+#include <stdexcept>
+#include <string>
 
 using namespace std;
 
@@ -38,7 +42,9 @@ bool test_matMult(adtk_matrix I, adtk_matrix B, adtk_matrix C){
 	try{
 		C*C;
 		return false;	// if C*C succeeds, there is a problem!
-	}catch(...){}
+	}
+	catch(adtk_exception& e){ /*expect this one, don't do anything*/ }
+	catch(...){ throw; }
 
 	// Test simple identity matrix multiplication
 	adtk_matrix Q = I*I;
@@ -50,7 +56,7 @@ bool test_matMult(adtk_matrix I, adtk_matrix B, adtk_matrix C){
 	double sol[] = {1,2,0,1};
 	adtk_matrix Sol(B.getRows(), B.getCols(), sol);
 	if(Q != Sol)
-			return false;
+		return false;
 
 	// Test 2x2 * 2x3 multiplication
 	adtk_matrix Q2 = B*C;
@@ -66,7 +72,9 @@ bool test_matMult_inPlace(adtk_matrix I, adtk_matrix B, adtk_matrix C){
 	try{
 		C*=I;
 		return false;
-	}catch(...){}
+	}
+	catch(adtk_exception& e){ /*expect this one, don't do anything*/ }
+	catch(...){ throw; }
 
 	adtk_matrix tempI = I;
 	if((tempI*=tempI) != I){

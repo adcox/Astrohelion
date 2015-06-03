@@ -12,11 +12,9 @@
 #include "adtk_matrix.hpp"
 
 #include <cmath>
-#include <exception>
 #include <fstream>
 #include <gsl/gsl_cblas.h>
 #include <iostream>
-#include <stdexcept>
  
 using namespace std;
 
@@ -28,12 +26,11 @@ using namespace std;
  *	be added, subtracted, or multiplied because they do not have the
  *	appropriate dimensions
  */
-class sizeMismatch: public std::exception{
-  virtual const char* what() const throw()
-  {
-    return "Matrix dimensions do not match!";
-  }
-} adtk_matSizeMismatch;
+// class sizeMismatch: public std::exception{
+//   	virtual const char* what() const throw(){
+//     	return "Matrix dimensions do not match!";
+//   	}
+// } adtk_matSizeMismatch;
 
 //---------------------------------------------------------------------------
 //    	Constructors and Destructor
@@ -259,7 +256,7 @@ adtk_matrix operator +(const adtk_matrix &lhs, const adtk_matrix &rhs){
 		return adtk_matrix(lhs.rows, lhs.cols, q);
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw adtk_matSizeMismatch;
+		throw adtk_sizeMismatch();
 	}
 }
 
@@ -274,7 +271,7 @@ adtk_matrix& adtk_matrix::operator +=(const adtk_matrix &b){
 		return *this;
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw adtk_matSizeMismatch;
+		throw adtk_sizeMismatch();
 	}
 }//==============================================
 
@@ -299,7 +296,7 @@ adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
 		return *this;
 	}else{
 		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw adtk_matSizeMismatch;
+		throw adtk_sizeMismatch();
 	}
 }//==============================================
 
@@ -313,7 +310,7 @@ adtk_matrix& adtk_matrix::operator -=(const adtk_matrix &b){
  */
 adtk_matrix adtk_matrix::operator *(const adtk_matrix &b) const{
 	if(cols != b.rows){
-		throw adtk_matSizeMismatch;
+		throw adtk_sizeMismatch();
 	}
 
 	// Get the arrays of doubles from both matrix objects
@@ -373,7 +370,7 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 		delete[] C;
 		return *this;
 	}else{
-		throw adtk_matSizeMismatch;
+		throw adtk_sizeMismatch();
 	}
 }//=============================================
 

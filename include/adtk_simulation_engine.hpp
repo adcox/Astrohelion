@@ -15,7 +15,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with ADTK.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef __H_SIMENGINE_
 #define __H_SIMENGINE_
@@ -34,7 +34,7 @@ class adtk_cr3bp_traj;
  *	@brief Performs numerical integration on any system type and produces an
  *	adtk_trajectory object
  *
- *	The simulation engine is the workhorse object for the ATDK. It
+ *	The simulation engine is the workhorse object for the ADTK. It
  *	holds functions to integrate equations of motion and is called by the 
  *	<tt>adtk_correction_engine</tt> to compute arcs between nodes.
  *

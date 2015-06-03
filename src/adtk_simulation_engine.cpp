@@ -20,7 +20,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with ADTK.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "adtk_simulation_engine.hpp"
@@ -37,6 +37,7 @@
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
 #include "adtk_cr3bp_traj.hpp"
+#include "adtk_exceptions.hpp"
 #include "adtk_matrix.hpp"
 #include "adtk_utilities.hpp"
 
@@ -225,8 +226,8 @@ adtk_cr3bp_traj adtk_simulation_engine::getCR3BPTraj() const{
         adtk_cr3bp_traj temp( *(static_cast<adtk_cr3bp_traj *>(traj) ) );
         return temp;
     }else{
-        printf("Wrong system type: %s\n", sysData->getTypeStr().c_str());
-        throw;
+        printErr("Wrong system type: %s\n", sysData->getTypeStr().c_str());
+        throw adtk_exception();
     }
 }//==============================================
 
@@ -247,8 +248,8 @@ adtk_bcr4bpr_traj adtk_simulation_engine::getBCR4BPRTraj() const{
         return temp;
     }
     else{
-        printf("Wrong system type: %s\n", sysData->getTypeStr().c_str());
-        throw;
+        printErr("Wrong system type: %s\n", sysData->getTypeStr().c_str());
+        throw adtk_exception();
     }
 }//=====================================
 
@@ -382,8 +383,8 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
 			break;
         }
 		default:
-			cout << "Cannnot simulate with system type: " << sysData->getTypeStr() << endl;
-			return;
+            printErr("Cannot simulation with this system type: %s\n", sysData->getTypeStr().c_str());
+			throw adtk_exception();
 	}
 
     // Run the simulation
@@ -451,8 +452,8 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             eomFcn = simpleIntegration ? &bcr4bpr_simple_EOMs : &bcr4bpr_EOMs;
             break;
         default:
-            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
-            throw;
+            printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
+            throw adtk_exception();
     }
 
     // Create a system to integrate; we don't include a Jacobian (NULL)
@@ -509,8 +510,8 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
             }
 
             if(status != GSL_SUCCESS){
-                printf("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
-                break;
+                printErr("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
+                throw adtk_diverge();
             }
 
             killSim = locateEvents(y, t0);
@@ -538,8 +539,8 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 }
 
                 if(status != GSL_SUCCESS){
-                    printf("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
-                    break;
+                    printErr("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
+                    throw adtk_diverge();
                 }
 
                 killSim = locateEvents(y, t0);
@@ -654,7 +655,8 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
             break;
         }
         default:
-            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
+            printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
+            throw adtk_exception();
     }
 
     // Save the accelerations
@@ -684,7 +686,8 @@ void adtk_simulation_engine::setEOMParams(){
             break;
         }
         default:
-            cout << "Unknown sim type " << sysData->getTypeStr() << endl;
+            printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
+            throw adtk_exception();
     }
 }//==============================================
 
@@ -722,8 +725,7 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
         if(events.at(ev).crossedEvent(y, t)){
 
             printVerb(verbose, "  Event %d detected; searching for exact crossing\n", ev);
-            events.at(ev).updateDist(y,t);
-            events.at(ev).printStatus();
+            if(verbose){ events.at(ev).printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
@@ -763,10 +765,18 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     eventNodeset.addConstraint(fixFirstCon);
                     eventNodeset.addConstraint(eventCon);
 
-                    eventNodeset.print();
+                    if(verbose){ eventNodeset.print(); }
 
                     printVerb(verbose, "  Applying corrections process to locate event\n");
-                    corrector.correct_cr3bp(&eventNodeset);
+                    try{
+                        corrector.correct_cr3bp(&eventNodeset);
+                    }catch(adtk_diverge &e){
+                        printErr("Unable to locate event; corrector diverged\n");
+                        return false;
+                    }catch(adtk_linalg_err &e){
+                        printErr("LinAlg Err while locating event; bug in corrector!\n");
+                        return false;
+                    }
 
                     // Because we set findEvent to true, this output nodeset should contain
                     // the full (42 or 48 element) final state
@@ -804,10 +814,18 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     eventNodeset.addConstraint(fixFirstCon);
                     eventNodeset.addConstraint(eventCon);
 
-                    eventNodeset.print();
+                    if(verbose){ eventNodeset.print(); }
 
                     printVerb(verbose, "  Applying corrections process to locate event\n");
-                    corrector.correct_bcr4bpr(&eventNodeset);
+                    try{
+                        corrector.correct_bcr4bpr(&eventNodeset);
+                    }catch(adtk_diverge &e){
+                        printErr("Unable to locate event; corrector diverged\n");
+                        return false;
+                    }catch(adtk_linalg_err &e){
+                        printErr("LinAlg Err while locating event; bug in corrector!\n");
+                        return false;
+                    }
 
                     // Because we set findEvent to true, this output nodeset should contain
                     // the full (42 or 48 element) final state
@@ -822,8 +840,8 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     break;
                 }
                 default:
-                    cout << "Unknown sim type " << sysData->getTypeStr() << endl;
-                    throw;
+                    printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
+                    throw adtk_exception();
             }
             
             // Remember that this event has occured; step # is one less than the current size

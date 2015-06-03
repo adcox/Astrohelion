@@ -79,7 +79,7 @@ bodyDataTest: $(OBJ)/bodyData.o
 cr3bpTest: $(OBJ)/bodyData.o $(OBJ)/calculations.o $(OBJ)/matrix.o
 	$(COMP) -I $(INC) $^ $(GSL_FLAGS) CR3BP_test.cpp -o $(BIN)/$@
 
-matrixTest: $(OBJ)/matrix.o
+matrixTest: $(OBJ)/matrix.o $(OBJ)/utilities.o
 	$(COMP) -I $(INC) $^ $(GSL_FLAGS) Matrix_test.cpp -o $(BIN)/$@
 
 nodesetTest: $(patsubst %.o,$(OBJ)/%.o, $(NODESET_TEST_DEP))

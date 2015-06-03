@@ -63,7 +63,7 @@ void printWarn(const char * format, ...){
  *	@param format a standard format string literal to pass to <tt>vprintf</tt>
  */
 void printColor(const char* color, const char * format, ...){
-    printf(color);
+    printf("%s", color);
     va_list args;
     va_start(args, format);
     vprintf(format, args);
@@ -79,7 +79,7 @@ void printColor(const char* color, const char * format, ...){
  */
 void printVerbColor(bool verbose, const char* color, const char * format, ...){
 	if(verbose){
-	    printf(color);
+	    printf("%s", color);
 	    va_list args;
 	    va_start(args, format);
 	    vprintf(format, args);

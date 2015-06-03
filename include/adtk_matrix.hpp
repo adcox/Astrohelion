@@ -15,11 +15,13 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with ATDK.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with ADTK.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef __ADTK_MATRIX__
 #define __ADTK_MATRIX__
+
+#include "adtk_exceptions.hpp"
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
@@ -92,6 +94,8 @@ class adtk_matrix{
 		void print() const;
 		void print(const char *format) const;
 		void toCSV(const char *filename) const;
+		
+		// static adtk_sizeMismatch adtk_matSizeMismatch;
 		
 	private:
 		gsl_matrix *a;

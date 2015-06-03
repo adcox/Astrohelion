@@ -121,7 +121,6 @@ void adtk_event::initEvent(event_t t, int dir, bool willStop, double* params){
 				// Get body data, compute crash distance
 			    adtk_body_data primData(sysData->getPrimary((int)(data[0])));
 			    data[1] = (primData.getRadius() + primData.getMinFlyBy())/sysData->getCharL();
-			    printColor(RED, "Set max dist for primary %d to %f (nd)\n", (int)(data[0]), data[1]);
 			}else{
 				printErr("Cannot access primary #%d for crash event\n", data[0]);
 				throw;

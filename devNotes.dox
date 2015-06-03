@@ -1,0 +1,69 @@
+/** \page devNotes Developer Notes
+\brief Information that will be useful for developers
+
+<h2>Tested Platforms</h2>
+This software has been tested on (and <i>should</i> work on) the following system platforms and architectures:
+<ul>
+	<li>Debian Linux Ubuntu/Mint 14.04 - AMD 64-bit </li>
+	<li>Mac OS X 10.10.3 - Intel 64-bit</li>
+</ul>
+
+<h2>Software Dependencies</h2>
+<p>Our software is dependent on a few libraries:</p>
+<ul>
+	<li>
+		GNU Science Library (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
+	</li>
+	<li>
+		Mat I/O Library: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
+		<ul>
+			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>
+		</ul>
+	</li>
+</ul>
+
+<h2>To-Do List</h2>
+<ul>
+	<li> Saddle point computation and targeting </li>
+	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
+</ul>
+
+<h2>Debugging</h2>
+<h3>In General</h3>
+Run the executable using the graphic debugging library:
+<pre>
+	ddd simEngineTest
+</pre>
+For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler.
+
+<h3>Checking for Dependency Issues</h3>
+Run doxygen with the inheritance/dependency plots turned on (this is already set for this project).
+
+<h3>Checking for Memory Leaks</h3>
+Use valgrind to check for leaks:
+<pre>
+	valgrind --tool=memcheck --leak-check=yes simEngineTest
+</pre>
+On my Macbook, I've created a file at <code>~/.valgrindrc</code> which specifies arguments for valgrind so I don't have to type out the lengthy code above, I just type <code>valgrind simEngineTest</code>. I've also created a file called <code>valgrindIgnore.supp</code> with code to tell valgrind to suppress memory leaks that come from system libraries that I have no control over.
+
+<h2>Coding Practice Notes</h2>
+<h3>"Right Way" to include</h3>
+Whether or not to include or use forward declaration:
+<ul>
+	<li> do nothing if: A makes no references at all to B </li>
+	<li> do nothing if: The only reference to B is in a friend declaration </li>
+	<li> forward declare B if: A contains a B pointer or reference: B* myb; </li>
+	<li> forward declare B if: one or more functions has a B object/pointer/reference
+	as a parementer, or as a return type: B MyFunction(B myb); </li>
+	<li> #include "b.h" if: B is a parent class of A </li>
+	<li> #include "b.h" if: A contains a B object: B myb; </li>
+</ul>
+
+Include Order (my convention:)
+<ol>
+	<li> Header file for this class </li>
+	<li> Local header files - ones I've written, in alphabetical order </li>
+	<li> Global header files, like string, vector, etc. </li>
+</ol>
+
+*/

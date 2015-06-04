@@ -21,7 +21,8 @@ using namespace std;
  *	and additionall initializes the jacobi matrix
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj() : adtk_trajectory(){
-	jacobi.assign(1,0);
+	// jacobi.assign(1,0);
+	jacobi.clear();
 }
 
 /**
@@ -29,7 +30,8 @@ adtk_cr3bp_traj::adtk_cr3bp_traj() : adtk_trajectory(){
  *	@param data a system data object describing the system
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj(adtk_cr3bp_sys_data data){
-	jacobi.assign(1,0);
+	// jacobi.assign(1,0);
+	jacobi.clear();
 	sysData = data;
 }
 
@@ -37,7 +39,8 @@ adtk_cr3bp_traj::adtk_cr3bp_traj(adtk_cr3bp_sys_data data){
  *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
 adtk_cr3bp_traj::adtk_cr3bp_traj(int n) : adtk_trajectory(n){
-	jacobi.assign(n, 0);
+	// jacobi.assign(n, 0);
+	jacobi.reserve(n);
 }
 
 /**

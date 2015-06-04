@@ -151,7 +151,7 @@ class adtk_simulation_engine{
 		double numSteps = 1000;
 
 		void integrate(double ic[], double t[], int t_dim);
-		void saveIntegratedData(double *y, double t, bool);
+		void saveIntegratedData(double *y, double t);
 		void setEOMParams();
 		bool locateEvents(double*, double);
 		void cleanEngine();

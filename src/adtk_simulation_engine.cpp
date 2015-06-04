@@ -483,7 +483,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
     }
 
     // Save the initial state, time, and STM
-    saveIntegratedData(y, t[0], true);
+    saveIntegratedData(y, t[0]);
 
     // Update all event functions with IC
     printVerb(verbose, "  sim will use %d event functions:\n", ((int)events.size()));
@@ -518,7 +518,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
 
             // Put newly integrated state and time into state vector
             if(!killSim)
-                saveIntegratedData(y, t0, false);
+                saveIntegratedData(y, t0);
             
             steps++;
         }
@@ -550,7 +550,7 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            saveIntegratedData(y, t0, false);
+            saveIntegratedData(y, t0);
             steps++;
         }
     }
@@ -581,10 +581,8 @@ void adtk_simulation_engine::integrate(double ic[], double t[], int t_dim){
  *
  *  @param y a pointer to the 42-element state array computed by the integrator
  *  @param t the time at which the integrated state occurs
- *  @param first a flag telling the function if this is the first data point or not.
- *  A value of true indicates it IS the first, false indicates it is NOT
  */
-void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first){
+void adtk_simulation_engine::saveIntegratedData(double *y, double t){
 
     // Grab pointers to the trajectory object's vectors
     vector<double>* state = traj->getState();       // hold the entire integrated state
@@ -593,27 +591,18 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
 
     // Save the position and velocity states
     for(int i = 0; i < 6; i++){
-        if(first)
-            state->at(i) = y[i];
-        else
-            state->push_back(y[i]);
+        state->push_back(y[i]);
     }
 
     // printf("t=%5.2f :: %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f\n", t, y[0], y[1], y[2], y[3], y[4], y[5]);
 
     // Save time
-    if(first)
-        times->at(0) = t;
-    else
-        times->push_back(t);
+    times->push_back(t);
 
     // Save STM
     double stmElm[36];
     copy(y+6, y+42, stmElm);
-    if(first)
-        allSTM->at(0) = adtk_matrix(6,6,stmElm);
-    else
-        allSTM->push_back(adtk_matrix(6,6,stmElm));
+    allSTM->push_back(adtk_matrix(6,6,stmElm));
 
     // Compute acceleration
     double dsdt[6] = {0};
@@ -627,10 +616,7 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
             adtk_cr3bp_traj *cr3bpTraj = static_cast<adtk_cr3bp_traj*>(traj);
             adtk_cr3bp_sys_data *cr3bpData = static_cast<adtk_cr3bp_sys_data *>(sysData);
             
-            if(first)
-                cr3bpTraj->getJC()->at(0) = cr3bp_getJacobi(y, cr3bpData->getMu());
-            else
-                cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, cr3bpData->getMu()));
+            cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, cr3bpData->getMu()));
             break;
         }
         case adtk_sys_data::BCR4BPR_SYS:
@@ -640,18 +626,12 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
 
             // Cast the trajectory to a BCR4BPR guy and save the dqdT data
             adtk_bcr4bpr_traj *bcrTraj = static_cast<adtk_bcr4bpr_traj*>(traj);
-            if(first){
-                vector<double>* vecPtr = bcrTraj->get_dqdT();
-                copy(vecPtr->begin(), vecPtr->begin()+6, y+42);
-            }
-            else{
-                bcrTraj->get_dqdT()->push_back(y[42]);
-                bcrTraj->get_dqdT()->push_back(y[43]);
-                bcrTraj->get_dqdT()->push_back(y[44]);
-                bcrTraj->get_dqdT()->push_back(y[45]);
-                bcrTraj->get_dqdT()->push_back(y[46]);
-                bcrTraj->get_dqdT()->push_back(y[47]);
-            }
+            bcrTraj->get_dqdT()->push_back(y[42]);
+            bcrTraj->get_dqdT()->push_back(y[43]);
+            bcrTraj->get_dqdT()->push_back(y[44]);
+            bcrTraj->get_dqdT()->push_back(y[45]);
+            bcrTraj->get_dqdT()->push_back(y[46]);
+            bcrTraj->get_dqdT()->push_back(y[47]);
             break;
         }
         default:
@@ -660,14 +640,9 @@ void adtk_simulation_engine::saveIntegratedData(double *y, double t, bool first)
     }
 
     // Save the accelerations
-    if(first){
-        // printf("1st Accel: %14.8f %14.8f %14.8f\n", dsdt[3], dsdt[4], dsdt[5]);
-        copy(dsdt+3, dsdt+6, &(state->front())+6);
-    }else{
-        state->push_back(dsdt[3]);
-        state->push_back(dsdt[4]);
-        state->push_back(dsdt[5]);
-    }
+    state->push_back(dsdt[3]);
+    state->push_back(dsdt[4]);
+    state->push_back(dsdt[5]);
 }//=========================================
 
 /**
@@ -787,7 +762,7 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     double eventTime = correctedNodes.getTOF(0) + t0;
 
                     // Use the data stored in nodes and save the state and time of the event occurence
-                    saveIntegratedData(&(nodes->at(6)), eventTime, false);
+                    saveIntegratedData(&(nodes->at(6)), eventTime);
                     break;
                 }
                 case adtk_sys_data::BCR4BPR_SYS:
@@ -836,7 +811,7 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     double eventTime = correctedNodes.getTOF(0) + t0;
 
                     // Use the data stored in nodes and save the state and time of the event occurence
-                    saveIntegratedData(&(nodes->at(6)), eventTime, false);
+                    saveIntegratedData(&(nodes->at(6)), eventTime);
                     break;
                 }
                 default:

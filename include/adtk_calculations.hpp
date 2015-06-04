@@ -36,6 +36,7 @@
 
 // Forward declarations
 class adtk_bcr4bpr_sys_data;
+class adtk_cr3bp_sys_data;
 
 // Equations of motion
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params);
@@ -47,6 +48,7 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);
 double cr3bp_getJacobi(double s[], double);
+void cr3bp_getEquilibPt(adtk_cr3bp_sys_data, int, double, double[3]);
 
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, adtk_bcr4bpr_sys_data, double*);

@@ -40,14 +40,16 @@ using namespace std;
 /**
  *	@brief Default constructor. 
  *
- *	Sets the number of points to 1 and initializes all vectors
- *	to have one point of data with all values set to zero.
+ *	Sets the number of points to 0
  */
 adtk_trajectory::adtk_trajectory(){
-	numPoints = 1;
-	state.assign(STATE_WIDTH,0);	// assign 9 values of zero
-	times.assign(1,0);
-	allSTM.assign(1, adtk_matrix::Identity(6));
+	numPoints = 0;
+	// state.clear(STATE_WIDTH,0);	// assign 9 values of zero
+	// times.assign(1,0);
+	// allSTM.assign(1, adtk_matrix::Identity(6));
+	state.clear();
+	times.clear();
+	allSTM.clear();
 }
 
 /**
@@ -64,9 +66,12 @@ adtk_trajectory::adtk_trajectory(){
  */
 adtk_trajectory::adtk_trajectory(int n){
 	numPoints = n;
-	state.assign(n*STATE_WIDTH, 0);
-	times.assign(n, 0);
-	allSTM.assign(n, adtk_matrix::Identity(6));
+	// state.assign(n*STATE_WIDTH, 0);
+	// times.assign(n, 0);
+	// allSTM.assign(n, adtk_matrix::Identity(6));
+	state.reserve(n*STATE_WIDTH);
+	times.reserve(n);
+	allSTM.reserve(n);
 }
 
 /**

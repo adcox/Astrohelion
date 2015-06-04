@@ -9,8 +9,11 @@
 #include "adtk_calculations.hpp"
 
 #include "adtk_bcr4bpr_sys_data.hpp"
+#include "adtk_constants.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
+#include "adtk_exceptions.hpp"
 #include "adtk_matrix.hpp"
+#include "adtk_utilities.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -374,6 +377,80 @@ double cr3bp_getJacobi(double s[], double mu){
     return 2*U - v*v;
 }//================================================
 
+
+/**
+ *  @brief Compute the location of a Lagrange point in the CR3BP
+ *
+ *  @param sysData object describing the particular CR3BP
+ *  @param L the Lagrange point number, 1 to 5
+ *  @param tol the tolerance to use; if NAN is input, then a default value of 1e-14 will
+ *  be used.
+ *  @param pos a 3-element array to store the position of the Lagrange point
+ */
+void cr3bp_getEquilibPt(adtk_cr3bp_sys_data sysData, int L, double tol, double pos[3]){
+    if(L < 1 || L > 5){
+        printErr("Invalid Lagrange Point: %d\n", L);
+        throw adtk_exception();
+    }
+
+    if(tol == NAN){
+        tol = 1e-14;
+    }
+
+    double mu = sysData.getMu();
+    pos[0] = 0;
+    pos[1] = 0;
+    pos[2] = 0;
+
+    double gamma;
+    double gamma_prev = -999;
+    int count = 0;
+    const int maxCount = 20;
+
+    switch(L){
+        case 1:
+            gamma = 0.1;    // Initial guess is 10% of orbital radius
+            while(abs(gamma - gamma_prev) > tol && count < maxCount){   // Newton-Raphson for L1
+                gamma_prev = gamma;
+                gamma = gamma - ( mu/(gamma*gamma) - (1-mu)/pow(1-gamma, 2) - gamma - mu + 1)/
+                    ( -2*mu/pow(gamma,3) - 2*(1-mu)/pow(1-gamma,3) - 1 );
+                count++;
+            }
+            pos[0] = 1 - mu - gamma;
+            break;
+        case 2:
+            gamma = 0.1;    // Initial guess is 10% of orbital radius
+            while(abs(gamma - gamma_prev) > tol && count < maxCount){
+                gamma_prev = gamma;
+                gamma = gamma - ( -1*mu/(gamma*gamma) - (1-mu)/pow(1+gamma, 2) - mu + 1 + gamma)/
+                    ( 2*mu/pow(gamma, 3) + 2*(1-mu)/pow(1+gamma, 3) + 1 );
+                count++;
+            }
+            pos[0] = 1 - mu + gamma;
+            break;
+        case 3:
+            gamma = 1;  // Initial guess is 100% of orbital radius
+            while(abs(gamma - gamma_prev) > tol && count < maxCount){
+                gamma_prev = gamma;
+                gamma = gamma - ( mu/pow(-1 - gamma, 2) + (1-mu)/(gamma*gamma) - mu - gamma)/
+                    ( -2*mu/pow(1+gamma,3) - 2*(1-mu)/pow(gamma, 3) - 1);
+                count++;
+            }
+            pos[0] = -1*mu - gamma;
+            break;
+        case 4:
+        case 5:
+            pos[0] = 0.5 - mu;
+            pos[1] = L == 4 ? sin(PI/3) : -1*sin(PI/3);
+            break;
+    }
+
+    if(L < 4 && abs(gamma - gamma_prev) > tol){
+        printErr("Could not converge on L%d\n", L);
+    }
+
+
+}//========================================
 
 //-----------------------------------------------------
 //      BCR4BP Utility Functions

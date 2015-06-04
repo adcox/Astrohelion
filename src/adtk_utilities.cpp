@@ -3,18 +3,16 @@
 
 #include "adtk_ascii_output.hpp"
 
+#include <complex>
 #include <iostream>
 #include <string>
 
 using namespace std;
 
-/**
- *  @brief Suspend operation until the user presses a key
- */
-void waitForUser(){
-	cout << "Press ENTER to continue...";
-	cin.ignore();
-	cout<<endl;
+std::string complexToStr(std::complex<double> num){
+    char buffer[64];
+    sprintf(buffer, "%.4e%s%.4ej", real(num), imag(num) < 0 ? " - " : " + ", abs(imag(num)));
+    return string(buffer);
 }
 
 /**
@@ -87,3 +85,12 @@ void printVerbColor(bool verbose, const char* color, const char * format, ...){
 	    printf(RESET);
 	}
 }//==========================================
+
+/**
+ *  @brief Suspend operation until the user presses a key
+ */
+void waitForUser(){
+    cout << "Press ENTER to continue...";
+    cin.ignore();
+    cout<<endl;
+}

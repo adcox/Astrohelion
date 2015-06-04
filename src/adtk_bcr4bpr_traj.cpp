@@ -19,7 +19,8 @@ using namespace std;
  *	@brief Construct a basic BCR4BPR trajectory object
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj() : adtk_trajectory() {
-	dqdT.assign(6,0);
+	// dqdT.assign(6,0);
+	dqdT.clear();
 }
 
 /**
@@ -27,7 +28,8 @@ adtk_bcr4bpr_traj::adtk_bcr4bpr_traj() : adtk_trajectory() {
  *	@param data a system data object describing the BCR4BPR system
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
-	dqdT.assign(6,0);
+	// dqdT.assign(6,0);
+	dqdT.clear();
 	sysData = data;
 }
 
@@ -36,7 +38,8 @@ adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(adtk_bcr4bpr_sys_data data){
  *	@param n the number of states this trajectory will contain
  */
 adtk_bcr4bpr_traj::adtk_bcr4bpr_traj(int n) : adtk_trajectory(n){
-	dqdT.assign(n*6,0);
+	// dqdT.assign(n*6,0);
+	dqdT.reserve(n*6);
 }
 
 /**

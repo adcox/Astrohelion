@@ -1,12 +1,3 @@
-/**
- *	@brief Contains miscellaneous utility functions that make 
- *	coding in C++ easier
- *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
- */
-
 /*
  *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -27,27 +18,39 @@
  *  along with ADTK.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_UTILITIES_
-#define __H_UTILITIES_
+#ifndef __H_LIN_MOTION_
+#define __H_LIN_MOTION_
 
-#include <complex>
-#include <string>
+// Forward delcarations
+class adtk_cr3bp_traj;
 
-template<class T> T adtk_sum(T* data, int length){
-	T total = 0;
-	for(int n = 0; n < length; n++){
-		total += data[n];
-	}
+/**
+ *	@brief An engine that will generate a trajectory from the linearized EOMs
+ */
+class adtk_linear_motion_engine{
+	public:
+		enum motion_t {NONE, HYP, ELLIP, SPO, LPO, MPO, CONVERGE, DIVERGE};
 
-	return total;
-}
+		// *structors
+		adtk_linear_motion_engine();
 
-std::string complexToStr(std::complex<double> num);
-void printErr(const char*, ...);
-void printWarn(const char*, ...);
-void printVerb(bool, const char*, ...);
-void printColor(const char*, const char*, ...);
-void printVerbColor(bool, const char*, const char*, ...);
-void waitForUser();
+		// Operators
+
+		// Set and Get
+		void setTol(double);
+		const char* getTypeStr(motion_t) const;
+
+		// Misc
+		adtk_cr3bp_traj getCR3BPLinear(int, double[3], const char*, const char*);
+		adtk_cr3bp_traj getCR3BPLinear(int, double[3], motion_t, const char*, const char*);
+	private:
+		double t_step = 0.001;
+
+		double rots = 1;
+
+		double tol = 1e-14;
+
+		double nu = 1;
+};
 
 #endif

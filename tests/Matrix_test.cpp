@@ -24,6 +24,7 @@ static int C_r = 2, C_c = 3;
 static double I_data[] = {1,0,0,1};
 static double B_data[] = {1,1,0,1};
 static double C_data[] = {1,2,3,4,5,6};
+static double C_data_trans[] = {1, 4, 2, 5, 3, 6};
 
 bool test_constructor(adtk_matrix C){
 	// Check the elements are correct
@@ -136,7 +137,7 @@ bool test_matSubtract(adtk_matrix C){
 bool test_plusEquals(){
 	double d[] = {1,2,3,4};
 	adtk_matrix D = adtk_matrix(2,2,d);
-	adtk_matrix I = adtk_matrix::Identity(2);
+	adtk_matrix I = adtk_matrix::I(2);
 
 	D+=I;
 
@@ -149,7 +150,7 @@ bool test_plusEquals(){
 bool test_minusEquals(){
 	double d[] = {1,2,3,4};
 	adtk_matrix D = adtk_matrix(2,2,d);
-	adtk_matrix I = adtk_matrix::Identity(2);
+	adtk_matrix I = adtk_matrix::I(2);
 
 	D-=I;
 
@@ -160,7 +161,7 @@ bool test_minusEquals(){
 }//===========================================
 
 bool test_identity(adtk_matrix I){
-	adtk_matrix I2 = adtk_matrix::Identity(2);
+	adtk_matrix I2 = adtk_matrix::I(2);
 	// cout << endl;
 	// I2.print();
 	adtk_matrix Q = I - I2;
@@ -174,14 +175,59 @@ bool test_getRow(adtk_matrix C){
 	adtk_matrix Sol(1,3,sol);
 
 	return Sol == C.getRow(0);
-}
+}//===========================================
 
 bool test_getCol(adtk_matrix C){
 	double sol[] = {1,4};
 	adtk_matrix Sol(2,1,sol);
 
 	return Sol == C.getCol(0);
-}
+}//===========================================
+
+bool test_trans(adtk_matrix C){
+	adtk_matrix C_trans(3,2, C_data_trans);
+	return trans(C) == C_trans;
+}//===========================================
+
+bool test_norm(){
+	double data[] = {1,2,3,4,5};
+	adtk_matrix Q(1,5, data);
+
+	return norm(Q) == sqrt(1 + 4 + 9 + 16 + 25);
+}//===========================================
+
+bool test_det(){
+	double data[] = {1,2,3,4};
+	adtk_matrix Q(2,2,data);
+	bool test1 = det(Q) == -2;
+
+	double data3[] = {1,2,0,0};
+	adtk_matrix S(2,2,data3);
+	bool test3 = det(S) == 0;
+
+	return test1 && test3;
+}//===========================================
+
+bool test_diag(){
+	double sol_data[] = {1, 0, 0, 0, 2, 0, 0, 0, 3};
+	double diag_data[] = {1,2,3};
+
+	adtk_matrix sol(3,3, sol_data);
+
+	return sol == adtk_matrix::diag(diag_data, 3);
+}//===========================================
+
+bool test_cross(){
+	double sol_data[] = {-3, 6, -3};
+	double lhs_data[] = {1,2,3};
+	double rhs_data[] = {4,5,6};
+
+	adtk_matrix sol(1,3, sol_data);
+	adtk_matrix lhs(1,3, lhs_data);
+	adtk_matrix rhs(3,1, rhs_data);
+
+	return sol == cross(lhs, rhs);
+}//===========================================
 
 int main(void){
 
@@ -209,8 +255,13 @@ int main(void){
 	cout << "Test: operator A*=B ... " << ( test_matMult_inPlace(I, B, C) ? PASS : FAIL) << endl;
 	cout << "Test: operator A*=q ... " << ( test_multScalar_inPlace() ? PASS : FAIL) << endl;
 
-	cout << "Test: Create Identity... " << (test_identity(I) ? PASS : FAIL) << endl;
+	cout << "Test: I()... " << (test_identity(I) ? PASS : FAIL) << endl;
+	cout << "Test: diag()... " << ( test_diag() ? PASS : FAIL) << endl;
 	cout << "Test: Get Row ... " << ( test_getRow(C) ? PASS : FAIL) << endl;
 	cout << "Test: Get Column ... " << ( test_getCol(C) ? PASS : FAIL) << endl;
+	cout << "Test: trans()... " << ( test_trans(C) ? PASS : FAIL) << endl;
+	cout << "Test: norm()... " << ( test_norm() ? PASS : FAIL) << endl;
+	cout << "Test: det()... " << ( test_det() ? PASS : FAIL) << endl;
+	cout << "Test: cross()... " << ( test_cross() ? PASS : FAIL) << endl;
 	return 0;
 }

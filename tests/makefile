@@ -65,6 +65,9 @@ calcTest: $(OBJECTS)
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) LinMotionTest.cpp -o $(BIN)/$@
 
+matrixTest: $(OBJ)/adtk_utilities.o $(OBJ)/adtk_matrix.o
+	$(COMP) -I $(INC) $^ $(LDFLAGS) Matrix_test.cpp -o $(BIN)/$@
+
 nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) Nodeset_test.cpp -o $(BIN)/$@
 

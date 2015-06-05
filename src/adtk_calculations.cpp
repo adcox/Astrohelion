@@ -10,9 +10,12 @@
 
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_constants.hpp"
+#include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
+#include "adtk_cr3bp_traj.hpp"
 #include "adtk_exceptions.hpp"
 #include "adtk_matrix.hpp"
+#include "adtk_trajectory.hpp"
 #include "adtk_utilities.hpp"
 
 #include <cmath>
@@ -145,12 +148,12 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     adtk_matrix v(3,1,v_data);
 
     // Create relative position vectors between s/c and primaries
-    adtk_matrix r_p1 = r - primPos.getRow(0).trans();
-    adtk_matrix r_p2 = r - primPos.getRow(1).trans();
-    adtk_matrix r_p3 = r - primPos.getRow(2).trans();
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
+    adtk_matrix r_p1 = r - trans(primPos.getRow(0));
+    adtk_matrix r_p2 = r - trans(primPos.getRow(1));
+    adtk_matrix r_p3 = r - trans(primPos.getRow(2));
+    double d1 = norm(r_p1);
+    double d2 = norm(r_p2);
+    double d3 = norm(r_p3);
     
     // Save constants to short variables for readability
     double k = sysData->getK();
@@ -173,17 +176,23 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Compute psuedo-potential
     double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 3*pow(r_p3.at(0),2)/pow(d3,5));
-    double dxdy = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) + (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+                3*pow(r_p3.at(0),2)/pow(d3,5));
+    double dxdy = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) +
+            (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
             nu*3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);
-    double dxdz = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) + (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
+    double dxdz = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
             nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);
     double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 3*pow(r_p3.at(1),2)/pow(d3,5));
-    double dydz = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) + (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*pow(r_p3.at(1),2)/pow(d3,5));
+    double dydz = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
             nu*3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);
     double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(2),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 3*pow(r_p3.at(2),2)/pow(d3,5));
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*pow(r_p3.at(2),2)/pow(d3,5));
 
     // Create A matrix for STM derivative
     double aData[] = {  0, 0, 0, 1, 0, 0,
@@ -244,7 +253,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     adtk_matrix primVel(3,3, primVelData);
 
     // Compute derivative of dqdT
-    adtk_matrix dot_dqdT = A*dqdT + DfDr2*(primVel.getRow(1).trans()) + DfDr3*(primVel.getRow(2).trans());
+    adtk_matrix dot_dqdT = A*dqdT + DfDr2*trans(primVel.getRow(1)) + DfDr3*trans(primVel.getRow(2));
 
     // Save derivatives to output vector
     double *accelPtr = accel.getDataPtr();
@@ -289,12 +298,12 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     adtk_matrix v(3,1,v_data);
 
     // Create relative position vectors between s/c and primaries
-    adtk_matrix r_p1 = r - primPos.getRow(0).trans();
-    adtk_matrix r_p2 = r - primPos.getRow(1).trans();
-    adtk_matrix r_p3 = r - primPos.getRow(2).trans();
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
+    adtk_matrix r_p1 = r - trans(primPos.getRow(0));
+    adtk_matrix r_p2 = r - trans(primPos.getRow(1));
+    adtk_matrix r_p3 = r - trans(primPos.getRow(2));
+    double d1 = norm(r_p1);
+    double d2 = norm(r_p2);
+    double d3 = norm(r_p3);
     
     // Save constants to short variables for readability
     double k = sysData->getK();
@@ -448,9 +457,338 @@ void cr3bp_getEquilibPt(adtk_cr3bp_sys_data sysData, int L, double tol, double p
     if(L < 4 && abs(gamma - gamma_prev) > tol){
         printErr("Could not converge on L%d\n", L);
     }
-
-
 }//========================================
+
+/**
+ *  @brief Transition a trajectory from the EM system to the SE system
+ *  
+ *  The relative orientation between the two systems is described by the three angles
+ *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. These angles describe the
+ *  system orientation at time t = 0, so if the start of the trajectory does not coincide
+ *  with this initial time, be sure to shift the time coordinates to assure that the first
+ *  value in the time vector reflects correct initial time.
+ *
+ *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  inertial x-axis at time t = 0.
+ *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  lunar "periapse" at time t = 0.
+ *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  to the ecliptic; this value is held constant.
+ */
+adtk_cr3bp_traj cr3bp_EM2SE(adtk_cr3bp_traj EMTraj, double thetaE0, double thetaM0, double gamma){
+    // Create a trajectory in the Sun-Earth system
+    adtk_cr3bp_sys_data SESys("sun", "earth");
+    adtk_cr3bp_traj SETraj(SESys);
+    vector<double>* state = SETraj.getState();
+
+    double charTE = EMTraj.getSysData().getCharT();     // characteristic time in EM system
+    double charLE = EMTraj.getSysData().getCharL();     // characteristic length in EM system
+    double charTS = SESys.getCharT();                   // characteristic time in SE system
+    double charLS = SESys.getCharL();                   // characteristic length in SE system
+
+    for(int n = 0; n < ((int)EMTraj.getTime()->size()); n++){
+        // Transform the state from EM coordinates to SE coordinates
+        vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
+            thetaM0, gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+
+        // Copy transformed state into new vector
+        state->insert(state->end(), state_SE.begin(), state_SE.end());
+
+        // Re-Scale Time
+        SETraj.getTime()->push_back(EMTraj.getTime(n)*charTE/charTS);
+
+        // Recompute Jacobi
+        SETraj.getJC()->push_back(cr3bp_getJacobi(&(state->back())-9, SESys.getMu()));
+
+        // Put in a bogus STM
+        SETraj.getSTM()->push_back(adtk_matrix::I(6));
+    }
+
+    return SETraj; 
+}//=========================================================
+
+/**
+ *  @brief Transition a nodeset from the EM system to the SE system
+ *  
+ *  The relative orientation between the two systems is described by the three angles
+ *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. These angles describe the
+ *  system orientation at time t = 0, but you can use the <tt>t0</tt> argument to specify
+ *  an initial time since CR3BP nodesets do not have an epoch for each node.
+ *
+ *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param t0 epoch associated with the first node
+ *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  inertial x-axis at time t = 0.
+ *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  lunar "periapse" at time t = 0.
+ *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  to the ecliptic; this value is held constant.
+ */
+adtk_cr3bp_nodeset cr3bp_EM2SE(adtk_cr3bp_nodeset EMNodes, double t0, double thetaE0, double thetaM0,
+    double gamma){
+
+    adtk_cr3bp_sys_data SESys("sun", "earth");
+    adtk_cr3bp_nodeset SENodes(SESys);
+    vector<double>* nodes = SENodes.getNodes();
+
+    double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
+    double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
+    double charTS = SESys.getCharT();                       // characteristic time in SE system
+    double charLS = SESys.getCharL();                       // characteristic length in SE system
+
+    double epoch = t0;
+    for(int n = 0; n < EMNodes.getNumNodes(); n++){
+        vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n), epoch, thetaE0, thetaM0,
+            gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+
+        // Copy first 6 elements of transformed state/node into new node vector
+        nodes->insert(nodes->end(), node_SE.begin(), node_SE.begin()+6);
+
+        // Re-Scale Time
+        SENodes.getTOFs()->push_back(EMNodes.getTOF(n)*charTE/charTS);
+
+        // Update epoch time
+        epoch += EMNodes.getTOF(n);
+    }
+
+    return SENodes;
+}//=========================================================
+
+/**
+ *  @brief Transition a trajectory from the SE system to the EM system
+ *  
+ *  The relative orientation between the two systems is described by the three angles
+ *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. These angles describe the
+ *  system orientation at time t = 0, so if the start of the trajectory does not coincide
+ *  with this initial time, be sure to shift the time coordinates to assure that the first
+ *  value in the time vector reflects correct initial time.
+ *
+ *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  inertial x-axis at time t = 0.
+ *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  lunar "periapse" at time t = 0.
+ *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  to the ecliptic; this value is held constant.
+ */
+adtk_cr3bp_traj cr3bp_SE2EM(adtk_cr3bp_traj SETraj, double thetaE0, double thetaM0, double gamma){
+    // Create a trajectory in the Earth-Moon system
+    adtk_cr3bp_sys_data EMSys("earth", "moon");
+    adtk_cr3bp_traj EMTraj(EMSys);
+    vector<double>* state = EMTraj.getState();
+
+    // Shift coordinates to EM barcyenter from SE barycenter
+    adtk_matrix posShift = adtk_matrix::e_j(3, 1)*(1 - SETraj.getSysData().getMu());
+
+    double charTE = EMSys.getCharT();               // characteristic time in EM system
+    double charLE = EMSys.getCharL();               // characteristic length in EM system
+    double charTS = SETraj.getSysData().getCharT(); // characteristic time in SE system
+    double charLS = SETraj.getSysData().getCharL(); // characteristic length in SE system
+
+    for(int n = 0; n < ((int)SETraj.getTime()->size()); n++){
+        
+        // Transform the state from SE coordinates to EM coordinates
+        vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
+            thetaM0, gamma, charLE, charTE, charLS, charTS, SETraj.getSysData().getMu());
+
+        // Copy transformed state into new vector
+        state->insert(state->end(), state_EM.begin(), state_EM.end());
+
+        // Re-Scale Time
+        EMTraj.getTime()->push_back(SETraj.getTime(n)*charTS/charTE);
+
+        // Recompute Jacobi
+        EMTraj.getJC()->push_back(cr3bp_getJacobi(&(state->back())-9, EMSys.getMu()));
+
+        // Put in a bogus STM
+        EMTraj.getSTM()->push_back(adtk_matrix::I(6));
+    }
+
+    return EMTraj; 
+}//=========================================================
+
+/**
+ *  @brief Transition a nodeset from the SE system to the EM system
+ *  
+ *  The relative orientation between the two systems is described by the three angles
+ *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. These angles describe the
+ *  system orientation at time t = 0, but you can use the <tt>t0</tt> argument to specify
+ *  an initial time since CR3BP nodesets do not have an epoch for each node.
+ *
+ *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param t0 epoch associated with the first node
+ *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  inertial x-axis at time t = 0.
+ *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  lunar "periapse" at time t = 0.
+ *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  to the ecliptic; this value is held constant.
+ */
+adtk_cr3bp_nodeset cr3bp_SE2EM(adtk_cr3bp_nodeset SENodes, double t0, double thetaE0, double thetaM0,
+    double gamma){
+
+    adtk_cr3bp_sys_data EMSys("earth", "moon");
+    adtk_cr3bp_sys_data SESys("sun", "earth");
+    adtk_cr3bp_nodeset EMNodes(EMSys);
+    vector<double>* nodes = EMNodes.getNodes();
+
+    double charTE = EMSys.getCharT();                   // characteristic time in EM system
+    double charLE = EMSys.getCharL();                   // characteristic length in EM system
+    double charTS = SENodes.getSysData()->getCharT();    // characteristic time in SE system
+    double charLS = SENodes.getSysData()->getCharL();    // characteristic length in SE system
+
+    double epoch = t0;
+    for(int n = 0; n < SENodes.getNumNodes(); n++){
+        // Transform a single node
+        vector<double> node_EM = cr3bp_EM2SE_state(SENodes.getNode(n), epoch, thetaE0, thetaM0,
+            gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+
+        // Copy first 6 elements of transformed state/node into new node vector
+        nodes->insert(nodes->end(), node_EM.begin(), node_EM.begin()+6);
+
+        // Re-Scale Time
+        EMNodes.getTOFs()->push_back(SENodes.getTOF(n)*charTS/charTE);
+
+        // Update epoch time
+        epoch += SENodes.getTOF(n);
+    }
+
+    return SENodes;
+}//=========================================================
+
+/**
+ *  @brief Transform a single state from EM coordinates to SE coordinates
+ *
+ *  @param state_SE a 6- or 9-element state vector
+ *  @param t non-dimensional time associated with the state
+ *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  inertial x-axis at time t = 0.
+ *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  lunar "periapse" at time t = 0.
+ *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  to the ecliptic; this value is held constant.
+ *  @param charLE EM characteristic length
+ *  @param charTE EM characterstic time
+ *  @param charLS SE characteristic length
+ *  @param charTS SE characteristic time
+ *  @param mu_SE SE mass ratio
+ *
+ *  @return a 9-element state vector in EM coordinates
+ */
+vector<double> cr3bp_EM2SE_state(vector<double> state_EM, double t, double thetaE0, double thetaM0,
+    double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
+
+    // Shift coordinates to SE barcyenter from EM barycenter
+    adtk_matrix posShift = adtk_matrix::e_j(3, 1)*(1 - mu_SE);
+
+    // Compute Earth's position in inertial frame at this time
+    double thetaE_k = thetaE0 + t*charTE/charTS;
+    double thetaM_k = thetaM0 + t;
+
+    // Compute DCMs
+    double inertToLunar[] = {cos(gamma), 0, sin(gamma), 0, 1, 0, -sin(gamma), 0, cos(gamma)};
+    double inertToSE[] = {cos(thetaE_k), -sin(thetaE_k), 0, sin(thetaE_k), cos(thetaE_k), 0,
+                                0, 0, 1};
+    double lunarToEM[] = {cos(thetaM_k), -sin(thetaM_k), 0, sin(thetaM_k), cos(thetaM_k), 0,
+                                0, 0, 1};
+    adtk_matrix DCM_I2L(3,3, inertToLunar);
+    adtk_matrix DCM_I2S(3,3, inertToSE);
+    adtk_matrix DCM_L2E(3,3, lunarToEM);
+
+    adtk_matrix posEM(1,3, &(state_EM[0]));
+    adtk_matrix velEM(1,3, &(state_EM[0])+3);
+
+    // Rotate the position into SE frameand shift basepoint to SE barycenter (EM working frame)
+    adtk_matrix posSE = posEM*trans(DCM_L2E)*trans(DCM_I2L)*DCM_I2S + posShift*charLS/charLE;
+
+    // Angular velocity of SE frame in EM frame (working frame = EM)
+    adtk_matrix omega = -1*charTE/charTS*adtk_matrix::e_j(3,3) *
+        trans(DCM_I2S)*DCM_I2L*DCM_L2E + charTE/charTE*adtk_matrix::e_j(3,3);
+
+    // Apply BKE to get velocity with SE observer, still in EM working frame
+    adtk_matrix velSE = velEM + cross(omega, posEM);
+
+    // Rotate the velocity into the SE working frame
+    velSE *= trans(DCM_L2E)*trans(DCM_I2L)*DCM_I2S;
+
+    // Units are still in non-dim EM, so change to SE non-dim
+    posSE *= charLE/charLS;
+    velSE *= (charLE/charTE)/(charLS/charTS);
+
+    // Put new data into state vector
+    vector<double> state_SE(9,0);
+    state_SE.insert(state_SE.begin(), posSE.getDataPtr(), posSE.getDataPtr()+3);
+    state_SE.insert(state_SE.begin()+3, velSE.getDataPtr(), velSE.getDataPtr()+3);
+
+    return state_SE;
+}
+
+/**
+ *  @brief Transform a single state from SE coordinates to EM coordinates
+ *
+ *  @param state_SE a 6- or 9-element state vector
+ *  @param t non-dimensional time associated with the state
+ *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  inertial x-axis at time t = 0.
+ *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  lunar "periapse" at time t = 0.
+ *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  to the ecliptic; this value is held constant.
+ *  @param charLE EM characteristic length
+ *  @param charTE EM characterstic time
+ *  @param charLS SE characteristic length
+ *  @param charTS SE characteristic time
+ *  @param mu_SE SE mass ratio
+ *
+ *  @return a 9-element state vector in SE coordinates
+ */
+vector<double> cr3bp_SE2EM_state(vector<double> state_SE, double t, double thetaE0, double thetaM0,
+    double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
+    
+    adtk_matrix posShift = adtk_matrix::e_j(3, 1)*(1 - mu_SE);
+
+    // Compute Earth's position in inertial frame at this time
+    double thetaE_k = thetaE0 + t;
+    double thetaM_k = thetaM0 + t*charTS/charTE;
+
+    // Compute DCMs
+    double inertToLunar[] = {cos(gamma), 0, sin(gamma), 0, 1, 0, -sin(gamma), 0, cos(gamma)};
+    double inertToSE[] = {cos(thetaE_k), -sin(thetaE_k), 0, sin(thetaE_k), cos(thetaE_k), 0,
+                                0, 0, 1};
+    double lunarToEM[] = {cos(thetaM_k), -sin(thetaM_k), 0, sin(thetaM_k), cos(thetaM_k), 0,
+                                0, 0, 1};
+    adtk_matrix DCM_I2L(3,3, inertToLunar);
+    adtk_matrix DCM_I2S(3,3, inertToSE);
+    adtk_matrix DCM_L2E(3,3, lunarToEM);
+
+    adtk_matrix posSE(1,3, &(state_SE[0]));
+    adtk_matrix velSE(1,3, &(state_SE[0])+3);
+
+    // Rotate the position into SE frame, coordinates are EM ND
+    adtk_matrix posEM = (posSE - posShift)*trans(DCM_I2S)*DCM_I2L*DCM_L2E;
+
+    // Angular velocity of EM frame in SE frame (working frame = SE)
+    adtk_matrix omega = charTS/charTS*adtk_matrix::e_j(3,3) - charTS/charTE*adtk_matrix::e_j(3,3)*
+        trans(DCM_I2L)*DCM_I2S;
+
+    // Compute velocity in EM frame (working frame = SE)
+    adtk_matrix velEM = velSE + cross(omega, (posSE-posShift));
+
+    // Rotate the velocity into the EM working frame
+    velEM *= trans(DCM_I2S)*DCM_I2L*DCM_L2E;
+
+    // Units are still in non-dim SE, so change to EM non-dim
+    posEM *= charLS/charLE;
+    velEM *= (charLS/charTS)/(charLE/charTE);
+
+    // Put new data into state vector
+    vector<double> state_EM(9, 0);
+    state_EM.insert(state_EM.begin(), posEM.getDataPtr(), posEM.getDataPtr()+3);
+    state_EM.insert(state_EM.begin()+3, velEM.getDataPtr(), velEM.getDataPtr()+3);
+
+    return state_EM;
+}
 
 //-----------------------------------------------------
 //      BCR4BP Utility Functions

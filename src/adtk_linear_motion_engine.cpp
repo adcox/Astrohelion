@@ -265,7 +265,7 @@ adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			for(double t = 0; t < rots*period; t+= t_step){
             	times->push_back(t);
 				xi = xi0*cos(s1d*t) - (a1*xi0 - eta0)/b1 * sin(s1d*t);
-				eta = eta0*cos(s1d*t) - (xi0*norm(alpha1) - a1*eta0)/b1 * sin(s1d*t);
+				eta = eta0*cos(s1d*t) - (xi0*abs(alpha1) - a1*eta0)/b1 * sin(s1d*t);
 				state->push_back(xi + LPtPos[0]);
 				state->push_back(eta + LPtPos[1]);
 
@@ -273,7 +273,7 @@ adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			}
 
 			xi_dot0 = -s1d*(a1*xi0 - eta0)/b1;
-            eta_dot0 = -s1d*(xi0*norm(alpha1) - a1*eta0)/b1;
+            eta_dot0 = -s1d*(xi0*abs(alpha1) - a1*eta0)/b1;
 		}else{
 			// Case III
 			double p = real(s1);
@@ -323,7 +323,7 @@ adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 
 	// Make the Jacobi full of NAN and STM full of Identity matrices
 	linTraj.getJC()->assign(((int)times->size()), NAN);
-	linTraj.getSTM()->assign(((int)times->size()), adtk_matrix::Identity(6));
+	linTraj.getSTM()->assign(((int)times->size()), adtk_matrix::I(6));
 	linTraj.setLength();
 
 	return linTraj;

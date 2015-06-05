@@ -458,7 +458,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 				// Clear old variables to avoid any potential issues
 				it.lastState.clear();
 				it.last_dqdT.clear();
-				it.lastSTM = adtk_matrix::Identity(6);
+				it.lastSTM = adtk_matrix::I(6);
 				
 				// Determine TOF and t0
 				tof = varTime ? it.X[6*it.numNodes+n] : set->getTOF(n);
@@ -583,7 +583,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 
 		// Compute error; norm of constraint vector
 		adtk_matrix FX_mat(it.totalCons, 1, it.FX);
-		err = FX_mat.norm();
+		err = norm(FX_mat);
 
 		count++;
 		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", count, err);
@@ -842,13 +842,13 @@ void adtk_correction_engine::targetSP(iterationData* it, adtk_bcr4bpr_sys_data* 
 	adtk_matrix r(3, 1, X+6*n);		// position vector
 
 	// Create relative position vectors between s/c and primaries
-    adtk_matrix r_p1 = r - primPos.getRow(0).trans();
-    adtk_matrix r_p2 = r - primPos.getRow(1).trans();
-    adtk_matrix r_p3 = r - primPos.getRow(2).trans();
+    adtk_matrix r_p1 = r - trans(primPos.getRow(0));
+    adtk_matrix r_p2 = r - trans(primPos.getRow(1));
+    adtk_matrix r_p3 = r - trans(primPos.getRow(2));
 
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
+    double d1 = norm(r_p1);
+    double d2 = norm(r_p2);
+    double d3 = norm(r_p3);
 
 	double k = bcSysData.getK();
 	double mu = bcSysData.getMu();
@@ -920,7 +920,7 @@ void adtk_correction_engine::targetSP(iterationData* it, adtk_bcr4bpr_sys_data* 
     dFdr3 *= -1*nu;
 
     // Compute partials of constraint function w.r.t. epoch time
-    adtk_matrix dFdT = dFdr2*(primVel.getRow(1).trans()) + dFdr3*(primVel.getRow(2).trans());
+    adtk_matrix dFdT = dFdr2*trans(primVel.getRow(1)) + dFdr3*trans(primVel.getRow(2));
 
     // Copy data into the correct vectors/matrices
     double* conEvalPtr = conEval.getDataPtr();
@@ -1145,7 +1145,7 @@ adtk_matrix adtk_correction_engine::solveUpdateEq(iterationData* it){
 			// }
 
 			// Compute Gramm matrix
-			adtk_matrix G = J*J.trans();
+			adtk_matrix G = J*trans(J);
 
 			/* Use LU decomposition to invert the Gramm matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
@@ -1171,7 +1171,7 @@ adtk_matrix adtk_correction_engine::solveUpdateEq(iterationData* it){
 
 			// Compute the optimal x from w
 			adtk_matrix W(w, false);	// create column vector
-			X_diff = J.trans()*W;	//X_diff = X_new - X_old
+			X_diff = trans(J)*W;	//X_diff = X_new - X_old
 		}else{	// Over-constrained
 			// dummy allocations to avoid errors when cleaning up
 			perm = gsl_permutation_alloc(J.getRows());

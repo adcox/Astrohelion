@@ -44,9 +44,6 @@ using namespace std;
  */
 adtk_trajectory::adtk_trajectory(){
 	numPoints = 0;
-	// state.clear(STATE_WIDTH,0);	// assign 9 values of zero
-	// times.assign(1,0);
-	// allSTM.assign(1, adtk_matrix::Identity(6));
 	state.clear();
 	times.clear();
 	allSTM.clear();
@@ -66,9 +63,6 @@ adtk_trajectory::adtk_trajectory(){
  */
 adtk_trajectory::adtk_trajectory(int n){
 	numPoints = n;
-	// state.assign(n*STATE_WIDTH, 0);
-	// times.assign(n, 0);
-	// allSTM.assign(n, adtk_matrix::Identity(6));
 	state.reserve(n*STATE_WIDTH);
 	times.reserve(n);
 	allSTM.reserve(n);
@@ -301,7 +295,7 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
 	for (int n = 0; n < numPoints; n++){
 		// get the transpose of the STM matrix; we need to store it in column-major order
 		// and it's currently in row-major order
-		adtk_matrix P = (allSTM[n]).trans();
+		adtk_matrix P = trans(allSTM[n]);
 		// Retrieve the data from the matrix
 		double *matData = P.getDataPtr();
 		// Store that data in our huge vector

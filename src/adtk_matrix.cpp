@@ -11,26 +11,16 @@
  */
 #include "adtk_matrix.hpp"
 
+#include "adtk_ascii_output.hpp"
+#include "adtk_utilities.hpp"
+
 #include <cmath>
 #include <fstream>
 #include <gsl/gsl_cblas.h>
+#include <gsl/gsl_linalg.h>
 #include <iostream>
  
 using namespace std;
-
-/**
- *	@brief Exception class for matrices, fired when the dimension of matrices
- *	makes a function impossible.
- *
- * 	Size mismatch means two matrices cannot
- *	be added, subtracted, or multiplied because they do not have the
- *	appropriate dimensions
- */
-// class sizeMismatch: public std::exception{
-//   	virtual const char* what() const throw(){
-//     	return "Matrix dimensions do not match!";
-//   	}
-// } adtk_matSizeMismatch;
 
 //---------------------------------------------------------------------------
 //    	Constructors and Destructor
@@ -126,13 +116,43 @@ adtk_matrix::adtk_matrix(const adtk_matrix &b){
  *	@param size the number of rows or columns the (square) matrix has
  *	@return an identiy matrix
  */
-adtk_matrix adtk_matrix::Identity(int size){
-	vector<double> data(size*size);
+adtk_matrix adtk_matrix::I(int size){
+	vector<double> data(size*size, 0);
 	for(int i = 0; i < size*size; i += size+1){
 		data[i] = 1;
 	}
 	return adtk_matrix(size, size, data);
 }//==============================================
+
+/**
+ *	@brief create a simple basis vector \f$ e_j \f$
+ *	
+ *	For example, e_j(4, 1) will create the row vector {1, 0, 0, 0} and
+ *	e_j(3,2) will create the row vector {0, 1, 0}
+ *
+ *	@param dim the dimension of the vector space (i.e. number of elements in the vector)
+ *	@param j the vector number (begins with 1)
+ *	@return the row vector
+ */
+adtk_matrix adtk_matrix::e_j(int dim, int j){
+	vector<double> data(dim, 0);
+	data[j-1] = 1;
+	return adtk_matrix(1, dim, data);
+}//===========================================
+
+/**
+ *	@brief Create a diagonal, square matrix with the specified elements
+ *	@param vals an array of values along the diagonal
+ *	@param vals_len the number of values in vals
+ *	@return a matrix with the specified values along the diagonal, zeros elsewhere
+ */
+adtk_matrix adtk_matrix::diag(double *vals, int vals_len){
+	vector<double> data(vals_len*vals_len, 0);
+	for(int i = 0; i < vals_len; i++){
+		data[(vals_len+1)*i] = vals[i];
+	}
+	return adtk_matrix(vals_len, vals_len, data);
+}//===========================================
 
 //---------------------------------------------------------------------------
 //    	Set and Get
@@ -446,35 +466,92 @@ bool operator !=(const adtk_matrix &lhs, const adtk_matrix &rhs){
 //    	Matrix Operation Functions
 //---------------------------------------------------------------------------
 
+/**
+ *	@brief Compute the L2, or Euclidean, norm of a 1D matrix (i.e. a vector)
+ *
+ *	@param m a 1D matrix
+ */
+double abs(const adtk_matrix &m){
+	return norm(m);
+}//==============================
 
 /**
- *	@brief Transpose this matrix (does not change the original copy of the matrix)
- *	@return the transpose (NOT the complex conjugate transpose)
+ *	@brief compute the cross product of two, three-element vectors
+ *	@param lhs a 3-element vector
+ *	@param rhs a 3-element vector
+ *	@return \f$ \vec{l} \times \vec{r} \f$ as a 3-element row vector,
+ *	regardless of the orientation of the input vectors
  */
-adtk_matrix adtk_matrix::trans() const{
-	gsl_matrix *b = gsl_matrix_alloc(cols, rows);
-	gsl_matrix_transpose_memcpy(b, a);
-	adtk_matrix temp(cols, rows, b->data);
-	gsl_matrix_free(b);
-	return temp;
-}//==============================================
+adtk_matrix cross(const adtk_matrix &lhs, const adtk_matrix &rhs){
+	if(lhs.rows*lhs.cols != 3 || rhs.rows*rhs.cols != 3){
+		printErr("Cross product only defined for 3D vectors...\n");
+		throw adtk_linalg_err();
+	}
 
-/** 
- *	@brief Get the norm of this "matrix;" only applies for 1-D matrices (vectors)
- *	@return the 2-norm (sqrt of sum of squared elements) of the matrix
+	vector<double> data(3,0);
+	data[0] = lhs.at(1)*rhs.at(2) - lhs.at(2)*rhs.at(1);
+	data[1] = rhs.at(0)*lhs.at(2) - rhs.at(2)*lhs.at(0);
+	data[2] = lhs.at(0)*rhs.at(1) - lhs.at(1)*rhs.at(0);
+
+	return adtk_matrix(1, 3, data);
+}//============================================
+
+/**
+ *	@brief compute the determinant of a square matrix
+ *
+ *	This function uses GSL's linear algebra library to compute the determinant
+ *
+ *	@param m a square matrix
+ *	@return the determinant of <tt>m</tt>
  */
-double adtk_matrix::norm() const{
-	if(rows == 1 || cols == 1){
+double det(const adtk_matrix &m){
+	if(m.rows != m.cols){
+		printErr("Cannot take determinant of non-square matrix!\n");
+		throw adtk_linalg_err();
+	}
+	int permSign;
+	gsl_permutation *perm = gsl_permutation_alloc(m.rows);
+	int status = gsl_linalg_LU_decomp(m.a, perm, &permSign);
+	if(status){
+		printErr("Unable to perform LU decomp on matrix; GSL ERR: %s\n", gsl_strerror(status));
+		throw adtk_linalg_err();
+	}
+	double ans = gsl_linalg_LU_det(m.a, permSign);
+	gsl_permutation_free(perm);
+
+	return ans;
+}//========================
+
+/**
+ *	@brief Compute the L2, or Euclidean, norm of a 1D matrix (i.e. a vector)
+ *
+ *	@param m a 1D matrix
+ */
+double norm(const adtk_matrix &m){
+	if(m.rows == 1 || m.cols == 1){
 		double sumSquares = 0;
-		for(int i = 0; i < rows*cols; i++){
-			sumSquares += (a->data[i])*(a->data[i]);
+		for(int i = 0; i < m.rows * m.cols; i++){
+			sumSquares += (m.a->data[i])*(m.a->data[i]);
 		}
 		return sqrt(sumSquares);
 	}else{
 		cout << "adtk_matrix :: Cannot take norm of a 2-D matrix" << endl;
-		throw;
+		throw adtk_exception();
 	}
 }//==========================================
+
+/**
+ *	@brief Transpose a matrix
+ *	@param m a matrix
+ *	@return the transpose (NOT the complex conjugate transpose)
+ */
+adtk_matrix trans(const adtk_matrix &m){
+	gsl_matrix *b = gsl_matrix_alloc(m.cols, m.rows);
+	gsl_matrix_transpose_memcpy(b, m.a);
+	adtk_matrix temp(m.cols, m.rows, b->data);
+	gsl_matrix_free(b);
+	return temp;
+}//===============================================
 
 //---------------------------------------------------------------------------
 //    	Utilities
@@ -519,6 +596,10 @@ void adtk_matrix::copyDataIntoGSL_Matrix(double *data){
  *	@param v a vector (row-major order) containing data for this matrix
  */
 void adtk_matrix::copyDataIntoGSL_Matrix(std::vector<double> v){
+	if(((int)v.size()) != rows*cols){
+		printErr("Input vector size does not match matrix size!\n");
+		throw adtk_sizeMismatch();
+	}
 	copyDataIntoGSL_Matrix(&(v[0]));
 }//============================================
 

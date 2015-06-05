@@ -53,7 +53,9 @@ class adtk_matrix{
 		~adtk_matrix();
 
 		// Special constructors
-		static adtk_matrix Identity(int size);
+		static adtk_matrix I(int);
+		static adtk_matrix e_j(int, int);
+		static adtk_matrix diag(double[], int);
 
 		// Operator Overloading
 		adtk_matrix& operator =(const adtk_matrix&);
@@ -76,8 +78,12 @@ class adtk_matrix{
 		friend bool operator !=(const adtk_matrix&, const adtk_matrix&);
 
 		// Matrix operations
-		adtk_matrix trans() const;
-		double norm() const;
+		friend double abs(const adtk_matrix&);
+		friend adtk_matrix cross(const adtk_matrix&, const adtk_matrix&);
+		friend double det(const adtk_matrix&);
+		friend double norm(const adtk_matrix&);
+		friend adtk_matrix trans(const adtk_matrix&);
+		
 
 		// Set and Gets
 		int getLength() const;

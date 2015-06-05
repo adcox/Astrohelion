@@ -35,6 +35,13 @@ adtk_bcr4bpr_nodeset::adtk_bcr4bpr_nodeset(double IC[6], adtk_bcr4bpr_sys_data d
 }//======================================================================
 
 /**
+ *	@brief Destructor
+ */
+adtk_bcr4bpr_nodeset::~adtk_bcr4bpr_nodeset(){
+	epochs.clear();
+}//=================================
+
+/**
  *	@brief Copy constructor - calls base class copy constructor to handle basic copy
  *	@param n a BCR4BPR nodeset
  */

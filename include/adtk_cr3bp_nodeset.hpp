@@ -22,7 +22,6 @@
 #define __H_CR3BP_NODESET__
 
 #include "adtk_nodeset.hpp"
-#include "adtk_cr3bp_constraint.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
 
 #include <vector>
@@ -56,7 +55,7 @@ class adtk_cr3bp_nodeset : public adtk_nodeset{
 		adtk_sys_data* getSysData();
 		void print() const;
 	private:
-		adtk_cr3bp_sys_data sysData;
+		adtk_cr3bp_sys_data sysData; 	//!< Object holding information about the dynamical system
 };
 
 #endif

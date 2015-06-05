@@ -86,8 +86,7 @@ class adtk_event{
 
 		void printStatus() const;
 	private:
-		/** The type of event this is */
-		event_t type = NONE;
+		event_t type = NONE; //!< The type of event this is
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */
 		int triggerDir = 0;
@@ -95,12 +94,9 @@ class adtk_event{
 		/** Whether or not to stop integration when this event occurs */
 		bool stop = true;
 
-		/** Distance to the event; must be able to change sign */
-		double dist = 100000;
-		double lastDist = 100000;
-
-		/** Time at which the even occurs */
-		double theTime = 0;
+		double dist = 100000;		//!< Distance to the event; must be able to change sign
+		double lastDist = 100000; 	//!< distance to event at previous iteration
+		double theTime = 0;			//!< Time at which the even occurs
 
 		/** State at which the event occurs; also used to store last state whenver
 		updateDist() is called so we can determine the direction */
@@ -112,8 +108,7 @@ class adtk_event{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData;
 
-		/** Copy of the system data pointer */
-		adtk_sys_data* sysData;
+		adtk_sys_data* sysData; 	//!< Copy of the system data pointer
 
 		void copyEvent(const adtk_event&);
 		void initEvent(event_t, int, bool, double*);

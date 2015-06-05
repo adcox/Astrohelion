@@ -13,51 +13,46 @@ using namespace std;
 //-----------------------------------------------------
 
 /**
- *	@brief Construct a constraint with specified node size (number of elements in one node)
- *	@param n node size
+ *	@brief Construct a constraint
  */
-adtk_constraint::adtk_constraint(int n) : nodeSize(n){
-	data.assign(n, NAN);
+adtk_constraint::adtk_constraint(){
+	data.clear();
 }//============================================
 
 /**
- *	@brief Construct a constraint with specified node size (number of elements in one node)
- *	and constraint type
- *	@param n node size
+ *	@brief Construct a constraint with specified constraint type
  *	@param t constraint type
  */
-adtk_constraint::adtk_constraint(int n, constraint_t t) : nodeSize(n){
+adtk_constraint::adtk_constraint(constraint_t t){
 	type = t;
-	data.assign(n, NAN);
+	data.clear();
 }//============================================
 
 /**
- *	@brief Construct a constraint with specified node size (number of elements in one node),
- *	constraint type, and data values
- *	@param n node size
+ *	@brief Construct a constraint with specified constraint type and data values
  *	@param t constraint type
  *	@param i the node this constriant applies to
  *	@param d data (length n)
  */
-adtk_constraint::adtk_constraint(int n, constraint_t t, int i, std::vector<double> d) : nodeSize(n){
+adtk_constraint::adtk_constraint(constraint_t t, int i, std::vector<double> d){
 	type = t;
 	node = i;
 	data = d;
 }//============================================
 
 /**
- *	@brief Construct a constraint with specified node size (number of elements in one node),
- *	constraint type, and data values
- *	@param n node size
+ *	@brief Construct a constraint with specified constraint type, and data values
  *	@param t constraint type
  *	@param i the node this constriant applies to
- *	@param d data (MUST have length n, or the code will read past end of array)
+ *	@param d data
+ *	@param d_len the number of elements in d_len
  */
-adtk_constraint::adtk_constraint(int n, constraint_t t, int i, double* d) : nodeSize(n){
+adtk_constraint::adtk_constraint(constraint_t t, int i, double* d, int d_len){
 	type = t;
 	node = i;
+	data.reserve(d_len);
 
-	for(int j = 0; j < n; j++){
+	for(int j = 0; j < d_len; j++){
 		data.push_back(d[j]);
 	}
 }//============================================
@@ -66,11 +61,18 @@ adtk_constraint::adtk_constraint(int n, constraint_t t, int i, double* d) : node
  *	@brief Create a copy of the specified constraint
  *	@param c a constraint
  */
-adtk_constraint::adtk_constraint(const adtk_constraint& c) : nodeSize(c.nodeSize){
+adtk_constraint::adtk_constraint(const adtk_constraint& c){
 	type = c.type;
 	node = c.node;
 	data = c.data;
 }//============================================
+
+/**
+ *	@brief Destructor
+ */
+adtk_constraint::~adtk_constraint(){
+	data.clear();
+}
 
 //-----------------------------------------------------
 // 		Operator Functions
@@ -106,11 +108,6 @@ int adtk_constraint::getNode() const { return node; }
  *	@return the data vector for this constraint
  */
 std::vector<double> adtk_constraint::getData() const { return data; }
-
-/**
- *	@return the node size for this constraint (remains constant)
- */
-int adtk_constraint::getNodeSize() const {return nodeSize; }
 
 /**
  *	@return a count of the constrained states; certain constraint types, 
@@ -172,7 +169,7 @@ const char* adtk_constraint::getTypeStr(constraint_t t) const{
  */
 void adtk_constraint::print() const {
 	printf("Constraint:\n  Type: %s\n  Node: %d\n  Data: ", getTypeStr(type), node);
-	for(int n = 0; n < nodeSize; n++){
+	for(int n = 0; n < ((int)data.size()); n++){
 		printf("%12.5f ", data[n]);
 	}
 	printf("\n");

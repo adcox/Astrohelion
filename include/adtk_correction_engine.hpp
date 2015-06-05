@@ -101,7 +101,7 @@ class adtk_correction_engine{
 
 		void copyEngine(const adtk_correction_engine&);
 		void correct(adtk_nodeset*);
-		void createOutput(iterationData*, adtk_simulation_engine);
+		void createOutput(iterationData*);
 
 		void createPosVelCons(iterationData*, adtk_sys_data::system_t, int);
 		void targetState(iterationData*, adtk_constraint, int);

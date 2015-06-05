@@ -56,12 +56,35 @@ const char* adtk_linear_motion_engine::getTypeStr(motion_t type) const{
 //      Linear Motion Generation Functions
 //-----------------------------------------------------
 
+/**
+ * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ *
+ *	This function chooses the default motion types: Elliptical for the collinear points and
+ *	SPO for the triangular points. If the system has a mass ratio such that it falls into 
+ *	Case III, then convergent behavior will be employed.
+ *
+ *	@param L the Lagrange point number [1,5]
+ *	@param r0 a three-element vector that specifies the initial position of the arc relative
+ *		to the chosen Lagrange point
+ *	@param P1 name of the larger Primary
+ * 	@param P2 name of the smaller Primary
+ */
 adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], const char* P1,
 	const char* P2){
 
-	return getCR3BPLinear(L, r0, L < 4 ? ELLIP : SPO, P1, P2);
+	return getCR3BPLinear(L, r0, NONE, P1, P2);
 }
 
+/**
+ * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ *
+ *	@param L the Lagrange point number [1,5]
+ *	@param r0 a three-element vector that specifies the initial position of the arc relative
+ *		to the chosen Lagrange point
+ *	@param type the type of linearized motion desired
+ *	@param P1 name of the larger Primary
+ * 	@param P2 name of the smaller Primary
+ */
 adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, const char* P1,
 	const char* P2){
 
@@ -101,6 +124,7 @@ adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 
 		double s;
 		switch(type){
+			case NONE:	// for default behavior
 			case ELLIP:
 			{
 				s = imag(eigenval[2]);
@@ -191,6 +215,7 @@ adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 					xi_dot0 = s1d*(eta0 - a1*xi0)/b1;
                 	eta_dot0 = -s1d*(b1*xi0 - a1*(eta0 - a1*xi0)/b1);
                 	break;
+                case NONE: // for default behavior
 				case SPO:
 					period = 2*PI/s3d;
 					printf("period = %f\n", period);
@@ -254,6 +279,7 @@ adtk_cr3bp_traj adtk_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			double p = real(s1);
 			double q = imag(s1);
 			switch(type){
+				case NONE: // for default behavior
 				case CONVERGE:
 					period = 2*PI/q;
 					for(double t = 0; t < rots*period; t += t_step){

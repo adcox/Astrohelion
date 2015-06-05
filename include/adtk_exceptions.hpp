@@ -32,8 +32,7 @@
  */
 class adtk_exception : public std::exception{
 	public:
-		adtk_exception(){}
-		virtual ~adtk_exception() throw() {}
+		/** @brief describe the exception */
 		virtual const char* what() const throw(){
 			return "Custom exception!";
 		}
@@ -48,7 +47,7 @@ class adtk_exception : public std::exception{
  */
 class adtk_sizeMismatch : public adtk_exception{
 	public:
-		adtk_sizeMismatch(){}
+		/** @brief describe the exception */
 		const char* what() const throw(){
 	    	return "Matrix dimensions do not match!";
 	  	}
@@ -63,6 +62,7 @@ class adtk_sizeMismatch : public adtk_exception{
  */
 class adtk_diverge : public adtk_exception{
 	public:
+		/** @brief describe the exception */
 		const char* what() const throw(){
 			return "Did not converge!";
 		}
@@ -76,6 +76,7 @@ class adtk_diverge : public adtk_exception{
  */
 class adtk_linalg_err : public adtk_exception{
 	public:
+		/** @brief describe the exception */
 		const char* what() const throw(){
 			return "Linear algebra error!";
 		}

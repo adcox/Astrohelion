@@ -87,17 +87,17 @@ class adtk_constraint{
 		enum constraint_t {NONE, STATE, MATCH_ALL, MATCH_CUST, DIST, MIN_DIST, MAX_DIST, 
 			DELTA_V, MAX_DELTA_V, SP};
 		
-		adtk_constraint(int);
-		adtk_constraint(int, constraint_t);
-		adtk_constraint(int, constraint_t, int, std::vector<double>);
-		adtk_constraint(int, constraint_t, int, double*);
+		adtk_constraint();
+		adtk_constraint(constraint_t);
+		adtk_constraint(constraint_t, int, std::vector<double>);
+		adtk_constraint(constraint_t, int, double*, int);
 		adtk_constraint(const adtk_constraint&);
-
+		~adtk_constraint();
+		
 		adtk_constraint& operator =(const adtk_constraint&);
 
 		constraint_t getType() const;
 		int getNode() const;
-		int getNodeSize() const;
 		std::vector<double> getData() const;
 		int countConstrainedStates() const;
 
@@ -108,11 +108,9 @@ class adtk_constraint{
 		void print() const;
 		const char* getTypeStr(constraint_t) const;
 	private:
-		const int nodeSize;
-
-		constraint_t type = NONE;
-		int node = 0;
-		std::vector<double> data;
+		constraint_t type = NONE;	//!< The type of constraint
+		int node = 0;				//!< Node index that this constraint applies to
+		std::vector<double> data;	//!< Data for this constraint
 };
 
 #endif

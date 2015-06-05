@@ -21,9 +21,7 @@
 #ifndef __H_NODESET__
 #define __H_NODESET__
 
-#include "adtk_bcr4bpr_constraint.hpp"
 #include "adtk_constraint.hpp"
-#include "adtk_cr3bp_constraint.hpp"
 
 #include <vector>
 
@@ -62,7 +60,7 @@ class adtk_nodeset{
 
 		adtk_nodeset(const int);
 		adtk_nodeset(const adtk_nodeset&);
-		virtual ~adtk_nodeset(){}
+		virtual ~adtk_nodeset();
 		
 		adtk_nodeset& operator =(const adtk_nodeset&);
 

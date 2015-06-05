@@ -29,6 +29,25 @@ class adtk_cr3bp_traj;
  */
 class adtk_linear_motion_engine{
 	public:
+		/**
+		 *	@brief type of linear motion
+		 *
+		 *	NONE 		- 	No motion specified
+		 *	HYP 		- 	Hyperbolic motion, applies only to linearizations 
+		 *					near collinear points
+		 *	ELLIP		- 	Elliptical motion, applies only to linearizations
+		 *					near collinear points
+		 *	SPO			- 	Short-Period Orbit, applies only to Case I linearizations
+		 *					near triangular points
+		 *	LPO			- 	Long-Period Orbit, applies only to Case I linearizations
+		 *					near triangular points
+		 *	MPO			- 	Mixed-Period Orbit, applies only to Case I linearizations
+		 *					near triangular points
+		 *	CONVERGE 	- 	Convergent motion, applies only to Case III linearizations
+		 *					near triangular points
+		 *	DIVERGE 	- 	Divergent motion, applies only to Case III linearizations
+		 *					near triangular points
+		 */
 		enum motion_t {NONE, HYP, ELLIP, SPO, LPO, MPO, CONVERGE, DIVERGE};
 
 		// *structors
@@ -44,12 +63,16 @@ class adtk_linear_motion_engine{
 		adtk_cr3bp_traj getCR3BPLinear(int, double[3], const char*, const char*);
 		adtk_cr3bp_traj getCR3BPLinear(int, double[3], motion_t, const char*, const char*);
 	private:
+		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;
 
+		/** @brief Number of rotations to propagate */
 		double rots = 1;
 
+		/** @brief tolerance for numerical methods, like locating Lagrange points */
 		double tol = 1e-14;
 
+		/** Ratio between SPO and LPO behavior when constructing an MPO */
 		double nu = 1;
 };
 

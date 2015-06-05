@@ -33,7 +33,6 @@
 #include "adtk_calculations.hpp"
 #include "adtk_constants.hpp"
 #include "adtk_correction_engine.hpp"
-#include "adtk_cr3bp_constraint.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
 #include "adtk_cr3bp_traj.hpp"
@@ -265,7 +264,7 @@ void adtk_simulation_engine::addEvent(adtk_event::event_t type, int dir, bool st
 }//======================================
 
 /**
- *  @breif Add an event for this integration
+ *  @brief Add an event for this integration
  *  @param evt an event
  */
 void adtk_simulation_engine::addEvent(adtk_event evt){
@@ -731,10 +730,10 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                     adtk_cr3bp_nodeset eventNodeset(ic, crSysData, tof, 2, adtk_nodeset::TIME);
 
                     // Constraint to keep first node unchanged
-                    adtk_cr3bp_constraint fixFirstCon(adtk_constraint::STATE, 0, ic);
+                    adtk_constraint fixFirstCon(adtk_constraint::STATE, 0, ic, 6);
 
                     // Constraint to enforce event
-                    adtk_cr3bp_constraint eventCon(events.at(ev).getConType(),
+                    adtk_constraint eventCon(events.at(ev).getConType(),
                         events.at(ev).getConNode(), events.at(ev).getConData());
 
                     eventNodeset.addConstraint(fixFirstCon);
@@ -780,10 +779,10 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
                         tof, 2, adtk_nodeset::TIME);
 
                     // Constraint to keep first node unchanged
-                    adtk_bcr4bpr_constraint fixFirstCon(adtk_constraint::STATE, 0, ic);
+                    adtk_constraint fixFirstCon(adtk_constraint::STATE, 0, ic, 7);
 
                     // Constraint to enforce event
-                    adtk_bcr4bpr_constraint eventCon(events.at(ev).getConType(),
+                    adtk_constraint eventCon(events.at(ev).getConType(),
                         events.at(ev).getConNode(), events.at(ev).getConData());
 
                     eventNodeset.addConstraint(fixFirstCon);

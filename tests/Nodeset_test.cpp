@@ -21,9 +21,8 @@
  *  along with ADTK.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "adtk_constraint.hpp"
 #include "adtk_correction_engine.hpp"
-#include "adtk_cr3bp_constraint.hpp"
-#include "adtk_bcr4bpr_constraint.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_bcr4bpr_nodeset.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
@@ -51,7 +50,7 @@ void test_createCR3BPNodeset(){
 	// Add a constraint
 	// double data[] = {1,1,1,NAN,NAN,NAN};
 	double data[] = {1.5};
-	adtk_cr3bp_constraint crCon1(adtk_constraint::MAX_DELTA_V, 0, data);
+	adtk_constraint crCon1(adtk_constraint::MAX_DELTA_V, 0, data, 1);
 	// crSet->addConstraint(crCon1);
 
 	printf("CR3BP Nodeset:\n Nodes: %d\n", crSet->getNumNodes());
@@ -80,8 +79,8 @@ void test_createBCR4BPRNodeset(){
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
 	// double data[] = {5,5,5,NAN,NAN,NAN,NAN};
-	double data[] = {1.5, NAN, NAN, NAN, NAN, NAN, NAN};
-	adtk_bcr4bpr_constraint bcCon1(adtk_constraint::MAX_DELTA_V, 0, data);
+	double data[] = {1.5};
+	adtk_constraint bcCon1(adtk_constraint::MAX_DELTA_V, 0, data, 1);
 	bcSet->addConstraint(bcCon1);
 
 	int nodes[] = {2,3};
@@ -103,13 +102,14 @@ void test_createBCR4BPRNodeset(){
 
 
 int main(void){
-	
-	// test_createCR3BPNodeset();
-	test_createBCR4BPRNodeset();
-
 	adtk_correction_engine corrector;
-	// corrector.correct_cr3bp(crSet);
 
+	test_createCR3BPNodeset();
+	corrector.setVerbose(false);
+	corrector.correct_cr3bp(crSet);
+
+	test_createBCR4BPRNodeset();
+	corrector.setVerbose(false);
 	corrector.correct_bcr4bpr(bcSet);
 
 	// Memory clean-up

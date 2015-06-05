@@ -359,6 +359,9 @@ int adtk_event::getDir(double y[6], double t) const{
 	return (int)(d*dt/abs(d*dt));
 }//==============================================
 
+/**
+ *	@brief Print out a discription of the event
+ */
 void adtk_event::printStatus() const{
 	printf("Event: Type = %s, Trigger Dir = %d, KillSim = %s\n", getTypeStr(), triggerDir, 
 		stop ? "YES" : "NO");

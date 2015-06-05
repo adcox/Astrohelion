@@ -22,7 +22,6 @@
 #define __H_BCR4BPR_NODESET__
 
 #include "adtk_nodeset.hpp"
-#include "adtk_bcr4bpr_constraint.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
 
 #include <vector>
@@ -42,7 +41,8 @@ class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 			node_distro_t);
 
 		adtk_bcr4bpr_nodeset(const adtk_bcr4bpr_nodeset&);
-
+		~adtk_bcr4bpr_nodeset();
+		
 		adtk_bcr4bpr_nodeset& operator =(const adtk_bcr4bpr_nodeset&);
 		
 		std::vector<double>* getEpochs();
@@ -53,9 +53,8 @@ class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 		void appendEpoch(double);
 		void print() const;
 	private:
-		std::vector<double> epochs;
-
-		adtk_bcr4bpr_sys_data sysData;
+		std::vector<double> epochs;			//!< Vector of epochs, one for each node
+		adtk_bcr4bpr_sys_data sysData;		//!< System data object
 };
 
 #endif

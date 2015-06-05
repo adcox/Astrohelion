@@ -53,14 +53,9 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 		void setPhi0(double p);
 		void setGamma(double g);
 	private:
-		/** Mass ratio between P2 + P3 and total*/
-		double mu = 0;
-
-		/** Mass ratio between P3 and total */
-		double nu = 0;
-
-		/** Scaling constant, non-dim */
-		double k = 1/100;
+		double mu = 0;			//!< Mass ratio between P2 + P3 and total
+		double nu = 0;			//!< Mass ratio between P3 and total
+		double k = 1/100;		//!< Scaling constant, non-dim 
 
 		/** Ratio between P3's orbital radius and P2's orbital radius */
 		double charLRatio = 0;
@@ -76,14 +71,9 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 		This angle does not change over time; radians */
 		double gamma = 5.14*PI/180;
 
-		/** Name of P1 */
-		std::string P1 = "P1";
-
-		/** Name of P2 */
-		std::string P2 = "P2";
-
-		/** Name of P3 */
-		std::string P3 = "P3";
+		std::string P1 = "P1";		//!< Name of P1
+		std::string P2 = "P2";		//!< Name of P2
+		std::string P3 = "P3";		//!< Name of P3
 };
 
 #endif

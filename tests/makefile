@@ -65,6 +65,9 @@ calcTest: $(OBJECTS)
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) LinMotionTest.cpp -o $(BIN)/$@
 
+nodesetTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) Nodeset_test.cpp -o $(BIN)/$@
+
 simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) SimulationEngine_test.cpp -o $(BIN)/$@
 

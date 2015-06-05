@@ -568,7 +568,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 					if(count == 0)
 						it.X[slackCol] = sqrt(abs(con.getData()[0] - it.FX[it.totalCons-1]));
 
-					it.FX[it.totalCons-1] -= con.getData()[0] + it.X[slackCol]*it.X[slackCol];
+					it.FX[it.totalCons-1] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
 					it.DF[it.totalFree*(it.totalCons - 1) + slackCol] = 2*it.X[slackCol];
 				}
 				break;
@@ -586,7 +586,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		err = FX_mat.norm();
 
 		count++;
-		printVerbColor(verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", count, err);
+		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", count, err);
 	}// end of corrections loop
 
 	if(err > tol){
@@ -594,7 +594,7 @@ void adtk_correction_engine::correct(adtk_nodeset *set){
 		throw adtk_diverge();
 	}
 
-	createOutput(&it, simEngine);
+	createOutput(&it);
 }//==========================================================
 
 /**
@@ -681,7 +681,7 @@ void adtk_correction_engine::targetState(iterationData* it, adtk_constraint con,
 	vector<double> conData = con.getData();
 
 	// Allow user to constrain all 7 states
-	for(int s = 0; s < con.getNodeSize(); s++){
+	for(int s = 0; s < ((int)con.getData().size()); s++){
 		if(!isnan(conData[s])){
 			if(s < 6){
 				it->FX[it->conCount] = it->X[6*n+s] - conData[s];
@@ -1001,7 +1001,7 @@ void adtk_correction_engine::updateDeltaVCon(iterationData* it, adtk_sys_data* s
  *
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param sysData a pointer to the system data object for this corrections process
- *	@param n the index of the node that has been constrained
+ *	@param t the time the current node occurs at
  */
 void adtk_correction_engine::updatePrimPos(iterationData* it, adtk_sys_data* sysData, double t){
 	if(!it->upToDatePrimPos){
@@ -1043,7 +1043,7 @@ void adtk_correction_engine::updatePrimPos(iterationData* it, adtk_sys_data* sys
  *
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param sysData a pointer to the system data object for this corrections process
- *	@param n the index of the node that has been constrained
+ *	@param t the time the current node occurs at
  */
 void adtk_correction_engine::updatePrimVel(iterationData* it, adtk_sys_data* sysData, double t){
 	if(!it->upToDatePrimVel){
@@ -1200,14 +1200,11 @@ adtk_matrix adtk_correction_engine::solveUpdateEq(iterationData* it){
  *	and dqdT (if non-autonomous) values for the final node; this information will be appended to 
  *	the end of the regular n x 6 vector of nodes.
  *
- *	@param X the final, corrected free variable vector
- *	@param engine the simulation engine used to perform corrections, which must still contain
- *	the final integrated trajectory so the full state data can be saved for event function use.
- *
+ *	@param it an iteration data object containing all info from the corrections process
  */
-void adtk_correction_engine::createOutput(iterationData *data, adtk_simulation_engine engine){
+void adtk_correction_engine::createOutput(iterationData *it){
 
-	vector<double> X = data->X;
+	vector<double> X = it->X;
 
 	// get objects for the system type
 	adtk_sys_data::system_t sysType = nodeset_in->getSysData()->getType();
@@ -1255,20 +1252,12 @@ void adtk_correction_engine::createOutput(iterationData *data, adtk_simulation_e
 	are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
 	information*/
 	if(findEvent){
-
-		// Get an object containing data about the final segment
-		adtk_trajectory lastSeg = engine.getTraj();
-		int lastSegLen = lastSeg.getLength() - 1;	// number of data points in that segment
-		adtk_matrix lastSTM = lastSeg.getSTM(lastSegLen);	// final STM
-
 		// Append the 36 STM elements to the node vector
-		nodes->insert(nodes->end(), lastSTM.getDataPtr(), lastSTM.getDataPtr()+36);
+		nodes->insert(nodes->end(), it->lastSTM.getDataPtr(), it->lastSTM.getDataPtr()+36);
 
+		// Append dqdT as well
 		if(sysType == adtk_sys_data::BCR4BPR_SYS){
-			// Grab a specific BCR4BPR trajectory object so I can append the dqdT data
-			adtk_bcr4bpr_traj bcLastSeg = engine.getBCR4BPRTraj();
-			vector<double> last_dqdT = bcLastSeg.get_dqdT(lastSegLen);
-			nodes->insert(nodes->end(), last_dqdT.begin(), last_dqdT.end());
+			nodes->insert(nodes->end(), it->last_dqdT.begin(), it->last_dqdT.end());
 		}
 	}
 
@@ -1279,5 +1268,5 @@ void adtk_correction_engine::createOutput(iterationData *data, adtk_simulation_e
 		epochs->clear();
 		epochs->insert(epochs->begin(), X.begin() + 7*numNodes-1, X.begin() + 8*numNodes-1);
 	}
-}//===========================
+}//=================================================================================
 

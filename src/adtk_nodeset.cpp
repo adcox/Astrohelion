@@ -35,16 +35,28 @@ adtk_nodeset::adtk_nodeset(const int n) : nodeSize(n){
  */
 adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
 	if(nodeSize == n.nodeSize){
+		nodeDistro = n.nodeDistro;
 		nodes = n.nodes;
 		tofs = n.tofs;
 		velConNodes = n.velConNodes;
 		constraints = n.constraints;
+		velConSet = n.velConSet;
 	}else{
 		printErr("Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",
 			nodeSize, n.nodeSize);
 		throw;
 	}
 }//========================================================
+
+/**
+ *	@brief Destructor
+ */
+adtk_nodeset::~adtk_nodeset(){
+	nodes.clear();
+	tofs.clear();
+	constraints.clear();
+	velConNodes.clear();
+}//======================================
 
 //-----------------------------------------------------
 //      Operator Functions
@@ -57,10 +69,12 @@ adtk_nodeset::adtk_nodeset(const adtk_nodeset& n) : nodeSize(n.nodeSize){
  */
 adtk_nodeset& adtk_nodeset::operator =(const adtk_nodeset &n){
 	if(nodeSize == n.nodeSize){
+		nodeDistro = n.nodeDistro;
 		nodes = n.nodes;
 		tofs = n.tofs;
 		velConNodes = n.velConNodes;
 		constraints = n.constraints;
+		velConSet = n.velConSet;
 		return *this;
 	}else{
 		printErr("Cannot create a nodeset with %d-size nodes from one with %d-size nodes\n",

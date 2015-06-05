@@ -25,5 +25,5 @@ Since this toolkit is primarily for propagating and investigating trajectories, 
 	sim.runSim(ic, 2.77);								// Run the simulation
 	adtk_cr3bp_traj traj = sim.getCR3BPTraj(); 			// Retrieve the simulated trajectory
 </pre>
-We can save the <code>traj</code> object to a </code>.mat</code> file using the </code>saveToMat</code> function, where the trajectory can easily be visualized and manipulated. The output MATLAB file is produced in such a way that it can easily be imported as a data structure and used with the pre-existing, afore-mentioned MATLAB tools.
+We can save the <code>traj</code> object to a <code>.mat</code> file using the <code>saveToMat</code> function, where the trajectory can easily be visualized and manipulated. The output MATLAB file is produced in such a way that it can easily be imported as a data structure and used with the pre-existing, afore-mentioned MATLAB tools.
 */

@@ -34,10 +34,9 @@
  */
 class adtk_cr3bp_sys_data : public adtk_sys_data{
 	private:
-		/** Mass ratio between two primaries*/
-		double mu = 0;
-		std::string P1 = "P1";
-		std::string P2 = "P2";
+		double mu = 0;				//!< Mass ratio between two primaries
+		std::string P1 = "P1";		//!< Name of P1
+		std::string P2 = "P2";		//!< Name of P2
 
 	public:
 		adtk_cr3bp_sys_data();

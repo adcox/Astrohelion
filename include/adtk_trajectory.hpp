@@ -94,7 +94,6 @@ class adtk_trajectory{
 		void saveState(mat_t*);
 		void saveTime(mat_t*);
 		void saveSTMs(mat_t*);
-		void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 };
 
 #endif

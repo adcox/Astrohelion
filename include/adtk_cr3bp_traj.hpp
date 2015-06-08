@@ -24,7 +24,7 @@
 #include "adtk_trajectory.hpp"
 
 #include "matio.h"
- 
+
 /**
  *	@brief A derivative class of the adtk_trajectory object, which
  *	contains trajectory information specific to the CR3BP
@@ -64,7 +64,6 @@ class adtk_cr3bp_traj : public adtk_trajectory{
 		adtk_cr3bp_sys_data sysData;
 		
 		void saveJacobi(mat_t*);
-		void saveSysData(mat_t*);
 };
 
 #endif

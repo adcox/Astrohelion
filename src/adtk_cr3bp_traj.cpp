@@ -7,7 +7,7 @@
 #include "adtk_cr3bp_traj.hpp"
 
 #include "adtk_utilities.hpp"
- 
+
 #include <cstring>
  
 using namespace std;
@@ -198,7 +198,7 @@ void adtk_cr3bp_traj::saveToMat(const char* filename){
 		saveTime(matfp);
 		saveSTMs(matfp);
 		saveJacobi(matfp);
-		saveSysData(matfp);
+		sysData.saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);
@@ -213,32 +213,6 @@ void adtk_cr3bp_traj::saveJacobi(mat_t *matFile){
 	matvar_t *matvar = Mat_VarCreate("Jacobi", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(jacobi[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "Jacobi", MAT_COMPRESSION_NONE);
 }//=================================================
-
-/**
- *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
- *	@param matFile a pointer to the .mat file
- */
-void adtk_cr3bp_traj::saveSysData(mat_t *matFile){
-	size_t dims[2] = {1,1};
-
-	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
-	char p1_str[64];
-	strcpy(p1_str, sysData.getPrimary(0).c_str());
-	dims[1] = sysData.getPrimary(0).length();
-	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
-
-	char p2_str[64];
-	strcpy(p2_str, sysData.getPrimary(1).c_str());
-	dims[1] = sysData.getPrimary(1).length();
-	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
-
-	double mu_val = sysData.getMu();
-	dims[1] = 1;	
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu_val, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
-}//===================================================
 
 
 

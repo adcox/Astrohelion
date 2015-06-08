@@ -8,6 +8,7 @@
 
 #include "adtk_calculations.hpp"
 
+#include "adtk_ascii_output.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
 #include "adtk_constants.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
@@ -488,9 +489,13 @@ adtk_cr3bp_traj cr3bp_EM2SE(adtk_cr3bp_traj EMTraj, double thetaE0, double theta
     double charLS = SESys.getCharL();                   // characteristic length in SE system
 
     for(int n = 0; n < ((int)EMTraj.getTime()->size()); n++){
+
         // Transform the state from EM coordinates to SE coordinates
         vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+
+        // Recompute Jacobi
+        SETraj.getJC()->push_back(cr3bp_getJacobi(&(state_SE[0]), SESys.getMu()));
 
         // Copy transformed state into new vector
         state->insert(state->end(), state_SE.begin(), state_SE.end());
@@ -498,13 +503,11 @@ adtk_cr3bp_traj cr3bp_EM2SE(adtk_cr3bp_traj EMTraj, double thetaE0, double theta
         // Re-Scale Time
         SETraj.getTime()->push_back(EMTraj.getTime(n)*charTE/charTS);
 
-        // Recompute Jacobi
-        SETraj.getJC()->push_back(cr3bp_getJacobi(&(state->back())-9, SESys.getMu()));
-
         // Put in a bogus STM
         SETraj.getSTM()->push_back(adtk_matrix::I(6));
     }
 
+    SETraj.setLength();
     return SETraj; 
 }//=========================================================
 
@@ -538,6 +541,8 @@ adtk_cr3bp_nodeset cr3bp_EM2SE(adtk_cr3bp_nodeset EMNodes, double t0, double the
     double charLS = SESys.getCharL();                       // characteristic length in SE system
 
     double epoch = t0;
+    printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d TOFs\n", EMNodes.getNumNodes(),
+        ((int)EMNodes.getTOFs()->size()));
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
         vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys.getMu());
@@ -545,11 +550,13 @@ adtk_cr3bp_nodeset cr3bp_EM2SE(adtk_cr3bp_nodeset EMNodes, double t0, double the
         // Copy first 6 elements of transformed state/node into new node vector
         nodes->insert(nodes->end(), node_SE.begin(), node_SE.begin()+6);
 
-        // Re-Scale Time
-        SENodes.getTOFs()->push_back(EMNodes.getTOF(n)*charTE/charTS);
+        if(n < EMNodes.getNumNodes()-1){
+            // Re-Scale Time
+            SENodes.getTOFs()->push_back(EMNodes.getTOF(n)*charTE/charTS);
 
-        // Update epoch time
-        epoch += EMNodes.getTOF(n);
+            // Update epoch time
+            epoch += EMNodes.getTOF(n);
+        }
     }
 
     return SENodes;
@@ -592,19 +599,20 @@ adtk_cr3bp_traj cr3bp_SE2EM(adtk_cr3bp_traj SETraj, double thetaE0, double theta
         vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SETraj.getSysData().getMu());
 
+        // Recompute Jacobi
+        EMTraj.getJC()->push_back(cr3bp_getJacobi(&(state_EM[0]), EMSys.getMu()));
+
         // Copy transformed state into new vector
         state->insert(state->end(), state_EM.begin(), state_EM.end());
 
         // Re-Scale Time
         EMTraj.getTime()->push_back(SETraj.getTime(n)*charTS/charTE);
 
-        // Recompute Jacobi
-        EMTraj.getJC()->push_back(cr3bp_getJacobi(&(state->back())-9, EMSys.getMu()));
-
         // Put in a bogus STM
         EMTraj.getSTM()->push_back(adtk_matrix::I(6));
     }
 
+    EMTraj.setLength();
     return EMTraj; 
 }//=========================================================
 
@@ -639,22 +647,26 @@ adtk_cr3bp_nodeset cr3bp_SE2EM(adtk_cr3bp_nodeset SENodes, double t0, double the
     double charLS = SENodes.getSysData()->getCharL();    // characteristic length in SE system
 
     double epoch = t0;
+    printColor(BLUE, "Converting SE to EM\nSE Sys:\n  %d Nodes\n  %d TOFs\n", SENodes.getNumNodes(),
+        ((int)SENodes.getTOFs()->size()));
     for(int n = 0; n < SENodes.getNumNodes(); n++){
         // Transform a single node
-        vector<double> node_EM = cr3bp_EM2SE_state(SENodes.getNode(n), epoch, thetaE0, thetaM0,
+        vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
         // Copy first 6 elements of transformed state/node into new node vector
         nodes->insert(nodes->end(), node_EM.begin(), node_EM.begin()+6);
 
-        // Re-Scale Time
-        EMNodes.getTOFs()->push_back(SENodes.getTOF(n)*charTS/charTE);
+        if(n < SENodes.getNumNodes()-1){
+            // Re-Scale Time
+            EMNodes.getTOFs()->push_back(SENodes.getTOF(n)*charTS/charTE);
 
-        // Update epoch time
-        epoch += SENodes.getTOF(n);
+            // Update epoch time
+            epoch += SENodes.getTOF(n);
+        }
     }
 
-    return SENodes;
+    return EMNodes;
 }//=========================================================
 
 /**
@@ -717,7 +729,7 @@ vector<double> cr3bp_EM2SE_state(vector<double> state_EM, double t, double theta
     velSE *= (charLE/charTE)/(charLS/charTS);
 
     // Put new data into state vector
-    vector<double> state_SE(9,0);
+    vector<double> state_SE(3,0);   // three zeros for acceleration; insert pos and vel in front
     state_SE.insert(state_SE.begin(), posSE.getDataPtr(), posSE.getDataPtr()+3);
     state_SE.insert(state_SE.begin()+3, velSE.getDataPtr(), velSE.getDataPtr()+3);
 
@@ -783,7 +795,7 @@ vector<double> cr3bp_SE2EM_state(vector<double> state_SE, double t, double theta
     velEM *= (charLS/charTS)/(charLE/charTE);
 
     // Put new data into state vector
-    vector<double> state_EM(9, 0);
+    vector<double> state_EM(3, 0);  // three zeros for acceleration; insert pos and vel in front
     state_EM.insert(state_EM.begin(), posEM.getDataPtr(), posEM.getDataPtr()+3);
     state_EM.insert(state_EM.begin()+3, velEM.getDataPtr(), velEM.getDataPtr()+3);
 

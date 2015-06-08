@@ -370,7 +370,7 @@ adtk_matrix adtk_matrix::operator *(const adtk_matrix &b) const{
  */
 adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 
-	if(cols == rows && b.rows == b.cols && cols == b.cols){
+	if(cols == b.rows && cols == b.cols){
 		// Get the arrays of doubles from both matrix objects
 		double *A = a->data;
 		double *B = b.a->data;
@@ -390,6 +390,7 @@ adtk_matrix& adtk_matrix::operator *=(const adtk_matrix &b){
 		delete[] C;
 		return *this;
 	}else{
+		printErr("Operation will not return same size matrix\n");
 		throw adtk_sizeMismatch();
 	}
 }//=============================================

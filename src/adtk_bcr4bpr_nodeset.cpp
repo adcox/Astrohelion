@@ -4,6 +4,7 @@
 
 #include "adtk_bcr4bpr_nodeset.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
+#include "adtk_utilities.hpp"
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -104,4 +105,49 @@ void adtk_bcr4bpr_nodeset::print() const {
 	for(int c = 0; c < getNumCons(); c++){
 		constraints[c].print();
 	}
-}
+}//========================================
+
+/**
+ *	@brief Save the trajectory to a file
+ *	@param filename the name of the .mat file
+ */
+void adtk_bcr4bpr_nodeset::saveToMat(const char* filename){
+	// TODO: Check for propper file extension, add if necessary
+
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		printErr("Error creating MAT file\n");
+	}else{
+		saveNodes(matfp);
+		saveTOFs(matfp);
+		saveEpochs(matfp);
+		sysData.saveToMat(matfp);
+		// TODO: Add these functions:
+		// saveCons(matfp);
+		// saveVelCon(matfp);
+	}
+
+	Mat_Close(matfp);
+}//========================================
+
+/**
+ *	@brief Save the epoch values to a file
+ *	@param matFile a pointer to the destination matlab file
+ */
+void adtk_bcr4bpr_nodeset::saveEpochs(mat_t *matFile){
+	size_t dims[2] = {epochs.size(), 1};
+	matvar_t *matvar = Mat_VarCreate("Epochs", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(epochs[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, matvar, "Epochs", MAT_COMPRESSION_NONE);
+}//=========================================
+
+
+

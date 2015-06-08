@@ -21,7 +21,7 @@
 #define __H_CR3BP_SYS_DATA_
 
 #include "adtk_sys_data.hpp"
-
+#include "matio.h"
 #include <string>
 
 /**
@@ -46,6 +46,8 @@ class adtk_cr3bp_sys_data : public adtk_sys_data{
 		
 		double getMu() const;
 		std::string getPrimary(int n) const;	//We override this function, so re-declare it
+
+		void saveToMat(mat_t*);
 };
 
 #endif

@@ -30,8 +30,11 @@
 #ifndef __H_UTILITIES_
 #define __H_UTILITIES_
 
+#include "matio.h"
+ 
 #include <complex>
 #include <string>
+
 
 template<class T> T adtk_sum(T* data, int length){
 	T total = 0;
@@ -48,6 +51,8 @@ void printWarn(const char*, ...);
 void printVerb(bool, const char*, ...);
 void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
+void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
+
 void waitForUser();
 
 #endif

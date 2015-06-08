@@ -5,6 +5,7 @@
 #include "adtk_cr3bp_nodeset.hpp"
 
 #include "adtk_cr3bp_sys_data.hpp"
+#include "adtk_utilities.hpp"
  
 #include <cmath>
 #include <iostream>
@@ -78,4 +79,37 @@ void adtk_cr3bp_nodeset::print() const{
 	for(int c = 0; c < getNumCons(); c++){
 		constraints[c].print();
 	}
-}
+}//==================================
+
+/**
+ *	@brief Save the trajectory to a file
+ *	@param filename the name of the .mat file
+ */
+void adtk_cr3bp_nodeset::saveToMat(const char* filename){
+	// TODO: Check for propper file extension, add if necessary
+
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		printErr("Error creating MAT file\n");
+	}else{
+		saveNodes(matfp);
+		saveTOFs(matfp);
+		sysData.saveToMat(matfp);
+		// TODO: Add these functions:
+		// saveCons(matfp);
+		// saveVelCon(matfp);
+	}
+
+	Mat_Close(matfp);
+}//========================================
+
+

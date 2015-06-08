@@ -54,6 +54,7 @@ class adtk_cr3bp_nodeset : public adtk_nodeset{
 		// Set and Gets
 		adtk_sys_data* getSysData();
 		void print() const;
+		void saveToMat(const char*);
 	private:
 		adtk_cr3bp_sys_data sysData; 	//!< Object holding information about the dynamical system
 };

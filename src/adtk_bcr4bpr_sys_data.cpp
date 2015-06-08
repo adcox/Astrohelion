@@ -8,7 +8,8 @@
  
 #include "adtk_body_data.hpp"
 #include "adtk_constants.hpp"
-
+#include "adtk_utilities.hpp"
+ 
 #include <cmath>
 #include <exception>
 #include <iostream>
@@ -147,7 +148,42 @@ void adtk_bcr4bpr_sys_data::setPhi0(double t){ phi0 = t; }
  */
 void adtk_bcr4bpr_sys_data::setGamma(double t){ gamma = t; }
 
+/**
+ *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	@param matFile a pointer to the .mat file
+ */
+void adtk_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
+	size_t dims[2] = {1,1};
 
+	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
+	char p1_str[64];
+	strcpy(p1_str, P1.c_str());
+	dims[1] = P1.length();
+	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
+
+	char p2_str[64];
+	strcpy(p2_str, P2.c_str());
+	dims[1] = P2.length();
+	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
+
+	char p3_str[64];
+	strcpy(p3_str, P3.c_str());
+	dims[1] = P3.length();
+	matvar_t *p3_var = Mat_VarCreate("P3", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p3_str[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
+
+	dims[1] = 1;
+	matvar_t *theta0_var = Mat_VarCreate("Theta0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &theta0, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, theta0_var, "Theta0", MAT_COMPRESSION_NONE);
+
+	matvar_t *phi0_var = Mat_VarCreate("Phi0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &phi0, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, phi0_var, "Phi0", MAT_COMPRESSION_NONE);
+
+	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &gamma, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, gamma_var, "Gamma", MAT_COMPRESSION_NONE);
+}//===================================================
 
 
 

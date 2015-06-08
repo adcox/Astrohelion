@@ -74,6 +74,9 @@ nodesetTest: $(OBJECTS)
 simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) SimulationEngine_test.cpp -o $(BIN)/$@
 
+sysSwitchTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) SwitchSysTest.cpp -o $(BIN)/$@	
+
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################

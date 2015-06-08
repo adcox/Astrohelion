@@ -23,7 +23,8 @@
 
 #include "adtk_nodeset.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
-
+#include "matio.h"
+ 
 #include <vector>
 
 /**
@@ -52,9 +53,12 @@ class adtk_bcr4bpr_nodeset : public adtk_nodeset{
 
 		void appendEpoch(double);
 		void print() const;
+		void saveToMat(const char*);
 	private:
 		std::vector<double> epochs;			//!< Vector of epochs, one for each node
 		adtk_bcr4bpr_sys_data sysData;		//!< System data object
+
+		void saveEpochs(mat_t*);
 };
 
 #endif

@@ -22,6 +22,7 @@
 #define __H_NODESET__
 
 #include "adtk_constraint.hpp"
+#include "matio.h"
 
 #include <vector>
 
@@ -58,15 +59,17 @@ class adtk_nodeset{
 		 */
 		enum node_distro_t {NONE, TIME, ARCLENGTH};
 
+		// *structors
 		adtk_nodeset(const int);
 		adtk_nodeset(const adtk_nodeset&);
 		virtual ~adtk_nodeset();
 		
+		// Operators
 		adtk_nodeset& operator =(const adtk_nodeset&);
 
+		// Set and Get functions
 		std::vector<double>* getNodes();
 		std::vector<double>* getTOFs();
-
 		std::vector<double> getNode(int) const;
 		double getTOF(int) const;
 		int getNumNodes() const;
@@ -89,9 +92,11 @@ class adtk_nodeset{
 		void setVelConNodes(std::vector<int>);
 		void setVelConNodes_allBut(std::vector<int>);
 
+		// Utility Functions
 		void clearConstraints();
-
 		virtual void print() const = 0;
+		void saveToMat(const char*);
+
 	protected:
 		/** The number of states in one node */
 		const int nodeSize;
@@ -115,6 +120,8 @@ class adtk_nodeset{
 		bool velConSet = false;
 
 		void initSetFromICs(double[], adtk_sys_data*, double, double, int, node_distro_t);
+		void saveNodes(mat_t*);
+		void saveTOFs(mat_t*);
 };
 
 #endif

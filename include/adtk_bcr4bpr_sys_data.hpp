@@ -21,7 +21,7 @@
 #define __H_BCR4BPR_SYS_DATA_
 
 #include "adtk_sys_data.hpp"
-
+#include "matio.h"
 #include "adtk_constants.hpp"
 
 /**
@@ -52,6 +52,9 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 		void setTheta0(double t);
 		void setPhi0(double p);
 		void setGamma(double g);
+
+		void saveToMat(mat_t*);
+		
 	private:
 		double mu = 0;			//!< Mass ratio between P2 + P3 and total
 		double nu = 0;			//!< Mass ratio between P3 and total

@@ -276,11 +276,13 @@ void adtk_nodeset::initSetFromICs(double IC[6], adtk_sys_data *sysData, double t
 
 	for (int n = 0; n < traj.getLength(); n++){
 		if(nodeDistro == adtk_nodeset::ARCLENGTH){
-			// Compute the total length of the trajectory (approx.)
-			double dx = trajState->at(n*k) - trajState->at((n-1)*k);
-			double dy = trajState->at(n*k+1) - trajState->at((n-1)*k+1);
-			double dz = trajState->at(n*k+2) - trajState->at((n-1)*k+2);
-			sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
+			if(n > 0){
+				// Compute the total length of the trajectory (approx.)
+				double dx = trajState->at(n*k) - trajState->at((n-1)*k);
+				double dy = trajState->at(n*k+1) - trajState->at((n-1)*k+1);
+				double dz = trajState->at(n*k+2) - trajState->at((n-1)*k+2);
+				sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
+			}
 		}else{
 			// if TIME is the type, every state on the trajectory is a node, so just copy them over
 			nodes.insert(nodes.end(), trajState->begin()+n*k, trajState->begin()+n*k+6);
@@ -316,4 +318,73 @@ void adtk_nodeset::initSetFromICs(double IC[6], adtk_sys_data *sysData, double t
 				tofs.push_back(trajTime->at(n) - trajTime->at(n-1));
 		}
 	}
+
+	// Add the last state if it hasn't been already for ARCLENGTH type
+	if(nodeDistro == adtk_nodeset::ARCLENGTH && lastNode < traj.getLength()-1){
+		int n = traj.getLength()-1;
+		nodes.insert(nodes.end(), trajState->begin()+n*k, trajState->begin()+n*k + 6);
+		tofs.push_back(trajTime->at(n) - trajTime->at(lastNode));
+	}
 }//==========================================================
+
+/**
+ *	@brief Save the trajectory to a file
+ *	@param filename the name of the .mat file
+ */
+void adtk_nodeset::saveToMat(const char* filename){
+	// TODO: Check for propper file extension, add if necessary
+
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		printErr("Error creating MAT file\n");
+	}else{
+		saveNodes(matfp);
+		saveTOFs(matfp);
+		// TODO: Add these functions:
+		// saveCons(matfp);
+		// saveVelCon(matfp);
+	}
+
+	Mat_Close(matfp);
+}//========================================
+
+/**
+ *	@brief Save the nodes to a file
+ *	@param matFile a pointer to the destination matlab file 
+ */
+void adtk_nodeset::saveNodes(mat_t *matFile){
+
+	// We store data in row-major order, but the Matlab file-writing algorithm takes data
+	// in column-major order, so we transpose our vector and split it into two smaller ones
+	vector<double> posVel(nodes.size());
+	int numNodes = getNumNodes();
+	for(int r = 0; r < numNodes; r++){
+		for(int c = 0; c < nodeSize; c++){
+			posVel[c*numNodes + r] = nodes[r*nodeSize + c];
+		}
+	}
+
+	// Next, create a matlab variable for the nodes and save it to the file
+	size_t dims[2] = {static_cast<size_t>(numNodes), 6};
+	matvar_t *matvar = Mat_VarCreate("Nodes", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, matvar, "Nodes", MAT_COMPRESSION_NONE);
+}//==================================================
+
+/**
+ *	@brief Save the tof values to a file
+ *	@param matFile a pointer to the destination matlab file
+ */
+void adtk_nodeset::saveTOFs(mat_t *matFile){
+	size_t dims[2] = {tofs.size(), 1};
+	matvar_t *matvar = Mat_VarCreate("TOFs", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(tofs[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, matvar, "TOFs", MAT_COMPRESSION_NONE);
+}

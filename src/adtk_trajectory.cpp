@@ -307,27 +307,6 @@ void adtk_trajectory::saveSTMs(mat_t *matFile){
 	saveVar(matFile, matvar, "STM", MAT_COMPRESSION_NONE);
 }//=========================================
 
-/**
- *	@brief Save a variable to a .mat file, performing error checks along the way. 
- *
- *	Once the variable is written to file, it is freed from memory
- *
- *	@param matFile a pointer to the matlab output file
- *	@param matvar a pointer to the matlab variable object
- *	@param varName a literal string that describes the variable; only used in error message output
- *	@param comp an enum that describes the compression strategy. Options are:
- *		MAT_COMPRESSION_NONE - no compression
- *		MAT_COMPRESSION_ZLIB - zlib compression
- */
-void adtk_trajectory::saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compression comp){
-	if(NULL == matvar){
-		printErr("Error creating variable for '%s'\n", varName);
-	}else{
-		Mat_VarWrite(matFile, matvar, comp);
-		Mat_VarFree(matvar);
-	}
-}//==============================
-
 
 
 

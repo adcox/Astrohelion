@@ -3,6 +3,8 @@
 
 #include "adtk_ascii_output.hpp"
 
+#include "matio.h"
+
 #include <complex>
 #include <iostream>
 #include <string>
@@ -85,6 +87,27 @@ void printVerbColor(bool verbose, const char* color, const char * format, ...){
 	    printf(RESET);
 	}
 }//==========================================
+
+/**
+ *  @brief Save a variable to a .mat file, performing error checks along the way. 
+ *
+ *  Once the variable is written to file, it is freed from memory
+ *
+ *  @param matFile a pointer to the matlab output file
+ *  @param matvar a pointer to the matlab variable object
+ *  @param varName a literal string that describes the variable; only used in error message output
+ *  @param comp an enum that describes the compression strategy. Options are:
+ *      MAT_COMPRESSION_NONE - no compression
+ *      MAT_COMPRESSION_ZLIB - zlib compression
+ */
+void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compression comp){
+    if(NULL == matvar){
+        printErr("Error creating variable for '%s'\n", varName);
+    }else{
+        Mat_VarWrite(matFile, matvar, comp);
+        Mat_VarFree(matvar);
+    }
+}//==============================
 
 /**
  *  @brief Suspend operation until the user presses a key

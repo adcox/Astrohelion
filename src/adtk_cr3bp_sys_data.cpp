@@ -10,6 +10,7 @@
  
 #include "adtk_body_data.hpp"
 #include "adtk_constants.hpp"
+#include "adtk_utilities.hpp"
 
 #include <cmath>
 #include <exception>
@@ -77,4 +78,29 @@ double adtk_cr3bp_sys_data::getMu() const { return mu; }
  */
 std::string adtk_cr3bp_sys_data::getPrimary(int n) const {
 	return n == 0 ? P1 : P2;
-}
+}//======================================
+
+/**
+ *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	@param matFile a pointer to the .mat file
+ */
+void adtk_cr3bp_sys_data::saveToMat(mat_t *matFile){
+	size_t dims[2] = {1,1};
+
+	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
+	char p1_str[64];
+	strcpy(p1_str, P1.c_str());
+	dims[1] = P1.length();
+	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
+
+	char p2_str[64];
+	strcpy(p2_str, P2.c_str());
+	dims[1] = P2.length();
+	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
+
+	dims[1] = 1;	
+	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
+}//===================================================

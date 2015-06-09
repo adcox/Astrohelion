@@ -101,6 +101,7 @@ adtk_trajectory& adtk_trajectory::operator= (const adtk_trajectory& t){
 //-----------------------------------------------------
 
 /**
+ *	@brief Retrieve the number of states, times, STMs, etc. on this trajectory
  *	@return the number of points along this trajectory
  */
 int adtk_trajectory::getLength() const{ return numPoints; }

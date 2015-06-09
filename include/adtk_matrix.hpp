@@ -104,8 +104,9 @@ class adtk_matrix{
 		// static adtk_sizeMismatch adtk_matSizeMismatch;
 		
 	private:
-		gsl_matrix *a;
-		int rows, cols;
+		gsl_matrix *a;	//!< GSL matrix object that stores matrix elements
+		int rows;		//!< Number of rows
+		int cols;		//!< Number of columns
 
 		void initBasicMatrix(int r, int c);
 		void copyDataIntoGSL_Matrix(double*);

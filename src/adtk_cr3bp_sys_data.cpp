@@ -38,8 +38,10 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(std::string P1, std::string P2){
 	adtk_body_data p1Data(P1);
 	adtk_body_data p2Data(P2);
 
-	this->P1 = p1Data.getName();
-	this->P2 = p2Data.getName();
+	primaries.push_back(p1Data.getName());
+	primIDs.push_back(p1Data.getID());
+	primaries.push_back(p2Data.getName());
+	primIDs.push_back(p2Data.getID());
 
 	// Check to make sure P1 is P2's parent
 	if(p2Data.getName().compare(p1Data.getName())){
@@ -54,6 +56,10 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(std::string P1, std::string P2){
 	}
 }//===================================================
 
+adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(const adtk_cr3bp_sys_data &d) : adtk_sys_data(d){
+	mu = d.mu;
+}
+
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a CR3BP system data object
@@ -61,24 +67,14 @@ adtk_cr3bp_sys_data::adtk_cr3bp_sys_data(std::string P1, std::string P2){
  */
 adtk_cr3bp_sys_data& adtk_cr3bp_sys_data::operator= (const adtk_cr3bp_sys_data &d){
 	adtk_sys_data::operator= (d);
-	P1 = d.P1;
-	P2 = d.P2;
 	mu = d.mu;
 	return *this;
-}
+}//===================================================
 
 /**
  *	@return the non-dimensional mass ratio for the system
  */
 double adtk_cr3bp_sys_data::getMu() const { return mu; }
-
-/**
- *	@param n the index of the primary (0 for P1, 1 for P2)
- *	@return the name of the primary
- */
-std::string adtk_cr3bp_sys_data::getPrimary(int n) const {
-	return n == 0 ? P1 : P2;
-}//======================================
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
@@ -89,14 +85,14 @@ void adtk_cr3bp_sys_data::saveToMat(mat_t *matFile){
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
 	char p1_str[64];
-	strcpy(p1_str, P1.c_str());
-	dims[1] = P1.length();
-	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
+	strcpy(p1_str, primaries.at(0).c_str());
+	dims[1] = primaries.at(0).length();
+	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
-	strcpy(p2_str, P2.c_str());
-	dims[1] = P2.length();
+	strcpy(p2_str, primaries.at(1).c_str());
+	dims[1] = primaries.at(1).length();
 	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 

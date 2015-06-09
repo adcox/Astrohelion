@@ -16,9 +16,18 @@
 using namespace std;
 
 /**
- *	Create a new system data object and initialize all values to zero.
+ *	@brief Create a new system data object and initialize all values to zero.
  */
 adtk_sys_data::adtk_sys_data(){}
+
+/**
+ *	@brief Copy constructor
+ *
+ *	@param d a system data object
+ */
+adtk_sys_data::adtk_sys_data(const adtk_sys_data& d){
+	copyData(d);
+}//============================================
 
 /**
  *	@brief Copy the system data object
@@ -27,17 +36,37 @@ adtk_sys_data::adtk_sys_data(){}
  *	@return this data object, set to equal the input object
  */
 adtk_sys_data& adtk_sys_data::operator =(const adtk_sys_data &d){
+	copyData(d);
+	return *this;
+}//==========================================
+
+void adtk_sys_data::copyData(const adtk_sys_data &d){
 	charL = d.charL;
 	charT = d.charT;
 	charM = d.charM;
 	type = d.type;
-	return *this;
+	primaries = d.primaries;
+	primIDs = d.primIDs;
 }//==========================================
 
 /**
  *	@return the number of primaries this system models
  */
 int adtk_sys_data::getNumPrimaries() const { return numPrimaries; }
+
+/**
+ *	@brief Retrieve the name of one of the system primaries
+ *	@param n the "index" of the primary, starts at 0
+ *	@return the name of the n'th primary
+ */
+std::string adtk_sys_data::getPrimary(int n) const{ return primaries.at(n); }
+
+/**
+ *	@brief Retrieve a unique numerical ID for one of the system primaries
+ *	@param n the index of the primary, starts at 0
+ *	@return a unique numerical ID for this primary; useful for comparing systems
+ */
+int adtk_sys_data::getPrimID(int n) const{ return primIDs.at(n); }
 
 /**
  *	@return the characteristic length (km) associated with this system

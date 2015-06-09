@@ -36,6 +36,7 @@
 
 // Forward declarations
 class adtk_bcr4bpr_sys_data;
+class adtk_bcr4bpr_traj;
 class adtk_cr3bp_nodeset;
 class adtk_cr3bp_sys_data;
 class adtk_cr3bp_traj;
@@ -63,6 +64,7 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, doubl
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, adtk_bcr4bpr_sys_data, double*);
 void bcr4bpr_getPrimaryVel(double, adtk_bcr4bpr_sys_data, double*);
+adtk_bcr4bpr_traj bcr4bpr_SE2SEM(adtk_cr3bp_traj, adtk_bcr4bpr_sys_data, double);
 
 #endif
 //END

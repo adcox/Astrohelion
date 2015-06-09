@@ -24,7 +24,6 @@ This software has been tested on (and <i>should</i> work on) the following syste
 
 <h2>To-Do List</h2>
 <ul>
-	<li> Test functions that switch between CR3BP and BCR4BPR </li>
 	<li> Write funtion to convert SE CR3BP to SEM BCR4BPR </li>
 	<li> Create a few scripts that do meaningful things, like compute a family of orbits - I want to see how fast
 		C++ can be! OOH MAKE SOME MAPS

@@ -38,9 +38,13 @@ adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data(std::string P1, std::string P2, std
 	adtk_body_data p2Data(P2);
 	adtk_body_data p3Data(P3);
 
-	this->P1 = p1Data.getName();
-	this->P2 = p2Data.getName();
-	this->P3 = p3Data.getName();
+	primaries.push_back(p1Data.getName());
+	primaries.push_back(p2Data.getName());
+	primaries.push_back(p3Data.getName());
+
+	primIDs.push_back(p1Data.getID());
+	primIDs.push_back(p2Data.getID());
+	primIDs.push_back(p3Data.getID());
 
 	// Check to make sure P1 is P2's parent
 	if(p2Data.getParent().compare(p1Data.getName()) == 0 && p2Data.getParent().compare(p1Data.getName()) == 0){
@@ -59,19 +63,32 @@ adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data(std::string P1, std::string P2, std
 }//===================================================
 
 /**
+ *	@brief Copy constructor
+ *	@param d
+ */
+adtk_bcr4bpr_sys_data::adtk_bcr4bpr_sys_data(const adtk_bcr4bpr_sys_data &d) : adtk_sys_data(d){
+	copyData(d);
+}//==============================================
+
+/**
+ *	@brief Copy data from a system data object into this one
+ *	@param d
+ */
+void adtk_bcr4bpr_sys_data::copyData(const adtk_bcr4bpr_sys_data &d){
+	k = d.k;
+	mu = d.mu;
+	nu = d.nu;
+	charLRatio = d.charLRatio;
+}//==============================================
+
+/**
  *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a BCR4BPR system data object
  *	@return this system data object
  */
 adtk_bcr4bpr_sys_data& adtk_bcr4bpr_sys_data::operator= (const adtk_bcr4bpr_sys_data &d){
 	adtk_sys_data::operator= (d);
-	P1 = d.P1;
-	P2 = d.P2;
-	P3 = d.P3;
-	k = d.k;
-	mu = d.mu;
-	nu = d.nu;
-	charLRatio = d.charLRatio;
+	copyData(d);
 	return *this;
 }//=====================================
 
@@ -94,24 +111,6 @@ double adtk_bcr4bpr_sys_data::getCharLRatio() const { return charLRatio; }
  *	@return the scaling constant for this system
  */
 double adtk_bcr4bpr_sys_data::getK() const { return k; }
-
-/**
- *	@param n the index of the primary (0 for P1, 1 for P2, 2 for P3)
- *	@return the name of the primary
- */
-std::string adtk_bcr4bpr_sys_data::getPrimary(int n) const {
-	switch(n){
-		case 0:
-			return P1;
-		case 1:
-			return P2;
-		case 2:
-			return P3;
-		default:
-			cout << "adtk_bcr4bpr_sys_data :: Cannot get name of primary #" << n << endl;
-			throw;
-	}
-}//=======================================
 
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
@@ -157,20 +156,20 @@ void adtk_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
 	char p1_str[64];
-	strcpy(p1_str, P1.c_str());
-	dims[1] = P1.length();
+	strcpy(p1_str, primaries.at(0).c_str());
+	dims[1] = primaries.at(0).length();
 	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
-	strcpy(p2_str, P2.c_str());
-	dims[1] = P2.length();
+	strcpy(p2_str, primaries.at(1).c_str());
+	dims[1] = primaries.at(1).length();
 	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 
 	char p3_str[64];
-	strcpy(p3_str, P3.c_str());
-	dims[1] = P3.length();
+	strcpy(p3_str, primaries.at(2).c_str());
+	dims[1] = primaries.at(2).length();
 	matvar_t *p3_var = Mat_VarCreate("P3", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p3_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
 

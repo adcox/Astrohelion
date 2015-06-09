@@ -29,6 +29,7 @@ adtk_body_data::adtk_body_data(){
 	orbitRad = 0;
 	minFlyByAlt = 0;
 	name = "Unknown";
+	ID = 999999;
 	parent = "Unknown";
 }//------------------------
 
@@ -45,6 +46,7 @@ adtk_body_data::adtk_body_data(std::string n){
 	// Begin the behomoth of if statements...
 	if(n.compare("earth") == 0){
 		name = "Earth";
+		ID = 399;
         parent = "Sun";
         gravParam = 3.9860043543609598e5;
         radius = 6378.137;
@@ -56,6 +58,7 @@ adtk_body_data::adtk_body_data(std::string n){
 
 	if(n.compare("sun") == 0){
 		name = "Sun";
+		ID = 10;
 		parent = "N/A";
 		gravParam = 1.3271244004193938e11;
 		radius = 695990;
@@ -66,6 +69,7 @@ adtk_body_data::adtk_body_data(std::string n){
     
     if(n.compare("moon") == 0){
 		name = "Moon";
+		ID = 301;
 		parent = "Earth";
 		gravParam = 4.9028000661637961e3;
 		radius = 1737.40;
@@ -76,6 +80,7 @@ adtk_body_data::adtk_body_data(std::string n){
 
     if(n.compare("mercury") == 0){
 		name = "Mercury";
+		ID = 199;
 		parent = "Sun";
 		gravParam = 2.2031780000000021e4;
 		radius = 2439.7;
@@ -85,6 +90,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("venus") == 0){
 		name = "Venus";
+		ID = 299;
 		parent = "Sun";
 		gravParam = 3.2485859200000006e5;
 		radius = 6051.8;
@@ -95,6 +101,7 @@ adtk_body_data::adtk_body_data(std::string n){
     
     if(n.compare("mars") == 0){
 		name = "Mars";
+		ID = 499;
 		parent = "Sun";
 		gravParam = 4.282837362069909e4;
 		radius = 3396.19;
@@ -113,6 +120,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("saturn") == 0){
 		name = "Saturn";
+		ID = 699;
 		parent = "Sun";
 		gravParam = 3.793120749865224e7;
 		radius = 60268.00;
@@ -122,6 +130,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("uranus") == 0){
 		name = "Uranus";
+		ID = 799;
 		parent = "Sun";
 		gravParam = 5.793951322279009e6;
 		radius = 25559;
@@ -131,6 +140,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("neptune") == 0){
 		name = "Neptune";
+		ID = 899;
 		parent = "Sun";
 		gravParam = 6.835099502439672e6;
 		radius = 25559;
@@ -140,6 +150,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("pluto") == 0){
 		name = "Pluto";
+		ID = 999;
 		parent = "Sun";
 		gravParam = 8.696138177608748e2;
 		radius = 1195.00;
@@ -149,6 +160,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("ganymede") == 0){
 		name = "Ganymede";
+		ID = 503;
 		parent = "Sun";
 		gravParam = 9.887834453334144e3;
 		radius = 2634.1;
@@ -158,6 +170,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("triton") == 0){
 		name = "Triton";
+		ID = 801;
 		parent = "Neptune";
 		gravParam = 1.427598140725034e3;
 		radius = 1353.4;
@@ -167,6 +180,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("titan") == 0){
 		name = "Titan";
+		ID = 606;
 		parent = "Saturn";
 		gravParam = 8.978138845307376e3;
 		radius = 2576;
@@ -176,6 +190,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("charon") == 0){
 		name = "Charon";
+		ID = 901;
 		parent = "Pluto";
 		radius = 603.5;
 		orbitRad = 17536;
@@ -185,6 +200,7 @@ adtk_body_data::adtk_body_data(std::string n){
     }
     if(n.compare("europa") == 0){
 		name = "Europa";
+		ID = 502;
 		parent = "Jupiter";
 		radius = 1560;
 		orbitRad = 671101.9638;
@@ -258,6 +274,12 @@ double adtk_body_data::getMinFlyBy(){return minFlyByAlt;}
 *	@return the name of the body
 */
 std::string adtk_body_data::getName(){return name;}
+
+/**
+ *	@brief Retrieve the ID (SPICE or HORIZONS ID) associated with this body
+ *	@return the ID associated with this body
+ */
+int adtk_body_data::getID(){ return ID; }
 
 /**
 *	@return the name of the parent body. If there is no parent, "None" is returned

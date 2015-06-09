@@ -53,6 +53,9 @@ class adtk_body_data{
 		/** Name of this body */
 		std::string name;
 
+		/** Unique ID (same as SPICE ID or HORIZONS ID) for this body */
+		int ID;
+
 		/** Name of the parent body */
 		std::string parent;
 
@@ -70,6 +73,7 @@ class adtk_body_data{
 		double getOrbitRad();
 		double getMinFlyBy();
 		std::string getName();
+		int getID();
 		std::string getParent();
 
 		void setRadius(double);

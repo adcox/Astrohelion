@@ -94,7 +94,7 @@ class adtk_nodeset{
 
 		// Utility Functions
 		void clearConstraints();
-		virtual void print() const = 0;
+		virtual void print() const = 0;		//!< @brief Output a human-readable description of the nodeset
 		void saveToMat(const char*);
 
 	protected:

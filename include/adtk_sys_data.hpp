@@ -21,6 +21,7 @@
 #define __H_SYSDATA_
 
 #include <string>
+#include <vector>
 
 /**
  *	@brief Contains information about a system, like mass ratio, primary names, etc.
@@ -56,28 +57,31 @@ class adtk_sys_data{
 		enum system_t {UNDEF_SYS, CR3BP_SYS, BCR4BPR_SYS};
 
 		adtk_sys_data();	// Copy constructor is defined by compiler, should be fine
+		adtk_sys_data(const adtk_sys_data&);
 		virtual ~adtk_sys_data() {}
+		
 
 		adtk_sys_data& operator= (const adtk_sys_data&);
 
 		int getNumPrimaries() const;
+		std::string getPrimary(int n) const;
+		int getPrimID(int n) const;
 		double getCharL() const;
 		double getCharT() const;
 		double getCharM() const;
 		system_t getType() const;
 		std::string getTypeStr() const;
-
-		/**
-		 *	Each derivative class must define this function to provide the name of each primary
-		 *	@param n the "index" of the primary, starts at 0
-		 *	@return the name of the n'th primary
-		 */
-		virtual std::string getPrimary(int n) const = 0;
-
+		
 	protected:
 
 		/** Number of primaries that exist in this system */
 		int numPrimaries = 0;
+
+		/** Vector containing names of primaries */
+		std::vector<std::string> primaries;
+
+		/** Vector containing IDs for primaries */
+		std::vector<int> primIDs;
 
 		/** Characteristic length (km) */
 		double charL = 0;
@@ -90,5 +94,8 @@ class adtk_sys_data{
 
 		/** The type of system this data object describes */
 		system_t type = UNDEF_SYS;
+
+	private:
+		void copyData(const adtk_sys_data&);
 };
 #endif

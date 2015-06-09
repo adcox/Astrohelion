@@ -33,21 +33,19 @@
  *	@copyright GNU GPL v3.0
  */
 class adtk_cr3bp_sys_data : public adtk_sys_data{
-	private:
-		double mu = 0;				//!< Mass ratio between two primaries
-		std::string P1 = "P1";		//!< Name of P1
-		std::string P2 = "P2";		//!< Name of P2
-
 	public:
 		adtk_cr3bp_sys_data();
-		adtk_cr3bp_sys_data(std::string P1, std::string P2);
+		adtk_cr3bp_sys_data(std::string, std::string);
+		adtk_cr3bp_sys_data(const adtk_cr3bp_sys_data&);
 
 		adtk_cr3bp_sys_data& operator=(const adtk_cr3bp_sys_data&);
 		
 		double getMu() const;
-		std::string getPrimary(int n) const;	//We override this function, so re-declare it
 
 		void saveToMat(mat_t*);
+		
+	private:
+		double mu = 0;				//!< Mass ratio between two primaries
 };
 
 #endif

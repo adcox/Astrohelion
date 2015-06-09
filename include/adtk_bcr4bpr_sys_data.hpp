@@ -36,6 +36,7 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 	public:
 		adtk_bcr4bpr_sys_data();
 		adtk_bcr4bpr_sys_data(std::string, std::string, std::string);
+		adtk_bcr4bpr_sys_data(const adtk_bcr4bpr_sys_data&);
 
 		adtk_bcr4bpr_sys_data& operator=(const adtk_bcr4bpr_sys_data&);
 		
@@ -43,7 +44,6 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 		double getNu() const;
 		double getK() const;
 		double getCharLRatio() const;
-		std::string getPrimary(int n) const;	//We override this function, so re-declare it
 
 		double getTheta0() const;
 		double getPhi0() const;
@@ -74,9 +74,7 @@ class adtk_bcr4bpr_sys_data : public adtk_sys_data{
 		This angle does not change over time; radians */
 		double gamma = 5.14*PI/180;
 
-		std::string P1 = "P1";		//!< Name of P1
-		std::string P2 = "P2";		//!< Name of P2
-		std::string P3 = "P3";		//!< Name of P3
+		void copyData(const adtk_bcr4bpr_sys_data&);
 };
 
 #endif

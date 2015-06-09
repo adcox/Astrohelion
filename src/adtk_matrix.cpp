@@ -142,11 +142,12 @@ adtk_matrix adtk_matrix::e_j(int dim, int j){
 
 /**
  *	@brief Create a diagonal, square matrix with the specified elements
+ *
  *	@param vals an array of values along the diagonal
  *	@param vals_len the number of values in vals
  *	@return a matrix with the specified values along the diagonal, zeros elsewhere
  */
-adtk_matrix adtk_matrix::diag(double *vals, int vals_len){
+adtk_matrix adtk_matrix::diag(double* vals, int vals_len){
 	vector<double> data(vals_len*vals_len, 0);
 	for(int i = 0; i < vals_len; i++){
 		data[(vals_len+1)*i] = vals[i];

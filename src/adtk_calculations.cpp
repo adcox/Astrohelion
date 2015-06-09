@@ -10,6 +10,7 @@
 
 #include "adtk_ascii_output.hpp"
 #include "adtk_bcr4bpr_sys_data.hpp"
+#include "adtk_bcr4bpr_traj.hpp"
 #include "adtk_constants.hpp"
 #include "adtk_cr3bp_nodeset.hpp"
 #include "adtk_cr3bp_sys_data.hpp"
@@ -519,7 +520,7 @@ adtk_cr3bp_traj cr3bp_EM2SE(adtk_cr3bp_traj EMTraj, double thetaE0, double theta
  *  system orientation at time t = 0, but you can use the <tt>t0</tt> argument to specify
  *  an initial time since CR3BP nodesets do not have an epoch for each node.
  *
- *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param EMNodes a CR3BP Earth-Moon nodeset
  *  @param t0 epoch associated with the first node
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -571,7 +572,7 @@ adtk_cr3bp_nodeset cr3bp_EM2SE(adtk_cr3bp_nodeset EMNodes, double t0, double the
  *  with this initial time, be sure to shift the time coordinates to assure that the first
  *  value in the time vector reflects correct initial time.
  *
- *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param SETraj a CR3BP Sun-Earth trajectory
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -624,7 +625,7 @@ adtk_cr3bp_traj cr3bp_SE2EM(adtk_cr3bp_traj SETraj, double thetaE0, double theta
  *  system orientation at time t = 0, but you can use the <tt>t0</tt> argument to specify
  *  an initial time since CR3BP nodesets do not have an epoch for each node.
  *
- *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param SENodes a CR3BP Sun-Earth nodeset
  *  @param t0 epoch associated with the first node
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -672,7 +673,7 @@ adtk_cr3bp_nodeset cr3bp_SE2EM(adtk_cr3bp_nodeset SENodes, double t0, double the
 /**
  *  @brief Transform a single state from EM coordinates to SE coordinates
  *
- *  @param state_SE a 6- or 9-element state vector
+ *  @param state_EM a 6- or 9-element state vector
  *  @param t non-dimensional time associated with the state
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -885,4 +886,69 @@ void bcr4bpr_getPrimaryVel(double t, adtk_bcr4bpr_sys_data sysData, double *prim
     primVel[6] = v_P2P3Line[0] * (1-nu/mu)*sysData.getCharLRatio();
     primVel[7] = v_P2P3Line[1] * (1-nu/mu)*sysData.getCharLRatio();
     primVel[8] = v_P2P3Line[2] * (1-nu/mu)*sysData.getCharLRatio();
-}
+}//===================================================================
+
+/**
+ *  @brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
+ *
+ *  @param crTraj a CR3BP Sun-Earth trajectory
+ *  @param bcSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
+ *  scaling and orientation at time t = 0
+ *  @param t0 the epoch at the initial point on the CR3BP Trajectory
+ *
+ *  @return a BCR4BPR Trajectory object
+ */
+adtk_bcr4bpr_traj bcr4bpr_SE2SEM(adtk_cr3bp_traj crTraj, adtk_bcr4bpr_sys_data bcSys, double t0){
+    string sun("Sun");      string earth("Earth");      string moon("Moon");
+
+    if(crTraj.getSysData().getPrimID(0) != 10 || crTraj.getSysData().getPrimID(1) != 399){
+        printErr("CR3BP trajectory is not in the Sun-Earth System!\n");
+        throw adtk_exception();
+    }
+
+    if(bcSys.getPrimID(0) != 10 || bcSys.getPrimID(1) != 399 || bcSys.getPrimID(2) != 301){
+        
+        printErr("BCR4BPR system is not Sun-Earth-Moon!\n");
+        throw adtk_exception();
+    }
+
+    // Create a BCR4BPR Trajectory
+    adtk_bcr4bpr_traj bcTraj(bcSys);
+
+    vector<double>* state = bcTraj.getState();
+    vector<double>* times = bcTraj.getTime();
+    vector<double>* dqdT = bcTraj.get_dqdT();
+    vector<adtk_matrix>* STMs = bcTraj.getSTM();
+
+    double charL2 = crTraj.getSysData().getCharL();
+    double charT2 = crTraj.getSysData().getCharT();
+    double charL3 = bcSys.getCharL();
+    double charT3 = bcSys.getCharT();
+
+    vector<double> blank(6, NAN);
+
+    for(int n = 0; n < crTraj.getLength(); n++){
+        vector<double> crState = crTraj.getState(n);
+        printColor(BLUE, "crState[%d]: %d/%d\n", ((int)crState.size()), n, crTraj.getLength());
+        for(int r = 0; r < ((int)crState.size()); r++){
+            if(r < 3)   // Convert position
+                state->push_back(crState[r]*charL2/charL3);
+            else if(r < 6)  // Convert velocity
+                state->push_back(crState[r]*(charL2/charL3)*(charT3/charT2));
+            else    // Convert acceleration
+                state->push_back(crState[r]*(charL2/charL3)*(charT3/charT2)*(charT3/charT2));
+        }
+        
+        times->push_back(crTraj.getTime(n)*charT2/charT3 + t0);
+
+        // Put bogus values into dqdT and STMs
+        dqdT->insert(dqdT->end(), blank.begin(), blank.end());
+        STMs->push_back(adtk_matrix::I(6));
+    }
+
+    bcTraj.setLength();
+    return bcTraj;
+}//==================================================
+
+
+

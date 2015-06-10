@@ -4,10 +4,10 @@
 
 #include <iostream>
 
-#include "adtk_ascii_output.hpp"
-#include "adtk_calculations.hpp"
-#include "adtk_cr3bp_sys_data.hpp"
-#include "adtk_utilities.hpp"
+#include "tpat_ascii_output.hpp"
+#include "tpat_calculations.hpp"
+#include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_utilities.hpp"
 
 using namespace std;
 
@@ -25,7 +25,7 @@ bool compareLPts(double *actual, double *computed, double tol){
 
 void checkLPts(){
 	printf("\nChecking Lagrange Points (Earth-Moon):\n");
-	adtk_cr3bp_sys_data emSys("earth", "moon");
+	tpat_cr3bp_sys_data emSys("earth", "moon");
 
 	double L1[3] = {0};
 	double L2[3] = {0};
@@ -54,7 +54,7 @@ void checkLPts(){
 
 void checkUDDots(){
 	printf("\nChecking Pseudo-Potential DDots (Earth-Moon):\n");
-	adtk_cr3bp_sys_data emSys("earth", "moon");
+	tpat_cr3bp_sys_data emSys("earth", "moon");
 	double ans[] = {1.04726723737184, 0.976366381314081, -0.0236336186859191,
 		1.47677525977129, 1.47677525977129, 1.47976912234663};
 	double comp[6] = {0};

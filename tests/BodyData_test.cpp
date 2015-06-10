@@ -5,12 +5,12 @@
 #include <iostream>
 #include <math.h>
 
-#include "adtk_body_data.hpp"
+#include "tpat_body_data.hpp"
 
 using namespace std;
 
 int main(){
-	adtk_body_data B("earth");
+	tpat_body_data B("earth");
 
 	cout << "Body: " << B.getName() << "\n";
 	cout << "  Mass: " << B.getMass() << " kg\n";

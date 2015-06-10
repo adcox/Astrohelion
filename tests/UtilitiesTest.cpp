@@ -2,8 +2,8 @@
  *	Test the Utilities functions
  */
 
-#include "adtk_ascii_output.hpp"
-#include "adtk_utilities.hpp"
+#include "tpat_ascii_output.hpp"
+#include "tpat_utilities.hpp"
 
 #include <iostream>
 
@@ -14,12 +14,12 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 bool testSumInt(){
 	int data[] = {1,2,3,4,5};
-	return adtk_sum(data, 5) == 15;
+	return tpat_sum(data, 5) == 15;
 }
 
 bool testSumDouble(){
 	double data[] = {1.0, 1.1, 1.2, 1.3, 1.4};
-	return adtk_sum(data, 5) == 6;
+	return tpat_sum(data, 5) == 6;
 }
 
 

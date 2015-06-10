@@ -2,7 +2,7 @@
  *  Test out the matio tools
  */
 
-#include "adtk_utilities.hpp"
+#include "tpat_utilities.hpp"
  
 #include <stdlib.h>
 #include <stdio.h>

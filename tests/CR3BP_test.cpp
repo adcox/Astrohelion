@@ -5,21 +5,21 @@
 #include <iostream>
 #include <math.h>
 
-#include "adtk_body_data.hpp"
-#include "adtk_calculations.hpp"
+#include "tpat_body_data.hpp"
+#include "tpat_calculations.hpp"
 
 using namespace std;
 
 int main(void){
-	adtk_body_data earth("earth");
-	adtk_body_data moon("moon");
+	tpat_body_data earth("earth");
+	tpat_body_data moon("moon");
 
 	double mu = moon.getMass()/(earth.getMass() + moon.getMass());
 	cout << "Mu = " << mu << "\n";
 
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 	double t[] = {0, 2.776481};
-	vector<double> data = adtk_cr3bp_integrate(ic, t, mu, 2);
+	vector<double> data = tpat_cr3bp_integrate(ic, t, mu, 2);
 
 	double n = data.size()/7;
 	cout << n << endl;

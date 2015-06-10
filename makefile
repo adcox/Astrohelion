@@ -1,4 +1,4 @@
-# This file will compile various tests
+# Makefile for the entire library (not for individual tests)
 #
 # Syntax Notes
 # 	$^ gives the RHS of the :
@@ -16,25 +16,32 @@
 ############################################################
 
 # Paths for files
-INC := ../inc
-SRC := ../src
-OBJ := ../obj
-BIN := ../bin
-LIB := ../lib
+INC := inc
+SRC := src
+OBJ := obj
+BIN := bin
+LIB := lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-CFLAGS += -g -W -Wall -Wextra -pedantic 
+CFLAGS += -W -Wall -Wextra -pedantic -O3
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
 LIBS = gsl gslcblas matio
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
+SYS_INC_DIR := /usr/local/include/tpat
+
 # Options that are platform dependent
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S), Linux)
+	# @echo Making Linux libraries
 	LDFLAGS += -L /usr/local/lib
+	LIBS_TO_MAKE := libTPAT.a libTPAT.so
+else ifeq ($(UNAME_S), Darwin)
+	# @echo Making OS X libraries
+	LIBS_TO_MAKE := libTPAT.dylib
 endif
 
 # Get JUST the filenames, no filepaths, of the source files
@@ -56,42 +63,36 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 ############################################################
 .PHONY: printVars
 
-all: simEngineTest
-	
+all:
+ifeq ($(UNAME_S), Linux)
+	@echo Making Linux libraries
+	@make libtpat.a
+	@make libtpat.so
+else ifeq ($(UNAME_S), Darwin)
+	@echo Making OS X libraries
+	@make libtpat.a
+	@make libtpat.dylib
+endif
 
-############################################################
-## TESTS - All executable %.out files go in the BIN directory
-############################################################
+install:
+ifeq ($(UNAME_S), Linux)
+	@echo Installing Linux libraries and headers
+	# Do stuff to install linux libraries
+else ifeq ($(UNAME_S), Darwin)
+	@echo Installing OS X libraries and headers
+	@if [ ! -d $(SYS_INC_DIR) ]; then mkdir $(SYS_INC_DIR); fi
+	cp $(INC)/*.hpp $(SYS_INC_DIR)
+	cp $(LIB)/libtpat.a /usr/local/lib/
+	cp $(LIB)/libtpat.dylib /usr/local/lib/
+endif
 
-calcTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) TestCalc.cpp -o $(BIN)/$@
-
-linMotionTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) LinMotionTest.cpp -o $(BIN)/$@
-
-maps: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
-
-matrixTest: $(OBJ)/tpat_utilities.o $(OBJ)/tpat_matrix.o
-	$(COMP) -I $(INC) $^ $(LDFLAGS) Matrix_test.cpp -o $(BIN)/$@
-
-nodesetTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) Nodeset_test.cpp -o $(BIN)/$@
-
-simEngineTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) SimulationEngine_test.cpp -o $(BIN)/$@
-
-sysSwitchTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) SwitchSysTest.cpp -o $(BIN)/$@	
-
-# Create a static library
-libTPAT.a: $(OBJECTS)
+libtpat.a: $(OBJECTS)
 	ar rcs $(LIB)/$@ $^
 
-libTPAT.so: $(OBJECTS)
+libtpat.so: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
-libTPAT.dylib: $(OBJECTS)
+libtpat.dylib: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
 ############################################################
@@ -117,6 +118,7 @@ printVars:
 	$(info $(SRC_FILES))
 	$(info $(SOURCES))
 	$(info $(OBJECTS))
+
 
 
 

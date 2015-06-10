@@ -24,10 +24,11 @@ This software has been tested on (and <i>should</i> work on) the following syste
 
 <h2>To-Do List</h2>
 <ul>
-	<li> Write funtion to convert SE CR3BP to SEM BCR4BPR </li>
-	<li> Create a few scripts that do meaningful things, like compute a family of orbits - I want to see how fast
-		C++ can be! OOH MAKE SOME MAPS
-	</li>
+	<li> Reproduce LPF orbit script from LPF update analysis</li>
+</ul>
+
+<h2>Extended To-Do List</h2>
+<ul>
 	<li> Eigenvalue/Eigenvector computation for monodromy matrices </li>
 	<li> Eigenvalue sorting </li>
 	<li> Compute manifolds </li>

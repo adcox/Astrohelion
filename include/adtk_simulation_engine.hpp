@@ -52,6 +52,18 @@ class adtk_cr3bp_traj;
  *	<tt>get_*Traj()</tt> functions. To reuse the simulation engine, call the <tt>reset()</tt>
  *  function and re-run the simulation with different initial conditions and time-of-flight.
  *
+ *	<b>Events</b>
+ *
+ *	The user can tell the simulation to watch for certain types of events during the simulation; 
+ *	if such an event occurs, the simulation can be made to end immediately, or record the 
+ *	occurence and continue. The <tt>addEvent()</tt> function adds events to the simulation and
+ *	the <tt>clearEvents()</tt> function removes all events from the simulation. In order for 
+ *	the engine to locate events, the simulation must be run with a sufficient number of points.
+ *	The engine compares points along the integrated path to the location of the event and flags
+ *	an event occurence when the direction to the event changes. If too few points are used,
+ *	the engine may never detect a change in direction.
+ *	
+ *
  *	@author Andrew Cox
  *	@version June 1, 2015
  *	@copyright GNU GPL v3.0

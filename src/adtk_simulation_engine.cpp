@@ -350,7 +350,7 @@ void adtk_simulation_engine::runSim(double *ic, double t0, double tof){
     vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = revTime ? t0 - tof : t0 + tof;
-    printVerb(verbose, "  time will span from %.4f to %.4f\n", t0, tf);
+    printVerb(verbose, "  time will span from %.3e to %.3e\n", t0, tf);
 
     if(varStepSize){
         t_span.reserve(2);
@@ -695,24 +695,40 @@ void adtk_simulation_engine::setEOMParams(){
  *  TODO: Implement a way to save information about which event is fired at which state
  */
 bool adtk_simulation_engine::locateEvents(double *y, double t){
+    int numPts = traj->getTime()->size();
+
+    // Look through all events
     for(int ev = 0; ev < ((int)events.size()); ev++){
-        if(events.at(ev).crossedEvent(y, t)){
+        // Don't trigger if only two points have been integrated
+        if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
             printVerb(verbose, "  Event %d detected; searching for exact crossing\n", ev);
             if(verbose){ events.at(ev).printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
-            double t0 = traj->getTime()->back();
-            double tof = 0.5*(t - t0);
 
-            // Copy 6-element IC into vector
-            vector<double> generalIC(events.at(ev).getState()->begin(),
-                events.at(ev).getState()->begin()+6);
+            double t0 = traj->getTime(numPts-2);    // Time from the state before last
+            double ti = traj->getTime()->back();    // Time from the previous state
+            double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
+
+            // Copy 6-element IC into vector - Use the state from two iterations ago to avoid
+            // numerical problems when the previous state is REALLY close to the event
+            vector<double> generalIC = traj->getState(numPts-2);
+
+            if(verbose){
+                printColor(BLUE, "Num Pts = %d\n", numPts);
+                printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
+                    traj->getTime()->back(), traj->getTime(numPts-2));
+                printColor(BLUE, "tof = %f\n", tof);
+                printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", generalIC[0],
+                    generalIC[1], generalIC[2], generalIC[3], generalIC[4], generalIC[5]);
+                // waitForUser();
+            }   
 
             adtk_correction_engine corrector;
             corrector.setVarTime(true);
-            corrector.setTol(relTol);
+            corrector.setTol(absTol);
             corrector.setVerbose(verbose);
             corrector.setFindEvent(true);   // apply special settings to minimize computations
 
@@ -825,15 +841,16 @@ bool adtk_simulation_engine::locateEvents(double *y, double t){
             eventOccurs.push_back(ev);
 
             if(events.at(ev).stopOnEvent()){
+                printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
                 return true;    // Tell the simulation to stop
+            }else{
+                printVerbColor(verbose, GREEN, "**Completed Event Location, continuing integration**\n");
+                return false;
             }
         }// end of If(hasCrossed)
         // Save the distance and current state to the event
         events.at(ev).updateDist(y, t);
     }// end of loop
-
-    // Pause ever step of the integration
-    // waitForUser();
 
     return false;
 }//========================================
@@ -850,6 +867,7 @@ void adtk_simulation_engine::cleanEngine(){
     delete traj;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
     eomParams = 0;
+    eventOccurs.clear();
 
     isClean = true;
 }//====================================================

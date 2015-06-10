@@ -365,7 +365,7 @@ int adtk_event::getDir(double y[6], double t) const{
 void adtk_event::printStatus() const{
 	printf("Event: Type = %s, Trigger Dir = %d, KillSim = %s\n", getTypeStr(), triggerDir, 
 		stop ? "YES" : "NO");
-	printf("  Dist: %f Last Dist: %f\n", dist, lastDist);
+	printf("  Dist: %e Last Dist: %e\n", dist, lastDist);
 }//======================================
 
 

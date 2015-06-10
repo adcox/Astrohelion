@@ -8,6 +8,9 @@
 #	This code: $(patsubst %.o,$(OBJ)/%.o, $^)
 #	replaces all the object %.o files in the dependency list with a relative path using the $(OBJ) macro
 
+# Instructions for creating libraries:
+# <http://www.iram.fr/~roche/code/c++/AddNumbers.html>
+
 ############################################################
 # Macros for compiling
 ############################################################
@@ -17,6 +20,7 @@ INC := ../include
 SRC := ../src
 OBJ := ../obj
 BIN := ../bin
+LIB := ../lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
@@ -65,6 +69,9 @@ calcTest: $(OBJECTS)
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) LinMotionTest.cpp -o $(BIN)/$@
 
+maps: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
+
 matrixTest: $(OBJ)/adtk_utilities.o $(OBJ)/adtk_matrix.o
 	$(COMP) -I $(INC) $^ $(LDFLAGS) Matrix_test.cpp -o $(BIN)/$@
 
@@ -76,6 +83,16 @@ simEngineTest: $(OBJECTS)
 
 sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) SwitchSysTest.cpp -o $(BIN)/$@	
+
+# Create a static library
+libADTK.a: $(OBJECTS)
+	ar rcs $(LIB)/$@ $^
+
+libADTK.so: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+
+libADTK.dylib: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory

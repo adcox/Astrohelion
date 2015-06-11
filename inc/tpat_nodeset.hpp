@@ -87,6 +87,7 @@ class tpat_nodeset{
 
 		void addConstraint(tpat_constraint);
 		void appendNode(std::vector<double>);
+		void appendNode(double*);
 		void appendTOF(double);
 		void setNodeDistro(node_distro_t);
 		void setVelConNodes(std::vector<int>);
@@ -119,9 +120,11 @@ class tpat_nodeset{
 		/** Whether or not velocity continuity nodes have been initiailized or set by user */
 		bool velConSet = false;
 
+		static void basicConcat(const tpat_nodeset&, const tpat_nodeset&, tpat_nodeset*);
 		void initSetFromICs(double[], tpat_sys_data*, double, double, int, node_distro_t);
 		void saveNodes(mat_t*);
 		void saveTOFs(mat_t*);
+		// std::vector<double> concatNodes(std::vector<double>, std::vector<double>);
 };
 
 #endif

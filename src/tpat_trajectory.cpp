@@ -114,10 +114,15 @@ vector<double>* tpat_trajectory::getState(){ return &state;}
 /**
  *	@brief Retrieve a single state along the trajectory
  *
- *	@param n the index of the state (0 is the first state, or IC)
+ *	@param n the index of the state (0 is the first state, or IC). If n is negative,
+ *	the countwill proceed from the end of the vector, i.e. -1 will return the 
+ *	final time, -2 will give the second to last value, etc.
  *	@return a vector representing the full state (pos, vel, accel)
  */
 vector<double> tpat_trajectory::getState(int n) const{
+	if(n < 0)
+		n += state.size()/STATE_WIDTH;
+
 	vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
 	vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH;
 	vector<double> oneState(first, last);
@@ -126,10 +131,16 @@ vector<double> tpat_trajectory::getState(int n) const{
 
 /**
  *	@brief Retrieve the time at a specific point along the trajectory
- *	@param n the index of the point (starts at 0)
+ *	@param n the index of the point (starts at 0). If n is negative, the count
+ *	will proceed from the end of the vector, i.e. -1 will return the final time, 
+ *	-2 will give the second to last value, etc.
  *	@return the non-dimensional time along the trajectory
  */
-double tpat_trajectory::getTime(int n) const { return times[n]; }
+double tpat_trajectory::getTime(int n) const {
+	if(n < 0)
+		n += times.size();
+	return times[n];
+}
 
 /**
  *	@return a pointer to the begining of the time vector
@@ -138,10 +149,14 @@ vector<double>* tpat_trajectory::getTime(){ return &times; }
 
 /**
  *	@brief Retrieve the STM at a specific point along the trajectory
- *	@param n the index of the point (starts at 0)
+ *	@param n the index of the point (starts at 0). If n is negative, the count
+ *	will proceed from the end of the vector, i.e. -1 will return the final time, 
+ *	-2 will give the second to last value, etc.
  *	@return the STM
  */
-tpat_matrix tpat_trajectory::getSTM(int n) const { 
+tpat_matrix tpat_trajectory::getSTM(int n) const {
+	if(n < 0)
+		n += allSTM.size();
 	tpat_matrix temp(allSTM[n]);
 	return temp;
 }

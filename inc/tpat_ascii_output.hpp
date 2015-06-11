@@ -1,4 +1,5 @@
 /**
+ *	@file tpat_ascii_output
  *	@brief This class contains macros for fancy ASCII outputs
  *
  *	@author Andrew Cox

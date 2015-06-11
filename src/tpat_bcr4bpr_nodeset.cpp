@@ -4,7 +4,37 @@
 
 #include "tpat_bcr4bpr_nodeset.hpp"
 #include "tpat_bcr4bpr_sys_data.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
+
+/**
+ *	@brief Construct a nodeset with no data other than the system
+ *	@param data system data object describing the system the nodes exist in
+ */
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(tpat_bcr4bpr_sys_data data) : tpat_nodeset(6){
+	sysData = data;
+}
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	integrated trajectory into pieces (nodes).
+ *
+ *	The type is automatically set to splitting the trajectory equally in TIME
+ *
+ *	@param IC a set of initial conditions, non-dimensional units
+ *	@param data a pointer to a system data object that describes the model to integrate in
+ *	@param t0 time that corresponds to IC
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ */
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data data, 
+	double t0, double tof, int numNodes) : tpat_nodeset(6){
+
+	sysData = data;
+
+	initSetFromICs(IC, &sysData, t0, tof, numNodes, tpat_nodeset::TIME);
+	initEpochs(numNodes, t0);
+}//======================================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -18,12 +48,15 @@
  *	@param type node distribution type
  */
 tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data data, 
-		double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(6){
+	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(6){
 
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, t0, tof, numNodes, type);
+	initEpochs(numNodes, t0);
+}//======================================================================
 
+void tpat_bcr4bpr_nodeset::initEpochs(int numNodes, double t0){
 	// Compute epoch times for each node
 	epochs.reserve(numNodes);
 
@@ -33,7 +66,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
 		ellapsed += tofs.at(n);
 		epochs.push_back(ellapsed);
 	}
-}//======================================================================
+}//=========================================
 
 /**
  *	@brief Destructor
@@ -64,6 +97,39 @@ tpat_bcr4bpr_nodeset& tpat_bcr4bpr_nodeset::operator =(const tpat_bcr4bpr_nodese
 }//=========================================
 
 /**
+ *	@brief Concatenate two nodesets
+ *
+ *	If the final node in <tt>lhs</tt> is the same as the first node in <tt>rhs</tt>, the
+ *	concatenation will delete one occurence of the node to achieve continuity. Otherwise
+ *	the nodes from <tt>rhs</tt> are concatenated to the end of <tt>lhs</tt>. The velocity
+ *	continuity specifications and constraints for <tt>rhs</tt> are updated to reflect the 
+ *	new indices of the nodes they describe.
+ *
+ *	@param lhs
+ *	@param rhs
+ *	@return a nodeset containing the concatenated input nodesets
+ */
+tpat_bcr4bpr_nodeset operator +(const tpat_bcr4bpr_nodeset &lhs, const tpat_bcr4bpr_nodeset &rhs){
+	if(lhs.sysData != rhs.sysData){
+		throw tpat_exception("Cannot add nodesets from different systems; please transform them to be in the same system");
+	}
+
+	tpat_bcr4bpr_nodeset temp(lhs.sysData);
+	tpat_bcr4bpr_nodeset::basicConcat(lhs, rhs, &temp);
+
+	// Concatenate Epoch Times
+	temp.epochs.clear();
+	if(lhs.getNode(-1) == rhs.getNode(0)){
+		temp.epochs.insert(temp.epochs.end(), lhs.epochs.begin(), lhs.epochs.end()-1);
+	}else{
+		temp.epochs.insert(temp.epochs.end(), lhs.epochs.begin(), lhs.epochs.end());
+	}
+	temp.epochs.insert(temp.epochs.end(), rhs.epochs.begin(), rhs.epochs.end());
+
+	return temp;
+}//=====================================================
+
+/**
  *	@brief Retrieve a pointer to the vector of epochs
  *	@return a pointer to the beginning of the epochs vector
  */
@@ -71,10 +137,14 @@ std::vector<double>* tpat_bcr4bpr_nodeset::getEpochs(){ return &epochs; }
 
 /**
  *	@brief Retrieve a specifi epoch
- *	@param i epoch index (begins with zero)
+ *	@param i epoch index (begins with zero). If i is negative, the epoch will be
+ *	selected from the end of the vector, i.e. -1 will give the last value, -2 will
+ *	give the second to last, etc.
  *	@return the epoch, non-dimensional units
  */
 double tpat_bcr4bpr_nodeset::getEpoch(int i) const {
+	if(i < 0)
+		i += epochs.size();
 	return epochs.at(i);
 }//=====================================
 

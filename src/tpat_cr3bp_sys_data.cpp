@@ -10,6 +10,7 @@
  
 #include "tpat_body_data.hpp"
 #include "tpat_constants.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -51,8 +52,7 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
 
 		mu = p2Data.getMass()/charM;
 	}else{
-		cout << "tpat_cr3bp_sys_Data constructor :: P1 must be the parent of P2" << endl;
-		throw;
+		throw tpat_exception("P1 must be the parent of P2");
 	}
 }//===================================================
 

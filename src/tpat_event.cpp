@@ -9,6 +9,7 @@
 #include "tpat_body_data.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
  
 #include <cmath>
@@ -51,8 +52,7 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
 			break;
 		}
 		default: 
-			printWarn("tpat_event() Creating event with no type!\n");
-			throw;
+			throw tpat_exception("Creating event with no type");
 	}
 }//================================================
 
@@ -105,8 +105,7 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 			conType = tpat_constraint::MAX_DIST;
 			break;
 		default: 
-			printWarn("tpat_event::initEvent() Creating event with no type!\n");
-			throw;
+			throw tpat_exception("Creating event with no type");
 	}
 
 	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};	// seven empty elements
@@ -122,8 +121,7 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 			    tpat_body_data primData(sysData->getPrimary((int)(data[0])));
 			    data[1] = (primData.getRadius() + primData.getMinFlyBy())/sysData->getCharL();
 			}else{
-				printErr("Cannot access primary #%d for crash event\n", data[0]);
-				throw;
+				throw tpat_exception("Cannot access primary for crash event");
 			}
 			break;
 		}
@@ -315,8 +313,7 @@ double tpat_event::getDist(double y[6], double t) const{
 					break;
 				}
 				default: 
-					printErr("tpat_event::getDist() Unsupported system type for crash\n");
-					throw;
+					throw tpat_exception("Unsupported system type for crash");
 			}
 
 			int Pix = (int)(conData[0]);
@@ -327,8 +324,7 @@ double tpat_event::getDist(double y[6], double t) const{
 			break;
 		}
 		default:
-			printErr("tpat_event::getDist() Event type not implemented: %s\n", getTypeStr());
-			throw;
+			throw tpat_exception("Event type not implemented");
 	}
 
 	return d;
@@ -352,8 +348,7 @@ int tpat_event::getDir(double y[6], double t) const{
 		case XY_PLANE: d = y[2] - state[2]; break;
 		case CRASH: d = dist - lastDist; break;
 		default: 
-			printErr("tpat_event::getDir() Event type not implemented: %s\n", getTypeStr());
-			throw;
+			throw tpat_exception("Event type not implemented");
 	}
 
 	return (int)(d*dt/abs(d*dt));

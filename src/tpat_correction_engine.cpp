@@ -196,12 +196,10 @@ tpat_cr3bp_nodeset tpat_correction_engine::getCR3BPOutput(){
 			tpat_cr3bp_nodeset temp( *(static_cast<tpat_cr3bp_nodeset *>(nodeset_out)) );
 			return temp;
 		}else{
-			printErr("Wrong system type!\n");
-			throw tpat_exception();
+			throw tpat_exception("Wrong system type");
 		}
 	}else{
-		printErr("Output nodeset has not been created, cannot return CR3BP output\n");
-		throw tpat_exception();
+		throw tpat_exception("Output nodeset has not been created, cannot return CR3BP output");
 	}
 }//=========================================
 
@@ -220,12 +218,10 @@ tpat_bcr4bpr_nodeset tpat_correction_engine::getBCR4BPROutput(){
 			tpat_bcr4bpr_nodeset temp( *(static_cast<tpat_bcr4bpr_nodeset *>(nodeset_out)) );
 			return temp;
 		}else{
-			printErr("Wrong system type!\n");
-			throw tpat_exception();
+			throw tpat_exception("Wrong system type");
 		}
 	}else{
-		printErr("Output nodeset has not been created, cannot return CR3BP output\n");
-		throw tpat_exception();
+		throw tpat_exception("Output nodeset has not been created, cannot return CR3BP output");
 	}
 }//=========================================
 
@@ -382,8 +378,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 						slackAssignCon.push_back(c);
 					}
 				}else{
-					printErr("You can only apply ONE delta-V constraint!\n");
-					throw;
+					throw tpat_exception("You can only apply ONE delta-V constraint");
 				}
 				break;
 			default: break;
@@ -519,16 +514,14 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 								updatePrimVel(&it, sysData, t0);
 								targetSP(&it, static_cast<tpat_bcr4bpr_sys_data *>(sysData), n);
 							}else{
-								printErr("Cannot apply SP constraint to systems other than BCR4BPR\n");
-								throw tpat_exception();
+								throw tpat_exception("Cannot apply SP constraint to systems other than BCR4BPR");
 							}
 							break;
 						case tpat_constraint::DELTA_V:	// handled outside this loop
 						case tpat_constraint::MAX_DELTA_V:
 							break;
 						default:
-							printErr("Unrecognized consraint type\n");
-							throw tpat_exception();
+							throw tpat_exception("Unrecognized consraint type");
 					}// End switch/case
 				}// End if(con.getNode() == n)
 
@@ -590,7 +583,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	}// end of corrections loop
 
 	if(err > tol){
-		printErr("tpat_correction_engine - Corrections process did not converge\n");
 		throw tpat_diverge();
 	}
 
@@ -693,8 +685,7 @@ void tpat_correction_engine::targetState(iterationData* it, tpat_constraint con,
 					it->DF[it->totalFree*it->conCount + 7*it->numNodes-1+n] = 1;
 					it->conCount++;
 				}else{
-					printErr("State constraints must have <= 7 elements\n");
-					throw tpat_exception();
+					throw tpat_exception("State constraints must have <= 7 elements");
 				}
 			}
 		}
@@ -1025,9 +1016,7 @@ void tpat_correction_engine::updatePrimPos(iterationData* it, tpat_sys_data* sys
 				break;
 			}
 			default:
-				printErr("Cannot compute primary position for system type %s\n",
-					sysData->getTypeStr().c_str());
-				throw tpat_exception();
+				throw tpat_exception("Cannot compute primary position for system type");
 		}
 		it->upToDatePrimPos = true;
 	}
@@ -1061,9 +1050,7 @@ void tpat_correction_engine::updatePrimVel(iterationData* it, tpat_sys_data* sys
 				break;
 			}
 			default:
-				printErr("Cannot compute primary velocity for system type %s\n",
-					sysData->getTypeStr().c_str());
-				throw tpat_exception();
+				throw tpat_exception("Cannot compute primary velocity for system type");
 		}
 		it->upToDatePrimVel = true;
 	}
@@ -1126,13 +1113,13 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 		perm = gsl_permutation_alloc(J.getRows());
 		status = gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
 		if(status){
-			printErr("Unable to decompose J into L and U; GSL ERR: %s\n", gsl_strerror(status));
-			throw tpat_linalg_err();
+			printErr("GSL ERR: %s\n", gsl_strerror(status));
+			throw tpat_linalg_err("Unable to decompose J into L and U");
 		}
 		status = gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
 		if(status){
-			printErr("Unable to invert J, likely singular; GSL ERR: %s\n", gsl_strerror(status));
-			throw tpat_linalg_err();
+			printErr("GSL ERR: %s\n", gsl_strerror(status));
+			throw tpat_linalg_err("Unable to invert J, likely singular");
 		}
 		// w, in this case, is X_diff
 		X_diff = tpat_matrix(w, false);
@@ -1158,15 +1145,13 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 			perm = gsl_permutation_alloc(G.getRows());
 			status = gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
 			if(status){
-				printErr("Unable to decompose J into L and U; GSL ERR: %s\n",
-					gsl_strerror(status));
-				throw tpat_linalg_err();
+				printErr("GSL ERR: %s\n", gsl_strerror(status));
+				throw tpat_linalg_err("Unable to decompose J into L and U");
 			}
 			status = gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
 			if(status){
-				printErr("Unable to invert G = JJ', likely singular; GSL ERR: %s\n",
-					gsl_strerror(status));
-				throw tpat_linalg_err();
+				printErr("GSL ERR: %s\n", gsl_strerror(status));
+				throw tpat_linalg_err("Unable to invert G = JJ', likely singular");
 			}
 
 			// Compute the optimal x from w
@@ -1176,8 +1161,7 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 			// dummy allocations to avoid errors when cleaning up
 			perm = gsl_permutation_alloc(J.getRows());
 			w = gsl_vector_alloc(J.getRows());
-			printErr("System is over constrained... No solution implemented!\n");
-			throw tpat_linalg_err();
+			throw tpat_linalg_err("System is over constrained... No solution implemented");
 		}
 	}
 

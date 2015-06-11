@@ -1,20 +1,15 @@
 #include <iostream>
+#include <gsl/gsl_matrix.h>
 
 using namespace std;
 
 int main(void){
 	
-	int i = 0;
-	double d = 0;
+	double data[] = {1,2,3,4};
+	gsl_matrix *m = gsl_matrix_alloc(2,2);
+	copy(data, data+4, m->data);
 
-	// while(i < 10){
-	// 	// d = 0;
-	// 	d = i*0.5;
-	// 	printf("d = %f\n", d);
-
-	// 	// delete d;
-	// 	i++;
-	// }
-
+	printf("Matrix:\n%f %f\n%f %f\n", gsl_matrix_get(m, 0, 0), gsl_matrix_get(m, 0, 1),
+		gsl_matrix_get(m, 1, 0), gsl_matrix_get(m, 1, 1));
 	return 0;
 }

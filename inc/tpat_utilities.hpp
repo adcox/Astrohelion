@@ -34,8 +34,18 @@
  
 #include <complex>
 #include <string>
+#include <vector>
 
 
+/**
+ *	@brief sum all values in an array
+ *
+ *	For this function to work, the class must overload +=
+ *
+ *	@param data an array
+ *	@param length the number of elements in the array that can be summed.
+ *	@return a single object representing the sum of all the elements of data.
+ */
 template<class T> T tpat_sum(T* data, int length){
 	T total = 0;
 	for(int n = 0; n < length; n++){
@@ -43,7 +53,19 @@ template<class T> T tpat_sum(T* data, int length){
 	}
 
 	return total;
-}
+}//=====================================
+
+/**
+ *	@brief concatenate two vectors
+ *	@param lhs the left-hand-side vector
+ *	@param rhs the righ-hand-side vector
+ *	@return a new vector that includes both input vectors in order, i.e. [lhs, rhs]
+ */
+template<class T> std::vector<T> concatVecs(std::vector<T> lhs, std::vector<T> rhs){
+	std::vector<T> tempVec(lhs.begin(), lhs.end());
+	tempVec.insert(tempVec.end(), rhs.begin(), rhs.end());
+	return tempVec;
+}//=======================================
 
 std::string complexToStr(std::complex<double> num);
 void printErr(const char*, ...);

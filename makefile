@@ -112,7 +112,7 @@ cleandist: clean
 
 nuke:
 	@- $(RM) $(OBJ)/*.o
-	@- $(RM) $(BIN)/*.out
+	@- $(RM) $(LIB)/libtpat.*
 
 printVars:
 	$(info $(SRC_FILES))

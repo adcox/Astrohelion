@@ -2,7 +2,7 @@
  *	Test the simulation engine
  */
 
-
+#include "tpat_ascii_output.hpp"
 #include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_bcr4bpr_traj.hpp"
 #include "tpat_constants.hpp"
@@ -65,7 +65,8 @@ void test_cr3bp_events(){
 	tpat_simulation_engine engine(&sys);
 	engine.setVerbose(true);
 	engine.addEvent(tpat_event::XZ_PLANE, 0, true);
-	engine.runSim(ic, 2.77);
+	engine.setRevTime(true);
+	engine.runSim(ic, 1.5);
 
 	tpat_cr3bp_traj traj = engine.getCR3BPTraj();
 	traj.saveToMat("HaloHalfTest.mat");
@@ -90,10 +91,14 @@ int main(void){
 	
 	gsl_set_error_handler_off();
 	
+	printColor(RED, "*************************\n* Test CR3BP Sim        *\n*************************\n");
 	test_cr3bp_sim();
+	printColor(RED, "*************************\n* Test BCR4BPR Sim      *\n*************************\n");
 	test_bcr4bpr_sim();
 
+	printColor(RED, "*************************\n* Test CR3BP Events     *\n*************************\n");
 	test_cr3bp_events();
+	printColor(RED, "*************************\n* Test BCR4BPR Events   *\n*************************\n");
 	test_bcr4bpr_events();
 
 	return 0;

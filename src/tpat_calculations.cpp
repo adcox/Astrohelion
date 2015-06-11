@@ -400,8 +400,7 @@ double cr3bp_getJacobi(double s[], double mu){
  */
 void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double pos[3]){
     if(L < 1 || L > 5){
-        printErr("Invalid Lagrange Point: %d\n", L);
-        throw tpat_exception();
+        throw tpat_exception("Invalid Lagrange Point");
     }
 
     if(tol == NAN){
@@ -902,14 +901,11 @@ tpat_bcr4bpr_traj bcr4bpr_SE2SEM(tpat_cr3bp_traj crTraj, tpat_bcr4bpr_sys_data b
     string sun("Sun");      string earth("Earth");      string moon("Moon");
 
     if(crTraj.getSysData().getPrimID(0) != 10 || crTraj.getSysData().getPrimID(1) != 399){
-        printErr("CR3BP trajectory is not in the Sun-Earth System!\n");
-        throw tpat_exception();
+        throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
     if(bcSys.getPrimID(0) != 10 || bcSys.getPrimID(1) != 399 || bcSys.getPrimID(2) != 301){
-        
-        printErr("BCR4BPR system is not Sun-Earth-Moon!\n");
-        throw tpat_exception();
+        throw tpat_exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
     // Create a BCR4BPR Trajectory

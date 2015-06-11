@@ -276,8 +276,7 @@ tpat_matrix operator +(const tpat_matrix &lhs, const tpat_matrix &rhs){
 		// Return a new matrix
 		return tpat_matrix(lhs.rows, lhs.cols, q);
 	}else{
-		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw tpat_sizeMismatch();
+		throw tpat_sizeMismatch("Matrices must be the same size to apply addition");
 	}
 }
 
@@ -291,8 +290,7 @@ tpat_matrix& tpat_matrix::operator +=(const tpat_matrix &b){
 		gsl_matrix_add(a, b.a);
 		return *this;
 	}else{
-		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw tpat_sizeMismatch();
+		throw tpat_sizeMismatch("Matrices must be the same size to apply addition");
 	}
 }//==============================================
 
@@ -391,8 +389,7 @@ tpat_matrix& tpat_matrix::operator *=(const tpat_matrix &b){
 		delete[] C;
 		return *this;
 	}else{
-		printErr("Operation will not return same size matrix\n");
-		throw tpat_sizeMismatch();
+		throw tpat_sizeMismatch("Operation will not return same size matrix");
 	}
 }//=============================================
 
@@ -486,8 +483,7 @@ double abs(const tpat_matrix &m){
  */
 tpat_matrix cross(const tpat_matrix &lhs, const tpat_matrix &rhs){
 	if(lhs.rows*lhs.cols != 3 || rhs.rows*rhs.cols != 3){
-		printErr("Cross product only defined for 3D vectors...\n");
-		throw tpat_linalg_err();
+		throw tpat_linalg_err("Cross product only defined for 3D vectors");
 	}
 
 	vector<double> data(3,0);
@@ -508,15 +504,14 @@ tpat_matrix cross(const tpat_matrix &lhs, const tpat_matrix &rhs){
  */
 double det(const tpat_matrix &m){
 	if(m.rows != m.cols){
-		printErr("Cannot take determinant of non-square matrix!\n");
-		throw tpat_linalg_err();
+		throw tpat_linalg_err("Cannot take determinant of non-square matrix");
 	}
 	int permSign;
 	gsl_permutation *perm = gsl_permutation_alloc(m.rows);
 	int status = gsl_linalg_LU_decomp(m.a, perm, &permSign);
 	if(status){
-		printErr("Unable to perform LU decomp on matrix; GSL ERR: %s\n", gsl_strerror(status));
-		throw tpat_linalg_err();
+		printErr("GSL ERR: %s\n", gsl_strerror(status));
+		throw tpat_linalg_err("Unable to perform LU decomp on matrix");
 	}
 	double ans = gsl_linalg_LU_det(m.a, permSign);
 	gsl_permutation_free(perm);
@@ -537,8 +532,7 @@ double norm(const tpat_matrix &m){
 		}
 		return sqrt(sumSquares);
 	}else{
-		cout << "tpat_matrix :: Cannot take norm of a 2-D matrix" << endl;
-		throw tpat_exception();
+		throw tpat_exception("Cannot take norm of a 2-D matrix");
 	}
 }//==========================================
 
@@ -599,8 +593,7 @@ void tpat_matrix::copyDataIntoGSL_Matrix(double *data){
  */
 void tpat_matrix::copyDataIntoGSL_Matrix(std::vector<double> v){
 	if(((int)v.size()) != rows*cols){
-		printErr("Input vector size does not match matrix size!\n");
-		throw tpat_sizeMismatch();
+		throw tpat_sizeMismatch("Input vector size does not match matrix size");
 	}
 	copyDataIntoGSL_Matrix(&(v[0]));
 }//============================================

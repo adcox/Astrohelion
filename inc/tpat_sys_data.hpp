@@ -61,7 +61,10 @@ class tpat_sys_data{
 		virtual ~tpat_sys_data() {}
 		
 
-		tpat_sys_data& operator= (const tpat_sys_data&);
+		tpat_sys_data& operator =(const tpat_sys_data&);
+
+		friend bool operator ==(const tpat_sys_data&, const tpat_sys_data&);
+		friend bool operator !=(const tpat_sys_data&, const tpat_sys_data&);
 
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;

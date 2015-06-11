@@ -18,7 +18,7 @@
 # Paths for files
 INC := ../inc
 SRC := ../src
-OBJ := ../obj
+OBJ := ../obj_debug
 BIN := ../bin
 LIB := ../lib
 
@@ -64,35 +64,28 @@ all: simEngineTest
 ############################################################
 
 calcTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) TestCalc.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
 
 linMotionTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) LinMotionTest.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
 
 maps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
 
 matrixTest: $(OBJ)/tpat_utilities.o $(OBJ)/tpat_matrix.o
-	$(COMP) -I $(INC) $^ $(LDFLAGS) Matrix_test.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_matrix.cpp -o $(BIN)/$@
 
 nodesetTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) Nodeset_test.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
 
 simEngineTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) SimulationEngine_test.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
 
 sysSwitchTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) SwitchSysTest.cpp -o $(BIN)/$@	
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
 
-# Create a static library
-libTPAT.a: $(OBJECTS)
-	ar rcs $(LIB)/$@ $^
-
-libTPAT.so: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
-
-libTPAT.dylib: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+utilityTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory

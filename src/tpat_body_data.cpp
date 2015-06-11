@@ -6,6 +6,7 @@
 #include "tpat_body_data.hpp"
 
 #include "tpat_constants.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -219,8 +220,7 @@ tpat_body_data::tpat_body_data(std::string n){
     }
 
     // Function should have returned by this point if the body was found
-    printErr("tpat_body_data constructor :: Could not locate body %s\n", n.c_str());
-    throw;
+    throw tpat_exception("Could not locate body");
 }// END of constructor using body name -------------------------------------
 
 /**

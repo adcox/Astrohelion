@@ -82,10 +82,8 @@ tpat_cr3bp_traj& tpat_cr3bp_traj::operator= (const tpat_cr3bp_traj& t){
  *	@return a new trajectory
  */
 tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rhs){
-	if(lhs.sysData.getPrimary(0).compare(rhs.sysData.getPrimary(0)) != 0 ||
-			lhs.sysData.getPrimary(1).compare(rhs.sysData.getPrimary(1)) != 0){
-		printErr("Cannot sum two CR3BP trajectories from different systems!\n");
-		throw;
+	if(lhs.sysData != rhs.sysData){
+		throw tpat_exception("Cannot sum two CR3BP trajectories from different systems");
 	}
 
 	// create a new trajectory object with space for both sets of data to be combined
@@ -124,10 +122,16 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 
 /**
  *	@brief Get the value of Jacobi constant at a particular point on the trajectory
- *	@param n the index of the point
+ *	@param n the index of the point. If n is negative, the count
+ *	will proceed from the end of the vector, i.e. -1 will return the final time, 
+ *	-2 will give the second to last value, etc.
  *	@return the Jacobi constant (non-dimensional)
  */
-double tpat_cr3bp_traj::getJC(int n){ return jacobi[n]; }
+double tpat_cr3bp_traj::getJC(int n){
+	if(n < 0)
+		n += jacobi.size();
+	return jacobi[n];
+}
 
 /**
  *	@brief Retrieve a pointer to the Jacobi array for in-place editing.

@@ -32,10 +32,15 @@
  */
 class tpat_exception : public std::exception{
 	public:
+		tpat_exception() : msg("Custom exception!") {}
+		tpat_exception(const char* m) : msg(m) {}
+
 		/** @brief describe the exception */
 		virtual const char* what() const throw(){
-			return "Custom exception!";
+			return msg;
 		}
+	protected:
+		const char *msg;
 };
 
 /**
@@ -45,11 +50,13 @@ class tpat_exception : public std::exception{
  * 	Size mismatch means two matrices cannot be added, subtracted, or multiplied 
  *  because they do not have the appropriate dimensions
  */
-class tpat_sizeMismatch : public tpat_exception{
+class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
 	public:
+		tpat_sizeMismatch() : tpat_exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
+		tpat_sizeMismatch(const char* m) : tpat_exception(m), std::runtime_error(m) {}
 		/** @brief describe the exception */
 		const char* what() const throw(){
-	    	return "Matrix dimensions do not match!";
+	    	return msg;
 	  	}
 };
 
@@ -60,11 +67,13 @@ class tpat_sizeMismatch : public tpat_exception{
  *	This exception should be thrown when the solution fails to converge (or diverges)
  *	and provides a way for the calling function to gracefully handle the divergence
  */
-class tpat_diverge : public tpat_exception{
+class tpat_diverge : public tpat_exception, std::runtime_error{
 	public:
+		tpat_diverge() : tpat_exception("Did not converge!"), std::runtime_error("Did not converge!"){}
+		tpat_diverge(const char* m) : tpat_exception(m), std::runtime_error(m) {}
 		/** @brief describe the exception */
 		const char* what() const throw(){
-			return "Did not converge!";
+			return msg;
 		}
 };
 
@@ -74,11 +83,13 @@ class tpat_diverge : public tpat_exception{
  *	This exception should be thrown for cases like trying to factor singular
  *	matrices, taking the deteriminant of a non-square matrix, etc.
  */
-class tpat_linalg_err : public tpat_exception{
+class tpat_linalg_err : public tpat_exception, std::runtime_error{
 	public:
+		tpat_linalg_err() : tpat_exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
+		tpat_linalg_err(const char* m) : tpat_exception(m), std::runtime_error(m) {}
 		/** @brief describe the exception */
 		const char* what() const throw(){
-			return "Linear algebra error!";
+			return msg;
 		}
 };
 

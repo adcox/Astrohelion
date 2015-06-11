@@ -21,19 +21,69 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_cr3bp_nodeset.hpp"
 #include "tpat_bcr4bpr_nodeset.hpp"
 #include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_exceptions.hpp"
 
 #include <cmath>
 #include <iostream>
 
 using namespace std;
 
+static const char* PASS = BOLDGREEN "PASS" RESET;
+static const char* FAIL = BOLDRED "FAIL" RESET;
+
 tpat_cr3bp_nodeset *crSet;
 tpat_bcr4bpr_nodeset *bcSet;
+
+void test_concat_CR3BP(){
+	tpat_cr3bp_sys_data sys("Saturn", "Titan");
+	tpat_cr3bp_sys_data emSys("earth", "moon");
+	tpat_cr3bp_nodeset set1(sys);
+	tpat_cr3bp_nodeset set2(sys);
+	tpat_cr3bp_nodeset set3(sys);
+	tpat_cr3bp_nodeset set4(emSys);
+
+	double node1[] = {1,0,0,0,0,0};
+	double node2[] = {2,1,0,0,0,0};
+	double node3[] = {3,0,1,0,0,0};
+	double node4[] = {4,0,0,1,0,0};
+
+	set1.appendNode(node1);
+	set1.appendNode(node2);
+	
+	set2.appendNode(node3);
+	set2.appendNode(node4);
+	
+	set3.appendNode(node2);
+	set3.appendNode(node3);
+	set3.appendNode(node4);
+
+	set4.appendNode(node4);
+
+	tpat_cr3bp_nodeset sum1 = set1 + set2;
+	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
+	sum1.print();
+
+	tpat_cr3bp_nodeset sum2 = set1 + set3;
+	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
+	sum2.print();
+	
+	try{
+		cout << "Testing sum of different systems: ";
+		tpat_cr3bp_nodeset sum3 = set1 + set4;
+		cout << FAIL << endl;
+	}catch(tpat_exception &e){
+		cout << PASS << endl;
+	}
+	catch(...){
+		cout << FAIL << endl;
+	}
+}
 
 void test_createCR3BPNodeset(){
 	// Define system and IC
@@ -115,6 +165,8 @@ int main(void){
 	// Memory clean-up
 	delete crSet;
 	delete bcSet;
+
+	test_concat_CR3BP();
 
 	return 0;
 }

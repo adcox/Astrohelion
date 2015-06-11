@@ -166,8 +166,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	            break;
 			}
 			default:
-				printErr("Collinear points; invalid type: %s\n", getTypeStr(type));
-				throw tpat_exception();
+				throw tpat_exception("Invalid type for collinear points");
 		}
 	}else{ // L = 4 or 5
 		// Compute eigenvalues analytically
@@ -196,7 +195,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			double s3d = imag(s3);
 			
 			if(s1d < 0 || s3d < 0){
-				printErr("Eigenvalue order appears to be shifting... please hardcode abs()\n");
+				printErr("tpat_linear_motion_engine :: Eigenvalue order appears to be shifting... please hardcode abs()\n");
 			}
 
 			switch(type){
@@ -254,8 +253,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
                 	break;
                 }
 				default:
-					printErr("Triangular points, Case I: unrecognized type %s\n", getTypeStr(type));
-					throw tpat_exception();
+					throw tpat_exception("Invalid type for triangular points, Case I");
 			}
 		}else if(abs(g) < tol){
 			// Case II, g is 0 (approx.)
@@ -296,12 +294,10 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 					eta_dot0 = -p*eta0 - q*(b3*xi0 - a3*(eta0 - a3*xi0)/b3);
 					break;	
 				case DIVERGE:
-					printErr("Triangular points, Case III: Diverge not yet implemented\n");
-					throw tpat_exception();
+					throw tpat_exception("Triangular points, Case III: Diverge not yet implemented");
 					break;
 				default:
-					printErr("Triangular points, Case III: unrecognized type %s\n", getTypeStr(type));
-					throw tpat_exception();
+					throw tpat_exception("Invalid type for triangular points, Case III");
 			}
 		}
 	}

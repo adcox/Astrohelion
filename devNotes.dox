@@ -20,6 +20,9 @@ This software has been tested on (and <i>should</i> work on) the following syste
 			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>
 		</ul>
 	</li>
+	<li>
+		NAIF SPICE <http://naif.jpl.nasa.gov/naif/toolkit_C.html>
+	</li>
 </ul>
 
 <h2>To-Do List</h2>

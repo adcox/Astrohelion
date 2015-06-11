@@ -225,8 +225,7 @@ tpat_cr3bp_traj tpat_simulation_engine::getCR3BPTraj() const{
         tpat_cr3bp_traj temp( *(static_cast<tpat_cr3bp_traj *>(traj) ) );
         return temp;
     }else{
-        printErr("Wrong system type: %s\n", sysData->getTypeStr().c_str());
-        throw tpat_exception();
+        throw tpat_exception("Wrong system type");
     }
 }//==============================================
 
@@ -247,8 +246,7 @@ tpat_bcr4bpr_traj tpat_simulation_engine::getBCR4BPRTraj() const{
         return temp;
     }
     else{
-        printErr("Wrong system type: %s\n", sysData->getTypeStr().c_str());
-        throw tpat_exception();
+        throw tpat_exception("Wrong system type");
     }
 }//=====================================
 
@@ -349,8 +347,9 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
 
     vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
-    double tf = revTime ? t0 - tof : t0 + tof;
+    double tf = revTime ? t0 - abs(tof) : t0 + abs(tof);
     printVerb(verbose, "  time will span from %.3e to %.3e\n", t0, tf);
+    printVerb(verbose, "  (Reverse Time is %s)\n", revTime ? "ON" : "OFF");
 
     if(varStepSize){
         t_span.reserve(2);
@@ -382,8 +381,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
 			break;
         }
 		default:
-            printErr("Cannot simulation with this system type: %s\n", sysData->getTypeStr().c_str());
-			throw tpat_exception();
+			throw tpat_exception("Cannot simulate for this system type");
 	}
 
     // Run the simulation
@@ -451,8 +449,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
             eomFcn = simpleIntegration ? &bcr4bpr_simple_EOMs : &bcr4bpr_EOMs;
             break;
         default:
-            printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
-            throw tpat_exception();
+            throw tpat_exception("Unknown sim system type");
     }
 
     // Create a system to integrate; we don't include a Jacobian (NULL)
@@ -475,7 +472,8 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     }else{
         printVerb(verbose, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         // Allocate space for a driver; the msadams algorithm requires access to the driver
-        d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, dtGuess, absTol, relTol);
+        double signed_dt = revTime ? -1*dtGuess : dtGuess;
+        d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
         // Allocate space for the stepping object
         s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
         gsl_odeiv2_step_set_driver(s, d);
@@ -509,8 +507,8 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
             }
 
             if(status != GSL_SUCCESS){
-                printErr("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
-                throw tpat_diverge();
+                printErr("GSL error: %s\n", gsl_strerror(status));
+                throw tpat_diverge("Integration did not succeed");
             }
 
             killSim = locateEvents(y, t0);
@@ -538,8 +536,8 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 }
 
                 if(status != GSL_SUCCESS){
-                    printErr("Integration did not succeed:\n  GSL error: %s\n", gsl_strerror(status));
-                    throw tpat_diverge();
+                    printErr("GSL error: %s\n", gsl_strerror(status));
+                    throw tpat_diverge("Integration did not succeed");
                 }
 
                 killSim = locateEvents(y, t0);
@@ -634,8 +632,7 @@ void tpat_simulation_engine::saveIntegratedData(double *y, double t){
             break;
         }
         default:
-            printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
-            throw tpat_exception();
+            throw tpat_exception("Unsupported system type");
     }
 
     // Save the accelerations
@@ -660,8 +657,7 @@ void tpat_simulation_engine::setEOMParams(){
             break;
         }
         default:
-            printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
-            throw tpat_exception();
+            throw tpat_exception("Unsupported system type");
     }
 }//==============================================
 
@@ -830,8 +826,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
                     break;
                 }
                 default:
-                    printErr("Unknown sim type: %s\n", sysData->getTypeStr().c_str());
-                    throw tpat_exception();
+                    throw tpat_exception("Unsupported system type");
             }
             
             // Remember that this event has occured; step # is one less than the current size

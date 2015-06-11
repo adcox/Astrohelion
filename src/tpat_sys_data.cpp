@@ -40,6 +40,38 @@ tpat_sys_data& tpat_sys_data::operator =(const tpat_sys_data &d){
 	return *this;
 }//==========================================
 
+/**
+ *	@brief compare two system data objects. They are the same if they 
+ *	represent the same system (exact same primaries)
+ *
+ *	@param lhs
+ *	@param rhs
+ *	@return whether or not they are the same
+ */
+bool operator ==(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
+	if(lhs.numPrimaries != rhs.numPrimaries)
+		return false;
+
+	for(int p = 0; p < lhs.numPrimaries; p++){
+		if(lhs.primIDs[p] != rhs.primIDs[p])
+			return false;
+	}
+
+	return true;
+}//===========================================
+
+/**
+ *	@brief compare two system data objects. They are the same if they 
+ *	represent the same system (exact same primaries)
+ *
+ *	@param lhs
+ *	@param rhs
+ *	@return whether or not they are different
+ */
+bool operator !=(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
+	return ! operator==(lhs, rhs);
+}//===========================================
+
 void tpat_sys_data::copyData(const tpat_sys_data &d){
 	charL = d.charL;
 	charT = d.charT;

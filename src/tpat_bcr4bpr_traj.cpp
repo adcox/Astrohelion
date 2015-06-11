@@ -82,11 +82,8 @@ tpat_bcr4bpr_traj& tpat_bcr4bpr_traj::operator= (const tpat_bcr4bpr_traj& t){
  *	@return a new trajectory
  */
 tpat_bcr4bpr_traj operator +(const tpat_bcr4bpr_traj &lhs, const tpat_bcr4bpr_traj &rhs){
-	if(lhs.sysData.getPrimary(0).compare(rhs.sysData.getPrimary(0)) != 0 ||
-			lhs.sysData.getPrimary(1).compare(rhs.sysData.getPrimary(1)) != 0 || 
-			lhs.sysData.getPrimary(2).compare(rhs.sysData.getPrimary(2)) != 0){
-		printErr("Cannot sum two BCR4BPR trajectories from different systems!\n");
-		throw;
+	if(lhs.sysData != rhs.sysData){
+		throw tpat_exception("Cannot sum two BCR4BPR trajectories from different systems!");
 	}
 
 	// create a new trajectory object with space for both sets of data to be combined
@@ -144,9 +141,14 @@ vector<double>* tpat_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
 
 /**
  *	@param i the index of the dqdT vector to retrieve
- *	@return the i'th 6-element dqdT vector
+ *	@return the i'th 6-element dqdT vector. If i is negative, the count
+ *	will proceed from the end of the vector, i.e. -1 will return the final time, 
+ *	-2 will give the second to last value, etc.
  */
 vector<double> tpat_bcr4bpr_traj::get_dqdT(int i){
+	if(i < 0)
+		i += dqdT.size()/6;
+	
 	vector<double> temp(dqdT.begin()+i*6, dqdT.begin()+(i+1)*6);
 	return temp;
 }//===============================================

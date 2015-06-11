@@ -5,6 +5,7 @@
 #include "tpat_cr3bp_nodeset.hpp"
 
 #include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
  
 #include <cmath>
@@ -33,11 +34,30 @@ tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(tpat_cr3bp_sys_data data) : tpat_nodeset(
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, double tof, int numNodes, 
-		node_distro_t type) : tpat_nodeset(6){
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, double tof,
+	int numNodes, node_distro_t type) : tpat_nodeset(6){
+
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, 0, tof, numNodes, type);
+}//======================================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	integrated trajectory into pieces (nodes).
+ *
+ *	The type is automatically specified as splitting the trajectory equally in TIME
+ *
+ *	@param IC a set of initial conditions, non-dimensional units
+ *	@param data a pointer to a system data object that describes the model to integrate in
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ */
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, double tof, 
+	int numNodes) : tpat_nodeset(6){
+	sysData = data;
+
+	initSetFromICs(IC, &sysData, 0, tof, numNodes, tpat_nodeset::TIME);
 }//======================================================================
 
 /**
@@ -60,6 +80,29 @@ tpat_cr3bp_nodeset& tpat_cr3bp_nodeset::operator =(const tpat_cr3bp_nodeset& n){
 	sysData = n.sysData;
 	return *this;
 }//==============================
+
+/**
+ *	@brief Concatenate two nodesets
+ *
+ *	If the final node in <tt>lhs</tt> is the same as the first node in <tt>rhs</tt>, the
+ *	concatenation will delete one occurence of the node to achieve continuity. Otherwise
+ *	the nodes from <tt>rhs</tt> are concatenated to the end of <tt>lhs</tt>. The velocity
+ *	continuity specifications and constraints for <tt>rhs</tt> are updated to reflect the 
+ *	new indices of the nodes they describe.
+ *
+ *	@param lhs
+ *	@param rhs
+ *	@return a nodeset containing the concatenated input nodesets
+ */
+tpat_cr3bp_nodeset operator +(const tpat_cr3bp_nodeset &lhs, const tpat_cr3bp_nodeset &rhs){
+	if(lhs.sysData != rhs.sysData){
+		throw tpat_exception("Cannot add nodesets from different systems; please transform them to be in the same system");
+	}
+
+	tpat_cr3bp_nodeset temp(lhs.sysData);
+	tpat_cr3bp_nodeset::basicConcat(lhs, rhs, &temp);
+	return temp;
+}//=====================================================
 
 /**
  *	@return a pointer to the system data object stored in this nodeset

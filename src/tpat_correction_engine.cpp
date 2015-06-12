@@ -3,10 +3,10 @@
  */
 
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "tpat.hpp"
+ 
 #include "tpat_correction_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
@@ -470,14 +471,13 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 				it.newSeg = simEngine.getTraj();
 
 				// Determine the final state and final STM on the integrated segment
-				int segEnd = it.newSeg.getLength() - 1;
-				it.lastState = it.newSeg.getState(segEnd);
-				it.lastSTM = it.newSeg.getSTM(segEnd);
+				it.lastState = it.newSeg.getState(-1);
+				it.lastSTM = it.newSeg.getSTM(-1);
 
 				// Extract specific trajectory type for access to system-specific data
 				if(sysType == tpat_sys_data::BCR4BPR_SYS){
 					it.bcNewSeg = simEngine.getBCR4BPRTraj();
-					it.last_dqdT = it.bcNewSeg.get_dqdT(segEnd);
+					it.last_dqdT = it.bcNewSeg.get_dqdT(-1);
 				}
 
 				createPosVelCons(&it, sysType, n);

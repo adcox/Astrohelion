@@ -16,7 +16,7 @@
 ############################################################
 
 # Paths for files
-INC := ../inc
+INC := ../include
 SRC := ../src
 OBJ := ../obj_debug
 BIN := ../bin
@@ -28,7 +28,7 @@ CFLAGS += -g -W -Wall -Wextra -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio
+LIBS = gsl gslcblas matio cspice
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 # Options that are platform dependent
@@ -47,6 +47,11 @@ SOURCES := $(addprefix $(SRC)/,$(SRC_FILES))
 # putting the OBJ path before the name
 OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
+# Header files that don't have associated objects; we need the compiler to
+# know that objects are dependent on these and to update if changes are made to them
+IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp
+
+HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
 ## Macros to make dependency lists shorter (don't have to put)
 ## OBJ in front of all the files, use a macro to do the substitution
@@ -91,7 +96,7 @@ utilityTest: $(OBJECTS)
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
-$(OBJ)/%.o: $(SRC)/%.cpp
+$(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
 	$(COMP) -I $(INC) -c $< -o $@
 
 ############################################################

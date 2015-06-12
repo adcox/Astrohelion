@@ -1,11 +1,13 @@
 /**
  *	@file tpat_bcr4bpr_nodeset.cpp
  */
-
+#include "tpat.hpp"
 #include "tpat_bcr4bpr_nodeset.hpp"
 #include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
+
+using namespace std;
 
 /**
  *	@brief Construct a nodeset with no data other than the system
@@ -40,6 +42,27 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
+ *	The type is automatically set to splitting the trajectory equally in TIME
+ *
+ *	@param IC a set of initial conditions, non-dimensional units
+ *	@param data a pointer to a system data object that describes the model to integrate in
+ *	@param t0 time that corresponds to IC
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ */
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(vector<double> IC, tpat_bcr4bpr_sys_data data, 
+	double t0, double tof, int numNodes) : tpat_nodeset(6){
+
+	sysData = data;
+
+	initSetFromICs(&(IC[0]), &sysData, t0, tof, numNodes, tpat_nodeset::TIME);
+	initEpochs(numNodes, t0);
+}//======================================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	integrated trajectory into pieces (nodes).
+ *
  *	@param IC a set of initial conditions, non-dimensional units
  *	@param data a pointer to a system data object that describes the model to integrate in
  *	@param t0 time that corresponds to IC
@@ -53,6 +76,26 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, t0, tof, numNodes, type);
+	initEpochs(numNodes, t0);
+}//======================================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	integrated trajectory into pieces (nodes).
+ *
+ *	@param IC a set of initial conditions, non-dimensional units
+ *	@param data a pointer to a system data object that describes the model to integrate in
+ *	@param t0 time that corresponds to IC
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ *	@param type node distribution type
+ */
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(vector<double> IC, tpat_bcr4bpr_sys_data data, 
+	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(6){
+
+	sysData = data;
+
+	initSetFromICs(&(IC[0]), &sysData, t0, tof, numNodes, type);
 	initEpochs(numNodes, t0);
 }//======================================================================
 
@@ -168,14 +211,51 @@ void tpat_bcr4bpr_nodeset::appendEpoch(double d){
 void tpat_bcr4bpr_nodeset::print() const {
 	printf("BCR4BPR Nodeset:\n  Nodes:\n");
 	for(int n = 0; n < getNumNodes(); n++){
-		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]\n", n,
-			nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
+		printf("  > %02d -> @ %9.4f [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
+			epochs[n], nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
 			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
+
+		if(n < getNumNodes()-1){
+			printf("  TOF = %.4f\n", tofs[n]);
+		}else{
+			printf("\n");
+		}
 	}
 	for(int c = 0; c < getNumCons(); c++){
 		constraints[c].print();
 	}
 }//========================================
+
+void tpat_bcr4bpr_nodeset::sortChrono(){
+	// Get the indices to sort time
+	vector<int> sortedIx = getSortedInd(epochs);
+
+	vector<double> nodeCpy;
+	vector<double> epochCpy;
+	vector<double> tofCpy;
+
+	for(int n = 0; n < ((int)epochs.size(); n++){
+		nodeCpy.push_back(getNode(sortedIx[n]));
+		epochCpy.push_back(getEpoch(sortedIx[n]));
+		
+		if(n < (int)tofs.size())
+			tofCpy.push_back(getTOF(sortedIx[n]));
+	}
+
+	nodes = nodeCpy;
+	epochs = epochCpy;
+	tofs = tofCpy;
+
+	// Adjust nodes on constraints and velcon
+	for(int n = 0; n < ((int)constraints.size()); n++){
+		constraints[n].setNode(sortedIx[constraints[n].getNode()]);
+	}
+
+	// Adjust velcon nodes
+	for(int n = 0; n < ((int)velConNodes.size()); n++){
+		velConNodes[n] = sortedIx[velConNodes[n]];
+	}
+}
 
 /**
  *	@brief Save the trajectory to a file

@@ -16,7 +16,7 @@
 ############################################################
 
 # Paths for files
-INC := inc
+INC := include
 SRC := src
 OBJ := obj
 BIN := bin
@@ -28,7 +28,7 @@ CFLAGS += -W -Wall -Wextra -pedantic -O3
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio
+LIBS = gsl gslcblas matio cspice
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 SYS_INC_DIR := /usr/local/include/tpat
@@ -36,12 +36,9 @@ SYS_INC_DIR := /usr/local/include/tpat
 # Options that are platform dependent
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S), Linux)
-	# @echo Making Linux libraries
 	LDFLAGS += -L /usr/local/lib
-	LIBS_TO_MAKE := libTPAT.a libTPAT.so
 else ifeq ($(UNAME_S), Darwin)
-	# @echo Making OS X libraries
-	LIBS_TO_MAKE := libTPAT.dylib
+	# Do special things for OS X
 endif
 
 # Get JUST the filenames, no filepaths, of the source files
@@ -53,6 +50,12 @@ SOURCES := $(addprefix $(SRC)/,$(SRC_FILES))
 # Get list of all object files by copying source file names and 
 # putting the OBJ path before the name
 OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
+
+# Header files that don't have associated objects; we need the compiler to
+# know that objects are dependent on these and to update if changes are made to them
+IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp
+
+HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 
 ############################################################
 ## Macros to make dependency lists shorter (don't have to put)
@@ -99,7 +102,7 @@ libtpat.dylib: $(OBJECTS)
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
-$(OBJ)/%.o: $(SRC)/%.cpp
+$(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
 	$(COMP) -I $(INC) -c $< -o $@
 
 ############################################################

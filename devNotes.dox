@@ -12,16 +12,30 @@ This software has been tested on (and <i>should</i> work on) the following syste
 <p>Our software is dependent on a few libraries:</p>
 <ul>
 	<li>
-		GNU Science Library (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
+		<a href="http://www.gnu.org/software/gsl/">GNU Science Library</a> (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
 	</li>
 	<li>
-		Mat I/O Library: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
+		<a href="http://sourceforge.net/projects/matio/">Mat I/O Library</a>: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
 		<ul>
 			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>
 		</ul>
 	</li>
 	<li>
-		NAIF SPICE <http://naif.jpl.nasa.gov/naif/toolkit_C.html>
+		<a href="http://naif.jpl.nasa.gov/naif/toolkit_C.html">NAIF SPICE</a>: This library 
+		provides access to accurate ephemerides. To install, I downloaded the 64-bit tar.Z file 
+		for OS X and ran the installation script. Spice doesn't install itself like other 
+		libraries do, so I took the necessary steps to install it the usual way:
+		<ul>
+			<li> 
+				Copy the header files from <code>include/</code> to <code>/usr/local/include/cspice</code> </li>
+			<li> 
+				Rename the library files to begin with "lib" so that C/C++ will link them appropriately. I then copied them to the <code>/usr/local/lib/</code> directory.
+			</li>
+			<li>
+				Copy the executable binaries from the <code>exe/</code> directory into <code>/usr/local/bin/cspice/</code> and add a line to the <code>.bash_profile</code> configuration file: <code>PATH=$PATH:/usr/local/bin/cspice/</code> so that I can access these binary files from the command line.
+			</li>
+		</ul>
+		To use SPICE functions, include the <code>SpiceUsr.h</code> header file, which is a sort of include-wrapper that includes all the relevant headers for SPICE routines. An API for the C toolkit can be found <a href="http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/index.html">here</a>
 	</li>
 </ul>
 

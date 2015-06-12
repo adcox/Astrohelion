@@ -2,6 +2,7 @@
  *	Test system conversion functions: SE2EM and EM2SE
  */
 
+#include "tpat_bcr4bpr_nodeset.hpp"
 #include "tpat_bcr4bpr_traj.hpp"
 #include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_calculations.hpp"
@@ -56,5 +57,7 @@ int main(void){
 	tpat_bcr4bpr_traj bcTraj = bcr4bpr_SE2SEM(seTraj, bcSys, 7.08);
 	bcTraj.saveToMat("SEM_Traj.mat");
 
+	tpat_bcr4bpr_nodeset bcNodes = bcr4bpr_SE2SEM(seNodes, bcSys, 7.08);
+	bcNodes.saveToMat("SEM_Nodes.mat");
 	return 0;
 }

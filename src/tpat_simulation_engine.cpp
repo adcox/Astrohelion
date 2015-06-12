@@ -4,10 +4,10 @@
  */
  
 /*
- *  Astrodynamics Toolkit 
+ *  Trajectory Propagation and Analysis Toolkit 
  *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *  
- *  This file is part of the Astrodynamics Toolkit (TPAT).
+ *  This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "tpat.hpp"
+ 
 #include "tpat_simulation_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
@@ -703,19 +704,18 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
-
-            double t0 = traj->getTime(numPts-2);    // Time from the state before last
-            double ti = traj->getTime()->back();    // Time from the previous state
+            double t0 = traj->getTime(-2);          // Time from the state before last
+            double ti = traj->getTime(-1);          // Time from the previous state
             double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
 
             // Copy 6-element IC into vector - Use the state from two iterations ago to avoid
             // numerical problems when the previous state is REALLY close to the event
-            vector<double> generalIC = traj->getState(numPts-2);
+            vector<double> generalIC = traj->getState(-2);
 
             if(verbose){
                 printColor(BLUE, "Num Pts = %d\n", numPts);
                 printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
-                    traj->getTime()->back(), traj->getTime(numPts-2));
+                    traj->getTime(-1), traj->getTime(-2));
                 printColor(BLUE, "tof = %f\n", tof);
                 printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", generalIC[0],
                     generalIC[1], generalIC[2], generalIC[3], generalIC[4], generalIC[5]);

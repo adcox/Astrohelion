@@ -5,10 +5,31 @@
  *   motion associated with various mathematical models. It also contains 
  *   miscellaneous functions to compute other quantities, like Jacobi Constant
  */
+/*
+ *  Trajectory Propagation and Analysis Toolkit 
+ *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  
+ *  This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *
+ *  TPAT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  TPAT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "tpat.hpp"
 
 #include "tpat_calculations.hpp"
 
 #include "tpat_ascii_output.hpp"
+#include "tpat_bcr4bpr_nodeset.hpp"
 #include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_bcr4bpr_traj.hpp"
 #include "tpat_constants.hpp"
@@ -20,8 +41,12 @@
 #include "tpat_trajectory.hpp"
 #include "tpat_utilities.hpp"
 
+#include "cspice/SpiceUsr.h"
+
 #include <cmath>
+#include <cstring>
 #include <iostream>
+#include <string>
 
 
 using namespace std;
@@ -335,6 +360,52 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
 
+//-----------------------------------------------------
+//      General Utility Functions
+//-----------------------------------------------------
+
+/**
+ *  @brief convert a date to epoch time
+ *  
+ *  @param date a string representing the date. The string can be formatted in one
+ *  of two ways. First, a Gregorian-style date: 'YYYY/MM/DD HH:II:SS' (UTC, 24-hour clock);
+ *  The time 'HH:II:SS' can be ommited, and the function will assume the time is 0:0:00
+ *  Second, a Julian date (UTC) can be input with the format 'jd #' where '#' represents
+ *  the Julian date.
+ *
+ *  @return the J2000 epoch time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
+ *  
+ */
+double dateToEpochTime(const char *date){
+    // Load time kernel
+    char timeKernel[] = "/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
+    furnsh_c(timeKernel);
+
+    if(failed_c()){
+        char errMsg[26];
+        getmsg_c("short", 25, errMsg);
+        printErr("Spice Error: %s\n", errMsg);
+        reset_c();  // reset error status
+        throw tpat_exception("Could not load SPICE time kernel");
+    }
+
+    // Convert the date to epoch time
+    double et = 0;
+    str2et_c(date, &et);
+    printf("Epoch Time: %.12f\n", et);
+
+    // Unload the kernel
+    unload_c(timeKernel);
+    if(failed_c()){
+        char errMsg[26];
+        getmsg_c("short", 25, errMsg);
+        printErr("Spice Error: %s\n", errMsg);
+        reset_c();  // reset error status
+        throw tpat_exception("Could not unload SPICE time kernel");
+    }
+
+    return et;
+}//==========================================
 
 //-----------------------------------------------------
 //      CR3BP Utility Functions
@@ -898,8 +969,6 @@ void bcr4bpr_getPrimaryVel(double t, tpat_bcr4bpr_sys_data sysData, double *prim
  *  @return a BCR4BPR Trajectory object
  */
 tpat_bcr4bpr_traj bcr4bpr_SE2SEM(tpat_cr3bp_traj crTraj, tpat_bcr4bpr_sys_data bcSys, double t0){
-    string sun("Sun");      string earth("Earth");      string moon("Moon");
-
     if(crTraj.getSysData().getPrimID(0) != 10 || crTraj.getSysData().getPrimID(1) != 399){
         throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
@@ -925,7 +994,6 @@ tpat_bcr4bpr_traj bcr4bpr_SE2SEM(tpat_cr3bp_traj crTraj, tpat_bcr4bpr_sys_data b
 
     for(int n = 0; n < crTraj.getLength(); n++){
         vector<double> crState = crTraj.getState(n);
-        printColor(BLUE, "crState[%d]: %d/%d\n", ((int)crState.size()), n, crTraj.getLength());
         for(int r = 0; r < ((int)crState.size()); r++){
             if(r < 3)   // Convert position
                 state->push_back(crState[r]*charL2/charL3);
@@ -945,6 +1013,82 @@ tpat_bcr4bpr_traj bcr4bpr_SE2SEM(tpat_cr3bp_traj crTraj, tpat_bcr4bpr_sys_data b
     bcTraj.setLength();
     return bcTraj;
 }//==================================================
+
+/**
+ *  @brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset
+ *
+ *  @param crNodes a CR3BP Sun-Earth nodeset
+ *  @param bcSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
+ *  scaling and orientation at time t = 0
+ *  @param t0 the epoch at the first node on the CR3BP nodeset
+ *
+ *  @return a BCR4BPR nodeset
+ */
+tpat_bcr4bpr_nodeset bcr4bpr_SE2SEM(tpat_cr3bp_nodeset crNodes, tpat_bcr4bpr_sys_data bcSys, double t0){
+    if(crNodes.getSysData()->getPrimID(0) != 10 || crNodes.getSysData()->getPrimID(1) != 399){
+        throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
+    }
+
+    if(bcSys.getPrimID(0) != 10 || bcSys.getPrimID(1) != 399 || bcSys.getPrimID(2) != 301){
+        throw tpat_exception("BCR4BPR system is not Sun-Earth-Moon");
+    }
+
+    // Create a BCR4BPR Trajectory
+    tpat_bcr4bpr_nodeset bcNodes(bcSys);
+
+    vector<double>* nodes = bcNodes.getNodes();
+    vector<double>* tofs = bcNodes.getTOFs();
+    vector<double>* epochs = bcNodes.getEpochs();
+
+    double charL2 = crNodes.getSysData()->getCharL();
+    double charT2 = crNodes.getSysData()->getCharT();
+    double charL3 = bcSys.getCharL();
+    double charT3 = bcSys.getCharT();
+
+    double ellapsed = t0;
+
+    for(int n = 0; n < crNodes.getNumNodes(); n++){
+        vector<double> crNode = crNodes.getNode(n);
+        for(int r = 0; r < ((int)crNode.size()); r++){
+            if(r < 3)   // Convert position
+                nodes->push_back(crNode[r]*charL2/charL3);
+            else  // Convert velocity
+                nodes->push_back(crNode[r]*(charL2/charL3)*(charT3/charT2));
+        }
+        
+        epochs->push_back(ellapsed);
+        if(n < crNodes.getNumNodes()-1){
+            tofs->push_back(crNodes.getTOF(n)*charT2/charT3 + t0);
+            ellapsed += crNodes.getTOF(n)*charT2/charT3;
+        }
+    }
+
+    return bcNodes;
+}//==================================================
+
+/**
+ *  @brief Orient a BCR4BPR system so that t = 0 corresponds to the specified epoch time
+ *  
+ *  @param et epoch time (seconds, J2000, UTC)
+ *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
+ *  in this data object
+ */
+void bcr4bpr_orientAtEpoch(double et, tpat_bcr4bpr_sys_data *sysData){
+    double time_nonDim = (et - tpat_bcr4bpr_sys_data::REF_EPOCH)/sysData->getCharT();
+    
+    // Compute theta and phi
+    double theta = sysData->getK()*time_nonDim;
+    double phi = sqrt(sysData->getMu()/pow(sysData->getCharLRatio(), 3))*time_nonDim;
+
+    // Adjust theta and phi to be between 0 and 2*PI
+    theta -= floor(theta/(2*PI))*2*PI;
+    phi -= floor(phi/(2*PI))*2*PI;
+
+    sysData->setTheta0(theta);
+    sysData->setPhi0(phi);
+}//===========================================
+
+
 
 
 

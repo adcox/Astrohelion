@@ -65,10 +65,23 @@ void checkUDDots(){
 	}
 }
 
+void checkDate2EpochTime(){
+	double ET_ans = 172650160;
+	double ET_comp = dateToEpochTime("2005/06/21 18:21:35.816");
+
+	cout << "Gregorian Date to Epoch Time Test: " << (floor(ET_ans) == floor(ET_comp) ? PASS : FAIL) << endl;
+
+	double ET_comp2 = dateToEpochTime("jd 2453543.264998");
+
+	cout << "Julian Date to Epoch Time Test: " << (floor(ET_comp) == floor(ET_comp2) ? PASS : FAIL) << endl;
+
+}
+
 int main(void){
 
 	checkLPts();
 	checkUDDots();
-	
+	checkDate2EpochTime();
+
 	return 0;
 }

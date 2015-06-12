@@ -12,7 +12,6 @@
 #include "tpat_simulation_engine.hpp"
 #include "tpat_utilities.hpp"
 
-#include <gsl/gsl_errno.h>
 #include <iostream>
 
 using namespace std;
@@ -88,9 +87,6 @@ void test_bcr4bpr_events(){
 }
 
 int main(void){
-	
-	gsl_set_error_handler_off();
-	
 	printColor(RED, "*************************\n* Test CR3BP Sim        *\n*************************\n");
 	test_cr3bp_sim();
 	printColor(RED, "*************************\n* Test BCR4BPR Sim      *\n*************************\n");

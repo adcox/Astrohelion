@@ -1,6 +1,26 @@
 /**
  *	@file tpat_cr3bp_nodeset.cpp
  */
+/*
+ *	Trajectory Propagation and Analysis Toolkit 
+ *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *
+ *  TPAT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  TPAT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "tpat.hpp"
 
 #include "tpat_cr3bp_nodeset.hpp"
 
@@ -10,6 +30,8 @@
  
 #include <cmath>
 #include <iostream>
+
+using namespace std;
 
 /**
  *	@brief Create a general CR3BP nodeset
@@ -46,6 +68,23 @@ tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, d
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
+ *	@param IC a set of initial conditions, non-dimensional units
+ *	@param data a pointer to a system data object that describes the model to integrate in
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ *	@param type node distribution type
+ */
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(vector<double> IC, tpat_cr3bp_sys_data data, double tof,
+	int numNodes, node_distro_t type) : tpat_nodeset(6){
+
+	sysData = data;
+	initSetFromICs(&(IC[0]), &sysData, 0, tof, numNodes, type);
+}//=====================================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	integrated trajectory into pieces (nodes).
+ *
  *	The type is automatically specified as splitting the trajectory equally in TIME
  *
  *	@param IC a set of initial conditions, non-dimensional units
@@ -58,6 +97,24 @@ tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, d
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, 0, tof, numNodes, tpat_nodeset::TIME);
+}//======================================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	integrated trajectory into pieces (nodes).
+ *
+ *	The type is automatically specified as splitting the trajectory equally in TIME
+ *
+ *	@param IC a set of initial conditions, non-dimensional units
+ *	@param data a pointer to a system data object that describes the model to integrate in
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ */
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(vector<double> IC, tpat_cr3bp_sys_data data, double tof, 
+	int numNodes) : tpat_nodeset(6){
+	sysData = data;
+
+	initSetFromICs(&(IC[0]), &sysData, 0, tof, numNodes, tpat_nodeset::TIME);
 }//======================================================================
 
 /**
@@ -115,9 +172,14 @@ tpat_sys_data* tpat_cr3bp_nodeset::getSysData() { return &sysData; }
 void tpat_cr3bp_nodeset::print() const{
 	printf("CR3BP Nodeset:\n  Nodes:\n");
 	for(int n = 0; n < getNumNodes(); n++){
-		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]\n", n,
+		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
 			nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
 			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
+		if(n < getNumNodes()-1){
+			printf("  TOF = %.4f\n", tofs[n]);
+		}else{
+			printf("\n");
+		}
 	}
 	for(int c = 0; c < getNumCons(); c++){
 		constraints[c].print();

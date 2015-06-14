@@ -29,8 +29,6 @@
 #include "tpat_utilities.hpp"
 
 #include <cstring>
- 
-using namespace std;
 
 //-----------------------------------------------------
 // 		Constructor Functions
@@ -158,7 +156,7 @@ double tpat_cr3bp_traj::getJC(int n){
  *	
  *	@return a pointer to the vector of Jacobi constants;
  */
-vector<double>* tpat_cr3bp_traj::getJC(){ return &jacobi; }
+std::vector<double>* tpat_cr3bp_traj::getJC(){ return &jacobi; }
 
 /**
  *	@brief Set the vector of Jacobi constant values for this trajectory

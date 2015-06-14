@@ -26,10 +26,6 @@
 #include "tpat_bcr4bpr_traj.hpp"
 
 #include "tpat_utilities.hpp"
- 
-#include <iostream>
-
-using namespace std;
 
 //-----------------------------------------------------
 // 		Constructor Functions
@@ -110,18 +106,18 @@ tpat_bcr4bpr_traj operator +(const tpat_bcr4bpr_traj &lhs, const tpat_bcr4bpr_tr
 	tpat_bcr4bpr_traj newTraj(lhs.numPoints + rhs.numPoints);
 	
 	// Copy the states and times from the LHS into the new guy
-	copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
-	copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
+	std::copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
+	std::copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
 	
 	// Append the rhs state and timeto the end of the new guy's vectors; don't adjust the
 	// time because the system is non-autonomous
-	copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
-	copy(rhs.times.begin(), rhs.times.end(), newTraj.getTime()->begin() + lhs.numPoints);
+	std::copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
+	std::copy(rhs.times.begin(), rhs.times.end(), newTraj.getTime()->begin() + lhs.numPoints);
 
 	// Copy only the lhs STMs, because there is no gaurantee the two summed trajectories
 	// will be continuous and smooth in time and state; same for dqdT
-	copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
-	copy(lhs.dqdT.begin(), lhs.dqdT.end(), newTraj.get_dqdT()->begin());
+	std::copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
+	std::copy(lhs.dqdT.begin(), lhs.dqdT.end(), newTraj.get_dqdT()->begin());
 	
 	return newTraj;
 }//========================================
@@ -157,7 +153,7 @@ tpat_bcr4bpr_sys_data tpat_bcr4bpr_traj::getSysData(){ return sysData; }
  *	
  *	@return a pointer to the vector of dqdT values;
  */
-vector<double>* tpat_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
+std::vector<double>* tpat_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
 
 /**
  *	@param i the index of the dqdT vector to retrieve
@@ -165,11 +161,11 @@ vector<double>* tpat_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
  */
-vector<double> tpat_bcr4bpr_traj::get_dqdT(int i){
+std::vector<double> tpat_bcr4bpr_traj::get_dqdT(int i){
 	if(i < 0)
 		i += dqdT.size()/6;
 	
-	vector<double> temp(dqdT.begin()+i*6, dqdT.begin()+(i+1)*6);
+	std::vector<double> temp(dqdT.begin()+i*6, dqdT.begin()+(i+1)*6);
 	return temp;
 }//===============================================
 

@@ -33,8 +33,6 @@
 
 #include "tpat_sys_data.hpp"
 
-using namespace std;
-
 /**
  *	@brief Create a new system data object and initialize all values to zero.
  */

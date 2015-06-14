@@ -29,15 +29,12 @@
 #include "matio.h"
 
 #include <complex>
-#include <iostream>
 #include <string>
-
-using namespace std;
 
 std::string complexToStr(std::complex<double> num){
     char buffer[64];
-    sprintf(buffer, "%.4e%s%.4ej", real(num), imag(num) < 0 ? " - " : " + ", abs(imag(num)));
-    return string(buffer);
+    sprintf(buffer, "%.4e%s%.4ej", real(num), imag(num) < 0 ? " - " : " + ", std::abs(imag(num)));
+    return std::string(buffer);
 }
 
 /**
@@ -136,7 +133,7 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
  *  @brief Suspend operation until the user presses a key
  */
 void waitForUser(){
-    cout << "Press ENTER to continue...";
-    cin.ignore();
-    cout<<endl;
+    std::cout << "Press ENTER to continue...";
+    std::cin.ignore();
+    std::cout << std::endl;
 }

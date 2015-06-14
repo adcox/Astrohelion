@@ -45,11 +45,7 @@
 
 #include <cmath>
 #include <cstring>
-#include <iostream>
 #include <string>
-
-
-using namespace std;
 
 //-----------------------------------------------------
 //      Equations of Motion
@@ -101,7 +97,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Copy the STM states into a sub-array
     double stmElements[36];
-    copy(s+6, s+42, stmElements);
+    std::copy(s+6, s+42, stmElements);
 
     // Turn sub-array into matrix object for math stuffs
     tpat_matrix phi(6,6, stmElements);
@@ -111,7 +107,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
     double *phiDotData = phiDot.getDataPtr();
 
     // Copy the elements of phiDot into the derivative array
-    copy(phiDotData, phiDotData+36, sdot+6);
+    std::copy(phiDotData, phiDotData+36, sdot+6);
 
     return GSL_SUCCESS;
 }//===============================================================
@@ -166,12 +162,12 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Put the position states into a 3-element column vector
     double r_data[3] = {0};
-    copy(s, s+3, r_data);
+    std::copy(s, s+3, r_data);
     tpat_matrix r(3,1,r_data);
 
     // Put velocity states into a 3-element column vector
     double v_data[3] = {0};
-    copy(s+3, s+6, v_data);
+    std::copy(s+3, s+6, v_data);
     tpat_matrix v(3,1,v_data);
 
     // Create relative position vectors between s/c and primaries
@@ -193,7 +189,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // truncated position vector used in EOMs
     double r_trunc_data[3] = {0};
-    copy(s, s+2, r_trunc_data);
+    std::copy(s, s+2, r_trunc_data);
     tpat_matrix r_trunc(3,1,r_trunc_data);
 
     // Compute acceleration using matrix math
@@ -232,7 +228,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     
     // Compute the STM derivative
     double phiData[36];
-    copy(s+6, s+42, phiData);
+    std::copy(s+6, s+42, phiData);
     tpat_matrix Phi(6, 6, phiData);
     tpat_matrix PhiDot = A*Phi;
 
@@ -271,7 +267,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     
     // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
     double dqdT_data[6] = {0};
-    copy(s+42,s+48, dqdT_data);
+    std::copy(s+42,s+48, dqdT_data);
     tpat_matrix dqdT(6,1, dqdT_data);
 
     // Get the velocity of the primaries
@@ -287,10 +283,10 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     double *phiDotPtr = PhiDot.getDataPtr();
     double *dqdtDotPtr = dot_dqdT.getDataPtr();
 
-    copy(s+3, s+6, sdot);
-    copy(accelPtr, accelPtr+3, sdot+3);
-    copy(phiDotPtr, phiDotPtr+36, sdot+6);
-    copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
+    std::copy(s+3, s+6, sdot);
+    std::copy(accelPtr, accelPtr+3, sdot+3);
+    std::copy(phiDotPtr, phiDotPtr+36, sdot+6);
+    std::copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
 
     // printf("sdot: [%.4f %.4f %.4f %.4f %.4f %.4f]\n", sdot[0], sdot[1], sdot[2], sdot[3], sdot[4], sdot[5]);
     return GSL_SUCCESS;
@@ -316,12 +312,12 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
 
     // Put the position states into a 3-element column vector
     double r_data[3] = {0};
-    copy(s, s+3, r_data);
+    std::copy(s, s+3, r_data);
     tpat_matrix r(3,1,r_data);
 
     // Put velocity states into a 3-element column vector
     double v_data[3] = {0};
-    copy(s+3, s+6, v_data);
+    std::copy(s+3, s+6, v_data);
     tpat_matrix v(3,1,v_data);
 
     // Create relative position vectors between s/c and primaries
@@ -343,7 +339,7 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
 
     // truncated position vector used in EOMs
     double r_trunc_data[3] = {0};
-    copy(s, s+2, r_trunc_data);
+    std::copy(s, s+2, r_trunc_data);
     tpat_matrix r_trunc(3,1,r_trunc_data);
 
     // Compute acceleration using matrix math
@@ -354,8 +350,8 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     // Save derivatives to output vector
     double *accelPtr = accel.getDataPtr();
 
-    copy(s+3, s+6, sdot);
-    copy(accelPtr, accelPtr+3, sdot+3);
+    std::copy(s+3, s+6, sdot);
+    std::copy(accelPtr, accelPtr+3, sdot+3);
 
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
@@ -491,7 +487,7 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
     switch(L){
         case 1:
             gamma = 0.1;    // Initial guess is 10% of orbital radius
-            while(abs(gamma - gamma_prev) > tol && count < maxCount){   // Newton-Raphson for L1
+            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){   // Newton-Raphson for L1
                 gamma_prev = gamma;
                 gamma = gamma - ( mu/(gamma*gamma) - (1-mu)/pow(1-gamma, 2) - gamma - mu + 1)/
                     ( -2*mu/pow(gamma,3) - 2*(1-mu)/pow(1-gamma,3) - 1 );
@@ -501,7 +497,7 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
             break;
         case 2:
             gamma = 0.1;    // Initial guess is 10% of orbital radius
-            while(abs(gamma - gamma_prev) > tol && count < maxCount){
+            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){
                 gamma_prev = gamma;
                 gamma = gamma - ( -1*mu/(gamma*gamma) - (1-mu)/pow(1+gamma, 2) - mu + 1 + gamma)/
                     ( 2*mu/pow(gamma, 3) + 2*(1-mu)/pow(1+gamma, 3) + 1 );
@@ -511,7 +507,7 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
             break;
         case 3:
             gamma = 1;  // Initial guess is 100% of orbital radius
-            while(abs(gamma - gamma_prev) > tol && count < maxCount){
+            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){
                 gamma_prev = gamma;
                 gamma = gamma - ( mu/pow(-1 - gamma, 2) + (1-mu)/(gamma*gamma) - mu - gamma)/
                     ( -2*mu/pow(1+gamma,3) - 2*(1-mu)/pow(gamma, 3) - 1);
@@ -526,7 +522,7 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
             break;
     }
 
-    if(L < 4 && abs(gamma - gamma_prev) > tol){
+    if(L < 4 && std::abs(gamma - gamma_prev) > tol){
         printErr("Could not converge on L%d\n", L);
     }
 }//========================================
@@ -552,7 +548,7 @@ tpat_cr3bp_traj cr3bp_EM2SE(tpat_cr3bp_traj EMTraj, double thetaE0, double theta
     // Create a trajectory in the Sun-Earth system
     tpat_cr3bp_sys_data SESys("sun", "earth");
     tpat_cr3bp_traj SETraj(SESys);
-    vector<double>* state = SETraj.getState();
+    std::vector<double>* state = SETraj.getState();
 
     double charTE = EMTraj.getSysData().getCharT();     // characteristic time in EM system
     double charLE = EMTraj.getSysData().getCharL();     // characteristic length in EM system
@@ -562,7 +558,7 @@ tpat_cr3bp_traj cr3bp_EM2SE(tpat_cr3bp_traj EMTraj, double thetaE0, double theta
     for(int n = 0; n < ((int)EMTraj.getTime()->size()); n++){
 
         // Transform the state from EM coordinates to SE coordinates
-        vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
+        std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
         // Recompute Jacobi
@@ -604,7 +600,7 @@ tpat_cr3bp_nodeset cr3bp_EM2SE(tpat_cr3bp_nodeset EMNodes, double t0, double the
 
     tpat_cr3bp_sys_data SESys("sun", "earth");
     tpat_cr3bp_nodeset SENodes(SESys);
-    vector<double>* nodes = SENodes.getNodes();
+    std::vector<double>* nodes = SENodes.getNodes();
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
@@ -615,7 +611,7 @@ tpat_cr3bp_nodeset cr3bp_EM2SE(tpat_cr3bp_nodeset EMNodes, double t0, double the
     printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d TOFs\n", EMNodes.getNumNodes(),
         ((int)EMNodes.getTOFs()->size()));
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
-        vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n), epoch, thetaE0, thetaM0,
+        std::vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
         // Copy first 6 elements of transformed state/node into new node vector
@@ -654,7 +650,7 @@ tpat_cr3bp_traj cr3bp_SE2EM(tpat_cr3bp_traj SETraj, double thetaE0, double theta
     // Create a trajectory in the Earth-Moon system
     tpat_cr3bp_sys_data EMSys("earth", "moon");
     tpat_cr3bp_traj EMTraj(EMSys);
-    vector<double>* state = EMTraj.getState();
+    std::vector<double>* state = EMTraj.getState();
 
     // Shift coordinates to EM barcyenter from SE barycenter
     tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - SETraj.getSysData().getMu());
@@ -667,7 +663,7 @@ tpat_cr3bp_traj cr3bp_SE2EM(tpat_cr3bp_traj SETraj, double thetaE0, double theta
     for(int n = 0; n < ((int)SETraj.getTime()->size()); n++){
         
         // Transform the state from SE coordinates to EM coordinates
-        vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
+        std::vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SETraj.getSysData().getMu());
 
         // Recompute Jacobi
@@ -710,7 +706,7 @@ tpat_cr3bp_nodeset cr3bp_SE2EM(tpat_cr3bp_nodeset SENodes, double t0, double the
     tpat_cr3bp_sys_data EMSys("earth", "moon");
     tpat_cr3bp_sys_data SESys("sun", "earth");
     tpat_cr3bp_nodeset EMNodes(EMSys);
-    vector<double>* nodes = EMNodes.getNodes();
+    std::vector<double>* nodes = EMNodes.getNodes();
 
     double charTE = EMSys.getCharT();                   // characteristic time in EM system
     double charLE = EMSys.getCharL();                   // characteristic length in EM system
@@ -722,7 +718,7 @@ tpat_cr3bp_nodeset cr3bp_SE2EM(tpat_cr3bp_nodeset SENodes, double t0, double the
         ((int)SENodes.getTOFs()->size()));
     for(int n = 0; n < SENodes.getNumNodes(); n++){
         // Transform a single node
-        vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n), epoch, thetaE0, thetaM0,
+        std::vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
         // Copy first 6 elements of transformed state/node into new node vector
@@ -759,7 +755,7 @@ tpat_cr3bp_nodeset cr3bp_SE2EM(tpat_cr3bp_nodeset SENodes, double t0, double the
  *
  *  @return a 9-element state vector in EM coordinates
  */
-vector<double> cr3bp_EM2SE_state(vector<double> state_EM, double t, double thetaE0, double thetaM0,
+std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, double thetaE0, double thetaM0,
     double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
 
     // Shift coordinates to SE barcyenter from EM barycenter
@@ -800,7 +796,7 @@ vector<double> cr3bp_EM2SE_state(vector<double> state_EM, double t, double theta
     velSE *= (charLE/charTE)/(charLS/charTS);
 
     // Put new data into state vector
-    vector<double> state_SE(3,0);   // three zeros for acceleration; insert pos and vel in front
+    std::vector<double> state_SE(3,0);   // three zeros for acceleration; insert pos and vel in front
     state_SE.insert(state_SE.begin(), posSE.getDataPtr(), posSE.getDataPtr()+3);
     state_SE.insert(state_SE.begin()+3, velSE.getDataPtr(), velSE.getDataPtr()+3);
 
@@ -826,7 +822,7 @@ vector<double> cr3bp_EM2SE_state(vector<double> state_EM, double t, double theta
  *
  *  @return a 9-element state vector in SE coordinates
  */
-vector<double> cr3bp_SE2EM_state(vector<double> state_SE, double t, double thetaE0, double thetaM0,
+std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, double thetaE0, double thetaM0,
     double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
     
     tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - mu_SE);
@@ -866,7 +862,7 @@ vector<double> cr3bp_SE2EM_state(vector<double> state_SE, double t, double theta
     velEM *= (charLS/charTS)/(charLE/charTE);
 
     // Put new data into state vector
-    vector<double> state_EM(3, 0);  // three zeros for acceleration; insert pos and vel in front
+    std::vector<double> state_EM(3, 0);  // three zeros for acceleration; insert pos and vel in front
     state_EM.insert(state_EM.begin(), posEM.getDataPtr(), posEM.getDataPtr()+3);
     state_EM.insert(state_EM.begin()+3, velEM.getDataPtr(), velEM.getDataPtr()+3);
 
@@ -980,20 +976,20 @@ tpat_bcr4bpr_traj bcr4bpr_SE2SEM(tpat_cr3bp_traj crTraj, tpat_bcr4bpr_sys_data b
     // Create a BCR4BPR Trajectory
     tpat_bcr4bpr_traj bcTraj(bcSys);
 
-    vector<double>* state = bcTraj.getState();
-    vector<double>* times = bcTraj.getTime();
-    vector<double>* dqdT = bcTraj.get_dqdT();
-    vector<tpat_matrix>* STMs = bcTraj.getSTM();
+    std::vector<double>* state = bcTraj.getState();
+    std::vector<double>* times = bcTraj.getTime();
+    std::vector<double>* dqdT = bcTraj.get_dqdT();
+    std::vector<tpat_matrix>* STMs = bcTraj.getSTM();
 
     double charL2 = crTraj.getSysData().getCharL();
     double charT2 = crTraj.getSysData().getCharT();
     double charL3 = bcSys.getCharL();
     double charT3 = bcSys.getCharT();
 
-    vector<double> blank(6, NAN);
+    std::vector<double> blank(6, NAN);
 
     for(int n = 0; n < crTraj.getLength(); n++){
-        vector<double> crState = crTraj.getState(n);
+        std::vector<double> crState = crTraj.getState(n);
         for(int r = 0; r < ((int)crState.size()); r++){
             if(r < 3)   // Convert position
                 state->push_back(crState[r]*charL2/charL3);
@@ -1036,9 +1032,9 @@ tpat_bcr4bpr_nodeset bcr4bpr_SE2SEM(tpat_cr3bp_nodeset crNodes, tpat_bcr4bpr_sys
     // Create a BCR4BPR Trajectory
     tpat_bcr4bpr_nodeset bcNodes(bcSys);
 
-    vector<double>* nodes = bcNodes.getNodes();
-    vector<double>* tofs = bcNodes.getTOFs();
-    vector<double>* epochs = bcNodes.getEpochs();
+    std::vector<double>* nodes = bcNodes.getNodes();
+    std::vector<double>* tofs = bcNodes.getTOFs();
+    std::vector<double>* epochs = bcNodes.getEpochs();
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();
@@ -1048,7 +1044,7 @@ tpat_bcr4bpr_nodeset bcr4bpr_SE2SEM(tpat_cr3bp_nodeset crNodes, tpat_bcr4bpr_sys
     double ellapsed = t0;
 
     for(int n = 0; n < crNodes.getNumNodes(); n++){
-        vector<double> crNode = crNodes.getNode(n);
+        std::vector<double> crNode = crNodes.getNode(n);
         for(int r = 0; r < ((int)crNode.size()); r++){
             if(r < 3)   // Convert position
                 nodes->push_back(crNode[r]*charL2/charL3);

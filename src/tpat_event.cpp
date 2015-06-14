@@ -33,9 +33,6 @@
 #include "tpat_utilities.hpp"
  
 #include <cmath>
-#include <iostream>
-
-using namespace std;
 
 //-----------------------------------------------------
 //      *structors
@@ -315,7 +312,7 @@ double tpat_event::getDist(double y[6], double t) const{
 		case XY_PLANE: d = conData[2] - y[2]; break;
 		case CRASH:
 		{
-			vector<double> primPos;
+			std::vector<double> primPos;
 			switch(sysData->getType()){
 				case tpat_sys_data::CR3BP_SYS:
 				{
@@ -371,7 +368,7 @@ int tpat_event::getDir(double y[6], double t) const{
 			throw tpat_exception("Event type not implemented");
 	}
 
-	return (int)(d*dt/abs(d*dt));
+	return (int)(d*dt/std::abs(d*dt));
 }//==============================================
 
 /**

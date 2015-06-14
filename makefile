@@ -70,7 +70,7 @@ all:
 ifeq ($(UNAME_S), Linux)
 	@echo Making Linux libraries
 	@make libtpat.a
-	@make libtpat.so
+#	@make libtpat.so
 else ifeq ($(UNAME_S), Darwin)
 	@echo Making OS X libraries
 	@make libtpat.a

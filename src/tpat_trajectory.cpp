@@ -31,9 +31,6 @@
 #include "tpat_utilities.hpp"
  
 #include <cstdlib>
-#include <iostream>
-
-using namespace std;
 
 //-----------------------------------------------------
 // 		Constructors
@@ -111,7 +108,7 @@ int tpat_trajectory::getLength() const{ return numPoints; }
 /**
  *	@return a pointer to the beginning of the state array.
  */
-vector<double>* tpat_trajectory::getState(){ return &state;}
+std::vector<double>* tpat_trajectory::getState(){ return &state;}
 
 /**
  *	@brief Retrieve a single state along the trajectory
@@ -121,13 +118,13 @@ vector<double>* tpat_trajectory::getState(){ return &state;}
  *	final time, -2 will give the second to last value, etc.
  *	@return a vector representing the full state (pos, vel, accel)
  */
-vector<double> tpat_trajectory::getState(int n) const{
+std::vector<double> tpat_trajectory::getState(int n) const{
 	if(n < 0)
 		n += state.size()/STATE_WIDTH;
 
-	vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
-	vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH;
-	vector<double> oneState(first, last);
+	std::vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
+	std::vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH;
+	std::vector<double> oneState(first, last);
 	return oneState;
 }
 
@@ -147,7 +144,7 @@ double tpat_trajectory::getTime(int n) const {
 /**
  *	@return a pointer to the begining of the time vector
  */
-vector<double>* tpat_trajectory::getTime(){ return &times; }
+std::vector<double>* tpat_trajectory::getTime(){ return &times; }
 
 /**
  *	@brief Retrieve the STM at a specific point along the trajectory
@@ -167,7 +164,7 @@ tpat_matrix tpat_trajectory::getSTM(int n) const {
  *	@brief Useful for setting the STM (in place) after the trajectory has been initialized
  *	@return a pointer to the beginning of the vector of STMs
  */
-vector<tpat_matrix>* tpat_trajectory::getSTM(){ return &allSTM;}
+std::vector<tpat_matrix>* tpat_trajectory::getSTM(){ return &allSTM;}
 
 /**
  *	@return the system data type
@@ -210,8 +207,7 @@ void tpat_trajectory::setLength(){
 	if(sL == tL && tL == pL){
 		numPoints = sL;
 	}else{
-		cout << "Warning: trajectory has vectors with different lengths:" << endl;
-		cout << " state: " << sL << "\n time: " << tL << "\n STM: " << pL<< endl;
+		printWarn("Trajectory has vectors with different lengths\n");
 		numPoints = sL;
 	}
 }//=======================================
@@ -252,8 +248,8 @@ void tpat_trajectory::saveState(mat_t *matFile){
 
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	vector<double> posVel(numPoints*6);
-	vector<double> accel(numPoints*3);
+	std::vector<double> posVel(numPoints*6);
+	std::vector<double> accel(numPoints*3);
 
 	for(int r = 0; r < numPoints; r++){
 		for(int c = 0; c < STATE_WIDTH; c++){
@@ -309,7 +305,7 @@ void tpat_trajectory::saveTime(mat_t *matFile){
  */
 void tpat_trajectory::saveSTMs(mat_t *matFile){
 	// Create one large vector to put all the STM elements in
-	vector<double> allSTMEl(numPoints*36);
+	std::vector<double> allSTMEl(numPoints*36);
 	for (int n = 0; n < numPoints; n++){
 		// get the transpose of the STM matrix; we need to store it in column-major order
 		// and it's currently in row-major order
@@ -317,7 +313,7 @@ void tpat_trajectory::saveSTMs(mat_t *matFile){
 		// Retrieve the data from the matrix
 		double *matData = P.getDataPtr();
 		// Store that data in our huge vector
-		copy(matData, matData+36, &(allSTMEl[0]) + n*36);
+		std::copy(matData, matData+36, &(allSTMEl[0]) + n*36);
 	}
 
 	size_t dims[3] = {6, 6, static_cast<size_t>(numPoints)};

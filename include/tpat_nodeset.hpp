@@ -98,6 +98,7 @@ class tpat_nodeset{
 		void setVelConNodes_allBut(std::vector<int>);
 
 		// Utility Functions
+		void reverseOrder();
 		void clearConstraints();
 		virtual void print() const = 0;		//!< @brief Output a human-readable description of the nodeset
 		void saveToMat(const char*);

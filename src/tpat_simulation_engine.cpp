@@ -45,10 +45,7 @@
 #include <cstdlib>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
-#include <iostream>
 #include <vector>
-
-using namespace std;
 
 //-----------------------------------------------------
 //      *structors
@@ -346,9 +343,9 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
         cleanEngine();
     }
 
-    vector<double> t_span;
+    std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
-    double tf = revTime ? t0 - abs(tof) : t0 + abs(tof);
+    double tf = revTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
     printVerb(verbose, "  time will span from %.3e to %.3e\n", t0, tf);
     printVerb(verbose, "  (Reverse Time is %s)\n", revTime ? "ON" : "OFF");
 
@@ -421,8 +418,8 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     printVerb(verbose, "  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
-    vector<double> fullIC(ic_dim, 0);
-    copy(ic, ic+6, &(fullIC.front()));
+    std::vector<double> fullIC(ic_dim, 0);
+    std::copy(ic, ic+6, &(fullIC.front()));
 
     if(ic_dim > 6){
         fullIC.at(6) = 1;       // STM initial condition: 6x6 identity matrix
@@ -583,9 +580,9 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
 void tpat_simulation_engine::saveIntegratedData(double *y, double t){
 
     // Grab pointers to the trajectory object's vectors
-    vector<double>* state = traj->getState();       // hold the entire integrated state
-    vector<double>* times = traj->getTime();        // hold all times along trajectory
-    vector<tpat_matrix>* allSTM = traj->getSTM();   // hold all STM along trajectory
+    std::vector<double>* state = traj->getState();       // hold the entire integrated state
+    std::vector<double>* times = traj->getTime();        // hold all times along trajectory
+    std::vector<tpat_matrix>* allSTM = traj->getSTM();   // hold all STM along trajectory
 
     // Save the position and velocity states
     for(int i = 0; i < 6; i++){
@@ -599,7 +596,7 @@ void tpat_simulation_engine::saveIntegratedData(double *y, double t){
 
     // Save STM
     double stmElm[36];
-    copy(y+6, y+42, stmElm);
+    std::copy(y+6, y+42, stmElm);
     allSTM->push_back(tpat_matrix(6,6,stmElm));
 
     // Compute acceleration
@@ -710,7 +707,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
 
             // Copy 6-element IC into vector - Use the state from two iterations ago to avoid
             // numerical problems when the previous state is REALLY close to the event
-            vector<double> generalIC = traj->getState(-2);
+            std::vector<double> generalIC = traj->getState(-2);
 
             if(verbose){
                 printColor(BLUE, "Num Pts = %d\n", numPts);
@@ -767,7 +764,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
                     // Because we set findEvent to true, this output nodeset should contain
                     // the full (42 or 48 element) final state
                     tpat_cr3bp_nodeset correctedNodes = corrector.getCR3BPOutput();
-                    vector<double> *nodes = correctedNodes.getNodes();
+                    std::vector<double> *nodes = correctedNodes.getNodes();
 
                     // event time is the TOF of corrected path + time at the state we integrated from
                     double eventTime = correctedNodes.getTOF(0) + t0;
@@ -816,7 +813,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
                     // Because we set findEvent to true, this output nodeset should contain
                     // the full (42 or 48 element) final state
                     tpat_bcr4bpr_nodeset correctedNodes = corrector.getBCR4BPROutput();
-                    vector<double> *nodes = correctedNodes.getNodes();
+                    std::vector<double> *nodes = correctedNodes.getNodes();
 
                     // event time is the TOF of corrected path + time at the state we integrated from
                     double eventTime = correctedNodes.getTOF(0) + t0;

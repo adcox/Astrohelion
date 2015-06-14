@@ -32,10 +32,8 @@
 #include "tpat_utilities.hpp"
  
 #include <cmath>
+#include <cstring>
 #include <exception>
-#include <iostream>
-
-using namespace std;
 
 // Static variable initialization
 double tpat_bcr4bpr_sys_data::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35

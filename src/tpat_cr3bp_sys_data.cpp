@@ -33,11 +33,9 @@
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
+#include <cstring>
 #include <cmath>
 #include <exception>
-#include <iostream>
-
-using namespace std;
 
 /**
  *	@brief Default constructor

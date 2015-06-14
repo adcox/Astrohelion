@@ -30,11 +30,9 @@
 #include "tpat_trajectory.hpp"
 #include "tpat_utilities.hpp"
  
+#include <algorithm>
 #include <cstdio>
-#include <iostream>
 #include <cmath>
-
-using namespace std;
 
 //-----------------------------------------------------
 //      *structors
@@ -112,7 +110,7 @@ void tpat_nodeset::basicConcat(const tpat_nodeset &lhs, const tpat_nodeset &rhs,
 	// If the last node of LHS equals the first node of RHS, skip it when concatenating
 	if(lhs.getNode(-1) == rhs.getNode(0)){
 		rhsNodeShift--;
-		vector<double> lhsNodes(lhs.nodes.begin(), lhs.nodes.end()-1*lhs.nodeSize);
+		std::vector<double> lhsNodes(lhs.nodes.begin(), lhs.nodes.end()-1*lhs.nodeSize);
 		output->appendNode(lhsNodes);
 	}else{
 		output->appendNode(lhs.nodes);
@@ -136,7 +134,7 @@ void tpat_nodeset::basicConcat(const tpat_nodeset &lhs, const tpat_nodeset &rhs,
 
 	// Concatenate velocity continuity nodes, adjusting node numbers for RHS
 	// velConNodes to account for the shift in node index
-	vector<int> newVelCon(lhs.velConNodes.begin(), lhs.velConNodes.end());
+	std::vector<int> newVelCon(lhs.velConNodes.begin(), lhs.velConNodes.end());
 	for(int n = 0; n < ((int)rhs.velConNodes.size()); n++){
 		newVelCon.push_back(rhs.velConNodes[n] + rhsNodeShift);
 	}
@@ -169,7 +167,7 @@ std::vector<double> tpat_nodeset::getNode(int i) const {
 	if(i < 0)
 		i += getNumNodes();
 
-	vector<double> temp(nodes.begin()+i*nodeSize, nodes.begin()+(i+1)*nodeSize);
+	std::vector<double> temp(nodes.begin()+i*nodeSize, nodes.begin()+(i+1)*nodeSize);
 	return temp;
 }
 
@@ -335,7 +333,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 			break;
 		case tpat_nodeset::ARCLENGTH:
 			engine.setVarStepSize(true);
-			engine.setNumSteps(abs(tof)*500);
+			engine.setNumSteps(std::abs(tof)*500);
 			nodeDistro = tpat_nodeset::ARCLENGTH;
 			break;
 	}
@@ -353,8 +351,8 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	tofs.reserve(numNodes);
 
 	// Save the nodes and TOFs
-	vector<double> *trajState = traj.getState();
-	vector<double> *trajTime = traj.getTime();
+	std::vector<double> *trajState = traj.getState();
+	std::vector<double> *trajTime = traj.getTime();
 
 	double sumArclen = 0;
 	double desiredArclen = 0;
@@ -415,6 +413,27 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	}
 }//==========================================================
 
+void tpat_nodeset::reverseOrder(){
+	// Re-order nodes and TOFs
+	for(int n = 0; n < floor(getNumNodes()/2); n++){
+		for(int r = 0; r < nodeSize; r++){
+			std::swap(nodes[n*nodeSize+r], nodes[nodes.size()-(n+1)*nodeSize+r]);
+		}
+
+		if(n < floor(tofs.size()/2)){
+			std::swap(tofs[n], tofs[tofs.size()-n-1]);
+		}
+	}
+
+	for(int c = 0; c < ((int)constraints.size()); c++){
+		constraints[c].setNode(getNumNodes()-1-constraints[c].getNode());
+	}
+
+	for(int v = 0; v < ((int)velConNodes.size()); v++){
+		velConNodes[v] = getNumNodes()-1-velConNodes[v];
+	}
+}//=====================================
+
 /**
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
@@ -453,7 +472,7 @@ void tpat_nodeset::saveNodes(mat_t *matFile){
 
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	vector<double> posVel(nodes.size());
+	std::vector<double> posVel(nodes.size());
 	int numNodes = getNumNodes();
 	for(int r = 0; r < numNodes; r++){
 		for(int c = 0; c < nodeSize; c++){

@@ -40,12 +40,10 @@
 #include "tpat_trajectory.hpp"
 #include "tpat_utilities.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <gsl/gsl_linalg.h>
-#include <iostream>
 #include <vector>
-
-using namespace std;
 
 /**
  *	@brief a custom data class to encapsulate data used in each iteration
@@ -57,16 +55,16 @@ using namespace std;
  */
 class iterationData{
 	public:
-		vector<double> X;			//!< Free-Variable Vector
-		vector<double> FX;			//!< Constraint Function Vector
-		vector<double> DF;			//!< Jacobian Matrix
-		vector<double> deltaVs;		//!< nx3 vector of non-dim delta-Vs
-		vector<double> lastState;	//!< Final state on most recent integrated arc
-		vector<double> last_dqdT;	//!< Final dqdT on most recent integrated arc
-		vector<double> primPos;		//!< Store the positions of the primaries
-		vector<double> primVel;		//!< Store the velocities of the primaries
-		vector<int> velConNodes;	//!< Indices of nodes that are continuous in velocity
-		vector<int> slackAssignCon;	//!< Indices of constraints, index of entry corresponds to a slack variable
+		std::vector<double> X;			//!< Free-Variable Vector
+		std::vector<double> FX;			//!< Constraint Function Vector
+		std::vector<double> DF;			//!< Jacobian Matrix
+		std::vector<double> deltaVs;		//!< nx3 vector of non-dim delta-Vs
+		std::vector<double> lastState;	//!< Final state on most recent integrated arc
+		std::vector<double> last_dqdT;	//!< Final dqdT on most recent integrated arc
+		std::vector<double> primPos;		//!< Store the positions of the primaries
+		std::vector<double> primVel;		//!< Store the velocities of the primaries
+		std::vector<int> velConNodes;	//!< Indices of nodes that are continuous in velocity
+		std::vector<int> slackAssignCon;	//!< Indices of constraints, index of entry corresponds to a slack variable
 		tpat_trajectory newSeg;		//!< Most recent integrated ard
 		tpat_bcr4bpr_traj bcNewSeg;	//!< Most recent integrated ard, cast to BCR4BPR
 		tpat_matrix lastSTM = tpat_matrix(6,6);	//!< Final STM on most recent integrated arc
@@ -328,10 +326,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	it.extraCons = 0;
 	it.numSlack = 0;
 	bool foundDVCon = false;
-
-	// Each entry holds the index of a constraint for later reference, the index of 
-	// the entry itself tells which slack variable is associated with the constraint
-	vector<int> slackAssignCon;
 	
 	for(int c = 0; c < set->getNumCons(); c++){
 		tpat_constraint con = set->getConstraint(c);
@@ -352,7 +346,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 			case tpat_constraint::MAX_DIST:
 			case tpat_constraint::MIN_DIST:
 				it.X.push_back(1e-4);
-				slackAssignCon.push_back(c);
+				it.slackAssignCon.push_back(c);
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for DIST as well
 			case tpat_constraint::DIST:
@@ -376,7 +370,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 						 */
 						it.X.push_back(1e-4);
 						it.numSlack++;
-						slackAssignCon.push_back(c);
+						it.slackAssignCon.push_back(c);
 					}
 				}else{
 					throw tpat_exception("You can only apply ONE delta-V constraint");
@@ -435,11 +429,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 		it.DF.assign(it.totalCons*it.totalFree, 0);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
-		// printf("DF contains %d elements\n", ((int)DF.size()));
-		// printf("FX contains %d elements\n", ((int)FX.size()));
-		// printf("X contains %d elements\n", ((int)X.size()));
-		// printf("DeltaVs contains %d elements\n", ((int)deltaVs.size()));
-
 		it.conCount = it.posVelCons + it.timeCons;	// row where extra constraints will begin
 		it.pvConCount = 0;		// reset to zero every iteration
 
@@ -489,7 +478,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 				tpat_constraint con = set->getConstraint(c);
 
 				if(con.getNode() == n){
-					vector<double> conData = con.getData();
+					std::vector<double> conData = con.getData();
 
 					switch(con.getType()){
 						case tpat_constraint::STATE:
@@ -549,7 +538,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 				case tpat_constraint::MAX_DELTA_V:
 				{
 					// figure out which of the slack variables correspond to this constraint
-					vector<int>::iterator slackIx = std::find(it.slackAssignCon.begin(),
+					std::vector<int>::iterator slackIx = std::find(it.slackAssignCon.begin(),
 						it.slackAssignCon.end(), c);
 
 					// which column of the DF matrix the slack variable is in
@@ -670,7 +659,7 @@ void tpat_correction_engine::createPosVelCons(iterationData* it, tpat_sys_data::
  *	@param n the index of the node that has been constrained
  */
 void tpat_correction_engine::targetState(iterationData* it, tpat_constraint con, int n){
-	vector<double> conData = con.getData();
+	std::vector<double> conData = con.getData();
 
 	// Allow user to constrain all 7 states
 	for(int s = 0; s < ((int)con.getData().size()); s++){
@@ -724,7 +713,7 @@ void tpat_correction_engine::targetMatchAll(iterationData* it, tpat_constraint c
  *	@param n the index of the node that has been constrained
  */
 void tpat_correction_engine::targetMatchCust(iterationData* it, tpat_constraint con, int n){
-	vector<double> conData = con.getData();
+	std::vector<double> conData = con.getData();
 	// Only allow matching 6 states, not epoch time (state 7)
 	for(int s = 0; s < 6; s++){
 		if(!isnan(conData[s])){
@@ -757,7 +746,7 @@ void tpat_correction_engine::targetMatchCust(iterationData* it, tpat_constraint 
 void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
 		tpat_sys_data* sysData, int n, int c){
 
-	vector<double> conData = con.getData();
+	std::vector<double> conData = con.getData();
 	int Pix = (int)(conData[0]);	// index of primary
 
 	// Get distance between node and primary in x, y, and z-coordinates
@@ -779,7 +768,7 @@ void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
 	if(con.getType() == tpat_constraint::MIN_DIST || 
 		con.getType() == tpat_constraint::MAX_DIST ){
 		// figure out which of the slack variables correspond to this constraint
-		vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
+		std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
 			it->slackAssignCon.end(), c);
 
 		// which column of the DF matrix the slack variable is in
@@ -921,15 +910,15 @@ void tpat_correction_engine::targetSP(iterationData* it, tpat_bcr4bpr_sys_data* 
     double *FX = &(it->FX[0]);
     double *DF = &(it->DF[0]);
 
-    copy(conEvalPtr, conEvalPtr+3, FX+it->conCount);
-    copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*it->conCount + 6*n);
-    copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(it->conCount+1) + 6*n);
-    copy(dFdq_ptr+6, dFdq_ptr+9, DF + it->totalFree*(it->conCount+2) + 6*n);
+    std::copy(conEvalPtr, conEvalPtr+3, FX+it->conCount);
+    std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*it->conCount + 6*n);
+    std::copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(it->conCount+1) + 6*n);
+    std::copy(dFdq_ptr+6, dFdq_ptr+9, DF + it->totalFree*(it->conCount+2) + 6*n);
 
     if(varTime){
-    	copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*it->conCount + 7*it->numNodes-1+n);
-    	copy(dFdT_ptr+1, dFdT_ptr+2, DF + it->totalFree*(it->conCount+1) + 7*it->numNodes-1+n);
-    	copy(dFdT_ptr+2, dFdT_ptr+3, DF + it->totalFree*(it->conCount+2) + 7*it->numNodes-1+n);
+    	std::copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*it->conCount + 7*it->numNodes-1+n);
+    	std::copy(dFdT_ptr+1, dFdT_ptr+2, DF + it->totalFree*(it->conCount+1) + 7*it->numNodes-1+n);
+    	std::copy(dFdT_ptr+2, dFdT_ptr+3, DF + it->totalFree*(it->conCount+2) + 7*it->numNodes-1+n);
     }
 }// End of SP Targeting ==============================
 
@@ -1108,6 +1097,11 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 	int permSign;	// store sign (even/odd) of permutation matrix
 	int status;		// status for GSL functions
 	if(it->totalCons == it->totalFree){	// J is square, use regular inverse
+		// J.toCSV("J.csv");
+		// FX_mat.toCSV("FX.csv");
+		// oldX.toCSV("X.csv");
+		// waitForUser();
+
 		// Solve the system Jw = b
 		w = gsl_vector_alloc(it->totalFree);
 		perm = gsl_permutation_alloc(J.getRows());
@@ -1188,7 +1182,7 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
  */
 void tpat_correction_engine::createOutput(iterationData *it){
 
-	vector<double> X = it->X;
+	std::vector<double> X = it->X;
 
 	// get objects for the system type
 	tpat_sys_data::system_t sysType = nodeset_in->getSysData()->getType();
@@ -1221,8 +1215,8 @@ void tpat_correction_engine::createOutput(iterationData *it){
 	int numNodes = nodeset_in->getNumNodes();
 
 	// Get pointers to relevant data vectors
-	vector<double> *nodes = nodeset_out->getNodes();
-	vector<double> *tofs = nodeset_out->getTOFs();
+	std::vector<double> *nodes = nodeset_out->getNodes();
+	std::vector<double> *tofs = nodeset_out->getTOFs();
 
 	// Clear nodes and TOF and repopulate using data from output free variable vector
 	nodes->clear();
@@ -1248,7 +1242,7 @@ void tpat_correction_engine::createOutput(iterationData *it){
 	// Clear the epoch vector and copy in the final, corrected epochs (if applicable)
 	if(sysType == tpat_sys_data::BCR4BPR_SYS){
 		tpat_bcr4bpr_nodeset *nodeOutCast = static_cast<tpat_bcr4bpr_nodeset *>(nodeset_out);
-		vector<double> *epochs = nodeOutCast->getEpochs();
+		std::vector<double> *epochs = nodeOutCast->getEpochs();
 		epochs->clear();
 		epochs->insert(epochs->begin(), X.begin() + 7*numNodes-1, X.begin() + 8*numNodes-1);
 	}

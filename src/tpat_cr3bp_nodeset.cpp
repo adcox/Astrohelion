@@ -29,9 +29,6 @@
 #include "tpat_utilities.hpp"
  
 #include <cmath>
-#include <iostream>
-
-using namespace std;
 
 /**
  *	@brief Create a general CR3BP nodeset

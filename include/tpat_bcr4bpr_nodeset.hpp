@@ -61,7 +61,7 @@ class tpat_bcr4bpr_nodeset : public tpat_nodeset{
 		tpat_sys_data* getSysData();
 
 		void appendEpoch(double);
-		void sortChrono();
+		void reverseOrder();
 		void print() const;
 		void saveToMat(const char*);
 

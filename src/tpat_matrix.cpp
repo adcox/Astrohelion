@@ -39,9 +39,6 @@
 #include <fstream>
 #include <gsl/gsl_cblas.h>
 #include <gsl/gsl_linalg.h>
-#include <iostream>
- 
-using namespace std;
 
 //---------------------------------------------------------------------------
 //    	Constructors and Destructor
@@ -116,7 +113,7 @@ tpat_matrix::~tpat_matrix(){
 	try{
 		gsl_matrix_free(a);
 	}catch(...){
-		cout << "\nError! cannot free a: my dimensions are " << rows << " x " << cols << endl;
+		throw tpat_exception("Cannot free gsl matrix!");
 	}
 }//==============================================
 
@@ -138,7 +135,7 @@ tpat_matrix::tpat_matrix(const tpat_matrix &b){
  *	@return an identiy matrix
  */
 tpat_matrix tpat_matrix::I(int size){
-	vector<double> data(size*size, 0);
+	std::vector<double> data(size*size, 0);
 	for(int i = 0; i < size*size; i += size+1){
 		data[i] = 1;
 	}
@@ -156,7 +153,7 @@ tpat_matrix tpat_matrix::I(int size){
  *	@return the row vector
  */
 tpat_matrix tpat_matrix::e_j(int dim, int j){
-	vector<double> data(dim, 0);
+	std::vector<double> data(dim, 0);
 	data[j-1] = 1;
 	return tpat_matrix(1, dim, data);
 }//===========================================
@@ -169,7 +166,7 @@ tpat_matrix tpat_matrix::e_j(int dim, int j){
  *	@return a matrix with the specified values along the diagonal, zeros elsewhere
  */
 tpat_matrix tpat_matrix::diag(double* vals, int vals_len){
-	vector<double> data(vals_len*vals_len, 0);
+	std::vector<double> data(vals_len*vals_len, 0);
 	for(int i = 0; i < vals_len; i++){
 		data[(vals_len+1)*i] = vals[i];
 	}
@@ -197,7 +194,7 @@ tpat_matrix tpat_matrix::getRow(int i){
 	tpat_matrix temp(v, true);
 	gsl_vector_free(v);
 	return temp;
-}
+}//==================================
 
 /**
  * 	@return the number of columns in this matrix
@@ -215,7 +212,7 @@ tpat_matrix tpat_matrix::getCol(int j){
 	tpat_matrix temp(v, false);
 	gsl_vector_free(v);
 	return temp;
-}
+}//======================================
 
 /**
  *	@return the total number of elements in the matrix
@@ -253,7 +250,7 @@ double tpat_matrix::at(int r, int c) const {
 double tpat_matrix::at(int i) const {
 	if(i < rows*cols){
 		if(rows != 1 && cols != 1){
-			cout << "tpat_matrix :: Warning - matrix is not 1D; returning element from storage array" << endl;
+			printWarn("tpat_matrix :: matrix is not 1D; returning element from storage array\n");
 		}
 		return a->data[i];
 	}else{
@@ -288,7 +285,7 @@ tpat_matrix& tpat_matrix::operator =(const tpat_matrix &b){
  */
 tpat_matrix operator +(const tpat_matrix &lhs, const tpat_matrix &rhs){
 	if(lhs.rows == rhs.rows && lhs.cols == rhs.cols){
-		vector<double> q(lhs.rows * lhs.cols);
+		std::vector<double> q(lhs.rows * lhs.cols);
 		for (int r = 0; r < lhs.rows; r++){
 			for (int c = 0; c < lhs.cols; c++){
 				q[r * lhs.cols + c] = gsl_matrix_get(lhs.a, r, c) + gsl_matrix_get(rhs.a, r, c);
@@ -335,8 +332,7 @@ tpat_matrix& tpat_matrix::operator -=(const tpat_matrix &b){
 		gsl_matrix_sub(a, b.a);
 		return *this;
 	}else{
-		cout << "Matrices must be the same size to apply addition!" << endl;
-		throw tpat_sizeMismatch();
+		throw tpat_sizeMismatch("Cannot perform addition");
 	}
 }//==============================================
 
@@ -423,7 +419,7 @@ tpat_matrix& tpat_matrix::operator *=(const tpat_matrix &b){
 tpat_matrix operator *(const double &lhs, const tpat_matrix &rhs){
 	int rows = rhs.rows;
 	int cols = rhs.cols;
-	vector<double> b(rows * cols);
+	std::vector<double> b(rows * cols);
 	for(int r = 0; r< rows; r++){
 		for(int c = 0; c< cols; c++){
 			b[r * cols + c] = lhs *gsl_matrix_get(rhs.a, r, c);
@@ -507,7 +503,7 @@ tpat_matrix cross(const tpat_matrix &lhs, const tpat_matrix &rhs){
 		throw tpat_linalg_err("Cross product only defined for 3D vectors");
 	}
 
-	vector<double> data(3,0);
+	std::vector<double> data(3,0);
 	data[0] = lhs.at(1)*rhs.at(2) - lhs.at(2)*rhs.at(1);
 	data[1] = rhs.at(0)*lhs.at(2) - rhs.at(2)*lhs.at(0);
 	data[2] = lhs.at(0)*rhs.at(1) - lhs.at(1)*rhs.at(0);
@@ -644,8 +640,8 @@ void tpat_matrix::print(const char *format) const{
  *	@param filename the filename or filepath, including file extension
  */
 void tpat_matrix::toCSV(const char *filename) const{
-	ofstream outFile;
-	outFile.open(filename, ios::out);
+	std::ofstream outFile;
+	outFile.open(filename, std::ios::out);
 	for (int r = 0; r < rows; r++){
 	    for (int c = 0; c < cols; c++){
 	    	char buffer[64];

@@ -56,7 +56,7 @@ class tpat_exception : public std::exception{
  * 	Size mismatch means two matrices cannot be added, subtracted, or multiplied 
  *  because they do not have the appropriate dimensions
  */
-class tpat_sizeMismatch : public tpat_exception std::runtime_error{
+class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
 	public:
 		/** @brief Default constructor */
 		tpat_sizeMismatch() : tpat_exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
@@ -80,7 +80,7 @@ class tpat_sizeMismatch : public tpat_exception std::runtime_error{
  *	This exception should be thrown when the solution fails to converge (or diverges)
  *	and provides a way for the calling function to gracefully handle the divergence
  */
-class tpat_diverge : public tpat_exception std::runtime_error{
+class tpat_diverge : public tpat_exception, std::runtime_error{
 	public:
 		/** Default constructor */
 		tpat_diverge() : tpat_exception("Did not converge!"), std::runtime_error("Did not converge!"){}
@@ -103,7 +103,7 @@ class tpat_diverge : public tpat_exception std::runtime_error{
  *	This exception should be thrown for cases like trying to factor singular
  *	matrices, taking the deteriminant of a non-square matrix, etc.
  */
-class tpat_linalg_err : public tpat_exception std::runtime_error{
+class tpat_linalg_err : public tpat_exception, std::runtime_error{
 	public:
 		/** Default constructor */
 		tpat_linalg_err() : tpat_exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}

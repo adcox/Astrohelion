@@ -65,7 +65,7 @@ void test_cr3bp_events(){
 	engine.setVerbose(true);
 	engine.addEvent(tpat_event::XZ_PLANE, 0, true);
 	engine.setRevTime(true);
-	engine.runSim(ic, 1.5);
+	engine.runSim(ic, 2.7);
 
 	tpat_cr3bp_traj traj = engine.getCR3BPTraj();
 	traj.saveToMat("HaloHalfTest.mat");

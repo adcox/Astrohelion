@@ -37,8 +37,6 @@
 #include <complex>
 #include <vector>
 
-using namespace std;
-
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
@@ -126,8 +124,8 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 
 	tpat_cr3bp_traj linTraj;
 
-	vector<double>* times = linTraj.getTime();
-	vector<double>* state = linTraj.getState();
+	std::vector<double>* times = linTraj.getTime();
+	std::vector<double>* state = linTraj.getState();
 	double xi;
 	double eta;
 	double xi_dot0;
@@ -139,9 +137,9 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 		// Compute eigenvalues analytically
 		double beta1 = 2 - (ddots[0] + ddots[1])/2;
 		double beta2 = sqrt(-1*ddots[1]*ddots[0]);
-		complex<double> Lam1 = -1*beta1 + sqrt(beta1*beta1 + beta2*beta2);
-		complex<double> Lam2 = -1*beta1 - sqrt(beta1*beta1 + beta2*beta2);
-		complex<double> eigenval[] = {sqrt(Lam1), -1.0*sqrt(Lam1), sqrt(Lam2), -1.0*sqrt(Lam2)};
+		std::complex<double> Lam1 = -1*beta1 + sqrt(beta1*beta1 + beta2*beta2);
+		std::complex<double> Lam2 = -1*beta1 - sqrt(beta1*beta1 + beta2*beta2);
+		std::complex<double> eigenval[] = {sqrt(Lam1), -1.0*sqrt(Lam1), sqrt(Lam2), -1.0*sqrt(Lam2)};
 
 		double s;
 		switch(type){
@@ -191,16 +189,16 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 		}
 	}else{ // L = 4 or 5
 		// Compute eigenvalues analytically
-		complex<double> gc = 1 - 27*mu*(1-mu);
-		complex<double> Lam1 = -0.5 + 0.5*sqrt(gc);
-		complex<double> Lam2 = -0.5 - 0.5*sqrt(gc);
-		complex<double> eigenval[] = {sqrt(Lam1), -1.0*sqrt(Lam1), -1.0*sqrt(Lam2), sqrt(Lam2)};
+		std::complex<double> gc = 1 - 27*mu*(1-mu);
+		std::complex<double> Lam1 = -0.5 + 0.5*sqrt(gc);
+		std::complex<double> Lam2 = -0.5 - 0.5*sqrt(gc);
+		std::complex<double> eigenval[] = {sqrt(Lam1), -1.0*sqrt(Lam1), -1.0*sqrt(Lam2), sqrt(Lam2)};
 
 		// Other variables that depend on eigenvalues
-		complex<double> s1 = eigenval[0];
-		complex<double> s3 = eigenval[2];
-		complex<double> alpha1 = (s1*s1 - ddots[0])/(2.0*s1 + ddots[3]);
-		complex<double> alpha3 = (s3*s3 - ddots[0])/(2.0*s3 + ddots[3]);
+		std::complex<double> s1 = eigenval[0];
+		std::complex<double> s3 = eigenval[2];
+		std::complex<double> alpha1 = (s1*s1 - ddots[0])/(2.0*s1 + ddots[3]);
+		std::complex<double> alpha3 = (s3*s3 - ddots[0])/(2.0*s3 + ddots[3]);
 		double a1 = real(alpha1);
 		double a3 = real(alpha3);
 		double b1 = imag(alpha1);
@@ -276,7 +274,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 				default:
 					throw tpat_exception("Invalid type for triangular points, Case I");
 			}
-		}else if(abs(g) < tol){
+		}else if(std::abs(g) < tol){
 			// Case II, g is 0 (approx.)
 			double s1d = s1.imag();
 			period = 2*PI/s1d;
@@ -284,7 +282,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			for(double t = 0; t < rots*period; t+= t_step){
             	times->push_back(t);
 				xi = xi0*cos(s1d*t) - (a1*xi0 - eta0)/b1 * sin(s1d*t);
-				eta = eta0*cos(s1d*t) - (xi0*abs(alpha1) - a1*eta0)/b1 * sin(s1d*t);
+				eta = eta0*cos(s1d*t) - (xi0*std::abs(alpha1) - a1*eta0)/b1 * sin(s1d*t);
 				state->push_back(xi + LPtPos[0]);
 				state->push_back(eta + LPtPos[1]);
 
@@ -292,7 +290,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			}
 
 			xi_dot0 = -s1d*(a1*xi0 - eta0)/b1;
-            eta_dot0 = -s1d*(xi0*abs(alpha1) - a1*eta0)/b1;
+            eta_dot0 = -s1d*(xi0*std::abs(alpha1) - a1*eta0)/b1;
 		}else{
 			// Case III
 			double p = real(s1);
@@ -330,8 +328,8 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	// Out of plane motion
 	double zeta0 = r0[2];
 	double zeta_dot0 = 0;
-	vector<double> zeta;
-	complex<double> p = sqrt(static_cast< complex<double> >(ddots[2]));
+	std::vector<double> zeta;
+	std::complex<double> p = sqrt(static_cast< std::complex<double> >(ddots[2]));
 	double s = p.imag();
 	for(int i = 0; i < ((int)times->size()); i++){
 		state->at(tpat_trajectory::STATE_WIDTH * i + 2) = 

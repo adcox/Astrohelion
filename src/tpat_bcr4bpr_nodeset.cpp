@@ -7,8 +7,6 @@
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
-using namespace std;
-
 /**
  *	@brief Construct a nodeset with no data other than the system
  *	@param data system data object describing the system the nodes exist in
@@ -205,6 +203,16 @@ void tpat_bcr4bpr_nodeset::appendEpoch(double d){
 	epochs.push_back(d);
 }//=====================================
 
+void tpat_bcr4bpr_nodeset::reverseOrder(){
+	// Default reverse stuff
+	tpat_nodeset::reverseOrder();
+
+	// Additionally, re-order epochs
+	for(int n = 0; n < floor(epochs.size()/2); n++){
+		std::swap(epochs[n], epochs[epochs.size()-1-n]);
+	}
+}//===========================================
+
 /**
  *	@brief Print a textual representation of this object to the standard output
  */
@@ -225,46 +233,6 @@ void tpat_bcr4bpr_nodeset::print() const {
 		constraints[c].print();
 	}
 }//========================================
-
-void tpat_bcr4bpr_nodeset::reverseOrder(){
-	
-}
-
-/**
- *	@brief Sort the nodes by their epoch time in chronological order
- */	
-void tpat_bcr4bpr_nodeset::sortChrono(){
-	// Get the indices to sort time
-	vector<int> sortedIx = getSortedInd(epochs);
-
-	vector<double> nodeCpy;
-	vector<double> epochCpy;
-	vector<double> tofCpy;
-
-	for(int n = 0; n < ((int)epochs.size()); n++){
-		cout << sortedIx[n] << endl;
-		vector<double> node = getNode(sortedIx[n]);
-		nodeCpy.insert(nodeCpy.end(), node.begin(), node.end());
-		epochCpy.push_back(getEpoch(sortedIx[n]));
-		
-		if(n < (int)tofs.size())
-			tofCpy.push_back(getTOF(sortedIx[n]));
-	}
-
-	nodes = nodeCpy;
-	epochs = epochCpy;
-	tofs = tofCpy;
-
-	// Adjust nodes on constraints and velcon
-	for(int n = 0; n < ((int)constraints.size()); n++){
-		constraints[n].setNode(sortedIx[constraints[n].getNode()]);
-	}
-
-	// Adjust velcon nodes
-	for(int n = 0; n < ((int)velConNodes.size()); n++){
-		velConNodes[n] = sortedIx[velConNodes[n]];
-	}
-}//======================================
 
 /**
  *	@brief Save the trajectory to a file

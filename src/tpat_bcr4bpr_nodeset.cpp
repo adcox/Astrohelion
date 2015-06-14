@@ -50,7 +50,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(vector<double> IC, tpat_bcr4bpr_sys_data data, 
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_sys_data data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(6){
 
 	sysData = data;
@@ -90,7 +90,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(vector<double> IC, tpat_bcr4bpr_sys_data data, 
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_sys_data data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(6){
 
 	sysData = data;
@@ -226,6 +226,13 @@ void tpat_bcr4bpr_nodeset::print() const {
 	}
 }//========================================
 
+void tpat_bcr4bpr_nodeset::reverseOrder(){
+	
+}
+
+/**
+ *	@brief Sort the nodes by their epoch time in chronological order
+ */	
 void tpat_bcr4bpr_nodeset::sortChrono(){
 	// Get the indices to sort time
 	vector<int> sortedIx = getSortedInd(epochs);
@@ -234,8 +241,10 @@ void tpat_bcr4bpr_nodeset::sortChrono(){
 	vector<double> epochCpy;
 	vector<double> tofCpy;
 
-	for(int n = 0; n < ((int)epochs.size(); n++){
-		nodeCpy.push_back(getNode(sortedIx[n]));
+	for(int n = 0; n < ((int)epochs.size()); n++){
+		cout << sortedIx[n] << endl;
+		vector<double> node = getNode(sortedIx[n]);
+		nodeCpy.insert(nodeCpy.end(), node.begin(), node.end());
 		epochCpy.push_back(getEpoch(sortedIx[n]));
 		
 		if(n < (int)tofs.size())
@@ -255,7 +264,7 @@ void tpat_bcr4bpr_nodeset::sortChrono(){
 	for(int n = 0; n < ((int)velConNodes.size()); n++){
 		velConNodes[n] = sortedIx[velConNodes[n]];
 	}
-}
+}//======================================
 
 /**
  *	@brief Save the trajectory to a file

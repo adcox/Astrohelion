@@ -100,6 +100,12 @@ tpat_nodeset& tpat_nodeset::operator =(const tpat_nodeset &n){
 	}
 }//======================================================
 
+/**
+ *	@brief Concatenate two nodesets
+ *	@param lhs the "first" nodeset
+ *	@param rhs the "second" nodeset
+ *	@param output the output nodeset; will be made equal to lhs + rhs, or [lhs, rhs]
+ */
 void tpat_nodeset::basicConcat(const tpat_nodeset &lhs, const tpat_nodeset &rhs, tpat_nodeset *output){
 	// how much the index of the nodes in RHS will change when concatenated
 	int rhsNodeShift = lhs.getNumNodes();

@@ -76,6 +76,10 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
 	}
 }//===================================================
 
+/**
+ *	@brief Copy constructor
+ *	@param d
+ */
 tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(const tpat_cr3bp_sys_data &d) : tpat_sys_data(d){
 	mu = d.mu;
 }

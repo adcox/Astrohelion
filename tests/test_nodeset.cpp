@@ -155,11 +155,11 @@ int main(void){
 	tpat_correction_engine corrector;
 
 	test_createCR3BPNodeset();
-	corrector.setVerbose(false);
+	corrector.setVerbose(true);
 	corrector.correct_cr3bp(crSet);
 
 	test_createBCR4BPRNodeset();
-	corrector.setVerbose(false);
+	corrector.setVerbose(true);
 	corrector.correct_bcr4bpr(bcSet);
 
 	// Memory clean-up

@@ -61,7 +61,7 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
 .PHONY: printVars
 
-all: simEngineTest
+all: calcTest linMotionTest matrixTest nodesetTest simEngineTest sysSwitchTest utilityTest
 	
 
 ############################################################

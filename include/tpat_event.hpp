@@ -39,22 +39,24 @@
 class tpat_event{
 	public:
 		/**
-		 *	Event Type
+		 *	@brief The type of event
 		 *
-		 *	NONE 		- 	No type has been specified; cannot be used in integration
-		 *
-		 *	YZ_Plane 	- 	Event occurs when trajectory crosses the YZ-plane (x = 0)
-		 *					In 2D, this is equivalent to a y-axis crossing
-		 *
-		 *	XZ_PLANE 	- 	Event occurs when trajectory crosses the XZ-plane (y = 0)
-		 *					In 2D, this is equivalent to an x-axis crossing
-		 *
-		 *	XY_PLANE	- 	Event occurs when trajectory crosses the XY-plane (z = 0)
-		 *
-		 *	CRASH		- 	Event occurs when trajectory falls below minimum acceptable
-		 *					altitude or the surface of one of the system primaries.
+		 *	This tells the simulation and correction engines how to interpret the
+		 *	data stored in this object
 		 */
-		enum event_t {NONE, YZ_PLANE, XZ_PLANE, XY_PLANE, CRASH};
+		enum event_t {
+			NONE,		//!< No type has been specified; cannot be used in integration
+			YZ_PLANE,	/*!< Event occurs when trajectory crosses the YZ-plane (x = 0)
+		 				 * In 2D, this is equivalent to a y-axis crossing
+		 				 */
+			XZ_PLANE,	/*!< Event occurs when trajectory crosses the XZ-plane (y = 0)
+		 				 * In 2D, this is equivalent to an x-axis crossing
+		 				 */
+			XY_PLANE,	//!< Event occurs when trajectory crosses the XY-plane (z = 0)
+			CRASH		/*!< Event occurs when trajectory falls below minimum acceptable
+		 				 * altitude or the surface of one of the system primaries.
+		 				 */
+		};
 
 		// *structors
 		tpat_event();

@@ -22,7 +22,6 @@
 #define __H_TPAT_EXCEPTIONS_
 
 #include <exception>
-#include <iostream>
 #include <stdexcept>
 
 /**

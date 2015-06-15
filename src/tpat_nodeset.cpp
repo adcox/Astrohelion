@@ -66,6 +66,31 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset& n) : nodeSize(n.nodeSize){
 }//========================================================
 
 /**
+ *	@brief Create a nodeset as a subset of another
+ *	@param orig Original nodeset
+ *	@param index of the first node to be included in the new nodeset
+ *	@param last index of the last node to be included in the new nodeset
+ */
+tpat_nodeset::tpat_nodeset(const tpat_nodeset &orig, int first, int last) : nodeSize(orig.nodeSize){
+	nodeDistro = orig.nodeDistro;
+
+	nodes.insert(nodes.end(), orig.nodes.begin()+first*nodeSize, orig.nodes.begin()+last*nodeSize);
+	tofs.insert(tofs.end(), orig.tofs.begin()+first, orig.tofs.begin()+last-1);
+
+	for(int c = 0; c < ((int)orig.constraints.size()); c++){
+		if(orig.constraints[c].getNode() <= last && orig.constraints[c].getNode() >= first)
+			constraints.push_back(orig.constraints[c]);
+	}
+
+	for(int v = 0; v < ((int)orig.velConNodes.size()); v++){
+		if(orig.velConNodes[v] <= last && orig.velConNodes[v] >= first)
+			velConNodes.push_back(orig.velConNodes[v]);
+	}
+
+	velConSet = orig.velConSet;
+}//======================================================
+
+/**
  *	@brief Destructor
  */
 tpat_nodeset::~tpat_nodeset(){
@@ -98,51 +123,6 @@ tpat_nodeset& tpat_nodeset::operator =(const tpat_nodeset &n){
 	}
 }//======================================================
 
-/**
- *	@brief Concatenate two nodesets
- *	@param lhs the "first" nodeset
- *	@param rhs the "second" nodeset
- *	@param output the output nodeset; will be made equal to lhs + rhs, or [lhs, rhs]
- */
-void tpat_nodeset::basicConcat(const tpat_nodeset &lhs, const tpat_nodeset &rhs, tpat_nodeset *output){
-	// how much the index of the nodes in RHS will change when concatenated
-	int rhsNodeShift = lhs.getNumNodes();
-	// If the last node of LHS equals the first node of RHS, skip it when concatenating
-	if(lhs.getNode(-1) == rhs.getNode(0)){
-		rhsNodeShift--;
-		std::vector<double> lhsNodes(lhs.nodes.begin(), lhs.nodes.end()-1*lhs.nodeSize);
-		output->appendNode(lhsNodes);
-	}else{
-		output->appendNode(lhs.nodes);
-	}
-	output->appendNode(rhs.nodes);
-
-	// Concatenate TOF vectors
-	output->tofs.insert(output->tofs.end(), lhs.tofs.begin(), lhs.tofs.end());
-	output->tofs.insert(output->tofs.end(), rhs.tofs.begin(), rhs.tofs.end());
-
-	// Concatenate constraint vectors, adjusting node numbers on any constraints in RHS
-	// to account for the shift in node index
-	for(int c = 0; c < lhs.getNumCons(); c++){
-		output->addConstraint(lhs.constraints[c]);
-	}
-	for(int c = 0; c < rhs.getNumCons(); c++){
-		tpat_constraint temp(rhs.getConstraint(c));
-		temp.setNode(temp.getNode() + rhsNodeShift);
-		output->addConstraint(temp);
-	}
-
-	// Concatenate velocity continuity nodes, adjusting node numbers for RHS
-	// velConNodes to account for the shift in node index
-	std::vector<int> newVelCon(lhs.velConNodes.begin(), lhs.velConNodes.end());
-	for(int n = 0; n < ((int)rhs.velConNodes.size()); n++){
-		newVelCon.push_back(rhs.velConNodes[n] + rhsNodeShift);
-	}
-	output->setVelConNodes(newVelCon);
-
-	output->setNodeDistro( lhs.nodeDistro == rhs.nodeDistro ? lhs.nodeDistro : NONE);
-}//=======================================
-
 //-----------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------
@@ -169,7 +149,7 @@ std::vector<double> tpat_nodeset::getNode(int i) const {
 
 	std::vector<double> temp(nodes.begin()+i*nodeSize, nodes.begin()+(i+1)*nodeSize);
 	return temp;
-}
+}//=========================================
 
 /**
  *	@param i the index of the TOF; note that if there are n nodes, there will be n-1 
@@ -181,7 +161,7 @@ double tpat_nodeset::getTOF(int i) const {
 	if(i < 0)
 		i += tofs.size();
 	return tofs.at(i);
-}
+}//=========================================
 
 /**
  *	@return the number of nodes contained in this node set
@@ -223,7 +203,7 @@ std::vector<int> tpat_nodeset::getVelConNodes() {
 tpat_constraint tpat_nodeset::getConstraint(int i) const{
 	tpat_constraint temp(constraints.at(i)); 
 	return temp;
-}
+}//=========================================
 
 /**
  *	@return the number of constraints stored in this nodeset
@@ -255,12 +235,66 @@ void tpat_nodeset::appendNode(double *node){
 }
 
 /**
+ *	@brief Insert a node at the specified position
+ *	@param idx the index the new node should have (begins at 0). If the index is negative,
+ *	it will count backwards from the end of the vector.
+ *	@param newNode a new node to be inserted
+ */
+void tpat_nodeset::insertNode(int idx, std::vector<double> newNode){
+	if(idx < 0)
+		idx += getNumNodes();
+
+	nodes.insert(nodes.begin()+idx*nodeSize, newNode.begin(), newNode.begin()+nodeSize);
+}//=========================================
+
+/**
+ *	@brief Insert a node at the specified position
+ *	@param idx the index the new node should have (begins at 0). If the index is negative,
+ *	it will count backwards from the end of the vector.
+ *	@param newNode a new node to be inserted;  MUST have <tt>nodeSize</tt> number
+ *	of elements. Fewer elements will result in reading past the
+ *	end of the array, more will simply be ignored.
+ */
+void tpat_nodeset::insertNode(int idx, double *newNode){
+	if(idx < 0)
+		idx += getNumNodes();
+
+	nodes.insert(nodes.begin()+idx*nodeSize, newNode, newNode+nodeSize);
+}//=========================================
+
+/**
  *	@brief Append a new TOF to the end of the TOF vector
  *	@param tof a new TOF, non-dimensional units
  */
 void tpat_nodeset::appendTOF(double tof){
 	tofs.push_back(tof);
-}
+}//====================================
+
+/**
+ *	@brief Insert a TOF at the specified index (begins at 0)
+ *	@param idx the index of the time of flight. If the index is negative,
+ *	it will count backwards from the end of the vector.
+ *	@param tof the TOF to insert
+ */
+void tpat_nodeset::insertTOF(int idx, double tof){
+	if(idx < 0)
+		idx += tofs.size();
+
+	tofs.insert(tofs.begin()+idx, tof);
+}//====================================
+
+/**
+ *	@brief Delete a TOF
+ *	@param idx the index of the TOF to be deleted. Note that this will affect 
+ *	the indices of all following TOFs. If the index is negative,
+ *	it will count backwards from the end of the vector.
+ */
+void tpat_nodeset::deleteTOF(int idx){
+	if(idx < 0)
+		idx += tofs.size();
+
+	tofs.erase(tofs.begin()+idx);
+}//===================================
 
 /**
  *	@brief Set the node distribution type; this will not perform any calculations, it is for 
@@ -268,6 +302,18 @@ void tpat_nodeset::appendTOF(double tof){
  *	@param type the type of node distribution
  */
 void tpat_nodeset::setNodeDistro(node_distro_t type){ nodeDistro = type; }
+
+/**
+ *	@brief Set the specified TOF value
+ *	@param idx The index of the TOF to change
+ *	@param tof the value of the new TOF
+ */
+void tpat_nodeset::setTOF(int idx, double tof){
+	if(idx < 0)
+		idx += tofs.size();
+
+	tofs[idx] = tof;
+}//=====================================
 
 /**
  *	@brief Set the specified nodes to be continuous in velocity
@@ -319,7 +365,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 		node_distro_t type){
 	// Set up the simulation engine
 	tpat_simulation_engine engine(sysData);
-	engine.setVerbose(true);
+	engine.setVerbose(false);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
 
 	switch(type){
@@ -338,13 +384,13 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 			break;
 	}
 	engine.setRevTime(tof < 0);
-	printColor(BLUE, "    Set RevTime to %s\n", engine.usesRevTime() ? "ON" : "OFF");
+	// printColor(BLUE, "    Set RevTime to %s\n", engine.usesRevTime() ? "ON" : "OFF");
 
 	// Run the simulation and get the trajectory
 	engine.runSim(IC, t0, tof);
 	tpat_trajectory traj = engine.getTraj();
 
-	printColor(BLUE, "    Retrieved trajectory\n");
+	// printColor(BLUE, "    Retrieved trajectory\n");
 
 	// Reserve space in the nodes and tof vectors
 	nodes.reserve(numNodes*nodeSize);
@@ -358,7 +404,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	double desiredArclen = 0;
 	const int k = tpat_trajectory::STATE_WIDTH;
 
-	printColor(BLUE, "    Moving nodes from sim into nodeset\n");
+	// printColor(BLUE, "    Moving nodes from sim into nodeset\n");
 	for (int n = 0; n < traj.getLength(); n++){
 		if(nodeDistro == tpat_nodeset::ARCLENGTH){
 			if(n > 0){
@@ -377,7 +423,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	desiredArclen = sumArclen/(numNodes-1);
 	sumArclen = 0;
 
-	printColor(BLUE, "    Computing TOFs\n");
+	// printColor(BLUE, "    Computing TOFs\n");
 	int lastNode = 0;
 	for (int n = 0; n < traj.getLength(); n++){
 		if(nodeDistro == tpat_nodeset::ARCLENGTH){
@@ -425,14 +471,70 @@ void tpat_nodeset::reverseOrder(){
 		}
 	}
 
+	// Reverse sign on TOFs
+	for(int n = 0; n < ((int)tofs.size()); n++){
+		tofs[n] *= -1;
+	}
+
+	// Update node indices for constraints and velConNodes
 	for(int c = 0; c < ((int)constraints.size()); c++){
 		constraints[c].setNode(getNumNodes()-1-constraints[c].getNode());
 	}
 
 	for(int v = 0; v < ((int)velConNodes.size()); v++){
-		velConNodes[v] = getNumNodes()-1-velConNodes[v];
+		if(velConNodes[v] == getNumNodes()-1){
+			// Do nothing - it wouldn't make sense to make node 0 continuous,
+			// so leave the final node marked as continuous
+		}else{
+			velConNodes[v] = getNumNodes()-1-velConNodes[v];
+		}
 	}
 }//=====================================
+
+/**
+ *	@brief Concatenate two nodesets
+ *	@param lhs the "first" nodeset
+ *	@param rhs the "second" nodeset
+ *	@param output the output nodeset; will be made equal to lhs + rhs, or [lhs, rhs]
+ */
+void tpat_nodeset::basicConcat(const tpat_nodeset &lhs, const tpat_nodeset &rhs, tpat_nodeset *output){
+	// how much the index of the nodes in RHS will change when concatenated
+	int rhsNodeShift = lhs.getNumNodes();
+	// If the last node of LHS equals the first node of RHS, skip it when concatenating
+	if(lhs.getNode(-1) == rhs.getNode(0)){
+		rhsNodeShift--;
+		std::vector<double> lhsNodes(lhs.nodes.begin(), lhs.nodes.end()-1*lhs.nodeSize);
+		output->appendNode(lhsNodes);
+	}else{
+		output->appendNode(lhs.nodes);
+	}
+	output->appendNode(rhs.nodes);
+
+	// Concatenate TOF
+	output->tofs.insert(output->tofs.end(), lhs.tofs.begin(), lhs.tofs.end());
+	output->tofs.insert(output->tofs.end(), rhs.tofs.begin(), rhs.tofs.end());
+
+	// Concatenate constraint vectors, adjusting node numbers on any constraints in RHS
+	// to account for the shift in node index
+	for(int c = 0; c < lhs.getNumCons(); c++){
+		output->addConstraint(lhs.constraints[c]);
+	}
+	for(int c = 0; c < rhs.getNumCons(); c++){
+		tpat_constraint temp(rhs.getConstraint(c));
+		temp.setNode(temp.getNode() + rhsNodeShift);
+		output->addConstraint(temp);
+	}
+
+	// Concatenate velocity continuity nodes, adjusting node numbers for RHS
+	// velConNodes to account for the shift in node index
+	std::vector<int> newVelCon(lhs.velConNodes.begin(), lhs.velConNodes.end());
+	for(int n = 0; n < ((int)rhs.velConNodes.size()); n++){
+		newVelCon.push_back(rhs.velConNodes[n] + rhsNodeShift);
+	}
+	output->setVelConNodes(newVelCon);
+
+	output->setNodeDistro( lhs.nodeDistro == rhs.nodeDistro ? lhs.nodeDistro : NONE);
+}//=======================================
 
 /**
  *	@brief Save the trajectory to a file

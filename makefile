@@ -24,7 +24,8 @@ LIB := lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-CFLAGS += -W -Wall -Wextra -pedantic -O3
+# CFLAGS += -W -Wall -Wextra -pedantic -O3
+CFLAGS += -W -Wall -Wextra -pedantic -g
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -76,6 +77,13 @@ else ifeq ($(UNAME_S), Darwin)
 	@make libtpat.a
 	@make libtpat.dylib
 endif
+
+check:
+	make -C tests/
+	bin/calcTest
+	bin/linMotionTest
+	bin/matrixTest
+	bin/utilityTest
 
 install:
 ifeq ($(UNAME_S), Linux)

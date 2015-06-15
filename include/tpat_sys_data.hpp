@@ -40,21 +40,19 @@ class tpat_sys_data{
 
 	public:
 		/**
-		 *	System Type - Enumerated Type
+		 *	@brief Specifies the type of dynamical system
 		 *	
 		 *	Describes the type of system described by this data object. This
 		 *	is useful when a function or object specifies only the super-class
 		 *	tpat_sys_data and the user needs to determine which derivative
 		 *	data type to use. Each derivative type will set its type variable to
 		 *	one of the type values.
-		 *
-		 *	Values:
-		 *		UNDEF_SYS 	-	System type is undefined; no derivative type defined.
-		 *		CR3BP_SYS 	- 	Circular Restricted 3-Body Problem; applies to tpat_cr3bp_sys_data
-		 *		BCR4BPR_SYS - 	Bi-Circular Restricted 4-Body Problem, rotating frame; applies
-		 *						to tpat_bcr4bpr_sys
 		 */
-		enum system_t {UNDEF_SYS, CR3BP_SYS, BCR4BPR_SYS};
+		enum system_t {
+			UNDEF_SYS,	//!< System type is undefined; no derivative type defined.
+			CR3BP_SYS,	//!< Circular Restricted 3-Body Problem; applies to tpat_cr3bp_sys_data
+			BCR4BPR_SYS //!< Bi-Circular Restricted 4-Body Problem, rotating frame; applies to tpat_bcr4bpr_sys_data
+		};
 
 		tpat_sys_data();	// Copy constructor is defined by compiler, should be fine
 		tpat_sys_data(const tpat_sys_data&);

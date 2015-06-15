@@ -1,5 +1,5 @@
 /**
- *  @filel tpat_utilities.cpp
+ *  @file tpat_utilities.cpp
  */
 /*
  *  Trajectory Propagation and Analysis Toolkit 

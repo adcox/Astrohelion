@@ -73,7 +73,7 @@ class tpat_correction_engine{
 
 	private:
 		/** Whether or not to spit out lots of messages */
-		bool verbose = true;
+		bool verbose = false;
 
 		/** Whether or not to use variable time in the corrections process */
 		bool varTime = true;
@@ -99,6 +99,9 @@ class tpat_correction_engine{
 		/** The output nodeset, constructed from the corrected arcs */
 		tpat_nodeset *nodeset_out = 0;
 
+		/** Whether or not the engine is ready to be cleaned and/or deconstructed */
+		bool isClean = true;
+
 		void copyEngine(const tpat_correction_engine&);
 		void correct(tpat_nodeset*);
 		void createOutput(iterationData*);
@@ -114,6 +117,8 @@ class tpat_correction_engine{
 		void updatePrimVel(iterationData*, tpat_sys_data*, double);
 
 		tpat_matrix solveUpdateEq(iterationData*);
+
+		void cleanEngine();
 };
 
 #endif

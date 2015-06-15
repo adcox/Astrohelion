@@ -388,7 +388,6 @@ double dateToEpochTime(const char *date){
     // Convert the date to epoch time
     double et = 0;
     str2et_c(date, &et);
-    printf("Epoch Time: %.12f\n", et);
 
     // Unload the kernel
     unload_c(timeKernel);
@@ -1054,7 +1053,7 @@ tpat_bcr4bpr_nodeset bcr4bpr_SE2SEM(tpat_cr3bp_nodeset crNodes, tpat_bcr4bpr_sys
         
         epochs->push_back(ellapsed);
         if(n < crNodes.getNumNodes()-1){
-            tofs->push_back(crNodes.getTOF(n)*charT2/charT3 + t0);
+            tofs->push_back(crNodes.getTOF(n)*charT2/charT3);
             ellapsed += crNodes.getTOF(n)*charT2/charT3;
         }
     }

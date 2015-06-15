@@ -324,10 +324,38 @@ void tpat_simulation_engine::setNumSteps(int n){ numSteps = n; }
  *
  *  It is assumed that t0 = 0
  *	@param ic a 6-element array containting the non-dimensional initial state
- *	@param tof the total integration time, or time-of-flight
+ *	@param tof the total integration time, or time-of-flight (non-dim units)
  */
 void tpat_simulation_engine::runSim(double *ic, double tof){
-	this->runSim(ic, 0, tof);
+	runSim(ic, 0, tof);
+}//=======================================================
+
+/**
+ *  @brief Run a simulation given a set of initial conditions and run time
+ *
+ *  It is assumed that t0 = 0
+ *  @param ic a vector containing the IC (six non-dim states)
+ *  @param tof the total integration time, or time-of-flight (non-dim units)
+ */
+void tpat_simulation_engine::runSim(std::vector<double> ic, double tof){
+    runSim(ic, 0, tof);
+}//=======================================================
+
+/**
+ *  @brief Run a simulation given a set of initial conditions and run time
+ *
+ *  It is assumed that t0 = 0
+ *  @param ic a vector containing the IC (six non-dim states)
+ *  @param t0 the epoch time associated with the IC (non-dim units)
+ *  @param tof the total integration time, or time-of-flight (non-dim units)
+ */
+void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double tof){
+    if(ic.size() >= 6){
+        std::vector<double> tempIC = ic;
+        runSim(&(tempIC[0]), t0, tof);
+    }else{
+        throw tpat_exception("IC must have at least six elements");
+    }
 }//=======================================================
 
 /**

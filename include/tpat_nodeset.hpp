@@ -47,25 +47,20 @@ class tpat_sys_data;
 class tpat_nodeset{
 	public:
 		/**
-		 *	Node Distribution Type
+		 *	@brief Node distribution type
 		 *
-		 *	This type describes how nodes are distributed, or how they are chosen
-		 *	from a trajectory. Values are:
-		 *
-		 *	NONE 		- 	There is no organizational method; nodes may be input by
-		 *					user.
-		 *
-		 *	TIME 		- 	nodes spread evenly in time
-		 *
-		 *	ARCLENGTH 	- 	nodes spread evenly along trajectory by arclength; this
-		 *					method is approximate, so not all legs will be exactly 
-		 *					the same length, but should be close.
+		 *	Specified how nodes are distributed along an integrated trajectory
 		 */
-		enum node_distro_t {NONE, TIME, ARCLENGTH};
+		enum node_distro_t {
+			NONE, 	//!< There is no organizational method; nodes may be input by user.
+			TIME,	//!< Nodes spread evenly in time
+			ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 		// *structors
 		tpat_nodeset(const int);
 		tpat_nodeset(const tpat_nodeset&);
+		tpat_nodeset(const tpat_nodeset&, int, int);
+
 		virtual ~tpat_nodeset();
 		
 		// Operators
@@ -93,7 +88,13 @@ class tpat_nodeset{
 		void appendNode(std::vector<double>);
 		void appendNode(double*);
 		void appendTOF(double);
+		void deleteTOF(int);
+		void insertNode(int, std::vector<double>);
+		void insertNode(int, double*);
+		void insertTOF(int, double);
+
 		void setNodeDistro(node_distro_t);
+		void setTOF(int, double);
 		void setVelConNodes(std::vector<int>);
 		void setVelConNodes_allBut(std::vector<int>);
 

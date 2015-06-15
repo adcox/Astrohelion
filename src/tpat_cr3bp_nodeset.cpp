@@ -115,6 +115,18 @@ tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(std::vector<double> IC, tpat_cr3bp_sys_da
 }//======================================================================
 
 /**
+ *	@brief Create a nodeset as a subset of another
+ *	@param orig Original nodeset
+ *	@param index of the first node to be included in the new nodeset
+ *	@param last index of the last node to be included in the new nodeset
+ */
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset &orig, int first,
+	int last) : tpat_nodeset(orig, first, last){
+	
+	sysData = orig.sysData;
+}//========================================
+
+/**
  *	@brief Copy input nodeset. 
  *
  *	This function calls the base-class copy constructor to
@@ -172,12 +184,20 @@ void tpat_cr3bp_nodeset::print() const{
 		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
 			nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
 			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
-		if(n < getNumNodes()-1){
+		if(n < ((int)tofs.size())){
 			printf("  TOF = %.4f\n", tofs[n]);
 		}else{
 			printf("\n");
 		}
 	}
+	
+	printf("  VelConNodes: [");
+	for(int v = 0; v < ((int)velConNodes.size()); v++){
+		printf("%s%d", (v%20 == 0 && v > 0) ? "\n" : (v == 0 ? " ": ", "), velConNodes[v]);
+	}
+	printf(" ]\n");
+
+	printf("  Constraints:%s", getNumCons() > 0 ? "\n" : " None\n");
 	for(int c = 0; c < getNumCons(); c++){
 		constraints[c].print();
 	}

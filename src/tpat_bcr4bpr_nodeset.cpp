@@ -97,6 +97,22 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_
 	initEpochs(numNodes, t0);
 }//======================================================================
 
+/**
+ *	@brief Create a nodeset as a subset of another
+ *	@param orig Original nodeset
+ *	@param index of the first node to be included in the new nodeset
+ *	@param last index of the last node to be included in the new nodeset
+ */
+tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset &orig, int first,
+	int last) : tpat_nodeset(orig, first, last){
+
+	sysData = orig.sysData;
+	
+	// State, TOF, constraints, and velConNodes are already taken care of
+	// Just copy epochs
+	epochs.insert(epochs.end(), orig.epochs.begin()+first, orig.epochs.begin()+last);
+}//=======================================================
+
 void tpat_bcr4bpr_nodeset::initEpochs(int numNodes, double t0){
 	// Compute epoch times for each node
 	epochs.reserve(numNodes);
@@ -197,10 +213,24 @@ tpat_sys_data* tpat_bcr4bpr_nodeset::getSysData() { return &sysData; }
 
 /**
  *	@brief Add an epoch to the nodeset
- *	@param d an epoch (non-dimensional time) to add
+ *	@param t an epoch (non-dimensional time) to add
  */
-void tpat_bcr4bpr_nodeset::appendEpoch(double d){
-	epochs.push_back(d);
+void tpat_bcr4bpr_nodeset::appendEpoch(double t){
+	epochs.push_back(t);
+}//=====================================
+
+/**
+ *	@brief Insert an epoch time at the specified index
+ *	@param idx the index of the new epoch time (begins wit 0). If
+ *	the index is negative, it will count backwards from the end of 
+ *	the vector.
+ *	@param t the epoch time
+ */
+void tpat_bcr4bpr_nodeset::insertEpoch(int idx, double t){
+	if(idx < 0)
+		idx += epochs.size();
+
+	epochs.insert(epochs.begin() + idx, t);
 }//=====================================
 
 void tpat_bcr4bpr_nodeset::reverseOrder(){
@@ -223,12 +253,20 @@ void tpat_bcr4bpr_nodeset::print() const {
 			epochs[n], nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
 			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
 
-		if(n < getNumNodes()-1){
+		if(n < ((int)tofs.size())){
 			printf("  TOF = %.4f\n", tofs[n]);
 		}else{
 			printf("\n");
 		}
 	}
+	
+	printf("  VelConNodes:\n  [");
+	for(int v = 0; v < ((int)velConNodes.size()); v++){
+		printf("%s%d", (v%20 == 0 && v > 0) ? "\n" : (v == 0 ? " ": ", "), velConNodes[v]);
+	}
+	printf(" ]\n");
+
+	printf("  Constraints:%s", getNumCons() > 0 ? "\n" : " None\n");
 	for(int c = 0; c < getNumCons(); c++){
 		constraints[c].print();
 	}

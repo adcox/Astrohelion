@@ -48,6 +48,7 @@ class tpat_bcr4bpr_nodeset : public tpat_nodeset{
 			node_distro_t);
 		tpat_bcr4bpr_nodeset(std::vector<double>, tpat_bcr4bpr_sys_data, double, double, int,
 			node_distro_t);
+		tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset&, int, int);
 		tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset&);
 		~tpat_bcr4bpr_nodeset();
 		
@@ -61,6 +62,7 @@ class tpat_bcr4bpr_nodeset : public tpat_nodeset{
 		tpat_sys_data* getSysData();
 
 		void appendEpoch(double);
+		void insertEpoch(int, double);
 		void reverseOrder();
 		void print() const;
 		void saveToMat(const char*);

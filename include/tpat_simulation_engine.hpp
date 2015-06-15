@@ -105,8 +105,10 @@ class tpat_simulation_engine{
 
 		// Simulation Methods
 		void runSim(double*, double);
+		void runSim(std::vector<double>, double);
 		void runSim(double*, double, double);
-
+		void runSim(std::vector<double>, double, double);
+		
 		// Utility Functions
 		void reset();
 		void clearEvents();

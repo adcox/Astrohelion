@@ -32,23 +32,17 @@ class tpat_linear_motion_engine{
 		/**
 		 *	@brief type of linear motion
 		 *
-		 *	NONE 		- 	No motion specified
-		 *	HYP 		- 	Hyperbolic motion, applies only to linearizations 
-		 *					near collinear points
-		 *	ELLIP		- 	Elliptical motion, applies only to linearizations
-		 *					near collinear points
-		 *	SPO			- 	Short-Period Orbit, applies only to Case I linearizations
-		 *					near triangular points
-		 *	LPO			- 	Long-Period Orbit, applies only to Case I linearizations
-		 *					near triangular points
-		 *	MPO			- 	Mixed-Period Orbit, applies only to Case I linearizations
-		 *					near triangular points
-		 *	CONVERGE 	- 	Convergent motion, applies only to Case III linearizations
-		 *					near triangular points
-		 *	DIVERGE 	- 	Divergent motion, applies only to Case III linearizations
-		 *					near triangular points
+		 *	This type tells the engine what kind of linearization to produce
 		 */
-		enum motion_t {NONE, HYP, ELLIP, SPO, LPO, MPO, CONVERGE, DIVERGE};
+		enum motion_t {
+			NONE,	//!< No motion specified
+			HYP,	//!< Hyperbolic motion, applies only to linearizations near collinear points
+			ELLIP,	//!< Elliptical motion, applies only to linearizations near collinear points
+			SPO,	//!< Short-Period Orbit, applies only to Case I linearizations near triangular points
+			LPO,	//!< Long-Period Orbit, applies only to Case I linearizations near triangular points
+			MPO,	//!< Mixed-Period Orbit, applies only to Case I linearizations near triangular points
+			CONVERGE,	//!< Convergent motion, applies only to Case III linearizations near triangular points
+			DIVERGE};	//!< Divergent motion, applies only to Case III linearizations near triangular points
 
 		// *structors
 		tpat_linear_motion_engine();

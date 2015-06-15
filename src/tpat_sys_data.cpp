@@ -32,7 +32,8 @@
 #include "tpat.hpp"
 
 #include "tpat_sys_data.hpp"
-
+#include "tpat_utilities.hpp"
+ 
 /**
  *	@brief Create a new system data object and initialize all values to zero.
  */
@@ -109,7 +110,14 @@ int tpat_sys_data::getNumPrimaries() const { return numPrimaries; }
  *	@param n the "index" of the primary, starts at 0
  *	@return the name of the n'th primary
  */
-std::string tpat_sys_data::getPrimary(int n) const{ return primaries.at(n); }
+std::string tpat_sys_data::getPrimary(int n) const{ 
+	try{
+		return primaries.at(n);
+	}catch(std::out_of_range &err){
+		printErr("Could not find primary at index %d; out of range\n", n);
+		return "NULL";
+	}
+}//=============================
 
 /**
  *	@brief Retrieve a unique numerical ID for one of the system primaries

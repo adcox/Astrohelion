@@ -49,7 +49,7 @@ class tpat_cr3bp_nodeset : public tpat_nodeset{
 		tpat_cr3bp_nodeset(std::vector<double>, tpat_cr3bp_sys_data, double, int);
 		tpat_cr3bp_nodeset(double[6], tpat_cr3bp_sys_data, double, int, node_distro_t);
 		tpat_cr3bp_nodeset(std::vector<double>, tpat_cr3bp_sys_data, double, int, node_distro_t);
-		
+		tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset&, int, int);
 		tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset&);
 
 		// Operators

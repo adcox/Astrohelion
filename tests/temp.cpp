@@ -1,20 +1,18 @@
-#include "tpat/tpat_utilities.hpp"
-
-#include <iostream>
+#include <cstdio>
 #include <vector>
 
 using namespace std;
 
 int main(void){
 	
-	double data[] = {1,3,2,5,4};
-	vector<double> vec(data, data+5);
+	int data[] = {1, 3, 5, 7, 9};
+	vector<int> vec(data, data+5);
 
-	vector<int> ix = getSortedInd(vec);
+	printf("Vector: [%d %d %d %d %d]\n", vec[0], vec[1], vec[2], vec[3], vec[4] );
 
-	for(int i = 0; i < ((int)ix.size()); i++){
-		cout << ix[i] << endl;
-	}
+	vec.insert(vec.begin()+0, 8);
+	
+	printf("Vector: [%d %d %d %d %d %d]\n", vec[0], vec[1], vec[2], vec[3], vec[4], vec[5] );
 
 	return 0;
 }

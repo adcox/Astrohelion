@@ -55,18 +55,18 @@
  */
 class iterationData{
 	public:
-		std::vector<double> X;			//!< Free-Variable Vector
-		std::vector<double> FX;			//!< Constraint Function Vector
-		std::vector<double> DF;			//!< Jacobian Matrix
+		std::vector<double> X;				//!< Free-Variable Vector
+		std::vector<double> FX;				//!< Constraint Function Vector
+		std::vector<double> DF;				//!< Jacobian Matrix
 		std::vector<double> deltaVs;		//!< nx3 vector of non-dim delta-Vs
-		std::vector<double> lastState;	//!< Final state on most recent integrated arc
-		std::vector<double> last_dqdT;	//!< Final dqdT on most recent integrated arc
+		std::vector<double> lastState;		//!< Final state on most recent integrated arc
+		std::vector<double> last_dqdT;		//!< Final dqdT on most recent integrated arc
 		std::vector<double> primPos;		//!< Store the positions of the primaries
 		std::vector<double> primVel;		//!< Store the velocities of the primaries
-		std::vector<int> velConNodes;	//!< Indices of nodes that are continuous in velocity
+		std::vector<int> velConNodes;		//!< Indices of nodes that are continuous in velocity
 		std::vector<int> slackAssignCon;	//!< Indices of constraints, index of entry corresponds to a slack variable
-		tpat_trajectory newSeg;		//!< Most recent integrated ard
-		tpat_bcr4bpr_traj bcNewSeg;	//!< Most recent integrated ard, cast to BCR4BPR
+		tpat_trajectory newSeg;				//!< Most recent integrated arc
+		tpat_bcr4bpr_traj bcNewSeg;			//!< Most recent integrated arc, cast to BCR4BPR
 		tpat_matrix lastSTM = tpat_matrix(6,6);	//!< Final STM on most recent integrated arc
 
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
@@ -102,9 +102,7 @@ tpat_correction_engine::tpat_correction_engine(const tpat_correction_engine &e){
  *	@brief Destructor
  */
 tpat_correction_engine::~tpat_correction_engine(){
-	if(createdNodesetOut){
-		delete nodeset_out;
-	}
+	cleanEngine();
 }//=================================================
 
 void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
@@ -263,20 +261,28 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	@param set a pointer to a nodeset
  */
 void tpat_correction_engine::correct_cr3bp(tpat_cr3bp_nodeset* set){
+	if(!isClean)
+		cleanEngine();
+
 	nodeset_in = set;
 	receivedNodesetIn = true;
 	correct(nodeset_in);
-}
+	isClean = false;
+}//========================================
 
 /**
  *	@brief Correct a BCR4BP nodeset
  *	@param set a pointer to a nodeset
  */
 void tpat_correction_engine::correct_bcr4bpr(tpat_bcr4bpr_nodeset* set){
+	if(!isClean)
+		cleanEngine();
+
 	nodeset_in = set;
 	receivedNodesetIn = true;
 	correct(nodeset_in);
-}
+	isClean = false;
+}//======================================
 
 /**
  *	@brief Correct a generic nodeset; equipped to handle any type
@@ -304,11 +310,10 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 
 	// Copy in the state vectors
 	it.X.insert(it.X.begin(), set->getNodes()->begin(), set->getNodes()->end());
-	
+
 	// Append the TOF and (if applicable) node epochs
 	if(varTime){
 		it.X.insert(it.X.end(), set->getTOFs()->begin(), set->getTOFs()->end());
-
 		if(sysType == tpat_sys_data::BCR4BPR_SYS){
 			it.X.insert(it.X.end(), bcSet->getEpochs()->begin(), bcSet->getEpochs()->end());
 		}
@@ -387,7 +392,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 
 	// Define values for use in corrections loop
 	double err = 1000000000;
-	int count = 0;
 
 	// Determine the number of free variables and time constraints based on the system type
 	it.totalFree = 0;
@@ -414,14 +418,15 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	simEngine.setVerbose(verbose);
 	// TODO: Should I set the tolerance or use the default?
 
+	// Only need info about the final state, no need to generate lots of intermediate data points
+	simEngine.setVarStepSize(false);
+	simEngine.setNumSteps(2);
+
 	if(findEvent){
-		// To avoid using several steps, use fixed step size and only two steps
-		simEngine.setVarStepSize(false);
-		simEngine.setNumSteps(2);
 		simEngine.clearEvents();	// don't use crash events when searching for an event
 	}
 
-	while( err > tol && count < maxIts){
+	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
 		it.DF.clear();
 		it.deltaVs.clear();
@@ -547,8 +552,8 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 					/* FIRST ITERATION ONLY (before the targeter computes a value for beta)
 					Set the slack variable such that the constraint will evaluate to zero if 
 					the actual deltaV is less than the required deltaV */
-					if(count == 0)
-						it.X[slackCol] = sqrt(abs(con.getData()[0] - it.FX[it.totalCons-1]));
+					if(it.count == 0)
+						it.X[slackCol] = sqrt(std::abs(con.getData()[0] - it.FX[it.totalCons-1]));
 
 					it.FX[it.totalCons-1] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
 					it.DF[it.totalFree*(it.totalCons - 1) + slackCol] = 2*it.X[slackCol];
@@ -567,8 +572,8 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 		tpat_matrix FX_mat(it.totalCons, 1, it.FX);
 		err = norm(FX_mat);
 
-		count++;
-		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", count, err);
+		it.count++;
+		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", it.count, err);
 	}// end of corrections loop
 
 	if(err > tol){
@@ -1119,11 +1124,11 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 		X_diff = tpat_matrix(w, false);
 	}else{
 		if(it->totalCons < it->totalFree){	// Under-constrained
-			// if(count == 0){
-			// 	J.toCSV("J.csv");
-			// 	FX_mat.toCSV("FX.csv");
-			// 	oldX.toCSV("X.csv");
-			// }
+			if(it->count == 0){
+				J.toCSV("J.csv");
+				FX_mat.toCSV("FX.csv");
+				oldX.toCSV("X.csv");
+			}
 
 			// Compute Gramm matrix
 			tpat_matrix G = J*trans(J);
@@ -1248,3 +1253,17 @@ void tpat_correction_engine::createOutput(iterationData *it){
 	}
 }//=================================================================================
 
+/**
+ *	@brief clean up data so that engine can be used again (or deconstructed safely)
+ */
+void tpat_correction_engine::cleanEngine(){
+	printVerb(verbose, "Cleaning the engine...\n");
+	if(createdNodesetOut){
+		delete nodeset_out;
+	}
+
+	nodeset_in = 0;
+	receivedNodesetIn = false;
+	createdNodesetOut = false;
+	isClean = true;
+}//===================================

@@ -25,6 +25,9 @@
 
 #include "matio.h"
 
+// forward declarations
+class tpat_cr3bp_nodeset;
+
 /**
  *	@brief A derivative class of the tpat_trajectory object, which
  *	contains trajectory information specific to the CR3BP
@@ -40,19 +43,21 @@ class tpat_cr3bp_traj : public tpat_trajectory{
 		tpat_cr3bp_traj(int);
 		tpat_cr3bp_traj(tpat_cr3bp_sys_data);
 		tpat_cr3bp_traj(const tpat_cr3bp_traj&);
+		static tpat_cr3bp_traj fromNodeset(tpat_cr3bp_nodeset); 
 
 		// Operators
 		tpat_cr3bp_traj& operator= (const tpat_cr3bp_traj&);
 		friend tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rhs);
+		tpat_cr3bp_traj& operator +=(const tpat_cr3bp_traj&);
 
 		// Set and Get Functions
-		double getJC(int);
+		double getJC(int) const;
 		std::vector<double>* getJC();
-		void setJC(std::vector<double>);
-		tpat_cr3bp_sys_data getSysData();
-		void setSysData(tpat_cr3bp_sys_data);
+		tpat_cr3bp_sys_data getSysData() const;
 		tpat_sys_data::system_t getType() const;
 
+		void setJC(std::vector<double>);
+		void setSysData(tpat_cr3bp_sys_data);
 		// Utility functions
 		void saveToMat(const char*);
 		void setLength();

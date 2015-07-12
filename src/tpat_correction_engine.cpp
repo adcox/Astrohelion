@@ -259,6 +259,7 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
 /**
  *	@brief Correct a CR3BP nodeset
  *	@param set a pointer to a nodeset
+ *	@throws a <tt>tpat_diverge</tt> exception if the corrector cannot converge on a solution
  */
 void tpat_correction_engine::correct_cr3bp(tpat_cr3bp_nodeset* set){
 	if(!isClean)
@@ -273,6 +274,7 @@ void tpat_correction_engine::correct_cr3bp(tpat_cr3bp_nodeset* set){
 /**
  *	@brief Correct a BCR4BP nodeset
  *	@param set a pointer to a nodeset
+ *	@throws a <tt>tpat_diverge</tt> exception if the corrector cannot converge on a solution
  */
 void tpat_correction_engine::correct_bcr4bpr(tpat_bcr4bpr_nodeset* set){
 	if(!isClean)

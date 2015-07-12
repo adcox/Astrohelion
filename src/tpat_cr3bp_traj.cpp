@@ -25,7 +25,8 @@
 #include "tpat.hpp"
 
 #include "tpat_cr3bp_traj.hpp"
-
+#include "tpat_cr3bp_nodeset.hpp"
+#include "tpat_simulation_engine.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cstring>
@@ -39,7 +40,6 @@
  *	and additionall initializes the jacobi matrix
  */
 tpat_cr3bp_traj::tpat_cr3bp_traj() : tpat_trajectory(){
-	// jacobi.assign(1,0);
 	jacobi.clear();
 }
 
@@ -48,18 +48,16 @@ tpat_cr3bp_traj::tpat_cr3bp_traj() : tpat_trajectory(){
  *	@param data a system data object describing the system
  */
 tpat_cr3bp_traj::tpat_cr3bp_traj(tpat_cr3bp_sys_data data){
-	// jacobi.assign(1,0);
 	jacobi.clear();
 	sysData = data;
-}
+}//====================================================
 
 /**
  *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
 tpat_cr3bp_traj::tpat_cr3bp_traj(int n) : tpat_trajectory(n){
-	// jacobi.assign(n, 0);
 	jacobi.reserve(n);
-}
+}//====================================================
 
 /**
  *	@brief Copy the specified trajectory
@@ -68,7 +66,34 @@ tpat_cr3bp_traj::tpat_cr3bp_traj(int n) : tpat_trajectory(n){
 tpat_cr3bp_traj::tpat_cr3bp_traj(const tpat_cr3bp_traj &t) : tpat_trajectory(t){
 	sysData = t.sysData;
 	jacobi = t.jacobi;
-}
+}//====================================================
+
+/**
+ *	@brief Create a trajectory from a nodeset
+ *
+ *	This algorithm will concatenate trajectories integrated from each node in 
+ *	the nodeset. It does not check to make sure the arcs are continuous; that
+ *	is up to you
+ *
+ *	@param nodes a nodeset
+ *	@return a trajectory formed from the integrated nodeset
+ */
+tpat_cr3bp_traj tpat_cr3bp_traj::fromNodeset(tpat_cr3bp_nodeset nodes){
+	tpat_simulation_engine simEngine(nodes.getSysData());
+	tpat_cr3bp_traj totalTraj;
+
+	for(int n = 0; n < nodes.getNumNodes()-1; n++){
+		simEngine.runSim(nodes.getNode(n), nodes.getTOF(n));
+
+		if(n == 0){
+			totalTraj = simEngine.getCR3BPTraj();
+		}else{
+			totalTraj += simEngine.getCR3BPTraj();
+		}
+	}
+
+	return totalTraj;
+}//====================================================
 
 //-----------------------------------------------------
 // 		Operators
@@ -134,6 +159,19 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 	return newTraj;
 }//========================================
 
+/**
+ *	@brief Add a new trajectory to the end of this one; concatenation, in short.
+ *	@param rhs another trajectory
+ *	@return the concatenated pair
+ *	@seealso tpat_cr3bp_traj operator +()
+ */
+tpat_cr3bp_traj& tpat_cr3bp_traj::operator +=(const tpat_cr3bp_traj &rhs){
+	tpat_cr3bp_traj temp(*this);
+	tpat_cr3bp_traj sum = temp + rhs;
+	(*this) = sum;
+	return *this;
+}//========================================
+
 //-----------------------------------------------------
 // 		Set and Get Functions
 //-----------------------------------------------------
@@ -145,7 +183,7 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
  *	-2 will give the second to last value, etc.
  *	@return the Jacobi constant (non-dimensional)
  */
-double tpat_cr3bp_traj::getJC(int n){
+double tpat_cr3bp_traj::getJC(int n) const{
 	if(n < 0)
 		n += jacobi.size();
 	return jacobi[n];
@@ -168,7 +206,7 @@ void tpat_cr3bp_traj::setJC(std::vector<double> j){ jacobi = j; }
  *	@brief Retrieve data about the system this trajectory was propagated in
  *	@return the system data object
  */
-tpat_cr3bp_sys_data tpat_cr3bp_traj::getSysData(){ return sysData; }
+tpat_cr3bp_sys_data tpat_cr3bp_traj::getSysData() const { return sysData; }
 
 
 /**

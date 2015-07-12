@@ -85,9 +85,17 @@ class tpat_constraint{
 			DELTA_V,	/*!< Constrain delta V to be exactly the specified amount
 		 				 *	Data is input in the same format as MAX_DELTA_V
 		 				 */
-			SP 			/*!< Constrain the node to intersect the saddle point (BCR4BPR only)
-		 				 * Place the index of the node you want to constrain in the <tt>node</tt>
-		 				 *					variable; <tt>data</tt> is unused in this constraint
+			SP, 		/*!< Constrain the node to intersect the saddle point (BCR4BPR only)
+		 				 * 	Place the index of the node you want to constrain in the <tt>node</tt>
+		 				 * 	variable; <tt>data</tt> is unused in this constraint
+		 				 */
+		 	JC, 		/*!< Constrain the node to have a specific Jacobi constant (CR3BP only)
+		 				 * 	Place the index of the node you want to cosntraint in the <tt>node</tt>
+		 				 *	variable; <tt>data</tt> holds the value of Jacobi
+		 				 */
+		 	TOF			/*!< Constrain the trajectory to have a total time-of-flight
+		 				 *	The index of the node is unused, and <tt>data</tt> holds the
+		 				 *	value for the total TOF in non-dimensional units
 		 				 */
 		};
 		

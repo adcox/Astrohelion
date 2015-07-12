@@ -138,6 +138,18 @@ std::vector<double>* tpat_nodeset::getNodes(){ return &nodes; }
 std::vector<double>* tpat_nodeset::getTOFs(){ return &tofs; }
 
 /**
+ *	@brief Get the total TOF for the whole nodeset
+ *	@return the total TOF for the whole nodeset (non-dim)
+ */
+double tpat_nodeset::getTotalTOF() const { 
+	double total = 0;
+	for(int n = 0; n < ((int)tofs.size()); n++){
+		total += tofs[n];
+	}	
+	return total;
+}//===================================================
+
+/**
  *	@param i the index of the node (begins at zero). Negative values count
  *	backwards from the end, i.e. -1 gives the final value, -2 gives the second
  *	to last value, etc.

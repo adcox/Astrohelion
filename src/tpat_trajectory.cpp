@@ -111,6 +111,23 @@ int tpat_trajectory::getLength() const{ return numPoints; }
 std::vector<double>* tpat_trajectory::getState(){ return &state;}
 
 /**
+ *	@brief get a vector of one coordinate's evolution during the flight
+ *
+ *	@param i the index of the coordinate, i.e. (0 = x, 1 = y, 2 = z, 3 = v_x, 4 = v_y, 5 = v_z)
+ */
+std::vector<double> tpat_trajectory::getCoord(int i) const{
+	if(i >= STATE_WIDTH)
+		throw tpat_exception("Coordinate Index Out of Range");
+
+	std::vector<double> coord;
+	for(int n = 0; n < state.size()/STATE_WIDTH; n++){
+		coord.push_back(state[n*STATE_WIDTH + i]);
+	}
+
+	return coord;
+}//==========================================================
+
+/**
  *	@brief Retrieve a single state along the trajectory
  *
  *	@param n the index of the state (0 is the first state, or IC). If n is negative,

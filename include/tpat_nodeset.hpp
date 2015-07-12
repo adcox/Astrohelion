@@ -69,6 +69,7 @@ class tpat_nodeset{
 		// Set and Get functions
 		std::vector<double>* getNodes();
 		std::vector<double>* getTOFs();
+		double getTotalTOF() const;
 		std::vector<double> getNode(int) const;
 		double getTOF(int) const;
 		int getNumNodes() const;

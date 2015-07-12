@@ -62,34 +62,30 @@ class tpat_trajectory{
 		int getLength() const;
 		virtual tpat_sys_data::system_t getType() const;
 
+		std::vector<double> getCoord(int) const;
 		std::vector<double> getState(int) const;
 		std::vector<double>* getState();
-		double getTime(int) const;
-		std::vector<double>* getTime();
 		tpat_matrix getSTM(int) const;
 		std::vector<tpat_matrix>* getSTM();
+		double getTime(int) const;
+		std::vector<double>* getTime();
 
 		void setState(std::vector<double>);
-		void setTime(std::vector<double>);
 		void setSTMs(std::vector<tpat_matrix>);
+		void setTime(std::vector<double>);
 
 		// Utility functions
 		void saveToMat(const char*);
 		virtual void setLength();
 	protected:
-		/** Number of points along integrated path */
-		int numPoints = 0;
+		int numPoints = 0;	//!< Number of points along integrated path
 
 		/** Holds state info: [pos, vel, accel] in 1D form, so every 9 elements
 		 * 	constitutes a new "row" 
 		 */
 		std::vector<double> state;
-
-		/** Holds time info */
-		std::vector<double> times;
-
-		/** An array containing the STM at each step of the integration */
-		std::vector<tpat_matrix> allSTM;
+		std::vector<double> times;			//!< Holds time info
+		std::vector<tpat_matrix> allSTM;	//!< An array containing the STM at each step of the integration
 
 		void saveState(mat_t*);
 		void saveTime(mat_t*);

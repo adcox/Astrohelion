@@ -57,27 +57,6 @@ class tpat_bcr4bpr_sys_data : public tpat_sys_data{
 		
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */
 		static double REF_EPOCH;	// 2005/06/21 18:21:35
-
-	private:
-		double mu = 0;			//!< Mass ratio between P2 + P3 and total
-		double nu = 0;			//!< Mass ratio between P3 and total
-		double k = 1/100;		//!< Scaling constant, non-dim 
-
-		/** Ratio between P3's orbital radius and P2's orbital radius */
-		double charLRatio = 0;
-
-		/** Angle between the P1/P2 line and the inertial x-axis, radians */
-		double theta0 = 0;
-
-		/** Angle between the P2/P3 line (projected into inertial XY plane) and the
-		x-axis, radians */
-		double phi0 = 0;
-
-		/** Inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane;
-		This angle does not change over time; radians */
-		double gamma = 5.14*PI/180;
-
-		void copyData(const tpat_bcr4bpr_sys_data&);
 };
 
 #endif

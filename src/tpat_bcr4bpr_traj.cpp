@@ -47,7 +47,7 @@ tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(tpat_bcr4bpr_sys_data data){
 	// dqdT.assign(6,0);
 	dqdT.clear();
 	sysData = data;
-}
+}//====================================================
 
 /**
  *	@brief Construct a BCR4BPR trajectory object with room for a specified number of states
@@ -56,16 +56,15 @@ tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(tpat_bcr4bpr_sys_data data){
 tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(int n) : tpat_trajectory(n){
 	// dqdT.assign(n*6,0);
 	dqdT.reserve(n*6);
-}
+}//====================================================
 
 /**
  *	@brief Copy the specified trajectory
  *	@param t a BCR4BPR trajectory object
  */
 tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(const tpat_bcr4bpr_traj &t) : tpat_trajectory(t){
-	sysData = t.sysData;
-	dqdT = t.dqdT;
-}
+	copyMe(t);
+}//====================================================
 
 //-----------------------------------------------------
 // 		Operator Functions
@@ -78,10 +77,14 @@ tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(const tpat_bcr4bpr_traj &t) : tpat_trajecto
  */
 tpat_bcr4bpr_traj& tpat_bcr4bpr_traj::operator= (const tpat_bcr4bpr_traj& t){
 	tpat_trajectory::operator= (t);
+	copyMe(t);
+	return *this;
+}//====================================================
+
+void tpat_bcr4bpr_traj::copyMe(const tpat_bcr4bpr_traj &t){
 	sysData = t.sysData;
 	dqdT = t.dqdT;
-	return *this;
-}//=====================================
+}//====================================================
 
 /**
  *	@brief Sum two BCR4BPR trajectories

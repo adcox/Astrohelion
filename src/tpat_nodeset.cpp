@@ -376,7 +376,7 @@ void tpat_nodeset::clearConstraints(){
 void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t0, double tof, int numNodes, 
 		node_distro_t type){
 	// Set up the simulation engine
-	tpat_simulation_engine engine(sysData);
+	tpat_simulation_engine engine(*sysData);
 	engine.setVerbose(false);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
 

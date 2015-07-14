@@ -72,7 +72,7 @@ class tpat_simulation_engine{
 	public:
 		// Constructors
 		tpat_simulation_engine();
-		tpat_simulation_engine(tpat_sys_data*);
+		tpat_simulation_engine(tpat_sys_data);
 		tpat_simulation_engine(const tpat_simulation_engine&);	//copy constructor
 		void createCrashEvents();
 		
@@ -83,25 +83,25 @@ class tpat_simulation_engine{
 		tpat_simulation_engine& operator =(const tpat_simulation_engine&);
 
 		// Set and get functions
-		bool usesRevTime() const;
-		bool isVerbose() const;
-		bool usesVarStepSize() const;
-		double getAbsTol() const;
-		double getRelTol() const;
-		int getNumSteps() const;
-		tpat_trajectory getTraj() const;
-		tpat_cr3bp_traj getCR3BPTraj() const;
-		tpat_bcr4bpr_traj getBCR4BPRTraj() const;
-
 		void addEvent(tpat_event::event_t, int, bool);
 		void addEvent(tpat_event);
-		void setSysData(tpat_sys_data*);
+		double getAbsTol() const;
+		tpat_bcr4bpr_traj getBCR4BPRTraj() const;
+		tpat_cr3bp_traj getCR3BPTraj() const;
+		int getNumSteps() const;
+		double getRelTol() const;
+		bool usesRevTime() const;
+		tpat_trajectory getTraj() const;
+		bool isVerbose() const;
+		bool usesVarStepSize() const;
+		
+		void setAbsTol(double);
+		void setNumSteps(int);
+		void setRelTol(double);
 		void setRevTime(bool);
+		void setSysData(tpat_sys_data);
 		void setVerbose(bool);
 		void setVarStepSize(bool);
-		void setAbsTol(double);
-		void setRelTol(double);
-		void setNumSteps(int);
 
 		// Simulation Methods
 		void runSim(double*, double);
@@ -110,12 +110,13 @@ class tpat_simulation_engine{
 		void runSim(std::vector<double>, double, double);
 		
 		// Utility Functions
-		void reset();
 		void clearEvents();
+		void reset();
+		
 
 	private:
-		/** Pointer to a system data object; contains characteristic quantities, among other things */
-		tpat_sys_data *sysData = 0;	// set null pointers for now
+		/** A system data object; contains characteristic quantities, among other things */
+		tpat_sys_data sysData;
 
 		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
 		tpat_trajectory *traj = 0;

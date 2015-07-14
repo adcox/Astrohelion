@@ -65,6 +65,7 @@ class iterationData{
 		std::vector<double> primVel;		//!< Store the velocities of the primaries
 		std::vector<int> velConNodes;		//!< Indices of nodes that are continuous in velocity
 		std::vector<int> slackAssignCon;	//!< Indices of constraints, index of entry corresponds to a slack variable
+		std::vector<int> conRows;			//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
 		tpat_trajectory newSeg;				//!< Most recent integrated arc
 		tpat_bcr4bpr_traj bcNewSeg;			//!< Most recent integrated arc, cast to BCR4BPR
 		tpat_matrix lastSTM = tpat_matrix(6,6);	//!< Final STM on most recent integrated arc
@@ -74,13 +75,11 @@ class iterationData{
 
 		int posVelCons = 0;			//!< # position and velocity constraints
 		int timeCons = 0;			//!< # time constraints
-		int extraCons = 0;			//!< # extra constraints
 		int numSlack = 0;			//!< # slack variables
 		int totalCons = 0;			//!< Total # constraints -> # rows of DF
 		int totalFree = 0;			//!< Total # free var. -> # cols of DF
 
 		int pvConCount = 0;			//!< Rolling count of position and velocity constraints applied
-		int conCount = 0;			//!< Rolling count of total constraints applied
 
 		bool upToDatePrimPos = false;	//!< Whether or not primPos has been updated for this node/iteration
 		bool upToDatePrimVel = false;	//!< Whether or not primVel has been updated for this node/iteration
@@ -329,26 +328,40 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	// Compute number of position and velocity continuity constraints
 	it.posVelCons = 3*(it.numNodes - 1) + 3*it.velConNodes.size();
 
+	// Determine number of time constraints
+	it.timeCons = 0;
+	if(sysType == tpat_sys_data::BCR4BPR_SYS && varTime){
+		it.timeCons = it.numNodes - 1;
+	}
+
 	// Compute number of extra consraint functions to add
-	it.extraCons = 0;
 	it.numSlack = 0;
+
+	it.conRows.assign(set->getNumCons(), NAN);	// Fill with NAN
+	int conRow = it.posVelCons + it.timeCons;
+
 	bool foundDVCon = false;
+	bool foundTOFCon = false;
 	
 	for(int c = 0; c < set->getNumCons(); c++){
 		tpat_constraint con = set->getConstraint(c);
 
 		switch(con.getType()){
 			case tpat_constraint::STATE:
-				it.extraCons += con.countConstrainedStates();
+				it.conRows.at(c) = conRow;
+				conRow += con.countConstrainedStates();
 				break;
 			case tpat_constraint::MATCH_ALL:
-				it.extraCons += 6;
+				it.conRows.at(c) = conRow;
+				conRow += 6;
 				break;
 			case tpat_constraint::MATCH_CUST:
-				it.extraCons += con.countConstrainedStates();
+				it.conRows.at(c) = conRow;
+				conRow += con.countConstrainedStates();
 				break;
 			case tpat_constraint::SP:
-				it.extraCons += 3;
+				it.conRows.at(c) = conRow;
+				conRow += 3;
 				break;
 			case tpat_constraint::MAX_DIST:
 			case tpat_constraint::MIN_DIST:
@@ -357,7 +370,8 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for DIST as well
 			case tpat_constraint::DIST:
-				it.extraCons += 1;
+				it.conRows.at(c) = conRow;
+				conRow++;
 				break;
 			case tpat_constraint::MAX_DELTA_V:
 			case tpat_constraint::DELTA_V:
@@ -367,7 +381,8 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 						printErr("The gramm matrix will likely be singular...\n");
 					}
 
-					it.extraCons += 1;
+					it.conRows.at(c) = conRow;
+					conRow++;
 					foundDVCon = true;
 
 					if(con.getType() == tpat_constraint::MAX_DELTA_V){
@@ -383,6 +398,21 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 					throw tpat_exception("You can only apply ONE delta-V constraint");
 				}
 				break;
+			case tpat_constraint::JC:
+				if(sysType == tpat_sys_data::CR3BP_SYS){
+					it.conRows.at(c) = conRow;
+					conRow++;
+				}else{
+					throw tpat_exception("Cannot apply JC constraint to systems other than CR3BP");
+				}
+				break;
+			case tpat_constraint::TOF:
+				if(!foundTOFCon){
+					it.conRows.at(c) = conRow;
+					conRow++;
+				}else
+					throw tpat_exception("You can only apply ONE TOF constraint");
+				break;
 			default: break;
 		}
 
@@ -395,28 +425,25 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	// Define values for use in corrections loop
 	double err = 1000000000;
 
-	// Determine the number of free variables and time constraints based on the system type
+	// Determine the number of free/design variables based on the system type
 	it.totalFree = 0;
-	it.timeCons = 0;
 	if(sysType == tpat_sys_data::CR3BP_SYS){
 		it.totalFree = varTime ? (7*it.numNodes - 1 + it.numSlack) : (6*it.numNodes + it.numSlack);
-		it.timeCons = 0;	// Autonomous system, no need to constrain time
 	}else{
 		it.totalFree = varTime ? (8*it.numNodes - 1 + it.numSlack) : (6*it.numNodes + it.numSlack);
-		it.timeCons = varTime*(it.numNodes - 1);
 	}
 
-	it.totalCons = it.posVelCons + it.timeCons + it.extraCons;
+	it.totalCons = conRow;
 
 	printVerb(verbose, "  Pos + Vel Constraints: %d\n  Time Constraints: %d\n",
 		it.posVelCons, it.timeCons);
 	printVerb(verbose, "  Extra Constraints: %d\n  # Free: %d\n  # Constraints: %d\n",
-		it.extraCons, it.totalFree, it.totalCons);
+		it.totalCons-it.posVelCons-it.timeCons, it.totalFree, it.totalCons);
 	printVerb(verbose, "  -> # Slack Variables: %d\n", it.numSlack);
 
 	// create a simulation engine
 	tpat_sys_data *sysData = set->getSysData();
-	tpat_simulation_engine simEngine(sysData);
+	tpat_simulation_engine simEngine(*sysData);
 	simEngine.setVerbose(verbose);
 	// TODO: Should I set the tolerance or use the default?
 
@@ -436,7 +463,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 		it.DF.assign(it.totalCons*it.totalFree, 0);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
-		it.conCount = it.posVelCons + it.timeCons;	// row where extra constraints will begin
 		it.pvConCount = 0;		// reset to zero every iteration
 
 		for(int n = 0; n < it.numNodes; n++){
@@ -483,19 +509,20 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 			// Add extra constraints and form the partials for those constraints
 			for(int c = 0; c < set->getNumCons(); c++){
 				tpat_constraint con = set->getConstraint(c);
+				int row0 = it.conRows[c];
 
 				if(con.getNode() == n){
 					std::vector<double> conData = con.getData();
 
 					switch(con.getType()){
 						case tpat_constraint::STATE:
-							targetState(&it, con, n);
+							targetState(&it, con, n, row0);
 							break;
 						case tpat_constraint::MATCH_ALL:
-							targetMatchAll(&it, con, n);
+							targetMatchAll(&it, con, n, row0);
 							break;
 						case tpat_constraint::MATCH_CUST:
-							targetMatchCust(&it, con, n);
+							targetMatchCust(&it, con, n, row0);
 							break;
 						case tpat_constraint::MAX_DIST:
 						case tpat_constraint::MIN_DIST:
@@ -508,13 +535,17 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 							if(sysType == tpat_sys_data::BCR4BPR_SYS){
 								updatePrimPos(&it, sysData, t0);
 								updatePrimVel(&it, sysData, t0);
-								targetSP(&it, static_cast<tpat_bcr4bpr_sys_data *>(sysData), n);
+								targetSP(&it, static_cast<tpat_bcr4bpr_sys_data *>(sysData), n, row0);
 							}else{
 								throw tpat_exception("Cannot apply SP constraint to systems other than BCR4BPR");
 							}
 							break;
-						case tpat_constraint::DELTA_V:	// handled outside this loop
-						case tpat_constraint::MAX_DELTA_V:
+						case tpat_constraint::JC:
+							targetJC(&it, con, sysData, n, row0);
+							break;
+						case tpat_constraint::DELTA_V:		// handled outside this loop
+						case tpat_constraint::MAX_DELTA_V:	// handled outside this loop
+						case tpat_constraint::TOF:			// handled outside this loop
 							break;
 						default:
 							throw tpat_exception("Unrecognized consraint type");
@@ -528,19 +559,20 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 					(con.getType() == tpat_constraint::DELTA_V || 
 						con.getType() == tpat_constraint::MAX_DELTA_V)){
 					
-					updateDeltaVCon(&it, sysData, n);
+					updateDeltaVCon(&it, sysData, n, row0);
 				}
 			}// End of loop through constraints
 		}// end of loop through nodes
 
-		// Once all nodes have been integrated, finish computing Delta-V constraints
+		// Once all nodes have been integrated, finish computing node-independent constraints
 		for(int c = 0; c < set->getNumCons(); c++){
 
 			tpat_constraint con = set->getConstraint(c);
-
+			int row0 = it.conRows[c];
 			switch(con.getType()){
 				case tpat_constraint::DELTA_V:
-					it.FX[it.totalCons-1] -= con.getData()[0];
+					it.FX[row0] -= con.getData()[0];
+					// it.FX[it.totalCons-1] -= con.getData()[0];
 					break;
 				case tpat_constraint::MAX_DELTA_V:
 				{
@@ -554,12 +586,27 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 					/* FIRST ITERATION ONLY (before the targeter computes a value for beta)
 					Set the slack variable such that the constraint will evaluate to zero if 
 					the actual deltaV is less than the required deltaV */
-					if(it.count == 0)
-						it.X[slackCol] = sqrt(std::abs(con.getData()[0] - it.FX[it.totalCons-1]));
-
-					it.FX[it.totalCons-1] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
-					it.DF[it.totalFree*(it.totalCons - 1) + slackCol] = 2*it.X[slackCol];
+					if(it.count == 0){
+						it.X[slackCol] = sqrt(std::abs(con.getData()[0] - it.FX[row0]));
+						// it.X[slackCol] = sqrt(std::abs(con.getData()[0] - it.FX[it.totalCons-1]));
+					}
+					it.FX[row0] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
+					it.DF[it.totalFree*row0 + slackCol] = 2*it.X[slackCol];
+					// it.FX[it.totalCons-1] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
+					// it.DF[it.totalFree*(it.totalCons - 1) + slackCol] = 2*it.X[slackCol];
 				}
+				break;
+				case tpat_constraint::TOF:
+				{
+					// Sum all TOF for total, set partials w.r.t. integration times equal to one
+					for(int i = 0; i < it.numNodes-1; i++){
+						it.FX[row0] += it.X[6*it.numNodes+i];
+						it.DF[it.totalFree*row0 + 7*it.numNodes+i] = 1;
+					}
+					
+					// subtract the desired TOF from the constraint to finish its computation
+					it.FX[row0] -= con.getData()[0];
+				}	
 				break;
 				default: break;
 			}
@@ -664,22 +711,25 @@ void tpat_correction_engine::createPosVelCons(iterationData* it, tpat_sys_data::
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
  *	@param n the index of the node that has been constrained
+ *	@param row0 the index of the row this constraint begins at
  */
-void tpat_correction_engine::targetState(iterationData* it, tpat_constraint con, int n){
+void tpat_correction_engine::targetState(iterationData* it, tpat_constraint con, int n, int row0){
 	std::vector<double> conData = con.getData();
 
 	// Allow user to constrain all 7 states
+	
+	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(int s = 0; s < ((int)con.getData().size()); s++){
 		if(!isnan(conData[s])){
 			if(s < 6){
-				it->FX[it->conCount] = it->X[6*n+s] - conData[s];
-				it->DF[it->totalFree*it->conCount + 6*n + s] = 1;
-				it->conCount++;
+				it->FX[row0+count] = it->X[6*n+s] - conData[s];
+				it->DF[it->totalFree*(row0 + count) + 6*n + s] = 1;
+				count++;
 			}else{
 				if(s == 6){
-					it->FX[it->conCount] = it->X[7*it->numNodes-1+n] - conData[s];
-					it->DF[it->totalFree*it->conCount + 7*it->numNodes-1+n] = 1;
-					it->conCount++;
+					it->FX[row0+count] = it->X[7*it->numNodes-1+n] - conData[s];
+					it->DF[it->totalFree*(row0 + count) + 7*it->numNodes-1+n] = 1;
+					count++;
 				}else{
 					throw tpat_exception("State constraints must have <= 7 elements");
 				}
@@ -694,22 +744,22 @@ void tpat_correction_engine::targetState(iterationData* it, tpat_constraint con,
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
  *	@param n the index of the node that has been constrained
+ *	@param row0 the index of the row this constraint begins at
  */
-void tpat_correction_engine::targetMatchAll(iterationData* it, tpat_constraint con, int n){
+void tpat_correction_engine::targetMatchAll(iterationData* it, tpat_constraint con, int n, int row0){
 	// Only allow matching 6 states, not epoch time (state 7)
 	int cn = con.getData()[0];
 	for(int row = 0; row < 6; row++){
 		// Constrain the states of THIS node to be equal to the node 
 		// with index stored in conData[0]
-		it->FX[it->conCount+row] = it->X[6*n+row] - it->X[6*cn+row];
+		it->FX[row0+row] = it->X[6*n+row] - it->X[6*cn+row];
 
 		// Partial of this constraint wrt THIS node = I
-		it->DF[it->totalFree*(it->conCount + row) + 6*n + row] = 1;
+		it->DF[it->totalFree*(row0 + row) + 6*n + row] = 1;
 
 		// Partial of this constraint wrt other node = -I
-		it->DF[it->totalFree*(it->conCount + row) + 6*cn+row] = -1;
+		it->DF[it->totalFree*(row0 + row) + 6*cn+row] = -1;
 	}
-	it->conCount += 6;
 }//=============================================
 
 /**
@@ -718,25 +768,56 @@ void tpat_correction_engine::targetMatchAll(iterationData* it, tpat_constraint c
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
  *	@param n the index of the node that has been constrained
+ *	@param row0 the index of the row this constraint begins at
  */
-void tpat_correction_engine::targetMatchCust(iterationData* it, tpat_constraint con, int n){
+void tpat_correction_engine::targetMatchCust(iterationData* it, tpat_constraint con, int n, int row0){
 	std::vector<double> conData = con.getData();
+	int count = 0;
 	// Only allow matching 6 states, not epoch time (state 7)
 	for(int s = 0; s < 6; s++){
 		if(!isnan(conData[s])){
 			int cn = conData[0];
-			it->FX[it->conCount] = it->X[6*n+s] - it->X[6*cn+s];
+			it->FX[row0 + count] = it->X[6*n+s] - it->X[6*cn+s];
 
 			// partial of this constraint wrt THIS node = 1
-			it->DF[it->totalFree*it->conCount + 6*n+s] = 1;
+			it->DF[it->totalFree*(row0 + count) + 6*n+s] = 1;
 
 			// partial of this constraint wrt other node = -1
-			it->DF[it->totalFree*it->conCount + 6*cn+s] = -1;
+			it->DF[it->totalFree*(row0 + count) + 6*cn+s] = -1;
 
-			it->conCount++;
+			count++;
 		}
 	}
 }//===============================================
+
+void tpat_correction_engine::targetJC(iterationData* it, tpat_constraint con, tpat_sys_data *sysData, int n, int row0){
+	std::vector<double> conData = con.getData();
+	tpat_cr3bp_sys_data *crSys = static_cast<tpat_cr3bp_sys_data *> (sysData);
+
+	// Compute the value of Jacobi at this node
+	double mu = crSys->getMu();
+	double *nodeState = &(it->X[6*n]);
+	double nodeJC = cr3bp_getJacobi(nodeState, mu);
+	
+	// temp variables to make equations more readable; compute partials w.r.t. node state
+	double x = nodeState[0];
+	double y = nodeState[1];
+	double z = nodeState[2];
+	double vx = nodeState[3];
+	double vy = nodeState[4];
+	double vz = nodeState[5];
+
+	double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
+	double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+
+	it->FX[row0] = nodeJC - conData[0];
+	it->DF[it->totalFree*row0 + 6*n + 0] = -2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x;	//dFdx
+	it->DF[it->totalFree*row0 + 6*n + 1] = -2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) - 2*y;						//dFdy
+	it->DF[it->totalFree*row0 + 6*n + 2] = -2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3);							//dFdz
+	it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx;	//dFdx_dot
+	it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy;	//dFdy_dot
+	it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz;	//dFdz_dot
+}//=============================================
 
 /**
  *	@brief Compute partials and constraint functions for nodes constrained with <tt>DIST</tt>, 
@@ -749,12 +830,14 @@ void tpat_correction_engine::targetMatchCust(iterationData* it, tpat_constraint 
  *	@param con a copy of the constraint object
  *	@param sysData a pointer to the system data object for this corrections process
  *	@param n the index of the node that has been constrained
+ *	@param c the index of this constraint in the constraint vector object
  */
 void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
 		tpat_sys_data* sysData, int n, int c){
 
 	std::vector<double> conData = con.getData();
 	int Pix = (int)(conData[0]);	// index of primary
+	int row0 = it->conRows[c];
 
 	// Get distance between node and primary in x, y, and z-coordinates
 	double dx = it->X[6*n+0] - it->primPos[Pix*3+0];
@@ -764,12 +847,12 @@ void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
 	// Compute difference between desired distance and true distance
-	it->FX[it->conCount] = h - conData[1];
+	it->FX[row0] = h - conData[1];
 
 	// Partials with respect to node position states
-	it->DF[it->totalFree*it->conCount + 6*n + 0] = dx/h;
-	it->DF[it->totalFree*it->conCount + 6*n + 1] = dy/h;
-	it->DF[it->totalFree*it->conCount + 6*n + 2] = dz/h;
+	it->DF[it->totalFree*row0 + 6*n + 0] = dx/h;
+	it->DF[it->totalFree*row0 + 6*n + 1] = dy/h;
+	it->DF[it->totalFree*row0 + 6*n + 2] = dz/h;
 
 	// Extra stuff for inequality constraints
 	if(con.getType() == tpat_constraint::MIN_DIST || 
@@ -783,10 +866,10 @@ void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
 		int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
 
 		// Subtract squared slack variable from constraint
-		it->FX[it->conCount] += sign*it->X[slackCol]*it->X[slackCol];
+		it->FX[row0] += sign*it->X[slackCol]*it->X[slackCol];
 
 		// Partial with respect to slack variable
-		it->DF[it->totalFree*it->conCount + slackCol] = sign*2*it->X[slackCol];
+		it->DF[it->totalFree*row0 + slackCol] = sign*2*it->X[slackCol];
 
 		// Epoch dependencies from primary positions
 		if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
@@ -794,11 +877,9 @@ void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
 
 			tpat_matrix dhdr(1, 3, dhdr_data);
 			tpat_matrix vel(3, 1, &(it->primVel[Pix*3]) );
-			it->DF[it->totalFree*it->conCount + 7*it->numNodes - 1 + n];
+			it->DF[it->totalFree*row0 + 7*it->numNodes - 1 + n];
 		}
 	}
-
-	it->conCount++;
 }// End of targetDist() =========================================
 
 /**
@@ -816,9 +897,10 @@ void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
  *
  *	@param it the iterationData object holding the current data for the corrections process
  *	@param sysData BCR4BPR system data
- *	@param n the index of thenode that is being constriant to colocate with the SP
+ *	@param n the index of the node that is being constriant to colocate with the SP
+ *	@param row0 the index of the first row for this constraint
  */
-void tpat_correction_engine::targetSP(iterationData* it, tpat_bcr4bpr_sys_data* sysData, int n){
+void tpat_correction_engine::targetSP(iterationData* it, tpat_bcr4bpr_sys_data* sysData, int n, int row0){
 
 	tpat_bcr4bpr_sys_data bcSysData = *sysData;
 
@@ -917,15 +999,15 @@ void tpat_correction_engine::targetSP(iterationData* it, tpat_bcr4bpr_sys_data* 
     double *FX = &(it->FX[0]);
     double *DF = &(it->DF[0]);
 
-    std::copy(conEvalPtr, conEvalPtr+3, FX+it->conCount);
-    std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*it->conCount + 6*n);
-    std::copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(it->conCount+1) + 6*n);
-    std::copy(dFdq_ptr+6, dFdq_ptr+9, DF + it->totalFree*(it->conCount+2) + 6*n);
+    std::copy(conEvalPtr, conEvalPtr+3, FX+row0);
+    std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + 6*n);
+    std::copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(row0+1) + 6*n);
+    std::copy(dFdq_ptr+6, dFdq_ptr+9, DF + it->totalFree*(row0+2) + 6*n);
 
     if(varTime){
-    	std::copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*it->conCount + 7*it->numNodes-1+n);
-    	std::copy(dFdT_ptr+1, dFdT_ptr+2, DF + it->totalFree*(it->conCount+1) + 7*it->numNodes-1+n);
-    	std::copy(dFdT_ptr+2, dFdT_ptr+3, DF + it->totalFree*(it->conCount+2) + 7*it->numNodes-1+n);
+    	std::copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*row0 + 7*it->numNodes-1+n);
+    	std::copy(dFdT_ptr+1, dFdT_ptr+2, DF + it->totalFree*(row0+1) + 7*it->numNodes-1+n);
+    	std::copy(dFdT_ptr+2, dFdT_ptr+3, DF + it->totalFree*(row0+2) + 7*it->numNodes-1+n);
     }
 }// End of SP Targeting ==============================
 
@@ -941,15 +1023,16 @@ void tpat_correction_engine::targetSP(iterationData* it, tpat_bcr4bpr_sys_data* 
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param sysData a pointer to the system data object for this corrections process
  *	@param n the index of the node that has been constrained
+ *	@param row0 the index of the first row for this constraint
  */
-void tpat_correction_engine::updateDeltaVCon(iterationData* it, tpat_sys_data* sysData, int n){
+void tpat_correction_engine::updateDeltaVCon(iterationData* it, tpat_sys_data* sysData, int n, int row0){
 	// Compute deltaV magnitude, add to constraint function
 	double dvMag = sqrt(it->deltaVs[n*3]*it->deltaVs[n*3] +
 		it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
 		it->deltaVs[n*3+2]*it->deltaVs[n*3+2]);
 	
-	// force the delta-V constraing to be the final one (last row of FX and DF)
-	it->FX[it->totalCons-1] += dvMag;
+	// Add the desired delta-V
+	it->FX[row0] += dvMag;
 
 	// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
 	double dFdq_ndf_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
@@ -964,17 +1047,17 @@ void tpat_correction_engine::updateDeltaVCon(iterationData* it, tpat_sys_data* s
 	tpat_matrix dFdt_n = -1*dFdq_n2 * state_dot;
 
 	for(int i = 0; i < 6; i++){
-		it->DF[it->totalFree*(it->totalCons-1) + 6*(n+1) + i] = dFdq_n2.at(0, i);
-		it->DF[it->totalFree*(it->totalCons-1) + 6*n + i] = dFdq_nf.at(0, i);
+		it->DF[it->totalFree*row0 + 6*(n+1) + i] = dFdq_n2.at(0, i);
+		it->DF[it->totalFree*row0 + 6*n + i] = dFdq_nf.at(0, i);
 	}
 
-	it->DF[it->totalFree*(it->totalCons-1) + 6*it->numNodes+n] = dFdt_n.at(0,0);
+	it->DF[it->totalFree*row0 + 6*it->numNodes+n] = dFdt_n.at(0,0);
 
 	if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
 		// Compute partial w.r.t. epoch time n
 		tpat_matrix dqdT(6, 1, it->last_dqdT);
 		tpat_matrix dFdT_n = -1*dFdq_n2 * dqdT;
-		it->DF[it->totalFree*(it->totalCons-1) + 7*it->numNodes-1+n] = dFdT_n.at(0,0);
+		it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n.at(0,0);
 	}
 }//==============================================
 
@@ -1114,12 +1197,12 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 		perm = gsl_permutation_alloc(J.getRows());
 		status = gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
 		if(status){
-			printErr("GSL ERR: %s\n", gsl_strerror(status));
+			printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
 			throw tpat_linalg_err("Unable to decompose J into L and U");
 		}
 		status = gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
 		if(status){
-			printErr("GSL ERR: %s\n", gsl_strerror(status));
+			printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
 			throw tpat_linalg_err("Unable to invert J, likely singular");
 		}
 		// w, in this case, is X_diff
@@ -1146,12 +1229,12 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 			perm = gsl_permutation_alloc(G.getRows());
 			status = gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
 			if(status){
-				printErr("GSL ERR: %s\n", gsl_strerror(status));
+				printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
 				throw tpat_linalg_err("Unable to decompose J into L and U");
 			}
 			status = gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
 			if(status){
-				printErr("GSL ERR: %s\n", gsl_strerror(status));
+				printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
 				throw tpat_linalg_err("Unable to invert G = JJ', likely singular");
 			}
 

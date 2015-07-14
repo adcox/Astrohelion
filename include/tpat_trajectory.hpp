@@ -64,6 +64,7 @@ class tpat_trajectory{
 
 		std::vector<double> getCoord(int) const;
 		std::vector<double> getState(int) const;
+		std::vector<double> getState_6(int) const;
 		std::vector<double>* getState();
 		tpat_matrix getSTM(int) const;
 		std::vector<tpat_matrix>* getSTM();

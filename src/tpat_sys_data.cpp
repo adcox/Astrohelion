@@ -98,6 +98,7 @@ void tpat_sys_data::copyData(const tpat_sys_data &d){
 	type = d.type;
 	primaries = d.primaries;
 	primIDs = d.primIDs;
+	otherParams = d.otherParams;
 }//==========================================
 
 /**

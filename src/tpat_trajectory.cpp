@@ -120,7 +120,7 @@ std::vector<double> tpat_trajectory::getCoord(int i) const{
 		throw tpat_exception("Coordinate Index Out of Range");
 
 	std::vector<double> coord;
-	for(int n = 0; n < state.size()/STATE_WIDTH; n++){
+	for(size_t n = 0; n < state.size()/STATE_WIDTH; n++){
 		coord.push_back(state[n*STATE_WIDTH + i]);
 	}
 
@@ -141,6 +141,24 @@ std::vector<double> tpat_trajectory::getState(int n) const{
 
 	std::vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
 	std::vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH;
+	std::vector<double> oneState(first, last);
+	return oneState;
+}
+
+/**
+ *	@brief Retrieve a single state (only the 6 regular elements) along the trajectory
+ *
+ *	@param n the index of the state (0 is the first state, or IC). If n is negative,
+ *	the countwill proceed from the end of the vector, i.e. -1 will return the 
+ *	final time, -2 will give the second to last value, etc.
+ *	@return a vector representing the partial state (pos, vel)
+ */
+std::vector<double> tpat_trajectory::getState_6(int n) const{
+	if(n < 0)
+		n += state.size()/STATE_WIDTH;
+
+	std::vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
+	std::vector<double>::const_iterator last = state.begin() + n*STATE_WIDTH + 6;
 	std::vector<double> oneState(first, last);
 	return oneState;
 }

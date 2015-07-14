@@ -67,6 +67,7 @@ class tpat_bcr4bpr_traj : public tpat_trajectory{
 		tpat_bcr4bpr_sys_data sysData;
 
 		void save_dqdT(mat_t*);
+		void copyMe(const tpat_bcr4bpr_traj&);
 };
 
 #endif

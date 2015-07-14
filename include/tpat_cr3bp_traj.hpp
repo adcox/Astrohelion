@@ -69,6 +69,7 @@ class tpat_cr3bp_traj : public tpat_trajectory{
 		tpat_cr3bp_sys_data sysData;
 		
 		void saveJacobi(mat_t*);
+		void copyMe(const tpat_cr3bp_traj&);
 };
 
 #endif

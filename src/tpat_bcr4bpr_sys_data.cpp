@@ -44,6 +44,7 @@ double tpat_bcr4bpr_sys_data::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
 tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data() : tpat_sys_data(){
 	numPrimaries = 3;
 	type = tpat_sys_data::BCR4BPR_SYS;
+	otherParams.assign(7,0);
 }//========================================
 
 /**
@@ -55,7 +56,8 @@ tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data() : tpat_sys_data(){
 tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(std::string P1, std::string P2, std::string P3){
 	numPrimaries = 3;
 	type = tpat_sys_data::BCR4BPR_SYS;
-	
+	otherParams.assign(7,0);
+
 	tpat_body_data p1Data(P1);
 	tpat_body_data p2Data(P2);
 	tpat_body_data p3Data(P3);
@@ -70,14 +72,25 @@ tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(std::string P1, std::string P2, std
 
 	// Check to make sure P1 is P2's parent
 	if(p2Data.getParent().compare(p1Data.getName()) == 0 && p2Data.getParent().compare(p1Data.getName()) == 0){
-		k = 1.0/100.0;	// Scaling factor to make non-dimensional numbers nicer
+		double k = 1.0/100.0;	// Scaling factor to make non-dimensional numbers nicer
 		charL = k * p2Data.getOrbitRad();
 		charM = k * (p1Data.getMass() + p2Data.getMass() + p3Data.getMass());
-		charLRatio = p3Data.getOrbitRad()/charL;
+		double charLRatio = p3Data.getOrbitRad()/charL;
 		charT = sqrt(pow(charL, 3)/(G*charM));
 
-		mu = (p2Data.getMass() + p3Data.getMass())/charM;
-		nu = p3Data.getMass()/charM;
+		double mu = (p2Data.getMass() + p3Data.getMass())/charM;
+		double nu = p3Data.getMass()/charM;
+		double theta = 0;
+		double phi = 0;
+		double gamma = 5.14*PI/180;
+
+		otherParams[0] = mu;
+		otherParams[1] = nu;
+		otherParams[2] = k;
+		otherParams[3] = charLRatio;
+		otherParams[4] = theta;
+		otherParams[5] = phi;
+		otherParams[6] = gamma;
 	}else{
 		throw tpat_exception("P1 must be the parent of P2 and P2 must be the parent of P3");
 	}
@@ -87,20 +100,7 @@ tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(std::string P1, std::string P2, std
  *	@brief Copy constructor
  *	@param d
  */
-tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(const tpat_bcr4bpr_sys_data &d) : tpat_sys_data(d){
-	copyData(d);
-}//==============================================
-
-/**
- *	@brief Copy data from a system data object into this one
- *	@param d
- */
-void tpat_bcr4bpr_sys_data::copyData(const tpat_bcr4bpr_sys_data &d){
-	k = d.k;
-	mu = d.mu;
-	nu = d.nu;
-	charLRatio = d.charLRatio;
-}//==============================================
+tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(const tpat_bcr4bpr_sys_data &d) : tpat_sys_data(d){}
 
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
@@ -109,64 +109,63 @@ void tpat_bcr4bpr_sys_data::copyData(const tpat_bcr4bpr_sys_data &d){
  */
 tpat_bcr4bpr_sys_data& tpat_bcr4bpr_sys_data::operator= (const tpat_bcr4bpr_sys_data &d){
 	tpat_sys_data::operator= (d);
-	copyData(d);
 	return *this;
 }//=====================================
 
 /**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */
-double tpat_bcr4bpr_sys_data::getMu() const { return mu; }
+double tpat_bcr4bpr_sys_data::getMu() const { return otherParams.at(0); }
 
 /**
  *	@return the non-dimensional mass ratio for P3
  */
-double tpat_bcr4bpr_sys_data::getNu() const { return nu; }
+double tpat_bcr4bpr_sys_data::getNu() const { return otherParams.at(1); }
 
 /**
  *	@return the ratio between P3's orbital radius and P2's orbital radius, non-dimensional units
  */
-double tpat_bcr4bpr_sys_data::getCharLRatio() const { return charLRatio; }
+double tpat_bcr4bpr_sys_data::getCharLRatio() const { return otherParams.at(3); }
 
 /**
  *	@return the scaling constant for this system
  */
-double tpat_bcr4bpr_sys_data::getK() const { return k; }
+double tpat_bcr4bpr_sys_data::getK() const { return otherParams.at(2); }
 
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
  *	angle in radians
  */
-double tpat_bcr4bpr_sys_data::getTheta0() const { return theta0; }
+double tpat_bcr4bpr_sys_data::getTheta0() const { return otherParams.at(4); }
 
 /**
  *	@return the angle between the P2/P3 line (projected onto inertial XY plane) and the 
  *	x-axis at time t = 0, angle in radians
  */
-double tpat_bcr4bpr_sys_data::getPhi0() const { return phi0; }
+double tpat_bcr4bpr_sys_data::getPhi0() const { return otherParams.at(5); }
 
 /**
  *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane, radians.
  */
-double tpat_bcr4bpr_sys_data::getGamma() const { return gamma; }
+double tpat_bcr4bpr_sys_data::getGamma() const { return otherParams.at(6); }
 
 /**
  *	@brief Set the angle theta0
  *	@param t angle in radians
  */
-void tpat_bcr4bpr_sys_data::setTheta0(double t){ theta0 = t; }
+void tpat_bcr4bpr_sys_data::setTheta0(double t){ otherParams.at(4) = t; }
 
 /**
  *	@brief Set the angle phi0
  *	@param t angle in radians
  */
-void tpat_bcr4bpr_sys_data::setPhi0(double t){ phi0 = t; }
+void tpat_bcr4bpr_sys_data::setPhi0(double t){ otherParams.at(5) = t; }
 
 /**
  *	@brief Set the angle gamma
  *	@param t angle in radians
  */
-void tpat_bcr4bpr_sys_data::setGamma(double t){ gamma = t; }
+void tpat_bcr4bpr_sys_data::setGamma(double t){ otherParams.at(6) = t; }
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
@@ -195,13 +194,13 @@ void tpat_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
 	saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;
-	matvar_t *theta0_var = Mat_VarCreate("Theta0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &theta0, MAT_F_DONT_COPY_DATA);
+	matvar_t *theta0_var = Mat_VarCreate("Theta0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[4]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, theta0_var, "Theta0", MAT_COMPRESSION_NONE);
 
-	matvar_t *phi0_var = Mat_VarCreate("Phi0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &phi0, MAT_F_DONT_COPY_DATA);
+	matvar_t *phi0_var = Mat_VarCreate("Phi0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[5]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, phi0_var, "Phi0", MAT_COMPRESSION_NONE);
 
-	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &gamma, MAT_F_DONT_COPY_DATA);
+	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[6]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, gamma_var, "Gamma", MAT_COMPRESSION_NONE);
 }//===================================================
 

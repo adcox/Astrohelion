@@ -93,10 +93,12 @@ class tpat_sys_data{
 		/** Characteristic mass (kg) */
 		double charM = 0;
 
+		/** Vector containing other parameters, like mu, k, nu, etc. */
+		std::vector<double> otherParams;
+
 		/** The type of system this data object describes */
 		system_t type = UNDEF_SYS;
 
-	private:
 		void copyData(const tpat_sys_data&);
 };
 #endif

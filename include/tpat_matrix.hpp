@@ -81,6 +81,7 @@ class tpat_matrix{
 		friend double abs(const tpat_matrix&);
 		friend tpat_matrix cross(const tpat_matrix&, const tpat_matrix&);
 		friend double det(const tpat_matrix&);
+		friend tpat_matrix inv(const tpat_matrix&);
 		friend double norm(const tpat_matrix&);
 		friend tpat_matrix trans(const tpat_matrix&);
 		
@@ -104,9 +105,9 @@ class tpat_matrix{
 		// static tpat_sizeMismatch tpat_matSizeMismatch;
 		
 	private:
-		gsl_matrix *a = 0;	//!< GSL matrix object that stores matrix elements
-		int rows = 0;		//!< Number of rows
-		int cols = 0;		//!< Number of columns
+		gsl_matrix *gslMat = 0;		//!< GSL matrix object that stores matrix elements
+		int rows = 0;				//!< Number of rows
+		int cols = 0;				//!< Number of columns
 
 		void initBasicMatrix(int r, int c);
 		void copyDataIntoGSL_Matrix(double*);

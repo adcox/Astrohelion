@@ -70,12 +70,12 @@ tpat_simulation_engine::tpat_simulation_engine(){
  *
  *  @param data a pointer to a system data object
  */
-tpat_simulation_engine::tpat_simulation_engine(tpat_sys_data *data){
+tpat_simulation_engine::tpat_simulation_engine(tpat_sys_data data){
     events.clear();
     eventOccurs.clear();
     sysData = data;
     createCrashEvents();
-    printVerb(verbose, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
+    printVerb(verbose, "Created Simulation Engine for %s system\n", data.getTypeStr().c_str());
 }//===========================================
 
 /**
@@ -99,10 +99,10 @@ tpat_simulation_engine::~tpat_simulation_engine(){
  *  @param s an input simulation engine
  */
 void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
-    sysData = s.sysData;                        // Copies ADDRESS of a system data object
+    sysData = s.sysData;
 
     // Copy the trajectory object using the correct casting
-    switch(sysData->getType()){
+    switch(sysData.getType()){
         case tpat_sys_data::CR3BP_SYS:
             traj = new tpat_cr3bp_traj(*(static_cast<tpat_cr3bp_traj *>(s.traj)));
             break;
@@ -132,10 +132,10 @@ void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
  */
 void tpat_simulation_engine::createCrashEvents(){
     if(!madeCrashEvents){
-        for(int p = 0; p < sysData->getNumPrimaries(); p++){
+        for(int p = 0; p < sysData.getNumPrimaries(); p++){
             // Put primary index # into an array, create event
             double Pix = (double)p;
-            tpat_event crashEvt(sysData, tpat_event::CRASH, -1, true, &Pix);
+            tpat_event crashEvt(&sysData, tpat_event::CRASH, -1, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }
@@ -215,7 +215,7 @@ tpat_trajectory tpat_simulation_engine::getTraj() const {
  *  @return a CR3BP Trajectory object
  */
 tpat_cr3bp_traj tpat_simulation_engine::getCR3BPTraj() const{
-    if(sysData->getType() == tpat_sys_data::CR3BP_SYS){
+    if(sysData.getType() == tpat_sys_data::CR3BP_SYS){
         /* Use a static cast to convert the general trajectory pointer
          * into a specific CR3BP trajectory pointer, then dereference
          * and return a COPY of the trajectory
@@ -238,7 +238,7 @@ tpat_cr3bp_traj tpat_simulation_engine::getCR3BPTraj() const{
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
  */
 tpat_bcr4bpr_traj tpat_simulation_engine::getBCR4BPRTraj() const{
-    if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
+    if(sysData.getType() == tpat_sys_data::BCR4BPR_SYS){
         // Make a copy and return it
         tpat_bcr4bpr_traj temp( *( static_cast<tpat_bcr4bpr_traj *>(traj) ) );
         return temp;
@@ -255,7 +255,7 @@ tpat_bcr4bpr_traj tpat_simulation_engine::getBCR4BPRTraj() const{
  *  @param stop whether or not to stop integration when this event occurs
  */
 void tpat_simulation_engine::addEvent(tpat_event::event_t type, int dir, bool stop){
-    tpat_event temp(sysData, type, dir, stop);
+    tpat_event temp(&sysData, type, dir, stop);
     events.push_back(temp);
 }//======================================
 
@@ -269,9 +269,9 @@ void tpat_simulation_engine::addEvent(tpat_event evt){
 
 /**
  *	@brief Specify the system the engine will be using for integration
- *	@param d a pointer to the system data object (use &sys)
+ *	@param d a system data object
  */
-void tpat_simulation_engine::setSysData(tpat_sys_data *d){ sysData = d; }
+void tpat_simulation_engine::setSysData(tpat_sys_data d){ sysData = d; }
 
 /**
  *	@brief Specify whether or not the engine should run in reverse time
@@ -390,20 +390,20 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
         }
     }
 
-	switch(sysData->getType()){
+	switch(sysData.getType()){
 		case tpat_sys_data::CR3BP_SYS:
 		{
             // Initialize trajectory (will only have one set of values)
             printVerb(verbose, "  initializing CR3BP trajectory\n");
-            tpat_cr3bp_sys_data *data = static_cast<tpat_cr3bp_sys_data *>(sysData);
-            traj = new tpat_cr3bp_traj(*data);
+            tpat_cr3bp_sys_data data = *static_cast<tpat_cr3bp_sys_data *>(&sysData);
+            traj = new tpat_cr3bp_traj(data);
 			break;
         }
 		case tpat_sys_data::BCR4BPR_SYS:
         {
             printVerb(verbose, "  initializing BCR4BPR trajectory\n");
-            tpat_bcr4bpr_sys_data *data = static_cast<tpat_bcr4bpr_sys_data *>(sysData);
-            traj = new tpat_bcr4bpr_traj(*data);
+            tpat_bcr4bpr_sys_data data = *static_cast<tpat_bcr4bpr_sys_data *>(&sysData);
+            traj = new tpat_bcr4bpr_traj(data);
 			break;
         }
 		default:
@@ -439,7 +439,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     if(simpleIntegration){
         ic_dim = 6;
     }else{
-        if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
+        if(sysData.getType() == tpat_sys_data::BCR4BPR_SYS){
             ic_dim = 48;    // requires 6 extra states for numerically integrated epoch dependencies
         }
     }
@@ -467,7 +467,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     // Choose EOM function based on system type and simplicity
     printVerb(verbose, "  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
-    switch(sysData->getType()){
+    switch(sysData.getType()){
         case tpat_sys_data::CR3BP_SYS:
             eomFcn = simpleIntegration ? &cr3bp_simple_EOMs : &cr3bp_EOMs;
             break;
@@ -533,7 +533,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
             }
 
             if(status != GSL_SUCCESS){
-                printErr("GSL error: %s\n", gsl_strerror(status));
+                printErr("tpat_simulation_engine::integrate: GSL ERR: %s\n", gsl_strerror(status));
                 throw tpat_diverge("Integration did not succeed");
             }
 
@@ -562,7 +562,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 }
 
                 if(status != GSL_SUCCESS){
-                    printErr("GSL error: %s\n", gsl_strerror(status));
+                    printErr("tpat_simulation_engine::integrate: GSL ERR: %s\n", gsl_strerror(status));
                     throw tpat_diverge("Integration did not succeed");
                 }
 
@@ -629,7 +629,7 @@ void tpat_simulation_engine::saveIntegratedData(double *y, double t){
 
     // Compute acceleration
     double dsdt[6] = {0};
-    switch(sysData->getType()){
+    switch(sysData.getType()){
         case tpat_sys_data::CR3BP_SYS:
         {
             // Use the simple EOMs to compute the velocity/acceleration. 
@@ -637,7 +637,7 @@ void tpat_simulation_engine::saveIntegratedData(double *y, double t){
 
             // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
             tpat_cr3bp_traj *cr3bpTraj = static_cast<tpat_cr3bp_traj*>(traj);
-            tpat_cr3bp_sys_data *cr3bpData = static_cast<tpat_cr3bp_sys_data *>(sysData);
+            tpat_cr3bp_sys_data *cr3bpData = static_cast<tpat_cr3bp_sys_data *>(&sysData);
             
             cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, cr3bpData->getMu()));
             break;
@@ -671,15 +671,15 @@ void tpat_simulation_engine::saveIntegratedData(double *y, double t){
  *  @brief Set the pointer for EOM Parameters for each type of system
  */
 void tpat_simulation_engine::setEOMParams(){
-    switch(sysData->getType()){
+    switch(sysData.getType()){
         case tpat_sys_data::CR3BP_SYS:
         {
-            eomParams = sysData;
+            eomParams = static_cast<tpat_cr3bp_sys_data *>(&sysData);
             break;
         }
         case tpat_sys_data::BCR4BPR_SYS:
         {
-            eomParams = sysData;
+            eomParams = static_cast<tpat_bcr4bpr_sys_data *>(&sysData);
             break;
         }
         default:
@@ -753,14 +753,14 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
             corrector.setVerbose(verbose);
             corrector.setFindEvent(true);   // apply special settings to minimize computations
 
-            switch(sysData->getType()){
+            switch(sysData.getType()){
                 case tpat_sys_data::CR3BP_SYS:
                 {
                     // Get the address of the IC
                     double *ic = &(generalIC[0]);
 
                     // Copy system data object
-                    tpat_cr3bp_sys_data crSysData(*static_cast<tpat_cr3bp_sys_data *>(sysData));
+                    tpat_cr3bp_sys_data crSysData(*static_cast<tpat_cr3bp_sys_data *>(&sysData));
 
                     // Create a nodeset for this particular type of system
                     printVerb(verbose, "  Creating nodeset for event location\n");
@@ -808,7 +808,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
                     double *ic = &(generalIC[0]);
 
                     // Copy system data object
-                    tpat_bcr4bpr_sys_data bcSysData(*static_cast<tpat_bcr4bpr_sys_data *>(sysData));
+                    tpat_bcr4bpr_sys_data bcSysData(*static_cast<tpat_bcr4bpr_sys_data *>(&sysData));
 
                     // Create a nodeset for this particular type of system
                     printVerb(verbose, "  Creating nodeset for event location\n");

@@ -54,9 +54,9 @@ This software has been tested on (and <i>should</i> work on) the following syste
 
 <h2>Debugging</h2>
 <h3>In General</h3>
-Run the executable using the graphic debugging library:
+First, open X11 from the Applications menu. Then, run the executable using the graphic debugging library:
 <pre>
-	ddd simEngineTest
+	ddd -display :0.0 simEngineTest
 </pre>
 For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler.
 

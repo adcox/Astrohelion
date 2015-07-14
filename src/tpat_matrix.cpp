@@ -87,7 +87,7 @@ tpat_matrix::tpat_matrix(gsl_matrix *m){
 	// Copy data from gsl_matrix pointer
 	rows = m->size1;
 	cols = m->size2;
-	a = m;
+	gslMat = m;
 }//===================================
 
 /**
@@ -111,7 +111,7 @@ tpat_matrix::tpat_matrix(gsl_vector *v, bool isRow){
  */
 tpat_matrix::~tpat_matrix(){
 	try{
-		gsl_matrix_free(a);
+		gsl_matrix_free(gslMat);
 	}catch(...){
 		throw tpat_exception("Cannot free gsl matrix!");
 	}
@@ -124,7 +124,7 @@ tpat_matrix::tpat_matrix(const tpat_matrix &b){
 	initBasicMatrix(b.rows, b.cols);
 	for(int r=0; r<rows; r++){
 		for(int c=0; c<cols; c++){
-			gsl_matrix_set(a, r, c, gsl_matrix_get(b.a, r, c));
+			gsl_matrix_set(gslMat, r, c, gsl_matrix_get(b.gslMat, r, c));
 		}
 	}
 }//=================================================
@@ -190,7 +190,7 @@ int tpat_matrix::getRows() const {return rows;}
 tpat_matrix tpat_matrix::getRow(int i){
 	// Retrieve the row data
 	gsl_vector *v = gsl_vector_alloc(static_cast<size_t>(cols));
-	gsl_matrix_get_row(v, a, static_cast<size_t>(i));
+	gsl_matrix_get_row(v, gslMat, static_cast<size_t>(i));
 	tpat_matrix temp(v, true);
 	gsl_vector_free(v);
 	return temp;
@@ -208,7 +208,7 @@ int tpat_matrix::getCols() const {return cols;}
  */
 tpat_matrix tpat_matrix::getCol(int j){
 	gsl_vector *v = gsl_vector_alloc(static_cast<size_t>(rows));
-	gsl_matrix_get_col(v, a, static_cast<size_t>(j));
+	gsl_matrix_get_col(v, gslMat, static_cast<size_t>(j));
 	tpat_matrix temp(v, false);
 	gsl_vector_free(v);
 	return temp;
@@ -222,13 +222,13 @@ int tpat_matrix::getLength() const {return rows*cols;}
 /**
  *	@return a pointer to the gsl_matrix object that represents this matrix
  */
-gsl_matrix* tpat_matrix::getGSLMat(){return a;}
+gsl_matrix* tpat_matrix::getGSLMat(){return gslMat;}
 
 /**
  *	@return a pointer to the array of doubles that represents this matrix;
  *	values are stored in row-major order
  */
-double* tpat_matrix::getDataPtr(){ return a->data; }
+double* tpat_matrix::getDataPtr(){ return gslMat->data; }
 
 /**
  *	@param r the row
@@ -237,7 +237,7 @@ double* tpat_matrix::getDataPtr(){ return a->data; }
  */
 double tpat_matrix::at(int r, int c) const {
 	if(r >= 0 && r < rows && c >= 0 && c < cols){
-		return gsl_matrix_get(a, r, c);
+		return gsl_matrix_get(gslMat, r, c);
 	}else{
 		throw std::out_of_range("Index out of range");
 	}
@@ -252,7 +252,7 @@ double tpat_matrix::at(int i) const {
 		if(rows != 1 && cols != 1){
 			printWarn("tpat_matrix :: matrix is not 1D; returning element from storage array\n");
 		}
-		return a->data[i];
+		return gslMat->data[i];
 	}else{
 		throw std::out_of_range("Index out of range");
 	}
@@ -273,7 +273,7 @@ tpat_matrix& tpat_matrix::operator =(const tpat_matrix &b){
 
 	for(int r = 0; r<rows; r++){
 		for(int c = 0; c<cols; c++){
-			gsl_matrix_set(a, r, c, gsl_matrix_get(b.a, r, c));
+			gsl_matrix_set(gslMat, r, c, gsl_matrix_get(b.gslMat, r, c));
 		}
 	}
 	return *this;
@@ -288,7 +288,7 @@ tpat_matrix operator +(const tpat_matrix &lhs, const tpat_matrix &rhs){
 		std::vector<double> q(lhs.rows * lhs.cols);
 		for (int r = 0; r < lhs.rows; r++){
 			for (int c = 0; c < lhs.cols; c++){
-				q[r * lhs.cols + c] = gsl_matrix_get(lhs.a, r, c) + gsl_matrix_get(rhs.a, r, c);
+				q[r * lhs.cols + c] = gsl_matrix_get(lhs.gslMat, r, c) + gsl_matrix_get(rhs.gslMat, r, c);
 			}
 		}
 		// Return a new matrix
@@ -305,7 +305,7 @@ tpat_matrix operator +(const tpat_matrix &lhs, const tpat_matrix &rhs){
  */
 tpat_matrix& tpat_matrix::operator +=(const tpat_matrix &b){
 	if(rows == b.rows && cols == b.cols){
-		gsl_matrix_add(a, b.a);
+		gsl_matrix_add(gslMat, b.gslMat);
 		return *this;
 	}else{
 		throw tpat_sizeMismatch("Matrices must be the same size to apply addition");
@@ -329,7 +329,7 @@ tpat_matrix operator -(const tpat_matrix &lhs, const tpat_matrix &rhs){
  */
 tpat_matrix& tpat_matrix::operator -=(const tpat_matrix &b){
 	if(rows == b.rows && cols == b.cols){
-		gsl_matrix_sub(a, b.a);
+		gsl_matrix_sub(gslMat, b.gslMat);
 		return *this;
 	}else{
 		throw tpat_sizeMismatch("Cannot perform addition");
@@ -350,8 +350,8 @@ tpat_matrix tpat_matrix::operator *(const tpat_matrix &b) const{
 	}
 
 	// Get the arrays of doubles from both matrix objects
-	double *A = a->data;
-	double *B = b.a->data;
+	double *A = gslMat->data;
+	double *B = b.gslMat->data;
 
 	// Create a new array that will hold the data from the mulitplication
 	double *C = new double[rows * b.cols];
@@ -388,8 +388,8 @@ tpat_matrix& tpat_matrix::operator *=(const tpat_matrix &b){
 
 	if(cols == b.rows && cols == b.cols){
 		// Get the arrays of doubles from both matrix objects
-		double *A = a->data;
-		double *B = b.a->data;
+		double *A = gslMat->data;
+		double *B = b.gslMat->data;
 		double *C = new double[rows * b.cols];
 
 		// Do the multiplication, 
@@ -399,7 +399,7 @@ tpat_matrix& tpat_matrix::operator *=(const tpat_matrix &b){
 		// Store data back in this matrix
 		for (int i = 0; i < rows; i++){
 		    for (int j = 0; j < cols; j++){
-		    	gsl_matrix_set(a, i, j, C[i*cols+j]);
+		    	gsl_matrix_set(gslMat, i, j, C[i*cols+j]);
 		    }
 		}
 
@@ -422,7 +422,7 @@ tpat_matrix operator *(const double &lhs, const tpat_matrix &rhs){
 	std::vector<double> b(rows * cols);
 	for(int r = 0; r< rows; r++){
 		for(int c = 0; c< cols; c++){
-			b[r * cols + c] = lhs *gsl_matrix_get(rhs.a, r, c);
+			b[r * cols + c] = lhs *gsl_matrix_get(rhs.gslMat, r, c);
 		}
 	}
 
@@ -454,7 +454,7 @@ tpat_matrix operator /(const tpat_matrix &lhs, const double &rhs){
  * 	@param alpha a real scalar
  */
 tpat_matrix& tpat_matrix::operator *=(const double &alpha){
-	gsl_matrix_scale(a, alpha);
+	gsl_matrix_scale(gslMat, alpha);
 	return *this;
 }//==============================================
 
@@ -465,7 +465,7 @@ tpat_matrix& tpat_matrix::operator *=(const double &alpha){
  *	@return whether or not L and R contain the same values
  */
 bool operator ==(const tpat_matrix &lhs, const tpat_matrix &rhs){
-	return gsl_matrix_equal(lhs.a, rhs.a);
+	return gsl_matrix_equal(lhs.gslMat, rhs.gslMat);
 }
 
 /**
@@ -525,16 +525,46 @@ double det(const tpat_matrix &m){
 	}
 	int permSign;
 	gsl_permutation *perm = gsl_permutation_alloc(m.rows);
-	int status = gsl_linalg_LU_decomp(m.a, perm, &permSign);
+	int status = gsl_linalg_LU_decomp(m.gslMat, perm, &permSign);
 	if(status){
-		printErr("GSL ERR: %s\n", gsl_strerror(status));
+		printErr("tpat_matrix::det: GSL ERR: %s\n", gsl_strerror(status));
 		throw tpat_linalg_err("Unable to perform LU decomp on matrix");
 	}
-	double ans = gsl_linalg_LU_det(m.a, permSign);
+	double ans = gsl_linalg_LU_det(m.gslMat, permSign);
 	gsl_permutation_free(perm);
 
 	return ans;
-}//========================
+}//============================================
+
+/**
+ *	@brief Invert a matrix
+ *
+ *	Only square matrices can be inverted
+ *	@param m the matrix to invert
+ *	@return the inverted matrix
+ */
+tpat_matrix inv(const tpat_matrix& m){
+	if(m.rows != m.cols)
+		throw tpat_linalg_err("Cannot invert non-square matrix");
+
+	gsl_permutation *perm = gsl_permutation_alloc(m.rows);
+	int permSign = 0;
+
+	int status = gsl_linalg_LU_decomp(m.gslMat, perm, &permSign);
+	if(status){
+		printErr("tpat_matrix::inv GSL ERR: %s\n", gsl_strerror(status));
+		throw tpat_linalg_err("Unable to decompose matrix into L and U");
+	}
+	gsl_matrix *invMat = gsl_matrix_alloc(m.rows, m.cols);
+	status = gsl_linalg_LU_invert(m.gslMat, perm, invMat);
+	if(status){
+		printErr("tpat_matrix::inv GSL ERR: %s\n", gsl_strerror(status));
+		throw tpat_linalg_err("Unable to invert LU decomposition");
+	}
+
+	tpat_matrix tpatInvMat(invMat);
+	return tpatInvMat;
+}//============================================
 
 /**
  *	@brief Compute the L2, or Euclidean, norm of a 1D matrix (i.e. a vector)
@@ -545,7 +575,7 @@ double norm(const tpat_matrix &m){
 	if(m.rows == 1 || m.cols == 1){
 		double sumSquares = 0;
 		for(int i = 0; i < m.rows * m.cols; i++){
-			sumSquares += (m.a->data[i])*(m.a->data[i]);
+			sumSquares += (m.gslMat->data[i])*(m.gslMat->data[i]);
 		}
 		return sqrt(sumSquares);
 	}else{
@@ -560,7 +590,7 @@ double norm(const tpat_matrix &m){
  */
 tpat_matrix trans(const tpat_matrix &m){
 	gsl_matrix *b = gsl_matrix_alloc(m.cols, m.rows);
-	gsl_matrix_transpose_memcpy(b, m.a);
+	gsl_matrix_transpose_memcpy(b, m.gslMat);
 	tpat_matrix temp(m.cols, m.rows, b->data);
 	gsl_matrix_free(b);
 	return temp;
@@ -576,10 +606,10 @@ tpat_matrix trans(const tpat_matrix &m){
  *	@param c number of columns
  */
 void tpat_matrix::initBasicMatrix(int r, int c){
-	a = gsl_matrix_alloc (r, c);
+	gslMat = gsl_matrix_alloc (r, c);
 	rows = r;
 	cols = c;
-	gsl_matrix_set_zero(a);
+	gsl_matrix_set_zero(gslMat);
 }//============================================
 
 /**
@@ -594,7 +624,7 @@ void tpat_matrix::initBasicMatrix(int r, int c){
 void tpat_matrix::copyDataIntoGSL_Matrix(double *data){
 	for (int i = 0; i < rows; i++){
 	    for (int j = 0; j < cols; j++){
-	    	gsl_matrix_set(a, i, j, data[i*cols+j]);
+	    	gsl_matrix_set(gslMat, i, j, data[i*cols+j]);
 	    }
 	}
 }//============================================
@@ -610,7 +640,7 @@ void tpat_matrix::copyDataIntoGSL_Matrix(double *data){
  */
 void tpat_matrix::copyDataIntoGSL_Matrix(std::vector<double> v){
 	if(((int)v.size()) != rows*cols){
-		throw tpat_sizeMismatch("Input vector size does not match matrix size");
+		throw tpat_sizeMismatch("tpat_matrix::copyDataIntoGSL_Matrix: Input vector size does not match matrix size");
 	}
 	copyDataIntoGSL_Matrix(&(v[0]));
 }//============================================
@@ -629,7 +659,7 @@ void tpat_matrix::print() const{
 void tpat_matrix::print(const char *format) const{
 	for (int r = 0; r < rows; r++){
 	    for (int c = 0; c < cols; c++){
-	    	printf(format, gsl_matrix_get(a, r, c));
+	    	printf(format, gsl_matrix_get(gslMat, r, c));
 	    }
 	    printf("\n");
 	}
@@ -646,9 +676,9 @@ void tpat_matrix::toCSV(const char *filename) const{
 	    for (int c = 0; c < cols; c++){
 	    	char buffer[64];
 	    	if(c < cols-1)
-	    		sprintf(buffer, "%.14f, ", gsl_matrix_get(a,r,c));
+	    		sprintf(buffer, "%.14f, ", gsl_matrix_get(gslMat,r,c));
 	    	else
-	    		sprintf(buffer, "%.14f\n", gsl_matrix_get(a,r,c));
+	    		sprintf(buffer, "%.14f\n", gsl_matrix_get(gslMat,r,c));
 
 	    	outFile << buffer;
 	    }

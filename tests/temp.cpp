@@ -3,16 +3,37 @@
 
 using namespace std;
 
+class Rectangle{
+	public:
+		Rectangle(double w, double h) : width(w), height(h) {}
+		double getArea(){return width*height;}
+		double getWidth(){return width;}
+		double getHeight(){return height;}
+	protected:
+		double width = 0;
+		double height = 0;
+};
+
+class Square : public Rectangle{
+	public:
+		Square(double s) : Rectangle(s,s) {}
+};
+
+double getPerim(Rectangle r){
+	return 2*r.getWidth() + 2*r.getHeight();
+}
+
 int main(void){
-	
-	int data[] = {1, 3, 5, 7, 9};
-	vector<int> vec(data, data+5);
+	Rectangle r(3,3);
+	Square s(2);
 
-	printf("Vector: [%d %d %d %d %d]\n", vec[0], vec[1], vec[2], vec[3], vec[4] );
+	Square s2 = static_cast<Square>(r);
 
-	vec.insert(vec.begin()+0, 8);
-	
-	printf("Vector: [%d %d %d %d %d %d]\n", vec[0], vec[1], vec[2], vec[3], vec[4], vec[5] );
+	printf("Rectangle area: %f\n", r.getArea());
+	printf("Square area: %f\n", s.getArea());
+
+	printf("Rectangle perimeter: %f\n", getPerim(r));
+	printf("Square perimeter: %f\n", getPerim(s));
 
 	return 0;
 }

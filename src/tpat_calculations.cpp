@@ -33,15 +33,18 @@
 #include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_bcr4bpr_traj.hpp"
 #include "tpat_constants.hpp"
+#include "tpat_correction_engine.hpp"
 #include "tpat_cr3bp_nodeset.hpp"
 #include "tpat_cr3bp_sys_data.hpp"
 #include "tpat_cr3bp_traj.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
+#include "tpat_simulation_engine.hpp"
 #include "tpat_trajectory.hpp"
 #include "tpat_utilities.hpp"
 
 #include "cspice/SpiceUsr.h"
+#include "gsl/gsl_linalg.h"
 
 #include <cmath>
 #include <cstring>
@@ -402,6 +405,175 @@ double dateToEpochTime(const char *date){
     return et;
 }//==========================================
 
+/**
+ *  @brief use least squares to predict new values of variables in a continuation process
+ *
+ *  This function uses a 2nd-order polynomial fit to predict a set of
+ *  dependent variables using past relationships between an independent
+ *  variable and the dependent variables. The number of points considered
+ *  in those past relationships can be adjusted to vary the "stiffness"
+ *  of the fit.
+ *
+ *  Ocasionally the 2nd-order fit does not work well and we encounter a 
+ *  singular (or very near singular) matrix. In this case, the algorithm
+ *  will apply linear regression, which generally solves the problem and
+ *  results in a safe inversion.
+ *
+ *  For all these inputs, the "state vector" must take the following form:
+ *      [x, y, z, xdot, ydot, zdot, Period, Jacobi Constant]
+ *
+ *  @param indVarIx the index of the state variable to use as the indpendent variable
+ *  @param nextInd The next value of the independent variable
+ *  @param depVars a vector specifying the indices of the states that will be
+ *  dependent variables. The algorithm will predict fugure values for these
+ *  variables based on how they have changed with the independent variable.
+ *  @param varHistory a vector representing an n x 8 matrix which contains
+ *  information about previous states, period, and JC. n should be at least 
+ *  3. If it is larger than MemSize, only the first set of MemSize rows will
+ *  be used.
+ *
+ *  @return an 8-element vector with predictions for the dependent variables.
+ *  If a particular variable has not been predicted, its place will be kept with
+ *  a NAN value.
+ *
+ *  An example may make things more clear:
+ *
+ *  Say I am continuing a family and am using x as the natural parameter in the
+ *  continuation. indVarIx would be 0 to represent x. We input the value of x
+ *  for the next orbit in the family (nextInd) and specify which variables (from
+ *  the 8-element "state") we would like to have predicted by least-squares.
+ */
+std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int> depVars, std::vector<double> varHistory){
+    const int STATE_SIZE = 8;
+    const double EPS = 1e-14;
+
+    // Form A and B matrices
+    std::vector<double> A_data;
+    std::vector<double> B_data;
+
+    for(size_t n = 0; n < varHistory.size()/STATE_SIZE; n++){
+        double d = varHistory[n*STATE_SIZE + indVarIx];
+        A_data.push_back(d*d);  // ind. var^2
+        A_data.push_back(d);    // ind. var^1
+        A_data.push_back(1);    // ind. var^0
+
+        for(size_t p = 0; p < depVars.size(); p++){
+            // vector of dependent variables
+            B_data.push_back(varHistory[n*STATE_SIZE + depVars[p]]);
+        }
+    }
+
+    tpat_matrix A(varHistory.size()/STATE_SIZE, 3, A_data);
+    tpat_matrix B(varHistory.size()/STATE_SIZE, depVars.size(), B_data);
+
+    // Generate coefficient matrix; these are coefficients for second-order
+    // polynomials in the new independent variable
+    tpat_matrix G = trans(A)*A;    // also a Gramm matrix
+    tpat_matrix Gcopy = G;
+    gsl_matrix *V = gsl_matrix_alloc(Gcopy.getRows(), Gcopy.getCols());
+    gsl_vector *S = gsl_vector_alloc(Gcopy.getRows());
+    gsl_vector *work = gsl_vector_alloc(Gcopy.getRows());
+
+    int status = gsl_linalg_SV_decomp (Gcopy.getGSLMat(), V, S, work);
+
+    if(status){
+        printErr("tpat_calculations::familyCont_LS: GSL ERR: %s\n", gsl_strerror(status));
+        throw tpat_linalg_err("Unable to take singular value decomposition");
+    }
+
+
+    double *smallestVal = std::min_element(S->data, S->data + S->size);
+    tpat_matrix P(1,depVars.size());
+
+    if(*smallestVal > EPS){
+        // Use 2nd-order polynomial fit
+        tpat_matrix C = solveAX_eq_B(G, trans(A)*B);
+
+        double indMatData[] = {nextInd*nextInd, nextInd, 1};
+        tpat_matrix indMat(1,3, indMatData);
+
+        P = indMat*C;
+    }else{
+        // User 1st-order polynomial fit
+        std::vector<double> A_lin_data;
+        for(size_t n = 0; n < varHistory.size()/STATE_SIZE; n++){
+            A_lin_data.push_back(varHistory[n*STATE_SIZE + indVarIx]);
+            A_lin_data.push_back(1);
+        }
+
+        tpat_matrix A_lin(varHistory.size()/STATE_SIZE, 2, A_lin_data);
+        tpat_matrix G = trans(A_lin)*A_lin;
+        tpat_matrix C = solveAX_eq_B(G, trans(A_lin)*B);
+
+        double indMatData[] = {nextInd, 1};
+        tpat_matrix indMat(1,2, indMatData);
+
+        P = indMat*C;
+    }
+
+    // Insert NAN for states that have not been predicted
+    std::vector<double> predicted;
+    predicted.assign(STATE_SIZE, NAN);
+    for(size_t i = 0; i < depVars.size(); i++)
+        predicted[depVars[i]] = P.at(i);
+
+    return predicted;
+}//====================================================
+
+/**
+ *  @brief Solve a matrix equation by iteratively applying LU factorization
+ *
+ *  Consider the matrix equation AX = B where A is an n x n square matrix,
+ *  X is an n x m matrix or vector, and B is an n x m matrix or vector. We 
+ *  solve this system by factoring A and solving individually for each column
+ *  of X.
+ *
+ *  @param A an m x n matrix
+ *  @param B an m x n matrix
+ *  @return an n x n matrix that solves the systsem AX = B
+ */
+tpat_matrix solveAX_eq_B(tpat_matrix A, tpat_matrix B){
+    if(A.getCols() != A.getRows()){
+        printErr("tpat_calculations::solveAX_eq_B: A must be square");
+        throw tpat_sizeMismatch("Cannot solve system unless A is square; cannot invert non-square matrix");
+    }
+
+    // printf("A = \n"); A.print("%12.8f");
+    // printf("B = \n"); B.print("%12.8f");
+
+    gsl_permutation *perm = gsl_permutation_alloc(A.getCols());
+    int permSign = 0;
+    int status = gsl_linalg_LU_decomp(A.getGSLMat(), perm, &permSign);
+    if(status){
+        printErr("tpat_calculations::solveAX_eq_B: GSL ERR: %s\n", gsl_strerror(status));
+        throw tpat_linalg_err("Cannot form LU Decomp");
+    }
+
+    std::vector<double> solvedCols;
+    gsl_vector *x = gsl_vector_alloc(B.getRows());
+
+    for(int c = 0; c < B.getCols(); c++){
+        tpat_matrix col = B.getCol(c);
+        // printf("Applying inverse to column %d:\n",c);
+        // col.print();
+        gsl_vector_view gsl_col = gsl_vector_view_array(col.getDataPtr(), col.getRows());
+
+        status = gsl_linalg_LU_solve(A.getGSLMat(), perm, &(gsl_col.vector), x);
+        if(status){
+            printErr("tpat_calculations::solveAX_eq_B: GSL ERR: %s\n", gsl_strerror(status));
+            throw tpat_linalg_err("Could not solve for collumn of X");
+        }
+        tpat_matrix newCol(x, false);
+        // printf("New column:\n");
+        // newCol.print();
+        solvedCols.insert(solvedCols.end(), x->data, x->data + x->size);
+    }
+
+    tpat_matrix allSolvedCols(B.getCols(), A.getCols(), solvedCols);
+    return trans(allSolvedCols);
+}//====================================================
+
+
 //-----------------------------------------------------
 //      CR3BP Utility Functions
 //-----------------------------------------------------
@@ -447,11 +619,11 @@ void cr3bp_getUDDots(double mu, double x, double y, double z, double* ddots){
  *  @return the Jacobi Constant at this specific state and system
  */
 double cr3bp_getJacobi(double s[], double mu){
-    double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+    double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
     double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
     double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
     double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
-    return 2*U - v*v;
+    return 2*U - v_squared;
 }//================================================
 
 
@@ -525,6 +697,75 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
         printErr("Could not converge on L%d\n", L);
     }
 }//========================================
+
+/**
+ *  @brief Compute a periodic orbit in the CR3BP system
+ *
+ *  @param sys the dynamical system
+ *  @param IC non-dimensional initial state vector
+ *  @param period non-dimensional period for the orbit
+ *  @param how this periodic orbit mirrors in the CR3BP
+ *
+ *  @return A periodic orbit. Note that this algorithm only enforces the mirror
+ *  condition at the initial state and halfway point. To increase the accuracy
+ *  of the periodic orbit, run it through a corrector to force the final state 
+ *  to equal the first
+ */
+tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> IC,
+    double period, mirror_t mirrorType){
+
+    tpat_simulation_engine sim(sys);
+
+    // Create a constraint to enforce mirror condition
+    double mirrorCon0[] = {NAN,NAN,NAN,NAN,NAN,NAN};
+    double mirrorCon1[] = {NAN,NAN,NAN,NAN,NAN,NAN};
+    switch(mirrorType){
+        case MIRROR_XZ:
+            mirrorCon1[1] = 0;
+            mirrorCon1[3] = 0;
+
+            mirrorCon0[0] = IC[0];
+            mirrorCon0[1] = 0;
+            mirrorCon0[2] = IC[2];
+            mirrorCon0[3] = 0;
+            mirrorCon0[5] = 0;
+            sim.addEvent(tpat_event::XZ_PLANE, 0, true);
+            break;
+        default:
+            throw tpat_exception("Mirror type either not defined or not implemented");
+    }
+
+    tpat_constraint firstCon(tpat_constraint::STATE, 0, mirrorCon0, 6);
+    tpat_constraint secondCon(tpat_constraint::STATE, 1, mirrorCon1, 6);
+
+    // Run the sim until the event is triggered
+    sim.runSim(IC, period);
+    tpat_cr3bp_traj halfOrbArc = sim.getCR3BPTraj();
+
+    // Create a nodeset with two nodes
+    tpat_cr3bp_nodeset halfOrbNodes(sys);
+    halfOrbNodes.appendNode(halfOrbArc.getState_6(0));
+    halfOrbNodes.appendNode(halfOrbArc.getState_6(-1));
+    halfOrbNodes.appendTOF(halfOrbArc.getTime(-1));
+    halfOrbNodes.addConstraint(firstCon);
+    halfOrbNodes.addConstraint(secondCon);
+
+    // Use differential corrections to enforce the mirror conditions
+    tpat_correction_engine corrector;
+    // corrector.setVerbose(true);
+    try{
+        corrector.correct_cr3bp(&halfOrbNodes);
+        tpat_cr3bp_nodeset correctedHalfPer = corrector.getCR3BPOutput();
+
+        // After correcting, simulate the entire orbit and pass it back
+        sim.clearEvents();
+        sim.runSim(correctedHalfPer.getNode(0), 2*correctedHalfPer.getTOF(0));
+
+        return sim.getCR3BPTraj();
+    }catch(tpat_diverge &e){
+        throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
+    }
+}//================================================
 
 /**
  *  @brief Transition a trajectory from the EM system to the SE system

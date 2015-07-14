@@ -43,9 +43,6 @@ class tpat_cr3bp_sys_data : public tpat_sys_data{
 		double getMu() const;
 
 		void saveToMat(mat_t*);
-		
-	private:
-		double mu = 0;				//!< Mass ratio between two primaries
 };
 
 #endif

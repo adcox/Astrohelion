@@ -41,7 +41,7 @@
  */
 tpat_cr3bp_traj::tpat_cr3bp_traj() : tpat_trajectory(){
 	jacobi.clear();
-}
+}//====================================================
 
 /**
  *	@brief Create a CR3BP trajectory object for the specified system
@@ -64,8 +64,7 @@ tpat_cr3bp_traj::tpat_cr3bp_traj(int n) : tpat_trajectory(n){
  *	@param t trajectory
  */
 tpat_cr3bp_traj::tpat_cr3bp_traj(const tpat_cr3bp_traj &t) : tpat_trajectory(t){
-	sysData = t.sysData;
-	jacobi = t.jacobi;
+	copyMe(t);
 }//====================================================
 
 /**
@@ -79,7 +78,8 @@ tpat_cr3bp_traj::tpat_cr3bp_traj(const tpat_cr3bp_traj &t) : tpat_trajectory(t){
  *	@return a trajectory formed from the integrated nodeset
  */
 tpat_cr3bp_traj tpat_cr3bp_traj::fromNodeset(tpat_cr3bp_nodeset nodes){
-	tpat_simulation_engine simEngine(nodes.getSysData());
+	tpat_sys_data *sysData = nodes.getSysData();
+	tpat_simulation_engine simEngine(*sysData);
 	tpat_cr3bp_traj totalTraj;
 
 	for(int n = 0; n < nodes.getNumNodes()-1; n++){
@@ -106,9 +106,18 @@ tpat_cr3bp_traj tpat_cr3bp_traj::fromNodeset(tpat_cr3bp_nodeset nodes){
  */
 tpat_cr3bp_traj& tpat_cr3bp_traj::operator= (const tpat_cr3bp_traj& t){
 	tpat_trajectory::operator= (t);
-	jacobi = t.jacobi;
+	copyMe(t);
 	return *this;
-}//=====================================
+}//=====================================================
+
+/**
+ *	@brief Copy all data objects specific to the CR3BP Trajectory
+ *	@param t the source trajectory; copy its attributes into this one
+ */
+void tpat_cr3bp_traj::copyMe(const tpat_cr3bp_traj &t){
+	sysData = t.sysData;
+	jacobi = t.jacobi;
+}//=====================================================
 
 /**
  *	@brief Sum two CR3BP trajectories

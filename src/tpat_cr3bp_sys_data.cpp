@@ -43,6 +43,7 @@
 tpat_cr3bp_sys_data::tpat_cr3bp_sys_data() : tpat_sys_data(){
 	numPrimaries = 2;
 	type = tpat_sys_data::CR3BP_SYS;
+	otherParams.assign(1,0);
 }//========================================
 
 /**
@@ -53,6 +54,7 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data() : tpat_sys_data(){
 tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
 	numPrimaries = 2;
 	type = tpat_sys_data::CR3BP_SYS;
+	otherParams.assign(1,0);
 	
 	tpat_body_data p1Data(P1);
 	tpat_body_data p2Data(P2);
@@ -68,7 +70,7 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
 		charM = p1Data.getMass() + p2Data.getMass();
 		charT = sqrt(pow(charL, 3)/(G*charM));
 
-		mu = p2Data.getMass()/charM;
+		otherParams.at(0) = p2Data.getMass()/charM;	// Non-dimensional mass ratio mu
 	}else{
 		throw tpat_exception("P1 must be the parent of P2");
 	}
@@ -78,9 +80,7 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
  *	@brief Copy constructor
  *	@param d
  */
-tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(const tpat_cr3bp_sys_data &d) : tpat_sys_data(d){
-	mu = d.mu;
-}
+tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(const tpat_cr3bp_sys_data &d) : tpat_sys_data(d){}
 
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
@@ -89,14 +89,13 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(const tpat_cr3bp_sys_data &d) : tpat_sy
  */
 tpat_cr3bp_sys_data& tpat_cr3bp_sys_data::operator= (const tpat_cr3bp_sys_data &d){
 	tpat_sys_data::operator= (d);
-	mu = d.mu;
 	return *this;
 }//===================================================
 
 /**
  *	@return the non-dimensional mass ratio for the system
  */
-double tpat_cr3bp_sys_data::getMu() const { return mu; }
+double tpat_cr3bp_sys_data::getMu() const { return otherParams.at(0); }
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
@@ -104,6 +103,11 @@ double tpat_cr3bp_sys_data::getMu() const { return mu; }
  */
 void tpat_cr3bp_sys_data::saveToMat(mat_t *matFile){
 	size_t dims[2] = {1,1};
+
+	if(primaries.size() < 2){
+		printErr("Primaries size is %zu\n", primaries.size());
+		throw tpat_exception("tpat_cr3bp_sys_data::saveToMat: There are no primaries?");
+	}
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
 	char p1_str[64];
@@ -119,6 +123,6 @@ void tpat_cr3bp_sys_data::saveToMat(mat_t *matFile){
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;	
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
+	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 }//===================================================

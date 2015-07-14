@@ -107,12 +107,13 @@ class tpat_correction_engine{
 		void createOutput(iterationData*);
 
 		void createPosVelCons(iterationData*, tpat_sys_data::system_t, int);
-		void targetState(iterationData*, tpat_constraint, int);
-		void targetMatchAll(iterationData*, tpat_constraint, int);
-		void targetMatchCust(iterationData*, tpat_constraint, int);
+		void targetState(iterationData*, tpat_constraint, int, int);
+		void targetMatchAll(iterationData*, tpat_constraint, int, int);
+		void targetMatchCust(iterationData*, tpat_constraint, int, int);
 		void targetDist(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
-		void targetSP(iterationData*, tpat_bcr4bpr_sys_data*, int);
-		void updateDeltaVCon(iterationData*, tpat_sys_data*, int);
+		void targetSP(iterationData*, tpat_bcr4bpr_sys_data*, int, int);
+		void targetJC(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
+		void updateDeltaVCon(iterationData*, tpat_sys_data*, int, int);
 		void updatePrimPos(iterationData*, tpat_sys_data*, double);
 		void updatePrimVel(iterationData*, tpat_sys_data*, double);
 

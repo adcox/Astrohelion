@@ -38,63 +38,63 @@
  
 #include <iostream>
 
- 	/** 
-     * 	What action SPICE should take when it encounters an error
-	 *	Options are:
-	 *	'abort' 	- 	Designed for safety; output messages and traceback to
-	 *					screen or stdout, then stop program and return status
-	 *					code if possible.
-	 *
-	 *	'return'	-	For use in programs that must keep running (our default).
-	 *					Output messages and traceback are saved to current error
-	 *					device and can be retrieved for error handling.
- 	 */
- 	static char SPICE_ERR_ACTION[] = "return";
+/** 
+ * 	What action SPICE should take when it encounters an error
+ *	Options are:
+ *	'abort' 	- 	Designed for safety; output messages and traceback to
+ *					screen or stdout, then stop program and return status
+ *					code if possible.
+ *
+ *	'return'	-	For use in programs that must keep running (our default).
+ *					Output messages and traceback are saved to current error
+ *					device and can be retrieved for error handling.
+ */
+static char SPICE_ERR_ACTION[] = "return";
 
- 	/**
- 	 *	The type of message type SPICE should return to us
- 	 */
-    static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
+/**
+ *	The type of message type SPICE should return to us
+ */
+static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 
-    /**
-     *	Flag to prevent initializations happing lots of times
-     */
-    static bool isInitialized = false;
+/**
+ *	Flag to prevent initializations happing lots of times
+ */
+static bool isInitialized = false;
 
-    /**
-     *	@brief a structure that contains functions to initialize and unload 
-     *	global library stuff
-     */
-	struct initializer {
-		/**
-		 *	@brief Initialize the library
-		 */
-		initializer(){
-			if(!isInitialized){
-				std::cout << "Initializing TPAT System" << std::endl;
+/**
+ *	@brief a structure that contains functions to initialize and unload 
+ *	global library stuff
+ */
+struct initializer {
+	/**
+	 *	@brief Initialize the library
+	 */
+	initializer(){
+		if(!isInitialized){
+			std::cout << "Initializing TPAT System" << std::endl;
 
-				// Tell SPICE how to handle errors
-			    erract_c("set", 0, SPICE_ERR_ACTION);
-			    errprt_c("set", 0, SPICE_ERR_MSG_TYPE);
+			// Tell SPICE how to handle errors
+		    erract_c("set", 0, SPICE_ERR_ACTION);
+		    errprt_c("set", 0, SPICE_ERR_MSG_TYPE);
 
-			    // Turn GSL's error handler off; we will catch and handle the errors
-			    gsl_set_error_handler_off();
+		    // Turn GSL's error handler off; we will catch and handle the errors
+		    gsl_set_error_handler_off();
 
-			    isInitialized = true;
-			}
+		    isInitialized = true;
 		}
+	}
 
-		/**
-		 *	@brief Perform any duties necessary to safely shut down the library
-		 */
-		~initializer(){
-			if(isInitialized){
-				std::cout << "Closing out the TPAT System" << std::endl;
-				isInitialized = false;
-			}
+	/**
+	 *	@brief Perform any duties necessary to safely shut down the library
+	 */
+	~initializer(){
+		if(isInitialized){
+			std::cout << "Closing out the TPAT System" << std::endl;
+			isInitialized = false;
 		}
-	};
+	}
+};
 
-	static initializer tpat_init;
+static initializer tpat_init;	// Create one to initialize the system
 
 #endif

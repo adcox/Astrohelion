@@ -23,9 +23,10 @@
 
 // Forward delcarations
 class tpat_cr3bp_traj;
+class tpat_cr3bp_sys_data;
 
 /**
- *	@brief An engine that will generate a trajectory from the linearized EOMs
+ *	@brief An engine that will generate a trajectory from the linearized CR3BP EOMs
  */
 class tpat_linear_motion_engine{
 	public:
@@ -54,8 +55,8 @@ class tpat_linear_motion_engine{
 		const char* getTypeStr(motion_t) const;
 
 		// Misc
-		tpat_cr3bp_traj getCR3BPLinear(int, double[3], const char*, const char*);
-		tpat_cr3bp_traj getCR3BPLinear(int, double[3], motion_t, const char*, const char*);
+		tpat_cr3bp_traj getCR3BPLinear(int, double[3], tpat_cr3bp_sys_data);
+		tpat_cr3bp_traj getCR3BPLinear(int, double[3], motion_t, tpat_cr3bp_sys_data);
 	private:
 		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;

@@ -1,6 +1,8 @@
 /**
  *	@file tpat_constants.hpp
- *	@brief Contains values for physical constants like pi, G, etc.
+ *	@brief Contains values for physical constants like pi, G, etc. and custom data wrappers
+ *
+ *
  *
  *	@author Andrew Cox
  *	@version May 15, 2015
@@ -28,6 +30,12 @@
  */
 #ifndef __H_CONST__
 #define __H_CONST__
+
+#include <complex>
+ 
+// Custom types
+typedef std::complex<double> cdouble;	//!< A complex double
+typedef std::complex<int> cint;			//!< A complex integer
 
 /** Universal Gravity Constant, km^3/kg-s^2 */
 const double G = 6.67384e-20;

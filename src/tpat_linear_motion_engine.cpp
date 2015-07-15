@@ -85,13 +85,11 @@ const char* tpat_linear_motion_engine::getTypeStr(motion_t type) const{
  *	@param L the Lagrange point number [1,5]
  *	@param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
- *	@param P1 name of the larger Primary
- * 	@param P2 name of the smaller Primary
+ *	@param sys the CR3BP system data object
  */
-tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], const char* P1,
-	const char* P2){
+tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], tpat_cr3bp_sys_data sys){
 
-	return getCR3BPLinear(L, r0, NONE, P1, P2);
+	return getCR3BPLinear(L, r0, NONE, sys);
 }
 
 /**
@@ -101,14 +99,10 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], c
  *	@param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
  *	@param type the type of linearized motion desired
- *	@param P1 name of the larger Primary
- * 	@param P2 name of the smaller Primary
+ *	@param sysData the CR3BP system data object
  */
-tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, const char* P1,
-	const char* P2){
+tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, tpat_cr3bp_sys_data sysData){
 
-	// Get system info
-	tpat_cr3bp_sys_data sysData(P1, P2);
 	double mu = sysData.getMu();
 
 	// Locate Lagrange point

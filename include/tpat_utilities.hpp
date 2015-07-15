@@ -97,6 +97,11 @@ std::vector<int> getSortedInd(const std::vector<T> &v) {
   	return idx; 
 }//===========================================
 
+template <typename T>
+bool aboutEquals(T t1, T t2, double tol){
+	return std::abs(t1 - t2) < tol;
+}//=========================================
+
 std::string complexToStr(std::complex<double> num);
 void printErr(const char*, ...);
 void printWarn(const char*, ...);

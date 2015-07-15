@@ -3,8 +3,8 @@
  *
  * 	Matrix object that employs GSL's Matrix and CBLAS functionality
  *
- *	The matrix is double precision, rectangular, and real. No other
- *	characteristics are assumed (e.g. banded, symmetric, etc.)
+ *	The matrix is double precision and real. No other
+ *	characteristics are assumed (e.g. square, banded, symmetric, etc.)
  *
  *	@author Andrew Cox
  *	@version May 6, 2015
@@ -33,11 +33,13 @@
 #include "tpat_matrix.hpp"
 
 #include "tpat_ascii_output.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
 #include <fstream>
 #include <gsl/gsl_cblas.h>
+#include <gsl/gsl_eigen.h>
 #include <gsl/gsl_linalg.h>
 
 //---------------------------------------------------------------------------
@@ -535,6 +537,36 @@ double det(const tpat_matrix &m){
 
 	return ans;
 }//============================================
+
+// std::vector<cdouble> eig(const tpat_matrix &m){
+	
+// }
+
+std::vector<cdouble> eig(const tpat_matrix &m, tpat_matrix *vecs){
+	if(m.rows != m.cols)
+		throw tpat_sizeMismatch("Cannot compute eigenvalues and vectors of non-square matrix");
+
+	// Space for eigenvalues and eigenvectors
+	gsl_vector_complex *eval = gsl_vector_complex_alloc (m.rows);
+  	gsl_matrix_complex *evec = gsl_matrix_complex_alloc (m.rows, m.cols);
+
+  	// Allocate space to do computations
+  	gsl_eigen_nonsymmv_workspace * w = gsl_eigen_nonsymmv_alloc (m.rows);
+  
+  	// Compute eigenvalues of non-symmetric, real matrix
+  	gsl_eigen_nonsymmv (m.gslMat, eval, evec, w);
+
+  	// Free memory
+  	gsl_eigen_nonsymmv_free (w);
+
+  	std::vector<cdouble> eigenVals;
+  	for(int i = 0; i < m.rows; i++){
+  		gsl_complex val = gsl_vector_complex_get(eval, i);
+  		eigenVals.push_back(cdouble(GSL_REAL(val), GSL_IMAG(val)));
+  	}
+
+  	return eigenVals;
+}//=========================================
 
 /**
  *	@brief Invert a matrix

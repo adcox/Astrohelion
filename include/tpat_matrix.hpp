@@ -21,10 +21,11 @@
 #ifndef __TPAT_MATRIX__
 #define __TPAT_MATRIX__
 
-#include "tpat_exceptions.hpp"
+#include "tpat_constants.hpp"	// for complex number typedefs
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
+
 #include <string>
 #include <vector>
 
@@ -84,7 +85,8 @@ class tpat_matrix{
 		friend tpat_matrix inv(const tpat_matrix&);
 		friend double norm(const tpat_matrix&);
 		friend tpat_matrix trans(const tpat_matrix&);
-		
+		friend std::vector<cdouble> eig(const tpat_matrix&);
+		friend std::vector<cdouble> eig(const tpat_matrix&, tpat_matrix*);
 
 		// Set and Gets
 		int getLength() const;

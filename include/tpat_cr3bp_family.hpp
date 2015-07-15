@@ -46,6 +46,9 @@ class tpat_cr3bp_family{
 		 *	Families typically evolve naturally through one variable, and
 		 *	it makes sense to analyze trends using this parameter as the 
 		 *	independent variable.
+		 *
+		 *	The integer value of each type is set up to map to the index
+		 *	of the independent variable in the continuation process
 		 */
 		enum sortVar_t{
 			SORT_X 		= 0,	//!< Sort by the x-coordinate in the IC
@@ -54,8 +57,8 @@ class tpat_cr3bp_family{
 			SORT_VX 	= 3,	//!< Sort by the x velocity component in the IC
 			SORT_VY  	= 4,	//!< Sort by the y velocity component in the IC
 			SORT_VZ 	= 5,	//!< Sort by the z velocity component in the IC
-			SORT_JC 	= 6,	//!< Sort by Jacobi Constant
-			SORT_TOF 	= 7		//!< Sort by Time-Of-Flight
+			SORT_JC 	= 7,	//!< Sort by Jacobi Constant
+			SORT_TOF 	= 6		//!< Sort by Time-Of-Flight
 		};
 
 		tpat_cr3bp_family(tpat_cr3bp_sys_data);

@@ -91,7 +91,7 @@ void test_createCR3BPNodeset(){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	crSet = new tpat_cr3bp_nodeset(ic, sysData, 2.77, 5, tpat_nodeset::TIME);
+	crSet = new tpat_cr3bp_nodeset(ic, sysData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
@@ -124,7 +124,7 @@ void test_createBCR4BPRNodeset(){
 	tpat_bcr4bpr_sys_data semData("sun", "earth", "moon");
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new tpat_bcr4bpr_nodeset(ic2, semData, 0, 40, 5, tpat_nodeset::TIME);
+	bcSet = new tpat_bcr4bpr_nodeset(ic2, semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};

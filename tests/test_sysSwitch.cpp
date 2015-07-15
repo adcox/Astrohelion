@@ -27,7 +27,7 @@ int main(void){
 	tpat_cr3bp_traj emHalo = engine.getCR3BPTraj();
 	emHalo.saveToMat("EM_Halo.mat");
 
-	tpat_cr3bp_nodeset emNodes(haloIC, emSys, 2.77, 10, tpat_nodeset::TIME);
+	tpat_cr3bp_nodeset emNodes(haloIC, emSys, 2.77, 10, tpat_nodeset::DISTRO_TIME);
 	emNodes.saveToMat("EM_Nodes.mat");
 
 	tpat_cr3bp_traj emHalo_inSE = cr3bp_EM2SE(emHalo, 0.1, 0.2, 0.05);
@@ -43,7 +43,7 @@ int main(void){
 	tpat_cr3bp_traj seTraj = engine.getCR3BPTraj();
 	seTraj.saveToMat("SE_Traj.mat");
 
-	tpat_cr3bp_nodeset seNodes(haloIC, seSys, 2.77, 10, tpat_nodeset::ARCLENGTH);
+	tpat_cr3bp_nodeset seNodes(haloIC, seSys, 2.77, 10, tpat_nodeset::DISTRO_ARCLENGTH);
 	seNodes.saveToMat("SE_Nodes.mat");
 
 	tpat_cr3bp_traj seTraj_inEM = cr3bp_SE2EM(seTraj, 0.1, 0.2, 0.05);

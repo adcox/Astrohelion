@@ -47,9 +47,10 @@ class tpat_matrix;
  *	@brief Describes the plane a periodic orbit can be mirrored across
  */
 enum mirror_t{
-	MIRROR_XZ,	//!< Mirror over the XZ-Plane
-	MIRROR_XY,	//!< Mirror over the XY-Plane
-	MIRROR_YZ	//!< Mirror over the YZ-Plane
+	MIRROR_XZ,		//!< Mirror over the XZ-Plane; x, z, and y-dot can be fixed if desired
+	MIRROR_XY,		//!< Mirror over the XY-Plane; x, y, and z-dot can be fixed if desired
+	MIRROR_YZ,		//!< Mirror over the YZ-Plane; y, z, and x-dot can be fixed if desired
+	MIRROR_X_AX 	//!< Mirror over the X-Axis
 };
 
 // Equations of motion
@@ -77,7 +78,7 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, doubl
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
 tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data, std::vector<double>, double, mirror_t);
-
+tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data, std::vector<double>, double, int, mirror_t, std::vector<int>);
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, tpat_bcr4bpr_sys_data, double*);
 void bcr4bpr_getPrimaryVel(double, tpat_bcr4bpr_sys_data, double*);

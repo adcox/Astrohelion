@@ -28,6 +28,7 @@
 
 // Forward Declarations
 class tpat_sys_data;
+class tpat_trajectory;
 
 /**
  *	@brief Similar to tpat_trajectory, but only holds state data at specific "nodes"
@@ -52,9 +53,9 @@ class tpat_nodeset{
 		 *	Specified how nodes are distributed along an integrated trajectory
 		 */
 		enum node_distro_t {
-			NONE, 	//!< There is no organizational method; nodes may be input by user.
-			TIME,	//!< Nodes spread evenly in time
-			ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
+			DISTRO_NONE, 	//!< There is no organizational method; nodes may be input by user.
+			DISTRO_TIME,	//!< Nodes spread evenly in time
+			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 		// *structors
 		tpat_nodeset(const int);
@@ -68,10 +69,10 @@ class tpat_nodeset{
 
 		// Set and Get functions
 		std::vector<double>* getNodes();
-		std::vector<double>* getTOFs();
-		double getTotalTOF() const;
 		std::vector<double> getNode(int) const;
 		double getTOF(int) const;
+		std::vector<double>* getTOFs();
+		double getTotalTOF() const;
 		int getNumNodes() const;
 		int getNodeSize() const;
 		node_distro_t getNodeDistro() const;
@@ -110,7 +111,7 @@ class tpat_nodeset{
 		const int nodeSize;
 
 		/** How nodes are distributed */
-		node_distro_t nodeDistro = NONE;
+		node_distro_t nodeDistro = DISTRO_NONE;
 
 		/** A vector of nodes; organized in row-major order */
 		std::vector<double> nodes;
@@ -129,6 +130,7 @@ class tpat_nodeset{
 
 		static void basicConcat(const tpat_nodeset&, const tpat_nodeset&, tpat_nodeset*);
 		void initSetFromICs(double[], tpat_sys_data*, double, double, int, node_distro_t);
+		void initSetFromTraj(tpat_trajectory, tpat_sys_data*, int, node_distro_t);
 		void saveNodes(mat_t*);
 		void saveTOFs(mat_t*);
 		// std::vector<double> concatNodes(std::vector<double>, std::vector<double>);

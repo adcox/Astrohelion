@@ -31,6 +31,17 @@
 // 		Constructors
 //-----------------------------------------------------
 
+tpat_cr3bp_family_member::tpat_cr3bp_family_member(double *ic, double tof,
+	double jc, double xWid, double yWid, double zWid){
+	IC.clear();
+	IC.insert(IC.begin(), ic, ic+6);
+	TOF = tof;
+	JC = jc;
+	xWidth = xWid;
+	yWidth = yWid;
+	zWidth = zWid;
+}//====================================================
+
 /**
  *	@brief Create a family member from a trajectory object
  */

@@ -1,5 +1,7 @@
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_cr3bp_family.hpp"
+#include "tpat_cr3bp_family_member.hpp"
 #include "tpat_cr3bp_nodeset.hpp"
 #include "tpat_cr3bp_sys_data.hpp"
 #include "tpat_cr3bp_traj.hpp"
@@ -12,7 +14,7 @@
 #include <vector>
 
 int main(void){
-	int numOrbits = 800;
+	int numOrbits = 500;
 	int numSimple = 3;
 	double step_simple = 0.0005;
 	double step_fitted = 0.0005;
@@ -41,11 +43,17 @@ int main(void){
 	std::vector<tpat_cr3bp_traj> members;
 	const int STATE_SIZE = 8;
 
+	tpat_cr3bp_family fam(sys);
+	fam.setName("Earth-Moon L1 Lyapunov");
+	fam.setSortType(tpat_cr3bp_family::SORT_X);
+	std::vector<int> fixStates;
+	fixStates.push_back(0);
+
 	while(orbitCount < numOrbits){
 		ydot_0_guess.push_back(linIC[4]);
 		tpat_cr3bp_traj perOrbit;
 		try{
-			perOrbit = cr3bp_getPeriodic(sys, linIC, tof, MIRROR_XZ);
+			perOrbit = cr3bp_getPeriodic(sys, linIC, tof, 3, MIRROR_XZ, fixStates);
 		}catch(tpat_diverge &e){
 			break;
 		}catch(tpat_linalg_err &e){
@@ -114,11 +122,14 @@ int main(void){
 			}
 		}//End if(!leftFamily)
 		tof = perOrbit.getTime(-1);
-		perOrbit.saveToMat("LyapCorrected.mat");
+		// perOrbit.saveToMat("LyapCorrected.mat");
+		tpat_cr3bp_family_member child(perOrbit);
+		fam.addMember(child);
 	}//END while loop
 
 	tpat_matrix temp1(ydot_0_guess.size(),1,ydot_0_guess);
 	tpat_matrix temp2(trueState.size()/2,2,trueState);
 	temp1.toCSV("ydot_0_guess.csv");
 	temp2.toCSV("correctedState.csv");
+	fam.saveToMat("LyapFamily.mat");
 }

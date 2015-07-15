@@ -24,6 +24,8 @@
 #include "tpat_cr3bp_family_member.hpp"
 #include "tpat_cr3bp_sys_data.hpp"
 
+#include "matio.h"
+
 #include <cmath>
 #include <string>
 #include <vector>
@@ -46,18 +48,18 @@ class tpat_cr3bp_family{
 		 *	independent variable.
 		 */
 		enum sortVar_t{
-			SORT_X,		//!< Sort by the x-coordinate in the IC
-			SORT_Y,		//!< Sort by the y-coordinate in the IC
-			SORT_Z,		//!< Sort by the z-coordinate in the IC
-			SORT_VX,	//!< Sort by the x velocity component in the IC
-			SORT_VY,	//!< Sort by the y velocity component in the IC
-			SORT_VZ,	//!< Sort by the z velocity component in the IC
-			SORT_JC,	//!< Sort by Jacobi Constant
-			SORT_TOF	//!< Sort by Time-Of-Flight
+			SORT_X 		= 0,	//!< Sort by the x-coordinate in the IC
+			SORT_Y 		= 1,	//!< Sort by the y-coordinate in the IC
+			SORT_Z 		= 2,	//!< Sort by the z-coordinate in the IC
+			SORT_VX 	= 3,	//!< Sort by the x velocity component in the IC
+			SORT_VY  	= 4,	//!< Sort by the y velocity component in the IC
+			SORT_VZ 	= 5,	//!< Sort by the z velocity component in the IC
+			SORT_JC 	= 6,	//!< Sort by Jacobi Constant
+			SORT_TOF 	= 7		//!< Sort by Time-Of-Flight
 		};
 
 		tpat_cr3bp_family(tpat_cr3bp_sys_data);
-		tpat_cr3bp_family(std::string);
+		tpat_cr3bp_family(const char*);
 		tpat_cr3bp_family(const tpat_cr3bp_family&);
 		~tpat_cr3bp_family();
 
@@ -71,27 +73,39 @@ class tpat_cr3bp_family{
 		std::vector<tpat_cr3bp_family_member> getMemberByJacobi(double) const;
 		std::string getName() const;
 		sortVar_t getSortType() const;
+		const char* getSortTypeStr() const;
 		tpat_cr3bp_sys_data getSysData() const;
 
 		void setName(std::string);
 		void setSortType(sortVar_t);
 
-		void saveToFile(std::string filepath) const;
+		void saveToMat(const char*);
 		void sort();
 
 	protected:
 		std::string name = "NULL";						//!< Descriptive name of the family
 		std::vector<tpat_cr3bp_family_member> members;	//!< Contains all family members
 		tpat_cr3bp_sys_data sysData;					//!< Describes the system this family exists in
-		sortVar_t sortType;								//!< Describes the most natural variable to sort family members by
+		sortVar_t sortType = SORT_X;								//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 		double numNodes = 4;		//!< Number of nodes to use when representing a family member
+
+		const char* DATA_VAR_NAME = "MemberData";
+		const char* SORTTYPE_VAR_NAME = "SortType";
+		const char* NAME_VAR_NAME = "Name";
+		const size_t DATA_WIDTH = 11;
 
 		void copyMe(const tpat_cr3bp_family&);
 		std::vector<int> findMatches(double, std::vector<double>*) const;
 		std::vector<tpat_cr3bp_family_member> getMatchingMember(double, std::vector<double>*, tpat_constraint) const;
 		void getCoord(int, std::vector<double>*) const;
+
+		void loadMemberData(mat_t*);
+		void loadName(mat_t*);
+		void loadSortType(mat_t*);
+		void saveMembers(mat_t*);
+		void saveMiscData(mat_t*);
 };
 
 #endif

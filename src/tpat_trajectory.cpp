@@ -261,7 +261,7 @@ void tpat_trajectory::saveToMat(const char* filename){
 	 *	the file. Arguments are:
 	 *	const char *matname 	- 	the name of the file
 	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
+	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
 	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){

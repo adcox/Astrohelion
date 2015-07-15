@@ -407,6 +407,9 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 				}
 				break;
 			case tpat_constraint::TOF:
+				if(!varTime){
+					printWarn("Attempting to constraint TOF without variable time... won't work!");
+				}
 				if(!foundTOFCon){
 					it.conRows.at(c) = conRow;
 					conRow++;
@@ -572,7 +575,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 			switch(con.getType()){
 				case tpat_constraint::DELTA_V:
 					it.FX[row0] -= con.getData()[0];
-					// it.FX[it.totalCons-1] -= con.getData()[0];
 					break;
 				case tpat_constraint::MAX_DELTA_V:
 				{
@@ -588,29 +590,26 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 					the actual deltaV is less than the required deltaV */
 					if(it.count == 0){
 						it.X[slackCol] = sqrt(std::abs(con.getData()[0] - it.FX[row0]));
-						// it.X[slackCol] = sqrt(std::abs(con.getData()[0] - it.FX[it.totalCons-1]));
 					}
 					it.FX[row0] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
 					it.DF[it.totalFree*row0 + slackCol] = 2*it.X[slackCol];
-					// it.FX[it.totalCons-1] -= con.getData()[0] - it.X[slackCol]*it.X[slackCol];
-					// it.DF[it.totalFree*(it.totalCons - 1) + slackCol] = 2*it.X[slackCol];
+					break;
 				}
-				break;
 				case tpat_constraint::TOF:
 				{
 					// Sum all TOF for total, set partials w.r.t. integration times equal to one
 					for(int i = 0; i < it.numNodes-1; i++){
 						it.FX[row0] += it.X[6*it.numNodes+i];
-						it.DF[it.totalFree*row0 + 7*it.numNodes+i] = 1;
+						it.DF[it.totalFree*row0 + 6*it.numNodes+i] = 1;
 					}
 					
 					// subtract the desired TOF from the constraint to finish its computation
 					it.FX[row0] -= con.getData()[0];
+					break;
 				}	
-				break;
 				default: break;
-			}
-		}
+			}// End switch(conType)
+		}// END loop through constraints
 
 		// Solve for newX and copy into working vector X
 		tpat_matrix newX = solveUpdateEq(&it);
@@ -1301,7 +1300,7 @@ void tpat_correction_engine::createOutput(iterationData *it){
 			return;
 	}
 
-	nodeset_out->setNodeDistro(tpat_nodeset::NONE);
+	nodeset_out->setNodeDistro(tpat_nodeset::DISTRO_NONE);
 	int numNodes = nodeset_in->getNumNodes();
 
 	// Get pointers to relevant data vectors

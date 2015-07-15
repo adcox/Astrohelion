@@ -54,9 +54,13 @@ class tpat_bcr4bpr_sys_data : public tpat_sys_data{
 		void setGamma(double g);
 
 		void saveToMat(mat_t*);
-		
+		void readFromMat(mat_t*);
+
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */
 		static double REF_EPOCH;	// 2005/06/21 18:21:35
+
+	private:
+		void initFromPrimNames(std::string, std::string, std::string);
 };
 
 #endif

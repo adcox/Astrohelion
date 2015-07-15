@@ -28,6 +28,7 @@
 
 // Forward declarations
 class tpat_cr3bp_sys_data;
+class tpat_cr3bp_traj;
 
 /**
  *	@brief This derivative of the tpat_nodeset contains additional information for 
@@ -49,6 +50,8 @@ class tpat_cr3bp_nodeset : public tpat_nodeset{
 		tpat_cr3bp_nodeset(std::vector<double>, tpat_cr3bp_sys_data, double, int);
 		tpat_cr3bp_nodeset(double[6], tpat_cr3bp_sys_data, double, int, node_distro_t);
 		tpat_cr3bp_nodeset(std::vector<double>, tpat_cr3bp_sys_data, double, int, node_distro_t);
+		tpat_cr3bp_nodeset(tpat_cr3bp_traj, int);
+		tpat_cr3bp_nodeset(tpat_cr3bp_traj, int, node_distro_t);
 		tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset&, int, int);
 		tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset&);
 

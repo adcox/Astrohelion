@@ -32,7 +32,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
 
 	sysData = data;
 
-	initSetFromICs(IC, &sysData, t0, tof, numNodes, tpat_nodeset::TIME);
+	initSetFromICs(IC, &sysData, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(numNodes, t0);
 }//======================================================================
 
@@ -53,7 +53,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_
 
 	sysData = data;
 
-	initSetFromICs(&(IC[0]), &sysData, t0, tof, numNodes, tpat_nodeset::TIME);
+	initSetFromICs(&(IC[0]), &sysData, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(numNodes, t0);
 }//======================================================================
 

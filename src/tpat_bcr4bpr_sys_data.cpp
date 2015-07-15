@@ -58,14 +58,26 @@ tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(std::string P1, std::string P2, std
 	type = tpat_sys_data::BCR4BPR_SYS;
 	otherParams.assign(7,0);
 
+	initFromPrimNames(P1, P2, P3);
+}//===================================================
+
+/**
+ *	@brief Initialize all data fiels using the primaries' names
+ *	@param P1 name of the largest primary in the entire system
+ *	@param P2 name of the larger primary in the secondary system
+ *	@param P3 name of the smaller primary int he secondary system
+ */
+void tpat_bcr4bpr_sys_data::initFromPrimNames(std::string P1, std::string P2, std::string P3){
 	tpat_body_data p1Data(P1);
 	tpat_body_data p2Data(P2);
 	tpat_body_data p3Data(P3);
 
+	primaries.clear();
 	primaries.push_back(p1Data.getName());
 	primaries.push_back(p2Data.getName());
 	primaries.push_back(p3Data.getName());
 
+	primIDs.clear();
 	primIDs.push_back(p1Data.getID());
 	primIDs.push_back(p2Data.getID());
 	primIDs.push_back(p3Data.getID());
@@ -178,19 +190,19 @@ void tpat_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
 	char p1_str[64];
 	strcpy(p1_str, primaries.at(0).c_str());
 	dims[1] = primaries.at(0).length();
-	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UTF8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
+	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UINT8, 2, dims, p1_str, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
 	strcpy(p2_str, primaries.at(1).c_str());
 	dims[1] = primaries.at(1).length();
-	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
+	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 
 	char p3_str[64];
 	strcpy(p3_str, primaries.at(2).c_str());
 	dims[1] = primaries.at(2).length();
-	matvar_t *p3_var = Mat_VarCreate("P3", MAT_C_CHAR, MAT_T_UTF8, 2, dims, &(p3_str[0]), MAT_F_DONT_COPY_DATA);
+	matvar_t *p3_var = Mat_VarCreate("P3", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p3_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;
@@ -203,6 +215,21 @@ void tpat_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
 	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[6]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, gamma_var, "Gamma", MAT_COMPRESSION_NONE);
 }//===================================================
+
+/**
+ *	@brief Load system data from a mat file
+ *	@param matFile a pointer to the mat file in question
+ */
+void tpat_bcr4bpr_sys_data::readFromMat(mat_t *matFile){
+	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
+	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
+	std::string P3 = readStringFromMat(matFile, "P3", MAT_T_UINT8, MAT_C_CHAR);
+	initFromPrimNames(P1, P2, P3);
+
+	otherParams[4] = readDoubleFromMat(matFile, "Theta0");
+	otherParams[5] = readDoubleFromMat(matFile, "Phi0");
+	otherParams[6] = readDoubleFromMat(matFile, "Gamma");
+}//====================================================
 
 
 

@@ -88,7 +88,8 @@ tpat_cr3bp_traj tpat_cr3bp_traj::fromNodeset(tpat_cr3bp_nodeset nodes){
 		if(n == 0){
 			totalTraj = simEngine.getCR3BPTraj();
 		}else{
-			totalTraj += simEngine.getCR3BPTraj();
+			tpat_cr3bp_traj temp = totalTraj + simEngine.getCR3BPTraj();
+			totalTraj = temp;
 		}
 	}
 
@@ -139,31 +140,39 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 	}
 
 	// create a new trajectory object with space for both sets of data to be combined
-	tpat_cr3bp_traj newTraj(lhs.numPoints + rhs.numPoints);
-	newTraj.setSysData(lhs.sysData);
+	tpat_cr3bp_traj newTraj(lhs.sysData);
+	// tpat_cr3bp_traj newTraj(lhs.numPoints + rhs.numPoints);
+	// newTraj.setSysData(lhs.sysData);
 
-	// Copy the states and times from the LHS into the new guy
-	copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
-	copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
+	// Copy the states and times from the LHS into the new guy)
+	newTraj.getState()->insert(newTraj.getState()->begin(), lhs.state.begin(), lhs.state.end());
+	newTraj.getTime()->insert(newTraj.getTime()->begin(), lhs.times.begin(), lhs.times.end());
+	// std::copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
+	// std::copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
 	
 	// Append the rhs state to the end of the new guy's state vector
-	copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
+	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin(), rhs.state.end());
+	// std::copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
 
 	// Append the rhs times, adjusted for continuity, to the new guy's time vector; adjustments
 	// don't affect the result because system is autonomous
-	double *newTimes = &(newTraj.getTime()->at(lhs.numPoints));
+	// double *newTimes = &(newTraj.getTime()->at(lhs.numPoints));
 	for (int n = 0; n < rhs.numPoints; n++){
-		*newTimes = lhs.times.back() + rhs.times.at(n) - rhs.times.at(0);
-		newTimes++;
+		newTraj.getTime()->push_back(lhs.times.back() + rhs.times.at(n) - rhs.times.at(0));
+		// *newTimes = lhs.times.back() + rhs.times.at(n) - rhs.times.at(0);
+		// newTimes++;
 	}
 
 	// Copy only the lhs STMs, because there is no gaurantee the two summed trajectories
 	// will be continuous and smooth in time and state
-	copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
+	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
+	// std::copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
 
 	// Copy Jacobi constant
-	copy(lhs.jacobi.begin(), lhs.jacobi.end(), newTraj.getJC()->begin());
-	copy(rhs.jacobi.begin(), rhs.jacobi.end(), newTraj.getJC()->begin() + lhs.numPoints);
+	newTraj.getJC()->insert(newTraj.getJC()->begin(), lhs.jacobi.begin(), lhs.jacobi.end());
+	newTraj.getJC()->insert(newTraj.getJC()->end(), rhs.jacobi.begin(), rhs.jacobi.end());
+	// std::copy(lhs.jacobi.begin(), lhs.jacobi.end(), newTraj.getJC()->begin());
+	// std::copy(rhs.jacobi.begin(), rhs.jacobi.end(), newTraj.getJC()->begin() + lhs.numPoints);
 
 	return newTraj;
 }//========================================

@@ -764,7 +764,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
 
                     // Create a nodeset for this particular type of system
                     printVerb(verbose, "  Creating nodeset for event location\n");
-                    tpat_cr3bp_nodeset eventNodeset(ic, crSysData, tof, 2, tpat_nodeset::TIME);
+                    tpat_cr3bp_nodeset eventNodeset(ic, crSysData, tof, 2, tpat_nodeset::DISTRO_TIME);
 
                     // Constraint to keep first node unchanged
                     tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, ic, 6);
@@ -813,7 +813,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
                     // Create a nodeset for this particular type of system
                     printVerb(verbose, "  Creating nodeset for event location\n");
                     tpat_bcr4bpr_nodeset eventNodeset(ic, bcSysData, t0,
-                        tof, 2, tpat_nodeset::TIME);
+                        tof, 2, tpat_nodeset::DISTRO_TIME);
 
                     // Constraint to keep first node unchanged
                     tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, ic, 7);

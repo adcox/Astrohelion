@@ -33,6 +33,7 @@ class tpat_cr3bp_traj;
 class tpat_cr3bp_family_member{
 	public:
 		tpat_cr3bp_family_member(){}
+		tpat_cr3bp_family_member(double*, double, double, double, double, double);
 		tpat_cr3bp_family_member(const tpat_cr3bp_traj);
 		tpat_cr3bp_family_member(const tpat_cr3bp_family_member&);
 		~tpat_cr3bp_family_member();

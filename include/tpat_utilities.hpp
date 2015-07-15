@@ -30,6 +30,8 @@
 #ifndef __H_UTILITIES_
 #define __H_UTILITIES_
 
+#include "tpat_exceptions.hpp"
+ 
 #include "matio.h"
  
 #include <complex>
@@ -102,6 +104,9 @@ void printVerb(bool, const char*, ...);
 void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
 void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
+int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
+double readDoubleFromMat(mat_t*, const char*);
+std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);
 
 void waitForUser();
 

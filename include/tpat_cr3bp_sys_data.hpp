@@ -43,6 +43,10 @@ class tpat_cr3bp_sys_data : public tpat_sys_data{
 		double getMu() const;
 
 		void saveToMat(mat_t*);
+		void readFromMat(mat_t*);
+		
+	private:
+		void initFromPrimNames(std::string, std::string);
 };
 
 #endif

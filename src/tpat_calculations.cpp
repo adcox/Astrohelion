@@ -701,11 +701,17 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
 /**
  *  @brief Compute a periodic orbit in the CR3BP system
  *
+ *  The initial and final states are constrained based on the mirror type, but
+ *  all other states are allowed to vary during the corrections process. If you
+ *  wish to constrain a specific states, see 
+ *  cr3bp_getPeriodic(sys, IC, period, numNodes, mirrorType, fixedStates)
+ *  This function also uses only two nodes; to specify more, see the function above.
+ *
  *  @param sys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
- *  @param how this periodic orbit mirrors in the CR3BP
- *
+ *  @param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  
  *  @return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
@@ -713,42 +719,102 @@ void cr3bp_getEquilibPt(tpat_cr3bp_sys_data sysData, int L, double tol, double p
  */
 tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> IC,
     double period, mirror_t mirrorType){
+    
+    std::vector<int> fixedStates;   // Initialize an empty vector
+    cr3bp_getPeriodic(sys, IC, period, 2, mirrorType, fixedStates);
+}//========================================
 
-    tpat_simulation_engine sim(sys);
+/**
+ *  @brief Compute a periodic orbit in the CR3BP system
+ *
+ *  @param sys the dynamical system
+ *  @param IC non-dimensional initial state vector
+ *  @param period non-dimensional period for the orbit
+ *  @param numNodes the number of nodes to use; more nodes may result in a more robust correction
+ *  @param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  @param fixedStates a vector containing the indices of which initial states
+ *  we would like to fix. Not all states are possible for each mirror condition.
+ *  See the enum definition for specific details.
+ *  
+ *  @return A periodic orbit. Note that this algorithm only enforces the mirror
+ *  condition at the initial state and halfway point. To increase the accuracy
+ *  of the periodic orbit, run it through a corrector to force the final state 
+ *  to equal the first
+ */
+tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> IC,
+    double period, int numNodes, mirror_t mirrorType, std::vector<int> fixedStates){
 
-    // Create a constraint to enforce mirror condition
-    double mirrorCon0[] = {NAN,NAN,NAN,NAN,NAN,NAN};
-    double mirrorCon1[] = {NAN,NAN,NAN,NAN,NAN,NAN};
+    tpat_simulation_engine sim(sys);// Engine to perform simulation
+    std::vector<int> zeroStates;    // Which states must be zero to ensure a perpendicular crossing
+
+    // Determien which states must be zero for mirroring
     switch(mirrorType){
         case MIRROR_XZ:
-            mirrorCon1[1] = 0;
-            mirrorCon1[3] = 0;
-
-            mirrorCon0[0] = IC[0];
-            mirrorCon0[1] = 0;
-            mirrorCon0[2] = IC[2];
-            mirrorCon0[3] = 0;
-            mirrorCon0[5] = 0;
-            sim.addEvent(tpat_event::XZ_PLANE, 0, true);
+            zeroStates.push_back(1);    // y
+            zeroStates.push_back(3);    // x-dot
+            zeroStates.push_back(5);    // z-dot
+            sim.addEvent(tpat_event::XZ_PLANE, 0, true);    // Tell the sim to quit once it reaches the XZ plane
+            break;
+        case MIRROR_YZ:
+            zeroStates.push_back(0);    // x
+            zeroStates.push_back(4);    // y-dot
+            zeroStates.push_back(5);    // z-dot
+            sim.addEvent(tpat_event::YZ_PLANE, 0, true);
+            break;
+        case MIRROR_XY:
+            zeroStates.push_back(2);    // z
+            zeroStates.push_back(3);    // x-dot
+            zeroStates.push_back(4);    // y-dot
+            sim.addEvent(tpat_event::YZ_PLANE, 0, true);
+            break;
+        case MIRROR_X_AX:
+            zeroStates.push_back(1);    // y
+            zeroStates.push_back(2);    // z
+            zeroStates.push_back(3);    // x-dot
             break;
         default:
             throw tpat_exception("Mirror type either not defined or not implemented");
     }
 
-    tpat_constraint firstCon(tpat_constraint::STATE, 0, mirrorCon0, 6);
-    tpat_constraint secondCon(tpat_constraint::STATE, 1, mirrorCon1, 6);
+    // Create a constraint to enforce mirror condition at the beginning and end of arc
+    double mirrorCon0[] = {NAN,NAN,NAN,NAN,NAN,NAN};
+    double mirrorCon1[] = {NAN,NAN,NAN,NAN,NAN,NAN};
+
+    // Set the zero states to zero in both constraints
+    for(size_t i = 0; i < zeroStates.size(); i++){
+        mirrorCon0[zeroStates[i]] = 0;
+        mirrorCon1[zeroStates[i]] = 0;
+    }
+
+    // Fix states at the initial point
+    for(size_t i = 0; i < fixedStates.size(); i++){
+        bool okToFix = true;
+        for(size_t n = 0; n < zeroStates.size(); n++){
+            if(fixedStates[i] == zeroStates[n]){
+                printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring", fixedStates[i]);
+                okToFix = false;
+                break;
+            }
+        }
+        if(okToFix){
+            mirrorCon0[fixedStates[i]] = IC[fixedStates[i]];
+        }
+    }
+
+    tpat_constraint initStateCon(tpat_constraint::STATE, 0, mirrorCon0, 6);
+    tpat_constraint finalStateCon(tpat_constraint::STATE, numNodes-1, mirrorCon1, 6);
 
     // Run the sim until the event is triggered
     sim.runSim(IC, period);
     tpat_cr3bp_traj halfOrbArc = sim.getCR3BPTraj();
 
     // Create a nodeset with two nodes
-    tpat_cr3bp_nodeset halfOrbNodes(sys);
-    halfOrbNodes.appendNode(halfOrbArc.getState_6(0));
-    halfOrbNodes.appendNode(halfOrbArc.getState_6(-1));
-    halfOrbNodes.appendTOF(halfOrbArc.getTime(-1));
-    halfOrbNodes.addConstraint(firstCon);
-    halfOrbNodes.addConstraint(secondCon);
+    tpat_cr3bp_nodeset halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
+    // halfOrbNodes.appendNode(halfOrbArc.getState_6(0));
+    // halfOrbNodes.appendNode(halfOrbArc.getState_6(-1));
+    // halfOrbNodes.appendTOF(halfOrbArc.getTime(-1));
+    halfOrbNodes.addConstraint(initStateCon);
+    halfOrbNodes.addConstraint(finalStateCon);
 
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
@@ -759,7 +825,7 @@ tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> I
 
         // After correcting, simulate the entire orbit and pass it back
         sim.clearEvents();
-        sim.runSim(correctedHalfPer.getNode(0), 2*correctedHalfPer.getTOF(0));
+        sim.runSim(correctedHalfPer.getNode(0), 2*correctedHalfPer.getTotalTOF());
 
         return sim.getCR3BPTraj();
     }catch(tpat_diverge &e){

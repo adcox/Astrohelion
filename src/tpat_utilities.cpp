@@ -31,6 +31,11 @@
 #include <complex>
 #include <string>
 
+/**
+ *  @brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j
+ *  @param num a complex number
+ *  @return the complex number as a string
+ */
 std::string complexToStr(std::complex<double> num){
     char buffer[64];
     sprintf(buffer, "%.4e%s%.4ej", real(num), imag(num) < 0 ? " - " : " + ", std::abs(imag(num)));
@@ -130,10 +135,114 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
 }//==============================
 
 /**
+ *  @brief Read a double from a mat file
+ *  @param matFile a pointer to the matlab file in quesiton
+ *  @param varName the name of the variable in the mat file
+ *  @return the value of the variable
+ *  @throws tpat_exception if there is trouble reading or parsing the variable
+ */
+double readDoubleFromMat(mat_t *matFile, const char* varName){
+    double result = 0;
+    matvar_t *matvar = Mat_VarRead(matFile, varName);
+    if(matvar == NULL){
+        throw tpat_exception("tpat_utilities::readDoubleFromMat: Could not read variable from file");
+    }else{
+        if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
+            double *data = static_cast<double *>(matvar->data);
+
+            if(data != NULL){
+                result = *data;
+            }else{
+                throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+            }
+        }else{
+            throw tpat_exception("tpat_utilities::readDoubleFromMat: Incompatible data file: unsupported data type/class");
+        }
+    }
+
+    Mat_VarFree(matvar);
+    return result;
+}//==============================================
+
+/**
+ *  @brief Read an int from a mat file
+ *  @param matFile a pointer to the matlab file in quesiton
+ *  @param varName the name of the variable in the mat file
+ *  @param aType the expected variable type
+ *  @param aClass the expected variable class
+ *  @return the value of the variable
+ *  @throws tpat_exception if there is trouble reading or parsing the variable
+ */
+int readIntFromMat(mat_t *matFile, const char* varName, matio_types aType,
+    matio_classes aClass){
+
+    int result = 0;
+    matvar_t *matvar = Mat_VarRead(matFile, varName);
+    if(matvar == NULL){
+        throw tpat_exception("tpat_utilities::readIntFromMat: Could not read variable from file");
+    }else{
+        if(matvar->class_type == aClass && matvar->data_type == aType){
+            int *data = static_cast<int *>(matvar->data);
+
+            if(data != NULL){
+                result = *data;
+            }else{
+                throw tpat_exception("tpat_utilities::readIntFromMat: No data");
+            }
+        }else{
+            throw tpat_exception("tpat_utilities::readIntFromMat: Incompatible data file: unsupported data type/class");
+        }
+    }
+
+    Mat_VarFree(matvar);
+    return result;
+}//==============================================
+
+/**
+ *  @brief Read a string from a matlab file
+ *
+ *  @param matFile a pointer to the matlab file in questions
+ *  @param varName the name of the variable in the mat file
+ *  @param aType the expected variable type (e.g. MAT_T_UINT8)
+ *  @param aClass the expected variable class (e.g. MAT_C_CHAR)
+ *  @return the string
+ *  @throws tpat_exception if there is trouble reading or parsing the variable.
+ */
+std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types aType,
+    matio_classes aClass){
+
+    std::string result = "";
+    matvar_t *matvar = Mat_VarRead(matFile, varName);
+    if(matvar == NULL){
+        throw tpat_exception("tpat_utilities::readStringFromMat: Could not read variable from file");
+    }else{
+        if(matvar->class_type == aClass && matvar->data_type == aType){
+            char *data = static_cast<char *>(matvar->data);
+
+            if(data != NULL){
+                result = std::string(data, matvar->dims[1]);
+            }else{
+                throw tpat_exception("tpat_utilities::readStringFromMat: No data");
+            }
+        }else{
+            throw tpat_exception("tpat_utilities::readStringFromMat: Incompatible data file: unsupported data type/class");
+        }
+    }
+
+    Mat_VarFree(matvar);
+    return result;
+}//=============================================
+
+/**
  *  @brief Suspend operation until the user presses a key
  */
 void waitForUser(){
     std::cout << "Press ENTER to continue...";
     std::cin.ignore();
     std::cout << std::endl;
-}
+}//========================================================
+
+
+
+
+//

@@ -25,6 +25,7 @@
 #include "tpat_cr3bp_nodeset.hpp"
 
 #include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_cr3bp_traj.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
  
@@ -93,7 +94,7 @@ tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, d
 	int numNodes) : tpat_nodeset(6){
 	sysData = data;
 
-	initSetFromICs(IC, &sysData, 0, tof, numNodes, tpat_nodeset::TIME);
+	initSetFromICs(IC, &sysData, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 }//======================================================================
 
 /**
@@ -111,8 +112,35 @@ tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(std::vector<double> IC, tpat_cr3bp_sys_da
 	int numNodes) : tpat_nodeset(6){
 	sysData = data;
 
-	initSetFromICs(&(IC[0]), &sysData, 0, tof, numNodes, tpat_nodeset::TIME);
+	initSetFromICs(&(IC[0]), &sysData, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 }//======================================================================
+
+/**
+ *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
+ *
+ *	The node distribution type is automatically specified as splitting the trajectory equally in TIME
+ *
+ *	@param traj the trajectory to split
+ *	@param numNodes the number of nodes.
+ */
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(tpat_cr3bp_traj traj, int numNodes) : tpat_nodeset(6){
+	sysData = traj.getSysData();
+	initSetFromTraj(traj, &sysData, numNodes, tpat_nodeset::DISTRO_TIME);
+}//===========================================
+
+/**
+ *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
+ *
+ *	@param traj the trajectory to split
+ *	@param numNodes the number of nodes.
+ *	@param type the node distribution type
+ */
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(tpat_cr3bp_traj traj, int numNodes,
+	node_distro_t type) : tpat_nodeset(6){
+	
+	sysData = traj.getSysData();
+	initSetFromTraj(traj, &sysData, numNodes, type);
+}//===========================================
 
 /**
  *	@brief Create a nodeset as a subset of another

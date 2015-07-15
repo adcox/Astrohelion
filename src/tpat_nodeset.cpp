@@ -49,23 +49,6 @@ tpat_nodeset::tpat_nodeset(const int n) : nodeSize(n){
 }//========================================================
 
 /**
- *	@brief Copy constructor
- *	@param n a nodeset
- */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset& n) : nodeSize(n.nodeSize){
-	if(nodeSize == n.nodeSize){
-		nodeDistro = n.nodeDistro;
-		nodes = n.nodes;
-		tofs = n.tofs;
-		velConNodes = n.velConNodes;
-		constraints = n.constraints;
-		velConSet = n.velConSet;
-	}else{
-		throw tpat_exception("Nodesets must have same nodeSize");
-	}
-}//========================================================
-
-/**
  *	@brief Create a nodeset as a subset of another
  *	@param orig Original nodeset
  *	@param index of the first node to be included in the new nodeset
@@ -89,6 +72,23 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &orig, int first, int last) : node
 
 	velConSet = orig.velConSet;
 }//======================================================
+
+/**
+ *	@brief Copy constructor
+ *	@param n a nodeset
+ */
+tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : nodeSize(n.nodeSize){
+	if(nodeSize == n.nodeSize){
+		nodeDistro = n.nodeDistro;
+		nodes = n.nodes;
+		tofs = n.tofs;
+		velConNodes = n.velConNodes;
+		constraints = n.constraints;
+		velConSet = n.velConSet;
+	}else{
+		throw tpat_exception("Nodesets must have same nodeSize");
+	}
+}//========================================================
 
 /**
  *	@brief Destructor
@@ -382,17 +382,17 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 
 	switch(type){
 		default:
-		case tpat_nodeset::NONE:
-			printWarn("Nodeset type is NONE or not specified, using TIME\n");
-		case tpat_nodeset::TIME:
+		case tpat_nodeset::DISTRO_NONE:
+			printWarn("Nodeset type is NONE or not specified, using DISTRO_TIME\n");
+		case tpat_nodeset::DISTRO_TIME:
 			engine.setVarStepSize(false);
 			engine.setNumSteps(numNodes);
-			nodeDistro = tpat_nodeset::TIME;
+			nodeDistro = tpat_nodeset::DISTRO_TIME;
 			break;
-		case tpat_nodeset::ARCLENGTH:
+		case tpat_nodeset::DISTRO_ARCLENGTH:
 			engine.setVarStepSize(true);
 			engine.setNumSteps(std::abs(tof)*500);
-			nodeDistro = tpat_nodeset::ARCLENGTH;
+			nodeDistro = tpat_nodeset::DISTRO_ARCLENGTH;
 			break;
 	}
 	engine.setRevTime(tof < 0);
@@ -418,7 +418,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 
 	// printColor(BLUE, "    Moving nodes from sim into nodeset\n");
 	for (int n = 0; n < traj.getLength(); n++){
-		if(nodeDistro == tpat_nodeset::ARCLENGTH){
+		if(nodeDistro == tpat_nodeset::DISTRO_ARCLENGTH){
 			if(n > 0){
 				// Compute the total length of the trajectory (approx.)
 				double dx = trajState->at(n*k) - trajState->at((n-1)*k);
@@ -427,7 +427,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 				sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
 			}
 		}else{
-			// if TIME is the type, every state on the trajectory is a node, so just copy them over
+			// if DISTRO_TIME is the type, every state on the trajectory is a node, so just copy them over
 			nodes.insert(nodes.end(), trajState->begin()+n*k, trajState->begin()+n*k+6);
 		}
 	}
@@ -438,7 +438,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	// printColor(BLUE, "    Computing TOFs\n");
 	int lastNode = 0;
 	for (int n = 0; n < traj.getLength(); n++){
-		if(nodeDistro == tpat_nodeset::ARCLENGTH){
+		if(nodeDistro == tpat_nodeset::DISTRO_ARCLENGTH){
 			if(n == 0){
 				nodes.insert(nodes.end(), trajState->begin(), trajState->begin()+6);
 			}else{
@@ -464,12 +464,29 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	}
 
 	// Add the last state if it hasn't been already for ARCLENGTH type
-	if(nodeDistro == tpat_nodeset::ARCLENGTH && lastNode < traj.getLength()-1){
+	if(nodeDistro == tpat_nodeset::DISTRO_ARCLENGTH && lastNode < traj.getLength()-1){
 		int n = traj.getLength()-1;
 		nodes.insert(nodes.end(), trajState->begin()+n*k, trajState->begin()+n*k + 6);
 		tofs.push_back(trajTime->at(n) - trajTime->at(lastNode));
 	}
 }//==========================================================
+
+/**
+ *	@brief Split a trajectory into nodes using the specified distribution type
+ *	@param traj a trajectory to make into a nodeset
+ *	@param sysData a pointer to the system data object used to create traj (cannot extract from trajectory base class)
+ *	@param numNodes the number of nodes to create, including IC
+ *	@param type the node distribution type
+ */
+void tpat_nodeset::initSetFromTraj(tpat_trajectory traj, tpat_sys_data *sysData, int numNodes, node_distro_t type){
+	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
+	double ic[] = {0,0,0,0,0,0};
+	std::vector<double> trajIC = traj.getState(0);
+	std::copy(trajIC.begin(), trajIC.begin()+6, ic);
+	// std::copy(ic, ic+6, &(traj.getState(0)[0]));
+	
+	initSetFromICs(ic, sysData, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
+}//==============================================
 
 void tpat_nodeset::reverseOrder(){
 	// Re-order nodes and TOFs
@@ -545,7 +562,7 @@ void tpat_nodeset::basicConcat(const tpat_nodeset &lhs, const tpat_nodeset &rhs,
 	}
 	output->setVelConNodes(newVelCon);
 
-	output->setNodeDistro( lhs.nodeDistro == rhs.nodeDistro ? lhs.nodeDistro : NONE);
+	output->setNodeDistro( lhs.nodeDistro == rhs.nodeDistro ? lhs.nodeDistro : DISTRO_NONE);
 }//=======================================
 
 /**

@@ -3,37 +3,22 @@
 
 using namespace std;
 
-class Rectangle{
-	public:
-		Rectangle(double w, double h) : width(w), height(h) {}
-		double getArea(){return width*height;}
-		double getWidth(){return width;}
-		double getHeight(){return height;}
-	protected:
-		double width = 0;
-		double height = 0;
-};
-
-class Square : public Rectangle{
-	public:
-		Square(double s) : Rectangle(s,s) {}
-};
-
-double getPerim(Rectangle r){
-	return 2*r.getWidth() + 2*r.getHeight();
-}
+enum blah_t{TYPEA = 1,
+	TYPEB = 3,
+	TYPEC = 77,
+	TYPED = 4};
 
 int main(void){
-	Rectangle r(3,3);
-	Square s(2);
+	
+	blah_t blah1 = TYPEA;
+	blah_t blah2 = TYPEB;
+	blah_t blah3 = TYPEC;
+	blah_t blah4 = TYPED;
 
-	Square s2 = static_cast<Square>(r);
-
-	printf("Rectangle area: %f\n", r.getArea());
-	printf("Square area: %f\n", s.getArea());
-
-	printf("Rectangle perimeter: %f\n", getPerim(r));
-	printf("Square perimeter: %f\n", getPerim(s));
+	printf("Enum = %d\n", ((int)blah1));
+	printf("Enum = %d\n", ((int)blah2));
+	printf("Enum = %d\n", ((int)blah3));
+	printf("Enum = %d\n", ((int)blah4));
 
 	return 0;
 }

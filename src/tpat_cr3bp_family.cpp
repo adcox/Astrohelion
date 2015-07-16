@@ -25,6 +25,7 @@
  
 #include "tpat_cr3bp_family.hpp"
 
+#include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_cr3bp_nodeset.hpp"
@@ -54,6 +55,7 @@ tpat_cr3bp_family::tpat_cr3bp_family(const char* filepath){
 	}
 
 	loadMemberData(matfp);
+	loadEigVals(matfp);
 	name = readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	sortType = static_cast<sortVar_t>(readIntFromMat(matfp, SORTTYPE_VAR_NAME, MAT_T_INT8, MAT_C_INT8));
 	sysData.readFromMat(matfp);
@@ -389,24 +391,187 @@ void tpat_cr3bp_family::loadMemberData(mat_t *matFile){
 	Mat_VarFree(matvar);
 }//==============================================
 
-void tpat_cr3bp_family::loadSortType(mat_t *matFile){
-	matvar_t *matvar = Mat_VarRead(matFile, SORTTYPE_VAR_NAME);
+/**
+ *	@brief Load eigenvalues from the data file
+ *
+ *	NOTE: the vector of family members MUST be populated before loading the eigenvalues
+ *	@param matFile a pointer to the data file in question
+ */
+void tpat_cr3bp_family::loadEigVals(mat_t *matFile){
+	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
 	if(matvar == NULL){
-		throw tpat_exception("Could not read sort type");
+		throw tpat_exception("Could not read eigenvalues into family");
 	}else{
-		if(matvar->class_type == MAT_C_INT8 && matvar->data_type == MAT_T_INT8){
-			int *data = static_cast<int *>(matvar->data);
+		int numMembers = matvar->dims[0];
+		if(matvar->dims[1] != 6){
+			throw tpat_exception("Incompatible data file: Data widths are different.");
+		}
 
-			if(data != NULL){
-				sortType = static_cast<sortVar_t>(*data);
-				printf("Type = %s\n", getSortTypeStr());
+		if((int)(members.size()) != numMembers){
+			throw tpat_exception("tpat_cr3bp_family::loadEigVals: # eigenvalues is not same as number of members");
+		}
+
+		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
+			// First cast the data to a special variable matio uses to store complex values
+			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(matvar->data);
+
+			if(splitVals != NULL){
+				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
+				double *realParts = static_cast<double *>(splitVals->Re);
+				double *imagParts = static_cast<double *>(splitVals->Im);
+
+				// Read data from column-major order matrix, store in row-major order vector
+				for(int i = 0; i < numMembers; i++){
+					std::vector<cdouble> vals;
+					for(int j = 0; j < 6; j++){
+						cdouble temp(realParts[j*numMembers + i], imagParts[j*numMembers + i]);
+						vals.push_back(temp);
+					}
+
+					members[i].setEigVals(vals);
+				}
 			}
 		}else{
-			throw tpat_exception("tpat_cr3bp_family::loadSortType: Incompatible data file: unsupported data type/class");
+			throw tpat_exception("tpat_cr3bp_family::loadEigVals: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(matvar);
 }//=============================================
+
+/**
+ *	@brief Sort all members' eigenvalues so they are in the same order.
+ *
+ *	This is necessary before bifurcations can be accurately located.
+ */
+void tpat_cr3bp_family::sortEigs(){
+	if(members.size() == 0){
+		printErr("Cannot sort eigenvalues: there are no family members");
+		return;
+	}
+
+	const double MAX_ONES_ERR = 1e-5;
+
+	// Figure out which eigenvalues are closest to one, save their indices
+	std::vector<double> onesErr;
+	std::vector<cdouble> e1 = members[0].getEigVals();
+	for(int i = 0; i < 6; i++){
+		onesErr.push_back(std::abs(real(e1[i])-1) + std::abs(imag(e1[i])));
+	}
+	std::vector<double>::iterator smallestErr = std::min_element(onesErr.begin(), onesErr.end());
+	int onesIx[] = {0,0};	// Indices of the eigenvalues that (nearly) exactly 1.0
+	if(*smallestErr < MAX_ONES_ERR){
+		int smallIx = smallestErr - onesErr.begin();
+		if(smallIx % 2 == 0 && smallIx != 0){
+			onesIx[0] = smallIx;
+			onesIx[1] = smallIx+1;
+		}else{
+			onesIx[0] = smallIx-1;
+			onesIx[1] = smallIx;
+		}
+	}else{
+		printWarn("tpat_cr3bp_family::sortEigs: did not find eigenvalues at 1.0");
+	}
+
+	// Generate all permutations of the indices 0 through 5
+	std::vector<int> vals {0,1,2,3,4,5};
+	std::vector<int> ixPerms = tpat_util::generatePerms<int>(vals);
+	std::vector<int> sortedIxs;
+	cdouble predict[6];
+	std::copy(e1.begin(), e1.end(), predict);
+
+	for(size_t m = 0; m < members.size(); m++){
+		if(m > 0 && m == 1){
+			if(*smallestErr < MAX_ONES_ERR){
+				// Update the indices of the ones in case they got moved in the first sorting
+				onesIx[0] = sortedIxs[onesIx[0]];
+				onesIx[1] = sortedIxs[onesIx[1]];
+			}
+			std::vector<cdouble> sorted_e1 = members[0].getEigVals();
+			std::copy(sorted_e1.begin(), sorted_e1.end(), predict);
+		}else if(m > 1){
+			// Use linear extrapolation of m-1 and m-2 to predict m
+			for(int i = 0; i < 6; i++){
+				cdouble deltaEig = members[m-1].getEigVals()[i] - members[m-2].getEigVals()[i];
+				predict[i] = members[m-1].getEigVals()[i] + deltaEig;
+			}
+		}
+
+		std::vector<double> cost;
+		cost.assign(ixPerms.size()/6, 0);
+		cdouble one(1,0);
+		for(size_t p = 0; p < ixPerms.size()/6; p++){
+			// rearrange the splitOrig vector using the current permutation
+			cdouble swappedOrig[6];
+			// cdouble swappedOrig[] = {0,0,0,0,0,0};
+			for(int i = 0; i < 6; i++){
+				swappedOrig[i] = members[m].getEigVals()[ixPerms[6*p + i]];
+			}
+
+			// Compute difference between this permutation and prediction
+			for(int i = 0; i < 6; i++){
+				cost[p] += std::abs(swappedOrig[i] - predict[i]);
+			}
+
+			if(p == 80 && m == 289)
+				waitForUser();
+
+			// Add infinite cost if the ones eigenvalues change spots
+			if(*smallestErr < MAX_ONES_ERR){
+				double distToOne[6];
+				for(int i = 0; i < 6; i++){
+					distToOne[i] = std::abs(swappedOrig[i]-one);
+				}
+				double *closestToOne = std::min_element(distToOne, distToOne+6);
+				int closestIx = closestToOne - distToOne;
+
+				if(closestIx != onesIx[0] && closestIx != onesIx[1]){
+					cost[p] += 1e20;
+					continue;
+				}
+			}
+
+			// Add infinite cost if each consecutive pair are not inverses
+			// or complex conjugates
+			for(int i = 0; i < 6; i+=2){
+				/* don't consider the eigenvalues that are closest to one
+					because they may have small innaccuracies that trigger
+					these costs, screwing up the algorithm */
+				if(i != onesIx[0]){
+					// Complex parts don't sum to zero (conjugates will, two
+					// real eigenvalues will)
+					if(std::abs(imag(swappedOrig[i]) + imag(swappedOrig[i+1]))){
+						cost[p] += 1e20;
+						break;
+					}
+
+					// We have established that the ones are in the same place; Compute
+					// the error in a 1.0 eigenvalue; this error is acceptable in the
+					// reciprocal calculation (error tends to get bad at the larger orbits)
+					double okErr = std::abs(swappedOrig[onesIx[0]] - one);
+
+					// Both are real but are not reciprocals
+					if(imag(swappedOrig[i]) == 0 && imag(swappedOrig[i+1]) == 0 &&
+						real(swappedOrig[i]) - pow(real(swappedOrig[i+1]), -1) > okErr){
+						cost[p] += 1e20;
+						break;
+					}
+				}
+			}// end of checking consecutive pairs
+		}// end of loop through permutations
+
+		// Find the minimum cost
+		std::vector<double>::iterator minCost = std::min_element(cost.begin(), cost.end());
+		int ix = minCost - cost.begin();
+		std::vector<cdouble> bestPerm(6);
+		for(int i = 0; i < 6; i++){
+			bestPerm[i] = members[m].getEigVals()[ixPerms[ix*6 + i]];
+		}
+		members[m].setEigVals(bestPerm);
+		sortedIxs.insert(sortedIxs.end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
+	}// end of loop through all members/eigenvalue sets
+
+	// 
+}//=================================================
 
 /**
  *	@brief Sort the family members by the specified sort variable (in ascending order)
@@ -419,7 +584,7 @@ void tpat_cr3bp_family::loadSortType(mat_t *matFile){
  *	you can retrieve family members. The process will run without sorting, but the results
  *	will likely be wonky.
  */
-void tpat_cr3bp_family::sort(){
+void tpat_cr3bp_family::sortMembers(){
 	// Create an array containing the independent variable from each family member
 	std::vector<double> dataToSort;
 	switch(sortType){
@@ -451,7 +616,7 @@ void tpat_cr3bp_family::sort(){
 	}
 
 	// Sort the data, retrieve the indices of the now-sorted elements
-	std::vector<int> indices = getSortedInd(dataToSort);
+	std::vector<int> indices = tpat_util::getSortedInd(dataToSort);
 
 	// Use those indices to sort the family members
 	std::vector<tpat_cr3bp_family_member> sortedMembers;
@@ -480,6 +645,7 @@ void tpat_cr3bp_family::saveToMat(const char *filename){
 		// save things
 		saveMembers(matfp);
 		saveMiscData(matfp);
+		saveEigVals(matfp);
 		sysData.saveToMat(matfp);
 	}
 
@@ -494,7 +660,7 @@ void tpat_cr3bp_family::saveMembers(mat_t *matFile){
 	// Create a vector with member data stored in column-major order
 	std::vector<double> allData(members.size()*DATA_WIDTH);
 	for(size_t i = 0; i < members.size(); i++){
-		for(int j = 0; j < DATA_WIDTH; j++){
+		for(size_t j = 0; j < DATA_WIDTH; j++){
 			if(j < 6)
 				allData[j*members.size() + i] = members[i].getIC()[j];
 			else if(j == 6)
@@ -513,6 +679,32 @@ void tpat_cr3bp_family::saveMembers(mat_t *matFile){
 	size_t dims[2] = {members.size(), static_cast<size_t>(DATA_WIDTH)};
 	matvar_t *matvar = Mat_VarCreate(DATA_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allData[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
+ *	@brief Save eigenvalue data to a mat file
+ *	@param matFile a pointer to the mat file in question
+ */
+void tpat_cr3bp_family::saveEigVals(mat_t *matFile){
+	// Separate all eigenvalues into real and complex parts
+	std::vector<double> realParts(members.size()*6);
+	std::vector<double> imagParts(members.size()*6);
+	for(size_t i = 0; i < members.size(); i++){
+		std::vector<cdouble> vals = members[i].getEigVals();
+			if(vals.size() != 6)
+				throw tpat_exception("tpat_cr3bp_family::saveEigVals: family member does not have 6 eigenvalues!");
+		for(int j = 0; j < 6; j++){
+			realParts[j*members.size() + i] = real(vals[j]);
+			imagParts[j*members.size() + i] = imag(vals[j]);
+		}
+	}
+
+	// create a special variable for them
+	mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
+
+	size_t dims[2] = {members.size(), 6};
+	matvar_t *matvar = Mat_VarCreate(EIG_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
+	saveVar(matFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**

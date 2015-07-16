@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_LIN_MOTION_
-#define __H_LIN_MOTION_
+#ifndef H_LIN_MOTION
+#define H_LIN_MOTION
 
 // Forward delcarations
 class tpat_cr3bp_traj;

@@ -233,7 +233,7 @@ bool test_eig(){
 	double D_data[] = {1,2,3,0,4,5,0,0,6};
 	tpat_matrix D(3,3,D_data);
 
-	std::vector<cdouble> vals = eig(D, &D);
+	std::vector<cdouble> vals = eig(D);
 
 	if(vals.size() != 3)
 		return false;
@@ -247,7 +247,7 @@ bool test_eig(){
 	tpat_matrix E(3,3,E_data);
 
 	vals.clear();
-	vals = eig(E, &E);
+	vals = eig(E);
 
 	if(vals.size() != 3)
 		return false;

@@ -18,8 +18,10 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_FAMILY_MEMBER_
-#define __H_FAMILY_MEMBER_
+#ifndef H_FAMILY_MEMBER
+#define H_FAMILY_MEMBER
+
+#include "tpat_constants.hpp"
 
 #include <cmath>
 #include <string>
@@ -40,6 +42,7 @@ class tpat_cr3bp_family_member{
 
 		tpat_cr3bp_family_member& operator= (const tpat_cr3bp_family_member&);
 
+		std::vector<cdouble> getEigVals() const;
 		std::vector<double> getIC() const;
 		double getTOF() const;
 		double getJC() const; 
@@ -47,6 +50,7 @@ class tpat_cr3bp_family_member{
 		double getYWidth() const;
 		double getZWidth() const;
 
+		void setEigVals(std::vector<cdouble>);
 		void setIC(std::vector<double>);
 		void setJC(double);
 		void setTOF(double);
@@ -55,6 +59,8 @@ class tpat_cr3bp_family_member{
 		void setZWidth(double);
 
 	protected:
+		/** Vector of 6 eigenvalues; initialized to NAN by default */
+		std::vector<cdouble> eigVals {{NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}};
 		std::vector<double> IC {0,0,0,0,0,0};	//!< Initial state for this trajectory, non-dim units
 		double TOF = NAN;			//!< Time of flight for traj., non-dim units
 		double JC = NAN;			//!< Jacobi constant for traj., non-dimensional

@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_BCR4BPR_TRAJ_
-#define __H_BCR4BPR_TRAJ_
+#ifndef H_BCR4BPR_TRAJ
+#define H_BCR4BPR_TRAJ
 
 #include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_trajectory.hpp"

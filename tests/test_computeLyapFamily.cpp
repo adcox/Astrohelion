@@ -24,6 +24,7 @@ int main(void){
 	L2_Lyap.saveToMat("../share/families/EM_L2_Lyap.mat");
 
 	gen.setNumNodes(5);
+	gen.setStep_fitted(0.005);
 	tpat_cr3bp_family L3_Lyap = gen.cr3bp_generateLyap(sysData, 3, 0.01);
 	L3_Lyap.setName("Earth-Moon L3 Lyapunov");
 	L3_Lyap.saveToMat("../share/families/EM_L3_Lyap.mat");

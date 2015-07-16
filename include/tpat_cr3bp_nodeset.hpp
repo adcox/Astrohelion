@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_CR3BP_NODESET__
-#define __H_CR3BP_NODESET__
+#ifndef H_CR3BP_NODESET
+#define H_CR3BP_NODESET
 
 #include "tpat_nodeset.hpp"
 #include "tpat_cr3bp_sys_data.hpp"

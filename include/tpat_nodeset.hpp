@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_NODESET__
-#define __H_NODESET__
+#ifndef H_NODESET
+#define H_NODESET
 
 #include "tpat_constraint.hpp"
 #include "matio.h"

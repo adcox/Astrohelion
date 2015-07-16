@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_CORRECTIONS_
-#define __H_CORRECTIONS_
+#ifndef H_CORRECTIONS
+#define H_CORRECTIONS
 
 #include "tpat_nodeset.hpp"
 #include "tpat_sys_data.hpp"

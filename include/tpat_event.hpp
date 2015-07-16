@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_EVENT_
-#define __H_EVENT_
+#ifndef H_EVENT
+#define H_EVENT
 
 #include "tpat_constraint.hpp"
 #include "tpat_sys_data.hpp"

@@ -12,8 +12,9 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 int main(void){
 	// Load the family
-	tpat_cr3bp_family fam("LyapFamily.mat");
-	// fam.saveToMat("LoadedLyapFam.mat");	// Check to see if data was re-loaded correctly
+	tpat_cr3bp_family fam("../share/families/EM_L1_Lyap.mat");
+	fam.sortEigs();
+	fam.saveToMat("LoadedLyapFam.mat");	// Check to see if data was re-loaded correctly
 
 	printf("Checing Match State: X\n");
 	double matchX = 0.9;

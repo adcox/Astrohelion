@@ -26,8 +26,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_ASCII_
-#define __H_ASCII_
+#ifndef H_ASCII
+#define H_ASCII
 
 /* 
  *	ASCII Escape Sequences for text coloring. Usage:

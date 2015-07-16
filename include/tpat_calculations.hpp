@@ -29,8 +29,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_CALCULATIONS__
-#define __H_CALCULATIONS__
+#ifndef H_CALCULATIONS
+#define H_CALCULATIONS
 
 #include <vector>
 

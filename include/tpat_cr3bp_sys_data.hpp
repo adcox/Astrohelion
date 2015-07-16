@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_CR3BP_SYS_DATA_
-#define __H_CR3BP_SYS_DATA_
+#ifndef H_CR3BP_SYS_DATA
+#define H_CR3BP_SYS_DATA
 
 #include "tpat_sys_data.hpp"
 #include "matio.h"

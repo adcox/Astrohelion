@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_TRAJECTORY_
-#define __H_TRAJECTORY_
+#ifndef H_TRAJECTORY
+#define H_TRAJECTORY
 
 #include "tpat_matrix.hpp"
 #include "tpat_sys_data.hpp"

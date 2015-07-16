@@ -28,8 +28,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_CONST__
-#define __H_CONST__
+#ifndef H_CONSTANTS
+#define H_CONSTANTS
 
 #include <complex>
  

@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_FAMILIY_
-#define __H_FAMILIY_
+#ifndef H_FAMILIY
+#define H_FAMILIY
 
 #include "tpat_cr3bp_family_member.hpp"
 #include "tpat_cr3bp_sys_data.hpp"
@@ -83,7 +83,9 @@ class tpat_cr3bp_family{
 		void setSortType(sortVar_t);
 
 		void saveToMat(const char*);
-		void sort();
+		void sortEigs();
+		void sortMembers();
+
 
 	protected:
 		std::string name = "NULL";						//!< Descriptive name of the family
@@ -97,6 +99,7 @@ class tpat_cr3bp_family{
 		const char* DATA_VAR_NAME = "MemberData";
 		const char* SORTTYPE_VAR_NAME = "SortType";
 		const char* NAME_VAR_NAME = "Name";
+		const char* EIG_VAR_NAME = "Eigenvalues";
 		const size_t DATA_WIDTH = 11;
 
 		void copyMe(const tpat_cr3bp_family&);
@@ -105,10 +108,10 @@ class tpat_cr3bp_family{
 		void getCoord(int, std::vector<double>*) const;
 
 		void loadMemberData(mat_t*);
-		void loadName(mat_t*);
-		void loadSortType(mat_t*);
+		void loadEigVals(mat_t*);
 		void saveMembers(mat_t*);
 		void saveMiscData(mat_t*);
+		void saveEigVals(mat_t*);
 };
 
 #endif

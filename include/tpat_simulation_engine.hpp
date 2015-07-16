@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_SIMENGINE_
-#define __H_SIMENGINE_
+#ifndef H_SIMENGINE
+#define H_SIMENGINE
 
 #include "tpat_event.hpp"
 #include "tpat_sys_data.hpp"

@@ -25,6 +25,8 @@
  
 #include "tpat_cr3bp_family_member.hpp"
 
+#include "tpat_constants.hpp"
+#include "tpat_exceptions.hpp"
 #include "tpat_cr3bp_traj.hpp"
 #include "tpat_cr3bp_nodeset.hpp"
 
@@ -92,6 +94,11 @@ tpat_cr3bp_family_member& tpat_cr3bp_family_member::operator= (const tpat_cr3bp_
 //-----------------------------------------------------
 
 /**
+ *	@brief Retrieve a vector of eigenvalues (of the final STM, likely the Monodromy matrix)
+ */
+std::vector<cdouble> tpat_cr3bp_family_member::getEigVals() const { return eigVals; }
+
+/**
  *	@brief Retrieve the initial state for this trajectory (non-dim)
  */
 std::vector<double> tpat_cr3bp_family_member::getIC() const { return IC; }
@@ -120,6 +127,18 @@ double tpat_cr3bp_family_member::getYWidth() const { return yWidth; }
  *	@brief Retrieve the maximum width in the z-direction
  */
 double tpat_cr3bp_family_member::getZWidth() const { return zWidth; }
+
+/**
+ *	@brief Set the eigenvalues for this orbit
+ *
+ *	These should be the eigenvalues of the final STM and/or Monodromy matrix
+ *	@param vals the eigenvalues
+ */
+void tpat_cr3bp_family_member::setEigVals(std::vector<cdouble> vals) {
+	if(vals.size() != 6)
+		throw tpat_exception("tpat_cr3bp_family_member::setEigVals: There must be 6 eigenvalues");
+	eigVals = vals;
+}//====================================================
 
 /**
  *	@brief Set the initial state
@@ -163,6 +182,7 @@ void tpat_cr3bp_family_member::setZWidth(double w){ zWidth = w; }
  *	@param mem some other family member
  */
 void tpat_cr3bp_family_member::copyMe(const tpat_cr3bp_family_member& mem){
+	eigVals = mem.eigVals;
 	IC = mem.IC;
 	JC = mem.JC;
 	TOF = mem.TOF;

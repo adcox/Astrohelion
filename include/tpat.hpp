@@ -30,8 +30,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_TPAT_INIT__
-#define __H_TPAT_INIT__
+#ifndef H_TPAT_INIT
+#define H_TPAT_INIT
 
 #include <cspice/SpiceZfc.h>	// prototypes for functions
 #include <gsl/gsl_errno.h>

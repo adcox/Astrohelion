@@ -4,8 +4,8 @@
  *	@brief Provides easy include for all headers in the TPAT library
  */
 
-#ifndef _H_TPAT_ALL_INCLUDE_
-#define _H_TPAT_ALL_INCLUDE_
+#ifndef H_TPAT_ALL_INCLUDE
+#define H_TPAT_ALL_INCLUDE
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_bcr4bpr_nodeset.hpp"

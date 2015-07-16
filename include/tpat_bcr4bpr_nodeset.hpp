@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_BCR4BPR_NODESET__
-#define __H_BCR4BPR_NODESET__
+#ifndef H_BCR4BPR_NODESET
+#define H_BCR4BPR_NODESET
 
 #include "tpat_nodeset.hpp"
 #include "tpat_bcr4bpr_sys_data.hpp"

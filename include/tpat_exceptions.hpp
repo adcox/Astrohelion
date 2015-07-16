@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_TPAT_EXCEPTIONS_
-#define __H_TPAT_EXCEPTIONS_
+#ifndef H_TPAT_EXCEPTIONS
+#define H_TPAT_EXCEPTIONS
 
 #include <exception>
 #include <stdexcept>

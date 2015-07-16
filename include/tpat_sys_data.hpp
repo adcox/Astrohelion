@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_SYSDATA_
-#define __H_SYSDATA_
+#ifndef H_SYSDATA
+#define H_SYSDATA
 
 #include <string>
 #include <vector>

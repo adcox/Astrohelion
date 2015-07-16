@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_BODYDATA__
-#define __H_BODYDATA__
+#ifndef H_BODYDATA
+#define H_BODYDATA
 
 #include <string>
 

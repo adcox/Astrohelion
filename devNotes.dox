@@ -40,17 +40,7 @@ This software has been tested on (and <i>should</i> work on) the following syste
 </ul>
 
 <h2>To-Do List</h2>
-<ul>
-	<li> Reproduce LPF orbit script from LPF update analysis</li>
-</ul>
-
-<h2>Extended To-Do List</h2>
-<ul>
-	<li> Eigenvalue/Eigenvector computation for monodromy matrices </li>
-	<li> Eigenvalue sorting </li>
-	<li> Compute manifolds </li>
-	<li> Decide how this system is going to work from a UI perspective; I don't want to write little scripts in C++, make them, and then run every time I want to compute a trajectory. Some sort of GUI would be excellent. In the mean time, a terminal interface may be handy!</li>
-</ul>
+<i>This has been moved to BitBucket's issue tracker</i>
 
 <h2>Debugging</h2>
 <h3>In General</h3>
@@ -58,7 +48,7 @@ First, open X11 from the Applications menu. Then, run the executable using the g
 <pre>
 	ddd -display :0.0 simEngineTest
 </pre>
-For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler.
+For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler. Alternatively, skip the GUI and run <code>gdb</code> from the terminal directly.
 
 <h3>Checking for Dependency Issues</h3>
 Run doxygen with the inheritance/dependency plots turned on (this is already set for this project).

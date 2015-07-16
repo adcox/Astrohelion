@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __TPAT_MATRIX__
-#define __TPAT_MATRIX__
+#ifndef H_TPAT_MATRIX
+#define H_TPAT_MATRIX
 
 #include "tpat_constants.hpp"	// for complex number typedefs
 
@@ -86,7 +86,6 @@ class tpat_matrix{
 		friend double norm(const tpat_matrix&);
 		friend tpat_matrix trans(const tpat_matrix&);
 		friend std::vector<cdouble> eig(const tpat_matrix&);
-		friend std::vector<cdouble> eig(const tpat_matrix&, tpat_matrix*);
 
 		// Set and Gets
 		int getLength() const;

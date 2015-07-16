@@ -143,6 +143,7 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
  */
 double readDoubleFromMat(mat_t *matFile, const char* varName){
     double result = 0;
+    
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     if(matvar == NULL){
         throw tpat_exception("tpat_utilities::readDoubleFromMat: Could not read variable from file");

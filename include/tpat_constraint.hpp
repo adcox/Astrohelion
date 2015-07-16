@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __H_CONSTRAINT__
-#define __H_CONSTRAINT__
+#ifndef H_CONSTRAINT
+#define H_CONSTRAINT
  
 #include <string>
 #include <vector>

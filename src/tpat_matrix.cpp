@@ -538,11 +538,7 @@ double det(const tpat_matrix &m){
 	return ans;
 }//============================================
 
-// std::vector<cdouble> eig(const tpat_matrix &m){
-	
-// }
-
-std::vector<cdouble> eig(const tpat_matrix &m, tpat_matrix *vecs){
+std::vector<cdouble> eig(const tpat_matrix &m){
 	if(m.rows != m.cols)
 		throw tpat_sizeMismatch("Cannot compute eigenvalues and vectors of non-square matrix");
 

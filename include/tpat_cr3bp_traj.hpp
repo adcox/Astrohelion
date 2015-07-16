@@ -17,8 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __H_CR3BP_TRAJ_
-#define __H_CR3BP_TRAJ_
+#ifndef H_CR3BP_TRAJ
+#define H_CR3BP_TRAJ
 
 #include "tpat_cr3bp_sys_data.hpp"
 #include "tpat_trajectory.hpp"

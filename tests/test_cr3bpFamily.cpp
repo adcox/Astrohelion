@@ -14,6 +14,7 @@ int main(void){
 	// Load the family
 	tpat_cr3bp_family fam("../share/families/EM_L1_Lyap.mat");
 	fam.sortEigs();
+	fam.findBifurcations();
 	fam.saveToMat("LoadedLyapFam.mat");	// Check to see if data was re-loaded correctly
 
 	printf("Checing Match State: X\n");

@@ -135,7 +135,7 @@ void tpat_simulation_engine::createCrashEvents(){
         for(int p = 0; p < sysData.getNumPrimaries(); p++){
             // Put primary index # into an array, create event
             double Pix = (double)p;
-            tpat_event crashEvt(&sysData, tpat_event::CRASH, -1, true, &Pix);
+            tpat_event crashEvt(&sysData, tpat_event::CRASH, 0, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }
@@ -247,6 +247,40 @@ tpat_bcr4bpr_traj tpat_simulation_engine::getBCR4BPRTraj() const{
         throw tpat_exception("Wrong system type");
     }
 }//=====================================
+
+/**
+ *  @brief Retrieve a vector of all events being watched for the current simulation
+ *  @return a vector of events
+ */
+std::vector<tpat_event> tpat_simulation_engine::getEvents() const { return events; }
+
+/**
+ *  @brief Retrieve a vector of all events that occured during the 
+ *  most recent simulation
+ *  @return a vector of event records; the event indices correspond to
+ *  the indices of the events stored in this simulation engine
+ *  @seealso getEvents()
+ */
+std::vector<eventRecord> tpat_simulation_engine::getEventRecords() const { return eventOccurs; }
+
+/**
+ *  @brief Retrieve a list of all events that fired at the last step
+ *  of the simulation, potentially ending the run.
+ *  @return a vector of events
+ */
+std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
+    if(traj != NULL && traj != 0){
+        std::vector<tpat_event> endEvents;
+        for(size_t i = 0; i < eventOccurs.size(); i++){
+            if(eventOccurs[i].stepIx == (int)(traj->getTime()->size() - 1)){
+                endEvents.push_back(events[eventOccurs[i].eventIx]);
+            }
+        }
+        return endEvents;
+    }else{
+        throw tpat_exception("No trajectory object exists. Please run a sim before querying end events");
+    }
+}//============================================
 
 /**
  *  @brief Add an event for this integration
@@ -591,10 +625,11 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     printVerbColor(verbose, GREEN, "  **Integration complete**\n  Total: %d data points\n", steps);
 
     // Summarize event occurrences
-    for(int ev = 0; ev < (int)(eventOccurs.size())-1; ev+=2){
-        printVerb(verbose, "  Event %d (%s) occured at step %d\n", eventOccurs[ev+1],
-            events[eventOccurs[ev+1]].getTypeStr(), eventOccurs[ev]);
+    for(size_t i = 0; i < eventOccurs.size(); i++){
+        printVerb(verbose, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
+            events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
+
     traj->setLength();
 }//================================END of cr3bp_integrate
 
@@ -857,8 +892,8 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
             // Remember that this event has occured; step # is one less than the current size
             // of the trajectory's time vector
             int timeSize = traj->getTime()->size();
-            eventOccurs.push_back(timeSize - 1);
-            eventOccurs.push_back(ev);
+            eventRecord rec(ev, timeSize - 1);
+            eventOccurs.push_back(rec);
 
             if(events.at(ev).stopOnEvent()){
                 printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
@@ -920,4 +955,5 @@ void tpat_simulation_engine::reset(){
 void tpat_simulation_engine::clearEvents(){
     printVerb(verbose, "Clearing all events...\n");
     events.clear();
+    madeCrashEvents = false;
 }//==========================================

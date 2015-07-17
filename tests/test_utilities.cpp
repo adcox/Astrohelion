@@ -49,21 +49,19 @@ bool test_permute(){
 	vector<int> perms = tpat_util::generatePerms<int>(values, numSpots);
 	vector<int> sol {1,1,1, 1,1,2, 1,2,1, 1,2,2, 2,1,1, 2,1,2, 2,2,1, 2,2,2};
 
-	// vector<int> values2 = {1,2,3};
-	vector<int> values2 = {0,1,2,3,4,5};
-	numSpots = 6;
+	vector<int> values2 = {1,2,3};
 	vector<int> perms2 = tpat_util::generatePerms<int>(values2);
 	vector<int> sol2 = {1,2,3, 1,3,2, 2,1,3, 2,3,1, 3,1,2, 3,2,1};
 
-	printf("permutations:\n%03d: ", 0);
-	int row = 0;
-	for(size_t i = 0; i < perms2.size(); i++){
-		if((i+1) % numSpots == 0){
-			row++;
-			printf("%3d\n%03d: ", perms2[i], row);
-		}else
-			printf("%3d", perms2[i]);
-	}
+	// printf("permutations:\n%03d: ", 0);
+	// int row = 0;
+	// for(size_t i = 0; i < perms2.size(); i++){
+	// 	if((i+1) % numSpots == 0){
+	// 		row++;
+	// 		printf("%3d\n%03d: ", perms2[i], row);
+	// 	}else
+	// 		printf("%3d", perms2[i]);
+	// }
 
 	return perms == sol && perms2 == sol2;
 }//=================================================

@@ -58,6 +58,7 @@ tpat_cr3bp_family::tpat_cr3bp_family(const char* filepath){
 	loadEigVals(matfp);
 	name = readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	sortType = static_cast<sortVar_t>(readIntFromMat(matfp, SORTTYPE_VAR_NAME, MAT_T_INT8, MAT_C_INT8));
+	
 	sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
@@ -344,9 +345,102 @@ std::vector<tpat_cr3bp_family_member> tpat_cr3bp_family::getMatchingMember(doubl
  *	@param array a pointer to the array we want to populate
  */
 void tpat_cr3bp_family::getCoord(int ix, std::vector<double> *array) const{
-	for(int i = 0; i < ((int)members.size()); i++){
-		array->push_back(members[i].getIC()[ix]);
+	for(size_t i = 0; i < members.size(); i++){
+		std::vector<double> ic = members[i].getIC();
+		array->push_back(ic[ix]);
 	}
+}//====================================================
+
+/**
+ *	@brief Locate all bifurcations in the family by analyzing the 
+ *	eigenvalues
+ *
+ *	Eigenvalues MUST be sorted, or this will yield completely bogus
+ *	results
+ */
+std::vector<int> tpat_cr3bp_family::findBifurcations(){
+	// TODO: Incorporate much more advanced ways to compute this
+	double okErr = 1e-3;
+	cdouble one(1,0);
+
+	eigValSet_t setTypes[3];
+
+	// Determine what "type" of eigenvalue pair we have
+	for(int set = 0; set < 3; set++){
+		double sumImag = 0;
+		// double sumReal = 0;
+		double sumDistFromOne = 0;
+
+		for(size_t m = 0; m < members.size(); m++){
+			std::vector<cdouble> eigs = members[m].getEigVals();
+			sumImag += (std::abs(imag(eigs[set*2])) + std::abs(imag(eigs[set*2+1])))/2;
+			// sumReal += (std::abs(real(eigs[set*2])) + std::abs(real(eigs[set*2+1])))/2;
+			sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
+		}
+
+		double count = members.size();
+		double meanImag = sumImag/count;
+		// double meanReal = sumReal/count;
+		double meanDistFromOne = sumDistFromOne/count;
+
+		if(meanImag > okErr){
+			// significant imaginary parts
+			setTypes[set] = EIGSET_COMP_RECIP;
+		}else{
+			if(meanDistFromOne < okErr){
+				setTypes[set] = EIGSET_ONES;
+			}else{
+				setTypes[set] = EIGSET_REAL_RECIP;
+			}
+		}
+	}
+
+	// Find bifurcations
+	std::vector<int> bifs;
+	for(size_t m = 1; m < members.size(); m++){
+		for(int set = 0; set < 3; set++){
+			std::vector<cdouble> eigs = members[m].getEigVals();
+			std::vector<cdouble> prevEigs = members[m-1].getEigVals();
+
+			switch(setTypes[set]){
+				case EIGSET_REAL_RECIP:
+				{
+					// Compute distance of each eigenvalues from +/- 1
+					double d1 = 1 - std::abs(real(eigs[set*2]));
+					double d2 = 1 - std::abs(real(eigs[set*2+1]));
+					double prev_d1 = 1 - std::abs(real(prevEigs[set*2]));
+					double prev_d2 = 1 - std::abs(real(prevEigs[set*2+1]));
+
+					// Check to make sure magnitude of differences is significant
+					if( std::abs(d1) > okErr && std::abs(d2) > okErr &&
+						std::abs(prev_d1) > okErr && std::abs(prev_d2) > okErr){
+						if(d1*prev_d1 < 0 && d2*prev_d2 < 0){
+							// Sign changed; bifurcation!
+							// printf("Located a bifurcation!\n");
+							// printf("  Member %03zu - %03zu\n", m-1, m);
+							bifs.push_back(m-1);
+						}
+					}
+					break;
+				}
+				case EIGSET_COMP_RECIP:
+				{
+					double meanPrevImag = (std::abs(imag(prevEigs[set*2])) + std::abs(imag(prevEigs[set*2+1])))/2;
+					double meanImag = (std::abs(imag(eigs[set*2])) + std::abs(imag(eigs[set*2+1])))/2;
+
+					// Check to see if we moved from complex to real or vice versa
+					if( (meanPrevImag > okErr) != (meanImag > okErr) ){
+						// printf("Located a bifurcation!\n");
+						// printf("  Member %03zu - %03zu\n", m-1, m);
+						bifs.push_back(m-1);
+					}
+				}
+				default: break;
+			}
+		}
+	}
+
+	return bifs;
 }//====================================================
 
 /**
@@ -511,10 +605,7 @@ void tpat_cr3bp_family::sortEigs(){
 			for(int i = 0; i < 6; i++){
 				cost[p] += std::abs(swappedOrig[i] - predict[i]);
 			}
-
-			if(p == 80 && m == 289)
-				waitForUser();
-
+			
 			// Add infinite cost if the ones eigenvalues change spots
 			if(*smallestErr < MAX_ONES_ERR){
 				double distToOne[6];
@@ -657,28 +748,30 @@ void tpat_cr3bp_family::saveToMat(const char *filename){
  *	@param matFile a pointer to the destination matlab file
  */
 void tpat_cr3bp_family::saveMembers(mat_t *matFile){
-	// Create a vector with member data stored in column-major order
-	std::vector<double> allData(members.size()*DATA_WIDTH);
-	for(size_t i = 0; i < members.size(); i++){
-		for(size_t j = 0; j < DATA_WIDTH; j++){
-			if(j < 6)
-				allData[j*members.size() + i] = members[i].getIC()[j];
-			else if(j == 6)
-				allData[j*members.size() + i] = members[i].getTOF();
-			else if(j == 7)
-				allData[j*members.size() + i] = members[i].getJC();
-			else if(j == 8)
-				allData[j*members.size() + i] = members[i].getXWidth();
-			else if(j == 9)
-				allData[j*members.size() + i] = members[i].getYWidth();
-			else
-				allData[j*members.size() + i] = members[i].getZWidth();
+	if(members.size() > 0){
+		// Create a vector with member data stored in column-major order
+		std::vector<double> allData(members.size()*DATA_WIDTH);
+		for(size_t i = 0; i < members.size(); i++){
+			for(size_t j = 0; j < DATA_WIDTH; j++){
+				if(j < 6)
+					allData[j*members.size() + i] = members[i].getIC()[j];
+				else if(j == 6)
+					allData[j*members.size() + i] = members[i].getTOF();
+				else if(j == 7)
+					allData[j*members.size() + i] = members[i].getJC();
+				else if(j == 8)
+					allData[j*members.size() + i] = members[i].getXWidth();
+				else if(j == 9)
+					allData[j*members.size() + i] = members[i].getYWidth();
+				else
+					allData[j*members.size() + i] = members[i].getZWidth();
+			}
 		}
-	}
 
-	size_t dims[2] = {members.size(), static_cast<size_t>(DATA_WIDTH)};
-	matvar_t *matvar = Mat_VarCreate(DATA_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allData[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
+		size_t dims[2] = {members.size(), static_cast<size_t>(DATA_WIDTH)};
+		matvar_t *matvar = Mat_VarCreate(DATA_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allData[0]), MAT_F_DONT_COPY_DATA);
+		saveVar(matFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
+	}
 }//====================================================
 
 /**
@@ -686,25 +779,27 @@ void tpat_cr3bp_family::saveMembers(mat_t *matFile){
  *	@param matFile a pointer to the mat file in question
  */
 void tpat_cr3bp_family::saveEigVals(mat_t *matFile){
-	// Separate all eigenvalues into real and complex parts
-	std::vector<double> realParts(members.size()*6);
-	std::vector<double> imagParts(members.size()*6);
-	for(size_t i = 0; i < members.size(); i++){
-		std::vector<cdouble> vals = members[i].getEigVals();
-			if(vals.size() != 6)
-				throw tpat_exception("tpat_cr3bp_family::saveEigVals: family member does not have 6 eigenvalues!");
-		for(int j = 0; j < 6; j++){
-			realParts[j*members.size() + i] = real(vals[j]);
-			imagParts[j*members.size() + i] = imag(vals[j]);
+	if(members.size() > 0){
+		// Separate all eigenvalues into real and complex parts
+		std::vector<double> realParts(members.size()*6);
+		std::vector<double> imagParts(members.size()*6);
+		for(size_t i = 0; i < members.size(); i++){
+			std::vector<cdouble> vals = members[i].getEigVals();
+				if(vals.size() != 6)
+					throw tpat_exception("tpat_cr3bp_family::saveEigVals: family member does not have 6 eigenvalues!");
+			for(int j = 0; j < 6; j++){
+				realParts[j*members.size() + i] = real(vals[j]);
+				imagParts[j*members.size() + i] = imag(vals[j]);
+			}
 		}
+
+		// create a special variable for them
+		mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
+
+		size_t dims[2] = {members.size(), 6};
+		matvar_t *matvar = Mat_VarCreate(EIG_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
+		saveVar(matFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
 	}
-
-	// create a special variable for them
-	mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
-
-	size_t dims[2] = {members.size(), 6};
-	matvar_t *matvar = Mat_VarCreate(EIG_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
-	saveVar(matFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**
@@ -724,5 +819,5 @@ void tpat_cr3bp_family::saveMiscData(mat_t *matFile){
 	dims[1] = name.length();
 	matvar_t *nameVar = Mat_VarCreate(NAME_VAR_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);
-}
+}//====================================================
 

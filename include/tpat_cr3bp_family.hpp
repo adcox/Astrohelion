@@ -61,13 +61,22 @@ class tpat_cr3bp_family{
 			SORT_TOF 	= 6		//!< Sort by Time-Of-Flight
 		};
 
+		enum eigValSet_t{
+			EIGSET_COMP_RECIP,	//!< Complex, reciprocal pair
+			EIGSET_ONES,		//!< Exactly equal to 1.0
+			EIGSET_REAL_RECIP	//!< Real, reciprocal pair
+		};
+
+		// *structors
 		tpat_cr3bp_family(tpat_cr3bp_sys_data);
 		tpat_cr3bp_family(const char*);
 		tpat_cr3bp_family(const tpat_cr3bp_family&);
 		~tpat_cr3bp_family();
 
+		// Operators
 		tpat_cr3bp_family& operator= (const tpat_cr3bp_family&);
 
+		// Set and Get Methods
 		void addMember(tpat_cr3bp_family_member);
 		
 		tpat_cr3bp_family_member getMember(int) const;
@@ -82,6 +91,8 @@ class tpat_cr3bp_family{
 		void setName(std::string);
 		void setSortType(sortVar_t);
 
+		// Utility and Operational Functions
+		std::vector<int> findBifurcations();
 		void saveToMat(const char*);
 		void sortEigs();
 		void sortMembers();
@@ -91,7 +102,7 @@ class tpat_cr3bp_family{
 		std::string name = "NULL";						//!< Descriptive name of the family
 		std::vector<tpat_cr3bp_family_member> members;	//!< Contains all family members
 		tpat_cr3bp_sys_data sysData;					//!< Describes the system this family exists in
-		sortVar_t sortType = SORT_X;								//!< Describes the most natural variable to sort family members by
+		sortVar_t sortType = SORT_X;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 		double numNodes = 4;		//!< Number of nodes to use when representing a family member

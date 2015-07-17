@@ -698,11 +698,11 @@ void tpat_matrix::print(const char *format) const{
  *	@param filename the filename or filepath, including file extension
  */
 void tpat_matrix::toCSV(const char *filename) const{
-	std::ofstream outFile;
-	outFile.open(filename, std::ios::out);
+	std::ofstream outFile(filename, std::ios::out);
+	// outFile.open(filename, std::ios::out);
 	for (int r = 0; r < rows; r++){
 	    for (int c = 0; c < cols; c++){
-	    	char buffer[64];
+	    	char buffer[64] = { };
 	    	if(c < cols-1)
 	    		sprintf(buffer, "%.14f, ", gsl_matrix_get(gslMat,r,c));
 	    	else

@@ -721,7 +721,7 @@ tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> I
     double period, mirror_t mirrorType){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
-    cr3bp_getPeriodic(sys, IC, period, 2, mirrorType, fixedStates);
+    return cr3bp_getPeriodic(sys, IC, period, 2, mirrorType, fixedStates);
 }//========================================
 
 /**
@@ -767,10 +767,17 @@ tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> I
             zeroStates.push_back(4);    // y-dot
             sim.addEvent(tpat_event::YZ_PLANE, 0, true);
             break;
-        case MIRROR_X_AX:
+        case MIRROR_X_AX_H:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
+            sim.addEvent(tpat_event::XZ_PLANE, 0, true);
+            break;
+        case MIRROR_X_AX_V:
+            zeroStates.push_back(1);    // y
+            zeroStates.push_back(2);    // z
+            zeroStates.push_back(3);    // x-dot
+            sim.addEvent(tpat_event::XY_PLANE, 0, true);
             break;
         default:
             throw tpat_exception("Mirror type either not defined or not implemented");
@@ -791,7 +798,7 @@ tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> I
         bool okToFix = true;
         for(size_t n = 0; n < zeroStates.size(); n++){
             if(fixedStates[i] == zeroStates[n]){
-                printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring", fixedStates[i]);
+                printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring\n", fixedStates[i]);
                 okToFix = false;
                 break;
             }
@@ -810,23 +817,30 @@ tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> I
 
     // Create a nodeset with two nodes
     tpat_cr3bp_nodeset halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
-    // halfOrbNodes.appendNode(halfOrbArc.getState_6(0));
-    // halfOrbNodes.appendNode(halfOrbArc.getState_6(-1));
-    // halfOrbNodes.appendTOF(halfOrbArc.getTime(-1));
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
 
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
-    // corrector.setVerbose(true);
     try{
         corrector.correct_cr3bp(&halfOrbNodes);
         tpat_cr3bp_nodeset correctedHalfPer = corrector.getCR3BPOutput();
 
         // After correcting, simulate the entire orbit and pass it back
-        sim.clearEvents();
+        sim.clearEvents();          // Remove quit-at-plane-crossing constraint
+        sim.createCrashEvents();    // add back crash events
         sim.runSim(correctedHalfPer.getNode(0), 2*correctedHalfPer.getTotalTOF());
 
+        // Although the multiple shooting converged to get us here, it doesn't check for
+        // crashes by default. So here we check to make sure the trajectory doesn't do any tunneling
+        std::vector<tpat_event> endEvents = sim.getEndEvents();
+        for(size_t i = 0; i < endEvents.size(); i++){
+            if(endEvents[i].getType() == tpat_event::CRASH){
+                throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Final simulation ended with a crash... M.S. is likely required to integrate this arc.");
+            }
+        }
+
+        // We didn't find any crashes, return the periodic orbit!
         return sim.getCR3BPTraj();
     }catch(tpat_diverge &e){
         throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");

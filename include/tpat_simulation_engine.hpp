@@ -31,6 +31,21 @@ class tpat_bcr4bpr_traj;
 class tpat_cr3bp_traj;
 
 /**
+ *	@brief A small structure to store event occurrence records
+ */
+struct eventRecord{
+public:
+	/**
+	 *	@brief Construct an event record
+	 *	@param e the event index within the simulation engine event vector
+	 *	@param s the step index; which step did this event occur at?
+	 */
+	eventRecord(int e, int s) : eventIx(e), stepIx(s) {}
+	int eventIx;	//!< The index of the event (index from simulation engine vector of events)
+	int stepIx;		//!< The index of the integration step the event occured at
+};
+
+/**
  *	@brief Performs numerical integration on any system type and produces an
  *	tpat_trajectory object
  *
@@ -74,7 +89,6 @@ class tpat_simulation_engine{
 		tpat_simulation_engine();
 		tpat_simulation_engine(tpat_sys_data);
 		tpat_simulation_engine(const tpat_simulation_engine&);	//copy constructor
-		void createCrashEvents();
 		
 		//Destructor
 		~tpat_simulation_engine();
@@ -88,6 +102,9 @@ class tpat_simulation_engine{
 		double getAbsTol() const;
 		tpat_bcr4bpr_traj getBCR4BPRTraj() const;
 		tpat_cr3bp_traj getCR3BPTraj() const;
+		std::vector<tpat_event> getEndEvents() const;
+		std::vector<tpat_event> getEvents() const;
+		std::vector<eventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
 		bool usesRevTime() const;
@@ -111,6 +128,7 @@ class tpat_simulation_engine{
 		
 		// Utility Functions
 		void clearEvents();
+		void createCrashEvents();
 		void reset();
 		
 
@@ -124,12 +142,11 @@ class tpat_simulation_engine{
 		/** Vector of events to consider during integration */
 		std::vector<tpat_event> events;
 
-		/** Contains data recording which events happened and at which step in the 
-		 integration. Data is stored in sets of two, with the first value representing the 
-		 step # along the integration and the second representing the index of the event
-		 in the events vector */
-		std::vector<int> eventOccurs;
-
+		/**
+		 *	Contains data recroding which events happened and at which step in the integration
+		 */
+		std::vector<eventRecord> eventOccurs;
+		
 		/** a void pointer to some data object that contains data for the EOM function */
 		void *eomParams = 0;
 

@@ -24,7 +24,7 @@ LIB := ../lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-CFLAGS += -g -W -Wall -Wextra -pedantic 
+CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -74,8 +74,8 @@ calcTest: $(OBJECTS)
 familyOps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
 
-generateLyap: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_computeLyapFamily.cpp -o $(BIN)/$@
+emFams: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) computeEarthMoonFams.cpp -o $(BIN)/$@
 
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@

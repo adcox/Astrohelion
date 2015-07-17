@@ -104,7 +104,7 @@ void tpat_sys_data::copyData(const tpat_sys_data &d){
 /**
  *	@return the number of primaries this system models
  */
-int tpat_sys_data::getNumPrimaries() const { return numPrimaries; }
+int tpat_sys_data::getNumPrimaries() const { return primaries.size(); }
 
 /**
  *	@brief Retrieve the name of one of the system primaries

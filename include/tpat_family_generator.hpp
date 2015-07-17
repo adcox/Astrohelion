@@ -44,24 +44,30 @@ class tpat_family_generator{
 		tpat_family_generator& operator =(const tpat_family_generator&);
 
 		// Set and Get
-		void setStep_simple(double);
-		void setStep_fitted(double);
 		void setNumNodes(int);
+		void setNumOrbits(int);
+		void setSlopeThresh(double);
+		void setStep_simple(double);
+		void setStep_fitted_1(double);
+		void setStep_fitted_2(double);
 
 		// Operations & Utility
+		tpat_cr3bp_family cr3bp_generateAxial(const char*, double);
+		tpat_cr3bp_family cr3bp_generateHalo(const char*, double);
 		tpat_cr3bp_family cr3bp_generateLyap(tpat_cr3bp_sys_data, int, double);
+		void reset();
 
 	private:
 		int numOrbits = 500;			//!< Maximum number of family members to generate
 		int numSimple = 3;				//!< Number of simply-continued family members
 		double step_simple = 0.0005;	//!< Step size in the independent variable when using simple continuation
-		double step_fitted = 0.005;		//!< Step size in the independent variable when using advanced continuation
+		double step_fitted_1 = 0.005;	//!< Step size in first ind. var. when using advanced continuation
+		double step_fitted_2 = 0.005;	//!< Step size in second ind. var. when using advanced continuation
 		int curveFitMem = 5;			//!< Number of points to use with Least-Squares algorithm
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
-
+		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 		void copyMe(const tpat_family_generator&);
-		void cr3bp_continueFamily(tpat_cr3bp_family*, tpat_cr3bp_sys_data, tpat_cr3bp_traj, mirror_t,
-			std::vector<int>, std::vector<int>);
+		void cr3bp_continueFamily(tpat_cr3bp_family*, tpat_cr3bp_traj, std::vector<mirror_t>, std::vector<int>, std::vector<int>);
 };
 
 #endif

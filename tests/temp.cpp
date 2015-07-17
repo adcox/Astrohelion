@@ -3,22 +3,25 @@
 
 using namespace std;
 
-enum blah_t{TYPEA = 1,
-	TYPEB = 3,
-	TYPEC = 77,
-	TYPED = 4};
+typedef struct thing{
+	int a;
+	int b;
+	int c;
+} thing;
 
-int main(void){
+int main(){
 	
-	blah_t blah1 = TYPEA;
-	blah_t blah2 = TYPEB;
-	blah_t blah3 = TYPEC;
-	blah_t blah4 = TYPED;
+	thing t;
+	t.a = 1;
+	t.b = 2;
+	t.c = 3;
 
-	printf("Enum = %d\n", ((int)blah1));
-	printf("Enum = %d\n", ((int)blah2));
-	printf("Enum = %d\n", ((int)blah3));
-	printf("Enum = %d\n", ((int)blah4));
+	switch(t.a){
+		case 1:
+			printf("yay!\n"); break;
+		default:
+			printf("boooo\n");
+	}
 
 	return 0;
 }

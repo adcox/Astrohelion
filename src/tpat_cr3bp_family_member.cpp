@@ -144,7 +144,11 @@ void tpat_cr3bp_family_member::setEigVals(std::vector<cdouble> vals) {
  *	@brief Set the initial state
  *	@param ic The initial state (non-dim)
  */
-void tpat_cr3bp_family_member::setIC( std::vector<double> ic ){ IC = ic; }
+void tpat_cr3bp_family_member::setIC( std::vector<double> ic ){
+if(ic.size() != 6)
+	throw tpat_exception("tpat_cr3bp_family_member::setIC: There must be 6 elements!");
+	IC = ic;
+}
 
 /**
  *	@brief Set the time-of-flight

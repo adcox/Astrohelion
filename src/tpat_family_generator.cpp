@@ -192,7 +192,6 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 
 	tpat_cr3bp_traj firstAxial = cr3bp_getPeriodic(axialFam.getSysData(), IC, period,
 		numNodes, MIRROR_X_AX_H, fixStates);
-	firstAxial.saveToMat("firstAxial.mat");
 
 	std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
 	std::vector<int> depVars {0,6};	// Predict x and period with least squares
@@ -430,7 +429,6 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_cr3bp_family *fam,
 					}
 					predictedIC = familyCont_LS(indVar1, IC.at(indVar1),
 						allDepVars, prevStates);
-
 				}else{
 					mirrorType = mirrorTypes[1];
 					// Use continuation in indVar2

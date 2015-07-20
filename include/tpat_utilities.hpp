@@ -202,6 +202,19 @@ public:
 		return std::abs(t1 - t2) < tol;
 	}//=========================================
 
+	template <typename T>
+	static bool aboutEquals(std::vector<T> v1, std::vector<T> v2, double tol){
+		if(v1.size() != v2.size())
+			return false;
+
+		for(size_t i = 0; i < v1.size(); i++){
+			if(!aboutEquals(v1[i], v2[i], tol))
+				return false;
+		}
+
+		return true;
+	}//==========================================
+
 	/**
 	 *	@brief Generate all permutations of a set of n elements
 	 *

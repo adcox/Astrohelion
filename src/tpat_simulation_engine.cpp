@@ -467,6 +467,9 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
  *  @param t_dim the dimension of t
  */
 void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
+    // Save tolerance for trajectory
+    traj->setTol(absTol > relTol ? absTol : relTol);
+    
     // Default IC dimension
     int ic_dim = 42;
 

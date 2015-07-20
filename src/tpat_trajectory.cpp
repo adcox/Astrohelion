@@ -72,11 +72,8 @@ tpat_trajectory::tpat_trajectory(int n){
  *	@param t a trajectory
  */
 tpat_trajectory::tpat_trajectory(const tpat_trajectory& t){
-	numPoints = t.numPoints;
-	state = t.state;
-	times = t.times;
-	allSTM = t.allSTM;
-}//=========================================
+	copyMe(t);
+}//====================================================
 
 //-----------------------------------------------------
 // 		Operators
@@ -86,14 +83,17 @@ tpat_trajectory::tpat_trajectory(const tpat_trajectory& t){
  *	@brief Assignment operator. Directly copy the vectors from one trajectory into this one
  */
 tpat_trajectory& tpat_trajectory::operator= (const tpat_trajectory& t){
+	copyMe(t);
+	return *this;
+}//============================================
+
+void tpat_trajectory::copyMe(const tpat_trajectory &t){
 	numPoints = t.numPoints;
 	state = t.state;
 	times = t.times;
 	allSTM = t.allSTM;
-
-	return *this;
-}//============================================
-
+	tol = t.tol;
+}//====================================================
 
 //-----------------------------------------------------
 // 		Set and Get Functions
@@ -182,6 +182,11 @@ double tpat_trajectory::getTime(int n) const {
 std::vector<double>* tpat_trajectory::getTime(){ return &times; }
 
 /**
+ *	@brief Retrieve the tolerance used to generate this trajectory
+ */
+double tpat_trajectory::getTol() const { return tol; }
+
+/**
  *	@brief Retrieve the STM at a specific point along the trajectory
  *	@param n the index of the point (starts at 0). If n is negative, the count
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
@@ -225,6 +230,14 @@ void tpat_trajectory::setTime(std::vector<double> t){ times = t; }
  *	@param phi a vector of STMs, one for every point along the trajectory.
  */
 void tpat_trajectory::setSTMs(std::vector<tpat_matrix> phi){ allSTM = phi; }
+
+/**
+ *	@brief Set the tolerance for this trajectory
+ *
+ *	This information is useful later when comparing errors between states
+ *	@param d the tolerance
+ */
+void tpat_trajectory::setTol(double d){ tol = d; }
 
 //-----------------------------------------------------
 // 		Utility Functions

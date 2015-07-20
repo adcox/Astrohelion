@@ -448,7 +448,10 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	tpat_sys_data *sysData = set->getSysData();
 	tpat_simulation_engine simEngine(*sysData);
 	simEngine.setVerbose(verbose);
-	// TODO: Should I set the tolerance or use the default?
+	
+	// Set both tolerances of simulation engine to be same as corrector
+	simEngine.setAbsTol(tol);
+	simEngine.setRelTol(tol);
 
 	// Only need info about the final state, no need to generate lots of intermediate data points
 	simEngine.setVarStepSize(false);

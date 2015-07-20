@@ -127,8 +127,9 @@ void tpat_cr3bp_traj::copyMe(const tpat_cr3bp_traj &t){
  *	The states from both trajectories are appended [lhs, rhs] without any modification, as is 
  *	the vector of Jacobi Constant values. The time vectors are appended such that time is 
  *	continuous throughout the trajectory; this doesn't affect the motion because the CR3BP is
- *	autonomous. Only the STMs from <tt>lhs</tt> are copied to the new trajectory since the 
- *	<tt>rhs</tt> STMs will have no meaning in the new, combined trajectory.
+ *	autonomous. STMs from <tt>rhs</tt> are multiplied by the final STM of <tt>lhs</tt> to 
+ *	create new, accurate STMs. This assumes that there are no discontinuities in time,
+ *	space, or velocity between the end of <tt>lhs</tt> and the beginning of <tt>rhs</tt>
  *
  *	@param lhs a trajectory
  *	@param rhs a trajectory
@@ -139,40 +140,49 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 		throw tpat_exception("Cannot sum two CR3BP trajectories from different systems");
 	}
 
+	int skipShift = 1;
+	double t1 = lhs.getTol();
+	double t2 = rhs.getTol();
+	double tol = t1 > t2 ? t1 : t2;
+	if(tol == 0)
+		tol = 1e-9;
+
+	if(tpat_util::aboutEquals(lhs.getState(-1), rhs.getState(0), 100*tol)){
+		skipShift = 1;
+	}
+
 	// create a new trajectory object with space for both sets of data to be combined
 	tpat_cr3bp_traj newTraj(lhs.sysData);
-	// tpat_cr3bp_traj newTraj(lhs.numPoints + rhs.numPoints);
-	// newTraj.setSysData(lhs.sysData);
+
+	// Set the tolerance to the greater of the two
+	newTraj.setTol(t1 > t2 ? t1 : t2);
 
 	// Copy the states and times from the LHS into the new guy)
 	newTraj.getState()->insert(newTraj.getState()->begin(), lhs.state.begin(), lhs.state.end());
 	newTraj.getTime()->insert(newTraj.getTime()->begin(), lhs.times.begin(), lhs.times.end());
-	// std::copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
-	// std::copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
 	
 	// Append the rhs state to the end of the new guy's state vector
-	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin(), rhs.state.end());
-	// std::copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
+	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_cr3bp_traj::STATE_WIDTH, rhs.state.end());
 
 	// Append the rhs times, adjusted for continuity, to the new guy's time vector; adjustments
 	// don't affect the result because system is autonomous
-	// double *newTimes = &(newTraj.getTime()->at(lhs.numPoints));
-	for (int n = 0; n < rhs.numPoints; n++){
+	for (int n = skipShift; n < rhs.numPoints; n++){
 		newTraj.getTime()->push_back(lhs.times.back() + rhs.times.at(n) - rhs.times.at(0));
-		// *newTimes = lhs.times.back() + rhs.times.at(n) - rhs.times.at(0);
-		// newTimes++;
 	}
-
-	// Copy only the lhs STMs, because there is no gaurantee the two summed trajectories
-	// will be continuous and smooth in time and state
-	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
-	// std::copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
 
 	// Copy Jacobi constant
 	newTraj.getJC()->insert(newTraj.getJC()->begin(), lhs.jacobi.begin(), lhs.jacobi.end());
-	newTraj.getJC()->insert(newTraj.getJC()->end(), rhs.jacobi.begin(), rhs.jacobi.end());
-	// std::copy(lhs.jacobi.begin(), lhs.jacobi.end(), newTraj.getJC()->begin());
-	// std::copy(rhs.jacobi.begin(), rhs.jacobi.end(), newTraj.getJC()->begin() + lhs.numPoints);
+	newTraj.getJC()->insert(newTraj.getJC()->end(), rhs.jacobi.begin()+skipShift, rhs.jacobi.end());
+
+	// Copy the lhs stm
+	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
+	// Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
+	for(size_t i = skipShift; i < rhs.allSTM.size(); i++){
+		tpat_matrix shiftedSTM = rhs.getSTM(i)*lhs.getSTM(-1);
+		newTraj.getSTM()->push_back(shiftedSTM);
+	}
+
+	newTraj.setLength();
 
 	return newTraj;
 }//========================================

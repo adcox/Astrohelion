@@ -521,6 +521,40 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
 }//====================================================
 
 /**
+ *  @brief construct a matrix to mirror a 6-d state over the specified plane or axis
+ *  @param mirrorType describes how to mirror a 6-d state
+ *  @return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
+ */
+tpat_matrix getMirrorMat(mirror_t mirrorType){
+    switch(mirrorType){
+        case MIRROR_XZ:
+        {
+            double data[] = {1, 0, 0, 0, 0, 0,
+                            0, -1, 0, 0, 0, 0,
+                            0, 0, 1, 0, 0, 0,
+                            0, 0, 0, -1, 0, 0,
+                            0, 0, 0, 0, 1, 0,
+                            0, 0, 0, 0, 0, -1};
+            return tpat_matrix(6,6,data);
+        }
+        case MIRROR_X_AX_H:
+        case MIRROR_X_AX_V:
+        {
+            double data[] = {1, 0, 0, 0, 0, 0,
+                            0, -1, 0, 0, 0, 0,
+                            0, 0, -1, 0, 0, 0,
+                            0, 0, 0, -1, 0, 0,
+                            0, 0, 0, 0, 1, 0,
+                            0, 0, 0, 0, 0, 1};
+            return tpat_matrix(6,6,data);
+        }
+        default:
+            printErr("tpat_calculations::getMirrorMat: Mirror type is not implemented; returning identiy\n");
+            return tpat_matrix::I(6);
+    }
+}//===================================================
+
+/**
  *  @brief Solve a matrix equation by iteratively applying LU factorization
  *
  *  Consider the matrix equation AX = B where A is an n x n square matrix,
@@ -826,22 +860,31 @@ tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data sys, std::vector<double> I
         corrector.correct_cr3bp(&halfOrbNodes);
         tpat_cr3bp_nodeset correctedHalfPer = corrector.getCR3BPOutput();
 
-        // After correcting, simulate the entire orbit and pass it back
-        sim.clearEvents();          // Remove quit-at-plane-crossing constraint
-        sim.createCrashEvents();    // add back crash events
-        sim.runSim(correctedHalfPer.getNode(0), 2*correctedHalfPer.getTotalTOF());
-
-        // Although the multiple shooting converged to get us here, it doesn't check for
-        // crashes by default. So here we check to make sure the trajectory doesn't do any tunneling
-        std::vector<tpat_event> endEvents = sim.getEndEvents();
-        for(size_t i = 0; i < endEvents.size(); i++){
-            if(endEvents[i].getType() == tpat_event::CRASH){
-                throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Final simulation ended with a crash... M.S. is likely required to integrate this arc.");
-            }
+        // Now add more nodes, use MS to get an accurate
+        tpat_matrix mirrorMat = getMirrorMat(mirrorType);
+        for(int i = correctedHalfPer.getNumNodes()-2; i >= 0; i--){
+            tpat_matrix stateVec(1,6, correctedHalfPer.getNode(i));
+            tpat_matrix newStateVec = stateVec*mirrorMat;
+            correctedHalfPer.appendNode(newStateVec.getDataPtr());
+            correctedHalfPer.appendTOF(correctedHalfPer.getTOF(i));
         }
+        // Make all nodes continuous in velocity
+        std::vector<int> empty;
+        correctedHalfPer.setVelConNodes_allBut(empty);
 
-        // We didn't find any crashes, return the periodic orbit!
-        return sim.getCR3BPTraj();
+        // Remove intermediate constraint, constrain both end points
+        correctedHalfPer.clearConstraints();
+        correctedHalfPer.addConstraint(initStateCon);
+        tpat_constraint finalCon(tpat_constraint::STATE, correctedHalfPer.getNumNodes()-1, mirrorCon1, 6);
+        correctedHalfPer.addConstraint(finalCon);
+
+        // Reconverge the solution
+        corrector.correct_cr3bp(&correctedHalfPer);
+
+        // Return the corrected solution in trajectory form
+        tpat_cr3bp_nodeset finalSet = corrector.getCR3BPOutput();
+        return tpat_cr3bp_traj::fromNodeset(finalSet);
+
     }catch(tpat_diverge &e){
         throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
     }

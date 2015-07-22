@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,26 +43,31 @@
  *
  *	TODO:
  *		- Overload +, += operators for concatenating trajectories
+ *		- It probably makes more sense to make extraParams a vector of 
+ *		  vectors to avoid confusion when reading and writing values that
+ *		  are not 1-dimensional
  */
-class tpat_trajectory{
+class tpat_traj{
 	public:
-		/** The width of one row of the state vector (state vector stored in row-major order) */
-		static const int STATE_WIDTH = 9;
-		
+		static const int STATE_SIZE = 6;
+		static const int ACCEL_SIZE = 3;
+
 		// *structors
-		tpat_trajectory();
-		tpat_trajectory(int);
-		tpat_trajectory(const tpat_trajectory&);
-		virtual ~tpat_trajectory(){}
+		tpat_traj();
+		tpat_traj(int);
+		tpat_traj(const tpat_traj&);
+		virtual ~tpat_traj(){}
 
 		// Operators
-		tpat_trajectory& operator= (const tpat_trajectory&);
+		tpat_traj& operator= (const tpat_traj&);
 
 		// Set and Get functions
+		std::vector<double> getAccel(int) const;
+		std::vector<double>* getAccel();
 		std::vector<double> getCoord(int) const;
 		int getLength() const;
+		std::vector<double>* getExtraParam();
 		std::vector<double> getState(int) const;
-		std::vector<double> getState_6(int) const;
 		std::vector<double>* getState();
 		tpat_matrix getSTM(int) const;
 		std::vector<tpat_matrix>* getSTM();
@@ -72,25 +77,29 @@ class tpat_trajectory{
 		virtual tpat_sys_data::system_t getType() const;
 
 		void setState(std::vector<double>);
+		void setAccel(std::vector<double>);
+		void setExtraParam(std::vector<double>);
 		void setSTMs(std::vector<tpat_matrix>);
 		void setTime(std::vector<double>);
 		void setTol(double);
 		
 		// Utility functions
 		void saveToMat(const char*);
-		virtual void setLength();
+		void setLength();
 	protected:
-		int numPoints = 0;	//!< Number of points along integrated path
-		double tol = 0;		//!< tolerance used to compute this trajectory
+		int numPoints = 0;		//!< Number of points along integrated path
+		double tol = 0;			//!< tolerance used to compute this trajectory
+		int numExtraParam = 0;	//!< Number of variables stored in the extraParam vector
 
-		/** Holds state info: [pos, vel, accel] in 1D form, so every 9 elements
-		 * 	constitutes a new "row" 
-		 */
-		std::vector<double> state;
+		std::vector<double> state;			//!< Holds [pos, vel] (6d) for every step
+		std::vector<double> accel;			//!< Holds accelerations in three principle directions at every step
 		std::vector<double> times;			//!< Holds time info
+		std::vector<double> extraParam;		//!< Holds data for any extra parameters
 		std::vector<tpat_matrix> allSTM;	//!< An array containing the STM at each step of the integration
 
-		void copyMe(const tpat_trajectory&);
+		void copyMe(const tpat_traj&);
+		void saveAccel(mat_t*);
+		void saveExtraParam(mat_t*, int, int, const char*);
 		void saveState(mat_t*);
 		void saveTime(mat_t*);
 		void saveSTMs(mat_t*);

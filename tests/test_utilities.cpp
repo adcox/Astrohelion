@@ -15,12 +15,12 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 bool testSumInt(){
 	int data[] = {1,2,3,4,5};
-	return tpat_util::tpat_sum(data, 5) == 15;
+	return tpat_util::sum(data, 5) == 15;
 }
 
 bool testSumDouble(){
 	double data[] = {1.0, 1.1, 1.2, 1.3, 1.4};
-	return tpat_util::tpat_sum(data, 5) == 6;
+	return tpat_util::sum(data, 5) == 6;
 }
 
 bool test_concatVec(){

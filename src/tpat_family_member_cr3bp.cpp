@@ -1,5 +1,5 @@
 /**
- *	@file tpat_cr3bp_family_member
+ *	@file tpat_family_member_cr3bp
  *	@brief Data object for CR3BP family members
  */
 /*
@@ -23,18 +23,18 @@
  */
 #include "tpat.hpp"
  
-#include "tpat_cr3bp_family_member.hpp"
+#include "tpat_family_member_cr3bp.hpp"
 
 #include "tpat_constants.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_cr3bp_traj.hpp"
-#include "tpat_cr3bp_nodeset.hpp"
+#include "tpat_traj_cr3bp.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
 
 //-----------------------------------------------------
 // 		Constructors
 //-----------------------------------------------------
 
-tpat_cr3bp_family_member::tpat_cr3bp_family_member(double *ic, double tof,
+tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
 	double jc, double xWid, double yWid, double zWid){
 	IC.clear();
 	IC.insert(IC.begin(), ic, ic+6);
@@ -48,7 +48,7 @@ tpat_cr3bp_family_member::tpat_cr3bp_family_member(double *ic, double tof,
 /**
  *	@brief Create a family member from a trajectory object
  */
-tpat_cr3bp_family_member::tpat_cr3bp_family_member(const tpat_cr3bp_traj traj){
+tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
 	IC = traj.getState(0);
 	TOF = traj.getTime(-1);
 	JC = traj.getJC(0);
@@ -65,14 +65,14 @@ tpat_cr3bp_family_member::tpat_cr3bp_family_member(const tpat_cr3bp_traj traj){
 /**
  *	@brief Copy constructor
  */
-tpat_cr3bp_family_member::tpat_cr3bp_family_member(const tpat_cr3bp_family_member& mem){
+tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_family_member_cr3bp& mem){
 	copyMe(mem);
 }//====================================================
 
 /**
  *	@brief Destructor
  */
-tpat_cr3bp_family_member::~tpat_cr3bp_family_member(){
+tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){
 	IC.clear();
 }//===================================================
 
@@ -84,7 +84,7 @@ tpat_cr3bp_family_member::~tpat_cr3bp_family_member(){
 /**
  *	@brief Assignment operator
  */
-tpat_cr3bp_family_member& tpat_cr3bp_family_member::operator= (const tpat_cr3bp_family_member& mem){
+tpat_family_member_cr3bp& tpat_family_member_cr3bp::operator= (const tpat_family_member_cr3bp& mem){
 	copyMe(mem);
 	return *this;
 }//====================================================
@@ -96,37 +96,37 @@ tpat_cr3bp_family_member& tpat_cr3bp_family_member::operator= (const tpat_cr3bp_
 /**
  *	@brief Retrieve a vector of eigenvalues (of the final STM, likely the Monodromy matrix)
  */
-std::vector<cdouble> tpat_cr3bp_family_member::getEigVals() const { return eigVals; }
+std::vector<cdouble> tpat_family_member_cr3bp::getEigVals() const { return eigVals; }
 
 /**
  *	@brief Retrieve the initial state for this trajectory (non-dim)
  */
-std::vector<double> tpat_cr3bp_family_member::getIC() const { return IC; }
+std::vector<double> tpat_family_member_cr3bp::getIC() const { return IC; }
 
 /**
  *	@breif Retrieve the Time-Of-Flight along this trajectory (non-dim)
  */
-double tpat_cr3bp_family_member::getTOF() const { return TOF; }
+double tpat_family_member_cr3bp::getTOF() const { return TOF; }
 
 /**
  *	@brief Retrieve the Jacobi Constant for this trajectory
  */
-double tpat_cr3bp_family_member::getJC() const { return JC; }
+double tpat_family_member_cr3bp::getJacobi() const { return JC; }
 
 /**
  *	@brief Retrieve the maximum width in the x-direction
  */
-double tpat_cr3bp_family_member::getXWidth() const { return xWidth; }
+double tpat_family_member_cr3bp::getXWidth() const { return xWidth; }
 
 /**
  *	@brief Retrieve the maximum width in the y-direction
  */
-double tpat_cr3bp_family_member::getYWidth() const { return yWidth; }
+double tpat_family_member_cr3bp::getYWidth() const { return yWidth; }
 
 /**
  *	@brief Retrieve the maximum width in the z-direction
  */
-double tpat_cr3bp_family_member::getZWidth() const { return zWidth; }
+double tpat_family_member_cr3bp::getZWidth() const { return zWidth; }
 
 /**
  *	@brief Set the eigenvalues for this orbit
@@ -134,9 +134,9 @@ double tpat_cr3bp_family_member::getZWidth() const { return zWidth; }
  *	These should be the eigenvalues of the final STM and/or Monodromy matrix
  *	@param vals the eigenvalues
  */
-void tpat_cr3bp_family_member::setEigVals(std::vector<cdouble> vals) {
+void tpat_family_member_cr3bp::setEigVals(std::vector<cdouble> vals) {
 	if(vals.size() != 6)
-		throw tpat_exception("tpat_cr3bp_family_member::setEigVals: There must be 6 eigenvalues");
+		throw tpat_exception("tpat_family_member_cr3bp::setEigVals: There must be 6 eigenvalues");
 	eigVals = vals;
 }//====================================================
 
@@ -144,9 +144,9 @@ void tpat_cr3bp_family_member::setEigVals(std::vector<cdouble> vals) {
  *	@brief Set the initial state
  *	@param ic The initial state (non-dim)
  */
-void tpat_cr3bp_family_member::setIC( std::vector<double> ic ){
+void tpat_family_member_cr3bp::setIC( std::vector<double> ic ){
 if(ic.size() != 6)
-	throw tpat_exception("tpat_cr3bp_family_member::setIC: There must be 6 elements!");
+	throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
 	IC = ic;
 }
 
@@ -154,28 +154,28 @@ if(ic.size() != 6)
  *	@brief Set the time-of-flight
  *	@param tof The time-of-flight (non-dim)
  */
-void tpat_cr3bp_family_member::setTOF( double tof ){ TOF = tof; }
+void tpat_family_member_cr3bp::setTOF( double tof ){ TOF = tof; }
 
 /**
  *	@brief Set the Jacobi Constant
  *	@param jc The Jacobi Constant (non-dim)
  */
-void tpat_cr3bp_family_member::setJC( double jc ){ JC = jc; }
+void tpat_family_member_cr3bp::setJacobi( double jc ){ JC = jc; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_cr3bp_family_member::setXWidth(double w){ xWidth = w; }
+void tpat_family_member_cr3bp::setXWidth(double w){ xWidth = w; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_cr3bp_family_member::setYWidth(double w){ yWidth = w; }
+void tpat_family_member_cr3bp::setYWidth(double w){ yWidth = w; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_cr3bp_family_member::setZWidth(double w){ zWidth = w; }
+void tpat_family_member_cr3bp::setZWidth(double w){ zWidth = w; }
 
 //-----------------------------------------------------
 // 		Utility Functions
@@ -185,7 +185,7 @@ void tpat_cr3bp_family_member::setZWidth(double w){ zWidth = w; }
  *	@brief Copy an input family member into this one
  *	@param mem some other family member
  */
-void tpat_cr3bp_family_member::copyMe(const tpat_cr3bp_family_member& mem){
+void tpat_family_member_cr3bp::copyMe(const tpat_family_member_cr3bp& mem){
 	eigVals = mem.eigVals;
 	IC = mem.IC;
 	JC = mem.JC;

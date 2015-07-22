@@ -11,10 +11,10 @@
  */
  
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,12 +35,12 @@
 #include <vector>
 
 // Forward declarations
-class tpat_bcr4bpr_nodeset;
-class tpat_bcr4bpr_sys_data;
-class tpat_bcr4bpr_traj;
-class tpat_cr3bp_nodeset;
-class tpat_cr3bp_sys_data;
-class tpat_cr3bp_traj;
+class tpat_nodeset_bcr4bpr;
+class tpat_sys_data_bcr4bpr;
+class tpat_traj_bcr4bpr;
+class tpat_nodeset_cr3bp;
+class tpat_sys_data_cr3bp;
+class tpat_traj_cr3bp;
 class tpat_matrix;
 
 /**
@@ -55,11 +55,14 @@ enum mirror_t{
 };
 
 // Equations of motion
-int cr3bp_EOMs(double t, const double s[], double sdot[], void *params);
-int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params);
+int cr3bp_EOMs(double, const double[], double[], void*);
+int cr3bp_simple_EOMs(double, const double[], double[], void*);
 
-int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params);
-int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params);
+int cr3bp_ltvp_EOMs(double, const double[], double[], void*);
+int cr3bp_ltvp_simple_EOMs(double, const double[], double[], void*);
+
+int bcr4bpr_EOMs(double, const double[], double[], void*);
+int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 
 // General Utility Functions
 double dateToEpochTime(const char*);
@@ -69,23 +72,24 @@ tpat_matrix solveAX_eq_B(tpat_matrix, tpat_matrix);
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);
 double cr3bp_getJacobi(double s[], double);
-void cr3bp_getEquilibPt(tpat_cr3bp_sys_data, int, double, double[3]);
-tpat_cr3bp_traj cr3bp_EM2SE(tpat_cr3bp_traj, double, double, double);
-tpat_cr3bp_nodeset cr3bp_EM2SE(tpat_cr3bp_nodeset, double, double, double, double);
-tpat_cr3bp_traj cr3bp_SE2EM(tpat_cr3bp_traj, double, double, double);
-tpat_cr3bp_nodeset cr3bp_SE2EM(tpat_cr3bp_nodeset, double, double, double, double);
+void cr3bp_getEquilibPt(tpat_sys_data_cr3bp, int, double, double[3]);
+tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, double, double, double);
+tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, double, double, double, double);
+tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp, double, double, double);
+tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp, double, double, double, double);
 std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
-tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data, std::vector<double>, double, mirror_t);
-tpat_cr3bp_traj cr3bp_getPeriodic(tpat_cr3bp_sys_data, std::vector<double>, double, int, mirror_t, std::vector<int>);
+tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp, std::vector<double>, double, mirror_t);
+tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp, std::vector<double>, double, int, mirror_t, std::vector<int>);
+
 // BCR4BPR Utility Functions
-void bcr4bpr_getPrimaryPos(double, tpat_bcr4bpr_sys_data, double*);
-void bcr4bpr_getPrimaryVel(double, tpat_bcr4bpr_sys_data, double*);
-tpat_bcr4bpr_traj bcr4bpr_SE2SEM(tpat_cr3bp_traj, tpat_bcr4bpr_sys_data, double);
-tpat_bcr4bpr_nodeset bcr4bpr_SE2SEM(tpat_cr3bp_nodeset, tpat_bcr4bpr_sys_data, double);
-void bcr4bpr_orientAtEpoch(double, tpat_bcr4bpr_sys_data*);
+void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr, double*);
+void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr, double*);
+tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr, double);
+tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr, double);
+void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
 
 #endif
 //END

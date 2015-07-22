@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,13 +32,13 @@
  *	@version May 18, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_bcr4bpr_sys_data : public tpat_sys_data{
+class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 	public:
-		tpat_bcr4bpr_sys_data();
-		tpat_bcr4bpr_sys_data(std::string, std::string, std::string);
-		tpat_bcr4bpr_sys_data(const tpat_bcr4bpr_sys_data&);
+		tpat_sys_data_bcr4bpr();
+		tpat_sys_data_bcr4bpr(std::string, std::string, std::string);
+		tpat_sys_data_bcr4bpr(const tpat_sys_data_bcr4bpr&);
 
-		tpat_bcr4bpr_sys_data& operator=(const tpat_bcr4bpr_sys_data&);
+		tpat_sys_data_bcr4bpr& operator=(const tpat_sys_data_bcr4bpr&);
 		
 		double getMu() const;
 		double getNu() const;

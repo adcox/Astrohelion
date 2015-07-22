@@ -3,11 +3,11 @@
  */
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_bcr4bpr_sys_data.hpp"
-#include "tpat_bcr4bpr_traj.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bpr.hpp"
 #include "tpat_constants.hpp"
-#include "tpat_cr3bp_sys_data.hpp"
-#include "tpat_cr3bp_traj.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_cr3bp.hpp"
 #include "tpat_matrix.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_utilities.hpp"
@@ -19,7 +19,7 @@ using namespace std;
 void test_cr3bp_sim(){
 	tpat_simulation_engine simEngine;
 
-	tpat_cr3bp_sys_data sys("earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
 
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
@@ -28,7 +28,7 @@ void test_cr3bp_sim(){
 	simEngine.setAbsTol(1e-14);
 	simEngine.setRelTol(1e-16);
 	simEngine.runSim(ic, 2.77);
-	tpat_cr3bp_traj traj = simEngine.getCR3BPTraj();
+	tpat_traj_cr3bp traj = simEngine.getCR3BP_Traj();
 
 	cout << "Trajectory contains " << traj.getLength() << " points" << endl;
 	
@@ -40,7 +40,7 @@ void test_cr3bp_sim(){
 
 void test_bcr4bpr_sim(){
 	// Do a simulation in the BCR4BP
-	tpat_bcr4bpr_sys_data bcSys("sun", "earth", "moon");
+	tpat_sys_data_bcr4bpr bcSys("sun", "earth", "moon");
 	tpat_simulation_engine bcEngine(bcSys);
 
 	double haloCross177_IC[] = {100.0359099212, 	0, 					285.85225655914e-05, 
@@ -52,13 +52,13 @@ void test_bcr4bpr_sim(){
 	bcEngine.setVerbose(true);
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
-	tpat_bcr4bpr_traj bcTraj = bcEngine.getBCR4BPRTraj();
+	tpat_traj_bcr4bpr bcTraj = bcEngine.getBCR4BPR_Traj();
 	cout << "Trajectory contains " << bcTraj.getLength() << " points" << endl;
 	bcTraj.saveToMat("bcHaloManifoldProp.mat");
 }
 
 void test_cr3bp_events(){
-	tpat_cr3bp_sys_data sys("earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	tpat_simulation_engine engine(sys);
@@ -67,12 +67,12 @@ void test_cr3bp_events(){
 	engine.setRevTime(true);
 	engine.runSim(ic, 2.7);
 
-	tpat_cr3bp_traj traj = engine.getCR3BPTraj();
+	tpat_traj_cr3bp traj = engine.getCR3BP_Traj();
 	traj.saveToMat("HaloHalfTest.mat");
 }
 
 void test_bcr4bpr_events(){
-	tpat_bcr4bpr_sys_data sys("sun", "earth", "moon");
+	tpat_sys_data_bcr4bpr sys("sun", "earth", "moon");
 	double ic[] = {100.0359099212, 	0, 					285.85225655914e-05, 
 					0.0405130514527453, 0, 	0.0310985198400586};
 	double t0 = 2.57;
@@ -82,7 +82,7 @@ void test_bcr4bpr_events(){
 	engine.addEvent(tpat_event::XY_PLANE, 0, true);
 	engine.runSim(ic, t0, 2*PI);
 
-	tpat_bcr4bpr_traj traj = engine.getBCR4BPRTraj();
+	tpat_traj_bcr4bpr traj = engine.getBCR4BPR_Traj();
 	traj.saveToMat("BC_HaloManifold.mat");
 }
 
@@ -95,6 +95,7 @@ int main(void){
 
 	printColor(RED, "*************************\n* Test CR3BP Events     *\n*************************\n");
 	test_cr3bp_events();
+	
 	printColor(RED, "*************************\n* Test BCR4BPR Events   *\n*************************\n");
 	test_bcr4bpr_events();
 

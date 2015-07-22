@@ -2,10 +2,10 @@
  *	Test the nodeset object
  */
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,9 +24,9 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
-#include "tpat_cr3bp_nodeset.hpp"
-#include "tpat_bcr4bpr_nodeset.hpp"
-#include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_exceptions.hpp"
 
 #include <cmath>
@@ -37,16 +37,16 @@ using namespace std;
 static const char* PASS = BOLDGREEN "PASS" RESET;
 static const char* FAIL = BOLDRED "FAIL" RESET;
 
-tpat_cr3bp_nodeset *crSet;
-tpat_bcr4bpr_nodeset *bcSet;
+tpat_nodeset_cr3bp *crSet;
+tpat_nodeset_bcr4bpr *bcSet;
 
 void test_concat_CR3BP(){
-	tpat_cr3bp_sys_data sys("Saturn", "Titan");
-	tpat_cr3bp_sys_data emSys("earth", "moon");
-	tpat_cr3bp_nodeset set1(sys);
-	tpat_cr3bp_nodeset set2(sys);
-	tpat_cr3bp_nodeset set3(sys);
-	tpat_cr3bp_nodeset set4(emSys);
+	tpat_sys_data_cr3bp sys("Saturn", "Titan");
+	tpat_sys_data_cr3bp emSys("earth", "moon");
+	tpat_nodeset_cr3bp set1(sys);
+	tpat_nodeset_cr3bp set2(sys);
+	tpat_nodeset_cr3bp set3(sys);
+	tpat_nodeset_cr3bp set4(emSys);
 
 	double node1[] = {1,0,0,0,0,0};
 	double node2[] = {2,1,0,0,0,0};
@@ -65,17 +65,17 @@ void test_concat_CR3BP(){
 
 	set4.appendNode(node4);
 
-	tpat_cr3bp_nodeset sum1 = set1 + set2;
+	tpat_nodeset_cr3bp sum1 = set1 + set2;
 	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
 	sum1.print();
 
-	tpat_cr3bp_nodeset sum2 = set1 + set3;
+	tpat_nodeset_cr3bp sum2 = set1 + set3;
 	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
 	sum2.print();
 	
 	try{
 		cout << "Testing sum of different systems: ";
-		tpat_cr3bp_nodeset sum3 = set1 + set4;
+		tpat_nodeset_cr3bp sum3 = set1 + set4;
 		cout << FAIL << endl;
 	}catch(tpat_exception &e){
 		cout << PASS << endl;
@@ -87,11 +87,11 @@ void test_concat_CR3BP(){
 
 void test_createCR3BPNodeset(){
 	// Define system and IC
-	tpat_cr3bp_sys_data sysData("earth", "moon");
+	tpat_sys_data_cr3bp sysData("earth", "moon");
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	crSet = new tpat_cr3bp_nodeset(ic, sysData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
+	crSet = new tpat_nodeset_cr3bp(ic, sysData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
@@ -121,10 +121,10 @@ void test_createCR3BPNodeset(){
 }//==============================================
 
 void test_createBCR4BPRNodeset(){
-	tpat_bcr4bpr_sys_data semData("sun", "earth", "moon");
+	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new tpat_bcr4bpr_nodeset(ic2, semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
+	bcSet = new tpat_nodeset_bcr4bpr(ic2, semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};

@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

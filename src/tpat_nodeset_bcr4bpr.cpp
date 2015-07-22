@@ -1,9 +1,9 @@
 /**
- *	@file tpat_bcr4bpr_nodeset.cpp
+ *	@file tpat_nodeset_bcr4bpr.cpp
  */
 #include "tpat.hpp"
-#include "tpat_bcr4bpr_nodeset.hpp"
-#include "tpat_bcr4bpr_sys_data.hpp"
+#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
@@ -11,7 +11,7 @@
  *	@brief Construct a nodeset with no data other than the system
  *	@param data system data object describing the system the nodes exist in
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(tpat_bcr4bpr_sys_data data) : tpat_nodeset(6){
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(tpat_sys_data_bcr4bpr data) : tpat_nodeset(6){
 	sysData = data;
 }
 
@@ -27,7 +27,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(tpat_bcr4bpr_sys_data data) : tpat_no
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data data, 
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(6){
 
 	sysData = data;
@@ -48,7 +48,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_sys_data data, 
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data_bcr4bpr data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(6){
 
 	sysData = data;
@@ -68,7 +68,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data data, 
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(6){
 
 	sysData = data;
@@ -88,7 +88,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(double IC[6], tpat_bcr4bpr_sys_data d
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_sys_data data, 
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data_bcr4bpr data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(6){
 
 	sysData = data;
@@ -103,7 +103,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(std::vector<double> IC, tpat_bcr4bpr_
  *	@param index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset &orig, int first,
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &orig, int first,
 	int last) : tpat_nodeset(orig, first, last){
 
 	sysData = orig.sysData;
@@ -113,7 +113,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset &orig, int
 	epochs.insert(epochs.end(), orig.epochs.begin()+first, orig.epochs.begin()+last);
 }//=======================================================
 
-void tpat_bcr4bpr_nodeset::initEpochs(int numNodes, double t0){
+void tpat_nodeset_bcr4bpr::initEpochs(int numNodes, double t0){
 	// Compute epoch times for each node
 	epochs.reserve(numNodes);
 
@@ -128,7 +128,7 @@ void tpat_bcr4bpr_nodeset::initEpochs(int numNodes, double t0){
 /**
  *	@brief Destructor
  */
-tpat_bcr4bpr_nodeset::~tpat_bcr4bpr_nodeset(){
+tpat_nodeset_bcr4bpr::~tpat_nodeset_bcr4bpr(){
 	epochs.clear();
 }//=================================
 
@@ -136,7 +136,7 @@ tpat_bcr4bpr_nodeset::~tpat_bcr4bpr_nodeset(){
  *	@brief Copy constructor - calls base class copy constructor to handle basic copy
  *	@param n a BCR4BPR nodeset
  */
-tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset &n) : tpat_nodeset(n){
+tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &n) : tpat_nodeset(n){
 	sysData = n.sysData;
 	epochs = n.epochs;
 }//=========================================
@@ -146,7 +146,7 @@ tpat_bcr4bpr_nodeset::tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset &n) : tpat
  *	@param n an input BCR4BPR nodeset
  *	@return this nodeset, made equal to the input nodeset
  */
-tpat_bcr4bpr_nodeset& tpat_bcr4bpr_nodeset::operator =(const tpat_bcr4bpr_nodeset &n){
+tpat_nodeset_bcr4bpr& tpat_nodeset_bcr4bpr::operator =(const tpat_nodeset_bcr4bpr &n){
 	tpat_nodeset::operator =(n);
 	sysData = n.sysData;
 	epochs = n.epochs;
@@ -166,13 +166,13 @@ tpat_bcr4bpr_nodeset& tpat_bcr4bpr_nodeset::operator =(const tpat_bcr4bpr_nodese
  *	@param rhs
  *	@return a nodeset containing the concatenated input nodesets
  */
-tpat_bcr4bpr_nodeset operator +(const tpat_bcr4bpr_nodeset &lhs, const tpat_bcr4bpr_nodeset &rhs){
+tpat_nodeset_bcr4bpr operator +(const tpat_nodeset_bcr4bpr &lhs, const tpat_nodeset_bcr4bpr &rhs){
 	if(lhs.sysData != rhs.sysData){
 		throw tpat_exception("Cannot add nodesets from different systems; please transform them to be in the same system");
 	}
 
-	tpat_bcr4bpr_nodeset temp(lhs.sysData);
-	tpat_bcr4bpr_nodeset::basicConcat(lhs, rhs, &temp);
+	tpat_nodeset_bcr4bpr temp(lhs.sysData);
+	tpat_nodeset_bcr4bpr::basicConcat(lhs, rhs, &temp);
 
 	// Concatenate Epoch Times
 	temp.epochs.clear();
@@ -190,7 +190,7 @@ tpat_bcr4bpr_nodeset operator +(const tpat_bcr4bpr_nodeset &lhs, const tpat_bcr4
  *	@brief Retrieve a pointer to the vector of epochs
  *	@return a pointer to the beginning of the epochs vector
  */
-std::vector<double>* tpat_bcr4bpr_nodeset::getEpochs(){ return &epochs; }
+std::vector<double>* tpat_nodeset_bcr4bpr::getEpochs(){ return &epochs; }
 
 /**
  *	@brief Retrieve a specifi epoch
@@ -199,7 +199,7 @@ std::vector<double>* tpat_bcr4bpr_nodeset::getEpochs(){ return &epochs; }
  *	give the second to last, etc.
  *	@return the epoch, non-dimensional units
  */
-double tpat_bcr4bpr_nodeset::getEpoch(int i) const {
+double tpat_nodeset_bcr4bpr::getEpoch(int i) const {
 	if(i < 0)
 		i += epochs.size();
 	return epochs.at(i);
@@ -209,13 +209,13 @@ double tpat_bcr4bpr_nodeset::getEpoch(int i) const {
  *	@brief  Retrieve a pointer to the system data object
  *	@return a pointer to the system data object for this nodeset
  */
-tpat_sys_data* tpat_bcr4bpr_nodeset::getSysData() { return &sysData; }
+tpat_sys_data* tpat_nodeset_bcr4bpr::getSysData() { return &sysData; }
 
 /**
  *	@brief Add an epoch to the nodeset
  *	@param t an epoch (non-dimensional time) to add
  */
-void tpat_bcr4bpr_nodeset::appendEpoch(double t){
+void tpat_nodeset_bcr4bpr::appendEpoch(double t){
 	epochs.push_back(t);
 }//=====================================
 
@@ -226,14 +226,14 @@ void tpat_bcr4bpr_nodeset::appendEpoch(double t){
  *	the vector.
  *	@param t the epoch time
  */
-void tpat_bcr4bpr_nodeset::insertEpoch(int idx, double t){
+void tpat_nodeset_bcr4bpr::insertEpoch(int idx, double t){
 	if(idx < 0)
 		idx += epochs.size();
 
 	epochs.insert(epochs.begin() + idx, t);
 }//=====================================
 
-void tpat_bcr4bpr_nodeset::reverseOrder(){
+void tpat_nodeset_bcr4bpr::reverseOrder(){
 	// Default reverse stuff
 	tpat_nodeset::reverseOrder();
 
@@ -246,7 +246,7 @@ void tpat_bcr4bpr_nodeset::reverseOrder(){
 /**
  *	@brief Print a textual representation of this object to the standard output
  */
-void tpat_bcr4bpr_nodeset::print() const {
+void tpat_nodeset_bcr4bpr::print() const {
 	printf("BCR4BPR Nodeset:\n  Nodes:\n");
 	for(int n = 0; n < getNumNodes(); n++){
 		printf("  > %02d -> @ %9.4f [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
@@ -276,7 +276,7 @@ void tpat_bcr4bpr_nodeset::print() const {
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_bcr4bpr_nodeset::saveToMat(const char* filename){
+void tpat_nodeset_bcr4bpr::saveToMat(const char* filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -308,7 +308,7 @@ void tpat_bcr4bpr_nodeset::saveToMat(const char* filename){
  *	@brief Save the epoch values to a file
  *	@param matFile a pointer to the destination matlab file
  */
-void tpat_bcr4bpr_nodeset::saveEpochs(mat_t *matFile){
+void tpat_nodeset_bcr4bpr::saveEpochs(mat_t *matFile){
 	size_t dims[2] = {epochs.size(), 1};
 	matvar_t *matvar = Mat_VarCreate("Epochs", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(epochs[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "Epochs", MAT_COMPRESSION_NONE);

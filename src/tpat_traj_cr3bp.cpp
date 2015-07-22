@@ -1,5 +1,5 @@
 /**
- *	@file tpat_cr3bp_traj.cpp
+ *	@file tpat_traj_cr3bp.cpp
  *
  *	CR3BP Trajectory
  */
@@ -24,8 +24,8 @@
  */
 #include "tpat.hpp"
 
-#include "tpat_cr3bp_traj.hpp"
-#include "tpat_cr3bp_nodeset.hpp"
+#include "tpat_traj_cr3bp.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_utilities.hpp"
 
@@ -36,34 +36,35 @@
 //-----------------------------------------------------
 
 /**
- *	@brief Default constructor; calls constructor for super-class tpat_trajectory
+ *	@brief Default constructor; calls constructor for super-class tpat_traj
  *	and additionall initializes the jacobi matrix
  */
-tpat_cr3bp_traj::tpat_cr3bp_traj() : tpat_trajectory(){
-	jacobi.clear();
+tpat_traj_cr3bp::tpat_traj_cr3bp() : tpat_traj(){
+	numExtraParam = 1;
 }//====================================================
 
 /**
  *	@brief Create a CR3BP trajectory object for the specified system
  *	@param data a system data object describing the system
  */
-tpat_cr3bp_traj::tpat_cr3bp_traj(tpat_cr3bp_sys_data data){
-	jacobi.clear();
+tpat_traj_cr3bp::tpat_traj_cr3bp(tpat_sys_data_cr3bp data){
+	numExtraParam = 1;
 	sysData = data;
 }//====================================================
 
 /**
  *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
-tpat_cr3bp_traj::tpat_cr3bp_traj(int n) : tpat_trajectory(n){
-	jacobi.reserve(n);
+tpat_traj_cr3bp::tpat_traj_cr3bp(int n) : tpat_traj(n){
+	numExtraParam = 1;
+	extraParam.reserve(n);
 }//====================================================
 
 /**
  *	@brief Copy the specified trajectory
  *	@param t trajectory
  */
-tpat_cr3bp_traj::tpat_cr3bp_traj(const tpat_cr3bp_traj &t) : tpat_trajectory(t){
+tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_traj_cr3bp &t) : tpat_traj(t){
 	copyMe(t);
 }//====================================================
 
@@ -77,18 +78,18 @@ tpat_cr3bp_traj::tpat_cr3bp_traj(const tpat_cr3bp_traj &t) : tpat_trajectory(t){
  *	@param nodes a nodeset
  *	@return a trajectory formed from the integrated nodeset
  */
-tpat_cr3bp_traj tpat_cr3bp_traj::fromNodeset(tpat_cr3bp_nodeset nodes){
+tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
 	tpat_sys_data *sysData = nodes.getSysData();
 	tpat_simulation_engine simEngine(*sysData);
-	tpat_cr3bp_traj totalTraj;
+	tpat_traj_cr3bp totalTraj;
 
 	for(int n = 0; n < nodes.getNumNodes()-1; n++){
 		simEngine.runSim(nodes.getNode(n), nodes.getTOF(n));
 
 		if(n == 0){
-			totalTraj = simEngine.getCR3BPTraj();
+			totalTraj = simEngine.getCR3BP_Traj();
 		}else{
-			tpat_cr3bp_traj temp = totalTraj + simEngine.getCR3BPTraj();
+			tpat_traj_cr3bp temp = totalTraj + simEngine.getCR3BP_Traj();
 			totalTraj = temp;
 		}
 	}
@@ -105,8 +106,8 @@ tpat_cr3bp_traj tpat_cr3bp_traj::fromNodeset(tpat_cr3bp_nodeset nodes){
  *	@param t a trajectory object
  *	@return this trajectory object
  */
-tpat_cr3bp_traj& tpat_cr3bp_traj::operator= (const tpat_cr3bp_traj& t){
-	tpat_trajectory::operator= (t);
+tpat_traj_cr3bp& tpat_traj_cr3bp::operator= (const tpat_traj_cr3bp& t){
+	tpat_traj::operator= (t);
 	copyMe(t);
 	return *this;
 }//=====================================================
@@ -115,9 +116,8 @@ tpat_cr3bp_traj& tpat_cr3bp_traj::operator= (const tpat_cr3bp_traj& t){
  *	@brief Copy all data objects specific to the CR3BP Trajectory
  *	@param t the source trajectory; copy its attributes into this one
  */
-void tpat_cr3bp_traj::copyMe(const tpat_cr3bp_traj &t){
+void tpat_traj_cr3bp::copyMe(const tpat_traj_cr3bp &t){
 	sysData = t.sysData;
-	jacobi = t.jacobi;
 }//=====================================================
 
 /**
@@ -135,7 +135,7 @@ void tpat_cr3bp_traj::copyMe(const tpat_cr3bp_traj &t){
  *	@param rhs a trajectory
  *	@return a new trajectory
  */
-tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rhs){
+tpat_traj_cr3bp operator +(const tpat_traj_cr3bp &lhs, const tpat_traj_cr3bp &rhs){
 	if(lhs.sysData != rhs.sysData){
 		throw tpat_exception("Cannot sum two CR3BP trajectories from different systems");
 	}
@@ -152,7 +152,7 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 	}
 
 	// create a new trajectory object with space for both sets of data to be combined
-	tpat_cr3bp_traj newTraj(lhs.sysData);
+	tpat_traj_cr3bp newTraj(lhs.sysData);
 
 	// Set the tolerance to the greater of the two
 	newTraj.setTol(t1 > t2 ? t1 : t2);
@@ -160,19 +160,19 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 	// Copy the states and times from the LHS into the new guy)
 	newTraj.getState()->insert(newTraj.getState()->begin(), lhs.state.begin(), lhs.state.end());
 	newTraj.getTime()->insert(newTraj.getTime()->begin(), lhs.times.begin(), lhs.times.end());
-	
+	newTraj.getAccel()->insert(newTraj.getAccel()->begin(), lhs.accel.begin(), lhs.accel.end());
+	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->begin(), lhs.extraParam.begin(), lhs.extraParam.end());
+
 	// Append the rhs state to the end of the new guy's state vector
-	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_cr3bp_traj::STATE_WIDTH, rhs.state.end());
+	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_traj_cr3bp::STATE_SIZE, rhs.state.end());
+	newTraj.getAccel()->insert(newTraj.getAccel()->end(), rhs.accel.begin()+skipShift*tpat_traj_cr3bp::ACCEL_SIZE, rhs.accel.end());
+	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->end(), rhs.extraParam.begin() +skipShift*lhs.numExtraParam, rhs.extraParam.end());
 
 	// Append the rhs times, adjusted for continuity, to the new guy's time vector; adjustments
 	// don't affect the result because system is autonomous
 	for (int n = skipShift; n < rhs.numPoints; n++){
 		newTraj.getTime()->push_back(lhs.times.back() + rhs.times.at(n) - rhs.times.at(0));
 	}
-
-	// Copy Jacobi constant
-	newTraj.getJC()->insert(newTraj.getJC()->begin(), lhs.jacobi.begin(), lhs.jacobi.end());
-	newTraj.getJC()->insert(newTraj.getJC()->end(), rhs.jacobi.begin()+skipShift, rhs.jacobi.end());
 
 	// Copy the lhs stm
 	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
@@ -187,19 +187,6 @@ tpat_cr3bp_traj operator +(const tpat_cr3bp_traj &lhs, const tpat_cr3bp_traj &rh
 	return newTraj;
 }//========================================
 
-/**
- *	@brief Add a new trajectory to the end of this one; concatenation, in short.
- *	@param rhs another trajectory
- *	@return the concatenated pair
- *	@seealso tpat_cr3bp_traj operator +()
- */
-tpat_cr3bp_traj& tpat_cr3bp_traj::operator +=(const tpat_cr3bp_traj &rhs){
-	tpat_cr3bp_traj temp(*this);
-	tpat_cr3bp_traj sum = temp + rhs;
-	(*this) = sum;
-	return *this;
-}//========================================
-
 //-----------------------------------------------------
 // 		Set and Get Functions
 //-----------------------------------------------------
@@ -211,10 +198,10 @@ tpat_cr3bp_traj& tpat_cr3bp_traj::operator +=(const tpat_cr3bp_traj &rhs){
  *	-2 will give the second to last value, etc.
  *	@return the Jacobi constant (non-dimensional)
  */
-double tpat_cr3bp_traj::getJC(int n) const{
+double tpat_traj_cr3bp::getJC(int n) const{
 	if(n < 0)
-		n += jacobi.size();
-	return jacobi[n];
+		n += extraParam.size();
+	return extraParam[n];
 }
 
 /**
@@ -222,42 +209,33 @@ double tpat_cr3bp_traj::getJC(int n) const{
  *	
  *	@return a pointer to the vector of Jacobi constants;
  */
-std::vector<double>* tpat_cr3bp_traj::getJC(){ return &jacobi; }
+std::vector<double>* tpat_traj_cr3bp::getJacobi(){ return &extraParam; }
+
+void tpat_traj_cr3bp::setLength() { tpat_traj::setLength(); }
 
 /**
  *	@brief Set the vector of Jacobi constant values for this trajectory
  *	@param j a vector of Jacobi constants
  */
-void tpat_cr3bp_traj::setJC(std::vector<double> j){ jacobi = j; }
+void tpat_traj_cr3bp::setJacobi(std::vector<double> j){ extraParam = j; }
 
 /**
  *	@brief Retrieve data about the system this trajectory was propagated in
  *	@return the system data object
  */
-tpat_cr3bp_sys_data tpat_cr3bp_traj::getSysData() const { return sysData; }
+tpat_sys_data_cr3bp tpat_traj_cr3bp::getSysData() const { return sysData; }
 
 
 /**
  *	@brief Set the system data for this trajectory
  *	@param d a system data object
  */
-void tpat_cr3bp_traj::setSysData(tpat_cr3bp_sys_data d){ sysData = d; }
+void tpat_traj_cr3bp::setSysData(tpat_sys_data_cr3bp d){ sysData = d; }
 
-tpat_sys_data::system_t tpat_cr3bp_traj::getType() const{
+tpat_sys_data::system_t tpat_traj_cr3bp::getType() const{
 	return sysData.getType();
-}
+}//=====================================================
 
-/**
- *	@brief Calls the basic trajectory setLength() method and implements extra catches
- *	specific to the CR3BP trajectory object
- */
-void tpat_cr3bp_traj::setLength(){
-	tpat_trajectory::setLength();
-	
-	if(jacobi.size() != times.size()){
-		printErr("Warning: Jacobi vector has different length than time vector!\n");
-	}
-}
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
@@ -266,7 +244,7 @@ void tpat_cr3bp_traj::setLength(){
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_cr3bp_traj::saveToMat(const char* filename){
+void tpat_traj_cr3bp::saveToMat(const char* filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -283,24 +261,15 @@ void tpat_cr3bp_traj::saveToMat(const char* filename){
 		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
+		saveAccel(matfp);
 		saveTime(matfp);
 		saveSTMs(matfp);
-		saveJacobi(matfp);
+		saveExtraParam(matfp, 0, 1, "Jacobi");
 		sysData.saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);
 }//========================================
-
-/**
- *	@brief Save the Jacobi vector to a file
- * 	@param matFile a pointer to the destination matlab file 
- */
-void tpat_cr3bp_traj::saveJacobi(mat_t *matFile){
-	size_t dims[2] = {static_cast<size_t>(numPoints), 1};
-	matvar_t *matvar = Mat_VarCreate("Jacobi", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(jacobi[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, "Jacobi", MAT_COMPRESSION_NONE);
-}//=================================================
 
 
 

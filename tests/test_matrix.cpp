@@ -252,8 +252,9 @@ bool test_eig(){
 	if(vals.size() != 3)
 		return false;
 
-	bool check4 = aboutEquals(real(vals[0]), 13.1015555756727, 1e-13) && imag(vals[0]) == 0;
-	bool check5 = aboutEquals(real(vals[1]), 0.44922221216366, 1e-13) && aboutEquals(imag(vals[1]), 0.164863116315263, 1e-13);
+	bool check4 = tpat_util::aboutEquals(real(vals[0]), 13.1015555756727, 1e-13) && imag(vals[0]) == 0;
+	bool check5 = tpat_util::aboutEquals(real(vals[1]), 0.44922221216366, 1e-13) && 
+		tpat_util::aboutEquals(imag(vals[1]), 0.164863116315263, 1e-13);
 	bool check6 = real(vals[2]) == real(vals[1]) && imag(vals[2]) == -1*imag(vals[1]);
 	bool matrix2Pass = check4 && check5 && check6;
 	return matrix1Pass && matrix2Pass;

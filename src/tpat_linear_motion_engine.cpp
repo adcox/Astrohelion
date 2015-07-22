@@ -26,11 +26,11 @@
 
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
-#include "tpat_cr3bp_sys_data.hpp"
-#include "tpat_cr3bp_traj.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_cr3bp.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
-#include "tpat_trajectory.hpp"
+#include "tpat_traj.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -87,7 +87,7 @@ const char* tpat_linear_motion_engine::getTypeStr(motion_t type) const{
  *		to the chosen Lagrange point
  *	@param sys the CR3BP system data object
  */
-tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], tpat_cr3bp_sys_data sys){
+tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], tpat_sys_data_cr3bp sys){
 
 	return getCR3BPLinear(L, r0, NONE, sys);
 }
@@ -101,7 +101,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], t
  *	@param type the type of linearized motion desired
  *	@param sysData the CR3BP system data object
  */
-tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, tpat_cr3bp_sys_data sysData){
+tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, tpat_sys_data_cr3bp sysData){
 
 	double mu = sysData.getMu();
 
@@ -116,7 +116,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	double xi0 = r0[0];		// Initial x-variation
 	double eta0 = r0[1];	// Initial y-variation
 
-	tpat_cr3bp_traj linTraj;
+	tpat_traj_cr3bp linTraj;
 
 	std::vector<double>* times = linTraj.getTime();
 	std::vector<double>* state = linTraj.getState();
@@ -125,7 +125,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	double xi_dot0;
 	double eta_dot0;
 	double period;
-	double zeros[7] = {0};
+	double zeros[tpat_traj_cr3bp::STATE_SIZE-2] = {0};
 
 	if(L < 4){
 		// Compute eigenvalues analytically
@@ -151,7 +151,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 					state->push_back(xi + LPtPos[0]);
 					state->push_back(eta + LPtPos[1]);
 
-					state->insert(state->end(), zeros, zeros+7);
+					state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 				}
 
 				xi_dot0 = s*eta0/beta3;
@@ -171,7 +171,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 					state->push_back(xi + LPtPos[0]);
 					state->push_back(eta + LPtPos[1]);
 
-					state->insert(state->end(), zeros, zeros+7);
+					state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 				}
 
 	            xi_dot0 = s*eta0/alpha;
@@ -221,7 +221,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 						state->push_back(xi + LPtPos[0]);
 						state->push_back(eta + LPtPos[1]);
 
-						state->insert(state->end(), zeros, zeros+7);
+						state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 					}
 
 					xi_dot0 = s1d*(eta0 - a1*xi0)/b1;
@@ -230,7 +230,6 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
                 case NONE: // for default behavior
 				case SPO:
 					period = 2*PI/s3d;
-					printf("period = %f\n", period);
 					for(double t = 0; t < rots*period; t+= t_step){
 		            	times->push_back(t);
 						xi = xi0*cos(s3d*t) + (eta0 - a3*xi0)/b3 * sin(s3d*t);
@@ -238,7 +237,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 						state->push_back(xi + LPtPos[0]);
 						state->push_back(eta + LPtPos[1]);
 
-						state->insert(state->end(), zeros, zeros+7);
+						state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 					}
 
 					xi_dot0 = s3d*(eta0 - a3*xi0)/b3;
@@ -258,7 +257,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 						state->push_back(xi + LPtPos[0]);
 						state->push_back(eta + LPtPos[1]);
 
-						state->insert(state->end(), zeros, zeros+7);
+						state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 					}
 
 					xi_dot0 = -2*C1*(s1d + nu*s3d);
@@ -280,7 +279,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 				state->push_back(xi + LPtPos[0]);
 				state->push_back(eta + LPtPos[1]);
 
-				state->insert(state->end(), zeros, zeros+7);
+				state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 			}
 
 			xi_dot0 = -s1d*(a1*xi0 - eta0)/b1;
@@ -300,7 +299,7 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	                    state->push_back(xi + LPtPos[0]);
 	                    state->push_back(eta + LPtPos[1]);
 
-	                    state->insert(state->end(), zeros, zeros+7);
+	                    state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
 					}
 
 					xi_dot0 = -xi0*p + q*(eta0 - a3*xi0)/b3;
@@ -326,12 +325,13 @@ tpat_cr3bp_traj tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	std::complex<double> p = sqrt(static_cast< std::complex<double> >(ddots[2]));
 	double s = p.imag();
 	for(int i = 0; i < ((int)times->size()); i++){
-		state->at(tpat_trajectory::STATE_WIDTH * i + 2) = 
+		state->at(tpat_traj::STATE_SIZE * i + 2) = 
 			zeta0*cos(s*times->at(i)) + zeta_dot0/s*sin(s*times->at(i)) + LPtPos[2];
 	}
 
 	// Make the Jacobi full of NAN and STM full of Identity matrices
-	linTraj.getJC()->assign(((int)times->size()), NAN);
+	linTraj.getAccel()->assign(tpat_traj_cr3bp::ACCEL_SIZE*(times->size()), NAN);
+	linTraj.getJacobi()->assign(((int)times->size()), NAN);
 	linTraj.getSTM()->assign(((int)times->size()), tpat_matrix::I(6));
 	linTraj.setLength();
 

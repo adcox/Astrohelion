@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
 #define H_LIN_MOTION
 
 // Forward delcarations
-class tpat_cr3bp_traj;
-class tpat_cr3bp_sys_data;
+class tpat_traj_cr3bp;
+class tpat_sys_data_cr3bp;
 
 /**
  *	@brief An engine that will generate a trajectory from the linearized CR3BP EOMs
@@ -55,8 +55,8 @@ class tpat_linear_motion_engine{
 		const char* getTypeStr(motion_t) const;
 
 		// Misc
-		tpat_cr3bp_traj getCR3BPLinear(int, double[3], tpat_cr3bp_sys_data);
-		tpat_cr3bp_traj getCR3BPLinear(int, double[3], motion_t, tpat_cr3bp_sys_data);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_sys_data_cr3bp);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], motion_t, tpat_sys_data_cr3bp);
 	private:
 		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;

@@ -68,6 +68,9 @@ tpat_sys_data& tpat_sys_data::operator =(const tpat_sys_data &d){
  *	@return whether or not they are the same
  */
 bool operator ==(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
+	if(lhs.type != rhs.type)
+		return false;
+
 	if(lhs.numPrimaries != rhs.numPrimaries)
 		return false;
 
@@ -75,7 +78,7 @@ bool operator ==(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
 		if(lhs.primIDs[p] != rhs.primIDs[p])
 			return false;
 	}
-
+	
 	return true;
 }//===========================================
 
@@ -156,9 +159,14 @@ std::string tpat_sys_data::getTypeStr() const{
 			return "Undefined System Type";
 		case tpat_sys_data::CR3BP_SYS:
 			return "CR3BP";
+		case tpat_sys_data::CR3BP_LTVP_SYS:
+			return "CR3BP, Low Thrust, Velocity-Pointing";
 		case tpat_sys_data::BCR4BPR_SYS:
 			return "BCR4BP, Rotating Coord.";
 		default:
 			return "Unrecognized value... May be a bug";
 	}
 }//=================================================
+
+
+//

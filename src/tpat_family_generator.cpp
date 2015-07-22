@@ -28,11 +28,11 @@
 #include "tpat_family_generator.hpp"
 
 #include "tpat_correction_engine.hpp"
-#include "tpat_cr3bp_family.hpp"
-#include "tpat_cr3bp_family_member.hpp"
-#include "tpat_cr3bp_nodeset.hpp"
-#include "tpat_cr3bp_sys_data.hpp"
-#include "tpat_cr3bp_traj.hpp"
+#include "tpat_family_cr3bp.hpp"
+#include "tpat_family_member_cr3bp.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_cr3bp.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_linear_motion_engine.hpp"
 #include "tpat_utilities.hpp"
@@ -160,11 +160,11 @@ void tpat_family_generator::copyMe(const tpat_family_generator &f){
  *	@param initStepSize the initial step-off in the z-dot direction
  *	@return an axial family
  */
-tpat_cr3bp_family tpat_family_generator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize){
-	tpat_cr3bp_family lyapFam(lyapFamFile);
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize){
+	tpat_family_cr3bp lyapFam(lyapFamFile);
 
-	tpat_cr3bp_family axialFam(lyapFam.getSysData());
-	axialFam.setSortType(tpat_cr3bp_family::SORT_X);
+	tpat_family_cr3bp axialFam(lyapFam.getSysData());
+	axialFam.setSortType(tpat_family_cr3bp::SORT_X);
 
 	// Set the simple step size to be negative if the user inputs a negative step-off distance
 	if(step_simple > 0 && initStepSize < 0)
@@ -190,7 +190,7 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	std::vector<int> fixStates {5};	// force z-dot to be non-zero
 	IC[5] += initStepSize;
 
-	tpat_cr3bp_traj firstAxial = cr3bp_getPeriodic(axialFam.getSysData(), IC, period,
+	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysData(), IC, period,
 		numNodes, MIRROR_X_AX_H, fixStates);
 
 	std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
@@ -217,11 +217,11 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
  *	@param initStepSize the size of the initial step away from the bifurcating
  *	Lyapunov orbit (non-dimensional units)
  */
-tpat_cr3bp_family tpat_family_generator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize){
-	tpat_cr3bp_family lyapFam(lyapFamFile);
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize){
+	tpat_family_cr3bp lyapFam(lyapFamFile);
 	
-	tpat_cr3bp_family haloFam(lyapFam.getSysData());
-	haloFam.setSortType(tpat_cr3bp_family::SORT_X);
+	tpat_family_cr3bp haloFam(lyapFam.getSysData());
+	haloFam.setSortType(tpat_family_cr3bp::SORT_X);
 
 	// Set the simple step size to be negative if the user inputs a negative step-off distance
 	if(step_simple > 0 && initStepSize < 0)
@@ -246,7 +246,7 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	std::vector<int> fixStates {2};	// force z to be out of plane
 	IC[2] += initStepSize;
 
-	tpat_cr3bp_traj firstHalo = cr3bp_getPeriodic(haloFam.getSysData(), IC, period,
+	tpat_traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysData(), IC, period,
 		numNodes, MIRROR_XZ, fixStates);
 
 	std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
@@ -273,7 +273,7 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
  *
  *	@return a family of orbits
  */
-tpat_cr3bp_family tpat_family_generator::cr3bp_generateLyap(tpat_cr3bp_sys_data sysData, int LPt, double x0){
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp sysData, int LPt, double x0){
 	if(LPt < 1 || LPt > 3)
 		throw tpat_exception("tpat_family_generator::cr3bp_generateLyap: Invalide LPt number");
 
@@ -283,14 +283,14 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateLyap(tpat_cr3bp_sys_data 
 	// Begin solving - get linear approximation at ICs
 	double r0[] = {x0, 0, 0};
 	tpat_linear_motion_engine linEngine;
-	tpat_cr3bp_traj linTraj = linEngine.getCR3BPLinear(LPt, r0,
+	tpat_traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
 		tpat_linear_motion_engine::ELLIP, sysData);
 
 	// Initialize variables and containers for data
-	tpat_cr3bp_family fam(sysData);
+	tpat_family_cr3bp fam(sysData);
 
 	// Lyapunov-specific settings
-	fam.setSortType(tpat_cr3bp_family::SORT_X);
+	fam.setSortType(tpat_family_cr3bp::SORT_X);
 	std::vector<int> indVars;
 	indVars.push_back(0);	// We're going to fix the x-coordinate in the corrector to keep it from slipping
 	indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
@@ -318,10 +318,10 @@ tpat_cr3bp_family tpat_family_generator::cr3bp_generateLyap(tpat_cr3bp_sys_data 
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
  */
-void tpat_family_generator::cr3bp_continueFamily(tpat_cr3bp_family *fam,
-	tpat_cr3bp_traj initialGuess, std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx){
+void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
+	tpat_traj_cr3bp initialGuess, std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx){
 
-	tpat_cr3bp_sys_data sys = fam->getSysData();
+	tpat_sys_data_cr3bp sys = fam->getSysData();
 
 	if(indVarIx.size() < 2)
 		throw tpat_exception("tpat_family_generator::cr3bp_continueFamily: Must specify two independent variables");
@@ -347,9 +347,9 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_cr3bp_family *fam,
 	double deltaVar1 = 1;
 	double deltaVar2 = 1;
 
-	std::vector<tpat_cr3bp_traj> members;
+	std::vector<tpat_traj_cr3bp> members;
 	while(orbitCount < numOrbits){
-		tpat_cr3bp_traj perOrbit;
+		tpat_traj_cr3bp perOrbit;
 		try{
 			printf("IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);
@@ -467,7 +467,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_cr3bp_family *fam,
 			std::vector<cdouble> eigVals = eig(mono);
 
 			// Add orbit to family
-			tpat_cr3bp_family_member child(perOrbit);
+			tpat_family_member_cr3bp child(perOrbit);
 			child.setEigVals(eigVals);
 			fam->addMember(child);
 		}// End of leftFamily?

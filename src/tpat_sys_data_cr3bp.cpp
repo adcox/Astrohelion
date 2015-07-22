@@ -1,7 +1,7 @@
 /**
- *	@tpat_cr3bp_sys_data.cpp
+ *	@tpat_sys_data_cr3bp.cpp
  *
- *	tpat_cr3bp_sys_data.cpp
+ *	tpat_sys_data_cr3bp.cpp
  *
  * 	System Data object specifically for CR3BP
  */
@@ -26,7 +26,7 @@
  */
 #include "tpat.hpp"
 
-#include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
  
 #include "tpat_body_data.hpp"
 #include "tpat_constants.hpp"
@@ -40,10 +40,10 @@
 /**
  *	@brief Default constructor
  */
-tpat_cr3bp_sys_data::tpat_cr3bp_sys_data() : tpat_sys_data(){
+tpat_sys_data_cr3bp::tpat_sys_data_cr3bp() : tpat_sys_data(){
 	numPrimaries = 2;
 	type = tpat_sys_data::CR3BP_SYS;
-	otherParams.assign(1,0);
+	otherParams.assign(1,0);	// make mu = 0
 }//========================================
 
 /**
@@ -51,10 +51,10 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data() : tpat_sys_data(){
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary; P2 must orbit P1
  */
-tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
+tpat_sys_data_cr3bp::tpat_sys_data_cr3bp(std::string P1, std::string P2){
 	numPrimaries = 2;
 	type = tpat_sys_data::CR3BP_SYS;
-	otherParams.assign(1,0);
+	otherParams.assign(1,0);	// make mu = 0
 	
 	initFromPrimNames(P1, P2);
 }//===================================================
@@ -64,7 +64,7 @@ tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(std::string P1, std::string P2){
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary
  */
-void tpat_cr3bp_sys_data::initFromPrimNames(std::string P1, std::string P2){
+void tpat_sys_data_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 	tpat_body_data p1Data(P1);
 	tpat_body_data p2Data(P2);
 
@@ -92,14 +92,14 @@ void tpat_cr3bp_sys_data::initFromPrimNames(std::string P1, std::string P2){
  *	@brief Copy constructor
  *	@param d
  */
-tpat_cr3bp_sys_data::tpat_cr3bp_sys_data(const tpat_cr3bp_sys_data &d) : tpat_sys_data(d){}
+tpat_sys_data_cr3bp::tpat_sys_data_cr3bp(const tpat_sys_data_cr3bp &d) : tpat_sys_data(d){}
 
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a CR3BP system data object
  *	@return this system data object
  */
-tpat_cr3bp_sys_data& tpat_cr3bp_sys_data::operator= (const tpat_cr3bp_sys_data &d){
+tpat_sys_data_cr3bp& tpat_sys_data_cr3bp::operator= (const tpat_sys_data_cr3bp &d){
 	tpat_sys_data::operator= (d);
 	return *this;
 }//===================================================
@@ -107,18 +107,18 @@ tpat_cr3bp_sys_data& tpat_cr3bp_sys_data::operator= (const tpat_cr3bp_sys_data &
 /**
  *	@return the non-dimensional mass ratio for the system
  */
-double tpat_cr3bp_sys_data::getMu() const { return otherParams.at(0); }
+double tpat_sys_data_cr3bp::getMu() const { return otherParams.at(0); }
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
-void tpat_cr3bp_sys_data::saveToMat(mat_t *matFile){
+void tpat_sys_data_cr3bp::saveToMat(mat_t *matFile){
 	size_t dims[2] = {1,1};
 
 	if(primaries.size() < 2){
 		printErr("Primaries size is %zu\n", primaries.size());
-		throw tpat_exception("tpat_cr3bp_sys_data::saveToMat: There are no primaries?");
+		throw tpat_exception("tpat_sys_data_cr3bp::saveToMat: There are no primaries?");
 	}
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
@@ -144,7 +144,7 @@ void tpat_cr3bp_sys_data::saveToMat(mat_t *matFile){
  *	names from a Mat file
  *	@param matFile a pointer to the Mat file in question
  */
-void tpat_cr3bp_sys_data::readFromMat(mat_t *matFile){
+void tpat_sys_data_cr3bp::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
 	initFromPrimNames(P1, P2);

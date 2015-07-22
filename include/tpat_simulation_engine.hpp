@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,15 +20,17 @@
 #ifndef H_SIMENGINE
 #define H_SIMENGINE
 
+#include "tpat_model.hpp"
 #include "tpat_event.hpp"
 #include "tpat_sys_data.hpp"
-#include "tpat_trajectory.hpp"
+#include "tpat_traj.hpp"
  
 #include <vector>
 
 // Forward declarations
-class tpat_bcr4bpr_traj;
-class tpat_cr3bp_traj;
+class tpat_traj_bcr4bpr;
+class tpat_traj_cr3bp;
+class tpat_traj_cr3bp_ltvp;
 
 /**
  *	@brief A small structure to store event occurrence records
@@ -47,7 +49,7 @@ public:
 
 /**
  *	@brief Performs numerical integration on any system type and produces an
- *	tpat_trajectory object
+ *	tpat_traj object
  *
  *	The simulation engine is the workhorse object for the TPAT. It
  *	holds functions to integrate equations of motion and is called by the 
@@ -100,15 +102,16 @@ class tpat_simulation_engine{
 		void addEvent(tpat_event::event_t, int, bool);
 		void addEvent(tpat_event);
 		double getAbsTol() const;
-		tpat_bcr4bpr_traj getBCR4BPRTraj() const;
-		tpat_cr3bp_traj getCR3BPTraj() const;
+		tpat_traj_bcr4bpr getBCR4BPR_Traj() const;
+		tpat_traj_cr3bp getCR3BP_Traj() const;
+		tpat_traj_cr3bp_ltvp getCR3BP_LTVP_Traj() const;
 		std::vector<tpat_event> getEndEvents() const;
 		std::vector<tpat_event> getEvents() const;
 		std::vector<eventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
 		bool usesRevTime() const;
-		tpat_trajectory getTraj() const;
+		tpat_traj getTraj() const;
 		bool isVerbose() const;
 		bool usesVarStepSize() const;
 		
@@ -137,7 +140,10 @@ class tpat_simulation_engine{
 		tpat_sys_data sysData;
 
 		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
-		tpat_trajectory *traj = 0;
+		tpat_traj *traj = 0;
+
+		/** Pointer to a dynamic model object; is set to non-null value when integration occurs */
+		tpat_model *model = 0;
 
 		/** Vector of events to consider during integration */
 		std::vector<tpat_event> events;

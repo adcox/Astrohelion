@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,12 +49,13 @@ class tpat_sys_data{
 		 *	one of the type values.
 		 */
 		enum system_t {
-			UNDEF_SYS,	//!< System type is undefined; no derivative type defined.
-			CR3BP_SYS,	//!< Circular Restricted 3-Body Problem; applies to tpat_cr3bp_sys_data
-			BCR4BPR_SYS //!< Bi-Circular Restricted 4-Body Problem, rotating frame; applies to tpat_bcr4bpr_sys_data
+			UNDEF_SYS,		//!< System type is undefined
+			CR3BP_SYS,		//!< Circular Restricted 3-Body Problem
+			CR3BP_LTVP_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
+			BCR4BPR_SYS 	//!< Bi-Circular Restricted 4-Body Problem, rotating frame
 		};
 
-		tpat_sys_data();	// Copy constructor is defined by compiler, should be fine
+		tpat_sys_data();
 		tpat_sys_data(const tpat_sys_data&);
 		virtual ~tpat_sys_data() {}
 		
@@ -64,12 +65,13 @@ class tpat_sys_data{
 		friend bool operator ==(const tpat_sys_data&, const tpat_sys_data&);
 		friend bool operator !=(const tpat_sys_data&, const tpat_sys_data&);
 
+		double getCharL() const;
+		double getCharM() const;
+		double getCharT() const;
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
 		int getPrimID(int n) const;
-		double getCharL() const;
-		double getCharT() const;
-		double getCharM() const;
+		int getStateWidth() const;
 		system_t getType() const;
 		std::string getTypeStr() const;
 		

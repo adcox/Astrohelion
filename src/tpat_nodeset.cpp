@@ -27,7 +27,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data.hpp"
-#include "tpat_trajectory.hpp"
+#include "tpat_traj.hpp"
 #include "tpat_utilities.hpp"
  
 #include <algorithm>
@@ -400,7 +400,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 
 	// Run the simulation and get the trajectory
 	engine.runSim(IC, t0, tof);
-	tpat_trajectory traj = engine.getTraj();
+	tpat_traj traj = engine.getTraj();
 
 	// printColor(BLUE, "    Retrieved trajectory\n");
 
@@ -414,7 +414,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 
 	double sumArclen = 0;
 	double desiredArclen = 0;
-	const int k = tpat_trajectory::STATE_WIDTH;
+	const int k = tpat_traj::STATE_SIZE;
 
 	// printColor(BLUE, "    Moving nodes from sim into nodeset\n");
 	for (int n = 0; n < traj.getLength(); n++){
@@ -478,7 +478,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void tpat_nodeset::initSetFromTraj(tpat_trajectory traj, tpat_sys_data *sysData, int numNodes, node_distro_t type){
+void tpat_nodeset::initSetFromTraj(tpat_traj traj, tpat_sys_data *sysData, int numNodes, node_distro_t type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getState(0);

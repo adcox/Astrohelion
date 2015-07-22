@@ -27,18 +27,23 @@
 #include "tpat_simulation_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_bcr4bpr_nodeset.hpp"
-#include "tpat_bcr4bpr_sys_data.hpp"
-#include "tpat_bcr4bpr_traj.hpp"
+#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bpr.hpp"
 #include "tpat_body_data.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
 #include "tpat_correction_engine.hpp"
-#include "tpat_cr3bp_nodeset.hpp"
-#include "tpat_cr3bp_sys_data.hpp"
-#include "tpat_cr3bp_traj.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_cr3bp.hpp"
+#include "tpat_sys_data_cr3bp_ltvp.hpp"
+#include "tpat_traj_cr3bp_ltvp.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
+#include "tpat_model_cr3bp.hpp"
+#include "tpat_model_cr3bp_ltvp.hpp"
+#include "tpat_model_bcr4bpr.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -104,13 +109,19 @@ void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
     // Copy the trajectory object using the correct casting
     switch(sysData.getType()){
         case tpat_sys_data::CR3BP_SYS:
-            traj = new tpat_cr3bp_traj(*(static_cast<tpat_cr3bp_traj *>(s.traj)));
+            traj = new tpat_traj_cr3bp(*static_cast<tpat_traj_cr3bp *>(s.traj));
+            model = new tpat_model_cr3bp(*static_cast<tpat_model_cr3bp *>(s.model));
+            break;
+        case tpat_sys_data::CR3BP_LTVP_SYS:
+            traj = new tpat_traj_cr3bp_ltvp(*static_cast<tpat_traj_cr3bp_ltvp *>(s.traj));
+            model = new tpat_model_cr3bp_ltvp(*static_cast<tpat_model_cr3bp_ltvp *>(s.model));
             break;
         case tpat_sys_data::BCR4BPR_SYS:
-            traj = new tpat_bcr4bpr_traj(*(static_cast<tpat_bcr4bpr_traj *>(s.traj)));
+            traj = new tpat_traj_bcr4bpr(*static_cast<tpat_traj_bcr4bpr *>(s.traj));
+            model = new tpat_model_cr3bp_ltvp(*static_cast<tpat_model_cr3bp_ltvp *>(s.model));
             break;
         default:
-            traj = new tpat_trajectory(*(s.traj));
+            throw tpat_exception("tpat_simulation_engine::copyEngine: Cannot copy engine with unknown type");
     }
 
     eomParams = 0;                              // void*, will get set again by the runSim() method
@@ -198,11 +209,11 @@ int tpat_simulation_engine::getNumSteps() const { return numSteps; }
  *  @brief Retrieve the trajectory as a generic trajectory object
  *  @return a trajectory object
  */
-tpat_trajectory tpat_simulation_engine::getTraj() const {
+tpat_traj tpat_simulation_engine::getTraj() const {
     // Make a copy and return that
-    tpat_trajectory temp (*traj);
+    tpat_traj temp (*traj);
     return temp;
-}
+}//==============================================================
 
 /**
  *  @brief Retrieve the CR3BP trajectory. 
@@ -214,13 +225,36 @@ tpat_trajectory tpat_simulation_engine::getTraj() const {
  *
  *  @return a CR3BP Trajectory object
  */
-tpat_cr3bp_traj tpat_simulation_engine::getCR3BPTraj() const{
+tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
     if(sysData.getType() == tpat_sys_data::CR3BP_SYS){
         /* Use a static cast to convert the general trajectory pointer
          * into a specific CR3BP trajectory pointer, then dereference
          * and return a COPY of the trajectory
          */
-        tpat_cr3bp_traj temp( *(static_cast<tpat_cr3bp_traj *>(traj) ) );
+        tpat_traj_cr3bp temp( *(static_cast<tpat_traj_cr3bp *>(traj) ) );
+        return temp;
+    }else{
+        throw tpat_exception("Wrong system type");
+    }
+}//==============================================
+
+/**
+ *  @brief Retrieve the CR3BP LTVP trajectory. 
+ *
+ *  To avoid static casts in driver programs,
+ *  we create several different getTraj() type functions that will perform
+ *  the static cast and return the specific type of trajectory object rather
+ *  than a generic one.
+ *
+ *  @return a CR3BP LTVP Trajectory object
+ */
+tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
+    if(sysData.getType() == tpat_sys_data::CR3BP_LTVP_SYS){
+        /* Use a static cast to convert the general trajectory pointer
+         * into a specific CR3BP trajectory pointer, then dereference
+         * and return a COPY of the trajectory
+         */
+        tpat_traj_cr3bp_ltvp temp( *(static_cast<tpat_traj_cr3bp_ltvp *>(traj) ) );
         return temp;
     }else{
         throw tpat_exception("Wrong system type");
@@ -237,10 +271,10 @@ tpat_cr3bp_traj tpat_simulation_engine::getCR3BPTraj() const{
  *
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
  */
-tpat_bcr4bpr_traj tpat_simulation_engine::getBCR4BPRTraj() const{
+tpat_traj_bcr4bpr tpat_simulation_engine::getBCR4BPR_Traj() const{
     if(sysData.getType() == tpat_sys_data::BCR4BPR_SYS){
         // Make a copy and return it
-        tpat_bcr4bpr_traj temp( *( static_cast<tpat_bcr4bpr_traj *>(traj) ) );
+        tpat_traj_bcr4bpr temp( *( static_cast<tpat_traj_bcr4bpr *>(traj) ) );
         return temp;
     }
     else{
@@ -427,17 +461,30 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
 	switch(sysData.getType()){
 		case tpat_sys_data::CR3BP_SYS:
 		{
-            // Initialize trajectory (will only have one set of values)
+            // Initialize trajectory
             printVerb(verbose, "  initializing CR3BP trajectory\n");
-            tpat_cr3bp_sys_data data = *static_cast<tpat_cr3bp_sys_data *>(&sysData);
-            traj = new tpat_cr3bp_traj(data);
+            tpat_sys_data_cr3bp* data = static_cast<tpat_sys_data_cr3bp *>(&sysData);
+            eomParams = data;
+            traj = new tpat_traj_cr3bp(*data);
+            model = new tpat_model_cr3bp();
 			break;
+        }
+        case tpat_sys_data::CR3BP_LTVP_SYS:
+        {
+            printVerb(verbose, "  initializing CR3BP LTVP trajectory\n");
+            tpat_sys_data_cr3bp_ltvp* data = static_cast<tpat_sys_data_cr3bp_ltvp *>(&sysData);
+            eomParams = data;
+            traj = new tpat_traj_cr3bp_ltvp(*data);
+            model = new tpat_model_cr3bp_ltvp();
+            break;
         }
 		case tpat_sys_data::BCR4BPR_SYS:
         {
             printVerb(verbose, "  initializing BCR4BPR trajectory\n");
-            tpat_bcr4bpr_sys_data data = *static_cast<tpat_bcr4bpr_sys_data *>(&sysData);
-            traj = new tpat_bcr4bpr_traj(data);
+            tpat_sys_data_bcr4bpr* data = static_cast<tpat_sys_data_bcr4bpr *>(&sysData);
+            eomParams = data;
+            traj = new tpat_traj_bcr4bpr(*data);
+            model = new tpat_model_bcr4bpr();
 			break;
         }
 		default:
@@ -469,51 +516,33 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
 void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     // Save tolerance for trajectory
     traj->setTol(absTol > relTol ? absTol : relTol);
-    
-    // Default IC dimension
-    int ic_dim = 42;
 
-    if(simpleIntegration){
-        ic_dim = 6;
-    }else{
-        if(sysData.getType() == tpat_sys_data::BCR4BPR_SYS){
-            ic_dim = 48;    // requires 6 extra states for numerically integrated epoch dependencies
-        }
-    }
+    // Get the dimension of the state vector for integration
+    int core = model->getCoreStateSize();
+    int ic_dim = core + (!simpleIntegration)*(model->getSTMStateSize() + model->getExtraStateSize());
     printVerb(verbose, "  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
-    std::copy(ic, ic+6, &(fullIC.front()));
+    std::copy(ic, ic + core, &(fullIC.front()));
 
-    if(ic_dim > 6){
-        fullIC.at(6) = 1;       // STM initial condition: 6x6 identity matrix
-        fullIC.at(13) = 1;
-        fullIC.at(20) = 1;
-        fullIC.at(27) = 1;
-        fullIC.at(34) = 1;
-        fullIC.at(41) = 1;      // Elements 42-48 for BCR4BPR ICs are all zero
+    // ASSUMPTION: STM follows immediately after core states; any extras come after the STM
+    if(!simpleIntegration){
+        fullIC.at(core + 0) = 1;       // STM initial condition: 6x6 identity matrix
+        fullIC.at(core + 7) = 1;
+        fullIC.at(core + 14) = 1;
+        fullIC.at(core + 21) = 1;
+        fullIC.at(core + 28) = 1;
+        fullIC.at(core + 35) = 1;      // Elements 42-48 for BCR4BPR ICs are all zero
     }
 
     int steps = 0;                      // count number of integration steps
-    double *y = &(fullIC.front());      // double "array" that is passed to the integrator
-
-    // set the parameters that will be given to the EOM function
-    setEOMParams();
+    double *y = &(fullIC.front());      // array of states that is passed to the integrator
 
     // Choose EOM function based on system type and simplicity
     printVerb(verbose, "  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
-    int (*eomFcn)(double, const double[], double[], void*) = 0;     // Pointer for the EOM function
-    switch(sysData.getType()){
-        case tpat_sys_data::CR3BP_SYS:
-            eomFcn = simpleIntegration ? &cr3bp_simple_EOMs : &cr3bp_EOMs;
-            break;
-        case tpat_sys_data::BCR4BPR_SYS:
-            eomFcn = simpleIntegration ? &bcr4bpr_simple_EOMs : &bcr4bpr_EOMs;
-            break;
-        default:
-            throw tpat_exception("Unknown sim system type");
-    }
+    int (*eomFcn)(double, const double[], double[], void*) = 
+        simpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
     // Create a system to integrate; we don't include a Jacobian (NULL)
     gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
@@ -543,7 +572,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     }
 
     // Save the initial state, time, and STM
-    saveIntegratedData(y, t[0]);
+    model->saveIntegratedData(y, t[0], traj);
 
     // Update all event functions with IC
     printVerb(verbose, "  sim will use %d event functions:\n", ((int)events.size()));
@@ -578,7 +607,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
 
             // Put newly integrated state and time into state vector
             if(!killSim)
-                saveIntegratedData(y, t0);
+                model->saveIntegratedData(y, t0, traj);
             
             steps++;
         }
@@ -610,7 +639,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            saveIntegratedData(y, t0);
+            model->saveIntegratedData(y, t0, traj);
             steps++;
         }
     }
@@ -634,96 +663,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     }
 
     traj->setLength();
-}//================================END of cr3bp_integrate
-
-/**
- *  @brief Take an integrated state and the time, and save those variables into the 
- *  appropriate vectors in the trajectory data object
- *
- *  @param y a pointer to the 42-element state array computed by the integrator
- *  @param t the time at which the integrated state occurs
- */
-void tpat_simulation_engine::saveIntegratedData(double *y, double t){
-
-    // Grab pointers to the trajectory object's vectors
-    std::vector<double>* state = traj->getState();       // hold the entire integrated state
-    std::vector<double>* times = traj->getTime();        // hold all times along trajectory
-    std::vector<tpat_matrix>* allSTM = traj->getSTM();   // hold all STM along trajectory
-
-    // Save the position and velocity states
-    for(int i = 0; i < 6; i++){
-        state->push_back(y[i]);
-    }
-
-    // printf("t=%5.2f :: %12.4f %12.4f %12.4f %12.4f %12.4f %12.4f\n", t, y[0], y[1], y[2], y[3], y[4], y[5]);
-
-    // Save time
-    times->push_back(t);
-
-    // Save STM
-    double stmElm[36];
-    std::copy(y+6, y+42, stmElm);
-    allSTM->push_back(tpat_matrix(6,6,stmElm));
-
-    // Compute acceleration
-    double dsdt[6] = {0};
-    switch(sysData.getType()){
-        case tpat_sys_data::CR3BP_SYS:
-        {
-            // Use the simple EOMs to compute the velocity/acceleration. 
-            cr3bp_simple_EOMs(0, y, dsdt, eomParams);
-
-            // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-            tpat_cr3bp_traj *cr3bpTraj = static_cast<tpat_cr3bp_traj*>(traj);
-            tpat_cr3bp_sys_data *cr3bpData = static_cast<tpat_cr3bp_sys_data *>(&sysData);
-            
-            cr3bpTraj->getJC()->push_back(cr3bp_getJacobi(y, cr3bpData->getMu()));
-            break;
-        }
-        case tpat_sys_data::BCR4BPR_SYS:
-        {
-            // Use simple EOMs to compute acceleration, stored in dsdt
-            bcr4bpr_simple_EOMs(t, y, dsdt, eomParams);
-
-            // Cast the trajectory to a BCR4BPR guy and save the dqdT data
-            tpat_bcr4bpr_traj *bcrTraj = static_cast<tpat_bcr4bpr_traj*>(traj);
-            bcrTraj->get_dqdT()->push_back(y[42]);
-            bcrTraj->get_dqdT()->push_back(y[43]);
-            bcrTraj->get_dqdT()->push_back(y[44]);
-            bcrTraj->get_dqdT()->push_back(y[45]);
-            bcrTraj->get_dqdT()->push_back(y[46]);
-            bcrTraj->get_dqdT()->push_back(y[47]);
-            break;
-        }
-        default:
-            throw tpat_exception("Unsupported system type");
-    }
-
-    // Save the accelerations
-    state->push_back(dsdt[3]);
-    state->push_back(dsdt[4]);
-    state->push_back(dsdt[5]);
-}//=========================================
-
-/**
- *  @brief Set the pointer for EOM Parameters for each type of system
- */
-void tpat_simulation_engine::setEOMParams(){
-    switch(sysData.getType()){
-        case tpat_sys_data::CR3BP_SYS:
-        {
-            eomParams = static_cast<tpat_cr3bp_sys_data *>(&sysData);
-            break;
-        }
-        case tpat_sys_data::BCR4BPR_SYS:
-        {
-            eomParams = static_cast<tpat_bcr4bpr_sys_data *>(&sysData);
-            break;
-        }
-        default:
-            throw tpat_exception("Unsupported system type");
-    }
-}//==============================================
+}//===============================================END of cr3bp_integrate
 
 /**
  *  @brief Locate event occurences as exactly as possible and determine if the simulation 
@@ -751,8 +691,6 @@ void tpat_simulation_engine::setEOMParams(){
  *  @param y the most recent state on the integrated arc.
  *  @param t the time associated with y
  *  @return whether or not the simulation should end (an event triggers killSim)
- *
- *  TODO: Implement a way to save information about which event is fired at which state
  */
 bool tpat_simulation_engine::locateEvents(double *y, double t){
     int numPts = traj->getTime()->size();
@@ -771,7 +709,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
             double ti = traj->getTime(-1);          // Time from the previous state
             double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
 
-            // Copy 6-element IC into vector - Use the state from two iterations ago to avoid
+            // Copy IC into vector - Use the state from two iterations ago to avoid
             // numerical problems when the previous state is REALLY close to the event
             std::vector<double> generalIC = traj->getState(-2);
 
@@ -785,125 +723,21 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
                 // waitForUser();
             }   
 
-            tpat_correction_engine corrector;
-            corrector.setVarTime(true);
-            corrector.setTol(absTol);
-            corrector.setVerbose(verbose);
-            corrector.setFindEvent(true);   // apply special settings to minimize computations
+            // Use correction to locate the event very accurately
+            if(model->locateEvent(events.at(ev), traj, model, &(generalIC[0]), t0, tof, verbose)){
+                // Remember that this event has occured; step # is one less than the current size
+                // of the trajectory's time vector
+                int timeSize = traj->getTime()->size();
+                eventRecord rec(ev, timeSize - 1);
+                eventOccurs.push_back(rec);
 
-            switch(sysData.getType()){
-                case tpat_sys_data::CR3BP_SYS:
-                {
-                    // Get the address of the IC
-                    double *ic = &(generalIC[0]);
-
-                    // Copy system data object
-                    tpat_cr3bp_sys_data crSysData(*static_cast<tpat_cr3bp_sys_data *>(&sysData));
-
-                    // Create a nodeset for this particular type of system
-                    printVerb(verbose, "  Creating nodeset for event location\n");
-                    tpat_cr3bp_nodeset eventNodeset(ic, crSysData, tof, 2, tpat_nodeset::DISTRO_TIME);
-
-                    // Constraint to keep first node unchanged
-                    tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, ic, 6);
-
-                    // Constraint to enforce event
-                    tpat_constraint eventCon(events.at(ev).getConType(),
-                        events.at(ev).getConNode(), events.at(ev).getConData());
-
-                    eventNodeset.addConstraint(fixFirstCon);
-                    eventNodeset.addConstraint(eventCon);
-
-                    if(verbose){ eventNodeset.print(); }
-
-                    printVerb(verbose, "  Applying corrections process to locate event\n");
-                    try{
-                        corrector.correct_cr3bp(&eventNodeset);
-                    }catch(tpat_diverge &e){
-                        printErr("Unable to locate event; corrector diverged\n");
-                        return false;
-                    }catch(tpat_linalg_err &e){
-                        printErr("LinAlg Err while locating event; bug in corrector!\n");
-                        return false;
-                    }
-
-                    // Because we set findEvent to true, this output nodeset should contain
-                    // the full (42 or 48 element) final state
-                    tpat_cr3bp_nodeset correctedNodes = corrector.getCR3BPOutput();
-                    std::vector<double> *nodes = correctedNodes.getNodes();
-
-                    // event time is the TOF of corrected path + time at the state we integrated from
-                    double eventTime = correctedNodes.getTOF(0) + t0;
-
-                    // Use the data stored in nodes and save the state and time of the event occurence
-                    saveIntegratedData(&(nodes->at(6)), eventTime);
-                    break;
+                if(events.at(ev).stopOnEvent()){
+                    printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
+                    return true;    // Tell the simulation to stop
+                }else{
+                    printVerbColor(verbose, GREEN, "**Completed Event Location, continuing integration**\n");
+                    return false;
                 }
-                case tpat_sys_data::BCR4BPR_SYS:
-                {
-                    // **** Make sure you fix the epoch of the first node as well as the states
-                    generalIC.push_back(t0);
-                    double *ic = &(generalIC[0]);
-
-                    // Copy system data object
-                    tpat_bcr4bpr_sys_data bcSysData(*static_cast<tpat_bcr4bpr_sys_data *>(&sysData));
-
-                    // Create a nodeset for this particular type of system
-                    printVerb(verbose, "  Creating nodeset for event location\n");
-                    tpat_bcr4bpr_nodeset eventNodeset(ic, bcSysData, t0,
-                        tof, 2, tpat_nodeset::DISTRO_TIME);
-
-                    // Constraint to keep first node unchanged
-                    tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, ic, 7);
-
-                    // Constraint to enforce event
-                    tpat_constraint eventCon(events.at(ev).getConType(),
-                        events.at(ev).getConNode(), events.at(ev).getConData());
-
-                    eventNodeset.addConstraint(fixFirstCon);
-                    eventNodeset.addConstraint(eventCon);
-
-                    if(verbose){ eventNodeset.print(); }
-
-                    printVerb(verbose, "  Applying corrections process to locate event\n");
-                    try{
-                        corrector.correct_bcr4bpr(&eventNodeset);
-                    }catch(tpat_diverge &e){
-                        printErr("Unable to locate event; corrector diverged\n");
-                        return false;
-                    }catch(tpat_linalg_err &e){
-                        printErr("LinAlg Err while locating event; bug in corrector!\n");
-                        return false;
-                    }
-
-                    // Because we set findEvent to true, this output nodeset should contain
-                    // the full (42 or 48 element) final state
-                    tpat_bcr4bpr_nodeset correctedNodes = corrector.getBCR4BPROutput();
-                    std::vector<double> *nodes = correctedNodes.getNodes();
-
-                    // event time is the TOF of corrected path + time at the state we integrated from
-                    double eventTime = correctedNodes.getTOF(0) + t0;
-
-                    // Use the data stored in nodes and save the state and time of the event occurence
-                    saveIntegratedData(&(nodes->at(6)), eventTime);
-                    break;
-                }
-                default:
-                    throw tpat_exception("Unsupported system type");
-            }
-            
-            // Remember that this event has occured; step # is one less than the current size
-            // of the trajectory's time vector
-            int timeSize = traj->getTime()->size();
-            eventRecord rec(ev, timeSize - 1);
-            eventOccurs.push_back(rec);
-
-            if(events.at(ev).stopOnEvent()){
-                printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
-                return true;    // Tell the simulation to stop
-            }else{
-                printVerbColor(verbose, GREEN, "**Completed Event Location, continuing integration**\n");
-                return false;
             }
         }// end of If(hasCrossed)
         // Save the distance and current state to the event
@@ -922,9 +756,12 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
  */
 void tpat_simulation_engine::cleanEngine(){
     printVerb(verbose, "Cleaning the engine...\n");
-    delete traj;   // de-allocate the memory
+    delete traj;    // de-allocate the memory
+    delete model;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
-    eomParams = 0;
+    model = 0;      // set pointer to 0 (null pointer)
+    eomParams = 0;  // set pointer to 0 (null pointer)
+
     eventOccurs.clear();
 
     isClean = true;

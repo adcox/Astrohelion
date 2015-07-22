@@ -1,14 +1,3 @@
-/**
- *	@file tpat_constants.hpp
- *	@brief Contains values for physical constants like pi, G, etc. and custom data wrappers
- *
- *
- *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
- */
-
 /*
  *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
@@ -28,23 +17,37 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef H_CONSTANTS
-#define H_CONSTANTS
 
-#include <complex>
- 
-// Custom types
-typedef std::complex<double> cdouble;	//!< A complex double
-typedef std::complex<int> cint;			//!< A complex integer
+#ifndef H_CR3BP_LTVP_SYS_DATA
+#define H_CR3BP_LTVP_SYS_DATA
 
-/** Universal Gravity Constant, km^3/kg-s^2 */
-const double G = 6.67384e-20;
+#include "tpat_sys_data_cr3bp.hpp"
 
-/** 1 G acceleration, km/s^2 */
-const double G_GRAV_0 = 9.8065/1000;
+/**
+ *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
+ */
+class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 
-/** Pi */
-const double PI = 3.14159265358979323846264338327950;
+	public:
+		tpat_sys_data_cr3bp_ltvp();
+		tpat_sys_data_cr3bp_ltvp(std::string, std::string, double, double, double);
+		tpat_sys_data_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp&);
+
+		tpat_sys_data_cr3bp_ltvp& operator=(const tpat_sys_data_cr3bp_ltvp&);
+		
+		double getIsp() const;
+		double getThrust() const;
+		double getM0() const;
+
+		void setIsp(double);
+		void setIspDim(double);
+		void setM0(double);
+		void setM0Dim(double);
+		void setThrust(double);
+		void setThrustDim(double);
+
+		void saveToMat(mat_t*);
+
+};
 
 #endif
-//END

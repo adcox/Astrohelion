@@ -3,25 +3,30 @@
 
 using namespace std;
 
-typedef struct thing{
-	int a;
-	int b;
-	int c;
-} thing;
+class Rectangle{
+public:
+	Rectangle(int w, int h) : width(w), height(h) {}
+	int getArea() { return width * height; }
+	int getPerimeter() {return 2*width + 2*height; }
+private:
+	int width;
+	int height;
+};
+
+class Square : public Rectangle{
+public:
+	Square(int s) : Rectangle(s, s) {}
+};
 
 int main(){
 	
-	thing t;
-	t.a = 1;
-	t.b = 2;
-	t.c = 3;
+	Square square(4);
+	Rectangle rect(2,3);
 
-	switch(t.a){
-		case 1:
-			printf("yay!\n"); break;
-		default:
-			printf("boooo\n");
-	}
+	Rectangle *cast_square = static_cast<Rectangle *>(&square);
+
+	Rectangle *rectPtr;
+	Rectangle *cast_try2 = static_cast<rectPtr>(&square);
 
 	return 0;
 }

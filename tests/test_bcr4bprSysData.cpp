@@ -2,7 +2,7 @@
  *	Test the System Data structure
  */
 
-#include "tpat_bcr4bpr_sys_data.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
 
 #include <iostream>
 #include <cstdio>
@@ -11,7 +11,7 @@ using namespace std;
 
 int main(void){
 
-	tpat_bcr4bpr_sys_data semData("sun", "earth", "moon");
+	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 
 	cout << "Data for system:" << endl;
 	cout << "  Type: " << semData.getTypeStr() << endl;

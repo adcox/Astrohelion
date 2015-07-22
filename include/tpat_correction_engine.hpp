@@ -1,8 +1,8 @@
 /*
- *	Astrodynamics Toolkit 
+ *	Trajectory Propagation and Analysis Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Astrodynamics Toolkit (TPAT).
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,10 +25,10 @@
 #include "tpat_sys_data.hpp"
 
 // Forward declarations
-class tpat_bcr4bpr_nodeset;
-class tpat_bcr4bpr_sys_data;
+class tpat_nodeset_bcr4bpr;
+class tpat_sys_data_bcr4bpr;
 class tpat_constraint;
-class tpat_cr3bp_nodeset;
+class tpat_nodeset_cr3bp;
 class tpat_matrix;
 class tpat_simulation_engine;
 class iterationData;
@@ -58,8 +58,8 @@ class tpat_correction_engine{
 		double getTol() const;
 		bool isVerbose() const;
 		bool isFindingEvent() const;
-		tpat_cr3bp_nodeset getCR3BPOutput();
-		tpat_bcr4bpr_nodeset getBCR4BPROutput();
+		tpat_nodeset_cr3bp getCR3BP_Output();
+		tpat_nodeset_bcr4bpr getBCR4BPR_Output();
 
 		void setVarTime(bool);
 		void setMaxIts(int);
@@ -68,8 +68,8 @@ class tpat_correction_engine{
 		void setFindEvent(bool);
 
 		// Utility/Action functions
-		void correct_cr3bp(tpat_cr3bp_nodeset*);
-		void correct_bcr4bpr(tpat_bcr4bpr_nodeset*);
+		void correct_cr3bp(tpat_nodeset_cr3bp*);
+		void correct_bcr4bpr(tpat_nodeset_bcr4bpr*);
 
 	private:
 		/** Whether or not to spit out lots of messages */
@@ -111,7 +111,7 @@ class tpat_correction_engine{
 		void targetMatchAll(iterationData*, tpat_constraint, int, int);
 		void targetMatchCust(iterationData*, tpat_constraint, int, int);
 		void targetDist(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
-		void targetSP(iterationData*, tpat_bcr4bpr_sys_data*, int, int);
+		void targetSP(iterationData*, tpat_sys_data_bcr4bpr*, int, int);
 		void targetJC(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
 		void updateDeltaVCon(iterationData*, tpat_sys_data*, int, int);
 		void updatePrimPos(iterationData*, tpat_sys_data*, double);

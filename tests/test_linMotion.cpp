@@ -2,8 +2,8 @@
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
-#include "tpat_cr3bp_sys_data.hpp"
-#include "tpat_cr3bp_traj.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
 #include "tpat_utilities.hpp"
 
@@ -23,8 +23,8 @@ void testEllip(){
 	double q0[] = {0.936915132364302, 0.1, 0, 0.065088146132374, -0.837227319488528, 0};
 	double q9[] = {0.937478813500055, 0.092443439352275};
 
-	tpat_cr3bp_traj traj = engine.getCR3BPLinear(1, r, tpat_linear_motion_engine::ELLIP,
-		"earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_traj_cr3bp traj = engine.getCR3BPLinear(1, r, tpat_linear_motion_engine::ELLIP, sys);
 	
 	for(int i = 0; i < 6; i++){
 		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
@@ -40,8 +40,8 @@ void testHyp(){
 	double q0[] = {1.25568216029234, 0.1, 0, -0.342515005674306, -0.136048780251457, 0};
 	double q9[] = {1.25261820440111, 0.098794357035758};
 
-	tpat_cr3bp_traj traj = engine.getCR3BPLinear(2, r, tpat_linear_motion_engine::HYP,
-		"earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_traj_cr3bp traj = engine.getCR3BPLinear(2, r, tpat_linear_motion_engine::HYP, sys);
 	
 	for(int i = 0; i < 6; i++){
 		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
@@ -57,8 +57,8 @@ void testSPO(){
 	double q0[] = {0.58784941573006, 0.966025403784439, 0, 0.221427092899258, -0.146427092899258, 0};
 	double q9[] = {0.589838545236831, 0.964703886338579};
 
-	tpat_cr3bp_traj traj = engine.getCR3BPLinear(4, r, tpat_linear_motion_engine::SPO,
-		"earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_traj_cr3bp traj = engine.getCR3BPLinear(4, r, tpat_linear_motion_engine::SPO, sys);
 
 	for(int i = 0; i < 6; i++){
 		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
@@ -74,8 +74,8 @@ void testLPO(){
 	double q0[] = {0.58784941573006, -0.766025403784439, 0, 0.0535729071007422, 0.0214270928992578, 0};
 	double q9[] = {0.58833121115652, -0.765832920338464};
 
-	tpat_cr3bp_traj traj = engine.getCR3BPLinear(5, r, tpat_linear_motion_engine::LPO,
-		"earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_traj_cr3bp traj = engine.getCR3BPLinear(5, r, tpat_linear_motion_engine::LPO, sys);
 	
 	for(int i = 0; i < 6; i++){
 		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
@@ -91,8 +91,8 @@ void testMPO(){
 	double q0[] = {0.58784941573006, -0.766025403784439, 0, 0.0770913737661744, 0.000873498086544126, 0};
 	double q9[] = {0.58854120640494, -0.766019806926301};
 
-	tpat_cr3bp_traj traj = engine.getCR3BPLinear(5, r, tpat_linear_motion_engine::MPO,
-		"earth", "moon");
+	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_traj_cr3bp traj = engine.getCR3BPLinear(5, r, tpat_linear_motion_engine::MPO, sys);
 	
 	for(int i = 0; i < 6; i++){
 		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
@@ -109,8 +109,8 @@ void testConverge(){
 	double q0[] = {0.491460111646493, 0.966025403784439, 0, 0.132761907938009, -0.180873270208478, 0};
 	double q9[] = {0.492647479254839, 0.964400034052942};
 
-	tpat_cr3bp_traj traj = engine.getCR3BPLinear(4, r, tpat_linear_motion_engine::CONVERGE,
-		"pluto", "charon");
+	tpat_sys_data_cr3bp sys("pluto", "charon");
+	tpat_traj_cr3bp traj = engine.getCR3BPLinear(4, r, tpat_linear_motion_engine::CONVERGE, sys);
 	
 	for(int i = 0; i < 6; i++){
 		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;

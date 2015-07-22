@@ -1,5 +1,5 @@
 /**
- *	@file tpat_bcr4bpr_sys_data.cpp
+ *	@file tpat_sys_data_bcr4bpr.cpp
  *
  * 	System Data object specifically for BCR4BP, rotating coordinates
  */
@@ -24,7 +24,7 @@
  */
 #include "tpat.hpp"
 
-#include "tpat_bcr4bpr_sys_data.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
  
 #include "tpat_body_data.hpp"
 #include "tpat_constants.hpp"
@@ -36,12 +36,12 @@
 #include <exception>
 
 // Static variable initialization
-double tpat_bcr4bpr_sys_data::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
+double tpat_sys_data_bcr4bpr::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
 
 /**
  *	@brief Default constructor
  */
-tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data() : tpat_sys_data(){
+tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr() : tpat_sys_data(){
 	numPrimaries = 3;
 	type = tpat_sys_data::BCR4BPR_SYS;
 	otherParams.assign(7,0);
@@ -53,7 +53,7 @@ tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data() : tpat_sys_data(){
  *	@param P2 the name of the medium primary; P2 must orbit P1
  *	@param P3 the name of the smallest primary; P3 must orbit P2
  */
-tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(std::string P1, std::string P2, std::string P3){
+tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(std::string P1, std::string P2, std::string P3){
 	numPrimaries = 3;
 	type = tpat_sys_data::BCR4BPR_SYS;
 	otherParams.assign(7,0);
@@ -67,7 +67,7 @@ tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(std::string P1, std::string P2, std
  *	@param P2 name of the larger primary in the secondary system
  *	@param P3 name of the smaller primary int he secondary system
  */
-void tpat_bcr4bpr_sys_data::initFromPrimNames(std::string P1, std::string P2, std::string P3){
+void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, std::string P3){
 	tpat_body_data p1Data(P1);
 	tpat_body_data p2Data(P2);
 	tpat_body_data p3Data(P3);
@@ -112,14 +112,14 @@ void tpat_bcr4bpr_sys_data::initFromPrimNames(std::string P1, std::string P2, st
  *	@brief Copy constructor
  *	@param d
  */
-tpat_bcr4bpr_sys_data::tpat_bcr4bpr_sys_data(const tpat_bcr4bpr_sys_data &d) : tpat_sys_data(d){}
+tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const tpat_sys_data_bcr4bpr &d) : tpat_sys_data(d){}
 
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a BCR4BPR system data object
  *	@return this system data object
  */
-tpat_bcr4bpr_sys_data& tpat_bcr4bpr_sys_data::operator= (const tpat_bcr4bpr_sys_data &d){
+tpat_sys_data_bcr4bpr& tpat_sys_data_bcr4bpr::operator= (const tpat_sys_data_bcr4bpr &d){
 	tpat_sys_data::operator= (d);
 	return *this;
 }//=====================================
@@ -127,63 +127,63 @@ tpat_bcr4bpr_sys_data& tpat_bcr4bpr_sys_data::operator= (const tpat_bcr4bpr_sys_
 /**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */
-double tpat_bcr4bpr_sys_data::getMu() const { return otherParams.at(0); }
+double tpat_sys_data_bcr4bpr::getMu() const { return otherParams.at(0); }
 
 /**
  *	@return the non-dimensional mass ratio for P3
  */
-double tpat_bcr4bpr_sys_data::getNu() const { return otherParams.at(1); }
+double tpat_sys_data_bcr4bpr::getNu() const { return otherParams.at(1); }
 
 /**
  *	@return the ratio between P3's orbital radius and P2's orbital radius, non-dimensional units
  */
-double tpat_bcr4bpr_sys_data::getCharLRatio() const { return otherParams.at(3); }
+double tpat_sys_data_bcr4bpr::getCharLRatio() const { return otherParams.at(3); }
 
 /**
  *	@return the scaling constant for this system
  */
-double tpat_bcr4bpr_sys_data::getK() const { return otherParams.at(2); }
+double tpat_sys_data_bcr4bpr::getK() const { return otherParams.at(2); }
 
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
  *	angle in radians
  */
-double tpat_bcr4bpr_sys_data::getTheta0() const { return otherParams.at(4); }
+double tpat_sys_data_bcr4bpr::getTheta0() const { return otherParams.at(4); }
 
 /**
  *	@return the angle between the P2/P3 line (projected onto inertial XY plane) and the 
  *	x-axis at time t = 0, angle in radians
  */
-double tpat_bcr4bpr_sys_data::getPhi0() const { return otherParams.at(5); }
+double tpat_sys_data_bcr4bpr::getPhi0() const { return otherParams.at(5); }
 
 /**
  *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane, radians.
  */
-double tpat_bcr4bpr_sys_data::getGamma() const { return otherParams.at(6); }
+double tpat_sys_data_bcr4bpr::getGamma() const { return otherParams.at(6); }
 
 /**
  *	@brief Set the angle theta0
  *	@param t angle in radians
  */
-void tpat_bcr4bpr_sys_data::setTheta0(double t){ otherParams.at(4) = t; }
+void tpat_sys_data_bcr4bpr::setTheta0(double t){ otherParams.at(4) = t; }
 
 /**
  *	@brief Set the angle phi0
  *	@param t angle in radians
  */
-void tpat_bcr4bpr_sys_data::setPhi0(double t){ otherParams.at(5) = t; }
+void tpat_sys_data_bcr4bpr::setPhi0(double t){ otherParams.at(5) = t; }
 
 /**
  *	@brief Set the angle gamma
  *	@param t angle in radians
  */
-void tpat_bcr4bpr_sys_data::setGamma(double t){ otherParams.at(6) = t; }
+void tpat_sys_data_bcr4bpr::setGamma(double t){ otherParams.at(6) = t; }
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
-void tpat_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
+void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile){
 	size_t dims[2] = {1,1};
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
@@ -220,7 +220,7 @@ void tpat_bcr4bpr_sys_data::saveToMat(mat_t *matFile){
  *	@brief Load system data from a mat file
  *	@param matFile a pointer to the mat file in question
  */
-void tpat_bcr4bpr_sys_data::readFromMat(mat_t *matFile){
+void tpat_sys_data_bcr4bpr::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P3 = readStringFromMat(matFile, "P3", MAT_T_UINT8, MAT_C_CHAR);

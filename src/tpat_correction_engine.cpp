@@ -1195,9 +1195,9 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 	int permSign;	// store sign (even/odd) of permutation matrix
 	int status;		// status for GSL functions
 	if(it->totalCons == it->totalFree){	// J is square, use regular inverse
-		// J.toCSV("J.csv");
-		// FX_mat.toCSV("FX.csv");
-		// oldX.toCSV("X.csv");
+		J.toCSV("J_old.csv");
+		FX_mat.toCSV("FX_old.csv");
+		oldX.toCSV("X_old.csv");
 		// waitForUser();
 
 		// Solve the system Jw = b
@@ -1217,11 +1217,9 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 		X_diff = tpat_matrix(w, false);
 	}else{
 		if(it->totalCons < it->totalFree){	// Under-constrained
-			if(it->count == 0){
-				J.toCSV("J.csv");
-				FX_mat.toCSV("FX.csv");
-				oldX.toCSV("X.csv");
-			}
+			J.toCSV("J_old.csv");
+			FX_mat.toCSV("FX_old.csv");
+			oldX.toCSV("X_old.csv");
 
 			// Compute Gramm matrix
 			tpat_matrix G = J*trans(J);

@@ -71,6 +71,9 @@ all: calcTest linMotionTest matrixTest nodesetTest simEngineTest sysSwitchTest u
 calcTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
 
+correctorTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_corrector.cpp -o $(BIN)/$@
+
 familyOps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
 

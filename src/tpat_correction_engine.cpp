@@ -26,18 +26,18 @@
 #include "tpat_correction_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_bcr4bpr_nodeset.hpp"
+#include "tpat_bcr4bpr_traj.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_constraint.hpp"
-#include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
+#include "tpat_cr3bp_nodeset.hpp"
+#include "tpat_cr3bp_traj.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data.hpp"
-#include "tpat_traj.hpp"
+#include "tpat_trajectory.hpp"
 #include "tpat_utilities.hpp"
 
 #include <algorithm>
@@ -60,15 +60,14 @@ class iterationData{
 		std::vector<double> DF;				//!< Jacobian Matrix
 		std::vector<double> deltaVs;		//!< nx3 vector of non-dim delta-Vs
 		std::vector<double> lastState;		//!< Final state on most recent integrated arc
-		std::vector<double> lastAccel;		//!< Final acceleration on most recent integrated arc
 		std::vector<double> last_dqdT;		//!< Final dqdT on most recent integrated arc
 		std::vector<double> primPos;		//!< Store the positions of the primaries
 		std::vector<double> primVel;		//!< Store the velocities of the primaries
 		std::vector<int> velConNodes;		//!< Indices of nodes that are continuous in velocity
 		std::vector<int> slackAssignCon;	//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows;			//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
-		tpat_traj newSeg;				//!< Most recent integrated arc
-		tpat_traj_bcr4bpr bcNewSeg;			//!< Most recent integrated arc, cast to BCR4BPR
+		tpat_trajectory newSeg;				//!< Most recent integrated arc
+		tpat_bcr4bpr_traj bcNewSeg;			//!< Most recent integrated arc, cast to BCR4BPR
 		tpat_matrix lastSTM = tpat_matrix(6,6);	//!< Final STM on most recent integrated arc
 
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
@@ -119,10 +118,10 @@ void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 		tpat_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
 		switch(type){
 			case tpat_sys_data::CR3BP_SYS:
-				nodeset_out = new tpat_nodeset_cr3bp (* static_cast<tpat_nodeset_cr3bp *>(e.nodeset_out));
+				nodeset_out = new tpat_cr3bp_nodeset (* static_cast<tpat_cr3bp_nodeset *>(e.nodeset_out));
 				break;
 			case tpat_sys_data::BCR4BPR_SYS:
-				nodeset_out = new tpat_nodeset_bcr4bpr (*static_cast<tpat_nodeset_bcr4bpr *>(e.nodeset_out));
+				nodeset_out = new tpat_bcr4bpr_nodeset (*static_cast<tpat_bcr4bpr_nodeset *>(e.nodeset_out));
 				break;
 			default: nodeset_out = 0; break;
 		}
@@ -186,11 +185,11 @@ double tpat_correction_engine::getTol() const { return tol; }
  *
  *	@return a CR3BP nodeset object with the corrected trajectory data stored inside
  */
-tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
+tpat_cr3bp_nodeset tpat_correction_engine::getCR3BPOutput(){
 	if(createdNodesetOut && receivedNodesetIn){
 		if(nodeset_in->getSysData()->getType() == tpat_sys_data::CR3BP_SYS){
 			// Create a copy of the nodeset, return it
-			tpat_nodeset_cr3bp temp( *(static_cast<tpat_nodeset_cr3bp *>(nodeset_out)) );
+			tpat_cr3bp_nodeset temp( *(static_cast<tpat_cr3bp_nodeset *>(nodeset_out)) );
 			return temp;
 		}else{
 			throw tpat_exception("Wrong system type");
@@ -208,11 +207,11 @@ tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
  *
  *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
  */
-tpat_nodeset_bcr4bpr tpat_correction_engine::getBCR4BPR_Output(){
+tpat_bcr4bpr_nodeset tpat_correction_engine::getBCR4BPROutput(){
 	if(createdNodesetOut && receivedNodesetIn){
 		if(nodeset_in->getSysData()->getType() == tpat_sys_data::BCR4BPR_SYS){
 			// Create a copy of the nodeset, return it
-			tpat_nodeset_bcr4bpr temp( *(static_cast<tpat_nodeset_bcr4bpr *>(nodeset_out)) );
+			tpat_bcr4bpr_nodeset temp( *(static_cast<tpat_bcr4bpr_nodeset *>(nodeset_out)) );
 			return temp;
 		}else{
 			throw tpat_exception("Wrong system type");
@@ -261,7 +260,7 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	@param set a pointer to a nodeset
  *	@throws a <tt>tpat_diverge</tt> exception if the corrector cannot converge on a solution
  */
-void tpat_correction_engine::correct_cr3bp(tpat_nodeset_cr3bp* set){
+void tpat_correction_engine::correct_cr3bp(tpat_cr3bp_nodeset* set){
 	if(!isClean)
 		cleanEngine();
 
@@ -276,7 +275,7 @@ void tpat_correction_engine::correct_cr3bp(tpat_nodeset_cr3bp* set){
  *	@param set a pointer to a nodeset
  *	@throws a <tt>tpat_diverge</tt> exception if the corrector cannot converge on a solution
  */
-void tpat_correction_engine::correct_bcr4bpr(tpat_nodeset_bcr4bpr* set){
+void tpat_correction_engine::correct_bcr4bpr(tpat_bcr4bpr_nodeset* set){
 	if(!isClean)
 		cleanEngine();
 
@@ -303,9 +302,9 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	printVerb(verbose, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	// Create specific nodeset objects using static_cast
-	tpat_nodeset_bcr4bpr *bcSet;
+	tpat_bcr4bpr_nodeset *bcSet;
 	if(sysType == tpat_sys_data::BCR4BPR_SYS)
-		bcSet = static_cast<tpat_nodeset_bcr4bpr *>(set);
+		bcSet = static_cast<tpat_bcr4bpr_nodeset *>(set);
 
 	// Create the initial state vector
 	it.X.clear();
@@ -482,7 +481,6 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 			if(n < it.numNodes-1){
 				// Clear old variables to avoid any potential issues
 				it.lastState.clear();
-				it.lastAccel.clear();
 				it.last_dqdT.clear();
 				it.lastSTM = tpat_matrix::I(6);
 				
@@ -502,12 +500,11 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 
 				// Determine the final state and final STM on the integrated segment
 				it.lastState = it.newSeg.getState(-1);
-				it.lastAccel = it.newSeg.getAccel(-1);
 				it.lastSTM = it.newSeg.getSTM(-1);
 
 				// Extract specific trajectory type for access to system-specific data
 				if(sysType == tpat_sys_data::BCR4BPR_SYS){
-					it.bcNewSeg = simEngine.getBCR4BPR_Traj();
+					it.bcNewSeg = simEngine.getBCR4BPRTraj();
 					it.last_dqdT = it.bcNewSeg.get_dqdT(-1);
 				}
 
@@ -544,7 +541,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 							if(sysType == tpat_sys_data::BCR4BPR_SYS){
 								updatePrimPos(&it, sysData, t0);
 								updatePrimVel(&it, sysData, t0);
-								targetSP(&it, static_cast<tpat_sys_data_bcr4bpr *>(sysData), n, row0);
+								targetSP(&it, static_cast<tpat_bcr4bpr_sys_data *>(sysData), n, row0);
 							}else{
 								throw tpat_exception("Cannot apply SP constraint to systems other than BCR4BPR");
 							}
@@ -688,10 +685,7 @@ void tpat_correction_engine::createPosVelCons(iterationData* it, tpat_sys_data::
 		// Columns of DF based on time constraints
 		if(varTime){
 			// Column of state derivatives: [vel; accel]
-			if(r < 3)
-				it->DF[it->totalFree*(it->pvConCount+r) + 6*it->numNodes+n] = it->lastState[r+3];
-			else
-				it->DF[it->totalFree*(it->pvConCount+r) + 6*it->numNodes+n] = it->lastAccel[r-3];
+			it->DF[it->totalFree*(it->pvConCount+r) + 6*it->numNodes+n] = it->lastState[r+3];
 
 			if(sysType == tpat_sys_data::BCR4BPR_SYS){
 				// Epoch dependencies
@@ -800,7 +794,7 @@ void tpat_correction_engine::targetMatchCust(iterationData* it, tpat_constraint 
 
 void tpat_correction_engine::targetJC(iterationData* it, tpat_constraint con, tpat_sys_data *sysData, int n, int row0){
 	std::vector<double> conData = con.getData();
-	tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *> (sysData);
+	tpat_cr3bp_sys_data *crSys = static_cast<tpat_cr3bp_sys_data *> (sysData);
 
 	// Compute the value of Jacobi at this node
 	double mu = crSys->getMu();
@@ -908,9 +902,9 @@ void tpat_correction_engine::targetDist(iterationData* it, tpat_constraint con,
  *	@param n the index of the node that is being constriant to colocate with the SP
  *	@param row0 the index of the first row for this constraint
  */
-void tpat_correction_engine::targetSP(iterationData* it, tpat_sys_data_bcr4bpr* sysData, int n, int row0){
+void tpat_correction_engine::targetSP(iterationData* it, tpat_bcr4bpr_sys_data* sysData, int n, int row0){
 
-	tpat_sys_data_bcr4bpr bcSysData = *sysData;
+	tpat_bcr4bpr_sys_data bcSysData = *sysData;
 
 	// Get primary positions at the specified epoch time
 	tpat_matrix primPos(3, 3, &(it->primPos[0]));
@@ -1090,7 +1084,7 @@ void tpat_correction_engine::updatePrimPos(iterationData* it, tpat_sys_data* sys
 			case tpat_sys_data::CR3BP_SYS:
 			{
 				it->primPos.assign(6,0);
-				tpat_sys_data_cr3bp *crSysData = static_cast<tpat_sys_data_cr3bp *>(sysData);
+				tpat_cr3bp_sys_data *crSysData = static_cast<tpat_cr3bp_sys_data *>(sysData);
 				it->primPos[0] = -1*crSysData->getMu();
 				it->primPos[3] = 1 - crSysData->getMu();
 				break;
@@ -1098,7 +1092,7 @@ void tpat_correction_engine::updatePrimPos(iterationData* it, tpat_sys_data* sys
 			case tpat_sys_data::BCR4BPR_SYS:
 			{
 				it->primPos.assign(9,0);
-				tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
+				tpat_bcr4bpr_sys_data *bcSysData = static_cast<tpat_bcr4bpr_sys_data *>(sysData);
 				bcr4bpr_getPrimaryPos(t, *(bcSysData), &(it->primPos[0]));
 				break;
 			}
@@ -1132,7 +1126,7 @@ void tpat_correction_engine::updatePrimVel(iterationData* it, tpat_sys_data* sys
 			case tpat_sys_data::BCR4BPR_SYS:
 			{
 				it->primVel.assign(9,0);
-				tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
+				tpat_bcr4bpr_sys_data *bcSysData = static_cast<tpat_bcr4bpr_sys_data *>(sysData);
 				bcr4bpr_getPrimaryVel(t, *(bcSysData), &(it->primVel[0]));
 				break;
 			}
@@ -1287,18 +1281,18 @@ void tpat_correction_engine::createOutput(iterationData *it){
 		case tpat_sys_data::CR3BP_SYS:
 		{
 			// Cast input nodeset to its specific type
-			tpat_nodeset_cr3bp *nodeInCast = static_cast<tpat_nodeset_cr3bp *>(nodeset_in);
+			tpat_cr3bp_nodeset *nodeInCast = static_cast<tpat_cr3bp_nodeset *>(nodeset_in);
 			// Copy that nodeset into the output guy
-			nodeset_out = new tpat_nodeset_cr3bp(*nodeInCast);
+			nodeset_out = new tpat_cr3bp_nodeset(*nodeInCast);
 			createdNodesetOut = true;
 			break;
 		}
 		case tpat_sys_data::BCR4BPR_SYS:
 		{
 			// Cast input nodeset to its specific type
-			tpat_nodeset_bcr4bpr *nodeInCast = static_cast<tpat_nodeset_bcr4bpr *>(nodeset_in);
+			tpat_bcr4bpr_nodeset *nodeInCast = static_cast<tpat_bcr4bpr_nodeset *>(nodeset_in);
 			// Copy that nodeset into the output guy
-			nodeset_out = new tpat_nodeset_bcr4bpr(*nodeInCast);
+			nodeset_out = new tpat_bcr4bpr_nodeset(*nodeInCast);
 			createdNodesetOut = true;
 			break;
 		}
@@ -1337,7 +1331,7 @@ void tpat_correction_engine::createOutput(iterationData *it){
 
 	// Clear the epoch vector and copy in the final, corrected epochs (if applicable)
 	if(sysType == tpat_sys_data::BCR4BPR_SYS){
-		tpat_nodeset_bcr4bpr *nodeOutCast = static_cast<tpat_nodeset_bcr4bpr *>(nodeset_out);
+		tpat_bcr4bpr_nodeset *nodeOutCast = static_cast<tpat_bcr4bpr_nodeset *>(nodeset_out);
 		std::vector<double> *epochs = nodeOutCast->getEpochs();
 		epochs->clear();
 		epochs->insert(epochs->begin(), X.begin() + 7*numNodes-1, X.begin() + 8*numNodes-1);

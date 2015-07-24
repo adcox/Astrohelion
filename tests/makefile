@@ -83,9 +83,6 @@ emFams: $(OBJECTS)
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
 
-lowThrustTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bp_lowThrust.cpp -o $(BIN)/$@
-
 maps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
 

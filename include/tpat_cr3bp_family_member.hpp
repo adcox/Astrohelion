@@ -1,8 +1,8 @@
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,32 +27,32 @@
 #include <string>
 #include <vector>
 
-class tpat_traj_cr3bp;
+class tpat_cr3bp_traj;
 
 /**
  *	@brief A data object to store information about a family member
  */
-class tpat_family_member_cr3bp{
+class tpat_cr3bp_family_member{
 	public:
-		tpat_family_member_cr3bp(){}
-		tpat_family_member_cr3bp(double*, double, double, double, double, double);
-		tpat_family_member_cr3bp(const tpat_traj_cr3bp);
-		tpat_family_member_cr3bp(const tpat_family_member_cr3bp&);
-		~tpat_family_member_cr3bp();
+		tpat_cr3bp_family_member(){}
+		tpat_cr3bp_family_member(double*, double, double, double, double, double);
+		tpat_cr3bp_family_member(const tpat_cr3bp_traj);
+		tpat_cr3bp_family_member(const tpat_cr3bp_family_member&);
+		~tpat_cr3bp_family_member();
 
-		tpat_family_member_cr3bp& operator= (const tpat_family_member_cr3bp&);
+		tpat_cr3bp_family_member& operator= (const tpat_cr3bp_family_member&);
 
 		std::vector<cdouble> getEigVals() const;
 		std::vector<double> getIC() const;
 		double getTOF() const;
-		double getJacobi() const; 
+		double getJC() const; 
 		double getXWidth() const;
 		double getYWidth() const;
 		double getZWidth() const;
 
 		void setEigVals(std::vector<cdouble>);
 		void setIC(std::vector<double>);
-		void setJacobi(double);
+		void setJC(double);
 		void setTOF(double);
 		void setXWidth(double);
 		void setYWidth(double);
@@ -68,7 +68,7 @@ class tpat_family_member_cr3bp{
 		double yWidth = NAN;		//!< Max width in y-direction, non-dim units
 		double zWidth = NAN;		//!< Max width in z-direction, non-dim units
 
-		void copyMe(const tpat_family_member_cr3bp&);
+		void copyMe(const tpat_cr3bp_family_member&);
 };
 
 #endif

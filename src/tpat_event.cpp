@@ -25,11 +25,10 @@
 #include "tpat_event.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_bcr4bpr_sys_data.hpp"
 #include "tpat_body_data.hpp"
 #include "tpat_calculations.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_sys_data_cr3bp_ltvp.hpp"
+#include "tpat_cr3bp_sys_data.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
  
@@ -317,23 +316,15 @@ double tpat_event::getDist(double y[6], double t) const{
 			switch(sysData->getType()){
 				case tpat_sys_data::CR3BP_SYS:
 				{
-					tpat_sys_data_cr3bp *crSysData = static_cast<tpat_sys_data_cr3bp*>(sysData);
+					tpat_cr3bp_sys_data *crSysData = static_cast<tpat_cr3bp_sys_data*>(sysData);
 					primPos.assign(6,0);
 					primPos[0] = -1*crSysData->getMu();
 					primPos[3] = 1 - crSysData->getMu();
 					break;
 				}
-				case tpat_sys_data::CR3BP_LTVP_SYS:
-				{
-					tpat_sys_data_cr3bp_ltvp *sys = static_cast<tpat_sys_data_cr3bp_ltvp*>(sysData);
-					primPos.assign(6,0);
-					primPos[0] = -1*sys->getMu();
-					primPos[3] = 1 - sys->getMu();
-					break;
-				}
 				case tpat_sys_data::BCR4BPR_SYS:
 				{
-					tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr*>(sysData);
+					tpat_bcr4bpr_sys_data *bcSysData = static_cast<tpat_bcr4bpr_sys_data*>(sysData);
 					primPos.assign(9, 0);
 					bcr4bpr_getPrimaryPos(t, *bcSysData, &(primPos[0]));
 					break;

@@ -10,10 +10,10 @@
  */
 
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,9 +39,6 @@ typedef std::complex<int> cint;			//!< A complex integer
 
 /** Universal Gravity Constant, km^3/kg-s^2 */
 const double G = 6.67384e-20;
-
-/** 1 G acceleration, km/s^2 */
-const double G_GRAV_0 = 9.8065/1000;
 
 /** Pi */
 const double PI = 3.14159265358979323846264338327950;

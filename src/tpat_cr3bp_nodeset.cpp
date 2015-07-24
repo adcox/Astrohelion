@@ -1,5 +1,5 @@
 /**
- *	@file tpat_nodeset_cr3bp.cpp
+ *	@file tpat_cr3bp_nodeset.cpp
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 
@@ -22,10 +22,10 @@
  */
 #include "tpat.hpp"
 
-#include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_cr3bp_nodeset.hpp"
 
-#include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
+#include "tpat_cr3bp_sys_data.hpp"
+#include "tpat_cr3bp_traj.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
  
@@ -34,13 +34,13 @@
 /**
  *	@brief Create a general CR3BP nodeset
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp() : tpat_nodeset(6){}
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset() : tpat_nodeset(6){}
 
 /**
  *	@brief Create a nodeset with specified system data
  *	@param data system data object
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp data) : tpat_nodeset(6){
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(tpat_cr3bp_sys_data data) : tpat_nodeset(6){
 	sysData = data;
 }
 
@@ -54,7 +54,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp data) : tpat_nodeset(
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, double tof,
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, double tof,
 	int numNodes, node_distro_t type) : tpat_nodeset(6){
 
 	sysData = data;
@@ -72,7 +72,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, d
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3bp data, double tof,
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(std::vector<double> IC, tpat_cr3bp_sys_data data, double tof,
 	int numNodes, node_distro_t type) : tpat_nodeset(6){
 
 	sysData = data;
@@ -90,7 +90,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, double tof, 
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(double IC[6], tpat_cr3bp_sys_data data, double tof, 
 	int numNodes) : tpat_nodeset(6){
 	sysData = data;
 
@@ -108,7 +108,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, d
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3bp data, double tof, 
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(std::vector<double> IC, tpat_cr3bp_sys_data data, double tof, 
 	int numNodes) : tpat_nodeset(6){
 	sysData = data;
 
@@ -123,7 +123,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
  *	@param traj the trajectory to split
  *	@param numNodes the number of nodes.
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpat_nodeset(6){
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(tpat_cr3bp_traj traj, int numNodes) : tpat_nodeset(6){
 	sysData = traj.getSysData();
 	initSetFromTraj(traj, &sysData, numNodes, tpat_nodeset::DISTRO_TIME);
 }//===========================================
@@ -135,7 +135,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpa
  *	@param numNodes the number of nodes.
  *	@param type the node distribution type
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(tpat_cr3bp_traj traj, int numNodes,
 	node_distro_t type) : tpat_nodeset(6){
 	
 	sysData = traj.getSysData();
@@ -148,7 +148,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
  *	@param index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp &orig, int first,
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset &orig, int first,
 	int last) : tpat_nodeset(orig, first, last){
 	
 	sysData = orig.sysData;
@@ -161,7 +161,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp &orig, int first
  *	handle copying the generic fields like state and tofs
  *	@param n a nodeset
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodeset(n){
+tpat_cr3bp_nodeset::tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset& n) : tpat_nodeset(n){
 	sysData = n.sysData;
 }
 
@@ -169,7 +169,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodes
  *	@brief Make this nodeset equal to the input nodeset
  *	@param n a nodeset
  */
-tpat_nodeset_cr3bp& tpat_nodeset_cr3bp::operator =(const tpat_nodeset_cr3bp& n){
+tpat_cr3bp_nodeset& tpat_cr3bp_nodeset::operator =(const tpat_cr3bp_nodeset& n){
 	tpat_nodeset::operator =(n);
 	sysData = n.sysData;
 	return *this;
@@ -188,25 +188,25 @@ tpat_nodeset_cr3bp& tpat_nodeset_cr3bp::operator =(const tpat_nodeset_cr3bp& n){
  *	@param rhs
  *	@return a nodeset containing the concatenated input nodesets
  */
-tpat_nodeset_cr3bp operator +(const tpat_nodeset_cr3bp &lhs, const tpat_nodeset_cr3bp &rhs){
+tpat_cr3bp_nodeset operator +(const tpat_cr3bp_nodeset &lhs, const tpat_cr3bp_nodeset &rhs){
 	if(lhs.sysData != rhs.sysData){
 		throw tpat_exception("Cannot add nodesets from different systems; please transform them to be in the same system");
 	}
 
-	tpat_nodeset_cr3bp temp(lhs.sysData);
-	tpat_nodeset_cr3bp::basicConcat(lhs, rhs, &temp);
+	tpat_cr3bp_nodeset temp(lhs.sysData);
+	tpat_cr3bp_nodeset::basicConcat(lhs, rhs, &temp);
 	return temp;
 }//=====================================================
 
 /**
  *	@return a pointer to the system data object stored in this nodeset
  */
-tpat_sys_data* tpat_nodeset_cr3bp::getSysData() { return &sysData; }
+tpat_sys_data* tpat_cr3bp_nodeset::getSysData() { return &sysData; }
 
 /**
  *	@brief Print a textual representation of this object to the standard output
  */
-void tpat_nodeset_cr3bp::print() const{
+void tpat_cr3bp_nodeset::print() const{
 	printf("CR3BP Nodeset:\n  Nodes:\n");
 	for(int n = 0; n < getNumNodes(); n++){
 		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
@@ -235,7 +235,7 @@ void tpat_nodeset_cr3bp::print() const{
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_nodeset_cr3bp::saveToMat(const char* filename){
+void tpat_cr3bp_nodeset::saveToMat(const char* filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional

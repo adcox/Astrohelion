@@ -1,8 +1,8 @@
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,13 +22,13 @@
 #define H_CR3BP_NODESET
 
 #include "tpat_nodeset.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_cr3bp_sys_data.hpp"
 
 #include <vector>
 
 // Forward declarations
-class tpat_sys_data_cr3bp;
-class tpat_traj_cr3bp;
+class tpat_cr3bp_sys_data;
+class tpat_cr3bp_traj;
 
 /**
  *	@brief This derivative of the tpat_nodeset contains additional information for 
@@ -41,30 +41,30 @@ class tpat_traj_cr3bp;
  *	@version May 21, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset_cr3bp : public tpat_nodeset{
+class tpat_cr3bp_nodeset : public tpat_nodeset{
 	public:
 		// *structors
-		tpat_nodeset_cr3bp();
-		tpat_nodeset_cr3bp(tpat_sys_data_cr3bp data);
-		tpat_nodeset_cr3bp(double[6], tpat_sys_data_cr3bp, double, int);
-		tpat_nodeset_cr3bp(std::vector<double>, tpat_sys_data_cr3bp, double, int);
-		tpat_nodeset_cr3bp(double[6], tpat_sys_data_cr3bp, double, int, node_distro_t);
-		tpat_nodeset_cr3bp(std::vector<double>, tpat_sys_data_cr3bp, double, int, node_distro_t);
-		tpat_nodeset_cr3bp(tpat_traj_cr3bp, int);
-		tpat_nodeset_cr3bp(tpat_traj_cr3bp, int, node_distro_t);
-		tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&, int, int);
-		tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&);
+		tpat_cr3bp_nodeset();
+		tpat_cr3bp_nodeset(tpat_cr3bp_sys_data data);
+		tpat_cr3bp_nodeset(double[6], tpat_cr3bp_sys_data, double, int);
+		tpat_cr3bp_nodeset(std::vector<double>, tpat_cr3bp_sys_data, double, int);
+		tpat_cr3bp_nodeset(double[6], tpat_cr3bp_sys_data, double, int, node_distro_t);
+		tpat_cr3bp_nodeset(std::vector<double>, tpat_cr3bp_sys_data, double, int, node_distro_t);
+		tpat_cr3bp_nodeset(tpat_cr3bp_traj, int);
+		tpat_cr3bp_nodeset(tpat_cr3bp_traj, int, node_distro_t);
+		tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset&, int, int);
+		tpat_cr3bp_nodeset(const tpat_cr3bp_nodeset&);
 
 		// Operators
-		tpat_nodeset_cr3bp& operator =(const tpat_nodeset_cr3bp&);
-		friend tpat_nodeset_cr3bp operator +(const tpat_nodeset_cr3bp&, const tpat_nodeset_cr3bp&);
+		tpat_cr3bp_nodeset& operator =(const tpat_cr3bp_nodeset&);
+		friend tpat_cr3bp_nodeset operator +(const tpat_cr3bp_nodeset&, const tpat_cr3bp_nodeset&);
 		
 		// Set and Gets
 		tpat_sys_data* getSysData();
 		void print() const;
 		void saveToMat(const char*);
 	private:
-		tpat_sys_data_cr3bp sysData; 	//!< Object holding information about the dynamical system
+		tpat_cr3bp_sys_data sysData; 	//!< Object holding information about the dynamical system
 };
 
 #endif

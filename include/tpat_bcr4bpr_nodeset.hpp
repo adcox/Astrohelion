@@ -1,8 +1,8 @@
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #define H_BCR4BPR_NODESET
 
 #include "tpat_nodeset.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_bcr4bpr_sys_data.hpp"
 #include "matio.h"
  
 #include <vector>
@@ -38,23 +38,23 @@
  *	@version May 21, 2015
  * 	@copyright GNU GPL v3.0
  */
-class tpat_nodeset_bcr4bpr : public tpat_nodeset{
+class tpat_bcr4bpr_nodeset : public tpat_nodeset{
 	public:
-		tpat_nodeset_bcr4bpr() : tpat_nodeset(6){}	//!< Default, do-nothing constructor
-		tpat_nodeset_bcr4bpr(tpat_sys_data_bcr4bpr);
-		tpat_nodeset_bcr4bpr(double[6], tpat_sys_data_bcr4bpr, double, double, int);
-		tpat_nodeset_bcr4bpr(std::vector<double>, tpat_sys_data_bcr4bpr, double, double, int);
-		tpat_nodeset_bcr4bpr(double[6], tpat_sys_data_bcr4bpr, double, double, int,
+		tpat_bcr4bpr_nodeset() : tpat_nodeset(6){}	//!< Default, do-nothing constructor
+		tpat_bcr4bpr_nodeset(tpat_bcr4bpr_sys_data);
+		tpat_bcr4bpr_nodeset(double[6], tpat_bcr4bpr_sys_data, double, double, int);
+		tpat_bcr4bpr_nodeset(std::vector<double>, tpat_bcr4bpr_sys_data, double, double, int);
+		tpat_bcr4bpr_nodeset(double[6], tpat_bcr4bpr_sys_data, double, double, int,
 			node_distro_t);
-		tpat_nodeset_bcr4bpr(std::vector<double>, tpat_sys_data_bcr4bpr, double, double, int,
+		tpat_bcr4bpr_nodeset(std::vector<double>, tpat_bcr4bpr_sys_data, double, double, int,
 			node_distro_t);
-		tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr&, int, int);
-		tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr&);
-		~tpat_nodeset_bcr4bpr();
+		tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset&, int, int);
+		tpat_bcr4bpr_nodeset(const tpat_bcr4bpr_nodeset&);
+		~tpat_bcr4bpr_nodeset();
 		
 
-		tpat_nodeset_bcr4bpr& operator =(const tpat_nodeset_bcr4bpr&);
-		friend tpat_nodeset_bcr4bpr operator +(const tpat_nodeset_bcr4bpr &, const tpat_nodeset_bcr4bpr &);
+		tpat_bcr4bpr_nodeset& operator =(const tpat_bcr4bpr_nodeset&);
+		friend tpat_bcr4bpr_nodeset operator +(const tpat_bcr4bpr_nodeset &, const tpat_bcr4bpr_nodeset &);
 		
 		std::vector<double>* getEpochs();
 		
@@ -69,7 +69,7 @@ class tpat_nodeset_bcr4bpr : public tpat_nodeset{
 
 	private:
 		std::vector<double> epochs;			//!< Vector of epochs, one for each node
-		tpat_sys_data_bcr4bpr sysData;		//!< System data object
+		tpat_bcr4bpr_sys_data sysData;		//!< System data object
 
 		void initEpochs(int, double);
 		void saveEpochs(mat_t*);

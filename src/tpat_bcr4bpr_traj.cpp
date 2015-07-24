@@ -1,5 +1,5 @@
 /**
- *	@file tpat_traj_bcr4bpr.cpp
+ *	@file tpat_bcr4bpr_traj.cpp
  *	
  */
 /*
@@ -23,7 +23,7 @@
  */
 #include "tpat.hpp"
 
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_bcr4bpr_traj.hpp"
 
 #include "tpat_utilities.hpp"
 
@@ -34,16 +34,18 @@
 /**
  *	@brief Construct a basic BCR4BPR trajectory object
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr() : tpat_traj() {
-	numExtraParam = 6;
+tpat_bcr4bpr_traj::tpat_bcr4bpr_traj() : tpat_trajectory() {
+	// dqdT.assign(6,0);
+	dqdT.clear();
 }
 
 /**
  *	@brief Construct a BCR4BPR trajectory object for the specified system
  *	@param data a system data object describing the BCR4BPR system
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr data){
-	numExtraParam = 6;
+tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(tpat_bcr4bpr_sys_data data){
+	// dqdT.assign(6,0);
+	dqdT.clear();
 	sysData = data;
 }//====================================================
 
@@ -51,16 +53,16 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr data){
  *	@brief Construct a BCR4BPR trajectory object with room for a specified number of states
  *	@param n the number of states this trajectory will contain
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(int n) : tpat_traj(n){
-	numExtraParam = 6;
-	extraParam.reserve(n*6);
+tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(int n) : tpat_trajectory(n){
+	// dqdT.assign(n*6,0);
+	dqdT.reserve(n*6);
 }//====================================================
 
 /**
  *	@brief Copy the specified trajectory
  *	@param t a BCR4BPR trajectory object
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr &t) : tpat_traj(t){
+tpat_bcr4bpr_traj::tpat_bcr4bpr_traj(const tpat_bcr4bpr_traj &t) : tpat_trajectory(t){
 	copyMe(t);
 }//====================================================
 
@@ -73,14 +75,15 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr &t) : tpat_traj(t){
  *	@param t a trajectory object
  *	@return this trajectory object
  */
-tpat_traj_bcr4bpr& tpat_traj_bcr4bpr::operator= (const tpat_traj_bcr4bpr& t){
-	tpat_traj::operator= (t);
+tpat_bcr4bpr_traj& tpat_bcr4bpr_traj::operator= (const tpat_bcr4bpr_traj& t){
+	tpat_trajectory::operator= (t);
 	copyMe(t);
 	return *this;
 }//====================================================
 
-void tpat_traj_bcr4bpr::copyMe(const tpat_traj_bcr4bpr &t){
+void tpat_bcr4bpr_traj::copyMe(const tpat_bcr4bpr_traj &t){
 	sysData = t.sysData;
+	dqdT = t.dqdT;
 }//====================================================
 
 /**
@@ -97,47 +100,28 @@ void tpat_traj_bcr4bpr::copyMe(const tpat_traj_bcr4bpr &t){
  *	@param rhs a trajectory
  *	@return a new trajectory
  */
-tpat_traj_bcr4bpr operator +(const tpat_traj_bcr4bpr &lhs, const tpat_traj_bcr4bpr &rhs){
+tpat_bcr4bpr_traj operator +(const tpat_bcr4bpr_traj &lhs, const tpat_bcr4bpr_traj &rhs){
 	if(lhs.sysData != rhs.sysData){
 		throw tpat_exception("Cannot sum two BCR4BPR trajectories from different systems!");
 	}
 
-	int skipShift = 1;
-	double t1 = lhs.getTol();
-	double t2 = rhs.getTol();
-	double tol = t1 > t2 ? t1 : t2;
-	if(tol == 0)
-		tol = 1e-9;
-
-	if(tpat_util::aboutEquals(lhs.getState(-1), rhs.getState(0), 100*tol)){
-		skipShift = 1;
-	}
-
 	// create a new trajectory object with space for both sets of data to be combined
-	tpat_traj_bcr4bpr newTraj(lhs.sysData);
+	tpat_bcr4bpr_traj newTraj(lhs.numPoints + rhs.numPoints);
 	
 	// Copy the states and times from the LHS into the new guy
-	newTraj.getState()->insert(newTraj.getState()->end(), lhs.state.begin(), lhs.state.end());
-	newTraj.getAccel()->insert(newTraj.getAccel()->end(), lhs.accel.begin(), lhs.accel.end());
-	newTraj.getTime()->insert(newTraj.getTime()->end(), lhs.times.begin(), lhs.times.end());
-	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->begin(), lhs.extraParam.begin(), lhs.extraParam.end());
+	std::copy(lhs.state.begin(), lhs.state.end(), newTraj.getState()->begin());
+	std::copy(lhs.times.begin(), lhs.times.end(), newTraj.getTime()->begin());
+	
+	// Append the rhs state and timeto the end of the new guy's vectors; don't adjust the
+	// time because the system is non-autonomous
+	std::copy(rhs.state.begin(), rhs.state.end(), newTraj.getState()->begin() + lhs.numPoints);
+	std::copy(rhs.times.begin(), rhs.times.end(), newTraj.getTime()->begin() + lhs.numPoints);
 
-	// Append the rhs state to the end of the new guy's state vector
-	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_traj_bcr4bpr::STATE_SIZE, rhs.state.end());
-	newTraj.getAccel()->insert(newTraj.getAccel()->end(), rhs.accel.begin()+skipShift*tpat_traj_bcr4bpr::ACCEL_SIZE, rhs.accel.end());
-	newTraj.getTime()->insert(newTraj.getTime()->end(), rhs.times.begin()+skipShift, rhs.times.end());
-	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->end(), rhs.extraParam.begin() +skipShift*lhs.numExtraParam, rhs.extraParam.end());
-
-	// Copy the lhs stm
-	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
-	// Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
-	for(size_t i = skipShift; i < rhs.allSTM.size(); i++){
-		tpat_matrix shiftedSTM = rhs.getSTM(i)*lhs.getSTM(-1);
-		newTraj.getSTM()->push_back(shiftedSTM);
-	}
-
-	newTraj.setLength();
-
+	// Copy only the lhs STMs, because there is no gaurantee the two summed trajectories
+	// will be continuous and smooth in time and state; same for dqdT
+	std::copy(lhs.allSTM.begin(), lhs.allSTM.end(), newTraj.getSTM()->begin());
+	std::copy(lhs.dqdT.begin(), lhs.dqdT.end(), newTraj.get_dqdT()->begin());
+	
 	return newTraj;
 }//========================================
 
@@ -148,31 +132,31 @@ tpat_traj_bcr4bpr operator +(const tpat_traj_bcr4bpr &lhs, const tpat_traj_bcr4b
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis, radians
  */
-double tpat_traj_bcr4bpr::getTheta0(){ return sysData.getTheta0(); }
+double tpat_bcr4bpr_traj::getTheta0(){ return sysData.getTheta0(); }
 
 /**
  *	@return the angle between the P2/P3 line (projected into the inertial XY plane)
  *	and the inertial x-axis, radians
  */
-double tpat_traj_bcr4bpr::getPhi0(){ return sysData.getPhi0(); }
+double tpat_bcr4bpr_traj::getPhi0(){ return sysData.getPhi0(); }
 
 /**
  *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital
  *	plane, radians
  */
-double tpat_traj_bcr4bpr::getGamma(){ return sysData.getGamma(); }
+double tpat_bcr4bpr_traj::getGamma(){ return sysData.getGamma(); }
 
 /**
  *	@return the system data object describing this system
  */
-tpat_sys_data_bcr4bpr tpat_traj_bcr4bpr::getSysData(){ return sysData; }
+tpat_bcr4bpr_sys_data tpat_bcr4bpr_traj::getSysData(){ return sysData; }
 
 /**
  *	@brief Retrieve a pointer to the dqdT array for in-place editing.
  *	
  *	@return a pointer to the vector of dqdT values;
  */
-std::vector<double>* tpat_traj_bcr4bpr::get_dqdT(){ return &extraParam; }
+std::vector<double>* tpat_bcr4bpr_traj::get_dqdT(){ return &dqdT; }
 
 /**
  *	@param i the index of the dqdT vector to retrieve
@@ -180,35 +164,45 @@ std::vector<double>* tpat_traj_bcr4bpr::get_dqdT(){ return &extraParam; }
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
  */
-std::vector<double> tpat_traj_bcr4bpr::get_dqdT(int i){
+std::vector<double> tpat_bcr4bpr_traj::get_dqdT(int i){
 	if(i < 0)
-		i += extraParam.size()/6;
+		i += dqdT.size()/6;
 	
-	std::vector<double> temp(extraParam.begin()+i*6, extraParam.begin()+(i+1)*6);
+	std::vector<double> temp(dqdT.begin()+i*6, dqdT.begin()+(i+1)*6);
 	return temp;
 }//===============================================
 
-tpat_sys_data::system_t tpat_traj_bcr4bpr::getType() const{
+tpat_sys_data::system_t tpat_bcr4bpr_traj::getType() const{
 	return sysData.getType();
-}//===============================================
-
-void tpat_traj_bcr4bpr::setLength() { tpat_traj::setLength(); }
+}
 
 /**
  *	@brief Set the system data object
  *	@param data a data object describing the BCR4BP
  */
-void tpat_traj_bcr4bpr::setSysData(tpat_sys_data_bcr4bpr data){ sysData = data; }
+void tpat_bcr4bpr_traj::setSysData(tpat_bcr4bpr_sys_data data){ sysData = data; }
 
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
 
 /**
+ *	@brief Calls the basic trajectory setLength() method and implements extra catches
+ *	specific to the BCR4BPR trajectory object
+ */
+void tpat_bcr4bpr_traj::setLength(){
+	tpat_trajectory::setLength();
+
+	if(dqdT.size()/6 != times.size()){
+		printErr("Warning: dqdT vector has different length than time vector!\n");
+	}
+}//================================
+
+/**
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj_bcr4bpr::saveToMat(const char* filename){
+void tpat_bcr4bpr_traj::saveToMat(const char* filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -225,18 +219,21 @@ void tpat_traj_bcr4bpr::saveToMat(const char* filename){
 		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
-		saveAccel(matfp);
 		saveTime(matfp);
 		saveSTMs(matfp);
-		saveExtraParam(matfp, 0, 6, "dqdT");
+		save_dqdT(matfp);
 		sysData.saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);
 }//========================================
 
-
-
-
-
-//
+/**
+ *	@brief Save the Jacobi vector to a file
+ * 	@param matFile a pointer to the destination matlab file 
+ */
+void tpat_bcr4bpr_traj::save_dqdT(mat_t *matFile){
+	size_t dims[2] = {static_cast<size_t>(numPoints), 6};
+	matvar_t *matvar = Mat_VarCreate("dqdT", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(dqdT[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, matvar, "dqdT", MAT_COMPRESSION_NONE);
+}//=================================================

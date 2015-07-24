@@ -4,8 +4,8 @@
 
 #include "tpat/tpat_ascii_output.hpp"
 #include "tpat/tpat_constants.hpp"
-#include "tpat/tpat_sys_data_cr3bp.hpp"
-#include "tpat/tpat_traj_cr3bp.hpp"
+#include "tpat/tpat_cr3bp_sys_data.hpp"
+#include "tpat/tpat_cr3bp_traj.hpp"
 #include "tpat/tpat_simulation_engine.hpp"
 #include "tpat/tpat_utilities.hpp"
 
@@ -15,9 +15,9 @@
 
 using namespace std;
 
-void computeMap(vector<double> ICs, int numReturns, double C, tpat_sys_data_cr3bp sysData){
+void computeMap(vector<double> ICs, int numReturns, double C, tpat_cr3bp_sys_data sysData){
 	int numICs = ICs.size()/6;
-	tpat_sys_data_cr3bp tempSysData(sysData);
+	tpat_cr3bp_sys_data tempSysData(sysData);
 
 	printf("Beginning map creation for C = %.2f\n", C);
 	printf("  Will integrate %d orbits, %d total integrations\n", numICs, 
@@ -40,7 +40,7 @@ void computeMap(vector<double> ICs, int numReturns, double C, tpat_sys_data_cr3b
 			// 	IC[0], IC[1], IC[2], IC[3], IC[4], IC[5]);
 
 			engine.runSim(&(IC[0]), 6*PI);
-			tpat_traj_cr3bp traj = engine.getCR3BPTraj();
+			tpat_cr3bp_traj traj = engine.getCR3BPTraj();
 			int trajEnd = traj.getLength()-1;
 			vector<double> lastState = traj.getState(trajEnd);
 
@@ -89,7 +89,7 @@ void computeMap(vector<double> ICs, int numReturns, double C, tpat_sys_data_cr3b
 }//==========================================
 
 int main(void){
-	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_cr3bp_sys_data sys("earth", "moon");
 	double mu = sys.getMu();
 	double y = 0;
 	double C = 3.01;

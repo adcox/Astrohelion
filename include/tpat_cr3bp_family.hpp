@@ -1,8 +1,8 @@
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 #ifndef H_FAMILIY
 #define H_FAMILIY
 
-#include "tpat_family_member_cr3bp.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_cr3bp_family_member.hpp"
+#include "tpat_cr3bp_sys_data.hpp"
 
 #include "matio.h"
 
@@ -38,7 +38,7 @@ class tpat_constraint;
  *
  *	Currently, this structure assumes family members are periodic.
  */
-class tpat_family_cr3bp{
+class tpat_cr3bp_family{
 	public:
 		/**
 		 *	@brief How to sort members of this family
@@ -68,25 +68,25 @@ class tpat_family_cr3bp{
 		};
 
 		// *structors
-		tpat_family_cr3bp(tpat_sys_data_cr3bp);
-		tpat_family_cr3bp(const char*);
-		tpat_family_cr3bp(const tpat_family_cr3bp&);
-		~tpat_family_cr3bp();
+		tpat_cr3bp_family(tpat_cr3bp_sys_data);
+		tpat_cr3bp_family(const char*);
+		tpat_cr3bp_family(const tpat_cr3bp_family&);
+		~tpat_cr3bp_family();
 
 		// Operators
-		tpat_family_cr3bp& operator= (const tpat_family_cr3bp&);
+		tpat_cr3bp_family& operator= (const tpat_cr3bp_family&);
 
 		// Set and Get Methods
-		void addMember(tpat_family_member_cr3bp);
+		void addMember(tpat_cr3bp_family_member);
 		
-		tpat_family_member_cr3bp getMember(int) const;
-		std::vector<tpat_family_member_cr3bp> getMemberByStateVar(double, int) const;
-		std::vector<tpat_family_member_cr3bp> getMemberByTOF(double) const;
-		std::vector<tpat_family_member_cr3bp> getMemberByJacobi(double) const;
+		tpat_cr3bp_family_member getMember(int) const;
+		std::vector<tpat_cr3bp_family_member> getMemberByStateVar(double, int) const;
+		std::vector<tpat_cr3bp_family_member> getMemberByTOF(double) const;
+		std::vector<tpat_cr3bp_family_member> getMemberByJacobi(double) const;
 		std::string getName() const;
 		sortVar_t getSortType() const;
 		const char* getSortTypeStr() const;
-		tpat_sys_data_cr3bp getSysData() const;
+		tpat_cr3bp_sys_data getSysData() const;
 
 		void setName(std::string);
 		void setSortType(sortVar_t);
@@ -100,8 +100,8 @@ class tpat_family_cr3bp{
 
 	protected:
 		std::string name = "NULL";						//!< Descriptive name of the family
-		std::vector<tpat_family_member_cr3bp> members;	//!< Contains all family members
-		tpat_sys_data_cr3bp sysData;					//!< Describes the system this family exists in
+		std::vector<tpat_cr3bp_family_member> members;	//!< Contains all family members
+		tpat_cr3bp_sys_data sysData;					//!< Describes the system this family exists in
 		sortVar_t sortType = SORT_X;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
@@ -113,9 +113,9 @@ class tpat_family_cr3bp{
 		const char* EIG_VAR_NAME = "Eigenvalues";
 		const size_t DATA_WIDTH = 11;
 
-		void copyMe(const tpat_family_cr3bp&);
+		void copyMe(const tpat_cr3bp_family&);
 		std::vector<int> findMatches(double, std::vector<double>*) const;
-		std::vector<tpat_family_member_cr3bp> getMatchingMember(double, std::vector<double>*, tpat_constraint) const;
+		std::vector<tpat_cr3bp_family_member> getMatchingMember(double, std::vector<double>*, tpat_constraint) const;
 		void getCoord(int, std::vector<double>*) const;
 
 		void loadMemberData(mat_t*);

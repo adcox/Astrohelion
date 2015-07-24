@@ -1,8 +1,8 @@
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,20 +32,20 @@
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_sys_data_cr3bp : public tpat_sys_data{
+class tpat_cr3bp_sys_data : public tpat_sys_data{
 	public:
-		tpat_sys_data_cr3bp();
-		tpat_sys_data_cr3bp(std::string, std::string);
-		tpat_sys_data_cr3bp(const tpat_sys_data_cr3bp&);
+		tpat_cr3bp_sys_data();
+		tpat_cr3bp_sys_data(std::string, std::string);
+		tpat_cr3bp_sys_data(const tpat_cr3bp_sys_data&);
 
-		tpat_sys_data_cr3bp& operator=(const tpat_sys_data_cr3bp&);
+		tpat_cr3bp_sys_data& operator=(const tpat_cr3bp_sys_data&);
 		
 		double getMu() const;
 
 		void saveToMat(mat_t*);
 		void readFromMat(mat_t*);
 		
-	protected:
+	private:
 		void initFromPrimNames(std::string, std::string);
 };
 

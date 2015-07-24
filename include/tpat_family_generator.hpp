@@ -26,9 +26,9 @@
 #include <vector>
 
 // forward declarations
-class tpat_family_cr3bp;
-class tpat_sys_data_cr3bp;
-class tpat_traj_cr3bp;
+class tpat_cr3bp_family;
+class tpat_cr3bp_sys_data;
+class tpat_cr3bp_traj;
 
 /**
  *	@brief An object to generate families of orbits
@@ -52,9 +52,9 @@ class tpat_family_generator{
 		void setStep_fitted_2(double);
 
 		// Operations & Utility
-		tpat_family_cr3bp cr3bp_generateAxial(const char*, double);
-		tpat_family_cr3bp cr3bp_generateHalo(const char*, double);
-		tpat_family_cr3bp cr3bp_generateLyap(tpat_sys_data_cr3bp, int, double);
+		tpat_cr3bp_family cr3bp_generateAxial(const char*, double);
+		tpat_cr3bp_family cr3bp_generateHalo(const char*, double);
+		tpat_cr3bp_family cr3bp_generateLyap(tpat_cr3bp_sys_data, int, double);
 		void reset();
 
 	private:
@@ -67,7 +67,7 @@ class tpat_family_generator{
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 		void copyMe(const tpat_family_generator&);
-		void cr3bp_continueFamily(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>);
+		void cr3bp_continueFamily(tpat_cr3bp_family*, tpat_cr3bp_traj, std::vector<mirror_t>, std::vector<int>, std::vector<int>);
 };
 
 #endif

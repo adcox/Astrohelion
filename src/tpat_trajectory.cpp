@@ -1,5 +1,5 @@
 /**
- *	@file tpat_traj.cpp
+ *	@file tpat_trajectory.cpp
  *
  *	Trajectory Class: contains info about a trajectory
  */
@@ -24,7 +24,7 @@
  */
 #include "tpat.hpp"
  
-#include "tpat_traj.hpp"
+#include "tpat_trajectory.hpp"
 
 #include "tpat_matrix.hpp"
 #include "tpat_sys_data.hpp"
@@ -41,7 +41,7 @@
  *
  *	Sets the number of points to 0
  */
-tpat_traj::tpat_traj(){
+tpat_trajectory::tpat_trajectory(){
 	numPoints = 0;
 	state.clear();
 	times.clear();
@@ -60,9 +60,9 @@ tpat_traj::tpat_traj(){
  *
  *	@param n the number of points
  */
-tpat_traj::tpat_traj(int n){
+tpat_trajectory::tpat_trajectory(int n){
 	numPoints = n;
-	state.reserve(n*9);	// may need more, but this is a good starting spot
+	state.reserve(n*STATE_WIDTH);
 	times.reserve(n);
 	allSTM.reserve(n);
 }
@@ -71,7 +71,7 @@ tpat_traj::tpat_traj(int n){
  *	@brief Create a copy of the input trajectory
  *	@param t a trajectory
  */
-tpat_traj::tpat_traj(const tpat_traj& t){
+tpat_trajectory::tpat_trajectory(const tpat_trajectory& t){
 	copyMe(t);
 }//====================================================
 
@@ -82,18 +82,15 @@ tpat_traj::tpat_traj(const tpat_traj& t){
 /**
  *	@brief Assignment operator. Directly copy the vectors from one trajectory into this one
  */
-tpat_traj& tpat_traj::operator= (const tpat_traj& t){
+tpat_trajectory& tpat_trajectory::operator= (const tpat_trajectory& t){
 	copyMe(t);
 	return *this;
 }//============================================
 
-void tpat_traj::copyMe(const tpat_traj &t){
+void tpat_trajectory::copyMe(const tpat_trajectory &t){
 	numPoints = t.numPoints;
 	state = t.state;
-	accel = t.accel;
 	times = t.times;
-	extraParam = t.extraParam;
-	numExtraParam = t.numExtraParam;
 	allSTM = t.allSTM;
 	tol = t.tol;
 }//====================================================
@@ -103,60 +100,32 @@ void tpat_traj::copyMe(const tpat_traj &t){
 //-----------------------------------------------------
 
 /**
- *	@brief Get one acceleration vector
- *	@param n the index of the step; if n < 0, it will count backwards from
- *	the end of the trajectory
- *	@return the nth acceleration vector [ax, ay, az]
- */
-std::vector<double> tpat_traj::getAccel(int n) const {
-	if(n < 0)
-		n += accel.size()/ACCEL_SIZE;
-
-	std::vector<double>::const_iterator first = accel.begin() + n*ACCEL_SIZE;
-	std::vector<double>::const_iterator last = accel.begin() + (n+1)*ACCEL_SIZE;
-	std::vector<double> oneAccel(first, last);
-	return oneAccel;
-}//======================================================
-
-/**	
- *	@brief Retrieve a pointer to the acceleration vector
- *	@return a pointer to the acceleration vector
- */
-std::vector<double>* tpat_traj::getAccel(){ return &accel; }
-
-/**
  *	@brief Retrieve the number of states, times, STMs, etc. on this trajectory
  *	@return the number of points along this trajectory
  */
-int tpat_traj::getLength() const{ return numPoints; }
+int tpat_trajectory::getLength() const{ return numPoints; }
 
 /**
  *	@return a pointer to the beginning of the state array.
  */
-std::vector<double>* tpat_traj::getState(){ return &state;}
+std::vector<double>* tpat_trajectory::getState(){ return &state;}
 
 /**
  *	@brief get a vector of one coordinate's evolution during the flight
  *
  *	@param i the index of the coordinate, i.e. (0 = x, 1 = y, 2 = z, 3 = v_x, 4 = v_y, 5 = v_z)
  */
-std::vector<double> tpat_traj::getCoord(int i) const{
-	if(i >= STATE_SIZE)
+std::vector<double> tpat_trajectory::getCoord(int i) const{
+	if(i >= STATE_WIDTH)
 		throw tpat_exception("Coordinate Index Out of Range");
 
 	std::vector<double> coord;
-	for(size_t n = 0; n < state.size()/STATE_SIZE; n++){
-		coord.push_back(state[n*STATE_SIZE + i]);
+	for(size_t n = 0; n < state.size()/STATE_WIDTH; n++){
+		coord.push_back(state[n*STATE_WIDTH + i]);
 	}
 
 	return coord;
 }//==========================================================
-
-/**
- *	@brief Retrieve a pointer to the vector of extra parameters
- *	@return a pointer to the vector of extra parameters
- */
-std::vector<double>* tpat_traj::getExtraParam(){ return &extraParam; }
 
 /**
  *	@brief Retrieve a single state along the trajectory
@@ -164,17 +133,35 @@ std::vector<double>* tpat_traj::getExtraParam(){ return &extraParam; }
  *	@param n the index of the state (0 is the first state, or IC). If n is negative,
  *	the countwill proceed from the end of the vector, i.e. -1 will return the 
  *	final time, -2 will give the second to last value, etc.
- *	@return a vector representing the full state (pos, vel)
+ *	@return a vector representing the full state (pos, vel, accel)
  */
-std::vector<double> tpat_traj::getState(int n) const{
+std::vector<double> tpat_trajectory::getState(int n) const{
 	if(n < 0)
-		n += state.size()/STATE_SIZE;
+		n += state.size()/STATE_WIDTH;
 
-	std::vector<double>::const_iterator first = state.begin() + n*STATE_SIZE;
-	std::vector<double>::const_iterator last = state.begin() + (n+1)*STATE_SIZE;
+	std::vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
+	std::vector<double>::const_iterator last = state.begin() + (n+1)*STATE_WIDTH;
 	std::vector<double> oneState(first, last);
 	return oneState;
-}//==========================================================
+}
+
+/**
+ *	@brief Retrieve a single state (only the 6 regular elements) along the trajectory
+ *
+ *	@param n the index of the state (0 is the first state, or IC). If n is negative,
+ *	the countwill proceed from the end of the vector, i.e. -1 will return the 
+ *	final time, -2 will give the second to last value, etc.
+ *	@return a vector representing the partial state (pos, vel)
+ */
+std::vector<double> tpat_trajectory::getState_6(int n) const{
+	if(n < 0)
+		n += state.size()/STATE_WIDTH;
+
+	std::vector<double>::const_iterator first = state.begin() + n*STATE_WIDTH;
+	std::vector<double>::const_iterator last = state.begin() + n*STATE_WIDTH + 6;
+	std::vector<double> oneState(first, last);
+	return oneState;
+}
 
 /**
  *	@brief Retrieve the time at a specific point along the trajectory
@@ -183,21 +170,21 @@ std::vector<double> tpat_traj::getState(int n) const{
  *	-2 will give the second to last value, etc.
  *	@return the non-dimensional time along the trajectory
  */
-double tpat_traj::getTime(int n) const {
+double tpat_trajectory::getTime(int n) const {
 	if(n < 0)
 		n += times.size();
 	return times[n];
-}//==========================================================
+}
 
 /**
  *	@return a pointer to the begining of the time vector
  */
-std::vector<double>* tpat_traj::getTime(){ return &times; }
+std::vector<double>* tpat_trajectory::getTime(){ return &times; }
 
 /**
  *	@brief Retrieve the tolerance used to generate this trajectory
  */
-double tpat_traj::getTol() const { return tol; }
+double tpat_trajectory::getTol() const { return tol; }
 
 /**
  *	@brief Retrieve the STM at a specific point along the trajectory
@@ -206,57 +193,43 @@ double tpat_traj::getTol() const { return tol; }
  *	-2 will give the second to last value, etc.
  *	@return the STM
  */
-tpat_matrix tpat_traj::getSTM(int n) const {
+tpat_matrix tpat_trajectory::getSTM(int n) const {
 	if(n < 0)
 		n += allSTM.size();
 	tpat_matrix temp(allSTM[n]);
 	return temp;
-}//==========================================================
+}
 
 /**
  *	@brief Useful for setting the STM (in place) after the trajectory has been initialized
  *	@return a pointer to the beginning of the vector of STMs
  */
-std::vector<tpat_matrix>* tpat_traj::getSTM(){ return &allSTM;}
+std::vector<tpat_matrix>* tpat_trajectory::getSTM(){ return &allSTM;}
 
 /**
  *	@return the system data type
  */
-tpat_sys_data::system_t tpat_traj::getType() const { return tpat_sys_data::UNDEF_SYS; }
-
-/**
- *	@brief Set the acceleration vector
- *	@param a a vector of non-dimensional accelerations. The vector should be 1D in
- *	Row-Major format.
- */
-void tpat_traj::setAccel(std::vector<double> a){ accel = a; }
+tpat_sys_data::system_t tpat_trajectory::getType() const { return tpat_sys_data::UNDEF_SYS; }
 
 /** 
  *	@brief Set the state vector by copying a vector
  *	@param s a vector of non-dimensional states. The vector should be 1D in Row-Major
- *	format
+ *	format; all units are non-dimensional
  */
-void tpat_traj::setState(std::vector<double> s){ state = s; }
+void tpat_trajectory::setState(std::vector<double> s){ state = s; }
 
 /** 
  *	@brief Set the time vector by copying a vector
  *	@param t a vector of non-dimensional times along the trajectory. Length
  *	must match the length of the state vector
  */
-void tpat_traj::setTime(std::vector<double> t){ times = t; }
+void tpat_trajectory::setTime(std::vector<double> t){ times = t; }
 
 /** 
  *	@brief Set the STM vector by copying a vector
  *	@param phi a vector of STMs, one for every point along the trajectory.
  */
-void tpat_traj::setSTMs(std::vector<tpat_matrix> phi){ allSTM = phi; }
-
-/**
- *	@brief Set the vector of extra parameters. 
- *	@param e a vector of extra parameters in row-major order; each row
- *	corresponds to a state along the trajectory
- */
-void tpat_traj::setExtraParam(std::vector<double> e){ extraParam = e; }
+void tpat_trajectory::setSTMs(std::vector<tpat_matrix> phi){ allSTM = phi; }
 
 /**
  *	@brief Set the tolerance for this trajectory
@@ -264,7 +237,7 @@ void tpat_traj::setExtraParam(std::vector<double> e){ extraParam = e; }
  *	This information is useful later when comparing errors between states
  *	@param d the tolerance
  */
-void tpat_traj::setTol(double d){ tol = d; }
+void tpat_trajectory::setTol(double d){ tol = d; }
 
 //-----------------------------------------------------
 // 		Utility Functions
@@ -274,28 +247,24 @@ void tpat_traj::setTol(double d){ tol = d; }
  *	@brief Set the number of points by checking the number of data in 
  *	the state, time, and STM vectors.
  */
-void tpat_traj::setLength(){
-	int sL = state.size()/STATE_SIZE;
-	int aL = accel.size()/ACCEL_SIZE;
+void tpat_trajectory::setLength(){
+	int sL = state.size()/STATE_WIDTH;	// row-major format, 9 elements per row
 	int tL = times.size();
 	int pL = allSTM.size();
 
-	if(sL == tL && tL == pL && aL == sL){
-		if(numExtraParam != 0 && (int)(extraParam.size()/numExtraParam) == sL){
-			numPoints = sL;
-			return;
-		}
+	if(sL == tL && tL == pL){
+		numPoints = sL;
+	}else{
+		printWarn("Trajectory has vectors with different lengths\n");
+		numPoints = sL;
 	}
-
-	printWarn("Trajectory has vectors with different lengths\n");
-	numPoints = sL;
 }//=======================================
 
 /**
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj::saveToMat(const char* filename){
+void tpat_trajectory::saveToMat(const char* filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -312,7 +281,6 @@ void tpat_traj::saveToMat(const char* filename){
 		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
-		saveAccel(matfp);
 		saveTime(matfp);
 		saveSTMs(matfp);
 	}
@@ -324,15 +292,19 @@ void tpat_traj::saveToMat(const char* filename){
  *	@brief Save the state vector [pos, vel, accel] to a file
  *	@param matFile a pointer to the destination matlab file 
  */
-void tpat_traj::saveState(mat_t *matFile){
+void tpat_trajectory::saveState(mat_t *matFile){
 
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> posVel(state.size());
+	std::vector<double> posVel(numPoints*6);
+	std::vector<double> accel(numPoints*3);
 
-	for(size_t r = 0; r < state.size()/STATE_SIZE; r++){
-		for(int c = 0; c < STATE_SIZE; c++){
-			posVel[c*state.size()/STATE_SIZE + r] = state[r*STATE_SIZE + c];
+	for(int r = 0; r < numPoints; r++){
+		for(int c = 0; c < STATE_WIDTH; c++){
+			if(c < 6)
+				posVel[c*numPoints + r] = state[r*STATE_WIDTH + c];
+			else
+				accel[(c-6)*numPoints + r] = state[r*STATE_WIDTH + c];
 		}
 	}
 
@@ -354,61 +326,21 @@ void tpat_traj::saveState(mat_t *matFile){
 	 *							MAT_F_GLOBAL: make the matlab variable global
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
-	size_t dims[2] = {state.size()/STATE_SIZE, STATE_SIZE};
+	size_t dims[2] = {static_cast<size_t>(numPoints), 6};
 	matvar_t *matvar = Mat_VarCreate("State", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "State", MAT_COMPRESSION_NONE);
-}//==================================================
 
-/**
- *	@brief Save the acceleration vector to file
- *	@param matFile a pointer to the destination mat-file
- */
-void tpat_traj::saveAccel(mat_t *matFile){
-	// We store data in row-major order, but the Matlab file-writing algorithm takes data
-	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> accel_colMaj(accel.size());
-
-	for(size_t r = 0; r < accel.size()/ACCEL_SIZE; r++){
-		for(int c = 0; c < ACCEL_SIZE; c++){
-			accel_colMaj[c*accel.size()/ACCEL_SIZE + r] = state[r*ACCEL_SIZE + c];
-		}
-	}
-	
-	size_t dims[2] = {accel.size()/ACCEL_SIZE, ACCEL_SIZE};
-	matvar_t *matvar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel_colMaj[0]), MAT_F_DONT_COPY_DATA);
+	// Repeat the procedure with the accelerations
+	dims[1] = 3;
+	matvar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "Accel", MAT_COMPRESSION_NONE);
-}//=====================================================
-
-/**
- *	@brief Save one of the extra parameters to file
- *	@param matFile a pointer to the destination mat-file
- *	@param varIx the index of the parameter within one row of the 
- *	extraParam vector; this assumes a 1d variable is being saved
- *	@param width the number elements each row contains. For example, if I'm storing a 1x3 vector,
- *	varIx would be 0 and width would be three.
- *	@param name the name of the variable being saved
- */
-void tpat_traj::saveExtraParam(mat_t *matFile, int varIx, int width, const char *name){
-	if(varIx > numExtraParam || varIx < 0)
-		throw tpat_exception("Could not save extra parameter; index out of bounds");
-
-	// Get the specified coordinate
-	std::vector<double> param;
-	for(size_t i = 0; i < extraParam.size()/numExtraParam; i++){
-		param.insert(param.end(), extraParam.begin()+i*numExtraParam+varIx, extraParam.begin()+i*numExtraParam+varIx+width);
-	}
-
-	size_t dims[2] = {param.size()/width, static_cast<size_t>(width)};
-	matvar_t *matvar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, name, MAT_COMPRESSION_NONE);
-}//======================================================
-
+}//==================================================
 
 /**
  *	@brief Save the time vector to a file
  * 	@param matFile a pointer to the destination matlab file 
  */
-void tpat_traj::saveTime(mat_t *matFile){
+void tpat_trajectory::saveTime(mat_t *matFile){
 	size_t dims[2] = {static_cast<size_t>(numPoints), 1};
 	matvar_t *matvar = Mat_VarCreate("Time", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(times[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "Time", MAT_COMPRESSION_NONE);
@@ -419,7 +351,7 @@ void tpat_traj::saveTime(mat_t *matFile){
  *	compatibility with existing MATLAB scripts
  *	@param matFile a pointer to the destination matlab file 
  */
-void tpat_traj::saveSTMs(mat_t *matFile){
+void tpat_trajectory::saveSTMs(mat_t *matFile){
 	// Create one large vector to put all the STM elements in
 	std::vector<double> allSTMEl(numPoints*36);
 	for (int n = 0; n < numPoints; n++){

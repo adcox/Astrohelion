@@ -1,8 +1,8 @@
 /*
- *	Trajectory Propagation and Analysis Toolkit 
+ *	Astrodynamics Toolkit 
  *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *	This file is part of the Astrodynamics Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,10 +28,10 @@
 
 // Forward Declarations
 class tpat_sys_data;
-class tpat_traj;
+class tpat_trajectory;
 
 /**
- *	@brief Similar to tpat_traj, but only holds state data at specific "nodes"
+ *	@brief Similar to tpat_trajectory, but only holds state data at specific "nodes"
  * 
  *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
  *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
@@ -130,7 +130,7 @@ class tpat_nodeset{
 
 		static void basicConcat(const tpat_nodeset&, const tpat_nodeset&, tpat_nodeset*);
 		void initSetFromICs(double[], tpat_sys_data*, double, double, int, node_distro_t);
-		void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
+		void initSetFromTraj(tpat_trajectory, tpat_sys_data*, int, node_distro_t);
 		void saveNodes(mat_t*);
 		void saveTOFs(mat_t*);
 		// std::vector<double> concatNodes(std::vector<double>, std::vector<double>);

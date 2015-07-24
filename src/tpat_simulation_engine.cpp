@@ -75,12 +75,12 @@ tpat_simulation_engine::tpat_simulation_engine(){
  *
  *  @param data a pointer to a system data object
  */
-tpat_simulation_engine::tpat_simulation_engine(tpat_sys_data data){
+tpat_simulation_engine::tpat_simulation_engine(tpat_sys_data *data){
     events.clear();
     eventOccurs.clear();
     sysData = data;
     createCrashEvents();
-    printVerb(verbose, "Created Simulation Engine for %s system\n", data.getTypeStr().c_str());
+    printVerb(verbose, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
 }//===========================================
 
 /**
@@ -104,19 +104,21 @@ tpat_simulation_engine::~tpat_simulation_engine(){
  *  @param s an input simulation engine
  */
 void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
-    sysData = s.sysData;
 
     // Copy the trajectory object using the correct casting
-    switch(sysData.getType()){
+    switch(sysData->getType()){
         case tpat_sys_data::CR3BP_SYS:
+            sysData = static_cast<tpat_sys_data_cr3bp *>(s.sysData);
             traj = new tpat_traj_cr3bp(*static_cast<tpat_traj_cr3bp *>(s.traj));
             model = new tpat_model_cr3bp(*static_cast<tpat_model_cr3bp *>(s.model));
             break;
         case tpat_sys_data::CR3BP_LTVP_SYS:
+            sysData = static_cast<tpat_sys_data_cr3bp_ltvp *>(s.sysData);
             traj = new tpat_traj_cr3bp_ltvp(*static_cast<tpat_traj_cr3bp_ltvp *>(s.traj));
             model = new tpat_model_cr3bp_ltvp(*static_cast<tpat_model_cr3bp_ltvp *>(s.model));
             break;
         case tpat_sys_data::BCR4BPR_SYS:
+            sysData = static_cast<tpat_sys_data_bcr4bpr *>(s.sysData);
             traj = new tpat_traj_bcr4bpr(*static_cast<tpat_traj_bcr4bpr *>(s.traj));
             model = new tpat_model_cr3bp_ltvp(*static_cast<tpat_model_cr3bp_ltvp *>(s.model));
             break;
@@ -143,10 +145,10 @@ void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
  */
 void tpat_simulation_engine::createCrashEvents(){
     if(!madeCrashEvents){
-        for(int p = 0; p < sysData.getNumPrimaries(); p++){
+        for(int p = 0; p < sysData->getNumPrimaries(); p++){
             // Put primary index # into an array, create event
             double Pix = (double)p;
-            tpat_event crashEvt(&sysData, tpat_event::CRASH, 0, true, &Pix);
+            tpat_event crashEvt(sysData, tpat_event::CRASH, 0, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }
@@ -226,7 +228,7 @@ tpat_traj tpat_simulation_engine::getTraj() const {
  *  @return a CR3BP Trajectory object
  */
 tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
-    if(sysData.getType() == tpat_sys_data::CR3BP_SYS){
+    if(sysData->getType() == tpat_sys_data::CR3BP_SYS){
         /* Use a static cast to convert the general trajectory pointer
          * into a specific CR3BP trajectory pointer, then dereference
          * and return a COPY of the trajectory
@@ -249,7 +251,7 @@ tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
  *  @return a CR3BP LTVP Trajectory object
  */
 tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
-    if(sysData.getType() == tpat_sys_data::CR3BP_LTVP_SYS){
+    if(sysData->getType() == tpat_sys_data::CR3BP_LTVP_SYS){
         /* Use a static cast to convert the general trajectory pointer
          * into a specific CR3BP trajectory pointer, then dereference
          * and return a COPY of the trajectory
@@ -272,7 +274,7 @@ tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
  */
 tpat_traj_bcr4bpr tpat_simulation_engine::getBCR4BPR_Traj() const{
-    if(sysData.getType() == tpat_sys_data::BCR4BPR_SYS){
+    if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
         // Make a copy and return it
         tpat_traj_bcr4bpr temp( *( static_cast<tpat_traj_bcr4bpr *>(traj) ) );
         return temp;
@@ -323,7 +325,7 @@ std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
  *  @param stop whether or not to stop integration when this event occurs
  */
 void tpat_simulation_engine::addEvent(tpat_event::event_t type, int dir, bool stop){
-    tpat_event temp(&sysData, type, dir, stop);
+    tpat_event temp(sysData, type, dir, stop);
     events.push_back(temp);
 }//======================================
 
@@ -339,7 +341,7 @@ void tpat_simulation_engine::addEvent(tpat_event evt){
  *	@brief Specify the system the engine will be using for integration
  *	@param d a system data object
  */
-void tpat_simulation_engine::setSysData(tpat_sys_data d){ sysData = d; }
+void tpat_simulation_engine::setSysData(tpat_sys_data *d){ sysData = d; }
 
 /**
  *	@brief Specify whether or not the engine should run in reverse time
@@ -458,12 +460,12 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
         }
     }
 
-	switch(sysData.getType()){
+	switch(sysData->getType()){
 		case tpat_sys_data::CR3BP_SYS:
 		{
             // Initialize trajectory
             printVerb(verbose, "  initializing CR3BP trajectory\n");
-            tpat_sys_data_cr3bp* data = static_cast<tpat_sys_data_cr3bp *>(&sysData);
+            tpat_sys_data_cr3bp* data = static_cast<tpat_sys_data_cr3bp *>(sysData);
             eomParams = data;
             traj = new tpat_traj_cr3bp(*data);
             model = new tpat_model_cr3bp();
@@ -472,7 +474,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
         case tpat_sys_data::CR3BP_LTVP_SYS:
         {
             printVerb(verbose, "  initializing CR3BP LTVP trajectory\n");
-            tpat_sys_data_cr3bp_ltvp* data = static_cast<tpat_sys_data_cr3bp_ltvp *>(&sysData);
+            tpat_sys_data_cr3bp_ltvp* data = static_cast<tpat_sys_data_cr3bp_ltvp *>(sysData);
             eomParams = data;
             traj = new tpat_traj_cr3bp_ltvp(*data);
             model = new tpat_model_cr3bp_ltvp();
@@ -481,7 +483,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
 		case tpat_sys_data::BCR4BPR_SYS:
         {
             printVerb(verbose, "  initializing BCR4BPR trajectory\n");
-            tpat_sys_data_bcr4bpr* data = static_cast<tpat_sys_data_bcr4bpr *>(&sysData);
+            tpat_sys_data_bcr4bpr* data = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
             eomParams = data;
             traj = new tpat_traj_bcr4bpr(*data);
             model = new tpat_model_bcr4bpr();

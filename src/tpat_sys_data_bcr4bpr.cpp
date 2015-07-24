@@ -124,6 +124,8 @@ tpat_sys_data_bcr4bpr& tpat_sys_data_bcr4bpr::operator= (const tpat_sys_data_bcr
 	return *this;
 }//=====================================
 
+tpat_model* tpat_sys_data_bcr4bpr::getModel() { return &model; }
+
 /**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */

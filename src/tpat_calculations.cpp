@@ -911,8 +911,9 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
 tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> IC,
     double period, int numNodes, mirror_t mirrorType, std::vector<int> fixedStates){
 
-    tpat_simulation_engine sim(sys);// Engine to perform simulation
-    std::vector<int> zeroStates;    // Which states must be zero to ensure a perpendicular crossing
+    tpat_sys_data_cr3bp sysCpy(sys);
+    tpat_simulation_engine sim(&sysCpy);    // Engine to perform simulation
+    std::vector<int> zeroStates;            // Which states must be zero to ensure a perpendicular crossing
 
     // Determien which states must be zero for mirroring
     switch(mirrorType){
@@ -986,6 +987,8 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
     tpat_nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
+    halfOrbNodes.print();
+    halfOrbNodes.saveToMat("Nodes_BeforeCorrect.mat");
 
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
@@ -993,17 +996,22 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
         corrector.correct_cr3bp(&halfOrbNodes);
         tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();
 
+        // Grab the last node, change its TOF and re-append it to the set
+        tpat_node lastNode = correctedHalfPer.getNode(-1);
+        lastNode.setTOF(correctedHalfPer.getNode(-2).getTOF());
+        correctedHalfPer.deleteNode(-1);
+        correctedHalfPer.appendNode(lastNode);
+
         // Now add more nodes, use MS to get an accurate
         tpat_matrix mirrorMat = getMirrorMat(mirrorType);
         for(int i = correctedHalfPer.getNumNodes()-2; i >= 0; i--){
-            tpat_matrix stateVec(1,6, correctedHalfPer.getNode(i));
+            tpat_matrix stateVec(1,6, correctedHalfPer.getNode(i).getPosVelState());
             tpat_matrix newStateVec = stateVec*mirrorMat;
-            correctedHalfPer.appendNode(newStateVec.getDataPtr());
-            correctedHalfPer.appendTOF(correctedHalfPer.getTOF(i));
+
+            tpat_node node = correctedHalfPer.getNode(i);
+            tpat_node newNode(newStateVec.getDataPtr(), correctedHalfPer.getNode(i).getTOF());
+            correctedHalfPer.appendNode(newNode);
         }
-        // Make all nodes continuous in velocity
-        std::vector<int> empty;
-        correctedHalfPer.setVelConNodes_allBut(empty);
 
         // Remove intermediate constraint, constrain both end points
         correctedHalfPer.clearConstraints();
@@ -1011,11 +1019,14 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
         tpat_constraint finalCon(tpat_constraint::STATE, correctedHalfPer.getNumNodes()-1, mirrorCon1, 6);
         correctedHalfPer.addConstraint(finalCon);
 
+        correctedHalfPer.print();
+
         // Reconverge the solution
         corrector.correct_cr3bp(&correctedHalfPer);
 
         // Return the corrected solution in trajectory form
         tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
+        
         return tpat_traj_cr3bp::fromNodeset(finalSet);
 
     }catch(tpat_diverge &e){
@@ -1101,7 +1112,6 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double the
 
     tpat_sys_data_cr3bp SESys("sun", "earth");
     tpat_nodeset_cr3bp SENodes(SESys);
-    std::vector<double>* nodes = SENodes.getNodes();
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
@@ -1110,18 +1120,17 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double the
 
     double epoch = t0;
     printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d TOFs\n", EMNodes.getNumNodes(),
-        ((int)EMNodes.getTOFs()->size()));
+        EMNodes.getNumNodes()-1);
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
-        std::vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n), epoch, thetaE0, thetaM0,
+        std::vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
-        // Copy first 6 elements of transformed state/node into new node vector
-        nodes->insert(nodes->end(), node_SE.begin(), node_SE.end());
+        double tof = n + 1 < EMNodes.getNumNodes() ? EMNodes.getTOF(n)*charTE/charTS : NAN;
+        tpat_node node(node_SE, tof);
+        SENodes.appendNode(node);
+
 
         if(n < EMNodes.getNumNodes()-1){
-            // Re-Scale Time
-            SENodes.getTOFs()->push_back(EMNodes.getTOF(n)*charTE/charTS);
-
             // Update epoch time
             epoch += EMNodes.getTOF(n);
         }
@@ -1212,7 +1221,6 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, double t0, double the
     tpat_sys_data_cr3bp EMSys("earth", "moon");
     tpat_sys_data_cr3bp SESys("sun", "earth");
     tpat_nodeset_cr3bp EMNodes(EMSys);
-    std::vector<double>* nodes = EMNodes.getNodes();
 
     double charTE = EMSys.getCharT();                   // characteristic time in EM system
     double charLE = EMSys.getCharL();                   // characteristic length in EM system
@@ -1221,19 +1229,18 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, double t0, double the
 
     double epoch = t0;
     printColor(BLUE, "Converting SE to EM\nSE Sys:\n  %d Nodes\n  %d TOFs\n", SENodes.getNumNodes(),
-        ((int)SENodes.getTOFs()->size()));
+        SENodes.getNumNodes()-1);
     for(int n = 0; n < SENodes.getNumNodes(); n++){
         // Transform a single node
-        std::vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n), epoch, thetaE0, thetaM0,
+        std::vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
-        // Copy first 6 elements of transformed state/node into new node vector
-        nodes->insert(nodes->end(), node_EM.begin(), node_EM.end());
+        double tof = n + 1 < SENodes.getNumNodes() ? SENodes.getTOF(n)*charTS/charTE : NAN;
+        tpat_node node(node_EM, tof);
+        EMNodes.appendNode(node);
+
 
         if(n < SENodes.getNumNodes()-1){
-            // Re-Scale Time
-            EMNodes.getTOFs()->push_back(SENodes.getTOF(n)*charTS/charTE);
-
             // Update epoch time
             epoch += SENodes.getTOF(n);
         }
@@ -1543,10 +1550,6 @@ tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bc
     // Create a BCR4BPR Trajectory
     tpat_nodeset_bcr4bpr bcNodes(bcSys);
 
-    std::vector<double>* nodes = bcNodes.getNodes();
-    std::vector<double>* tofs = bcNodes.getTOFs();
-    std::vector<double>* epochs = bcNodes.getEpochs();
-
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();
     double charL3 = bcSys.getCharL();
@@ -1555,18 +1558,22 @@ tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bc
     double ellapsed = t0;
 
     for(int n = 0; n < crNodes.getNumNodes(); n++){
-        std::vector<double> crNode = crNodes.getNode(n);
+        std::vector<double> bcNodeState;
+        std::vector<double> crNode = crNodes.getNode(n).getPosVelState();
         for(int r = 0; r < ((int)crNode.size()); r++){
             if(r < 3)   // Convert position
-                nodes->push_back(crNode[r]*charL2/charL3);
+                bcNodeState.push_back(crNode[r]*charL2/charL3);
             else  // Convert velocity
-                nodes->push_back(crNode[r]*(charL2/charL3)*(charT3/charT2));
+                bcNodeState.push_back(crNode[r]*(charL2/charL3)*(charT3/charT2));
         }
         
-        epochs->push_back(ellapsed);
+        double tof = crNodes.getTOF(n)*charT2/charT3;
+        tpat_node bcNode(bcNodeState, tof);
+        bcNode.setExtraParam(0, ellapsed);  // set epoch
+
+        bcNodes.appendNode(bcNode);
         if(n < crNodes.getNumNodes()-1){
-            tofs->push_back(crNodes.getTOF(n)*charT2/charT3);
-            ellapsed += crNodes.getTOF(n)*charT2/charT3;
+            ellapsed += tof;
         }
     }
 

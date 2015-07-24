@@ -22,6 +22,8 @@
 #define H_NODESET
 
 #include "tpat_constraint.hpp"
+#include "tpat_node.hpp"
+
 #include "matio.h"
 
 #include <vector>
@@ -37,9 +39,10 @@ class tpat_traj;
  *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
  *	into smaller pieces, which can improve the corrector's performance.
  *
- *	Each node has 6 states: three position, and three velocity. Times-of-flight between nodes
- *	are stored in non-dimensional time units. In addition to nodes and times-of-flight, 
- *	a nodeset stores information about velocity continuity and a list of constraints.
+ *	In addition to nodes, a nodeset stores information about the constraints that should
+ *	be applied when the nodeset is passed through a corrections algorithm
+ *
+ *	@seealso tpat_node
  *
  *	@author Andrew Cox
  *	@version May 21, 2015
@@ -58,7 +61,7 @@ class tpat_nodeset{
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 		// *structors
-		tpat_nodeset(const int);
+		tpat_nodeset();
 		tpat_nodeset(const tpat_nodeset&);
 		tpat_nodeset(const tpat_nodeset&, int, int);
 
@@ -68,16 +71,12 @@ class tpat_nodeset{
 		tpat_nodeset& operator =(const tpat_nodeset&);
 
 		// Set and Get functions
-		std::vector<double>* getNodes();
-		std::vector<double> getNode(int) const;
+		tpat_node getNode(int) const;
 		double getTOF(int) const;
-		std::vector<double>* getTOFs();
 		double getTotalTOF() const;
-		int getNumNodes() const;
-		int getNodeSize() const;
-		node_distro_t getNodeDistro() const;
-		std::vector<int> getVelConNodes();
 		int getNumCons() const;
+		int getNumNodes() const;
+		node_distro_t getNodeDistro() const;
 		tpat_constraint getConstraint(int) const;
 
 		/**
@@ -87,53 +86,36 @@ class tpat_nodeset{
 		virtual tpat_sys_data* getSysData() = 0;
 
 		void addConstraint(tpat_constraint);
-		void appendNode(std::vector<double>);
-		void appendNode(double*);
-		void appendTOF(double);
-		void deleteTOF(int);
-		void insertNode(int, std::vector<double>);
-		void insertNode(int, double*);
-		void insertTOF(int, double);
+		void appendNode(tpat_node);
+		void deleteNode(int);
+		void insertNode(int, tpat_node);
 
 		void setNodeDistro(node_distro_t);
-		void setTOF(int, double);
-		void setVelConNodes(std::vector<int>);
 		void setVelConNodes_allBut(std::vector<int>);
 
 		// Utility Functions
-		void reverseOrder();
 		void clearConstraints();
+		void copyMe(const tpat_nodeset&);
 		virtual void print() const = 0;		//!< @brief Output a human-readable description of the nodeset
+		void reverseOrder();
 		void saveToMat(const char*);
 
 	protected:
-		/** The number of states in one node */
-		const int nodeSize;
 
 		/** How nodes are distributed */
 		node_distro_t nodeDistro = DISTRO_NONE;
 
-		/** A vector of nodes; organized in row-major order */
-		std::vector<double> nodes;
-
-		/** A vector of TOFs between nodes */
-		std::vector<double> tofs;
+		/** A vector of node objects */
+		std::vector<tpat_node> nodes;
 
 		/** Vector of constraints to be applied to this nodeset*/
 		std::vector<tpat_constraint> constraints;
-
-		/** List of node indices; the nodes included in this list should have continuous velocity */
-		std::vector<int>velConNodes;
-
-		/** Whether or not velocity continuity nodes have been initiailized or set by user */
-		bool velConSet = false;
 
 		static void basicConcat(const tpat_nodeset&, const tpat_nodeset&, tpat_nodeset*);
 		void initSetFromICs(double[], tpat_sys_data*, double, double, int, node_distro_t);
 		void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
 		void saveNodes(mat_t*);
 		void saveTOFs(mat_t*);
-		// std::vector<double> concatNodes(std::vector<double>, std::vector<double>);
 };
 
 #endif

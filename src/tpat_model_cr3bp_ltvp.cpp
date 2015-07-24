@@ -29,6 +29,7 @@
 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
 #include "tpat_event.hpp"
@@ -56,6 +57,21 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn(){
 	return &cr3bp_ltvp_EOMs;
 }//==============================================
 
+std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, tpat_sys_data *sysData){
+    double primPos[6] = {0};
+    tpat_sys_data_cr3bp_ltvp crSys(*static_cast<tpat_sys_data_cr3bp_ltvp *>(sysData));
+
+    primPos[0] = -1*crSys.getMu();
+    primPos[3] = 1 - crSys.getMu();
+
+    return std::vector<double>(primPos, primPos+6);
+}//==============================================
+
+std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, tpat_sys_data *sysData){
+    double primVel[6] = {0};
+    
+    return std::vector<double>(primVel, primVel+6);
+}//==============================================
 
 void tpat_model_cr3bp_ltvp::saveIntegratedData(double* y, double t, tpat_traj* traj){
 	// Save the position and velocity states
@@ -138,3 +154,60 @@ bool tpat_model_cr3bp_ltvp::locateEvent(tpat_event event, tpat_traj* traj, tpat_
 
     return true;
 }//=======================================================
+
+/**
+ *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  nodeset
+ *
+ *  If <tt>findEvent</tt> is set to true, the
+ *  output nodeset will contain extra information for the simulation engine to use. Rather than
+ *  returning only the position and velocity states, the output nodeset will contain the STM 
+ *  and dqdT values for the final node; this information will be appended to the extraParameter
+ *  vector in the final node.
+ *
+ *  @param it an iteration data object containing all info from the corrections process
+ *  @param nodeset_out a pointer to the output nodeset object
+ *  @param findEvent whether or not this correction process is locating an event
+ */
+tpat_nodeset* tpat_model_cr3bp_ltvp::corrector_createOutput(iterationData *it, bool findEvent){
+
+    // Create a nodeset with the same system data as the input
+    // tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(it->sysData);
+    // tpat_nodeset_bcr4bpr *nodeset_out = new tpat_nodeset_bcr4bpr(*bcSys);
+    // nodeset_out->setNodeDistro(tpat_nodeset::DISTRO_NONE);
+
+    // int numNodes = (int)(it->origNodes.size());
+    // for(int i = 0; i < numNodes; i++){
+    //     if(i + 1 < numNodes){
+    //         tpat_node node(&(it->X[i*6]), it->X[numNodes*6 + i]);   // create node with state and TOF
+    //         node.setExtraParam(0, it->X[7*numNodes-1 + i]);     // save epoch time
+    //         nodeset_out->appendNode(node);
+    //     }else{
+    //         tpat_node node(&(it->X[i*6]), NAN);                 // create node with state and fake TOF (last node)
+    //         node.setExtraParam(0, it->X[7*numNodes-1 + i]);     // save epoch time
+            
+    //          To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
+    //             state for the last node. We do this by appending the STM elements and dqdT elements to the
+    //             end of the node array. This output nodeset should have two "nodes": the first 6 elements
+    //             are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
+    //             information
+    //         if(findEvent){
+    //             // Append the 36 STM elements to the node vector
+    //             tpat_traj lastSeg = it->allSegs.back();
+    //             tpat_matrix lastSTM = lastSeg.getSTM(-1);
+                
+    //             // Create a vector of extra parameters from existing extraParam vector
+    //             std::vector<double> extraParams = nodeset_out->getNode(-1).getExtraParams();
+    //             // append the STM elements at the end
+    //             extraParams.insert(extraParams.end(), lastSTM.getDataPtr(), lastSTM.getDataPtr()+36);
+    //             // append the last dqdT vector
+    //             std::vector<double> dqdT = lastSeg.getExtraParam(-1);
+    //             extraParams.insert(extraParams.end(), dqdT.begin(), dqdT.end());
+    //             node.setExtraParams(extraParams);
+    //         }
+    //         nodeset_out->appendNode(node);
+    //     }
+    // }
+
+    return new tpat_nodeset_cr3bp;
+}//====================================================

@@ -40,7 +40,7 @@
  */
 class tpat_nodeset_bcr4bpr : public tpat_nodeset{
 	public:
-		tpat_nodeset_bcr4bpr() : tpat_nodeset(6){}	//!< Default, do-nothing constructor
+		tpat_nodeset_bcr4bpr(){}	//!< Default, do-nothing constructor
 		tpat_nodeset_bcr4bpr(tpat_sys_data_bcr4bpr);
 		tpat_nodeset_bcr4bpr(double[6], tpat_sys_data_bcr4bpr, double, double, int);
 		tpat_nodeset_bcr4bpr(std::vector<double>, tpat_sys_data_bcr4bpr, double, double, int);
@@ -56,19 +56,13 @@ class tpat_nodeset_bcr4bpr : public tpat_nodeset{
 		tpat_nodeset_bcr4bpr& operator =(const tpat_nodeset_bcr4bpr&);
 		friend tpat_nodeset_bcr4bpr operator +(const tpat_nodeset_bcr4bpr &, const tpat_nodeset_bcr4bpr &);
 		
-		std::vector<double>* getEpochs();
-		
 		double getEpoch(int) const;
 		tpat_sys_data* getSysData();
 
-		void appendEpoch(double);
-		void insertEpoch(int, double);
-		void reverseOrder();
 		void print() const;
 		void saveToMat(const char*);
 
 	private:
-		std::vector<double> epochs;			//!< Vector of epochs, one for each node
 		tpat_sys_data_bcr4bpr sysData;		//!< System data object
 
 		void initEpochs(int, double);

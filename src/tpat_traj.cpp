@@ -75,6 +75,17 @@ tpat_traj::tpat_traj(const tpat_traj& t){
 	copyMe(t);
 }//====================================================
 
+/**
+ *	@brief Destructor
+ */
+tpat_traj::~tpat_traj(){
+	state.clear();
+	accel.clear();
+	times.clear();
+	extraParam.clear();
+	allSTM.clear();
+}//====================================================
+
 //-----------------------------------------------------
 // 		Operators
 //-----------------------------------------------------
@@ -153,6 +164,24 @@ std::vector<double> tpat_traj::getCoord(int i) const{
 }//==========================================================
 
 /**
+ *	@brief Retrieve a single set of extra parameters
+ *
+ *	@param n the index of the set of parameters. If n is negative,
+ *	the count will proceed from the end of the vector.
+ *	@return a vector representing the values of all extra parameters
+ *	at the nth integrated step
+ */
+std::vector<double> tpat_traj::getExtraParam(int n) const{
+	if(n < 0)
+		n += extraParam.size()/numExtraParam;
+
+	std::vector<double>::const_iterator first = extraParam.begin() + n*numExtraParam;
+	std::vector<double>::const_iterator last = extraParam.begin() + (n+1)*numExtraParam;
+	std::vector<double> oneSetParam(first, last);
+	return oneSetParam;
+}//==========================================================
+
+/**
  *	@brief Retrieve a pointer to the vector of extra parameters
  *	@return a pointer to the vector of extra parameters
  */
@@ -162,7 +191,7 @@ std::vector<double>* tpat_traj::getExtraParam(){ return &extraParam; }
  *	@brief Retrieve a single state along the trajectory
  *
  *	@param n the index of the state (0 is the first state, or IC). If n is negative,
- *	the countwill proceed from the end of the vector, i.e. -1 will return the 
+ *	the count will proceed from the end of the vector, i.e. -1 will return the 
  *	final time, -2 will give the second to last value, etc.
  *	@return a vector representing the full state (pos, vel)
  */

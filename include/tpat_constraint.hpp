@@ -93,10 +93,31 @@ class tpat_constraint{
 		 				 * 	Place the index of the node you want to cosntraint in the <tt>node</tt>
 		 				 *	variable; <tt>data</tt> holds the value of Jacobi
 		 				 */
-		 	TOF			/*!< Constrain the trajectory to have a total time-of-flight
+		 	TOF,		/*!< Constrain the trajectory to have a total time-of-flight
 		 				 *	The index of the node is unused, and <tt>data</tt> holds the
 		 				 *	value for the total TOF in non-dimensional units
 		 				 */
+		 	CONT_PV,	/*!< Constrain a node to be continuous with the previous node in 
+						 * the set in the specified position and velocity states. The
+						 * <tt>node</tt> value specifies the index of the node, and the
+						 * <tt>data</tt> field specifies which states must be continuous.
+						 * For example, if I want the propagation from node 4 to node 5 to
+						 * be continuous in all position states and x_dot, then I would set
+						 * <tt>node</tt> to 5 and <tt>data</tt> to [1 1 1 1 NAN NAN]. Values
+						 * of NAN tell the algorithm not to force continuity in that state,
+						 * so in this example y_dot and z_dot are allowed to be discontinous.
+						 * NOTE: These constraints are applied automatically by the corrections
+						 * algorithm: DO NOT CREATE THESE.
+						 */
+			CONT_EX,	/*!< Constrain one of the extra parameters stored in a nodeset to be
+						 * continuous between nodes. This may apply to epoch time, spacecraft mass,
+						 * etc. Place the node number in <tt>node</tt> and the index of the extra
+						 * parameter in the first data field, i.e. <tt>data[0]</tt>. The specified
+						 * node will then be made continuous with the previous node in the nodeset
+						 * provided it isn't the first one.
+						 * NOTE: These constraints are applied automatically by the corrections
+						 * algorithm: DO NOT CREATE THESE.
+						 */
 		};
 		
 		tpat_constraint();

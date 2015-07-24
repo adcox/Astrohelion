@@ -53,17 +53,17 @@ void test_concat_CR3BP(){
 	double node3[] = {3,0,1,0,0,0};
 	double node4[] = {4,0,0,1,0,0};
 
-	set1.appendNode(node1);
-	set1.appendNode(node2);
+	set1.appendNode(tpat_node(node1, 0));
+	set1.appendNode(tpat_node(node2, 0));
 	
-	set2.appendNode(node3);
-	set2.appendNode(node4);
+	set2.appendNode(tpat_node(node3, 0));
+	set2.appendNode(tpat_node(node4, 0));
 	
-	set3.appendNode(node2);
-	set3.appendNode(node3);
-	set3.appendNode(node4);
+	set3.appendNode(tpat_node(node2, 0));
+	set3.appendNode(tpat_node(node3, 0));
+	set3.appendNode(tpat_node(node4, 0));
 
-	set4.appendNode(node4);
+	set4.appendNode(tpat_node(node4, 0));
 
 	tpat_nodeset_cr3bp sum1 = set1 + set2;
 	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
@@ -105,7 +105,7 @@ void test_createCR3BPNodeset(){
 
 	printf("CR3BP Nodeset:\n Nodes: %d\n", crSet->getNumNodes());
 	for (int n = 0; n < crSet->getNumNodes(); n++){
-		vector<double> node = crSet->getNode(n);
+		vector<double> node = crSet->getNode(n).getPosVelState();
 		printf("  %02d: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1,
 			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
 		if(n < crSet->getNumNodes()-1){
@@ -139,7 +139,7 @@ void test_createBCR4BPRNodeset(){
 
 	printf("BCR4BPR Nodeset:\n Nodes: %d\n", bcSet->getNumNodes());
 	for (int n = 0; n < bcSet->getNumNodes(); n++){
-		vector<double> node = bcSet->getNode(n);
+		vector<double> node = bcSet->getNode(n).getPosVelState();
 		printf("  %02d: %9.4f -- %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f\n", n+1,
 			bcSet->getEpoch(n), node.at(0), node.at(1), node.at(2), node.at(3),
 			node.at(4), node.at(5));

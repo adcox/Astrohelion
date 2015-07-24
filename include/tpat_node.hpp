@@ -38,13 +38,17 @@ public:
 
 	// Operators
 	tpat_node& operator =(const tpat_node&);
+	friend bool operator ==(const tpat_node&, const tpat_node&);
 
 	// Set and Get functions
 	std::vector<double> getPosVelState() const;
 	double getExtraParam(int) const;
+	std::vector<double> getExtraParams() const;
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
 
+	void setExtraParam(int, double);
+	void setExtraParams(std::vector<double>);
 	void setPosVelState(double*);
 	void setPosVelState(std::vector<double>);
 	void setTOF(double);

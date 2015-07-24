@@ -23,6 +23,8 @@
 
 #include "tpat_sys_data_cr3bp.hpp"
 
+#include "tpat_model_cr3bp_ltvp.hpp"
+ 
 /**
  *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
@@ -34,6 +36,8 @@ class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 		tpat_sys_data_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp&);
 
 		tpat_sys_data_cr3bp_ltvp& operator=(const tpat_sys_data_cr3bp_ltvp&);
+		
+		tpat_model* getModel();
 		
 		double getIsp() const;
 		double getThrust() const;
@@ -47,6 +51,10 @@ class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 		void setThrustDim(double);
 
 		void saveToMat(mat_t*);
+		
+	private:
+		/** The dynamic model that governs motion for this system*/
+		tpat_model_cr3bp model;
 
 };
 

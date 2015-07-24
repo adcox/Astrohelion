@@ -78,6 +78,16 @@ tpat_node& tpat_node::operator =(const tpat_node &n){
 	return *this;
 }//====================================================
 
+bool operator ==(const tpat_node &lhs, const tpat_node &rhs){
+	bool sameTOF = lhs.tof == rhs.tof;
+	bool sameState = lhs.posVelState == rhs.posVelState;
+	bool sameExtraParam = lhs.extraParam == rhs.extraParam;
+	bool sameVelCon = lhs.velCon == rhs.velCon;
+
+	return sameTOF && sameState && sameExtraParam && sameVelCon;
+}//====================================================
+
+
 //-----------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------
@@ -90,6 +100,8 @@ std::vector<double> tpat_node::getPosVelState() const{
 
 double tpat_node::getExtraParam(int i) const { return extraParam.at(i); }
 
+std::vector<double> tpat_node::getExtraParams() const { return extraParam; }
+
 double tpat_node::getTOF() const { return tof; }
 
 std::vector<bool> tpat_node::getVelCon() const {
@@ -97,6 +109,24 @@ std::vector<bool> tpat_node::getVelCon() const {
 	temp.insert(temp.end(), velCon, velCon+3);
 	return temp;
 }//====================================================
+
+void tpat_node::setExtraParam(int ix, double val){
+	// Make the vector bigger if need be
+	if((int)(extraParam.size()) <= ix){
+		std::vector<double> temp = extraParam;
+		extraParam.clear();
+		extraParam.assign(ix+1, NAN);
+		for(size_t n = 0; n < temp.size(); n++)
+			extraParam[n] = temp[n];
+	}
+
+	// Put the desired value in the desired spot
+	extraParam[ix] = val;
+}//====================================================
+
+void tpat_node::setExtraParams(std::vector<double> allExtra) {
+	extraParam = allExtra;
+}
 
 void tpat_node::setPosVelState(double *array){
 	std::copy(array, array+6, posVelState);

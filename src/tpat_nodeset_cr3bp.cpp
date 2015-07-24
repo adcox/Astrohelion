@@ -34,13 +34,13 @@
 /**
  *	@brief Create a general CR3BP nodeset
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp() : tpat_nodeset(6){}
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(){}
 
 /**
  *	@brief Create a nodeset with specified system data
  *	@param data system data object
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp data) : tpat_nodeset(6){
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp data){
 	sysData = data;
 }
 
@@ -55,7 +55,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp data) : tpat_nodeset(
  *	@param type node distribution type
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, double tof,
-	int numNodes, node_distro_t type) : tpat_nodeset(6){
+	int numNodes, node_distro_t type){
 
 	sysData = data;
 
@@ -73,7 +73,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, d
  *	@param type node distribution type
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3bp data, double tof,
-	int numNodes, node_distro_t type) : tpat_nodeset(6){
+	int numNodes, node_distro_t type){
 
 	sysData = data;
 	initSetFromICs(&(IC[0]), &sysData, 0, tof, numNodes, type);
@@ -91,7 +91,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
  *	@param numNodes number of nodes to create, including IC
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, double tof, 
-	int numNodes) : tpat_nodeset(6){
+	int numNodes){
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
@@ -109,7 +109,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp data, d
  *	@param numNodes number of nodes to create, including IC
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3bp data, double tof, 
-	int numNodes) : tpat_nodeset(6){
+	int numNodes){
 	sysData = data;
 
 	initSetFromICs(&(IC[0]), &sysData, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
@@ -123,7 +123,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
  *	@param traj the trajectory to split
  *	@param numNodes the number of nodes.
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpat_nodeset(6){
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes){
 	sysData = traj.getSysData();
 	initSetFromTraj(traj, &sysData, numNodes, tpat_nodeset::DISTRO_TIME);
 }//===========================================
@@ -136,7 +136,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpa
  *	@param type the node distribution type
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
-	node_distro_t type) : tpat_nodeset(6){
+	node_distro_t type){
 	
 	sysData = traj.getSysData();
 	initSetFromTraj(traj, &sysData, numNodes, type);
@@ -163,7 +163,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp &orig, int first
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodeset(n){
 	sysData = n.sysData;
-}
+}//========================================
 
 /**
  *	@brief Make this nodeset equal to the input nodeset
@@ -208,22 +208,16 @@ tpat_sys_data* tpat_nodeset_cr3bp::getSysData() { return &sysData; }
  */
 void tpat_nodeset_cr3bp::print() const{
 	printf("CR3BP Nodeset:\n  Nodes:\n");
-	for(int n = 0; n < getNumNodes(); n++){
-		printf("  > %02d -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
-			nodes[n*nodeSize+0], nodes[n*nodeSize+1], nodes[n*nodeSize+2], 
-			nodes[n*nodeSize+3], nodes[n*nodeSize+4], nodes[n*nodeSize+5]);
-		if(n < ((int)tofs.size())){
-			printf("  TOF = %.4f\n", tofs[n]);
-		}else{
+	for(size_t n = 0; n < nodes.size(); n++){
+		std::vector<double> state = nodes[n].getPosVelState();
+		printf("  > %02zu -> [%9.5f %9.5f %9.5f %9.5f %9.5f %9.5f]", n,
+			state[0], state[1], state[2], state[3], state[4], state[5]);
+
+		if(n + 1 < nodes.size())
+			printf("  TOF = %.4f\n", nodes[n].getTOF());
+		else
 			printf("\n");
-		}
 	}
-	
-	printf("  VelConNodes: [");
-	for(int v = 0; v < ((int)velConNodes.size()); v++){
-		printf("%s%d", (v%20 == 0 && v > 0) ? "\n" : (v == 0 ? " ": ", "), velConNodes[v]);
-	}
-	printf(" ]\n");
 
 	printf("  Constraints:%s", getNumCons() > 0 ? "\n" : " None\n");
 	for(int c = 0; c < getNumCons(); c++){

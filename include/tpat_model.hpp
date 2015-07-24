@@ -20,10 +20,17 @@
 #ifndef H_MODEL_DEF
 #define H_MODEL_DEF
 
+#include "tpat_constraint.hpp"
+
+#include <vector>
+
 // Forward Declarations
+class tpat_constraint;
 class tpat_event;
+class tpat_nodeset;
 class tpat_traj;
 class tpat_sys_data;
+struct iterationData;
 
 /**
  *	@brief A base class that defines the behavior of a dynamical model and provides
@@ -97,16 +104,73 @@ public:
 	 */
 	virtual eom_fcn getFullEOM_fcn() = 0;
 
+	/**
+	 *	@brief Compute the positions of all primaries
+	 *
+	 *	@param t the time at which the computations occur (only important for non-autonomous systems)
+	 *	@param sysData object describing the specific system
+	 *	@return an n x 3 vector (row-major order) containing the positions of
+	 *	n primaries; each row is one position vector in non-dimensional units
+	 */
+	virtual std::vector<double> getPrimPos(double t, tpat_sys_data *sysData) = 0;
+
+	/**
+	 *	@brief Compute the velocities of all primaries
+	 *
+	 *	@param t the time at which the computations occur (only important for non-autonomous systems)
+	 *	@param sysData object describing the specific system
+	 *	@return an n x 3 vector (row-major order) containing the velocities of
+	 *	n primaries; each row is one velocity vector in non-dimensional units
+	 */
+	virtual std::vector<double> getPrimVel(double t, tpat_sys_data *sysData) = 0;
+
+	virtual void corrector_initDesignVec(iterationData*, tpat_nodeset*);
+	virtual void corrector_createContCons(iterationData*, tpat_nodeset*);
+	virtual void corrector_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
+	virtual void corrector_applyConstraint(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetPosVelCons(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetExContCons(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetState(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetMatchAll(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetMatchCust(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetDist(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetDeltaV(iterationData*t, tpat_constraint, int);
+	virtual void corrector_targetTOF(iterationData*, tpat_constraint, int);
+
+	/**
+	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+	 *  nodeset
+	 *
+	 *  If <tt>findEvent</tt> is set to true, the
+	 *  output nodeset will contain extra information for the simulation engine to use. Rather than
+	 *  returning only the position and velocity states, the output nodeset will contain the STM 
+	 *  and other values for the final node; this information will be appended to the extraParameter
+	 *  vector in the final node.
+	 *
+	 *  @param it an iteration data object containing all info from the corrections process
+	 *  @param nodeset_out a pointer to the output nodeset object
+	 *	@param findEvent whether or not this correction process is locating an event
+	 */
+	virtual tpat_nodeset* corrector_createOutput(iterationData* it, bool findEvent) = 0;
+
 	// Set and Get Functions
 	int getCoreStateSize() const;
 	int getSTMStateSize() const;
 	int getExtraStateSize() const;
-
+	bool supportsCon(tpat_constraint::constraint_t) const;
 protected:
 	dynamicModel_t modelType = MODEL_NULL;	//!< Describes the model type
 	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
 	int stmStates = 36;		//!< The number of states used to store the STM; will always be 36
 	int extraStates = 0;		//!< The number of extra states stored after the core states and STM states; default is zero.
+
+	/** A vector containing the all the types of constraints this model supports */
+	std::vector<tpat_constraint::constraint_t> allowedCons {tpat_constraint::NONE, tpat_constraint::STATE,
+		tpat_constraint::MATCH_ALL, tpat_constraint::MATCH_CUST,
+		tpat_constraint::DIST, tpat_constraint::MIN_DIST, tpat_constraint::MAX_DIST,
+		tpat_constraint::MAX_DELTA_V, tpat_constraint::DELTA_V,
+		tpat_constraint::TOF,
+		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX};
 
 	void copyMe(const tpat_model&);
 };

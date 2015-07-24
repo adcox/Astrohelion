@@ -29,14 +29,30 @@ class tpat_model_bcr4bpr : public tpat_model{
 public:
 	tpat_model_bcr4bpr();
 	tpat_model_bcr4bpr(const tpat_model_bcr4bpr&);
+	~tpat_model_bcr4bpr() {}
 
 	tpat_model_bcr4bpr& operator=(const tpat_model_bcr4bpr&);
 
 	// Core Functions
 	tpat_model::eom_fcn getFullEOM_fcn();
 	tpat_model::eom_fcn getSimpleEOM_fcn();
+	std::vector<double> getPrimPos(double, tpat_sys_data*);
+	std::vector<double> getPrimVel(double, tpat_sys_data*);
 	void saveIntegratedData(double*, double, tpat_traj*);
 	bool locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
+
+	// Corrector function
+	void corrector_initDesignVec(iterationData*, tpat_nodeset*);
+	void corrector_createContCons(iterationData*, tpat_nodeset*);
+	void corrector_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
+	void corrector_applyConstraint(iterationData*, tpat_constraint, int);
+	void corrector_targetPosVelCons(iterationData*, tpat_constraint, int);
+	void corrector_targetExContCons(iterationData*, tpat_constraint, int);
+	void corrector_targetState(iterationData*, tpat_constraint, int);
+	void corrector_targetDeltaV(iterationData*, tpat_constraint, int);
+	void corrector_targetDist(iterationData*, tpat_constraint, int);
+	void corrector_targetSP(iterationData*, tpat_constraint, int);
+	tpat_nodeset* corrector_createOutput(iterationData*, bool);
 };
 
 #endif

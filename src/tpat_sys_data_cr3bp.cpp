@@ -88,6 +88,8 @@ void tpat_sys_data_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 	}
 }//===================================================
 
+tpat_model* tpat_sys_data_cr3bp::getModel() { return &model; }
+
 /**
  *	@brief Copy constructor
  *	@param d

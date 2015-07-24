@@ -80,11 +80,11 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_traj_cr3bp &t) : tpat_traj(t){
  */
 tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
 	tpat_sys_data *sysData = nodes.getSysData();
-	tpat_simulation_engine simEngine(*sysData);
+	tpat_simulation_engine simEngine(sysData);
 	tpat_traj_cr3bp totalTraj;
 
 	for(int n = 0; n < nodes.getNumNodes()-1; n++){
-		simEngine.runSim(nodes.getNode(n), nodes.getTOF(n));
+		simEngine.runSim(nodes.getNode(n).getPosVelState(), nodes.getTOF(n));
 
 		if(n == 0){
 			totalTraj = simEngine.getCR3BP_Traj();

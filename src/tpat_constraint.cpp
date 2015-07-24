@@ -179,6 +179,9 @@ const char* tpat_constraint::getTypeStr(constraint_t t) const{
 		case MAX_DELTA_V: { return "MAX_DELTA_V"; break; }
 		case DELTA_V: { return "DELTA_V"; break; }
 		case SP: { return "SP"; break; }
+		case TOF: { return "TOF"; break; }
+		case CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }
+		case CONT_EX: { return "CONTINUOUS_EXTRA"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}
 }//========================================

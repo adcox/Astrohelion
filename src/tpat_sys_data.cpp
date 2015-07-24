@@ -49,6 +49,11 @@ tpat_sys_data::tpat_sys_data(const tpat_sys_data& d){
 }//============================================
 
 /**
+ *	@brief Destructor
+ */
+tpat_sys_data::~tpat_sys_data(){}
+
+/**
  *	@brief Copy the system data object
  *
  *	@param d a system data object

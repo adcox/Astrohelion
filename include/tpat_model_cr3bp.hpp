@@ -29,14 +29,22 @@ class tpat_model_cr3bp : public tpat_model{
 public:
 	tpat_model_cr3bp();
 	tpat_model_cr3bp(const tpat_model_cr3bp&);
+	~tpat_model_cr3bp() {}
 
 	tpat_model_cr3bp& operator=(const tpat_model_cr3bp&);
 
 	// Core Functions
 	tpat_model::eom_fcn getFullEOM_fcn();
 	tpat_model::eom_fcn getSimpleEOM_fcn();
+	std::vector<double> getPrimPos(double, tpat_sys_data*);
+	std::vector<double> getPrimVel(double, tpat_sys_data*);
 	void saveIntegratedData(double*, double, tpat_traj*);
 	bool locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
+
+	// Corrector Functions
+	void corrector_applyConstraint(iterationData*, tpat_constraint, int);
+	void corrector_targetJC(iterationData*, tpat_constraint, int);
+	tpat_nodeset* corrector_createOutput(iterationData*, bool);
 };
 
 #endif

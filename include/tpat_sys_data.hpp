@@ -23,6 +23,9 @@
 #include <string>
 #include <vector>
 
+//forward declarations
+class tpat_model;
+
 /**
  *	@brief Contains information about a system, like mass ratio, primary names, etc.
  *
@@ -57,7 +60,7 @@ class tpat_sys_data{
 
 		tpat_sys_data();
 		tpat_sys_data(const tpat_sys_data&);
-		virtual ~tpat_sys_data() {}
+		virtual ~tpat_sys_data();
 		
 
 		tpat_sys_data& operator =(const tpat_sys_data&);
@@ -68,6 +71,7 @@ class tpat_sys_data{
 		double getCharL() const;
 		double getCharM() const;
 		double getCharT() const;
+		virtual tpat_model* getModel() = 0;
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
 		int getPrimID(int n) const;
@@ -76,7 +80,6 @@ class tpat_sys_data{
 		std::string getTypeStr() const;
 		
 	protected:
-
 		/** Number of primaries that exist in this system */
 		int numPrimaries = 0;
 

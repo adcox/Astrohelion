@@ -21,8 +21,11 @@
 #define H_BCR4BPR_SYS_DATA
 
 #include "tpat_sys_data.hpp"
+
+#include "tpat_constants.hpp" 
+#include "tpat_model_bcr4bpr.hpp"
+
 #include "matio.h"
-#include "tpat_constants.hpp"
 
 /**
  *	@brief This derivative class of the tpat_sys_data super-class
@@ -40,6 +43,8 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 
 		tpat_sys_data_bcr4bpr& operator=(const tpat_sys_data_bcr4bpr&);
 		
+		tpat_model* getModel();
+
 		double getMu() const;
 		double getNu() const;
 		double getK() const;
@@ -60,6 +65,9 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 		static double REF_EPOCH;	// 2005/06/21 18:21:35
 
 	private:
+		/** The dynamic model that governs motion for this system*/
+		tpat_model_bcr4bpr model;
+		
 		void initFromPrimNames(std::string, std::string, std::string);
 };
 

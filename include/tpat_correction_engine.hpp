@@ -24,14 +24,49 @@
 #include "tpat_nodeset.hpp"
 #include "tpat_sys_data.hpp"
 
+#include <vector>
+
 // Forward declarations
 class tpat_nodeset_bcr4bpr;
 class tpat_sys_data_bcr4bpr;
 class tpat_constraint;
+class tpat_node;
 class tpat_nodeset_cr3bp;
 class tpat_matrix;
 class tpat_simulation_engine;
-class iterationData;
+
+/**
+ *	@brief a custom data class to encapsulate data used in each iteration
+ *	of the corrections process.
+ *
+ *	This data object can be passed to other functions, allowing us to break 
+ *	the master corrections loop into smaller functions without requiring an
+ *	obscene amount of arguments to be passed in.
+ */
+struct iterationData{
+	public:
+		tpat_sys_data *sysData;					//!< A pointer to the system data object used for this corrections process
+		std::vector<double> X;					//!< Free-Variable Vector
+		std::vector<double> FX;					//!< Constraint Function Vector
+		std::vector<double> DF;					//!< Jacobian Matrix
+		std::vector<double> deltaVs;			//!< nx3 vector of non-dim delta-Vs
+		std::vector<double> primPos;			//!< Store the positions of the primaries
+		std::vector<double> primVel;			//!< Store the velocities of the primaries
+		std::vector<tpat_node> origNodes;		//!< Store the original nodes that birthed this correction process
+		std::vector<tpat_traj> allSegs;			//!< A collection of all integrated segments
+		std::vector<tpat_constraint> allCons;	//!< A list of all constraints
+		std::vector<int> slackAssignCon;		//!< Indices of constraints, index of entry corresponds to a slack variable
+		std::vector<int> conRows;				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
+
+		int numNodes = 0;			//!< Number of nodes in the entire nodeset
+		int count = 0;				//!< Count of number of iterations through corrections process
+
+		int numSlack = 0;			//!< # slack variables
+		int totalCons = 0;			//!< Total # constraints -> # rows of DF
+		int totalFree = 0;			//!< Total # free var. -> # cols of DF
+
+		bool varTime = true;		//!< Whether or not the simulation is using variable time
+};
 
 /**
  *	@brief An engine object to perform corrections, such as single-shooting
@@ -106,16 +141,16 @@ class tpat_correction_engine{
 		void correct(tpat_nodeset*);
 		void createOutput(iterationData*);
 
-		void createPosVelCons(iterationData*, tpat_sys_data::system_t, int);
-		void targetState(iterationData*, tpat_constraint, int, int);
-		void targetMatchAll(iterationData*, tpat_constraint, int, int);
-		void targetMatchCust(iterationData*, tpat_constraint, int, int);
-		void targetDist(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
-		void targetSP(iterationData*, tpat_sys_data_bcr4bpr*, int, int);
-		void targetJC(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
-		void updateDeltaVCon(iterationData*, tpat_sys_data*, int, int);
-		void updatePrimPos(iterationData*, tpat_sys_data*, double);
-		void updatePrimVel(iterationData*, tpat_sys_data*, double);
+		// void createPosVelCons(iterationData*, tpat_sys_data::system_t, int);
+		// void targetState(iterationData*, tpat_constraint, int, int);
+		// void targetMatchAll(iterationData*, tpat_constraint, int, int);
+		// void targetMatchCust(iterationData*, tpat_constraint, int, int);
+		// void targetDist(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
+		// void targetSP(iterationData*, tpat_sys_data_bcr4bpr*, int, int);
+		// void targetJC(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
+		// void updateDeltaVCon(iterationData*, tpat_sys_data*, int, int);
+		// void updatePrimPos(iterationData*, tpat_sys_data*, double);
+		// void updatePrimVel(iterationData*, tpat_sys_data*, double);
 
 		tpat_matrix solveUpdateEq(iterationData*);
 

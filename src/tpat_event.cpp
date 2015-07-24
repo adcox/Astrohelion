@@ -126,7 +126,7 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 			throw tpat_exception("Creating event with no type");
 	}
 
-	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN, NAN};	// seven empty elements
+	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// seven empty elements
 	switch(type){
 		case YZ_PLANE: data[0] = params[0]; break;	// x = 0
 		case XZ_PLANE: data[1] = params[0];	break;	// y = 0
@@ -145,7 +145,7 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 		}
 		default: break;	// Do nothing
 	}
-	conData.insert(conData.begin(), data, data+7);
+	conData.insert(conData.begin(), data, data+6);
 }//==========================================
 
 /**

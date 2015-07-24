@@ -21,6 +21,9 @@
 #define H_CR3BP_SYS_DATA
 
 #include "tpat_sys_data.hpp"
+
+#include "tpat_model_cr3bp.hpp"
+
 #include "matio.h"
 #include <string>
 
@@ -40,6 +43,7 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 
 		tpat_sys_data_cr3bp& operator=(const tpat_sys_data_cr3bp&);
 		
+		tpat_model* getModel();
 		double getMu() const;
 
 		void saveToMat(mat_t*);
@@ -47,6 +51,10 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 		
 	protected:
 		void initFromPrimNames(std::string, std::string);
+
+	private:
+		/** The dynamic model that governs motion for this system*/
+		tpat_model_cr3bp model;
 };
 
 #endif

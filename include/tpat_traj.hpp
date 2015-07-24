@@ -56,7 +56,7 @@ class tpat_traj{
 		tpat_traj();
 		tpat_traj(int);
 		tpat_traj(const tpat_traj&);
-		virtual ~tpat_traj(){}
+		virtual ~tpat_traj();
 
 		// Operators
 		tpat_traj& operator= (const tpat_traj&);
@@ -66,6 +66,7 @@ class tpat_traj{
 		std::vector<double>* getAccel();
 		std::vector<double> getCoord(int) const;
 		int getLength() const;
+		std::vector<double> getExtraParam(int) const;
 		std::vector<double>* getExtraParam();
 		std::vector<double> getState(int) const;
 		std::vector<double>* getState();

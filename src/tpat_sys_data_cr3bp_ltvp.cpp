@@ -71,6 +71,8 @@ tpat_sys_data_cr3bp_ltvp& tpat_sys_data_cr3bp_ltvp::operator= (const tpat_sys_da
 	return *this;
 }//===================================================
 
+tpat_model* tpat_sys_data_cr3bp_ltvp::getModel() { return &model; }
+
 /**
  *	@brief Get the non-dimensional thrust for P3 in this system
  *	@return the thrust (non-dimensional)

@@ -36,7 +36,11 @@
 #include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
 
-tpat_model_cr3bp::tpat_model_cr3bp() : tpat_model(MODEL_CR3BP) {}
+tpat_model_cr3bp::tpat_model_cr3bp() : tpat_model(MODEL_CR3BP) {
+    // Allow a few more constraints than the default
+    allowedCons.push_back(tpat_constraint::JC);
+}//==============================================
+
 tpat_model_cr3bp::tpat_model_cr3bp(const tpat_model_cr3bp &m) : tpat_model(m) {}
 
 tpat_model_cr3bp& tpat_model_cr3bp::operator =(const tpat_model_cr3bp &m){
@@ -52,6 +56,21 @@ tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn(){
 	return &cr3bp_EOMs;
 }//==============================================
 
+std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysData){
+    double primPos[6] = {0};
+    tpat_sys_data_cr3bp crSys(*static_cast<tpat_sys_data_cr3bp *>(sysData));
+    
+    primPos[0] = -1*crSys.getMu();
+    primPos[3] = 1 - crSys.getMu();
+
+    return std::vector<double>(primPos, primPos+6);
+}//==============================================
+
+std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysData){
+    double primVel[6] = {0};
+    
+    return std::vector<double>(primVel, primVel+6);
+}//==============================================
 
 void tpat_model_cr3bp::saveIntegratedData(double* y, double t, tpat_traj* traj){
     // Save the position and velocity states
@@ -141,13 +160,126 @@ bool tpat_model_cr3bp::locateEvent(tpat_event event, tpat_traj* traj, tpat_model
     // Because we set findEvent to true, this output nodeset should contain
     // the full (42 or 48 element) final state
     tpat_nodeset_cr3bp correctedNodes = corrector.getCR3BP_Output();
-    std::vector<double> *nodes = correctedNodes.getNodes();
+
+    std::vector<double> state = correctedNodes.getNode(-1).getPosVelState();
+    std::vector<double> extra = correctedNodes.getNode(-1).getExtraParams();
+    extra.insert(extra.begin(), state.begin(), state.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
     double eventTime = correctedNodes.getTOF(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    model->saveIntegratedData(&(nodes->at(6)), eventTime, traj);
+    model->saveIntegratedData(&(extra[0]), eventTime, traj);
 
     return true;
 }//======================================================
+
+
+/**
+ *  @brief Compute constraint function and partial derivative values for a constraint
+ *  
+ *  This function calls its relative in the tpat_model base class and appends additional
+ *  instructions specific to the CR3BP
+ *
+ *  @param it a pointer to the corrector's iteration data structure
+ *  @param con the constraint being applied
+ *  @param c the index of the constraint within the total constraint vector (which is, in
+ *  turn, stored in the iteration data)
+ */ 
+void tpat_model_cr3bp::corrector_applyConstraint(iterationData *it, tpat_constraint con, int c){
+
+    // Let the base class do its thing first
+    tpat_model::corrector_applyConstraint(it, con, c);
+
+    // Handle constraints specific to the CR3BP
+    int row0 = it->conRows[c];
+
+    switch(con.getType()){
+        case tpat_constraint::JC:
+            corrector_targetJC(it, con, row0);
+            break;
+        default: break;
+    }
+}//=========================================================
+
+void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con, int row0){
+    std::vector<double> conData = con.getData();
+    int n = con.getNode();
+    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *> (it->sysData);
+
+    // Compute the value of Jacobi at this node
+    double mu = crSys->getMu();
+    double *nodeState = &(it->X[6*n]);
+    double nodeJC = cr3bp_getJacobi(nodeState, mu);
+    
+    // temp variables to make equations more readable; compute partials w.r.t. node state
+    double x = nodeState[0];
+    double y = nodeState[1];
+    double z = nodeState[2];
+    double vx = nodeState[3];
+    double vy = nodeState[4];
+    double vz = nodeState[5];
+
+    double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
+    double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+
+    it->FX[row0] = nodeJC - conData[0];
+    it->DF[it->totalFree*row0 + 6*n + 0] = -2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x;    //dFdx
+    it->DF[it->totalFree*row0 + 6*n + 1] = -2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) - 2*y;                      //dFdy
+    it->DF[it->totalFree*row0 + 6*n + 2] = -2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3);                            //dFdz
+    it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx;   //dFdx_dot
+    it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy;   //dFdy_dot
+    it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz;   //dFdz_dot
+}//=============================================
+
+/**
+ *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  nodeset
+ *
+ *  If <tt>findEvent</tt> is set to true, the
+ *  output nodeset will contain extra information for the simulation engine to use. Rather than
+ *  returning only the position and velocity states, the output nodeset will contain the STM 
+ *  and dqdT values for the final node; this information will be appended to the extraParameter
+ *  vector in the final node.
+ *
+ *  @param it an iteration data object containing all info from the corrections process
+ *  @param nodeset_out a pointer to the output nodeset object
+ *  @param findEvent whether or not this correction process is locating an event
+ */
+tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, bool findEvent){
+
+    // Create a nodeset with the same system data as the input
+    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(it->sysData);
+    tpat_nodeset_cr3bp *nodeset_out = new tpat_nodeset_cr3bp(*crSys);
+    nodeset_out->setNodeDistro(tpat_nodeset::DISTRO_NONE);
+
+    int numNodes = (int)(it->origNodes.size());
+    for(int i = 0; i < numNodes; i++){
+        if(i + 1 < numNodes){
+            tpat_node node(&(it->X[i*6]), it->X[numNodes*6 + i]);   // create node with state and TOF
+            nodeset_out->appendNode(node);
+        }else{
+            tpat_node node(&(it->X[i*6]), NAN);                 // create node with state and fake TOF (last node)
+            /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
+            state for the last node. We do this by appending the STM elements and dqdT elements to the
+            end of the node array. This output nodeset should have two "nodes": the first 6 elements
+            are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
+            information*/
+            if(findEvent){
+                // Append the 36 STM elements to the node vector
+                tpat_traj lastSeg = it->allSegs.back();
+                tpat_matrix stm = lastSeg.getSTM(-1);
+                std::vector<double> extraParam(stm.getDataPtr(), stm.getDataPtr()+36);
+                
+                node.setExtraParams(extraParam);
+            }
+            nodeset_out->appendNode(node);
+        }
+    }
+
+
+    return nodeset_out;
+}//====================================================
+
+
+

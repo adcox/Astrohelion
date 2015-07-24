@@ -1006,8 +1006,11 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
             tpat_matrix stateVec(1,6, correctedHalfPer.getNode(i).getPosVelState());
             tpat_matrix newStateVec = stateVec*mirrorMat;
 
-            tpat_node node = correctedHalfPer.getNode(i);
-            tpat_node newNode(newStateVec.getDataPtr(), correctedHalfPer.getNode(i).getTOF());
+            double tof = NAN;
+            if(i > 0)
+                tof = correctedHalfPer.getNode(i-1).getTOF();
+
+            tpat_node newNode(newStateVec.getDataPtr(), tof);
             correctedHalfPer.appendNode(newNode);
         }
 
@@ -1017,14 +1020,11 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
         tpat_constraint finalCon(tpat_constraint::STATE, correctedHalfPer.getNumNodes()-1, mirrorCon1, 6);
         correctedHalfPer.addConstraint(finalCon);
 
-
         // Reconverge the solution
         corrector.correct_cr3bp(&correctedHalfPer);
 
         // Return the corrected solution in trajectory form
         tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
-
-        waitForUser();
         
         return tpat_traj_cr3bp::fromNodeset(finalSet);
     }catch(tpat_diverge &e){

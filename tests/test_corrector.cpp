@@ -28,6 +28,10 @@ int main(void){
 	// Also constraint final state to be perpendicular
 	tpat_constraint perpCrossEnd(tpat_constraint::STATE, 14, perpCrossData, 6);
 
+	double almostIC[] =  {IC[0], 0, 0, NAN, NAN, NAN};
+	tpat_constraint icCon(tpat_constraint::STATE, 0, almostIC, 6);
+
+	nodeset.addConstraint(icCon);
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(perpCrossEnd);
 

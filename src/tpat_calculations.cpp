@@ -1023,9 +1023,10 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
 
         // Return the corrected solution in trajectory form
         tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
+
+        waitForUser();
         
         return tpat_traj_cr3bp::fromNodeset(finalSet);
-
     }catch(tpat_diverge &e){
         throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
     }

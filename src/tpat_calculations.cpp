@@ -987,8 +987,6 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
     tpat_nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
-    halfOrbNodes.print();
-    halfOrbNodes.saveToMat("Nodes_BeforeCorrect.mat");
 
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
@@ -1019,7 +1017,6 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
         tpat_constraint finalCon(tpat_constraint::STATE, correctedHalfPer.getNumNodes()-1, mirrorCon1, 6);
         correctedHalfPer.addConstraint(finalCon);
 
-        correctedHalfPer.print();
 
         // Reconverge the solution
         corrector.correct_cr3bp(&correctedHalfPer);

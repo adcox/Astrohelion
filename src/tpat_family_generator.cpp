@@ -50,6 +50,7 @@ tpat_family_generator::tpat_family_generator(){}
 
 /** 
  *	@brief Copy constructor
+ *	@param f a family generator reference
  */
 tpat_family_generator::tpat_family_generator(const tpat_family_generator &f){
 	copyMe(f);
@@ -63,6 +64,7 @@ tpat_family_generator::~tpat_family_generator(){}
 
 /**
  *	@brief Copy operator
+ *	@param f a family generator reference
  */
 tpat_family_generator& tpat_family_generator::operator =(const tpat_family_generator &f){
 	copyMe(f);
@@ -269,7 +271,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
  *	
  *	@param sysData represents the system the Lyapunov exists in
  *	@param LPt The Lagrange point number [1-5]
- *	@param r0 the initial displacement from the Lagrange point along the x-axis.
+ *	@param x0 the initial displacement from the Lagrange point along the x-axis.
  *
  *	@return a family of orbits
  */

@@ -1,6 +1,25 @@
 /**
  *	@file tpat_nodeset_bcr4bpr.cpp
  */
+/*
+ *	Trajectory Propagation and Analysis Toolkit 
+ *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *
+ *  TPAT is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  TPAT is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "tpat.hpp"
 #include "tpat_nodeset_bcr4bpr.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
@@ -33,7 +52,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr d
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
-	initEpochs(numNodes, t0);
+	initEpochs(t0);
 }//======================================================================
 
 /**
@@ -54,7 +73,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data
 	sysData = data;
 
 	initSetFromICs(&(IC[0]), &sysData, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
-	initEpochs(numNodes, t0);
+	initEpochs(t0);
 }//======================================================================
 
 /**
@@ -74,7 +93,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr d
 	sysData = data;
 
 	initSetFromICs(IC, &sysData, t0, tof, numNodes, type);
-	initEpochs(numNodes, t0);
+	initEpochs(t0);
 }//======================================================================
 
 /**
@@ -94,13 +113,13 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data
 	sysData = data;
 
 	initSetFromICs(&(IC[0]), &sysData, t0, tof, numNodes, type);
-	initEpochs(numNodes, t0);
+	initEpochs(t0);
 }//======================================================================
 
 /**
  *	@brief Create a nodeset as a subset of another
  *	@param orig Original nodeset
- *	@param index of the first node to be included in the new nodeset
+ *	@param first index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
 tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &orig, int first,
@@ -109,7 +128,14 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &orig, int
 	sysData = orig.sysData;
 }//=======================================================
 
-void tpat_nodeset_bcr4bpr::initEpochs(int numNodes, double t0){
+/**
+ *	@brief Auto-generate epochs for all nodes
+ *
+ *	Using the times-of-flight for each node an an initial 
+ *	time, compute the epoch for each node assuming time
+ *	flows continuously through all nodes
+ */
+void tpat_nodeset_bcr4bpr::initEpochs(double t0){
 	
 	// Compute epoch times for each node
 	double ellapsed = t0;

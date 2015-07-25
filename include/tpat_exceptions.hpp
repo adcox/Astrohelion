@@ -45,7 +45,7 @@ class tpat_exception : public std::exception{
 			return msg;
 		}
 	protected:
-		const char *msg;	//<! Custom error message
+		const char *msg;	//!< Custom error message
 };
 
 /**

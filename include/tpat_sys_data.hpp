@@ -71,11 +71,16 @@ class tpat_sys_data{
 		double getCharL() const;
 		double getCharM() const;
 		double getCharT() const;
+
+		/**
+		 *	@brief Retrieve the model that governs the motion for this system type
+		 *	@return the model that governs the motion for this system type
+		 */
 		virtual tpat_model* getModel() = 0;
+		
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
 		int getPrimID(int n) const;
-		int getStateWidth() const;
 		system_t getType() const;
 		std::string getTypeStr() const;
 		

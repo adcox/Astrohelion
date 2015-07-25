@@ -42,7 +42,7 @@ public:
 	bool locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
 
 	// Corrector Functions
-	tpat_nodeset* corrector_createOutput(iterationData*, bool);
+	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

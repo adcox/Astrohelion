@@ -56,7 +56,7 @@ class tpat_matrix{
 		// Special constructors
 		static tpat_matrix I(int);
 		static tpat_matrix e_j(int, int);
-		static tpat_matrix diag(double[], int);
+		static tpat_matrix diag(double*, int);
 
 		// Operator Overloading
 		tpat_matrix& operator =(const tpat_matrix&);

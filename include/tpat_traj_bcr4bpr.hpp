@@ -55,7 +55,6 @@ class tpat_traj_bcr4bpr : public tpat_traj{
 		std::vector<double>* get_dqdT();
 		std::vector<double> get_dqdT(int);
 		
-		void setLength();
 		void setSysData(tpat_sys_data_bcr4bpr);
 		void saveToMat(const char*);
 	private:

@@ -1,7 +1,5 @@
 /**
- *	@tpat_sys_data_cr3bp.cpp
- *
- *	tpat_sys_data_cr3bp.cpp
+ *	@file tpat_sys_data_cr3bp.cpp
  *
  * 	System Data object specifically for CR3BP
  */
@@ -88,6 +86,10 @@ void tpat_sys_data_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 	}
 }//===================================================
 
+/**
+ *	@brief Retrieve the model that governs the motion for this system type
+ *	@return the model that governs the motion for this system type
+ */
 tpat_model* tpat_sys_data_cr3bp::getModel() { return &model; }
 
 /**

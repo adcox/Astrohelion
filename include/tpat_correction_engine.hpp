@@ -139,7 +139,6 @@ class tpat_correction_engine{
 
 		void copyEngine(const tpat_correction_engine&);
 		void correct(tpat_nodeset*);
-		void createOutput(iterationData*);
 
 		// void createPosVelCons(iterationData*, tpat_sys_data::system_t, int);
 		// void targetState(iterationData*, tpat_constraint, int, int);

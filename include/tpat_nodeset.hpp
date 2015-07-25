@@ -42,7 +42,7 @@ class tpat_traj;
  *	In addition to nodes, a nodeset stores information about the constraints that should
  *	be applied when the nodeset is passed through a corrections algorithm
  *
- *	@seealso tpat_node
+ *	@see tpat_node
  *
  *	@author Andrew Cox
  *	@version May 21, 2015
@@ -112,7 +112,7 @@ class tpat_nodeset{
 		std::vector<tpat_constraint> constraints;
 
 		static void basicConcat(const tpat_nodeset&, const tpat_nodeset&, tpat_nodeset*);
-		void initSetFromICs(double[], tpat_sys_data*, double, double, int, node_distro_t);
+		void initSetFromICs(double[6], tpat_sys_data*, double, double, int, node_distro_t);
 		void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
 		void saveNodes(mat_t*);
 		void saveTOFs(mat_t*);

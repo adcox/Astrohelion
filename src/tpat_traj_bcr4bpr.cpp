@@ -79,6 +79,10 @@ tpat_traj_bcr4bpr& tpat_traj_bcr4bpr::operator= (const tpat_traj_bcr4bpr& t){
 	return *this;
 }//====================================================
 
+/**
+ *	@brief Copy the trajectory
+ *	@param t a trajectory reference
+ */
 void tpat_traj_bcr4bpr::copyMe(const tpat_traj_bcr4bpr &t){
 	sysData = t.sysData;
 }//====================================================
@@ -191,8 +195,6 @@ std::vector<double> tpat_traj_bcr4bpr::get_dqdT(int i){
 tpat_sys_data::system_t tpat_traj_bcr4bpr::getType() const{
 	return sysData.getType();
 }//===============================================
-
-void tpat_traj_bcr4bpr::setLength() { tpat_traj::setLength(); }
 
 /**
  *	@brief Set the system data object

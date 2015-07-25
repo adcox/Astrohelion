@@ -55,6 +55,7 @@ public:
 	void setVel_AllCon();
 	void setVel_AllDiscon();
 	void setVelCon(bool[3]);
+	void setVelCon(std::vector<bool>);
 	void setVelCon(bool, bool, bool);
 
 	// Utility Functions

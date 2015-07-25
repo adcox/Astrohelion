@@ -189,9 +189,6 @@ class tpat_simulation_engine{
 		double numSteps = 1000;
 
 		void integrate(double ic[], double t[], int t_dim);
-		void saveIntegratedData(double *y, double t);
-		void setEOMParams();
-		bool locateEvents(double*, double);
 		void cleanEngine();
 		void copyEngine(const tpat_simulation_engine&);
 };

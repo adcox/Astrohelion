@@ -39,6 +39,7 @@
 
 /**
  *	@brief Create an empty family for the specified system
+ *	@param data a CR3BP system data object
  */
 tpat_family_cr3bp::tpat_family_cr3bp(tpat_sys_data_cr3bp data){
 	sysData = data;
@@ -46,6 +47,8 @@ tpat_family_cr3bp::tpat_family_cr3bp(tpat_sys_data_cr3bp data){
 
 /**
  *	@brief load a family from a file
+ *	@param filepath an aboslute or relative filepath to the data file
+ *	@throws tpat_exception if the file cannot be opened
  */
 tpat_family_cr3bp::tpat_family_cr3bp(const char* filepath){
 	// Load the matlab file
@@ -66,6 +69,7 @@ tpat_family_cr3bp::tpat_family_cr3bp(const char* filepath){
 
 /**
  *	@brief Copy Constructor
+ *	@brief fam a family reference
  */
 tpat_family_cr3bp::tpat_family_cr3bp(const tpat_family_cr3bp& fam){
 	copyMe(fam);
@@ -84,6 +88,7 @@ tpat_family_cr3bp::~tpat_family_cr3bp(){
 
 /**
  *	@brief Assignment operator
+ *	@param fam a family reference
  */
 tpat_family_cr3bp& tpat_family_cr3bp::operator= (const tpat_family_cr3bp& fam){
 	copyMe(fam);
@@ -184,6 +189,10 @@ std::string tpat_family_cr3bp::getName() const { return name; }
  */
 tpat_family_cr3bp::sortVar_t tpat_family_cr3bp::getSortType() const { return sortType; }
 
+/**
+ *	@brief Retrieve a string describing the sort type in human-readable format
+ *	@return a string describing the sort type in human-readable format
+ */
 const char* tpat_family_cr3bp::getSortTypeStr() const{
 	switch(sortType){
 		case SORT_X: return "SORT_X"; break;
@@ -385,7 +394,7 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 
 		if(meanImag > okErr){
 			// significant imaginary parts
-			setTypes[set] = EIGSET_COMP_RECIP;
+			setTypes[set] = EIGSET_COMP_CONJ;
 		}else{
 			if(meanDistFromOne < okErr){
 				setTypes[set] = EIGSET_ONES;
@@ -423,7 +432,7 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 					}
 					break;
 				}
-				case EIGSET_COMP_RECIP:
+				case EIGSET_COMP_CONJ:
 				{
 					double meanPrevImag = (std::abs(imag(prevEigs[set*2])) + std::abs(imag(prevEigs[set*2+1])))/2;
 					double meanImag = (std::abs(imag(eigs[set*2])) + std::abs(imag(eigs[set*2+1])))/2;
@@ -719,6 +728,10 @@ void tpat_family_cr3bp::sortMembers(){
 	members = sortedMembers;
 }//===================================================
 
+/**
+ *	@brief Save the family to a mat-file
+ *	@param filename a path the the mat-file in question
+ */
 void tpat_family_cr3bp::saveToMat(const char *filename){
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 

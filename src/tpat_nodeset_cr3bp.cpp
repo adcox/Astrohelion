@@ -145,7 +145,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
 /**
  *	@brief Create a nodeset as a subset of another
  *	@param orig Original nodeset
- *	@param index of the first node to be included in the new nodeset
+ *	@param first index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp &orig, int first,

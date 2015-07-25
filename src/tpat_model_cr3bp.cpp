@@ -36,26 +36,53 @@
 #include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
 
+/**
+ *  @brief Construct a CR3BP Dynamic Model
+ */
 tpat_model_cr3bp::tpat_model_cr3bp() : tpat_model(MODEL_CR3BP) {
     // Allow a few more constraints than the default
     allowedCons.push_back(tpat_constraint::JC);
 }//==============================================
 
+/**
+ *  @brief Copy Constructor
+ *  @param m a model reference
+ */
 tpat_model_cr3bp::tpat_model_cr3bp(const tpat_model_cr3bp &m) : tpat_model(m) {}
 
+/**
+ *  @brief Assignment operator
+ *  @param m a model reference
+ */
 tpat_model_cr3bp& tpat_model_cr3bp::operator =(const tpat_model_cr3bp &m){
 	tpat_model::operator =(m);
 	return *this;
 }//==============================================
 
+/**
+ *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  for only the core states (i.e. simple)
+ */
 tpat_model::eom_fcn tpat_model_cr3bp::getSimpleEOM_fcn(){
 	return &cr3bp_simple_EOMs;
 }//==============================================
 
+/**
+ *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  for all states (i.e. full)
+ */
 tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn(){
 	return &cr3bp_EOMs;
 }//==============================================
 
+/**
+ *  @brief Compute the positions of all primaries
+ *
+ *  @param t the epoch at which the computations occur
+ *  @param sysData object describing the specific system
+ *  @return an n x 3 vector (row-major order) containing the positions of
+ *  n primaries; each row is one position vector in non-dimensional units
+ */
 std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysData){
     double primPos[6] = {0};
     tpat_sys_data_cr3bp crSys(*static_cast<tpat_sys_data_cr3bp *>(sysData));
@@ -66,12 +93,27 @@ std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysDat
     return std::vector<double>(primPos, primPos+6);
 }//==============================================
 
+/**
+ *  @brief Compute the velocities of all primaries
+ *
+ *  @param t the epoch at which the computations occur
+ *  @param sysData object describing the specific system
+ *  @return an n x 3 vector (row-major order) containing the velocities of
+ *  n primaries; each row is one velocity vector in non-dimensional units
+ */
 std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysData){
     double primVel[6] = {0};
     
     return std::vector<double>(primVel, primVel+6);
 }//==============================================
 
+/**
+ *  @brief Takes an input state and time and saves the data to the trajectory
+ *  @param y an array containing the core state and any extra states integrated
+ *  by the EOM function, including STM elements.
+ *  @param t the time at the current integration state
+ *  @param traj a pointer to the trajectory we should store the data in
+ */
 void tpat_model_cr3bp::saveIntegratedData(double* y, double t, tpat_traj* traj){
     // Save the position and velocity states
     for(int i = 0; i < 6; i++){
@@ -103,21 +145,21 @@ void tpat_model_cr3bp::saveIntegratedData(double* y, double t, tpat_traj* traj){
 }//=====================================================
 
 /**
- *  @brief Use a correction algorithm to check and see if an event has occurred
+ *  @brief Use a correction algorithm to accurately locate an event crossing
  *
  *  The simulation engine calls this function if and when it determines that an event 
  *  has been crossed. To accurately locate the event, we employ differential corrections
  *  and find the exact event occurence in space and time.
  *
  *  @param event the event we're looking for
- *  @param sysData a system data object describing the system we're working in
+ *  @param traj a pointer to the trajectory the event should occur on
  *  @param model the dynamical model we're working in
  *  @param ic the core state vector for this system
  *  @param t0 non-dimensional time at the beginning of the search arc
  *  @param tof the time-of-flight for the arc to search over
  *  @param verbose whether or not we should be verbose with output messages
  *
- *  @param return wether or not the event has been located. If it has, a new point
+ *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp::locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
@@ -202,6 +244,13 @@ void tpat_model_cr3bp::corrector_applyConstraint(iterationData *it, tpat_constra
     }
 }//=========================================================
 
+/**
+ *  @brief Compute constraint function and partial derivative values for a Jacobi Constraint
+ *
+ *  @param it a pointer to the corrector's iteration data structure
+ *  @param con the constraint being applied
+ *  @param row0 the row this constraint begins on
+ */
 void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con, int row0){
     std::vector<double> conData = con.getData();
     int n = con.getNode();
@@ -243,10 +292,12 @@ void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con
  *  vector in the final node.
  *
  *  @param it an iteration data object containing all info from the corrections process
- *  @param nodeset_out a pointer to the output nodeset object
+ *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
+ *
+ *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, bool findEvent){
+tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
 
     // Create a nodeset with the same system data as the input
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(it->sysData);
@@ -255,11 +306,15 @@ tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, bool f
 
     int numNodes = (int)(it->origNodes.size());
     for(int i = 0; i < numNodes; i++){
+        tpat_node node;
+        node.setPosVelState(&(it->X[i*6]));
+        node.setVelCon(nodes_in->getNode(i).getVelCon());
+
         if(i + 1 < numNodes){
-            tpat_node node(&(it->X[i*6]), it->X[numNodes*6 + i]);   // create node with state and TOF
-            nodeset_out->appendNode(node);
+            node.setTOF(it->X[numNodes*6 + i]);
         }else{
-            tpat_node node(&(it->X[i*6]), NAN);                 // create node with state and fake TOF (last node)
+            node.setTOF(NAN);
+
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
             end of the node array. This output nodeset should have two "nodes": the first 6 elements
@@ -273,10 +328,14 @@ tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, bool f
                 
                 node.setExtraParams(extraParam);
             }
-            nodeset_out->appendNode(node);
         }
+        nodeset_out->appendNode(node);
     }
 
+    // Save all the original constraints
+    for(int n = 0; n < nodes_in->getNumCons(); n++){
+        nodeset_out->addConstraint(nodes_in->getConstraint(n));
+    }
 
     return nodeset_out;
 }//====================================================

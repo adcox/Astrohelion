@@ -34,6 +34,16 @@
 // 		Constructors
 //-----------------------------------------------------
 
+/**
+ *	@brief Construct a family member given all the required parameters
+ *
+ *	@param ic a 6-element vector describing the initial state on the trajectory (non-dim)
+ *	@param tof the time-of-flight along the trajectory (non-dim)
+ *	@param jc the Jacobi Constant on this trajectory
+ *	@param xWid the maximum amplitude in the x-direction (non-dim)
+ *	@param yWid the maximum amplitude in the y-direction (non-dim)
+ *	@param zWid the maximum amplitude in the z-direction (non-dim)
+ */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
 	double jc, double xWid, double yWid, double zWid){
 	IC.clear();
@@ -47,6 +57,7 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
 
 /**
  *	@brief Create a family member from a trajectory object
+ *	@param traj a trajectory reference
  */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
 	IC = traj.getState(0);
@@ -64,6 +75,7 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
 
 /**
  *	@brief Copy constructor
+ *	@param mem a family member reference
  */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_family_member_cr3bp& mem){
 	copyMe(mem);
@@ -83,6 +95,7 @@ tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){
 
 /**
  *	@brief Assignment operator
+ *	@param mem a family member reference
  */
 tpat_family_member_cr3bp& tpat_family_member_cr3bp::operator= (const tpat_family_member_cr3bp& mem){
 	copyMe(mem);
@@ -104,7 +117,7 @@ std::vector<cdouble> tpat_family_member_cr3bp::getEigVals() const { return eigVa
 std::vector<double> tpat_family_member_cr3bp::getIC() const { return IC; }
 
 /**
- *	@breif Retrieve the Time-Of-Flight along this trajectory (non-dim)
+ *	@brief Retrieve the Time-Of-Flight along this trajectory (non-dim)
  */
 double tpat_family_member_cr3bp::getTOF() const { return TOF; }
 
@@ -114,17 +127,17 @@ double tpat_family_member_cr3bp::getTOF() const { return TOF; }
 double tpat_family_member_cr3bp::getJacobi() const { return JC; }
 
 /**
- *	@brief Retrieve the maximum width in the x-direction
+ *	@brief Retrieve the maximum amplitude in the x-direction
  */
 double tpat_family_member_cr3bp::getXWidth() const { return xWidth; }
 
 /**
- *	@brief Retrieve the maximum width in the y-direction
+ *	@brief Retrieve the maximum amplitude in the y-direction
  */
 double tpat_family_member_cr3bp::getYWidth() const { return yWidth; }
 
 /**
- *	@brief Retrieve the maximum width in the z-direction
+ *	@brief Retrieve the maximum amplitude in the z-direction
  */
 double tpat_family_member_cr3bp::getZWidth() const { return zWidth; }
 
@@ -148,7 +161,7 @@ void tpat_family_member_cr3bp::setIC( std::vector<double> ic ){
 if(ic.size() != 6)
 	throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
 	IC = ic;
-}
+}//====================================================
 
 /**
  *	@brief Set the time-of-flight

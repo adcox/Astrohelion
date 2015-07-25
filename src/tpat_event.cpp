@@ -263,6 +263,7 @@ void tpat_event::setSysData(tpat_sys_data* data){ sysData = data; }
  *	previous trajectory state and the current one.
  *
  *	@param y the current integrated state (6 elements)
+ *	@param t the current time
  *	@return whether or not the trajectory has passed through this event
  */
 bool tpat_event::crossedEvent(double y[6], double t) const{

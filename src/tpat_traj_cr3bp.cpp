@@ -211,8 +211,6 @@ double tpat_traj_cr3bp::getJC(int n) const{
  */
 std::vector<double>* tpat_traj_cr3bp::getJacobi(){ return &extraParam; }
 
-void tpat_traj_cr3bp::setLength() { tpat_traj::setLength(); }
-
 /**
  *	@brief Set the vector of Jacobi constant values for this trajectory
  *	@param j a vector of Jacobi constants

@@ -51,10 +51,11 @@ tpat_traj::tpat_traj(){
 /**
  *	@brief Create a trajectory to hold a specific number of points. 
  *
- *	The state, time, and STM
- *	vectors are all initialized with enough space to hold the number of points
- *	specified. State and Time are filled with zeros, the STMs are filled with identity
- *	matrices. If initializing the trajectory this way (recommended), use the in-place
+ *	The state, time, and STM are initialized with enough space reserved to hold
+ *	the number of points specified. No data is actually present; the data vectors
+ *	 are empty, but pre-allocating the space may save computation time.
+ *
+ *	If initializing the trajectory this way (recommended), use the in-place
  *	set() functions to manipulate the allocated state, time, and STM vectors using
  *	their pointers.
  *
@@ -65,11 +66,11 @@ tpat_traj::tpat_traj(int n){
 	state.reserve(n*9);	// may need more, but this is a good starting spot
 	times.reserve(n);
 	allSTM.reserve(n);
-}
+}//====================================================
 
 /**
  *	@brief Create a copy of the input trajectory
- *	@param t a trajectory
+ *	@param t a trajectory reference
  */
 tpat_traj::tpat_traj(const tpat_traj& t){
 	copyMe(t);
@@ -92,12 +93,17 @@ tpat_traj::~tpat_traj(){
 
 /**
  *	@brief Assignment operator. Directly copy the vectors from one trajectory into this one
+ *	@param t a trajectory reference
  */
 tpat_traj& tpat_traj::operator= (const tpat_traj& t){
 	copyMe(t);
 	return *this;
 }//============================================
 
+/**
+ *	@brief Copy all the data from one trajectory to another
+ *	@param t a trajectory reference
+ */
 void tpat_traj::copyMe(const tpat_traj &t){
 	numPoints = t.numPoints;
 	state = t.state;
@@ -148,7 +154,6 @@ std::vector<double>* tpat_traj::getState(){ return &state;}
 
 /**
  *	@brief get a vector of one coordinate's evolution during the flight
- *
  *	@param i the index of the coordinate, i.e. (0 = x, 1 = y, 2 = z, 3 = v_x, 4 = v_y, 5 = v_z)
  */
 std::vector<double> tpat_traj::getCoord(int i) const{

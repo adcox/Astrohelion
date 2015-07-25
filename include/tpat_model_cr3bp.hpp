@@ -44,7 +44,7 @@ public:
 	// Corrector Functions
 	void corrector_applyConstraint(iterationData*, tpat_constraint, int);
 	void corrector_targetJC(iterationData*, tpat_constraint, int);
-	tpat_nodeset* corrector_createOutput(iterationData*, bool);
+	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

@@ -40,6 +40,10 @@
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
+
+/**
+ *	@brief Default, do-nothing constructor
+ */
 tpat_linear_motion_engine::tpat_linear_motion_engine(){}
 
 //-----------------------------------------------------
@@ -100,6 +104,10 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], t
  *		to the chosen Lagrange point
  *	@param type the type of linearized motion desired
  *	@param sysData the CR3BP system data object
+ *
+ *	@return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
+ *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
 tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, tpat_sys_data_cr3bp sysData){
 
@@ -336,5 +344,5 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	linTraj.setLength();
 
 	return linTraj;
-}
+}//====================================================
 

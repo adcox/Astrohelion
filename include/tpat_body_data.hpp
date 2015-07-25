@@ -33,6 +33,30 @@
  *	@copyright GNU GPL v3.0
  */
 class tpat_body_data{
+	public:
+
+		// Constructors
+		tpat_body_data();	// Copy constructor is defined by compiler, should be fine
+		tpat_body_data(std::string);
+		tpat_body_data(double m, double R, double r, double mu, std::string name, std::string parent);
+
+		// Set and Get Functions
+		double getRadius();
+		double getMass();
+		double getGravParam();
+		double getOrbitRad();
+		double getMinFlyBy();
+		std::string getName();
+		int getID();
+		std::string getParent();
+
+		void setRadius(double);
+		void setMass(double);
+		void setOrbitRad(double);
+		void setGravParam(double);
+		void setName(std::string);
+		void setParent(std::string);
+		
 	private:
 		/** Mean radius of the body, km */
 		double radius = 0;
@@ -58,30 +82,6 @@ class tpat_body_data{
 
 		/** Name of the parent body */
 		std::string parent = "NULL";
-
-	public:
-
-		// Constructors
-		tpat_body_data();	// Copy constructor is defined by compiler, should be fine
-		tpat_body_data(std::string);
-		tpat_body_data(double m, double R, double r, double mu, std::string name, std::string parent);
-
-		// Set and Get Functions
-		double getRadius();
-		double getMass();
-		double getGravParam();
-		double getOrbitRad();
-		double getMinFlyBy();
-		std::string getName();
-		int getID();
-		std::string getParent();
-
-		void setRadius(double);
-		void setMass(double);
-		void setOrbitRad(double);
-		void setGravParam(double);
-		void setName(std::string);
-		void setParent(std::string);
 };
 
 #endif

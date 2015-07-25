@@ -55,7 +55,6 @@ class tpat_traj_cr3bp : public tpat_traj{
 		tpat_sys_data_cr3bp getSysData() const;
 		tpat_sys_data::system_t getType() const;
 
-		void setLength();
 		void setJacobi(std::vector<double>);
 		void setSysData(tpat_sys_data_cr3bp);
 		

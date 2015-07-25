@@ -106,49 +106,38 @@ private:
 public:
 
 	/**
-	 *	@brief Get the sign of a number
-	 *	@param T a number
-	 *	@return +/- 1 for the sign (0 if T = 0)
+	 *	@brief Check if two numbers are equal within a given tolerance
+	 *	@param t1 a number
+	 *	@param t2 another number
+	 *	@param tol the tolerance
+	 *	@return true if the absolute value of the difference between t1 
+	 *	and t2 is less than the tolerance
 	 */
-	template<typename T>
-	static int sign(T num){
-		if(num == 0)
-			return 0;
-		else
-			return num < 0 ? -1 : 1;
-	}//===========================================
-	
+	template <typename T>
+	static bool aboutEquals(T t1, T t2, double tol){
+		return std::abs(t1 - t2) < tol;
+	}//=========================================
+
 	/**
-	 *	@brief sum all values in an array
-	 *
-	 *	For this function to work, the class must overload +=
-	 *
-	 *	@param data an array
-	 *	@param length the number of elements in the array that can be summed.
-	 *	@return a single object representing the sum of all the elements of data.
+	 *	@ brief Check if two vectors are equal to a given tolerance
+	 *	@param v1 a vector
+	 *	@param v2 another vector
+	 *	@param tol the tolerance
+	 *	@return true if v1 and v2 are the same size and their corresponding
+	 *	elements differ by less than the tolerance
 	 */
-	template<typename T>
-	static T sum(T* data, int length){
-		T total = 0;
-		for(int n = 0; n < length; n++){
-			total += data[n];
+	template <typename T>
+	static bool aboutEquals(std::vector<T> v1, std::vector<T> v2, double tol){
+		if(v1.size() != v2.size())
+			return false;
+
+		for(size_t i = 0; i < v1.size(); i++){
+			if(!aboutEquals(v1[i], v2[i], tol))
+				return false;
 		}
 
-		return total;
-	}//=====================================
-
-	/**
-	 *	@brief Compute the mean (average) of an array of data
-	 *
-	 *	@param data an array of numbers
-	 *	@param length the length of the array
-	 *
-	 *	@return the mean
-	 */
-	template<typename T>
-	static T mean(T *data, int length){
-		return sum(data, length)/length;
-	}//=====================================
+		return true;
+	}//==========================================
 
 	/**
 	 *	@brief concatenate two vectors
@@ -190,32 +179,6 @@ public:
 	}//===========================================
 
 	/**
-	 *	@brief Check if two numbers are equal within a given tolerance
-	 *	@param t1 a number
-	 *	@param t2 another number
-	 *	@param tol the tolerance
-	 *	@return true if the absolute value of the difference between t1 
-	 *	and t2 is less than the tolerance
-	 */
-	template <typename T>
-	static bool aboutEquals(T t1, T t2, double tol){
-		return std::abs(t1 - t2) < tol;
-	}//=========================================
-
-	template <typename T>
-	static bool aboutEquals(std::vector<T> v1, std::vector<T> v2, double tol){
-		if(v1.size() != v2.size())
-			return false;
-
-		for(size_t i = 0; i < v1.size(); i++){
-			if(!aboutEquals(v1[i], v2[i], tol))
-				return false;
-		}
-
-		return true;
-	}//==========================================
-
-	/**
 	 *	@brief Generate all permutations of a set of n elements
 	 *
 	 *	Each of the n elements can contain any of the values stored in the values vector
@@ -246,6 +209,51 @@ public:
 		permute(values, ixs, &perms);
 		return perms;
 	}
+
+	/**
+	 *	@brief Compute the mean (average) of an array of data
+	 *
+	 *	@param data an array of numbers
+	 *	@param length the length of the array
+	 *
+	 *	@return the mean
+	 */
+	template<typename T>
+	static T mean(T *data, int length){
+		return sum(data, length)/length;
+	}//=====================================
+
+	/**
+	 *	@brief Get the sign of a number
+	 *	@param num a number
+	 *	@return +/- 1 for the sign (0 if T = 0)
+	 */
+	template<typename T>
+	static int sign(T num){
+		if(num == 0)
+			return 0;
+		else
+			return num < 0 ? -1 : 1;
+	}//===========================================
+	
+	/**
+	 *	@brief sum all values in an array
+	 *
+	 *	For this function to work, the class must overload +=
+	 *
+	 *	@param data an array
+	 *	@param length the number of elements in the array that can be summed.
+	 *	@return a single object representing the sum of all the elements of data.
+	 */
+	template<typename T>
+	static T sum(T* data, int length){
+		T total = 0;
+		for(int n = 0; n < length; n++){
+			total += data[n];
+		}
+
+		return total;
+	}//=====================================
 };
 
 std::string complexToStr(std::complex<double> num);

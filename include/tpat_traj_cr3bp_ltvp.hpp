@@ -58,7 +58,6 @@ class tpat_traj_cr3bp_ltvp : public tpat_traj{
 		
 		// Utility functions
 		void saveToMat(const char*);
-		void setLength();
 
 	private:
 		/** A system data object specific to the Low Thrust, Velocity-Pointing CR3BP */

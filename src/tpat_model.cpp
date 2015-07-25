@@ -399,7 +399,6 @@ void tpat_model::corrector_targetMatchCust(iterationData* it, tpat_constraint co
  *
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
- *	@param sysData a pointer to the system data object for this corrections process
  *	@param c the index of this constraint in the constraint vector object
  */
 void tpat_model::corrector_targetDist(iterationData* it, tpat_constraint con, int c){
@@ -462,7 +461,7 @@ void tpat_model::corrector_targetDist(iterationData* it, tpat_constraint con, in
  *
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con the constraint being applied
- *	@param row0 the index of the first row for this constraint
+ *	@param c the index of the first row for this constraint
  */
 void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, int c){
 

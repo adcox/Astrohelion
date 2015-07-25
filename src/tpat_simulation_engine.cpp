@@ -295,7 +295,7 @@ std::vector<tpat_event> tpat_simulation_engine::getEvents() const { return event
  *  most recent simulation
  *  @return a vector of event records; the event indices correspond to
  *  the indices of the events stored in this simulation engine
- *  @seealso getEvents()
+ *  @see getEvents()
  */
 std::vector<eventRecord> tpat_simulation_engine::getEventRecords() const { return eventOccurs; }
 

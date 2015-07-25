@@ -64,6 +64,10 @@ tpat_correction_engine::~tpat_correction_engine(){
 	cleanEngine();
 }//=================================================
 
+/**
+ *	@brief Copy all engine variables
+ *	@param e an engine reference
+ */
 void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 	verbose = e.verbose;
 	varTime = e.varTime;
@@ -111,27 +115,32 @@ tpat_correction_engine& tpat_correction_engine::operator =(const tpat_correction
 //-----------------------------------------------------
 
 /**
+ *  @brief Retrieve whether or not we are using variable time
  *	@return whether or not the corrector uses variable time (as opposed
  * 	to fixed time)
  */
 bool tpat_correction_engine::usesVarTime() const { return varTime; }
 
 /**
+ *  @brief Retrieve the verbosity setting
  *	@return whether or not the corrector will be verbose
  */
 bool tpat_correction_engine::isVerbose() const { return verbose; }
 
 /**
+ *  @brief Retrieve whether or not we are located an event crossing
  *	@return whether or not the algorithm will optimize the process to find an event
  */
 bool tpat_correction_engine::isFindingEvent() const { return findEvent; }
 
 /**
+ *  @brief Retrieve the maximum number of iterations to attempt
  *	@return the maximum number of iterations to attempt before giving up
  */
 int tpat_correction_engine::getMaxIts() const { return maxIts; }
 
 /**
+ *  @brief Retrieve the minimum error tolerance
  *	@return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
  */
@@ -446,7 +455,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 		throw tpat_diverge();
 	}
 
-	nodeset_out = model->corrector_createOutput(&it, findEvent);
+	nodeset_out = model->corrector_createOutput(&it, nodeset_in, findEvent);
 	createdNodesetOut = true;
 }//==========================================================
 

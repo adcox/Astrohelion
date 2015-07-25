@@ -128,14 +128,6 @@ double tpat_traj_cr3bp_ltvp::getJacobi(int n) const {
  */
 void tpat_traj_cr3bp_ltvp::setSysData(tpat_sys_data_cr3bp_ltvp d){ sysData = d; }
 
-/**
- *	@brief Calls the basic trajectory setLength() method and implements extra catches
- *	specific to the CR3BP trajectory object
- */
-void tpat_traj_cr3bp_ltvp::setLength(){
-	tpat_traj::setLength();
-}//=====================================================
-
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------

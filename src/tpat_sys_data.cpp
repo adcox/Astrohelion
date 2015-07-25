@@ -99,6 +99,10 @@ bool operator !=(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
 	return ! operator==(lhs, rhs);
 }//===========================================
 
+/**
+ *	@brief Copy this system data object
+ *	@param d a system data reference
+ */
 void tpat_sys_data::copyData(const tpat_sys_data &d){
 	charL = d.charL;
 	charT = d.charT;

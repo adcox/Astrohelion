@@ -1,5 +1,5 @@
 /**
- *	@tpat_sys_data_cr3bp_ltvp.cpp
+ *	@file tpat_sys_data_cr3bp_ltvp.cpp
  *
  * 	System Data object specifically for CR3BP, Low-Thrust, Velocity-Pointing
  */
@@ -71,6 +71,10 @@ tpat_sys_data_cr3bp_ltvp& tpat_sys_data_cr3bp_ltvp::operator= (const tpat_sys_da
 	return *this;
 }//===================================================
 
+/**
+ *	@brief Retrieve the model that governs the motion for this system type
+ *	@return the model that governs the motion for this system type
+ */
 tpat_model* tpat_sys_data_cr3bp_ltvp::getModel() { return &model; }
 
 /**

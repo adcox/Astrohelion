@@ -61,8 +61,18 @@ class tpat_family_cr3bp{
 			SORT_TOF 	= 6		//!< Sort by Time-Of-Flight
 		};
 
+		/**
+		 *	@brief Eigenvalue pair types
+		 *
+		 *	Eigenvalues come in three different types of pairs. They will
+		 *	either be complex, real, or exactly equal to 1.0. Since the 
+		 *	matrices are real, all complex eigenvalues will come in conjucate
+		 *	pairs. In this type of problem (trajectory design), the other STM
+		 *	eigenvalues also come in pairs: 2 1.0 eigenvalues, or two real 
+		 *	eigenvalues that are reciprocals.
+		 */
 		enum eigValSet_t{
-			EIGSET_COMP_RECIP,	//!< Complex, reciprocal pair
+			EIGSET_COMP_CONJ,	//!< Complex conjugate pair
 			EIGSET_ONES,		//!< Exactly equal to 1.0
 			EIGSET_REAL_RECIP	//!< Real, reciprocal pair
 		};
@@ -107,11 +117,11 @@ class tpat_family_cr3bp{
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 		double numNodes = 4;		//!< Number of nodes to use when representing a family member
 
-		const char* DATA_VAR_NAME = "MemberData";
-		const char* SORTTYPE_VAR_NAME = "SortType";
-		const char* NAME_VAR_NAME = "Name";
-		const char* EIG_VAR_NAME = "Eigenvalues";
-		const size_t DATA_WIDTH = 11;
+		const char* DATA_VAR_NAME = "MemberData";		//!< Variable name for family member data
+		const char* SORTTYPE_VAR_NAME = "SortType";		//!< Variable name for the sort type
+		const char* NAME_VAR_NAME = "Name";				//!< Variable name for the name of the family
+		const char* EIG_VAR_NAME = "Eigenvalues";		//!< Variable name for the eigenvalues
+		const size_t DATA_WIDTH = 11;					//!< Number of elements in one row of member data
 
 		void copyMe(const tpat_family_cr3bp&);
 		std::vector<int> findMatches(double, std::vector<double>*) const;

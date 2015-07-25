@@ -35,8 +35,8 @@
 #include <exception>
 
 /*
-*********** CONSTRUCTOR FUNCTIONS *******************************
-*/
+ *********** CONSTRUCTOR FUNCTIONS *******************************
+ */
 
 /**
  * @brief Default constructor; sets all fields to 0
@@ -242,14 +242,14 @@ tpat_body_data::tpat_body_data(std::string n){
 }// END of constructor using body name -------------------------------------
 
 /**
-* Constructor
-*	@param m mass, kg
-*	@param R mean orbital radius, km
-*	@param r mean radius, km
-*	@param mu gravitational parameter, km^3/s^2
-* 	@param n name of the body
-*	@param p name of the body"s parent
-*/
+ *  @brief Constructor
+ *	@param m mass, kg
+ *	@param R mean orbital radius, km
+ *	@param r mean radius, km
+ *	@param mu gravitational parameter, km^3/s^2
+ * 	@param n name of the body
+ *	@param p name of the body"s parent
+ */
 tpat_body_data::tpat_body_data(double m, double R, double r, double mu, std::string n, std::string p){
 	mass = m;
 	orbitRad = R;
@@ -260,37 +260,43 @@ tpat_body_data::tpat_body_data(double m, double R, double r, double mu, std::str
 }//-------------------------
 
 /*
-*********** SET AND GET FUNCTIONS *******************************
-*/
+ *********** SET AND GET FUNCTIONS *******************************
+ */
 
 /**
-*	@return the mean radius of the body, km
-*/
+ *	@brief Retrieve the mean radius of the body, km
+ *	@return the mean radius of the body, km
+ */
 double tpat_body_data::getRadius(){return radius;}
 
 /**
-*	@return the mass of the body, kg
-*/
+ *	@brief Retrieve the mass of the body, kg
+ *	@return the mass of the body, kg
+ */
 double tpat_body_data::getMass(){return mass;}
 
 /**
-*	@return the gravitational parameter for the body, km^3/s^2
-*/
+ *	@brief Retrieve the gravitational parameter for the body, km^3/s^2
+ *	@return the gravitational parameter for the body, km^3/s^2
+ */
 double tpat_body_data::getGravParam(){return gravParam;}
 
 /**
-*	@return the mean orbital radius of this body, km
-*/
+ *	@brief Retrieve
+ *	@return the mean orbital radius of this body, km
+ */
 double tpat_body_data::getOrbitRad(){return orbitRad;}
 
 /**
-* 	@return the minimum fly-by altitude for this body, km
-*/
+ *	@brief Retrieve the minimum fly-by altitude for this body, km
+ * 	@return the minimum fly-by altitude for this body, km
+ */
 double tpat_body_data::getMinFlyBy(){return minFlyByAlt;}
 
 /**
-*	@return the name of the body
-*/
+ *	@brief Retrieve the name of the body
+ *	@return the name of the body
+ */
 std::string tpat_body_data::getName(){return name;}
 
 /**
@@ -300,43 +306,44 @@ std::string tpat_body_data::getName(){return name;}
 int tpat_body_data::getID(){ return ID; }
 
 /**
-*	@return the name of the parent body. If there is no parent, "None" is returned
-*/
+ *	@brief Retrieve the name of the parent body
+ *	@return the name of the parent body. If there is no parent, "None" is returned
+ */
 std::string tpat_body_data::getParent(){return parent;}
 
 /**
-*	@brief Set the mean radius of the body
-*	@param r the radius of the body, km
-*/
+ *	@brief Set the mean radius of the body
+ *	@param r the radius of the body, km
+ */
 void tpat_body_data::setRadius(double r){radius = r;}
 
 /**
-*	@brief Set the mass of the body
-*	@param m the mass of the body, kg
-*/
+ *	@brief Set the mass of the body
+ *	@param m the mass of the body, kg
+ */
 void tpat_body_data::setMass(double m){mass = m;}
 
 /**
-*	@brief Set the mean orbital radius of the body
-*	@param R the orbital radius of the body, km
-*/
+ *	@brief Set the mean orbital radius of the body
+ *	@param R the orbital radius of the body, km
+ */
 void tpat_body_data::setOrbitRad(double R){orbitRad = R;}
 
 /**
-*	@brief Set the gravitational parameter of the body
-*	@param mu the gravitational parameter of the body, km^3/s^2
-*/
+ *	@brief Set the gravitational parameter of the body
+ *	@param mu the gravitational parameter of the body, km^3/s^2
+ */
 void tpat_body_data::setGravParam(double mu){gravParam = mu;}
 
 /**
-*	@brief Set the name of the body
-*	@param s the name the body
-*/
+ *	@brief Set the name of the body
+ *	@param s the name the body
+ */
 void tpat_body_data::setName(std::string s){name = s;}
 
 /**
-*	@brief Set the mean radius of the body
-*	@param s the name of this body"s parent. For example, Earth"s parent body is the Sun,
-*	and the Moon"s parent body is Earth
-*/
+ *	@brief Set the mean radius of the body
+ *	@param s the name of this body"s parent. For example, Earth"s parent body is the Sun,
+ *	and the Moon"s parent body is Earth
+ */
 void tpat_body_data::setParent(std::string s){parent = s;}

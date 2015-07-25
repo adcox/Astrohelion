@@ -52,7 +52,7 @@ public:
 	void corrector_targetDeltaV(iterationData*, tpat_constraint, int);
 	void corrector_targetDist(iterationData*, tpat_constraint, int);
 	void corrector_targetSP(iterationData*, tpat_constraint, int);
-	tpat_nodeset* corrector_createOutput(iterationData*, bool);
+	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

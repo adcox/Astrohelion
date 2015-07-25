@@ -538,6 +538,12 @@ double det(const tpat_matrix &m){
 	return ans;
 }//============================================
 
+/**
+ *	@brief Compute the eigenvalues of a square matrix
+ *	@param m a matrix reference
+ *	@return a vector of complex numbers representing all eigenvalues
+ *	for the input matrix
+ */	
 std::vector<cdouble> eig(const tpat_matrix &m){
 	if(m.rows != m.cols)
 		throw tpat_sizeMismatch("Cannot compute eigenvalues and vectors of non-square matrix");

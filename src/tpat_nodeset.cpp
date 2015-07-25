@@ -46,7 +46,7 @@ tpat_nodeset::tpat_nodeset(){}
 /**
  *	@brief Create a nodeset as a subset of another
  *	@param orig Original nodeset
- *	@param index of the first node to be included in the new nodeset
+ *	@param first index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
 tpat_nodeset::tpat_nodeset(const tpat_nodeset &orig, int first, int last){
@@ -230,8 +230,7 @@ void tpat_nodeset::clearConstraints(){
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
- *	integrated trajectory into pieces (nodes).
- *
+ *	integrated trajectory into pieces (nodes)
  *	@param IC a set of initial conditions, non-dimensional units
  *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
  *	@param t0 time that corresponds to IC, non-dimensional
@@ -360,6 +359,13 @@ void tpat_nodeset::initSetFromTraj(tpat_traj traj, tpat_sys_data *sysData, int n
 	initSetFromICs(ic, sysData, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
 }//==============================================
 
+/**
+ *	@brief Reverse the order of the nodes in this nodeset
+ *
+ *	The cosntraints are automatically adjusted so they still 
+ *	constraint the same states even though the node indices 
+ *	have changed.
+ */
 void tpat_nodeset::reverseOrder(){
 	// Re-order nodes and TOFs
 	for(int n = 0; n < floor(getNumNodes()/2); n++){
@@ -492,6 +498,10 @@ void tpat_nodeset::saveTOFs(mat_t *matFile){
 	saveVar(matFile, matvar, "TOFs", MAT_COMPRESSION_NONE);
 }//====================================================
 
+/**
+ *	@brief Copy the nodeset
+ *	@param n a nodeset reference
+ */
 void tpat_nodeset::copyMe(const tpat_nodeset &n){
 	nodeDistro = n.nodeDistro;
 	nodes = n.nodes;

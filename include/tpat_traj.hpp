@@ -49,8 +49,8 @@
  */
 class tpat_traj{
 	public:
-		static const int STATE_SIZE = 6;
-		static const int ACCEL_SIZE = 3;
+		static const int STATE_SIZE = 6;	//!< Number of elements stored in a state vector
+		static const int ACCEL_SIZE = 3;	//!< Number of elements stored in an acceleration vector
 
 		// *structors
 		tpat_traj();

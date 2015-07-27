@@ -1,5 +1,6 @@
 /**
  *	@file tpat_nodeset_cr3bp.cpp
+ *	@brief Derivative of tpat_nodeset, specific to CR3BP
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

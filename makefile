@@ -54,7 +54,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp
+IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp tpat_utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 
@@ -84,6 +84,9 @@ check:
 	bin/linMotionTest
 	bin/matrixTest
 	bin/utilityTest
+	bin/sysSwitchTest
+	bin/nodesetTest
+	bin/simEngineTest
 
 install:
 ifeq ($(UNAME_S), Linux)

@@ -1,5 +1,6 @@
 /**
  *	@file tpat_nodeset.cpp
+ *	@brief Contains a set of nodes and constraints
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

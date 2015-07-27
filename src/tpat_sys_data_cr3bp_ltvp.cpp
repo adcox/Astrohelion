@@ -1,7 +1,6 @@
 /**
  *	@file tpat_sys_data_cr3bp_ltvp.cpp
- *
- * 	System Data object specifically for CR3BP, Low-Thrust, Velocity-Pointing
+ *	@brief Derivative of tpat_sys_data, specific to CR3BP-LTVP
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 
@@ -50,7 +49,7 @@ tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(std::string P1, std::string P
 	otherParams.assign(4,0);
 	
 	initFromPrimNames(P1, P2);	// use function from cr3bp_sys_data to initialize most everything
-	otherParams[1] = T*(charT*charT/(charL*1000)/charM);	// thrust, non-dimensionalized
+	otherParams[1] = T*1000*charT*charT/charL/charM;	// thrust, non-dimensionalized
 	otherParams[2] = I/charT;	// Isp, non-dimensionalized
 	otherParams[3] = M0/charM;	// Initial mass, non-dimensionalized
 }//===================================================
@@ -117,7 +116,7 @@ void tpat_sys_data_cr3bp_ltvp::setM0(double d){ otherParams[3] = d; }
  *	@brief Set the thrust for P3 for this system using a dimensional quantity
  *	@param d the thrust, in Newtons
  */
-void tpat_sys_data_cr3bp_ltvp::setThrustDim(double d){ otherParams[1] = d*charT*charT/charM/(charL*1000); }
+void tpat_sys_data_cr3bp_ltvp::setThrustDim(double d){ otherParams[1] = d*1000*charT*charT/charM/charL; }
 
 /**
  *	@brief Set the specific impulse for P3 for this system using a dimensional quantity

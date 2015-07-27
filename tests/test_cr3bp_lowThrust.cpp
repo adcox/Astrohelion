@@ -10,7 +10,7 @@ int main(void){
 	double tof = 0.363031858821079;
 
 	tpat_sys_data_cr3bp sys("earth", "moon");
-	tpat_simulation_engine sim(sys);
+	tpat_simulation_engine sim(&sys);
 	sim.runSim(ic, tof);
 	tpat_traj_cr3bp traj = sim.getCR3BP_Traj();
 	traj.saveToMat("circleOrb.mat");
@@ -19,7 +19,7 @@ int main(void){
 	tpat_sys_data_cr3bp_ltvp lowThrustSys("earth", "moon", 0.12, 2500, 12);
 	// tpat_simulation_engine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, mass/lowThrustSys.getCharM()};
-	sim.setSysData(lowThrustSys);
+	sim.setSysData(&lowThrustSys);
 	sim.setVerbose(true);
 	sim.runSim(ic_lt, 5*tof);
 	

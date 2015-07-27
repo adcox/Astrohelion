@@ -23,7 +23,12 @@
 #include "tpat_model.hpp"
 
 /**
- *	@brief Defines the dynamical models for the BCR4BP, Rotating Coordinates
+ *	@brief A derivative of the tpat_model class, specific to the BCR4BPR
+ *
+ *	This dynamic model overrides many of the base class's functions to add
+ *	support for epoch-dependencies present in this non-autonomous system.
+ *	It also adds support for SP targeting, which is only currently supported 
+ *	in the BCR4BP.
  */
 class tpat_model_bcr4bpr : public tpat_model{
 public:
@@ -38,8 +43,8 @@ public:
 	tpat_model::eom_fcn getSimpleEOM_fcn();
 	std::vector<double> getPrimPos(double, tpat_sys_data*);
 	std::vector<double> getPrimVel(double, tpat_sys_data*);
-	void saveIntegratedData(double*, double, tpat_traj*);
-	bool locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
+	void sim_saveIntegratedData(double*, double, tpat_traj*);
+	bool sim_locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
 
 	// Corrector function
 	void corrector_initDesignVec(iterationData*, tpat_nodeset*);

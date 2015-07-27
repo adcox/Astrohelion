@@ -1,6 +1,8 @@
 /**
  *  @file tpat_calculations.cpp
  *
+ *  @brief  Contains non-member calculation functions
+ *
  *   This library contains functions to numerically integrate the equations of 
  *   motion associated with various mathematical models. It also contains 
  *   miscellaneous functions to compute other quantities, like Jacobi Constant
@@ -57,13 +59,15 @@
 
 /**
  *  @brief Integrate the equations of motion for the CR3BP
- *  @param t the current time of the integration
+ *  @param t the current time of the integration; not used for this system
  *  @param s the 42-d state vector
  *  @param sdot the 42-d state derivative vector
  *  @param *params pointer to extra parameters required for integration. For this
  *  function, the pointer points to a cr3bp system data object
  */
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
+    (void)t;
+
     // Extract mu from params
     tpat_sys_data_cr3bp *sysData = static_cast<tpat_sys_data_cr3bp *>(params);
     double mu = sysData->getMu();
@@ -124,6 +128,8 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
  *  @param params points to a cr3bp system data object
  */
 int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
+    (void)t;
+    
     // Extract mu from params
     tpat_sys_data_cr3bp *sysData = static_cast<tpat_sys_data_cr3bp *>(params);
     double mu = sysData->getMu();
@@ -170,7 +176,16 @@ int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
     double g0_nonDim = G_GRAV_0/charL*charT*charT;
     double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
 
-    // compute distance to primaries
+    if(std::abs(t - 6.7380218582109383e-7) < 1e-22){
+        printf("");
+    }
+
+    if(m <= 0){
+        T = 0;
+        m = 1;
+    }
+
+    // compute distance to primaries and velocity magnitude
     double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
     double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
     double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);
@@ -262,7 +277,7 @@ int cr3bp_ltvp_simple_EOMs(double t, const double s[], double sdot[], void *para
     double g0_nonDim = G_GRAV_0/charL*charT*charT;
     double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
 
-    // compute distance to primaries
+    // compute distance to primaries and velocity magnitude
     double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
     double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
     double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);

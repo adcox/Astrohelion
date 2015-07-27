@@ -3,7 +3,6 @@
 <h2>Introduction</h2>
 <p>
 	The Trajectory Propagation and Analysis Toolkit (TPAT) is a collection of C++ functions and libraries that facilitate fast and accurate trajectory design.
-	This toolkit contains three different types of objects. The first are data objects that provide containers for information that is typically grouped together. For example, the trajectory object stores states along a trajectory, times associated with each state, the type of system the trajectory was propagated in, etc. All of this data is packed into one bundle and can easily be passed between functions that "operate" on the data, such as numerical integrators and correction processes. Speaking of which, the second type of object contained in this toolkit is an "engine," like the simulation engine and corrector engine. These objects' primary purpose is to generate or modify data and they are complex enough to justify being an object in and of themselves. This complexity means engines store relavent data like integration tolerances, lists of event functions, or sets of simpler data objects like trajectories. The engines then operate on and with this data to create new data objects. The final type of object is a ``library'' of sorts, which contains only functions and is not really an object at all. These files, like the utilities and calculations libraries, are not created as objects, their functions are simply included and called in other functions. Computations such as Equations of Motion (EOMs) are included in these types of libraries.
 </p>
 
 <p>
@@ -20,6 +19,12 @@ This toolkit supports the following dynamical models
 		circular orbits.
 	</li>
 	<li>
+		Circular Restricted 3-Body Problem with Velocity-Pointing Low Thrust (CR3BP-LTVP) - 
+		makes all the same assumptions as the CR3BP but adds a constant-thrust system to P3.
+		The thrust vector is always parallel to the velocity vector and the magnitude is constant.
+		Mass varies over time.
+	</li>
+	<li>
 		Bi-Circular Restricted 4-Body Problem, rotating coordinates (BCR4BPR) - three
 		primaries with spherically-symmetric gravity fields and a fourth, relatively
 		massless body moving under the influence of the three primaries. The two 
@@ -27,61 +32,26 @@ This toolkit supports the following dynamical models
 	</li>
 </ul>
 
-<h2>Data Objects</h2>
-The following objects are used in the toolkit to store data. These objects are typically
-required as input arguments or are returned by engine objects.
-<ul>
-	<li>
-		Body Data - stores characteristics of a particular celestial body. Current
-		implementations: <tt>tpat_body_data</tt>
-	</li>
-	<li>
-		System Data - stores characteristic quantities and other system-specific data. This
-		object is used to create trajectories and nodesets as well as initialize engines. Current implementations: <tt>tpat_cr3bp_sys_data</tt>, 
-		<tt>tpat_bcr4bpr_sys_data</tt>.
-	</li>
-	<li>
-		Trajectory - stores states along the trajectory, times along the path, and
-		other system-specific values. Current implementations: <tt>tpat_cr3bp_traj</tt>,
-		<tt>tpat_bcr4bpr_traj</tt>.
-	</li>
-	<li>
-		Nodeset - represents a trajectory as a discrete set of nodes. The correction
-		engine takes this type of object as an input and outputs a similar nodeset. Current
-		implementations: <tt>tpat_cr3bp_nodeset</tt>, <tt>tpat_bcr4bpr_nodeset</tt>.
-	</li>
-</ul>
-
 <h2>Engines</h2>
+This toolkit contains several different "engines" that either propagate or analyze trajectories.
+
+<b>Simulator</b><br>
+The simulation engine (<tt>tpat_simulation_engine</tt>) takes an initial state, time-of-flight, and (optionally) an initial time and numerically integrates the initial conditions to produce a trajectory. Although no mechanism exists to constrain these trajectories, the user can tell the simulator to watch for events such as plane crossings, apse crossings, or crash events. The simulator can be configured to end integration when an event occurs, or it can be allowed to continue.
+
+<b>Corrector</b><br>
+Like the simulation engine, the correction engine (<tt>tpat_correction_engine</tt>) takes a set of initial conditions and integrates them. The corrector takes a nodeset as input and integrates one arc for every node; the node's state is used as the initial condition, the node's time-of-flight dictates the length of the arc, and any extra parameters stored in the node are interpreted via the dynamic model associated with the nodeset. After integrating from all nodes in the nodeset, the corrector evaluates a set of constraint functions. If all constraint functions are minimized (less than some \f$\epsilon\f$), the process is complete. This is rarely the case, however. If the constraints are not met, the engine makes adjustments to the initial states, times-of-flight, and other parameters, and then re-integrates. The engine iterates through this process until either all the constraints are met or a maximum number of iterations are met.
+
+Other engines:
 <ul>
-	<li>
-		Simulation Engine - Numerically a set of initial conditions in a specified 
-		dynamical system according to the engine parameters. Current implementations: 
-		<tt>tpat_simulation_engine</tt>
-	</li>
-	<li>
-		Correction Engine - Correct a nodeset to be continuous (where specified) in one 
-		of the dynamical systems. Corrections are made under a set of constraints. 
-		Current implementations: <tt>tpat_correction_engine</tt>
-	</li>
 	<li>
 		Linear Motion Engine - Generate a trajectory using simplified linearized 
 		equations of motion (EOMs). This engine currently only works for the CR3BP.
 		Current implementations: <tt>tpat_linear_motion_engine</tt>
 	</li>
-</ul>
-
-<h2>Miscellaneous</h2>
-<ul>
 	<li>
-		Common Numerical Constants - a header that contains useful numerical constants
-		like <i>pi</i>, the astronomical constant <i>G</i>, etc. Current implementations:
-		<tt>tpat_constants.hpp</tt>
-	</li>
-	<li>
-		Exception Handling - Some functions and objects throw exceptions. These all derive from the base class <tt>tpat_exception</tt> and can be caught using
-		either the base class or one of the more specific derived classes. Any other
-		excpetions thrown are not intentional and should be reported as bugs.
+		Family Generator - Currently only implemented for CR3BP periodic orbits, this engine
+		begins with an initial orbit and then uses natural parameter continuation to 
+		evolve a family of trajectories. Current implementations: <tt>tpat_family_generator</tt>
 	</li>
 </ul>
 

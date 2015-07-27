@@ -1,6 +1,6 @@
 /**
  *  @file tpat_model.cpp
- *
+ *	@brief Defines behavior for a dynamic model
  */
  
 /*
@@ -55,7 +55,8 @@ tpat_model::tpat_model(const tpat_model &m){
  */
 tpat_model::~tpat_model(){
 	allowedCons.clear();
-}
+	allowedEvents.clear();
+}//==============================
 
 /**
  *	@brief Copy Operator
@@ -100,6 +101,14 @@ int tpat_model::getExtraStateSize() const { return extraStates; }
  */
 bool tpat_model::supportsCon(tpat_constraint::constraint_t type) const{
 	return std::find(allowedCons.begin(), allowedCons.end(), type) != allowedCons.end();
+}//===================================================
+
+/**
+ *	@brief Determine whether the specified event type is supported in this model
+ *	@return whether or not the specified event type is supported in this model
+ */
+bool tpat_model::supportsEvent(tpat_event::event_t type) const{
+	return std::find(allowedEvents.begin(), allowedEvents.end(), type) != allowedEvents.end();
 }//===================================================
 
 /**
@@ -300,7 +309,12 @@ void tpat_model::corrector_targetPosVelCons(iterationData* it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::corrector_targetExContCons(iterationData *it, tpat_constraint con, int row0){}
+void tpat_model::corrector_targetExContCons(iterationData *it, tpat_constraint con, int row0){
+	// Do absoluately nothing
+	(void)it;
+	(void)con;
+	(void)row0;
+}
 
 /**
  *	@brief Compute partials and constraint functions for nodes constrained with <tt>STATE</tt>.
@@ -407,7 +421,7 @@ void tpat_model::corrector_targetDist(iterationData* it, tpat_constraint con, in
 	int n = con.getNode();
 	int Pix = (int)(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
-	double t = it->allSegs[n].getTime(0);
+	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	tpat_sys_data *sysData = it->sysData;
 
 	// Get the primary position

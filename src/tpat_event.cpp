@@ -1,5 +1,6 @@
 /**
  *	@file tpat_event.cpp
+ *	@brief Data object that stores information about a simulation event
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 
@@ -79,17 +80,7 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
  *	@brief Create an event with custom specifications
  *	
  *	Rather than using the default parameters, this constructor allows you to
- *	create more specialized events. Details below
- *
- *	For the _PLANE crossing events, pass a single double into the <tt>params</tt>
- *	field to specify the location of the plane. For example, choosing an event
- *	with type YZ_PLANE and passing a <tt>param</tt> of 0.5 will create an event
- *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane.
- *
- *	For the CRASH event, pass an array with the first element specifying the 
- *	primary index (0 for P1, 1 for P2, etc.) and the second element specifying
- *	the minimum acceptable distance; distances below this value (non-dim) will
- *	trigger the crash event
+ *	create more specialized events.
  *
  *	@param data a system data object that describes the system this event will occur in
  *	@param t the event type
@@ -97,7 +88,8 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  *	@param params an array of doubles that give the constructor extra information
- *	
+ *
+ *	@see tpat_event::event_t
  */
 tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir , bool willStop, double* params){
 	sysData = data;
@@ -112,6 +104,10 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 	triggerDir = dir;
 	stop = willStop;
 
+	if(! sysData->getModel()->supportsEvent(type)){
+		throw tpat_exception("tpat_event::initEvent: The current dynamic model does not support this event type");
+	}
+
 	// Create constraint data based on the type
 	switch(type){
 		case YZ_PLANE:
@@ -122,15 +118,18 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 		case CRASH:
 			conType = tpat_constraint::MAX_DIST;
 			break;
+		case JC:
+			conType = tpat_constraint::JC;
+			break;
 		default: 
-			throw tpat_exception("Creating event with no type");
+			throw tpat_exception("tpat_event::initEvent: Creating event with no type");
 	}
 
-	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// seven empty elements
+	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
 	switch(type){
-		case YZ_PLANE: data[0] = params[0]; break;	// x = 0
-		case XZ_PLANE: data[1] = params[0];	break;	// y = 0
-		case XY_PLANE: data[2] = params[0]; break;	// z = 0
+		case YZ_PLANE: data[0] = params[0]; break;	// x = specified value
+		case XZ_PLANE: data[1] = params[0];	break;	// y = specified value
+		case XY_PLANE: data[2] = params[0]; break;	// z = specified value
 		case CRASH:
 		{
 			data[0] = params[0];	// Index of primary
@@ -143,6 +142,7 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 			}
 			break;
 		}
+		case JC: data[0] = params[0]; break;	// JC = specified value
 		default: break;	// Do nothing
 	}
 	conData.insert(conData.begin(), data, data+6);
@@ -169,6 +169,14 @@ void tpat_event::copyEvent(const tpat_event &ev){
 	conType = ev.conType;
 	conData = ev.conData;
 	sysData = ev.sysData;	// COPY ADDRESS (ptr) of SYS DATA
+}//=============================================
+
+/**
+ *	@brief Destructor
+ */
+tpat_event::~tpat_event(){
+	state.clear();
+	conData.clear();
 }//=============================================
 
 //-----------------------------------------------------
@@ -208,6 +216,7 @@ const char* tpat_event::getTypeStr() const{
 		case XZ_PLANE: { return "xz-plane"; break; }
 		case XY_PLANE: { return "xy-plane"; break; }
 		case CRASH: { return "crash"; break; }
+		case JC: { return "jacobi constant"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}
 }//========================================
@@ -238,12 +247,6 @@ tpat_constraint::constraint_t tpat_event::getConType() const { return conType; }
 std::vector<double> tpat_event::getConData() const { return conData; }
 
 /**
- *	@return the node index for the constrained node. This is hard-coded to be 1, the second
- *	node in a two-node nodeset
- */
-int tpat_event::getConNode() const { return 1; }
-
-/**
  *	@brief Set the trigger direction for this event
  *	@param d the direction: +1 for positive, -1 for negative, 0 for both/either
  */
@@ -254,6 +257,8 @@ void tpat_event::setDir(int d){ triggerDir = d; }
  *	@param data a system data object
  */
 void tpat_event::setSysData(tpat_sys_data* data){ sysData = data; }
+
+
 //-----------------------------------------------------
 //      Computations, etc.
 //-----------------------------------------------------
@@ -314,40 +319,19 @@ double tpat_event::getDist(double y[6], double t) const{
 		case XY_PLANE: d = conData[2] - y[2]; break;
 		case CRASH:
 		{
-			std::vector<double> primPos;
-			switch(sysData->getType()){
-				case tpat_sys_data::CR3BP_SYS:
-				{
-					tpat_sys_data_cr3bp *crSysData = static_cast<tpat_sys_data_cr3bp*>(sysData);
-					primPos.assign(6,0);
-					primPos[0] = -1*crSysData->getMu();
-					primPos[3] = 1 - crSysData->getMu();
-					break;
-				}
-				case tpat_sys_data::CR3BP_LTVP_SYS:
-				{
-					tpat_sys_data_cr3bp_ltvp *sys = static_cast<tpat_sys_data_cr3bp_ltvp*>(sysData);
-					primPos.assign(6,0);
-					primPos[0] = -1*sys->getMu();
-					primPos[3] = 1 - sys->getMu();
-					break;
-				}
-				case tpat_sys_data::BCR4BPR_SYS:
-				{
-					tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr*>(sysData);
-					primPos.assign(9, 0);
-					bcr4bpr_getPrimaryPos(t, *bcSysData, &(primPos[0]));
-					break;
-				}
-				default: 
-					throw tpat_exception("Unsupported system type for crash");
-			}
+			std::vector<double> primPos = sysData->getModel()->getPrimPos(t, sysData);
 
 			int Pix = (int)(conData[0]);
 			double dx = y[0] - primPos[Pix*3 + 0];
 			double dy = y[1] - primPos[Pix*3 + 1];
 			double dz = y[2] - primPos[Pix*3 + 2];
 			d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
+			break;
+		}
+		case JC:
+		{
+			tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(sysData);
+			d = conData[0] - cr3bp_getJacobi(y, crSys->getMu());
 			break;
 		}
 		default:
@@ -368,12 +352,14 @@ double tpat_event::getDist(double y[6], double t) const{
 int tpat_event::getDir(double y[6], double t) const{
 	double d = 0;
 	double dt = t - theTime;
+
 	// Compute distance from old point (in state) to new point (in y)
 	switch(type){
 		case YZ_PLANE: d = y[0] - state[0]; break;
 		case XZ_PLANE: d = y[1] - state[1]; break;
 		case XY_PLANE: d = y[2] - state[2]; break;
 		case CRASH: d = dist - lastDist; break;
+		case JC: d = dist - lastDist; break;
 		default: 
 			throw tpat_exception("Event type not implemented");
 	}

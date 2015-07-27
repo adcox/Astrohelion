@@ -1,7 +1,6 @@
 /**
  *	@file tpat_traj_cr3bp_ltvp.cpp
- *
- *	Low Thrust, Velocity-Pointing CR3BP Trajectory
+ *	@brief Derivative of tpat_traj, specific to CR3BP-LTVP
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

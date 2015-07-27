@@ -1,7 +1,6 @@
 /**
  *	@file tpat_sys_data_cr3bp.cpp
- *
- * 	System Data object specifically for CR3BP
+ *	@brief Derivative of tpat_sys_data, specific to CR3BP
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

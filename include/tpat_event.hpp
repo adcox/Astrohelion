@@ -42,19 +42,32 @@ class tpat_event{
 		 *	@brief The type of event
 		 *
 		 *	This tells the simulation and correction engines how to interpret the
-		 *	data stored in this object
+		 *	data stored in this object.
+		 *
+		 *	For the _PLANE crossing events, pass a single double into the <tt>params</tt>
+		 *	field to specify the location of the plane. For example, choosing an event
+		 *	with type YZ_PLANE and passing a <tt>param</tt> of 0.5 will create an event
+		 *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane. By 
+		 * 	default, 0 is used, so the planes include the axes.
 		 */
 		enum event_t {
 			NONE,		//!< No type has been specified; cannot be used in integration
-			YZ_PLANE,	/*!< Event occurs when trajectory crosses the YZ-plane (x = 0)
-		 				 * In 2D, this is equivalent to a y-axis crossing
+			YZ_PLANE,	//!< Event occurs when trajectory crosses an YZ-plane 
+			XZ_PLANE,	//!< Event occurs when trajectory crosses an XZ-plane
+			XY_PLANE,	//!< Event occurs when trajectory crosses an XY-plane
+			CRASH,		/*!< Event occurs when trajectory falls below minimum acceptable
+		 				 * 	altitude or the surface of one of the system primaries.
+		 				 *	The <tt>param</tt> array should have the first element specifying the 
+						 *	primary index (0 for P1, 1 for P2, etc.) The minimum acceptable radius
+						 *	will be the radius of the primary plus the minimum acceptable fly-by distance
+						 *	specified in the tpat_body_data class.
 		 				 */
-			XZ_PLANE,	/*!< Event occurs when trajectory crosses the XZ-plane (y = 0)
-		 				 * In 2D, this is equivalent to an x-axis crossing
-		 				 */
-			XY_PLANE,	//!< Event occurs when trajectory crosses the XY-plane (z = 0)
-			CRASH		/*!< Event occurs when trajectory falls below minimum acceptable
-		 				 * altitude or the surface of one of the system primaries.
+		 	JC 			/*!< Event occurs when the Jacobi value reaches the specified value
+		 				 * 	of Jacobi Constant. Place this JC value in the first element of
+		 				 * 	the <tt>params</tt> vector present in the 
+		 				 * 	tpat_event(tpat_sys_data*, event_t, int, bool, double*) cosntructor.
+		 				 * 	This event can only be supported by dynamic models that have associated
+		 				 * 	system data objects that can be cast to cr3bp system data objects.
 		 				 */
 		};
 
@@ -63,21 +76,20 @@ class tpat_event{
 		tpat_event(tpat_sys_data*, event_t, int, bool);
 		tpat_event(tpat_sys_data*, event_t, int, bool, double*);
 		tpat_event(const tpat_event&);
-
+		~tpat_event();
+		
 		// Operators
 		tpat_event& operator =(const tpat_event&);
 
 		// Get and Set Functions
+		std::vector<double> getConData() const;
+		tpat_constraint::constraint_t getConType() const;
 		int getDir() const;
 		event_t getType() const;
 		const char* getTypeStr() const;
 		double getTime() const;
 		std::vector<double>* getState();
 		bool stopOnEvent() const;
-
-		tpat_constraint::constraint_t getConType() const;
-		std::vector<double> getConData() const;
-		int getConNode() const;
 
 		void setDir(int);
 		void setSysData(tpat_sys_data*);
@@ -88,6 +100,7 @@ class tpat_event{
 
 		void printStatus() const;
 	private:
+
 		event_t type = NONE; //!< The type of event this is
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */

@@ -49,7 +49,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp
+IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp tpat_utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
@@ -92,6 +92,9 @@ maps: $(OBJECTS)
 matrixTest: $(OBJ)/tpat_utilities.o $(OBJ)/tpat_matrix.o
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_matrix.cpp -o $(BIN)/$@
 
+manyArcTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
+
 nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
 
@@ -104,6 +107,9 @@ sysSwitchTest: $(OBJECTS)
 utilityTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
 
+temp: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) temp_prop.cpp -o $(BIN)/$@	
+	
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################

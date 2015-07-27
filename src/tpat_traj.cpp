@@ -1,7 +1,6 @@
 /**
  *	@file tpat_traj.cpp
- *
- *	Trajectory Class: contains info about a trajectory
+ *	@brief stores information about a trajectory
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

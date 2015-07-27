@@ -1,5 +1,6 @@
 /**
  *	@file tpat_nodeset_bcr4bpr.cpp
+ *	@brief Derivative of tpat_nodeset, specific to BCR4BPR
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

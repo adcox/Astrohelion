@@ -1,6 +1,6 @@
 /**
  *	@file tpat_traj_bcr4bpr.cpp
- *	
+ *	@brief Derivative of tpat_traj, specific to BCR4BPR
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

@@ -1,6 +1,7 @@
 /**
  *  @file tpat_simulation_engine.cpp
- *
+ *  @brief Performs numerical integration on a set of initial conditions in 
+ *  any dynamic model and system
  */
  
 /*
@@ -41,9 +42,7 @@
 #include "tpat_traj_cr3bp_ltvp.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
-#include "tpat_model_cr3bp.hpp"
-#include "tpat_model_cr3bp_ltvp.hpp"
-#include "tpat_model_bcr4bpr.hpp"
+#include "tpat_model.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -110,17 +109,14 @@ void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
         case tpat_sys_data::CR3BP_SYS:
             sysData = static_cast<tpat_sys_data_cr3bp *>(s.sysData);
             traj = new tpat_traj_cr3bp(*static_cast<tpat_traj_cr3bp *>(s.traj));
-            model = new tpat_model_cr3bp(*static_cast<tpat_model_cr3bp *>(s.model));
             break;
         case tpat_sys_data::CR3BP_LTVP_SYS:
             sysData = static_cast<tpat_sys_data_cr3bp_ltvp *>(s.sysData);
             traj = new tpat_traj_cr3bp_ltvp(*static_cast<tpat_traj_cr3bp_ltvp *>(s.traj));
-            model = new tpat_model_cr3bp_ltvp(*static_cast<tpat_model_cr3bp_ltvp *>(s.model));
             break;
         case tpat_sys_data::BCR4BPR_SYS:
             sysData = static_cast<tpat_sys_data_bcr4bpr *>(s.sysData);
             traj = new tpat_traj_bcr4bpr(*static_cast<tpat_traj_bcr4bpr *>(s.traj));
-            model = new tpat_model_cr3bp_ltvp(*static_cast<tpat_model_cr3bp_ltvp *>(s.model));
             break;
         default:
             throw tpat_exception("tpat_simulation_engine::copyEngine: Cannot copy engine with unknown type");
@@ -236,7 +232,7 @@ tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
         tpat_traj_cr3bp temp( *(static_cast<tpat_traj_cr3bp *>(traj) ) );
         return temp;
     }else{
-        throw tpat_exception("Wrong system type");
+        throw tpat_exception("tpat_simulation_engine::getCR3BP_Traj: Wrong system type");
     }
 }//==============================================
 
@@ -259,7 +255,7 @@ tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
         tpat_traj_cr3bp_ltvp temp( *(static_cast<tpat_traj_cr3bp_ltvp *>(traj) ) );
         return temp;
     }else{
-        throw tpat_exception("Wrong system type");
+        throw tpat_exception("tpat_simulation_engine::getCR3BP_LTVP_Traj: Wrong system type");
     }
 }//==============================================
 
@@ -280,7 +276,7 @@ tpat_traj_bcr4bpr tpat_simulation_engine::getBCR4BPR_Traj() const{
         return temp;
     }
     else{
-        throw tpat_exception("Wrong system type");
+        throw tpat_exception("tpat_simulation_engine::getBCR4BPR_Traj: Wrong system type");
     }
 }//=====================================
 
@@ -395,6 +391,8 @@ void tpat_simulation_engine::setNumSteps(int n){ numSteps = n; }
  *  It is assumed that t0 = 0
  *	@param ic a 6-element array containting the non-dimensional initial state
  *	@param tof the total integration time, or time-of-flight (non-dim units)
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  */
 void tpat_simulation_engine::runSim(double *ic, double tof){
 	runSim(ic, 0, tof);
@@ -406,6 +404,8 @@ void tpat_simulation_engine::runSim(double *ic, double tof){
  *  It is assumed that t0 = 0
  *  @param ic a vector containing the IC (six non-dim states)
  *  @param tof the total integration time, or time-of-flight (non-dim units)
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  */
 void tpat_simulation_engine::runSim(std::vector<double> ic, double tof){
     runSim(ic, 0, tof);
@@ -417,7 +417,9 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double tof){
  *  It is assumed that t0 = 0
  *  @param ic a vector containing the IC (six non-dim states)
  *  @param t0 the epoch time associated with the IC (non-dim units)
- *  @param tof the total integration time, or time-of-flight (non-dim units)
+ *  @param tof the total integration time, or time-of-flight (non-dim units).
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  */
 void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double tof){
     if(ic.size() >= 6){
@@ -434,6 +436,8 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double to
  *	@param ic a 6-element array of non-dimensional initial states
  *	@param t0 the time at the start of the integration, non-dimensional units
  *	@param tof time-of-flight, non-dimensional time units
+ *  Only the absolute value of the TOF is considered; to integrate backwards in
+ *  time, use the setRevTime() function.
  */
 void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
     printVerbColor(verbose, GREEN, "Running simulation...\n");
@@ -468,7 +472,6 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             tpat_sys_data_cr3bp* data = static_cast<tpat_sys_data_cr3bp *>(sysData);
             eomParams = data;
             traj = new tpat_traj_cr3bp(*data);
-            model = new tpat_model_cr3bp();
 			break;
         }
         case tpat_sys_data::CR3BP_LTVP_SYS:
@@ -477,7 +480,6 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             tpat_sys_data_cr3bp_ltvp* data = static_cast<tpat_sys_data_cr3bp_ltvp *>(sysData);
             eomParams = data;
             traj = new tpat_traj_cr3bp_ltvp(*data);
-            model = new tpat_model_cr3bp_ltvp();
             break;
         }
 		case tpat_sys_data::BCR4BPR_SYS:
@@ -486,7 +488,6 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             tpat_sys_data_bcr4bpr* data = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
             eomParams = data;
             traj = new tpat_traj_bcr4bpr(*data);
-            model = new tpat_model_bcr4bpr();
 			break;
         }
 		default:
@@ -509,7 +510,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
  *
  *  This function uses values stored in object-wide variables to determine the direction time flows,
  *  whether or not to use simple integration, and whether or not to use variable step sizes. Dad
- *  is saved to object-wide storage vectors via the <tt>saveIntegratedData()</tt> function.
+ *  is saved to object-wide storage vectors via the <tt>sim_saveIntegratedData()</tt> function.
  *
  *  @param ic a 6-element initial state for the trajectory
  *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
@@ -518,6 +519,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
 void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     // Save tolerance for trajectory
     traj->setTol(absTol > relTol ? absTol : relTol);
+    tpat_model *model = sysData->getModel();
 
     // Get the dimension of the state vector for integration
     int core = model->getCoreStateSize();
@@ -574,7 +576,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
     }
 
     // Save the initial state, time, and STM
-    model->saveIntegratedData(y, t[0], traj);
+    model->sim_saveIntegratedData(y, t[0], traj);
 
     // Update all event functions with IC
     printVerb(verbose, "  sim will use %d event functions:\n", ((int)events.size()));
@@ -593,6 +595,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
         int sgn = tf > t0 ? 1 : -1;
 
         while (sgn*t0 < sgn*tf && !killSim){
+            // printf("Integrating at t = %6.4f\n", t0);
             // apply integrator for one step; new state and time are stored in y and t0
             if(varStepSize){
                 status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
@@ -609,7 +612,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
 
             // Put newly integrated state and time into state vector
             if(!killSim)
-                model->saveIntegratedData(y, t0, traj);
+                model->sim_saveIntegratedData(y, t0, traj);
             
             steps++;
         }
@@ -622,7 +625,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
             int sgn = tf > t0 ? 1 : -1;
 
             while(sgn*t0 < sgn*tf && !killSim){
-
+                // printf("Integrating at t = %6.4f\n", t0);
                 if(varStepSize){
                     status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
                 }else{
@@ -641,7 +644,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            model->saveIntegratedData(y, t0, traj);
+            model->sim_saveIntegratedData(y, t0, traj);
             steps++;
         }
     }
@@ -696,7 +699,8 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
  */
 bool tpat_simulation_engine::locateEvents(double *y, double t){
     int numPts = traj->getTime()->size();
-
+    tpat_model *model = sysData->getModel();
+    
     // Look through all events
     for(int ev = 0; ev < ((int)events.size()); ev++){
         // Don't trigger if only two points have been integrated
@@ -726,7 +730,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->locateEvent(events.at(ev), traj, model, &(generalIC[0]), t0, tof, verbose)){
+            if(model->sim_locateEvent(events.at(ev), traj, model, &(generalIC[0]), t0, tof, verbose)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory's time vector
                 int timeSize = traj->getTime()->size();
@@ -759,9 +763,7 @@ bool tpat_simulation_engine::locateEvents(double *y, double t){
 void tpat_simulation_engine::cleanEngine(){
     printVerb(verbose, "Cleaning the engine...\n");
     delete traj;    // de-allocate the memory
-    delete model;   // de-allocate the memory
     traj = 0;       // set pointer to 0 (null pointer)
-    model = 0;      // set pointer to 0 (null pointer)
     eomParams = 0;  // set pointer to 0 (null pointer)
 
     eventOccurs.clear();

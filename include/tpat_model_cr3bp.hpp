@@ -23,7 +23,11 @@
 #include "tpat_model.hpp"
 
 /**
- *	@brief Defines the dynamical models for the CR3BP
+ *	@brief Derivative of tpat_model, specific to the CR3BP
+ *
+ *	The base class's methods provide a good framework for this system,
+ *	so only minimal adjustments are needed. This model adds support for 
+ *	Jacobi-Constant targeting.
  */
 class tpat_model_cr3bp : public tpat_model{
 public:
@@ -38,8 +42,8 @@ public:
 	tpat_model::eom_fcn getSimpleEOM_fcn();
 	std::vector<double> getPrimPos(double, tpat_sys_data*);
 	std::vector<double> getPrimVel(double, tpat_sys_data*);
-	void saveIntegratedData(double*, double, tpat_traj*);
-	bool locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
+	void sim_saveIntegratedData(double*, double, tpat_traj*);
+	bool sim_locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
 
 	// Corrector Functions
 	void corrector_applyConstraint(iterationData*, tpat_constraint, int);

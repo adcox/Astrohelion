@@ -1,5 +1,6 @@
 /**
  *	@file tpat_correction_engine.cpp
+ *	@brief Engine object that applies differential corrections to nodesets
  */
 
 /*
@@ -161,10 +162,10 @@ tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
 			tpat_nodeset_cr3bp temp( *(static_cast<tpat_nodeset_cr3bp *>(nodeset_out)) );
 			return temp;
 		}else{
-			throw tpat_exception("Wrong system type");
+			throw tpat_exception("tpat_correction_engine::getCR3BP_Output: Wrong system type");
 		}
 	}else{
-		throw tpat_exception("Output nodeset has not been created, cannot return CR3BP output");
+		throw tpat_exception("tpat_correction_engine::getCR3BP_Output: Output nodeset has not been created, cannot return CR3BP output");
 	}
 }//=========================================
 
@@ -183,10 +184,10 @@ tpat_nodeset_bcr4bpr tpat_correction_engine::getBCR4BPR_Output(){
 			tpat_nodeset_bcr4bpr temp( *(static_cast<tpat_nodeset_bcr4bpr *>(nodeset_out)) );
 			return temp;
 		}else{
-			throw tpat_exception("Wrong system type");
+			throw tpat_exception("tpat_correction_engine::getBCR4BPR_Output: Wrong system type");
 		}
 	}else{
-		throw tpat_exception("Output nodeset has not been created, cannot return CR3BP output");
+		throw tpat_exception("tpat_correction_engine::getBCR4BPR_Output: Output nodeset has not been created, cannot return CR3BP output");
 	}
 }//=========================================
 
@@ -413,13 +414,12 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 		it.deltaVs.assign(3*it.numNodes, 0);
 
 		for(int n = 0; n < it.numNodes-1; n++){
+			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0;
 			double tof = 0;
 			double ic[] = {0,0,0,0,0,0};
 			model->corrector_getSimICs(&it, set, n, ic, &t0, &tof);
 
-			// Copy IC for node n from free variable vector
-			// double *ic = &(it.X[6*n]);
 			simEngine.setRevTime(tof < 0);
 			simEngine.runSim(ic, t0, tof);
 			it.allSegs.push_back(simEngine.getTraj());

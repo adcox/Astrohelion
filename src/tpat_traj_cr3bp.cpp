@@ -1,7 +1,6 @@
 /**
  *	@file tpat_traj_cr3bp.cpp
- *
- *	CR3BP Trajectory
+ *	@brief Derivative of tpat_traj, specific to CR3BP
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

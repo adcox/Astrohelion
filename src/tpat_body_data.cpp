@@ -1,7 +1,7 @@
 /**
  *	@file tpat_body_data.cpp
  *
- *	Data class that holds data about orbitRad body
+ *	@brief Data class that holds data about orbitRad body
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

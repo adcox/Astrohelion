@@ -1,5 +1,6 @@
 /**
  *	@file tpat_constraint.cpp
+ *	@brief Data object that stores information about a node constraint
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 
@@ -195,4 +196,4 @@ void tpat_constraint::print() const {
 		printf("%12.5f ", data[n]);
 	}
 	printf("\n");
-}
+}//========================================

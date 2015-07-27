@@ -1,6 +1,6 @@
 /**
  *  @file tpat_model_cr3bp_ltvp.cpp
- *
+ *  @brief Derivative of tpat_model, specific to CR3BP-LTVP
  */
  
 /*
@@ -79,12 +79,13 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn(){
 /**
  *  @brief Compute the positions of all primaries
  *
- *  @param t the epoch at which the computations occur
+ *  @param t the epoch at which the computations occur (unused for this system)
  *  @param sysData object describing the specific system
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, tpat_sys_data *sysData){
+    (void)t;
     double primPos[6] = {0};
     tpat_sys_data_cr3bp_ltvp crSys(*static_cast<tpat_sys_data_cr3bp_ltvp *>(sysData));
 
@@ -97,12 +98,14 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, tpat_sys_data *s
 /**
  *  @brief Compute the velocities of all primaries
  *
- *  @param t the epoch at which the computations occur
- *  @param sysData object describing the specific system
+ *  @param t the epoch at which the computations occur (unused for this system)
+ *  @param sysData object describing the specific system (unused for this system)
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
 std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, tpat_sys_data *sysData){
+    (void)t;
+    (void)sysData;
     double primVel[6] = {0};
     
     return std::vector<double>(primVel, primVel+6);
@@ -115,7 +118,7 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, tpat_sys_data *s
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp_ltvp::saveIntegratedData(double* y, double t, tpat_traj* traj){
+void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
 	// Save the position and velocity states
     for(int i = 0; i < 6; i++){
         traj->getState()->push_back(y[i]);
@@ -164,7 +167,7 @@ void tpat_model_cr3bp_ltvp::saveIntegratedData(double* y, double t, tpat_traj* t
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_cr3bp_ltvp::locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
+bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
     double *ic, double t0, double tof, bool verbose){
 
     return true;

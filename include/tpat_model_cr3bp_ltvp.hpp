@@ -23,7 +23,11 @@
 #include "tpat_model.hpp"
 
 /**
- *	@brief Defines the dynamical models for the CR3BP, LTVP
+ *	@brief Derivative of tpat_model, specific to the CR3BP-LTVP
+ *
+ *	Under construction. Simulation is fully supported in this model,
+ *	but the corrections process will fall back to the base model 
+ *	behavior, which may produce unexpected results.
  */
 class tpat_model_cr3bp_ltvp : public tpat_model{
 public:
@@ -38,8 +42,8 @@ public:
 	tpat_model::eom_fcn getSimpleEOM_fcn();
 	std::vector<double> getPrimPos(double, tpat_sys_data*);
 	std::vector<double> getPrimVel(double, tpat_sys_data*);
-	void saveIntegratedData(double*, double, tpat_traj*);
-	bool locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
+	void sim_saveIntegratedData(double*, double, tpat_traj*);
+	bool sim_locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
 
 	// Corrector Functions
 	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);

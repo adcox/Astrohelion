@@ -21,6 +21,7 @@
 #define H_MODEL_DEF
 
 #include "tpat_constraint.hpp"
+#include "tpat_event.hpp"
 
 #include <vector>
 
@@ -35,6 +36,31 @@ struct iterationData;
 /**
  *	@brief A base class that defines the behavior of a dynamical model and provides
  *	functions used in simulation and correction algorithms
+ *
+ *	This class provides the flexibility that allows the engine objects to operate on
+ *	any dynamical model. This class is abstract and cannot be instantiated as an object,
+ *	and, as such, only provides a framework and some common methods for other derived
+ *	methods.
+ *
+ *	The tpat_simulation_engine and tpat_correction_engine make heavy use of dynamic 
+ *	models to generalize their code. This allows the developer to easily implement
+ *	new dynamic models for use in the simulator and corrector without making major
+ *	modifications to their code.
+ *
+ *	The simulation engine calls the getSimpleEOM_fcn() and getFullEOM_fcn() to 
+ *	obtain function pointers to the equations of motion for a dynamic model. It
+ *	also calls the sim_locateEvent() and sim_saveIntegratedData() functions.
+ *
+ *	The correction engine calls functions defined in the dynamic model to 
+ *	populate the design vector, constraint vector, and Jacobi matrix. Again,
+ *	placing these functions in a model class allows the developer to add new
+ *	models to the system without making huge changes to the complex correction
+ *	algorithm.
+ *
+ *	In addition to useful functions, the dynamic model stores information about
+ *	the number of states the equations of motion compute, and also contains a 
+ *	list of all constraints the model supports in a corrections environment. 
+ *	Derived classes can modify these variables to their needs.
  */
 class tpat_model{
 
@@ -64,36 +90,6 @@ public:
 
 	// Operators
 	tpat_model& operator =(const tpat_model&);
-
-	/**
-	 *	@brief Takes an input state and time and saves the data to the trajectory
-	 *	@param y an array containing the core state and any extra states integrated
-	 *	by the EOM function, including STM elements.
-	 *	@param t the time at the current integration state
-	 *	@param traj a pointer to the trajectory we should store the data in
-	 */
-	virtual void saveIntegratedData(double *y, double t, tpat_traj* traj) = 0;
-	
-	/**
-	 *  @brief Use a correction algorithm to accurately locate an event crossing
-	 *
-	 *  The simulation engine calls this function if and when it determines that an event 
-	 *  has been crossed. To accurately locate the event, we employ differential corrections
-	 *  and find the exact event occurence in space and time.
-	 *
-	 *  @param event the event we're looking for
-	 *  @param traj a pointer to the trajectory the event should occur on
-	 *  @param model the dynamical model we're working in
-	 *  @param ic the core state vector for this system
-	 *  @param t0 non-dimensional time at the beginning of the search arc
-	 *  @param tof the time-of-flight for the arc to search over
-	 *  @param verbose whether or not we should be verbose with output messages
-	 *
-	 *  @return wether or not the event has been located. If it has, a new point
-	 *  has been appended to the trajectory's data vectors.
-	 */
-	virtual bool locateEvent(tpat_event event, tpat_traj *traj, tpat_model* model,
-    	double *ic, double t0, double tof, bool verbose) = 0;
 
 	/**
 	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
@@ -164,11 +160,43 @@ public:
 	 */
 	virtual tpat_nodeset* corrector_createOutput(iterationData* it, tpat_nodeset *nodes_in, bool findEvent) = 0;
 
+	/**
+	 *  @brief Use a correction algorithm to accurately locate an event crossing
+	 *
+	 *  The simulation engine calls this function if and when it determines that an event 
+	 *  has been crossed. To accurately locate the event, we employ differential corrections
+	 *  and find the exact event occurence in space and time.
+	 *
+	 *  @param event the event we're looking for
+	 *  @param traj a pointer to the trajectory the event should occur on
+	 *  @param model the dynamical model we're working in
+	 *  @param ic the core state vector for this system
+	 *  @param t0 non-dimensional time at the beginning of the search arc
+	 *  @param tof the time-of-flight for the arc to search over
+	 *  @param verbose whether or not we should be verbose with output messages
+	 *
+	 *  @return wether or not the event has been located. If it has, a new point
+	 *  has been appended to the trajectory's data vectors.
+	 */
+	virtual bool sim_locateEvent(tpat_event event, tpat_traj *traj, tpat_model* model,
+    	double *ic, double t0, double tof, bool verbose) = 0;
+
+	/**
+	 *	@brief Takes an input state and time and saves the data to the trajectory
+	 *	@param y an array containing the core state and any extra states integrated
+	 *	by the EOM function, including STM elements.
+	 *	@param t the time at the current integration state
+	 *	@param traj a pointer to the trajectory we should store the data in
+	 */
+	virtual void sim_saveIntegratedData(double *y, double t, tpat_traj* traj) = 0;
+
 	// Set and Get Functions
 	int getCoreStateSize() const;
 	int getSTMStateSize() const;
 	int getExtraStateSize() const;
 	bool supportsCon(tpat_constraint::constraint_t) const;
+	bool supportsEvent(tpat_event::event_t) const;
+	
 protected:
 	dynamicModel_t modelType = MODEL_NULL;	//!< Describes the model type
 	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
@@ -182,6 +210,10 @@ protected:
 		tpat_constraint::MAX_DELTA_V, tpat_constraint::DELTA_V,
 		tpat_constraint::TOF,
 		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX};
+
+	/** A vector containing all the types of events this model supports */
+	std::vector<tpat_event::event_t> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
+		tpat_event::XZ_PLANE, tpat_event::CRASH};
 
 	void copyMe(const tpat_model&);
 };

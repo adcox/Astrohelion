@@ -1,5 +1,7 @@
 /**
  *  @file tpat_utilities.cpp
+ *  @brief Similar to tpat_calculations, but these functions are
+ *  more general, less math-y
  */
 /*
  *  Trajectory Propagation and Analysis Toolkit 

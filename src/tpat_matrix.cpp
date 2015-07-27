@@ -1,7 +1,7 @@
 /**
  *	@file tpat_matrix.cpp
  *
- * 	Matrix object that employs GSL's Matrix and CBLAS functionality
+ * 	@brief Matrix object that employs GSL's Matrix and CBLAS functionality
  *
  *	The matrix is double precision and real. No other
  *	characteristics are assumed (e.g. square, banded, symmetric, etc.)

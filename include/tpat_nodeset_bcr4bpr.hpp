@@ -65,7 +65,7 @@ class tpat_nodeset_bcr4bpr : public tpat_nodeset{
 	private:
 		tpat_sys_data_bcr4bpr sysData;		//!< System data object
 
-		void initEpochs(int, double);
+		void initEpochs(double);
 		void saveEpochs(mat_t*);
 };
 

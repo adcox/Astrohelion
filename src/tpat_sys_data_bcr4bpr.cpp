@@ -1,7 +1,6 @@
 /**
  *	@file tpat_sys_data_bcr4bpr.cpp
- *
- * 	System Data object specifically for BCR4BP, rotating coordinates
+ *	@brief Derivative of tpat_sys_data, specific to BCR4BPR
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

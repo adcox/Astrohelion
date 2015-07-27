@@ -1,6 +1,6 @@
 /**
  *  @file tpat_model_cr3bp.cpp
- *
+ *  @brief Derivative of tpat_model, specific to CR3BP
  */
  
 /*
@@ -42,6 +42,7 @@
 tpat_model_cr3bp::tpat_model_cr3bp() : tpat_model(MODEL_CR3BP) {
     // Allow a few more constraints than the default
     allowedCons.push_back(tpat_constraint::JC);
+    allowedEvents.push_back(tpat_event::JC);
 }//==============================================
 
 /**
@@ -78,12 +79,13 @@ tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn(){
 /**
  *  @brief Compute the positions of all primaries
  *
- *  @param t the epoch at which the computations occur
+ *  @param t the epoch at which the computations occur (unused for this system)
  *  @param sysData object describing the specific system
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysData){
+    (void)t;
     double primPos[6] = {0};
     tpat_sys_data_cr3bp crSys(*static_cast<tpat_sys_data_cr3bp *>(sysData));
     
@@ -96,12 +98,14 @@ std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysDat
 /**
  *  @brief Compute the velocities of all primaries
  *
- *  @param t the epoch at which the computations occur
- *  @param sysData object describing the specific system
+ *  @param t the epoch at which the computations occur (unused for this system)
+ *  @param sysData object describing the specific system (unused for this system)
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
 std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysData){
+    (void)t;
+    (void)sysData;
     double primVel[6] = {0};
     
     return std::vector<double>(primVel, primVel+6);
@@ -114,7 +118,7 @@ std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysDat
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp::saveIntegratedData(double* y, double t, tpat_traj* traj){
+void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
     // Save the position and velocity states
     for(int i = 0; i < 6; i++){
         traj->getState()->push_back(y[i]);
@@ -162,7 +166,7 @@ void tpat_model_cr3bp::saveIntegratedData(double* y, double t, tpat_traj* traj){
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_cr3bp::locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
+bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
     double *ic, double t0, double tof, bool verbose){
 
     // Copy system data object
@@ -176,7 +180,7 @@ bool tpat_model_cr3bp::locateEvent(tpat_event event, tpat_traj* traj, tpat_model
     tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, ic, 6);
 
     // Constraint to enforce event
-    tpat_constraint eventCon(event.getConType(), event.getConNode(), event.getConData());
+    tpat_constraint eventCon(event.getConType(), 1, event.getConData());
 
     eventNodeset.addConstraint(fixFirstCon);
     eventNodeset.addConstraint(eventCon);
@@ -211,7 +215,7 @@ bool tpat_model_cr3bp::locateEvent(tpat_event event, tpat_traj* traj, tpat_model
     double eventTime = correctedNodes.getTOF(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    model->saveIntegratedData(&(extra[0]), eventTime, traj);
+    model->sim_saveIntegratedData(&(extra[0]), eventTime, traj);
 
     return true;
 }//======================================================

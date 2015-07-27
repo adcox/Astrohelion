@@ -1,6 +1,6 @@
 /**
  *  @file tpat_model_bcr4bpr.cpp
- *
+ *  @brief Derivative of tpat_model, specific to BCR4BPR
  */
  
 /*
@@ -116,7 +116,7 @@ std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, tpat_sys_data *sysD
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_bcr4bpr::saveIntegratedData(double* y, double t, tpat_traj* traj){
+void tpat_model_bcr4bpr::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
     // Save the position and velocity states
     for(int i = 0; i < 6; i++){
         traj->getState()->push_back(y[i]);
@@ -170,7 +170,7 @@ void tpat_model_bcr4bpr::saveIntegratedData(double* y, double t, tpat_traj* traj
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_bcr4bpr::locateEvent(tpat_event event, tpat_traj *traj, tpat_model* model,
+bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj, tpat_model* model,
     double *ic, double t0, double tof, bool verbose){
 
     // **** Make sure you fix the epoch of the first node as well as the states
@@ -190,7 +190,7 @@ bool tpat_model_bcr4bpr::locateEvent(tpat_event event, tpat_traj *traj, tpat_mod
     tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, IC, 7);
 
     // Constraint to enforce event
-    tpat_constraint eventCon(event.getConType(), event.getConNode(), event.getConData());
+    tpat_constraint eventCon(event.getConType(), 1, event.getConData());
 
     eventNodeset.addConstraint(fixFirstCon);
     eventNodeset.addConstraint(eventCon);
@@ -225,7 +225,7 @@ bool tpat_model_bcr4bpr::locateEvent(tpat_event event, tpat_traj *traj, tpat_mod
     double eventTime = correctedNodes.getTOF(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    model->saveIntegratedData(&(extra[0]), eventTime, traj);
+    model->sim_saveIntegratedData(&(extra[0]), eventTime, traj);
     
     return true;
 }//=========================================================

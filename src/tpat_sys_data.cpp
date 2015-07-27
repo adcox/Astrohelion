@@ -1,7 +1,7 @@
 /** 
  *	@file tpat_sys_data.cpp
  *
- *	System Data (Abstract Base Class)
+ *	@brief System Data (Abstract Base Class)
  *
  * 	Stores information like the number and names of primaries, and the value 
  * 	of different characteristic quantities.
@@ -51,7 +51,11 @@ tpat_sys_data::tpat_sys_data(const tpat_sys_data& d){
 /**
  *	@brief Destructor
  */
-tpat_sys_data::~tpat_sys_data(){}
+tpat_sys_data::~tpat_sys_data(){
+	primaries.clear();
+	primIDs.clear();
+	otherParams.clear();
+}//============================================
 
 /**
  *	@brief Copy the system data object

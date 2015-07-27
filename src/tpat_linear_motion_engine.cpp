@@ -1,5 +1,6 @@
 /**
  *	@file tpat_linear_motion_engine.cpp
+ *	@brief Uses linear EOMS near libration points to generate trajectories
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 

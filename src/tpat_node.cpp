@@ -1,6 +1,6 @@
 /**
  *  @file tpat_node.cpp
- *
+ *	@brief Data object that stores information about a node
  */
  
 /*

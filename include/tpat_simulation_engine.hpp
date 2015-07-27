@@ -142,9 +142,6 @@ class tpat_simulation_engine{
 		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
 		tpat_traj *traj = 0;
 
-		/** Pointer to a dynamic model object; is set to non-null value when integration occurs */
-		tpat_model *model = 0;
-
 		/** Vector of events to consider during integration */
 		std::vector<tpat_event> events;
 
@@ -188,7 +185,8 @@ class tpat_simulation_engine{
 		/** Number of steps to take (only applies when varStepSize = false) */
 		double numSteps = 1000;
 
-		void integrate(double ic[], double t[], int t_dim);
+		void integrate(double[], double[], int);
+		bool locateEvents(double *, double);
 		void cleanEngine();
 		void copyEngine(const tpat_simulation_engine&);
 };

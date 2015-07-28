@@ -16,7 +16,7 @@ int main(void){
 	traj.saveToMat("circleOrb.mat");
 
 	double mass = 12;	// kg
-	tpat_sys_data_cr3bp_ltvp lowThrustSys("earth", "moon", 0.12, 2500, 12);
+	tpat_sys_data_cr3bp_ltvp lowThrustSys("earth", "moon", 0.0012, 2500, 12);
 	// tpat_simulation_engine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, mass/lowThrustSys.getCharM()};
 	sim.setSysData(&lowThrustSys);

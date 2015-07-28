@@ -186,7 +186,7 @@ class tpat_simulation_engine{
 		double numSteps = 1000;
 
 		void integrate(double[], double[], int);
-		bool locateEvents(double *, double);
+		bool locateEvents(const double*, double);
 		void cleanEngine();
 		void copyEngine(const tpat_simulation_engine&);
 };

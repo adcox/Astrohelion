@@ -43,6 +43,8 @@ tpat_model_cr3bp_ltvp::tpat_model_cr3bp_ltvp() : tpat_model(MODEL_CR3BP_LTVP) {
     coreStates = 6;
     stmStates = 36;
     extraStates = 0;
+    allowedCons.push_back(tpat_constraint::JC);
+    allowedEvents.push_back(tpat_event::JC);
 }//==============================================
 
 /**
@@ -138,7 +140,7 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
 
     // Compute acceleration
     double dsdt[6] = {0};
-    cr3bp_ltvp_simple_EOMs(0, y, dsdt, &sysData);
+    cr3bp_ltvp_simple_EOMs(t, y, dsdt, &sysData);
 
     // Save the accelerations
     traj->getAccel()->push_back(dsdt[3]);

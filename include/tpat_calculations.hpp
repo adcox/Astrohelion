@@ -71,7 +71,7 @@ tpat_matrix solveAX_eq_B(tpat_matrix, tpat_matrix);
 
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);
-double cr3bp_getJacobi(double s[], double);
+double cr3bp_getJacobi(const double s[], double);
 void cr3bp_getEquilibPt(tpat_sys_data_cr3bp, int, double, double[3]);
 tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, double, double, double);
 tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, double, double, double, double);

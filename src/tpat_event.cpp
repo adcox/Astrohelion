@@ -271,7 +271,7 @@ void tpat_event::setSysData(tpat_sys_data* data){ sysData = data; }
  *	@param t the current time
  *	@return whether or not the trajectory has passed through this event
  */
-bool tpat_event::crossedEvent(double y[6], double t) const{
+bool tpat_event::crossedEvent(const double y[6], double t) const{
 	double newDist = getDist(y, t);
 
 	// See if we have crossed (in pos. or neg. direction)
@@ -294,7 +294,7 @@ bool tpat_event::crossedEvent(double y[6], double t) const{
  *	only the first 6 will be copied
  *	@param t non-dimensional time associated with state <tt>y</tt>
  */
-void tpat_event::updateDist(double y[6], double t){	
+void tpat_event::updateDist(const double y[6], double t){	
 	// update the dist variable using information from y
 	lastDist = dist;
 	dist = getDist(y, t);
@@ -311,7 +311,7 @@ void tpat_event::updateDist(double y[6], double t){
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return the distance
  */
-double tpat_event::getDist(double y[6], double t) const{
+double tpat_event::getDist(const double y[6], double t) const{
 	double d = 0;
 	switch(type){
 		case YZ_PLANE: d = conData[0] - y[0]; break;
@@ -349,7 +349,7 @@ double tpat_event::getDist(double y[6], double t) const{
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return positive or negative one to correspond with the sign
  */
-int tpat_event::getDir(double y[6], double t) const{
+int tpat_event::getDir(const double y[6], double t) const{
 	double d = 0;
 	double dt = t - theTime;
 

@@ -173,17 +173,8 @@ int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
     double x = s[0];    double y = s[1];    double z = s[2];
     double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
     
-    double g0_nonDim = G_GRAV_0/charL*charT*charT;
+    double g0_nonDim = (G_GRAV_0/charL)*charT*charT;
     double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
-
-    if(std::abs(t - 6.7380218582109383e-7) < 1e-22){
-        printf("");
-    }
-
-    if(m <= 0){
-        T = 0;
-        m = 1;
-    }
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
@@ -238,6 +229,7 @@ int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
                         dydx, dydy, dydz, dydxdot, dydydot, dydzdot,
                         dzdx, dzdy, dzdz, dzdxdot, dzdydot, dzdzdot};
     tpat_matrix A(6,6,a_data);
+
 
     // Copy the STM states into a sub-array
     double stmElements[36];
@@ -800,7 +792,7 @@ void cr3bp_getUDDots(double mu, double x, double y, double z, double* ddots){
  *
  *  @return the Jacobi Constant at this specific state and system
  */
-double cr3bp_getJacobi(double s[], double mu){
+double cr3bp_getJacobi(const double s[], double mu){
     double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
     double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
     double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);

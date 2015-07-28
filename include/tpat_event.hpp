@@ -95,8 +95,8 @@ class tpat_event{
 		void setSysData(tpat_sys_data*);
 
 		// Computations, etc.
-		bool crossedEvent(double[6], double) const;
-		void updateDist(double[6], double);
+		bool crossedEvent(const double[6], double) const;
+		void updateDist(const double[6], double);
 
 		void printStatus() const;
 	private:
@@ -127,8 +127,8 @@ class tpat_event{
 
 		void copyEvent(const tpat_event&);
 		void initEvent(event_t, int, bool, double*);
-		double getDist(double[6], double) const;
-		int getDir(double[6], double) const;
+		double getDist(const double[6], double) const;
+		int getDir(const double[6], double) const;
 };
 
 #endif

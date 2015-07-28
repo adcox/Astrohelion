@@ -697,7 +697,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
  *  @param t the time associated with y
  *  @return whether or not the simulation should end (an event triggers killSim)
  */
-bool tpat_simulation_engine::locateEvents(double *y, double t){
+bool tpat_simulation_engine::locateEvents(const double *y, double t){
     int numPts = traj->getTime()->size();
     tpat_model *model = sysData->getModel();
     

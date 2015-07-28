@@ -1,0 +1,61 @@
+/** \page systemSetup System Architecture
+\brief Describes how the TPAT system is architected. May be useful for future developers
+
+The TPAT system has been designed with easy expansion in mind. We have taken advantage of C++'s object-oriented programming capabilities to define common behaviors in base classes and implement specific behaviors in derived classes. In the sections below, we will discuss the base classes and how they can be expanded upon to increase the system's capabilities.
+
+<h2>Conventions</h2>
+As with any project, we have made certain choices consistently during development. Most of these conventions are technical and code-related, but the following may be useful for future development:
+
+<b>Storing data as a matrix</b><br>
+Although we have a matrix object, it is generally easier to store data in an array or vector. Vectors, in particular, are useful because they can be sized dynamically, and appending, inserting, and detelting elements is simple. We follow the row-major convention for all such matrices. For example, a 2x3 matrix stored in a vector will be stored as such: [(1,1), (1,2), (1,3), (2,1), (2,2), (2,3)] where (i,j) represents the value stored in the ith row and jth column.
+
+
+<h2>Base Class Overview</h2>
+There are several different types of base classes in the TPAT system. We are primarily interested in propagating and analyzing trajectories (hence the name...), so the base classes reflect this intention. 
+
+<b>Dynamic Model</b><br>
+At the most basic level, we have the <tt>tpat_model</tt> class. This base model is an abstract class that provides a framework and some common methods for all dynamical systems. The model base class and derived classes provide much of the flexibility in the system. For more information, see the documentation for the base class (<tt>tpat_model</tt>). The derived classes (<tt>tpat_model_bcr4bpr</tt>, <tt>tpat_model_cr3bp</tt>, <tt>tpat_model_cr3bp_ltvp</tt>) also provide some details for their respective systems.
+
+<b>System Data</b><br>
+Each dynamic model has an associated object that defines constants based on the celestial bodies included in the system. The base of this system is the <tt>tpat_sys_data</tt> class, which is abstract. Most computations in the TPAT system are done in non-dimensional units, and the system data object defines characteristic quantities that are used to non-dimensionalize all physical quantities. A system data object is typically constructed using only the names of the primary masses. For maximum polymorphic ability, the base class defines a vector of extra parameters where system-specific quantities can be stored. These quantities may include mass ratio (\f$\mu\f$) for the CR3BP, or secondary ratios like the BCR4BP's \f$\nu\f$ and \f$k\f$.
+
+<b>Trajectory</b><br>
+The trajectory class hierarchy is designed like the system data classes. The base class is <tt>tpat_traj</tt>, with derivative classes for each type of dynamic model. At the most basic level, a trajectory stores a vector of states, a vector of accelerations, a vector of times, and a vector of state transition matrices (STMs). I.e. there is one 6-element state, one 3-element acceleration, one time, and one STM for each step along the integrated path. The base class provides a vector to store extra parameters in, such as Jacobi Constant, epoch, mass, etc. Derivative classes provide functions to access the extra parameters, but since they don't have to declare new storage variables, casting between classes becomes much more powerful. The simulation engine produces trajectory objects once it has completed a run.
+
+<b>Nodeset</b><br>
+Nodesets are similar to trajectories; they describe a trajectory through some propagation. A nodeset however, only provides information about a handful of integration steps, not <i>every</i> integration step like the trajectory. The base class for this hierarchy is <tt>tpat_nodeset</tt>, with derived classes for each dynamic model. Nodesets are primarily used in the correction engine and store a set of nodes and a set of constraints. Each node (<tt>tpat_node</tt>) contains a 6-element state vector, a time-of-flight, and a vector of extra parameters (again, these may be epochs, masses, Jacobi Constantes, etc.). Since the nodeset doesn't store any information itself (storage is abstracted one level into the node objects), the nodeset object only provides functions for accessing nodes and constraints. As such, the derived classes are on the thin side and don't add much functionality; they merely change the access functions to make them relevant to a specific system.
+
+<h2>Engine Overview</h2>
+It's great to have lots of data storage, but we're really here for the engines... Engines take objects and manipulate them in some way to produce something useful.
+
+<b>Simulator</b><br>
+The simulation engine (<tt>tpat_simulation_engine</tt>) is a relatively simple engine (at least when compared to the correction engine). It queries a dynamical model to get pointers to the equations of motion and then employs GSL's integration algorithms to evolve the initial state for some time-of-flight. There are still some static casts in this engine that will need to be appended to when new models are added to the system. We are working on changing this.
+
+<b>Corrector</b><br>
+The correction engine (<tt>tpat_correction_engine</tt>) makes heavy use of functions stored in the dynamic models to do its job. This engine is almost entire independent of dynamic model type, and we hope it will soon be 100% generic.
+
+<h2>Utility Functions</h2>
+<ul>
+	<li><b>Celestial Mechanics Functions</b>: things like EOMs, equilibrium point calculations, system conversions, and linear algebra routines are located in tpat_calculations.
+	</li>
+	<li><b>Matrix Operations</b>:C++ is accurate and fast, but it lacks easy matrix operations. The tpat_matrix class leverages GSL's matrix functionality and some lower-level CBLAS libraries to make matrix operations more Matlab-like.
+	</li>
+	<li><b>Miscellaneous Functions</b>: things like sorting algorithms, template functions for mean, absolute value, sums, etc. are found in tpat_utilities
+	</li>
+</ul>
+
+<h2>Data and Constants</h2>
+Celestial mechanics mostly uses letters, but there are a few numbers involved. Here's where we get them:
+
+<ul>
+<li>
+	<b>Physical Constants</b> The tpat_constants header stores values for physical constants, like \f$\pi\f$, the gravitational constant, etc.
+</li>
+<li>
+	<b>Body Data</b> Information about celestial bodies is currently hard-coded into the tpat_body_data object. Although we could implement SPICE calls to get more accurate data, it is useful to have static values for these quantities so we can reproduce results down the road.
+</li>
+<li>
+	<b>Ephemeris</b> We use SPICE data files to obtain ephemeris data, including leap seconds.
+</li>
+</ul>
+*/

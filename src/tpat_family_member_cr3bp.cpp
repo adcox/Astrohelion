@@ -62,7 +62,7 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
 	IC = traj.getState(0);
 	TOF = traj.getTime(-1);
-	JC = traj.getJC(0);
+	JC = traj.getJacobi(0);
 
 	std::vector<double> x = traj.getCoord(0);
 	std::vector<double> y = traj.getCoord(0);

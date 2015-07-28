@@ -179,17 +179,19 @@ std::vector<double> tpat_traj::getExtraParam(int n) const{
 	if(n < 0)
 		n += extraParam.size()/numExtraParam;
 
-	std::vector<double>::const_iterator first = extraParam.begin() + n*numExtraParam;
-	std::vector<double>::const_iterator last = extraParam.begin() + (n+1)*numExtraParam;
-	std::vector<double> oneSetParam(first, last);
-	return oneSetParam;
+	return extraParam.at(n);
+	// std::vector<double>::const_iterator first = extraParam.begin() + n*numExtraParam;
+	// std::vector<double>::const_iterator last = extraParam.begin() + (n+1)*numExtraParam;
+	// std::vector<double> oneSetParam(first, last);
+	// return oneSetParam;
 }//==========================================================
 
 /**
  *	@brief Retrieve a pointer to the vector of extra parameters
+ *	@param n the index of the vector of parameters
  *	@return a pointer to the vector of extra parameters
  */
-std::vector<double>* tpat_traj::getExtraParam(){ return &extraParam; }
+std::vector<double>* tpat_traj::getExtraParamPtr(int n){ return &(extraParam.at(n)); }
 
 /**
  *	@brief Retrieve a single state along the trajectory
@@ -286,10 +288,10 @@ void tpat_traj::setSTMs(std::vector<tpat_matrix> phi){ allSTM = phi; }
 
 /**
  *	@brief Set the vector of extra parameters. 
- *	@param e a vector of extra parameters in row-major order; each row
- *	corresponds to a state along the trajectory
+ *	@param ix the index of the extra parameter
+ *	@param e a vector of parameters
  */
-void tpat_traj::setExtraParam(std::vector<double> e){ extraParam = e; }
+void tpat_traj::setExtraParam(int ix, std::vector<double> e){ extraParam.at(ix) = e; }
 
 /**
  *	@brief Set the tolerance for this trajectory
@@ -304,24 +306,76 @@ void tpat_traj::setTol(double d){ tol = d; }
 //-----------------------------------------------------
 
 /**
+ *	@brief Concatenate two trajectories
+ *	@param lhs a pointer to the left-hand side of the sum
+ *	@param rhs a pointer to the right-hand side of the sum
+ *	@param out a pointer to the output trajectory object
+ */
+void basicConcat(const tpat_traj *lhs, const tpat_traj *rhs, tpat_traj *out){
+	int skipShift = 1;
+	double t1 = lhs->getTol();
+	double t2 = rhs->getTol();
+	double tol = t1 > t2 ? t1 : t2;
+	if(tol == 0)
+		tol = 1e-9;
+
+	if(tpat_util::aboutEquals(lhs->getState(-1), rhs->getState(0), 100*tol)){
+		skipShift = 1;
+	}
+	
+	// Copy all data form LHS into OUT
+	out->state.insert(out->state.end(), lhs->state.begin(), lhs->state.end());
+	out->accel.insert(out->accel.end(), lhs->accel.begin(), lhs->accel.end());
+	out->times.insert(out->times.end(), lhs->times.begin(), lhs->times.end());
+
+	for(size_t i = 0; i < lhs->extraParam.size(); i++){
+		out->extraParam.push_back(lhs->extraParam.at(i));
+	}
+
+	// Append data from RHS to OUT
+	out->state.insert(out->state.end(), rhs->state.begin()+skipShift*rhs->STATE_SIZE, rhs->state.end());
+	out->accel.insert(out->accel.end(), rhs->accel.begin()+skipShift*rhs->ACCEL_SIZE, rhs->accel.end());
+	out->times.insert(out->times.end(), rhs->times.begin()+skipShift, rhs->times.end());
+
+	for(size_t i = 0; i < lhs->extraParam.size(); i++){
+		int rowSize = rhs->extraParamRowSize.at(i);
+		out->extraParam.at(i).insert(out->extraParam.at(i).end(), rhs->extraParam.at(i).begin()+skipShift*rowSize, 
+			rhs->extraParam.at(i).end());
+	}
+
+	// Copy the lhs stm
+	out->allSTM.insert(out->allSTM.end(), lhs->allSTM.begin(), lhs->allSTM.end());
+	
+	// Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
+	for(size_t i = skipShift; i < rhs->allSTM.size(); i++){
+		tpat_matrix shiftedSTM = rhs->getSTM(i)*lhs->getSTM(-1);
+		out->allSTM.push_back(shiftedSTM);
+	}
+
+	out->setLength();
+}//========================================================
+
+/**
  *	@brief Set the number of points by checking the number of data in 
  *	the state, time, and STM vectors.
  */
 void tpat_traj::setLength(){
-	int sL = state.size()/STATE_SIZE;
-	int aL = accel.size()/ACCEL_SIZE;
-	int tL = times.size();
-	int pL = allSTM.size();
+	size_t sL = state.size()/STATE_SIZE;
+	size_t aL = accel.size()/ACCEL_SIZE;
+	size_t tL = times.size();
+	size_t pL = allSTM.size();
+	bool stillTrue = true;
 
 	if(sL == tL && tL == pL && aL == sL){
-		if(numExtraParam != 0 && (int)(extraParam.size()/numExtraParam) == sL){
-			numPoints = sL;
-			return;
+		for(size_t i = 0; i < extraParam.size(); i++){
+			stillTrue = stillTrue && extraParam.at(i).size()/extraParamRowSize.at(i) == sL;
 		}
 	}
 
-	printWarn("Trajectory has vectors with different lengths\n");
 	numPoints = sL;
+
+	if(!stillTrue)
+		printWarn("Trajectory has vectors with different lengths\n");
 }//=======================================
 
 /**
@@ -415,8 +469,7 @@ void tpat_traj::saveAccel(mat_t *matFile){
 /**
  *	@brief Save one of the extra parameters to file
  *	@param matFile a pointer to the destination mat-file
- *	@param varIx the index of the parameter within one row of the 
- *	extraParam vector; this assumes a 1d variable is being saved
+ *	@param varIx the index of the parameter
  *	@param width the number elements each row contains. For example, if I'm storing a 1x3 vector,
  *	varIx would be 0 and width would be three.
  *	@param name the name of the variable being saved
@@ -427,8 +480,8 @@ void tpat_traj::saveExtraParam(mat_t *matFile, int varIx, int width, const char 
 
 	// Get the specified coordinate
 	std::vector<double> param;
-	for(size_t i = 0; i < extraParam.size()/numExtraParam; i++){
-		param.insert(param.end(), extraParam.begin()+i*numExtraParam+varIx, extraParam.begin()+i*numExtraParam+varIx+width);
+	for(size_t i = 0; i < extraParam.at(varIx).size()/width; i++){
+		param.insert(param.end(), extraParam.at(varIx).begin()+i*width, extraParam.at(varIx).begin()+(i+1)*width);
 	}
 
 	size_t dims[2] = {param.size()/width, static_cast<size_t>(width)};

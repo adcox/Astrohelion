@@ -36,7 +36,9 @@
  *	and additionall initializes the jacobi matrix
  */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp() : tpat_traj(){
-	numExtraParam = 1;
+	numExtraParam = 1;	// Jacobi
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParam.push_back(std::vector<double>(0));
 }//====================================================
 
 /**
@@ -44,7 +46,9 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp() : tpat_traj(){
  *	@param data a system data object describing the system
  */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp data){
-	numExtraParam = 1;
+	numExtraParam = 1;	// Jacobi
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParam.push_back(std::vector<double>(0));
 	sysData = data;
 }//====================================================
 
@@ -52,8 +56,10 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp data){
  *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(int n) : tpat_traj(n){
-	numExtraParam = 1;
-	extraParam.reserve(n);
+	numExtraParam = 1;	// Jacobi
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParam.push_back(std::vector<double>(0));
+	extraParam.at(0).reserve(n);
 }//====================================================
 
 /**
@@ -106,7 +112,7 @@ tpat_sys_data::system_t tpat_traj_cr3bp_ltvp::getType() const{
  *	@brief Get a pointer to the vector of Jacobi values along the trajectory
  *	@return a pointer to the vector of Jacobi values along the trajectory
  */
-std::vector<double>* tpat_traj_cr3bp_ltvp::getJacobi() { return &extraParam; }
+std::vector<double>* tpat_traj_cr3bp_ltvp::getJacobi() { return &(extraParam.at(0)); }
 
 /**
  *	@brief Retrieve a Jacobi value at one point on the trajectory
@@ -116,9 +122,9 @@ std::vector<double>* tpat_traj_cr3bp_ltvp::getJacobi() { return &extraParam; }
  */
 double tpat_traj_cr3bp_ltvp::getJacobi(int n) const {
 	if(n < 0)
-		n += extraParam.size();
+		n += extraParam.at(0).size();
 
-	return extraParam[n];
+	return extraParam.at(0)[n];
 }//=====================================================
 
 /**

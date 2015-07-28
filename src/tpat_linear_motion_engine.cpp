@@ -340,7 +340,9 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 
 	// Make the Jacobi full of NAN and STM full of Identity matrices
 	linTraj.getAccel()->assign(tpat_traj_cr3bp::ACCEL_SIZE*(times->size()), NAN);
-	linTraj.getJacobi()->assign(((int)times->size()), NAN);
+	std::vector<double> jc(times->size(), NAN);
+	linTraj.getJacobi()->insert(linTraj.getJacobi()->begin(), jc.begin(), jc.end());
+	// linTraj.getJacobi()->assign(((int)times->size()), NAN);
 	linTraj.getSTM()->assign(((int)times->size()), tpat_matrix::I(6));
 	linTraj.setLength();
 

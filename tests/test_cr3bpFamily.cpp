@@ -32,8 +32,8 @@ int main(void){
 	matches = fam.getMemberByJacobi(matchJC);
 	printf("  Found %zu Potential members\n", matches.size());
 	for(size_t i = 0; i < matches.size(); i++){
-		printf("   %03zu: JC = %f ", i, matches[i].getJC());
-		std::cout << (std::abs(matches[i].getJC() - matchJC) < 1e-9 ? PASS : FAIL) << std::endl;
+		printf("   %03zu: JC = %f ", i, matches[i].getJacobi());
+		std::cout << (std::abs(matches[i].getJacobi() - matchJC) < 1e-9 ? PASS : FAIL) << std::endl;
 	}
 
 	printf("Checking Match TOF:\n");

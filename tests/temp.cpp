@@ -20,13 +20,10 @@ public:
 
 int main(){
 	
-	Square square(4);
-	Rectangle rect(2,3);
+	std::vector< std::vector<double> > data;
 
-	Rectangle *cast_square = static_cast<Rectangle *>(&square);
+	data.push_back(std::vector<double>(0));
 
-	Rectangle *rectPtr;
-	Rectangle *cast_try2 = static_cast<rectPtr>(&square);
-
+	printf("Data has %zu vectors stored\n", data.size());
 	return 0;
 }

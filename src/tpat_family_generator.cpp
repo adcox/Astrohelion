@@ -411,7 +411,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 					std::vector<double> ic = members[n].getState(0);
 					prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
 					prevStates.push_back(members[n].getTime(-1));
-					prevStates.push_back(members[n].getJC(0));
+					prevStates.push_back(members[n].getJacobi(0));
 				}
 
 				// This will hold the input depVars plus the unused independent variable

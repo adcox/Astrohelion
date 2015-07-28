@@ -67,7 +67,7 @@ class tpat_traj{
 		std::vector<double> getCoord(int) const;
 		int getLength() const;
 		std::vector<double> getExtraParam(int) const;
-		std::vector<double>* getExtraParam();
+		std::vector<double>* getExtraParamPtr(int);
 		std::vector<double> getState(int) const;
 		std::vector<double>* getState();
 		tpat_matrix getSTM(int) const;
@@ -79,12 +79,13 @@ class tpat_traj{
 
 		void setState(std::vector<double>);
 		void setAccel(std::vector<double>);
-		void setExtraParam(std::vector<double>);
+		void setExtraParam(int, std::vector<double>);
 		void setSTMs(std::vector<tpat_matrix>);
 		void setTime(std::vector<double>);
 		void setTol(double);
 		
 		// Utility functions
+		friend void basicConcat(const tpat_traj*, const tpat_traj*, tpat_traj*);
 		void saveToMat(const char*);
 		void setLength();
 	protected:
@@ -95,7 +96,8 @@ class tpat_traj{
 		std::vector<double> state;			//!< Holds [pos, vel] (6d) for every step
 		std::vector<double> accel;			//!< Holds accelerations in three principle directions at every step
 		std::vector<double> times;			//!< Holds time info
-		std::vector<double> extraParam;		//!< Holds data for any extra parameters
+		std::vector< std::vector<double> > extraParam;	//!< Holds data for any extra parameters
+		std::vector<int> extraParamRowSize;	//!< Number of elements in one row of each of the extra parameter vectors
 		std::vector<tpat_matrix> allSTM;	//!< An array containing the STM at each step of the integration
 
 		void copyMe(const tpat_traj&);

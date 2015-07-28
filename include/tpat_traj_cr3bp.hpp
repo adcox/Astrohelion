@@ -50,7 +50,7 @@ class tpat_traj_cr3bp : public tpat_traj{
 		friend tpat_traj_cr3bp operator +(const tpat_traj_cr3bp &lhs, const tpat_traj_cr3bp &rhs);
 
 		// Set and Get Functions
-		double getJC(int) const;
+		double getJacobi(int) const;
 		std::vector<double>* getJacobi();
 		tpat_sys_data_cr3bp getSysData() const;
 		tpat_sys_data::system_t getType() const;

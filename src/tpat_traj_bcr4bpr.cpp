@@ -35,7 +35,10 @@
  *	@brief Construct a basic BCR4BPR trajectory object
  */
 tpat_traj_bcr4bpr::tpat_traj_bcr4bpr() : tpat_traj() {
-	numExtraParam = 6;
+	numExtraParam = 1;	// one vector for dqdT values
+	extraParamRowSize.push_back(6);	// each dqdT has six elements
+	extraParam.push_back(std::vector<double>(0));
+
 }
 
 /**
@@ -43,7 +46,9 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr() : tpat_traj() {
  *	@param data a system data object describing the BCR4BPR system
  */
 tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr data){
-	numExtraParam = 6;
+	numExtraParam = 1;	// one vector for dqdT values
+	extraParamRowSize.push_back(6);	// each dqdT has six elements
+	extraParam.push_back(std::vector<double>(0));
 	sysData = data;
 }//====================================================
 
@@ -52,8 +57,10 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr data){
  *	@param n the number of states this trajectory will contain
  */
 tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(int n) : tpat_traj(n){
-	numExtraParam = 6;
-	extraParam.reserve(n*6);
+	numExtraParam = 1;	// one vector for dqdT values
+	extraParamRowSize.push_back(6);	// each dqdT has six elements
+	extraParam.push_back(std::vector<double>(0));
+	extraParam.at(0).reserve(n*6);
 }//====================================================
 
 /**
@@ -106,41 +113,49 @@ tpat_traj_bcr4bpr operator +(const tpat_traj_bcr4bpr &lhs, const tpat_traj_bcr4b
 		throw tpat_exception("Cannot sum two BCR4BPR trajectories from different systems!");
 	}
 
-	int skipShift = 1;
-	double t1 = lhs.getTol();
-	double t2 = rhs.getTol();
-	double tol = t1 > t2 ? t1 : t2;
-	if(tol == 0)
-		tol = 1e-9;
-
-	if(tpat_util::aboutEquals(lhs.getState(-1), rhs.getState(0), 100*tol)){
-		skipShift = 1;
-	}
-
-	// create a new trajectory object with space for both sets of data to be combined
 	tpat_traj_bcr4bpr newTraj(lhs.sysData);
+	basicConcat(&lhs, &rhs, &newTraj);
+
+	// int skipShift = 1;
+	// double t1 = lhs.getTol();
+	// double t2 = rhs.getTol();
+	// double tol = t1 > t2 ? t1 : t2;
+	// if(tol == 0)
+	// 	tol = 1e-9;
+
+	// if(tpat_util::aboutEquals(lhs.getState(-1), rhs.getState(0), 100*tol)){
+	// 	skipShift = 1;
+	// }
+
+	// // create a new trajectory object with space for both sets of data to be combined
+	// tpat_traj_bcr4bpr newTraj(lhs.sysData);
 	
-	// Copy the states and times from the LHS into the new guy
-	newTraj.getState()->insert(newTraj.getState()->end(), lhs.state.begin(), lhs.state.end());
-	newTraj.getAccel()->insert(newTraj.getAccel()->end(), lhs.accel.begin(), lhs.accel.end());
-	newTraj.getTime()->insert(newTraj.getTime()->end(), lhs.times.begin(), lhs.times.end());
-	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->begin(), lhs.extraParam.begin(), lhs.extraParam.end());
+	// // Copy the states and times from the LHS into the new guy
+	// newTraj.getState()->insert(newTraj.getState()->end(), lhs.state.begin(), lhs.state.end());
+	// newTraj.getAccel()->insert(newTraj.getAccel()->end(), lhs.accel.begin(), lhs.accel.end());
+	// newTraj.getTime()->insert(newTraj.getTime()->end(), lhs.times.begin(), lhs.times.end());
+	// std::vector<double> dqdT = newTraj.getExtraParam()->at(0);
+	// dqdT.insert(dqdT.begin(), lhs.extraParam.at(0).begin(), lhs.extraParam.at(0).end());
+	// // newTraj.getExtraParam()->insert(newTraj.getExtraParam()->begin(), lhs.extraParam.begin(), lhs.extraParam.end());
 
-	// Append the rhs state to the end of the new guy's state vector
-	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_traj_bcr4bpr::STATE_SIZE, rhs.state.end());
-	newTraj.getAccel()->insert(newTraj.getAccel()->end(), rhs.accel.begin()+skipShift*tpat_traj_bcr4bpr::ACCEL_SIZE, rhs.accel.end());
-	newTraj.getTime()->insert(newTraj.getTime()->end(), rhs.times.begin()+skipShift, rhs.times.end());
-	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->end(), rhs.extraParam.begin() +skipShift*lhs.numExtraParam, rhs.extraParam.end());
+	// // Append the rhs state to the end of the new guy's state vector
+	// newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_traj_bcr4bpr::STATE_SIZE, rhs.state.end());
+	// newTraj.getAccel()->insert(newTraj.getAccel()->end(), rhs.accel.begin()+skipShift*tpat_traj_bcr4bpr::ACCEL_SIZE, rhs.accel.end());
+	// newTraj.getTime()->insert(newTraj.getTime()->end(), rhs.times.begin()+skipShift, rhs.times.end());
+	// dqdT.insert(rhs.extraParam.at(0).begin() + skipShift*lhs.numExtraParam, rhs.extraParam.at(0).end());
+	// // newTraj.getExtraParam()->insert(newTraj.getExtraParam()->end(), rhs.extraParam.begin() +skipShift*lhs.numExtraParam, rhs.extraParam.end());
 
-	// Copy the lhs stm
-	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
-	// Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
-	for(size_t i = skipShift; i < rhs.allSTM.size(); i++){
-		tpat_matrix shiftedSTM = rhs.getSTM(i)*lhs.getSTM(-1);
-		newTraj.getSTM()->push_back(shiftedSTM);
-	}
+	// newTraj.getExtraParam()->at(0) = dqdT;
 
-	newTraj.setLength();
+	// // Copy the lhs stm
+	// newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
+	// // Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
+	// for(size_t i = skipShift; i < rhs.allSTM.size(); i++){
+	// 	tpat_matrix shiftedSTM = rhs.getSTM(i)*lhs.getSTM(-1);
+	// 	newTraj.getSTM()->push_back(shiftedSTM);
+	// }
+
+	// newTraj.setLength();
 
 	return newTraj;
 }//========================================
@@ -176,7 +191,7 @@ tpat_sys_data_bcr4bpr tpat_traj_bcr4bpr::getSysData(){ return sysData; }
  *	
  *	@return a pointer to the vector of dqdT values;
  */
-std::vector<double>* tpat_traj_bcr4bpr::get_dqdT(){ return &extraParam; }
+std::vector<double>* tpat_traj_bcr4bpr::get_dqdT(){ return &(extraParam.at(0)); }
 
 /**
  *	@param i the index of the dqdT vector to retrieve
@@ -186,9 +201,9 @@ std::vector<double>* tpat_traj_bcr4bpr::get_dqdT(){ return &extraParam; }
  */
 std::vector<double> tpat_traj_bcr4bpr::get_dqdT(int i){
 	if(i < 0)
-		i += extraParam.size()/6;
+		i += extraParam.at(0).size()/6;
 	
-	std::vector<double> temp(extraParam.begin()+i*6, extraParam.begin()+(i+1)*6);
+	std::vector<double> temp(extraParam.at(0).begin()+i*6, extraParam.at(0).begin()+(i+1)*6);
 	return temp;
 }//===============================================
 

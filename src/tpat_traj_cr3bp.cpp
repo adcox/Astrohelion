@@ -39,7 +39,9 @@
  *	and additionall initializes the jacobi matrix
  */
 tpat_traj_cr3bp::tpat_traj_cr3bp() : tpat_traj(){
-	numExtraParam = 1;
+	numExtraParam = 1;	// Jacobi
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParam.push_back(std::vector<double>(0));
 }//====================================================
 
 /**
@@ -47,7 +49,9 @@ tpat_traj_cr3bp::tpat_traj_cr3bp() : tpat_traj(){
  *	@param data a system data object describing the system
  */
 tpat_traj_cr3bp::tpat_traj_cr3bp(tpat_sys_data_cr3bp data){
-	numExtraParam = 1;
+	numExtraParam = 1;	// Jacobi
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParam.push_back(std::vector<double>(0));
 	sysData = data;
 }//====================================================
 
@@ -55,8 +59,10 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(tpat_sys_data_cr3bp data){
  *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
 tpat_traj_cr3bp::tpat_traj_cr3bp(int n) : tpat_traj(n){
-	numExtraParam = 1;
-	extraParam.reserve(n);
+	numExtraParam = 1;	// Jacobi
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParam.push_back(std::vector<double>(0));
+	extraParam.at(0).reserve(n);
 }//====================================================
 
 /**
@@ -139,49 +145,56 @@ tpat_traj_cr3bp operator +(const tpat_traj_cr3bp &lhs, const tpat_traj_cr3bp &rh
 		throw tpat_exception("Cannot sum two CR3BP trajectories from different systems");
 	}
 
-	int skipShift = 1;
-	double t1 = lhs.getTol();
-	double t2 = rhs.getTol();
-	double tol = t1 > t2 ? t1 : t2;
-	if(tol == 0)
-		tol = 1e-9;
-
-	if(tpat_util::aboutEquals(lhs.getState(-1), rhs.getState(0), 100*tol)){
-		skipShift = 1;
-	}
-
-	// create a new trajectory object with space for both sets of data to be combined
 	tpat_traj_cr3bp newTraj(lhs.sysData);
+	basicConcat(&lhs, &rhs, &newTraj);
+	// int skipShift = 1;
+	// double t1 = lhs.getTol();
+	// double t2 = rhs.getTol();
+	// double tol = t1 > t2 ? t1 : t2;
+	// if(tol == 0)
+	// 	tol = 1e-9;
 
-	// Set the tolerance to the greater of the two
-	newTraj.setTol(t1 > t2 ? t1 : t2);
+	// if(tpat_util::aboutEquals(lhs.getState(-1), rhs.getState(0), 100*tol)){
+	// 	skipShift = 1;
+	// }
 
-	// Copy the states and times from the LHS into the new guy)
-	newTraj.getState()->insert(newTraj.getState()->begin(), lhs.state.begin(), lhs.state.end());
-	newTraj.getTime()->insert(newTraj.getTime()->begin(), lhs.times.begin(), lhs.times.end());
-	newTraj.getAccel()->insert(newTraj.getAccel()->begin(), lhs.accel.begin(), lhs.accel.end());
-	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->begin(), lhs.extraParam.begin(), lhs.extraParam.end());
+	// // create a new trajectory object with space for both sets of data to be combined
+	// tpat_traj_cr3bp newTraj(lhs.sysData);
 
-	// Append the rhs state to the end of the new guy's state vector
-	newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_traj_cr3bp::STATE_SIZE, rhs.state.end());
-	newTraj.getAccel()->insert(newTraj.getAccel()->end(), rhs.accel.begin()+skipShift*tpat_traj_cr3bp::ACCEL_SIZE, rhs.accel.end());
-	newTraj.getExtraParam()->insert(newTraj.getExtraParam()->end(), rhs.extraParam.begin() +skipShift*lhs.numExtraParam, rhs.extraParam.end());
+	// // Set the tolerance to the greater of the two
+	// newTraj.setTol(t1 > t2 ? t1 : t2);
 
-	// Append the rhs times, adjusted for continuity, to the new guy's time vector; adjustments
-	// don't affect the result because system is autonomous
-	for (int n = skipShift; n < rhs.numPoints; n++){
-		newTraj.getTime()->push_back(lhs.times.back() + rhs.times.at(n) - rhs.times.at(0));
-	}
+	// // Copy the states and times from the LHS into the new guy)
+	// newTraj.getState()->insert(newTraj.getState()->begin(), lhs.state.begin(), lhs.state.end());
+	// newTraj.getTime()->insert(newTraj.getTime()->begin(), lhs.times.begin(), lhs.times.end());
+	// newTraj.getAccel()->insert(newTraj.getAccel()->begin(), lhs.accel.begin(), lhs.accel.end());
+	// std::vector<double> jacobi = newTraj.getExtraParam()->at(0);
+	// jacobi.insert(jacobi.end(), lhs.extraParam.at(0).begin(), lhs.extraParam.at(0).end());
+	// // newTraj.getExtraParam()->insert(newTraj.getExtraParam()->begin(), lhs.extraParam.begin(), lhs.extraParam.end());
 
-	// Copy the lhs stm
-	newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
-	// Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
-	for(size_t i = skipShift; i < rhs.allSTM.size(); i++){
-		tpat_matrix shiftedSTM = rhs.getSTM(i)*lhs.getSTM(-1);
-		newTraj.getSTM()->push_back(shiftedSTM);
-	}
+	// // Append the rhs state to the end of the new guy's state vector
+	// newTraj.getState()->insert(newTraj.getState()->end(), rhs.state.begin()+skipShift*tpat_traj_cr3bp::STATE_SIZE, rhs.state.end());
+	// newTraj.getAccel()->insert(newTraj.getAccel()->end(), rhs.accel.begin()+skipShift*tpat_traj_cr3bp::ACCEL_SIZE, rhs.accel.end());
+	// // newTraj.getExtraParam()->insert(newTraj.getExtraParam()->end(), rhs.extraParam.begin() +skipShift*lhs.numExtraParam, rhs.extraParam.end());
+	// jacobi.insert(jacobi.end(), rhs.extraParam.at(0).begin()+skipShift, rhs.extraParam.at(0).end());
 
-	newTraj.setLength();
+	// newTraj.getExtraParam()->at(0) = jacobi;
+
+	// // Append the rhs times, adjusted for continuity, to the new guy's time vector; adjustments
+	// // don't affect the result because system is autonomous
+	// for (int n = skipShift; n < rhs.numPoints; n++){
+	// 	newTraj.getTime()->push_back(lhs.times.back() + rhs.times.at(n) - rhs.times.at(0));
+	// }
+
+	// // Copy the lhs stm
+	// newTraj.getSTM()->insert(newTraj.getSTM()->begin(), lhs.allSTM.begin(), lhs.allSTM.end());
+	// // Assume the two are continuous, use matrix multiplication to shift the rhs STMs to be continuous
+	// for(size_t i = skipShift; i < rhs.allSTM.size(); i++){
+	// 	tpat_matrix shiftedSTM = rhs.getSTM(i)*lhs.getSTM(-1);
+	// 	newTraj.getSTM()->push_back(shiftedSTM);
+	// }
+
+	// newTraj.setLength();
 
 	return newTraj;
 }//========================================
@@ -197,10 +210,10 @@ tpat_traj_cr3bp operator +(const tpat_traj_cr3bp &lhs, const tpat_traj_cr3bp &rh
  *	-2 will give the second to last value, etc.
  *	@return the Jacobi constant (non-dimensional)
  */
-double tpat_traj_cr3bp::getJC(int n) const{
+double tpat_traj_cr3bp::getJacobi(int n) const{
 	if(n < 0)
-		n += extraParam.size();
-	return extraParam[n];
+		n += extraParam.at(0).size();
+	return extraParam.at(0)[n];
 }
 
 /**
@@ -208,13 +221,13 @@ double tpat_traj_cr3bp::getJC(int n) const{
  *	
  *	@return a pointer to the vector of Jacobi constants;
  */
-std::vector<double>* tpat_traj_cr3bp::getJacobi(){ return &extraParam; }
+std::vector<double>* tpat_traj_cr3bp::getJacobi(){ return &(extraParam.at(0)); }
 
 /**
  *	@brief Set the vector of Jacobi constant values for this trajectory
  *	@param j a vector of Jacobi constants
  */
-void tpat_traj_cr3bp::setJacobi(std::vector<double> j){ extraParam = j; }
+void tpat_traj_cr3bp::setJacobi(std::vector<double> j){ extraParam.at(0) = j; }
 
 /**
  *	@brief Retrieve data about the system this trajectory was propagated in

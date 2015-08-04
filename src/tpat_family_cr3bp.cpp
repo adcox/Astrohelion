@@ -383,8 +383,7 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 
 		for(size_t m = 0; m < members.size(); m++){
 			std::vector<cdouble> eigs = members[m].getEigVals();
-			sumImag += (std::abs(imag(eigs[set*2])) + std::abs(imag(eigs[set*2+1])))/2;
-			// sumReal += (std::abs(real(eigs[set*2])) + std::abs(real(eigs[set*2+1])))/2;
+			sumImag += (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
 			sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
 		}
 
@@ -416,10 +415,10 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 				case EIGSET_REAL_RECIP:
 				{
 					// Compute distance of each eigenvalues from +/- 1
-					double d1 = 1 - std::abs(real(eigs[set*2]));
-					double d2 = 1 - std::abs(real(eigs[set*2+1]));
-					double prev_d1 = 1 - std::abs(real(prevEigs[set*2]));
-					double prev_d2 = 1 - std::abs(real(prevEigs[set*2+1]));
+					double d1 = 1 - std::abs(std::real(eigs[set*2]));
+					double d2 = 1 - std::abs(std::real(eigs[set*2+1]));
+					double prev_d1 = 1 - std::abs(std::real(prevEigs[set*2]));
+					double prev_d2 = 1 - std::abs(std::real(prevEigs[set*2+1]));
 
 					// Check to make sure magnitude of differences is significant
 					if( std::abs(d1) > okErr && std::abs(d2) > okErr &&
@@ -435,8 +434,8 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 				}
 				case EIGSET_COMP_CONJ:
 				{
-					double meanPrevImag = (std::abs(imag(prevEigs[set*2])) + std::abs(imag(prevEigs[set*2+1])))/2;
-					double meanImag = (std::abs(imag(eigs[set*2])) + std::abs(imag(eigs[set*2+1])))/2;
+					double meanPrevImag = (std::abs(std::imag(prevEigs[set*2])) + std::abs(std::imag(prevEigs[set*2+1])))/2;
+					double meanImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
 
 					// Check to see if we moved from complex to real or vice versa
 					if( (meanPrevImag > okErr) != (meanImag > okErr) ){
@@ -694,8 +693,8 @@ void tpat_family_cr3bp::saveEigVals(mat_t *matFile){
 				if(vals.size() != 6)
 					throw tpat_exception("tpat_family_cr3bp::saveEigVals: family member does not have 6 eigenvalues!");
 			for(int j = 0; j < 6; j++){
-				realParts[j*members.size() + i] = real(vals[j]);
-				imagParts[j*members.size() + i] = imag(vals[j]);
+				realParts[j*members.size() + i] = std::real(vals[j]);
+				imagParts[j*members.size() + i] = std::imag(vals[j]);
 			}
 		}
 

@@ -765,7 +765,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
     std::vector<double> onesErr;
     std::vector<cdouble> e1(eigVals.begin(), eigVals.begin()+6);
     for(int i = 0; i < 6; i++){
-        onesErr.push_back(std::abs(real(e1[i])-1) + std::abs(imag(e1[i])));
+        onesErr.push_back(std::abs(std::real(e1[i])-1) + std::abs(std::imag(e1[i])));
     }
     std::vector<double>::iterator smallestErr = std::min_element(onesErr.begin(), onesErr.end());
     int onesIx[] = {0,0};   // Indices of the eigenvalues that (nearly) exactly 1.0
@@ -792,8 +792,11 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         if(m == 1){
             if(*smallestErr < MAX_ONES_ERR){
                 // Update the indices of the ones in case they got moved in the first sorting
+                printf("Ones at %d and %d\n", onesIx[0], onesIx[1]);
                 onesIx[0] = sortedIxs->at(onesIx[0]);
                 onesIx[1] = sortedIxs->at(onesIx[1]);
+                printf("Ones at %d and %d\n", onesIx[0], onesIx[1]);
+                printf("Sorted Ixs: [%d %d %d %d %d %d]\n", sortedIxs->at(0), sortedIxs->at(1), sortedIxs->at(2), sortedIxs->at(3), sortedIxs->at(4), sortedIxs->at(5));
             }
             std::copy(sortedEigs.begin(), sortedEigs.begin()+6, predict);
         }else if(m > 1){
@@ -808,9 +811,9 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         cost.assign(ixPerms.size()/6, 0);
         cdouble one(1,0);
         for(size_t p = 0; p < ixPerms.size()/6; p++){
+
             // rearrange the splitOrig vector using the current permutation
             cdouble swappedOrig[6];
-            // cdouble swappedOrig[] = {0,0,0,0,0,0};
             for(int i = 0; i < 6; i++){
                 swappedOrig[i] = eigVals[m*6 + ixPerms[6*p + i]];
             }
@@ -844,7 +847,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
                 if(i != onesIx[0]){
                     // Complex parts don't sum to zero (conjugates will, two
                     // real eigenvalues will)
-                    if(std::abs(imag(swappedOrig[i]) + imag(swappedOrig[i+1]))){
+                    if(std::abs(std::imag(swappedOrig[i]) + std::imag(swappedOrig[i+1]))){
                         cost[p] += 1e20;
                         break;
                     }
@@ -855,10 +858,12 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
                     double okErr = std::abs(swappedOrig[onesIx[0]] - one);
 
                     // Both are real but are not reciprocals
-                    if(imag(swappedOrig[i]) == 0 && imag(swappedOrig[i+1]) == 0 &&
-                        real(swappedOrig[i]) - pow(real(swappedOrig[i+1]), -1) > okErr){
-                        cost[p] += 1e20;
-                        break;
+                    if(std::imag(swappedOrig[i]) == 0 && std::imag(swappedOrig[i+1]) == 0){
+                        double recipErr = 1.0 - std::real(swappedOrig[i])*std::real(swappedOrig[i+1]);
+                        if(recipErr > okErr){
+                            cost[p] += 1e20;
+                            break;
+                        }
                     }
                 }
             }// end of checking consecutive pairs
@@ -866,6 +871,9 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
 
         // Find the minimum cost
         std::vector<double>::iterator minCost = std::min_element(cost.begin(), cost.end());
+        if(*minCost > 1e10){
+            printErr("Minimum cost on set #%d is %f - probably a bug with the sorter!\n", m, *minCost);
+        }
         int ix = minCost - cost.begin();
         for(int i = 0; i < 6; i++){
             sortedEigs.push_back(eigVals[m*6 + ixPerms[ix*6 + i]]);
@@ -936,7 +944,7 @@ std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int num
         pointIx[i] = floor(i*stepSize+0.5);
     }
 
-    tpat_matrix temp(6, nonCenterVecs.size()/6, nonCenterVecs);
+    tpat_matrix temp(6, nonCenterVecs.size()/6, tpat_util::real(nonCenterVecs));
     tpat_matrix vecs = trans(temp); // Transpose so eigenvectors are columns
 
     // NOW, copute the manifolds!

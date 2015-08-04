@@ -169,7 +169,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			}
 			case HYP:
 			{
-				s = real(eigenval[0]);
+				s = std::real(eigenval[0]);
 				double alpha = (s*s - ddots[0])/(2*s);
 				period = 2*PI/s;
 
@@ -202,19 +202,19 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 		std::complex<double> s3 = eigenval[2];
 		std::complex<double> alpha1 = (s1*s1 - ddots[0])/(2.0*s1 + ddots[3]);
 		std::complex<double> alpha3 = (s3*s3 - ddots[0])/(2.0*s3 + ddots[3]);
-		double a1 = real(alpha1);
-		double a3 = real(alpha3);
-		double b1 = imag(alpha1);
-		double b3 = imag(alpha3);
+		double a1 = std::real(alpha1);
+		double a3 = std::real(alpha3);
+		double b1 = std::imag(alpha1);
+		double b3 = std::imag(alpha3);
 
 		
 
 		// Will be a real number, so re-cast for easier use
-		double g = real(gc);
+		double g = std::real(gc);
 		if(g > tol){	// Case I, g > 0 (allow for some tiny error)
 			// Make these scalars now that we're done computing
-			double s1d = imag(s1);
-			double s3d = imag(s3);
+			double s1d = std::imag(s1);
+			double s3d = std::imag(s3);
 			
 			if(s1d < 0 || s3d < 0){
 				printErr("tpat_linear_motion_engine :: Eigenvalue order appears to be shifting... please hardcode abs()\n");
@@ -295,8 +295,8 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
             eta_dot0 = -s1d*(xi0*std::abs(alpha1) - a1*eta0)/b1;
 		}else{
 			// Case III
-			double p = real(s1);
-			double q = imag(s1);
+			double p = std::real(s1);
+			double q = std::imag(s1);
 			switch(type){
 				case NONE: // for default behavior
 				case CONVERGE:

@@ -211,6 +211,20 @@ public:
 	}
 
 	/**
+	 *	@brief Get the imaginary parts of every element of a vector
+	 *	@param compVec a vector of complex numbers
+	 *	@return a vector of the imaginary parts of the complex vector
+	 */
+	template<typename T>
+	static std::vector<T> imag(std::vector<std::complex<T> > compVec){
+		std::vector<T> imagParts;
+		for(size_t i = 0; i < compVec.size(); i++)
+			imagParts.push_back(std::imag(compVec[i]));
+
+		return imagParts;
+	}//================================================
+
+	/**
 	 *	@brief Compute the mean (average) of an array of data
 	 *
 	 *	@param data an array of numbers
@@ -222,6 +236,20 @@ public:
 	static T mean(T *data, int length){
 		return sum(data, length)/length;
 	}//=====================================
+
+	/**
+	 *	@brief Get the real parts of every element of a vector
+	 *	@param compVec a vector of complex numbers
+	 *	@return a vector of the real parts of the complex vector
+	 */
+	template<typename T>
+	static std::vector<T> real(std::vector<std::complex<T> > compVec){
+		std::vector<T> realParts;
+		for(size_t i = 0; i < compVec.size(); i++)
+			realParts.push_back(std::real(compVec[i]));
+
+		return realParts;
+	}//================================================
 
 	/**
 	 *	@brief Get the sign of a number

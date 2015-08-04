@@ -40,7 +40,7 @@
  */
 std::string complexToStr(std::complex<double> num){
     char buffer[64];
-    sprintf(buffer, "%.4e%s%.4ej", real(num), imag(num) < 0 ? " - " : " + ", std::abs(imag(num)));
+    sprintf(buffer, "%.4e%s%.4ej", std::real(num), std::imag(num) < 0 ? " - " : " + ", std::abs(std::imag(num)));
     return std::string(buffer);
 }
 

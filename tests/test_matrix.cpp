@@ -243,21 +243,21 @@ bool test_eig(){
 	if(vecs.size() != 9)
 		return false;
 
-	bool check1 = real(vals[0]) == 1 && imag(vals[0]) == 0;
-	bool check2 = real(vals[1]) == 4 && imag(vals[1]) == 0;
-	bool check3 = real(vals[2]) == 6 && imag(vals[2]) == 0;
+	bool check1 = std::real(vals[0]) == 1 && std::imag(vals[0]) == 0;
+	bool check2 = std::real(vals[1]) == 4 && std::imag(vals[1]) == 0;
+	bool check3 = std::real(vals[2]) == 6 && std::imag(vals[2]) == 0;
 
-	bool check_vec1 = real(vecs[0]) == 1 && imag(vecs[0]) == 0;
-	check_vec1 = check_vec1 && real(vecs[1]) == 0 && imag(vecs[1]) == 0;
-	check_vec1 = check_vec1 && real(vecs[2]) == 0 && imag(vecs[2]) == 0;
+	bool check_vec1 = std::real(vecs[0]) == 1 && std::imag(vecs[0]) == 0;
+	check_vec1 = check_vec1 && std::real(vecs[1]) == 0 && std::imag(vecs[1]) == 0;
+	check_vec1 = check_vec1 && std::real(vecs[2]) == 0 && std::imag(vecs[2]) == 0;
 
-	bool check_vec2 = tpat_util::aboutEquals(real(vecs[3]), 0.554700196225229, 1e-13) && imag(vecs[3]) == 0;
-	check_vec2 = check_vec2 && tpat_util::aboutEquals(real(vecs[4]), 0.832050294337844, 1e-13) && imag(vecs[4]) == 0;
-	check_vec2 = check_vec2 && real(vecs[5]) == 0 && imag(vecs[5]) == 0;
+	bool check_vec2 = tpat_util::aboutEquals(std::real(vecs[3]), 0.554700196225229, 1e-13) && std::imag(vecs[3]) == 0;
+	check_vec2 = check_vec2 && tpat_util::aboutEquals(std::real(vecs[4]), 0.832050294337844, 1e-13) && std::imag(vecs[4]) == 0;
+	check_vec2 = check_vec2 && std::real(vecs[5]) == 0 && std::imag(vecs[5]) == 0;
 
-	bool check_vec3 = tpat_util::aboutEquals(real(vecs[6]), 0.510840685451281, 1e-13) && imag(vecs[6]) == 0;
-	check_vec3 = check_vec3 && tpat_util::aboutEquals(real(vecs[7]), 0.798188571017626, 1e-13) && imag(vecs[7]) == 0;
-	check_vec3 = check_vec3 && tpat_util::aboutEquals(real(vecs[8]), 0.31927542840705, 1e-13) && imag(vecs[8]) == 0;
+	bool check_vec3 = tpat_util::aboutEquals(std::real(vecs[6]), 0.510840685451281, 1e-13) && std::imag(vecs[6]) == 0;
+	check_vec3 = check_vec3 && tpat_util::aboutEquals(std::real(vecs[7]), 0.798188571017626, 1e-13) && std::imag(vecs[7]) == 0;
+	check_vec3 = check_vec3 && tpat_util::aboutEquals(std::real(vecs[8]), 0.31927542840705, 1e-13) && std::imag(vecs[8]) == 0;
 
 	bool matrix1Pass = check1 && check2 && check3 && check_vec1 && check_vec2 && check_vec3;
 
@@ -278,26 +278,26 @@ bool test_eig(){
 	if(vecs.size() != 9)
 		return false;
 
-	bool check4 = tpat_util::aboutEquals(real(vals[0]), 13.1015555756727, 1e-13) && imag(vals[0]) == 0;
-	bool check5 = tpat_util::aboutEquals(real(vals[1]), 0.44922221216366, 1e-13) && 
-		tpat_util::aboutEquals(imag(vals[1]), 0.164863116315263, 1e-13);
-	bool check6 = real(vals[2]) == real(vals[1]) && imag(vals[2]) == -1*imag(vals[1]);
+	bool check4 = tpat_util::aboutEquals(std::real(vals[0]), 13.1015555756727, 1e-13) && std::imag(vals[0]) == 0;
+	bool check5 = tpat_util::aboutEquals(std::real(vals[1]), 0.44922221216366, 1e-13) && 
+		tpat_util::aboutEquals(std::imag(vals[1]), 0.164863116315263, 1e-13);
+	bool check6 = std::real(vals[2]) == std::real(vals[1]) && std::imag(vals[2]) == -1*std::imag(vals[1]);
 
-	bool check_vec4 = tpat_util::aboutEquals(real(vecs[0]), 0.281912833008201, 1e-13) && imag(vecs[0]) == 0;
-	check_vec4 = check_vec4 && tpat_util::aboutEquals(real(vecs[1]), 0.657008011457982, 1e-13) && imag(vecs[1]) == 0;
-	check_vec4 = check_vec4 && tpat_util::aboutEquals(real(vecs[2]), 0.699189264409372, 1e-13) && imag(vecs[2]) == 0;
+	bool check_vec4 = tpat_util::aboutEquals(std::real(vecs[0]), 0.281912833008201, 1e-13) && std::imag(vecs[0]) == 0;
+	check_vec4 = check_vec4 && tpat_util::aboutEquals(std::real(vecs[1]), 0.657008011457982, 1e-13) && std::imag(vecs[1]) == 0;
+	check_vec4 = check_vec4 && tpat_util::aboutEquals(std::real(vecs[2]), 0.699189264409372, 1e-13) && std::imag(vecs[2]) == 0;
 
 	// Matlab and GSL vary a bit here - the vectors are very similar, but not exact.
-	bool check_vec5 = tpat_util::aboutEquals(real(vecs[3]), 0.150692642039344, 1e-2) &&
-		tpat_util::aboutEquals(imag(vecs[3]), -0.0644436534652211, 1e-2);
-	check_vec5 = check_vec5 && tpat_util::aboutEquals(real(vecs[4]), -0.83159310577757, 1e-2) && 
-		tpat_util::aboutEquals(imag(vecs[4]), 0.0, 1e-2);
-	check_vec5 = check_vec5 && tpat_util::aboutEquals(real(vecs[5]), 0.530270811022171, 1e-2) && 
-		tpat_util::aboutEquals(imag(vecs[5]), 0.0201125971560176, 1e-2);
+	bool check_vec5 = tpat_util::aboutEquals(std::real(vecs[3]), 0.150692642039344, 1e-2) &&
+		tpat_util::aboutEquals(std::imag(vecs[3]), -0.0644436534652211, 1e-2);
+	check_vec5 = check_vec5 && tpat_util::aboutEquals(std::real(vecs[4]), -0.83159310577757, 1e-2) && 
+		tpat_util::aboutEquals(std::imag(vecs[4]), 0.0, 1e-2);
+	check_vec5 = check_vec5 && tpat_util::aboutEquals(std::real(vecs[5]), 0.530270811022171, 1e-2) && 
+		tpat_util::aboutEquals(std::imag(vecs[5]), 0.0201125971560176, 1e-2);
 
-	bool check_vec6 = real(vecs[3]) == real(vecs[6]) && imag(vecs[3]) == -1*imag(vecs[6]);
-	check_vec6 = check_vec6 && real(vecs[4]) == real(vecs[7]) && imag(vecs[4]) == -1*imag(vecs[7]);
-	check_vec6 = check_vec6 && real(vecs[5]) == real(vecs[8]) && imag(vecs[5]) == -1*imag(vecs[8]);
+	bool check_vec6 = std::real(vecs[3]) == std::real(vecs[6]) && std::imag(vecs[3]) == -1*std::imag(vecs[6]);
+	check_vec6 = check_vec6 && std::real(vecs[4]) == std::real(vecs[7]) && std::imag(vecs[4]) == -1*std::imag(vecs[7]);
+	check_vec6 = check_vec6 && std::real(vecs[5]) == std::real(vecs[8]) && std::imag(vecs[5]) == -1*istd::mag(vecs[8]);
 	
 	bool matrix2Pass = check4 && check5 && check6 && check_vec4 && check_vec5 && check_vec6;
 

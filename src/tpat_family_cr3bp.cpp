@@ -25,6 +25,7 @@
  
 #include "tpat_family_cr3bp.hpp"
 
+#include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
@@ -547,130 +548,22 @@ void tpat_family_cr3bp::loadEigVals(mat_t *matFile){
  *	This is necessary before bifurcations can be accurately located.
  */
 void tpat_family_cr3bp::sortEigs(){
-	if(members.size() == 0){
-		printErr("Cannot sort eigenvalues: there are no family members");
-		return;
-	}
-
-	const double MAX_ONES_ERR = 1e-5;
-
-	// Figure out which eigenvalues are closest to one, save their indices
-	std::vector<double> onesErr;
-	std::vector<cdouble> e1 = members[0].getEigVals();
-	for(int i = 0; i < 6; i++){
-		onesErr.push_back(std::abs(real(e1[i])-1) + std::abs(imag(e1[i])));
-	}
-	std::vector<double>::iterator smallestErr = std::min_element(onesErr.begin(), onesErr.end());
-	int onesIx[] = {0,0};	// Indices of the eigenvalues that (nearly) exactly 1.0
-	if(*smallestErr < MAX_ONES_ERR){
-		int smallIx = smallestErr - onesErr.begin();
-		if(smallIx % 2 == 0 && smallIx != 0){
-			onesIx[0] = smallIx;
-			onesIx[1] = smallIx+1;
-		}else{
-			onesIx[0] = smallIx-1;
-			onesIx[1] = smallIx;
-		}
-	}else{
-		printWarn("tpat_family_cr3bp::sortEigs: did not find eigenvalues at 1.0");
-	}
-
-	// Generate all permutations of the indices 0 through 5
-	std::vector<int> vals {0,1,2,3,4,5};
-	std::vector<int> ixPerms = tpat_util::generatePerms<int>(vals);
-	std::vector<int> sortedIxs;
-	cdouble predict[6];
-	std::copy(e1.begin(), e1.end(), predict);
-
+	std::vector<cdouble> allEigs;
+	// Create a vector with all the eigenvalues
 	for(size_t m = 0; m < members.size(); m++){
-		if(m > 0 && m == 1){
-			if(*smallestErr < MAX_ONES_ERR){
-				// Update the indices of the ones in case they got moved in the first sorting
-				onesIx[0] = sortedIxs[onesIx[0]];
-				onesIx[1] = sortedIxs[onesIx[1]];
-			}
-			std::vector<cdouble> sorted_e1 = members[0].getEigVals();
-			std::copy(sorted_e1.begin(), sorted_e1.end(), predict);
-		}else if(m > 1){
-			// Use linear extrapolation of m-1 and m-2 to predict m
-			for(int i = 0; i < 6; i++){
-				cdouble deltaEig = members[m-1].getEigVals()[i] - members[m-2].getEigVals()[i];
-				predict[i] = members[m-1].getEigVals()[i] + deltaEig;
-			}
-		}
+		std::vector<cdouble> vals = members[m].getEigVals();
+		allEigs.insert(allEigs.end(), vals.begin(), vals.end());
+	}
 
-		std::vector<double> cost;
-		cost.assign(ixPerms.size()/6, 0);
-		cdouble one(1,0);
-		for(size_t p = 0; p < ixPerms.size()/6; p++){
-			// rearrange the splitOrig vector using the current permutation
-			cdouble swappedOrig[6];
-			// cdouble swappedOrig[] = {0,0,0,0,0,0};
-			for(int i = 0; i < 6; i++){
-				swappedOrig[i] = members[m].getEigVals()[ixPerms[6*p + i]];
-			}
+	// Sort eigenvalues
+	std::vector<int> sortedIxs;
+	std::vector<cdouble> sortedEigs = sortEig(allEigs, &sortedIxs);
 
-			// Compute difference between this permutation and prediction
-			for(int i = 0; i < 6; i++){
-				cost[p] += std::abs(swappedOrig[i] - predict[i]);
-			}
-			
-			// Add infinite cost if the ones eigenvalues change spots
-			if(*smallestErr < MAX_ONES_ERR){
-				double distToOne[6];
-				for(int i = 0; i < 6; i++){
-					distToOne[i] = std::abs(swappedOrig[i]-one);
-				}
-				double *closestToOne = std::min_element(distToOne, distToOne+6);
-				int closestIx = closestToOne - distToOne;
-
-				if(closestIx != onesIx[0] && closestIx != onesIx[1]){
-					cost[p] += 1e20;
-					continue;
-				}
-			}
-
-			// Add infinite cost if each consecutive pair are not inverses
-			// or complex conjugates
-			for(int i = 0; i < 6; i+=2){
-				/* don't consider the eigenvalues that are closest to one
-					because they may have small innaccuracies that trigger
-					these costs, screwing up the algorithm */
-				if(i != onesIx[0]){
-					// Complex parts don't sum to zero (conjugates will, two
-					// real eigenvalues will)
-					if(std::abs(imag(swappedOrig[i]) + imag(swappedOrig[i+1]))){
-						cost[p] += 1e20;
-						break;
-					}
-
-					// We have established that the ones are in the same place; Compute
-					// the error in a 1.0 eigenvalue; this error is acceptable in the
-					// reciprocal calculation (error tends to get bad at the larger orbits)
-					double okErr = std::abs(swappedOrig[onesIx[0]] - one);
-
-					// Both are real but are not reciprocals
-					if(imag(swappedOrig[i]) == 0 && imag(swappedOrig[i+1]) == 0 &&
-						real(swappedOrig[i]) - pow(real(swappedOrig[i+1]), -1) > okErr){
-						cost[p] += 1e20;
-						break;
-					}
-				}
-			}// end of checking consecutive pairs
-		}// end of loop through permutations
-
-		// Find the minimum cost
-		std::vector<double>::iterator minCost = std::min_element(cost.begin(), cost.end());
-		int ix = minCost - cost.begin();
-		std::vector<cdouble> bestPerm(6);
-		for(int i = 0; i < 6; i++){
-			bestPerm[i] = members[m].getEigVals()[ixPerms[ix*6 + i]];
-		}
-		members[m].setEigVals(bestPerm);
-		sortedIxs.insert(sortedIxs.end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
-	}// end of loop through all members/eigenvalue sets
-
-	// 
+	// Update all eigenvalues in the family members
+	for(size_t m = 0; m < members.size(); m++){
+		std::vector<cdouble> sortedVals(sortedEigs.begin() + m*6, sortedEigs.begin() + (m+1)*6);
+		members[m].setEigVals(sortedVals);
+	}
 }//=================================================
 
 /**

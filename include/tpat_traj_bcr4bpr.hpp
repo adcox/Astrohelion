@@ -22,8 +22,6 @@
 
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_traj.hpp"
-
-#include "matio.h"
  
 /**
  *	@brief A derivative class of the tpat_traj object that
@@ -63,6 +61,7 @@ class tpat_traj_bcr4bpr : public tpat_traj{
 		tpat_sys_data_bcr4bpr sysData;
 
 		void copyMe(const tpat_traj_bcr4bpr&);
+		void initExtraParam();
 };
 
 #endif

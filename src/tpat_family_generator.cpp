@@ -466,7 +466,8 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 
 			// Compute eigenvalues
 			tpat_matrix mono = perOrbit.getSTM(-1);
-			std::vector<cdouble> eigVals = eig(mono);
+			std::vector< std::vector<cdouble> > eigData = eig(mono);
+			std::vector<cdouble> eigVals = eigData[0];
 
 			// Add orbit to family
 			tpat_family_member_cr3bp child(perOrbit);

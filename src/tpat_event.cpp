@@ -121,6 +121,9 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 		case JC:
 			conType = tpat_constraint::JC;
 			break;
+		case APSE:
+			conType = tpat_constraint::APSE;
+			break;
 		default: 
 			throw tpat_exception("tpat_event::initEvent: Creating event with no type");
 	}
@@ -143,6 +146,7 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 			break;
 		}
 		case JC: data[0] = params[0]; break;	// JC = specified value
+		case APSE: data[0] = params[0]; break; 	// primary index = specified value
 		default: break;	// Do nothing
 	}
 	conData.insert(conData.begin(), data, data+6);
@@ -217,6 +221,7 @@ const char* tpat_event::getTypeStr() const{
 		case XY_PLANE: { return "xy-plane"; break; }
 		case CRASH: { return "crash"; break; }
 		case JC: { return "jacobi constant"; break; }
+		case APSE: { return "apse"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}
 }//========================================
@@ -334,6 +339,16 @@ double tpat_event::getDist(const double y[6], double t) const{
 			d = conData[0] - cr3bp_getJacobi(y, crSys->getMu());
 			break;
 		}
+		case APSE:
+		{
+			std::vector<double> primPos = sysData->getModel()->getPrimPos(t, sysData);
+			int Pix = (int)(conData[0]);
+			double dx = y[0] - primPos[Pix*3 + 0];
+			double dy = y[1] - primPos[Pix*3 + 1];
+			double dz = y[2] - primPos[Pix*3 + 2];
+			d = dx*y[3] + dy*y[4] + dz*y[5];
+			break;
+		}
 		default:
 			throw tpat_exception("Event type not implemented");
 	}
@@ -360,6 +375,7 @@ int tpat_event::getDir(const double y[6], double t) const{
 		case XY_PLANE: d = y[2] - state[2]; break;
 		case CRASH: d = dist - lastDist; break;
 		case JC: d = dist - lastDist; break;
+		case APSE: d = dist - lastDist; break;
 		default: 
 			throw tpat_exception("Event type not implemented");
 	}

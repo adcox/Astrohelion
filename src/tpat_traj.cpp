@@ -110,6 +110,7 @@ void tpat_traj::copyMe(const tpat_traj &t){
 	times = t.times;
 	extraParam = t.extraParam;
 	numExtraParam = t.numExtraParam;
+	extraParamRowSize = t.extraParamRowSize;
 	allSTM = t.allSTM;
 	tol = t.tol;
 }//====================================================
@@ -329,7 +330,7 @@ void basicConcat(const tpat_traj *lhs, const tpat_traj *rhs, tpat_traj *out){
 	out->times.insert(out->times.end(), lhs->times.begin(), lhs->times.end());
 
 	for(size_t i = 0; i < lhs->extraParam.size(); i++){
-		out->extraParam.push_back(lhs->extraParam.at(i));
+		out->extraParam.at(i).insert(out->extraParam.at(i).end(), lhs->extraParam.at(i).begin(), lhs->extraParam.at(i).end());
 	}
 
 	// Append data from RHS to OUT

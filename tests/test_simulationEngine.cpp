@@ -35,7 +35,7 @@ void test_cr3bp_sim(){
 	tpat_matrix lastSTM = traj.getSTM(traj.getLength()-1);
 	lastSTM.print("%12.4f");
 
-	traj.saveToMat("HaloTest.mat");
+	traj.saveToMat("data/HaloTest.mat");
 }
 
 void test_bcr4bpr_sim(){
@@ -54,7 +54,7 @@ void test_bcr4bpr_sim(){
 
 	tpat_traj_bcr4bpr bcTraj = bcEngine.getBCR4BPR_Traj();
 	cout << "Trajectory contains " << bcTraj.getLength() << " points" << endl;
-	bcTraj.saveToMat("bcHaloManifoldProp.mat");
+	bcTraj.saveToMat("data/bcHaloManifoldProp.mat");
 }
 
 void test_cr3bp_events(){
@@ -68,7 +68,7 @@ void test_cr3bp_events(){
 	engine.runSim(ic, 2.7);
 
 	tpat_traj_cr3bp traj = engine.getCR3BP_Traj();
-	traj.saveToMat("HaloHalfTest.mat");
+	traj.saveToMat("data/HaloHalfTest.mat");
 }
 
 void test_bcr4bpr_events(){
@@ -83,7 +83,7 @@ void test_bcr4bpr_events(){
 	engine.runSim(ic, t0, 2*PI);
 
 	tpat_traj_bcr4bpr traj = engine.getBCR4BPR_Traj();
-	traj.saveToMat("BC_HaloManifold.mat");
+	traj.saveToMat("data/BC_HaloManifold.mat");
 }
 
 int main(void){

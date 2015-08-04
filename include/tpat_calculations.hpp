@@ -32,11 +32,14 @@
 #ifndef H_CALCULATIONS
 #define H_CALCULATIONS
 
+#include "tpat_constants.hpp"
+ 
 #include <vector>
 
 // Forward declarations
 class tpat_nodeset_bcr4bpr;
 class tpat_sys_data_bcr4bpr;
+class tpat_traj;
 class tpat_traj_bcr4bpr;
 class tpat_nodeset_cr3bp;
 class tpat_sys_data_cr3bp;
@@ -54,6 +57,16 @@ enum mirror_t{
 	MIRROR_X_AX_V	//!< Mirror over the X-Axis, orbit is mostly in xz-plane; x, y-dot, and z-dot can be fixed if desired
 };
 
+/**
+ *	@brief Describes the type of manifold, both stability and direction
+ */
+enum manifold_t{
+	MAN_U_P,	//!< Unstable, departing towards +x direction
+	MAN_U_M,	//!< Unstable, departing towards -x direction
+	MAN_S_P,	//!< Stable, arriving from +x direction
+	MAN_S_M		//!< Stable, arriving from -x direction
+};
+
 // Equations of motion
 int cr3bp_EOMs(double, const double[], double[], void*);
 int cr3bp_simple_EOMs(double, const double[], double[], void*);
@@ -68,6 +81,8 @@ int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
 tpat_matrix solveAX_eq_B(tpat_matrix, tpat_matrix);
+std::vector<tpat_traj> getManifolds(manifold_t, tpat_traj, int, double);
+std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);

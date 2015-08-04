@@ -28,8 +28,16 @@
  *	@brief Contains information about how a particular node should be 
  *	constrained during a corrections process
  *
+ * 	**Adding a New Constraint**
+ * 	* Create a new enumerated type and document it fully
+ * 	* Update the getTypStr() function
+ *	* Add the new constraint type to the list of accepted constraints for
+ * 		any dynamic models you wish
+ *	* Define behavior for dealing with those types of constraints in the
+ *		dynamic models
+ *
  *	@author Andrew Cox
- *	@version May 21, 2015
+ *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
 class tpat_constraint{
@@ -96,6 +104,13 @@ class tpat_constraint{
 		 	TOF,		/*!< Constrain the trajectory to have a total time-of-flight
 		 				 *	The index of the node is unused, and <tt>data</tt> holds the
 		 				 *	value for the total TOF in non-dimensional units
+		 				 */
+		 	APSE,		/*!< Constrain a node to be located at an apse relative to one
+		 				 *	of the primaries. The <tt>data</tt> field specified the index
+		 				 *	of the primary (e.g. 0 for P1, 1 for P2, etc.) in the FIRST
+		 				 *	element of the array. For example, if I want to constrain node
+		 				 *	seven to be an apse relative to P1, I would set <tt>node</tt> 
+		 				 *	to 7 and set <tt>data</tt> to [0, NAN, NAN, NAN, NAN, NAN]
 		 				 */
 		 	CONT_PV,	/*!< Constrain a node to be continuous with the previous node in 
 						 * the set in the specified position and velocity states. The

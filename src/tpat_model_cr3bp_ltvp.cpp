@@ -149,6 +149,10 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
 
     // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
     cr3bpTraj->getJacobi()->push_back(cr3bp_getJacobi(y, sysData.getMu()));
+
+    // Compute and save mass of s/c; assumes t began at 0
+    double g0_nonDim = G_GRAV_0*sysData.getCharT()*sysData.getCharT()/sysData.getCharL();
+    cr3bpTraj->getMass()->push_back(sysData.getM0() - sysData.getThrust()/(sysData.getIsp()*g0_nonDim) * t);
 }//=====================================================
 
 /**

@@ -23,8 +23,6 @@
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj.hpp"
 
-#include "matio.h"
-
 // forward declarations
 class tpat_nodeset_cr3bp;
 
@@ -65,6 +63,7 @@ class tpat_traj_cr3bp : public tpat_traj{
 		tpat_sys_data_cr3bp sysData;
 		
 		void copyMe(const tpat_traj_cr3bp&);
+		void initExtraParam();
 };
 
 #endif

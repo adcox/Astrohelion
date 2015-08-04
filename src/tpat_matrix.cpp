@@ -540,11 +540,13 @@ double det(const tpat_matrix &m){
 
 /**
  *	@brief Compute the eigenvalues of a square matrix
- *	@param m a matrix reference
- *	@return a vector of complex numbers representing all eigenvalues
- *	for the input matrix
+ *	@param m an nxn matrix reference
+ *	@return a vector of vectors; the first vector contains n eigenvalues,
+ *	while the second vector contains n, n-element, complex eigenvectors in
+ *	row-major order. The eigenvalues and eigenvectors are listed in the
+ *	same order, so they correspond to one another.
  */	
-std::vector<cdouble> eig(const tpat_matrix &m){
+std::vector< std::vector<cdouble> > eig(const tpat_matrix &m){
 	if(m.rows != m.cols)
 		throw tpat_sizeMismatch("Cannot compute eigenvalues and vectors of non-square matrix");
 
@@ -562,12 +564,22 @@ std::vector<cdouble> eig(const tpat_matrix &m){
   	gsl_eigen_nonsymmv_free (w);
 
   	std::vector<cdouble> eigenVals;
+  	std::vector<cdouble> eigenVecs;
   	for(int i = 0; i < m.rows; i++){
   		gsl_complex val = gsl_vector_complex_get(eval, i);
   		eigenVals.push_back(cdouble(GSL_REAL(val), GSL_IMAG(val)));
+
+  		for(int j = 0; j < m.rows; j++){
+  			gsl_complex vec_el = gsl_matrix_complex_get(evec, j, i);
+  			eigenVecs.push_back(cdouble(GSL_REAL(vec_el), GSL_IMAG(vec_el)));
+  		}
   	}
 
-  	return eigenVals;
+  	std::vector< std::vector<cdouble> > eigData;
+  	eigData.push_back(eigenVals);
+  	eigData.push_back(eigenVecs);
+
+  	return eigData;
 }//=========================================
 
 /**

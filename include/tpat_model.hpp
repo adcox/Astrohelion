@@ -61,6 +61,10 @@ struct iterationData;
  *	the number of states the equations of motion compute, and also contains a 
  *	list of all constraints the model supports in a corrections environment. 
  *	Derived classes can modify these variables to their needs.
+ *
+ *	@author Andrew Cox
+ *	@version August 3, 2015
+ *	@copyright GNU GPL v3.0
  */
 class tpat_model{
 
@@ -133,13 +137,14 @@ public:
 	virtual void corrector_createContCons(iterationData*, tpat_nodeset*);
 	virtual void corrector_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
 	virtual void corrector_applyConstraint(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetPosVelCons(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetApse(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetDeltaV(iterationData*t, tpat_constraint, int);
+	virtual void corrector_targetDist(iterationData*, tpat_constraint, int);
 	virtual void corrector_targetExContCons(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetState(iterationData*, tpat_constraint, int);
 	virtual void corrector_targetMatchAll(iterationData*, tpat_constraint, int);
 	virtual void corrector_targetMatchCust(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetDist(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetDeltaV(iterationData*t, tpat_constraint, int);
+	virtual void corrector_targetPosVelCons(iterationData*, tpat_constraint, int);
+	virtual void corrector_targetState(iterationData*, tpat_constraint, int);
 	virtual void corrector_targetTOF(iterationData*, tpat_constraint, int);
 
 	/**
@@ -208,12 +213,12 @@ protected:
 		tpat_constraint::MATCH_ALL, tpat_constraint::MATCH_CUST,
 		tpat_constraint::DIST, tpat_constraint::MIN_DIST, tpat_constraint::MAX_DIST,
 		tpat_constraint::MAX_DELTA_V, tpat_constraint::DELTA_V,
-		tpat_constraint::TOF,
+		tpat_constraint::TOF, tpat_constraint::APSE,
 		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX};
 
 	/** A vector containing all the types of events this model supports */
 	std::vector<tpat_event::event_t> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
-		tpat_event::XZ_PLANE, tpat_event::CRASH};
+		tpat_event::XZ_PLANE, tpat_event::CRASH, tpat_event::APSE};
 
 	void copyMe(const tpat_model&);
 };

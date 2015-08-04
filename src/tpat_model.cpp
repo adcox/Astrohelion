@@ -239,6 +239,9 @@ void tpat_model::corrector_applyConstraint(iterationData *it, tpat_constraint co
 		case tpat_constraint::TOF:
 			corrector_targetTOF(it, con, row0);
 			break;
+		case tpat_constraint::APSE:
+			corrector_targetApse(it, con, row0);
+			break;	
 		default: break;
 	}
 }//=========================================================
@@ -557,6 +560,40 @@ void tpat_model::corrector_targetTOF(iterationData *it, tpat_constraint con, int
 	// subtract the desired TOF from the constraint to finish its computation
 	it->FX[row0] -= con.getData()[0];
 }//===============================================
+
+/**
+ *	@brief Compute partials and constraint function values for apse constraints
+ *
+ *	This method *should* provide full functionality for any autonomous model. Non-
+ *	autonomous models will need to modify the function to account for epoch time
+ */
+void tpat_model::corrector_targetApse(iterationData *it, tpat_constraint con, int row0){
+	std::vector<double> conData = con.getData();
+	int n = con.getNode();
+	int Pix = (int)(conData[0]);	// index of primary
+	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
+	tpat_sys_data *sysData = it->sysData;
+
+	// Get the primary position
+	std::vector<double> primPos = getPrimPos(t, sysData);
+
+	// Get distance between node and primary in x, y, and z-coordinates
+	double dx = it->X[6*n+0] - primPos[Pix*3+0];
+	double dy = it->X[6*n+1] - primPos[Pix*3+1];
+	double dz = it->X[6*n+2] - primPos[Pix*3+2];
+
+	// Constraint function: r_dot = 0 
+	it->FX[row0] = dx*(it->X[6*n+3]) + dy*(it->X[6*n+4]) + dz*(it->X[6*n+5]);
+
+	// Partials of F w.r.t. node state
+	it->DF[it->totalFree*row0 + 6*n+0] = it->X[6*n+3];
+	it->DF[it->totalFree*row0 + 6*n+1] = it->X[6*n+4];
+	it->DF[it->totalFree*row0 + 6*n+2] = it->X[6*n+5];
+	it->DF[it->totalFree*row0 + 6*n+3] = dx;
+	it->DF[it->totalFree*row0 + 6*n+4] = dy;
+	it->DF[it->totalFree*row0 + 6*n+5] = dz;
+}//===============================================
+
 
 
 

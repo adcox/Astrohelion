@@ -23,8 +23,6 @@
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj.hpp"
 
-#include "matio.h"
-
 // forward declarations
 class tpat_nodeset_cr3bp;
 
@@ -51,6 +49,8 @@ class tpat_traj_cr3bp_ltvp : public tpat_traj{
 		// Set and Get Functions
 		std::vector<double>* getJacobi();
 		double getJacobi(int) const;
+		std::vector<double>* getMass();
+		double getMass(int) const;
 		tpat_sys_data_cr3bp_ltvp getSysData() const;
 		tpat_sys_data::system_t getType() const;
 
@@ -63,7 +63,7 @@ class tpat_traj_cr3bp_ltvp : public tpat_traj{
 		/** A system data object specific to the Low Thrust, Velocity-Pointing CR3BP */
 		tpat_sys_data_cr3bp_ltvp sysData;
 		
-		void saveJacobi(mat_t*);
+		void initExtraParam();
 		void copyMe(const tpat_traj_cr3bp_ltvp&);
 };
 

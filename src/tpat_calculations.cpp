@@ -747,11 +747,240 @@ tpat_matrix solveAX_eq_B(tpat_matrix A, tpat_matrix B){
     return trans(allSolvedCols);
 }//====================================================
 
+std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sortedIxs){
+    if(eigVals.size() == 0){
+        printErr("tpat_calculations::sortEig: Cannot sort eigenvalues: there are no family members");
+        return eigVals;
+    }
+
+    if(eigVals.size() % 6 != 0){
+        printErr("tpat_calculations::sortEig: Must have 6n eigenvalues");
+        return eigVals;
+    }
+
+    const double MAX_ONES_ERR = 1e-5;
+    std::vector<cdouble> sortedEigs;
+
+    // Figure out which eigenvalues are closest to one, save their indices
+    std::vector<double> onesErr;
+    std::vector<cdouble> e1(eigVals.begin(), eigVals.begin()+6);
+    for(int i = 0; i < 6; i++){
+        onesErr.push_back(std::abs(real(e1[i])-1) + std::abs(imag(e1[i])));
+    }
+    std::vector<double>::iterator smallestErr = std::min_element(onesErr.begin(), onesErr.end());
+    int onesIx[] = {0,0};   // Indices of the eigenvalues that (nearly) exactly 1.0
+    if(*smallestErr < MAX_ONES_ERR){
+        int smallIx = smallestErr - onesErr.begin();
+        if(smallIx % 2 == 0 && smallIx != 0){
+            onesIx[0] = smallIx;
+            onesIx[1] = smallIx+1;
+        }else{
+            onesIx[0] = smallIx-1;
+            onesIx[1] = smallIx;
+        }
+    }else{
+        printWarn("tpat_family_cr3bp::sortEigs: did not find eigenvalues at 1.0");
+    }
+
+    // Generate all permutations of the indices 0 through 5
+    std::vector<int> vals {0,1,2,3,4,5};
+    std::vector<int> ixPerms = tpat_util::generatePerms<int>(vals);
+    cdouble predict[6];
+    std::copy(e1.begin(), e1.end(), predict);
+
+    for(size_t m = 0; m < eigVals.size()/6; m++){
+        if(m == 1){
+            if(*smallestErr < MAX_ONES_ERR){
+                // Update the indices of the ones in case they got moved in the first sorting
+                onesIx[0] = sortedIxs->at(onesIx[0]);
+                onesIx[1] = sortedIxs->at(onesIx[1]);
+            }
+            std::copy(sortedEigs.begin(), sortedEigs.begin()+6, predict);
+        }else if(m > 1){
+            // Use linear extrapolation of m-1 and m-2 to predict m
+            for(int i = 0; i < 6; i++){
+                cdouble deltaEig = sortedEigs[(m-1)*6 + i] - sortedEigs[(m-2)*6 + i];
+                predict[i] = sortedEigs[(m-1)*6 + i] + deltaEig;
+            }
+        }
+
+        std::vector<double> cost;
+        cost.assign(ixPerms.size()/6, 0);
+        cdouble one(1,0);
+        for(size_t p = 0; p < ixPerms.size()/6; p++){
+            // rearrange the splitOrig vector using the current permutation
+            cdouble swappedOrig[6];
+            // cdouble swappedOrig[] = {0,0,0,0,0,0};
+            for(int i = 0; i < 6; i++){
+                swappedOrig[i] = eigVals[m*6 + ixPerms[6*p + i]];
+            }
+
+            // Compute difference between this permutation and prediction
+            for(int i = 0; i < 6; i++){
+                cost[p] += std::abs(swappedOrig[i] - predict[i]);
+            }
+            
+            // Add infinite cost if the ones eigenvalues change spots
+            if(*smallestErr < MAX_ONES_ERR){
+                double distToOne[6];
+                for(int i = 0; i < 6; i++){
+                    distToOne[i] = std::abs(swappedOrig[i]-one);
+                }
+                double *closestToOne = std::min_element(distToOne, distToOne+6);
+                int closestIx = closestToOne - distToOne;
+
+                if(closestIx != onesIx[0] && closestIx != onesIx[1]){
+                    cost[p] += 1e20;
+                    continue;
+                }
+            }
+
+            // Add infinite cost if each consecutive pair are not inverses
+            // or complex conjugates
+            for(int i = 0; i < 6; i+=2){
+                /* don't consider the eigenvalues that are closest to one
+                    because they may have small innaccuracies that trigger
+                    these costs, screwing up the algorithm */
+                if(i != onesIx[0]){
+                    // Complex parts don't sum to zero (conjugates will, two
+                    // real eigenvalues will)
+                    if(std::abs(imag(swappedOrig[i]) + imag(swappedOrig[i+1]))){
+                        cost[p] += 1e20;
+                        break;
+                    }
+
+                    // We have established that the ones are in the same place; Compute
+                    // the error in a 1.0 eigenvalue; this error is acceptable in the
+                    // reciprocal calculation (error tends to get bad at the larger orbits)
+                    double okErr = std::abs(swappedOrig[onesIx[0]] - one);
+
+                    // Both are real but are not reciprocals
+                    if(imag(swappedOrig[i]) == 0 && imag(swappedOrig[i+1]) == 0 &&
+                        real(swappedOrig[i]) - pow(real(swappedOrig[i+1]), -1) > okErr){
+                        cost[p] += 1e20;
+                        break;
+                    }
+                }
+            }// end of checking consecutive pairs
+        }// end of loop through permutations
+
+        // Find the minimum cost
+        std::vector<double>::iterator minCost = std::min_element(cost.begin(), cost.end());
+        int ix = minCost - cost.begin();
+        for(int i = 0; i < 6; i++){
+            sortedEigs.push_back(eigVals[m*6 + ixPerms[ix*6 + i]]);
+        }
+
+        sortedIxs->insert(sortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
+    }// end of loop through all members/eigenvalue sets
+
+    return sortedEigs;
+}//=====================================================
+
+std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int numMans, double tof){
+    // Get eigenvalues of monodromy matrix
+    tpat_matrix mono = perOrbit.getSTM(-1);
+    std::vector< std::vector<cdouble> > eigData = eig(mono);
+    
+    // Sort eigenvalues to put them in a "propper" order, get indices
+    // to sort the eigenvectors to match
+    std::vector<int> sortedIx;
+    std::vector<cdouble> sortedEig = sortEig(eigData[0], &sortedIx);
+
+    // Figure out which eigenvalues are the stable and unstable ones,
+    // delete the rest
+    std::vector<cdouble> nonCenterVals;
+    std::vector<cdouble> nonCenterVecs;
+    for(size_t c = 0; c < sortedEig.size(); c++){
+        if(tpat_util::aboutEquals(real(sortedEig[c]), 1.0, 1e-5) &&
+            tpat_util::aboutEquals(imag(sortedEig[c]), 0.0, 1e-5)){
+            //This eigenvalue identifies a center subspace
+        }else{
+            // Keep this eigenvalue/eigenvector pair
+            nonCenterVals.push_back(sortedEig[c]);
+            int vecIx = sortedIx[c];
+            nonCenterVecs.insert(nonCenterVecs.begin(), 
+                eigData.at(1).begin()+vecIx*6,
+                eigData.at(1).begin()+(vecIx+1)*6);
+        }
+    }
+
+    std::vector<tpat_traj> allManifolds;
+
+    if(nonCenterVals.size() == 0){
+        printWarn("tpat_calculations::getManifolds: No stable/unstable eigenvalues were found");
+        return allManifolds;
+    }
+
+    if(nonCenterVals.size() == 1){
+        throw tpat_exception("tpat_calculations::getManifolds: Only found one stable/unstable eigenvalue");
+    }
+
+    if(nonCenterVals.size() > 2){
+        printWarn("tpat_calculations::getManifolds: Stable/Unstable subspace is larger than 2D. Only the first pair will be considered");
+    }
+
+    /** TODO: If and when I can flexibily integrate generic trajectories and nodesets,
+     *  I would like to replace this with a nodeset to space the points evenly
+     *  in time and/or arclength
+     */
+    // Get a bunch of points to use as starting guesses for the manifolds
+    if(numMans > perOrbit.getLength()){
+        printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer");
+        numMans = perOrbit.getLength();
+    }
+
+    double stepSize = ((double)perOrbit.getLength())/((double)numMans);
+    std::vector<int> pointIx(numMans, NAN);
+    for(int i = 0; i < numMans; i++){
+        pointIx[i] = floor(i*stepSize+0.5);
+    }
+
+    tpat_matrix temp(6, nonCenterVecs.size()/6, nonCenterVecs);
+    tpat_matrix vecs = trans(temp); // Transpose so eigenvectors are columns
+
+    // NOW, copute the manifolds!
+    // tpat_simulation_engine sim()
+    for(int n = 0; n < numMans; n++){
+        // Transform the eigenvectors to this updated time
+        tpat_matrix newVecs = perOrbit.getSTM(pointIx[n])*vecs;
+
+        // Pick the direction from one of the transformed eigenvectors
+        tpat_matrix direction(6,1);
+        for(size_t v = 0; v < 2; v++){
+            tpat_matrix eigVec = vecs.getCol(v);
+            double mag = sqrt(eigVec.at(0)*eigVec.at(0) + 
+                eigVec.at(1)*eigVec.at(1) + eigVec.at(2)*eigVec.at(2));
+            if(type == MAN_U_P || type == MAN_U_M){
+                if(std::abs(nonCenterVals[v]) < 1){
+                    direction = eigVec/mag;
+                    break;
+                }
+            }else{
+                if(std::abs(nonCenterVals[v]) > 1){
+                    direction = eigVec/mag;
+                    break;
+                }
+            }
+        }
+
+        // Make sure it is pointing in +x direction
+        direction *= tpat_util::sign(direction.at(0));
+        
+        // Orient according to specified type
+        if(type == MAN_U_M || type == MAN_S_M)
+            direction *= -1;
+
+
+
+    }
+
+    return allManifolds;
+}//====================================================
 
 //-----------------------------------------------------
 //      CR3BP Utility Functions
 //-----------------------------------------------------
-
 
 /**
  *  @brief Compute the second derivatives of the pseudo-potential function

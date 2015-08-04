@@ -36,9 +36,7 @@
  *	and additionall initializes the jacobi matrix
  */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp() : tpat_traj(){
-	numExtraParam = 1;	// Jacobi
-	extraParamRowSize.push_back(1);	// each jacobi value has one element
-	extraParam.push_back(std::vector<double>(0));
+	initExtraParam();
 }//====================================================
 
 /**
@@ -46,9 +44,7 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp() : tpat_traj(){
  *	@param data a system data object describing the system
  */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp data){
-	numExtraParam = 1;	// Jacobi
-	extraParamRowSize.push_back(1);	// each jacobi value has one element
-	extraParam.push_back(std::vector<double>(0));
+	initExtraParam();
 	sysData = data;
 }//====================================================
 
@@ -56,10 +52,9 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp data){
  *	@brief Initialize all vectors to have size n; fill each vector with zeros.
  */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(int n) : tpat_traj(n){
-	numExtraParam = 1;	// Jacobi
-	extraParamRowSize.push_back(1);	// each jacobi value has one element
-	extraParam.push_back(std::vector<double>(0));
+	initExtraParam();
 	extraParam.at(0).reserve(n);
+	extraParam.at(1).reserve(n);
 }//====================================================
 
 /**
@@ -128,6 +123,25 @@ double tpat_traj_cr3bp_ltvp::getJacobi(int n) const {
 }//=====================================================
 
 /**
+ *	@brief Get a pointer to the vector of mass values along the trajectory
+ *	@return a pointer to the vector of mass values along the trajectory
+ */
+std::vector<double>* tpat_traj_cr3bp_ltvp::getMass() { return &(extraParam.at(1)); }
+
+/**
+ *	@brief Retrieve a mass value at one point on the trajectory
+ *	@param n the index of the point; if n < 0, it will count backwards
+ *	from the end of the trajectory
+ *	@return a mass value (non-dimensional units)
+ */
+double tpat_traj_cr3bp_ltvp::getMass(int n) const {
+	if(n < 0)
+		n += extraParam.at(1).size();
+
+	return extraParam.at(1)[n];
+}//====================================================
+
+/**
  *	@brief Set the system data for this trajectory
  *	@param d a system data object
  */
@@ -136,6 +150,14 @@ void tpat_traj_cr3bp_ltvp::setSysData(tpat_sys_data_cr3bp_ltvp d){ sysData = d; 
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
+
+void tpat_traj_cr3bp_ltvp::initExtraParam(){
+	numExtraParam = 2;	// Jacobi, Mass
+	extraParamRowSize.push_back(1);	// each jacobi value has one element
+	extraParamRowSize.push_back(1);	// each mass value has one element
+	extraParam.push_back(std::vector<double>(0));
+	extraParam.push_back(std::vector<double>(0));
+}//=========================================
 
 /**
  *	@brief Save the trajectory to a file
@@ -160,20 +182,11 @@ void tpat_traj_cr3bp_ltvp::saveToMat(const char* filename){
 		saveState(matfp);
 		saveTime(matfp);
 		saveSTMs(matfp);
-		saveJacobi(matfp);
+		saveExtraParam(matfp, 0, 1, "Jacobi");
+		saveExtraParam(matfp, 1, 1, "Mass");
 		sysData.saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);
 }//========================================
-
-/**
- *	@brief Save the Jacobi vector to a file
- * 	@param matFile a pointer to the destination matlab file 
- */
-void tpat_traj_cr3bp_ltvp::saveJacobi(mat_t *matFile){
-	size_t dims[2] = {extraParam.size(), 1};
-	matvar_t *matvar = Mat_VarCreate("Jacobi", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(extraParam[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, "Jacobi", MAT_COMPRESSION_NONE);
-}//=================================================
 

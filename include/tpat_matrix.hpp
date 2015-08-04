@@ -85,7 +85,7 @@ class tpat_matrix{
 		friend tpat_matrix inv(const tpat_matrix&);
 		friend double norm(const tpat_matrix&);
 		friend tpat_matrix trans(const tpat_matrix&);
-		friend std::vector<cdouble> eig(const tpat_matrix&);
+		friend std::vector< std::vector<cdouble> > eig(const tpat_matrix&);
 
 		// Set and Gets
 		int getLength() const;

@@ -73,7 +73,7 @@ struct iterationData{
  *	and multiple shooting algorithms
  *
  *	@author Andrew Cox
- *	@version May 25, 2015
+ *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
 class tpat_correction_engine{

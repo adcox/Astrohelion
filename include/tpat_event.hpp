@@ -30,10 +30,18 @@
  *	@brief A data object containing information about an event that may
  *	occur during simulation
  *
- *	TODO: The time variable isn't used. should it be? How?
+ *	**Adding a New Event**
+ *	* Add a new enumerated type value with detailed documentation of how it will
+ *		be parsed.
+ * 	* Update the initEvent() function
+ *	* Update the getTypeStr() function
+ *	* Define or identify a constraint type that can locate this event to a high
+ *		degree of accuracy.
+ *	* Update the getDist() function
+ * 	* Update the getDir() function
  *
  *	@author Andrew Cox
- *	@version May 29, 2015
+ *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
 class tpat_event{
@@ -62,12 +70,18 @@ class tpat_event{
 						 *	will be the radius of the primary plus the minimum acceptable fly-by distance
 						 *	specified in the tpat_body_data class.
 		 				 */
-		 	JC 			/*!< Event occurs when the Jacobi value reaches the specified value
+		 	JC, 		/*!< Event occurs when the Jacobi value reaches the specified value
 		 				 * 	of Jacobi Constant. Place this JC value in the first element of
 		 				 * 	the <tt>params</tt> vector present in the 
-		 				 * 	tpat_event(tpat_sys_data*, event_t, int, bool, double*) cosntructor.
+		 				 * 	tpat_event(tpat_sys_data*, event_t, int, bool, double*) constructor.
 		 				 * 	This event can only be supported by dynamic models that have associated
 		 				 * 	system data objects that can be cast to cr3bp system data objects.
+		 				 */
+		 	APSE		/*!< Event occurs when an apse is reached. The <tt>param</tt> array should have
+		 				 * 	the first element specifiying the primary index (0 for P1, 1 for P2, etc.).
+		 				 * 	The <tt>direction</tt> of the constraint identifies what type of apse, i.e.
+		 				 *	0 will catch all apsides, -1 will catch only apopases, and +1 will catch 
+		 				 *	only periapses
 		 				 */
 		};
 

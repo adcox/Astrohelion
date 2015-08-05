@@ -87,7 +87,9 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
  *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
- *	@param params an array of doubles that give the constructor extra information
+ *	@param params an array of doubles that give the constructor extra information. No
+ *	specific size is required, but params must have at least as many elements as the 
+ *	event type will expect (otherwise it will read uninitialized memory).
  *
  *	@see tpat_event::event_t
  */
@@ -194,6 +196,15 @@ tpat_event& tpat_event::operator =(const tpat_event &ev){
 	copyEvent(ev);
 	return *this;
 }//=============================================
+
+bool operator ==(const tpat_event &lhs, const tpat_event &rhs){
+	return lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
+		lhs.stop == rhs.stop && lhs.sysData == rhs.sysData;
+}
+
+bool operator !=(const tpat_event &lhs, const tpat_event &rhs){
+	return !(lhs == rhs);
+}
 
 //-----------------------------------------------------
 //      Set and Get Functions

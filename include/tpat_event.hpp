@@ -94,7 +94,9 @@ class tpat_event{
 		
 		// Operators
 		tpat_event& operator =(const tpat_event&);
-
+		friend bool operator ==(const tpat_event&, const tpat_event&);
+		friend bool operator !=(const tpat_event&, const tpat_event&);
+		
 		// Get and Set Functions
 		std::vector<double> getConData() const;
 		tpat_constraint::constraint_t getConType() const;

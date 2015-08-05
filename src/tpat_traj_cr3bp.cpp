@@ -181,6 +181,11 @@ void tpat_traj_cr3bp::setJacobi(std::vector<double> j){ extraParam.at(0) = j; }
  */
 tpat_sys_data_cr3bp tpat_traj_cr3bp::getSysData() const { return sysData; }
 
+/**
+ *	@brief Retrieve a pointer to the system data object
+ *	@return a pointer to the system data object
+ */
+tpat_sys_data* tpat_traj_cr3bp::getSysDataPtr(){ return &sysData; }
 
 /**
  *	@brief Set the system data for this trajectory

@@ -81,7 +81,7 @@ int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
 tpat_matrix solveAX_eq_B(tpat_matrix, tpat_matrix);
-std::vector<tpat_traj> getManifolds(manifold_t, tpat_traj, int, double);
+std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, double);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 
 // CR3BP Utility Functions

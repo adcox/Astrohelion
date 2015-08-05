@@ -749,12 +749,12 @@ tpat_matrix solveAX_eq_B(tpat_matrix A, tpat_matrix B){
 
 std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sortedIxs){
     if(eigVals.size() == 0){
-        printErr("tpat_calculations::sortEig: Cannot sort eigenvalues: there are no family members");
+        printErr("tpat_calculations::sortEig: Cannot sort eigenvalues: there are no family members\n");
         return eigVals;
     }
 
     if(eigVals.size() % 6 != 0){
-        printErr("tpat_calculations::sortEig: Must have 6n eigenvalues");
+        printErr("tpat_calculations::sortEig: Must have 6n eigenvalues\n");
         return eigVals;
     }
 
@@ -779,7 +779,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
             onesIx[1] = smallIx;
         }
     }else{
-        printWarn("tpat_family_cr3bp::sortEigs: did not find eigenvalues at 1.0");
+        printWarn("tpat_family_cr3bp::sortEigs: did not find eigenvalues at 1.0\n");
     }
 
     // Generate all permutations of the indices 0 through 5
@@ -882,14 +882,38 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         sortedIxs->insert(sortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
     }// end of loop through all members/eigenvalue sets
 
+    printf("Sorted Ixs: [%d %d %d %d %d %d]\n", sortedIxs->at(0), sortedIxs->at(1), sortedIxs->at(2), sortedIxs->at(3), sortedIxs->at(4), sortedIxs->at(5));
     return sortedEigs;
 }//=====================================================
 
-std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int numMans, double tof){
+void printEigenData(std::vector< std::vector<cdouble> > eigData){
+    std::vector<cdouble> vals = eigData[0];
+    std::vector<cdouble> vecs = eigData[1];
+
+    printf("Eigenvalues:\n");
+    for(size_t v = 0; v < vals.size(); v++){
+        printf("%27s", complexToStr(vals[v]).c_str());
+    }
+    printf("\nEigenvectors:\n");
+    for(size_t j = 0; j < vals.size(); j++){
+        for(size_t v = 0; v < vals.size(); v++){
+            printf("%27s", complexToStr(vecs[v*vals.size() + j]).c_str());
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+/**
+ *
+ *  Notes: No support for epoch time (yet)
+ */
+std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perOrbit, int numMans, double tof){
     // Get eigenvalues of monodromy matrix
-    tpat_matrix mono = perOrbit.getSTM(-1);
+    tpat_matrix mono = perOrbit->getSTM(-1);
     std::vector< std::vector<cdouble> > eigData = eig(mono);
-    
+    printEigenData(eigData);
+
     // Sort eigenvalues to put them in a "propper" order, get indices
     // to sort the eigenvectors to match
     std::vector<int> sortedIx;
@@ -900,23 +924,23 @@ std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int num
     std::vector<cdouble> nonCenterVals;
     std::vector<cdouble> nonCenterVecs;
     for(size_t c = 0; c < sortedEig.size(); c++){
-        if(tpat_util::aboutEquals(real(sortedEig[c]), 1.0, 1e-5) &&
-            tpat_util::aboutEquals(imag(sortedEig[c]), 0.0, 1e-5)){
-            //This eigenvalue identifies a center subspace
-        }else{
+        double realErr = std::real(sortedEig[c]) - 1.0;
+        double imagErr = std::imag(sortedEig[c]);
+
+        if(std::abs(realErr) > 1e-5 && std::abs(imagErr) < 1e-5){
             // Keep this eigenvalue/eigenvector pair
             nonCenterVals.push_back(sortedEig[c]);
             int vecIx = sortedIx[c];
-            nonCenterVecs.insert(nonCenterVecs.begin(), 
+            nonCenterVecs.insert(nonCenterVecs.end(), 
                 eigData.at(1).begin()+vecIx*6,
                 eigData.at(1).begin()+(vecIx+1)*6);
         }
     }
 
-    std::vector<tpat_traj> allManifolds;
+    std::vector<tpat_traj_cr3bp> allManifolds;
 
     if(nonCenterVals.size() == 0){
-        printWarn("tpat_calculations::getManifolds: No stable/unstable eigenvalues were found");
+        printWarn("tpat_calculations::getManifolds: No stable/unstable eigenvalues were found\n");
         return allManifolds;
     }
 
@@ -925,7 +949,7 @@ std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int num
     }
 
     if(nonCenterVals.size() > 2){
-        printWarn("tpat_calculations::getManifolds: Stable/Unstable subspace is larger than 2D. Only the first pair will be considered");
+        printWarn("tpat_calculations::getManifolds: Stable/Unstable subspace is larger than 2D. Only the first pair will be considered\n");
     }
 
     /** TODO: If and when I can flexibily integrate generic trajectories and nodesets,
@@ -933,40 +957,53 @@ std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int num
      *  in time and/or arclength
      */
     // Get a bunch of points to use as starting guesses for the manifolds
-    if(numMans > perOrbit.getLength()){
-        printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer");
-        numMans = perOrbit.getLength();
+    if(numMans > perOrbit->getLength()){
+        printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer\n");
+        numMans = perOrbit->getLength();
     }
 
-    double stepSize = ((double)perOrbit.getLength())/((double)numMans);
+    double stepSize = ((double)perOrbit->getLength())/((double)numMans);
     std::vector<int> pointIx(numMans, NAN);
     for(int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
     }
 
-    tpat_matrix temp(6, nonCenterVecs.size()/6, tpat_util::real(nonCenterVecs));
+    tpat_matrix temp(nonCenterVecs.size()/6, 6, tpat_util::real(nonCenterVecs));
     tpat_matrix vecs = trans(temp); // Transpose so eigenvectors are columns
 
+    printf("Eigenvalues:\n");
+    for(size_t i = 0; i < nonCenterVals.size(); i++){
+        printf("%26s", complexToStr(nonCenterVals[i]).c_str());
+    }
+    printf("\nEigenvectors:\n");
+    vecs.print();
+
     // NOW, copute the manifolds!
-    // tpat_simulation_engine sim()
+    tpat_simulation_engine sim(perOrbit->getSysDataPtr());
+    double stepDist = 200;
+    double charL = perOrbit->getSysDataPtr()->getCharL();
     for(int n = 0; n < numMans; n++){
         // Transform the eigenvectors to this updated time
-        tpat_matrix newVecs = perOrbit.getSTM(pointIx[n])*vecs;
+        tpat_matrix newVecs = perOrbit->getSTM(pointIx[n])*vecs;
 
         // Pick the direction from one of the transformed eigenvectors
         tpat_matrix direction(6,1);
         for(size_t v = 0; v < 2; v++){
-            tpat_matrix eigVec = vecs.getCol(v);
+            tpat_matrix eigVec = newVecs.getCol(v);
             double mag = sqrt(eigVec.at(0)*eigVec.at(0) + 
                 eigVec.at(1)*eigVec.at(1) + eigVec.at(2)*eigVec.at(2));
             if(type == MAN_U_P || type == MAN_U_M){
-                if(std::abs(nonCenterVals[v]) < 1){
+                if(std::abs(nonCenterVals[v]) > 1){
                     direction = eigVec/mag;
+                    sim.setRevTime(false);
+                    printf("Unstable eigenvalue: %f\n", std::real(nonCenterVals[v]));
                     break;
                 }
             }else{
-                if(std::abs(nonCenterVals[v]) > 1){
+                if(std::abs(nonCenterVals[v]) < 1){
                     direction = eigVec/mag;
+                    sim.setRevTime(true);
+                    printf("Stable eigenvalue: %f\n", std::real(nonCenterVals[v]));
                     break;
                 }
             }
@@ -979,8 +1016,12 @@ std::vector<tpat_traj> getManifolds(manifold_t type, tpat_traj perOrbit, int num
         if(type == MAN_U_M || type == MAN_S_M)
             direction *= -1;
 
+        printf("Direction: [%f %f %f]\n", direction.at(0), direction.at(1), direction.at(2));
+        tpat_matrix q0(6, 1, perOrbit->getState(pointIx[n]));
+        q0 += stepDist/charL * direction;
 
-
+        sim.runSim(q0.getDataPtr(), tof);
+        allManifolds.push_back(sim.getCR3BP_Traj());
     }
 
     return allManifolds;

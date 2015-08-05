@@ -86,6 +86,9 @@ linMotionTest: $(OBJECTS)
 lowThrustTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bp_lowThrust.cpp -o $(BIN)/$@
 
+manifolds: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
+
 maps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
 

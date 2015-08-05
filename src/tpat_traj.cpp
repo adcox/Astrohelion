@@ -260,6 +260,11 @@ std::vector<tpat_matrix>* tpat_traj::getSTM(){ return &allSTM;}
  */
 tpat_sys_data::system_t tpat_traj::getType() const { return tpat_sys_data::UNDEF_SYS; }
 
+/** 
+ *	@return a pointer to the system data object
+ */
+tpat_sys_data* tpat_traj::getSysDataPtr(){ return NULL; }
+
 /**
  *	@brief Set the acceleration vector
  *	@param a a vector of non-dimensional accelerations. The vector should be 1D in
@@ -336,7 +341,11 @@ void basicConcat(const tpat_traj *lhs, const tpat_traj *rhs, tpat_traj *out){
 	// Append data from RHS to OUT
 	out->state.insert(out->state.end(), rhs->state.begin()+skipShift*rhs->STATE_SIZE, rhs->state.end());
 	out->accel.insert(out->accel.end(), rhs->accel.begin()+skipShift*rhs->ACCEL_SIZE, rhs->accel.end());
-	out->times.insert(out->times.end(), rhs->times.begin()+skipShift, rhs->times.end());
+	
+	// Add times, adjusting to carry on from the end of LHS time vector (assumes continuity)
+	for(int i = skipShift; i < (int)rhs->times.size(); i++){
+		out->times.push_back(lhs->times.back() + rhs->times.at(i));
+	}
 
 	for(size_t i = 0; i < lhs->extraParam.size(); i++){
 		int rowSize = rhs->extraParamRowSize.at(i);

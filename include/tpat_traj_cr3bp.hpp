@@ -51,6 +51,7 @@ class tpat_traj_cr3bp : public tpat_traj{
 		double getJacobi(int) const;
 		std::vector<double>* getJacobi();
 		tpat_sys_data_cr3bp getSysData() const;
+		tpat_sys_data* getSysDataPtr();
 		tpat_sys_data::system_t getType() const;
 
 		void setJacobi(std::vector<double>);

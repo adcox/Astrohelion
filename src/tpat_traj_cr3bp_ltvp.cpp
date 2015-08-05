@@ -94,6 +94,11 @@ void tpat_traj_cr3bp_ltvp::copyMe(const tpat_traj_cr3bp_ltvp &t){
  */
 tpat_sys_data_cr3bp_ltvp tpat_traj_cr3bp_ltvp::getSysData() const { return sysData; }
 
+/**
+ *	@brief Retrieve a pointer to the system data object
+ *	@return a pointer to the system data object
+ */
+tpat_sys_data* tpat_traj_cr3bp_ltvp::getSysDataPtr(){ return &sysData; }
 
 /**
  *	@brief Retrieve the system type for this trajectory

@@ -72,14 +72,15 @@ class tpat_traj{
 		std::vector<double>* getState();
 		tpat_matrix getSTM(int) const;
 		std::vector<tpat_matrix>* getSTM();
+		virtual tpat_sys_data* getSysDataPtr();
 		double getTime(int) const;
 		std::vector<double>* getTime();
 		double getTol() const;
 		virtual tpat_sys_data::system_t getType() const;
 
-		void setState(std::vector<double>);
 		void setAccel(std::vector<double>);
 		void setExtraParam(int, std::vector<double>);
+		void setState(std::vector<double>);
 		void setSTMs(std::vector<tpat_matrix>);
 		void setTime(std::vector<double>);
 		void setTol(double);

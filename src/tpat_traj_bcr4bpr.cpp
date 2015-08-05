@@ -164,6 +164,12 @@ tpat_sys_data::system_t tpat_traj_bcr4bpr::getType() const{
 }//===============================================
 
 /**
+ *	@brief Retrieve a pointer to the system data object
+ *	@return a pointer to the system data object
+ */
+tpat_sys_data* tpat_traj_bcr4bpr::getSysDataPtr(){ return &sysData; }
+
+/**
  *	@brief Set the system data object
  *	@param data a data object describing the BCR4BP
  */

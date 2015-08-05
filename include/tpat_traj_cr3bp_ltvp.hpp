@@ -52,6 +52,7 @@ class tpat_traj_cr3bp_ltvp : public tpat_traj{
 		std::vector<double>* getMass();
 		double getMass(int) const;
 		tpat_sys_data_cr3bp_ltvp getSysData() const;
+		tpat_sys_data* getSysDataPtr();
 		tpat_sys_data::system_t getType() const;
 
 		void setSysData(tpat_sys_data_cr3bp_ltvp);

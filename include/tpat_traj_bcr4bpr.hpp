@@ -48,6 +48,7 @@ class tpat_traj_bcr4bpr : public tpat_traj{
 		double getPhi0();
 		double getGamma();
 		tpat_sys_data_bcr4bpr getSysData();
+		tpat_sys_data* getSysDataPtr();
 		tpat_sys_data::system_t getType() const;
 
 		std::vector<double>* get_dqdT();

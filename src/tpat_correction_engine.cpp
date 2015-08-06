@@ -364,6 +364,9 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 				else
 					throw tpat_exception("You can only apply ONE TOF constraint");
 				break;
+			case tpat_constraint::APSE:
+				addToRows = 1;
+				break;
 			default: break;
 		}
 

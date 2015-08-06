@@ -83,6 +83,7 @@ tpat_traj::~tpat_traj(){
 	accel.clear();
 	times.clear();
 	extraParam.clear();
+	extraParamRowSize.clear();
 	allSTM.clear();
 }//====================================================
 

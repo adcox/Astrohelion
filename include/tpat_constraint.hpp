@@ -35,6 +35,8 @@
  * 		any dynamic models you wish
  *	* Define behavior for dealing with those types of constraints in the
  *		dynamic models
+ *	* Add the constraint type to the corrector initializer so it knows how
+ *		many rows the constraint occupies
  *
  *	@author Andrew Cox
  *	@version August 3, 2015

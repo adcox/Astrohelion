@@ -792,11 +792,8 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         if(m == 1){
             if(*smallestErr < MAX_ONES_ERR){
                 // Update the indices of the ones in case they got moved in the first sorting
-                printf("Ones at %d and %d\n", onesIx[0], onesIx[1]);
                 onesIx[0] = sortedIxs->at(onesIx[0]);
                 onesIx[1] = sortedIxs->at(onesIx[1]);
-                printf("Ones at %d and %d\n", onesIx[0], onesIx[1]);
-                printf("Sorted Ixs: [%d %d %d %d %d %d]\n", sortedIxs->at(0), sortedIxs->at(1), sortedIxs->at(2), sortedIxs->at(3), sortedIxs->at(4), sortedIxs->at(5));
             }
             std::copy(sortedEigs.begin(), sortedEigs.begin()+6, predict);
         }else if(m > 1){
@@ -971,13 +968,6 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
     tpat_matrix temp(nonCenterVecs.size()/6, 6, tpat_util::real(nonCenterVecs));
     tpat_matrix vecs = trans(temp); // Transpose so eigenvectors are columns
 
-    printf("Eigenvalues:\n");
-    for(size_t i = 0; i < nonCenterVals.size(); i++){
-        printf("%26s", complexToStr(nonCenterVals[i]).c_str());
-    }
-    printf("\nEigenvectors:\n");
-    vecs.print();
-
     // NOW, copute the manifolds!
     tpat_simulation_engine sim(perOrbit->getSysDataPtr());
     double stepDist = 200;
@@ -996,14 +986,12 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
                 if(std::abs(nonCenterVals[v]) > 1){
                     direction = eigVec/mag;
                     sim.setRevTime(false);
-                    printf("Unstable eigenvalue: %f\n", std::real(nonCenterVals[v]));
                     break;
                 }
             }else{
                 if(std::abs(nonCenterVals[v]) < 1){
                     direction = eigVec/mag;
                     sim.setRevTime(true);
-                    printf("Stable eigenvalue: %f\n", std::real(nonCenterVals[v]));
                     break;
                 }
             }
@@ -1016,10 +1004,11 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
         if(type == MAN_U_M || type == MAN_S_M)
             direction *= -1;
 
-        printf("Direction: [%f %f %f]\n", direction.at(0), direction.at(1), direction.at(2));
+        // Step away from the point on the arc in the direction of the eigenvector
         tpat_matrix q0(6, 1, perOrbit->getState(pointIx[n]));
         q0 += stepDist/charL * direction;
 
+        // Simulate for some time to generate a manifold arc
         sim.runSim(q0.getDataPtr(), tof);
         allManifolds.push_back(sim.getCR3BP_Traj());
     }

@@ -21,12 +21,13 @@
 #ifndef H_TPAT_NODE
 #define H_TPAT_NODE
 
-#include "tpat_arc_step.hpp"
+#include <cmath>
+#include <vector>
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief A basic structure to contain info about a node in a nodeset
  */
-class tpat_node : public tpat_arc_step{
+class tpat_node{
 public:
 	// *structors
 	tpat_node();
@@ -35,18 +36,44 @@ public:
 	tpat_node(const tpat_node&);
 	~tpat_node();
 
-	// Set and Get Functions
+	// Operators
+	tpat_node& operator =(const tpat_node&);
+	friend bool operator ==(const tpat_node&, const tpat_node&);
+
+	// Set and Get functions
+	std::vector<double> getPosVelState() const;
+	double getExtraParam(int) const;
+	std::vector<double> getExtraParams() const;
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
 
+	void setExtraParam(int, double);
+	void setExtraParams(std::vector<double>);
+	void setPosVelState(double*);
+	void setPosVelState(std::vector<double>);
 	void setTOF(double);
 	void setVel_AllCon();
 	void setVel_AllDiscon();
 	void setVelCon(bool[3]);
 	void setVelCon(std::vector<bool>);
 	void setVelCon(bool, bool, bool);
+
+	// Utility Functions
+	void copyMe(const tpat_node&);
+	void initArrays();
 	
 private:
+
+	/** Stores the 6 position and velocity states */
+	double posVelState[6];
+
+	/** Determines the length of time (non-dimensional) the corrector will integrate
+	 *	past this node */
+	double tof = 0;
+
+	/** Stores any extra parameters, like epoch, initial mass, thrust level, etc. */
+	std::vector<double> extraParam;
+
 	/** Determines which velocity states are continuous. By default, 
 	 *	all of them are. 1 = continuous, 0 = discontinuous */
 	bool velCon[3];

@@ -18,38 +18,27 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_NODE
-#define H_TPAT_NODE
-
-#include "tpat_arc_step.hpp"
+#ifndef H_ARC_DATA
+#define H_ARC_DATA
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief Abstract class that provides the framework for trajectories and nodesets
  */
-class tpat_node : public tpat_arc_step{
+class tpat_arc_data{
+
 public:
 	// *structors
-	tpat_node();
-	tpat_node(double*, double);
-	tpat_node(std::vector<double>, double);
-	tpat_node(const tpat_node&);
-	~tpat_node();
 
-	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
+	// Operators
 
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
+	// Set and Get functions
+	
+	// Utility Functions
+	virtual void saveToMat(const char*) = 0;
 	
 private:
-	/** Determines which velocity states are continuous. By default, 
-	 *	all of them are. 1 = continuous, 0 = discontinuous */
-	bool velCon[3];
+
 };
+
 
 #endif

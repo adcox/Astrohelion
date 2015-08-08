@@ -59,6 +59,30 @@ void printVerb(bool verbose, const char * format, ...){
 }//==========================================
 
 /**
+ *  @brief Prints out a set of eigenvalues and eigenvectors
+ *  @param eigData a set of vectors that contain data about an
+ *  eigensystem; such sets are returned from tpat_matrix::eig()
+ *  @see tpat_matrix::eig()
+ */
+void printEigenData(std::vector< std::vector<cdouble> > eigData){
+    std::vector<cdouble> vals = eigData[0];
+    std::vector<cdouble> vecs = eigData[1];
+
+    printf("Eigenvalues:\n");
+    for(size_t v = 0; v < vals.size(); v++){
+        printf("%27s", complexToStr(vals[v]).c_str());
+    }
+    printf("\nEigenvectors:\n");
+    for(size_t j = 0; j < vals.size(); j++){
+        for(size_t v = 0; v < vals.size(); v++){
+            printf("%27s", complexToStr(vecs[v*vals.size() + j]).c_str());
+        }
+        printf("\n");
+    }
+    printf("\n");
+}//============================================
+
+/**
  *	@brief Print an error message to the standard output in red
  *	@param format a standard format string literal to pass to <tt>vprintf</tt>
  */

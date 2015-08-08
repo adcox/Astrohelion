@@ -311,7 +311,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 	std::vector<int> matches = findMatches(value, dataSet);
 	std::vector<tpat_family_member_cr3bp> matchMembers;
 	if(matches.size() == 0){
-		printErr("Could not locate any matches. The family either has too few members to facilitate an accurate search or the desired trajectory does not exist.");
+		printErr("Could not locate any matches. The family either has too few members to facilitate an accurate search or the desired trajectory does not exist.\n");
 		return matchMembers;	// empty set
 	}
 

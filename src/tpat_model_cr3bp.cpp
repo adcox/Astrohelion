@@ -278,7 +278,7 @@ void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con
 
     it->FX[row0] = nodeJC - conData[0];
     it->DF[it->totalFree*row0 + 6*n + 0] = -2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x;    //dFdx
-    it->DF[it->totalFree*row0 + 6*n + 1] = -2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) - 2*y;                      //dFdy
+    it->DF[it->totalFree*row0 + 6*n + 1] = -2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y;                      //dFdy
     it->DF[it->totalFree*row0 + 6*n + 2] = -2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3);                            //dFdz
     it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx;   //dFdx_dot
     it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy;   //dFdy_dot

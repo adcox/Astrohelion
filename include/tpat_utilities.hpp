@@ -30,6 +30,7 @@
 #ifndef H_UTILITIES
 #define H_UTILITIES
 
+#include "tpat_constants.hpp"
 #include "tpat_exceptions.hpp"
  
 #include "matio.h"

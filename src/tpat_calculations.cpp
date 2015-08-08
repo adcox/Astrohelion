@@ -883,24 +883,6 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
     return sortedEigs;
 }//=====================================================
 
-void printEigenData(std::vector< std::vector<cdouble> > eigData){
-    std::vector<cdouble> vals = eigData[0];
-    std::vector<cdouble> vecs = eigData[1];
-
-    printf("Eigenvalues:\n");
-    for(size_t v = 0; v < vals.size(); v++){
-        printf("%27s", complexToStr(vals[v]).c_str());
-    }
-    printf("\nEigenvectors:\n");
-    for(size_t j = 0; j < vals.size(); j++){
-        for(size_t v = 0; v < vals.size(); v++){
-            printf("%27s", complexToStr(vecs[v*vals.size() + j]).c_str());
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
 /**
  *
  *  Notes: No support for epoch time (yet)
@@ -909,7 +891,6 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
     // Get eigenvalues of monodromy matrix
     tpat_matrix mono = perOrbit->getSTM(-1);
     std::vector< std::vector<cdouble> > eigData = eig(mono);
-    printEigenData(eigData);
 
     // Sort eigenvalues to put them in a "propper" order, get indices
     // to sort the eigenvectors to match

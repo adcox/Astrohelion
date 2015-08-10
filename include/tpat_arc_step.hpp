@@ -21,6 +21,9 @@
 #ifndef H_ARC_STEP
 #define H_ARC_STEP
 
+// Forward Declarations
+class tpat_matrix;
+
 /**
  *	@brief Base class that represents a single integration step or node
  */
@@ -30,16 +33,17 @@ public:
 	// *structors
 	tpat_arc_step();
 	tpat_arc_step(const tpat_arc_step&);
-	~tpat_arc_step();
+	virtual ~tpat_arc_step();
 
 	// Operators
 	tpat_arc_step& operator =(const tpat_arc_step&);
-	friend bool operator ==(const tpat_arc_step&);
+	friend bool operator ==(const tpat_arc_step&, const tpat_arc_step&);
+	friend bool operator !=(const tpat_arc_step&, const tpat_arc_step&);
 
 	// Set and Get functions
 	std::vector<double> getAccel() const;
 	double getExtraParam(int) const;
-	std::vector<double> geExtraParams() const;
+	std::vector<double> getExtraParams() const;
 	std::vector<double> getPosVelState() const;
 	tpat_matrix getSTM() const;
 	std::vector<double> getSTMElements() const;
@@ -55,8 +59,8 @@ public:
 	void setSTM(std::vector<double>);
 
 protected:
-	void copyMe(const tpat_arc_step&);
-	void initArrays();
+	virtual void copyMe(const tpat_arc_step&);
+	virtual void initArrays();
 
 	double posVelState[6]; 	//!< Stores 6 position and velocity states
 	double accel[3];		//!< Stores 3 acceleration states
@@ -64,6 +68,9 @@ protected:
 
 	/** Stores extra parameters like integration time, time-of-flight, epoch, etc. */
 	std::vector<double> extraParam;
+
+	/** Stores flags, which may be interpreted by derivec classes */
+	std::vector<bool> flags;
 };
 
 

@@ -21,6 +21,12 @@
 #ifndef H_ARC_DATA
 #define H_ARC_DATA
 
+#include "tpat_arc_step.hpp"
+#include "tpat_sys_data.hpp"
+
+#include "matio.h"
+#include <vector>
+
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
  */
@@ -28,16 +34,52 @@ class tpat_arc_data{
 
 public:
 	// *structors
+	tpat_arc_data(tpat_sys_data*);
+	tpat_arc_data(const tpat_arc_data&);
+	virtual ~tpat_arc_data();
 
 	// Operators
+	tpat_arc_data& operator =(const tpat_arc_data&);
+	friend tpat_arc_data& operator +(const tpat_arc_data&, const tpat_arc_data&);
 
 	// Set and Get functions
-	
+	std::vector<double> getAccel(int) const;
+	std::vector<double> getCoord(int) const;
+	int getLength() const;
+	std::vector<double> getExtraParam(int, int) const;
+	std::vector<double> getState(int) const;
+	tpat_arc_step getStep(int) const;
+	tpat_matrix getSTM(int) const;
+	tpat_sys_data* getSysData();
+	double getTol() const;
+
+	void setTol(double);
+
 	// Utility Functions
 	virtual void saveToMat(const char*) = 0;
-	
-private:
+	virtual void print() const = 0;
 
+protected:
+	/** Contains all integration steps */
+	std::vector<tpat_arc_step> steps;
+
+	/** A pointer to the system data object that describes the system this arc exists in */
+	tpat_sys_data *sysData;
+
+	/** Number of variables stored in the extraParam vector */
+	int numExtraParam = 0;
+
+	/** Number of elements in each extra parameter */
+	std::vector<int> extraParamRowSize;
+
+	/** Tolerance used to compute this data */
+	double tol = 0;
+
+	void copyMe(const tpat_arc_data&);
+	void saveAccel(mat_t*);
+	void saveExtraParam(mat_t*, int, int, const char*);
+	void saveState(mat_t*);
+	void saveSTMs(mat_t*);
 };
 
 

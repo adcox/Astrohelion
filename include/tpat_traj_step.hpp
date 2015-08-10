@@ -18,37 +18,26 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_NODE
-#define H_TPAT_NODE
-
-#include "tpat_arc_step.hpp"
+#ifndef H_TRAJ_STEP
+#define H_TRAJ_STEP
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
- *
- *	Values Stored in ExtraParam:
- *	* 0 	- 	Node time-of-flight
+ *	@brief Derived from tpat_arc_step with specific access methods
+ *	for steps along a trajectory object
  */
-class tpat_node : public tpat_arc_step{
+class tpat_traj_step : pulic tpat_arc_step{
+
 public:
 	// *structors
-	tpat_node(double*, double);
-	tpat_node(std::vector<double>, double);
-
-	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
-
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
+	tpat_traj_step(double*, double);
+	tpat_traj_step(double*, double, double*, double*);
+	
+	// Set and Get functions
+	double getTime() const;
+	void setTime(double);
 
 private:
 	void initArrays();
-	
 };
 
 #endif

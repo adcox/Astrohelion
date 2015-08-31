@@ -18,39 +18,27 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_NODE
-#define H_TPAT_NODE
+#ifndef H_NEW_CLASS
+#define H_NEW_CLASS
 
-#include "tpat_arc_step.hpp"
+// Forward Declarations
+
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief A brief description
  *
- *	Values Stored in ExtraParam:
- *	* 0 	- 	Node time-of-flight
+ *	@author Andrew Cox
+ *	@version 
+ *	@copyright GNU GPL v3.0
  */
-class tpat_node : public tpat_arc_step{
+class newClass{
+
 public:
-	// *structors
-	tpat_node(double*, double);
-	tpat_node(std::vector<double>, double);
 
-	tpat_node(const tpat_arc_step&);
-	
-	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
-
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
+protected:
 
 private:
-	void initArrays();
-	
+
 };
 
 #endif

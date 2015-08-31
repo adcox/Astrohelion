@@ -54,6 +54,7 @@ tpat_arc_step::tpat_arc_step(const tpat_arc_step &s){
 tpat_arc_step::~tpat_arc_step(){
 	extraParam.clear();
 	flags.clear();
+	constraints.clear();
 }//====================================================
 
 //-----------------------------------------------------
@@ -123,8 +124,37 @@ bool operator != (const tpat_arc_step &lhs, const tpat_arc_step &rhs){
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Add a constraint to the current set for this step
+ *	@param c a new constraint
+ */
+void tpat_arc_step::addConstraint(tpat_constraint c){
+	constraints.push_back(c);
+}//====================================================
+
+/**
+ *	@brief Clear all constraints associated with this step
+ */
+void tpat_arc_step::clearConstraints(){ constraints.clear(); }
+
+/**
+ *	@brief Remove the specified constraint
+ *	@param ix the index of the constraint. If the ix < 0, it will
+ *	count backwards from the end of the set
+ */
+void tpat_arc_step::removeConstraint(int ix){
+	if(ix < 0)
+		ix += constraints.size();
+	
+	constraints.erase(constraints.begin() + ix);
+}//====================================================
+
 std::vector<double> tpat_arc_step::getAccel() const{
 	return std::vector<double>(accel, accel+3);
+}//====================================================
+
+std::vector<tpat_constraint> tpat_arc_step::getConstraints() const{
+	return constraints;
 }//====================================================
 
 double tpat_arc_step::getExtraParam(int ix) const {
@@ -155,7 +185,7 @@ void tpat_arc_step::setAccel(std::vector<double> a){
 	if(a.size() != 3)
 		throw tpat_exception("tpat_arc_step::setAccel: input acceleration must have three elements");
 	std::copy(a.begin(), a.begin()+3, accel);
-}
+}//====================================================
 
 /**
  *	@brief Set a specific extra parameter to a specific value
@@ -226,6 +256,7 @@ void tpat_arc_step::copyMe(const tpat_arc_step &s){
 	std::copy(s.stm, s.stm+36, stm);
 	extraParam = s.extraParam;
 	flags = s.flags;
+	constraints = s.constraints;
 }//====================================================
 
 /**

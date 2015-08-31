@@ -18,39 +18,29 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_NODE
-#define H_TPAT_NODE
+#ifndef H_CR3BP_TRAJ
+#define H_CR3BP_TRAJ
 
-#include "tpat_arc_step.hpp"
+// Forward Declarations
+
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief A derivative class of the tpat_traj object, contains 
+ *	trajectory information specific to the CR3BP
  *
- *	Values Stored in ExtraParam:
- *	* 0 	- 	Node time-of-flight
+ *	@author Andrew Cox
+ *	@version August 30, 2015
+ *	@copyright GNU GPL v3.0
  */
-class tpat_node : public tpat_arc_step{
+class tpat_traj_cr3bp : public tpat_traj{
+
 public:
-	// *structors
-	tpat_node(double*, double);
-	tpat_node(std::vector<double>, double);
-
-	tpat_node(const tpat_arc_step&);
+	tpat_traj_cr3bp(tpat_sys_data*);
 	
-	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
-
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
+protected:
 
 private:
-	void initArrays();
-	
+
 };
 
 #endif

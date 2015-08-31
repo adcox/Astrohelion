@@ -21,6 +21,8 @@
 #ifndef H_ARC_STEP
 #define H_ARC_STEP
 
+#include "tpat_constraint.hpp"
+
 // Forward Declarations
 class tpat_matrix;
 
@@ -42,11 +44,16 @@ public:
 
 	// Set and Get functions
 	std::vector<double> getAccel() const;
+	std::vector<tpat_constraint> getConstraints const;
 	double getExtraParam(int) const;
 	std::vector<double> getExtraParams() const;
 	std::vector<double> getPosVelState() const;
 	tpat_matrix getSTM() const;
 	std::vector<double> getSTMElements() const;
+
+	void addConstraint(tpat_constraint);
+	void clearConstraints();
+	void removeConstraint(int);
 
 	void setAccel(double*);
 	void setAccel(std::vector<double>);
@@ -69,8 +76,11 @@ protected:
 	/** Stores extra parameters like integration time, time-of-flight, epoch, etc. */
 	std::vector<double> extraParam;
 
-	/** Stores flags, which may be interpreted by derivec classes */
+	/** Stores flags, which may be interpreted by derived classes */
 	std::vector<bool> flags;
+
+	/** Stores constraints on this arc step (especially usefull in nodesets) */
+	std::vector<tpat_constraint> constraints;
 };
 
 

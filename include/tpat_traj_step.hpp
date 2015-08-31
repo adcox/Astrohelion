@@ -23,7 +23,7 @@
 
 /**
  *	@brief Derived from tpat_arc_step with specific access methods
- *	for steps along a trajectory object
+ *	for steps along a trajectory
  */
 class tpat_traj_step : pulic tpat_arc_step{
 
@@ -31,7 +31,8 @@ public:
 	// *structors
 	tpat_traj_step(double*, double);
 	tpat_traj_step(double*, double, double*, double*);
-	
+	tpat_traj_step(const tpat_arc_step&);
+
 	// Set and Get functions
 	double getTime() const;
 	void setTime(double);

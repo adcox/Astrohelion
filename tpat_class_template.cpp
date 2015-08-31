@@ -1,6 +1,10 @@
 /**
  *  @file 
  *	@brief 
+ *
+ *	@author Andrew Cox
+ *	@version 
+ *	@copyright GNU GPL v3.0
  */
  
 /*

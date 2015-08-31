@@ -63,6 +63,18 @@ tpat_node::tpat_node(std::vector<double> state, double tof){
 	extraParam[0] = tof;
 }//====================================================
 
+/**
+ *	@brief Create a node object from a generic arc
+ *	step object.
+ *
+ *	This is permissible because tpat_node only defines
+ *	new access methods, not new data objects
+ *	@param s a tpat_arc_step reference
+ */
+tpat_node::tpat_node(const tpat_arc_step &s){
+	copyMe(s);
+}//====================================================
+
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------

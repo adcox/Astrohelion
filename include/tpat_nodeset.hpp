@@ -21,16 +21,11 @@
 #ifndef H_NODESET
 #define H_NODESET
 
-#include "tpat_constraint.hpp"
-#include "tpat_node.hpp"
-
+#include "tpat_arc_data.hpp"
 #include "matio.h"
 
-#include <vector>
-
 // Forward Declarations
-class tpat_sys_data;
-class tpat_traj;
+class tpat_node;
 
 /**
  *	@brief Similar to tpat_traj, but only holds state data at specific "nodes"
@@ -45,12 +40,13 @@ class tpat_traj;
  *	@see tpat_node
  *
  *	@author Andrew Cox
- *	@version May 21, 2015
+ *	@version 
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset{
-	public:
-		/**
+class tpat_nodset : tpat_arc_data{
+
+public:
+	/**
 		 *	@brief Node distribution type
 		 *
 		 *	Specified how nodes are distributed along an integrated trajectory
@@ -60,62 +56,40 @@ class tpat_nodeset{
 			DISTRO_TIME,	//!< Nodes spread evenly in time
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
-		// *structors
-		tpat_nodeset();
-		tpat_nodeset(const tpat_nodeset&);
-		tpat_nodeset(const tpat_nodeset&, int, int);
+	// *structors
+	tpat_nodeset(tpat_sys_data*);
+	tpat_nodeset(const tpat_nodeset&);
+	tpat_nodeset(const tpat_nodeset&, int, int);
 
-		virtual ~tpat_nodeset();
-		
-		// Operators
-		tpat_nodeset& operator =(const tpat_nodeset&);
+	// Set and Get Functions
+	tpat_constraint getConstraint(int) const;
+	tpat_node getNode(int) const;
+	int getNumCons() const;
+	int getNumNodes() const;
+	double getTOF(int) const;
+	double getTotalTOF() const;
 
-		// Set and Get functions
-		tpat_node getNode(int) const;
-		double getTOF(int) const;
-		double getTotalTOF() const;
-		int getNumCons() const;
-		int getNumNodes() const;
-		node_distro_t getNodeDistro() const;
-		tpat_constraint getConstraint(int) const;
+	void addConstraint(tpat_constraint);
+	void appendNode(tpat_node);
+	void deleteNode(int);
+	void insertNode(int, tpat_node);
 
-		/**
-		 *	Extend this function to return a system data object from derivative classes
-		 *	@return a pointer to the system data object
-		 */
-		virtual tpat_sys_data* getSysData() = 0;
+	void setVelConNodes_allBut(std::vector<int>);
 
-		void addConstraint(tpat_constraint);
-		void appendNode(tpat_node);
-		void deleteNode(int);
-		void insertNode(int, tpat_node);
+	// Utility Functions
+	void clearConstraints();
+	void print();
+	void reverseOrder();
+	void saveToMat(const char*);
+	void initExtraParam();
 
-		void setNodeDistro(node_distro_t);
-		void setVelConNodes_allBut(std::vector<int>);
+protected:
+	void initSetFromICs(double[6], tpat_sys_data*, double, double, int, node_distro_t);
+	void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
+	void saveTOFs(mat_t*);
 
-		// Utility Functions
-		void clearConstraints();
-		void copyMe(const tpat_nodeset&);
-		virtual void print() const = 0;		//!< @brief Output a human-readable description of the nodeset
-		void reverseOrder();
-		void saveToMat(const char*);
+private:
 
-	protected:
-
-		/** How nodes are distributed */
-		node_distro_t nodeDistro = DISTRO_NONE;
-
-		/** A vector of node objects */
-		std::vector<tpat_node> nodes;
-
-		/** Vector of constraints to be applied to this nodeset*/
-		std::vector<tpat_constraint> constraints;
-
-		static void basicConcat(const tpat_nodeset&, const tpat_nodeset&, tpat_nodeset*);
-		void initSetFromICs(double[6], tpat_sys_data*, double, double, int, node_distro_t);
-		void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
-		void saveNodes(mat_t*);
-		void saveTOFs(mat_t*);
 };
 
 #endif

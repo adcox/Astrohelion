@@ -56,7 +56,15 @@ public:
 	void setTol(double);
 
 	// Utility Functions
+
+	/**
+	 *	@brief Saves the object to a Matlab binary file
+	 */
 	virtual void saveToMat(const char*) = 0;
+
+	/**
+	 *	@brief Displays a useful messages about the object
+	 */
 	virtual void print() const = 0;
 
 protected:
@@ -66,10 +74,17 @@ protected:
 	/** A pointer to the system data object that describes the system this arc exists in */
 	tpat_sys_data *sysData;
 
-	/** Number of variables stored in the extraParam vector */
+	/** 
+	 *	Number of variables stored in the extraParam vector. This
+	 *	parameter should be set by the constructor of all derived
+	 *	classes
+	 */
 	int numExtraParam = 0;
 
-	/** Number of elements in each extra parameter */
+	/** 
+	 *	Number of elements in each extra parameter. This parameter
+	 *	should be set by the constructor of all derived classes
+	 */
 	std::vector<int> extraParamRowSize;
 
 	/** Tolerance used to compute this data */
@@ -77,7 +92,7 @@ protected:
 
 	void copyMe(const tpat_arc_data&);
 	void saveAccel(mat_t*);
-	void saveExtraParam(mat_t*, int, int, const char*);
+	void saveExtraParam(mat_t*, int, const char*);
 	void saveState(mat_t*);
 	void saveSTMs(mat_t*);
 };

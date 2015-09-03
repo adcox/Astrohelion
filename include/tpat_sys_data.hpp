@@ -20,6 +20,7 @@
 #ifndef H_SYSDATA
 #define H_SYSDATA
 
+#include "matio.h"
 #include <string>
 #include <vector>
 
@@ -83,6 +84,12 @@ class tpat_sys_data{
 		int getPrimID(int n) const;
 		system_t getType() const;
 		std::string getTypeStr() const;
+
+		/**
+		 *	@brief Save the system data object to a file
+		 *	@param matFile a pointer to an open mat file
+		 */
+		virtual void saveToMat(mat_t *matFile) = 0;
 		
 	protected:
 		/** Number of primaries that exist in this system */

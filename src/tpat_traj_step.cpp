@@ -64,6 +64,12 @@ tpat_traj_step::tpat_traj_step(double *state, double t,
 }//====================================================
 
 /**
+ *	@brief Copy constructor
+ *	@param s a tpat_traj_step reference
+ */
+tpat_traj_step::tpat_traj_step(const tpat_traj_step &s) : tpat_arc_step(s) {}
+
+/**
  *	@brief Create a trajectory step object from a generic arc
  *	step object.
  *
@@ -71,9 +77,7 @@ tpat_traj_step::tpat_traj_step(double *state, double t,
  *	new access methods, not new data objects
  *	@param s a tpat_arc_step reference
  */
-tpat_traj_step::tpat_traj_step(const tpat_arc_step &s){
-	copyMe(s);
-}//====================================================
+tpat_traj_step::tpat_traj_step(const tpat_arc_step &s) : tpat_arc_step(s) {}
 
 //-----------------------------------------------------
 //      Operators

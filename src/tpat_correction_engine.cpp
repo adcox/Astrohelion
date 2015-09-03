@@ -27,18 +27,15 @@
 #include "tpat_correction_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
 #include "tpat_calculations.hpp"
-#include "tpat_constraint.hpp"
-#include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
-#include "tpat_exceptions.hpp"
+#include "tpat_exceptions.hpp" 
 #include "tpat_matrix.hpp"
-#include "tpat_nodeset.hpp"
+#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
-#include "tpat_sys_data.hpp"
-#include "tpat_traj.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
 
 #include <algorithm>
@@ -260,10 +257,13 @@ void tpat_correction_engine::correct_bcr4bpr(tpat_nodeset_bcr4bpr* set){
  *	@param set a pointer to a nodeset
  */
 void tpat_correction_engine::correct(tpat_nodeset *set){
+	// tpat_sys_data::system_t sysType = set->getSysData()->getType();
+
 	// Create structure to store iteration data for easy sharing
+	// iterationData it(set->getSysData());
 	iterationData it;
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
-	it.sysData = set->getSysData();
+	// it.sysData = set->getSysData();
 
 	// Save original nodes for later access (particularly when variable time is off)
 	for(int n = 0; n < set->getNumNodes(); n++){
@@ -272,16 +272,25 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 
 	// Get some basic data from the input nodeset
 	it.numNodes = set->getNumNodes();
-	tpat_sys_data::system_t sysType = set->getSysData()->getType();
+	// tpat_sys_data::spystem_t sysType = set->getSysData()->getType();
 	
 	printVerb(verbose, "Corrector:\n");
 	printVerb(verbose, "  it.numNodes = %d\n", it.numNodes);
 	printVerb(verbose, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
-	// Create specific nodeset objects using static_cast
-	tpat_nodeset_bcr4bpr *bcSet;
-	if(sysType == tpat_sys_data::BCR4BPR_SYS)
-		bcSet = static_cast<tpat_nodeset_bcr4bpr *>(set);
+	// Create model pointer
+	// tpat_model *model;
+	// switch (sysType){
+	// 	case tpat_sys_data::CR3BP_SYS:
+	// 	{
+	// 		tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(set->getSysData());
+	// 		model = crSys->getModel();
+	// 		break;
+	// 	}
+	// 	case
+	// 	default:
+	// 		throw tpat_exception("Not implemented!");
+	// }
 
 	// Dummy code for now; this will be replaced with better code later
 	tpat_model *model = set->getSysData()->getModel();
@@ -293,8 +302,11 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	model->corrector_createContCons(&it, set);
 
 	// Add all extra constraints from the nodeset to the total constraint vector
-	for(int i = 0; i < set->getNumCons(); i++){
-		it.allCons.push_back(set->getConstraint(i));
+	for(int n = 0; n < set->getNumNodes(); n++){
+		std::vector<tpat_constraint> nodeCons = set->getNodeCons(n);
+		for(size_t c = 0; c < nodeCons.size(); c++){
+			it.allCons.push_back(nodeCons[c]);
+		}
 	}
 
 	// Compute number of extra consraint functions to add

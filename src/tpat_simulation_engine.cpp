@@ -304,7 +304,7 @@ std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
     if(traj != NULL && traj != 0){
         std::vector<tpat_event> endEvents;
         for(size_t i = 0; i < eventOccurs.size(); i++){
-            if(eventOccurs[i].stepIx == (int)(traj->getTime()->size() - 1)){
+            if(eventOccurs[i].stepIx == traj->getLength()){
                 endEvents.push_back(events[eventOccurs[i].eventIx]);
             }
         }
@@ -471,7 +471,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             printVerb(verbose, "  initializing CR3BP trajectory\n");
             tpat_sys_data_cr3bp* data = static_cast<tpat_sys_data_cr3bp *>(sysData);
             eomParams = data;
-            traj = new tpat_traj_cr3bp(*data);
+            traj = new tpat_traj_cr3bp(data);
 			break;
         }
         case tpat_sys_data::CR3BP_LTVP_SYS:
@@ -479,7 +479,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             printVerb(verbose, "  initializing CR3BP LTVP trajectory\n");
             tpat_sys_data_cr3bp_ltvp* data = static_cast<tpat_sys_data_cr3bp_ltvp *>(sysData);
             eomParams = data;
-            traj = new tpat_traj_cr3bp_ltvp(*data);
+            traj = new tpat_traj_cr3bp_ltvp(data);
             break;
         }
 		case tpat_sys_data::BCR4BPR_SYS:
@@ -487,7 +487,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             printVerb(verbose, "  initializing BCR4BPR trajectory\n");
             tpat_sys_data_bcr4bpr* data = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
             eomParams = data;
-            traj = new tpat_traj_bcr4bpr(*data);
+            traj = new tpat_traj_bcr4bpr(data);
 			break;
         }
 		default:
@@ -666,8 +666,6 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
         printVerb(verbose, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
             events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
-
-    traj->setLength();
 }//===============================================END of cr3bp_integrate
 
 /**
@@ -698,7 +696,7 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
  *  @return whether or not the simulation should end (an event triggers killSim)
  */
 bool tpat_simulation_engine::locateEvents(const double *y, double t){
-    int numPts = traj->getTime()->size();
+    int numPts = traj->getLength();
     tpat_model *model = sysData->getModel();
     
     // Look through all events
@@ -732,8 +730,8 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
             // Use correction to locate the event very accurately
             if(model->sim_locateEvent(events.at(ev), traj, model, &(generalIC[0]), t0, tof, verbose)){
                 // Remember that this event has occured; step # is one less than the current size
-                // of the trajectory's time vector
-                int timeSize = traj->getTime()->size();
+                // of the trajectory
+                int timeSize = traj->getLength();
                 eventRecord rec(ev, timeSize - 1);
                 eventOccurs.push_back(rec);
 

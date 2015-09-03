@@ -41,17 +41,20 @@ class tpat_traj_step;
  *	@version August 29, 2015
  *	@copyright GNU GPL v3.0
  */
-class traj : public tpat_arc_data{
+class tpat_traj : public tpat_arc_data{
 
 public:
 	// *structors
 	tpat_traj(tpat_sys_data*);
 	tpat_traj(const tpat_traj&);
-
+	tpat_traj(const tpat_arc_data&);
+	
 	// Set and Get Functions
 	double getTime(int) const;
 	tpat_traj_step getStep(int) const;
 
+	void appendStep(tpat_traj_step);
+	
 	// Utility Functions
 	void saveToMat(const char*);
 	void print() const;

@@ -29,11 +29,13 @@
 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_event.hpp"
+#include "tpat_matrix.hpp"
+#include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_event.hpp"
-#include "tpat_matrix.hpp"
+#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 /**
@@ -120,32 +122,25 @@ std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysDat
  */
 void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
     // Save the position and velocity states
-    for(int i = 0; i < 6; i++){
-        traj->getState()->push_back(y[i]);
-    }
-
-    // Save time
-    traj->getTime()->push_back(t);
+    double state[6];
+    std::copy(y, y+6, state);
 
     // Save STM
     double stmElm[36];
     std::copy(y+6, y+42, stmElm);
-    traj->getSTM()->push_back(tpat_matrix(6,6,stmElm));
 
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    tpat_traj_cr3bp *cr3bpTraj = static_cast<tpat_traj_cr3bp*>(traj);
-    tpat_sys_data_cr3bp sysData = cr3bpTraj->getSysData();
+    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
 
-    // Compute acceleration
+    // Compute acceleration (elements 3 - 5)
     double dsdt[6] = {0};
-    cr3bp_simple_EOMs(0, y, dsdt, &sysData);
+    cr3bp_simple_EOMs(0, y, dsdt, crSys);
 
-    // Save the accelerations
-    traj->getAccel()->push_back(dsdt[3]);
-    traj->getAccel()->push_back(dsdt[4]);
-    traj->getAccel()->push_back(dsdt[5]);
-    
-    cr3bpTraj->getJacobi()->push_back(cr3bp_getJacobi(y, sysData.getMu()));
+    tpat_traj_step step(state, t, dsdt+3, stmElm);
+    traj->appendStep(step);
+
+    tpat_traj_cr3bp *cr3bpTraj = static_cast<tpat_traj_cr3bp*>(traj);    
+    cr3bpTraj->setJacobi(-1, cr3bp_getJacobi(y, crSys->getMu()));
 }//=====================================================
 
 /**
@@ -169,12 +164,11 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
 bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
     double *ic, double t0, double tof, bool verbose){
 
-    // Copy system data object
-    tpat_traj_cr3bp *crTraj = static_cast<tpat_traj_cr3bp *>(traj);
+    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
 
     // Create a nodeset for this particular type of system
     printVerb(verbose, "  Creating nodeset for event location\n");
-    tpat_nodeset_cr3bp eventNodeset(ic, crTraj->getSysData(), tof, 2, tpat_nodeset::DISTRO_TIME);
+    tpat_nodeset_cr3bp eventNodeset(ic, crSys, tof, 2, tpat_nodeset::DISTRO_TIME);
 
     // Constraint to keep first node unchanged
     tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, ic, 6);
@@ -305,14 +299,13 @@ tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, tpat_n
 
     // Create a nodeset with the same system data as the input
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(it->sysData);
-    tpat_nodeset_cr3bp *nodeset_out = new tpat_nodeset_cr3bp(*crSys);
-    nodeset_out->setNodeDistro(tpat_nodeset::DISTRO_NONE);
+    tpat_nodeset_cr3bp *nodeset_out = new tpat_nodeset_cr3bp(crSys);
 
     int numNodes = (int)(it->origNodes.size());
     for(int i = 0; i < numNodes; i++){
-        tpat_node node;
-        node.setPosVelState(&(it->X[i*6]));
+        tpat_node node(&(it->X[i*6]), NAN);
         node.setVelCon(nodes_in->getNode(i).getVelCon());
+        node.setConstraints(nodes_in->getNode(i).getConstraints());
 
         if(i + 1 < numNodes){
             node.setTOF(it->X[numNodes*6 + i]);
@@ -334,11 +327,6 @@ tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, tpat_n
             }
         }
         nodeset_out->appendNode(node);
-    }
-
-    // Save all the original constraints
-    for(int n = 0; n < nodes_in->getNumCons(); n++){
-        nodeset_out->addConstraint(nodes_in->getConstraint(n));
     }
 
     return nodeset_out;

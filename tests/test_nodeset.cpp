@@ -24,8 +24,10 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_exceptions.hpp"
 
@@ -43,10 +45,10 @@ tpat_nodeset_bcr4bpr *bcSet;
 void test_concat_CR3BP(){
 	tpat_sys_data_cr3bp sys("Saturn", "Titan");
 	tpat_sys_data_cr3bp emSys("earth", "moon");
-	tpat_nodeset_cr3bp set1(sys);
-	tpat_nodeset_cr3bp set2(sys);
-	tpat_nodeset_cr3bp set3(sys);
-	tpat_nodeset_cr3bp set4(emSys);
+	tpat_nodeset_cr3bp set1(&sys);
+	tpat_nodeset_cr3bp set2(&sys);
+	tpat_nodeset_cr3bp set3(&sys);
+	tpat_nodeset_cr3bp set4(&emSys);
 
 	double node1[] = {1,0,0,0,0,0};
 	double node2[] = {2,1,0,0,0,0};
@@ -91,7 +93,7 @@ void test_createCR3BPNodeset(){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	crSet = new tpat_nodeset_cr3bp(ic, sysData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
+	crSet = new tpat_nodeset_cr3bp(ic, &sysData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
@@ -115,8 +117,11 @@ void test_createCR3BPNodeset(){
 		}
 	}
 	cout << " Constraints:" << endl;
-	for(int n = 0; n < crSet->getNumCons(); n++){
-		crSet->getConstraint(n).print();
+	for(int n = 0; n < crSet->getNumNodes(); n++){
+		std::vector<tpat_constraint> nodeCons = crSet->getNodeCons(n);
+		for(size_t c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].print();
+		}
 	}
 }//==============================================
 
@@ -124,7 +129,7 @@ void test_createBCR4BPRNodeset(){
 	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new tpat_nodeset_bcr4bpr(ic2, semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
+	bcSet = new tpat_nodeset_bcr4bpr(ic2, &semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
@@ -145,8 +150,11 @@ void test_createBCR4BPRNodeset(){
 			node.at(4), node.at(5));
 	}
 	cout << " Constraints:" << endl;
-	for(int n = 0; n < bcSet->getNumCons(); n++){
-		bcSet->getConstraint(n).print();
+	for(int n = 0; n < bcSet->getNumNodes(); n++){
+		std::vector<tpat_constraint> nodeCons = bcSet->getNodeCons(n);
+		for(size_t c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].print();
+		}
 	}
 }//==============================================
 

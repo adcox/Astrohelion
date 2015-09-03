@@ -31,19 +31,21 @@
 #include "tpat_calculations.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
 #include "tpat_constants.hpp"
 #include "tpat_correction_engine.hpp"
-#include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
-#include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
+#include "tpat_node.hpp"
+#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj.hpp"
+#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_cr3bp.hpp"
+#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 #include "cspice/SpiceUsr.h"
@@ -950,9 +952,9 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
     tpat_matrix vecs = trans(temp); // Transpose so eigenvectors are columns
 
     // NOW, copute the manifolds!
-    tpat_simulation_engine sim(perOrbit->getSysDataPtr());
+    tpat_simulation_engine sim(perOrbit->getSysData());
     double stepDist = 200;
-    double charL = perOrbit->getSysDataPtr()->getCharL();
+    double charL = perOrbit->getSysData()->getCharL();
     for(int n = 0; n < numMans; n++){
         // Transform the eigenvectors to this updated time
         tpat_matrix newVecs = perOrbit->getSTM(pointIx[n])*vecs;
@@ -1307,39 +1309,35 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
 tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, double thetaE0, double thetaM0, double gamma){
     // Create a trajectory in the Sun-Earth system
     tpat_sys_data_cr3bp SESys("sun", "earth");
-    tpat_traj_cr3bp SETraj(SESys);
-    std::vector<double>* state = SETraj.getState();
+    tpat_traj_cr3bp SETraj(&SESys);
 
-    double charTE = EMTraj.getSysData().getCharT();     // characteristic time in EM system
-    double charLE = EMTraj.getSysData().getCharL();     // characteristic length in EM system
+    double charTE = EMTraj.getSysData()->getCharT();     // characteristic time in EM system
+    double charLE = EMTraj.getSysData()->getCharL();     // characteristic length in EM system
     double charTS = SESys.getCharT();                   // characteristic time in SE system
     double charLS = SESys.getCharL();                   // characteristic length in SE system
 
-    for(int n = 0; n < ((int)EMTraj.getTime()->size()); n++){
+    for(int n = 0; n < EMTraj.getLength(); n++){
 
         // Transform the state from EM coordinates to SE coordinates
         std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SESys.getMu());
 
+        // Adjust time to correct non-dim units
+        double t = EMTraj.getTime(n)*charTE/charTS;
+
+        // Create bogus accel and STM
+        double accel[] = {NAN, NAN, NAN};
+        tpat_matrix stm = tpat_matrix::I(6);
+
+        // Create a new step
+        tpat_traj_step step(&(state_SE[0]), t, accel, stm.getDataPtr());
+
+        SETraj.appendStep(step);
+        
         // Recompute Jacobi
-        SETraj.getJacobi()->push_back(cr3bp_getJacobi(&(state_SE[0]), SESys.getMu()));
-
-        // Copy transformed state into new vector
-        state->insert(state->end(), state_SE.begin(), state_SE.end());
-
-        // Re-Scale Time
-        SETraj.getTime()->push_back(EMTraj.getTime(n)*charTE/charTS);
-
-        // Put in a bogus STM
-        SETraj.getSTM()->push_back(tpat_matrix::I(6));
-
-        // Put in a bogus acceleration
-        SETraj.getAccel()->push_back(NAN);
-        SETraj.getAccel()->push_back(NAN);
-        SETraj.getAccel()->push_back(NAN);
+        SETraj.setJacobi(-1, cr3bp_getJacobi(&(state_SE[0]), SESys.getMu()));
     }
 
-    SETraj.setLength();
     return SETraj; 
 }//=========================================================
 
@@ -1364,7 +1362,7 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double the
     double gamma){
 
     tpat_sys_data_cr3bp SESys("sun", "earth");
-    tpat_nodeset_cr3bp SENodes(SESys);
+    tpat_nodeset_cr3bp SENodes(&SESys);
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
@@ -1412,42 +1410,37 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double the
 tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, double thetaE0, double thetaM0, double gamma){
     // Create a trajectory in the Earth-Moon system
     tpat_sys_data_cr3bp EMSys("earth", "moon");
-    tpat_traj_cr3bp EMTraj(EMSys);
-    std::vector<double>* state = EMTraj.getState();
+    tpat_traj_cr3bp EMTraj(&EMSys);
 
     // Shift coordinates to EM barcyenter from SE barycenter
-    tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - SETraj.getSysData().getMu());
+    tpat_sys_data_cr3bp *seSys = static_cast<tpat_sys_data_cr3bp*>(SETraj.getSysData());
+    tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - seSys->getMu());
 
     double charTE = EMSys.getCharT();               // characteristic time in EM system
     double charLE = EMSys.getCharL();               // characteristic length in EM system
-    double charTS = SETraj.getSysData().getCharT(); // characteristic time in SE system
-    double charLS = SETraj.getSysData().getCharL(); // characteristic length in SE system
+    double charTS = SETraj.getSysData()->getCharT(); // characteristic time in SE system
+    double charLS = SETraj.getSysData()->getCharL(); // characteristic length in SE system
 
-    for(int n = 0; n < ((int)SETraj.getTime()->size()); n++){
+    for(int n = 0; n < SETraj.getLength(); n++){
         
         // Transform the state from SE coordinates to EM coordinates
         std::vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
-            thetaM0, gamma, charLE, charTE, charLS, charTS, SETraj.getSysData().getMu());
+            thetaM0, gamma, charLE, charTE, charLS, charTS, seSys->getMu());
+        
+        // Rescale Time
+        double t = SETraj.getTime(n)*charTS/charTE;
+
+        // Bogus values for accel and STM
+        double accel[] = {NAN, NAN, NAN};
+        tpat_matrix stm = tpat_matrix::I(6);
+
+        tpat_traj_step step(&(state_EM[0]), t, accel, stm.getDataPtr());
+        EMTraj.appendStep(step);
 
         // Recompute Jacobi
-        EMTraj.getJacobi()->push_back(cr3bp_getJacobi(&(state_EM[0]), EMSys.getMu()));
-
-        // Copy transformed state into new vector
-        state->insert(state->end(), state_EM.begin(), state_EM.end());
-
-        // Re-Scale Time
-        EMTraj.getTime()->push_back(SETraj.getTime(n)*charTS/charTE);
-
-        // Put in a bogus STM
-        EMTraj.getSTM()->push_back(tpat_matrix::I(6));
-
-        // Put in a bogus acceleration
-        EMTraj.getAccel()->push_back(NAN);
-        EMTraj.getAccel()->push_back(NAN);
-        EMTraj.getAccel()->push_back(NAN);
+        EMTraj.setJacobi(-1, cr3bp_getJacobi(&(state_EM[0]), EMSys.getMu()));
     }
 
-    EMTraj.setLength();
     return EMTraj; 
 }//=========================================================
 
@@ -1473,7 +1466,7 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, double t0, double the
 
     tpat_sys_data_cr3bp EMSys("earth", "moon");
     tpat_sys_data_cr3bp SESys("sun", "earth");
-    tpat_nodeset_cr3bp EMNodes(EMSys);
+    tpat_nodeset_cr3bp EMNodes(&EMSys);
 
     double charTE = EMSys.getCharT();                   // characteristic time in EM system
     double charLE = EMSys.getCharL();                   // characteristic length in EM system
@@ -1731,7 +1724,7 @@ void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr sysData, double *prim
  *  @return a BCR4BPR Trajectory object
  */
 tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr bcSys, double t0){
-    if(crTraj.getSysData().getPrimID(0) != 10 || crTraj.getSysData().getPrimID(1) != 399){
+    if(crTraj.getSysData()->getPrimID(0) != 10 || crTraj.getSysData()->getPrimID(1) != 399){
         throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
@@ -1740,16 +1733,10 @@ tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr b
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_traj_bcr4bpr bcTraj(bcSys);
+    tpat_traj_bcr4bpr bcTraj(&bcSys);
 
-    std::vector<double>* state = bcTraj.getState();
-    std::vector<double>* accel = bcTraj.getAccel();
-    std::vector<double>* times = bcTraj.getTime();
-    std::vector<double>* dqdT = bcTraj.get_dqdT();
-    std::vector<tpat_matrix>* STMs = bcTraj.getSTM();
-
-    double charL2 = crTraj.getSysData().getCharL();
-    double charT2 = crTraj.getSysData().getCharT();
+    double charL2 = crTraj.getSysData()->getCharL();
+    double charT2 = crTraj.getSysData()->getCharT();
     double charL3 = bcSys.getCharL();
     double charT3 = bcSys.getCharT();
 
@@ -1757,27 +1744,34 @@ tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr b
 
     for(int n = 0; n < crTraj.getLength(); n++){
         std::vector<double> crState = crTraj.getState(n);
-        for(int r = 0; r < tpat_traj_cr3bp::STATE_SIZE; r++){
+
+        double bcState[6];
+        for(int r = 0; r < 6; r++){
             if(r < 3)   // Convert position
-                state->push_back(crState[r]*charL2/charL3);
+                bcState[r] = crState[r]*charL2/charL3;
             else if(r < 6)  // Convert velocity
-                state->push_back(crState[r]*(charL2/charL3)*(charT3/charT2));
+                bcState[r] = crState[r]*(charL2/charL3)*(charT3/charT2);
         }
 
         // Convert acceleration
         std::vector<double> crAccel = crTraj.getAccel(n);
-        for(int r = 0; r < tpat_traj_cr3bp::ACCEL_SIZE; r++){
-            accel->push_back(crAccel[r]*(charL2/charL3)*(charT3/charT2)*(charT3/charT2));
+        double bcAccel[3];
+        for(int r = 0; r < 3; r++){
+            bcAccel[r] = crAccel[r]*(charL2/charL3)*(charT3/charT2)*(charT3/charT2);
         }
         
-        times->push_back(crTraj.getTime(n)*charT2/charT3 + t0);
+        double t = crTraj.getTime(n)*charT2/charT3 + t0;
 
-        // Put bogus values into dqdT and STMs and accel
-        dqdT->insert(dqdT->end(), blank.begin(), blank.end());
-        STMs->push_back(tpat_matrix::I(6));
+        // Bogus values for dqdT and STM
+        double dqdT[] = {NAN, NAN, NAN, NAN, NAN, NAN};
+        tpat_matrix stm = tpat_matrix::I(6);
+
+        // Create step
+        tpat_traj_step step(bcState, t, bcAccel, stm.getDataPtr());
+        bcTraj.appendStep(step);
+        bcTraj.set_dqdT(-1, dqdT);
     }
 
-    bcTraj.setLength();
     return bcTraj;
 }//==================================================
 
@@ -1801,7 +1795,7 @@ tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bc
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_nodeset_bcr4bpr bcNodes(bcSys);
+    tpat_nodeset_bcr4bpr bcNodes(&bcSys);
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();

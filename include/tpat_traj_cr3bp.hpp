@@ -21,8 +21,11 @@
 #ifndef H_CR3BP_TRAJ
 #define H_CR3BP_TRAJ
 
-// Forward Declarations
+#include "tpat_traj.hpp"
 
+// Forward Declarations
+class tpat_nodeset_cr3bp;
+class tpat_sys_data_cr3bp;
 
 /**
  *	@brief A derivative class of the tpat_traj object, contains 
@@ -35,12 +38,21 @@
 class tpat_traj_cr3bp : public tpat_traj{
 
 public:
-	tpat_traj_cr3bp(tpat_sys_data*);
+	// *structors
+	tpat_traj_cr3bp(tpat_sys_data_cr3bp*);
+	tpat_traj_cr3bp(const tpat_traj_cr3bp&);
+	tpat_traj_cr3bp(const tpat_arc_data&);
 	
-protected:
+	static tpat_traj_cr3bp fromNodeset(tpat_nodeset_cr3bp);
+	
+	// Set and Get Functions
+	double getJacobi(int) const;
+
+	void setJacobi(int, double);
 
 private:
-
+	void initExtraParam();
+	
 };
 
 #endif

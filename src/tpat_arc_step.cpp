@@ -27,8 +27,10 @@
 
 #include "tpat_arc_step.hpp"
 
-#include "tpat_exception.hpp"
+#include "tpat_exceptions.hpp"
+#include "tpat_matrix.hpp"
 
+#include <cmath>
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
@@ -149,6 +151,14 @@ void tpat_arc_step::removeConstraint(int ix){
 	constraints.erase(constraints.begin() + ix);
 }//====================================================
 
+/**
+ *	@brief Set the list of constraints for this arc step
+ *	@param cons a vector of constraints
+ */
+void tpat_arc_step::setConstraints(std::vector<tpat_constraint> cons){
+	constraints = cons;
+}//====================================================
+
 std::vector<double> tpat_arc_step::getAccel() const{
 	return std::vector<double>(accel, accel+3);
 }//====================================================
@@ -157,8 +167,21 @@ std::vector<tpat_constraint> tpat_arc_step::getConstraints() const{
 	return constraints;
 }//====================================================
 
+/**
+ *	@brief Access the value of the specified extra parameter
+ *	@param ix the index of the parameter. If ix < 0, it will
+ *	count backwards from the end of the array
+ *	@return the value of the paramter associated with the 
+ *	input index
+ */
 double tpat_arc_step::getExtraParam(int ix) const {
-	return extraParam.at(ix);
+	if(ix < 0)
+		ix += extraParam.size();
+
+	if(ix < 0 || ix >= (int)(extraParam.size()))
+		throw tpat_exception("tpat_arc_step::getExtraParam: Cannot access extra param; index too high");
+
+	return extraParam[ix];
 }//====================================================
 
 std::vector<double> tpat_arc_step::getExtraParams() const {
@@ -170,7 +193,9 @@ std::vector<double> tpat_arc_step::getPosVelState() const {
 }//====================================================
 
 tpat_matrix tpat_arc_step::getSTM() const {
-	return tpat_matrix(6,6,stm);
+	double el[36];
+	std::copy(stm, stm+36, el);
+	return tpat_matrix(6, 6, el);
 }//====================================================
 
 std::vector<double> tpat_arc_step::getSTMElements() const {

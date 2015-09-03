@@ -27,6 +27,9 @@
 #include "matio.h"
 #include <vector>
 
+// Forward Declarations
+class tpat_matrix;
+
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
  */
@@ -40,7 +43,7 @@ public:
 
 	// Operators
 	tpat_arc_data& operator =(const tpat_arc_data&);
-	friend tpat_arc_data& operator +(const tpat_arc_data&, const tpat_arc_data&);
+	tpat_arc_data& operator +(const tpat_arc_data&);
 
 	// Set and Get functions
 	std::vector<double> getAccel(int) const;
@@ -53,6 +56,7 @@ public:
 	tpat_sys_data* getSysData();
 	double getTol() const;
 
+	void appendStep(tpat_arc_step);
 	void setTol(double);
 
 	// Utility Functions
@@ -72,7 +76,7 @@ protected:
 	std::vector<tpat_arc_step> steps;
 
 	/** A pointer to the system data object that describes the system this arc exists in */
-	tpat_sys_data *sysData;
+	tpat_sys_data *sysData = 0;
 
 	/** 
 	 *	Number of variables stored in the extraParam vector. This
@@ -94,6 +98,7 @@ protected:
 	void saveAccel(mat_t*);
 	void saveExtraParam(mat_t*, int, const char*);
 	void saveState(mat_t*);
+	void saveState(mat_t*, const char*);
 	void saveSTMs(mat_t*);
 };
 

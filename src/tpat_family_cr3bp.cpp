@@ -315,6 +315,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 		return matchMembers;	// empty set
 	}
 
+	tpat_sys_data_cr3bp tempSys = sysData;
 	
 	for(int n = 0; n < ((int)matches.size()); n++){
 		int idx = matches[n];
@@ -325,7 +326,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 		}else{	// If not, employ corrections
 			
 			// Create a nodeset and a constraint to make the orbit periodic
-			tpat_nodeset_cr3bp memberSet(members[idx].getIC(), sysData, members[idx].getTOF(), numNodes);
+			tpat_nodeset_cr3bp memberSet(members[idx].getIC(), &tempSys, members[idx].getTOF(), numNodes);
 			double end = numNodes-1;
 			double conData[] = {end,end,end,end,end,end};
 			tpat_constraint periodicCon(tpat_constraint::MATCH_CUST, 0, conData, 6);

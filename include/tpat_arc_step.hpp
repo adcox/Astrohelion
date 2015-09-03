@@ -44,7 +44,7 @@ public:
 
 	// Set and Get functions
 	std::vector<double> getAccel() const;
-	std::vector<tpat_constraint> getConstraints const;
+	std::vector<tpat_constraint> getConstraints() const;
 	double getExtraParam(int) const;
 	std::vector<double> getExtraParams() const;
 	std::vector<double> getPosVelState() const;
@@ -54,7 +54,8 @@ public:
 	void addConstraint(tpat_constraint);
 	void clearConstraints();
 	void removeConstraint(int);
-
+	void setConstraints(std::vector<tpat_constraint>);
+	
 	void setAccel(double*);
 	void setAccel(std::vector<double>);
 	void setExtraParam(int, double);

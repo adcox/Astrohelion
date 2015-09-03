@@ -18,39 +18,39 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_NODE
-#define H_TPAT_NODE
+#ifndef H_CR3BP_LTVP_TRAJ
+#define H_CR3BP_LTVP_TRAJ
 
-#include "tpat_arc_step.hpp"
+#include "tpat_traj.hpp"
+
+// Forward Declarations
+class tpat_sys_data_cr3bp_ltvp;
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief A derivative class of the tpat_traj object, which
+ *	contains trajectory information specific to the Low Thrust, 
+ *	Velocity-Pointing CR3BP
  *
- *	Values Stored in ExtraParam:
- *	* 0 	- 	Node time-of-flight
+ *	@author Andrew Cox
+ *	@version September 2, 2015
+ *	@copyright GNU GPL v3.0
  */
-class tpat_node : public tpat_arc_step{
+class tpat_traj_cr3bp_ltvp : public tpat_traj{
+
 public:
 	// *structors
-	tpat_node(double*, double);
-	tpat_node(std::vector<double>, double);
-	tpat_node(const tpat_node&);
-	tpat_node(const tpat_arc_step&);
+	tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp*);
+	tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp&);
+	tpat_traj_cr3bp_ltvp(const tpat_arc_data&);
 	
 	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
+	double getJacobi(int) const;
+	double getMass(int) const;
 
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
-
+	void setJacobi(int, double);
+	void setMass(int, double);
 private:
-	void initArrays();
-	
+	void initExtraParam();
 };
 
 #endif

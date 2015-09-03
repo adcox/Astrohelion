@@ -28,7 +28,6 @@
 #include "tpat_constants.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_nodeset_cr3bp.hpp"
 
 //-----------------------------------------------------
 // 		Constructors

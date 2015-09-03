@@ -297,7 +297,7 @@ bool test_eig(){
 
 	bool check_vec6 = std::real(vecs[3]) == std::real(vecs[6]) && std::imag(vecs[3]) == -1*std::imag(vecs[6]);
 	check_vec6 = check_vec6 && std::real(vecs[4]) == std::real(vecs[7]) && std::imag(vecs[4]) == -1*std::imag(vecs[7]);
-	check_vec6 = check_vec6 && std::real(vecs[5]) == std::real(vecs[8]) && std::imag(vecs[5]) == -1*istd::mag(vecs[8]);
+	check_vec6 = check_vec6 && std::real(vecs[5]) == std::real(vecs[8]) && std::imag(vecs[5]) == -1*std::imag(vecs[8]);
 	
 	bool matrix2Pass = check4 && check5 && check6 && check_vec4 && check_vec5 && check_vec6;
 

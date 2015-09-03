@@ -19,8 +19,13 @@ protected:
 class Square : public Rectangle{
 public:
 	Square() { printMsg(); }
+	void copyBool(bool array[3]){
+
+	}
 protected:
 	void printMsg() { printf("Square\n"); }
+private:
+	
 };
 
 int main(){

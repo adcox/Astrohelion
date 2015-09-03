@@ -27,14 +27,15 @@
  
 #include "tpat_family_generator.hpp"
 
+#include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
+#include "tpat_linear_motion_engine.hpp"
+#include "tpat_matrix.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_constraint.hpp"
-#include "tpat_linear_motion_engine.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -351,7 +352,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 
 	std::vector<tpat_traj_cr3bp> members;
 	while(orbitCount < numOrbits){
-		tpat_traj_cr3bp perOrbit;
+		tpat_traj_cr3bp perOrbit(&sys);
 		try{
 			printf("IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);

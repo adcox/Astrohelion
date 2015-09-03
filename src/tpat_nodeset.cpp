@@ -31,6 +31,14 @@
 
 #include "tpat_nodeset.hpp"
 
+#include "tpat_exceptions.hpp"
+#include "tpat_node.hpp"
+#include "tpat_simulation_engine.hpp"
+#include "tpat_traj.hpp"
+#include "tpat_utilities.hpp"
+
+#include <cmath>
+
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
@@ -40,6 +48,10 @@ tpat_nodeset::tpat_nodeset(tpat_sys_data *sys) : tpat_arc_data(sys){
 }//====================================================
 
 tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arc_data (n){
+	initExtraParam();
+}//====================================================
+
+tpat_nodeset::tpat_nodeset(const tpat_arc_data &a) : tpat_arc_data (a){
 	initExtraParam();
 }//====================================================
 
@@ -96,7 +108,7 @@ double tpat_nodeset::getTOF(int ix) const {
 
 double tpat_nodeset::getTotalTOF() const {
 	double total = 0;
-	for(size_t i = 0; i < steps.size(); i++){
+	for(size_t ix = 0; ix < steps.size(); ix++){
 		tpat_node node(steps[ix]);
 		total += node.getTOF();
 	}
@@ -105,7 +117,7 @@ double tpat_nodeset::getTotalTOF() const {
 }//====================================================
 
 void tpat_nodeset::addConstraint(tpat_constraint con){
-	if(con.getNode() > 0 && con.getNode() < steps.size()){
+	if(con.getNode() >= 0 && con.getNode() < (int)(steps.size())){
 		steps[con.getNode()].addConstraint(con);
 	}else{
 		throw tpat_exception("tpat_nodeset::addConstraint: constraint node out of range");
@@ -150,7 +162,7 @@ void tpat_nodeset::clearConstraints() {
 		steps[i].clearConstraints();
 }//====================================================
 
-void tpat_nodeset::print() {
+void tpat_nodeset::print() const{
 	printf("Someday this may something useful!\n");
 }//====================================================
 
@@ -162,16 +174,16 @@ void tpat_nodeset::print() {
  *	have changed.
  */
 void tpat_nodeset::reverseOrder() {
-	for(int n = 0; n < floor(steps.size()/2); n++){
+	for(int n = 0; n < std::floor(steps.size()/2); n++){
 		std::swap(steps[n], steps[steps.size()-n-1]);
 	}
 
 	// Make first node discontinuous in velocity (no preceding node)
 	// and the last node continuous (no previous info about its continuity)
-	tpat_node *first = static_cast<tpat_node*>(steps[0]);
-	tpat_node *last = static_cast<tpat_node*>(steps[steps.size()-1]);
+	tpat_node *first = static_cast<tpat_node*>(&steps[0]);
+	tpat_node *last = static_cast<tpat_node*>(&steps[steps.size()-1]);
 	first->setVel_AllDiscon();
-	last->setVal_AllCon();
+	last->setVel_AllCon();
 }//====================================================
 
 /**
@@ -194,7 +206,7 @@ void tpat_nodeset::saveToMat(const char* filename){
 	if(NULL == matfp){
 		printErr("Error creating MAT file\n");
 	}else{
-		saveNodes(matfp);
+		saveState(matfp, "Nodes");
 		saveTOFs(matfp);
 		// TODO: Add these functions:
 		// saveCons(matfp);
@@ -220,6 +232,8 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 	tpat_simulation_engine engine(sysData);
 	engine.setVerbose(false);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
+
+	node_distro_t nodeDistro = tpat_nodeset::DISTRO_NONE;
 
 	switch(type){
 		default:
@@ -340,10 +354,11 @@ void tpat_nodeset::initSetFromTraj(tpat_traj traj, tpat_sys_data *sysData, int n
 	initSetFromICs(ic, sysData, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
 }//==============================================
 
-void tpat_nodeset::saveTOFs(mat_t *file){
+void tpat_nodeset::saveTOFs(mat_t *matFile){
 	std::vector<double> tofs;
 	for(size_t n = 0; n < steps.size()-1; n++){
-		tofs.push_back(steps[n].getTOF());
+		tpat_node *node = static_cast<tpat_node*>(&steps[n]);
+		tofs.push_back(node->getTOF());
 	}
 	size_t dims[2] = {tofs.size(), 1};
 	matvar_t *matvar = Mat_VarCreate("TOFs", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(tofs[0]), MAT_F_DONT_COPY_DATA);

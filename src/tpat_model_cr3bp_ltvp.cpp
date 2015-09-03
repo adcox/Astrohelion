@@ -29,10 +29,11 @@
 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_event.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
-#include "tpat_event.hpp"
+#include "tpat_traj_step.hpp"
 #include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
 
@@ -122,37 +123,31 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, tpat_sys_data *s
  */
 void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
 	// Save the position and velocity states
-    for(int i = 0; i < 6; i++){
-        traj->getState()->push_back(y[i]);
-    }
-
-    // Save time
-    traj->getTime()->push_back(t);
+    double state[6];
+    std::copy(y, y+6, state);
 
     // Save STM
     double stmElm[36];
     std::copy(y+6, y+42, stmElm);
-    traj->getSTM()->push_back(tpat_matrix(6,6,stmElm));
 
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    tpat_traj_cr3bp_ltvp *cr3bpTraj = static_cast<tpat_traj_cr3bp_ltvp*>(traj);
-    tpat_sys_data_cr3bp_ltvp sysData = cr3bpTraj->getSysData();
+    tpat_sys_data_cr3bp_ltvp *ltSys = static_cast<tpat_sys_data_cr3bp_ltvp*>(traj->getSysData());
 
-    // Compute acceleration
+    // Compute acceleration (elements 3 - 5)
     double dsdt[6] = {0};
-    cr3bp_ltvp_simple_EOMs(t, y, dsdt, &sysData);
+    cr3bp_ltvp_simple_EOMs(t, y, dsdt, ltSys);
 
-    // Save the accelerations
-    traj->getAccel()->push_back(dsdt[3]);
-    traj->getAccel()->push_back(dsdt[4]);
-    traj->getAccel()->push_back(dsdt[5]);
+    tpat_traj_step step(state, t, dsdt+3, stmElm);
+    traj->appendStep(step);
+
+    tpat_traj_cr3bp_ltvp *cr3bpTraj = static_cast<tpat_traj_cr3bp_ltvp*>(traj);
 
     // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
-    cr3bpTraj->getJacobi()->push_back(cr3bp_getJacobi(y, sysData.getMu()));
+    cr3bpTraj->setJacobi(-1, cr3bp_getJacobi(y, ltSys->getMu()));
 
     // Compute and save mass of s/c; assumes t began at 0
-    double g0_nonDim = G_GRAV_0*sysData.getCharT()*sysData.getCharT()/sysData.getCharL();
-    cr3bpTraj->getMass()->push_back(sysData.getM0() - sysData.getThrust()/(sysData.getIsp()*g0_nonDim) * t);
+    double g0_nonDim = G_GRAV_0*ltSys->getCharT()*ltSys->getCharT()/ltSys->getCharL();
+    cr3bpTraj->setMass(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
 }//=====================================================
 
 /**
@@ -194,6 +189,6 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj, t
  *  @param findEvent whether or not this correction process is locating an event
  */
 tpat_nodeset* tpat_model_cr3bp_ltvp::corrector_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
-
-    return new tpat_nodeset_cr3bp;
+    tpat_sys_data_cr3bp_ltvp *sys = static_cast<tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
+    return new tpat_nodeset_cr3bp(sys);
 }//====================================================

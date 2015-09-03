@@ -28,6 +28,9 @@
 #include "tpat_arc_data.hpp"
 
 #include "tpat_sys_data.hpp"
+#include "tpat_exceptions.hpp"
+#include "tpat_matrix.hpp"
+#include "tpat_utilities.hpp"
 
 //-----------------------------------------------------
 //      *structors
@@ -67,46 +70,35 @@ tpat_arc_data::~tpat_arc_data(){
  *	@param d an arc_data reference
  *	@return a reference to this arc_data object
  */
-tpat_arc_data& tpat_arc_data:operator =(const tpat_arc_data &d){
+tpat_arc_data& tpat_arc_data::operator =(const tpat_arc_data &d){
 	copyMe(d);
 	return *this;
 }//====================================================
 
-/**
- *	@brief Concatenate two arc_data objects
- *
- *	If the two are continuous (i.e. the final state of lhs is the same as the
- *	initial state of rhs), then the identical state will only be included once.
- *
- *	@param lhs an arc_data reference
- *	@param rhs an arc_data reference
- *	@return a new arc_data object that is the combination (concatenation) of 
- *	rhs and lhs
- */
-tpat_arc_data& operator +(const tpat_arc_data &lhs, const tpat_arc_data &rhs){
-	if(*(lhs.sysData) != *(rhs.sysData))
+tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
+	if( *sysData != *(rhs.sysData))
 		throw tpat_exception("tpat_arc_data::+: Cannot concatenate data sets from different systems");
 
-	if(lhs.steps.size() == 0)
-		return rhs;
+	if(steps.size() == 0){
+		copyMe(rhs);
+		return *this;
+	}
 
 	if(rhs.steps.size() == 0)
-		return lhs;
+		return *this;
 
 	int skipShift = 0;
-	double tol = lhs.tol > rhs.tol ? lhs.tol : rhs.tol;
-	if(tol == 0)
+	double newTol = tol > rhs.tol ? tol : rhs.tol;
+	if(newTol == 0)
 		tol = 1e-9;
 
-	if(lhs.steps[0] == rhs.steps[0])
+	if(steps[0] == rhs.steps[0])
 		skipShift = 1;
 
-	tpat_arc_data temp = lhs; // Copy all data from lhs
+	// Copy data from rhs, optionally skipping the first step if it matches the final step in this arc
+	steps.insert(steps.end(), rhs.steps.begin()+skipShift, rhs.steps.end());
 
-	// Copy data from rhs, optionally skipping the first step if it matches the final step from lhs
-	temp.steps.insert(temp.steps.end(), rhs.steps.begin()+skipShift, rhs.steps.end());
-
-	return temp;
+	return *this;
 }//====================================================
 
 //-----------------------------------------------------
@@ -131,7 +123,7 @@ std::vector<double> tpat_arc_data::getAccel(int ix) const{
  *	integration steps
  */
 std::vector<double> tpat_arc_data::getCoord(int ix) const{
-	if(i >= 6)
+	if(ix >= 6)
 		throw tpat_exception("tpat_arc_data::getCoord: Index Out of Range");
 
 	std::vector<double> coord;
@@ -154,12 +146,12 @@ std::vector<double> tpat_arc_data::getExtraParam(int step, int ix) const{
 	if(step < 0)
 		step += steps.size();
 
-	if(ix < 0 || ix >= extraParamRowSize.size())
+	if(ix < 0 || ix >= (int)(extraParamRowSize.size()))
 		throw tpat_exception("tpat_arc_data::getExtraParam: parameter index out of bounds");
 
 	int startIx = 0;
 	for(int i = 0; i < ix; i++)
-		startIx += exrraParamRowSize[i];
+		startIx += extraParamRowSize[i];
 
 	int size = extraParamRowSize[ix];
 	std::vector<double> extraParam = steps[step].getExtraParams();
@@ -220,6 +212,11 @@ tpat_sys_data* tpat_arc_data::getSysData() { return sysData; }
 double tpat_arc_data::getTol() const { return tol; }
 
 /**
+ *	@brief Append a step to the trajectory
+ */
+void tpat_arc_data::appendStep(tpat_arc_step s){ steps.push_back(s); }
+
+/**
  *	@brief Set the computational tolerance for this data object
  *	@param d the tolerance
  */
@@ -257,7 +254,7 @@ void tpat_arc_data::saveAccel(mat_t *matFile){
 		}
 	}
 	
-	size_t dims[2] = {steps.size(), ACCEL_SIZE};
+	size_t dims[2] = {steps.size(), 3};
 	matvar_t *matvar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel_colMaj[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "Accel", MAT_COMPRESSION_NONE);
 }//=====================================================
@@ -293,7 +290,15 @@ void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name){
  *	@param matFile a pointer to the destination matlab file 
  */
 void tpat_arc_data::saveState(mat_t *matFile){
+	saveState(matFile, "State");
+}//==================================================
 
+/**
+ *	@brief Save the state vector [pos, vel] to a file
+ *	@param matFile a pointer to the destination matlab file 
+ *	@param varName the name of the variable (e.g. "state" or "nodes")
+ */
+void tpat_arc_data::saveState(mat_t *matFile, const char* varName){
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> posVel(6*steps.size());
@@ -307,7 +312,7 @@ void tpat_arc_data::saveState(mat_t *matFile){
 
 	// Next, create a matlab variable for the state and save it to the file
 	/*	Create a matlab variable. Arguments are:
-	 *	const char *name 	- "State"
+	 *	const char *name 	- varName, the name of the variable
 	 *	enum matio_classes 	- MAT_C_DOUBLE, Matlab double-precision variable class
 	 *	enum matio_types 	- MAT_T_DOUBLE, Matlab IEEE 754 double precision data type
 	 * 	int rank 			- 2 - the variable rank. Must be 2 or more; not really sure what this does
@@ -324,9 +329,9 @@ void tpat_arc_data::saveState(mat_t *matFile){
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
 	size_t dims[2] = {steps.size(), 6};
-	matvar_t *matvar = Mat_VarCreate("State", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, "State", MAT_COMPRESSION_NONE);
-}//==================================================
+	matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, matvar, varName, MAT_COMPRESSION_NONE);
+}
 
 /**
  *	@brief Save the STMs to a file; STMs are stored in a 6x6xn array for 

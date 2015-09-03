@@ -31,6 +31,9 @@
 
 #include "tpat_traj.hpp"
 
+#include "tpat_traj_step.hpp"
+#include "tpat_utilities.hpp"
+
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
@@ -42,6 +45,10 @@ tpat_traj::tpat_traj(tpat_sys_data *data) : tpat_arc_data(data) {
 tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arc_data(t) {
 	initExtraParam();
 }//====================================================
+
+tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
+	initExtraParam();
+}
 
 //-----------------------------------------------------
 //      Operators
@@ -63,6 +70,8 @@ tpat_traj_step tpat_traj::getStep(int ix) const{
 		ix += steps.size();
 	return tpat_traj_step(steps[ix]);
 }//====================================================
+
+void tpat_traj::appendStep(tpat_traj_step s){ steps.push_back(s); }
 
 //-----------------------------------------------------
 //      Utility Functions

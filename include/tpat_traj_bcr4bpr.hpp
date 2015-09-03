@@ -18,39 +18,42 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_NODE
-#define H_TPAT_NODE
+#ifndef H_BCR4BPR_TRAJ
+#define H_BCR4BPR_TRAJ
 
-#include "tpat_arc_step.hpp"
+#include "tpat_traj.hpp"
+
+// Forward Declarations
+class tpat_sys_data_bcr4bpr;
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief A derivative class of the tpat_traj object that
+ *	contains trajectory information specific to the CR3BP
  *
- *	Values Stored in ExtraParam:
- *	* 0 	- 	Node time-of-flight
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
-class tpat_node : public tpat_arc_step{
+class tpat_traj_bcr4bpr : public tpat_traj{
+
 public:
 	// *structors
-	tpat_node(double*, double);
-	tpat_node(std::vector<double>, double);
-	tpat_node(const tpat_node&);
-	tpat_node(const tpat_arc_step&);
+	tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr*);
+	tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr&);
+	tpat_traj_bcr4bpr(const tpat_arc_data&);
 	
 	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
+	double getTheta0();
+	double getPhi0();
+	double getGamma();
+	std::vector<double> get_dqdT(int);
 
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
+	void set_dqdT(int, double*);
+	void set_dqdT(int, std::vector<double>);
 
 private:
-	void initArrays();
-	
+
+	void initExtraParam();
 };
 
 #endif

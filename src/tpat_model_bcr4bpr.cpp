@@ -32,8 +32,10 @@
 #include "tpat_nodeset_bcr4bpr.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_step.hpp"
 #include "tpat_event.hpp"
 #include "tpat_matrix.hpp"
+#include "tpat_node.hpp"
 #include "tpat_utilities.hpp"
 
 /**
@@ -118,38 +120,29 @@ std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, tpat_sys_data *sysD
  */
 void tpat_model_bcr4bpr::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
     // Save the position and velocity states
-    for(int i = 0; i < 6; i++){
-        traj->getState()->push_back(y[i]);
-    }
-
-    // Save time
-    traj->getTime()->push_back(t);
+    double state[6];
+    std::copy(y, y+6, state);
 
     // Save STM
     double stmElm[36];
     std::copy(y+6, y+42, stmElm);
-    traj->getSTM()->push_back(tpat_matrix(6,6,stmElm));
 
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    tpat_traj_bcr4bpr *bcr4bprTraj = static_cast<tpat_traj_bcr4bpr*>(traj);
-    tpat_sys_data_bcr4bpr sysData = bcr4bprTraj->getSysData();
+    tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr*>(traj->getSysData());
 
-    // Compute acceleration
+    // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
-    bcr4bpr_simple_EOMs(0, y, dsdt, &sysData);
+    bcr4bpr_simple_EOMs(0, y, dsdt, bcSys);
 
-    // Save the accelerations
-    traj->getAccel()->push_back(dsdt[3]);
-    traj->getAccel()->push_back(dsdt[4]);
-    traj->getAccel()->push_back(dsdt[5]);
+    double dqdT[6];
+    std::copy(y+42, y+48, dqdT);
     
-    // Save dqdT
-    bcr4bprTraj->get_dqdT()->push_back(y[42]);
-    bcr4bprTraj->get_dqdT()->push_back(y[43]);
-    bcr4bprTraj->get_dqdT()->push_back(y[44]);
-    bcr4bprTraj->get_dqdT()->push_back(y[45]);
-    bcr4bprTraj->get_dqdT()->push_back(y[46]);
-    bcr4bprTraj->get_dqdT()->push_back(y[47]);
+    tpat_traj_step step(state, t, dsdt+3, stmElm);
+
+    traj->appendStep(step);
+    
+    tpat_traj_bcr4bpr *bcTraj = static_cast<tpat_traj_bcr4bpr*>(traj);
+    bcTraj->set_dqdT(-1, dqdT);
 }//=====================================================
 
 /**
@@ -178,12 +171,12 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj, tpat
     std::copy(ic, ic+6, IC);
     IC[6] = t0;
 
-    // Copy system data object
-    tpat_traj_bcr4bpr *bcTraj = static_cast<tpat_traj_bcr4bpr *>(traj);
+    // Recast system data pointer
+    tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr*>(traj->getSysData());
 
     // Create a nodeset for this particular type of system
     printVerb(verbose, "  Creating nodeset for event location\n");
-    tpat_nodeset_bcr4bpr eventNodeset(IC, bcTraj->getSysData(), t0,
+    tpat_nodeset_bcr4bpr eventNodeset(IC, bcSys, t0,
         tof, 2, tpat_nodeset::DISTRO_TIME);
 
     // Constraint to keep first node unchanged
@@ -344,7 +337,7 @@ void tpat_model_bcr4bpr::corrector_targetPosVelCons(iterationData* it, tpat_cons
     // Add epoch dependencies for this model
     int n = con.getNode();
     std::vector<double> conData = con.getData();
-    std::vector<double> last_dqdT = it->allSegs.at(n-1).getExtraParam(-1);
+    std::vector<double> last_dqdT = it->allSegs.at(n-1).getExtraParam(-1, 1);
 
     // Loop through conData
     for(size_t s = 0; s < conData.size(); s++){
@@ -521,7 +514,7 @@ void tpat_model_bcr4bpr::corrector_targetDeltaV(iterationData* it, tpat_constrai
 
         // Compute partial w.r.t. epoch time n
         if(it->varTime){
-            std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1);
+            std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1, 1);
             tpat_matrix dqdT(6, 1, &(last_dqdT[0]));
             tpat_matrix dFdT_n = -1*dFdq_n2 * dqdT;
             it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n.at(0,0);
@@ -677,15 +670,14 @@ tpat_nodeset* tpat_model_bcr4bpr::corrector_createOutput(iterationData *it, tpat
 
     // Create a nodeset with the same system data as the input
     tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(it->sysData);
-    tpat_nodeset_bcr4bpr *nodeset_out = new tpat_nodeset_bcr4bpr(*bcSys);
-    nodeset_out->setNodeDistro(tpat_nodeset::DISTRO_NONE);
+    tpat_nodeset_bcr4bpr *nodeset_out = new tpat_nodeset_bcr4bpr(bcSys);
 
     int numNodes = (int)(it->origNodes.size());
     for(int i = 0; i < numNodes; i++){
-        tpat_node node;
-        node.setPosVelState(&(it->X[i*6]));
+        tpat_node node(&(it->X[i*6]), NAN);
         node.setExtraParam(0, it->X[7*numNodes-1 + i]);     // save epoch time
         node.setVelCon(nodes_in->getNode(i).getVelCon());   // save velocity continuity info
+        node.setConstraints(nodes_in->getNode(i).getConstraints());    // save constraints
 
         if(i + 1 < numNodes){
             node.setTOF(it->X[numNodes*6 + i]);
@@ -707,18 +699,13 @@ tpat_nodeset* tpat_model_bcr4bpr::corrector_createOutput(iterationData *it, tpat
                 // append the STM elements at the end
                 extraParams.insert(extraParams.end(), lastSTM.getDataPtr(), lastSTM.getDataPtr()+36);
                 // append the last dqdT vector
-                std::vector<double> dqdT = lastSeg.getExtraParam(-1);
+                std::vector<double> dqdT = lastSeg.getExtraParam(-1,1);
                 extraParams.insert(extraParams.end(), dqdT.begin(), dqdT.end());
                 node.setExtraParams(extraParams);
             }
         }
 
         nodeset_out->appendNode(node);
-    }
-
-    // Save all the original constraints
-    for(int n = 0; n < nodes_in->getNumCons(); n++){
-        nodeset_out->addConstraint(nodes_in->getConstraint(n));
     }
 
     return nodeset_out;

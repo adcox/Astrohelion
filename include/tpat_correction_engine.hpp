@@ -21,19 +21,21 @@
 #ifndef H_CORRECTIONS
 #define H_CORRECTIONS
 
+#include "tpat_constraint.hpp"
+#include "tpat_matrix.hpp"
+#include "tpat_node.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_sys_data.hpp"
+#include "tpat_traj.hpp"
 
 #include <vector>
 
 // Forward declarations
-class tpat_nodeset_bcr4bpr;
-class tpat_sys_data_bcr4bpr;
 class tpat_constraint;
-class tpat_node;
+class tpat_nodeset_bcr4bpr;
 class tpat_nodeset_cr3bp;
-class tpat_matrix;
 class tpat_simulation_engine;
+class tpat_sys_data_bcr4bpr;
 
 /**
  *	@brief a custom data class to encapsulate data used in each iteration
@@ -45,6 +47,8 @@ class tpat_simulation_engine;
  */
 struct iterationData{
 	public:
+		/** @brief Constructor */
+		// iterationData(tpat_sys_data *sys) : sysData(sys) {}
 		tpat_sys_data *sysData;					//!< A pointer to the system data object used for this corrections process
 		std::vector<double> X;					//!< Free-Variable Vector
 		std::vector<double> FX;					//!< Constraint Function Vector
@@ -139,17 +143,6 @@ class tpat_correction_engine{
 
 		void copyEngine(const tpat_correction_engine&);
 		void correct(tpat_nodeset*);
-
-		// void createPosVelCons(iterationData*, tpat_sys_data::system_t, int);
-		// void targetState(iterationData*, tpat_constraint, int, int);
-		// void targetMatchAll(iterationData*, tpat_constraint, int, int);
-		// void targetMatchCust(iterationData*, tpat_constraint, int, int);
-		// void targetDist(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
-		// void targetSP(iterationData*, tpat_sys_data_bcr4bpr*, int, int);
-		// void targetJC(iterationData*, tpat_constraint, tpat_sys_data*, int, int);
-		// void updateDeltaVCon(iterationData*, tpat_sys_data*, int, int);
-		// void updatePrimPos(iterationData*, tpat_sys_data*, double);
-		// void updatePrimVel(iterationData*, tpat_sys_data*, double);
 
 		tpat_matrix solveUpdateEq(iterationData*);
 

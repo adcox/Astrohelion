@@ -64,6 +64,12 @@ tpat_node::tpat_node(std::vector<double> state, double tof){
 }//====================================================
 
 /**
+ *	@brief Copy constructor
+ *	@param n a tpat_node reference
+ */
+tpat_node::tpat_node(const tpat_node &n) : tpat_arc_step(n) {}
+
+/**
  *	@brief Create a node object from a generic arc
  *	step object.
  *
@@ -71,9 +77,7 @@ tpat_node::tpat_node(std::vector<double> state, double tof){
  *	new access methods, not new data objects
  *	@param s a tpat_arc_step reference
  */
-tpat_node::tpat_node(const tpat_arc_step &s){
-	copyMe(s);
-}//====================================================
+tpat_node::tpat_node(const tpat_arc_step &s) : tpat_arc_step(s) {}
 
 //-----------------------------------------------------
 //      Operators
@@ -135,7 +139,7 @@ void tpat_node::setVel_AllDiscon(){
  *	[v_x, v_y, v_z]
  */
 void tpat_node::setVelCon(bool data[3]){
-	std::copy(data, data+3, flags);
+	std::copy(data, data+3, &(flags[0]));
 }//====================================================
 
 /**
@@ -148,7 +152,7 @@ void tpat_node::setVelCon(std::vector<bool> data){
 	if(data.size() < 3)
 		throw tpat_exception("tpat_node::setVelCon: Need at least three velocity continuity booleans");
 
-	std::copy(data.begin(), data.begin()+3, flags);
+	std::copy(data.begin(), data.begin()+3, flags.begin());
 }//====================================================
 
 /**

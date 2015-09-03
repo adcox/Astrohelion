@@ -32,6 +32,7 @@
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
 #include "tpat_traj.hpp"
+#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -125,16 +126,13 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 	double xi0 = r0[0];		// Initial x-variation
 	double eta0 = r0[1];	// Initial y-variation
 
-	tpat_traj_cr3bp linTraj;
+	tpat_traj_cr3bp linTraj(&sysData);
 
-	std::vector<double>* times = linTraj.getTime();
-	std::vector<double>* state = linTraj.getState();
 	double xi;
 	double eta;
 	double xi_dot0;
 	double eta_dot0;
 	double period;
-	double zeros[tpat_traj_cr3bp::STATE_SIZE-2] = {0};
 
 	if(L < 4){
 		// Compute eigenvalues analytically
@@ -152,19 +150,23 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 				s = imag(eigenval[2]);
 				double beta3 = (s*s + ddots[0])/(2*s);
 				period = 2*PI/s;
-
-				for(double t = 0; t < rots*period; t += t_step){
-					times->push_back(t);
-					xi = xi0*cos(s*t) + eta0/beta3*sin(s*t);
-					eta = eta0*cos(s*t) - beta3*xi0*sin(s*t);
-					state->push_back(xi + LPtPos[0]);
-					state->push_back(eta + LPtPos[1]);
-
-					state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
-				}
-
 				xi_dot0 = s*eta0/beta3;
 				eta_dot0 = -1*s*beta3*xi0;
+
+				for(double t = 0; t < rots*period; t += t_step){
+					xi = xi0*cos(s*t) + eta0/beta3*sin(s*t);
+					eta = eta0*cos(s*t) - beta3*xi0*sin(s*t);
+
+					double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
+
+					if(t == 0){
+						state[3] = xi_dot0;
+						state[4] = eta_dot0;
+					}
+
+					tpat_traj_step step(state, t);
+					linTraj.appendStep(step);
+				}
 				break;
 			}
 			case HYP:
@@ -172,19 +174,23 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 				s = std::real(eigenval[0]);
 				double alpha = (s*s - ddots[0])/(2*s);
 				period = 2*PI/s;
+				xi_dot0 = s*eta0/alpha;
+	            eta_dot0 = s*alpha*xi0;
 
 				for(double t = 0; t < rots*period; t += t_step){
-	            	times->push_back(t);
 					xi = xi0*cosh(s*t) + eta0/alpha*sinh(s*t);
 					eta = eta0*cosh(s*t) + alpha*xi0*sinh(s*t);
-					state->push_back(xi + LPtPos[0]);
-					state->push_back(eta + LPtPos[1]);
+					
+					double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
 
-					state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
+					if(t == 0){
+						state[3] = xi_dot0;
+						state[4] = eta_dot0;
+					}
+
+					tpat_traj_step step(state, t);
+					linTraj.appendStep(step);
 				}
-
-	            xi_dot0 = s*eta0/alpha;
-	            eta_dot0 = s*alpha*xi0;
 	            break;
 			}
 			default:
@@ -223,54 +229,66 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			switch(type){
 				case LPO:
 					period = 2*PI/s1d;
-					for(double t = 0; t < rots*period; t+= t_step){
-		            	times->push_back(t);
-						xi = xi0*cos(s1d*t) + (eta0 - a1*xi0)/b1 * sin(s1d*t);
-						eta = eta0*cos(s1d*t) - (b1*xi0 - a1*(eta0 - a1*xi0)/b1)*sin(s1d*t);
-						state->push_back(xi + LPtPos[0]);
-						state->push_back(eta + LPtPos[1]);
-
-						state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
-					}
-
 					xi_dot0 = s1d*(eta0 - a1*xi0)/b1;
                 	eta_dot0 = -s1d*(b1*xi0 - a1*(eta0 - a1*xi0)/b1);
+					for(double t = 0; t < rots*period; t+= t_step){
+						xi = xi0*cos(s1d*t) + (eta0 - a1*xi0)/b1 * sin(s1d*t);
+						eta = eta0*cos(s1d*t) - (b1*xi0 - a1*(eta0 - a1*xi0)/b1)*sin(s1d*t);
+
+						double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
+
+						if(t == 0){
+							state[3] = xi_dot0;
+							state[4] = eta_dot0;
+						}
+
+						tpat_traj_step step(state, t);
+						linTraj.appendStep(step);
+					}
                 	break;
                 case NONE: // for default behavior
 				case SPO:
 					period = 2*PI/s3d;
-					for(double t = 0; t < rots*period; t+= t_step){
-		            	times->push_back(t);
-						xi = xi0*cos(s3d*t) + (eta0 - a3*xi0)/b3 * sin(s3d*t);
-						eta = eta0*cos(s3d*t) - (b3*xi0 - a3*(eta0 - a3*xi0)/b3)*sin(s3d*t);
-						state->push_back(xi + LPtPos[0]);
-						state->push_back(eta + LPtPos[1]);
-
-						state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
-					}
-
 					xi_dot0 = s3d*(eta0 - a3*xi0)/b3;
                 	eta_dot0 = -s3d*(b3*xi0 - a3*(eta0 - a3*xi0)/b3);
+					for(double t = 0; t < rots*period; t+= t_step){
+						xi = xi0*cos(s3d*t) + (eta0 - a3*xi0)/b3 * sin(s3d*t);
+						eta = eta0*cos(s3d*t) - (b3*xi0 - a3*(eta0 - a3*xi0)/b3)*sin(s3d*t);
+
+						double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
+
+						if(t == 0){
+							state[3] = xi_dot0;
+							state[4] = eta_dot0;
+						}
+
+						tpat_traj_step step(state, t);
+						linTraj.appendStep(step);
+					}
                 	break;
 				case MPO:
 				{
 					period = s1d < s3d ? 2*PI/s1d : 2*PI/s3d;
 					double R1 = xi0/(1 + nu);
                 	double C1 = xi0*(a1 + nu*a3)/(2*(1 + nu)*(b1 + nu*b3)) - eta0/(2*(b1 + nu*b3));
+                	xi_dot0 = -2*C1*(s1d + nu*s3d);
+                	eta_dot0 = -R1*(s1d*b1 + nu*s3d*b3) - 2*C1*(s1d*a1 + nu*s3d*a3);
 
                 	for(double t = 0; t < rots*period; t+= t_step){
-		            	times->push_back(t);
 						xi = R1*cos(s1d*t) - 2*C1*sin(s1d*t) + nu*R1*cos(s3d*t) - 2*nu*C1*sin(s3d*t);
 						eta = (a1*R1 - 2*b1*C1)*cos(s1d*t) - (b1*R1 + 2*a1*C1)*sin(s1d*t) +
                     		nu*(a3*R1 - 2*b3*C1)*cos(s3d*t) - nu*(b3*R1 + 2*a3*C1)*sin(s3d*t);
-						state->push_back(xi + LPtPos[0]);
-						state->push_back(eta + LPtPos[1]);
 
-						state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
+						double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
+
+						if(t == 0){
+							state[3] = xi_dot0;
+							state[4] = eta_dot0;
+						}
+
+						tpat_traj_step step(state, t);
+						linTraj.appendStep(step);
 					}
-
-					xi_dot0 = -2*C1*(s1d + nu*s3d);
-                	eta_dot0 = -R1*(s1d*b1 + nu*s3d*b3) - 2*C1*(s1d*a1 + nu*s3d*a3);
                 	break;
                 }
 				default:
@@ -280,19 +298,23 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			// Case II, g is 0 (approx.)
 			double s1d = s1.imag();
 			period = 2*PI/s1d;
-
-			for(double t = 0; t < rots*period; t+= t_step){
-            	times->push_back(t);
-				xi = xi0*cos(s1d*t) - (a1*xi0 - eta0)/b1 * sin(s1d*t);
-				eta = eta0*cos(s1d*t) - (xi0*std::abs(alpha1) - a1*eta0)/b1 * sin(s1d*t);
-				state->push_back(xi + LPtPos[0]);
-				state->push_back(eta + LPtPos[1]);
-
-				state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
-			}
-
 			xi_dot0 = -s1d*(a1*xi0 - eta0)/b1;
             eta_dot0 = -s1d*(xi0*std::abs(alpha1) - a1*eta0)/b1;
+
+			for(double t = 0; t < rots*period; t+= t_step){
+				xi = xi0*cos(s1d*t) - (a1*xi0 - eta0)/b1 * sin(s1d*t);
+				eta = eta0*cos(s1d*t) - (xi0*std::abs(alpha1) - a1*eta0)/b1 * sin(s1d*t);
+
+				double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
+
+				if(t == 0){
+					state[3] = xi_dot0;
+					state[4] = eta_dot0;
+				}
+
+				tpat_traj_step step(state, t);
+				linTraj.appendStep(step);
+			}
 		}else{
 			// Case III
 			double p = std::real(s1);
@@ -301,18 +323,23 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 				case NONE: // for default behavior
 				case CONVERGE:
 					period = 2*PI/q;
-					for(double t = 0; t < rots*period; t += t_step){
-						times->push_back(t);
-						xi = exp(-p*t)*(xi0*cos(q*t) + (eta0 - a3*xi0)/b3 * sin(q*t));
-	                    eta = exp(-p*t)*(eta0*cos(q*t) - (b3*xi0 - a3*(eta0 - a3*xi0)/b3)*sin(q*t));
-	                    state->push_back(xi + LPtPos[0]);
-	                    state->push_back(eta + LPtPos[1]);
-
-	                    state->insert(state->end(), zeros, zeros+(tpat_traj_cr3bp::STATE_SIZE - 2));
-					}
-
 					xi_dot0 = -xi0*p + q*(eta0 - a3*xi0)/b3;
 					eta_dot0 = -p*eta0 - q*(b3*xi0 - a3*(eta0 - a3*xi0)/b3);
+
+					for(double t = 0; t < rots*period; t += t_step){
+						xi = exp(-p*t)*(xi0*cos(q*t) + (eta0 - a3*xi0)/b3 * sin(q*t));
+	                    eta = exp(-p*t)*(eta0*cos(q*t) - (b3*xi0 - a3*(eta0 - a3*xi0)/b3)*sin(q*t));
+	                    
+	                    double state[] = {xi + LPtPos[0], eta + LPtPos[1], 0, 0, 0, 0};
+						
+						if(t == 0){
+							state[3] = xi_dot0;
+							state[4] = eta_dot0;
+						}
+
+						tpat_traj_step step(state, t);
+						linTraj.appendStep(step);
+					}
 					break;	
 				case DIVERGE:
 					throw tpat_exception("Triangular points, Case III: Diverge not yet implemented");
@@ -322,29 +349,6 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
 			}
 		}
 	}
-
-	// Insert initial velocity into state vector
-	state->at(3) = xi_dot0;
-	state->at(4) = eta_dot0;
-
-	// Out of plane motion
-	double zeta0 = r0[2];
-	double zeta_dot0 = 0;
-	std::vector<double> zeta;
-	std::complex<double> p = sqrt(static_cast< std::complex<double> >(ddots[2]));
-	double s = p.imag();
-	for(int i = 0; i < ((int)times->size()); i++){
-		state->at(tpat_traj::STATE_SIZE * i + 2) = 
-			zeta0*cos(s*times->at(i)) + zeta_dot0/s*sin(s*times->at(i)) + LPtPos[2];
-	}
-
-	// Make the Jacobi full of NAN and STM full of Identity matrices
-	linTraj.getAccel()->assign(tpat_traj_cr3bp::ACCEL_SIZE*(times->size()), NAN);
-	std::vector<double> jc(times->size(), NAN);
-	linTraj.getJacobi()->insert(linTraj.getJacobi()->begin(), jc.begin(), jc.end());
-	// linTraj.getJacobi()->assign(((int)times->size()), NAN);
-	linTraj.getSTM()->assign(((int)times->size()), tpat_matrix::I(6));
-	linTraj.setLength();
 
 	return linTraj;
 }//====================================================

@@ -26,6 +26,7 @@
 
 // Forward Declarations
 class tpat_node;
+class tpat_traj;
 
 /**
  *	@brief Similar to tpat_traj, but only holds state data at specific "nodes"
@@ -40,10 +41,10 @@ class tpat_node;
  *	@see tpat_node
  *
  *	@author Andrew Cox
- *	@version 
+ *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodset : tpat_arc_data{
+class tpat_nodeset : public tpat_arc_data{
 
 public:
 	/**
@@ -59,11 +60,13 @@ public:
 	// *structors
 	tpat_nodeset(tpat_sys_data*);
 	tpat_nodeset(const tpat_nodeset&);
+	tpat_nodeset(const tpat_arc_data&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
 
 	// Set and Get Functions
-	tpat_constraint getConstraint(int) const;
+	std::vector<tpat_constraint> getNodeCons(int) const;
 	tpat_node getNode(int) const;
+
 	int getNumCons() const;
 	int getNumNodes() const;
 	double getTOF(int) const;
@@ -78,7 +81,7 @@ public:
 
 	// Utility Functions
 	void clearConstraints();
-	void print();
+	void print() const;
 	void reverseOrder();
 	void saveToMat(const char*);
 	void initExtraParam();
@@ -87,8 +90,6 @@ protected:
 	void initSetFromICs(double[6], tpat_sys_data*, double, double, int, node_distro_t);
 	void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
 	void saveTOFs(mat_t*);
-
-private:
 
 };
 

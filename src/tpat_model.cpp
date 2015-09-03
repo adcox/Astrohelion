@@ -30,10 +30,13 @@
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
 #include "tpat_exceptions.hpp"
+#include "tpat_matrix.hpp"
+#include "tpat_node.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_traj.hpp"
 #include "tpat_sys_data.hpp"
 
+#include <cmath>
 
 /**
  *	@brief Default constructor

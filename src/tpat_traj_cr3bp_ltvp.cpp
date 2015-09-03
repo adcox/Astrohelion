@@ -1,12 +1,17 @@
 /**
- *	@file tpat_traj_cr3bp_ltvp.cpp
- *	@brief Derivative of tpat_traj, specific to CR3BP-LTVP
+ *  @file tpat_traj_cr3bp_ltvp.cpp
+ *	@brief 
+ *
+ *	@author Andrew Cox
+ *	@version 
+ *	@copyright GNU GPL v3.0
  */
+ 
 /*
- *	Trajectory Propagation and Analysis Toolkit 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
- *	
- *	This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
+ *  Trajectory Propagation and Analysis Toolkit 
+ *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  
+ *  This file is part of the Trajectory Propagation and Analysis Toolkit (TPAT).
  *
  *  TPAT is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,173 +30,71 @@
 #include "tpat.hpp"
 
 #include "tpat_traj_cr3bp_ltvp.hpp"
-#include "tpat_utilities.hpp"
- 
+
+#include "tpat_sys_data_cr3bp_ltvp.hpp"
 //-----------------------------------------------------
-// 		Constructor Functions
+//      *structors
 //-----------------------------------------------------
 
-/**
- *	@brief Default constructor; calls constructor for super-class tpat_traj
- *	and additionall initializes the jacobi matrix
- */
-tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp() : tpat_traj(){
+tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp* sys) : tpat_traj(sys){
 	initExtraParam();
 }//====================================================
 
-/**
- *	@brief Create a CR3BP LTVP trajectory object for the specified system
- *	@param data a system data object describing the system
- */
-tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp data){
-	initExtraParam();
-	sysData = data;
-}//====================================================
-
-/**
- *	@brief Initialize all vectors to have size n; fill each vector with zeros.
- */
-tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(int n) : tpat_traj(n){
-	initExtraParam();
-	extraParam.at(0).reserve(n);
-	extraParam.at(1).reserve(n);
-}//====================================================
-
-/**
- *	@brief Copy the specified trajectory
- *	@param t trajectory
- */
 tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp &t) : tpat_traj(t){
-	copyMe(t);
+	initExtraParam();
+}//====================================================
+
+tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arc_data &a) : tpat_traj(a){
+	initExtraParam();
 }//====================================================
 
 //-----------------------------------------------------
-// 		Operators
+//      Operators
 //-----------------------------------------------------
 
-/**
- *	@brief Copy operator; copy a trajectory object into this one.
- *	@param t a trajectory object
- *	@return this trajectory object
- */
-tpat_traj_cr3bp_ltvp& tpat_traj_cr3bp_ltvp::operator= (const tpat_traj_cr3bp_ltvp& t){
-	tpat_traj::operator= (t);
-	copyMe(t);
-	return *this;
-}//=====================================================
+//-----------------------------------------------------
+//      Set and Get Functions
+//-----------------------------------------------------
 
-/**
- *	@brief Copy all data objects specific to the CR3BP Trajectory
- *	@param t the source trajectory; copy its attributes into this one
- */
-void tpat_traj_cr3bp_ltvp::copyMe(const tpat_traj_cr3bp_ltvp &t){
-	sysData = t.sysData;
-}//=====================================================
-
-/**
- *	@brief Retrieve data about the system this trajectory was propagated in
- *	@return the system data object
- */
-tpat_sys_data_cr3bp_ltvp tpat_traj_cr3bp_ltvp::getSysData() const { return sysData; }
-
-/**
- *	@brief Retrieve a pointer to the system data object
- *	@return a pointer to the system data object
- */
-tpat_sys_data* tpat_traj_cr3bp_ltvp::getSysDataPtr(){ return &sysData; }
-
-/**
- *	@brief Retrieve the system type for this trajectory
- *	@return the system type
- */
-tpat_sys_data::system_t tpat_traj_cr3bp_ltvp::getType() const{
-	return sysData.getType();
-}//=====================================================
-
-/**
- *	@brief Get a pointer to the vector of Jacobi values along the trajectory
- *	@return a pointer to the vector of Jacobi values along the trajectory
- */
-std::vector<double>* tpat_traj_cr3bp_ltvp::getJacobi() { return &(extraParam.at(0)); }
-
-/**
- *	@brief Retrieve a Jacobi value at one point on the trajectory
- *	@param n the index of the point; if n < 0, it will count backwards
- *	from the end of the trajectory
- *	@return a Jacobi value (non-dimensional units)
- */
-double tpat_traj_cr3bp_ltvp::getJacobi(int n) const {
-	if(n < 0)
-		n += extraParam.at(0).size();
-
-	return extraParam.at(0)[n];
-}//=====================================================
-
-/**
- *	@brief Get a pointer to the vector of mass values along the trajectory
- *	@return a pointer to the vector of mass values along the trajectory
- */
-std::vector<double>* tpat_traj_cr3bp_ltvp::getMass() { return &(extraParam.at(1)); }
-
-/**
- *	@brief Retrieve a mass value at one point on the trajectory
- *	@param n the index of the point; if n < 0, it will count backwards
- *	from the end of the trajectory
- *	@return a mass value (non-dimensional units)
- */
-double tpat_traj_cr3bp_ltvp::getMass(int n) const {
-	if(n < 0)
-		n += extraParam.at(1).size();
-
-	return extraParam.at(1)[n];
+double tpat_traj_cr3bp_ltvp::getJacobi(int ix) const{
+	if(ix < 0)
+		ix += steps.size();
+	tpat_arc_step step = steps[ix];
+	return step.getExtraParam(1);
 }//====================================================
 
-/**
- *	@brief Set the system data for this trajectory
- *	@param d a system data object
- */
-void tpat_traj_cr3bp_ltvp::setSysData(tpat_sys_data_cr3bp_ltvp d){ sysData = d; }
+double tpat_traj_cr3bp_ltvp::getMass(int ix) const{
+	if(ix < 0)
+		ix += steps.size();
+	tpat_arc_step step = steps[ix];
+	return step.getExtraParam(2);
+}//====================================================
+
+void tpat_traj_cr3bp_ltvp::setJacobi(int ix, double val){
+	if(ix < 0)
+		ix += steps.size();
+
+	steps[ix].setExtraParam(1, val);
+}//====================================================
+
+void tpat_traj_cr3bp_ltvp::setMass(int ix, double val){
+	if(ix < 0)
+		ix += steps.size();
+
+	steps[ix].setExtraParam(2, val);
+}//====================================================
 
 //-----------------------------------------------------
-// 		Utility Functions
+//      Utility Functions
 //-----------------------------------------------------
 
 void tpat_traj_cr3bp_ltvp::initExtraParam(){
-	numExtraParam = 2;	// Jacobi, Mass
-	extraParamRowSize.push_back(1);	// each jacobi value has one element
-	extraParamRowSize.push_back(1);	// each mass value has one element
-	extraParam.push_back(std::vector<double>(0));
-	extraParam.push_back(std::vector<double>(0));
-}//=========================================
+	// This function in tpat_traj was already called, so 
+	// numExtraParam has been set to 1 and a row size has
+	// been appended for the time variable
 
-/**
- *	@brief Save the trajectory to a file
- *	@param filename the name of the .mat file
- */
-void tpat_traj_cr3bp_ltvp::saveToMat(const char* filename){
-	// TODO: Check for propper file extension, add if necessary
-
-	/*	Create a new Matlab MAT file with the given name and optional
-	 *	header string. If no header string is given, the default string 
-	 *	used containing the software, version, and date in it. If a header
-	 *	string is specified, at most the first 116 characters are written to
-	 *	the file. Arguments are:
-	 *	const char *matname 	- 	the name of the file
-	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
-	 */
-	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
-		printErr("Error creating MAT file\n");
-	}else{
-		saveState(matfp);
-		saveTime(matfp);
-		saveSTMs(matfp);
-		saveExtraParam(matfp, 0, 1, "Jacobi");
-		saveExtraParam(matfp, 1, 1, "Mass");
-		sysData.saveToMat(matfp);
-	}
-
-	Mat_Close(matfp);
-}//========================================
-
+	// Add another variable for Jacobi Constant, and one for mass
+	numExtraParam = 3;
+	extraParamRowSize.push_back(1);	// add var for Jacobi
+	extraParamRowSize.push_back(1); // add var for Mass
+}//====================================================

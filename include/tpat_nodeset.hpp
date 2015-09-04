@@ -63,6 +63,8 @@ public:
 	tpat_nodeset(const tpat_arc_data&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
 
+	// Operators
+
 	// Set and Get Functions
 	std::vector<tpat_constraint> getNodeCons(int) const;
 	tpat_node getNode(int) const;

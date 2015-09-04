@@ -4,6 +4,7 @@
  *	to be used over and over again
  */
 
+#include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
@@ -17,7 +18,7 @@ int main(){
 
 	// Generate a set of nodes around the arc
 	tpat_sys_data_cr3bp sys("earth", "moon");
-	tpat_nodeset_cr3bp scienceOrbitNodes(IC, sys, tof, 10);
+	tpat_nodeset_cr3bp scienceOrbitNodes(IC, &sys, tof, 10);
 
 	tpat_simulation_engine sim(&sys);
 	std::vector<tpat_traj_cr3bp> allArcs;

@@ -49,6 +49,8 @@ public:
 
 	void setJacobi(int, double);
 	void setMass(int, double);
+	
+	void saveToMat(const char*);
 private:
 	void initExtraParam();
 };

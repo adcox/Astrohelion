@@ -302,7 +302,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, *sysData, primPosData);
+    bcr4bpr_getPrimaryPos(t, sysData, primPosData);
     tpat_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
@@ -417,7 +417,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Get the velocity of the primaries
     double primVelData[9] = {0};
-    bcr4bpr_getPrimaryVel(t, *sysData, primVelData);
+    bcr4bpr_getPrimaryVel(t, sysData, primVelData);
     tpat_matrix primVel(3,3, primVelData);
 
     // Compute derivative of dqdT
@@ -452,7 +452,7 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, *sysData, primPosData);
+    bcr4bpr_getPrimaryPos(t, sysData, primPosData);
     tpat_matrix primPos(3, 3, primPosData);
 
     // Put the position states into a 3-element column vector
@@ -749,6 +749,23 @@ tpat_matrix solveAX_eq_B(tpat_matrix A, tpat_matrix B){
     return trans(allSolvedCols);
 }//====================================================
 
+/**
+ *  @brief Sort a list of eigenvalues
+ *
+ *  This algorithm is intended to sort eigenvalues from the monodromy matrices of a family of
+ *  periodic orbits. Because of this, the code attempts to locate at least one pair of 
+ *  eigenvalues that are equal to 1.0. Other eigenvalues come in either real, reciprocal pairs
+ *  or in complex conjugate pairs. The first row is sorted such that the pairs of eigenvalues
+ *  are located next to each other in the row. All subsequent rows are sorted so that the order
+ *  of the eigenvalues remains the same
+ *
+ *
+ *  @param eigVals vector of eigenvalues in row-major order. We assume that 6 eigenvalues are 
+ *  included in each row.
+ *  @param sortedIxs a pointer to an integer vector that will store the indices of the original
+ *  eigenvalues in their new order (after sorting)
+ *  @return the sorted eigenvalues, again in row-major order in a vector
+ */
 std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sortedIxs){
     if(eigVals.size() == 0){
         printErr("tpat_calculations::sortEig: Cannot sort eigenvalues: there are no family members\n");
@@ -1248,7 +1265,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
     try{
-        corrector.correct_cr3bp(&halfOrbNodes);
+        corrector.correct(&halfOrbNodes);
         tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();
 
         // Grab the last node, change its TOF and re-append it to the set
@@ -1278,7 +1295,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
         correctedHalfPer.addConstraint(finalCon);
 
         // Reconverge the solution
-        corrector.correct_cr3bp(&correctedHalfPer);
+        corrector.correct(&correctedHalfPer);
 
         // Return the corrected solution in trajectory form
         tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
@@ -1299,6 +1316,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
  *  value in the time vector reflects correct initial time.
  *
  *  @param EMTraj a CR3BP Earth-Moon trajectory
+ *  @param SESys a Sun-Earth CR3BP system data object
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1306,21 +1324,20 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, double thetaE0, double thetaM0, double gamma){
+tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, tpat_sys_data_cr3bp *SESys, double thetaE0, double thetaM0, double gamma){
     // Create a trajectory in the Sun-Earth system
-    tpat_sys_data_cr3bp SESys("sun", "earth");
-    tpat_traj_cr3bp SETraj(&SESys);
+    tpat_traj_cr3bp SETraj(SESys);
 
     double charTE = EMTraj.getSysData()->getCharT();     // characteristic time in EM system
     double charLE = EMTraj.getSysData()->getCharL();     // characteristic length in EM system
-    double charTS = SESys.getCharT();                   // characteristic time in SE system
-    double charLS = SESys.getCharL();                   // characteristic length in SE system
+    double charTS = SESys->getCharT();                   // characteristic time in SE system
+    double charLS = SESys->getCharL();                   // characteristic length in SE system
 
     for(int n = 0; n < EMTraj.getLength(); n++){
 
         // Transform the state from EM coordinates to SE coordinates
         std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
-            thetaM0, gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+            thetaM0, gamma, charLE, charTE, charLS, charTS, SESys->getMu());
 
         // Adjust time to correct non-dim units
         double t = EMTraj.getTime(n)*charTE/charTS;
@@ -1335,7 +1352,7 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, double thetaE0, double theta
         SETraj.appendStep(step);
         
         // Recompute Jacobi
-        SETraj.setJacobi(-1, cr3bp_getJacobi(&(state_SE[0]), SESys.getMu()));
+        SETraj.setJacobi(-1, cr3bp_getJacobi(&(state_SE[0]), SESys->getMu()));
     }
 
     return SETraj; 
@@ -1350,6 +1367,7 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, double thetaE0, double theta
  *  an initial time since CR3BP nodesets do not have an epoch for each node.
  *
  *  @param EMNodes a CR3BP Earth-Moon nodeset
+ *  @param SESys a Sun-Earth CR3BP system data object
  *  @param t0 epoch associated with the first node
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -1358,23 +1376,22 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, double thetaE0, double theta
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double thetaE0, double thetaM0,
+tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, tpat_sys_data_cr3bp *SESys, double t0, double thetaE0, double thetaM0,
     double gamma){
 
-    tpat_sys_data_cr3bp SESys("sun", "earth");
-    tpat_nodeset_cr3bp SENodes(&SESys);
+    tpat_nodeset_cr3bp SENodes(SESys);
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
-    double charTS = SESys.getCharT();                       // characteristic time in SE system
-    double charLS = SESys.getCharL();                       // characteristic length in SE system
+    double charTS = SESys->getCharT();                       // characteristic time in SE system
+    double charLS = SESys->getCharL();                       // characteristic length in SE system
 
     double epoch = t0;
     printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d TOFs\n", EMNodes.getNumNodes(),
         EMNodes.getNumNodes()-1);
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
         std::vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
-            gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+            gamma, charLE, charTE, charLS, charTS, SESys->getMu());
 
         double tof = n + 1 < EMNodes.getNumNodes() ? EMNodes.getTOF(n)*charTE/charTS : NAN;
         tpat_node node(node_SE, tof);
@@ -1400,6 +1417,7 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double the
  *  value in the time vector reflects correct initial time.
  *
  *  @param SETraj a CR3BP Sun-Earth trajectory
+ *  @param EMSys an Earth-Moon CR3BP system data object
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1407,17 +1425,16 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, double t0, double the
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, double thetaE0, double thetaM0, double gamma){
+tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, tpat_sys_data_cr3bp *EMSys, double thetaE0, double thetaM0, double gamma){
     // Create a trajectory in the Earth-Moon system
-    tpat_sys_data_cr3bp EMSys("earth", "moon");
-    tpat_traj_cr3bp EMTraj(&EMSys);
+    tpat_traj_cr3bp EMTraj(EMSys);
 
     // Shift coordinates to EM barcyenter from SE barycenter
     tpat_sys_data_cr3bp *seSys = static_cast<tpat_sys_data_cr3bp*>(SETraj.getSysData());
     tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - seSys->getMu());
 
-    double charTE = EMSys.getCharT();               // characteristic time in EM system
-    double charLE = EMSys.getCharL();               // characteristic length in EM system
+    double charTE = EMSys->getCharT();               // characteristic time in EM system
+    double charLE = EMSys->getCharL();               // characteristic length in EM system
     double charTS = SETraj.getSysData()->getCharT(); // characteristic time in SE system
     double charLS = SETraj.getSysData()->getCharL(); // characteristic length in SE system
 
@@ -1438,7 +1455,7 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, double thetaE0, double theta
         EMTraj.appendStep(step);
 
         // Recompute Jacobi
-        EMTraj.setJacobi(-1, cr3bp_getJacobi(&(state_EM[0]), EMSys.getMu()));
+        EMTraj.setJacobi(-1, cr3bp_getJacobi(&(state_EM[0]), EMSys->getMu()));
     }
 
     return EMTraj; 
@@ -1453,6 +1470,7 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, double thetaE0, double theta
  *  an initial time since CR3BP nodesets do not have an epoch for each node.
  *
  *  @param SENodes a CR3BP Sun-Earth nodeset
+ *  @param EMSys an Earth-Moon CR3BP system data object
  *  @param t0 epoch associated with the first node
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -1461,17 +1479,17 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, double thetaE0, double theta
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, double t0, double thetaE0, double thetaM0,
+tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, tpat_sys_data_cr3bp *EMSys, double t0, double thetaE0, double thetaM0,
     double gamma){
 
-    tpat_sys_data_cr3bp EMSys("earth", "moon");
-    tpat_sys_data_cr3bp SESys("sun", "earth");
-    tpat_nodeset_cr3bp EMNodes(&EMSys);
+    tpat_nodeset_cr3bp EMNodes(EMSys);
 
-    double charTE = EMSys.getCharT();                   // characteristic time in EM system
-    double charLE = EMSys.getCharL();                   // characteristic length in EM system
+    double charTE = EMSys->getCharT();                   // characteristic time in EM system
+    double charLE = EMSys->getCharL();                   // characteristic length in EM system
     double charTS = SENodes.getSysData()->getCharT();    // characteristic time in SE system
     double charLS = SENodes.getSysData()->getCharL();    // characteristic length in SE system
+
+    tpat_sys_data_cr3bp *SESys = static_cast<tpat_sys_data_cr3bp*>(SENodes.getSysData());
 
     double epoch = t0;
     printColor(BLUE, "Converting SE to EM\nSE Sys:\n  %d Nodes\n  %d TOFs\n", SENodes.getNumNodes(),
@@ -1479,7 +1497,7 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, double t0, double the
     for(int n = 0; n < SENodes.getNumNodes(); n++){
         // Transform a single node
         std::vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
-            gamma, charLE, charTE, charLS, charTS, SESys.getMu());
+            gamma, charLE, charTE, charLS, charTS, SESys->getMu());
 
         double tof = n + 1 < SENodes.getNumNodes() ? SENodes.getTOF(n)*charTS/charTE : NAN;
         tpat_node node(node_EM, tof);
@@ -1560,7 +1578,7 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
     state_SE.insert(state_SE.begin()+3, velSE.getDataPtr(), velSE.getDataPtr()+3);
 
     return state_SE;
-}
+}//====================================================
 
 /**
  *  @brief Transform a single state from SE coordinates to EM coordinates
@@ -1626,7 +1644,7 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
     state_EM.insert(state_EM.begin()+3, velEM.getDataPtr(), velEM.getDataPtr()+3);
 
     return state_EM;
-}
+}//====================================================
 
 //-----------------------------------------------------
 //      BCR4BP Utility Functions
@@ -1641,17 +1659,17 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
  *  row-major order. The first three elements are the position of P1, etc.
  */
-void bcr4bpr_getPrimaryPos(double t, tpat_sys_data_bcr4bpr sysData, double *primPos){
-    double k = sysData.getK();
-    double mu = sysData.getMu();
-    double nu = sysData.getNu();
-    double theta0 = sysData.getTheta0();
-    double phi0 = sysData.getPhi0();
-    double gamma = sysData.getGamma();
+void bcr4bpr_getPrimaryPos(double t, tpat_sys_data_bcr4bpr *sysData, double *primPos){
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+    double theta0 = sysData->getTheta0();
+    double phi0 = sysData->getPhi0();
+    double gamma = sysData->getGamma();
 
     // Compute the angles for the system at the specified time
     double theta = theta0 + k*t;
-    double phi = phi0 + sqrt(mu/pow(sysData.getCharLRatio(), 3)) * t;
+    double phi = phi0 + sqrt(mu/pow(sysData->getCharLRatio(), 3)) * t;
 
     // P1 position
     primPos[0] = -mu;
@@ -1659,15 +1677,15 @@ void bcr4bpr_getPrimaryPos(double t, tpat_sys_data_bcr4bpr sysData, double *prim
     primPos[2] = 0;
 
     // P2 position
-    primPos[3] = 1/k - mu - nu/mu*sysData.getCharLRatio() * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[4] = -nu/mu*sysData.getCharLRatio() * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[5] = nu/mu*sysData.getCharLRatio() * cos(phi) * sin(gamma);
+    primPos[3] = 1/k - mu - nu/mu*sysData->getCharLRatio() * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[4] = -nu/mu*sysData->getCharLRatio() * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+    primPos[5] = nu/mu*sysData->getCharLRatio() * cos(phi) * sin(gamma);
 
     // P3 position
-    primPos[6] = 1/k - mu + (1 - nu/mu)*sysData.getCharLRatio() * 
+    primPos[6] = 1/k - mu + (1 - nu/mu)*sysData->getCharLRatio() * 
         (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[7] = (1 - nu/mu)*sysData.getCharLRatio() * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[8] = (nu/mu - 1)*sysData.getCharLRatio() * cos(phi)*sin(gamma);
+    primPos[7] = (1 - nu/mu)*sysData->getCharLRatio() * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+    primPos[8] = (nu/mu - 1)*sysData->getCharLRatio() * cos(phi)*sin(gamma);
 }//================================================
 
 /**
@@ -1678,17 +1696,17 @@ void bcr4bpr_getPrimaryPos(double t, tpat_sys_data_bcr4bpr sysData, double *prim
  *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
  *  row-major order. The first three elements hold the velocity of P1, etc.
  */
-void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr sysData, double *primVel){
+void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr *sysData, double *primVel){
 
-    double k = sysData.getK();
-    double mu = sysData.getMu();
-    double nu = sysData.getNu();
-    double theta0 = sysData.getTheta0();
-    double phi0 = sysData.getPhi0();
-    double gamma = sysData.getGamma();
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+    double theta0 = sysData->getTheta0();
+    double phi0 = sysData->getPhi0();
+    double gamma = sysData->getGamma();
 
     double thetaDot = k;
-    double phiDot = sqrt(mu/pow(sysData.getCharLRatio(), 3));
+    double phiDot = sqrt(mu/pow(sysData->getCharLRatio(), 3));
 
     double theta = theta0 + thetaDot*t;
     double phi = phi0 + phiDot * t;    
@@ -1704,13 +1722,13 @@ void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr sysData, double *prim
     v_P2P3Line[2] = phiDot*sin(phi)*sin(gamma);
 
     // Multiply by radii of P2 and P3 to get their velocities
-    primVel[3] = v_P2P3Line[0] * (-nu/mu)*sysData.getCharLRatio();
-    primVel[4] = v_P2P3Line[1] * (-nu/mu)*sysData.getCharLRatio();
-    primVel[5] = v_P2P3Line[2] * (-nu/mu)*sysData.getCharLRatio();
+    primVel[3] = v_P2P3Line[0] * (-nu/mu)*sysData->getCharLRatio();
+    primVel[4] = v_P2P3Line[1] * (-nu/mu)*sysData->getCharLRatio();
+    primVel[5] = v_P2P3Line[2] * (-nu/mu)*sysData->getCharLRatio();
 
-    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*sysData.getCharLRatio();
-    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*sysData.getCharLRatio();
-    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*sysData.getCharLRatio();
+    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*sysData->getCharLRatio();
+    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*sysData->getCharLRatio();
+    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*sysData->getCharLRatio();
 }//===================================================================
 
 /**
@@ -1723,22 +1741,22 @@ void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr sysData, double *prim
  *
  *  @return a BCR4BPR Trajectory object
  */
-tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr bcSys, double t0){
+tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *bcSys, double t0){
     if(crTraj.getSysData()->getPrimID(0) != 10 || crTraj.getSysData()->getPrimID(1) != 399){
         throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
-    if(bcSys.getPrimID(0) != 10 || bcSys.getPrimID(1) != 399 || bcSys.getPrimID(2) != 301){
+    if(bcSys->getPrimID(0) != 10 || bcSys->getPrimID(1) != 399 || bcSys->getPrimID(2) != 301){
         throw tpat_exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_traj_bcr4bpr bcTraj(&bcSys);
+    tpat_traj_bcr4bpr bcTraj(bcSys);
 
     double charL2 = crTraj.getSysData()->getCharL();
     double charT2 = crTraj.getSysData()->getCharT();
-    double charL3 = bcSys.getCharL();
-    double charT3 = bcSys.getCharT();
+    double charL3 = bcSys->getCharL();
+    double charT3 = bcSys->getCharT();
 
     std::vector<double> blank(6, NAN);
 
@@ -1785,22 +1803,22 @@ tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr b
  *
  *  @return a BCR4BPR nodeset
  */
-tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bcr4bpr bcSys, double t0){
+tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bcr4bpr *bcSys, double t0){
     if(crNodes.getSysData()->getPrimID(0) != 10 || crNodes.getSysData()->getPrimID(1) != 399){
         throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
-    if(bcSys.getPrimID(0) != 10 || bcSys.getPrimID(1) != 399 || bcSys.getPrimID(2) != 301){
+    if(bcSys->getPrimID(0) != 10 || bcSys->getPrimID(1) != 399 || bcSys->getPrimID(2) != 301){
         throw tpat_exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_nodeset_bcr4bpr bcNodes(&bcSys);
+    tpat_nodeset_bcr4bpr bcNodes(bcSys);
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();
-    double charL3 = bcSys.getCharL();
-    double charT3 = bcSys.getCharT();
+    double charL3 = bcSys->getCharL();
+    double charT3 = bcSys->getCharT();
 
     double ellapsed = t0;
 
@@ -1816,7 +1834,7 @@ tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bc
         
         double tof = crNodes.getTOF(n)*charT2/charT3;
         tpat_node bcNode(bcNodeState, tof);
-        bcNode.setExtraParam(0, ellapsed);  // set epoch
+        bcNode.setExtraParam(1, ellapsed);  // set epoch
 
         bcNodes.appendNode(bcNode);
         if(n < crNodes.getNumNodes()-1){

@@ -107,8 +107,7 @@ class tpat_correction_engine{
 		void setFindEvent(bool);
 
 		// Utility/Action functions
-		void correct_cr3bp(tpat_nodeset_cr3bp*);
-		void correct_bcr4bpr(tpat_nodeset_bcr4bpr*);
+		void correct(tpat_nodeset*);
 
 	private:
 		/** Whether or not to spit out lots of messages */
@@ -123,17 +122,11 @@ class tpat_correction_engine{
 		/** Maximum acceptable error value, non-dimensional units */
 		double tol = 1e-12;
 
-		/** Whether or not an input nodeset was supplied and corrected */
-		bool receivedNodesetIn = false;
-
 		/** Whether or not space has been dynamically allocated for nodeset_out */
 		bool createdNodesetOut = false;
 
 		/** Flag to turn on when this algorithm is being used to locate an event */
 		bool findEvent = false;
-
-		/** The input nodeset, not modified*/
-		tpat_nodeset *nodeset_in = 0;
 
 		/** The output nodeset, constructed from the corrected arcs */
 		tpat_nodeset *nodeset_out = 0;
@@ -142,7 +135,6 @@ class tpat_correction_engine{
 		bool isClean = true;
 
 		void copyEngine(const tpat_correction_engine&);
-		void correct(tpat_nodeset*);
 
 		tpat_matrix solveUpdateEq(iterationData*);
 

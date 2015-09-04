@@ -64,7 +64,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr *
 	initExtraParam();
 	initSetFromICs(IC, data, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(t0);
-}//======================================================================
+}//====================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -84,7 +84,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data
 	initExtraParam();
 	initSetFromICs(&(IC[0]), data, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(t0);
-}//======================================================================
+}//====================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -103,7 +103,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr *
 	initExtraParam();
 	initSetFromICs(IC, data, t0, tof, numNodes, type);
 	initEpochs(t0);
-}//======================================================================
+}//====================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -122,7 +122,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data
 	initExtraParam();
 	initSetFromICs(&(IC[0]), data, t0, tof, numNodes, type);
 	initEpochs(t0);
-}//======================================================================
+}//====================================================
 
 /**
  *	@brief Create a nodeset as a subset of another
@@ -138,10 +138,14 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &orig, int
  *
  *	This function calls the base-class copy constructor to
  *	handle copying the generic fields like state and tofs
- *	@param n a nodeset
+ *	@param n a nodeset reference
  */
 tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr& n) : tpat_nodeset(n) {}
 
+/**
+ *	@brief Create a BCR4BPR nodeset from its base class
+ *	@param a an arc data reference
+ */
 tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_arc_data &a) : tpat_nodeset(a) {}
 
 /**
@@ -160,7 +164,7 @@ void tpat_nodeset_bcr4bpr::initEpochs(double t0){
 		tpat_node *node = static_cast<tpat_node*>(&steps[n]);
 		ellapsed += node->getTOF();
 	}
-}//=========================================
+}//====================================================
 
 
 //-----------------------------------------------------
@@ -171,6 +175,11 @@ void tpat_nodeset_bcr4bpr::initEpochs(double t0){
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Retrieve the epoch time at a specific node
+ *	@param ix node index; if < 0, will count backwards from the end of the nodeset
+ *	return the non-dimensional epoch time associated with the specified node
+ */
 double tpat_nodeset_bcr4bpr::getEpoch(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
@@ -182,6 +191,9 @@ double tpat_nodeset_bcr4bpr::getEpoch(int ix) const {
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Initialize the extra param vector to hold info specific to this nodeset
+ */
 void tpat_nodeset_bcr4bpr::initExtraParam(){
 	// This function in tpat_nodeset was already called, so 
 	// numExtraParam has been set to 1 and a row size has
@@ -192,6 +204,11 @@ void tpat_nodeset_bcr4bpr::initExtraParam(){
 	extraParamRowSize.push_back(1);
 }//====================================================
 
+/**
+ *	@brief Save this nodeset to a mat file
+ *	@param filename a relative or absolute filepath to a mat file. Note
+ *	the extension MUST be ".mat"
+ */
 void tpat_nodeset_bcr4bpr::saveToMat(const char *filename){
 	// TODO: Check for propper file extension, add if necessary
 
@@ -210,7 +227,7 @@ void tpat_nodeset_bcr4bpr::saveToMat(const char *filename){
 	}else{
 		saveState(matfp, "Nodes");
 		saveTOFs(matfp);
-		saveEpochs(matfp);
+		saveExtraParam(matfp, 1, "Epochs");
 		sysData->saveToMat(matfp);
 		// TODO: Add these functions:
 		// saveCons(matfp);
@@ -221,16 +238,26 @@ void tpat_nodeset_bcr4bpr::saveToMat(const char *filename){
 }//====================================================
 
 /**
- *	@brief Save the epoch values to a file
- *	@param matFile a pointer to the destination matlab file
+ *	@brief Display a textual representation of this object in the standard output
  */
-void tpat_nodeset_bcr4bpr::saveEpochs(mat_t *matFile){
-	std::vector<double> epochs;
-	for(size_t n = 0; n < steps.size(); n++){
-		epochs.push_back(steps[n].getExtraParam(1));
+void tpat_nodeset_bcr4bpr::print() const{
+	printf("%s Nodeset:\n Nodes: %zu\n", sysData->getTypeStr().c_str(), steps.size());
+	for (size_t n = 0; n < steps.size(); n++){
+		std::vector<double> node = steps[n].getPosVelState();
+		printf("  %02lu: @ %.2f, %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1, getEpoch(n),
+			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
+		if(n < steps.size()-1){
+			printf("   TOF = %.8f\n", getTOF(n));
+		}else{
+			printf("\n");
+		}
 	}
-	size_t dims[2] = {epochs.size(), 1};
-	matvar_t *matvar = Mat_VarCreate("Epochs", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(epochs[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, "Epochs", MAT_COMPRESSION_NONE);
+	printf(" Constraints:\n");
+	for(size_t n = 0; n < steps.size(); n++){
+		std::vector<tpat_constraint> nodeCons = getNodeCons(n);
+		for(size_t c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].print();
+		}
+	}
 }//====================================================
 

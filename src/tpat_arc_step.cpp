@@ -159,10 +159,19 @@ void tpat_arc_step::setConstraints(std::vector<tpat_constraint> cons){
 	constraints = cons;
 }//====================================================
 
+/**
+ *	@brief Get a three-element vector containing the accelerations
+ *	at this step
+ *	@return a vector of accelerations (non-dimensional)
+ */
 std::vector<double> tpat_arc_step::getAccel() const{
 	return std::vector<double>(accel, accel+3);
 }//====================================================
 
+/**
+ *	@brief Get all constraints for this step
+ *	@return a vector containing all constraints applied to this step
+ */
 std::vector<tpat_constraint> tpat_arc_step::getConstraints() const{
 	return constraints;
 }//====================================================
@@ -184,28 +193,54 @@ double tpat_arc_step::getExtraParam(int ix) const {
 	return extraParam[ix];
 }//====================================================
 
+/**
+ *	@brief Get a vector containing all extra parameters for this step
+ *	@return a vector containing all extra parameters for this step
+ */
 std::vector<double> tpat_arc_step::getExtraParams() const {
 	return extraParam;
 }//====================================================
 
+/**
+ *	@brief Get the 6-element non-dimensional position and velocity state vector
+ *	@return the 6-element non-dimensional position and velocity state vector
+ */
 std::vector<double> tpat_arc_step::getPosVelState() const {
 	return std::vector<double>(posVelState, posVelState+6);
 }//====================================================
 
+/**
+ *	@brief Retrieve the STM for this step
+ *	@return the STM for this step
+ */
 tpat_matrix tpat_arc_step::getSTM() const {
 	double el[36];
 	std::copy(stm, stm+36, el);
 	return tpat_matrix(6, 6, el);
 }//====================================================
 
+/**
+ *	@brief Retrieve the STM elements
+ *	@return a vector in row-major order containing the 36 STM elements
+ */
 std::vector<double> tpat_arc_step::getSTMElements() const {
 	return std::vector<double>(stm, stm+36);
 }//====================================================
 
+/**
+ *	@brief Set the acceleration vector for this step
+ *	@param a a 3-element array of non-dimensional accelerations. Note
+ *	that if the input array has fewer than three elements, un-initialized
+ *	memory will be accessed
+ */
 void tpat_arc_step::setAccel(double *a){
 	std::copy(a, a+3, accel);
 }//====================================================
 
+/**
+ *	@brief Set the acceleration vector for this step
+ *	@param a a 3-element vector of non-dimensional accelerations
+ */
 void tpat_arc_step::setAccel(std::vector<double> a){
 	if(a.size() != 3)
 		throw tpat_exception("tpat_arc_step::setAccel: input acceleration must have three elements");
@@ -236,30 +271,60 @@ void tpat_arc_step::setExtraParam(int ix, double val){
 	extraParam[ix] = val;
 }//====================================================
 
+/**
+ *	@brief Replace the extra parameter vector for this step
+ *	@param p a new extra paremeter vector
+ */
 void tpat_arc_step::setExtraParams(std::vector<double> p){
 	extraParam = p;
 }//====================================================
 
+/**
+ *	@brief Set the position-velocity state vector
+ *	@param s a 6-element array of non-dimensional position
+ *	and velocity states. Note that if the input array has fewer
+ *	than 6 states, un-initialized memory may be read.
+ */
 void tpat_arc_step::setPosVelState(double *s){
 	std::copy(s, s+6, posVelState);
 }//====================================================
 
+/**
+ *	@brief Set the position-velocity state vector
+ *	@param s a 6-element vector of non-dimensional position
+ *	and velocity states
+ */
 void tpat_arc_step::setPosVelState(std::vector<double> s){
 	if(s.size() != 6)
 		throw tpat_exception("tpat_arc_step::setPosVelState: input vector must have six elements");
 	std::copy(s.begin(), s.begin()+6, posVelState);
 }//====================================================
 
+/**
+ *	@brief Set the STM for this step
+ *	@param m a 6x6 state transition matrix (non-dim)
+ */
 void tpat_arc_step::setSTM(tpat_matrix m){
 	if(m.getRows() != 6 || m.getCols() != 6)
 		throw tpat_exception("tpat_arc_step::setSTM: STM must be 6x6");
 	std::copy(m.getDataPtr(), m.getDataPtr()+36, stm);
 }//====================================================
 
+/**
+ *	@brief Set the STM for this step
+ *	@param elements an array of stm elements in 
+ *	row-major order. Note that the array must have at least 36
+ *	elements, or un-initialized memory may be accessed
+ */
 void tpat_arc_step::setSTM(double *elements){
 	std::copy(elements, elements+36, stm);
 }//====================================================
 
+/**
+ *	@brief Set the STM for this step
+ *	@param elements a 36-element vector of STM elements
+ *	(non-dimensional) in row-major order
+ */
 void tpat_arc_step::setSTM(std::vector<double> elements){
 	if(elements.size() != 36)
 		throw tpat_exception("tpat_arc_step::setSTM: input vector must have 36 elements");

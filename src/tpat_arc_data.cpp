@@ -75,6 +75,16 @@ tpat_arc_data& tpat_arc_data::operator =(const tpat_arc_data &d){
 	return *this;
 }//====================================================
 
+/**
+ *	@brief Concatenate two arc_data objects
+ *
+ * 	When adding A + B, if the final state of A and initial state
+ *	of B are the same, this algorithm will skip the initial state
+ *	of B in the concatenation to avoid duplicating a node or state
+ *
+ *	@param rhs the right-hand-side of the addition operation
+ *	@return a reference to the concatenated arc_data object
+ */
 tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
 	if( *sysData != *(rhs.sysData))
 		throw tpat_exception("tpat_arc_data::+: Cannot concatenate data sets from different systems");
@@ -355,6 +365,20 @@ void tpat_arc_data::saveSTMs(mat_t *matFile){
 	matvar_t *matvar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "STM", MAT_COMPRESSION_NONE);
 }//=========================================
+
+/**
+ *	@brief Update the constraints for every node so that their node numberes
+ * 	match the node/step they belong to.
+ */
+void tpat_arc_data::updateCons(){
+	for(size_t n = 0; n < steps.size(); n++){
+		std::vector<tpat_constraint> nodeCons = steps[n].getConstraints();
+		for(size_t c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].setNode(n);
+		}
+		steps[n].setConstraints(nodeCons);
+	}
+}//====================================================
 
 
 

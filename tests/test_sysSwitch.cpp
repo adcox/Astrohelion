@@ -27,13 +27,13 @@ int main(void){
 	tpat_traj_cr3bp emHalo = engine.getCR3BP_Traj();
 	emHalo.saveToMat("data/EM_Halo.mat");
 
-	tpat_nodeset_cr3bp emNodes(haloIC, emSys, 2.77, 10, tpat_nodeset::DISTRO_TIME);
+	tpat_nodeset_cr3bp emNodes(haloIC, &emSys, 2.77, 10, tpat_nodeset::DISTRO_TIME);
 	emNodes.saveToMat("data/EM_Nodes.mat");
 
-	tpat_traj_cr3bp emHalo_inSE = cr3bp_EM2SE(emHalo, 0.1, 0.2, 0.05);
+	tpat_traj_cr3bp emHalo_inSE = cr3bp_EM2SE(emHalo, &seSys, 0.1, 0.2, 0.05);
 	emHalo_inSE.saveToMat("data/EM_Halo_inSE.mat");
 
-	tpat_nodeset_cr3bp emNodes_inSE = cr3bp_EM2SE(emNodes, 0, 0.1, 0.2, 0.05);
+	tpat_nodeset_cr3bp emNodes_inSE = cr3bp_EM2SE(emNodes, &seSys, 0, 0.1, 0.2, 0.05);
 	emNodes_inSE.saveToMat("data/EM_Nodes_inSE.mat");
 
 	// Try converting Sun-Earth to Earth-Moon
@@ -43,21 +43,21 @@ int main(void){
 	tpat_traj_cr3bp seTraj = engine.getCR3BP_Traj();
 	seTraj.saveToMat("data/SE_Traj.mat");
 
-	tpat_nodeset_cr3bp seNodes(haloIC, seSys, 2.77, 10, tpat_nodeset::DISTRO_ARCLENGTH);
+	tpat_nodeset_cr3bp seNodes(haloIC, &seSys, 2.77, 10, tpat_nodeset::DISTRO_ARCLENGTH);
 	seNodes.saveToMat("data/SE_Nodes.mat");
 
-	tpat_traj_cr3bp seTraj_inEM = cr3bp_SE2EM(seTraj, 0.1, 0.2, 0.05);
+	tpat_traj_cr3bp seTraj_inEM = cr3bp_SE2EM(seTraj, &emSys, 0.1, 0.2, 0.05);
 	seTraj_inEM.saveToMat("data/SE_Traj_inEM.mat");
 
-	tpat_nodeset_cr3bp seNodes_inEM = cr3bp_SE2EM(seNodes, 0, 0.1, 0.2, 0.05);
+	tpat_nodeset_cr3bp seNodes_inEM = cr3bp_SE2EM(seNodes, &emSys, 0, 0.1, 0.2, 0.05);
 	seNodes_inEM.saveToMat("data/SE_Nodes_inEM.mat");
 
 	// Try converting Sun-Earth to Sun-Earth-Moon
 	tpat_sys_data_bcr4bpr bcSys("sun", "earth", "moon");
-	tpat_traj_bcr4bpr bcTraj = bcr4bpr_SE2SEM(seTraj, bcSys, 7.08);
+	tpat_traj_bcr4bpr bcTraj = bcr4bpr_SE2SEM(seTraj, &bcSys, 7.08);
 	bcTraj.saveToMat("data/SEM_Traj.mat");
 
-	tpat_nodeset_bcr4bpr bcNodes = bcr4bpr_SE2SEM(seNodes, bcSys, 7.08);
+	tpat_nodeset_bcr4bpr bcNodes = bcr4bpr_SE2SEM(seNodes, &bcSys, 7.08);
 	bcNodes.saveToMat("data/SEM_Nodes.mat");
 	return 0;
 }

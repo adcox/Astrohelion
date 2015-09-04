@@ -147,7 +147,11 @@ double tpat_sys_data_bcr4bpr::getCharLRatio() const { return otherParams.at(3); 
 /**
  *	@return the scaling constant for this system
  */
-double tpat_sys_data_bcr4bpr::getK() const { return otherParams.at(2); }
+double tpat_sys_data_bcr4bpr::getK() const {
+	if(otherParams.size() != 7)
+		printf("");
+
+	return otherParams.at(2); }
 
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,

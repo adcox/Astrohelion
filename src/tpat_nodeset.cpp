@@ -43,21 +43,33 @@
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *	@brief Construct a nodeset for the specified system
+ *	@param sys a pointer to a system data object
+ */
 tpat_nodeset::tpat_nodeset(tpat_sys_data *sys) : tpat_arc_data(sys){
 	initExtraParam();
 }//====================================================
 
+/**
+ *	@brief Create a nodeset from another nodeset
+ *	@param n a nodeset reference
+ */
 tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arc_data (n){
 	initExtraParam();
 }//====================================================
 
+/**
+ *	@brief Create a nodeset from its base object
+ *	@param a an arc data object
+ */
 tpat_nodeset::tpat_nodeset(const tpat_arc_data &a) : tpat_arc_data (a){
 	initExtraParam();
 }//====================================================
 
 /**
  *	@brief Create a nodeset as a subset of another
- *	@param orig Original nodeset
+ *	@param n Original nodeset
  *	@param first index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
@@ -74,6 +86,12 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ar
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Retrieve the constraints for a specific node
+ *	@param nodeIx the index of the node. If less than 0, it will
+ *	count backward from the end of the nodeset
+ *	@return a vector of all constraints applied to the specified node
+ */
 std::vector<tpat_constraint> tpat_nodeset::getNodeCons(int nodeIx) const{
 	if(nodeIx < 0)
 		nodeIx += steps.size();
@@ -81,6 +99,12 @@ std::vector<tpat_constraint> tpat_nodeset::getNodeCons(int nodeIx) const{
 	return steps[nodeIx].getConstraints();
 }//====================================================
 
+/**
+ *	@brief Retrieve a specific node
+ *	@param ix the index of the node. If less than 0, the index
+ *	will count backwards from the end of the nodeset
+ *	@return the requested node
+ */
 tpat_node tpat_nodeset::getNode(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
@@ -88,6 +112,10 @@ tpat_node tpat_nodeset::getNode(int ix) const {
 	return tpat_node(steps[ix]);
 }//====================================================
 
+/**
+ *	@brief Retrieve the number of constraints for the entire nodeset
+ *	@return the number of constraints for the entire nodeset
+ */
 int tpat_nodeset::getNumCons() const { 
 	int count = 0;
 	for(size_t i = 0; i < steps.size(); i++){
@@ -96,8 +124,18 @@ int tpat_nodeset::getNumCons() const {
 	return count;
 }//====================================================
 
+/**
+ *	@brief Retrieve the number of nodes in the nodeset
+ *	@return the number of nodes in the nodeset
+ */
 int tpat_nodeset::getNumNodes() const { return steps.size(); }
 
+/**
+ *	@brief Get the time-of-flight for a specific node
+ *	@param ix node index; if less than 0, the index counts
+ *	backwards from the end of the nodeset
+ *	@return non-dimensional time-of-flight between nodes ix and ix+1
+ */
 double tpat_nodeset::getTOF(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
@@ -106,6 +144,10 @@ double tpat_nodeset::getTOF(int ix) const {
 	return node.getTOF();
 }//====================================================
 
+/**
+ *	@brief Get the total time-of-flight along this nodeset
+ *	@return the total time-of-flight along this nodeset (non-dimensional)
+ */
 double tpat_nodeset::getTotalTOF() const {
 	double total = 0;
 	for(size_t ix = 0; ix < steps.size(); ix++){
@@ -116,6 +158,14 @@ double tpat_nodeset::getTotalTOF() const {
 	return total;
 }//====================================================
 
+/**
+ *	@brief Add a constraint to the set
+ *	
+ *	The constraint object specifies the index of the node it will
+ *	be added to.
+ *
+ *	@param con the constraint to add
+ */
 void tpat_nodeset::addConstraint(tpat_constraint con){
 	if(con.getNode() >= 0 && con.getNode() < (int)(steps.size())){
 		steps[con.getNode()].addConstraint(con);
@@ -124,23 +174,45 @@ void tpat_nodeset::addConstraint(tpat_constraint con){
 	}
 }//====================================================
 
+/**
+ *	@brief Append a node to the end of the nodeset
+ *	@param node a new node
+ */
 void tpat_nodeset::appendNode(tpat_node node){
 	steps.push_back(node);
 }//====================================================
 
+/**
+ *	@brief Delete the specified node from the nodeset
+ *	@param ix node index; if < 0, index counts backwards from
+ *	end of nodeset
+ */
 void tpat_nodeset::deleteNode(int ix){
 	if(ix < 0)
 		ix += steps.size();
 	steps.erase(steps.begin()+ix);
+	updateCons();
 }//====================================================
 
+/**
+ *	@brief Insert a node at the desired index
+ *	@param ix node index; if < 0, will count backwards from end of nodeset
+ *	@param node new node
+ */
 void tpat_nodeset::insertNode(int ix, tpat_node node) {
 	if(ix < 0)
 		ix += steps.size();
 
 	steps.insert(steps.begin() + ix, node);
+	updateCons();
 }//====================================================
 
+/**
+ *	@brief Set all nodes to be continuous in velocity except for those
+ *	specified
+ *	@param ix a vector of node indices to make discontinuous in 
+ *	velocity
+ */
 void tpat_nodeset::setVelConNodes_allBut(std::vector<int> ix) {
 	for(size_t i = 0; i < steps.size()-1; i++){
 		tpat_node *np = static_cast<tpat_node*>(&(steps[i]));
@@ -157,13 +229,36 @@ void tpat_nodeset::setVelConNodes_allBut(std::vector<int> ix) {
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Remove all constraints from all nodes
+ */
 void tpat_nodeset::clearConstraints() {
 	for(size_t i = 0; i < steps.size(); i++)
 		steps[i].clearConstraints();
 }//====================================================
 
+/**
+ *	@brief Display a textual representation of this object in the standard output
+ */
 void tpat_nodeset::print() const{
-	printf("Someday this may something useful!\n");
+	printf("%s Nodeset:\n Nodes: %zu\n", sysData->getTypeStr().c_str(), steps.size());
+	for (size_t n = 0; n < steps.size(); n++){
+		std::vector<double> node = steps[n].getPosVelState();
+		printf("  %02lu: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1,
+			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
+		if(n < steps.size()-1){
+			printf("   TOF = %.8f\n", getTOF(n));
+		}else{
+			printf("\n");
+		}
+	}
+	printf(" Constraints:\n");
+	for(size_t n = 0; n < steps.size(); n++){
+		std::vector<tpat_constraint> nodeCons = getNodeCons(n);
+		for(size_t c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].print();
+		}
+	}
 }//====================================================
 
 /**
@@ -208,13 +303,14 @@ void tpat_nodeset::saveToMat(const char* filename){
 	}else{
 		saveState(matfp, "Nodes");
 		saveTOFs(matfp);
+		sysData->saveToMat(matfp);
 		// TODO: Add these functions:
 		// saveCons(matfp);
 		// saveVelCon(matfp);
 	}
 
 	Mat_Close(matfp);
-}
+}//====================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -354,17 +450,17 @@ void tpat_nodeset::initSetFromTraj(tpat_traj traj, tpat_sys_data *sysData, int n
 	initSetFromICs(ic, sysData, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
 }//==============================================
 
+/**
+ *	@brief Save time-of-flight values to a mat file
+ *	@param matFile a pointer to the open mat file
+ */
 void tpat_nodeset::saveTOFs(mat_t *matFile){
-	std::vector<double> tofs;
-	for(size_t n = 0; n < steps.size()-1; n++){
-		tpat_node *node = static_cast<tpat_node*>(&steps[n]);
-		tofs.push_back(node->getTOF());
-	}
-	size_t dims[2] = {tofs.size(), 1};
-	matvar_t *matvar = Mat_VarCreate("TOFs", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(tofs[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, matvar, "TOFs", MAT_COMPRESSION_NONE);
+	saveExtraParam(matFile, 0, "TOFs");
 }//==============================================
 
+/**
+ *	@brief Initialize the extraParam vector to hold nodeset-specific data
+ */
 void tpat_nodeset::initExtraParam(){
 	// Time of Flight for each node/step
 	numExtraParam = 1;

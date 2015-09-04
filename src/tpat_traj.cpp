@@ -31,6 +31,7 @@
 
 #include "tpat_traj.hpp"
 
+#include "tpat_exceptions.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
@@ -38,17 +39,29 @@
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *	@brief Create a trajectory for a specific system
+ *	@param data a pointer to a system data object
+ */
 tpat_traj::tpat_traj(tpat_sys_data *data) : tpat_arc_data(data) {
 	initExtraParam();
 }//====================================================
 
+/**
+ *	@brief Create a trajectory from another trajectory
+ *	@param t a trajectory reference
+ */
 tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arc_data(t) {
 	initExtraParam();
 }//====================================================
 
+/**
+ *	@brief Create a trajectory from its base class
+ *	@param a an arc data reference
+ */
 tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
 	initExtraParam();
-}
+}//====================================================
 
 //-----------------------------------------------------
 //      Operators
@@ -58,6 +71,11 @@ tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Retrieve the time along the trajectory at a specific step
+ *	@param ix step index; if < 0, it will count backwards from end of trajectory
+ *	@return the non-dimensional time along the trajectory at the specified step
+ */
 double tpat_traj::getTime(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
@@ -65,12 +83,21 @@ double tpat_traj::getTime(int ix) const {
 	return step.getTime();
 }//====================================================
 
+/**
+ *	@brief Retrieve the specified step
+ *	@param ix step index; if < 0, it will count backwards from end of trajectory
+ *	@return the requested trajectory step object
+ */
 tpat_traj_step tpat_traj::getStep(int ix) const{
 	if(ix < 0)
 		ix += steps.size();
 	return tpat_traj_step(steps[ix]);
 }//====================================================
 
+/**
+ *	@brief Append a step to the end of the trajectory
+ *	@param s a new step
+ */
 void tpat_traj::appendStep(tpat_traj_step s){ steps.push_back(s); }
 
 //-----------------------------------------------------
@@ -99,13 +126,14 @@ void tpat_traj::saveToMat(const char* filename){
 		saveAccel(matfp);
 		saveTime(matfp);
 		saveSTMs(matfp);
+		sysData->saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);
 }//====================================================
 
 /**
- *	@brief Print a useful message describing this trajectory
+ *	@brief Print a useful message describing this trajectory to the standard output
  */
 void tpat_traj::print() const {
 	printf("This is a trajectory\n\tTODO - MAKE THIS MESSAGE USEFUL\n");
@@ -119,6 +147,9 @@ void tpat_traj::saveTime(mat_t *file){
 	saveExtraParam(file, 0, "Time");
 }//====================================================
 
+/**
+ *	@brief Initialize the extra param vector for trajectory-specific info
+ */
 void tpat_traj::initExtraParam(){
 	// ExtraParam = [time]
 	numExtraParam = 1;

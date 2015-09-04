@@ -88,10 +88,10 @@ std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 void cr3bp_getUDDots(double, double, double, double, double*);
 double cr3bp_getJacobi(const double s[], double);
 void cr3bp_getEquilibPt(tpat_sys_data_cr3bp, int, double, double[3]);
-tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, double, double, double);
-tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, double, double, double, double);
-tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp, double, double, double);
-tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp, double, double, double, double);
+tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, tpat_sys_data_cr3bp*, double, double, double);
+tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, tpat_sys_data_cr3bp*, double, double, double, double);
+tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp, tpat_sys_data_cr3bp*, double, double, double);
+tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp, tpat_sys_data_cr3bp*, double, double, double, double);
 std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
@@ -100,10 +100,10 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp, std::vector<double>, doub
 tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp, std::vector<double>, double, int, mirror_t, std::vector<int>);
 
 // BCR4BPR Utility Functions
-void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr, double*);
-void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr, double*);
-tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr, double);
-tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr, double);
+void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr*, double*);
+void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr*, double*);
+tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr*, double);
+tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr*, double);
 void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
 
 #endif

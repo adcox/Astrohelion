@@ -49,7 +49,7 @@ public:
 	double getJacobi(int) const;
 
 	void setJacobi(int, double);
-
+	void saveToMat(const char*);
 private:
 	void initExtraParam();
 	

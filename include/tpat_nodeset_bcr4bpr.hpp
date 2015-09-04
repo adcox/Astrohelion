@@ -54,16 +54,18 @@ public:
 	tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr&);
 	tpat_nodeset_bcr4bpr(const tpat_arc_data&);
 
+	// Operators
+
 	// Set and Get Functions
 	double getEpoch(int) const;
 
 	// Utility Functions
 	void saveToMat(const char*);
-
+	void print() const;
+	
 private:
 	void initEpochs(double);
 	void initExtraParam();
-	void saveEpochs(mat_t*);
 };
 
 #endif

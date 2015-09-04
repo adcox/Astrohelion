@@ -51,6 +51,7 @@ public:
 	void set_dqdT(int, double*);
 	void set_dqdT(int, std::vector<double>);
 
+	void saveToMat(const char*);
 private:
 
 	void initExtraParam();

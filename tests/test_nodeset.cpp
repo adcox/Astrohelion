@@ -87,13 +87,12 @@ void test_concat_CR3BP(){
 	}
 }
 
-void test_createCR3BPNodeset(){
+tpat_nodeset_cr3bp test_createCR3BPNodeset(tpat_sys_data_cr3bp *emData){
 	// Define system and IC
-	tpat_sys_data_cr3bp sysData("earth", "moon");
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	crSet = new tpat_nodeset_cr3bp(ic, &sysData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
+	tpat_nodeset_cr3bp crSet(ic, emData, 2.77, 5, tpat_nodeset::DISTRO_TIME);
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
@@ -105,31 +104,15 @@ void test_createCR3BPNodeset(){
 	tpat_constraint crCon1(tpat_constraint::MAX_DELTA_V, 0, data, 1);
 	// crSet->addConstraint(crCon1);
 
-	printf("CR3BP Nodeset:\n Nodes: %d\n", crSet->getNumNodes());
-	for (int n = 0; n < crSet->getNumNodes(); n++){
-		vector<double> node = crSet->getNode(n).getPosVelState();
-		printf("  %02d: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1,
-			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
-		if(n < crSet->getNumNodes()-1){
-			printf("   TOF = %.8f\n", crSet->getTOF(n));
-		}else{
-			printf("\n");
-		}
-	}
-	cout << " Constraints:" << endl;
-	for(int n = 0; n < crSet->getNumNodes(); n++){
-		std::vector<tpat_constraint> nodeCons = crSet->getNodeCons(n);
-		for(size_t c = 0; c < nodeCons.size(); c++){
-			nodeCons[c].print();
-		}
-	}
+	crSet.print();
+
+	return crSet;
 }//==============================================
 
-void test_createBCR4BPRNodeset(){
-	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
+void test_createBCR4BPRNodeset(tpat_sys_data_bcr4bpr *semData){
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new tpat_nodeset_bcr4bpr(ic2, &semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
+	bcSet = new tpat_nodeset_bcr4bpr(ic2, semData, 0, 40, 5, tpat_nodeset::DISTRO_TIME);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
@@ -142,36 +125,23 @@ void test_createBCR4BPRNodeset(){
 	vector<int> velCon(nodes, nodes+2);
 	bcSet->setVelConNodes_allBut(velCon);
 
-	printf("BCR4BPR Nodeset:\n Nodes: %d\n", bcSet->getNumNodes());
-	for (int n = 0; n < bcSet->getNumNodes(); n++){
-		vector<double> node = bcSet->getNode(n).getPosVelState();
-		printf("  %02d: %9.4f -- %9.4f %9.4f %9.4f %9.4f %9.4f %9.4f\n", n+1,
-			bcSet->getEpoch(n), node.at(0), node.at(1), node.at(2), node.at(3),
-			node.at(4), node.at(5));
-	}
-	cout << " Constraints:" << endl;
-	for(int n = 0; n < bcSet->getNumNodes(); n++){
-		std::vector<tpat_constraint> nodeCons = bcSet->getNodeCons(n);
-		for(size_t c = 0; c < nodeCons.size(); c++){
-			nodeCons[c].print();
-		}
-	}
+	bcSet->print();
 }//==============================================
-
 
 int main(void){
 	tpat_correction_engine corrector;
 
-	test_createCR3BPNodeset();
+	tpat_sys_data_cr3bp emData("earth", "moon");
+	tpat_nodeset_cr3bp crSet = test_createCR3BPNodeset(&emData);
 	corrector.setVerbose(true);
-	corrector.correct_cr3bp(crSet);
+	corrector.correct(&crSet);
 
-	test_createBCR4BPRNodeset();
+	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
+	test_createBCR4BPRNodeset(&semData);
 	corrector.setVerbose(true);
-	corrector.correct_bcr4bpr(bcSet);
+	corrector.correct(bcSet);
 
 	// Memory clean-up
-	delete crSet;
 	delete bcSet;
 
 	test_concat_CR3BP();

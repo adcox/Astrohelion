@@ -1,5 +1,5 @@
 /**
- *	@file tpat_family_member_cr3bp
+ *	@file tpat_family_member_cr3bp.cpp
  *	@brief Data object for CR3BP family members
  */
 /*

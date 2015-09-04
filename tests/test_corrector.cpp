@@ -15,7 +15,7 @@ int main(void){
 	double tof = 31.00065761;
 
 	// Create a nodeset with 10 nodes
-	tpat_nodeset_cr3bp nodeset(IC, sys, tof, 15);
+	tpat_nodeset_cr3bp nodeset(IC, &sys, tof, 15);
 	tpat_traj_cr3bp traj = tpat_traj_cr3bp::fromNodeset(nodeset);
 
 	nodeset.saveToMat("resNodes.mat");
@@ -36,7 +36,7 @@ int main(void){
 	nodeset.addConstraint(perpCrossEnd);
 
 	tpat_correction_engine corrector;
-	corrector.correct_cr3bp(&nodeset);
+	corrector.correct(&nodeset);
 	tpat_nodeset_cr3bp correctedNodeset = corrector.getCR3BP_Output();
 	correctedNodeset.saveToMat("resNodes_Corrected.mat");
 

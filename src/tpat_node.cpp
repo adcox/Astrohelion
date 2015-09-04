@@ -186,5 +186,5 @@ void tpat_node::initArrays(){
 	for(int i = 0; i < 3; i++)
 		flags.push_back(true);
 
-	extraParam.assign(1,0);
+	extraParam.assign(1,0);	// Definitely one spot for TOF, filled by constructor
 }//====================================================

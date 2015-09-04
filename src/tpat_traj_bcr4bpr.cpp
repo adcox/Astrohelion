@@ -39,14 +39,26 @@
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *	@brief Create a trajectory for a specific system
+ *	@param sys a pointer to a system data object
+ */
 tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr *sys) : tpat_traj(sys){
 	initExtraParam();
 }//====================================================
 
+/**
+ *	@brief Create a trajectory from another trajectory
+ *	@param t a trajectory reference
+ */
 tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr &t) : tpat_traj(t){
 	initExtraParam();
 }//====================================================
 
+/**
+ *	@brief Create a trajectory from its base class
+ *	@param a an arc data reference
+ */
 tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_arc_data &a) : tpat_traj(a){
 	initExtraParam();
 }//====================================================
@@ -95,7 +107,7 @@ std::vector<double> tpat_traj_bcr4bpr::get_dqdT(int ix){
 	if(ix < 0)
 		ix += steps.size();
 
-	return getExtraParam(ix, 2);
+	return getExtraParam(ix, 1);
 }//====================================================
 
 /**
@@ -128,6 +140,9 @@ void tpat_traj_bcr4bpr::set_dqdT(int ix, std::vector<double> dqdT){
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Initialize the extra param vector for info specific to this trajectory
+ */
 void tpat_traj_bcr4bpr::initExtraParam(){
 	// This function in tpat_traj was already called, so 
 	// numExtraParam has been set to 1 and a row size has
@@ -137,3 +152,34 @@ void tpat_traj_bcr4bpr::initExtraParam(){
 	numExtraParam = 2;
 	extraParamRowSize.push_back(6);
 }//====================================================
+
+/**
+ *	@brief Save the trajectory to a file
+ *	@param filename the name of the .mat file
+ */
+void tpat_traj_bcr4bpr::saveToMat(const char* filename){
+	// TODO: Check for propper file extension, add if necessary
+
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		printErr("Error creating MAT file\n");
+	}else{
+		saveState(matfp);
+		saveAccel(matfp);
+		saveTime(matfp);
+		saveSTMs(matfp);
+		saveExtraParam(matfp, 1, "dqdT");
+		sysData->saveToMat(matfp);
+	}
+
+	Mat_Close(matfp);
+}//========================================

@@ -53,9 +53,7 @@ public:
 	tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&);
 	tpat_nodeset_cr3bp(const tpat_arc_data&);
 
-protected:
-
-private:
+	// Operators
 
 };
 

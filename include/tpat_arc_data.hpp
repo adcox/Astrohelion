@@ -71,6 +71,8 @@ public:
 	 */
 	virtual void print() const = 0;
 
+	void updateCons();
+	
 protected:
 	/** Contains all integration steps */
 	std::vector<tpat_arc_step> steps;

@@ -89,7 +89,7 @@ tpat_model::eom_fcn tpat_model_bcr4bpr::getFullEOM_fcn(){
  */
 std::vector<double> tpat_model_bcr4bpr::getPrimPos(double t, tpat_sys_data *sysData){
     double primPos[9];
-    tpat_sys_data_bcr4bpr bcSys(*static_cast<tpat_sys_data_bcr4bpr *>(sysData));
+    tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
     bcr4bpr_getPrimaryPos(t, bcSys, primPos);
 
     return std::vector<double>(primPos, primPos+9);
@@ -105,7 +105,7 @@ std::vector<double> tpat_model_bcr4bpr::getPrimPos(double t, tpat_sys_data *sysD
  */
 std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, tpat_sys_data *sysData){
     double primVel[9];
-    tpat_sys_data_bcr4bpr bcSys(*static_cast<tpat_sys_data_bcr4bpr *>(sysData));
+    tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
     bcr4bpr_getPrimaryVel(t, bcSys, primVel);
 
     return std::vector<double>(primVel, primVel+9);
@@ -197,7 +197,7 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj, tpat
     corrector.setVerbose(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
     try{
-        corrector.correct_bcr4bpr(&eventNodeset);
+        corrector.correct(&eventNodeset);
     }catch(tpat_diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;

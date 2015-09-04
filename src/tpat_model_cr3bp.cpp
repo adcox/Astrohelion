@@ -188,7 +188,7 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_m
     corrector.setVerbose(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
     try{
-        corrector.correct_cr3bp(&eventNodeset);
+        corrector.correct(&eventNodeset);
     }catch(tpat_diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;

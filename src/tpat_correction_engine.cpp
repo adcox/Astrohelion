@@ -33,9 +33,6 @@
 #include "tpat_nodeset_bcr4bpr.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
-#include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
 
 #include <algorithm>
@@ -71,10 +68,8 @@ void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 	varTime = e.varTime;
 	maxIts = e.maxIts;
 	tol = e.tol;
-	receivedNodesetIn = e.receivedNodesetIn;
 	createdNodesetOut = e.createdNodesetOut;
 	findEvent = e.findEvent;
-	nodeset_in = e.nodeset_in;		//POINTER, COPYING ADDRESS - passed in, so should point to same parent object
 
 	if(createdNodesetOut){
 		tpat_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
@@ -153,8 +148,8 @@ double tpat_correction_engine::getTol() const { return tol; }
  *	@return a CR3BP nodeset object with the corrected trajectory data stored inside
  */
 tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
-	if(createdNodesetOut && receivedNodesetIn){
-		if(nodeset_in->getSysData()->getType() == tpat_sys_data::CR3BP_SYS){
+	if(createdNodesetOut){
+		if(nodeset_out->getSysData()->getType() == tpat_sys_data::CR3BP_SYS){
 			// Create a copy of the nodeset, return it
 			tpat_nodeset_cr3bp temp( *(static_cast<tpat_nodeset_cr3bp *>(nodeset_out)) );
 			return temp;
@@ -175,8 +170,8 @@ tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
  *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
  */
 tpat_nodeset_bcr4bpr tpat_correction_engine::getBCR4BPR_Output(){
-	if(createdNodesetOut && receivedNodesetIn){
-		if(nodeset_in->getSysData()->getType() == tpat_sys_data::BCR4BPR_SYS){
+	if(createdNodesetOut){
+		if(nodeset_out->getSysData()->getType() == tpat_sys_data::BCR4BPR_SYS){
 			// Create a copy of the nodeset, return it
 			tpat_nodeset_bcr4bpr temp( *(static_cast<tpat_nodeset_bcr4bpr *>(nodeset_out)) );
 			return temp;
@@ -223,47 +218,22 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
 //-----------------------------------------------------
 
 /**
- *	@brief Correct a CR3BP nodeset
- *	@param set a pointer to a nodeset
- *	@throws a <tt>tpat_diverge</tt> exception if the corrector cannot converge on a solution
- */
-void tpat_correction_engine::correct_cr3bp(tpat_nodeset_cr3bp* set){
-	if(!isClean)
-		cleanEngine();
-
-	nodeset_in = set;
-	receivedNodesetIn = true;
-	correct(nodeset_in);
-	isClean = false;
-}//========================================
-
-/**
- *	@brief Correct a BCR4BP nodeset
- *	@param set a pointer to a nodeset
- *	@throws a <tt>tpat_diverge</tt> exception if the corrector cannot converge on a solution
- */
-void tpat_correction_engine::correct_bcr4bpr(tpat_nodeset_bcr4bpr* set){
-	if(!isClean)
-		cleanEngine();
-
-	nodeset_in = set;
-	receivedNodesetIn = true;
-	correct(nodeset_in);
-	isClean = false;
-}//======================================
-
-/**
  *	@brief Correct a generic nodeset; equipped to handle any type
  *	@param set a pointer to a nodeset
  */
 void tpat_correction_engine::correct(tpat_nodeset *set){
-	// tpat_sys_data::system_t sysType = set->getSysData()->getType();
+	if(!isClean)
+		cleanEngine();
+
+	isClean = false;
+
+	// Make sure all constraints have the propper node numbers
+	set->updateCons();
 
 	// Create structure to store iteration data for easy sharing
-	// iterationData it(set->getSysData());
 	iterationData it;
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
-	// it.sysData = set->getSysData();
+	it.sysData = set->getSysData();
 
 	// Save original nodes for later access (particularly when variable time is off)
 	for(int n = 0; n < set->getNumNodes(); n++){
@@ -272,25 +242,10 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 
 	// Get some basic data from the input nodeset
 	it.numNodes = set->getNumNodes();
-	// tpat_sys_data::spystem_t sysType = set->getSysData()->getType();
 	
 	printVerb(verbose, "Corrector:\n");
 	printVerb(verbose, "  it.numNodes = %d\n", it.numNodes);
 	printVerb(verbose, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
-
-	// Create model pointer
-	// tpat_model *model;
-	// switch (sysType){
-	// 	case tpat_sys_data::CR3BP_SYS:
-	// 	{
-	// 		tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(set->getSysData());
-	// 		model = crSys->getModel();
-	// 		break;
-	// 	}
-	// 	case
-	// 	default:
-	// 		throw tpat_exception("Not implemented!");
-	// }
 
 	// Dummy code for now; this will be replaced with better code later
 	tpat_model *model = set->getSysData()->getModel();
@@ -470,7 +425,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 		throw tpat_diverge();
 	}
 
-	nodeset_out = model->corrector_createOutput(&it, nodeset_in, findEvent);
+	nodeset_out = model->corrector_createOutput(&it, set, findEvent);
 	createdNodesetOut = true;
 }//==========================================================
 
@@ -603,8 +558,6 @@ void tpat_correction_engine::cleanEngine(){
 		delete nodeset_out;
 	}
 
-	nodeset_in = 0;
-	receivedNodesetIn = false;
 	createdNodesetOut = false;
 	isClean = true;
 }//===================================

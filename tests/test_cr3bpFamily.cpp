@@ -37,7 +37,7 @@ int main(void){
 	}
 
 	printf("Checking Match TOF:\n");
-	double matchTOF = 5;
+	double matchTOF = 4.5;
 	matches.clear();
 	matches = fam.getMemberByTOF(matchTOF);
 	printf("  Found %zu Potential members\n", matches.size());

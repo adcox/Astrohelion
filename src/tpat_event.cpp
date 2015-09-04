@@ -195,16 +195,28 @@ tpat_event::~tpat_event(){
 tpat_event& tpat_event::operator =(const tpat_event &ev){
 	copyEvent(ev);
 	return *this;
-}//=============================================
+}//====================================================
 
+/**
+ *	@brief Comparison operator
+ *	@param lhs
+ *	@param rhs
+ *	@return true if the two events are identical
+ */
 bool operator ==(const tpat_event &lhs, const tpat_event &rhs){
 	return lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
 		lhs.stop == rhs.stop && lhs.sysData == rhs.sysData;
-}
+}//====================================================
 
+/**
+ *	@brief Comparison operator
+ *	@param lhs
+ *	@param rhs
+ *	@return true if the two events are not identical
+ */
 bool operator !=(const tpat_event &lhs, const tpat_event &rhs){
 	return !(lhs == rhs);
-}
+}//====================================================
 
 //-----------------------------------------------------
 //      Set and Get Functions

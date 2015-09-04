@@ -87,14 +87,25 @@ tpat_traj_step::tpat_traj_step(const tpat_arc_step &s) : tpat_arc_step(s) {}
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Get the time at this step
+ *	@return the non-dimensional integration time at this step
+ */
 double tpat_traj_step::getTime() const { return extraParam[0]; }
 
+/**
+ *	@brief Set the time for this step
+ *	@param t non-dimensional integration time at this step
+ */
 void tpat_traj_step::setTime(double t){ extraParam[0] = t; }
 
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief initialize data arrays for this object
+ */
 void tpat_traj_step::initArrays(){
 	tpat_arc_step::initArrays();
 	extraParam.assign(1,0);

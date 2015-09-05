@@ -139,7 +139,9 @@ void tpat_node::setVel_AllDiscon(){
  *	[v_x, v_y, v_z]
  */
 void tpat_node::setVelCon(bool data[3]){
-	std::copy(data, data+3, &(flags[0]));
+	flags[0] = data[0];
+	flags[1] = data[1];
+	flags[2] = data[2];
 }//====================================================
 
 /**

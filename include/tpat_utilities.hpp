@@ -35,6 +35,7 @@
  
 #include "matio.h"
  
+#include <algorithm>
 #include <complex>
 #include <string>
 #include <vector>
@@ -173,7 +174,7 @@ public:
 	  	}
 
 	  	// sort indexes based on comparing values in v
-	  	sort(idx.begin(), idx.end(), 
+	  	std::sort(idx.begin(), idx.end(), 
 	  		[&v](int i1, int i2) {return v[i1] < v[i2];} );
 
 	  	return idx; 

@@ -36,6 +36,7 @@
 #include "tpat_traj.hpp"
 #include "tpat_sys_data.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 /**

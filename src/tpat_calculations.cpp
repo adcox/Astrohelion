@@ -51,6 +51,7 @@
 #include "cspice/SpiceUsr.h"
 #include "gsl/gsl_linalg.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <string>
@@ -519,7 +520,8 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
  */
 double dateToEpochTime(const char *date){
     // Load time kernel
-    char timeKernel[] = "/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
+    // char timeKernel[] = "/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
+    char timeKernel[] = "/home/andrew/Projects/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
     furnsh_c(timeKernel);
 
     if(failed_c()){

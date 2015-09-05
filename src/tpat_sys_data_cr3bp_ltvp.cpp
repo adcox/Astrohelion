@@ -27,6 +27,7 @@
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_utilities.hpp"
 
+#include <cstring>
 /**
  *	@brief Default constructor
  */
@@ -144,13 +145,13 @@ void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile){
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
 	char p1_str[64];
-	strcpy(p1_str, primaries.at(0).c_str());
+	std::strcpy(p1_str, primaries.at(0).c_str());
 	dims[1] = primaries.at(0).length();
 	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
-	strcpy(p2_str, primaries.at(1).c_str());
+	std::strcpy(p2_str, primaries.at(1).c_str());
 	dims[1] = primaries.at(1).length();
 	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);

@@ -10,6 +10,8 @@
 #include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
 
+#include <cmath>
+
 using namespace std;
 
 static const char* PASS = BOLDGREEN "PASS" RESET;
@@ -91,7 +93,7 @@ void checkFamilyContLS(){
 	depVars.push_back(4);
 	std::vector<double> nextData = familyCont_LS(0, 0.86469+0.0005, depVars, stateVec);
 
-	bool check1 = isnan(nextData[0]);
+	bool check1 = std::isnan(nextData[0]);
 	bool check2 = std::abs(nextData[4] + 0.20112499789815) < 1e-6;
 
 	cout << "Least Squares Test: " << (check1 && check2 ? PASS : FAIL) << endl;

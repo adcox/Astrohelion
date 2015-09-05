@@ -34,6 +34,8 @@
 #include "tpat_exceptions.hpp"
 #include "tpat_utilities.hpp"
 
+#include <algorithm>
+#include <cstring>
 //-----------------------------------------------------
 // 		Constructors
 //-----------------------------------------------------
@@ -722,7 +724,7 @@ void tpat_family_cr3bp::saveMiscData(mat_t *matFile){
 
 	// name
 	char name_str[128];
-	strcpy(name_str, name.c_str());
+	std::strcpy(name_str, name.c_str());
 	dims[1] = name.length();
 	matvar_t *nameVar = Mat_VarCreate(NAME_VAR_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);

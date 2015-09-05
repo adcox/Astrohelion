@@ -23,6 +23,7 @@
 
 #include "tpat_constants.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>

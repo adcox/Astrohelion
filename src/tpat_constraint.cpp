@@ -179,6 +179,7 @@ const char* tpat_constraint::getTypeStr(constraint_t t) const{
 		case MAX_DIST: { return "MAX_DIST"; break; }
 		case MAX_DELTA_V: { return "MAX_DELTA_V"; break; }
 		case DELTA_V: { return "DELTA_V"; break; }
+		case JC: { return "JC"; break; }
 		case SP: { return "SP"; break; }
 		case TOF: { return "TOF"; break; }
 		case APSE: {return "APS"; break; }

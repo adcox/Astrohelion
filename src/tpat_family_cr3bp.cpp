@@ -336,18 +336,12 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 			memberSet.addConstraint(periodicCon);
 			memberSet.addConstraint(matchCon);
 
-			printf("Nodes before correction:\n");
-			memberSet.print();
-
 			// Correct the nodeset while constraining the orbit to have the desired characterstic
 			tpat_correction_engine corrector;
 			corrector.setTol(1e-11);
 			try{
 				corrector.correct(&memberSet);
 				tpat_nodeset_cr3bp newNodes = corrector.getCR3BP_Output();
-
-				printf("Nodes after correction:\n");
-				newNodes.print();
 				
 				tpat_traj_cr3bp newTraj = tpat_traj_cr3bp::fromNodeset(newNodes);
 				tpat_family_member_cr3bp newMember(newTraj);

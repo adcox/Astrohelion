@@ -43,7 +43,7 @@ public:
 
 	// Operators
 	tpat_arc_data& operator =(const tpat_arc_data&);
-	tpat_arc_data& operator +(const tpat_arc_data&);
+	virtual tpat_arc_data& operator +(const tpat_arc_data&);
 
 	// Set and Get functions
 	std::vector<double> getAccel(int) const;

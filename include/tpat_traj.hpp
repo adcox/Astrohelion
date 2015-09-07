@@ -49,11 +49,15 @@ public:
 	tpat_traj(const tpat_traj&);
 	tpat_traj(const tpat_arc_data&);
 	
+	// Operators
+	tpat_arc_data& operator +(const tpat_arc_data&);
+
 	// Set and Get Functions
 	double getTime(int) const;
 	tpat_traj_step getStep(int) const;
 
 	void appendStep(tpat_traj_step);
+	void setTime(int, double);
 	
 	// Utility Functions
 	void saveToMat(const char*);

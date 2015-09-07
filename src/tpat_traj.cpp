@@ -67,6 +67,34 @@ tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
 //      Operators
 //-----------------------------------------------------
 
+/**
+ *	@brief Concatenate two trajectory objects
+ *
+ * 	When adding A + B, if the final state of A and initial state
+ *	of B are the same, this algorithm will skip the initial state
+ *	of B in the concatenation to avoid duplicating a state. This
+ *	method overrides the base class behavior and forces time to be
+ *	continuous along the concatentated trajectory
+ *
+ *	@param rhs the right-hand-side of the addition operation
+ *	@return a reference to the concatenated arc_data object
+ */
+tpat_arc_data& tpat_traj::operator +(const tpat_arc_data &rhs){
+	// Create a copy of rhs (it is const)
+	tpat_traj temp(rhs);
+
+	// Shift the time in temp by the final time in this trajectory
+	double tf = getTime(-1);
+	for(int s = 0; s < temp.getLength(); s++){
+		double t = tf + temp.getTime(s);
+		temp.setTime(s, t);
+	}
+
+	tpat_arc_data::operator +(temp);
+
+	return *this;
+}//====================================================
+
 //-----------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------
@@ -99,6 +127,19 @@ tpat_traj_step tpat_traj::getStep(int ix) const{
  *	@param s a new step
  */
 void tpat_traj::appendStep(tpat_traj_step s){ steps.push_back(s); }
+
+/**
+ *	@brief Set the time for the specified node
+ *	@param ix node index; if < 0, counts backwards from end
+ *	@param val non-dimensional time value for the specified node
+ */
+void tpat_traj::setTime(int ix, double val){
+	if(ix < 0)
+		ix += steps.size();
+
+	tpat_traj_step *step = static_cast<tpat_traj_step*>(&(steps[ix]));
+	step->setTime(val);
+}//====================================================
 
 //-----------------------------------------------------
 //      Utility Functions

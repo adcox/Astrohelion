@@ -428,7 +428,7 @@ void tpat_model_bcr4bpr::corrector_targetDist(iterationData* it, tpat_constraint
     int row0 = it->conRows[c];
     
     // Get the node epoch either from the design vector or from the original set of nodes
-    double t0 = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(0);
+    double t0 = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
 
     tpat_sys_data *sysData = it->sysData;
 
@@ -536,10 +536,10 @@ void tpat_model_bcr4bpr::corrector_targetDeltaV(iterationData* it, tpat_constrai
 void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint con, int row0){
 
     int n = con.getNode();
-    double t = it->allSegs[n].getTime(0);
+    double epoch = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
     tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr *> (it->sysData);
 
-    std::vector<double> primPosData = getPrimPos(t, it->sysData);
+    std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
 
     // Get primary positions at the specified epoch time
     tpat_matrix primPos(3, 3, &(primPosData[0]));
@@ -561,11 +561,11 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
     double nu = bcSysData->getNu();
 
     // Evaluate three constraint function values 
-    tpat_matrix conEval = -1*(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
+    tpat_matrix conEval = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
 
     // Parials w.r.t. node position r
     double dFdq_data[9] = {0};
-    dFdq_data[0] = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
+    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
             (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
                 3*pow(r_p3.at(0),2)/pow(d3,5));     //dxdx
     dFdq_data[1] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) + 
@@ -575,7 +575,7 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
             (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
             nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);   //dxdz
     dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
-    dFdq_data[4] = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
+    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
             (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - 
             nu*(1/pow(d3,3) - 3*pow(r_p3.at(1),2)/pow(d3,5));   //dydy
     dFdq_data[5] = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) +
@@ -590,7 +590,7 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
     tpat_matrix dFdq(3, 3, dFdq_data);
 
     // Get primary velocities at the specified epoch time
-    std::vector<double> primVelData = getPrimVel(t, it->sysData);
+    std::vector<double> primVelData = getPrimVel(epoch, it->sysData);
     tpat_matrix primVel(3, 3, &(primVelData[0]));
 
     // Compute partials of state w.r.t. primary positions; dont' compute partials
@@ -600,9 +600,9 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
     dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
     dfdr2_data[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
     dfdr2_data[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
-    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);       //dydy2
+    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2.at(1),2)/pow(d2,5);       //dydy2
     dfdr2_data[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
-    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);       //dzdz2
+    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2.at(2),2)/pow(d2,5);       //dzdz2
 
     dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
     dfdr2_data[15] = dfdr2_data[11];
@@ -611,9 +611,9 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
     dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
     dfdr3_data[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
     dfdr3_data[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
-    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);       //dydy3
+    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3.at(1),2)/pow(d3,5);       //dydy3
     dfdr3_data[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
-    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);       //dzdz3
+    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3.at(2),2)/pow(d3,5);       //dzdz3
 
     dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
     dfdr3_data[15] = dfdr3_data[11];
@@ -675,7 +675,7 @@ tpat_nodeset* tpat_model_bcr4bpr::corrector_createOutput(iterationData *it, tpat
     int numNodes = (int)(it->origNodes.size());
     for(int i = 0; i < numNodes; i++){
         tpat_node node(&(it->X[i*6]), NAN);
-        node.setExtraParam(0, it->X[7*numNodes-1 + i]);     // save epoch time
+        node.setExtraParam(1, it->X[7*numNodes-1 + i]);     // save epoch time
         node.setVelCon(nodes_in->getNode(i).getVelCon());   // save velocity continuity info
         node.setConstraints(nodes_in->getNode(i).getConstraints());    // save constraints
 

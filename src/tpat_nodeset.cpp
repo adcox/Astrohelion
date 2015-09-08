@@ -273,6 +273,17 @@ void tpat_nodeset::reverseOrder() {
 		std::swap(steps[n], steps[steps.size()-n-1]);
 	}
 
+	// Shift TOF back one node, change sign
+	for(size_t n = 0; n < steps.size()-1; n++){
+		tpat_node *node = static_cast<tpat_node*>(&(steps[n]));
+		tpat_node *nextNode = static_cast<tpat_node*>(&(steps[n+1]));
+		node->setTOF(-1*(nextNode->getTOF()));
+	}
+	
+	// Set TOF on final node to zero
+	tpat_node *endNode = static_cast<tpat_node*>(&(steps[steps.size()-1]));
+	endNode->setTOF(0);
+
 	// Make first node discontinuous in velocity (no preceding node)
 	// and the last node continuous (no previous info about its continuity)
 	tpat_node *first = static_cast<tpat_node*>(&steps[0]);

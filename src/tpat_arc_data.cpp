@@ -105,6 +105,10 @@ tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
 	if(steps[0] == rhs.steps[0])
 		skipShift = 1;
 
+	// Delete data from the lhs if anything is duplicated; chose LHS because it will serve nodesets better
+	if(skipShift > 0)
+		steps.erase(steps.end()-skipShift, steps.end());
+
 	// Copy data from rhs, optionally skipping the first step if it matches the final step in this arc
 	steps.insert(steps.end(), rhs.steps.begin()+skipShift, rhs.steps.end());
 
@@ -284,10 +288,12 @@ void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name){
 	for(int i = 0; i < varIx; i++){ ix0 += extraParamRowSize[i]; }
 
 	// Get the specified coordinate
-	std::vector<double> param;
-	for(size_t i = 0; i < steps.size(); i++){
-		std::vector<double> ep  = steps[i].getExtraParams();
-		param.insert(param.end(), ep.begin()+ix0, ep.begin()+ix0+extraParamRowSize[varIx]);
+	std::vector<double> param(extraParamRowSize[varIx]*steps.size());
+	for(size_t r = 0; r < steps.size(); r++){
+		std::vector<double> ep  = steps[r].getExtraParams();
+		for(int c = 0; c < extraParamRowSize[varIx];c++){
+			param[c*steps.size() + r] = ep[ix0+c];
+		}
 	}
 
 	size_t dims[2] = {steps.size(), static_cast<size_t>(extraParamRowSize[varIx])};

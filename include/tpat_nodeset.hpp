@@ -75,9 +75,9 @@ public:
 	double getTotalTOF() const;
 
 	void addConstraint(tpat_constraint);
-	void appendNode(tpat_node);
-	void deleteNode(int);
-	void insertNode(int, tpat_node);
+	virtual void appendNode(tpat_node);
+	virtual void deleteNode(int);
+	virtual void insertNode(int, tpat_node);
 
 	void setVelConNodes_allBut(std::vector<int>);
 

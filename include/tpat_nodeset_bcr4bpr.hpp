@@ -58,12 +58,16 @@ public:
 
 	// Set and Get Functions
 	double getEpoch(int) const;
+	void appendNode(tpat_node);
+	void deleteNode(int);
+	void insertNode(int, tpat_node);
 
 	// Utility Functions
 	void saveToMat(const char*);
 	void print() const;
 	
 private:
+	void initEpochs();
 	void initEpochs(double);
 	void initExtraParam();
 };

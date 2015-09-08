@@ -104,6 +104,9 @@ nodesetTest: $(OBJECTS)
 simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
 
+spTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_SPTargetting.cpp -o $(BIN)/$@
+
 sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
 

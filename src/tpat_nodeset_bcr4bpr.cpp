@@ -154,6 +154,8 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_arc_data &a) : tpat_nodese
  *	Using the times-of-flight for each node an an initial 
  *	time, compute the epoch for each node assuming time
  *	flows continuously through all nodes
+ *
+ *	@param t0 the epoch for the first node
  */
 void tpat_nodeset_bcr4bpr::initEpochs(double t0){
 	
@@ -166,6 +168,27 @@ void tpat_nodeset_bcr4bpr::initEpochs(double t0){
 	}
 }//====================================================
 
+/**
+ *	@brief Auto-generate epochs for all nodes
+ *
+ *	Assumes the first node has a properly set initial epoch
+ *
+ *	Using the times-of-flight for each node an an initial 
+ *	time, compute the epoch for each node assuming time
+ *	flows continuously through all nodes
+ */
+void tpat_nodeset_bcr4bpr::initEpochs(){
+	double ellapsed = 0;
+	for(size_t n = 0; n < steps.size(); n++){
+		tpat_node *node = static_cast<tpat_node*>(&(steps[n]));
+
+		if(n == 0)
+			ellapsed = node->getExtraParam(1);
+
+		node->setExtraParam(1, ellapsed);
+		ellapsed += node->getTOF();
+	}
+}//====================================================
 
 //-----------------------------------------------------
 //      Operators
@@ -185,6 +208,46 @@ double tpat_nodeset_bcr4bpr::getEpoch(int ix) const {
 		ix += steps.size();
 
 	return steps[ix].getExtraParam(1);
+}//====================================================
+
+/**
+ *	@brief Append a node to the nodeset
+ *
+ *	Epoch times are automatically generated and updated
+ *	for the entire nodeset
+ *
+ *	@param node a new node to append to the end of the set
+ */
+void tpat_nodeset_bcr4bpr::appendNode(tpat_node node){
+	tpat_nodeset::appendNode(node);
+	initEpochs();
+}//====================================================
+
+/**
+ *	@brief Insert a node to the nodeset
+ *
+ *	Epoch times are automatically generated and updated
+ *	for the entire nodeset
+ *
+ *	@param ix node index; if < 0, will count backwards from end of nodeset
+ *	@param node a new node to insert
+ */
+void tpat_nodeset_bcr4bpr::insertNode(int ix, tpat_node node){
+	tpat_nodeset::insertNode(ix, node);
+	initEpochs();
+}//====================================================
+
+/**
+ *	@brief Delete a node from the nodeset
+ *
+ *	Epoch times are automatically generated and updated
+ *	for the entire nodeset
+ *
+ *	@param ix node index; if < 0, will count backwards from end of nodeset
+ */
+void tpat_nodeset_bcr4bpr::deleteNode(int ix){
+	tpat_nodeset::deleteNode(ix);
+	initEpochs();
 }//====================================================
 
 //-----------------------------------------------------

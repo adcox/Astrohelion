@@ -78,8 +78,8 @@ tpat_arc_step& tpat_arc_step::operator =(const tpat_arc_step &s){
  *
  *	Conditions for identicalness:
  *	* Exact same state vector
- *	* Exact same extra parameter vector (e.g. epoch, tof, time, mass)
- * 	* Exact same flag vector (e.g. velocity continuity)
+ *	* (Not Active) Exact same extra parameter vector (e.g. epoch, tof, time, mass)
+ * 	* (Not Active) Exact same flag vector (e.g. velocity continuity)
  *	If these conditions are met, acceleration and the STM should also
  *	be identical.
  *
@@ -92,23 +92,23 @@ bool operator ==(const tpat_arc_step &lhs, const tpat_arc_step &rhs){
 			return false;
 	}
 
-	// Check extra parameters
-	if(lhs.extraParam.size() != rhs.extraParam.size())
-		return false;
+	// // Check extra parameters
+	// if(lhs.extraParam.size() != rhs.extraParam.size())
+	// 	return false;
 
-	for(size_t i = 0; i < lhs.extraParam.size(); i++){
-		if(lhs.extraParam[i] != rhs.extraParam[i])
-			return false;
-	}
+	// for(size_t i = 0; i < lhs.extraParam.size(); i++){
+	// 	if(lhs.extraParam[i] != rhs.extraParam[i])
+	// 		return false;
+	// }
 
-	// Check flags
-	if(lhs.flags.size() != rhs.flags.size())
-		return false;
+	// // Check flags
+	// if(lhs.flags.size() != rhs.flags.size())
+	// 	return false;
 
-	for(size_t i = 0; i < lhs.flags.size(); i++){
-		if(lhs.flags[i] != rhs.flags[i])
-			return false;
-	}
+	// for(size_t i = 0; i < lhs.flags.size(); i++){
+	// 	if(lhs.flags[i] != rhs.flags[i])
+	// 		return false;
+	// }
 
 	return true;
 }//====================================================

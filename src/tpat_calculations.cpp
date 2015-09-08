@@ -385,9 +385,9 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     dfdr2[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
     dfdr2[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
     dfdr2[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
-    dfdr2[13] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);       //dydy2
+    dfdr2[13] = -1/pow(d2,3) + 3*pow(r_p2.at(1),2)/pow(d2,5);       //dydy2
     dfdr2[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
-    dfdr2[17] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);       //dzdz2
+    dfdr2[17] = -1/pow(d2,3) + 3*pow(r_p2.at(2),2)/pow(d2,5);       //dzdz2
 
     dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
     dfdr2[15] = dfdr2[11];
@@ -396,9 +396,9 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     dfdr3[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
     dfdr3[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
     dfdr3[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
-    dfdr3[13] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);       //dydy3
+    dfdr3[13] = -1/pow(d3,3) + 3*pow(r_p3.at(1),2)/pow(d3,5);       //dydy3
     dfdr3[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
-    dfdr3[17] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);       //dzdz3
+    dfdr3[17] = -1/pow(d3,3) + 3*pow(r_p3.at(2),2)/pow(d3,5);       //dzdz3
 
     dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
     dfdr3[15] = dfdr3[11];

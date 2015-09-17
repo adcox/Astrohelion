@@ -109,8 +109,19 @@ tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
 	if(skipShift > 0)
 		steps.erase(steps.end()-skipShift, steps.end());
 
-	// Copy data from rhs, optionally skipping the first step if it matches the final step in this arc
-	steps.insert(steps.end(), rhs.steps.begin()+skipShift, rhs.steps.end());
+	size_t lhs_numSteps = steps.size();
+
+	// Copy data from rhs
+	steps.insert(steps.end(), rhs.steps.begin(), rhs.steps.end());
+
+	// Adjust STMs (Assuming arcs are continuous)
+	tpat_matrix lhs_lastSTM = steps[lhs_numSteps-1].getSTM();	// PHI(t1, t0)
+	for(size_t n = lhs_numSteps; n < steps.size(); n++){
+		tpat_matrix oldSTM = steps[n].getSTM();	// PHI(t2, t1)
+
+		// Multiply PHI(t2, t1)*PHI(t1, t0) to get PHI(t2, t0)
+		steps[n].setSTM(oldSTM*lhs_lastSTM);
+	}
 
 	return *this;
 }//====================================================

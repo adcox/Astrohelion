@@ -705,6 +705,8 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
         if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
             printVerb(verbose, "  Event %d detected; searching for exact crossing\n", ev);
+            events.at(ev).incrementCount();  // Update the counter for the event
+
             if(verbose){ events.at(ev).printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
@@ -724,7 +726,6 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
                 printColor(BLUE, "tof = %f\n", tof);
                 printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", generalIC[0],
                     generalIC[1], generalIC[2], generalIC[3], generalIC[4], generalIC[5]);
-                // waitForUser();
             }   
 
             // Use correction to locate the event very accurately
@@ -735,7 +736,7 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
                 eventRecord rec(ev, timeSize - 1);
                 eventOccurs.push_back(rec);
 
-                if(events.at(ev).stopOnEvent()){
+                if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
                     printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
                     return true;    // Tell the simulation to stop
                 }else{

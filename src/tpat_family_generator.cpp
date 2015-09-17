@@ -194,7 +194,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	IC[5] += initStepSize;
 
 	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysData(), IC, period,
-		numNodes, MIRROR_X_AX_H, fixStates);
+		numNodes, 1, MIRROR_X_AX_H, fixStates);
 
 	std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
 	std::vector<int> depVars {0,6};	// Predict x and period with least squares
@@ -250,7 +250,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	IC[2] += initStepSize;
 
 	tpat_traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysData(), IC, period,
-		numNodes, MIRROR_XZ, fixStates);
+		numNodes, 1, MIRROR_XZ, fixStates);
 
 	std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
 	std::vector<int> depVars {4};	// Predict y-dot with least-squares
@@ -306,6 +306,56 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 }//====================================================
 
 /**
+ *	@brief Generate a Lyapunov family in the CR3BP
+ *
+ *	Tuning:
+ *
+ *	- The L1 region is typically a little more sensitive, so try smaller step sizes
+ *	- A good initial guess for r0 is 0.001; smaller values may be possible, but the
+ *	  corrector often has trouble.
+ *	
+ *	@param sysData represents the system the Lyapunov exists in
+ *	@param LPt The Lagrange point number [1-5]
+ *	@param x0 the initial displacement from the Lagrange point along the x-axis.
+ *
+ *	@return a family of orbits
+ */
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_cr3bp sysData, int LPt, double x0){
+	if(LPt != 2)
+		throw tpat_exception("tpat_family_generator::cr3bp_butterfly: LPts != 2 are not implemented");
+
+	double LPt_data[] = {0,0,0};
+	cr3bp_getEquilibPt(sysData, LPt, 1e-14, LPt_data);
+
+	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
+	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
+	// use this IC for the bifucating Halo from Dan Grebow's Thesis
+	double ic[] = {1.0118, 0, 0.1739, 0, -0.0799, 0};
+	std::vector<double> icVec (ic, ic+6);
+	double tof = 1.3743;
+
+	printf("Correcting Halo...\n");
+	// Correct to a periodic orbit (Halo)
+	std::vector<int> fixed;
+	tpat_traj_cr3bp halo = cr3bp_getPeriodic(sysData, icVec, tof, 8, 1, MIRROR_XZ, fixed);
+
+	printf("Creating Family...\n");
+	// Initialize variables and containers for data
+	tpat_family_cr3bp fam(sysData);
+
+	// Butterfly-specific settings
+	fam.setSortType(tpat_family_cr3bp::SORT_X);
+	std::vector<int> indVars {2,4};
+	std::vector<int> depVars {0,2};
+	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+
+	printf("Using continuation...\n");
+	cr3bp_continueFamily(&fam, halo, mirrorTypes, indVars, depVars);
+
+	return fam;
+}//====================================================
+
+/**
  *	@brief Continue a family of orbits in the CR3BP
  *	
  * 	@param fam a pointer to a family object to store family members in; the family MUST have
@@ -325,6 +375,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 	tpat_traj_cr3bp initialGuess, std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx){
 
 	tpat_sys_data_cr3bp sys = fam->getSysData();
+	int order = 1;
 
 	if(indVarIx.size() < 2)
 		throw tpat_exception("tpat_family_generator::cr3bp_continueFamily: Must specify two independent variables");
@@ -362,7 +413,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(sys, IC, tof, numNodes, mirrorType, fixStates);
+			perOrbit = cr3bp_getPeriodic(sys, IC, tof, numNodes, order, mirrorType, fixStates);
 		}catch(tpat_diverge &e){
 			break;
 		}catch(tpat_linalg_err &e){

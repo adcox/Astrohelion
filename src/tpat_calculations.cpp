@@ -900,7 +900,6 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         sortedIxs->insert(sortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
     }// end of loop through all members/eigenvalue sets
 
-    printf("Sorted Ixs: [%d %d %d %d %d %d]\n", sortedIxs->at(0), sortedIxs->at(1), sortedIxs->at(2), sortedIxs->at(3), sortedIxs->at(4), sortedIxs->at(5));
     return sortedEigs;
 }//=====================================================
 
@@ -1150,6 +1149,8 @@ void cr3bp_getEquilibPt(tpat_sys_data_cr3bp sysData, int L, double tol, double p
  *  cr3bp_getPeriodic(sys, IC, period, numNodes, mirrorType, fixedStates)
  *  This function also uses only two nodes; to specify more, see the function above.
  *
+ *  This function also assumes the order of the periodic orbit is 1
+ *
  *  @param sys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
@@ -1164,7 +1165,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
     double period, mirror_t mirrorType){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
-    return cr3bp_getPeriodic(sys, IC, period, 2, mirrorType, fixedStates);
+    return cr3bp_getPeriodic(sys, IC, period, 2, 1, mirrorType, fixedStates);
 }//========================================
 
 /**
@@ -1174,6 +1175,8 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
  *  @param numNodes the number of nodes to use; more nodes may result in a more robust correction
+ *  @param order the number of revolutions about the system/primary this orbit completes before
+ *  it repeats periodically. Think of a period-3 DRO (order = 3) or a butterfly (order = 2)
  *  @param mirrorType how this periodic orbit mirrors in the CR3BP
  *  @param fixedStates a vector containing the indices of which initial states
  *  we would like to fix. Not all states are possible for each mirror condition.
@@ -1185,47 +1188,51 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> IC,
-    double period, int numNodes, mirror_t mirrorType, std::vector<int> fixedStates){
+    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates){
 
     tpat_sys_data_cr3bp sysCpy(sys);
     tpat_simulation_engine sim(&sysCpy);    // Engine to perform simulation
     std::vector<int> zeroStates;            // Which states must be zero to ensure a perpendicular crossing
 
-    // Determien which states must be zero for mirroring
+    tpat_event mirrorEvt;
+    // Determine which states must be zero for mirroring
     switch(mirrorType){
         case MIRROR_XZ:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(5);    // z-dot
-            sim.addEvent(tpat_event::XZ_PLANE, 0, true);    // Tell the sim to quit once it reaches the XZ plane
+            mirrorEvt = tpat_event(&sysCpy, tpat_event::XZ_PLANE, 0, true);  // Tell the sim to quit once it reaches the XZ plane
             break;
         case MIRROR_YZ:
             zeroStates.push_back(0);    // x
             zeroStates.push_back(4);    // y-dot
             zeroStates.push_back(5);    // z-dot
-            sim.addEvent(tpat_event::YZ_PLANE, 0, true);
+            mirrorEvt = tpat_event(&sysCpy, tpat_event::YZ_PLANE, 0, true);
             break;
         case MIRROR_XY:
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(4);    // y-dot
-            sim.addEvent(tpat_event::YZ_PLANE, 0, true);
+            mirrorEvt = tpat_event(&sysCpy, tpat_event::YZ_PLANE, 0, true);
             break;
         case MIRROR_X_AX_H:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            sim.addEvent(tpat_event::XZ_PLANE, 0, true);
+            mirrorEvt = tpat_event(&sysCpy, tpat_event::XZ_PLANE, 0, true);
             break;
         case MIRROR_X_AX_V:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            sim.addEvent(tpat_event::XY_PLANE, 0, true);
+            mirrorEvt = tpat_event(&sysCpy, tpat_event::XY_PLANE, 0, true);
             break;
         default:
             throw tpat_exception("Mirror type either not defined or not implemented");
     }
+
+    mirrorEvt.setStopCount(order);
+    sim.addEvent(mirrorEvt);
 
     // Create a constraint to enforce mirror condition at the beginning and end of arc
     double mirrorCon0[] = {NAN,NAN,NAN,NAN,NAN,NAN};

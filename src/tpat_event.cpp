@@ -175,6 +175,8 @@ void tpat_event::copyEvent(const tpat_event &ev){
 	conType = ev.conType;
 	conData = ev.conData;
 	sysData = ev.sysData;	// COPY ADDRESS (ptr) of SYS DATA
+	triggerCount = ev.triggerCount;
+	stopCount = ev.stopCount;
 }//=============================================
 
 /**
@@ -275,6 +277,25 @@ tpat_constraint::constraint_t tpat_event::getConType() const { return conType; }
 std::vector<double> tpat_event::getConData() const { return conData; }
 
 /**
+ *	@brief Retrieve the current trigger count, or the number of times
+ *	this event has been triggered during the current simulation
+ *	@return the trigger count
+ */
+int tpat_event::getTriggerCount() const { return triggerCount; }
+
+/**
+ *	@brief Retrieve the number of triggers this event can have before 
+ *	the simulation will be stopped (if applicable)
+ *	@return the stopping trigger count
+ */
+int tpat_event::getStopCount() const { return stopCount; }
+
+/**
+ *	@brief Increment the trigger counter by +1
+ */
+void tpat_event::incrementCount(){ triggerCount++; }
+
+/**
  *	@brief Set the trigger direction for this event
  *	@param d the direction: +1 for positive, -1 for negative, 0 for both/either
  */
@@ -286,6 +307,13 @@ void tpat_event::setDir(int d){ triggerDir = d; }
  */
 void tpat_event::setSysData(tpat_sys_data* data){ sysData = data; }
 
+/**
+ *	@brief Set the number of triggers this event can endure before the simulation
+ *	is forced to stop (if applicable, i.e. if stop = true)
+ *	@param c the maximum number of triggers; simulation will be stopped when this
+ *	number of triggers occurs (not after)
+ */
+void tpat_event::setStopCount(int c){ stopCount = c; }
 
 //-----------------------------------------------------
 //      Computations, etc.

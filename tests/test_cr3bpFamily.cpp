@@ -14,7 +14,13 @@ int main(void){
 	// Load the family
 	tpat_family_cr3bp fam("../share/families/EM_L1_Lyap.mat");
 	fam.sortEigs();
-	fam.findBifurcations();
+	std::vector<int> bifs = fam.findBifurcations();
+	if(bifs.size() > 0){
+		printf("Found bifurcations at:\n");
+		for(size_t i = 0; i < bifs.size(); i++){
+			printf("  Ix = %04d\n", bifs[i]);
+		}
+	}
 	fam.saveToMat("data/LoadedLyapFam.mat");	// Check to see if data was re-loaded correctly
 
 	printf("Checing Match State: X\n");

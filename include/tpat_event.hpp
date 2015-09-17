@@ -101,13 +101,18 @@ class tpat_event{
 		std::vector<double> getConData() const;
 		tpat_constraint::constraint_t getConType() const;
 		int getDir() const;
+		double getTime() const;
+		int getStopCount() const;
+		int getTriggerCount() const;
 		event_t getType() const;
 		const char* getTypeStr() const;
-		double getTime() const;
+		
 		std::vector<double>* getState();
+		void incrementCount();
 		bool stopOnEvent() const;
 
 		void setDir(int);
+		void setStopCount(int);
 		void setSysData(tpat_sys_data*);
 
 		// Computations, etc.
@@ -121,6 +126,13 @@ class tpat_event{
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */
 		int triggerDir = 0;
+
+		/** Number of times this event has been triggered */
+		int triggerCount = 0;
+
+		/** The number of times this event can be triggered before the simulation
+		 	is stopped (if applicable, i.e. stop = true)*/
+		int stopCount = 1;
 
 		/** Whether or not to stop integration when this event occurs */
 		bool stop = true;

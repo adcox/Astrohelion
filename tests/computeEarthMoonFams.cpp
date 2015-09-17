@@ -30,6 +30,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
 			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
+			L1_Lyap.sortEigs();
 			L1_Lyap.setName("Earth-Moon L1 Lyapunov");
 			L1_Lyap.saveToMat("../share/families/EM_L1_Lyap.mat");
 			break;
@@ -40,6 +41,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
 			tpat_family_cr3bp L2_Lyap = gen.cr3bp_generateLyap(sysData, 2, 0.01);
+			L2_Lyap.sortEigs();
 			L2_Lyap.setName("Earth-Moon L2 Lyapunov");
 			L2_Lyap.saveToMat("../share/families/EM_L2_Lyap.mat");
 			break;
@@ -51,6 +53,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.05);
 			gen.setStep_fitted_2(0.05);
 			tpat_family_cr3bp L3_Lyap = gen.cr3bp_generateLyap(sysData, 3, 0.01);
+			L3_Lyap.sortEigs();
 			L3_Lyap.setName("Earth-Moon L3 Lyapunov");
 			L3_Lyap.saveToMat("../share/families/EM_L3_Lyap.mat");
 			break;
@@ -61,6 +64,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.001);
 			gen.setStep_fitted_2(0.001);
 			tpat_family_cr3bp L1_Halo = gen.cr3bp_generateHalo("../share/families/EM_L1_Lyap.mat", -5.2e-5);
+			L1_Halo.sortEigs();
 			L1_Halo.setName("Earth-Moon L1 Northern Halo");
 			L1_Halo.saveToMat("../share/families/EM_L1_NHalo.mat");
 			break;
@@ -71,6 +75,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.001);
 			gen.setStep_fitted_2(0.001);
 			tpat_family_cr3bp L2_Halo = gen.cr3bp_generateHalo("../share/families/EM_L2_Lyap.mat", 5.2e-5);
+			L2_Halo.sortEigs();
 			L2_Halo.setName("Earth-Moon L2 Northern Halo");
 			L2_Halo.saveToMat("../share/families/EM_L2_NHalo.mat");
 			break;
@@ -81,6 +86,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.001);
 			gen.setStep_fitted_2(0.001);
 			tpat_family_cr3bp L3_Halo = gen.cr3bp_generateHalo("../share/families/EM_L3_Lyap.mat", -5.2e-5);
+			L3_Halo.sortEigs();
 			L3_Halo.setName("Earth-Moon L3 Northern Halo");
 			L3_Halo.saveToMat("../share/families/EM_L3_NHalo.mat");
 			break;
@@ -91,6 +97,7 @@ int main(int argc, char *argv[]){
 			gen.setNumNodes(5);
 			gen.setNumOrbits(285);	// family starts repeating after this many...
 			tpat_family_cr3bp L1_Axial = gen.cr3bp_generateAxial("../share/families/EM_L1_Lyap.mat", 1e-4);
+			L1_Axial.sortEigs();
 			L1_Axial.setName("Earth-Moon L1 Northern Axial");
 			L1_Axial.saveToMat("../share/families/EM_L1_NAxial.mat");
 			break;
@@ -102,6 +109,7 @@ int main(int argc, char *argv[]){
 			gen.setSlopeThresh(1.3);
 			gen.setNumOrbits(316);	// family starts repeating after this many...
 			tpat_family_cr3bp L2_Axial = gen.cr3bp_generateAxial("../share/families/EM_L2_Lyap.mat", 1e-4);
+			L2_Axial.sortEigs();
 			L2_Axial.setName("Earth-Moon L2 Northern Axial");
 			L2_Axial.saveToMat("../share/families/EM_L2_NAxial.mat");
 			break;	
@@ -116,9 +124,23 @@ int main(int argc, char *argv[]){
 			gen.setNumOrbits(1000);
 			// gen.setNumOrbits(316);	// family starts repeating after this many...
 			tpat_family_cr3bp L3_Axial = gen.cr3bp_generateAxial("../share/families/EM_L3_Lyap.mat", 1e-2);
+			L3_Axial.sortEigs();
 			L3_Axial.setName("Earth-Moon L3 Northern Axial");
 			L3_Axial.saveToMat("../share/families/EM_L3_NAxial.mat");
 			break;	
+		}
+		case 999:
+		{
+			printf("Generating Earth-Moon L2 Northern Butterfly Family\n");
+			gen.setNumNodes(10);
+			gen.setNumOrbits(10);
+			gen.setStep_simple(-0.0005);
+
+			tpat_family_cr3bp L2_NButterfly = gen.cr3bp_generateButterfly(sysData, 2, 1);
+			L2_NButterfly.sortEigs();
+			L2_NButterfly.setName("Earth-Moon L2 Northern Butterfly");
+			L2_NButterfly.saveToMat("../share/families/EM_L2_NButterfly.mat");
+			break;
 		}
 		default:
 			printf("The problem number %d has not been implemented\n", probNum);

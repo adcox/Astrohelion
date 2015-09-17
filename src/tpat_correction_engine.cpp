@@ -291,6 +291,9 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 			case tpat_constraint::SP:
 				addToRows = 3;
 				break;
+			case tpat_constraint::SP_RANGE:
+				addToRows = 1;
+				break;
 			case tpat_constraint::MAX_DIST:
 			case tpat_constraint::MIN_DIST:
 				it.X.push_back(1e-4);			// initial value for slack variable

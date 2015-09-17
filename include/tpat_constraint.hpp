@@ -99,6 +99,11 @@ class tpat_constraint{
 		 				 * 	Place the index of the node you want to constrain in the <tt>node</tt>
 		 				 * 	variable; <tt>data</tt> is unused in this constraint
 		 				 */
+		 	SP_RANGE,	/*!< Constrain the node to be within a specified range of the saddle point
+		 				 *	(BCR4BPR only). Place the index of the node you want to constrain in 
+		 				 * 	the <tt>node</tt> variable; The first element of <tt>data</tt> should
+		 				 * 	hold the maximum allowable distance from the saddle point in non-dim units
+		 				 */
 		 	JC, 		/*!< Constrain the node to have a specific Jacobi constant (CR3BP only)
 		 				 * 	Place the index of the node you want to cosntraint in the <tt>node</tt>
 		 				 *	variable; <tt>data</tt> holds the value of Jacobi

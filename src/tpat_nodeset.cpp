@@ -71,11 +71,20 @@ tpat_nodeset::tpat_nodeset(const tpat_arc_data &a) : tpat_arc_data (a){
  *	@brief Create a nodeset as a subset of another
  *	@param n Original nodeset
  *	@param first index of the first node to be included in the new nodeset
- *	@param last index of the last node to be included in the new nodeset
+ *	@param last index of the last node to be included in the new nodeset. If
+ *	last is the same index as first, only one node (with index = first = last)
+ *	will be put in the new nodeset
  */
 tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_arc_data(n){
 	steps.clear();
-	steps.insert(steps.end(), n.steps.begin()+first, n.steps.begin()+last);
+
+	if(first < 0 || last > (int)(n.steps.size()))
+		throw tpat_exception("tpat_nodeset::tpat_node: node index out of bounds");
+	
+	if(last > first)	// Insert a range
+		steps.insert(steps.end(), n.steps.begin()+first, n.steps.begin()+last);
+	else	// first = last, so just insert the specified node
+		steps.insert(steps.end(), n.steps[first]);
 }//====================================================
 
 //-----------------------------------------------------

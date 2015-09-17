@@ -46,6 +46,7 @@ tpat_model_bcr4bpr::tpat_model_bcr4bpr() : tpat_model(MODEL_CR3BP) {
     stmStates = 36;
     extraStates = 6;
     allowedCons.push_back(tpat_constraint::SP);
+    allowedCons.push_back(tpat_constraint::SP_RANGE);
 }//==============================================
 
 /**
@@ -310,6 +311,9 @@ void tpat_model_bcr4bpr::corrector_applyConstraint(iterationData *it, tpat_const
     switch(con.getType()){
         case tpat_constraint::SP:
             corrector_targetSP(it, con, row0);
+            break;
+        case tpat_constraint::SP_RANGE:
+            corrector_targetSP_mag(it, con, row0);
             break;
         default: break;
     }
@@ -648,6 +652,124 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
         std::copy(dFdT_ptr+2, dFdT_ptr+3, DF + it->totalFree*(row0+2) + 7*it->numNodes-1+n);
     }
 }// End of SP Targeting ==============================
+
+void tpat_model_bcr4bpr::corrector_targetSP_mag(iterationData* it, tpat_constraint con, int row0){
+
+    int n = con.getNode();
+    double epoch = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
+    tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr *> (it->sysData);
+
+    std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
+
+    // Get primary positions at the specified epoch time
+    tpat_matrix primPos(3, 3, &(primPosData[0]));
+
+    double *X = &(it->X[0]);
+    tpat_matrix r(3, 1, X+6*n);     // position vector
+
+    // Create relative position vectors between s/c and primaries
+    tpat_matrix r_p1 = r - trans(primPos.getRow(0));
+    tpat_matrix r_p2 = r - trans(primPos.getRow(1));
+    tpat_matrix r_p3 = r - trans(primPos.getRow(2));
+
+    double d1 = norm(r_p1);
+    double d2 = norm(r_p2);
+    double d3 = norm(r_p3);
+
+    double k = bcSysData->getK();
+    double mu = bcSysData->getMu();
+    double nu = bcSysData->getNu();
+
+    // Evaluate three constraint function values 
+    tpat_matrix A = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
+
+    // Parials w.r.t. node position r
+    double dFdq_data[9] = {0};
+    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+                3*pow(r_p3.at(0),2)/pow(d3,5));     //dxdx
+    dFdq_data[1] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) + 
+            (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
+            nu*3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);   //dxdy
+    dFdq_data[2] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
+            nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);   //dxdz
+    dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
+    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - 
+            nu*(1/pow(d3,3) - 3*pow(r_p3.at(1),2)/pow(d3,5));   //dydy
+    dFdq_data[5] = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
+            nu*3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);   //dydz
+    dFdq_data[6] = dFdq_data[2];    //dzdx = dxdz
+    dFdq_data[7] = dFdq_data[5];    //dzdy = dydz
+    dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(2),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+            3*pow(r_p3.at(2),2)/pow(d3,5)); //dzdz
+
+    tpat_matrix dAdq(3, 3, dFdq_data);
+    tpat_matrix dFdq = dAdq*A/norm(A);
+
+    // Get primary velocities at the specified epoch time
+    std::vector<double> primVelData = getPrimVel(epoch, it->sysData);
+    tpat_matrix primVel(3, 3, &(primVelData[0]));
+
+    // Compute partials of state w.r.t. primary positions; dont' compute partials
+    // for P1 because its velocity is zero in the rotating frame
+    double dfdr2_data[18] = {0};   double dfdr3_data[18] = {0};
+
+    dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
+    dfdr2_data[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
+    dfdr2_data[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
+    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2.at(1),2)/pow(d2,5);       //dydy2
+    dfdr2_data[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
+    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2.at(2),2)/pow(d2,5);       //dzdz2
+
+    dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
+    dfdr2_data[15] = dfdr2_data[11];
+    dfdr2_data[16] = dfdr2_data[14];
+
+    dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
+    dfdr3_data[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
+    dfdr3_data[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
+    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3.at(1),2)/pow(d3,5);       //dydy3
+    dfdr3_data[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
+    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3.at(2),2)/pow(d3,5);       //dzdz3
+
+    dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
+    dfdr3_data[15] = dfdr3_data[11];
+    dfdr3_data[16] = dfdr3_data[14];
+
+    tpat_matrix dFdr2(3,3, dfdr2_data+9);
+    tpat_matrix dFdr3(3,3, dfdr3_data+9);
+
+    // scale matrices by constants
+    dFdr2 *= -1*(mu - nu);
+    dFdr3 *= -1*nu;
+
+    // Compute partials of constraint function w.r.t. epoch time
+    tpat_matrix dAdT = dFdr2*trans(primVel.getRow(1)) + dFdr3*trans(primVel.getRow(2));
+    tpat_matrix dFdT = trans(A/norm(A))*dAdT;
+
+    // Copy data into the correct vectors/matrices
+    double* dFdq_ptr = dFdq.getDataPtr();
+    double* dFdT_ptr = dFdT.getDataPtr();
+
+    double *FX = &(it->FX[0]);
+    double *DF = &(it->DF[0]);
+
+    FX[row0] = norm(A);
+    
+    std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + 6*n);
+    // std::copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(row0+1) + 6*n);
+    // std::copy(dFdq_ptr+6, dFdq_ptr+9, DF + it->totalFree*(row0+2) + 6*n);
+
+    if(it->varTime){
+        std::copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*row0 + 7*it->numNodes-1+n);
+        // std::copy(dFdT_ptr+1, dFdT_ptr+2, DF + it->totalFree*(row0+1) + 7*it->numNodes-1+n);
+        // std::copy(dFdT_ptr+2, dFdT_ptr+3, DF + it->totalFree*(row0+2) + 7*it->numNodes-1+n);
+    }
+}// End of SP Targeting (Magnitude) ==============================
 
 
 /**

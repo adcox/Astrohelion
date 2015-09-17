@@ -181,6 +181,7 @@ const char* tpat_constraint::getTypeStr(constraint_t t) const{
 		case DELTA_V: { return "DELTA_V"; break; }
 		case JC: { return "JC"; break; }
 		case SP: { return "SP"; break; }
+		case SP_RANGE: { return "SP_RANGE"; break; }
 		case TOF: { return "TOF"; break; }
 		case APSE: {return "APS"; break; }
 		case CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }

@@ -1161,7 +1161,7 @@ void cr3bp_getEquilibPt(tpat_sys_data_cr3bp sysData, int L, double tol, double p
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> IC,
+tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> IC,
     double period, mirror_t mirrorType){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
@@ -1187,11 +1187,10 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> IC,
+tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> IC,
     double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates){
 
-    tpat_sys_data_cr3bp sysCpy(sys);
-    tpat_simulation_engine sim(&sysCpy);    // Engine to perform simulation
+    tpat_simulation_engine sim(sys);    // Engine to perform simulation
     std::vector<int> zeroStates;            // Which states must be zero to ensure a perpendicular crossing
 
     tpat_event mirrorEvt;
@@ -1201,31 +1200,31 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
             zeroStates.push_back(1);    // y
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(5);    // z-dot
-            mirrorEvt = tpat_event(&sysCpy, tpat_event::XZ_PLANE, 0, true);  // Tell the sim to quit once it reaches the XZ plane
+            mirrorEvt = tpat_event(sys, tpat_event::XZ_PLANE, 0, true);  // Tell the sim to quit once it reaches the XZ plane
             break;
         case MIRROR_YZ:
             zeroStates.push_back(0);    // x
             zeroStates.push_back(4);    // y-dot
             zeroStates.push_back(5);    // z-dot
-            mirrorEvt = tpat_event(&sysCpy, tpat_event::YZ_PLANE, 0, true);
+            mirrorEvt = tpat_event(sys, tpat_event::YZ_PLANE, 0, true);
             break;
         case MIRROR_XY:
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(4);    // y-dot
-            mirrorEvt = tpat_event(&sysCpy, tpat_event::YZ_PLANE, 0, true);
+            mirrorEvt = tpat_event(sys, tpat_event::YZ_PLANE, 0, true);
             break;
         case MIRROR_X_AX_H:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            mirrorEvt = tpat_event(&sysCpy, tpat_event::XZ_PLANE, 0, true);
+            mirrorEvt = tpat_event(sys, tpat_event::XZ_PLANE, 0, true);
             break;
         case MIRROR_X_AX_V:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            mirrorEvt = tpat_event(&sysCpy, tpat_event::XY_PLANE, 0, true);
+            mirrorEvt = tpat_event(sys, tpat_event::XY_PLANE, 0, true);
             break;
         default:
             throw tpat_exception("Mirror type either not defined or not implemented");
@@ -1266,7 +1265,13 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp sys, std::vector<double> I
     sim.runSim(IC, period);
     tpat_traj_cr3bp halfOrbArc = sim.getCR3BP_Traj();
 
-    // Create a nodeset with two nodes
+    double halfOrbTOF = halfOrbArc.getTime(-1);
+    double tofErr = 100*abs(halfOrbTOF-period/2.0)/(period/2.0);
+
+    if(tofErr > 10)
+        printWarn("tpat_calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
+
+    // Create a nodeset from arc
     tpat_nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);

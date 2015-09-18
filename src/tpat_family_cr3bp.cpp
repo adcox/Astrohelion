@@ -217,6 +217,12 @@ const char* tpat_family_cr3bp::getSortTypeStr() const{
 tpat_sys_data_cr3bp tpat_family_cr3bp::getSysData() const { return sysData; }
 
 /**
+ *	@brief Retrieve a pointer to the system data object for this family
+ *	@return a pointer to the system data object for this family
+ */
+tpat_sys_data_cr3bp* tpat_family_cr3bp::getSysDataPtr() { return &sysData; }
+
+/**
  *	@brief Set the name of this family
  *	@param n a descriptive name; must be less than 128 characters
  *	if you want to save to a matlab file

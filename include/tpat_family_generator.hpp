@@ -53,7 +53,7 @@ class tpat_family_generator{
 
 		// Operations & Utility
 		tpat_family_cr3bp cr3bp_generateAxial(const char*, double);
-		tpat_family_cr3bp cr3bp_generateButterfly(tpat_sys_data_cr3bp, int, double);
+		tpat_family_cr3bp cr3bp_generateButterfly(tpat_sys_data_cr3bp*, int);
 		tpat_family_cr3bp cr3bp_generateHalo(const char*, double);
 		tpat_family_cr3bp cr3bp_generateLyap(tpat_sys_data_cr3bp, int, double);
 		void reset();
@@ -68,7 +68,7 @@ class tpat_family_generator{
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 		void copyMe(const tpat_family_generator&);
-		void cr3bp_continueFamily(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>);
+		void cr3bp_continueFamily(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
 };
 
 #endif

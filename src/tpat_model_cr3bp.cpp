@@ -152,7 +152,6 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
  *
  *  @param event the event we're looking for
  *  @param traj a pointer to the trajectory the event should occur on
- *  @param model the dynamical model we're working in
  *  @param ic the core state vector for this system
  *  @param t0 non-dimensional time at the beginning of the search arc
  *  @param tof the time-of-flight for the arc to search over
@@ -161,7 +160,7 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
+bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     double *ic, double t0, double tof, bool verbose){
 
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
@@ -209,7 +208,7 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_m
     double eventTime = correctedNodes.getTOF(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    model->sim_saveIntegratedData(&(extra[0]), eventTime, traj);
+    sim_saveIntegratedData(&(extra[0]), eventTime, traj);
 
     return true;
 }//======================================================

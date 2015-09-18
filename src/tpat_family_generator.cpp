@@ -193,14 +193,14 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	std::vector<int> fixStates {5};	// force z-dot to be non-zero
 	IC[5] += initStepSize;
 
-	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysData(), IC, period,
+	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysDataPtr(), IC, period,
 		numNodes, 1, MIRROR_X_AX_H, fixStates);
 
 	std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
 	std::vector<int> depVars {0,6};	// Predict x and period with least squares
 	std::vector<mirror_t> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
 
-	cr3bp_continueFamily(&axialFam, firstAxial, mirrorTypes, indVars, depVars);
+	cr3bp_continueFamily(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
 
 	return axialFam;
 }//====================================================
@@ -249,14 +249,14 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	std::vector<int> fixStates {2};	// force z to be out of plane
 	IC[2] += initStepSize;
 
-	tpat_traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysData(), IC, period,
+	tpat_traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysDataPtr(), IC, period,
 		numNodes, 1, MIRROR_XZ, fixStates);
 
 	std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
 	std::vector<int> depVars {4};	// Predict y-dot with least-squares
 	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-	cr3bp_continueFamily(&haloFam, firstHalo, mirrorTypes, indVars, depVars);
+	cr3bp_continueFamily(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
 
 	return haloFam;
 }//=======================================================
@@ -300,7 +300,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 	std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
 	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-	cr3bp_continueFamily(&fam, linTraj, mirrorTypes, indVars, depVars);
+	cr3bp_continueFamily(&fam, linTraj, mirrorTypes, indVars, depVars, 1);
 
 	return fam;
 }//====================================================
@@ -320,37 +320,37 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
  *
  *	@return a family of orbits
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_cr3bp sysData, int LPt, double x0){
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_cr3bp *sysData, int LPt){
 	if(LPt != 2)
 		throw tpat_exception("tpat_family_generator::cr3bp_butterfly: LPts != 2 are not implemented");
 
 	double LPt_data[] = {0,0,0};
-	cr3bp_getEquilibPt(sysData, LPt, 1e-14, LPt_data);
+	cr3bp_getEquilibPt(*sysData, LPt, 1e-14, LPt_data);
 
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
 	// use this IC for the bifucating Halo from Dan Grebow's Thesis
-	double ic[] = {1.0118, 0, 0.1739, 0, -0.0799, 0};
+	double ic[] = {1.0196, 0, 0.1742, 0, -0.0817, 0};
 	std::vector<double> icVec (ic, ic+6);
-	double tof = 1.3743;
+	double tof = 2.7519;
 
 	printf("Correcting Halo...\n");
 	// Correct to a periodic orbit (Halo)
 	std::vector<int> fixed;
-	tpat_traj_cr3bp halo = cr3bp_getPeriodic(sysData, icVec, tof, 8, 1, MIRROR_XZ, fixed);
+	tpat_traj_cr3bp halo = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed);
 
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
-	tpat_family_cr3bp fam(sysData);
+	tpat_family_cr3bp fam(*sysData);
 
 	// Butterfly-specific settings
 	fam.setSortType(tpat_family_cr3bp::SORT_X);
-	std::vector<int> indVars {2,4};
-	std::vector<int> depVars {0,2};
+	std::vector<int> indVars {0,2};
+	std::vector<int> depVars {4,6};
 	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
 	printf("Using continuation...\n");
-	cr3bp_continueFamily(&fam, halo, mirrorTypes, indVars, depVars);
+	cr3bp_continueFamily(&fam, halo, mirrorTypes, indVars, depVars, 2);
 
 	return fam;
 }//====================================================
@@ -370,12 +370,14 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
  *	@param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
+ *	@param order the multiplicity or order of the family; i.e. the number of revs around the primary
+ *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
+ *	has order 2
  */
-void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
-	tpat_traj_cr3bp initialGuess, std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx){
+void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam, tpat_traj_cr3bp initialGuess,
+	std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
 
 	tpat_sys_data_cr3bp sys = fam->getSysData();
-	int order = 1;
 
 	if(indVarIx.size() < 2)
 		throw tpat_exception("tpat_family_generator::cr3bp_continueFamily: Must specify two independent variables");
@@ -397,7 +399,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 
 	// Initialize counters and storage containers
 	int orbitCount = 0;
-	double indVarSlope = 0;
+	double indVarSlope = NAN;
 	double deltaVar1 = 1;
 	double deltaVar2 = 1;
 
@@ -405,7 +407,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 	while(orbitCount < numOrbits){
 		tpat_traj_cr3bp perOrbit(&sys);
 		try{
-			printf("IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
+			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);
 			printf("Fix States: ");
 			for(size_t i = 0; i < fixStates.size(); i++){ printf("%d, ", fixStates[i]); }
@@ -413,11 +415,11 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(sys, IC, tof, numNodes, order, mirrorType, fixStates);
+			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates);
 		}catch(tpat_diverge &e){
 			break;
 		}catch(tpat_linalg_err &e){
-			printErr("There was a linear algebra error during family continuation...");
+			printErr("There was a linear algebra error during family continuation...\n");
 			break;
 		}
 
@@ -427,11 +429,12 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam,
 
 		// Check for large changes in period to detect leaving family
 		if(orbitCount > 2){
-			if(perOrbit.getTime(-1) > 1.75*members[members.size()-1].getTime(-1) ||
-				perOrbit.getTime(-1) < 0.4*members[members.size()-1].getTime(-1)){
-				
+			double dTOF = perOrbit.getTime(-1) - members[members.size()-1].getTime(-1);
+			double percChange = std::abs(dTOF/perOrbit.getTime(-1));
+			if(percChange > 0.25){
 				leftFamily = true;
-				printWarn("Period jumped! Left the family! Exiting...");
+				printf("percChange = %.4f\n", percChange);
+				printWarn("Period jumped (now = %.5f)! Left the family! Exiting...\n", perOrbit.getTime(-1));
 				break;
 			}
 		}

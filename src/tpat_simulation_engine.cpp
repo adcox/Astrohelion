@@ -729,13 +729,18 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj, model, &(generalIC[0]), t0, tof, verbose)){
+            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getLength();
                 eventRecord rec(ev, timeSize - 1);
                 eventOccurs.push_back(rec);
 
+                // Update event state
+                std::vector<double> state = traj->getState(-1);
+                double lastT = traj->getTime(-1);
+                events.at(ev).updateDist(&(state[0]), lastT);
+                
                 if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
                     printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
                     return true;    // Tell the simulation to stop

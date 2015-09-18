@@ -43,7 +43,7 @@ public:
 	std::vector<double> getPrimPos(double, tpat_sys_data*);
 	std::vector<double> getPrimVel(double, tpat_sys_data*);
 	void sim_saveIntegratedData(double*, double, tpat_traj*);
-	bool sim_locateEvent(tpat_event, tpat_traj*, tpat_model*, double*, double, double, bool);
+	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, bool);
 
 	// Corrector Functions
 	void corrector_applyConstraint(iterationData*, tpat_constraint, int);

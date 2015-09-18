@@ -159,7 +159,6 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
  *
  *  @param event the event we're looking for
  *  @param traj a pointer to the trajectory the event should occur on
- *  @param model the dynamical model we're working in
  *  @param ic the core state vector for this system
  *  @param t0 non-dimensional time at the beginning of the search arc
  *  @param tof the time-of-flight for the arc to search over
@@ -168,7 +167,7 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj, tpat_model* model,
+bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     double *ic, double t0, double tof, bool verbose){
 
     return true;

@@ -132,12 +132,11 @@ int main(int argc, char *argv[]){
 		case 999:
 		{
 			printf("Generating Earth-Moon L2 Northern Butterfly Family\n");
-			gen.setNumNodes(10);
 			//gen.setNumOrbits(10);
 			gen.setStep_simple(0.0005);
 			gen.setStep_fitted_1(0.0005);
 			gen.setStep_fitted_2(0.0005);
-
+			gen.setNumNodes(8);
 			tpat_family_cr3bp L2_NButterfly = gen.cr3bp_generateButterfly(&sysData, 2);
 			L2_NButterfly.sortEigs();
 			L2_NButterfly.setName("Earth-Moon L2 Northern Butterfly");

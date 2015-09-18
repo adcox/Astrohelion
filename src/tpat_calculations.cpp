@@ -1266,7 +1266,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
     tpat_traj_cr3bp halfOrbArc = sim.getCR3BP_Traj();
 
     double halfOrbTOF = halfOrbArc.getTime(-1);
-    double tofErr = 100*abs(halfOrbTOF-period/2.0)/(period/2.0);
+    double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);
 
     if(tofErr > 10)
         printWarn("tpat_calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
@@ -1275,6 +1275,9 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
     tpat_nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
+
+    halfOrbArc.saveToMat("HalfOrbArc.mat");
+    halfOrbNodes.saveToMat("HalfOrbNodes.mat");
 
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
@@ -1288,9 +1291,10 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         correctedHalfPer.deleteNode(-1);
         correctedHalfPer.appendNode(lastNode);
 
-        // Now add more nodes, use MS to get an accurate
+        // Now add more nodes, use MS to get an accurate orbit
         tpat_matrix mirrorMat = getMirrorMat(mirrorType);
         for(int i = correctedHalfPer.getNumNodes()-2; i >= 0; i--){
+            // Use mirroring to populate second half of the orbit via nodes
             tpat_matrix stateVec(1,6, correctedHalfPer.getNode(i).getPosVelState());
             tpat_matrix newStateVec = stateVec*mirrorMat;
 
@@ -1308,11 +1312,16 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         tpat_constraint finalCon(tpat_constraint::STATE, correctedHalfPer.getNumNodes()-1, mirrorCon1, 6);
         correctedHalfPer.addConstraint(finalCon);
 
+        correctedHalfPer.saveToMat("FullOrbNodes.mat");
+
         // Reconverge the solution
         corrector.correct(&correctedHalfPer);
 
         // Return the corrected solution in trajectory form
         tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
+        
+        finalSet.saveToMat("FinalSetNodes.mat");
+        waitForUser();
         
         return tpat_traj_cr3bp::fromNodeset(finalSet);
     }catch(tpat_diverge &e){

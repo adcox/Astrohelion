@@ -135,10 +135,15 @@ void tpat_model::corrector_initDesignVec(iterationData *it, tpat_nodeset *set){
 		it->X.insert(it->X.end(), state.begin(), state.end());
 	}
 
-	// Append the TOF for each node (except the last one, which isn't propagated)
-	if(it->varTime){
-		for(int n = 0; n < set->getNumNodes()-1; n++){
-			it->X.insert(it->X.end(), set->getNode(n).getTOF());
+	if(it->varTime){		
+		if(it->equalArcTime){
+			// Append the total TOF for the arc
+			it->X.insert(it->X.end(), set->getTotalTOF());
+		}else{
+			// Append the TOF for each node (except the last one, which isn't propagated)
+			for(int n = 0; n < set->getNumNodes()-1; n++){
+				it->X.insert(it->X.end(), set->getNode(n).getTOF());
+			}
 		}
 	}
 }//============================================================
@@ -189,7 +194,11 @@ void tpat_model::corrector_getSimICs(iterationData *it, tpat_nodeset *set, int n
 	double *ic, double *t0, double *tof){
 	
 	std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
-	*tof = it->varTime ? it->X[6*it->numNodes+n] : set->getTOF(n);
+	if(it->varTime){
+		*tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
+	}else{
+		*tof = set->getTOF(n);
+	}
 	*t0 = 0;
 }//============================================================
 
@@ -295,11 +304,18 @@ void tpat_model::corrector_targetPosVelCons(iterationData* it, tpat_constraint c
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
 			if(it->varTime){
+				
+				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
+				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+
+				// If equal arc time is enabled, all time derivatives are in one column
+				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n-1;
+				
 				// Column of state derivatives: [vel; accel]
 				if(s < 3)
-					it->DF[it->totalFree*(row0+s) + 6*it->numNodes+n-1] = lastState[s+3];
+					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3];
 				else{					
-					it->DF[it->totalFree*(row0+s) + 6*it->numNodes+n-1] = lastAccel[s-3];
+					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3];
 				}
 			}
 		}
@@ -321,7 +337,7 @@ void tpat_model::corrector_targetExContCons(iterationData *it, tpat_constraint c
 	(void)it;
 	(void)con;
 	(void)row0;
-}
+}//======================================================
 
 /**
  *	@brief Compute partials and constraint functions for nodes constrained with <tt>STATE</tt>.
@@ -514,13 +530,20 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
 		// Partial w.r.t. integrated path (newSeg) from node n
 		tpat_matrix dFdq_nf = -1*dFdq_n2*stm;
 
-		// Compute partial w.r.t. integration time n
-		tpat_matrix state_dot(6, 1, &(state_dot_data[0]));
-		tpat_matrix dFdt_n = -1*dFdq_n2 * state_dot;
-
 		for(int i = 0; i < 6; i++){
 			it->DF[it->totalFree*row0 + 6*(n+1) + i] = dFdq_n2.at(0, i);
 			it->DF[it->totalFree*row0 + 6*n + i] = dFdq_nf.at(0, i);
+		}
+
+		// Compute partial w.r.t. integration time n
+		if(it->varTime){
+			double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+			int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n-1;
+
+			tpat_matrix state_dot(6, 1, &(state_dot_data[0]));
+			tpat_matrix dFdt_n = -1*dFdq_n2 * state_dot;
+
+			it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n.at(0);
 		}
 	}
 	
@@ -555,10 +578,18 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
  *	used to relate TOFs.
  */
 void tpat_model::corrector_targetTOF(iterationData *it, tpat_constraint con, int row0){
-	// Sum all TOF for total, set partials w.r.t. integration times equal to one
-	for(int i = 0; i < it->numNodes-1; i++){
-		it->FX[row0] += it->X[6*it->numNodes+i];
-		it->DF[it->totalFree*row0 + 6*it->numNodes+i] = 1;
+	if(! it->varTime)
+		throw tpat_exception("tpat_model::corrector_targetTOF: Cannot target TOF when variable time is off!");
+
+	if(it->equalArcTime){
+		it->FX[row0] = it->X[6*it->numNodes];
+		it->DF[it->totalFree*row0 + 6*it->numNodes] = 1;
+	}else{
+		// Sum all TOF for total, set partials w.r.t. integration times equal to one
+		for(int i = 0; i < it->numNodes-1; i++){
+			it->FX[row0] += it->X[6*it->numNodes+i];
+			it->DF[it->totalFree*row0 + 6*it->numNodes+i] = 1;
+		}
 	}
 	
 	// subtract the desired TOF from the constraint to finish its computation

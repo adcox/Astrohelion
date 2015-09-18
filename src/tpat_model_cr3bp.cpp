@@ -307,7 +307,7 @@ tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, tpat_n
         node.setConstraints(nodes_in->getNode(i).getConstraints());
 
         if(i + 1 < numNodes){
-            node.setTOF(it->X[numNodes*6 + i]);
+            node.setTOF(it->equalArcTime ? it->X[numNodes*6]/(numNodes-1) : it->X[numNodes*6 + i]);
         }else{
             node.setTOF(NAN);
 

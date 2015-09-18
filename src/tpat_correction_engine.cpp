@@ -66,6 +66,7 @@ tpat_correction_engine::~tpat_correction_engine(){
 void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 	verbose = e.verbose;
 	varTime = e.varTime;
+	equalArcTime = e.equalArcTime;
 	maxIts = e.maxIts;
 	tol = e.tol;
 	createdNodesetOut = e.createdNodesetOut;
@@ -113,6 +114,15 @@ tpat_correction_engine& tpat_correction_engine::operator =(const tpat_correction
  * 	to fixed time)
  */
 bool tpat_correction_engine::usesVarTime() const { return varTime; }
+
+/**
+ *	@brief Retrieve whether or not we are force all segments to have the same length
+ *	(in time).
+ *
+ *	This setting only applies if variable time is turned on.
+ *	@return whether or not each arc will be forced to have the same length in time
+ */
+bool tpat_correction_engine::usesEqualArcTime() const { return equalArcTime; }
 
 /**
  *  @brief Retrieve the verbosity setting
@@ -181,13 +191,31 @@ tpat_nodeset_bcr4bpr tpat_correction_engine::getBCR4BPR_Output(){
 	}else{
 		throw tpat_exception("tpat_correction_engine::getBCR4BPR_Output: Output nodeset has not been created, cannot return CR3BP output");
 	}
-}//=========================================
+}//==================================================
 
 /**
  *	@brief Set varTime
  *	@param b whether or not the corrector should use variable time
  */
-void tpat_correction_engine::setVarTime(bool b){ varTime = b; }
+void tpat_correction_engine::setVarTime(bool b){
+	varTime = b;
+	// Turn off equal-time arcs too if varTime is false
+	if(!varTime)
+		equalArcTime = false;
+}//==================================================
+
+/**
+ *	@brief Tell the corrector how to apply variable time
+ *	@param b whether or not each arc will be forced to have the same duration
+ */
+void tpat_correction_engine::setEqualArcTime(bool b){
+	if(!varTime && b){
+		printErr("tpat_correction_engine::setequalArcTime: Cannot use equal-time arcs if variable time is disabled; please turn varTime ON first\n");
+		equalArcTime = false;
+	}else{
+		equalArcTime = b;
+	}
+}//==================================================
 
 /**
  *	@brief Set verbosity
@@ -233,6 +261,7 @@ void tpat_correction_engine::correct(tpat_nodeset *set){
 	// Create structure to store iteration data for easy sharing
 	iterationData it;
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
+	it.equalArcTime = equalArcTime;
 	it.sysData = set->getSysData();
 
 	// Save original nodes for later access (particularly when variable time is off)

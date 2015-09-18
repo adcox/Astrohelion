@@ -70,6 +70,7 @@ struct iterationData{
 		int totalFree = 0;			//!< Total # free var. -> # cols of DF
 
 		bool varTime = true;		//!< Whether or not the simulation is using variable time
+		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
 };
 
 /**
@@ -92,20 +93,22 @@ class tpat_correction_engine{
 		tpat_correction_engine& operator =(const tpat_correction_engine &e);
 
 		// Set and get functions
-		bool usesVarTime() const;
 		int getMaxIts() const;
 		double getTol() const;
 		bool isVerbose() const;
 		bool isFindingEvent() const;
 		tpat_nodeset_cr3bp getCR3BP_Output();
 		tpat_nodeset_bcr4bpr getBCR4BPR_Output();
+		bool usesEqualArcTime() const;
+		bool usesVarTime() const;
 
-		void setVarTime(bool);
+		void setEqualArcTime(bool);
+		void setFindEvent(bool);
 		void setMaxIts(int);
 		void setTol(double);
+		void setVarTime(bool);
 		void setVerbose(bool);
-		void setFindEvent(bool);
-
+		
 		// Utility/Action functions
 		void correct(tpat_nodeset*);
 
@@ -115,6 +118,10 @@ class tpat_correction_engine{
 
 		/** Whether or not to use variable time in the corrections process */
 		bool varTime = true;
+
+		/** Whether or not to force all arcs to have the same length (in time);
+		 	only applies if variable time is enabled */
+		bool equalArcTime = false;
 
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;

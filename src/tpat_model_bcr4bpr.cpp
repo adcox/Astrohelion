@@ -237,7 +237,10 @@ void tpat_model_bcr4bpr::corrector_initDesignVec(iterationData *it, tpat_nodeset
     // Call base class to do most of the work
     tpat_model::corrector_initDesignVec(it, set);
 
-    // Append the TOF for each node (except the last one, which isn't propagated)
+    if(it->equalArcTime)
+        throw tpat_exception("tpat_model_bcr4bpr::corrector_initDesignVec: Equal Arc Times have not been implemented in this Model (yet)!");
+
+    // Append the Epoch for each node
     if(it->varTime){
         // epochs come after ALL the TOFs have been added
         tpat_nodeset_bcr4bpr *bcSet = static_cast<tpat_nodeset_bcr4bpr *>(set);

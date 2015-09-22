@@ -161,7 +161,10 @@ double tpat_nodeset::getTotalTOF() const {
 	double total = 0;
 	for(size_t ix = 0; ix < steps.size(); ix++){
 		tpat_node node(steps[ix]);
-		total += node.getTOF();
+		
+		// If there are any NAN values, don't add them
+		if(node.getTOF() == node.getTOF())
+			total += node.getTOF();
 	}
 
 	return total;

@@ -29,7 +29,8 @@
 
 #include "tpat_exceptions.hpp"
 #include "tpat_matrix.hpp"
-
+#include "tpat_utilities.hpp"
+ 
 #include <cmath>
 //-----------------------------------------------------
 //      *structors
@@ -187,9 +188,10 @@ double tpat_arc_step::getExtraParam(int ix) const {
 	if(ix < 0)
 		ix += extraParam.size();
 
-	if(ix < 0 || ix >= (int)(extraParam.size()))
+	if(ix < 0 || ix >= (int)(extraParam.size())){
+		printErr("tpat_arc_step::getExtraParam: Attempting to access index %d\n", ix);
 		throw tpat_exception("tpat_arc_step::getExtraParam: Cannot access extra param; index too high");
-
+	}
 	return extraParam[ix];
 }//====================================================
 

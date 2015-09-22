@@ -186,6 +186,7 @@ const char* tpat_constraint::getTypeStr(constraint_t t) const{
 		case APSE: {return "APS"; break; }
 		case CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }
 		case CONT_EX: { return "CONTINUOUS_EXTRA"; break; }
+		case PSEUDOARC: { return "PSEUDO-ARCLENGTH"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}
 }//========================================

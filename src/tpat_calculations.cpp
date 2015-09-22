@@ -1321,7 +1321,6 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
         
         finalSet.saveToMat("FinalSetNodes.mat");
-        waitForUser();
         
         return tpat_traj_cr3bp::fromNodeset(finalSet);
     }catch(tpat_diverge &e){

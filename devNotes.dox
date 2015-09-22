@@ -15,6 +15,9 @@ This software has been tested on (and <i>should</i> work on) the following syste
 		<a href="http://www.gnu.org/software/gsl/">GNU Science Library</a> (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
 	</li>
 	<li>
+		<a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>: A matrix and linear algebra library. No installation is needed; this library is included with the source code.
+	</li>
+	<li>
 		<a href="http://sourceforge.net/projects/matio/">Mat I/O Library</a>: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
 		<ul>
 			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>

@@ -77,6 +77,9 @@ correctorTest: $(OBJECTS)
 familyOps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
 
+eigenTest:
+	$(COMP) -I $(INC) test_eigen.cpp -o $(BIN)/$@
+
 emFams: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) computeEarthMoonFams.cpp -o $(BIN)/$@
 

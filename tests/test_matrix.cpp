@@ -41,7 +41,7 @@ bool test_constructor(tpat_matrix C){
 bool test_matMult(tpat_matrix I, tpat_matrix B, tpat_matrix C){
 	// Test to make sure it catches size-mismatch
 	try{
-		C*C;
+		tpat_matrix Z = C*C;
 		return false;	// if C*C succeeds, there is a problem!
 	}
 	catch(tpat_exception& e){ /*expect this one, don't do anything*/ }
@@ -304,6 +304,71 @@ bool test_eig(){
 	return matrix1Pass && matrix2Pass;
 }//===========================================
 
+bool test_rank(){
+	double okErr = 1e-14;
+	double Z_data[] = {1,2,3,4,5,6,7,8,9};
+	tpat_matrix Z(3,3,Z_data);
+	bool test1 = mat_rank(Z, okErr) == 2;
+
+	if(!test1)
+		printf("Test 1: Rank should be 2, reported as %d\n", mat_rank(Z, okErr));
+
+	double W_data[] = {1,2,3,3,2,1,5,8,2};
+	tpat_matrix W(3,3,W_data);
+	bool test2 = mat_rank(W, okErr) == 3;
+
+	if(!test2)
+		printf("Test 2: Rank should be 3, reported as %d\n", mat_rank(W, okErr));
+
+	double X_data[] = {1,2,3,4,5,6,7,8};
+	tpat_matrix X(2,4,X_data);
+	bool test3 = mat_rank(X, okErr) == 2;
+
+	if(!test3)
+		printf("Test 3: Rank should be 2, reported as %d\n", mat_rank(X, okErr));
+
+	double V_data[] = {1,2,2,4,4,8};
+	tpat_matrix V(3,2,V_data);
+	bool test4 = mat_rank(V, okErr) == 1;
+
+	if(!test4)
+		printf("Test 4: Rank should be 1, reported as %d\n", mat_rank(V, okErr));
+
+	return test1 && test2 && test3 && test4;
+}//===========================================
+
+bool test_null(){
+
+	// Test with rows > cols, 1D nullspace
+	double Z_data[] = {1,0,0,0,0,0};
+	tpat_matrix Z(3,2,Z_data);
+	double N_data[] = {0,1};
+	tpat_matrix N_ans(2,1,N_data);
+	tpat_matrix Z_null = null_svd(Z);
+	bool test1 = Z_null == N_ans;
+
+	// Test with rows = cols, 2D nullspace
+	tpat_matrix W(2,2);
+	tpat_matrix N_ans2 = tpat_matrix::I(2);
+	bool test2 = null_svd(W) == N_ans2;
+	
+	// Test with rows = cols, no nullspace
+	double X_data[] = {1,2,3,4};
+	tpat_matrix X(2,2,X_data);
+	tpat_matrix N = null_svd(X);
+	bool test3 = (N.getCols() == 1 && N.getRows() == 1 && N.at(0,0) == 0);
+
+	// Test with rows < cols, 2D nullspace
+	double Y_data[] = {1,0,0,0,0,0};
+	tpat_matrix Y(2,3, Y_data);
+	double N3_data[] = {0,0,1,0,0,1};
+	tpat_matrix N_ans3(3,2, N3_data);
+	tpat_matrix N3 = null_svd(Y);
+	bool test4 = N3 == N_ans3;
+
+	return test1 && test2 && test3 && test4;
+}
+
 int main(void){
 
 	tpat_matrix I(2, 2, I_data);
@@ -339,5 +404,8 @@ int main(void){
 	cout << "Test: det()... " << ( test_det() ? PASS : FAIL) << endl;
 	cout << "Test: cross()... " << ( test_cross() ? PASS : FAIL) << endl;
 	cout << "Test: eig()... " << (test_eig() ? PASS : FAIL) << endl;
+	cout << "Test: rank()... " << (test_rank() ? PASS : FAIL) << endl;
+	cout << "Test: null()... " << (test_null() ? PASS : FAIL) << endl;
+
 	return 0;
 }

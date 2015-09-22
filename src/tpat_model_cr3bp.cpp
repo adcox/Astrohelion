@@ -44,6 +44,7 @@
 tpat_model_cr3bp::tpat_model_cr3bp() : tpat_model(MODEL_CR3BP) {
     // Allow a few more constraints than the default
     allowedCons.push_back(tpat_constraint::JC);
+    allowedCons.push_back(tpat_constraint::PSEUDOARC);
     allowedEvents.push_back(tpat_event::JC);
 }//==============================================
 
@@ -237,6 +238,8 @@ void tpat_model_cr3bp::corrector_applyConstraint(iterationData *it, tpat_constra
         case tpat_constraint::JC:
             corrector_targetJC(it, con, row0);
             break;
+        case tpat_constraint::PSEUDOARC:
+            corrector_targetPseudoArc(it, con, row0);
         default: break;
     }
 }//=========================================================
@@ -276,6 +279,40 @@ void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con
     it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx;   //dFdx_dot
     it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy;   //dFdy_dot
     it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz;   //dFdz_dot
+}//=============================================
+
+/**
+ *  @brief Compute constraint function and partial derivative values for Pseudo Arc-Length
+ *  
+ *  @param it a pointer to the corrector's iteration data structure
+ *  @param con the constraint being applied
+ *  @param row0 the row this constraint begins on
+ */
+void tpat_model_cr3bp::corrector_targetPseudoArc(iterationData *it, tpat_constraint con, int row0){
+    std::vector<double> conData = con.getData();
+
+    if(row0 != it->totalCons-1)
+        throw tpat_exception("tpat_model_cr3bp::corrector_targetPseudoArc: Pseudo Arc-Length constraint must be the final constraint; please re-create the nodeset accordingly");
+
+    if(it->totalCons != it->totalFree)
+        throw tpat_exception("tpat_model_cr3bp::corrector_targetPseudoArc: Jacobian matrix is not square; cannot apply pseudo arc-length");
+
+    // All elements except the last are the free-variable vector for a converged family member
+    std::vector<double> famFreeVec(conData.begin(), conData.begin()+it->totalFree);
+    std::vector<double> nullspace(conData.begin()+it->totalFree, conData.end()-1);
+    double stepSize = conData.back();   // The last element is the step size
+
+    tpat_matrix X(1, it->totalFree, it->X);
+    tpat_matrix X_fam(1, famFreeVec.size(), famFreeVec);
+    tpat_matrix N(nullspace.size(), 1, nullspace);
+
+    tpat_matrix dotProd = (X - X_fam)*N;
+
+    it->FX[row0] = dotProd.at(0) - stepSize;
+
+    for(int i = 0; i < it->totalFree; i++){
+        it->DF[it->totalFree*row0 + i] = N.at(i);
+    }
 }//=============================================
 
 /**

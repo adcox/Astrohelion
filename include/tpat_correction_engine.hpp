@@ -110,7 +110,7 @@ class tpat_correction_engine{
 		void setVerbose(bool);
 		
 		// Utility/Action functions
-		void correct(tpat_nodeset*);
+		iterationData correct(tpat_nodeset*);
 
 	private:
 		/** Whether or not to spit out lots of messages */

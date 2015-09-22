@@ -27,6 +27,7 @@
 
 // forward declarations
 class tpat_family_cr3bp;
+class tpat_nodeset_cr3bp;
 class tpat_sys_data_cr3bp;
 class tpat_traj_cr3bp;
 
@@ -69,6 +70,7 @@ class tpat_family_generator{
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 		void copyMe(const tpat_family_generator&);
 		void cr3bp_continueFamily(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
+		void cr3bp_continueFamily_PAC(tpat_family_cr3bp*, tpat_nodeset_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
 };
 
 #endif

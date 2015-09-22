@@ -140,6 +140,14 @@ class tpat_constraint{
 						 * NOTE: These constraints are applied automatically by the corrections
 						 * algorithm: DO NOT CREATE THESE.
 						 */
+			PSEUDOARC 	/*!< Pseudo arc-length continuation constraint. This forces a trajectory to
+						 *	be in the same family as the input arc. The <tt>node</tt> attribute is 
+						 *	meaningless for this constraint, but set it to the index of the last node.
+						 * 	To ensure this is the final constraint, add it to the nodeset last. The <tt>data</tt>
+						 *	field needs to contain the *entire* free-variable vector from a converged
+						 *	family member. At the end of the data vector, append a double that represents
+						 *	the continuation step size.
+						 */
 		};
 		
 		tpat_constraint();

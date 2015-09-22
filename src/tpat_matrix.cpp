@@ -41,6 +41,7 @@
 #include <gsl/gsl_cblas.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_linalg.h>
+#include <Eigen/Dense>
 
 //---------------------------------------------------------------------------
 //    	Constructors and Destructor
@@ -248,9 +249,10 @@ double tpat_matrix::at(int r, int c) const {
 /**
  *	@brief Retrive a value from a 1D matrix. If the matrix is not 1D, a value from the first row
  *	is returned.
+ *	@param i element index
  */
 double tpat_matrix::at(int i) const {
-	if(i < rows*cols){
+	if(i >= 0 && i < rows*cols){
 		if(rows != 1 && cols != 1){
 			printWarn("tpat_matrix :: matrix is not 1D; returning element from storage array\n");
 		}
@@ -258,7 +260,45 @@ double tpat_matrix::at(int i) const {
 	}else{
 		throw std::out_of_range("Index out of range");
 	}
-}//===============================
+}//===========================================
+
+/**
+ *	@brief Set a matrix element equal to a value
+ *	@param r row index
+ *	@param c column index
+ *	@param val the value to store in (r, c)
+ */
+void tpat_matrix::set(int r, int c, double val){
+	if(r >= 0 && r < rows && c >= 0 && c < cols){
+		gsl_matrix_set(gslMat, r, c, val);
+	}else{
+		throw std::out_of_range("Index out of range");
+	}
+}//===========================================
+
+/**
+ *	@brief Set a value in a 1D matrix. If the matrix is not 1D, a value from the first row is set
+ *	@param ix matrix/vector index
+ *	@param val value to store
+ */
+void tpat_matrix::set(int ix, double val){
+	if(ix >= 0 && ix < rows*cols){
+		if(rows != 1 && cols != 1){
+			printWarn("tpat_matrix :: matrix is not 1D; setting a row element by default\n");
+		}
+
+		if(cols == 1)
+			gsl_matrix_set(gslMat, ix, 1, val);
+		else{
+			if(ix < cols)
+				gsl_matrix_set(gslMat, 1, ix, val);
+			else
+				throw std::out_of_range("Index out of range");		
+		}
+	}else{
+		throw std::out_of_range("Index out of range");
+	}
+}//===========================================
 
 //---------------------------------------------------------------------------
 //   	Overloaded Operators
@@ -560,9 +600,6 @@ std::vector< std::vector<cdouble> > eig(const tpat_matrix &m){
   	// Compute eigenvalues of non-symmetric, real matrix
   	gsl_eigen_nonsymmv (m.gslMat, eval, evec, w);
 
-  	// Free memory
-  	gsl_eigen_nonsymmv_free (w);
-
   	std::vector<cdouble> eigenVals;
   	std::vector<cdouble> eigenVecs;
   	for(int i = 0; i < m.rows; i++){
@@ -578,6 +615,11 @@ std::vector< std::vector<cdouble> > eig(const tpat_matrix &m){
   	std::vector< std::vector<cdouble> > eigData;
   	eigData.push_back(eigenVals);
   	eigData.push_back(eigenVecs);
+
+  	// Free memory
+  	gsl_eigen_nonsymmv_free (w);
+  	gsl_vector_complex_free(eval);
+  	gsl_matrix_complex_free(evec);
 
   	return eigData;
 }//=========================================
@@ -609,6 +651,9 @@ tpat_matrix inv(const tpat_matrix& m){
 	}
 
 	tpat_matrix tpatInvMat(invMat);
+
+	gsl_permutation_free(perm);
+	gsl_matrix_free(invMat);
 	return tpatInvMat;
 }//============================================
 
@@ -641,6 +686,232 @@ tpat_matrix trans(const tpat_matrix &m){
 	gsl_matrix_free(b);
 	return temp;
 }//===============================================
+
+/**
+ *	@brief Compute the rank of a matrix
+ *
+ *	This algorithm works by computing the QR decomposition and then
+ *	counting the number of rows in R that are equal to zero; subtracting
+ *	the number of zero rows from the total gives the rank of the matrix.
+ *	Note that 'equal to zero' is a numerical computation, so some tolerance
+ *	is required. 1e-12 or 1e-14 are generally acceptable values for zero
+ *
+ *	@param m a matrix reference
+ *	@param okErr the acceptable numerical error.
+ */
+int mat_rank(const tpat_matrix &m, double okErr){
+	// It may be prudent to compute a value for okErr from the magnitude of
+	// the elements stored in M. R contains elements from the Gram-Schmidt orthogonalization
+
+	// Make a copy so as not to change the input
+	tpat_matrix temp(m);
+
+	int minDim = m.rows < m.cols ? m.rows : m.cols;
+
+	gsl_vector *tau = gsl_vector_alloc(minDim);
+	int status = gsl_linalg_QR_decomp(temp.getGSLMat(), tau);
+	if(status){
+		printErr("tpat_matrix::rank QR decomp GSL ERR: %s\n", gsl_strerror(status));
+		gsl_vector_free(tau);
+		throw tpat_linalg_err("tpat_matrix::rank: Unable to decompose matrix into Q and R");
+	}
+
+	gsl_matrix *Q = gsl_matrix_alloc(m.rows, m.rows);
+	gsl_matrix *R = gsl_matrix_alloc(m.rows, m.cols);
+	status = gsl_linalg_QR_unpack(temp.getGSLMat(), tau, Q, R);
+	if(status){
+		printErr("tpat_matrix::rank QR unpack GSL ERR: %s\n", gsl_strerror(status));
+		gsl_vector_free(tau);
+		gsl_matrix_free(Q);
+		throw tpat_linalg_err("tpat_matrix::rank: Unable to unpack Q and R");
+	}
+
+	// Count number of rows that are zero (within tolerance), starting at bottom
+	tpat_matrix R_mat(R);
+	int rank = m.rows;
+	int r = m.rows-1;
+	while(r >= 0 && std::abs(norm(R_mat.getRow(r))) < okErr){
+		rank -= 1;
+		r -= 1;
+	}
+
+	// Free stuff (Freeing R seems to cause an error when temp is destructed... I suspect R points to the temp gslMat)
+	gsl_vector_free(tau);
+	gsl_matrix_free(Q);
+	return rank;
+}//==================================================
+
+/**
+ *	@brief Compute an orthonormal basis for the right nullspace of a vector
+ *
+ *	This method uses the following algorithm to compute the nullspace:
+ *	<br>
+ *	An \f$ m \times n \f$ matrix \f$ \bf{A} \f$ can be factored into two matrices,
+ *	\f$ \bf{Q} \f$ and \f$ \bf{R} \f$ such that \f$ \bf{A} = \bf{QR} \f$. The
+ *	range and nullspace of \f$\bf{A}\f$ are stored within \f$ \bf{Q} \f$ as
+ *	\f$ \bf{Q} = [\bf{Q_1},~\bf{Q_2}] \f$ where \f$\bf{Q1}\f$ is \f$ m \times m \f$
+ *	and \f$\bf{Q_2}\f$ is \f$ m \times (n-r) \f$, \f$r\f$ being the rank of \f$\bf{Q}\f$.
+ *	The columns of \f$\bf{Q_1}\f$ span the range of \f$\bf{A}\f$ and the columns of 
+ *	\f$\bf{Q_2}\f$ span the nullspace.
+ *
+ *	@param m a matrix reference
+ *	@param okErr the maximum acceptable numerical error when looking for zeros
+ *	@return a matrix whose columns span the nullspace of m. If the nullspace is empty,
+ *	a matrix with 1 element set equal to 0 will be returned, regardless of the size of
+ *	the input matrix.
+ */
+tpat_matrix null_qr(const tpat_matrix &m, double okErr){
+	tpat_matrix temp = trans(m);
+
+	int tempRows = temp.getRows();
+	int tempCols = temp.getCols();
+	int minDim = tempRows < tempCols ? tempRows : tempCols;
+	
+	gsl_vector *tau = gsl_vector_alloc(minDim);
+	int status = gsl_linalg_QR_decomp(temp.getGSLMat(), tau);
+	if(status){
+		printErr("tpat_matrix::null QR decomp GSL ERR: %s\n", gsl_strerror(status));
+		gsl_vector_free(tau);
+		throw tpat_linalg_err("tpat_matrix::null: Unable to decompose matrix into Q and R");
+	}
+
+	gsl_matrix *Q = gsl_matrix_alloc(tempRows, tempRows);
+	gsl_matrix *R = gsl_matrix_alloc(tempRows, tempCols);
+	status = gsl_linalg_QR_unpack(temp.getGSLMat(), tau, Q, R);
+	if(status){
+		printErr("tpat_matrix::null QR upack GSL ERR: %s\n", gsl_strerror(status));
+		gsl_vector_free(tau);
+		gsl_matrix_free(Q);
+		throw tpat_linalg_err("tpat_matrix::null: Unable to unpack Q and R");
+	}
+
+	// Count number of rows that are zero (within tolerance), starting at bottom
+	tpat_matrix R_mat(R);
+	int rank = tempRows;
+	int r = tempRows-1;
+	while(r >= 0 && std::abs(norm(R_mat.getRow(r))) < okErr){
+		rank -= 1;
+		r -= 1;
+	}
+
+	// Check to see if a nullspace even exists!
+	if(rank == tempRows){
+		double data = 0;
+		return tpat_matrix(1,1,&data);
+	}
+
+	// Extract the columns of Q that correspond to the nullspace
+	tpat_matrix N(m.cols, m.cols - rank);
+	for(r = 0; r < m.cols; r++){
+		for(int c = rank; c < m.cols; c++){
+			N.set(r, c - rank, gsl_matrix_get(Q,r,c));
+		}
+	}
+
+	// Free stuff (Freeing R seems to cause an error when temp is destructed... I suspect R points to the temp gslMat)
+	gsl_vector_free(tau);
+	gsl_matrix_free(Q);
+
+	return N;
+}//================================================
+
+/**
+ *	@brief Compute the right nullspace for an input matrix
+ *
+ *	This algorithm computes the nullspace from the Singular Value
+ *	Decomposition of the input matrix. First, the rank is computed
+ *	by counting the number of zero (within 1e-14) singular values
+ *	and subtracting them from the total possible rank. The columns
+ *	of V that correspond to those zero singular values will span
+ *	the nullspace.
+ *
+ *	@param m a matrix reference
+ *	@return the right nullspace of the input matrix
+ */
+tpat_matrix null_svd(const tpat_matrix &m){
+
+	// GSL Algorithm can only handle matrices with rows >= cols
+	if(m.rows >= m.cols){
+		tpat_matrix U(m);
+
+		gsl_matrix *V = gsl_matrix_alloc(U.getCols(), U.getCols());
+		gsl_vector *S = gsl_vector_alloc(U.getCols());
+		gsl_vector *w = gsl_vector_alloc(U.getCols());
+		int status = 0;
+
+		// The one-sided Jacboi orthogonalization method should give singular values to a higher level of accuracy for S
+		// status = gsl_linalg_SV_decomp_jacobi(U.getGSLMat(),V,S);
+		status = gsl_linalg_SV_decomp(U.getGSLMat(), V, S, w);
+
+		if(status){
+			printErr("tpat_matrix::null_svd: could not perform SVD decomposition; GSL ERR: %s\n", gsl_strerror(status));
+			gsl_matrix_free(V);
+			gsl_vector_free(S);
+			gsl_vector_free(w);
+			throw tpat_linalg_err("tpat_matrix::null_svd: Unable to decompose matrix into SVD");
+		}
+
+		// Count number of zeros in S
+		int rank = S->size;
+		for(int r = (int)S->size-1; r >= 0; r--){
+			if(gsl_vector_get(S, r) == 0)
+				rank--;
+		}
+		
+		// Check for full-rank case
+		if(rank == (int)(S->size)){
+			double data = 0;
+			return tpat_matrix(1, 1, &data);
+		}
+
+		// Extract the right nullspace from V
+		tpat_matrix N(U.getCols(), U.getCols()-rank);
+		for(int r = 0; r < (int)(V->size1); r++){
+			for(int c = rank; c < (int)(V->size2); c++){
+				N.set(r, c-rank, gsl_matrix_get(V,r,c));
+			}
+		}
+
+		if(m.rows < m.cols)
+			N = trans(N);
+
+		gsl_matrix_free(V);
+		gsl_vector_free(S);
+		gsl_vector_free(w);
+		return N;
+	}else{	// Use Eigen library
+		
+		// Copy my matrix into an Eigen matrix
+		Eigen::MatrixXd A(m.rows, m.cols);
+		for(int r = 0; r < m.rows; r++){
+			for(int c = 0; c < m.cols; c++){
+				A(r,c) = m.at(r,c);
+			}
+		}
+
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeFullV);
+		svd.setThreshold(1e-14);
+
+		Eigen::MatrixXd V = svd.matrixV();
+		double rank = svd.rank();
+
+		if(rank == V.cols()){
+			double data = 0;
+			return tpat_matrix(1, 1, &data);
+		}
+
+		// Eigen::MatrixXd N((int)(V.rows()), (int)(V.cols()-rank));
+		tpat_matrix N((int)(V.rows()), (int)(V.cols()-rank));
+		for(int r = 0; r < V.rows(); r++){
+			for(int c = rank; c < V.cols(); c++){
+				// N(r,c-rank) = V(r,c);
+				N.set(r, c-rank, V(r,c));
+			}
+		}
+
+		return N;
+	}
+}//==============================================
 
 //---------------------------------------------------------------------------
 //    	Utilities

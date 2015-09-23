@@ -26,9 +26,17 @@ int main(int argc, char *argv[]){
 		case 0:
 		{
 			printf("Generating Earth-Moon L1 Lyapunov Family\n");
+			
+			// Natural Parameter Continuation
 			gen.setStep_simple(0.0005);
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
+			
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(1500);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+
+			// Run the generator
 			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
 			L1_Lyap.sortEigs();
 			L1_Lyap.setName("Earth-Moon L1 Lyapunov");
@@ -38,8 +46,16 @@ int main(int argc, char *argv[]){
 		case 1:
 		{
 			printf("Generating Earth-Moon L2 Lyapunov Family\n");
+
+			// Natural Parameter Continuation
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
+
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(2000);
+			gen.setNumNodes(5);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+
 			tpat_family_cr3bp L2_Lyap = gen.cr3bp_generateLyap(sysData, 2, 0.01);
 			L2_Lyap.sortEigs();
 			L2_Lyap.setName("Earth-Moon L2 Lyapunov");
@@ -49,9 +65,16 @@ int main(int argc, char *argv[]){
 		case 2:
 		{
 			printf("Generating Earth-Moon L3 Lyapunov Family\n");
+
+			// Natural Parameter Continuation
 			gen.setNumNodes(5);
 			gen.setStep_fitted_1(0.05);
 			gen.setStep_fitted_2(0.05);
+
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(3000);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+
 			tpat_family_cr3bp L3_Lyap = gen.cr3bp_generateLyap(sysData, 3, 0.01);
 			L3_Lyap.sortEigs();
 			L3_Lyap.setName("Earth-Moon L3 Lyapunov");
@@ -133,10 +156,10 @@ int main(int argc, char *argv[]){
 		{
 			printf("Generating Earth-Moon L2 Northern Butterfly Family\n");
 			//gen.setNumOrbits(10);
-			gen.setStep_simple(0.0005);
+			gen.setStep_simple(0.0001);
 			gen.setStep_fitted_1(0.0005);
 			gen.setStep_fitted_2(0.0005);
-			gen.setNumNodes(8);
+			gen.setNumNodes(4);
 			tpat_family_cr3bp L2_NButterfly = gen.cr3bp_generateButterfly(&sysData, 2);
 			L2_NButterfly.sortEigs();
 			L2_NButterfly.setName("Earth-Moon L2 Northern Butterfly");

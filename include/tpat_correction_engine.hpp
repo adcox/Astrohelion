@@ -65,7 +65,7 @@ struct iterationData{
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
 		int count = 0;				//!< Count of number of iterations through corrections process
 
-		int numSlack = 0;			//!< # slack variables
+		int numSlack = 0;			//!< number of slack variables
 		int totalCons = 0;			//!< Total # constraints -> # rows of DF
 		int totalFree = 0;			//!< Total # free var. -> # cols of DF
 

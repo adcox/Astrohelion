@@ -22,6 +22,7 @@
 #define H_FAMILY_GENERATOR
 
 #include "tpat_calculations.hpp"
+#include "tpat_correction_engine.hpp"
 
 #include <vector>
 
@@ -36,6 +37,14 @@ class tpat_traj_cr3bp;
  */
 class tpat_family_generator{
 	public:
+		/**
+		 *	@brief Type of continuation to use when generating a family
+		 */
+		enum cont_t{
+			NAT_PARAM,	//!< Use natural parameter continuation
+			PSEUDO_ARC	//!> Use pseudo arclength continuation
+		};
+
 		// *structors
 		tpat_family_generator();
 		tpat_family_generator(const tpat_family_generator&);
@@ -45,6 +54,7 @@ class tpat_family_generator{
 		tpat_family_generator& operator =(const tpat_family_generator&);
 
 		// Set and Get
+		void setContType(cont_t);
 		void setNumNodes(int);
 		void setNumOrbits(int);
 		void setSlopeThresh(double);
@@ -68,9 +78,12 @@ class tpat_family_generator{
 		int curveFitMem = 5;			//!< Number of points to use with Least-Squares algorithm
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
+		cont_t contType = NAT_PARAM;	//!< Type of continuation to use
+
 		void copyMe(const tpat_family_generator&);
-		void cr3bp_continueFamily(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
-		void cr3bp_continueFamily_PAC(tpat_family_cr3bp*, tpat_nodeset_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
+		void cr3bp_natParamCont(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
+		void cr3bp_pseudoArcCont(tpat_family_cr3bp*, tpat_nodeset_cr3bp, int, int, double, std::vector<int>);
+		tpat_nodeset_cr3bp cr3bp_getNextPACGuess(tpat_matrix, tpat_matrix, double, iterationData, tpat_constraint, tpat_constraint);
 };
 
 #endif

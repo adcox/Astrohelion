@@ -84,8 +84,10 @@ class tpat_matrix{
 		friend double det(const tpat_matrix&);
 		friend tpat_matrix inv(const tpat_matrix&);
 		friend double norm(const tpat_matrix&);
+		friend tpat_matrix null_qr(const tpat_matrix&);
 		friend tpat_matrix null_qr(const tpat_matrix&, double);
-		friend tpat_matrix null_svd(const tpat_matrix &);
+		friend tpat_matrix null_svd(const tpat_matrix&);
+		friend tpat_matrix null_svd(const tpat_matrix&, double);
 		friend int mat_rank(const tpat_matrix&, double);
 		friend tpat_matrix trans(const tpat_matrix&);
 		friend std::vector< std::vector<cdouble> > eig(const tpat_matrix&);

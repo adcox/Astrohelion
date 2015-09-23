@@ -27,8 +27,9 @@
  
 #include "tpat_family_generator.hpp"
 
+#include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
-#include "tpat_correction_engine.hpp"
+// #include "tpat_correction_engine.hpp"
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
@@ -75,6 +76,12 @@ tpat_family_generator& tpat_family_generator::operator =(const tpat_family_gener
 //-----------------------------------------------------
 //      Set and Get Methods
 //-----------------------------------------------------
+
+/**
+ *	@brief Set the continuation type/method
+ *	@param t continuation type
+ */
+void tpat_family_generator::setContType(cont_t t){ contType = t; }
 
 /**
  *	@brief Set the slope threshold
@@ -200,7 +207,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	std::vector<int> depVars {0,6};	// Predict x and period with least squares
 	std::vector<mirror_t> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
 
-	cr3bp_continueFamily(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
+	cr3bp_natParamCont(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
 
 	return axialFam;
 }//====================================================
@@ -256,7 +263,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	std::vector<int> depVars {4};	// Predict y-dot with least-squares
 	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-	cr3bp_continueFamily(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
+	cr3bp_natParamCont(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
 
 	return haloFam;
 }//=======================================================
@@ -280,6 +287,10 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 	if(LPt < 1 || LPt > 3)
 		throw tpat_exception("tpat_family_generator::cr3bp_generateLyap: Invalide LPt number");
 
+	// Initialize variables and containers for data
+	tpat_family_cr3bp fam(sysData);
+
+	// Get initial guess from linearization
 	double LPt_data[] = {0,0,0};
 	cr3bp_getEquilibPt(sysData, LPt, 1e-14, LPt_data);
 
@@ -289,29 +300,41 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 	tpat_traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
 		tpat_linear_motion_engine::ELLIP, sysData);
 
-	// Initialize variables and containers for data
-	tpat_family_cr3bp fam(sysData);
-
-	// Lyapunov-specific settings
 	fam.setSortType(tpat_family_cr3bp::SORT_X);
-	std::vector<int> indVars;
-	indVars.push_back(0);	// We're going to fix the x-coordinate in the corrector to keep it from slipping
-	indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
-	std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
-	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-	// cr3bp_continueFamily(&fam, linTraj, mirrorTypes, indVars, depVars, 1);
-	tpat_sys_data_cr3bp sys(sysData);
-	// std::vector<double> IC = linTraj.getState(0);
-	// double tof = linTraj.getTime(-1);
-	std::vector<double> IC {0.8089, 0, 0, 0, 0.2838, 0};
-	double tof = 3.0224;
-	mirror_t mirrorType = MIRROR_XZ;
-	std::vector<int> fixStates {0};
-	int order = 1;
-	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates);
-	tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
-	cr3bp_continueFamily_PAC(&fam, initGuess, mirrorTypes, indVars, depVars, order);
+	if(contType == NAT_PARAM){
+	
+		std::vector<int> indVars;
+		indVars.push_back(0);	// We're going to fix the x-coordinate in the corrector to keep it from slipping
+		indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
+		std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
+		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		cr3bp_natParamCont(&fam, linTraj, mirrorTypes, indVars, depVars, 1);
+
+	}else if(contType == PSEUDO_ARC){
+
+		// Make a copy of sysData so we can pass in a pointer
+		tpat_sys_data_cr3bp sys(sysData);
+
+		// Get the initial state and tof from the linearization
+		std::vector<double> IC = linTraj.getState(0);
+		double tof = linTraj.getTime(-1);
+
+		// Correct the initial guess to a true periodic orbit; we need a full DF matrix
+		// for a CONVERGED family member to start PAC
+		std::vector<int> fixStates {0};
+		int order = 1;
+		tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, MIRROR_XZ, fixStates);
+
+		// Turn trajectory object into nodeset; double number of nodes
+		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+
+		// Apply Pseudo Arclength Continuation: Ignore y (ix = 0) for periodicity, force y to equal 0 at node 0
+		int sign = IC[0] - LPt_data[0] < 0 ? -1 : 1;	// force the first step to be away from Lagrange point
+		std::vector<int> initDir {sign, 0, 0, 0, 0, 0};
+		cr3bp_pseudoArcCont(&fam, initGuess, 1, 1, 0, initDir);
+	}
+
 	return fam;
 }//====================================================
 
@@ -340,13 +363,13 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
 	// use this IC for the bifucating Halo from Dan Grebow's Thesis
-	double ic[] = {1.0196, 0, 0.1742, 0, -0.0817, 0};
+	double ic[] = {1.0406, 0, 0.1735, 0, -0.0770, 0};
 	std::vector<double> icVec (ic, ic+6);
-	double tof = 2.7519;
+	double tof = 2.8077;
 
 	printf("Correcting Halo...\n");
-	// Correct to a periodic orbit (Halo)
-	std::vector<int> fixed;
+	// Correct to a periodic orbit
+	std::vector<int> fixed {4};
 	tpat_traj_cr3bp halo = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed);
 
 	printf("Creating Family...\n");
@@ -355,12 +378,14 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 
 	// Butterfly-specific settings
 	fam.setSortType(tpat_family_cr3bp::SORT_X);
-	std::vector<int> indVars {0,2};
-	std::vector<int> depVars {4,6};
+	// std::vector<int> indVars {0,2};
+	std::vector<int> indVars {0, 2};
+	// std::vector<int> depVars {4,6};
+	std::vector<int> depVars {4, 6};
 	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
 	printf("Using continuation...\n");
-	cr3bp_continueFamily(&fam, halo, mirrorTypes, indVars, depVars, 2);
+	cr3bp_natParamCont(&fam, halo, mirrorTypes, indVars, depVars, 2);
 
 	return fam;
 }//====================================================
@@ -384,16 +409,16 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
  *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
  *	has order 2
  */
-void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam, tpat_traj_cr3bp initialGuess,
+void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj_cr3bp initialGuess,
 	std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
 
 	tpat_sys_data_cr3bp sys = fam->getSysData();
 
 	if(indVarIx.size() < 2)
-		throw tpat_exception("tpat_family_generator::cr3bp_continueFamily: Must specify two independent variables");
+		throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Must specify two independent variables");
 
 	if(mirrorTypes.size() != indVarIx.size())
-		throw tpat_exception("tpat_family_generator::cr3bp_continueFamily: there must be an equal number of ind. vars and mirror types");
+		throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: there must be an equal number of ind. vars and mirror types");
 
 	int indVar1 = indVarIx[0];
 	int indVar2 = indVarIx[1];
@@ -520,7 +545,7 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam, tpat_tr
 					else if(ix == 6)
 						tof = predictedIC[ix];
 					else
-						throw tpat_exception("tpat_family_generator::cr3bp_continueFamily: Cannot update independent variable; index out of range");
+						throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Cannot update independent variable; index out of range");
 				}
 
 				// Update slope
@@ -548,39 +573,62 @@ void tpat_family_generator::cr3bp_continueFamily(tpat_family_cr3bp *fam, tpat_tr
  * 	@param fam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
  *	@param initialGuess a trajectory that is a good initial guess for the "first" member of the family
- *	@param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
- *	reference frame. Each entry corresponds to an independent variable in <tt>indVarIx</tt>
- *	@param indVarIx a vector containing the indices of the independent variables to be used. You MUST
- *	specify at least two; currently only two can be used. The first index in the vector will be used
- *	first in the continuation (using stupid-simple continuation), and the second will be toggled
- *	on later if the slope favors it.
- *	@param depVarIx a list of state indices telling the algorithm which states should be predicted
- *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
- *	simple techniques that don't perform very well.
- *	@param order the multiplicity or order of the family; i.e. the number of revs around the primary
- *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
- *	has order 2
+ *	@param periodicityIgnoreIx index of a state variable to ignore when enforcing periodicity. It is best
+ *	to ignore one of the planar components (i.e. x or y, corresponding to indices 0 and 1, respectively)
+ *	@param fixToVal_ix index of a variable to fix to <tt>fixToVal_val</tt> at the first node. If the 
+ *	index is between 0 and 5, it will constraint one of the usual state variables. An index of 6 will 
+ *	constrain total TOF, and an index of 7 will constrain Jacobi at the first node
+ *	@param fixToVal_val the value to constrain state <tt>fixToVal_ix</tt> to
+ *	@param initDir a vector that contains one non-zero element that indicates the sign of 
+ *	the desired step for the family. The index corresponds to the state index. For example,
+ *	if I wish the family to continue with a step in the negative z direction for the first node,
+ *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
+ * 	a step on any of the free variables, but only one step direction will be considered (the first one
+ * 	as the algorithm reads through the vector)
  */
-void tpat_family_generator::cr3bp_continueFamily_PAC(tpat_family_cr3bp *fam, tpat_nodeset_cr3bp initialGuess,
-	std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
+void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nodeset_cr3bp initialGuess,
+	int periodicityIgnoreIx, int fixToVal_ix, double fixToVal_val, std::vector<int> initDir){
 
-	double stepSize = 0.0005;
+	// Check inputs
+	if(periodicityIgnoreIx < 0 || periodicityIgnoreIx > 5)
+		throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: Periodicity Ignore Index out of range");
+
+	if(fixToVal_ix < 0 || fixToVal_ix > 7)
+		throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: FixToVal Index out of range");
+
+	// TODO - Make these editable?
+	double stepSize = 0.005;
+	double maxStepSize = 0.5;
+	double minStepSize = 1e-7;
+
 	tpat_sys_data_cr3bp sys = fam->getSysData();
 	tpat_nodeset_cr3bp familyMember(initialGuess);	// Copy the input initial guess
 
 	printf("Correcting Initial Guess...\n");
-	// Clear constraints, add new ones for periodicity and desired state fix (should make the Jacobian nearly square (one more constraint needed))
+	
+	// Clear constraints and add new ones
 	familyMember.clearConstraints();
-	double periodicConData[] = {0,NAN,0,0,0,0};
+
+	// Create a periodicity constraint
+	double periodicConData[] = {0,0,0,0,0,0};
+	periodicConData[periodicityIgnoreIx] = NAN;
 	tpat_constraint periodicCon(tpat_constraint::MATCH_CUST, familyMember.getNumNodes()-1, periodicConData, 6);
 
-	double perpCrossData[] = {NAN, 0, NAN, NAN, NAN, NAN};
-	tpat_constraint perpCrossCon(tpat_constraint::STATE, 0, perpCrossData, 6);
+	tpat_constraint extraCon;
+	if(fixToVal_ix < 6){
+		double extraCon_data[] = {NAN, NAN, NAN, NAN, NAN, NAN};
+		extraCon_data[fixToVal_ix] = fixToVal_val;
+		extraCon = tpat_constraint(tpat_constraint::STATE, 0, extraCon_data, 6);
+	}else if(fixToVal_ix == 6){
+		double val = fixToVal_val;
+		extraCon = tpat_constraint(tpat_constraint::TOF, 0, &val, 1);
+	}else if(fixToVal_ix == 7){
+		double val = fixToVal_val;
+		extraCon = tpat_constraint(tpat_constraint::JC, 0, &val, 1);
+	}
 
 	familyMember.addConstraint(periodicCon);
-	familyMember.addConstraint(perpCrossCon);
-
-	// familyMember.print();
+	familyMember.addConstraint(extraCon);
 
 	// Correct the nodeset to retrieve a free-variable vector for a family member
 	tpat_correction_engine corrector;
@@ -590,119 +638,245 @@ void tpat_family_generator::cr3bp_continueFamily_PAC(tpat_family_cr3bp *fam, tpa
 	try{
 		familyItData = corrector.correct(&familyMember);
 	}catch(tpat_diverge &e){
-		printErr("tpat_family_generator::cr3bp_continueFamily_PAC: Could not converge initial guess!\n");
+		printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge initial guess!\n");
 	}catch(tpat_linalg_err &e){
-		printErr("tpat_family_generator::cr3bp_continueFamily_PAC: There was a linear algebra error...\n");
+		printErr("tpat_family_generator::cr3bp_pseudoArcCont: There was a linear algebra error...\n");
 	}
 
 	printf("Applying continuation to compute family...\n");
+	
 	// Initialize counters and storage containers
 	int orbitCount = 0;
-	tpat_matrix oldFreeVarVec(familyItData.totalFree, 1, familyItData.X);
-
+	tpat_matrix convergedFreeVarVec(familyItData.totalFree, 1, familyItData.X);
+	tpat_matrix prevN(familyItData.totalFree, 1);
 	std::vector<tpat_traj_cr3bp> members;
+
 	while(orbitCount < numOrbits){
 
-		// The first iteration should have a DF matrix that is (n-1) x n, but all further iterations will
-		// have an extra row for the pseudo-arc-length constraint; we want to remove that row and take the
-		// nullspace of the submatrix
+		/* 
+		 *	The first iteration should have a DF matrix that is (n-1) x n, but all further iterations will
+		 * 	have an extra row for the pseudo-arc-length constraint; we want to remove that row and take the
+		 * 	nullspace of the submatrix
+		 */
 		std::vector<double> DF_data;
 		if(familyItData.totalCons == familyItData.totalFree){
 			DF_data.insert(DF_data.begin(), familyItData.DF.begin(), familyItData.DF.begin() + familyItData.totalFree * (familyItData.totalCons - 1));
 		}else{
 			DF_data = familyItData.DF;
 		}
+
 		// Compute null space of previously computed member's Jacobian Matrix
 		tpat_matrix DF(familyItData.totalFree-1, familyItData.totalFree, DF_data);
-		// tpat_matrix N = null(DF, 1e-14);
-		tpat_matrix N = null_svd(DF);
+		tpat_matrix N = null_qr(DF);
 
-		// DF.toCSV("PrevDF.csv");
-		// N.toCSV("PrevDF_Null.csv");
-
-		// Check dimension of nullspace
-		if(N.getCols() > 1 || N.getRows() == 1){
-			printErr("tpat_family_generator::cr3bp_continueFamily_PAC: Nullspace is multi-dimensional; unsure how to proceed...\n");
+		// Check to make sure the IS a nullspace
+		if(N.getRows() == 1){
+			printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is zero-dimensional; cannot proceed...\n");
 			return;
+		}		
+
+		// // For debugging, save nullspace vectors to file
+		// char filename[16];
+		// sprintf(filename, "N%02d.csv", orbitCount);
+		// N.toCSV(filename);
+
+		/**
+		 *	Choose the nullspace vector that is closest to the previous one (which converged)
+		 */
+		printf("Choosing Nullspace Vector (%dD, %d elements)\n", N.getCols(), N.getRows());
+		if(orbitCount == 0){
+			if(N.getCols() > 1){
+				printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is multidimensional on first iteration; unsure how to proceed...\n");
+				return;
+			}
+
+			bool sameDir = true;
+			for(size_t i = 0; i < initDir.size(); i++){
+				// Find a non-zero element
+				if(initDir[i] != 0 && i < (size_t)(N.getCols())){
+					// If signs are different, assume direction is different
+					if(N.at(i)*initDir[i] < 0){
+						sameDir = false;
+						break;
+					}
+				}
+			}
+
+			// Reverse direction of nullspace
+			if(!sameDir)
+				N *= -1;
+
+		}else{
+			/* Make sure nullspace direction stays consistent by choosing the 
+			 * null vector that is closest to the same direction as the previous one
+			 */
+			int best_ix = 0;	// index of the column of the best vector option
+			int best_sign = 1;	// sign associated with best vector
+			double best_angle = 181;	// the best (smallest) angle found
+			for(int i = 0; i < N.getCols(); i++){
+				// Compute angle from dot product
+				tpat_matrix col_i = N.getCols() > 1 ? N.getCol(i) : N;
+				tpat_matrix dotProd = trans(prevN)*col_i / (norm(prevN)*norm(N));
+				double angle = std::acos(dotProd.at(0));
+				int sign = 1;
+
+				// Flip the sign if the angle is greater than 90 and change the value to 180 - angle
+				printf("dot product = %.4f\n", dotProd.at(0));
+				printf("Angle = %.4f deg\n", angle*180/PI);
+				if(angle > PI/2.0){
+					printColor(CYAN, "Angle is %.4f > pi/2; changing sign and angle\n", angle);
+					angle = PI - angle;
+					sign = -1;
+				}
+
+				// Keep track of the best option
+				if(angle < best_angle){
+					best_angle = angle;
+					best_sign = sign;
+					best_ix = i;
+				}
+			}
+
+			printf("best ix = %d, sign = %d\n", best_ix, best_sign);
+			tpat_matrix temp = N.getCols() > 1 ? N.getCol(best_ix) : N;
+			N = best_sign*temp;	// Apply sign change, if needed
 		}
 
-		// Make a step
-		tpat_matrix newFreeVarVec = oldFreeVarVec + stepSize*N;
-		double *X = newFreeVarVec.getDataPtr();
+		prevN = N;	// Update memory
+		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
+			N.at(0), N.at(1), N.at(2), N.at(3), N.at(4), N.at(5));
 
-		// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
-		tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp *>(familyItData.sysData);
-		tpat_nodeset_cr3bp newMember(sys);
+		tpat_nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData,
+			periodicCon, extraCon);
 
-		for(int n = 0; n < familyItData.numNodes; n++){
-			// tof stored in the element after all the nodes; NAN for last node
-			double tof = n < familyItData.numNodes - 1 ? X[6*familyItData.numNodes]/(familyItData.numNodes - 1) : NAN;
-			tpat_node node(X+6*n, tof);
-			newMember.appendNode(node);
-		}
-
-		// Add same constraints
-		newMember.addConstraint(periodicCon);
-		newMember.addConstraint(perpCrossCon);
-
-		// Form the Pseudo-Arclength Continuation constraint
-		std::vector<double> pacCon_data = familyItData.X;
-		pacCon_data.insert(pacCon_data.end(), N.getDataPtr(), N.getDataPtr()+N.getRows());
-		pacCon_data.insert(pacCon_data.end(), stepSize);
-		tpat_constraint pacCon(tpat_constraint::PSEUDOARC, familyItData.numNodes-1, pacCon_data);
-		newMember.addConstraint(pacCon);
-
-		// newMember.print();
-
-		// Reconverge
+		/*
+		 *	Apply multiple shooting to converge the new guess to be a member of the family
+		 */
+		bool killLoop = false;
 		try{
-			familyItData = corrector.correct(&newMember);
-		}catch(tpat_diverge &e){
-			printErr("tpat_family_generator::cr3bp_continueFamily_PAC: Could not converge new family member!\n");
-			break;
+			while(stepSize >= minStepSize){
+				try{
+					familyItData = corrector.correct(&newMember);
+
+					// If convergence was fast, take bigger steps
+					if(familyItData.count < 5){
+						stepSize = stepSize*2 < maxStepSize ? stepSize*2 : maxStepSize;
+						printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
+					}else if(familyItData.count > 10){
+						// If convergence was slow, take smaller steps
+						stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
+						printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
+					}
+
+					// Exit this loop; we converged!
+					break;
+				}catch(tpat_diverge &e){
+					if(stepSize > minStepSize){
+						printWarn("tpat_family_generator::cr3bp_pseudoArcCont: Corrector diverged... trying smaller step size\n");
+
+						// Decrease step size and try again
+						stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
+						printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
+
+						// Re-Create the initial guess using the new step size
+						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData,
+							periodicCon, extraCon);
+					}else{
+						printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
+						killLoop = true;
+						break;
+					}
+				}
+			}
 		}catch(tpat_linalg_err &e){
-			printErr("tpat_family_generator::cr3bp_continueFamily_PAC: There was a linear algebra error...\n");
-			break;
+			printErr("tpat_family_generator::cr3bp_pseudoArcCont: There was a linear algebra error...\n");
+			killLoop = true;
 		}
+
+		if(killLoop)
+			break;
 
 		printf("Orbit %03d converged!\n", ((int)members.size()));
 
-		bool leftFamily = false;
+		// Save new converged family vector
+		convergedFreeVarVec = tpat_matrix(familyItData.totalFree, 1, familyItData.X);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
 		tpat_nodeset_cr3bp perNodes = corrector.getCR3BP_Output();
-		// perNodes.print();
 
 		tpat_traj_cr3bp perOrbit = tpat_traj_cr3bp::fromNodeset(perNodes);
 
-		// Check for large changes in period to detect leaving family
-		if(orbitCount > 2){
-			double dTOF = perOrbit.getTime(-1) - members[members.size()-1].getTime(-1);
-			double percChange = std::abs(dTOF/perOrbit.getTime(-1));
-			if(percChange > 0.25){
-				leftFamily = true;
-				printf("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Exiting...\n", perOrbit.getTime(-1));
-				break;
-			}
-		}
+		members.push_back(perOrbit);
+		orbitCount++;
 
-		if(!leftFamily){
-			members.push_back(perOrbit);
-			orbitCount++;
+		// Compute eigenvalues
+		tpat_matrix mono = perOrbit.getSTM(-1);
+		std::vector< std::vector<cdouble> > eigData = eig(mono);
+		std::vector<cdouble> eigVals = eigData[0];
 
-			// Compute eigenvalues
-			tpat_matrix mono = perOrbit.getSTM(-1);
-			std::vector< std::vector<cdouble> > eigData = eig(mono);
-			std::vector<cdouble> eigVals = eigData[0];
-
-			// Add orbit to family
-			tpat_family_member_cr3bp child(perOrbit);
-			child.setEigVals(eigVals);
-			fam->addMember(child);
-		}// End of leftFamily?
+		// Add orbit to family
+		tpat_family_member_cr3bp child(perOrbit);
+		child.setEigVals(eigVals);
+		fam->addMember(child);
 	}// end of while loop
 }//==================================================
+
+/**
+ *	@brief Create a nodeset that contains an initial guess for a family member
+ *	using pseudo arclength continuation
+ *
+ *	@param convergedFreeVarVec a matrix containing the free variable vector of the previous
+ *	(nearest) converged family member
+ *	@param N a 1D nullspace vector that lies tangent to the family
+ *	@param familyItData an iterationData object containing corrections information about the
+ *	previous (nearest) converged family member
+ *	@param periodicCon a periodicity constraint (constructed by PAC algorithm)
+ *	@param extraCon an additional constraint on the family (constructed by PAC algorithm)
+ */
+tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix convergedFreeVarVec,
+	tpat_matrix N, double stepSize, iterationData familyItData, tpat_constraint periodicCon, 
+	tpat_constraint extraCon){
+
+	/**
+	 *	Step forwards away from previously converged solution
+	 */
+	tpat_matrix newFreeVarVec = convergedFreeVarVec + stepSize*N;
+	double *X = newFreeVarVec.getDataPtr();
+
+	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
+	tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp *>(familyItData.sysData);
+	tpat_nodeset_cr3bp newMember(sys);
+
+	for(int n = 0; n < familyItData.numNodes; n++){
+		// tof stored in the element after all the nodes; NAN for last node
+		double tof = n < familyItData.numNodes - 1 ? X[6*familyItData.numNodes]/(familyItData.numNodes - 1) : NAN;
+		tpat_node node(X+6*n, tof);
+		newMember.appendNode(node);
+	}
+
+	// Add same constraints
+	newMember.addConstraint(periodicCon);
+	newMember.addConstraint(extraCon);
+
+	/* 
+	 *	Form the Pseudo-Arclength Continuation constraint
+	 */
+	std::vector<double> pacCon_data = familyItData.X;
+	// Append the null vector (i.e. step direction)
+	pacCon_data.insert(pacCon_data.end(), N.getDataPtr(), N.getDataPtr()+N.getRows());
+	// Append the step size
+	pacCon_data.insert(pacCon_data.end(), stepSize);
+	// Create the actual constraint
+	tpat_constraint pacCon(tpat_constraint::PSEUDOARC, familyItData.numNodes-1, pacCon_data);
+	newMember.addConstraint(pacCon);
+
+	// Outputs for debugging and sanity checks
+	printColor(RED, "||delta-X|| = %.4e\n", norm(newFreeVarVec - convergedFreeVarVec));
+	printf("New IC = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...] tof = %.4f\n",
+		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.getCols()-1]);
+
+	return newMember;
+}
 
 /**
  *	@brief Reset all parameters to their default values

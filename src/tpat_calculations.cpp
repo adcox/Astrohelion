@@ -1174,7 +1174,8 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
  *  @param sys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
- *  @param numNodes the number of nodes to use; more nodes may result in a more robust correction
+ *  @param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
+ *  may result in a more robust correction
  *  @param order the number of revolutions about the system/primary this orbit completes before
  *  it repeats periodically. Think of a period-3 DRO (order = 3) or a butterfly (order = 2)
  *  @param mirrorType how this periodic orbit mirrors in the CR3BP

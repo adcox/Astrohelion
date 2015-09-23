@@ -742,6 +742,16 @@ int mat_rank(const tpat_matrix &m, double okErr){
 }//==================================================
 
 /**
+ *	@brief Compute the right nullspace of the input matrix using QR decomposition
+ *	@param m a matrix reference
+ *	@retrun the right nullspace of m
+ *	@see null_qr(const tpat_matrix&, double)
+ */
+tpat_matrix null_qr(const tpat_matrix &m){
+	return null_qr(m, 1e-14);
+}//================================================
+
+/**
  *	@brief Compute an orthonormal basis for the right nullspace of a vector
  *
  *	This method uses the following algorithm to compute the nullspace:
@@ -816,6 +826,16 @@ tpat_matrix null_qr(const tpat_matrix &m, double okErr){
 }//================================================
 
 /**
+ *	@brief Compute the right nullspace of the input matrix using SVD
+ *	@param m a matrix reference
+ *	@retrun the right nullspace of m
+ *	@see null_svd(const tpat_matrix&, double)
+ */
+tpat_matrix null_svd(const tpat_matrix &m){
+	return null_svd(m, 1e-14);
+}//================================================
+
+/**
  *	@brief Compute the right nullspace for an input matrix
  *
  *	This algorithm computes the nullspace from the Singular Value
@@ -826,9 +846,10 @@ tpat_matrix null_qr(const tpat_matrix &m, double okErr){
  *	the nullspace.
  *
  *	@param m a matrix reference
+ *	@param okErr the acceptable error when identifying zero-valued singular values
  *	@return the right nullspace of the input matrix
  */
-tpat_matrix null_svd(const tpat_matrix &m){
+tpat_matrix null_svd(const tpat_matrix &m, double okErr){
 
 	// GSL Algorithm can only handle matrices with rows >= cols
 	if(m.rows >= m.cols){
@@ -854,7 +875,7 @@ tpat_matrix null_svd(const tpat_matrix &m){
 		// Count number of zeros in S
 		int rank = S->size;
 		for(int r = (int)S->size-1; r >= 0; r--){
-			if(gsl_vector_get(S, r) == 0)
+			if(std::abs(gsl_vector_get(S, r)) < okErr)
 				rank--;
 		}
 		
@@ -890,7 +911,7 @@ tpat_matrix null_svd(const tpat_matrix &m){
 		}
 
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeFullV);
-		svd.setThreshold(1e-14);
+		svd.setThreshold(okErr);
 
 		Eigen::MatrixXd V = svd.matrixV();
 		double rank = svd.rank();

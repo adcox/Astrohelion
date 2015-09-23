@@ -396,9 +396,10 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 	tpat_simulation_engine simEngine(sysData);
 	simEngine.setVerbose(verbose);
 	
-	// Set both tolerances of simulation engine to be same as corrector
-	simEngine.setAbsTol(tol);
-	simEngine.setRelTol(tol);
+	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
+	double simTol = tol/1000 < 1e-15 ? 1e-15 : tol/1000;
+	simEngine.setAbsTol(simTol);
+	simEngine.setRelTol(simTol);
 
 	// Only need info about the final state, no need to generate lots of intermediate data points
 	simEngine.setVarStepSize(false);

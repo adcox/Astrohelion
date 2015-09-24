@@ -63,7 +63,8 @@ tpat_family_cr3bp::tpat_family_cr3bp(const char* filepath){
 	loadMemberData(matfp);
 	loadEigVals(matfp);
 	name = readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
-	sortType = static_cast<sortVar_t>(readIntFromMat(matfp, SORTTYPE_VAR_NAME, MAT_T_INT8, MAT_C_INT8));
+	double type = readDoubleFromMat(matfp, SORTTYPE_VAR_NAME);
+	sortType = static_cast<sortVar_t>((int)type);
 	
 	sysData.readFromMat(matfp);
 
@@ -725,7 +726,7 @@ void tpat_family_cr3bp::saveMiscData(mat_t *matFile){
 	// sortType
 	int type = static_cast<int>(sortType);
 	size_t dims[2] = {1,1};
-	matvar_t *typeVar = Mat_VarCreate(SORTTYPE_VAR_NAME, MAT_C_INT8, MAT_T_UINT8, 2, dims, &type, MAT_F_DONT_COPY_DATA);
+	matvar_t *typeVar = Mat_VarCreate(SORTTYPE_VAR_NAME, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, typeVar, SORTTYPE_VAR_NAME, MAT_COMPRESSION_NONE);
 
 	// name

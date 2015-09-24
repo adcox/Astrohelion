@@ -168,56 +168,49 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
  *  @throws tpat_exception if there is trouble reading or parsing the variable
  */
 double readDoubleFromMat(mat_t *matFile, const char* varName){
-    double result = 0;
+    double result = 2;
     
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     if(matvar == NULL){
         throw tpat_exception("tpat_utilities::readDoubleFromMat: Could not read variable from file");
     }else{
-        if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
-            double *data = static_cast<double *>(matvar->data);
-
-            if(data != NULL){
-                result = *data;
-            }else{
-                throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+        switch(matvar->data_type){
+            case MAT_T_UINT8:
+            case MAT_T_UINT16:
+            case MAT_T_UINT32:
+            case MAT_T_UINT64:
+            {
+                uint *data = static_cast<uint *>(matvar->data);
+                if(data != NULL)
+                    result = double(*data);
+                else
+                    throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+                break;
             }
-        }else{
-            throw tpat_exception("tpat_utilities::readDoubleFromMat: Incompatible data file: unsupported data type/class");
-        }
-    }
-
-    Mat_VarFree(matvar);
-    return result;
-}//==============================================
-
-/**
- *  @brief Read an int from a mat file
- *  @param matFile a pointer to the matlab file in quesiton
- *  @param varName the name of the variable in the mat file
- *  @param aType the expected variable type
- *  @param aClass the expected variable class
- *  @return the value of the variable
- *  @throws tpat_exception if there is trouble reading or parsing the variable
- */
-int readIntFromMat(mat_t *matFile, const char* varName, matio_types aType,
-    matio_classes aClass){
-
-    int result = 0;
-    matvar_t *matvar = Mat_VarRead(matFile, varName);
-    if(matvar == NULL){
-        throw tpat_exception("tpat_utilities::readIntFromMat: Could not read variable from file");
-    }else{
-        if(matvar->class_type == aClass && matvar->data_type == aType){
-            int *data = static_cast<int *>(matvar->data);
-
-            if(data != NULL){
-                result = *data;
-            }else{
-                throw tpat_exception("tpat_utilities::readIntFromMat: No data");
+            case MAT_T_INT8:
+            case MAT_T_INT16:
+            case MAT_T_INT32:
+            case MAT_T_INT64:
+            {
+                int *data = static_cast<int *>(matvar->data);
+                if(data != NULL)
+                    result = double(*data);
+                else
+                    throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+                break;
             }
-        }else{
-            throw tpat_exception("tpat_utilities::readIntFromMat: Incompatible data file: unsupported data type/class");
+            case MAT_T_SINGLE:
+            case MAT_T_DOUBLE:
+            {
+                double *data = static_cast<double *>(matvar->data);
+                if(data != NULL)
+                    result = double(*data);
+                else
+                    throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+                break;
+            }
+            default:
+                throw tpat_exception("tpat_utilities::readDoubleFromMat: incompatible data-type");
         }
     }
 

@@ -1230,7 +1230,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         default:
             throw tpat_exception("Mirror type either not defined or not implemented");
     }
-
+    // sim.setVerbose(true);
     mirrorEvt.setStopCount(order);
     sim.addEvent(mirrorEvt);
 

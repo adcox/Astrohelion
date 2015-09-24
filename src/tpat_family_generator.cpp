@@ -29,7 +29,6 @@
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
-// #include "tpat_correction_engine.hpp"
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
@@ -370,23 +369,30 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 	printf("Correcting Halo...\n");
 	// Correct to a periodic orbit
 	std::vector<int> fixed {4};
-	tpat_traj_cr3bp halo = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed);
+	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed);
 
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
 	tpat_family_cr3bp fam(*sysData);
 
-	// Butterfly-specific settings
-	fam.setSortType(tpat_family_cr3bp::SORT_X);
-	// std::vector<int> indVars {0,2};
-	std::vector<int> indVars {0, 2};
-	// std::vector<int> depVars {4,6};
-	std::vector<int> depVars {4, 6};
-	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+	if(contType == NAT_PARAM){
+		// Butterfly-specific settings
+		fam.setSortType(tpat_family_cr3bp::SORT_X);
+		// std::vector<int> indVars {0,2};
+		std::vector<int> indVars {0, 2};
+		// std::vector<int> depVars {4,6};
+		std::vector<int> depVars {4, 6};
+		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-	printf("Using continuation...\n");
-	cr3bp_natParamCont(&fam, halo, mirrorTypes, indVars, depVars, 2);
+		printf("Using continuation...\n");
+		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 2);
+	}else if(contType == PSEUDO_ARC){
+		// Turn trajectory object into nodeset; double number of nodes
+		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
+		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
+		cr3bp_pseudoArcCont(&fam, initGuess, 1, 1, 0, initDir);
+	}
 	return fam;
 }//====================================================
 

@@ -12,7 +12,8 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 int main(void){
 	// Load the family
-	tpat_family_cr3bp fam("../share/families/EM_L1_Lyap.mat");
+	// tpat_family_cr3bp fam("../share/families/EM_L1_Lyap.mat");
+	tpat_family_cr3bp fam("../share/families/EM_L2_NButterfly_combined.mat");
 	fam.sortEigs();
 	std::vector<int> bifs = fam.findBifurcations();
 	if(bifs.size() > 0){
@@ -21,7 +22,7 @@ int main(void){
 			printf("  Ix = %04d\n", bifs[i]);
 		}
 	}
-	fam.saveToMat("data/LoadedLyapFam.mat");	// Check to see if data was re-loaded correctly
+	fam.saveToMat("data/LoadedButterflyFam.mat");	// Check to see if data was re-loaded correctly
 
 	printf("Checing Match State: X\n");
 	double matchX = 0.9;

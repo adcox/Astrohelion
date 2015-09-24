@@ -95,6 +95,9 @@ manifolds: $(OBJECTS)
 maps: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
 
+matioTest: $(OBJ)/tpat_utilities.o
+	$(COMP) -I $(INC) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
+
 matrixTest: $(OBJ)/tpat_utilities.o $(OBJ)/tpat_matrix.o
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_matrix.cpp -o $(BIN)/$@
 

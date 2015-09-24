@@ -595,7 +595,6 @@ void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
         int sgn = tf > t0 ? 1 : -1;
 
         while (sgn*t0 < sgn*tf && !killSim){
-            // printf("Integrating at t = %6.4f\n", t0);
             // apply integrator for one step; new state and time are stored in y and t0
             if(varStepSize){
                 status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
@@ -704,52 +703,77 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
         // Don't trigger if only two points have been integrated
         if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
-            printVerb(verbose, "  Event %d detected; searching for exact crossing\n", ev);
-            events.at(ev).incrementCount();  // Update the counter for the event
+            // Make sure this event didn't just fire
+            bool skipThisCrossing = false;
+            // for(size_t i = 0; i < eventOccurs.size(); i++){
+            //     if(eventOccurs[i].eventIx == ev){
+            //         if(numPts - 1 - eventOccurs[i].stepIx < 3){
+            //             // Skip this crossing because it fired very recently! Probably a numerical issue
+            //             if(verbose)
+            //                 printColor(BLUE, "Event %d detected at step %d, but skipping because it JUST fired at step %d\n", ev, numPts-1, eventOccurs[i].stepIx);
+            //             skipThisCrossing = true;
+            //             break;
+            //         }
+            //     }
+            // }
 
-            if(verbose){ events.at(ev).printStatus(); }
+            if(!skipThisCrossing){
 
-            // Create a nodeset from the previous state (stored in the event) and
-            // integrating forwards for half the time between this state and the last one
-            double t0 = traj->getTime(-2);          // Time from the state before last
-            double ti = traj->getTime(-1);          // Time from the previous state
-            double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
+                printVerb(verbose, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
+                events.at(ev).incrementCount();  // Update the counter for the event
 
-            // Copy IC into vector - Use the state from two iterations ago to avoid
-            // numerical problems when the previous state is REALLY close to the event
-            std::vector<double> generalIC = traj->getState(-2);
+                if(verbose){ events.at(ev).printStatus(); }
 
-            if(verbose){
-                printColor(BLUE, "Num Pts = %d\n", numPts);
-                printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
-                    traj->getTime(-1), traj->getTime(-2));
-                printColor(BLUE, "tof = %f\n", tof);
-                printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", generalIC[0],
-                    generalIC[1], generalIC[2], generalIC[3], generalIC[4], generalIC[5]);
-            }   
+                // Create a nodeset from the previous state (stored in the event) and
+                // integrating forwards for half the time between this state and the last one
+                double t0 = traj->getTime(-2);          // Time from the state before last
+                double ti = traj->getTime(-1);          // Time from the previous state
+                double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
 
-            // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
-                // Remember that this event has occured; step # is one less than the current size
-                // of the trajectory
-                int timeSize = traj->getLength();
-                eventRecord rec(ev, timeSize - 1);
-                eventOccurs.push_back(rec);
+                // Copy IC into vector - Use the state from two iterations ago to avoid
+                // numerical problems when the previous state is REALLY close to the event
+                std::vector<double> generalIC = traj->getState(-2);
 
-                // Update event state
-                std::vector<double> state = traj->getState(-1);
-                double lastT = traj->getTime(-1);
-                events.at(ev).updateDist(&(state[0]), lastT);
-                
-                if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
-                    printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
-                    return true;    // Tell the simulation to stop
-                }else{
-                    printVerbColor(verbose, GREEN, "**Completed Event Location, continuing integration**\n");
-                    return false;
+                if(verbose){
+                    printColor(BLUE, "Step index = %d\n", numPts-1);
+                    printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
+                        traj->getTime(-1), traj->getTime(-2));
+                    printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
+                        y[1], y[2], y[3], y[4], y[5]);
+                    printColor(BLUE, "tof = %f\n", tof);
+                    printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", generalIC[0],
+                        generalIC[1], generalIC[2], generalIC[3], generalIC[4], generalIC[5]);
+                }   
+
+                // Use correction to locate the event very accurately
+                if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
+                    // Remember that this event has occured; step # is one less than the current size
+                    // of the trajectory
+                    int timeSize = traj->getLength();
+                    eventRecord rec(ev, timeSize - 1);
+                    eventOccurs.push_back(rec);
+
+                    // Update event state
+                    std::vector<double> state = traj->getState(-1);
+                    double lastT = traj->getTime(-1);
+                    events.at(ev).updateDist(&(state[0]), lastT);
+                    
+                    if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
+                        printVerbColor(verbose, GREEN, "**Completed Event Location, ending integration**\n");
+                        // No need to remember the most recent point; it will be discarded, leaving
+                        // the point from mult. shooting as the last
+                        // waitForUser();
+                        return true;    // Tell the simulation to stop
+                    }else{
+                        printVerbColor(verbose, GREEN, "**Completed Event Location, continuing integration**\n");
+                        events.at(ev).updateDist(y, t); // Remember the most recent point
+                        // waitForUser();
+                        return false;
+                    }
                 }
             }
         }// end of If(hasCrossed)
+
         // Save the distance and current state to the event
         events.at(ev).updateDist(y, t);
     }// end of loop

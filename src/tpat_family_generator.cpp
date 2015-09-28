@@ -331,7 +331,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 		// Apply Pseudo Arclength Continuation: Ignore y (ix = 0) for periodicity, force y to equal 0 at node 0
 		int sign = IC[0] - LPt_data[0] < 0 ? -1 : 1;	// force the first step to be away from Lagrange point
 		std::vector<int> initDir {sign, 0, 0, 0, 0, 0};
-		cr3bp_pseudoArcCont(&fam, initGuess, 1, 1, 0, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
 	}
 
 	return fam;
@@ -391,7 +391,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
-		cr3bp_pseudoArcCont(&fam, initGuess, 1, 1, 0, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
 	}
 	return fam;
 }//====================================================
@@ -576,15 +576,14 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 /**
  *	@brief Continue a family of orbits in the CR3BP
  *	
+ *	This algorithm is specifically tailored to periodic orbits; see the commented out
+ *	code about constraint method 1 for a more general approach that can be applied to 
+ *	families of non-periodic orbits
+ *	
  * 	@param fam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
  *	@param initialGuess a trajectory that is a good initial guess for the "first" member of the family
- *	@param periodicityIgnoreIx index of a state variable to ignore when enforcing periodicity. It is best
- *	to ignore one of the planar components (i.e. x or y, corresponding to indices 0 and 1, respectively)
- *	@param fixToVal_ix index of a variable to fix to <tt>fixToVal_val</tt> at the first node. If the 
- *	index is between 0 and 5, it will constraint one of the usual state variables. An index of 6 will 
- *	constrain total TOF, and an index of 7 will constrain Jacobi at the first node
- *	@param fixToVal_val the value to constrain state <tt>fixToVal_ix</tt> to
+ *	@param mirrorType describes how this orbit mirrors
  *	@param initDir a vector that contains one non-zero element that indicates the sign of 
  *	the desired step for the family. The index corresponds to the state index. For example,
  *	if I wish the family to continue with a step in the negative z direction for the first node,
@@ -593,14 +592,14 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
  * 	as the algorithm reads through the vector)
  */
 void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nodeset_cr3bp initialGuess,
-	int periodicityIgnoreIx, int fixToVal_ix, double fixToVal_val, std::vector<int> initDir){
+	mirror_t mirrorType, std::vector<int> initDir){
 
-	// Check inputs
-	if(periodicityIgnoreIx < 0 || periodicityIgnoreIx > 5)
-		throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: Periodicity Ignore Index out of range");
+	// Check inputs (Only applies to Constraint Method 1)
+	// if(periodicityIgnoreIx < 0 || periodicityIgnoreIx > 5)
+	// 	throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: Periodicity Ignore Index out of range");
 
-	if(fixToVal_ix < 0 || fixToVal_ix > 7)
-		throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: FixToVal Index out of range");
+	// if(fixToVal_ix < 0 || fixToVal_ix > 7)
+	// 	throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: FixToVal Index out of range");
 
 	// TODO - Make these editable?
 	double stepSize = 0.005;
@@ -615,6 +614,25 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	// Clear constraints and add new ones
 	familyMember.clearConstraints();
 
+	/*	Constraint Method 1:
+	 *	* Apply a periodicity constraint that forces the first and final node to be collocated,
+	 *	  	ignoring one to avoid numerical troubles. It is best to ignore one of the planar 
+	 *		position components, especially for planar families - ignoring z or z-dot can shift the
+	 *		null vector to have non-zero elements in the z and z-dot spots, effectively stepping 
+	 *		out of the plane, which is not desireable for a planar family...
+	 *	* Constrain one extra state to be zero; I used something that makes sense for a perpendicular
+	 *		plane crossing here (avoid constraining z or z-dot to be zero for planar families)
+	 *
+	 *	These were the descriptions for three input ints for this method:
+	 *
+	 *	@param periodicityIgnoreIx (int) index of a state variable to ignore when enforcing periodicity. It is best
+	 *	to ignore one of the planar components (i.e. x or y, corresponding to indices 0 and 1, respectively)
+	 *	@param fixToVal_ix (int) index of a variable to fix to <tt>fixToVal_val</tt> at the first node. If the 
+	 *	index is between 0 and 5, it will constraint one of the usual state variables. An index of 6 will 
+	 *	constrain total TOF, and an index of 7 will constrain Jacobi at the first node
+	 *	@param fixToVal_val (double) the value to constrain state <tt>fixToVal_ix</tt> to
+	 */
+	 /*
 	// Create a periodicity constraint
 	double periodicConData[] = {0,0,0,0,0,0};
 	periodicConData[periodicityIgnoreIx] = NAN;
@@ -635,6 +653,47 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 	familyMember.addConstraint(periodicCon);
 	familyMember.addConstraint(extraCon);
+	*/
+
+	/* Constraint Method 2:
+	 *
+	 *	Apply two constraints that enforce perpendicular crossings at the initial and final nodes
+	 *	This gives MUCH better performance for the Lyapunov families
+	 */
+	double perpCross_data[] = {NAN,NAN,NAN,NAN,NAN,NAN};
+	switch(mirrorType){
+		case MIRROR_XZ:
+			perpCross_data[1] = 0;
+			perpCross_data[3] = 0;
+			perpCross_data[5] = 0;
+            break;
+        case MIRROR_YZ:
+            perpCross_data[0] = 0;
+			perpCross_data[3] = 0;
+			perpCross_data[5] = 0;
+            break;
+        case MIRROR_XY:
+            perpCross_data[2] = 0;
+			perpCross_data[3] = 0;
+			perpCross_data[4] = 0;
+            break;
+        case MIRROR_X_AX_H:
+        case MIRROR_X_AX_V:
+        	perpCross_data[1] = 0;
+			perpCross_data[2] = 0;
+			perpCross_data[3] = 0;
+            break;
+        default:
+            throw tpat_exception("Mirror type either not defined or not implemented");
+	}
+	// Just for kicks: try constraining perpendicular crossings and periodicity
+	tpat_constraint perpCross1_Con(tpat_constraint::STATE, 0, perpCross_data, 6);
+	tpat_constraint perpCross2_Con(tpat_constraint::STATE, familyMember.getNumNodes()-1, perpCross_data, 6);
+
+	familyMember.addConstraint(perpCross1_Con);
+	familyMember.addConstraint(perpCross2_Con);
+
+	std::vector<tpat_constraint> constraints {perpCross1_Con, perpCross2_Con};
 
 	// Correct the nodeset to retrieve a free-variable vector for a family member
 	tpat_correction_engine corrector;
@@ -675,6 +734,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		tpat_matrix DF(familyItData.totalFree-1, familyItData.totalFree, DF_data);
 		tpat_matrix N = null_qr(DF);
 
+		printf("DF has dimensions %d x %d\n", DF.getRows(), DF.getCols());
 		// Check to make sure the IS a nullspace
 		if(N.getRows() == 1){
 			printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is zero-dimensional; cannot proceed...\n");
@@ -752,8 +812,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N.at(0), N.at(1), N.at(2), N.at(3), N.at(4), N.at(5));
 
-		tpat_nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData,
-			periodicCon, extraCon);
+		tpat_nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
@@ -785,8 +844,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 						printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 						// Re-Create the initial guess using the new step size
-						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData,
-							periodicCon, extraCon);
+						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
 					}else{
 						printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
 						killLoop = true;
@@ -836,12 +894,10 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
  *	@param N a 1D nullspace vector that lies tangent to the family
  *	@param familyItData an iterationData object containing corrections information about the
  *	previous (nearest) converged family member
- *	@param periodicCon a periodicity constraint (constructed by PAC algorithm)
- *	@param extraCon an additional constraint on the family (constructed by PAC algorithm)
+ *	@param cons a vector of constraints to place on the nodeset
  */
 tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix convergedFreeVarVec,
-	tpat_matrix N, double stepSize, iterationData familyItData, tpat_constraint periodicCon, 
-	tpat_constraint extraCon){
+	tpat_matrix N, double stepSize, iterationData familyItData, std::vector<tpat_constraint> cons){
 
 	/**
 	 *	Step forwards away from previously converged solution
@@ -861,8 +917,9 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix conv
 	}
 
 	// Add same constraints
-	newMember.addConstraint(periodicCon);
-	newMember.addConstraint(extraCon);
+	for(size_t c = 0; c < cons.size(); c++){
+		newMember.addConstraint(cons[c]);
+	}
 
 	/* 
 	 *	Form the Pseudo-Arclength Continuation constraint

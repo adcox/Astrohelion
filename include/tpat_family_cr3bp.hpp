@@ -94,6 +94,7 @@ class tpat_family_cr3bp{
 		std::vector<tpat_family_member_cr3bp> getMemberByTOF(double) const;
 		std::vector<tpat_family_member_cr3bp> getMemberByJacobi(double) const;
 		std::string getName() const;
+		int getNumMembers() const;
 		sortVar_t getSortType() const;
 		const char* getSortTypeStr() const;
 		tpat_sys_data_cr3bp getSysData() const;

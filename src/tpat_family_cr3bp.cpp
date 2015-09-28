@@ -188,6 +188,12 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByStateVar(dou
 std::string tpat_family_cr3bp::getName() const { return name; }
 
 /**
+ *	@brief Retrieve number of members in this family
+ *	@return number of members in this family
+ */
+int tpat_family_cr3bp::getNumMembers() const { return members.size(); }
+
+/**
  *	@brief Determine which variable best naturally describes the flow of the family
  *	@return the sorting variable
  */

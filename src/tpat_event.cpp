@@ -70,8 +70,11 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
 			initEvent(t, dir, willStop, params);
 			break;
 		}
+		case JC:
+		case APSE:
+			throw tpat_exception("tpat_event::tpat_event: Cannot create this type of event without parameter data...");
 		default: 
-			throw tpat_exception("Creating event with no type");
+			throw tpat_exception("tpat_event::tpat_event: Creating event with no type");
 	}
 }//================================================
 

@@ -162,8 +162,8 @@ int main(int argc, char *argv[]){
 			gen.setNumNodes(4);
 
 			// PAC
-			// gen.setContType(tpat_family_generator::PSEUDO_ARC);
-			// gen.setNumNodes(5);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setNumNodes(5);
 
 			tpat_family_cr3bp L2_NButterfly = gen.cr3bp_generateButterfly(&sysData, 2);
 			L2_NButterfly.sortEigs();

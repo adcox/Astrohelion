@@ -556,7 +556,8 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 			// oldX.toCSV("X.csv");
 
 			// Compute Gramm matrix
-			tpat_matrix G = J*trans(J);
+			tpat_matrix JT = trans(J);
+			tpat_matrix G = J*JT;
 
 			/* Use LU decomposition to invert the Gramm matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
@@ -584,7 +585,7 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 
 			// Compute the optimal x from w
 			tpat_matrix W(w, false);	// create column vector
-			X_diff = trans(J)*W;	//X_diff = X_new - X_old
+			X_diff = JT*W;	//X_diff = X_new - X_old
 		}else{	// Over-constrained
 			// dummy allocations to avoid errors when cleaning up
 			perm = gsl_permutation_alloc(J.getRows());

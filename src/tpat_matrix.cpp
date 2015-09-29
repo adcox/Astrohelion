@@ -90,7 +90,9 @@ tpat_matrix::tpat_matrix(gsl_matrix *m){
 	// Copy data from gsl_matrix pointer
 	rows = m->size1;
 	cols = m->size2;
-	gslMat = m;
+	initBasicMatrix(rows, cols);
+	gsl_matrix_memcpy(gslMat, m);
+	// gslMat = m;
 }//===================================
 
 /**
@@ -682,7 +684,7 @@ double norm(const tpat_matrix &m){
 tpat_matrix trans(const tpat_matrix &m){
 	gsl_matrix *b = gsl_matrix_alloc(m.cols, m.rows);
 	gsl_matrix_transpose_memcpy(b, m.gslMat);
-	tpat_matrix temp(m.cols, m.rows, b->data);
+	tpat_matrix temp(b);
 	gsl_matrix_free(b);
 	return temp;
 }//===============================================

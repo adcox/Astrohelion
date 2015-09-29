@@ -51,12 +51,22 @@ class tpat_linear_motion_engine{
 		// Operators
 
 		// Set and Get
+		double getMPORatio() const;
+		int getNumRevs() const;
+		double getTimeStep() const;
+		double getTol() const;
+
+		void setMPORatio(double);
+		void setNumRevs(int);
+		void setTimeStep(double);
 		void setTol(double);
 		const char* getTypeStr(motion_t) const;
 
 		// Misc
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_sys_data_cr3bp);
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], motion_t, tpat_sys_data_cr3bp);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_sys_data_cr3bp*);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], motion_t, tpat_sys_data_cr3bp*);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], double, double, motion_t, tpat_sys_data_cr3bp*);
+		tpat_traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, tpat_sys_data_cr3bp*);
 	private:
 		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;

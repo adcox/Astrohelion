@@ -32,6 +32,8 @@
 #include "tpat_traj.hpp"
 
 #include "tpat_exceptions.hpp"
+#include "tpat_node.hpp"
+#include "tpat_nodeset.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
@@ -144,6 +146,50 @@ void tpat_traj::setTime(int ix, double val){
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
+
+/**
+ *	@brief Discretize a trajectory into a set of nodes without using integration
+ *
+ *	This method uses the existing steps in a trajectory to create nodes. Arc segments
+ *	are created with equal number of steps regardless of the time or arc length separating
+ *	the nodes.
+ *
+ *	@param numNodes number of nodes, including both the initial and final states on 
+ *	the trajectory, which are always included
+ *	@return a nodeset with the specified number of nodes
+ */
+tpat_nodeset tpat_traj::discretize(int numNodes) const{
+	if(numNodes < 2)
+		throw tpat_exception("tpat_traj::discretize: Cannot split a trajectory into fewer than 2 nodes");
+
+	if(numNodes > (int)(steps.size())){
+		printWarn("tpat_traj::discretize: User requested more nodes than there are states; returning one node per step, will not meet requested number of nodes\n");
+		numNodes = steps.size();
+	}
+
+	double stepSize = (double)(steps.size()-1)/((double)numNodes - 1.0);
+
+	tpat_nodeset nodes(sysData);
+	int n = 0;
+	while(n < numNodes){
+		// Round the step number
+		int ix = std::floor(n*stepSize);
+		int nextIx = std::floor((n+1)*stepSize);
+
+		if(n == numNodes-2)
+			printf("");
+
+		// Create a node from this step
+		std::vector<double> state = getState(ix);
+		double tof = n < numNodes-1 ? getTime(nextIx) - getTime(ix) : NAN;
+		tpat_node node(state, tof);
+		nodes.appendNode(node);
+
+		n++;
+	}
+
+	return nodes;
+}//=================================================
 
 /**
  *	@brief Save the trajectory to a file

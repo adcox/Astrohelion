@@ -303,7 +303,11 @@ void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name){
 	for(size_t r = 0; r < steps.size(); r++){
 		std::vector<double> ep  = steps[r].getExtraParams();
 		for(int c = 0; c < extraParamRowSize[varIx];c++){
-			param[c*steps.size() + r] = ep[ix0+c];
+			// Save NAN (rather than un-allocated memeory) if the index is out of bounds
+			if(ix0 + c < (int)(ep.size()))
+				param[c*steps.size() + r] = ep[ix0+c];
+			else
+				param[c*steps.size() + r] = NAN;
 		}
 	}
 

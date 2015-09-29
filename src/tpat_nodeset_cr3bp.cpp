@@ -113,6 +113,9 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
  *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
  *
  *	The node distribution type is automatically specified as splitting the trajectory equally in TIME
+ *	This function relies on integration to generate nodes, so do not use this if
+ *	the trajectory was created by a linearization or other method that uses something
+ *	other than the non-linear dynamics to compute points along the trajectory.
  *
  *	@param traj the trajectory to split
  *	@param numNodes the number of nodes.
@@ -123,6 +126,10 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpa
 
 /**
  *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
+ *
+ *	This function relies on integration to generate nodes, so do not use this if
+ *	the trajectory was created by a linearization or other method that uses something
+ *	other than the non-linear dynamics to compute points along the trajectory.
  *
  *	@param traj the trajectory to split
  *	@param numNodes the number of nodes.

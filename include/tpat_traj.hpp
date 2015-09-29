@@ -26,6 +26,7 @@
 
 // Forward Declarations
 class tpat_traj_step;
+class tpat_nodeset;
 
 /**
  *	@brief Contains information about a series of continuous states along a trajectory.
@@ -63,6 +64,7 @@ public:
 	void saveToMat(const char*);
 	void print() const;
 	void initExtraParam();
+	tpat_nodeset discretize(int) const;
 
 protected:
 

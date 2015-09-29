@@ -459,6 +459,11 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 
 /**
  *	@brief Split a trajectory into nodes using the specified distribution type
+ *
+ *	This function relies on integration to generate nodes, so do not use this if
+ *	the trajectory was created by a linearization or other method that uses something
+ *	other than the non-linear dynamics to compute points along the trajectory.
+ *
  *	@param traj a trajectory to make into a nodeset
  *	@param sysData a pointer to the system data object used to create traj (cannot extract from trajectory base class)
  *	@param numNodes the number of nodes to create, including IC

@@ -297,7 +297,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 	double r0[] = {x0, 0, 0};
 	tpat_linear_motion_engine linEngine;
 	tpat_traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
-		tpat_linear_motion_engine::ELLIP, sysData);
+		tpat_linear_motion_engine::ELLIP, fam.getSysDataPtr());
 
 	fam.setSortType(tpat_family_cr3bp::SORT_X);
 

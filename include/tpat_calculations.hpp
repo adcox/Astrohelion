@@ -67,6 +67,22 @@ enum manifold_t{
 	MAN_S_M		//!< Stable, arriving from -x direction
 };
 
+/**
+ *	@brief Eigenvalue pair types
+ *
+ *	Eigenvalues come in three different types of pairs. They will
+ *	either be complex, real, or exactly equal to 1.0. Since the 
+ *	matrices are real, all complex eigenvalues will come in conjucate
+ *	pairs. In this type of problem (trajectory design), the other STM
+ *	eigenvalues also come in pairs: 2 1.0 eigenvalues, or two real 
+ *	eigenvalues that are reciprocals.
+ */
+enum eigValSet_t{
+	EIGSET_COMP_CONJ,	//!< Complex conjugate pair
+	EIGSET_ONES,		//!< Exactly equal to 1.0
+	EIGSET_REAL_RECIP	//!< Real, reciprocal pair
+};
+
 // Equations of motion
 int cr3bp_EOMs(double, const double[], double[], void*);
 int cr3bp_simple_EOMs(double, const double[], double[], void*);
@@ -83,10 +99,12 @@ std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<dou
 tpat_matrix solveAX_eq_B(tpat_matrix, tpat_matrix);
 std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, double);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
+double getStabilityIndex(std::vector<cdouble>);
 
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);
 double cr3bp_getJacobi(const double s[], double);
+double cr3bp_getVel_withC(const double s[], double, double, int);
 void cr3bp_getEquilibPt(tpat_sys_data_cr3bp, int, double, double[3]);
 tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, tpat_sys_data_cr3bp*, double, double, double);
 tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, tpat_sys_data_cr3bp*, double, double, double, double);
@@ -96,8 +114,8 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, doubl
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t);
-tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>);
+tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t, double);
+tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double);
 
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr*, double*);

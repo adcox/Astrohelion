@@ -25,12 +25,24 @@ int main(int argc, char *argv[]){
 	switch(probNum){
 		case 0:
 		{
-			printf("Generating Earth-Moon L1 Lyapunov Family\n");
+			printf("Generating Earth-Moon L1 Lyapunov Family : Nat Param\n");
 			
 			// Natural Parameter Continuation
 			gen.setStep_simple(0.0005);
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
+			gen.setContType(tpat_family_generator::NAT_PARAM);
+
+			// Run the generator
+			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
+			L1_Lyap.sortEigs();
+			L1_Lyap.setName("Earth-Moon L1 Lyapunov");
+			L1_Lyap.saveToMat("../share/families/EM_L1_Lyap.mat");
+			break;
+		}
+		case 100:
+		{
+			printf("Generating Earth-Moon L1 Lyapunov Family : PAC\n");
 			
 			// Pseudo Arclength (comment out for Natural Parameter)
 			gen.setNumOrbits(1500);
@@ -40,7 +52,7 @@ int main(int argc, char *argv[]){
 			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
 			L1_Lyap.sortEigs();
 			L1_Lyap.setName("Earth-Moon L1 Lyapunov");
-			L1_Lyap.saveToMat("../share/families/EM_L1_Lyap.mat");
+			L1_Lyap.saveToMat("../share/families/EM_L1_Lyap_PAC.mat");
 			break;
 		}
 		case 1:
@@ -50,16 +62,28 @@ int main(int argc, char *argv[]){
 			// Natural Parameter Continuation
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
-
-			// Pseudo Arclength (comment out for Natural Parameter)
-			gen.setNumOrbits(2000);
-			gen.setNumNodes(5);
-			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setContType(tpat_family_generator::NAT_PARAM);
 
 			tpat_family_cr3bp L2_Lyap = gen.cr3bp_generateLyap(sysData, 2, 0.01);
 			L2_Lyap.sortEigs();
 			L2_Lyap.setName("Earth-Moon L2 Lyapunov");
 			L2_Lyap.saveToMat("../share/families/EM_L2_Lyap.mat");
+			break;
+		}
+		case 101:
+		{
+			printf("Generating Earth-Moon L2 Lyapunov Family : PAC\n");
+			
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(2000);
+			gen.setNumNodes(5);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+
+			// Run the generator
+			tpat_family_cr3bp L2_Lyap = gen.cr3bp_generateLyap(sysData, 2, 0.01);
+			L2_Lyap.sortEigs();
+			L2_Lyap.setName("Earth-Moon L2 Lyapunov");
+			L2_Lyap.saveToMat("../share/families/EM_L2_Lyap_PAC.mat");
 			break;
 		}
 		case 2:
@@ -81,15 +105,47 @@ int main(int argc, char *argv[]){
 			L3_Lyap.saveToMat("../share/families/EM_L3_Lyap.mat");
 			break;
 		}
+		case 102:
+		{
+			printf("Generating Earth-Moon L2 Lyapunov Family : PAC\n");
+			
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(3000);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+
+			// Run the generator
+			tpat_family_cr3bp L3_Lyap = gen.cr3bp_generateLyap(sysData, 3, 0.01);
+			L3_Lyap.sortEigs();
+			L3_Lyap.setName("Earth-Moon L3 Lyapunov");
+			L3_Lyap.saveToMat("../share/families/EM_L3_Lyap_PAC.mat");
+			break;
+		}
 		case 3:
 		{
 			printf("Generating Earth-Moon L1 Northern Halo Family\n");
 			gen.setStep_fitted_1(0.001);
 			gen.setStep_fitted_2(0.001);
+			
 			tpat_family_cr3bp L1_Halo = gen.cr3bp_generateHalo("../share/families/EM_L1_Lyap.mat", -5.2e-5);
 			L1_Halo.sortEigs();
 			L1_Halo.setName("Earth-Moon L1 Northern Halo");
 			L1_Halo.saveToMat("../share/families/EM_L1_NHalo.mat");
+			break;
+		}
+		case 103:
+		{
+			printf("Generating Earth-Moon L1 Northern Halo Family : PAC\n");
+			
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(3000);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setTol(6e-12);
+
+			// Run the generator
+			tpat_family_cr3bp L1_Halo = gen.cr3bp_generateHalo("../share/families_natParam_checked/EM_L1_Lyap.mat", -5.2e-5);
+			L1_Halo.sortEigs();
+			L1_Halo.setName("Earth-Moon L1 Northern Halo");
+			L1_Halo.saveToMat("../share/families/EM_L1_NHalo_PAC.mat");
 			break;
 		}
 		case 4:
@@ -101,6 +157,22 @@ int main(int argc, char *argv[]){
 			L2_Halo.sortEigs();
 			L2_Halo.setName("Earth-Moon L2 Northern Halo");
 			L2_Halo.saveToMat("../share/families/EM_L2_NHalo.mat");
+			break;
+		}
+		case 104:
+		{
+			printf("Generating Earth-Moon L2 Northern Halo Family : PAC\n");
+			
+			// Pseudo Arclength (comment out for Natural Parameter)
+			gen.setNumOrbits(3000);
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setTol(6e-12);
+
+			// Run the generator
+			tpat_family_cr3bp L2_Halo = gen.cr3bp_generateHalo("../share/families_natParam_checked/EM_L2_Lyap.mat", 5.2e-5);
+			L2_Halo.sortEigs();
+			L2_Halo.setName("Earth-Moon L2 Northern Halo");
+			L2_Halo.saveToMat("../share/families/EM_L2_NHalo_PAC.mat");
 			break;
 		}
 		case 5:
@@ -163,6 +235,7 @@ int main(int argc, char *argv[]){
 
 			// PAC
 			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setNumOrbits(5000);
 			gen.setNumNodes(5);
 
 			tpat_family_cr3bp L2_NButterfly = gen.cr3bp_generateButterfly(&sysData, 2);

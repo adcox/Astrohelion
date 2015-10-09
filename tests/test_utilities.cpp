@@ -15,12 +15,42 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 bool testSumInt(){
 	int data[] = {1,2,3,4,5};
-	return tpat_util::sum(data, 5) == 15;
+	bool check1 = tpat_util::sum(data, 5) == 15;
+
+	std::vector<int> vecData {1,2,3,4,5};
+	bool check2 = tpat_util::sum(vecData) == 15;
+
+	return check1 && check2;
 }
 
 bool testSumDouble(){
 	double data[] = {1.0, 1.1, 1.2, 1.3, 1.4};
-	return tpat_util::sum(data, 5) == 6;
+	bool check1 = tpat_util::sum(data, 5) == 6;
+
+	std::vector<double> vecData {1.0, 1.1, 1.2, 1.3, 1.4};
+	bool check2 = tpat_util::sum(vecData) == 6;
+
+	return check1 && check2;
+}
+
+bool testMeanInt(){
+	int data[] = {2,4,5,1};
+	bool check1 = tpat_util::mean(data,4) == 3;
+
+	std::vector<int> vecData {2,4,5,1};
+	bool check2 = tpat_util::mean(vecData) == 3;
+
+	return check1 && check2;
+}
+
+bool testMeanDouble(){
+	double data[] = {1.1, 2.2, 3.3, 4.4, 5.5};
+	bool check1 = tpat_util::mean(data, 5) == 3.3;
+
+	std::vector<double> vecData {1.1, 2.2, 3.3, 4.4, 5.5};
+	bool check2 = tpat_util::mean(vecData) == 3.3;
+
+	return check1 && check2;
 }
 
 bool test_concatVec(){
@@ -70,6 +100,8 @@ int main(void){
 
 	cout << "Test sum<int>: " << (testSumInt() ? PASS : FAIL) << endl;
 	cout << "Test sum<double>: " << (testSumDouble() ? PASS : FAIL) << endl;
+	cout << "Test mean<int>: " << (testMeanInt() ? PASS : FAIL) << endl;
+	cout << "Test mean<double>: " << (testMeanDouble() ? PASS : FAIL) << endl;
 	cout << "Test concatVecs(vector<int>): " << (test_concatVecInt() ? PASS : FAIL) << endl;
 	cout << "Test concatVecs(vector<double>): " << (test_concatVec() ? PASS : FAIL) << endl;
 	cout << "Test permutations(int): " << (test_permute() ? PASS : FAIL) << endl;

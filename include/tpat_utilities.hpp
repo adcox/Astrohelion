@@ -1,4 +1,5 @@
 /**
+ *	@file tpat_utilities.hpp
  *	@brief Contains miscellaneous utility functions that make 
  *	coding in C++ easier
  *
@@ -237,7 +238,19 @@ public:
 	template<typename T>
 	static T mean(T *data, int length){
 		return sum(data, length)/length;
-	}//=====================================
+	}//================================================
+
+	/**
+	 *  @brief Compute the mean (average) of a vector of data
+	 * 
+	 *  @param data a vector of numbers
+	 *  @tparam T a numerical type, like int, double, long, etc.
+	 *  @return the mean
+	 */
+	template<typename T>
+	static T mean(std::vector<T> data){
+		return mean(&(data[0]), data.size());
+	}//================================================
 
 	/**
 	 *	@brief Get the real parts of every element of a vector
@@ -284,6 +297,18 @@ public:
 
 		return total;
 	}//=====================================
+
+	/**
+	 *  @brief Sum all values in a vector
+	 * 
+	 *  @param data a vector of data
+	 *  @tparam T numerical data type, like int, double, long, etc.
+	 *  @return the sum
+	 */
+	template<typename T>
+	static T sum(std::vector<T> data){
+		return sum(&(data[0]), data.size());
+	}//==============================================
 };
 
 std::string complexToStr(std::complex<double> num);
@@ -292,9 +317,11 @@ void printWarn(const char*, ...);
 void printVerb(bool, const char*, ...);
 void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
+void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
 void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 double readDoubleFromMat(mat_t*, const char*);
+std::vector<double> readMatrixFromMat(const char*, const char*);
 std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);
 
 void waitForUser();

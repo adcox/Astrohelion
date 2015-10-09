@@ -61,22 +61,6 @@ class tpat_family_cr3bp{
 			SORT_TOF 	= 6		//!< Sort by Time-Of-Flight
 		};
 
-		/**
-		 *	@brief Eigenvalue pair types
-		 *
-		 *	Eigenvalues come in three different types of pairs. They will
-		 *	either be complex, real, or exactly equal to 1.0. Since the 
-		 *	matrices are real, all complex eigenvalues will come in conjucate
-		 *	pairs. In this type of problem (trajectory design), the other STM
-		 *	eigenvalues also come in pairs: 2 1.0 eigenvalues, or two real 
-		 *	eigenvalues that are reciprocals.
-		 */
-		enum eigValSet_t{
-			EIGSET_COMP_CONJ,	//!< Complex conjugate pair
-			EIGSET_ONES,		//!< Exactly equal to 1.0
-			EIGSET_REAL_RECIP	//!< Real, reciprocal pair
-		};
-
 		// *structors
 		tpat_family_cr3bp(tpat_sys_data_cr3bp);
 		tpat_family_cr3bp(const char*);

@@ -158,7 +158,72 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
         Mat_VarWrite(matFile, matvar, comp);
         Mat_VarFree(matvar);
     }
-}//==============================
+}//=========================================================
+
+/**
+ * @brief Save a matrix of data to a Matlab .mat file
+ * @details This function will save the transpose of the input matrix, so be 
+ * sure to transpose after loading into Matlab
+ * 
+ * @param filename name/path of the file
+ * @param varName variable name
+ * @param data vector of data
+ * @param rows number of rows in the matrix
+ * @param cols number of columns in the matrix
+ */
+void saveMatrixToFile(const char* filename, const char* varName, std::vector<double> data, size_t rows, size_t cols){
+    if(data.size() < rows*cols)
+        throw tpat_exception("tpat_utilities::saveMatrixToFile: Input data has fewer elements than specified by the rows and cols arguments");
+
+    mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+    if(NULL != matfp){
+        size_t dims[2] = {cols, rows};
+        matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(data[0]), MAT_F_DONT_COPY_DATA);
+        saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
+    }else{
+        printErr("tpat_utilities::saveMatrixToFile: Error creating mat file\n");
+    }
+    Mat_Close(matfp);
+}//========================================================
+
+/**
+ *  @brief Read a matrix of doubles from a .mat file
+ * 
+ *  @param filename relative or absolute path to the .mat data file
+ *  @param varName the name of the variable/matrix to read from the file
+ * 
+ *  @return a column-major-order vector containing the data from the desired matrix
+ *  @throws tpat_exception if the file cannot be opened, if the variable doesn't exist,
+ *  or if the variable contains something other than doubles
+ */
+std::vector<double> readMatrixFromMat(const char *filename, const char *varName){
+ 
+    mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+    if(matfp ==  NULL)
+        throw tpat_exception("tpat_utilities::readMatrixFromFile: Could not open data file\n");
+
+    matvar_t *matvar = Mat_VarRead(matfp, varName);
+    if(matvar == NULL){
+        throw tpat_exception("tpat_utilities::readMatrixFromFile: Could not read variable data");
+    }else{
+
+        int dataSize = (matvar->dims[0])*(matvar->dims[1]);
+
+        if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
+            double *data = static_cast<double *>(matvar->data);
+
+            if(data != NULL){
+                std::vector<double> vecData(data, data+dataSize);
+                
+                Mat_VarFree(matvar);
+                return vecData;
+            }
+        }else{
+            Mat_VarFree(matvar);
+            throw tpat_exception("tpat_utilities::readMatrixFromFile: Incompatible data file: unsupported data type/class");
+        }
+    }
+}//==========================================================
 
 /**
  *  @brief Read a double from a mat file

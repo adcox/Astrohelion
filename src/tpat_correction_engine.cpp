@@ -71,7 +71,8 @@ void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 	tol = e.tol;
 	createdNodesetOut = e.createdNodesetOut;
 	findEvent = e.findEvent;
-
+	ignoreCrash = e.ignoreCrash;
+	
 	if(createdNodesetOut){
 		tpat_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
 		switch(type){
@@ -218,6 +219,16 @@ void tpat_correction_engine::setEqualArcTime(bool b){
 }//==================================================
 
 /**
+ * @brief Tell the corrector to ignore crash events (or to not to).
+ * @details By default, the corrector does monitor crashes and will 
+ * run into issues if the trajectory being corrected passes through a 
+ * primary.
+ * 
+ * @param b whether or not to ignore crashes (default is false)
+ */
+void tpat_correction_engine::setIgnoreCrash(bool b){ ignoreCrash = b; }
+
+/**
  *	@brief Set verbosity
  *	@param b whether or not the corrector should be verbose in its outputs
  */
@@ -233,7 +244,12 @@ void tpat_correction_engine::setMaxIts(int i){ maxIts = i; }
  *	@brief Set the error tolerance
  *	@param d errors below this value will be considered negligible
  */
-void tpat_correction_engine::setTol(double d){ tol = d; }
+void tpat_correction_engine::setTol(double d){
+	tol = d;
+
+	if(tol > 1)
+		printWarn("tpat_correction_engine::setTol: tolerance is greater than 1... just FYI\n");
+}
 
 /**
  *	@brief Set the findEven flag
@@ -246,7 +262,16 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
 //-----------------------------------------------------
 
 /**
- *	@brief Correct a generic nodeset; equipped to handle any type
+ *	@brief Correct a generic nodeset using multiple shooting
+ *	@details This algorithm employs multiple shooting to correct a set of nodes
+ *	subject to a set of constraints. The nodes and constraints are all stored in the 
+ *	input nodeset object. 
+ *	
+ *	Numerical integration is used to generate state transition matrices between
+ *	nodes. In order to optimize performance and accuracy, only two steps are computed
+ *	by the simulation engine, and the step size is fixed to force the usage of the 
+ *	Adams-Bashforth Adams-Moulton method.
+ *	
  *	@param set a pointer to a nodeset
  *	@return the iteration data object for this corrections process
  */
@@ -402,10 +427,12 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 	simEngine.setRelTol(simTol);
 
 	// Only need info about the final state, no need to generate lots of intermediate data points
+	// This forces the integrator to use the Adams-Bashforth Adams-Moulton integration method,
+	// which is most similar to Matlab's ode113
 	simEngine.setVarStepSize(false);
 	simEngine.setNumSteps(2);
 
-	if(findEvent){
+	if(findEvent || ignoreCrash){
 		simEngine.clearEvents();	// don't use crash events when searching for an event
 	}
 
@@ -446,16 +473,25 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 			model->corrector_applyConstraint(&it, it.allCons[c], c);
 
 		// Solve for newX and copy into working vector X
+		tpat_matrix oldX = tpat_matrix(it.totalFree, 1, it.X);
 		tpat_matrix newX = solveUpdateEq(&it);
 		it.X.clear();
 		it.X.insert(it.X.begin(), newX.getDataPtr(), newX.getDataPtr()+it.totalFree);
 
 		// Compute error; norm of constraint vector
 		tpat_matrix FX_mat(it.totalCons, 1, it.FX);
-		err = norm(FX_mat);
+		double err_cons = norm(FX_mat);
+
+		// Compute error: difference between subsequent free variable vectors
+		double err_it = norm(newX - oldX);
+
+		// Choose the lower of the two?
+		err = err_cons < err_it ? err_cons : err_it;
+		std::string errType = err_cons < err_it ? "||F||" : "||X - X_old||";
 
 		it.count++;
-		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: ||F|| = %.4e\n", it.count, err);
+		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: err = %.4e (%s)\n",
+			it.count, err, errType.c_str());
 	}// end of corrections loop
 
 	if(err > tol){

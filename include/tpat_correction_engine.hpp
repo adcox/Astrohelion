@@ -74,8 +74,7 @@ struct iterationData{
 };
 
 /**
- *	@brief An engine object to perform corrections, such as single-shooting
- *	and multiple shooting algorithms
+ *	@brief An engine object to perform corrections, such as multiple shooting.
  *
  *	@author Andrew Cox
  *	@version August 3, 2015
@@ -103,6 +102,7 @@ class tpat_correction_engine{
 		bool usesVarTime() const;
 
 		void setEqualArcTime(bool);
+		void setIgnoreCrash(bool);
 		void setFindEvent(bool);
 		void setMaxIts(int);
 		void setTol(double);
@@ -134,6 +134,9 @@ class tpat_correction_engine{
 
 		/** Flag to turn on when this algorithm is being used to locate an event */
 		bool findEvent = false;
+
+		/** Flag to turn off crash detection in the simulation engine */
+		bool ignoreCrash = false;
 
 		/** The output nodeset, constructed from the corrected arcs */
 		tpat_nodeset *nodeset_out = 0;

@@ -61,7 +61,8 @@ class tpat_family_generator{
 		void setStep_simple(double);
 		void setStep_fitted_1(double);
 		void setStep_fitted_2(double);
-
+		void setTol(double);
+		
 		// Operations & Utility
 		tpat_family_cr3bp cr3bp_generateAxial(const char*, double);
 		tpat_family_cr3bp cr3bp_generateButterfly(tpat_sys_data_cr3bp*, int);
@@ -70,6 +71,10 @@ class tpat_family_generator{
 		void reset();
 
 	private:
+		cont_t contType = NAT_PARAM;	//!< Type of continuation to use
+		double tol = 1e-12;				//!< Tolerance for corrections
+
+		// Settings for Natural Parameter Continuation
 		int numOrbits = 500;			//!< Maximum number of family members to generate
 		int numSimple = 3;				//!< Number of simply-continued family members
 		double step_simple = 0.0005;	//!< Step size in the independent variable when using simple continuation
@@ -78,7 +83,6 @@ class tpat_family_generator{
 		int curveFitMem = 5;			//!< Number of points to use with Least-Squares algorithm
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
-		cont_t contType = NAT_PARAM;	//!< Type of continuation to use
 
 		void copyMe(const tpat_family_generator&);
 		void cr3bp_natParamCont(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);

@@ -122,6 +122,17 @@ void tpat_family_generator::setStep_fitted_1(double d){ step_fitted_1 = d; }
 void tpat_family_generator::setStep_fitted_2(double d){ step_fitted_2 = d; }
 
 /**
+ * @brief  Set the corrector tolerance for the family generator
+ * @details This is the tolerance that a periodic orbit will be
+ * judged by; if constraints are not met to this tolerance, no
+ * periodic orbit will be returned. Note that a looser tolerance may
+ * allow continuation to make more prorgress
+ * 
+ * @param t corrector tolerance, non-dimensional
+ */
+void tpat_family_generator::setTol(double t){ tol = t; }
+
+/**
  *	@brief Set the number of nodes used for corrections processes
  *
  *	The default value is 3
@@ -152,6 +163,7 @@ void tpat_family_generator::copyMe(const tpat_family_generator &f){
 	step_fitted_1 = f.step_fitted_1;
 	step_fitted_2 = f.step_fitted_2;
 	curveFitMem = f.curveFitMem;
+	tol = f.tol;
 }//====================================================
 
 /**
@@ -186,12 +198,12 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	std::vector<int> bifs = lyapFam.findBifurcations();
 
 	if(bifs.size() == 0){
-		printErr("Could not locate any bifurcations in the Lyapunov family; extiting...");
+		printErr("Could not locate any bifurcations in the Lyapunov family; extiting...\n");
 		return axialFam;
 	}
 
 	if(bifs.size() != 3)
-		printWarn("The # of bifurcations in the Lyap family != 3... something may be wrong!");
+		printWarn("The # of bifurcations in the Lyap family != 3... something may be wrong!\n");
 
 	std::vector<double> IC = lyapFam.getMember(bifs[1]).getIC();
 	double period = lyapFam.getMember(bifs[1]).getTOF();
@@ -200,7 +212,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	IC[5] += initStepSize;
 
 	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysDataPtr(), IC, period,
-		numNodes, 1, MIRROR_X_AX_H, fixStates);
+		numNodes, 1, MIRROR_X_AX_H, fixStates, tol);
 
 	std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
 	std::vector<int> depVars {0,6};	// Predict x and period with least squares
@@ -242,12 +254,12 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	std::vector<int> bifs = lyapFam.findBifurcations();
 
 	if(bifs.size() == 0){
-		printErr("Could not locate any bifurcations in the Lyapunov family; extiting...");
+		printErr("Could not locate any bifurcations in the Lyapunov family; extiting...\n");
 		return haloFam;
 	}
 
 	if(bifs.size() != 3)
-		printWarn("The # of bifurcations in the Lyap family != 3... something may be wrong!");
+		printWarn("The # of bifurcations in the Lyap family != 3... something may be wrong!\n");
 
 	std::vector<double> IC = lyapFam.getMember(bifs[0]).getIC();
 	double period = lyapFam.getMember(bifs[0]).getTOF();
@@ -256,14 +268,23 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	IC[2] += initStepSize;
 
 	tpat_traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysDataPtr(), IC, period,
-		numNodes, 1, MIRROR_XZ, fixStates);
+		numNodes, 1, MIRROR_XZ, fixStates, tol);
 
-	std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
-	std::vector<int> depVars {4};	// Predict y-dot with least-squares
-	std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+	if(contType == NAT_PARAM){
+		std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
+		std::vector<int> depVars {4};	// Predict y-dot with least-squares
+		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-	cr3bp_natParamCont(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
+	}else if(contType == PSEUDO_ARC){
 
+		// Turn trajectory object into nodeset; double number of nodes
+		tpat_nodeset_cr3bp initGuess(firstHalo, 2*numNodes-1);
+
+		int sign = initStepSize < 0 ? -1 : 1;
+		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
+		cr3bp_pseudoArcCont(&haloFam, initGuess, MIRROR_XZ, initDir);
+	}
 	return haloFam;
 }//=======================================================
 
@@ -323,7 +344,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 		// for a CONVERGED family member to start PAC
 		std::vector<int> fixStates {0};
 		int order = 1;
-		tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, MIRROR_XZ, fixStates);
+		tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, MIRROR_XZ, fixStates, tol);
 
 		// Turn trajectory object into nodeset; double number of nodes
 		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
@@ -369,7 +390,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 	printf("Correcting Halo...\n");
 	// Correct to a periodic orbit
 	std::vector<int> fixed {4};
-	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed);
+	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed, tol);
 
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
@@ -456,7 +477,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates);
+			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol);
 		}catch(tpat_diverge &e){
 			break;
 		}catch(tpat_linalg_err &e){
@@ -562,6 +583,10 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 
 			// Compute eigenvalues
 			tpat_matrix mono = perOrbit.getSTM(-1);
+			double monoErr = std::abs(1.0 - det(mono));
+			if(monoErr > 1e-5)
+				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+			
 			std::vector< std::vector<cdouble> > eigData = eig(mono);
 			std::vector<cdouble> eigVals = eigData[0];
 
@@ -602,8 +627,8 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	// 	throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: FixToVal Index out of range");
 
 	// TODO - Make these editable?
-	double stepSize = 0.005;
-	double maxStepSize = 0.5;
+	double stepSize = 0.001;
+	double maxStepSize = 0.01;
 	double minStepSize = 1e-7;
 
 	tpat_sys_data_cr3bp sys = fam->getSysData();
@@ -699,6 +724,8 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	tpat_correction_engine corrector;
 	corrector.setVarTime(true);			// Variable time MUST be enabled for PAC
 	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
+	corrector.setTol(tol);
+	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
 	iterationData familyItData;
 	try{
 		familyItData = corrector.correct(&familyMember);
@@ -875,6 +902,10 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 		// Compute eigenvalues
 		tpat_matrix mono = perOrbit.getSTM(-1);
+		double monoErr = std::abs(1.0 - det(mono));
+		// if(monoErr > 1e-5)
+		printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+
 		std::vector< std::vector<cdouble> > eigData = eig(mono);
 		std::vector<cdouble> eigVals = eigData[0];
 
@@ -936,7 +967,7 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix conv
 	// Outputs for debugging and sanity checks
 	printColor(RED, "||delta-X|| = %.4e\n", norm(newFreeVarVec - convergedFreeVarVec));
 	printf("New IC = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...] tof = %.4f\n",
-		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.getCols()-1]);
+		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.getRows()-1]);
 
 	return newMember;
 }
@@ -953,6 +984,7 @@ void tpat_family_generator::reset(){
 	curveFitMem = 5;
 	numNodes = 3;
 	slopeThresh = 1;
+	tol = 1e-12;
 }//======================================
 
 //

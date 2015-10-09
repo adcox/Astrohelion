@@ -80,6 +80,7 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_arc_data &a) : tpat_traj(a){
 tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
 	tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp*>(nodes.getSysData());
 	tpat_simulation_engine simEngine(sys);
+	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
 	tpat_traj_cr3bp totalTraj(sys);
 
 	for(int n = 0; n < nodes.getNumNodes()-1; n++){

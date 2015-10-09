@@ -12,8 +12,8 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 int main(void){
 	// Load the family
-	// tpat_family_cr3bp fam("../share/families/EM_L1_Lyap.mat");
-	tpat_family_cr3bp fam("../share/families/EM_L2_NButterfly_combined.mat");
+	tpat_family_cr3bp fam("../share/families_natParam_checked/EM_L1_Lyap.mat");
+	// tpat_family_cr3bp fam("../share/families/EM_L2_NButterfly.mat");
 	fam.sortEigs();
 	std::vector<int> bifs = fam.findBifurcations();
 	if(bifs.size() > 0){

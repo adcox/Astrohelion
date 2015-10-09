@@ -779,7 +779,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         return eigVals;
     }
 
-    const double MAX_ONES_ERR = 1e-5;
+    const double MAX_ONES_ERR = 5e-5;
     std::vector<cdouble> sortedEigs;
 
     // Figure out which eigenvalues are closest to one, save their indices
@@ -788,19 +788,21 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
     for(int i = 0; i < 6; i++){
         onesErr.push_back(std::abs(std::real(e1[i])-1) + std::abs(std::imag(e1[i])));
     }
+    
     std::vector<double>::iterator smallestErr = std::min_element(onesErr.begin(), onesErr.end());
-    int onesIx[] = {0,0};   // Indices of the eigenvalues that (nearly) exactly 1.0
-    if(*smallestErr < MAX_ONES_ERR){
-        int smallIx = smallestErr - onesErr.begin();
-        if(smallIx % 2 == 0 && smallIx != 0){
-            onesIx[0] = smallIx;
-            onesIx[1] = smallIx+1;
-        }else{
-            onesIx[0] = smallIx-1;
-            onesIx[1] = smallIx;
-        }
-    }else{
-        printWarn("tpat_family_cr3bp::sortEigs: did not find eigenvalues at 1.0\n");
+
+    int smallIx = smallestErr - onesErr.begin();
+    double saveSmallestErrVal = *smallestErr;
+    // artifically inflate the error on the smallest so we can find the second smallest
+    onesErr[smallIx] += 1e20;
+    std::vector<double>::iterator secondSmallestErr = std::min_element(onesErr.begin(), onesErr.end());
+
+    int otherSmallIx = secondSmallestErr - onesErr.begin();
+
+    int onesIx[] = {smallIx, otherSmallIx};   // Indices of the eigenvalues that (nearly) exactly 1.0
+    if(saveSmallestErrVal > MAX_ONES_ERR || *secondSmallestErr > MAX_ONES_ERR){
+        printWarn("tpat_calculations::sortEigs: Eigenvalues closest to one have errors of %.4e and %.4e > %.4e\n",
+            saveSmallestErrVal, *secondSmallestErr, MAX_ONES_ERR);
     }
 
     // Generate all permutations of the indices 0 through 5
@@ -811,10 +813,11 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
 
     for(size_t m = 0; m < eigVals.size()/6; m++){
         if(m == 1){
-            if(*smallestErr < MAX_ONES_ERR){
+            if(saveSmallestErrVal < MAX_ONES_ERR){
                 // Update the indices of the ones in case they got moved in the first sorting
                 onesIx[0] = sortedIxs->at(onesIx[0]);
                 onesIx[1] = sortedIxs->at(onesIx[1]);
+                printf("Updated unit eigenvalue positions to %d and %d\n", onesIx[0], onesIx[1]);
             }
             std::copy(sortedEigs.begin(), sortedEigs.begin()+6, predict);
         }else if(m > 1){
@@ -825,6 +828,11 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
             }
         }
 
+        // printColor(RED, "Unsorted Set %03d: [%s %s %s %s %s %s]\n", m, complexToStr(eigVals[m*6+0]).c_str(),
+        //     complexToStr(eigVals[m*6+1]).c_str(), complexToStr(eigVals[m*6+2]).c_str(), complexToStr(eigVals[m*6+3]).c_str(),
+        //     complexToStr(eigVals[m*6+4]).c_str(), complexToStr(eigVals[m*6+5]).c_str());
+        
+        std::vector<int> killers(ixPerms.size()/6, 0);  // Keep track of which cost killed each permutation possibility
         std::vector<double> cost;
         cost.assign(ixPerms.size()/6, 0);
         cdouble one(1,0);
@@ -841,63 +849,113 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
                 cost[p] += std::abs(swappedOrig[i] - predict[i]);
             }
             
-            // Add infinite cost if the ones eigenvalues change spots
-            if(*smallestErr < MAX_ONES_ERR){
-                double distToOne[6];
-                for(int i = 0; i < 6; i++){
-                    distToOne[i] = std::abs(swappedOrig[i]-one);
-                }
-                double *closestToOne = std::min_element(distToOne, distToOne+6);
-                int closestIx = closestToOne - distToOne;
+            // Make sure ones end up next to each other the first time around
+            bool disqual = false;
 
-                if(closestIx != onesIx[0] && closestIx != onesIx[1]){
-                    cost[p] += 1e20;
-                    continue;
+            if(!disqual){
+                if(m == 0){
+                    // Determine the new indices of the eigenvalues identified as ones
+                    std::vector<int>::iterator a = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), onesIx[0]);
+                    std::vector<int>::iterator b = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), onesIx[1]);
+                    int ix0 = a - (ixPerms.begin()+6*p);
+                    int ix1 = b - (ixPerms.begin()+6*p);
+
+                    // If the two unit eigenvalues are not next to each other, toss this option
+                    if(std::abs(ix0 - ix1) > 1){
+                        cost[p] += 1e20;
+                        killers[p] = 1;
+                        disqual = true; // This permuation has been disqualified
+                    }else{
+                        // printColor(GREEN, "Permutation %03d has ones in indices %d and %d\n", p, ix0, ix1);
+                    }
                 }
             }
 
-            // Add infinite cost if each consecutive pair are not inverses
-            // or complex conjugates
-            for(int i = 0; i < 6; i+=2){
-                /* don't consider the eigenvalues that are closest to one
-                    because they may have small innaccuracies that trigger
-                    these costs, screwing up the algorithm */
-                if(i != onesIx[0]){
-                    // Complex parts don't sum to zero (conjugates will, two
-                    // real eigenvalues will)
-                    if(std::abs(std::imag(swappedOrig[i]) + std::imag(swappedOrig[i+1]))){
-                        cost[p] += 1e20;
-                        break;
+            if(!disqual){
+                // Add infinite cost if the ones eigenvalues change spots
+                if(saveSmallestErrVal < MAX_ONES_ERR){
+                    double distToOne[6];
+                    for(int i = 0; i < 6; i++){
+                        distToOne[i] = std::abs(swappedOrig[i]-one);
                     }
+                    double *closestToOne = std::min_element(distToOne, distToOne+6);
+                    int closestIx = closestToOne - distToOne;
 
-                    // We have established that the ones are in the same place; Compute
-                    // the error in a 1.0 eigenvalue; this error is acceptable in the
-                    // reciprocal calculation (error tends to get bad at the larger orbits)
-                    double okErr = std::abs(swappedOrig[onesIx[0]] - one);
+                    if( (closestIx != onesIx[0] && closestIx != onesIx[1]) ){
+                        cost[p] += 1e20;
+                        killers[p] = 2;
+                        disqual = true;
+                    }                    
+                    // distToOne[closestIx] += 1e20;
+                    // double *secondClosest = std::min_element(distToOne, distToOne+6);
+                    // int secClosestIx = secondClosest - distToOne;
 
-                    // Both are real but are not reciprocals
-                    if(std::imag(swappedOrig[i]) == 0 && std::imag(swappedOrig[i+1]) == 0){
-                        double recipErr = 1.0 - std::real(swappedOrig[i])*std::real(swappedOrig[i+1]);
-                        if(recipErr > okErr){
+                    // if( (closestIx != onesIx[0] && closestIx != onesIx[1]) ||
+                    //     (secClosestIx != onesIx[0] && secClosestIx != onesIx[1]) ){
+                    //     cost[p] += 1e20;
+                    //     killers[p] = 2;
+                    //     disqual = true;
+                    // }
+                }
+            }
+
+            if(!disqual){
+                // Add infinite cost if each consecutive pair are not inverses
+                // or complex conjugates
+                for(int i = 0; i < 6; i+=2){
+                    /* don't consider the eigenvalues that are closest to one
+                        because they may have small innaccuracies that trigger
+                        these costs, screwing up the algorithm */
+                    if(i != onesIx[0]){
+                        // Complex parts don't sum to zero (conjugates will, two
+                        // real eigenvalues will)
+                        if(std::abs(std::imag(swappedOrig[i]) + std::imag(swappedOrig[i+1]))){
                             cost[p] += 1e20;
+                            killers[p] = 3;
+                            disqual = true;
                             break;
                         }
+
+                        // We have established that the ones are in the same place; Compute
+                        // the error in a 1.0 eigenvalue; this error is acceptable in the
+                        // reciprocal calculation (error tends to get bad at the larger orbits)
+                        double okErr = std::abs(swappedOrig[onesIx[0]] - one);
+
+                        // Both are real but are not reciprocals
+                        if(std::imag(swappedOrig[i]) == 0 && std::imag(swappedOrig[i+1]) == 0){
+                            double recipErr = 1.0 - std::real(swappedOrig[i])*std::real(swappedOrig[i+1]);
+                            if(recipErr > okErr){
+                                cost[p] += 1e20;
+                                killers[p] = 4;
+                                disqual = true;
+                                break;
+                            }
+                        }
                     }
-                }
-            }// end of checking consecutive pairs
+                }// end of checking consecutive pairs
+            }
         }// end of loop through permutations
 
         // Find the minimum cost
         std::vector<double>::iterator minCost = std::min_element(cost.begin(), cost.end());
-        if(*minCost > 1e10){
-            printErr("Minimum cost on set #%d is %f - probably a bug with the sorter!\n", m, *minCost);
-        }
         int ix = minCost - cost.begin();
         for(int i = 0; i < 6; i++){
             sortedEigs.push_back(eigVals[m*6 + ixPerms[ix*6 + i]]);
         }
 
+        if(*minCost > 1e10){
+            printErr("Minimum cost on set #%03d is %e - perm %03d, killed by cost %d - probably a bug!\n", m, ix, killers[ix], *minCost);
+        }
+
+        // printf("Chose Perm %04d: [%d %d %d %d %d %d]\n", ix, ixPerms[6*ix+0], ixPerms[6*ix+1], ixPerms[6*ix+2],
+        //     ixPerms[6*ix+3], ixPerms[6*ix+4], ixPerms[6*ix+5]);
+
         sortedIxs->insert(sortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
+
+        // printColor(GREEN, "  Sorted Set %03d: [%s %s %s %s %s %s]\n", m, complexToStr(sortedEigs[m*6+0]).c_str(),
+        //     complexToStr(sortedEigs[m*6+1]).c_str(), complexToStr(sortedEigs[m*6+2]).c_str(), complexToStr(sortedEigs[m*6+3]).c_str(),
+        //     complexToStr(sortedEigs[m*6+4]).c_str(), complexToStr(sortedEigs[m*6+5]).c_str());
+        // waitForUser();
     }// end of loop through all members/eigenvalue sets
 
     return sortedEigs;
@@ -1017,6 +1075,42 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
     return allManifolds;
 }//====================================================
 
+/**
+ *  @brief Compute the stability index of a periodic orbit from a set of eigenvalues
+ *  @details This algorithm assumes the orbit is periodic and that the eigenvalues 
+ *  have been sorted (so they come in pairs).
+ * 
+ *  @param eigVals A 6-element vector of eigenvalues associated with a periodic orbit
+ *  @return the stability index, or NAN if no real, reciprocal eigenvalue pair is found
+ */
+double getStabilityIndex(std::vector<cdouble> eigs){
+    if(eigs.size() != 6)
+        throw tpat_exception("tpat_calculations::getStabilityIndex: Must input 6 eigenvalues!");
+
+    double okErr = 1e-3;
+    cdouble one(1,0);
+
+    std::vector<eigValSet_t> setTypes;
+    setTypes.reserve(3);
+
+    for(int set = 0; set < 3; set++){
+        double sumImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
+        double sumDistFromOne = (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
+
+        if(sumImag > okErr){
+            setTypes[set] = EIGSET_COMP_CONJ;
+        }else{
+            if(sumDistFromOne < okErr){
+                setTypes[set] = EIGSET_ONES;
+            }else{
+                setTypes[set] = EIGSET_REAL_RECIP;
+                return 0.5*std::real(eigs[set*2] + eigs[set*2 + 1]);
+            }
+        }
+    }
+    return NAN;
+}//====================================================
+
 //-----------------------------------------------------
 //      CR3BP Utility Functions
 //-----------------------------------------------------
@@ -1068,6 +1162,33 @@ double cr3bp_getJacobi(const double s[], double mu){
     return 2*U - v_squared;
 }//================================================
 
+/**
+ *  @brief Compute the magnitude of a velocity component given Jacobi Constant
+ * 
+ *  @param s state vector (non-dimensional); MUST contain at least the 6 position and velocity states.
+ *  Note that the desired velocity component identified by velIxToFind is not required; put a placeholder
+ *  zero or NAN (or anything, really) in its place; this value will not be used in computations.
+ *  @param mu non-dimensional system mass ratio
+ *  @param C Jacobi constant value
+ *  @param velIxToFind index of the velocity component to compute (i.e. 3, 4, or 5)
+ *  @return the magnitude of vx (3), vy (4), or vz (5).
+ */
+double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind){
+    double v_squared = 0;
+    switch(velIxToFind){
+        case 3: v_squared = s[4]*s[4] + s[5]*s[5]; break;
+        case 4: v_squared = s[3]*s[3] + s[5]*s[5]; break;
+        case 5: v_squared = s[3]*s[3] + s[4]*s[4]; break;
+        default: throw tpat_exception("tpat_utilities::cr3bp_getVel_withC: velocity index is invalid\n");
+    }
+    
+    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
+    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
+    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
+
+    // Solve for the desired velocity component
+    return sqrt(2*U - v_squared - C);
+}//=================================================
 
 /**
  *  @brief Compute the location of a Lagrange point in the CR3BP
@@ -1162,15 +1283,17 @@ void cr3bp_getEquilibPt(tpat_sys_data_cr3bp sysData, int L, double tol, double p
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, mirror_t mirrorType){
+    double period, mirror_t mirrorType, double tol){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
-    return cr3bp_getPeriodic(sys, IC, period, 2, 1, mirrorType, fixedStates);
+    return cr3bp_getPeriodic(sys, IC, period, 2, 1, mirrorType, fixedStates, tol);
 }//========================================
 
 /**
  *  @brief Compute a periodic orbit in the CR3BP system
- *
+ *  @details This method ignores all crash events, so it is possible to compute a
+ *  periodic orbit that passes through a primary
+ *  
  *  @param sys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
@@ -1189,9 +1312,12 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates){
+    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates, double tol){
 
     tpat_simulation_engine sim(sys);    // Engine to perform simulation
+    sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
+    sim.setRelTol(sim.getAbsTol());
+    sim.clearEvents();  // Ignore any crashes into the primaries
     std::vector<int> zeroStates;            // Which states must be zero to ensure a perpendicular crossing
 
     tpat_event mirrorEvt;
@@ -1282,6 +1408,9 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
 
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
+    corrector.setTol(tol);
+    corrector.setIgnoreCrash(true); // Corrector also ignores crash events
+
     try{
         corrector.correct(&halfOrbNodes);
         tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();

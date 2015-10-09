@@ -61,69 +61,27 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
 .PHONY: printVars
 
-all: calcTest linMotionTest matrixTest nodesetTest simEngineTest sysSwitchTest utilityTest
+all: prop
 	
 
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
 
-calcTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
+famStability: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) Fam_PeriStability.cpp -o $(BIN)/$@
 
-correctorTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_corrector.cpp -o $(BIN)/$@
+generateLiss: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) GenerateLiss.cpp -o $(BIN)/$@
 
-familyOps: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
-
-eigenTest:
-	$(COMP) -I $(INC) test_eigen.cpp -o $(BIN)/$@
-
-emFams: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) computeEarthMoonFams.cpp -o $(BIN)/$@
-
-linMotionTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
-
-lowThrustTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bp_lowThrust.cpp -o $(BIN)/$@
-
-manifolds: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
-
-maps: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
-
-matioTest: $(OBJ)/tpat_utilities.o
-	$(COMP) -I $(INC) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
-
-matrixTest: $(OBJ)/tpat_utilities.o $(OBJ)/tpat_matrix.o
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_matrix.cpp -o $(BIN)/$@
-
-manyArcTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
-
-nodesetTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
-
-simEngineTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
-
-spTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_SPTargetting.cpp -o $(BIN)/$@
-
-sysSwitchTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
-
-utilityTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
-
-temp: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) temp_prop.cpp -o $(BIN)/$@	
+prop: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) PropFromScienceOrbits.cpp -o $(BIN)/$@
 	
-lucia: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_lucia.cpp -o $(BIN)/$@	
+manPeri: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) EML2Halo_UM_Man_Periapses.cpp -o $(BIN)/$@
+	
+manTubeGridding: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) IceCube_ManTubeForwardProp.cpp -o $(BIN)/$@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory

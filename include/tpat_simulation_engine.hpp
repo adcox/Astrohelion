@@ -80,7 +80,35 @@ public:
  *	an event occurence when the direction to the event changes. If too few points are used,
  *	the engine may never detect a change in direction.
  *	
- *
+ *	<b>Algorithms</b>
+ *	
+ *	Two integration algorithms are used in this engine to numerically integrate a model's
+ *	equations of motion. One variable determines which integrator will be used: step size
+ *	variability. If steps are allowed to vary, a Runge-Kutta Cash-Karp 4-5 method is used.
+ *	If step size is fixed, then an Adams-Bashforth Adams-Moulton method is used. These 
+ *	integrators performed best in an error analysis of Jacobi constant in an unscientific
+ *	test comparison of multiple methods. Perhaps someday we'll actually do a propper comparison.
+ *	
+ *	The Runge-Kutta method is similar to Matlab's ode45, which uses a Dormand-Prince 8-9 variation
+ *	on the traditional Runge-Kutta method. The Cash-Karp variation used here should be nearly
+ *	identical, but it performed better in the error analysis.
+ *	
+ *	The Adams-Bashforth method is similar to Matlab's ode113.
+ *	
+ *	Because the Adams-Bashforth method requires a driver object, it is not possible (to our knowledge)
+ *	to retrieve intermediate points between the integration bounds. The driver will simply integrate from
+ *	t0 to tf and return the final state. To obtain a more complete trajectory history, the simulation
+ *	engine allows the user to specify the number of steps, which will be split evenly between the initial
+ *	and final integration time limits. The Adams-Bashforth method is run between each step, effectively
+ *	producing a series of states along a trajectory.
+ *	
+ *	The Runge-Kutta method, on the other hand, will return intermediate states because it is run using
+ *	more detailed commands (we do not use a driver object). The user can allow step size to vary, and
+ *	the integrator will return steps between t0 and tf at intervals that the integrator "likes". Typically
+ *	this means smaller steps are taken near dynamically volatile areas (e.g. near a primary body) and larger
+ *	steps are taken where the dynamics are less volatile.
+ *	
+ *	
  *	@author Andrew Cox
  *	@version June 1, 2015
  *	@copyright GNU GPL v3.0

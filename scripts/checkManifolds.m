@@ -2,8 +2,8 @@
 clear; clc; close all;
 defineConstants;
 
-load data/ManCross_IC.mat;
-load data/ManCrossings.mat;
+% load data/ManCross_IC.mat;
+load data/crossings_C3.030.mat;
 
 [mu3B, charT,charL,charM] = cr3bp_getSysParam('earth', 'moon');
 LPts = cr3bp_getEquilibPts(mu3B);
@@ -16,9 +16,9 @@ planePoints = [2 y 0.5; 1.8 y -0.5; 0.8 y -0.5; 0.8 y 0.5];
 fill3(planePoints(:,1), planePoints(:,2), planePoints(:,3), 'g');
 alpha(0.3);
 
-for i = 1:10:max(size(ICs))
-    fprintf('Simulating %03d/%03d...\n', i, max(size(ICs)));
-    o = cr3bp_simNL(ICs(1:6,i), 'earth', 'moon', 'tf', ICs(7,i), 'revTime', 'on');
+for i = 1:10:max(size(crossings))
+    fprintf('Simulating %03d/%03d...\n', i, max(size(crossings)));
+    o = cr3bp_simNL(crossings(1:6,i), 'earth', 'moon', 'tf', 2*pi);
     
     plot3(o.State(:,1), o.State(:,2), o.State(:,3), 'color', col_green, ...
         'linewidth', lineWidth);

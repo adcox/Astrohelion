@@ -11,6 +11,7 @@
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
 
+#include <cstdlib>
 #include <cmath>
 #include <vector>
 
@@ -25,23 +26,35 @@ std::vector<double> createICGrid(tpat_sys_data_cr3bp*, std::vector<double>, doub
 // Function Definitions
 // *********************
 
-int main(){
+/**
+ *	@brief Run a manifold tube for a specified Jacobi value
+ *
+ *	@param C desired Jacobi value
+ */
+int main(int argc, char *argv[]){
+	double C = 0;
+	if(argc > 1)
+		C = atof(argv[1]);
+	else{
+		printf("Please enter a Jacobi constant for the manifold tube!\n");
+		return EXIT_SUCCESS;
+	}
+
 	tpat_sys_data_cr3bp emSys("earth", "moon");
 
-	for(double C = 3.14; C > 3.01; C -= 0.01){
-		printf("Computing manifolds...\n");
-		std::vector<double> crossings = generateManifoldTube(&emSys, C, 400);
-		char crossFile[64];
-		sprintf(crossFile, "data/crossings_C%.3f.mat", C);
-		saveMatrixToFile(crossFile, "crossings", crossings, crossings.size()/6, 6);
+	printf("Computing manifolds...\n");
+	std::vector<double> crossings = generateManifoldTube(&emSys, C, 400);
+	char crossFile[64];
+	sprintf(crossFile, "data/crossings_C%.3f.mat", C);
+	saveMatrixToFile(crossFile, "crossings", crossings, crossings.size()/6, 6);
 
-		printf("Creating Grid of ICs...\n");
-		std::vector<double> allIC = createICGrid(&emSys, crossings, C, 100, 50, 50, 50);
+	printf("Creating Grid of ICs...\n");
+	std::vector<double> allIC = createICGrid(&emSys, crossings, C, 100, 50, 50, 50);
 
-		char gridFile[64];
-		sprintf(gridFile, "data/gridIC_C%.3f.mat", C);
-		saveMatrixToFile(gridFile, "gridICs", allIC, allIC.size()/6, 6);
-	}
+	char gridFile[64];
+	sprintf(gridFile, "data/gridIC_C%.3f.mat", C);
+	saveMatrixToFile(gridFile, "gridICs", allIC, allIC.size()/6, 6);
+
 	return EXIT_SUCCESS;
 }//=========================================================
 

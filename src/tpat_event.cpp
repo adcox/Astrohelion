@@ -72,6 +72,7 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
 		}
 		case JC:
 		case APSE:
+		case DIST:
 			throw tpat_exception("tpat_event::tpat_event: Cannot create this type of event without parameter data...");
 		default: 
 			throw tpat_exception("tpat_event::tpat_event: Creating event with no type");
@@ -129,6 +130,9 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 		case APSE:
 			conType = tpat_constraint::APSE;
 			break;
+		case DIST:
+			conType = tpat_constraint::DIST;
+			break;
 		default: 
 			throw tpat_exception("tpat_event::initEvent: Creating event with no type");
 	}
@@ -152,6 +156,10 @@ void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
 		}
 		case JC: data[0] = params[0]; break;	// JC = specified value
 		case APSE: data[0] = params[0]; break; 	// primary index = specified value
+		case DIST:
+			data[0] = params[0];
+			data[1] = params[1];
+			break;
 		default: break;	// Do nothing
 	}
 	conData.insert(conData.begin(), data, data+6);
@@ -243,14 +251,15 @@ tpat_event::event_t tpat_event::getType() const { return type; }
  */
 const char* tpat_event::getTypeStr() const{
 	switch(type){
-		case NONE: { return "NONE"; break; }
-		case YZ_PLANE: { return "yz-plane"; break; }
-		case XZ_PLANE: { return "xz-plane"; break; }
-		case XY_PLANE: { return "xy-plane"; break; }
-		case CRASH: { return "crash"; break; }
-		case JC: { return "jacobi constant"; break; }
-		case APSE: { return "apse"; break; }
-		default: { return "UNDEFINED!"; break; }
+		case NONE: return "NONE"; break;
+		case YZ_PLANE: return "yz-plane"; break;
+		case XZ_PLANE: return "xz-plane"; break;
+		case XY_PLANE: return "xy-plane"; break;
+		case CRASH: return "crash"; break;
+		case JC: return "jacobi constant"; break;
+		case APSE: return "apse"; break;
+		case DIST: return "distance"; break;
+		default: return "UNDEFINED!"; break;
 	}
 }//========================================
 
@@ -403,6 +412,16 @@ double tpat_event::getDist(const double y[6], double t) const{
 			d = dx*y[3] + dy*y[4] + dz*y[5];
 			break;
 		}
+		case DIST:
+		{
+			std::vector<double> primPos = sysData->getModel()->getPrimPos(t, sysData);
+			int Pix = (int)(conData[0]);
+			double dx = y[0] - primPos[Pix*3 + 0];
+			double dy = y[1] - primPos[Pix*3 + 1];
+			double dz = y[2] - primPos[Pix*3 + 2];
+			d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
+			break;
+		}
 		default:
 			throw tpat_exception("Event type not implemented");
 	}
@@ -427,9 +446,12 @@ int tpat_event::getDir(const double y[6], double t) const{
 		case YZ_PLANE: d = y[0] - state[0]; break;
 		case XZ_PLANE: d = y[1] - state[1]; break;
 		case XY_PLANE: d = y[2] - state[2]; break;
-		case CRASH: d = dist - lastDist; break;
-		case JC: d = dist - lastDist; break;
-		case APSE: d = dist - lastDist; break;
+		case CRASH:
+		case JC:
+		case APSE:
+		case DIST:
+			d = dist - lastDist;
+			break;
 		default: 
 			throw tpat_exception("Event type not implemented");
 	}

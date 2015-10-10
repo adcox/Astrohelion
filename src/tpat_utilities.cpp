@@ -24,9 +24,9 @@
  */
 #include "tpat.hpp"
 
-#include "tpat_utilities.hpp"
-
 #include "tpat_ascii_output.hpp"
+#include "tpat_matrix.hpp"
+#include "tpat_utilities.hpp"
 
 #include "matio.h"
 
@@ -196,30 +196,43 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
  *  @throws tpat_exception if the file cannot be opened, if the variable doesn't exist,
  *  or if the variable contains something other than doubles
  */
-std::vector<double> readMatrixFromMat(const char *filename, const char *varName){
+tpat_matrix readMatrixFromMat(const char *filename, const char *varName){
  
-    mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+    mat_t *matfp = Mat_Open(filename, MAT_ACC_RDONLY);
     if(matfp ==  NULL)
         throw tpat_exception("tpat_utilities::readMatrixFromFile: Could not open data file\n");
 
+    // For debugging, to print a list of all variables in the file
+    // matvar_t *tempvar;
+    // while( (tempvar = Mat_VarReadNextInfo(matfp)) != NULL){
+    //     printf("%s\n", tempvar->name);
+    //     Mat_VarFree(tempvar);
+    //     tempvar = NULL;
+    // }
+
     matvar_t *matvar = Mat_VarRead(matfp, varName);
     if(matvar == NULL){
+        Mat_Close(matfp);
         throw tpat_exception("tpat_utilities::readMatrixFromFile: Could not read variable data");
     }else{
-
-        int dataSize = (matvar->dims[0])*(matvar->dims[1]);
 
         if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
             double *data = static_cast<double *>(matvar->data);
 
             if(data != NULL){
-                std::vector<double> vecData(data, data+dataSize);
+                tpat_matrix mat(matvar->dims[1], matvar->dims[0], data);
                 
                 Mat_VarFree(matvar);
-                return vecData;
+                Mat_Close(matfp);
+                return mat;
             }
+
+             Mat_VarFree(matvar);
+            Mat_Close(matfp);
+            return tpat_matrix(1,1);
         }else{
             Mat_VarFree(matvar);
+            Mat_Close(matfp);
             throw tpat_exception("tpat_utilities::readMatrixFromFile: Incompatible data file: unsupported data type/class");
         }
     }

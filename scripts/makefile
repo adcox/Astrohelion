@@ -83,6 +83,9 @@ manPeri: $(OBJECTS)
 manTubeGridding: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) IceCube_ManTubeForwardProp.cpp -o $(BIN)/$@
 
+propGrid: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) IceCube_IntegrateGridICs.cpp -o $(BIN)/$@
+
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################

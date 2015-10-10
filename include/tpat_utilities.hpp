@@ -41,6 +41,9 @@
 #include <string>
 #include <vector>
 
+// Forward Declarations
+class tpat_matrix;
+
 /**
  *	@brief Class containing useful utility-type functions
  *
@@ -321,7 +324,7 @@ void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, siz
 void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 double readDoubleFromMat(mat_t*, const char*);
-std::vector<double> readMatrixFromMat(const char*, const char*);
+tpat_matrix readMatrixFromMat(const char*, const char*);
 std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);
 
 void waitForUser();

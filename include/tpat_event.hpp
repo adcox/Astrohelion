@@ -77,11 +77,18 @@ class tpat_event{
 		 				 * 	This event can only be supported by dynamic models that have associated
 		 				 * 	system data objects that can be cast to cr3bp system data objects.
 		 				 */
-		 	APSE		/*!< Event occurs when an apse is reached. The <tt>param</tt> array should have
+		 	APSE,		/*!< Event occurs when an apse is reached. The <tt>param</tt> array should have
 		 				 * 	the first element specifiying the primary index (0 for P1, 1 for P2, etc.).
-		 				 * 	The <tt>direction</tt> of the constraint identifies what type of apse, i.e.
+		 				 * 	The <tt>direction</tt> of the event identifies what type of apse, i.e.
 		 				 *	0 will catch all apsides, -1 will catch only apopases, and +1 will catch 
 		 				 *	only periapses
+		 				 */
+		 	DIST 		/*!< Event occurs when a distance from a primary is reached. The <tt>param</tt>
+		 				 * 	array should have two elements: element 0 specifies the primary index, and
+		 				 * 	element 1 specifies the distance from the center of the primary in
+		 				 *	non-dimensional units. The <tt>direction</tt> of the event identifies the
+		 				 *	direction of travel relative to the primary; +1 is away from the primary,
+		 				 *	-1 is towards the primary, and 0 triggers for either.
 		 				 */
 		};
 

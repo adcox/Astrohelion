@@ -96,6 +96,26 @@ bool test_permute(){
 	return perms == sol && perms2 == sol2;
 }//=================================================
 
+bool test_getSpiceID(){
+	bool test1 = getSpiceIDFromName("SUN") == 10;
+	bool test2 = getSpiceIDFromName("SOLAR_SYSTEM_BARYCENTER") == 0;
+	bool test3 = getSpiceIDFromName("PIONEER 12") == -12;
+
+	return test1 && test2 && test3;
+}//=================================================
+
+bool test_getSpiceName(){
+	std::string n1 = getNameFromSpiceID(199);
+	std::string n2 = getNameFromSpiceID(511);
+	std::string n3 = getNameFromSpiceID(-53);
+
+	bool test1 = std::strcmp(n1.c_str(), "MERCURY") == 0;
+	bool test2 = std::strcmp(n2.c_str(), "CARME") == 0;
+	bool test3 = std::strcmp(n3.c_str(), "MARS SURVEYOR 01 ORBITER") == 0;
+
+	return test1 && test2 && test3;
+}//=================================================
+
 int main(void){
 
 	cout << "Test sum<int>: " << (testSumInt() ? PASS : FAIL) << endl;
@@ -105,5 +125,7 @@ int main(void){
 	cout << "Test concatVecs(vector<int>): " << (test_concatVecInt() ? PASS : FAIL) << endl;
 	cout << "Test concatVecs(vector<double>): " << (test_concatVec() ? PASS : FAIL) << endl;
 	cout << "Test permutations(int): " << (test_permute() ? PASS : FAIL) << endl;
+	cout << "Test SpiceIDFromName(): " << (test_getSpiceID() ? PASS : FAIL) << endl;
+	cout << "Test NameFromSpiceID(): " << (test_getSpiceName() ? PASS : FAIL) << endl;
 	return 0;
 }

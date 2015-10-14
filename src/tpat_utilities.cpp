@@ -217,6 +217,8 @@ std::vector<double> readMatrixFromMat(const char *filename, const char *varName)
                 
                 Mat_VarFree(matvar);
                 return vecData;
+            }else{
+                throw tpat_exception("tpat_utilities::readMatrixFromFile: No data stored in this file");
             }
         }else{
             Mat_VarFree(matvar);
@@ -327,7 +329,67 @@ void waitForUser(){
     std::cout << std::endl;
 }//========================================================
 
+/**
+ *  @brief Retrieve a string representing the name of a spacecraft or celestial body
+ *  from its SPICE ID Code
+ *  @details For a list of SPICE IDs, see the 
+ *  <a href="http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/naif_ids.html">NAIF ID Page</a>
+ *  
+ *  @param ID Integer ID Code
+ *  @return A string representation of the body or satellite
+ */
+std::string getNameFromSpiceID(int ID){
+    SpiceInt lenout = 128;  // maximum length of output name
+    SpiceInt code = static_cast<SpiceInt>(ID);
+    SpiceChar name[128];
+    SpiceBoolean found = false;
 
+    bodc2n_c(code, lenout, name, &found);
+
+    if(!found)
+        return "BODY NOT FOUND";
+    else
+        return std::string(name);
+}//============================================
+
+/**
+ *  @brief Get a SPICE ID from a body name
+ *  @details Body names are case insensitive and leading/trailing spaces are not
+ *  important. However, when the name is made up of more than word, they must be
+ *  separated by at least one space.
+ * 
+ *  @param name body name to be translated to a SPICE ID code
+ *  @return a SPICE integer ID code
+ */
+SpiceInt getSpiceIDFromName(const char *name){
+    ConstSpiceChar *name_spice = static_cast<ConstSpiceChar*>(name);
+    SpiceInt code = NAN;
+    SpiceBoolean found = false;
+
+    bodn2c_c(name_spice, &code, &found);
+
+    if(!found)
+        throw tpat_exception("tpat_utilities::getSpiceIDFromName: Could not find a body name from that SPICE ID");
+    else
+        return code;
+}//============================================
+
+/**
+ *  @brief Check to see if SPICE failed; if it did, throw a tpat_exception with
+ *  a custom error message
+ * 
+ *  @param customMsg A message for the tpat_exception object
+ *  @throws tpat_exception if an error occured
+ */
+void checkAndReThrowSpiceErr(const char* customMsg){
+    if(failed_c()){
+        char errMsg[26];
+        getmsg_c("short", 25, errMsg);
+        printErr("Spice Error: %s\n", errMsg);
+        reset_c();  // reset error status
+        throw tpat_exception(customMsg);
+    }
+}//============================================
 
 
 //

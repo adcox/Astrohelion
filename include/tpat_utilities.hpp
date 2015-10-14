@@ -33,7 +33,8 @@
 
 #include "tpat_constants.hpp"
 #include "tpat_exceptions.hpp"
- 
+
+#include <cspice/SpiceZdf.h>	// typedefs for SPICE objects, like SpiceDouble 
 #include "matio.h"
  
 #include <algorithm>
@@ -311,18 +312,21 @@ public:
 	}//==============================================
 };
 
-std::string complexToStr(std::complex<double> num);
+void checkAndReThrowSpiceErr(const char*);
+std::string complexToStr(std::complex<double>);
+std::string getNameFromSpiceID(int);
+SpiceInt getSpiceIDFromName(const char*);
 void printErr(const char*, ...);
 void printWarn(const char*, ...);
 void printVerb(bool, const char*, ...);
 void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
-void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
-void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 double readDoubleFromMat(mat_t*, const char*);
 std::vector<double> readMatrixFromMat(const char*, const char*);
 std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);
+void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
+void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 
 void waitForUser();
 

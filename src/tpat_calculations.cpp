@@ -520,7 +520,7 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
  */
 double dateToEpochTime(const char *date){
     // Load time kernel
-    char timeKernel[] = "/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
+    char timeKernel[] = "/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/libTPAT/share/data_SPICE/naif0010.tls.pc";
     // char timeKernel[] = "/home/andrew/Projects/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
     furnsh_c(timeKernel);
 

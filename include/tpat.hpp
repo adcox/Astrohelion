@@ -36,6 +36,7 @@
 #define H_TPAT_INIT
 
 #include <cspice/SpiceZfc.h>	// prototypes for functions
+#include <cspice/SpiceZdf.h>	// typedefs for SPICE objects, like SpiceDouble
 #include <gsl/gsl_errno.h>
  
 #include <iostream>

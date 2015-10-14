@@ -83,6 +83,9 @@ manPeri: $(OBJECTS)
 manTubeGridding: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) IceCube_ManTubeForwardProp.cpp -o $(BIN)/$@
 
+spEffects: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_LocateSP_ManyBodies.cpp -o $(BIN)/$@
+
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################

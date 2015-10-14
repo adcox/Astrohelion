@@ -227,6 +227,13 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 		throw tpat_exception("tpat_linear_motion_engine::getCR3BPLiss: Cannot compute Lissajous motion for anything other than the collinear points");
 	}
 
+	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
+	// not enforced, but is still useful information
+	for(int i = 0; i < linTraj.getLength(); i++){
+		std::vector<double> state = linTraj.getState(i);
+		linTraj.setJacobi(i, cr3bp_getJacobi(&(state[0]), mu));
+	}
+	
 	return linTraj;
 }//========================================================
 
@@ -503,6 +510,13 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 					throw tpat_exception("Invalid type for triangular points, Case III");
 			}
 		}
+	}
+
+	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
+	// not enforced, but is still useful information
+	for(int i = 0; i < linTraj.getLength(); i++){
+		std::vector<double> state = linTraj.getState(i);
+		linTraj.setJacobi(i, cr3bp_getJacobi(&(state[0]), mu));
 	}
 
 	return linTraj;

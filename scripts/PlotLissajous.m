@@ -20,3 +20,11 @@ zlabel('z, km', 'FontSize', fontSize, 'fontWeight', fontWeight);
 legend('Linearization', 'Non-Linear');
 title('Linear & Non-Linear Lissajous', 'FontSize', fontSize, 'fontWeight', fontWeight);
 set(gca, 'FontSize', fontSize, 'FontWeight', fontWeight);
+
+figure(); hold on;
+plot(liss_lin.Time, liss_lin.Jacobi-3, 'b');
+plot(liss.Time, liss.Jacobi-3, 'r');
+hold off; grid on;
+xlabel('Time, non-dim');
+ylabel('Jacobi Constant - 3');
+set(gca, 'FontSize', fontSize, 'FontWeight', fontWeight);

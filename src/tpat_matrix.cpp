@@ -92,7 +92,6 @@ tpat_matrix::tpat_matrix(gsl_matrix *m){
 	cols = m->size2;
 	initBasicMatrix(rows, cols);
 	gsl_matrix_memcpy(gslMat, m);
-	// gslMat = m;
 }//===================================
 
 /**
@@ -315,6 +314,8 @@ tpat_matrix& tpat_matrix::operator =(const tpat_matrix &b){
 	rows = b.rows;
 	cols = b.cols;
 
+	initBasicMatrix(rows, cols);
+	
 	for(int r = 0; r<rows; r++){
 		for(int c = 0; c<cols; c++){
 			gsl_matrix_set(gslMat, r, c, gsl_matrix_get(b.gslMat, r, c));
@@ -946,6 +947,10 @@ tpat_matrix null_svd(const tpat_matrix &m, double okErr){
  *	@param c number of columns
  */
 void tpat_matrix::initBasicMatrix(int r, int c){
+	if(gslMat != NULL){
+		gsl_matrix_free(gslMat);
+		gslMat = NULL;
+	}
 	gslMat = gsl_matrix_alloc (r, c);
 	rows = r;
 	cols = c;

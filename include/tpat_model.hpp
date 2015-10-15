@@ -217,7 +217,7 @@ protected:
 
 	/** A vector containing all the types of events this model supports */
 	std::vector<tpat_event::event_t> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
-		tpat_event::YZ_PLANE, tpat_event::CRASH, tpat_event::APSE};
+		tpat_event::YZ_PLANE, tpat_event::CRASH, tpat_event::APSE, tpat_event::DIST};
 
 	void copyMe(const tpat_model&);
 };

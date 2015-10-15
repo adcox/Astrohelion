@@ -86,6 +86,9 @@ manTubeGridding: $(OBJECTS)
 spEffects: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_LocateSP_ManyBodies.cpp -o $(BIN)/$@
 
+propGrid: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) IceCube_IntegrateGridICs.cpp -o $(BIN)/$@
+
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################

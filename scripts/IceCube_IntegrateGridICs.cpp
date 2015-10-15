@@ -33,14 +33,12 @@ int main(int argc, char *argv[]){
 	char filename[64];
 	sprintf(filename, "data/gridIC_C%.3f.mat", C);
 	tpat_matrix gridICs = readMatrixFromMat(filename, "gridICs");
-	// gridICs = trans(gridICs);
-	printf("Read matrix of size %d x %d\n", gridICs.getRows(), gridICs.getCols());
 
 	tpat_sys_data_cr3bp emSys("earth", "moon");
 
 	int maxPeriCount = 6;
 	int periCount = 0;
-	double maxLunarDist = 0.4;
+	double maxLunarDist = 0.9;
 
 	tpat_simulation_engine sim(&emSys);
 
@@ -58,12 +56,8 @@ int main(int argc, char *argv[]){
 	allPeri.reserve(8*gridICs.getRows());
 
 	printf("Integrating segements to find periapses...\n");
-	for(int r = 0; r < 5; r++){
-	// for(int r = 0; r < gridICs.getRows(); r++){
+	for(int r = 0; r < gridICs.getRows(); r++){
 		tpat_matrix row = gridICs.getRow(r);
-		printf("row has size %d x %d\n", row.getRows(), row.getCols());
-		printf("ic = [%.4e %.4e %.4e %.4e %.4e %.4e]\n", row.at(0), row.at(1), row.at(2), 
-			row.at(3), row.at(4), row.at(5));
 		std::vector<double> IC(row.getDataPtr(), row.getDataPtr() + gridICs.getCols());
 		double ellapsed = 0;
 

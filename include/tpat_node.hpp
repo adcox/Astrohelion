@@ -28,6 +28,7 @@
  *
  *	Values Stored in ExtraParam:
  *	* 0 	- 	Node time-of-flight
+ *	* 1 	- 	Epoch (BCR4BP)
  */
 class tpat_node : public tpat_arc_step{
 public:

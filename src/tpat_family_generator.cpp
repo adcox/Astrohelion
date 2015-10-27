@@ -185,7 +185,6 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	tpat_family_cr3bp lyapFam(lyapFamFile);
 
 	tpat_family_cr3bp axialFam(lyapFam.getSysData());
-	axialFam.setSortType(tpat_family_cr3bp::SORT_X);
 
 	// Set the simple step size to be negative if the user inputs a negative step-off distance
 	if(step_simple > 0 && initStepSize < 0)
@@ -223,6 +222,32 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	return axialFam;
 }//====================================================
 
+// tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
+// 	tpat_family_cr3bp axialFam(axialFamFile);
+
+// 	tpat_family_cr3bp vertFam(axialFam.getSysDat());
+
+// 	// Try to find bifurcations
+// 	axialFam.sortMembers();
+// 	axialFam.sortEigs();
+// 	std::vector<int> bifs = axialFam.findBifurcations();
+
+// 	if(bifs.size() == 0){
+// 		printErr("Could not locate any bifurcations in the Axial family; exiting...\n");
+// 		return vertFam;
+// 	}
+
+// 	if(bifs.size() > 2){
+// 		printWarn("Axial family has more than 2 bifurcations... may be incorrect and yield unexpected results\n");
+// 	}
+
+// 	std::vector<double> IC = axialFam.getMember(bifs[0]).getIC();
+// 	double period = axialFam.getMember(bifs[0]).getTOF();
+// 	int numNodes = 3;
+// 	std::vector<int> fixStates {5}; // force z-dot to be non-zero
+// 	IC[5] += initStepSize;
+// }//====================================================
+
 /**
  *	@brief Generate a Halo family in the CR3BP
  *
@@ -241,8 +266,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize){
 	tpat_family_cr3bp lyapFam(lyapFamFile);
 	
-	tpat_family_cr3bp haloFam(lyapFam.getSysData());
-	haloFam.setSortType(tpat_family_cr3bp::SORT_X);
+	tpat_family_cr3bp haloFam(lyapFam.getSysData());	
 
 	// Set the simple step size to be negative if the user inputs a negative step-off distance
 	if(step_simple > 0 && initStepSize < 0)
@@ -583,13 +607,20 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 
 			// Compute eigenvalues
 			tpat_matrix mono = perOrbit.getSTM(-1);
+
 			double monoErr = std::abs(1.0 - det(mono));
 			if(monoErr > 1e-5)
 				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 			
+			mono.toCSV("famGen_Mono.csv");
 			std::vector< std::vector<cdouble> > eigData = eig(mono);
 			std::vector<cdouble> eigVals = eigData[0];
 
+			printf("Eigenvalues:\n");
+			for(int i = 0; i < 6; i++){
+				printf("  %s\n", complexToStr(eigVals[i]).c_str());
+			}
+			waitForUser();
 			// Add orbit to family
 			tpat_family_member_cr3bp child(perOrbit);
 			child.setEigVals(eigVals);

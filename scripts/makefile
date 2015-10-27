@@ -74,6 +74,9 @@ famStability: $(OBJECTS)
 generateLiss: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) GenerateLiss.cpp -o $(BIN)/$@
 
+generateLissTom: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) GenerateLiss_TomMethod.cpp -o $(BIN)/$@
+
 prop: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) PropFromScienceOrbits.cpp -o $(BIN)/$@
 	

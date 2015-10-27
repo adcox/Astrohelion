@@ -32,6 +32,8 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
 			gen.setContType(tpat_family_generator::NAT_PARAM);
+			gen.setNumOrbits(20);
+			gen.setTol(1e-14);
 
 			// Run the generator
 			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
@@ -97,7 +99,7 @@ int main(int argc, char *argv[]){
 
 			// Pseudo Arclength (comment out for Natural Parameter)
 			gen.setNumOrbits(3000);
-			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setContType(tpat_family_generator::NAT_PARAM);
 
 			tpat_family_cr3bp L3_Lyap = gen.cr3bp_generateLyap(sysData, 3, 0.01);
 			L3_Lyap.sortEigs();

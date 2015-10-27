@@ -75,8 +75,9 @@ tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
  * 	When adding A + B, if the final state of A and initial state
  *	of B are the same, this algorithm will skip the initial state
  *	of B in the concatenation to avoid duplicating a state. This
- *	method overrides the base class behavior and forces time to be
- *	continuous along the concatentated trajectory
+ *	method also overrides the base class behavior and forces time to be
+ *	continuous along the concatentated trajectory regardless of whether
+ *	the final state of A and in itial state of B are the same
  *
  *	@param rhs the right-hand-side of the addition operation
  *	@return a reference to the concatenated arc_data object

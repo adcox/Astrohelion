@@ -58,7 +58,8 @@ class tpat_family_cr3bp{
 			SORT_VY  	= 4,	//!< Sort by the y velocity component in the IC
 			SORT_VZ 	= 5,	//!< Sort by the z velocity component in the IC
 			SORT_JC 	= 7,	//!< Sort by Jacobi Constant
-			SORT_TOF 	= 6		//!< Sort by Time-Of-Flight
+			SORT_TOF 	= 6,	//!< Sort by Time-Of-Flight
+			SORT_NONE 	= 999	//!< Do not adjust sorting; sortMembers() will do nothing
 		};
 
 		// *structors
@@ -98,7 +99,7 @@ class tpat_family_cr3bp{
 		std::string name = "NULL";						//!< Descriptive name of the family
 		std::vector<tpat_family_member_cr3bp> members;	//!< Contains all family members
 		tpat_sys_data_cr3bp sysData;					//!< Describes the system this family exists in
-		sortVar_t sortType = SORT_X;					//!< Describes the most natural variable to sort family members by
+		sortVar_t sortType = SORT_NONE;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 		double numNodes = 4;		//!< Number of nodes to use when representing a family member

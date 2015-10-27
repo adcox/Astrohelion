@@ -110,6 +110,9 @@ nodesetTest: $(OBJECTS)
 simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
 
+sortEigTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sortEigs.cpp -o $(BIN)/$@
+
 spTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_SPTargetting.cpp -o $(BIN)/$@
 

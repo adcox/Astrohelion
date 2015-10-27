@@ -568,14 +568,17 @@ double det(const tpat_matrix &m){
 	if(m.rows != m.cols){
 		throw tpat_linalg_err("Cannot take determinant of non-square matrix");
 	}
+	// Copy the matrix so the original isn't altered
+	tpat_matrix temp = m;
+
 	int permSign;
-	gsl_permutation *perm = gsl_permutation_alloc(m.rows);
-	int status = gsl_linalg_LU_decomp(m.gslMat, perm, &permSign);
+	gsl_permutation *perm = gsl_permutation_alloc(temp.rows);
+	int status = gsl_linalg_LU_decomp(temp.gslMat, perm, &permSign);
 	if(status){
 		printErr("tpat_matrix::det: GSL ERR: %s\n", gsl_strerror(status));
 		throw tpat_linalg_err("Unable to perform LU decomp on matrix");
 	}
-	double ans = gsl_linalg_LU_det(m.gslMat, permSign);
+	double ans = gsl_linalg_LU_det(temp.gslMat, permSign);
 	gsl_permutation_free(perm);
 
 	return ans;
@@ -593,6 +596,9 @@ std::vector< std::vector<cdouble> > eig(const tpat_matrix &m){
 	if(m.rows != m.cols)
 		throw tpat_sizeMismatch("Cannot compute eigenvalues and vectors of non-square matrix");
 
+	// Copy the input matrix so it isn't altered
+	tpat_matrix temp = m;
+
 	// Space for eigenvalues and eigenvectors
 	gsl_vector_complex *eval = gsl_vector_complex_alloc (m.rows);
   	gsl_matrix_complex *evec = gsl_matrix_complex_alloc (m.rows, m.cols);
@@ -601,7 +607,7 @@ std::vector< std::vector<cdouble> > eig(const tpat_matrix &m){
   	gsl_eigen_nonsymmv_workspace * w = gsl_eigen_nonsymmv_alloc (m.rows);
   
   	// Compute eigenvalues of non-symmetric, real matrix
-  	gsl_eigen_nonsymmv (m.gslMat, eval, evec, w);
+  	gsl_eigen_nonsymmv (temp.gslMat, eval, evec, w);
 
   	std::vector<cdouble> eigenVals;
   	std::vector<cdouble> eigenVecs;
@@ -620,7 +626,7 @@ std::vector< std::vector<cdouble> > eig(const tpat_matrix &m){
   	eigData.push_back(eigenVecs);
 
   	// Free memory
-  	gsl_eigen_nonsymmv_free (w);
+  	gsl_eigen_nonsymmv_free(w);
   	gsl_vector_complex_free(eval);
   	gsl_matrix_complex_free(evec);
 
@@ -638,16 +644,19 @@ tpat_matrix inv(const tpat_matrix& m){
 	if(m.rows != m.cols)
 		throw tpat_linalg_err("Cannot invert non-square matrix");
 
+	// Copy input matrix to avoid changing it
+	tpat_matrix temp = m;
+
 	gsl_permutation *perm = gsl_permutation_alloc(m.rows);
 	int permSign = 0;
 
-	int status = gsl_linalg_LU_decomp(m.gslMat, perm, &permSign);
+	int status = gsl_linalg_LU_decomp(temp.gslMat, perm, &permSign);
 	if(status){
 		printErr("tpat_matrix::inv GSL ERR: %s\n", gsl_strerror(status));
 		throw tpat_linalg_err("Unable to decompose matrix into L and U");
 	}
 	gsl_matrix *invMat = gsl_matrix_alloc(m.rows, m.cols);
-	status = gsl_linalg_LU_invert(m.gslMat, perm, invMat);
+	status = gsl_linalg_LU_invert(temp.gslMat, perm, invMat);
 	if(status){
 		printErr("tpat_matrix::inv GSL ERR: %s\n", gsl_strerror(status));
 		throw tpat_linalg_err("Unable to invert LU decomposition");

@@ -72,10 +72,15 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_arc_data &a) : tpat_traj(a){
  *
  *	This algorithm will concatenate trajectories integrated from each node in 
  *	the nodeset. It does not check to make sure the arcs are continuous; that
- *	is up to you
+ *	is up to you. The trajectory is constructed via a simulation engine that ignores
+ *	crashes as we assume the initial nodeset has been propagated to either ignore
+ *	or avoid the primaries; will not challenge that behavior. Each node is integrated
+ *	for the associated time-of-flight and added (via operator +()) to a trajectory object.
  *
  *	@param nodes a nodeset
  *	@return a trajectory formed from the integrated nodeset
+ *	
+ *	@see tpat_traj::operator +()
  */
 tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
 	tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp*>(nodes.getSysData());

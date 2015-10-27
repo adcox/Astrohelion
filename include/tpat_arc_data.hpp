@@ -32,6 +32,41 @@ class tpat_matrix;
 
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
+ *	
+ *	The arc_data object specifies default and mandatory behaviors for all derivative
+ *	classes (i.e. tpat_traj and tpat_nodeset). All variables and data for an arc or 
+ *	one of its derivative classes are declared and stored here; in other words, no 
+ *	derivative classes declare class-specific data objects. This architecture has been
+ *	chosen to facilitate easy casting between model-specific derivative classes with
+ *	the added bonus of being able to cast easily between, say, a trajectory and a
+ *	nodeset.
+ *	
+ *	This class contains all information about any trajectory or nodeset in a few objects:
+ *	* steps - a vector of tpat_arc_step objects, each of which contains information about
+ *		the state, acceleration, STM, any any other parameter values at one single step
+ *	* sysData - a pointer to a system data object that describes the system this arc
+ *		has been generated in
+ *	* numExtraParam and extraParamRowSize describe the number of extra parameters and 
+ *		the number of elements in each parameter; this various for different dynamical
+ *		model-specific derivative classes
+ *	* tol - The maximum numerical tolerance with which the data in this object has been 
+ *		computed
+ *	
+ *	The following behavior is mandatory for all derivative classes:
+ *	* Ability to add two arcs together via operator +()
+ *	* Ability to save to a matlab file via saveToMat()
+ *	* Ability to display a textual representation of the object via print()
+ *	
+ *	Additionally, the following behavior is defined for all derivative classes, though
+ *	they may override the default:
+ *	* Assignment operator
+ *	* Access to position and velocity values at each step via getState()
+ *	* Access to acceleration values at each step via getAccel()
+ *	* Access to any extra parameters that evolve each step via getExtraParam()
+ *	* Access to the STM at each step via getSTM()
+ *	* Access to individual step objects via getStep()
+ *	* Access to the system data object pointer that describes the system this arc was integrated in
+ *	
  */
 class tpat_arc_data{
 
@@ -57,6 +92,10 @@ public:
 	double getTol() const;
 
 	void appendStep(tpat_arc_step);
+	void setAccel(int, std::vector<double>);
+	void setState(int, std::vector<double>);
+	void setSTM(int, tpat_matrix);
+
 	void setTol(double);
 
 	// Utility Functions

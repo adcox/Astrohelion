@@ -80,7 +80,13 @@ tpat_arc_data& tpat_arc_data::operator =(const tpat_arc_data &d){
  *
  * 	When adding A + B, if the final state of A and initial state
  *	of B are the same, this algorithm will skip the initial state
- *	of B in the concatenation to avoid duplicating a node or state
+ *	of B in the concatenation to avoid duplicating a node or state.
+ *	
+ *	The process begins by creating a new arc_data object and setting
+ *	it equal to A. B is then appended to the new object and the STM's
+ *	from B are updated to be continuous with those found in A. Note 
+ *	that if A and B are not conitnuous, the new STMs will be incorrect
+ *	and will have no practical meaning
  *
  *	@param rhs the right-hand-side of the addition operation
  *	@return a reference to the concatenated arc_data object
@@ -240,6 +246,50 @@ double tpat_arc_data::getTol() const { return tol; }
  *	@brief Append a step to the trajectory
  */
 void tpat_arc_data::appendStep(tpat_arc_step s){ steps.push_back(s); }
+
+/**
+ *  @brief Set the acceleration vector for a specific step/node
+ * 
+ *  @param ix step index; if it is negative, the index will count backwards
+ *  fro the end of the arc
+ *  @param accelVec 3-element (at least) vector of non-dimensional acceleration 
+ *  values (ax, ay, az, ...); only the first three are used
+ */
+void tpat_arc_data::setAccel(int ix, std::vector<double> accelVec){
+	if(ix < 0)
+		ix += steps.size();
+
+	steps[ix].setAccel(accelVec);
+}//=================================================
+
+/**
+ *  @brief Set the state vector for a specific step/node
+ * 
+ *  @param ix step index; if it is negative, the index will count backwards
+ *  fro the end of the arc
+ *  @param stateVec 6-element (at least) vector of non-dimensional state 
+ *  values (x, y, z, vx, vy, vz, ...); only the first six are used
+ */
+void tpat_arc_data::setState(int ix, std::vector<double> stateVec){
+	if(ix < 0)
+		ix += steps.size();
+
+	steps[ix].setPosVelState(stateVec);
+}//=================================================
+
+/**
+ *  @brief Set the STM for a specific step/node
+ * 
+ *  @param ix step index; if it is negative, the index will count backwards
+ *  fro the end of the arc
+ *  @param stm a 6x6 matrix containing the STM
+ */
+void tpat_arc_data::setSTM(int ix, tpat_matrix stm){
+	if(ix < 0)
+		ix += steps.size();
+
+	steps[ix].setSTM(stm);
+}//=================================================
 
 /**
  *	@brief Set the computational tolerance for this data object

@@ -1,5 +1,8 @@
 /**
 *	Test the matrix object and its operations
+*	
+*	Where applicable, each test also makes sure the input matrix is
+*	not changed by the operation
 */
 #include "tpat_matrix.hpp"
 
@@ -48,22 +51,31 @@ bool test_matMult(tpat_matrix I, tpat_matrix B, tpat_matrix C){
 	catch(...){ throw; }
 
 	// Test simple identity matrix multiplication
+	tpat_matrix oldI = I;
 	tpat_matrix Q = I*I;
 	if(Q != I)
 		return false;
+	if(oldI != I)
+		return false;
 
 	// Test different 2x2 multiplication
+	tpat_matrix oldB = B;
 	Q = B*B;
 	double sol[] = {1,2,0,1};
 	tpat_matrix Sol(B.getRows(), B.getCols(), sol);
 	if(Q != Sol)
 		return false;
+	if(oldB != B)
+		return false;
 
 	// Test 2x2 * 2x3 multiplication
+	tpat_matrix oldC = C;
 	tpat_matrix Q2 = B*C;
 	double sol2[] = {5,7,9,4,5,6};
 	tpat_matrix Sol2(B.getRows(), C.getCols(), sol2);
 	if(Q2 != Sol2)
+		return false;
+	if(oldB != B || oldC != C)
 		return false;
 
 	return true;
@@ -89,14 +101,18 @@ bool test_matMult_inPlace(tpat_matrix I, tpat_matrix B, tpat_matrix C){
 		return false;
 
 	return true;
-}
+}//===========================================
 
 bool test_multScalar(tpat_matrix I){
 	double sol[] = {5,0,0,5};
 	tpat_matrix Sol(I_r, I_c, sol);
+	tpat_matrix oldI = I;
 
 	tpat_matrix Q = I*5;
 	if(Q != Sol)
+		return false;
+
+	if(oldI != I)
 		return false;
 
 	return true;
@@ -118,17 +134,26 @@ bool test_multScalar_inPlace(){
 bool test_matAdd(tpat_matrix B){
 	double sol[] = {2,2,0,2};
 	tpat_matrix Sol(2,2,sol);
+	tpat_matrix oldB = B;
+
 	tpat_matrix Q = B + B;
 
 	if(Q != Sol)
+		return false;
+
+	if(B != oldB)
 		return false;
 
 	return true;
 }//===========================================
 
 bool test_matSubtract(tpat_matrix C){
+	tpat_matrix oldC = C;
 	tpat_matrix Zeros(2,3);
 	if(C - C != Zeros)
+		return false;
+
+	if(oldC != C)
 		return false;
 
 	return true;
@@ -138,11 +163,14 @@ bool test_plusEquals(){
 	double d[] = {1,2,3,4};
 	tpat_matrix D = tpat_matrix(2,2,d);
 	tpat_matrix I = tpat_matrix::I(2);
-
+	tpat_matrix oldI = I;
 	D+=I;
 
 	double sol[] = {2,2,3,5};
 	tpat_matrix Sol(2,2,sol);
+
+	if(oldI != I)
+		return false;
 
 	return D == Sol;
 }//===========================================
@@ -185,25 +213,42 @@ bool test_getCol(tpat_matrix C){
 }//===========================================
 
 bool test_trans(tpat_matrix C){
+	tpat_matrix oldC = C;
 	tpat_matrix C_trans(3,2, C_data_trans);
-	return trans(C) == C_trans;
+	tpat_matrix ans = trans(C);
+
+	if(oldC != C)
+		return false;
+
+	return ans == C_trans;
 }//===========================================
 
 bool test_norm(){
 	double data[] = {1,2,3,4,5};
 	tpat_matrix Q(1,5, data);
+	tpat_matrix oldQ = Q;
+	double ans = norm(Q);
 
-	return norm(Q) == sqrt(1 + 4 + 9 + 16 + 25);
+	if(oldQ != Q)
+		return false;
+
+	return ans == sqrt(1 + 4 + 9 + 16 + 25);
 }//===========================================
 
 bool test_det(){
 	double data[] = {1,2,3,4};
 	tpat_matrix Q(2,2,data);
+	tpat_matrix oldQ = Q;
+
 	bool test1 = det(Q) == -2;
 
 	double data3[] = {1,2,0,0};
 	tpat_matrix S(2,2,data3);
+	tpat_matrix oldS = S;
 	bool test3 = det(S) == 0;
+
+	if(oldQ != Q || oldS != S)
+		return false;
 
 	return test1 && test3;
 }//===========================================
@@ -225,17 +270,27 @@ bool test_cross(){
 	tpat_matrix sol(1,3, sol_data);
 	tpat_matrix lhs(1,3, lhs_data);
 	tpat_matrix rhs(3,1, rhs_data);
+	tpat_matrix old_lhs = lhs;
+	tpat_matrix old_rhs = rhs;
+	tpat_matrix ans = cross(lhs, rhs);
 
-	return sol == cross(lhs, rhs);
+	if(old_lhs != lhs || old_rhs != rhs)
+		return false;
+
+	return sol == ans;
 }//===========================================
 
 bool test_eig(){
 	double D_data[] = {1,2,3,0,4,5,0,0,6};
 	tpat_matrix D(3,3,D_data);
+	tpat_matrix oldD = D;
 
 	std::vector< std::vector<cdouble> > eigData = eig(D);
 	std::vector<cdouble> vals = eigData[0];
 	std::vector<cdouble> vecs = eigData[1];
+
+	if(oldD != D)
+		return false;
 
 	if(vals.size() != 3)
 		return false;
@@ -264,6 +319,7 @@ bool test_eig(){
 	// Now check a matrix with complex eigenvalues and eigenvectors
 	double E_data[] = {1,2,3,4,5,6,1,5,8};
 	tpat_matrix E(3,3,E_data);
+	tpat_matrix oldE = E;
 
 	vals.clear();
 	vecs.clear();
@@ -271,6 +327,9 @@ bool test_eig(){
 	eigData = eig(E);
 	vals = eigData[0];
 	vecs = eigData[1];
+
+	if(oldE != E)
+		return false;
 
 	if(vals.size() != 3)
 		return false;
@@ -308,6 +367,7 @@ bool test_rank(){
 	double okErr = 1e-14;
 	double Z_data[] = {1,2,3,4,5,6,7,8,9};
 	tpat_matrix Z(3,3,Z_data);
+	tpat_matrix oldZ = Z;
 	bool test1 = mat_rank(Z, okErr) == 2;
 
 	if(!test1)
@@ -315,6 +375,7 @@ bool test_rank(){
 
 	double W_data[] = {1,2,3,3,2,1,5,8,2};
 	tpat_matrix W(3,3,W_data);
+	tpat_matrix oldW = W;
 	bool test2 = mat_rank(W, okErr) == 3;
 
 	if(!test2)
@@ -322,6 +383,7 @@ bool test_rank(){
 
 	double X_data[] = {1,2,3,4,5,6,7,8};
 	tpat_matrix X(2,4,X_data);
+	tpat_matrix oldX = X;
 	bool test3 = mat_rank(X, okErr) == 2;
 
 	if(!test3)
@@ -329,10 +391,14 @@ bool test_rank(){
 
 	double V_data[] = {1,2,2,4,4,8};
 	tpat_matrix V(3,2,V_data);
+	tpat_matrix oldV = V;
 	bool test4 = mat_rank(V, okErr) == 1;
 
 	if(!test4)
 		printf("Test 4: Rank should be 1, reported as %d\n", mat_rank(V, okErr));
+
+	if(oldZ != Z || oldW != W || oldX != X || oldV != V)
+		return false;
 
 	return test1 && test2 && test3 && test4;
 }//===========================================
@@ -342,6 +408,7 @@ bool test_null(){
 	// Test with rows > cols, 1D nullspace
 	double Z_data[] = {1,0,0,0,0,0};
 	tpat_matrix Z(3,2,Z_data);
+	tpat_matrix oldZ = Z;
 	double N_data[] = {0,1};
 	tpat_matrix N_ans(2,1,N_data);
 	tpat_matrix Z_null = null_svd(Z);
@@ -355,16 +422,21 @@ bool test_null(){
 	// Test with rows = cols, no nullspace
 	double X_data[] = {1,2,3,4};
 	tpat_matrix X(2,2,X_data);
+	tpat_matrix oldX = X;
 	tpat_matrix N = null_svd(X);
 	bool test3 = (N.getCols() == 1 && N.getRows() == 1 && N.at(0,0) == 0);
 
 	// Test with rows < cols, 2D nullspace
 	double Y_data[] = {1,0,0,0,0,0};
 	tpat_matrix Y(2,3, Y_data);
+	tpat_matrix oldY = Y;
 	double N3_data[] = {0,0,1,0,0,1};
 	tpat_matrix N_ans3(3,2, N3_data);
 	tpat_matrix N3 = null_svd(Y);
 	bool test4 = N3 == N_ans3;
+
+	if(oldZ != Z || oldZ != Z || oldY != Y)
+		return false;
 
 	return test1 && test2 && test3 && test4;
 }

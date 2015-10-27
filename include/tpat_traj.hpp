@@ -30,17 +30,24 @@ class tpat_nodeset;
 
 /**
  *	@brief Contains information about a series of continuous states along a trajectory.
- *
- *	This object holds information about a trajectory in one package to
- *	make passing the data between engines and analysis tools symple.
- *	This class acts as a template for derivative classes that apply
- *	to specific systems. For example, the CR3BP has a specific
- *	trajectory class which includes additional information specific
- *	to the CR3BP, like Jacobi constant.
- *
+ *	
+ *	The trajecotory object holds information about a trajectory in one package
+ *	to make passing the data between engines and analysis tools simple. This class acts
+ *	as a base class for model-specific trajectory objects. This general object stores the
+ *	following information about a trajectory:
+ *	* A vector of trajectory steps, each of which contains:
+ *		* State  (x, y, z, vx, vy, vz [non-dimensional])
+ *		* Accleration (ax, ay, az [non-dimensional])
+ *		* State Transition Matrix (6x6 [non-dimensional])
+ *		* Time since first step [non-dimensional]
+ * 	* A system data object that describes the system the trajectory was integrated in
+ * 	* A tolerance value that describes the minimum numerical accuracy used to create the trajectory
+ * 	
  *	@author Andrew Cox
  *	@version August 29, 2015
  *	@copyright GNU GPL v3.0
+ *	
+ *	@see tpat_arc_data
  */
 class tpat_traj : public tpat_arc_data{
 

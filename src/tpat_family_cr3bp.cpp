@@ -213,6 +213,7 @@ const char* tpat_family_cr3bp::getSortTypeStr() const{
 		case SORT_VZ: return "SORT_VZ"; break;
 		case SORT_JC: return "SORT_JC"; break;
 		case SORT_TOF: return "SORT_TOF"; break;
+		case SORT_NONE: return "NO SORTING"; break;
 		default: return "Unrecognized Type!";
 	}
 }//===========================================
@@ -594,6 +595,10 @@ void tpat_family_cr3bp::sortEigs(){
  *	will likely be wonky.
  */
 void tpat_family_cr3bp::sortMembers(){
+	// Don't do any sorting if the sort type is NONE
+	if(sortType == SORT_NONE)
+		return;
+
 	// Create an array containing the independent variable from each family member
 	std::vector<double> dataToSort;
 	switch(sortType){

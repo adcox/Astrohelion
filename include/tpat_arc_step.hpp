@@ -28,6 +28,23 @@ class tpat_matrix;
 
 /**
  *	@brief Base class that represents a single integration step or node
+ *	
+ *	This class defines the default behavior for either of the more specific
+ *	step types, tpat_traj_step and tpat_node. At their most basic level, both
+ *	objects store the same information, hence this class defines all data objects
+ *	and derivative classes provide only access functions to the data for methods
+ *	more specific to their applications.
+ *	
+ *	An arc step stores the following data:
+ *	* State (x, y, z, vx, vy, vz [non-dimensional]), accessed via getPosVelState()
+ *	* Acceleration (ax, ay, az [non-dimensional]), accessed via getAccel()
+ *	* Constraints (only applies to tpat_node), accessed via getConstraints()
+ *	* State Transition Matrix (6x6), accessed via getSTM() or getSTMElements()
+ *	* Extra Parameters, which may be useful for model-specific derivative classes.
+ *	  	Parameters like Jacobi Constant, epoch, or mass are stored here
+ *	* Flags - a vector of booleans that may be used as status variables. The 
+ *		tpat_node class uses this data object to store information about velocity
+ *		continuity
  */
 class tpat_arc_step{
 

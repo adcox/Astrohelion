@@ -55,6 +55,8 @@ public:
 
 	// Operators
 
+	// Set and Get 
+	// TODO: Add method to get Jacobi constant?
 };
 
 #endif

@@ -40,16 +40,22 @@ int main(int argc, char *argv[]){
 		return EXIT_SUCCESS;
 	}
 
+	int numManifolds = 400;
+	int numXSteps = 25;//100;
+	int numZSteps = 25;//50;
+	int numVxSteps = 25;//50;
+	int numVzSteps = 25;//50;
+
 	tpat_sys_data_cr3bp emSys("earth", "moon");
 
 	printf("Computing manifolds...\n");
-	std::vector<double> crossings = generateManifoldTube(&emSys, C, 400);
+	std::vector<double> crossings = generateManifoldTube(&emSys, C, numManifolds);
 	char crossFile[64];
 	sprintf(crossFile, "data/crossings_C%.3f.mat", C);
 	saveMatrixToFile(crossFile, "crossings", crossings, crossings.size()/6, 6);
 
 	printf("Creating Grid of ICs...\n");
-	std::vector<double> allIC = createICGrid(&emSys, crossings, C, 100, 50, 50, 50);
+	std::vector<double> allIC = createICGrid(&emSys, crossings, C, numXSteps, numZSteps, numVxSteps, numVzSteps);
 
 	char gridFile[64];
 	sprintf(gridFile, "data/gridIC_C%.3f.mat", C);

@@ -219,11 +219,12 @@ tpat_matrix readMatrixFromMat(const char *filename, const char *varName){
         if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
             double *data = static_cast<double *>(matvar->data);
 
+            tpat_matrix mat(1,1);
             if(data != NULL){
-                tpat_matrix mat(matvar->dims[1], matvar->dims[0], data);
+                mat = tpat_matrix(matvar->dims[1], matvar->dims[0], data);
                 
                 Mat_VarFree(matvar);
-                return vecData;
+                return mat;
             }else{
                 Mat_Close(matfp);
                 return mat;

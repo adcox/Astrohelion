@@ -3,7 +3,7 @@ clear; clc; close all;
 defineConstants;
 
 % load data/ManCross_IC.mat;
-load data/crossings_C3.030.mat;
+load data/manifoldTubeGridding/crossings_C3.150.mat;
 
 [mu3B, charT,charL,charM] = cr3bp_getSysParam('earth', 'moon');
 LPts = cr3bp_getEquilibPts(mu3B);

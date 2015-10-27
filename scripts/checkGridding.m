@@ -2,8 +2,8 @@
 clear; clc; close all;
 defineConstants;
 
-load data/crossings_C3.150.mat;     % map crossings
-load  data/gridIC_C3.150.mat;      % Gridded ICs
+load data/manifoldTubeGridding/crossings_C3.150.mat;     % map crossings
+load  data/manifoldTubeGridding/gridIC_C3.150.mat;      % Gridded ICs
 
 tubeMarker = '-k';
 gridMarker = 'ob';

@@ -2,9 +2,9 @@
 clear; clc; close all;
 defineConstants;
 
-load data/crossings_C3.020.mat;     % map crossings
-load  data/gridIC_C3.020.mat;       % Gridded ICs
-load data/apses_C3.020.mat;         % Recorded Apses
+load data/manifoldTubeGridding/crossings_C3.150.mat;     % map crossings
+load  data/manifoldTubeGridding/gridIC_C3.150.mat;       % Gridded ICs
+% load data/apses_C3.020.mat;         % Recorded Apses
 
 tubeMarker = '-k';
 gridMarker = 'ob';

@@ -1707,7 +1707,7 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
     tpat_matrix posEM(1,3, &(state_EM[0]));
     tpat_matrix velEM(1,3, &(state_EM[0])+3);
 
-    // Rotate the position into SE frameand shift basepoint to SE barycenter (EM working frame)
+    // Rotate the position into SE frame and shift basepoint to SE barycenter (EM working frame)
     tpat_matrix posSE = posEM*trans(DCM_L2E)*trans(DCM_I2L)*DCM_I2S + posShift*charLS/charLE;
 
     // Angular velocity of SE frame in EM frame (working frame = EM)

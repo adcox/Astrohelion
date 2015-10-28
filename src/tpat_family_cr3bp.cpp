@@ -149,7 +149,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByJacobi(doubl
  */
 std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByTOF(double tof) const{
 	std::vector<double> allTOF;
-	for(int n = 0; n < ((int)members.size()); n++){
+	for(size_t n = 0; n < members.size(); n++){
 		allTOF.push_back(members[n].getTOF());
 	}
 
@@ -166,11 +166,11 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByTOF(double t
  */
 std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByStateVar(double value, int ix) const{
 	if(ix < 0 || ix > 5){
-		throw tpat_exception("Invalid state index; out of range");
+		throw tpat_exception("tpat_family_cr3bp::getMemberByStateVar: Invalid state index; out of range");
 	}
 
 	std::vector<double> allVals;
-	for(int n = 0; n < ((int)members.size()); n++){
+	for(size_t n = 0; n < members.size(); n++){
 		allVals.push_back(members[n].getIC()[ix]);
 	}
 
@@ -687,11 +687,11 @@ void tpat_family_cr3bp::saveMembers(mat_t *matFile){
 				else if(j == 7)
 					allData[j*members.size() + i] = members[i].getJacobi();
 				else if(j == 8)
-					allData[j*members.size() + i] = members[i].getXWidth();
+					allData[j*members.size() + i] = members[i].getXAmplitude();
 				else if(j == 9)
-					allData[j*members.size() + i] = members[i].getYWidth();
+					allData[j*members.size() + i] = members[i].getYAmplitude();
 				else
-					allData[j*members.size() + i] = members[i].getZWidth();
+					allData[j*members.size() + i] = members[i].getZAmplitude();
 			}
 		}
 

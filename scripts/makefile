@@ -65,6 +65,8 @@ all: prop
 	
 list:
 	@- echo "This make file can create the following executables:"
+	@- echo "  compEMFams - Compute families of common Earth-Moon periodic orbit families"
+	@- echo "  compSEFams - Compute families of common Sun-Earth periodic orbit families"
 	@- echo "  famStability"
 	@- echo "  generateLiss - Generate a Lissajous from the linear approximation"
 	@- echo "  generateLissTom - Generate a Lissajous via Tom's Method"
@@ -76,6 +78,12 @@ list:
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
+
+compEMFams: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) computeEarthMoonFams.cpp -o $(BIN)/$@
+
+compSEFams: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) computeSunEarthFams.cpp -o $(BIN)/$@
 
 famStability: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) Fam_PeriStability.cpp -o $(BIN)/$@

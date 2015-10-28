@@ -39,19 +39,19 @@
  *	@param ic a 6-element vector describing the initial state on the trajectory (non-dim)
  *	@param tof the time-of-flight along the trajectory (non-dim)
  *	@param jc the Jacobi Constant on this trajectory
- *	@param xWid the maximum amplitude in the x-direction (non-dim)
- *	@param yWid the maximum amplitude in the y-direction (non-dim)
- *	@param zWid the maximum amplitude in the z-direction (non-dim)
+ *	@param xAmp the maximum amplitude in the x-direction (non-dim)
+ *	@param yAmp the maximum amplitude in the y-direction (non-dim)
+ *	@param zAmp the maximum amplitude in the z-direction (non-dim)
  */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
-	double jc, double xWid, double yWid, double zWid){
+	double jc, double xAmp, double yAmp, double zAmp){
 	IC.clear();
 	IC.insert(IC.begin(), ic, ic+6);
 	TOF = tof;
 	JC = jc;
-	xWidth = xWid;
-	yWidth = yWid;
-	zWidth = zWid;
+	xAmplitude = xAmp;
+	yAmplitude = yAmp;
+	zAmplitude = zAmp;
 }//====================================================
 
 /**
@@ -64,12 +64,21 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
 	JC = traj.getJacobi(0);
 
 	std::vector<double> x = traj.getCoord(0);
-	std::vector<double> y = traj.getCoord(0);
-	std::vector<double> z = traj.getCoord(0);
+	std::vector<double> y = traj.getCoord(1);
+	std::vector<double> z = traj.getCoord(2);
 
-	xWidth = *std::max_element(x.begin(), x.end()) - *std::min_element(x.begin(), x.end());
-	yWidth = *std::max_element(y.begin(), y.end()) - *std::min_element(y.begin(), y.end());
-	zWidth = *std::max_element(z.begin(), z.end()) - *std::min_element(z.begin(), z.end());
+	double xMax = *std::max_element(x.begin(), x.end());
+	double xMin = *std::min_element(x.begin(), x.end());
+	double yMax = *std::max_element(y.begin(), y.end());
+	double yMin = *std::min_element(y.begin(), y.end());
+	double zMax = *std::max_element(z.begin(), z.end());
+	double zMin = *std::min_element(z.begin(), z.end());
+
+	xAmplitude = std::max(xMax, -1*xMin);
+	yAmplitude = std::max(yMax, -1*yMin);
+	zAmplitude = std::max(zMax, -1*zMin);
+
+	// printf("\nxAmp = %.4f\nyAmp = %.4f\nzAmp = %.4f\n", xAmplitude, yAmplitude, zAmplitude);
 }//===================================================
 
 /**
@@ -128,17 +137,17 @@ double tpat_family_member_cr3bp::getJacobi() const { return JC; }
 /**
  *	@brief Retrieve the maximum amplitude in the x-direction
  */
-double tpat_family_member_cr3bp::getXWidth() const { return xWidth; }
+double tpat_family_member_cr3bp::getXAmplitude() const { return xAmplitude; }
 
 /**
  *	@brief Retrieve the maximum amplitude in the y-direction
  */
-double tpat_family_member_cr3bp::getYWidth() const { return yWidth; }
+double tpat_family_member_cr3bp::getYAmplitude() const { return yAmplitude; }
 
 /**
  *	@brief Retrieve the maximum amplitude in the z-direction
  */
-double tpat_family_member_cr3bp::getZWidth() const { return zWidth; }
+double tpat_family_member_cr3bp::getZAmplitude() const { return zAmplitude; }
 
 /**
  *	@brief Set the eigenvalues for this orbit
@@ -177,17 +186,17 @@ void tpat_family_member_cr3bp::setJacobi( double jc ){ JC = jc; }
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_family_member_cr3bp::setXWidth(double w){ xWidth = w; }
+void tpat_family_member_cr3bp::setXAmplitude(double w){ xAmplitude = w; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_family_member_cr3bp::setYWidth(double w){ yWidth = w; }
+void tpat_family_member_cr3bp::setYAmplitude(double w){ yAmplitude = w; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_family_member_cr3bp::setZWidth(double w){ zWidth = w; }
+void tpat_family_member_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
 
 //-----------------------------------------------------
 // 		Utility Functions
@@ -202,7 +211,7 @@ void tpat_family_member_cr3bp::copyMe(const tpat_family_member_cr3bp& mem){
 	IC = mem.IC;
 	JC = mem.JC;
 	TOF = mem.TOF;
-	xWidth = mem.xWidth;
-	yWidth = mem.yWidth;
-	zWidth = mem.zWidth;
+	xAmplitude = mem.xAmplitude;
+	yAmplitude = mem.yAmplitude;
+	zAmplitude = mem.zAmplitude;
 }//===================================================

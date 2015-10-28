@@ -32,6 +32,10 @@ class tpat_traj_cr3bp;
 
 /**
  *	@brief A data object to store information about a family member
+ *	
+ *	The purpose of this object is to store just enough information to re-create the
+ *	orbit using the simulation engine with additional variables to describe the orbit
+ *	for categorization purposes (e.g. the getMemberBy___ functions in tpat_family_cr3bp)
  */
 class tpat_family_member_cr3bp{
 	public:
@@ -47,17 +51,17 @@ class tpat_family_member_cr3bp{
 		std::vector<double> getIC() const;
 		double getTOF() const;
 		double getJacobi() const; 
-		double getXWidth() const;
-		double getYWidth() const;
-		double getZWidth() const;
+		double getXAmplitude() const;
+		double getYAmplitude() const;
+		double getZAmplitude() const;
 
 		void setEigVals(std::vector<cdouble>);
 		void setIC(std::vector<double>);
 		void setJacobi(double);
 		void setTOF(double);
-		void setXWidth(double);
-		void setYWidth(double);
-		void setZWidth(double);
+		void setXAmplitude(double);
+		void setYAmplitude(double);
+		void setZAmplitude(double);
 
 	protected:
 		/** Vector of 6 eigenvalues; initialized to NAN by default */
@@ -65,9 +69,9 @@ class tpat_family_member_cr3bp{
 		std::vector<double> IC {0,0,0,0,0,0};	//!< Initial state for this trajectory, non-dim units
 		double TOF = NAN;			//!< Time of flight for traj., non-dim units
 		double JC = NAN;			//!< Jacobi constant for traj., non-dimensional
-		double xWidth = NAN;		//!< Max width in x-direction, non-dim units
-		double yWidth = NAN;		//!< Max width in y-direction, non-dim units
-		double zWidth = NAN;		//!< Max width in z-direction, non-dim units
+		double xAmplitude = NAN;		//!< Max width in x-direction, non-dim units
+		double yAmplitude = NAN;		//!< Max width in y-direction, non-dim units
+		double zAmplitude = NAN;		//!< Max width in z-direction, non-dim units
 
 		void copyMe(const tpat_family_member_cr3bp&);
 };

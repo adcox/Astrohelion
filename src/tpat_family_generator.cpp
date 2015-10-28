@@ -250,6 +250,10 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 		printWarn("Axial family has more than 2 bifurcations... may be incorrect and yield unexpected results\n");
 	}
 
+	for(size_t i = 0; i < bifs.size(); i++){
+		printf("Axial Bifurcation at orbit %d\n", bifs[i]);
+	}
+
 	std::vector<double> IC = axialFam.getMember(bifs[0]).getIC();
 	double period = axialFam.getMember(bifs[0]).getTOF();
 
@@ -284,6 +288,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 		tpat_nodeset_cr3bp initGuess(firstVertical, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
+
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
 		cr3bp_pseudoArcCont(&vertFam, initGuess, MIRROR_XZ, initDir);
 	}
@@ -785,7 +790,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
         default:
             throw tpat_exception("Mirror type either not defined or not implemented");
 	}
-	// Just for kicks: try constraining perpendicular crossings and periodicity
+	// constrain perpendicular crossings and periodicity
 	tpat_constraint perpCross1_Con(tpat_constraint::STATE, 0, perpCross_data, 6);
 	tpat_constraint perpCross2_Con(tpat_constraint::STATE, familyMember.getNumNodes()-1, perpCross_data, 6);
 
@@ -860,7 +865,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 			bool sameDir = true;
 			for(size_t i = 0; i < initDir.size(); i++){
 				// Find a non-zero element
-				if(initDir[i] != 0 && i < (size_t)(N.getCols())){
+				if(initDir[i] != 0 && i < (size_t)(N.getRows())){
 					// If signs are different, assume direction is different
 					if(N.at(i)*initDir[i] < 0){
 						sameDir = false;
@@ -963,6 +968,23 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 		printf("Orbit %03d converged!\n", ((int)members.size()));
 
+		
+		if(familyItData.totalFree < 6)
+			throw tpat_exception("tpat_family_generator::PAC algorithm expects at least 6 states in the free variable vector");
+		// Check to see if the converged family vector is significantly different from previously computed family member
+		// Note that only the first 6 states (the IC for the trajectory) is checked; differences in other nodes 
+		// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
+		tpat_matrix newX_init = tpat_matrix(6, 1, &(familyItData.X[0]));
+		tpat_matrix oldX_init = tpat_matrix(6, 1, convergedFreeVarVec.getDataPtr());
+
+		double diffX = norm(newX_init - oldX_init);
+		printErr("||diff in X(1:6)|| = %.4e\n", diffX);
+
+		if(diffX < tol){
+			printErr("Solutions from pseudo-arc-length have ceased changing; ending continuation\n");
+			break;
+		}
+		
 		// Save new converged family vector
 		convergedFreeVarVec = tpat_matrix(familyItData.totalFree, 1, familyItData.X);
 
@@ -977,8 +999,8 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		// Compute eigenvalues
 		tpat_matrix mono = perOrbit.getSTM(-1);
 		double monoErr = std::abs(1.0 - det(mono));
-		// if(monoErr > 1e-5)
-		printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+		if(monoErr > 1e-5)
+			printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 
 		std::vector< std::vector<cdouble> > eigData = eig(mono);
 		std::vector<cdouble> eigVals = eigData[0];
@@ -1039,7 +1061,6 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix conv
 	newMember.addConstraint(pacCon);
 
 	// Outputs for debugging and sanity checks
-	printColor(RED, "||delta-X|| = %.4e\n", norm(newFreeVarVec - convergedFreeVarVec));
 	printf("New IC = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...] tof = %.4f\n",
 		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.getRows()-1]);
 

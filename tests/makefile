@@ -80,9 +80,6 @@ familyOps: $(OBJECTS)
 eigenTest:
 	$(COMP) -I $(INC) test_eigen.cpp -o $(BIN)/$@
 
-emFams: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) computeEarthMoonFams.cpp -o $(BIN)/$@
-
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
 

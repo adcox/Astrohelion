@@ -32,9 +32,8 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_1(0.005);
 			gen.setStep_fitted_2(0.005);
 			gen.setContType(tpat_family_generator::NAT_PARAM);
-			gen.setNumOrbits(20);
-			gen.setTol(1e-14);
-
+			// gen.setNumOrbits(5);
+			
 			// Run the generator
 			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
 			L1_Lyap.sortEigs();

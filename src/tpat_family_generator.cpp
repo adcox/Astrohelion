@@ -186,11 +186,6 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 
 	tpat_family_cr3bp axialFam(lyapFam.getSysData());
 
-	// Set the simple step size to be negative if the user inputs a negative step-off distance
-	if(step_simple > 0 && initStepSize < 0)
-		step_simple *= -1;
-
-
 	// Try to find bifurcations
 	lyapFam.sortMembers();
 	lyapFam.sortEigs();
@@ -213,40 +208,76 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysDataPtr(), IC, period,
 		numNodes, 1, MIRROR_X_AX_H, fixStates, tol);
 
-	std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
-	std::vector<int> depVars {0,6};	// Predict x and period with least squares
-	std::vector<mirror_t> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
+	if(contType == NAT_PARAM){
+		std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
+		std::vector<int> depVars {0,6};	// Predict x and period with least squares
+		std::vector<mirror_t> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
 
-	cr3bp_natParamCont(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
+		// Set the simple step size to be negative if the user inputs a negative step-off distance
+		if(step_simple > 0 && initStepSize < 0)
+			step_simple *= -1;
 
+		cr3bp_natParamCont(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
+	}else if(contType == PSEUDO_ARC){
+		// Turn trajectory object into nodeset; double number of nodes
+		tpat_nodeset_cr3bp initGuess(firstAxial, 2*numNodes-1);
+
+		int sign = initStepSize < 0 ? -1 : 1;
+		std::vector<int> initDir {0, 0, 0, 0, 0, sign};
+		cr3bp_pseudoArcCont(&axialFam, initGuess, MIRROR_X_AX_H, initDir);
+	}
 	return axialFam;
 }//====================================================
 
-// tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
-// 	tpat_family_cr3bp axialFam(axialFamFile);
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
+	tpat_family_cr3bp axialFam(axialFamFile);
 
-// 	tpat_family_cr3bp vertFam(axialFam.getSysDat());
+	tpat_family_cr3bp vertFam(axialFam.getSysData());
 
-// 	// Try to find bifurcations
-// 	axialFam.sortMembers();
-// 	axialFam.sortEigs();
-// 	std::vector<int> bifs = axialFam.findBifurcations();
+	// Try to find bifurcations
+	axialFam.sortMembers();
+	axialFam.sortEigs();
+	std::vector<int> bifs = axialFam.findBifurcations();
 
-// 	if(bifs.size() == 0){
-// 		printErr("Could not locate any bifurcations in the Axial family; exiting...\n");
-// 		return vertFam;
-// 	}
+	if(bifs.size() == 0){
+		printErr("Could not locate any bifurcations in the Axial family; exiting...\n");
+		return vertFam;
+	}
 
-// 	if(bifs.size() > 2){
-// 		printWarn("Axial family has more than 2 bifurcations... may be incorrect and yield unexpected results\n");
-// 	}
+	if(bifs.size() > 2){
+		printWarn("Axial family has more than 2 bifurcations... may be incorrect and yield unexpected results\n");
+	}
 
-// 	std::vector<double> IC = axialFam.getMember(bifs[0]).getIC();
-// 	double period = axialFam.getMember(bifs[0]).getTOF();
-// 	int numNodes = 3;
-// 	std::vector<int> fixStates {5}; // force z-dot to be non-zero
-// 	IC[5] += initStepSize;
-// }//====================================================
+	std::vector<double> IC = axialFam.getMember(bifs[0]).getIC();
+	double period = axialFam.getMember(bifs[0]).getTOF();
+	int numNodes = 3;
+	std::vector<int> fixStates {2}; // force z-dot to be non-zero
+	IC[2] += initStepSize;
+
+	tpat_traj_cr3bp firstVertical = cr3bp_getPeriodic(vertFam.getSysDataPtr(), IC, period,
+		numNodes, 2, MIRROR_XZ, fixStates, tol);
+
+	if(contType == NAT_PARAM){
+		std::vector<int> indVars {2, 0};	// Begin stepping in z, optionally use x
+		std::vector<int> depVars {5, 6}; 	// Predict y-dot and period with least squares
+		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+
+		// Set the simple step size to be negative if the user inputs a negative step-off distance
+		if(step_simple > 0 && initStepSize < 0)
+			step_simple *= -1;
+
+		cr3bp_natParamCont(&vertFam, firstVertical, mirrorTypes, indVars, depVars, 2);
+	}else if(contType == PSEUDO_ARC){
+		// Turn trajectory object into nodeset; double number of nodes
+		tpat_nodeset_cr3bp initGuess(firstVertical, 2*numNodes-1);
+
+		int sign = initStepSize < 0 ? -1 : 1;
+		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
+		cr3bp_pseudoArcCont(&vertFam, initGuess, MIRROR_XZ, initDir);
+	}
+
+	return vertFam;
+}//====================================================
 
 /**
  *	@brief Generate a Halo family in the CR3BP
@@ -267,10 +298,6 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	tpat_family_cr3bp lyapFam(lyapFamFile);
 	
 	tpat_family_cr3bp haloFam(lyapFam.getSysData());	
-
-	// Set the simple step size to be negative if the user inputs a negative step-off distance
-	if(step_simple > 0 && initStepSize < 0)
-		step_simple *= -1;
 
 	// Try to find bifurcations
 	lyapFam.sortMembers();
@@ -298,6 +325,10 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 		std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
 		std::vector<int> depVars {4};	// Predict y-dot with least-squares
 		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+
+		// Set the simple step size to be negative if the user inputs a negative step-off distance
+		if(step_simple > 0 && initStepSize < 0)
+			step_simple *= -1;
 
 		cr3bp_natParamCont(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == PSEUDO_ARC){
@@ -515,7 +546,8 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 
 		// Check for large changes in period to detect leaving family
 		if(orbitCount > 2){
-			double dTOF = perOrbit.getTime(-1) - members[members.size()-1].getTime(-1);
+			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
+			double dTOF = std::abs(perOrbit.getTime(-1)) - std::abs(members[members.size()-1].getTime(-1));
 			double percChange = std::abs(dTOF/perOrbit.getTime(-1));
 			if(percChange > 0.25){
 				leftFamily = true;
@@ -612,15 +644,14 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			if(monoErr > 1e-5)
 				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 			
-			mono.toCSV("famGen_Mono.csv");
 			std::vector< std::vector<cdouble> > eigData = eig(mono);
 			std::vector<cdouble> eigVals = eigData[0];
 
-			printf("Eigenvalues:\n");
-			for(int i = 0; i < 6; i++){
-				printf("  %s\n", complexToStr(eigVals[i]).c_str());
-			}
-			waitForUser();
+			// For debugging:
+			// printf("Eigenvalues:\n");
+			// for(int i = 0; i < 6; i++){ printf("  %s\n", complexToStr(eigVals[i]).c_str()); }
+			// waitForUser();
+
 			// Add orbit to family
 			tpat_family_member_cr3bp child(perOrbit);
 			child.setEigVals(eigVals);

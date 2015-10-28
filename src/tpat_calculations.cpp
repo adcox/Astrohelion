@@ -1403,13 +1403,12 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
 
-    halfOrbArc.saveToMat("HalfOrbArc.mat");
-    halfOrbNodes.saveToMat("HalfOrbNodes.mat");
-
     // Use differential corrections to enforce the mirror conditions
     tpat_correction_engine corrector;
     corrector.setTol(tol);
     corrector.setIgnoreCrash(true); // Corrector also ignores crash events
+    corrector.setVarTime(true);
+    corrector.setEqualArcTime(true);
 
     try{
         corrector.correct(&halfOrbNodes);
@@ -1450,7 +1449,6 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         tpat_matrix MI(6,6,MI_data);
 
         tpat_matrix monoMat = mirrorMat*M*trans(halfPerSTM)*MI*mirrorMat*halfPerSTM;
-        monoMat.toCSV("monoMat.csv");
 
         // Set final STM of mirrored trajectory to the one computed here
         halfPerTraj.setSTM(-1, monoMat);

@@ -63,7 +63,16 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 
 all: prop
 	
-
+list:
+	@- echo "This make file can create the following executables:"
+	@- echo "  famStability"
+	@- echo "  generateLiss - Generate a Lissajous from the linear approximation"
+	@- echo "  generateLissTom - Generate a Lissajous via Tom's Method"
+	@- echo "  prop"
+	@- echo "  manPeri"
+	@- echo "  manTubeGridding"
+	@- echo "  spEffects"
+	@- echo "  propGrid"
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################

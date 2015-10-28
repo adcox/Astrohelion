@@ -29,11 +29,13 @@
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
+#include "tpat_event.hpp"
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
 #include "tpat_matrix.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
@@ -250,6 +252,16 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 
 	std::vector<double> IC = axialFam.getMember(bifs[0]).getIC();
 	double period = axialFam.getMember(bifs[0]).getTOF();
+
+	// The axial family has ICs at the x-axis; I want the vertical family to have ICs at the top of their figure 8's,
+	// so the first step is to integrate to that point
+	tpat_simulation_engine sim(vertFam.getSysDataPtr());
+	sim.addEvent(tpat_event::XZ_PLANE, 0, true);	// Stop integrated at XZ plane, going opposite direction as initial state
+	sim.runSim(IC, period/3);	// 1/3 period should be long enough to fly 1/4 of the trajectory
+
+	tpat_traj_cr3bp quarterArc = sim.getCR3BP_Traj();
+	IC = quarterArc.getState(-1);
+
 	int numNodes = 3;
 	std::vector<int> fixStates {2}; // force z-dot to be non-zero
 	IC[2] += initStepSize;

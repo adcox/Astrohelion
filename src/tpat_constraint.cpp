@@ -41,39 +41,39 @@ tpat_constraint::tpat_constraint(){
 
 /**
  *	@brief Construct a constraint with specified constraint type
- *	@param t constraint type
+ *	@param type constraint type
  */
-tpat_constraint::tpat_constraint(constraint_t t){
-	type = t;
+tpat_constraint::tpat_constraint(constraint_t type){
+	this->type = type;
 	data.clear();
 }//============================================
 
 /**
  *	@brief Construct a constraint with specified constraint type and data values
- *	@param t constraint type
- *	@param i the node this constriant applies to
- *	@param d data (length n)
+ *	@param type constraint type
+ *	@param node the node this constriant applies to
+ *	@param data data vector (length n)
  */
-tpat_constraint::tpat_constraint(constraint_t t, int i, std::vector<double> d){
-	type = t;
-	node = i;
-	data = d;
+tpat_constraint::tpat_constraint(constraint_t type, int node, std::vector<double> data){
+	this->type = type;
+	this->node = node;
+	this->data = data;
 }//============================================
 
 /**
  *	@brief Construct a constraint with specified constraint type, and data values
- *	@param t constraint type
- *	@param i the node this constriant applies to
- *	@param d data
- *	@param d_len the number of elements in d_len
+ *	@param type constraint type
+ *	@param node the node this constriant applies to
+ *	@param data data vector
+ *	@param data_len the number of elements in d_len
  */
-tpat_constraint::tpat_constraint(constraint_t t, int i, double* d, int d_len){
-	type = t;
-	node = i;
-	data.reserve(d_len);
+tpat_constraint::tpat_constraint(constraint_t type, int node, double* data, int data_len){
+	this->type = type;
+	this->node = node;
+	this->data.reserve(data_len);
 
-	for(int j = 0; j < d_len; j++){
-		data.push_back(d[j]);
+	for(int j = 0; j < data_len; j++){
+		this->data.push_back(data[j]);
 	}
 }//============================================
 

@@ -1391,6 +1391,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
     // Run the sim until the event is triggered
     sim.runSim(IC, period);
     tpat_traj_cr3bp halfOrbArc = sim.getCR3BP_Traj();
+    halfOrbArc.saveToMat("HalfOrbArc.mat");
 
     double halfOrbTOF = halfOrbArc.getTime(-1);
     double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);

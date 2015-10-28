@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
 			gen.setStep_fitted_2(0.005);
 			gen.setContType(tpat_family_generator::NAT_PARAM);
 			// gen.setNumOrbits(5);
-			
+
 			// Run the generator
 			tpat_family_cr3bp L1_Lyap = gen.cr3bp_generateLyap(sysData, 1, 0.001);
 			L1_Lyap.sortEigs();
@@ -224,6 +224,30 @@ int main(int argc, char *argv[]){
 			L3_Axial.setName("Earth-Moon L3 Northern Axial");
 			L3_Axial.saveToMat("../share/families/EM_L3_NAxial.mat");
 			break;	
+		}
+		case 9:
+		{
+			printf("Generating Earth-Moon L1 Vertical Family via Natural Parameter\n");
+			gen.setNumNodes(3);
+			gen.setStep_fitted_1(0.001);
+			gen.setStep_fitted_2(0.001);
+			gen.setContType(tpat_family_generator::NAT_PARAM);
+
+			tpat_family_cr3bp L1_Vert = gen.cr3bp_generateVertical("../share/families_natParam_checked/EM_L1_NAxial.mat", -0.0005);
+			L1_Vert.sortEigs();
+			L1_Vert.setName("Earth-Moon L1 Vertical");
+			L1_Vert.saveToMat("../share/families/EM_L1_Vert.mat");
+			break;
+		}
+		case 109:
+		{
+			printf("Generating Earth-Moon L1 Vertical Family via Pseudo Arc-Length\n");
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+
+			tpat_family_cr3bp L1_Vert = gen.cr3bp_generateVertical("../share/families_natParam_checked/EM_L1_NAxial.mat", 0.001);
+			L1_Vert.sortEigs();
+			L1_Vert.setName("Earth-Moon L1 Vertical");
+			L1_Vert.saveToMat("../share/families/EM_L1_Vert_PAC.mat");
 		}
 		case 999:
 		{

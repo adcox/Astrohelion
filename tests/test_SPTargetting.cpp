@@ -15,7 +15,11 @@ void testSP_ExactTarget(){
 	double tof = 5;
 
 	tpat_nodeset_bcr4bpr nodes0(IC, &semSys, t0, tof, 2);
-	tpat_constraint spCon(tpat_constraint::SP_RANGE, 1, IC,1);
+
+	double spConData = 100/semSys.getCharL();
+	printf("100 km in SEM system = %.6f non-dim units\n", spConData);
+	tpat_constraint spCon(tpat_constraint::SP_RANGE, 1, &spConData, 1);
+
 	nodes0.addConstraint(spCon);
 
 	nodes0.print();

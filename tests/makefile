@@ -121,9 +121,6 @@ utilityTest: $(OBJECTS)
 
 temp: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) temp_prop.cpp -o $(BIN)/$@	
-	
-lucia: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_lucia.cpp -o $(BIN)/$@	
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
@@ -148,6 +145,27 @@ printVars:
 	$(info $(SRC_FILES))
 	$(info $(SOURCES))
 	$(info $(OBJECTS))
+
+list:
+	@- echo "You may choose from the following options:"
+	@- echo "  calcTest - test calculation functions"
+	@- echo "  correctorTest - test multiple shooting corrector"
+	@- echo "  familyOps - test the ability to locate orbits within a family"
+	@- echo "  eigenTest - Test the Eigen library"
+	@- echo "  linMotionTest - Test the linear motion generator"
+	@- echo "  lowThrustTest - Test the low-thrust CR3BP EOM propagation"
+	@- echo "  manifolds - Test manifold generation"
+	@- echo "  maps - Test map generation"
+	@- echo "  matioTest - Test the MatIO library functions"
+	@- echo "  matrixTest - Test the matrix object and functions"
+	@- echo "  manyArcTest - Test the capability of the simulation engine to generate many arcs in sequence"
+	@- echo "  nodesetTest - Test the nodeset object and functions"
+	@- echo "  simEngineTest - Test the simulation engine"
+	@- echo "  sortEigTest - Test the eigenvalue sorting algorithm"
+	@- echo "  spTest - Test the saddle point targeting capabilities"
+	@- echo "  sysSwitchTest - Test functions that convert trajectories between systems and models"
+	@- echo "  utilityTest - Test the utility function library"
+	@- echo "  temp - test some temporary file"
 
 
 

@@ -27,6 +27,7 @@ int main(){
 	tpat_family_cr3bp vertFam("../share/families_pac_checked/SE_L1_Vert_small_PAC.mat");
 
 	// Get a vertical orbit (by inspectinv amplitdues from data)
+	// tpat_family_member_cr3bp vertMember = vertFam.getMember(111);
 	tpat_family_member_cr3bp vertMember = vertFam.getMember(111);
 
 	// Move initial condition to XY plane
@@ -47,7 +48,7 @@ int main(){
 		stackedNodes = temp;
 	}
 
-	// Constraint first node to have same x as original vertical, step away in y, fix z to 0
+	// Constrain first node to have same x as original vertical, step away in y, fix z to 0
 	double data[] = {vertMember.getIC().at(0), vertMember.getIC().at(1) + 0.001, 0, NAN, NAN, NAN};
 	tpat_constraint initNodeCon(tpat_constraint::STATE, 0, data, 6);
 
@@ -56,8 +57,15 @@ int main(){
 	// Correct the entire trajectory
 	tpat_correction_engine corrector;
 	
-	double maxZ = 0, maxY = 0;
+	double zAmp = 0, yAmp = 0;
 	tpat_nodeset_cr3bp correctedNodes(&sys);
+
+	// Try fixing the 150th node to have a z value of 200000 km
+	double maxZData[] = {NAN, NAN, 150000/sys.getCharL(), NAN, NAN, 0};
+	tpat_constraint maxZCon(tpat_constraint::STATE, 149, maxZData, 6);
+	stackedNodes.addConstraint(maxZCon);
+
+	double maxY = 0;
 	do{
 		corrector.correct(&stackedNodes);
 
@@ -66,21 +74,26 @@ int main(){
 		std::vector<double> allZ = correctedNodes.getCoord(2);
 		std::vector<double> allY = correctedNodes.getCoord(1);
 
-		maxZ = *std::max_element(allZ.begin(), allZ.end());
-		maxY = *std::max_element(allY.begin(), allY.end());
+		zAmp = *std::max_element(allZ.begin(), allZ.end());
+		yAmp = *std::max_element(allY.begin(), allY.end());
 
-		printf("yAmp = %.4f km\n", maxY*sys.getCharL());
-		printf("zAmp = %.4f km\n", maxZ*sys.getCharL());
+		printf("yAmp = %.4f km\n", yAmp*sys.getCharL());
+		printf("zAmp = %.4f km\n", zAmp*sys.getCharL());
+
+		std::vector<double> node = correctedNodes.getState(87);
+		maxY = node[1]*sys.getCharL() + 2000;
+		printf("> maxY = %.2f km, targeting %.2f km\n", node[1]*sys.getCharL(), maxY);
 
 		// Update constraint data
-		data[1] = correctedNodes.getState(0).at(1) + 0.001;
-		initNodeCon = tpat_constraint(tpat_constraint::STATE, 0, data, 6);
+		double maxYData[] = {NAN, maxY/sys.getCharL(), NAN, NAN, 0, NAN};
+		tpat_constraint maxYCon(tpat_constraint::STATE, 87, maxYData, 6);
 		correctedNodes.clearConstraints();
-		correctedNodes.addConstraint(initNodeCon);
+		correctedNodes.addConstraint(maxZCon);
+		correctedNodes.addConstraint(maxYCon);
 
 		// Update the set to correct
 		stackedNodes = correctedNodes;
-	}while(maxY*sys.getCharL() < 800000);
+	}while(maxY < 800000);
 
 	correctedNodes.saveToMat("data/Liss_TomMethod_Nodes.mat");
 	

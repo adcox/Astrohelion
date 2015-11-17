@@ -29,8 +29,8 @@
 
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_traj.hpp"
@@ -282,7 +282,7 @@ void tpat_model::corrector_targetPosVelCons(iterationData* it, tpat_constraint c
 	// Get info about the arc that was integrated to reach node n
 	std::vector<double> lastState = it->allSegs.at(n-1).getState(-1);
 	std::vector<double> lastAccel = it->allSegs.at(n-1).getAccel(-1);
-	tpat_matrix stm = it->allSegs.at(n-1).getSTM(-1);
+	MatrixXRd stm = it->allSegs.at(n-1).getSTM(-1);
 	std::vector<double> conData = con.getData();
 	
 	// Loop through conData
@@ -295,7 +295,7 @@ void tpat_model::corrector_targetPosVelCons(iterationData* it, tpat_constraint c
 			
 			for(size_t x = 0; x < 6; x++){
 				// put STM elements into DF matrix
-				it->DF[it->totalFree*(row0+s) + 6*(n-1)+x] = stm.at(s,x);
+				it->DF[it->totalFree*(row0+s) + 6*(n-1)+x] = stm(s,x);
 				// Negative identity matrix
 				if(s == x)
 					it->DF[it->totalFree*(row0+s) + 6*n+x] = -1;
@@ -517,10 +517,11 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
 		// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
 		double dFdq_ndf_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
 			-1*it->deltaVs[n*3+1]/dvMag, -1*it->deltaVs[n*3+2]/dvMag};
-		tpat_matrix dFdq_n2(1, 6, dFdq_ndf_data);
+		Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_ndf_data, 1, 6);
 
 		// Get info about the final state/accel of the integrated segment
-		tpat_matrix stm = it->allSegs[n].getSTM(-1);
+		MatrixXRd stm = it->allSegs[n].getSTM(-1);
+
 		std::vector<double> state_dot_data;
 		std::vector<double> lastState = it->allSegs[n].getState(-1);
 		std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
@@ -528,11 +529,11 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
 		state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
 
 		// Partial w.r.t. integrated path (newSeg) from node n
-		tpat_matrix dFdq_nf = -1*dFdq_n2*stm;
+		Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
 
 		for(int i = 0; i < 6; i++){
-			it->DF[it->totalFree*row0 + 6*(n+1) + i] = dFdq_n2.at(0, i);
-			it->DF[it->totalFree*row0 + 6*n + i] = dFdq_nf.at(0, i);
+			it->DF[it->totalFree*row0 + 6*(n+1) + i] = dFdq_n2(0, i);
+			it->DF[it->totalFree*row0 + 6*n + i] = dFdq_nf(0, i);
 		}
 
 		// Compute partial w.r.t. integration time n
@@ -540,10 +541,10 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
 			double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 			int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n-1;
 
-			tpat_matrix state_dot(6, 1, &(state_dot_data[0]));
-			tpat_matrix dFdt_n = -1*dFdq_n2 * state_dot;
+			Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
+			Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 
-			it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n.at(0);
+			it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n(0);
 		}
 	}
 	

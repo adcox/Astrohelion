@@ -33,6 +33,7 @@
 #define H_CALCULATIONS
 
 #include "tpat_constants.hpp"
+#include "tpat_eigen_defs.hpp"
  
 #include <vector>
 
@@ -44,7 +45,6 @@ class tpat_traj_bcr4bpr;
 class tpat_nodeset_cr3bp;
 class tpat_sys_data_cr3bp;
 class tpat_traj_cr3bp;
-class tpat_matrix;
 
 /**
  *	@brief Describes the plane a periodic orbit can be mirrored across
@@ -96,8 +96,9 @@ int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 // General Utility Functions
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
-tpat_matrix solveAX_eq_B(tpat_matrix, tpat_matrix);
+MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, double);
+MatrixXRd getMirrorMat(mirror_t);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 double getStabilityIndex(std::vector<cdouble>);
 

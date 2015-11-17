@@ -22,13 +22,11 @@
 #define H_ARC_DATA
 
 #include "tpat_arc_step.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_sys_data.hpp"
 
 #include "matio.h"
 #include <vector>
-
-// Forward Declarations
-class tpat_matrix;
 
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
@@ -87,14 +85,14 @@ public:
 	std::vector<double> getExtraParam(int, int) const;
 	std::vector<double> getState(int) const;
 	tpat_arc_step getStep(int) const;
-	tpat_matrix getSTM(int) const;
+	MatrixXRd getSTM(int) const;
 	tpat_sys_data* getSysData();
 	double getTol() const;
 
 	void appendStep(tpat_arc_step);
 	void setAccel(int, std::vector<double>);
 	void setState(int, std::vector<double>);
-	void setSTM(int, tpat_matrix);
+	void setSTM(int, MatrixXRd);
 
 	void setTol(double);
 

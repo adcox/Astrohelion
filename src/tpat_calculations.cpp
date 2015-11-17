@@ -34,7 +34,6 @@
 #include "tpat_constants.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_bcr4bpr.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
@@ -49,6 +48,9 @@
 #include "tpat_utilities.hpp"
 
 #include "cspice/SpiceUsr.h"
+#include <Eigen/Dense>
+#include <Eigen/LU>
+#include <Eigen/SVD>
 #include "gsl/gsl_linalg.h"
 
 #include <algorithm>
@@ -104,20 +106,22 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
                         ddots[0], ddots[3], ddots[4], 0, 2, 0,
                         ddots[3], ddots[1], ddots[5], -2, 0, 0,
                         ddots[4], ddots[5], ddots[2], 0, 0, 0};
-    tpat_matrix A(6,6,a_data);
+    MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
 
     // Copy the STM states into a sub-array
     double stmElements[36];
     std::copy(s+6, s+42, stmElements);
 
     // Turn sub-array into matrix object for math stuffs
-    tpat_matrix phi(6,6, stmElements);
+    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
+    
     
     // Compute derivative of STM
-    tpat_matrix phiDot = A*phi;
-    double *phiDotData = phiDot.getDataPtr();
+    MatrixXRd phiDot(6,6);
+    phiDot.noalias() = A*phi;
 
     // Copy the elements of phiDot into the derivative array
+    double *phiDotData = phiDot.data();
     std::copy(phiDotData, phiDotData+36, sdot+6);
 
     return GSL_SUCCESS;
@@ -231,21 +235,21 @@ int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
                         dxdx, dxdy, dxdz, dxdxdot, dxdydot, dxdzdot,
                         dydx, dydy, dydz, dydxdot, dydydot, dydzdot,
                         dzdx, dzdy, dzdz, dzdxdot, dzdydot, dzdzdot};
-    tpat_matrix A(6,6,a_data);
-
+    MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
 
     // Copy the STM states into a sub-array
     double stmElements[36];
     std::copy(s+6, s+42, stmElements);
 
     // Turn sub-array into matrix object for math stuffs
-    tpat_matrix phi(6,6, stmElements);
-    
+    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
+
     // Compute derivative of STM
-    tpat_matrix phiDot = A*phi;
-    double *phiDotData = phiDot.getDataPtr();
+    MatrixXRd phiDot(6,6);
+    phiDot.noalias() = A*phi;     // use noalias() to avoid creating an unnecessary temporary matrix in Eigen library
 
     // Copy the elements of phiDot into the derivative array
+    double *phiDotData = phiDot.data();
     std::copy(phiDotData, phiDotData+36, sdot+6);
 
     return GSL_SUCCESS;
@@ -304,25 +308,25 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
     bcr4bpr_getPrimaryPos(t, sysData, primPosData);
-    tpat_matrix primPos(3, 3, primPosData);
+    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
 
     // Put the position states into a 3-element column vector
     double r_data[3] = {0};
     std::copy(s, s+3, r_data);
-    tpat_matrix r(3,1,r_data);
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
 
     // Put velocity states into a 3-element column vector
     double v_data[3] = {0};
     std::copy(s+3, s+6, v_data);
-    tpat_matrix v(3,1,v_data);
+    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
 
     // Create relative position vectors between s/c and primaries
-    tpat_matrix r_p1 = r - trans(primPos.getRow(0));
-    tpat_matrix r_p2 = r - trans(primPos.getRow(1));
-    tpat_matrix r_p3 = r - trans(primPos.getRow(2));
-    double d1 = norm(r_p1);
-    double d2 = norm(r_p2);
-    double d3 = norm(r_p3);
+    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
+    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
+    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
     
     // Save constants to short variables for readability
     double k = sysData->getK();
@@ -331,37 +335,37 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 
     // Create C-matrix
     double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
-    tpat_matrix C(3,3,c);
+    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
 
     // truncated position vector used in EOMs
     double r_trunc_data[3] = {0};
     std::copy(s, s+2, r_trunc_data);
-    tpat_matrix r_trunc(3,1,r_trunc_data);
+    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
 
     // Compute acceleration using matrix math
-    tpat_matrix accel(3,1);
-    accel = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
+    Eigen::Vector3d accel;
+    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
             nu*r_p3/pow(d3, 3);
 
     // Compute psuedo-potential
-    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-                3*pow(r_p3.at(0),2)/pow(d3,5));
-    double dxdy = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
-            nu*3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);
-    double dxdz = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
-            nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);
-    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*pow(r_p3.at(1),2)/pow(d3,5));
-    double dydz = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
-            nu*3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);
-    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(2),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*pow(r_p3.at(2),2)/pow(d3,5));
+    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+                3*pow(r_p3(0),2)/pow(d3,5));
+    double dxdy = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) +
+            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);
+    double dxdz = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);
+    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*pow(r_p3(1),2)/pow(d3,5));
+    double dydz = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);
+    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*pow(r_p3(2),2)/pow(d3,5));
 
     // Create A matrix for STM derivative
     double aData[] = {  0, 0, 0, 1, 0, 0,
@@ -370,43 +374,45 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
                         dxdx, dxdy, dxdz, c[0], c[1], c[2],
                         dxdy, dydy, dydz, c[3], c[4], c[5],
                         dxdz, dydz, dzdz, c[6], c[7], c[8]};
-    tpat_matrix A(6,6, aData);
-    
+    MatrixXRd A = Eigen::Map<MatrixXRd>(aData, 6, 6);
+
     // Compute the STM derivative
     double phiData[36];
     std::copy(s+6, s+42, phiData);
-    tpat_matrix Phi(6, 6, phiData);
-    tpat_matrix PhiDot = A*Phi;
+    MatrixXRd Phi = Eigen::Map<MatrixXRd>(phiData, 6, 6);
+
+    MatrixXRd PhiDot(6,6);
+    PhiDot.noalias() = A*Phi;
 
     // Compute partials of state w.r.t. primary positions; dont' compute partials
     // for P1 because its velocity is zero in the rotating frame
     double dfdr2[18] = {0};   double dfdr3[18] = {0};
 
-    dfdr2[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
-    dfdr2[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
-    dfdr2[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
-    dfdr2[13] = -1/pow(d2,3) + 3*pow(r_p2.at(1),2)/pow(d2,5);       //dydy2
-    dfdr2[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
-    dfdr2[17] = -1/pow(d2,3) + 3*pow(r_p2.at(2),2)/pow(d2,5);       //dzdz2
+    dfdr2[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
+    dfdr2[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
+    dfdr2[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
+    dfdr2[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
+    dfdr2[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
+    dfdr2[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
 
     dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
     dfdr2[15] = dfdr2[11];
     dfdr2[16] = dfdr2[14];
 
-    dfdr3[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
-    dfdr3[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
-    dfdr3[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
-    dfdr3[13] = -1/pow(d3,3) + 3*pow(r_p3.at(1),2)/pow(d3,5);       //dydy3
-    dfdr3[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
-    dfdr3[17] = -1/pow(d3,3) + 3*pow(r_p3.at(2),2)/pow(d3,5);       //dzdz3
+    dfdr3[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
+    dfdr3[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
+    dfdr3[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
+    dfdr3[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
+    dfdr3[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
+    dfdr3[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
 
     dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
     dfdr3[15] = dfdr3[11];
     dfdr3[16] = dfdr3[14];
 
-    tpat_matrix DfDr2(6,3, dfdr2);
-    tpat_matrix DfDr3(6,3, dfdr3);
-
+    MatrixXRd DfDr2 = Eigen::Map<MatrixXRd>(dfdr2, 6, 3);
+    MatrixXRd DfDr3 = Eigen::Map<MatrixXRd>(dfdr3, 6, 3);
+    
     // Scale by constants
     DfDr2 *= -1*(mu-nu);
     DfDr3 *= -1*nu;
@@ -414,20 +420,21 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
     double dqdT_data[6] = {0};
     std::copy(s+42,s+48, dqdT_data);
-    tpat_matrix dqdT(6,1, dqdT_data);
+    Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(dqdT_data, 6, 1);
 
     // Get the velocity of the primaries
     double primVelData[9] = {0};
     bcr4bpr_getPrimaryVel(t, sysData, primVelData);
-    tpat_matrix primVel(3,3, primVelData);
+    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(primVelData, 3, 3);
 
     // Compute derivative of dqdT
-    tpat_matrix dot_dqdT = A*dqdT + DfDr2*trans(primVel.getRow(1)) + DfDr3*trans(primVel.getRow(2));
+    Eigen::VectorXd dot_dqdT;
+    dot_dqdT.noalias() = A*dqdT + DfDr2*(primVel.row(1).transpose()) + DfDr3*(primVel.row(2).transpose());
 
     // Save derivatives to output vector
-    double *accelPtr = accel.getDataPtr();
-    double *phiDotPtr = PhiDot.getDataPtr();
-    double *dqdtDotPtr = dot_dqdT.getDataPtr();
+    double *accelPtr = accel.data();
+    double *phiDotPtr = PhiDot.data();
+    double *dqdtDotPtr = dot_dqdT.data();
 
     std::copy(s+3, s+6, sdot);
     std::copy(accelPtr, accelPtr+3, sdot+3);
@@ -454,25 +461,25 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
     bcr4bpr_getPrimaryPos(t, sysData, primPosData);
-    tpat_matrix primPos(3, 3, primPosData);
+    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
 
     // Put the position states into a 3-element column vector
     double r_data[3] = {0};
     std::copy(s, s+3, r_data);
-    tpat_matrix r(3,1,r_data);
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
 
     // Put velocity states into a 3-element column vector
     double v_data[3] = {0};
     std::copy(s+3, s+6, v_data);
-    tpat_matrix v(3,1,v_data);
+    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
 
     // Create relative position vectors between s/c and primaries
-    tpat_matrix r_p1 = r - trans(primPos.getRow(0));
-    tpat_matrix r_p2 = r - trans(primPos.getRow(1));
-    tpat_matrix r_p3 = r - trans(primPos.getRow(2));
-    double d1 = norm(r_p1);
-    double d2 = norm(r_p2);
-    double d3 = norm(r_p3);
+    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
+    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
+    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
     
     // Save constants to short variables for readability
     double k = sysData->getK();
@@ -481,20 +488,20 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
 
     // Create C-matrix
     double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
-    tpat_matrix C(3,3,c);
+    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
 
     // truncated position vector used in EOMs
     double r_trunc_data[3] = {0};
     std::copy(s, s+2, r_trunc_data);
-    tpat_matrix r_trunc(3,1,r_trunc_data);
+    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
 
     // Compute acceleration using matrix math
-    tpat_matrix accel(3,1);
-    accel = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
+    Eigen::Vector3d accel;
+    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
             nu*r_p3/pow(d3, 3);
 
     // Save derivatives to output vector
-    double *accelPtr = accel.getDataPtr();
+    double *accelPtr = accel.data();
 
     std::copy(s+3, s+6, sdot);
     std::copy(accelPtr, accelPtr+3, sdot+3);
@@ -607,36 +614,28 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
         }
     }
 
-    tpat_matrix A(varHistory.size()/STATE_SIZE, 3, A_data);
-    tpat_matrix B(varHistory.size()/STATE_SIZE, depVars.size(), B_data);
+    MatrixXRd A = Eigen::Map<MatrixXRd>(&(A_data[0]), varHistory.size()/STATE_SIZE, 3);
+    MatrixXRd B = Eigen::Map<MatrixXRd>(&(B_data[0]), varHistory.size()/STATE_SIZE, depVars.size());
 
     // Generate coefficient matrix; these are coefficients for second-order
     // polynomials in the new independent variable
-    tpat_matrix G = trans(A)*A;    // also a Gramm matrix
-    tpat_matrix Gcopy = G;
-    gsl_matrix *V = gsl_matrix_alloc(Gcopy.getRows(), Gcopy.getCols());
-    gsl_vector *S = gsl_vector_alloc(Gcopy.getRows());
-    gsl_vector *work = gsl_vector_alloc(Gcopy.getRows());
+    MatrixXRd G = A.transpose()*A;
+    
+    Eigen::JacobiSVD<MatrixXRd> svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    svd.setThreshold(1e-14);
+    Eigen::VectorXd S = svd.singularValues();
+    double smallestVal = S.minCoeff();
+    
+    Eigen::RowVectorXd P(depVars.size());
 
-    int status = gsl_linalg_SV_decomp (Gcopy.getGSLMat(), V, S, work);
-
-    if(status){
-        printErr("tpat_calculations::familyCont_LS: GSL ERR: %s\n", gsl_strerror(status));
-        throw tpat_linalg_err("Unable to take singular value decomposition");
-    }
-
-
-    double *smallestVal = std::min_element(S->data, S->data + S->size);
-    tpat_matrix P(1,depVars.size());
-
-    if(*smallestVal > EPS){
-        // Use 2nd-order polynomial fit
-        tpat_matrix C = solveAX_eq_B(G, trans(A)*B);
-
+    if(smallestVal > EPS){
+        // Use 2nd-order polynomial fit; solve GC = A.transpose()*B for C
+        MatrixXRd C = G.fullPivLu().solve(A.transpose()*B);
+        
         double indMatData[] = {nextInd*nextInd, nextInd, 1};
-        tpat_matrix indMat(1,3, indMatData);
+        Eigen::RowVector3d indMat = Eigen::Map<Eigen::RowVector3d>(indMatData, 1, 3);
 
-        P = indMat*C;
+        P.noalias() = indMat*C;
     }else{
         // User 1st-order polynomial fit
         std::vector<double> A_lin_data;
@@ -645,21 +644,20 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
             A_lin_data.push_back(1);
         }
 
-        tpat_matrix A_lin(varHistory.size()/STATE_SIZE, 2, A_lin_data);
-        tpat_matrix G = trans(A_lin)*A_lin;
-        tpat_matrix C = solveAX_eq_B(G, trans(A_lin)*B);
+        MatrixXRd A_lin = Eigen::Map<MatrixXRd>(&(A_lin_data[0]), varHistory.size()/STATE_SIZE, 2);
+        MatrixXRd G = A_lin.transpose()*A_lin;
+        MatrixXRd C = G.fullPivLu().solve(A_lin.transpose()*B);
 
-        double indMatData[] = {nextInd, 1};
-        tpat_matrix indMat(1,2, indMatData);
+        Eigen::RowVector2d indMat(nextInd, 1);
 
-        P = indMat*C;
+        P.noalias() = indMat*C;
     }
 
     // Insert NAN for states that have not been predicted
     std::vector<double> predicted;
     predicted.assign(STATE_SIZE, NAN);
     for(size_t i = 0; i < depVars.size(); i++)
-        predicted[depVars[i]] = P.at(i);
+        predicted[depVars[i]] = P(i);
 
     return predicted;
 }//====================================================
@@ -669,7 +667,7 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
  *  @param mirrorType describes how to mirror a 6-d state
  *  @return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
  */
-tpat_matrix getMirrorMat(mirror_t mirrorType){
+MatrixXRd getMirrorMat(mirror_t mirrorType){
     switch(mirrorType){
         case MIRROR_XZ:
         {
@@ -679,7 +677,7 @@ tpat_matrix getMirrorMat(mirror_t mirrorType){
                             0, 0, 0, -1, 0, 0,
                             0, 0, 0, 0, 1, 0,
                             0, 0, 0, 0, 0, -1};
-            return tpat_matrix(6,6,data);
+            return Eigen::Map<MatrixXRd>(data, 6, 6);
         }
         case MIRROR_X_AX_H:
         case MIRROR_X_AX_V:
@@ -690,66 +688,13 @@ tpat_matrix getMirrorMat(mirror_t mirrorType){
                             0, 0, 0, -1, 0, 0,
                             0, 0, 0, 0, 1, 0,
                             0, 0, 0, 0, 0, 1};
-            return tpat_matrix(6,6,data);
+            return Eigen::Map<MatrixXRd>(data, 6, 6);
         }
         default:
             printErr("tpat_calculations::getMirrorMat: Mirror type is not implemented; returning identiy\n");
-            return tpat_matrix::I(6);
+            return Eigen::Matrix<double, 6, 6, Eigen::RowMajor>::Identity();
     }
 }//===================================================
-
-/**
- *  @brief Solve a matrix equation by iteratively applying LU factorization
- *
- *  Consider the matrix equation AX = B where A is an n x n square matrix,
- *  X is an n x m matrix or vector, and B is an n x m matrix or vector. We 
- *  solve this system by factoring A and solving individually for each column
- *  of X.
- *
- *  @param A an m x n matrix
- *  @param B an m x n matrix
- *  @return an n x n matrix that solves the systsem AX = B
- */
-tpat_matrix solveAX_eq_B(tpat_matrix A, tpat_matrix B){
-    if(A.getCols() != A.getRows()){
-        printErr("tpat_calculations::solveAX_eq_B: A must be square");
-        throw tpat_sizeMismatch("Cannot solve system unless A is square; cannot invert non-square matrix");
-    }
-
-    // printf("A = \n"); A.print("%12.8f");
-    // printf("B = \n"); B.print("%12.8f");
-
-    gsl_permutation *perm = gsl_permutation_alloc(A.getCols());
-    int permSign = 0;
-    int status = gsl_linalg_LU_decomp(A.getGSLMat(), perm, &permSign);
-    if(status){
-        printErr("tpat_calculations::solveAX_eq_B: GSL ERR: %s\n", gsl_strerror(status));
-        throw tpat_linalg_err("Cannot form LU Decomp");
-    }
-
-    std::vector<double> solvedCols;
-    gsl_vector *x = gsl_vector_alloc(B.getRows());
-
-    for(int c = 0; c < B.getCols(); c++){
-        tpat_matrix col = B.getCol(c);
-        // printf("Applying inverse to column %d:\n",c);
-        // col.print();
-        gsl_vector_view gsl_col = gsl_vector_view_array(col.getDataPtr(), col.getRows());
-
-        status = gsl_linalg_LU_solve(A.getGSLMat(), perm, &(gsl_col.vector), x);
-        if(status){
-            printErr("tpat_calculations::solveAX_eq_B: GSL ERR: %s\n", gsl_strerror(status));
-            throw tpat_linalg_err("Could not solve for collumn of X");
-        }
-        tpat_matrix newCol(x, false);
-        // printf("New column:\n");
-        // newCol.print();
-        solvedCols.insert(solvedCols.end(), x->data, x->data + x->size);
-    }
-
-    tpat_matrix allSolvedCols(B.getCols(), A.getCols(), solvedCols);
-    return trans(allSolvedCols);
-}//====================================================
 
 /**
  *  @brief Sort a list of eigenvalues
@@ -967,13 +912,20 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
  */
 std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perOrbit, int numMans, double tof){
     // Get eigenvalues of monodromy matrix
-    tpat_matrix mono = perOrbit->getSTM(-1);
-    std::vector< std::vector<cdouble> > eigData = eig(mono);
+    MatrixXRd mono = perOrbit->getSTM(-1);
+
+    Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+    if(eigensolver.info() != Eigen::Success)
+        throw tpat_exception("tpat_calculations::getManifolds: Could not compute eigenvalues of monodromy matrix");
+
+    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+    MatrixXRcd eigVecs = eigensolver.eigenvectors();
+    std::vector<cdouble> eigData(vals.data(), vals.data()+6);
 
     // Sort eigenvalues to put them in a "propper" order, get indices
     // to sort the eigenvectors to match
     std::vector<int> sortedIx;
-    std::vector<cdouble> sortedEig = sortEig(eigData[0], &sortedIx);
+    std::vector<cdouble> sortedEig = sortEig(eigData, &sortedIx);
 
     // Figure out which eigenvalues are the stable and unstable ones,
     // delete the rest
@@ -987,9 +939,8 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
             // Keep this eigenvalue/eigenvector pair
             nonCenterVals.push_back(sortedEig[c]);
             int vecIx = sortedIx[c];
-            nonCenterVecs.insert(nonCenterVecs.end(), 
-                eigData.at(1).begin()+vecIx*6,
-                eigData.at(1).begin()+(vecIx+1)*6);
+            nonCenterVecs.insert(nonCenterVecs.end(),
+                eigVecs.data()+vecIx*6, eigVecs.data()+(vecIx+1)*6); 
         }
     }
 
@@ -1024,8 +975,9 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
         pointIx[i] = floor(i*stepSize+0.5);
     }
 
-    tpat_matrix temp(nonCenterVecs.size()/6, 6, tpat_util::real(nonCenterVecs));
-    tpat_matrix vecs = trans(temp); // Transpose so eigenvectors are columns
+    std::vector<double> realVecs = tpat_util::real(nonCenterVecs);
+    MatrixXRd vecs = Eigen::Map<MatrixXRd>(&(realVecs[0]), nonCenterVecs.size()/6, 6);
+    vecs.transposeInPlace();    // Transpose so eigenvectors are columns
 
     // NOW, copute the manifolds!
     tpat_simulation_engine sim(perOrbit->getSysData());
@@ -1033,14 +985,14 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
     double charL = perOrbit->getSysData()->getCharL();
     for(int n = 0; n < numMans; n++){
         // Transform the eigenvectors to this updated time
-        tpat_matrix newVecs = perOrbit->getSTM(pointIx[n])*vecs;
+        MatrixXRd newVecs = perOrbit->getSTM(pointIx[n])*vecs;
 
         // Pick the direction from one of the transformed eigenvectors
-        tpat_matrix direction(6,1);
+        Eigen::VectorXd direction(6);
         for(size_t v = 0; v < 2; v++){
-            tpat_matrix eigVec = newVecs.getCol(v);
-            double mag = sqrt(eigVec.at(0)*eigVec.at(0) + 
-                eigVec.at(1)*eigVec.at(1) + eigVec.at(2)*eigVec.at(2));
+            Eigen::VectorXd eigVec = newVecs.col(v);
+            double mag = sqrt(eigVec(0)*eigVec(0) + 
+                eigVec(1)*eigVec(1) + eigVec(2)*eigVec(2));
             if(type == MAN_U_P || type == MAN_U_M){
                 if(std::abs(nonCenterVals[v]) > 1){
                     direction = eigVec/mag;
@@ -1057,18 +1009,19 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, tpat_traj_cr3bp *perO
         }
 
         // Make sure it is pointing in +x direction
-        direction *= tpat_util::sign(direction.at(0));
+        direction *= tpat_util::sign(direction(0));
         
         // Orient according to specified type
         if(type == MAN_U_M || type == MAN_S_M)
             direction *= -1;
 
         // Step away from the point on the arc in the direction of the eigenvector
-        tpat_matrix q0(6, 1, perOrbit->getState(pointIx[n]));
+        std::vector<double> state = perOrbit->getState(pointIx[n]);
+        Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
         q0 += stepDist/charL * direction;
 
         // Simulate for some time to generate a manifold arc
-        sim.runSim(q0.getDataPtr(), tof);
+        sim.runSim(q0.data(), tof);
         allManifolds.push_back(sim.getCR3BP_Traj());
     }
 
@@ -1425,16 +1378,17 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         tpat_traj_cr3bp halfPerTraj = tpat_traj_cr3bp::fromNodeset(correctedHalfPer);
         double halfTOF = halfPerTraj.getTime(-1);
         double halfPerTraj_len = halfPerTraj.getLength();
-        tpat_matrix halfPerSTM = halfPerTraj.getSTM(-1);
-
+        MatrixXRd halfPerSTM = halfPerTraj.getSTM(-1);
+        
         // Use Mirror theorem to create the second half of the orbit
-        tpat_matrix mirrorMat = getMirrorMat(mirrorType);
+        MatrixXRd mirrorMat = getMirrorMat(mirrorType);
         for(int i = halfPerTraj_len-2; i >= 0; i--){
             // Use mirroring to populate second half of the orbit
-            tpat_matrix stateVec(1,6, halfPerTraj.getState(i));
-            tpat_matrix newStateVec = stateVec*mirrorMat;
+            std::vector<double> state = halfPerTraj.getState(i);
+            Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
+            Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
 
-            tpat_traj_step step(newStateVec.getDataPtr(), 2*halfTOF - halfPerTraj.getTime(i));
+            tpat_traj_step step(newStateVec.data(), 2*halfTOF - halfPerTraj.getTime(i));
             halfPerTraj.appendStep(step);
         }
 
@@ -1452,13 +1406,15 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
                             -1, 0, 0, 0, 0, 0,
                             0, -1, 0, 0, 0, 0,
                             0, 0, -1, 0, 0, 0};
-        tpat_matrix M(6,6,M_data);
-        tpat_matrix MI(6,6,MI_data);
-
-        tpat_matrix monoMat = mirrorMat*M*trans(halfPerSTM)*MI*mirrorMat*halfPerSTM;
+        MatrixXRd M = Eigen::Map<MatrixXRd>(M_data, 6, 6);
+        MatrixXRd MI = Eigen::Map<MatrixXRd>(MI_data, 6, 6);
+        
+        MatrixXRd monoMat(6,6);
+        monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
 
         // Set final STM of mirrored trajectory to the one computed here
         halfPerTraj.setSTM(-1, monoMat);
+        
         return halfPerTraj;     // Now contains entire trajectory
 
         // // Grab the last node, change its TOF and re-append it to the set

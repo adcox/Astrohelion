@@ -22,9 +22,7 @@
 #define H_ARC_STEP
 
 #include "tpat_constraint.hpp"
-
-// Forward Declarations
-class tpat_matrix;
+#include "tpat_eigen_defs.hpp"
 
 /**
  *	@brief Base class that represents a single integration step or node
@@ -65,7 +63,7 @@ public:
 	double getExtraParam(int) const;
 	std::vector<double> getExtraParams() const;
 	std::vector<double> getPosVelState() const;
-	tpat_matrix getSTM() const;
+	MatrixXRd getSTM() const;
 	std::vector<double> getSTMElements() const;
 
 	void addConstraint(tpat_constraint);
@@ -79,7 +77,7 @@ public:
 	void setExtraParams(std::vector<double>);
 	void setPosVelState(double*);
 	void setPosVelState(std::vector<double>);
-	void setSTM(tpat_matrix);
+	void setSTM(MatrixXRd);
 	void setSTM(double*);
 	void setSTM(std::vector<double>);
 

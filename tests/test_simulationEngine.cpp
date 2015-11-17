@@ -32,8 +32,9 @@ void test_cr3bp_sim(){
 
 	cout << "Trajectory contains " << traj.getLength() << " points" << endl;
 	
-	tpat_matrix lastSTM = traj.getSTM(traj.getLength()-1);
-	lastSTM.print("%12.4f");
+	MatrixXRd lastSTM = traj.getSTM(traj.getLength()-1);
+	std::cout << lastSTM << std::endl;
+	// lastSTM.print("%12.4f");
 
 	traj.saveToMat("data/HaloTest.mat");
 }

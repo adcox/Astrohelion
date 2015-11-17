@@ -30,6 +30,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_event.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
@@ -39,6 +40,8 @@
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
+
+#include <Eigen/Dense>
 
 #include <cmath>
 
@@ -655,14 +658,18 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			}
 
 			// Compute eigenvalues
-			tpat_matrix mono = perOrbit.getSTM(-1);
+			MatrixXRd mono = perOrbit.getSTM(-1);
 
-			double monoErr = std::abs(1.0 - det(mono));
+			double monoErr = std::abs(1.0 - mono.determinant());
 			if(monoErr > 1e-5)
 				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 			
-			std::vector< std::vector<cdouble> > eigData = eig(mono);
-			std::vector<cdouble> eigVals = eigData[0];
+			Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+		    if(eigensolver.info() != Eigen::Success)
+		        throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
+
+		    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+		    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 			// For debugging:
 			// printf("Eigenvalues:\n");
@@ -997,13 +1004,18 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		orbitCount++;
 
 		// Compute eigenvalues
-		tpat_matrix mono = perOrbit.getSTM(-1);
-		double monoErr = std::abs(1.0 - det(mono));
+		MatrixXRd mono = perOrbit.getSTM(-1);
+
+		double monoErr = std::abs(1.0 - mono.determinant());
 		if(monoErr > 1e-5)
 			printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+		
+		Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+	    if(eigensolver.info() != Eigen::Success)
+	        throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
 
-		std::vector< std::vector<cdouble> > eigData = eig(mono);
-		std::vector<cdouble> eigVals = eigData[0];
+	    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+	    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 		// Add orbit to family
 		tpat_family_member_cr3bp child(perOrbit);

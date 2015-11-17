@@ -29,12 +29,12 @@
 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_nodeset_bcr4bpr.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_traj_bcr4bpr.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_event.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_node.hpp"
 #include "tpat_utilities.hpp"
 
@@ -478,9 +478,11 @@ void tpat_model_bcr4bpr::corrector_targetDist(iterationData* it, tpat_constraint
         std::vector<double> primVel = getPrimVel(t0, sysData);
 
         if(it->varTime){
-            tpat_matrix dhdr(1, 3, dhdr_data);
-            tpat_matrix vel(3, 1, &(primVel[Pix*3]) );
-            it->DF[it->totalFree*row0 + 7*it->numNodes - 1 + n];
+            Eigen::RowVector3d dhdr = Eigen::Map<Eigen::RowVector3d>(dhdr_data, 1, 3);
+            Eigen::Vector3d drdT = Eigen::Map<Eigen::Vector3d>(&(primVel[Pix*3]), 3, 1);
+            
+            double prod = dhdr*drdT;
+            it->DF[it->totalFree*row0 + 7*it->numNodes - 1 + n] = prod;
         }
     }
 }// End of targetDist() =========================================
@@ -516,14 +518,17 @@ void tpat_model_bcr4bpr::corrector_targetDeltaV(iterationData* it, tpat_constrai
         // Compute parial w.r.t. node n+1 (where velocity is discontinuous)
         double dFdq_ndf_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
             -1*it->deltaVs[n*3+1]/dvMag, -1*it->deltaVs[n*3+2]/dvMag};
-        tpat_matrix dFdq_n2(1, 6, dFdq_ndf_data);
+
+        MatrixXRd dFdq_n2 = Eigen::Map<MatrixXRd>(dFdq_ndf_data, 1, 6);
 
         // Compute partial w.r.t. epoch time n
         if(it->varTime){
             std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1, 1);
-            tpat_matrix dqdT(6, 1, &(last_dqdT[0]));
-            tpat_matrix dFdT_n = -1*dFdq_n2 * dqdT;
-            it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n.at(0,0);
+
+            Eigen::RowVectorXd dqdT = Eigen::Map<Eigen::RowVectorXd>(&(last_dqdT[0]), 6, 1);
+            MatrixXRd dFdT_n;
+            dFdT_n.noalias() = -1*dFdq_n2*dqdT;
+            it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n(0);
         }
     }
 }//==============================================
@@ -548,97 +553,99 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
     std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
 
     // Get primary positions at the specified epoch time
-    tpat_matrix primPos(3, 3, &(primPosData[0]));
+    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
 
     double *X = &(it->X[0]);
-    tpat_matrix r(3, 1, X+6*n);     // position vector
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+6*n, 3, 1);   // Position vector
 
     // Create relative position vectors between s/c and primaries
-    tpat_matrix r_p1 = r - trans(primPos.getRow(0));
-    tpat_matrix r_p2 = r - trans(primPos.getRow(1));
-    tpat_matrix r_p3 = r - trans(primPos.getRow(2));
+    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
+    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
+    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
 
-    double d1 = norm(r_p1);
-    double d2 = norm(r_p2);
-    double d3 = norm(r_p3);
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
 
     double k = bcSysData->getK();
     double mu = bcSysData->getMu();
     double nu = bcSysData->getNu();
 
     // Evaluate three constraint function values 
-    tpat_matrix conEval = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
+    Eigen::Vector3d conEval;
+    conEval.noalias() = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
 
     // Parials w.r.t. node position r
     double dFdq_data[9] = {0};
-    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-                3*pow(r_p3.at(0),2)/pow(d3,5));     //dxdx
-    dFdq_data[1] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) + 
-            (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
-            nu*3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);   //dxdy
-    dFdq_data[2] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
-            nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);   //dxdz
+    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+                3*pow(r_p3(0),2)/pow(d3,5));     //dxdx
+    dFdq_data[1] = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) + 
+            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);   //dxdy
+    dFdq_data[2] = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);   //dxdz
     dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
-    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - 
-            nu*(1/pow(d3,3) - 3*pow(r_p3.at(1),2)/pow(d3,5));   //dydy
-    dFdq_data[5] = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
-            nu*3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);   //dydz
+    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - 
+            nu*(1/pow(d3,3) - 3*pow(r_p3(1),2)/pow(d3,5));   //dydy
+    dFdq_data[5] = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);   //dydz
     dFdq_data[6] = dFdq_data[2];    //dzdx = dxdz
     dFdq_data[7] = dFdq_data[5];    //dzdy = dydz
-    dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(2),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-            3*pow(r_p3.at(2),2)/pow(d3,5)); //dzdz
+    dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+            3*pow(r_p3(2),2)/pow(d3,5)); //dzdz
 
-    tpat_matrix dFdq(3, 3, dFdq_data);
+    Matrix3Rd dFdq = Eigen::Map<Matrix3Rd>(dFdq_data, 3, 3);
 
     // Get primary velocities at the specified epoch time
     std::vector<double> primVelData = getPrimVel(epoch, it->sysData);
-    tpat_matrix primVel(3, 3, &(primVelData[0]));
+    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
 
     // Compute partials of state w.r.t. primary positions; dont' compute partials
     // for P1 because its velocity is zero in the rotating frame
     double dfdr2_data[18] = {0};   double dfdr3_data[18] = {0};
 
-    dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
-    dfdr2_data[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
-    dfdr2_data[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
-    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2.at(1),2)/pow(d2,5);       //dydy2
-    dfdr2_data[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
-    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2.at(2),2)/pow(d2,5);       //dzdz2
+    dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
+    dfdr2_data[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
+    dfdr2_data[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
+    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
+    dfdr2_data[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
+    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
 
     dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
     dfdr2_data[15] = dfdr2_data[11];
     dfdr2_data[16] = dfdr2_data[14];
 
-    dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
-    dfdr3_data[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
-    dfdr3_data[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
-    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3.at(1),2)/pow(d3,5);       //dydy3
-    dfdr3_data[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
-    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3.at(2),2)/pow(d3,5);       //dzdz3
+    dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
+    dfdr3_data[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
+    dfdr3_data[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
+    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
+    dfdr3_data[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
+    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
 
     dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
     dfdr3_data[15] = dfdr3_data[11];
     dfdr3_data[16] = dfdr3_data[14];
 
-    tpat_matrix dFdr2(6,3, dfdr2_data);
-    tpat_matrix dFdr3(6,3, dfdr3_data);
+    MatrixXRd dFdr2 = Eigen::Map<MatrixXRd>(dfdr2_data, 6, 3);
+    MatrixXRd dFdr3 = Eigen::Map<MatrixXRd>(dfdr3_data, 6, 3);
 
     // scale matrices by constants
     dFdr2 *= -1*(mu - nu);
     dFdr3 *= -1*nu;
 
     // Compute partials of constraint function w.r.t. epoch time
-    tpat_matrix dFdT = dFdr2*trans(primVel.getRow(1)) + dFdr3*trans(primVel.getRow(2));
+    MatrixXRd dFdT;
+    dFdT.noalias() = dFdr2*(primVel.row(1).transpose()) + dFdr3*(primVel.row(2).transpose());
 
     // Copy data into the correct vectors/matrices
-    double* conEvalPtr = conEval.getDataPtr();
-    double* dFdq_ptr = dFdq.getDataPtr();
-    double* dFdT_ptr = dFdT.getDataPtr();
+    double* conEvalPtr = conEval.data();
+    double* dFdq_ptr = dFdq.data();
+    double* dFdT_ptr = dFdT.data();
 
     double *FX = &(it->FX[0]);
     double *DF = &(it->DF[0]);
@@ -664,103 +671,108 @@ void tpat_model_bcr4bpr::corrector_targetSP_mag(iterationData* it, tpat_constrai
     std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
 
     // Get primary positions at the specified epoch time
-    tpat_matrix primPos(3, 3, &(primPosData[0]));
+    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
 
     double *X = &(it->X[0]);
-    tpat_matrix r(3, 1, X+6*n);     // position vector
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+6*n, 3, 1);   // Position vector
 
     // Create relative position vectors between s/c and primaries
-    tpat_matrix r_p1 = r - trans(primPos.getRow(0));
-    tpat_matrix r_p2 = r - trans(primPos.getRow(1));
-    tpat_matrix r_p3 = r - trans(primPos.getRow(2));
+    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
+    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
+    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
 
-    double d1 = norm(r_p1);
-    double d2 = norm(r_p2);
-    double d3 = norm(r_p3);
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
 
     double k = bcSysData->getK();
     double mu = bcSysData->getMu();
     double nu = bcSysData->getNu();
 
-    // Evaluate three constraint function values 
-    tpat_matrix A = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
+    // Evaluate three constraint function values
+    Eigen::Vector3d A;
+    A.noalias() = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
 
     // Parials w.r.t. node position r
     double dFdq_data[9] = {0};
-    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(0),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-                3*pow(r_p3.at(0),2)/pow(d3,5));     //dxdx
-    dFdq_data[1] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(1)/pow(d1,5) + 
-            (mu - nu)*3*r_p2.at(0)*r_p2.at(1)/pow(d2,5) +
-            nu*3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);   //dxdy
-    dFdq_data[2] = (1/k - mu)*3*r_p1.at(0)*r_p1.at(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(0)*r_p2.at(2)/pow(d2,5) +
-            nu*3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);   //dxdz
+    dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+                3*pow(r_p3(0),2)/pow(d3,5));     //dxdx
+    dFdq_data[1] = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) + 
+            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);   //dxdy
+    dFdq_data[2] = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);   //dxdz
     dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
-    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(1),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(1),2)/pow(d2,5)) - 
-            nu*(1/pow(d3,3) - 3*pow(r_p3.at(1),2)/pow(d3,5));   //dydy
-    dFdq_data[5] = (1/k - mu)*3*r_p1.at(1)*r_p1.at(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2.at(1)*r_p2.at(2)/pow(d2,5) +
-            nu*3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);   //dydz
+    dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - 
+            nu*(1/pow(d3,3) - 3*pow(r_p3(1),2)/pow(d3,5));   //dydy
+    dFdq_data[5] = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);   //dydz
     dFdq_data[6] = dFdq_data[2];    //dzdx = dxdz
     dFdq_data[7] = dFdq_data[5];    //dzdy = dydz
-    dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1.at(2),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2.at(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-            3*pow(r_p3.at(2),2)/pow(d3,5)); //dzdz
+    dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+            3*pow(r_p3(2),2)/pow(d3,5)); //dzdz
 
-    tpat_matrix dAdq(3, 3, dFdq_data);
-    tpat_matrix dFdq = dAdq*A/norm(A);
+    Matrix3Rd dAdq = Eigen::Map<Matrix3Rd>(dFdq_data, 3, 3);
+    Eigen::Vector3d dFdq;
+    dFdq.noalias() = dAdq*A/(A.norm());
 
     // Get primary velocities at the specified epoch time
     std::vector<double> primVelData = getPrimVel(epoch, it->sysData);
-    tpat_matrix primVel(3, 3, &(primVelData[0]));
+    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
 
     // Compute partials of state w.r.t. primary positions; dont' compute partials
     // for P1 because its velocity is zero in the rotating frame
     double dfdr2_data[18] = {0};   double dfdr3_data[18] = {0};
 
-    dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2.at(0),2)/pow(d2,5);        //dxdx2
-    dfdr2_data[10] = 3*r_p2.at(0)*r_p2.at(1)/pow(d2,5);                  //dxdy2
-    dfdr2_data[11] = 3*r_p2.at(0)*r_p2.at(2)/pow(d2,5);                  //dxdz2
-    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2.at(1),2)/pow(d2,5);       //dydy2
-    dfdr2_data[14] = 3*r_p2.at(1)*r_p2.at(2)/pow(d2,5);                  //dydz2
-    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2.at(2),2)/pow(d2,5);       //dzdz2
+    dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
+    dfdr2_data[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
+    dfdr2_data[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
+    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
+    dfdr2_data[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
+    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
 
     dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
     dfdr2_data[15] = dfdr2_data[11];
     dfdr2_data[16] = dfdr2_data[14];
 
-    dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3.at(0),2)/pow(d3,5);        //dxdx3
-    dfdr3_data[10] = 3*r_p3.at(0)*r_p3.at(1)/pow(d3,5);                  //dxdy3
-    dfdr3_data[11] = 3*r_p3.at(0)*r_p3.at(2)/pow(d3,5);                  //dxdz3
-    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3.at(1),2)/pow(d3,5);       //dydy3
-    dfdr3_data[14] = 3*r_p3.at(1)*r_p3.at(2)/pow(d3,5);                  //dydz3
-    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3.at(2),2)/pow(d3,5);       //dzdz3
+    dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
+    dfdr3_data[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
+    dfdr3_data[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
+    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
+    dfdr3_data[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
+    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
 
     dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
     dfdr3_data[15] = dfdr3_data[11];
     dfdr3_data[16] = dfdr3_data[14];
 
-    tpat_matrix dFdr2(3,3, dfdr2_data+9);
-    tpat_matrix dFdr3(3,3, dfdr3_data+9);
+    Matrix3Rd dFdr2 = Eigen::Map<Matrix3Rd>(dfdr2_data+9, 3, 3);
+    Matrix3Rd dFdr3 = Eigen::Map<Matrix3Rd>(dfdr3_data+9, 3, 3);
 
     // scale matrices by constants
     dFdr2 *= -1*(mu - nu);
     dFdr3 *= -1*nu;
 
     // Compute partials of constraint function w.r.t. epoch time
-    tpat_matrix dAdT = dFdr2*trans(primVel.getRow(1)) + dFdr3*trans(primVel.getRow(2));
-    tpat_matrix dFdT = trans(A/norm(A))*dAdT;
+    Eigen::Vector3d dAdT;
+    dAdT.noalias() = dFdr2*(primVel.row(1).transpose()) + dFdr3*(primVel.row(2).transpose());
+    
+    Eigen::VectorXd dFdT;
+    dFdT.noalias() = A.transpose()/A.norm() * dAdT;
 
     // Copy data into the correct vectors/matrices
-    double* dFdq_ptr = dFdq.getDataPtr();
-    double* dFdT_ptr = dFdT.getDataPtr();
+    double* dFdq_ptr = dFdq.data();
+    double* dFdT_ptr = dFdT.data();
 
     double *FX = &(it->FX[0]);
     double *DF = &(it->DF[0]);
 
-    FX[row0] = norm(A);
+    FX[row0] = A.norm();
     
     std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + 6*n);
     // std::copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(row0+1) + 6*n);
@@ -816,12 +828,12 @@ tpat_nodeset* tpat_model_bcr4bpr::corrector_createOutput(iterationData *it, tpat
             if(findEvent){
                 // Append the 36 STM elements to the node vector
                 tpat_traj lastSeg = it->allSegs.back();
-                tpat_matrix lastSTM = lastSeg.getSTM(-1);
+                MatrixXRd lastSTM = lastSeg.getSTM(-1);
                 
                 // Create a vector of extra parameters from existing extraParam vector
                 std::vector<double> extraParams = nodeset_out->getNode(-1).getExtraParams();
                 // append the STM elements at the end
-                extraParams.insert(extraParams.end(), lastSTM.getDataPtr(), lastSTM.getDataPtr()+36);
+                extraParams.insert(extraParams.end(), lastSTM.data(), lastSTM.data()+36);
                 // append the last dqdT vector
                 std::vector<double> dqdT = lastSeg.getExtraParam(-1,1);
                 extraParams.insert(extraParams.end(), dqdT.begin(), dqdT.end());

@@ -7,7 +7,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_matrix.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -104,39 +104,12 @@ void checkFamilyContLS(){
 	}
 }//=========================================
 
-void check_AX_eq_B(){
-	double A_data[] = {1,2,3,4};
-	double X_data[] = {9,8,7,6};
-	double B_data[] = {23,20,55,48};
-
-	tpat_matrix A(2,2,A_data);
-	tpat_matrix B(2,2,B_data);
-	tpat_matrix X_true(2,2,X_data);
-
-	tpat_matrix X_solved = solveAX_eq_B(A,B);
-
-	tpat_matrix diff = X_true - X_solved;
-	
-	bool same = true;
-	for(int r = 0; r < 2; r++){
-		for(int c = 0; c < 2; c++){
-			if(std::abs(diff.at(r,c)) > 1e-13){
-				same = false;
-				break;
-			}
-		}
-	}
-
-	cout << "Matrix Equation Solution Test: " << (same ? PASS : FAIL) << endl;
-}//=========================================
-
 int main(void){
 
 	checkLPts();
 	checkUDDots();
 	checkDate2EpochTime();
 	checkFamilyContLS();
-	check_AX_eq_B();
 
 	return 0;
 }//=========================================

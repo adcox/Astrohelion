@@ -26,10 +26,9 @@
 #include "tpat.hpp"
 
 #include "tpat_arc_data.hpp"
-
+#include "tpat_eigen_defs.hpp"
 #include "tpat_sys_data.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
 
 //-----------------------------------------------------
@@ -121,9 +120,9 @@ tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
 	steps.insert(steps.end(), rhs.steps.begin(), rhs.steps.end());
 
 	// Adjust STMs (Assuming arcs are continuous)
-	tpat_matrix lhs_lastSTM = steps[lhs_numSteps-1].getSTM();	// PHI(t1, t0)
+	MatrixXRd lhs_lastSTM = steps[lhs_numSteps-1].getSTM(); 	// PHI(t1, t0)
 	for(size_t n = lhs_numSteps; n < steps.size(); n++){
-		tpat_matrix oldSTM = steps[n].getSTM();	// PHI(t2, t1)
+		MatrixXRd oldSTM = steps[n].getSTM();	// PHI(t2, t1)
 
 		// Multiply PHI(t2, t1)*PHI(t1, t0) to get PHI(t2, t0)
 		steps[n].setSTM(oldSTM*lhs_lastSTM);
@@ -224,7 +223,7 @@ tpat_arc_step tpat_arc_data::getStep(int ix) const{
  *	from the end of the arc (e.g. ix = -1 will return the last STM)
  *	@return the STM associated with the specified index
  */
-tpat_matrix tpat_arc_data::getSTM(int ix) const{
+MatrixXRd tpat_arc_data::getSTM(int ix) const{
 	if(ix < 0)
 		ix += steps.size();
 	return steps[ix].getSTM();
@@ -284,7 +283,7 @@ void tpat_arc_data::setState(int ix, std::vector<double> stateVec){
  *  fro the end of the arc
  *  @param stm a 6x6 matrix containing the STM
  */
-void tpat_arc_data::setSTM(int ix, tpat_matrix stm){
+void tpat_arc_data::setSTM(int ix, MatrixXRd stm){
 	if(ix < 0)
 		ix += steps.size();
 
@@ -425,9 +424,9 @@ void tpat_arc_data::saveSTMs(mat_t *matFile){
 	for (size_t n = 0; n < steps.size(); n++){
 		// get the transpose of the STM matrix; we need to store it in column-major order
 		// and it's currently in row-major order
-		tpat_matrix P = trans(steps[n].getSTM());
+		MatrixXRd P = steps[n].getSTM().transpose();
 		// Retrieve the data from the matrix
-		double *matData = P.getDataPtr();
+		double *matData = P.data();
 		// Store that data in our huge vector
 		std::copy(matData, matData+36, &(allSTMEl[0]) + n*36);
 	}

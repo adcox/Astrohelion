@@ -29,8 +29,8 @@
 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_event.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
@@ -302,16 +302,17 @@ void tpat_model_cr3bp::corrector_targetPseudoArc(iterationData *it, tpat_constra
     std::vector<double> nullspace(conData.begin()+it->totalFree, conData.end()-1);
     double stepSize = conData.back();   // The last element is the step size
 
-    tpat_matrix X(1, it->totalFree, it->X);
-    tpat_matrix X_fam(1, famFreeVec.size(), famFreeVec);
-    tpat_matrix N(nullspace.size(), 1, nullspace);
+    Eigen::RowVectorXd X = Eigen::Map<Eigen::RowVectorXd>(&(it->X[0]), 1, it->totalFree);
+    Eigen::RowVectorXd X_fam = Eigen::Map<Eigen::RowVectorXd>(&(famFreeVec[0]), 1, famFreeVec.size());
+    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullspace[0]), nullspace.size(), 1);
+    
+    MatrixXRd dotProd;
+    dotProd.noalias() = (X - X_fam)*N;
 
-    tpat_matrix dotProd = (X - X_fam)*N;
-
-    it->FX[row0] = dotProd.at(0) - stepSize;
+    it->FX[row0] = dotProd(0) - stepSize;
 
     for(int i = 0; i < it->totalFree; i++){
-        it->DF[it->totalFree*row0 + i] = N.at(i);
+        it->DF[it->totalFree*row0 + i] = N(i);
     }
 }//=============================================
 
@@ -356,8 +357,8 @@ tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, tpat_n
             if(findEvent){
                 // Append the 36 STM elements to the node vector
                 tpat_traj lastSeg = it->allSegs.back();
-                tpat_matrix stm = lastSeg.getSTM(-1);
-                std::vector<double> extraParam(stm.getDataPtr(), stm.getDataPtr()+36);
+                MatrixXRd stm = lastSeg.getSTM(-1);
+                std::vector<double> extraParam(stm.data(), stm.data()+36);
                 
                 node.setExtraParams(extraParam);
             }

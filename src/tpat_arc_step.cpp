@@ -26,9 +26,8 @@
 #include "tpat.hpp"
 
 #include "tpat_arc_step.hpp"
-
+#include "tpat_eigen_defs.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
  
 #include <cmath>
@@ -215,10 +214,11 @@ std::vector<double> tpat_arc_step::getPosVelState() const {
  *	@brief Retrieve the STM for this step
  *	@return the STM for this step
  */
-tpat_matrix tpat_arc_step::getSTM() const {
-	double el[36];
-	std::copy(stm, stm+36, el);
-	return tpat_matrix(6, 6, el);
+MatrixXRd tpat_arc_step::getSTM() const {
+	double stmData[36];
+	std::copy(stm, stm+36, stmData);
+	MatrixXRd temp = Eigen::Map<MatrixXRd>(stmData, 6, 6);
+	return temp;
 }//====================================================
 
 /**
@@ -306,10 +306,11 @@ void tpat_arc_step::setPosVelState(std::vector<double> s){
  *	@brief Set the STM for this step
  *	@param m a 6x6 state transition matrix (non-dim)
  */
-void tpat_arc_step::setSTM(tpat_matrix m){
-	if(m.getRows() != 6 || m.getCols() != 6)
+void tpat_arc_step::setSTM(MatrixXRd m){
+	if(m.rows() != 6 || m.cols() != 6)
 		throw tpat_exception("tpat_arc_step::setSTM: STM must be 6x6");
-	std::copy(m.getDataPtr(), m.getDataPtr()+36, stm);
+	
+	std::copy(m.data(), m.data()+36, stm);
 }//====================================================
 
 /**

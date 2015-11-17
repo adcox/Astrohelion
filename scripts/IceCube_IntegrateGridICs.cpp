@@ -6,7 +6,6 @@
 
 #include "tpat_constants.hpp"
 #include "tpat_event.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
@@ -32,7 +31,7 @@ int main(int argc, char *argv[]){
 
 	char filename[64];
 	sprintf(filename, "data/gridIC_C%.3f.mat", C);
-	tpat_matrix gridICs = readMatrixFromMat(filename, "gridICs");
+	MatrixXRd gridICs = readMatrixFromMat(filename, "gridICs");
 
 	tpat_sys_data_cr3bp emSys("earth", "moon");
 
@@ -53,12 +52,12 @@ int main(int argc, char *argv[]){
 	// sim.setVerbose(true);
 
 	std::vector<double> allPeri;
-	allPeri.reserve(8*gridICs.getRows());
+	allPeri.reserve(8*gridICs.rows());
 
 	printf("Integrating segements to find periapses...\n");
-	for(int r = 0; r < gridICs.getRows(); r++){
-		tpat_matrix row = gridICs.getRow(r);
-		std::vector<double> IC(row.getDataPtr(), row.getDataPtr() + gridICs.getCols());
+	for(int r = 0; r < gridICs.rows(); r++){
+		Eigen::RowVectorXd row = gridICs.row(r);
+		std::vector<double> IC(row.data(), row.data() + gridICs.cols());
 		double ellapsed = 0;
 
 		periCount = 0;

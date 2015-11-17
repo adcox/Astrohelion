@@ -1416,45 +1416,6 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
         halfPerTraj.setSTM(-1, monoMat);
         
         return halfPerTraj;     // Now contains entire trajectory
-
-        // // Grab the last node, change its TOF and re-append it to the set
-        // tpat_node lastNode = correctedHalfPer.getNode(-1);
-        // lastNode.setTOF(correctedHalfPer.getNode(-2).getTOF());
-        // correctedHalfPer.deleteNode(-1);
-        // correctedHalfPer.appendNode(lastNode);
-
-        // // Now add more nodes, use MS to get an accurate orbit
-        // tpat_matrix mirrorMat = getMirrorMat(mirrorType);
-        // for(int i = correctedHalfPer.getNumNodes()-2; i >= 0; i--){
-        //     // Use mirroring to populate second half of the orbit via nodes
-        //     tpat_matrix stateVec(1,6, correctedHalfPer.getNode(i).getPosVelState());
-        //     tpat_matrix newStateVec = stateVec*mirrorMat;
-
-        //     double tof = NAN;
-        //     if(i > 0)
-        //         tof = correctedHalfPer.getNode(i-1).getTOF();
-
-        //     tpat_node newNode(newStateVec.getDataPtr(), tof);
-        //     correctedHalfPer.appendNode(newNode);
-        // }
-
-        // // Remove intermediate constraint, constrain both end points
-        // correctedHalfPer.clearConstraints();
-        // correctedHalfPer.addConstraint(initStateCon);
-        // tpat_constraint finalCon(tpat_constraint::STATE, correctedHalfPer.getNumNodes()-1, mirrorCon1, 6);
-        // correctedHalfPer.addConstraint(finalCon);
-
-        // correctedHalfPer.saveToMat("FullOrbNodes.mat");
-
-        // // Reconverge the solution
-        // corrector.correct(&correctedHalfPer);
-
-        // // Return the corrected solution in trajectory form
-        // tpat_nodeset_cr3bp finalSet = corrector.getCR3BP_Output();
-        
-        // finalSet.saveToMat("FinalSetNodes.mat");
-        
-        // return tpat_traj_cr3bp::fromNodeset(finalSet);
     }catch(tpat_diverge &e){
         throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
     }

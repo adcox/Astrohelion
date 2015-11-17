@@ -43,9 +43,6 @@
 #include <string>
 #include <vector>
 
-// Forward Declarations
-class tpat_matrix;
-
 /**
  *	@brief Class containing useful utility-type functions
  *

@@ -519,13 +519,13 @@ void tpat_model_bcr4bpr::corrector_targetDeltaV(iterationData* it, tpat_constrai
         double dFdq_ndf_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
             -1*it->deltaVs[n*3+1]/dvMag, -1*it->deltaVs[n*3+2]/dvMag};
 
-        MatrixXRd dFdq_n2 = Eigen::Map<MatrixXRd>(dFdq_ndf_data, 1, 6);
+        Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_ndf_data, 1, 6);
 
         // Compute partial w.r.t. epoch time n
         if(it->varTime){
             std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1, 1);
 
-            Eigen::RowVectorXd dqdT = Eigen::Map<Eigen::RowVectorXd>(&(last_dqdT[0]), 6, 1);
+            Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
             MatrixXRd dFdT_n;
             dFdT_n.noalias() = -1*dFdq_n2*dqdT;
             it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n(0);

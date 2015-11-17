@@ -8,7 +8,6 @@
 #include "tpat_constants.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_utilities.hpp"
 

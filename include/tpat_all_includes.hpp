@@ -17,7 +17,6 @@
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_nodeset_bcr4bpr.hpp"

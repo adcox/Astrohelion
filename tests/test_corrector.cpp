@@ -36,7 +36,7 @@ int main(void){
 	nodeset.addConstraint(perpCrossEnd);
 
 	tpat_correction_engine corrector;
-	corrector.setVerbose(true);
+	// corrector.setVerbose(true);
 	corrector.correct(&nodeset);
 	tpat_nodeset_cr3bp correctedNodeset = corrector.getCR3BP_Output();
 	correctedNodeset.saveToMat("resNodes_Corrected.mat");

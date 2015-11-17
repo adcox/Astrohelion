@@ -30,7 +30,6 @@
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_traj.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"

@@ -32,6 +32,7 @@
 #define H_UTILITIES
 
 #include "tpat_constants.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_exceptions.hpp"
 
 #include <cspice/SpiceZdf.h>	// typedefs for SPICE objects, like SpiceDouble 
@@ -326,10 +327,11 @@ void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
 int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 double readDoubleFromMat(mat_t*, const char*);
-tpat_matrix readMatrixFromMat(const char*, const char*);
+MatrixXRd readMatrixFromMat(const char*, const char*);
 std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);
 void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
 void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
+void toCSV(MatrixXRd, const char*);
 
 void waitForUser();
 

@@ -22,7 +22,7 @@
 #define H_CORRECTIONS
 
 #include "tpat_constraint.hpp"
-#include "tpat_matrix.hpp"
+#include "tpat_eigen_defs.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_sys_data.hpp"
@@ -146,7 +146,7 @@ class tpat_correction_engine{
 
 		void copyEngine(const tpat_correction_engine&);
 
-		tpat_matrix solveUpdateEq(iterationData*);
+		Eigen::VectorXd solveUpdateEq(iterationData*);
 
 		void cleanEngine();
 };

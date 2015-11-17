@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <Eigen/Dense>
 #include <gsl/gsl_linalg.h>
 #include <vector>
 
@@ -473,17 +474,19 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 			model->corrector_applyConstraint(&it, it.allCons[c], c);
 
 		// Solve for newX and copy into working vector X
-		tpat_matrix oldX = tpat_matrix(it.totalFree, 1, it.X);
-		tpat_matrix newX = solveUpdateEq(&it);
+		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
+		Eigen::VectorXd newX = solveUpdateEq(&it);
+		
 		it.X.clear();
-		it.X.insert(it.X.begin(), newX.getDataPtr(), newX.getDataPtr()+it.totalFree);
+		it.X.insert(it.X.begin(), newX.data(), newX.data()+it.totalFree);
 
 		// Compute error; norm of constraint vector
-		tpat_matrix FX_mat(it.totalCons, 1, it.FX);
-		double err_cons = norm(FX_mat);
+		Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
+		double err_cons = FX.norm();
 
 		// Compute error: difference between subsequent free variable vectors
-		double err_it = norm(newX - oldX);
+		Eigen::VectorXd diff = newX - oldX;
+		double err_it = diff.norm();
 
 		// Choose the lower of the two?
 		err = err_cons < err_it ? err_cons : err_it;
@@ -537,22 +540,23 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
  *
  *	@return the updated free variable vector \f$ \vec{X}_{n+1} \f$
  */
-tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
+Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
-	tpat_matrix oldX(it->totalFree, 1, it->X);
-	tpat_matrix J(it->totalCons, it->totalFree, it->DF);
-	tpat_matrix FX_mat(it->totalCons, 1, it->FX);
+	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it->X[0]), it->totalFree, 1);
+	Eigen::MatrixXd J = Eigen::Map<Eigen::MatrixXd>(&(it->DF[0]), it->totalCons, it->totalFree);
+	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it->FX[0]), it->totalCons, 1);
 	
 	// change sign for matrix multiplication
-	FX_mat*=-1;
+	FX *= -1;
 
 	// Create vector out of constraint vector FX
-	gsl_vector_view b = gsl_vector_view_array(FX_mat.getDataPtr(), FX_mat.getRows());
+	gsl_vector_view b = gsl_vector_view_array(FX.data(), FX.rows());
 	
 	// Allocate memory for intermediate vector w
 	gsl_vector *w;
 	gsl_permutation *perm;
-	tpat_matrix X_diff(it->totalFree, 1);
+
+	Eigen::VectorXd X_diff(it->totalFree, 1);
 	int permSign;	// store sign (even/odd) of permutation matrix
 	int status;		// status for GSL functions
 	if(it->totalCons == it->totalFree){	// J is square, use regular inverse
@@ -566,25 +570,28 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 		the nullspace of J.
 		Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 		 */
-		// Solve the system Jw = b
-		w = gsl_vector_alloc(it->totalFree);
-		perm = gsl_permutation_alloc(J.getRows());
-		status = gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
-		if(status){
-			printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
-			gsl_permutation_free(perm);
-			gsl_vector_free(w);
-			throw tpat_linalg_err("Unable to decompose J into L and U");
-		}
-		status = gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
-		if(status){
-			printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
-			gsl_permutation_free(perm);
-			gsl_vector_free(w);
-			throw tpat_linalg_err("Unable to invert J, likely singular");
-		}
-		// w, in this case, is X_diff
-		X_diff = tpat_matrix(w, false);
+		
+		// Solve the system Jw = b (In this case, w = X_diff)
+		X_diff = J.fullPivLu().solve(FX);
+
+		// w = gsl_vector_alloc(it->totalFree);
+		// perm = gsl_permutation_alloc(J.getRows());
+		// status = gsl_linalg_LU_decomp(J.getGSLMat(), perm, &permSign);
+		// if(status){
+		// 	printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
+		// 	gsl_permutation_free(perm);
+		// 	gsl_vector_free(w);
+		// 	throw tpat_linalg_err("Unable to decompose J into L and U");
+		// }
+		// status = gsl_linalg_LU_solve(J.getGSLMat(), perm, &(b.vector), w);
+		// if(status){
+		// 	printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
+		// 	gsl_permutation_free(perm);
+		// 	gsl_vector_free(w);
+		// 	throw tpat_linalg_err("Unable to invert J, likely singular");
+		// }
+		// // w, in this case, is X_diff
+		// X_diff = tpat_matrix(w, false);
 	}else{
 		if(it->totalCons < it->totalFree){	// Under-constrained
 			// J.toCSV("J.csv");
@@ -592,8 +599,8 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 			// oldX.toCSV("X.csv");
 
 			// Compute Gramm matrix
-			tpat_matrix JT = trans(J);
-			tpat_matrix G = J*JT;
+			MatrixXRd JT = J.transpose();
+			MatrixXRd G = J*JT;
 
 			/* Use LU decomposition to invert the Gramm matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
@@ -601,44 +608,61 @@ tpat_matrix tpat_correction_engine::solveUpdateEq(iterationData* it){
 			the nullspace of J.
 			Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 			 */
+			
 			// Solve the system Gw = b
-			w = gsl_vector_alloc(it->totalCons);
-			perm = gsl_permutation_alloc(G.getRows());
-			status = gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
-			if(status){
-				printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
-				gsl_permutation_free(perm);
-				gsl_vector_free(w);
-				throw tpat_linalg_err("Unable to decompose J into L and U");
-			}
-			status = gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
-			if(status){
-				printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
-				gsl_permutation_free(perm);
-				gsl_vector_free(w);
-				throw tpat_linalg_err("Unable to invert G = JJ', likely singular");
-			}
+			Eigen::VectorXd w = G.fullPivLu().solve(FX);
+			
+			// Compute optimal x from w
+			X_diff = JT*w;
 
-			// Compute the optimal x from w
-			tpat_matrix W(w, false);	// create column vector
-			X_diff = JT*W;	//X_diff = X_new - X_old
+			toCSV(J, "J.csv");
+			toCSV(G, "G.csv");
+			toCSV(oldX, "oldX.csv");
+			toCSV(X_diff, "X_diff.csv");
+			toCSV(FX, "FX.csv");
+
+			// w = gsl_vector_alloc(it->totalCons);
+			// perm = gsl_permutation_alloc(G.getRows());
+			// status = gsl_linalg_LU_decomp(G.getGSLMat(), perm, &permSign);
+			// if(status){
+			// 	printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
+			// 	gsl_permutation_free(perm);
+			// 	gsl_vector_free(w);
+			// 	throw tpat_linalg_err("Unable to decompose J into L and U");
+			// }
+			// status = gsl_linalg_LU_solve(G.getGSLMat(), perm, &(b.vector), w);
+			// if(status){
+			// 	printErr("tpat_correction_engine::solveUpdateEq: GSL ERR: %s\n", gsl_strerror(status));
+			// 	gsl_permutation_free(perm);
+			// 	gsl_vector_free(w);
+			// 	throw tpat_linalg_err("Unable to invert G = JJ', likely singular");
+			// }
+
+			// // Compute the optimal x from w
+			// tpat_matrix W(w, false);	// create column vector
+			// X_diff = JT*W;	//X_diff = X_new - X_old
 		}else{	// Over-constrained
 			// dummy allocations to avoid errors when cleaning up
-			perm = gsl_permutation_alloc(J.getRows());
-			w = gsl_vector_alloc(J.getRows());
+			perm = gsl_permutation_alloc(J.rows());
+			w = gsl_vector_alloc(J.rows());
 			gsl_permutation_free(perm);
 			gsl_vector_free(w);
 			throw tpat_linalg_err("System is over constrained... No solution implemented");
 		}
 	}
 
-	tpat_matrix newX = oldX + X_diff;
+	Eigen::VectorXd newX = oldX + X_diff;
+	toCSV(newX, "newX.csv");
+
+	waitForUser();
+	return newX;
+	
 
 	// Free up memory used to invert G or J
-	gsl_permutation_free(perm);
-	gsl_vector_free(w);
+	// gsl_permutation_free(perm);
+	// gsl_vector_free(w);
 
-	return newX;
+	// return newX;
 }// End of solveUpdateEq() =====================================
 
 /**

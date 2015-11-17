@@ -41,7 +41,6 @@
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_model.hpp"
 #include "tpat_utilities.hpp"
 

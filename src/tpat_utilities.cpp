@@ -25,12 +25,12 @@
 #include "tpat.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_utilities.hpp"
 
 #include "matio.h"
 
 #include <complex>
+#include <fstream>
 #include <string>
 
 /**
@@ -57,30 +57,6 @@ void printVerb(bool verbose, const char * format, ...){
         va_end(args);
     }
 }//==========================================
-
-/**
- *  @brief Prints out a set of eigenvalues and eigenvectors
- *  @param eigData a set of vectors that contain data about an
- *  eigensystem; such sets are returned from tpat_matrix::eig()
- *  @see tpat_matrix::eig()
- */
-void printEigenData(std::vector< std::vector<cdouble> > eigData){
-    std::vector<cdouble> vals = eigData[0];
-    std::vector<cdouble> vecs = eigData[1];
-
-    printf("Eigenvalues:\n");
-    for(size_t v = 0; v < vals.size(); v++){
-        printf("%27s", complexToStr(vals[v]).c_str());
-    }
-    printf("\nEigenvectors:\n");
-    for(size_t j = 0; j < vals.size(); j++){
-        for(size_t v = 0; v < vals.size(); v++){
-            printf("%27s", complexToStr(vecs[v*vals.size() + j]).c_str());
-        }
-        printf("\n");
-    }
-    printf("\n");
-}//============================================
 
 /**
  *	@brief Print an error message to the standard output in red
@@ -196,7 +172,7 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
  *  @throws tpat_exception if the file cannot be opened, if the variable doesn't exist,
  *  or if the variable contains something other than doubles
  */
-tpat_matrix readMatrixFromMat(const char *filename, const char *varName){
+MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  
     mat_t *matfp = Mat_Open(filename, MAT_ACC_RDONLY);
     if(matfp ==  NULL)
@@ -219,9 +195,10 @@ tpat_matrix readMatrixFromMat(const char *filename, const char *varName){
         if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
             double *data = static_cast<double *>(matvar->data);
 
-            tpat_matrix mat(1,1);
+            MatrixXRd mat;
+            
             if(data != NULL){
-                mat = tpat_matrix(matvar->dims[1], matvar->dims[0], data);
+                mat = Eigen::Map<MatrixXRd>(data, matvar->dims[1], matvar->dims[0]);
                 
                 Mat_VarFree(matvar);
                 return mat;
@@ -232,7 +209,7 @@ tpat_matrix readMatrixFromMat(const char *filename, const char *varName){
 
             Mat_VarFree(matvar);
             Mat_Close(matfp);
-            return tpat_matrix(1,1);
+            return mat;
         }else{
             Mat_VarFree(matvar);
             Mat_Close(matfp);
@@ -405,5 +382,23 @@ void checkAndReThrowSpiceErr(const char* customMsg){
     }
 }//============================================
 
+
+void toCSV(MatrixXRd m, const char* filename){
+    std::ofstream outFile(filename, std::ios::out);
+    
+    for (int r = 0; r < m.rows(); r++){
+        for (int c = 0; c < m.cols(); c++){
+            char buffer[64] = { };
+            if(c < m.cols()-1)
+                sprintf(buffer, "%.14f, ", m(r,c));
+            else
+                sprintf(buffer, "%.14f\n", m(r,c));
+
+            outFile << buffer;
+        }
+    }
+
+    outFile.close();
+}//=============================================
 
 //

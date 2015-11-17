@@ -34,7 +34,6 @@
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
-#include "tpat_matrix.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
@@ -825,8 +824,9 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	
 	// Initialize counters and storage containers
 	int orbitCount = 0;
-	tpat_matrix convergedFreeVarVec(familyItData.totalFree, 1, familyItData.X);
-	tpat_matrix prevN(familyItData.totalFree, 1);
+	Eigen::VectorXd convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
+	Eigen::VectorXd prevN(familyItData.totalFree, 1);
+	
 	std::vector<tpat_traj_cr3bp> members;
 
 	while(orbitCount < numOrbits){
@@ -844,12 +844,14 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		}
 
 		// Compute null space of previously computed member's Jacobian Matrix
-		tpat_matrix DF(familyItData.totalFree-1, familyItData.totalFree, DF_data);
-		tpat_matrix N = null_qr(DF);
+		MatrixXRd DF = Eigen::Map<MatrixXRd>(&(DF_data[0]), familyItData.totalFree-1, familyItData.totalFree);
+		Eigen::FullPivLU<MatrixXRd> lu(DF);
+		lu.setThreshold(1e-14);
+		MatrixXRd N = lu.kernel();
 
-		printf("DF has dimensions %d x %d\n", DF.getRows(), DF.getCols());
+		printf("DF has dimensions %ld x %ld\n", DF.rows(), DF.cols());
 		// Check to make sure the IS a nullspace
-		if(N.getRows() == 1){
+		if(N.rows() == 1){
 			printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is zero-dimensional; cannot proceed...\n");
 			return;
 		}		
@@ -862,9 +864,9 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		/**
 		 *	Choose the nullspace vector that is closest to the previous one (which converged)
 		 */
-		printf("Choosing Nullspace Vector (%dD, %d elements)\n", N.getCols(), N.getRows());
+		printf("Choosing Nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
 		if(orbitCount == 0){
-			if(N.getCols() > 1){
+			if(N.cols() > 1){
 				printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is multidimensional on first iteration; unsure how to proceed...\n");
 				return;
 			}
@@ -872,9 +874,9 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 			bool sameDir = true;
 			for(size_t i = 0; i < initDir.size(); i++){
 				// Find a non-zero element
-				if(initDir[i] != 0 && i < (size_t)(N.getRows())){
+				if(initDir[i] != 0 && i < (size_t)(N.rows())){
 					// If signs are different, assume direction is different
-					if(N.at(i)*initDir[i] < 0){
+					if(N(i,0)*initDir[i] < 0){
 						sameDir = false;
 						break;
 					}
@@ -892,15 +894,15 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 			int best_ix = 0;	// index of the column of the best vector option
 			int best_sign = 1;	// sign associated with best vector
 			double best_angle = 181;	// the best (smallest) angle found
-			for(int i = 0; i < N.getCols(); i++){
+			for(int i = 0; i < N.cols(); i++){
 				// Compute angle from dot product
-				tpat_matrix col_i = N.getCols() > 1 ? N.getCol(i) : N;
-				tpat_matrix dotProd = trans(prevN)*col_i / (norm(prevN)*norm(N));
-				double angle = std::acos(dotProd.at(0));
+				Eigen::VectorXd col_i = N.cols() > 1 ? N.col(i) : N;
+				Eigen::VectorXd dotProd = prevN.transpose()*col_i / (prevN.norm()*N.norm());
+				double angle = std::acos(dotProd(0));
 				int sign = 1;
 
 				// Flip the sign if the angle is greater than 90 and change the value to 180 - angle
-				printf("dot product = %.4f\n", dotProd.at(0));
+				printf("dot product = %.4f\n", dotProd(0));
 				printf("Angle = %.4f deg\n", angle*180/PI);
 				if(angle > PI/2.0){
 					printColor(CYAN, "Angle is %.4f > pi/2; changing sign and angle\n", angle);
@@ -917,13 +919,13 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 			}
 
 			printf("best ix = %d, sign = %d\n", best_ix, best_sign);
-			tpat_matrix temp = N.getCols() > 1 ? N.getCol(best_ix) : N;
+			Eigen::VectorXd temp = N.cols() > 1 ? N.col(best_ix) : N;
 			N = best_sign*temp;	// Apply sign change, if needed
 		}
 
 		prevN = N;	// Update memory
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
-			N.at(0), N.at(1), N.at(2), N.at(3), N.at(4), N.at(5));
+			N(0), N(1), N(2), N(3), N(4), N(5));
 
 		tpat_nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
 
@@ -981,10 +983,11 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		// Check to see if the converged family vector is significantly different from previously computed family member
 		// Note that only the first 6 states (the IC for the trajectory) is checked; differences in other nodes 
 		// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
-		tpat_matrix newX_init = tpat_matrix(6, 1, &(familyItData.X[0]));
-		tpat_matrix oldX_init = tpat_matrix(6, 1, convergedFreeVarVec.getDataPtr());
+		Eigen::VectorXd newX_init = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), 6, 1);
+		Eigen::VectorXd oldX_init = Eigen::Map<Eigen::VectorXd>(convergedFreeVarVec.data(), 6, 1);
 
-		double diffX = norm(newX_init - oldX_init);
+		Eigen::VectorXd diff = newX_init - oldX_init;
+		double diffX = diff.norm();
 		printErr("||diff in X(1:6)|| = %.4e\n", diffX);
 
 		if(diffX < tol){
@@ -993,7 +996,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		}
 		
 		// Save new converged family vector
-		convergedFreeVarVec = tpat_matrix(familyItData.totalFree, 1, familyItData.X);
+		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
 		tpat_nodeset_cr3bp perNodes = corrector.getCR3BP_Output();
@@ -1035,14 +1038,14 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
  *	previous (nearest) converged family member
  *	@param cons a vector of constraints to place on the nodeset
  */
-tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix convergedFreeVarVec,
-	tpat_matrix N, double stepSize, iterationData familyItData, std::vector<tpat_constraint> cons){
+tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
+	Eigen::VectorXd N, double stepSize, iterationData familyItData, std::vector<tpat_constraint> cons){
 
 	/**
 	 *	Step forwards away from previously converged solution
 	 */
-	tpat_matrix newFreeVarVec = convergedFreeVarVec + stepSize*N;
-	double *X = newFreeVarVec.getDataPtr();
+	Eigen::VectorXd newFreeVarVec = convergedFreeVarVec + stepSize*N;
+	double *X = newFreeVarVec.data();
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
 	tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp *>(familyItData.sysData);
@@ -1065,7 +1068,7 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix conv
 	 */
 	std::vector<double> pacCon_data = familyItData.X;
 	// Append the null vector (i.e. step direction)
-	pacCon_data.insert(pacCon_data.end(), N.getDataPtr(), N.getDataPtr()+N.getRows());
+	pacCon_data.insert(pacCon_data.end(), N.data(), N.data()+N.rows());
 	// Append the step size
 	pacCon_data.insert(pacCon_data.end(), stepSize);
 	// Create the actual constraint
@@ -1074,7 +1077,7 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(tpat_matrix conv
 
 	// Outputs for debugging and sanity checks
 	printf("New IC = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...] tof = %.4f\n",
-		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.getRows()-1]);
+		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.rows()-1]);
 
 	return newMember;
 }

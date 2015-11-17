@@ -1498,10 +1498,10 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, tpat_sys_data_cr3bp *SESys, 
 
         // Create bogus accel and STM
         double accel[] = {NAN, NAN, NAN};
-        tpat_matrix stm = tpat_matrix::I(6);
+        MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
         // Create a new step
-        tpat_traj_step step(&(state_SE[0]), t, accel, stm.getDataPtr());
+        tpat_traj_step step(&(state_SE[0]), t, accel, stm.data());
 
         SETraj.appendStep(step);
         
@@ -1585,7 +1585,6 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, tpat_sys_data_cr3bp *EMSys, 
 
     // Shift coordinates to EM barcyenter from SE barycenter
     tpat_sys_data_cr3bp *seSys = static_cast<tpat_sys_data_cr3bp*>(SETraj.getSysData());
-    tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - seSys->getMu());
 
     double charTE = EMSys->getCharT();               // characteristic time in EM system
     double charLE = EMSys->getCharL();               // characteristic length in EM system
@@ -1603,9 +1602,9 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, tpat_sys_data_cr3bp *EMSys, 
 
         // Bogus values for accel and STM
         double accel[] = {NAN, NAN, NAN};
-        tpat_matrix stm = tpat_matrix::I(6);
+        MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
-        tpat_traj_step step(&(state_EM[0]), t, accel, stm.getDataPtr());
+        tpat_traj_step step(&(state_EM[0]), t, accel, stm.data());
         EMTraj.appendStep(step);
 
         // Recompute Jacobi
@@ -1690,7 +1689,8 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
     double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
 
     // Shift coordinates to SE barcyenter from EM barycenter
-    tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - mu_SE);
+    Matrix3Rd I = Matrix3Rd::Identity(3,3);
+    Eigen::RowVector3d posShift = I.row(0)*(1 - mu_SE);
 
     // Compute Earth's position in inertial frame at this time
     double thetaE_k = thetaE0 + t*charTE/charTS;
@@ -1702,25 +1702,27 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
                                 0, 0, 1};
     double lunarToEM[] = {cos(thetaM_k), -sin(thetaM_k), 0, sin(thetaM_k), cos(thetaM_k), 0,
                                 0, 0, 1};
-    tpat_matrix DCM_I2L(3,3, inertToLunar);
-    tpat_matrix DCM_I2S(3,3, inertToSE);
-    tpat_matrix DCM_L2E(3,3, lunarToEM);
 
-    tpat_matrix posEM(1,3, &(state_EM[0]));
-    tpat_matrix velEM(1,3, &(state_EM[0])+3);
+    Matrix3Rd DCM_I2L = Eigen::Map<Matrix3Rd>(inertToLunar);
+    Matrix3Rd DCM_I2S = Eigen::Map<Matrix3Rd>(inertToSE);
+    Matrix3Rd DCM_L2E = Eigen::Map<Matrix3Rd>(lunarToEM);
+    
+    Eigen::RowVector3d posEM = Eigen::Map<Eigen::Vector3d>(&(state_EM[0]));
+    Eigen::RowVector3d velEM = Eigen::Map<Eigen::Vector3d>(&(state_EM[0])+3);
 
     // Rotate the position into SE frame and shift basepoint to SE barycenter (EM working frame)
-    tpat_matrix posSE = posEM*trans(DCM_L2E)*trans(DCM_I2L)*DCM_I2S + posShift*charLS/charLE;
+    Eigen::RowVector3d posSE = posEM*DCM_L2E.transpose()*DCM_I2L.transpose()*DCM_I2S + posShift*charLS/charLE;
+    
 
     // Angular velocity of SE frame in EM frame (working frame = EM)
-    tpat_matrix omega = -1*charTE/charTS*tpat_matrix::e_j(3,3) *
-        trans(DCM_I2S)*DCM_I2L*DCM_L2E + charTE/charTE*tpat_matrix::e_j(3,3);
+    Eigen::RowVector3d omega = -1*charTE/charTS*I.row(2)*DCM_I2S.transpose()*DCM_I2L*DCM_L2E + 
+        charTE/charTE*I.row(2);
 
     // Apply BKE to get velocity with SE observer, still in EM working frame
-    tpat_matrix velSE = velEM + cross(omega, posEM);
+    Eigen::RowVector3d velSE = velEM + omega.cross(posEM);
 
     // Rotate the velocity into the SE working frame
-    velSE *= trans(DCM_L2E)*trans(DCM_I2L)*DCM_I2S;
+    velSE *= DCM_L2E.transpose()*DCM_I2L.transpose()*DCM_I2S;
 
     // Units are still in non-dim EM, so change to SE non-dim
     posSE *= charLE/charLS;
@@ -1728,8 +1730,8 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
 
     // Put new data into state vector
     std::vector<double> state_SE;
-    state_SE.insert(state_SE.begin(), posSE.getDataPtr(), posSE.getDataPtr()+3);
-    state_SE.insert(state_SE.begin()+3, velSE.getDataPtr(), velSE.getDataPtr()+3);
+    state_SE.insert(state_SE.begin(), posSE.data(), posSE.data()+3);
+    state_SE.insert(state_SE.begin()+3, velSE.data(), velSE.data()+3);
 
     return state_SE;
 }//====================================================
@@ -1756,7 +1758,8 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
 std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, double thetaE0, double thetaM0,
     double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
     
-    tpat_matrix posShift = tpat_matrix::e_j(3, 1)*(1 - mu_SE);
+    Matrix3Rd I = Matrix3Rd::Identity(3,3);
+    Eigen::RowVector3d posShift = I.row(0)*(1 - mu_SE);
 
     // Compute Earth's position in inertial frame at this time
     double thetaE_k = thetaE0 + t;
@@ -1768,25 +1771,25 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
                                 0, 0, 1};
     double lunarToEM[] = {cos(thetaM_k), -sin(thetaM_k), 0, sin(thetaM_k), cos(thetaM_k), 0,
                                 0, 0, 1};
-    tpat_matrix DCM_I2L(3,3, inertToLunar);
-    tpat_matrix DCM_I2S(3,3, inertToSE);
-    tpat_matrix DCM_L2E(3,3, lunarToEM);
 
-    tpat_matrix posSE(1,3, &(state_SE[0]));
-    tpat_matrix velSE(1,3, &(state_SE[0])+3);
+    Matrix3Rd DCM_I2L = Eigen::Map<Matrix3Rd>(inertToLunar);
+    Matrix3Rd DCM_I2S = Eigen::Map<Matrix3Rd>(inertToSE);
+    Matrix3Rd DCM_L2E = Eigen::Map<Matrix3Rd>(lunarToEM);
+    
+    Eigen::RowVector3d posSE = Eigen::Map<Eigen::Vector3d>(&(state_SE[0]));
+    Eigen::RowVector3d velSE = Eigen::Map<Eigen::Vector3d>(&(state_SE[0])+3);
 
     // Rotate the position into SE frame, coordinates are EM ND
-    tpat_matrix posEM = (posSE - posShift)*trans(DCM_I2S)*DCM_I2L*DCM_L2E;
+    Eigen::RowVector3d posEM = (posSE - posShift)*DCM_I2S.transpose()*DCM_I2L*DCM_L2E;
 
     // Angular velocity of EM frame in SE frame (working frame = SE)
-    tpat_matrix omega = charTS/charTS*tpat_matrix::e_j(3,3) - charTS/charTE*tpat_matrix::e_j(3,3)*
-        trans(DCM_I2L)*DCM_I2S;
+    Eigen::RowVector3d omega = charTS/charTS*I.row(2) - charTS/charTE*I.row(2)*DCM_I2L.transpose()*DCM_I2S;
 
     // Compute velocity in EM frame (working frame = SE)
-    tpat_matrix velEM = velSE + cross(omega, (posSE-posShift));
+    Eigen::RowVector3d velEM = velSE + omega.cross(posSE - posShift);
 
     // Rotate the velocity into the EM working frame
-    velEM *= trans(DCM_I2S)*DCM_I2L*DCM_L2E;
+    velEM *= DCM_I2S.transpose()*DCM_I2L*DCM_L2E;
 
     // Units are still in non-dim SE, so change to EM non-dim
     posEM *= charLS/charLE;
@@ -1794,8 +1797,8 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
 
     // Put new data into state vector
     std::vector<double> state_EM;
-    state_EM.insert(state_EM.begin(), posEM.getDataPtr(), posEM.getDataPtr()+3);
-    state_EM.insert(state_EM.begin()+3, velEM.getDataPtr(), velEM.getDataPtr()+3);
+    state_EM.insert(state_EM.begin(), posEM.data(), posEM.data()+3);
+    state_EM.insert(state_EM.begin()+3, velEM.data(), velEM.data()+3);
 
     return state_EM;
 }//====================================================
@@ -1936,10 +1939,10 @@ tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *
 
         // Bogus values for dqdT and STM
         double dqdT[] = {NAN, NAN, NAN, NAN, NAN, NAN};
-        tpat_matrix stm = tpat_matrix::I(6);
+        MatrixXRd stm = MatrixXRd::Identity(6,6);
 
         // Create step
-        tpat_traj_step step(bcState, t, bcAccel, stm.getDataPtr());
+        tpat_traj_step step(bcState, t, bcAccel, stm.data());
         bcTraj.appendStep(step);
         bcTraj.set_dqdT(-1, dqdT);
     }

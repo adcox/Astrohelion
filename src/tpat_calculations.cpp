@@ -117,8 +117,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
     
     
     // Compute derivative of STM
-    MatrixXRd phiDot(6,6);
-    phiDot.noalias() = A*phi;
+    MatrixXRd phiDot = A*phi;
 
     // Copy the elements of phiDot into the derivative array
     double *phiDotData = phiDot.data();

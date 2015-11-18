@@ -13,10 +13,10 @@
 #include "tpat_utilities.hpp"
 
 #include "cspice/SpiceUsr.h"
+#include <Eigen/Dense>
 #include "gsl/gsl_linalg.h"
 
 #include <cstdlib>
-#include <Eigen/Dense>
 #include <iostream>
 
 Eigen::Vector3d getSPLoc_Ephm(double, std::vector<int>);
@@ -42,7 +42,8 @@ int main(){
     std::vector<int> bodies = {10, 399, 301};
     try{
 	    Eigen::Vector3d sp_pos = getSPLoc_Ephm(0, bodies);
-	    std::cout << "SP Position =\n" << sp_pos << std::endl;
+	    printf("SP Position =\n");
+	    std::cout << sp_pos << std::endl;
 	}catch(tpat_diverge &e){
 		printErr("Could not converge on SP location...\n");
 	}
@@ -61,11 +62,12 @@ int main(){
 			bodies.clear();
 			bodies.insert(bodies.end(), allPerturbing.at(p));
 
-			Eigen::Vector3d sp_pos(3,1);
+			Eigen::Vector3d sp_pos;
 			try{
 				sp_pos = getSPLoc_Ephm(et, bodies);
-				Eigen::Vector3d diff = sp_pos - SE_spPos;
+
 				// Compute distance between this perturbed SP location and the SE one
+				Eigen::Vector3d diff = sp_pos - SE_spPos;
 				data.push_back(diff.norm());
 			}catch(tpat_diverge &e){
 				printErr("SP location diverged at d = %.1f, p = %d\n", et, p);
@@ -96,7 +98,7 @@ int main(){
  *  @param bodyIx a vector of SPICE ID codes for the bodies to be considered when computing
  *  the location of the saddle point
  * 
- *  @return a three-element vector representing the position of the saddle point relative to 
+ *  @return a three-element matrix representing the position of the saddle point relative to 
  *  the Sun in a J2000 Ecliptic reference frame 
  */
 Eigen::Vector3d getSPLoc_Ephm(double et, std::vector<int> bodyIx){
@@ -139,12 +141,12 @@ Eigen::Vector3d getSPLoc_Ephm(double et, std::vector<int> bodyIx){
 		}
 
 		// Create a 3-element column vector for the position vector, save to vector of positions
-		Eigen::Vector3d p(pos[0], pos[1], pos[2]);
-		positions.push_back(p);
+		Eigen::Vector3d bodyPos = Eigen::Map<Eigen::Vector3d>(pos);
+		positions.push_back(bodyPos);
 		GMs.push_back(GM);
-		printf("  Obtained data for %s\n", getNameFromSpiceID(bodyIx[b]).c_str());
-		printf("    Pos = [%.4f, %.4f, %.4f] km\n", pos[0], pos[1], pos[2]);
-		printf("    GM = %.4e\n", GM);
+		// printf("  Obtained data for %s\n", getNameFromSpiceID(bodyIx[b]).c_str());
+		// printf("    Pos = [%.4f, %.4f, %.4f] km\n", pos[0], pos[1], pos[2]);
+		// printf("    GM = %.4e\n", GM);
 	}
 
 	// Approximate SP location using only the sun and earth
@@ -152,20 +154,16 @@ Eigen::Vector3d getSPLoc_Ephm(double et, std::vector<int> bodyIx){
 	double x = (2*mu3B - 2*mu3B*mu3B + sqrt(mu3B*(1-mu3B)) - 1)/(2*mu3B - 1);
 	Eigen::Vector3d sp_pos = positions[0] + x*(positions[1] - positions[0]);
 
-	printf("mu3B = %.8f\n", mu3B);
-	printf("x = %.8f\n", x);
-	printf("xp_pos estimate = [%.4f, %.4f, %.4f] km\n", sp_pos(0), sp_pos(1), sp_pos(2));
-	
 	double err = 1e20, okErr = 1e-12;
 	int count = 0, maxIts = 20;
 
 	while(err > okErr && count < maxIts){
-		Eigen::Vector3d accel;
+		Eigen::Vector3d accel(0, 0, 0);
 		double dfxdx = 0, dfydy = 0, dfzdz = 0, dfxdy = 0, dfxdz = 0, dfydz = 0;
 
 		for(size_t b = 0; b < positions.size(); b++){
-			Eigen::Vector3d p = positions[b];
-			Eigen::Vector3d r = sp_pos - p;	// Vector from SP to bodies
+			Eigen::Vector3d p = positions[b];	// Position of body
+			Eigen::Vector3d r = sp_pos - p;		// Vector from SP to bodies
 			double rMag = r.norm();
 
 			// Compute acceleration due to this body
@@ -184,16 +182,20 @@ Eigen::Vector3d getSPLoc_Ephm(double et, std::vector<int> bodyIx){
 		Matrix3Rd J = Eigen::Map<Matrix3Rd>(J_data);
 		J *= -1;	// multiply by -1 for solution process
 
-		Eigen::Vector3d w = J.fullPivLu().solve(accel);
+		// Use LU Decomposition to solve the system of equations
+		Eigen::FullPivLU<Matrix3Rd> lu(J);
+		lu.setThreshold(1e-20);
 
-		sp_pos += w;		// Update SP position (w = x_diff)
+		// w represents the perturbation in position
+		Eigen::Vector3d w = lu.solve(accel);
+
+		sp_pos += w;		// Update SP position
 		err = accel.norm();	// Update error
 		printColor(YELLOW, "Iterations %02d: ||A|| = %.8e\n", count, err);
 
 		count++;
 	}
 
-	waitForUser();
 	if(err < okErr)
 		return sp_pos;
 	else

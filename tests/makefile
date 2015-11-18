@@ -95,9 +95,6 @@ maps: $(OBJECTS)
 matioTest: $(OBJ)/tpat_utilities.o
 	$(COMP) -I $(INC) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
 
-matrixTest: $(OBJ)/tpat_utilities.o $(OBJ)/tpat_matrix.o
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_matrix.cpp -o $(BIN)/$@
-
 manyArcTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
 
@@ -157,7 +154,6 @@ list:
 	@- echo "  manifolds - Test manifold generation"
 	@- echo "  maps - Test map generation"
 	@- echo "  matioTest - Test the MatIO library functions"
-	@- echo "  matrixTest - Test the matrix object and functions"
 	@- echo "  manyArcTest - Test the capability of the simulation engine to generate many arcs in sequence"
 	@- echo "  nodesetTest - Test the nodeset object and functions"
 	@- echo "  simEngineTest - Test the simulation engine"

@@ -65,6 +65,7 @@ all: prop
 	
 list:
 	@- echo "This make file can create the following executables:"
+	@- echo "  benchmark - Run a series of benchmark tests on the TPAT system"
 	@- echo "  compEMFams - Compute families of common Earth-Moon periodic orbit families"
 	@- echo "  compSEFams - Compute families of common Sun-Earth periodic orbit families"
 	@- echo "  famStability"
@@ -78,6 +79,9 @@ list:
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
+
+benchmark: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) TPAT_Benchmark.cpp -o $(BIN)/$@
 
 compEMFams: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) computeEarthMoonFams.cpp -o $(BIN)/$@

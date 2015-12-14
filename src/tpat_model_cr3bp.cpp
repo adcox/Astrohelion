@@ -188,7 +188,7 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     corrector.setVerbose(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
     try{
-        corrector.correct(&eventNodeset);
+        corrector.multShoot(&eventNodeset);
     }catch(tpat_diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;
@@ -226,20 +226,20 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void tpat_model_cr3bp::corrector_applyConstraint(iterationData *it, tpat_constraint con, int c){
+void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c){
 
     // Let the base class do its thing first
-    tpat_model::corrector_applyConstraint(it, con, c);
+    tpat_model::multShoot_applyConstraint(it, con, c);
 
     // Handle constraints specific to the CR3BP
     int row0 = it->conRows[c];
 
     switch(con.getType()){
         case tpat_constraint::JC:
-            corrector_targetJC(it, con, row0);
+            multShoot_targetJC(it, con, row0);
             break;
         case tpat_constraint::PSEUDOARC:
-            corrector_targetPseudoArc(it, con, row0);
+            multShoot_targetPseudoArc(it, con, row0);
         default: break;
     }
 }//=========================================================
@@ -251,7 +251,7 @@ void tpat_model_cr3bp::corrector_applyConstraint(iterationData *it, tpat_constra
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con, int row0){
+void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con, int row0){
     std::vector<double> conData = con.getData();
     int n = con.getNode();
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *> (it->sysData);
@@ -288,14 +288,14 @@ void tpat_model_cr3bp::corrector_targetJC(iterationData* it, tpat_constraint con
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void tpat_model_cr3bp::corrector_targetPseudoArc(iterationData *it, tpat_constraint con, int row0){
+void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constraint con, int row0){
     std::vector<double> conData = con.getData();
 
     if(row0 != it->totalCons-1)
-        throw tpat_exception("tpat_model_cr3bp::corrector_targetPseudoArc: Pseudo Arc-Length constraint must be the final constraint; please re-create the nodeset accordingly");
+        throw tpat_exception("tpat_model_cr3bp::multShoot_targetPseudoArc: Pseudo Arc-Length constraint must be the final constraint; please re-create the nodeset accordingly");
 
     if(it->totalCons != it->totalFree)
-        throw tpat_exception("tpat_model_cr3bp::corrector_targetPseudoArc: Jacobian matrix is not square; cannot apply pseudo arc-length");
+        throw tpat_exception("tpat_model_cr3bp::multShoot_targetPseudoArc: Jacobian matrix is not square; cannot apply pseudo arc-length");
 
     // All elements except the last are the free-variable vector for a converged family member
     std::vector<double> famFreeVec(conData.begin(), conData.begin()+it->totalFree);
@@ -332,7 +332,7 @@ void tpat_model_cr3bp::corrector_targetPseudoArc(iterationData *it, tpat_constra
  *
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_cr3bp::corrector_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
+tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
 
     // Create a nodeset with the same system data as the input
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(it->sysData);

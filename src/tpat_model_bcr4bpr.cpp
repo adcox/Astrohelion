@@ -197,7 +197,7 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
     corrector.setVerbose(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
     try{
-        corrector.correct(&eventNodeset);
+        corrector.multShoot(&eventNodeset);
     }catch(tpat_diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;
@@ -233,12 +233,12 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
  *  @param it a pointer to the corrector's iteration data structure
  *  @param set a pointer to the nodeset being corrected
  */
-void tpat_model_bcr4bpr::corrector_initDesignVec(iterationData *it, tpat_nodeset *set){
+void tpat_model_bcr4bpr::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set){
     // Call base class to do most of the work
-    tpat_model::corrector_initDesignVec(it, set);
+    tpat_model::multShoot_initDesignVec(it, set);
 
     if(it->equalArcTime)
-        throw tpat_exception("tpat_model_bcr4bpr::corrector_initDesignVec: Equal Arc Times have not been implemented in this Model (yet)!");
+        throw tpat_exception("tpat_model_bcr4bpr::multShoot_initDesignVec: Equal Arc Times have not been implemented in this Model (yet)!");
 
     // Append the Epoch for each node
     if(it->varTime){
@@ -259,8 +259,8 @@ void tpat_model_bcr4bpr::corrector_initDesignVec(iterationData *it, tpat_nodeset
  *  @param it a pointer to the corrector's iteration data structure
  *  @param set a pointer to the nodeset being corrected
  */ 
-void tpat_model_bcr4bpr::corrector_createContCons(iterationData *it, tpat_nodeset *set){
-    tpat_model::corrector_createContCons(it, set);
+void tpat_model_bcr4bpr::multShoot_createContCons(iterationData *it, tpat_nodeset *set){
+    tpat_model::multShoot_createContCons(it, set);
 
     if(it->varTime){
         std::vector<double> zero {0};
@@ -282,7 +282,7 @@ void tpat_model_bcr4bpr::corrector_createContCons(iterationData *it, tpat_nodese
  *  @param t0 a pointer to a double representing the initial time (epoch)
  *  @param tof a pointer to a double the time-of-flight on the segment.
  */
-void tpat_model_bcr4bpr::corrector_getSimICs(iterationData *it, tpat_nodeset *set, int n,
+void tpat_model_bcr4bpr::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n,
     double *ic, double *t0, double *tof){
     
     std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
@@ -302,20 +302,20 @@ void tpat_model_bcr4bpr::corrector_getSimICs(iterationData *it, tpat_nodeset *se
  *  @param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void tpat_model_bcr4bpr::corrector_applyConstraint(iterationData *it, tpat_constraint con, int c){
+void tpat_model_bcr4bpr::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c){
 
     // Let the base class do its thing first
-    tpat_model::corrector_applyConstraint(it, con, c);
+    tpat_model::multShoot_applyConstraint(it, con, c);
 
     // Handle constraints specific to the CR3BP
     int row0 = it->conRows[c];
 
     switch(con.getType()){
         case tpat_constraint::SP:
-            corrector_targetSP(it, con, row0);
+            multShoot_targetSP(it, con, row0);
             break;
         case tpat_constraint::SP_RANGE:
-            corrector_targetSP_mag(it, con, row0);
+            multShoot_targetSP_mag(it, con, row0);
             break;
         default: break;
     }
@@ -336,9 +336,9 @@ void tpat_model_bcr4bpr::corrector_applyConstraint(iterationData *it, tpat_const
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
  */
-void tpat_model_bcr4bpr::corrector_targetPosVelCons(iterationData* it, tpat_constraint con, int row0){
+void tpat_model_bcr4bpr::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0){
     // Call base function first to do most of the work
-    tpat_model::corrector_targetPosVelCons(it, con, row0);
+    tpat_model::multShoot_targetPosVelCons(it, con, row0);
 
     // Add epoch dependencies for this model
     int n = con.getNode();
@@ -365,7 +365,7 @@ void tpat_model_bcr4bpr::corrector_targetPosVelCons(iterationData* it, tpat_cons
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
  */
-void tpat_model_bcr4bpr::corrector_targetExContCons(iterationData *it, tpat_constraint con, int row0){
+void tpat_model_bcr4bpr::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0){
     int n = con.getNode();
     if(con.getData()[0] == 0){
         /* Add time-continuity constraints if applicable; we need to match
@@ -378,7 +378,7 @@ void tpat_model_bcr4bpr::corrector_targetExContCons(iterationData *it, tpat_cons
             it->DF[it->totalFree*(row0) + 7*it->numNodes-1+n] = 1;
         }
     }else{
-        throw tpat_exception("tpat_model_bcr4bpr::corrector_createExContCons: Unrecognized extra constraint index");
+        throw tpat_exception("tpat_model_bcr4bpr::multShoot_createExContCons: Unrecognized extra constraint index");
     }
 }//=========================================================
 
@@ -392,7 +392,7 @@ void tpat_model_bcr4bpr::corrector_targetExContCons(iterationData *it, tpat_cons
  *  @param con the constraint being applied
  *  @param row0 the index of the row this constraint begins at
  */
-void tpat_model_bcr4bpr::corrector_targetState(iterationData* it, tpat_constraint con, int row0){
+void tpat_model_bcr4bpr::multShoot_targetState(iterationData* it, tpat_constraint con, int row0){
     std::vector<double> conData = con.getData();
     int n = con.getNode();
     // Allow user to constrain all 7 states
@@ -426,7 +426,7 @@ void tpat_model_bcr4bpr::corrector_targetState(iterationData* it, tpat_constrain
  *  @param con a copy of the constraint object
  *  @param c the index of this constraint in the constraint vector object
  */
-void tpat_model_bcr4bpr::corrector_targetDist(iterationData* it, tpat_constraint con, int c){
+void tpat_model_bcr4bpr::multShoot_targetDist(iterationData* it, tpat_constraint con, int c){
 
     std::vector<double> conData = con.getData();
     int n = con.getNode();
@@ -501,9 +501,9 @@ void tpat_model_bcr4bpr::corrector_targetDist(iterationData* it, tpat_constraint
  *  @param con the constraint being applied
  *  @param c the index of the first row for this constraint
  */
-void tpat_model_bcr4bpr::corrector_targetDeltaV(iterationData* it, tpat_constraint con, int c){
+void tpat_model_bcr4bpr::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, int c){
     // Call base function to take care of most of the constraint computations and partials
-    tpat_model::corrector_targetDeltaV(it, con, c);
+    tpat_model::multShoot_targetDeltaV(it, con, c);
 
     // Add partials w.r.t. epoch time
     int row0 = it->conRows[c];
@@ -544,7 +544,7 @@ void tpat_model_bcr4bpr::corrector_targetDeltaV(iterationData* it, tpat_constrai
  *  @param con the constraint being applied
  *  @param row0 the index of the first row for this constraint
  */
-void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint con, int row0){
+void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint con, int row0){
 
     int n = con.getNode();
     double epoch = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
@@ -662,7 +662,7 @@ void tpat_model_bcr4bpr::corrector_targetSP(iterationData* it, tpat_constraint c
     }
 }// End of SP Targeting ==============================
 
-void tpat_model_bcr4bpr::corrector_targetSP_mag(iterationData* it, tpat_constraint con, int row0){
+void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constraint con, int row0){
 
     int n = con.getNode();
     double epoch = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
@@ -802,7 +802,7 @@ void tpat_model_bcr4bpr::corrector_targetSP_mag(iterationData* it, tpat_constrai
  *
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_bcr4bpr::corrector_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
+tpat_nodeset* tpat_model_bcr4bpr::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
 
     // Create a nodeset with the same system data as the input
     tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(it->sysData);

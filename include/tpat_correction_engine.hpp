@@ -47,8 +47,6 @@ class tpat_sys_data_bcr4bpr;
  */
 struct iterationData{
 	public:
-		/** @brief Constructor */
-		// iterationData(tpat_sys_data *sys) : sysData(sys) {}
 		tpat_sys_data *sysData;					//!< A pointer to the system data object used for this corrections process
 		std::vector<double> X;					//!< Free-Variable Vector
 		std::vector<double> FX;					//!< Constraint Function Vector
@@ -110,7 +108,7 @@ class tpat_correction_engine{
 		void setVerbose(bool);
 		
 		// Utility/Action functions
-		iterationData correct(tpat_nodeset*);
+		iterationData multShoot(tpat_nodeset*);
 
 	private:
 		/** Whether or not to spit out lots of messages */

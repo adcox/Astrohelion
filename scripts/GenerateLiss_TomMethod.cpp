@@ -67,7 +67,7 @@ int main(){
 
 	double maxY = 0;
 	do{
-		corrector.correct(&stackedNodes);
+		corrector.multShoot(&stackedNodes);
 
 		correctedNodes = corrector.getCR3BP_Output();
 

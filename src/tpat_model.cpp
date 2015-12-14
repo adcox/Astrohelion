@@ -125,7 +125,7 @@ bool tpat_model::supportsEvent(tpat_event::event_t type) const{
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */
-void tpat_model::corrector_initDesignVec(iterationData *it, tpat_nodeset *set){
+void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set){
 	// Create the initial state vector
 	it->X.clear();
 
@@ -159,7 +159,7 @@ void tpat_model::corrector_initDesignVec(iterationData *it, tpat_nodeset *set){
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */	
-void tpat_model::corrector_createContCons(iterationData *it, tpat_nodeset *set){
+void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set){
 	// Create position and velocity constraints
     for(int n = 1; n < set->getNumNodes(); n++){
         // Get a vector specifying which velocity states are continuous from the nodeset
@@ -190,7 +190,7 @@ void tpat_model::corrector_createContCons(iterationData *it, tpat_nodeset *set){
  *	@param t0 a pointer to a double representing the initial time (epoch)
  *	@param tof a pointer to a double the time-of-flight on the segment.
  */
-void tpat_model::corrector_getSimICs(iterationData *it, tpat_nodeset *set, int n,
+void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n,
 	double *ic, double *t0, double *tof){
 	
 	std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
@@ -218,42 +218,42 @@ void tpat_model::corrector_getSimICs(iterationData *it, tpat_nodeset *set, int n
  *	@param c the index of the constraint within the total constraint vector (which is, in
  *	turn, stored in the iteration data)
  */	
-void tpat_model::corrector_applyConstraint(iterationData *it, tpat_constraint con, int c){
+void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c){
 
 	int row0 = it->conRows[c];
 
 	switch(con.getType()){
 		case tpat_constraint::CONT_PV:
 			// Apply position-velocity continuity constraints
-			corrector_targetPosVelCons(it, con, row0);
+			multShoot_targetPosVelCons(it, con, row0);
 			break;
 		case tpat_constraint::CONT_EX:
 			// Apply extra continuity constraints
-			corrector_targetExContCons(it, con, row0);
+			multShoot_targetExContCons(it, con, row0);
 			break;
 		case tpat_constraint::STATE:
-			corrector_targetState(it, con, row0);
+			multShoot_targetState(it, con, row0);
 			break;
 		case tpat_constraint::MATCH_ALL:
-			corrector_targetMatchAll(it, con, row0);
+			multShoot_targetMatchAll(it, con, row0);
 			break;
 		case tpat_constraint::MATCH_CUST:
-			corrector_targetMatchCust(it, con, row0);
+			multShoot_targetMatchCust(it, con, row0);
 			break;
 		case tpat_constraint::MAX_DIST:
 		case tpat_constraint::MIN_DIST:
 		case tpat_constraint::DIST:
-			corrector_targetDist(it, con, c);
+			multShoot_targetDist(it, con, c);
 			break;
 		case tpat_constraint::DELTA_V:
 		case tpat_constraint::MAX_DELTA_V:
-			corrector_targetDeltaV(it, con, c);
+			multShoot_targetDeltaV(it, con, c);
 			break;
 		case tpat_constraint::TOF:
-			corrector_targetTOF(it, con, row0);
+			multShoot_targetTOF(it, con, row0);
 			break;
 		case tpat_constraint::APSE:
-			corrector_targetApse(it, con, row0);
+			multShoot_targetApse(it, con, row0);
 			break;	
 		default: break;
 	}
@@ -274,10 +274,10 @@ void tpat_model::corrector_applyConstraint(iterationData *it, tpat_constraint co
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::corrector_targetPosVelCons(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0){
 	int n = con.getNode();
 	if(n == 0)
-		throw tpat_exception("tpat_model::corrector_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
+		throw tpat_exception("tpat_model::multShoot_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
 
 	// Get info about the arc that was integrated to reach node n
 	std::vector<double> lastState = it->allSegs.at(n-1).getState(-1);
@@ -332,7 +332,7 @@ void tpat_model::corrector_targetPosVelCons(iterationData* it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::corrector_targetExContCons(iterationData *it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0){
 	// Do absoluately nothing
 	(void)it;
 	(void)con;
@@ -349,7 +349,7 @@ void tpat_model::corrector_targetExContCons(iterationData *it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::corrector_targetState(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, int row0){
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	// Allow user to constrain all 6 states
@@ -378,7 +378,7 @@ void tpat_model::corrector_targetState(iterationData* it, tpat_constraint con, i
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::corrector_targetMatchAll(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con, int row0){
 	// Only allow matching 6 states, not TOF (state 7)
 	int n = con.getNode();
 	int cn = con.getData()[0];
@@ -405,7 +405,7 @@ void tpat_model::corrector_targetMatchAll(iterationData* it, tpat_constraint con
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::corrector_targetMatchCust(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint con, int row0){
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int count = 0;
@@ -438,7 +438,7 @@ void tpat_model::corrector_targetMatchCust(iterationData* it, tpat_constraint co
  *	@param con a copy of the constraint object
  *	@param c the index of this constraint in the constraint vector object
  */
-void tpat_model::corrector_targetDist(iterationData* it, tpat_constraint con, int c){
+void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, int c){
 
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
@@ -500,7 +500,7 @@ void tpat_model::corrector_targetDist(iterationData* it, tpat_constraint con, in
  *	@param con the constraint being applied
  *	@param c the index of the first row for this constraint
  */
-void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, int c){
+void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, int c){
 
 	int row0 = it->conRows[c];
 
@@ -509,15 +509,15 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
 	for(int n = 0; n < it->numNodes-1; n++){
 		// compute magnitude of DV between node n and n+1
 		double dvMag = sqrt(it->deltaVs[n*3]*it->deltaVs[n*3] +
-		it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
-		it->deltaVs[n*3+2]*it->deltaVs[n*3+2]);
+			it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
+			it->deltaVs[n*3+2]*it->deltaVs[n*3+2]);
 
 		totalDV += dvMag;
 
 		// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
-		double dFdq_ndf_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
+		double dFdq_n2_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
 			-1*it->deltaVs[n*3+1]/dvMag, -1*it->deltaVs[n*3+2]/dvMag};
-		Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_ndf_data, 1, 6);
+		Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
 		// Get info about the final state/accel of the integrated segment
 		MatrixXRd stm = it->allSegs[n].getSTM(-1);
@@ -578,9 +578,9 @@ void tpat_model::corrector_targetDeltaV(iterationData* it, tpat_constraint con, 
  *	This method *should* provide full functionality for any model; only 1's and 0's are
  *	used to relate TOFs.
  */
-void tpat_model::corrector_targetTOF(iterationData *it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int row0){
 	if(! it->varTime)
-		throw tpat_exception("tpat_model::corrector_targetTOF: Cannot target TOF when variable time is off!");
+		throw tpat_exception("tpat_model::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
 	if(it->equalArcTime){
 		it->FX[row0] = it->X[6*it->numNodes];
@@ -603,7 +603,7 @@ void tpat_model::corrector_targetTOF(iterationData *it, tpat_constraint con, int
  *	This method *should* provide full functionality for any autonomous model. Non-
  *	autonomous models will need to modify the function to account for epoch time
  */
-void tpat_model::corrector_targetApse(iterationData *it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0){
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int Pix = (int)(conData[0]);	// index of primary

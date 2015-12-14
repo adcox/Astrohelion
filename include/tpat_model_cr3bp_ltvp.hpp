@@ -46,7 +46,7 @@ public:
 	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, bool);
 
 	// Corrector Functions
-	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);
+	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

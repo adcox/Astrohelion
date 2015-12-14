@@ -186,7 +186,7 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
  */
-tpat_nodeset* tpat_model_cr3bp_ltvp::corrector_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
+tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
     tpat_sys_data_cr3bp_ltvp *sys = static_cast<tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
     return new tpat_nodeset_cr3bp(sys);
 }//====================================================

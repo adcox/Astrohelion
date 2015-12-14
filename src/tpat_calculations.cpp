@@ -320,9 +320,10 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
 
     // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
-    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
-    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
+    Eigen::Vector3d r_p1, r_p2, r_p3;
+    r_p1.noalias() = r - primPos.row(0).transpose();
+    r_p2.noalias() = r - primPos.row(1).transpose();
+    r_p3.noalias() = r - primPos.row(2).transpose();
     double d1 = r_p1.norm();
     double d2 = r_p2.norm();
     double d3 = r_p3.norm();
@@ -473,9 +474,10 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
 
     // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
-    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
-    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
+    Eigen::Vector3d r_p1, r_p2, r_p3;
+    r_p1.noalias() = r - primPos.row(0).transpose();
+    r_p2.noalias() = r - primPos.row(1).transpose();
+    r_p3.noalias() = r - primPos.row(2).transpose();
     double d1 = r_p1.norm();
     double d2 = r_p2.norm();
     double d3 = r_p3.norm();
@@ -618,7 +620,8 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
 
     // Generate coefficient matrix; these are coefficients for second-order
     // polynomials in the new independent variable
-    MatrixXRd G = A.transpose()*A;
+    MatrixXRd G(A.cols(), A.cols());
+    G.noalias() = A.transpose()*A;
     
     Eigen::JacobiSVD<MatrixXRd> svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
     svd.setThreshold(1e-14);
@@ -644,8 +647,10 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
         }
 
         MatrixXRd A_lin = Eigen::Map<MatrixXRd>(&(A_lin_data[0]), varHistory.size()/STATE_SIZE, 2);
-        MatrixXRd G = A_lin.transpose()*A_lin;
-        MatrixXRd C = G.fullPivLu().solve(A_lin.transpose()*B);
+        Eigen::Matrix2d G;
+        G.noalias() = A_lin.transpose()*A_lin;
+        Eigen::VectorXd C(depVars.size());
+        C.noalias() = G.fullPivLu().solve(A_lin.transpose()*B);
 
         Eigen::RowVector2d indMat(nextInd, 1);
 
@@ -1370,7 +1375,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp *sys, std::vector<double> 
     corrector.setEqualArcTime(true);
 
     try{
-        corrector.correct(&halfOrbNodes);
+        corrector.multShoot(&halfOrbNodes);
         tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();
 
         // Make the nodeset into a trajectory

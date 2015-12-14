@@ -46,10 +46,10 @@ public:
 	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, bool);
 
 	// Corrector Functions
-	void corrector_applyConstraint(iterationData*, tpat_constraint, int);
-	void corrector_targetJC(iterationData*, tpat_constraint, int);
-	void corrector_targetPseudoArc(iterationData*, tpat_constraint, int);
-	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);
+	void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
+	void multShoot_targetJC(iterationData*, tpat_constraint, int);
+	void multShoot_targetPseudoArc(iterationData*, tpat_constraint, int);
+	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

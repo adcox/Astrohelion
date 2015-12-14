@@ -133,19 +133,19 @@ public:
 	 */
 	virtual std::vector<double> getPrimVel(double t, tpat_sys_data *sysData) = 0;
 
-	virtual void corrector_initDesignVec(iterationData*, tpat_nodeset*);
-	virtual void corrector_createContCons(iterationData*, tpat_nodeset*);
-	virtual void corrector_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
-	virtual void corrector_applyConstraint(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetApse(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetDeltaV(iterationData*t, tpat_constraint, int);
-	virtual void corrector_targetDist(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetExContCons(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetMatchAll(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetMatchCust(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetPosVelCons(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetState(iterationData*, tpat_constraint, int);
-	virtual void corrector_targetTOF(iterationData*, tpat_constraint, int);
+	virtual void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
+	virtual void multShoot_createContCons(iterationData*, tpat_nodeset*);
+	virtual void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
+	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetDeltaV(iterationData*t, tpat_constraint, int);
+	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetState(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetTOF(iterationData*, tpat_constraint, int);
 
 	/**
 	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -163,7 +163,7 @@ public:
 	 *
 	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual tpat_nodeset* corrector_createOutput(iterationData* it, tpat_nodeset *nodes_in, bool findEvent) = 0;
+	virtual tpat_nodeset* multShoot_createOutput(iterationData* it, tpat_nodeset *nodes_in, bool findEvent) = 0;
 
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing

@@ -27,7 +27,7 @@ void testSP_ExactTarget(){
 	tpat_correction_engine corrector;
 	// corrector.setVerbose(true);
 	corrector.setVarTime(false);
-	corrector.correct(&nodes0);
+	corrector.multShoot(&nodes0);
 	tpat_nodeset_bcr4bpr cNodes = corrector.getBCR4BPR_Output();
 
 	printf("Corrected Nodes:\n");

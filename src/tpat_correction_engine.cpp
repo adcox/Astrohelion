@@ -275,7 +275,7 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	@param set a pointer to a nodeset
  *	@return the iteration data object for this corrections process
  */
-iterationData tpat_correction_engine::correct(tpat_nodeset *set){
+iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 	if(!isClean)
 		cleanEngine();
 
@@ -298,18 +298,18 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 	// Get some basic data from the input nodeset
 	it.numNodes = set->getNumNodes();
 	
-	printVerb(verbose, "Corrector:\n");
+	printVerb(verbose, "Multiple Shooting Algorithm:\n");
 	printVerb(verbose, "  it.numNodes = %d\n", it.numNodes);
 	printVerb(verbose, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
-	// Dummy code for now; this will be replaced with better code later
+	// Get the model associated with the nodeset
 	tpat_model *model = set->getSysData()->getModel();
-	model->corrector_initDesignVec(&it, set);
+	model->multShoot_initDesignVec(&it, set);
 
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
 	it.allCons.clear();
-	model->corrector_createContCons(&it, set);
+	model->multShoot_createContCons(&it, set);
 
 	// Add all extra constraints from the nodeset to the total constraint vector
 	for(int n = 0; n < set->getNumNodes(); n++){
@@ -452,7 +452,7 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 			double t0 = 0;
 			double tof = 0;
 			double ic[] = {0,0,0,0,0,0};
-			model->corrector_getSimICs(&it, set, n, ic, &t0, &tof);
+			model->multShoot_getSimICs(&it, set, n, ic, &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			simEngine.runSim(ic, t0, tof);
@@ -470,7 +470,7 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
 		for(size_t c = 0; c < it.allCons.size(); c++)
-			model->corrector_applyConstraint(&it, it.allCons[c], c);
+			model->multShoot_applyConstraint(&it, it.allCons[c], c);
 
 		// Solve for newX and copy into working vector X
 		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
@@ -500,7 +500,7 @@ iterationData tpat_correction_engine::correct(tpat_nodeset *set){
 		throw tpat_diverge();
 	}
 
-	nodeset_out = model->corrector_createOutput(&it, set, findEvent);
+	nodeset_out = model->multShoot_createOutput(&it, set, findEvent);
 	createdNodesetOut = true;
 
 	return it;

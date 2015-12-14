@@ -55,7 +55,7 @@ int main(){
 	corrector.setEqualArcTime(true);
 	corrector.setMaxIts(50);
 
-	corrector.correct(&SE_L1_Liss_linear_nodes);
+	corrector.multShoot(&SE_L1_Liss_linear_nodes);
 
 	tpat_nodeset_cr3bp SE_L1_Liss_nonlin_nodes = corrector.getCR3BP_Output();
 	tpat_traj_cr3bp SE_L1_Liss_nonlin = tpat_traj_cr3bp::fromNodeset(SE_L1_Liss_nonlin_nodes);

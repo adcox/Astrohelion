@@ -47,18 +47,18 @@ public:
 	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, bool);
 
 	// Corrector function
-	void corrector_initDesignVec(iterationData*, tpat_nodeset*);
-	void corrector_createContCons(iterationData*, tpat_nodeset*);
-	void corrector_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
-	void corrector_applyConstraint(iterationData*, tpat_constraint, int);
-	void corrector_targetPosVelCons(iterationData*, tpat_constraint, int);
-	void corrector_targetExContCons(iterationData*, tpat_constraint, int);
-	void corrector_targetState(iterationData*, tpat_constraint, int);
-	void corrector_targetDeltaV(iterationData*, tpat_constraint, int);
-	void corrector_targetDist(iterationData*, tpat_constraint, int);
-	void corrector_targetSP(iterationData*, tpat_constraint, int);
-	void corrector_targetSP_mag(iterationData*, tpat_constraint, int);
-	tpat_nodeset* corrector_createOutput(iterationData*, tpat_nodeset*, bool);
+	void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
+	void multShoot_createContCons(iterationData*, tpat_nodeset*);
+	void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
+	void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
+	void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int);
+	void multShoot_targetExContCons(iterationData*, tpat_constraint, int);
+	void multShoot_targetState(iterationData*, tpat_constraint, int);
+	void multShoot_targetDeltaV(iterationData*, tpat_constraint, int);
+	void multShoot_targetDist(iterationData*, tpat_constraint, int);
+	void multShoot_targetSP(iterationData*, tpat_constraint, int);
+	void multShoot_targetSP_mag(iterationData*, tpat_constraint, int);
+	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

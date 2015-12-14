@@ -121,6 +121,6 @@ void runCorrector(){
 	
 	for(int n = 0; n < 100; n++){
 		tpat_nodeset_cr3bp temp = nodeset;
-		corrector.correct(&nodeset);
+		corrector.multShoot(&nodeset);
 	}
 }//=============================================================

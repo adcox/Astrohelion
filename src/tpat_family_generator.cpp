@@ -813,7 +813,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
 	iterationData familyItData;
 	try{
-		familyItData = corrector.correct(&familyMember);
+		familyItData = corrector.multShoot(&familyMember);
 	}catch(tpat_diverge &e){
 		printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge initial guess!\n");
 	}catch(tpat_linalg_err &e){
@@ -936,7 +936,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		try{
 			while(stepSize >= minStepSize){
 				try{
-					familyItData = corrector.correct(&newMember);
+					familyItData = corrector.multShoot(&newMember);
 
 					// If convergence was fast, take bigger steps
 					if(familyItData.count < 5){

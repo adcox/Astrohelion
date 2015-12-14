@@ -37,7 +37,7 @@ int main(void){
 
 	tpat_correction_engine corrector;
 	// corrector.setVerbose(true);
-	corrector.correct(&nodeset);
+	corrector.multShoot(&nodeset);
 	tpat_nodeset_cr3bp correctedNodeset = corrector.getCR3BP_Output();
 	correctedNodeset.saveToMat("resNodes_Corrected.mat");
 
@@ -64,7 +64,7 @@ int main(void){
 
 	corrector.setVarTime(true);
 	corrector.setEqualArcTime(true);
-	corrector.correct(&halo);
+	corrector.multShoot(&halo);
 	tpat_nodeset_cr3bp correctedHalo = corrector.getCR3BP_Output();
 	correctedHalo.saveToMat("CorrectedHalo.mat");
 

@@ -160,6 +160,16 @@ void tpat_constraint::setNode(int n){ node = n; }
  */
 void tpat_constraint::setData(std::vector<double> d){ data = d; }
 
+/**
+ *  @brief Set the data for this node
+ * 
+ *  @param dat an array of data values
+ *  @param len number of elements in <tt>dat</tt>
+ */
+void tpat_constraint::setData(double *dat, int len){
+	data.insert(data.begin(), dat, dat+len);
+}
+
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------

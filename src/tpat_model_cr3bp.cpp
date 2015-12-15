@@ -346,8 +346,12 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_n
 
         if(i + 1 < numNodes){
             node.setTOF(it->equalArcTime ? it->X[numNodes*6]/(numNodes-1) : it->X[numNodes*6 + i]);
+            // Set Jacobi Constant
+            node.setExtraParam(1, cr3bp_getJacobi(&(it->X[i*6]), crSys->getMu()));
         }else{
             node.setTOF(NAN);
+            // Set Jacobi Constant
+            node.setExtraParam(1, cr3bp_getJacobi(&(it->X[i*6]), crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
@@ -363,6 +367,7 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_n
                 node.setExtraParams(extraParam);
             }
         }
+
         nodeset_out->appendNode(node);
     }
 

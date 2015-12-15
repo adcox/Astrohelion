@@ -56,7 +56,11 @@ public:
 	// Operators
 
 	// Set and Get 
-	// TODO: Add method to get Jacobi constant?
+	double getJacobi(int) const;
+	void setJacobi(int, double);
+
+	// Utility
+	void initExtraParam();
 };
 
 #endif

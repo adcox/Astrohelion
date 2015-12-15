@@ -41,7 +41,9 @@
  *	@brief Create a nodeset with specified system data
  *	@param data system data object
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp *data) : tpat_nodeset(data){}
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp *data) : tpat_nodeset(data){
+	initExtraParam();
+}
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -56,6 +58,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_sys_data_cr3bp *data) : tpat_nodeset
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp *data, double tof,
 	int numNodes, node_distro_t type) : tpat_nodeset(data){
 
+	initExtraParam();
 	initSetFromICs(IC, data, 0, tof, numNodes, type);
 }//======================================================================
 
@@ -72,6 +75,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp *data, 
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3bp *data, double tof,
 	int numNodes, node_distro_t type) : tpat_nodeset(data){
 
+	initExtraParam();
 	initSetFromICs(&(IC[0]), data, 0, tof, numNodes, type);
 }//=====================================================================
 
@@ -89,6 +93,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp *data, double tof, 
 	int numNodes) : tpat_nodeset(data){
 
+	initExtraParam();
 	initSetFromICs(IC, data, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 }//======================================================================
 
@@ -106,6 +111,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], tpat_sys_data_cr3bp *data, 
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3bp *data, double tof, 
 	int numNodes) : tpat_nodeset(data){
 
+	initExtraParam();
 	initSetFromICs(&(IC[0]), data, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 }//======================================================================
 
@@ -121,6 +127,8 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, tpat_sys_data_cr3
  *	@param numNodes the number of nodes.
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpat_nodeset(traj.getSysData()){
+
+	initExtraParam();
 	initSetFromTraj(traj, traj.getSysData(), numNodes, tpat_nodeset::DISTRO_TIME);
 }//===========================================
 
@@ -138,6 +146,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpa
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
 	node_distro_t type) : tpat_nodeset(traj.getSysData()){
 	
+	initExtraParam();
 	initSetFromTraj(traj, traj.getSysData(), numNodes, type);
 }//===========================================
 
@@ -157,13 +166,17 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp &orig, int first
  *	handle copying the generic fields like state and tofs
  *	@param n a nodeset
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodeset(n) {}
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodeset(n) {
+	initExtraParam();
+}
 
 /**
  *	@brief Create a CR3BP nodeset from its base class
  *	@param a an arc data reference
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arc_data &a) : tpat_nodeset(a) {}
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arc_data &a) : tpat_nodeset(a) {
+	initExtraParam();
+}
 
 //-----------------------------------------------------
 //      Operators
@@ -173,6 +186,43 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arc_data &a) : tpat_nodeset(a)
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *	@brief Retrieve the value of Jacobi's Constant at the specified step or node
+ *	@param ix step index; if < 0, counts backwards from end of nodeset
+ *	@return Jacobi at the specified step or node
+ */
+double tpat_nodeset_cr3bp::getJacobi(int ix) const{
+	if(ix < 0)
+		ix += steps.size();
+	tpat_arc_step step = steps[ix];
+	return step.getExtraParam(1);
+}//====================================================
+
+/**
+ *	@brief Set Jacobi at the specified step or node
+ *	@param ix step index; if < 0, counts backwards from end of nodeset
+ *	@param val value of Jacobi
+ */
+void tpat_nodeset_cr3bp::setJacobi(int ix, double val){
+	if(ix < 0)
+		ix += steps.size();
+
+	steps[ix].setExtraParam(1, val);
+}//====================================================
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
+
+/**
+ *	@brief Initialize the extra param vector for info specific to this nodeset
+ */
+void tpat_nodeset_cr3bp::initExtraParam(){
+	// This function in tpat_nodeset was already called, so 
+	// numExtraParam has been set to 1 and a row size has
+	// been appended for the time-of-flight variable
+
+	// Add another variable for Jacobi Constant
+	numExtraParam = 2;
+	extraParamRowSize.push_back(1);
+}//====================================================

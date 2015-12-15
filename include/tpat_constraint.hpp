@@ -168,6 +168,7 @@ class tpat_constraint{
 		void setType(constraint_t);
 		void setNode(int);
 		void setData(std::vector<double>);
+		void setData(double*, int);
 
 		void print() const;
 		const char* getTypeStr(constraint_t) const;

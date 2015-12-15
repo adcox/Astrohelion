@@ -409,7 +409,7 @@ void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint co
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int count = 0;
-	// Only allow matching 6 states, not epoch time (state 7)
+	
 	for(int s = 0; s < 6; s++){
 		if(!isnan(conData[s])){
 			int cn = conData[0];

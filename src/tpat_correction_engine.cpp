@@ -339,9 +339,11 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 			case tpat_constraint::CONT_PV:
 			case tpat_constraint::CONT_EX:
 			case tpat_constraint::STATE:
-			case tpat_constraint::MATCH_ALL:
 			case tpat_constraint::MATCH_CUST:
 				addToRows = con.countConstrainedStates();
+				break;
+			case tpat_constraint::MATCH_ALL:
+				addToRows = 6;
 				break;
 			case tpat_constraint::SP:
 				addToRows = 3;

@@ -98,6 +98,9 @@ matioTest: $(OBJ)/tpat_utilities.o
 manyArcTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
 
+multShootCons: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_multShootCons.cpp -o $(BIN)/$@
+
 nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
 
@@ -155,6 +158,7 @@ list:
 	@- echo "  maps - Test map generation"
 	@- echo "  matioTest - Test the MatIO library functions"
 	@- echo "  manyArcTest - Test the capability of the simulation engine to generate many arcs in sequence"
+	@- echo "  multShootCons - Test constraints in multiple shooting algorithms"
 	@- echo "  nodesetTest - Test the nodeset object and functions"
 	@- echo "  simEngineTest - Test the simulation engine"
 	@- echo "  sortEigTest - Test the eigenvalue sorting algorithm"

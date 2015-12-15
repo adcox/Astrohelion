@@ -70,7 +70,8 @@ class tpat_constraint{
 		 				 *	index of the constrained node in the place of each state you
 		 				 *	wish to constrain. For example, to constrain node 5 to match 
 		 				 *	node 2 in x and z position, the data vector would contain
-		 				 *	the following values: {5, NAN, 5, NAN, NAN, NAN}
+		 				 *	the following values: {5, NAN, 5, NAN, NAN, NAN} and the 
+		 				 *	<tt>node</tt> value would be set to 2.
 		 				 */
 			DIST,		/*!< Constrain a node to be at a specific distance from a primmary.
 		 				 *	The <tt>node</tt> field identifies the constrained node, the 

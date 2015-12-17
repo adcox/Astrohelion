@@ -175,28 +175,36 @@ void tpat_constraint::setData(double *dat, int len){
 //-----------------------------------------------------
 
 /**
+ *  @brief Get a human-redable string representing the constraint type
+ *  @return a human-redable string representing the constraint type
+ */
+const char* tpat_constraint::getTypeStr() const{
+	return getConTypeStr(type);
+}
+
+/**
  *	@param t a constraint type
  *	@return a human-readable string representing a constraint type
  */
-const char* tpat_constraint::getTypeStr(constraint_t t) const{
+const char* tpat_constraint::getConTypeStr(tpat_constraint::constraint_t t){
 	switch(t){
-		case NONE: { return "NONE"; break; }
-		case STATE: { return "STATE"; break; }
-		case MATCH_ALL: { return "MATCH_ALL"; break; }
-		case MATCH_CUST: { return "MATCH_CUST"; break; }
-		case DIST: { return "DIST"; break; }
-		case MIN_DIST: { return "MIN_DIST"; break; }
-		case MAX_DIST: { return "MAX_DIST"; break; }
-		case MAX_DELTA_V: { return "MAX_DELTA_V"; break; }
-		case DELTA_V: { return "DELTA_V"; break; }
-		case JC: { return "JC"; break; }
-		case SP: { return "SP"; break; }
-		case SP_RANGE: { return "SP_RANGE"; break; }
-		case TOF: { return "TOF"; break; }
-		case APSE: {return "APS"; break; }
-		case CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }
-		case CONT_EX: { return "CONTINUOUS_EXTRA"; break; }
-		case PSEUDOARC: { return "PSEUDO-ARCLENGTH"; break; }
+		case tpat_constraint::NONE: { return "NONE"; break; }
+		case tpat_constraint::STATE: { return "STATE"; break; }
+		case tpat_constraint::MATCH_ALL: { return "MATCH_ALL"; break; }
+		case tpat_constraint::MATCH_CUST: { return "MATCH_CUST"; break; }
+		case tpat_constraint::DIST: { return "DIST"; break; }
+		case tpat_constraint::MIN_DIST: { return "MIN_DIST"; break; }
+		case tpat_constraint::MAX_DIST: { return "MAX_DIST"; break; }
+		case tpat_constraint::MAX_DELTA_V: { return "MAX_DELTA_V"; break; }
+		case tpat_constraint::DELTA_V: { return "DELTA_V"; break; }
+		case tpat_constraint::JC: { return "JC"; break; }
+		case tpat_constraint::SP: { return "SP"; break; }
+		case tpat_constraint::SP_RANGE: { return "SP_RANGE"; break; }
+		case tpat_constraint::TOF: { return "TOF"; break; }
+		case tpat_constraint::APSE: {return "APS"; break; }
+		case tpat_constraint::CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }
+		case tpat_constraint::CONT_EX: { return "CONTINUOUS_EXTRA"; break; }
+		case tpat_constraint::PSEUDOARC: { return "PSEUDO-ARCLENGTH"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}
 }//========================================
@@ -205,7 +213,7 @@ const char* tpat_constraint::getTypeStr(constraint_t t) const{
  *	@brief Print this constraint and its data to the standard output.
  */
 void tpat_constraint::print() const {
-	printf("Constraint:\n  Type: %s\n  Node: %d\n  Data: ", getTypeStr(type), node);
+	printf("Constraint:\n  Type: %s\n  Node: %d\n  Data: ", getConTypeStr(type), node);
 	for(int n = 0; n < ((int)data.size()); n++){
 		printf("%12.5f ", data[n]);
 	}

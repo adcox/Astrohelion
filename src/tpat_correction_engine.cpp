@@ -129,7 +129,7 @@ bool tpat_correction_engine::usesEqualArcTime() const { return equalArcTime; }
  *  @brief Retrieve the verbosity setting
  *	@return whether or not the corrector will be verbose
  */
-bool tpat_correction_engine::isVerbose() const { return verbose; }
+verbosity_t tpat_correction_engine::isVerbose() const { return verbose; }
 
 /**
  *  @brief Retrieve whether or not we are located an event crossing
@@ -229,10 +229,19 @@ void tpat_correction_engine::setEqualArcTime(bool b){
 void tpat_correction_engine::setIgnoreCrash(bool b){ ignoreCrash = b; }
 
 /**
+ *  @brief Tell the corrector to ignore divergence and return the partially
+ *  corrected iteration data instead of throwing an exception when divergence
+ *  occurs.
+ * 
+ *  @param b Whether or not to ignore divergance
+ */
+void tpat_correction_engine::setIgnoreDiverge(bool b){ ignoreDiverge = b;}
+
+/**
  *	@brief Set verbosity
  *	@param b whether or not the corrector should be verbose in its outputs
  */
-void tpat_correction_engine::setVerbose(bool b){ verbose = b; }
+void tpat_correction_engine::setVerbose(verbosity_t b){ verbose = b; }
 
 /**
  *	@brief Set maximum iterations
@@ -289,6 +298,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
 	it.equalArcTime = equalArcTime;
 	it.sysData = set->getSysData();
+	it.nodeset = set;
 
 	// Save original nodes for later access (particularly when variable time is off)
 	for(int n = 0; n < set->getNumNodes(); n++){
@@ -298,9 +308,9 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 	// Get some basic data from the input nodeset
 	it.numNodes = set->getNumNodes();
 	
-	printVerb(verbose, "Multiple Shooting Algorithm:\n");
-	printVerb(verbose, "  it.numNodes = %d\n", it.numNodes);
-	printVerb(verbose, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
+	printVerb(verbose == ALL_MSG, "Multiple Shooting Algorithm:\n");
+	printVerb(verbose == ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
+	printVerb(verbose == ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the nodeset
 	tpat_model *model = set->getSysData()->getModel();
@@ -367,7 +377,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 					foundDVCon = true;
 
 					if(con.getType() == tpat_constraint::MAX_DELTA_V){
-						/* Add a slack variable to the design vector and keep track
+						/* Add a slack variable to the end of design vector and keep track
 						 * of which constraint it is assigned to; value of slack
 						 * variable will be recomputed later
 						 */
@@ -406,21 +416,40 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 		it.totalCons += addToRows;
 	}// END of loop through constraints
 
+	// Save the initial free variable vector
+	it.X0 = it.X;
+
 	// Determine the number of free/design variables based on the system type
 	it.totalFree = it.X.size();
 
-	printVerb(verbose, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
-	printVerb(verbose, "  -> # Slack Variables: %d\n", it.numSlack);
+	printVerb(verbose == ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
+	printVerb(verbose == ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
 
-	printVerb(verbose, "ALL CONSTRAINTS:\n\n");
-	if(verbose){
+	printVerb(verbose == ALL_MSG, "ALL CONSTRAINTS:\n\n");
+	if(verbose == ALL_MSG){
 		for(size_t n = 0; n < it.allCons.size(); n++){
 			it.allCons[n].print();
 		}
 	}
+	
+	// Run the multiple shooting process
+	return multShoot(it);
+}//==========================================================
+
+/**
+ *  @brief Run a multiple shooting algorithm given an iterationData object
+ * 
+ *  @param it A completely formed iterationData object that describes a 
+ *  multiple shooting problem. These are created from tpat_nodeset and its
+ *  derivative types by the other implementation of multShoot()
+ *  @return A corrected iterationData object
+ *  @see multShoot(tpat_nodeset*)
+ */
+iterationData tpat_correction_engine::multShoot(iterationData it){
+	it.count = 0;
+
 	// create a simulation engine
-	tpat_sys_data *sysData = set->getSysData();
-	tpat_simulation_engine simEngine(sysData);
+	tpat_simulation_engine simEngine(it.sysData);
 	simEngine.setVerbose(verbose);
 	
 	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
@@ -439,7 +468,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 	}
 
 	// Define values for use in corrections loop
-	double err = 1000000000;
+	double err = 1e10;
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
 		it.DF.clear();
@@ -454,7 +483,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 			double t0 = 0;
 			double tof = 0;
 			double ic[] = {0,0,0,0,0,0};
-			model->multShoot_getSimICs(&it, set, n, ic, &t0, &tof);
+			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, n, ic, &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			simEngine.runSim(ic, t0, tof);
@@ -462,7 +491,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 		}// end of loop through nodes
 
 		// Compute Delta-Vs between node segments
-		for(int n = 0; n < set->getNumNodes()-1; n++){
+		for(int n = 0; n < it.numNodes - 1; n++){
 			std::vector<double> lastState = it.allSegs[n].getState(-1);
 			for(int s = 3; s < 6; s++){
 				it.deltaVs[n*3+s-3] = lastState[s] - it.X[6*(n+1)+s];
@@ -472,7 +501,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
 		for(size_t c = 0; c < it.allCons.size(); c++)
-			model->multShoot_applyConstraint(&it, it.allCons[c], c);
+			it.sysData->getModel()->multShoot_applyConstraint(&it, it.allCons[c], c);
 
 		// Solve for newX and copy into working vector X
 		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
@@ -494,19 +523,19 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 		std::string errType = err_cons < err_it ? "||F||" : "||X - X_old||";
 
 		it.count++;
-		printVerbColor((!findEvent && !verbose) || verbose, YELLOW, "Iteration %02d: err = %.4e (%s)\n",
+		printVerbColor((findEvent && verbose == ALL_MSG) || (!findEvent && verbose > NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
 			it.count, err, errType.c_str());
 	}// end of corrections loop
 
-	if(err > tol){
+	if(err > tol && !ignoreDiverge){
 		throw tpat_diverge();
 	}
 
-	nodeset_out = model->multShoot_createOutput(&it, set, findEvent);
+	nodeset_out = it.sysData->getModel()->multShoot_createOutput(&it, it.nodeset, findEvent);
 	createdNodesetOut = true;
 
 	return it;
-}//==========================================================
+}//=====================================================
 
 /**
  *	@brief Apply linear algebra to solve the update equation and obtain an updated free-variable vector
@@ -607,7 +636,7 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
  *	@brief clean up data so that engine can be used again (or deconstructed safely)
  */
 void tpat_correction_engine::cleanEngine(){
-	printVerb(verbose, "Cleaning the engine...\n");
+	printVerb(verbose == ALL_MSG, "Cleaning the engine...\n");
 	if(createdNodesetOut){
 		delete nodeset_out;
 	}

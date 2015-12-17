@@ -25,7 +25,7 @@ void testSP_ExactTarget(){
 	nodes0.print();
 
 	tpat_correction_engine corrector;
-	// corrector.setVerbose(true);
+	// corrector.setVerbose(ALL_MSG);
 	corrector.setVarTime(false);
 	corrector.multShoot(&nodes0);
 	tpat_nodeset_bcr4bpr cNodes = corrector.getBCR4BPR_Output();

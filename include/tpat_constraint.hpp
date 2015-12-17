@@ -171,7 +171,8 @@ class tpat_constraint{
 		void setData(double*, int);
 
 		void print() const;
-		const char* getTypeStr(constraint_t) const;
+		const char* getTypeStr() const;
+		static const char* getConTypeStr(constraint_t);
 	private:
 		constraint_t type = NONE;	//!< The type of constraint
 		int node = 0;				//!< Node index that this constraint applies to

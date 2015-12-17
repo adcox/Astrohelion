@@ -152,7 +152,7 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set){
  *	@brief Create continuity constraints for the correction algorithm; this function
  *	creates position and velocity constraints.
  *
- *	Defived models may replace this function or call it and then append more constraints
+ *	Derived models may replace this function or call it and then append more constraints
  *	for other variables that may be continuous, such as time (non-autonomous systems)
  *	or mass.
  *
@@ -287,7 +287,7 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 	
 	// Loop through conData
 	for(size_t s = 0; s < conData.size(); s++){
-		if(!isnan(conData[s])){
+		if(conData[s] == 1){
 			// This state is constrained to be continuous; compute error
 			it->FX[row0+s] = lastState[s] - it->X[6*n+s];
 
@@ -507,43 +507,43 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 	// Compute total deltaV magnitude
 	double totalDV = 0;
 	for(int n = 0; n < it->numNodes-1; n++){
-		// compute magnitude of DV between node n and n+1
-		double dvMag = sqrt(it->deltaVs[n*3]*it->deltaVs[n*3] +
+		// compute squared magnitude of DV between node n and n+1
+		// This takes the form v_n,f - v_n+1,0
+		double dvMag = it->deltaVs[n*3]*it->deltaVs[n*3] +
 			it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
-			it->deltaVs[n*3+2]*it->deltaVs[n*3+2]);
+			it->deltaVs[n*3+2]*it->deltaVs[n*3+2];
 
 		totalDV += dvMag;
 
 		// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
-		double dFdq_n2_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
-			-1*it->deltaVs[n*3+1]/dvMag, -1*it->deltaVs[n*3+2]/dvMag};
+		double dFdq_n2_data[] = {0, 0, 0, -2*it->deltaVs[n*3], -2*it->deltaVs[n*3+1], -2*it->deltaVs[n*3+2]};
 		Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
 		// Get info about the final state/accel of the integrated segment
 		MatrixXRd stm = it->allSegs[n].getSTM(-1);
 
-		std::vector<double> state_dot_data;
-		std::vector<double> lastState = it->allSegs[n].getState(-1);
-		std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
-		state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
-		state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
-
 		// Partial w.r.t. integrated path (newSeg) from node n
 		Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
 
 		for(int i = 0; i < 6; i++){
-			it->DF[it->totalFree*row0 + 6*(n+1) + i] = dFdq_n2(0, i);
-			it->DF[it->totalFree*row0 + 6*n + i] = dFdq_nf(0, i);
+			it->DF[it->totalFree*row0 + 6*(n+1) + i] += dFdq_n2(0, i);
+			it->DF[it->totalFree*row0 + 6*n + i] += dFdq_nf(0, i);
 		}
 
 		// Compute partial w.r.t. integration time n
 		if(it->varTime){
-			double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-			int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n-1;
-
+			// Derivative of the final state of arc n
+			std::vector<double> state_dot_data;
+			std::vector<double> lastState = it->allSegs[n].getState(-1);
+			std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
+			state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
+			state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
 			Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
-			Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 
+			double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+			int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n;
+
+			Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 			it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n(0);
 		}
 	}
@@ -551,23 +551,15 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 	// Copute the difference between the actual deltaV and the desired deltaV
 	it->FX[row0] = totalDV - con.getData()[0];
 
-	if(con.getType() == tpat_constraint::DELTA_V){
-		it->FX[row0] -= con.getData()[0];
-	}else if(con.getType() == tpat_constraint::MAX_DELTA_V){
+	if(con.getType() == tpat_constraint::MAX_DELTA_V){
 		// figure out which of the slack variables correspond to this constraint
 		std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(),
 			it->slackAssignCon.end(), c);
 
 		// which column of the DF matrix the slack variable is in
 		int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
-
-		/* FIRST ITERATION ONLY (before the targeter computes a value for beta)
-		Set the slack variable such that the constraint will evaluate to zero if 
-		the actual deltaV is less than the required deltaV */
-		if(it->count == 0){
-			it->X[slackCol] = sqrt(std::abs(con.getData()[0] - it->FX[row0]));
-		}
-		it->FX[row0] -= con.getData()[0] - it->X[slackCol]*it->X[slackCol];
+		
+		it->FX[row0] += it->X[slackCol]*it->X[slackCol];
 		it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
 	}
 }//==============================================

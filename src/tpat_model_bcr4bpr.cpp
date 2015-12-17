@@ -164,7 +164,7 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(double* y, double t, tpat_traj* 
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
-    double *ic, double t0, double tof, bool verbose){
+    double *ic, double t0, double tof, verbosity_t verbose){
 
     // **** Make sure you fix the epoch of the first node as well as the states
     double IC[7] = {0};
@@ -175,7 +175,7 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
     tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr*>(traj->getSysData());
 
     // Create a nodeset for this particular type of system
-    printVerb(verbose, "  Creating nodeset for event location\n");
+    printVerb(verbose == ALL_MSG, "  Creating nodeset for event location\n");
     tpat_nodeset_bcr4bpr eventNodeset(IC, bcSys, t0,
         tof, 2, tpat_nodeset::DISTRO_TIME);
 
@@ -188,9 +188,9 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
     eventNodeset.addConstraint(fixFirstCon);
     eventNodeset.addConstraint(eventCon);
 
-    if(verbose){ eventNodeset.print(); }
+    if(verbose == ALL_MSG){ eventNodeset.print(); }
 
-    printVerb(verbose, "  Applying corrections process to locate event\n");
+    printVerb(verbose == ALL_MSG, "  Applying corrections process to locate event\n");
     tpat_correction_engine corrector;
     corrector.setVarTime(true);
     corrector.setTol(traj->getTol());

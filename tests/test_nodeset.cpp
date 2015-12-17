@@ -133,12 +133,12 @@ int main(void){
 
 	tpat_sys_data_cr3bp emData("earth", "moon");
 	tpat_nodeset_cr3bp crSet = test_createCR3BPNodeset(&emData);
-	corrector.setVerbose(true);
+	corrector.setVerbose(ALL_MSG);
 	corrector.multShoot(&crSet);
 
 	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 	test_createBCR4BPRNodeset(&semData);
-	corrector.setVerbose(true);
+	corrector.setVerbose(ALL_MSG);
 	corrector.multShoot(bcSet);
 
 	// Memory clean-up

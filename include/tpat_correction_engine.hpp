@@ -21,6 +21,7 @@
 #ifndef H_CORRECTIONS
 #define H_CORRECTIONS
 
+#include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_node.hpp"
@@ -48,6 +49,8 @@ class tpat_sys_data_bcr4bpr;
 struct iterationData{
 	public:
 		tpat_sys_data *sysData;					//!< A pointer to the system data object used for this corrections process
+		tpat_nodeset *nodeset;					//!< A pointer to the nodeset input for this corrections process
+		std::vector<double> X0;					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X;					//!< Free-Variable Vector
 		std::vector<double> FX;					//!< Constraint Function Vector
 		std::vector<double> DF;					//!< Jacobian Matrix
@@ -92,7 +95,7 @@ class tpat_correction_engine{
 		// Set and get functions
 		int getMaxIts() const;
 		double getTol() const;
-		bool isVerbose() const;
+		verbosity_t isVerbose() const;
 		bool isFindingEvent() const;
 		tpat_nodeset_cr3bp getCR3BP_Output();
 		tpat_nodeset_bcr4bpr getBCR4BPR_Output();
@@ -101,18 +104,20 @@ class tpat_correction_engine{
 
 		void setEqualArcTime(bool);
 		void setIgnoreCrash(bool);
+		void setIgnoreDiverge(bool);
 		void setFindEvent(bool);
 		void setMaxIts(int);
 		void setTol(double);
 		void setVarTime(bool);
-		void setVerbose(bool);
+		void setVerbose(verbosity_t);
 		
 		// Utility/Action functions
 		iterationData multShoot(tpat_nodeset*);
+		iterationData multShoot(iterationData);
 
 	private:
-		/** Whether or not to spit out lots of messages */
-		bool verbose = false;
+		/** Describes how many messages to spit out */
+		verbosity_t verbose = SOME_MSG;
 
 		/** Whether or not to use variable time in the corrections process */
 		bool varTime = true;
@@ -124,7 +129,9 @@ class tpat_correction_engine{
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;
 
-		/** Maximum acceptable error value, non-dimensional units */
+		/** Maximum acceptable error value, non-dimensional units.
+			This tolerance also influences the simulation tolerance.
+		 */
 		double tol = 1e-12;
 
 		/** Whether or not space has been dynamically allocated for nodeset_out */
@@ -135,6 +142,9 @@ class tpat_correction_engine{
 
 		/** Flag to turn off crash detection in the simulation engine */
 		bool ignoreCrash = false;
+
+		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
+		bool ignoreDiverge = false;
 
 		/** The output nodeset, constructed from the corrected arcs */
 		tpat_nodeset *nodeset_out = 0;

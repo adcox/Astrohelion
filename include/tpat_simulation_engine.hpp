@@ -140,7 +140,7 @@ class tpat_simulation_engine{
 		double getRelTol() const;
 		bool usesRevTime() const;
 		tpat_traj getTraj() const;
-		bool isVerbose() const;
+		verbosity_t getVerbosity() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
@@ -148,7 +148,7 @@ class tpat_simulation_engine{
 		void setRelTol(double);
 		void setRevTime(bool);
 		void setSysData(tpat_sys_data*);
-		void setVerbose(bool);
+		void setVerbose(verbosity_t);
 		void setVarStepSize(bool);
 
 		// Simulation Methods
@@ -184,8 +184,8 @@ class tpat_simulation_engine{
 		/** Whether or not to run the simulation in reverse time */
 		bool revTime = false;
 
-		/** Whether or not to print out lots of messages */
-		bool verbose = false;
+		/** Describes the verbosity of this engine */
+		verbosity_t verbose = NO_MSG;
 
 		/** Whether or not to use variable step size when integrating */
 		bool varStepSize = true;

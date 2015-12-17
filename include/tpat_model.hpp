@@ -20,6 +20,7 @@
 #ifndef H_MODEL_DEF
 #define H_MODEL_DEF
 
+#include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_event.hpp"
 
@@ -183,7 +184,7 @@ public:
 	 *  has been appended to the trajectory's data vectors.
 	 */
 	virtual bool sim_locateEvent(tpat_event event, tpat_traj *traj,
-    	double *ic, double t0, double tof, bool verbose) = 0;
+    	double *ic, double t0, double tof, verbosity_t verbose) = 0;
 
 	/**
 	 *	@brief Takes an input state and time and saves the data to the trajectory

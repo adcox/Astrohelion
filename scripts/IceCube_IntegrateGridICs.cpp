@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
 
 	sim.addEvent(maxDist);
 	sim.addEvent(periEvent);
-	// sim.setVerbose(true);
+	// sim.setVerbose(ALL_MSG);
 
 	std::vector<double> allPeri;
 	allPeri.reserve(8*gridICs.rows());

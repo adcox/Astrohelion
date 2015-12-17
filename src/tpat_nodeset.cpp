@@ -271,6 +271,24 @@ void tpat_nodeset::print() const{
 			nodeCons[c].print();
 		}
 	}
+
+	printf(" Velocity Discontinuities allowed at nodes ");
+	char velEl[] = {'x', 'y', 'z'};
+	bool anyDiscon = false;
+	for(size_t n = 0; n < steps.size(); n++){
+		tpat_node node = static_cast<tpat_node>(steps[n]);
+		std::vector<bool> velCon = node.getVelCon();
+		for(size_t i = 0; i < velCon.size(); i++){
+			if(!velCon[i]){
+				printf("%zuv_%c, ", n, velEl[i]);
+				anyDiscon = true;
+			}
+		}
+	}
+	if(!anyDiscon)
+		printf("None\n");
+	else
+		printf("\n");
 }//====================================================
 
 /**
@@ -349,7 +367,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
 		node_distro_t type){
 	// Set up the simulation engine
 	tpat_simulation_engine engine(sysData);
-	engine.setVerbose(false);
+	engine.setVerbose(SOME_MSG);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
 
 	node_distro_t nodeDistro = tpat_nodeset::DISTRO_NONE;

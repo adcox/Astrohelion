@@ -162,12 +162,12 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    double *ic, double t0, double tof, bool verbose){
+    double *ic, double t0, double tof, verbosity_t verbose){
 
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
 
     // Create a nodeset for this particular type of system
-    printVerb(verbose, "  Creating nodeset for event location\n");
+    printVerb(verbose == ALL_MSG, "  Creating nodeset for event location\n");
     tpat_nodeset_cr3bp eventNodeset(ic, crSys, tof, 2, tpat_nodeset::DISTRO_TIME);
 
     // Constraint to keep first node unchanged
@@ -179,9 +179,9 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     eventNodeset.addConstraint(fixFirstCon);
     eventNodeset.addConstraint(eventCon);
 
-    if(verbose){ eventNodeset.print(); }
+    if(verbose == ALL_MSG){ eventNodeset.print(); }
 
-    printVerb(verbose, "  Applying corrections process to locate event\n");
+    printVerb(verbose == ALL_MSG, "  Applying corrections process to locate event\n");
     tpat_correction_engine corrector;
     corrector.setVarTime(true);
     corrector.setTol(traj->getTol());

@@ -32,7 +32,16 @@
 #define H_CONSTANTS
 
 #include <complex>
- 
+
+/**
+ * @brief Provides a scale larger than true/false to set verbosity for TPAT routines
+ */
+enum verbosity_t{
+	NO_MSG 		= 0,	//!< Absolutely no messages
+	SOME_MSG	= 1,	//!< Some useful messages are printed to standard output
+	ALL_MSG		= 2		//!< All useful and not-so-useful messages are printed to standard output; helpful for debugging
+};
+
 // Custom types
 typedef std::complex<double> cdouble;	//!< A complex double
 typedef std::complex<int> cint;			//!< A complex integer

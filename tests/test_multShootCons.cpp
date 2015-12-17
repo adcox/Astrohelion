@@ -36,6 +36,61 @@ bool stateDiffBelowTol(std::vector<double> data, std::vector<double> correct, do
 	return stateDiffBelowTol(data, &(correct[0]), tol);
 }
 
+void finiteDiff(tpat_nodeset_cr3bp *nodeset){
+	printf("Finit Diff: Checking DF matrix... ");
+	// Create multiple shooter that will only do 1 iteration
+	tpat_correction_engine corrector;
+	corrector.setMaxIts(1);
+	corrector.setVerbose(NO_MSG);
+	corrector.setIgnoreDiverge(true);
+
+	// Run multiple shooter to get X, FX, and DF
+	iterationData it;
+	it = corrector.multShoot(nodeset);
+	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
+	MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
+
+	double pertSize = 1e-8;
+	MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
+	for(int i = 0; i < it.totalFree; i++){
+		std::vector<double> pertX = it.X0;
+		pertX[i] += pertSize;
+		it.X = pertX;
+		iterationData pertIt = corrector.multShoot(it);
+		Eigen::VectorXd newFX = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+		Eigen::VectorXd col = (newFX - FX)/std::abs(pertSize);
+		DFest.block(0, i, it.totalCons, 1) = col;
+	}
+
+	MatrixXRd diff = DF - DFest;
+	diff = diff.cwiseAbs();
+	Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
+	Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
+
+	double rowMaxMax = rowMax.maxCoeff();
+	double colMaxMax = colMax.maxCoeff();
+
+	if(rowMaxMax < 1000*pertSize && colMaxMax < 1000*colMaxMax){
+		printColor(BOLDGREEN, "No significant errors!\n");
+	}else{
+		printColor(BOLDRED, "Significant errors!\n");
+		printf("Maximum Difference between computed DF and estimated DF\n");
+		int conCount = 0;
+		for(long r = 0; r < rowMax.size(); r++){
+			if(r == 0 && it.totalCons > 0){
+				printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
+			}else if(conCount < it.totalCons && r >= it.conRows[conCount+1]){
+				conCount++;
+				printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
+			}
+			printColor(rowMax[r] > 1000*pertSize ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+		}
+		for(long c = 0; c < colMax.size(); c++){
+			printColor(colMax[c] > 1000*pertSize ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+		}
+	}
+}//================================================
+
 /**
  *  @brief Test all constraint types available to ensure they converge correctly
  */
@@ -53,9 +108,11 @@ int main(void){
 	printColor(BOLDBLACK, "Testing CR3BP Multiple Shooting Constraints\n");
 
 	// STATE
+	printColor(BOLDBLACK, "STATE Constraint\n");
 	double stateConData[] = {0.9, 0.1, NAN, NAN, NAN, NAN};
 	tpat_constraint stateCon(tpat_constraint::STATE, 7, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -66,10 +123,12 @@ int main(void){
 	}
 
 	// MATCH_ALL
+	printColor(BOLDBLACK, "MATCH_ALL Constraint\n");
 	double matchAllConData = 0;
 	tpat_constraint matchAllCon(tpat_constraint::MATCH_ALL, 7, &matchAllConData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(matchAllCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -81,10 +140,12 @@ int main(void){
 	}
 
 	// MATCH_CUST
+	printColor(BOLDBLACK, "MATCH_CUST Constraint\n");
 	double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
 	tpat_constraint matchCustCon(tpat_constraint::MATCH_CUST, 7, matchCustConData, 6);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(matchCustCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -98,10 +159,12 @@ int main(void){
 	}
 
 	// DIST
+	printColor(BOLDBLACK, "DIST Constraint\n");
 	double matchDistConData[] = {1, 0.2};
 	tpat_constraint matchDistCon(tpat_constraint::DIST, 5, matchDistConData, 2);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -113,11 +176,13 @@ int main(void){
 	}
 
 	// MIN_DIST
+	printColor(BOLDBLACK, "MIN_DIST Constraint\n");
 	matchDistConData[1] = 0.1;
 	matchDistCon.setData(matchDistConData, 2);
 	matchDistCon.setType(tpat_constraint::MIN_DIST);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -129,11 +194,13 @@ int main(void){
 	}
 
 	// MAX_DIST
+	printColor(BOLDBLACK, "MAX_DIST Constraint\n");
 	matchDistConData[1] = 0.3;
 	matchDistCon.setData(matchDistConData, 2);
 	matchDistCon.setType(tpat_constraint::MAX_DIST);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -145,43 +212,44 @@ int main(void){
 	}
 
 	// MAX_DELTA_V
-	std::vector<double> state = halfLyapNodeset.getState(4);
+	printColor(BOLDBLACK, "MAX_DELTA_V Constraint\n");
+	std::vector<double> state = halfLyapNodeset.getState(6);
 	state[3] += 0.01;
-	state[4] += 0.01;
-	halfLyapNodeset.setState(4, state);
-	std::vector<int> dvNodes {4};
-	halfLyapNodeset.setVelConNodes_allBut(dvNodes);
-	double maxDVConData = 0.01;
+	state[4] += 0.1;
+	halfLyapNodeset.setState(6, state);	// Perturb the velocity of this state to create a discontinuity
+	std::vector<int> dvNodes {6};
+	halfLyapNodeset.setVelConNodes_allBut(dvNodes);	// Allow the perturbed node to have a delta-v
+	double maxDVConData = 0.01*0.01;
 	tpat_constraint dVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
-	// halfLyapNodeset.saveToMat("tempNodes.mat");
-	// halfLyapNodeset.print();
+	finiteDiff(&halfLyapNodeset);
 	double totalDV = 0;
 	try{
 		iterationData itData = corrector.multShoot(&halfLyapNodeset);
-		for(size_t i = 0; i < itData.deltaVs.size()/3; i+=3){
-			totalDV += sqrt(pow(itData.deltaVs[i], 2) + pow(itData.deltaVs[i+1], 2) +
-				pow(itData.deltaVs[i+2], 2));
+		for(size_t i = 0; i < itData.deltaVs.size(); i+=3){
+			totalDV += pow(itData.deltaVs[i], 2) + pow(itData.deltaVs[i+1], 2) +
+				pow(itData.deltaVs[i+2], 2);
 		}
 		std::cout << "MAX_DELTA_V Constraint: " << (totalDV <= maxDVConData ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
 		std::cout << "MAX_DELTA_V Constraint: " << FAIL << std::endl;
-		printf("  Total DV = %.4e\n", totalDV);
 	}
 
 	// DELTA_V
-	maxDVConData = 0.02;
+	printColor(BOLDBLACK, "DELTA_V Constraint\n");
+	maxDVConData = 0.02*0.02;
 	dVCon.setData(&maxDVConData, 1);
 	dVCon.setType(tpat_constraint::DELTA_V);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
+	finiteDiff(&halfLyapNodeset);
 	totalDV = 0;
 	try{
 		iterationData itData = corrector.multShoot(&halfLyapNodeset);
-		for(size_t i = 0; i < itData.deltaVs.size()/3; i+=3){
-			totalDV += sqrt(pow(itData.deltaVs[i], 2) + pow(itData.deltaVs[i+1], 2) +
-				pow(itData.deltaVs[i+2], 2));
+		for(size_t i = 0; i < itData.deltaVs.size(); i+=3){
+			totalDV += pow(itData.deltaVs[i], 2) + pow(itData.deltaVs[i+1], 2) +
+				pow(itData.deltaVs[i+2], 2);
 		}
 		std::cout << "DELTA_V Constraint: " << (std::abs(totalDV - maxDVConData) < 1e-12 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -193,10 +261,12 @@ int main(void){
 	// SP_RANGE
 	
 	// JC
+	printColor(BOLDBLACK, "JC Constraint\n");
 	double jacobiData = 3.1149;
 	tpat_constraint jacobiCon(tpat_constraint::JC, 0, &jacobiData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(jacobiCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -207,10 +277,12 @@ int main(void){
 	}
 
 	// TOF
+	printColor(BOLDBLACK, "TOF Constraint\n");
 	double tofData = 2.5;
 	tpat_constraint tofCon(tpat_constraint::TOF, 0, &tofData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(tofCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
@@ -221,10 +293,12 @@ int main(void){
 	}
 
 	// APSE
+	printColor(BOLDBLACK, "APSE Constraint\n");
 	double apseData = 1;
 	tpat_constraint apseCon(tpat_constraint::APSE, 7, &apseData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(apseCon);
+	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();

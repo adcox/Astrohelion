@@ -34,7 +34,7 @@
  *	* Add a new enumerated type value with detailed documentation of how it will
  *		be parsed.
  * 	* Update the initEvent() function
- *	* Update the getTypeStr() function
+ *	* Update the getConTypeStr() function
  *	* Define or identify a constraint type that can locate this event to a high
  *		degree of accuracy.
  *	* Update the getDist() function

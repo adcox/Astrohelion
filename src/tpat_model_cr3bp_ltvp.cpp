@@ -167,7 +167,7 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    double *ic, double t0, double tof, bool verbose){
+    double *ic, double t0, double tof, verbosity_t verbose){
 
     return true;
 }//=======================================================

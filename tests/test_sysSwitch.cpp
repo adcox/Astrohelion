@@ -2,8 +2,8 @@
  *	Test system conversion functions: SE2EM and EM2SE
  */
 
-#include "tpat_nodeset_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
@@ -54,10 +54,10 @@ int main(void){
 
 	// Try converting Sun-Earth to Sun-Earth-Moon
 	tpat_sys_data_bcr4bpr bcSys("sun", "earth", "moon");
-	tpat_traj_bcr4bpr bcTraj = bcr4bpr_SE2SEM(seTraj, &bcSys, 7.08);
+	tpat_traj_bcr4bp bcTraj = bcr4bpr_SE2SEM(seTraj, &bcSys, 7.08);
 	bcTraj.saveToMat("data/SEM_Traj.mat");
 
-	tpat_nodeset_bcr4bpr bcNodes = bcr4bpr_SE2SEM(seNodes, &bcSys, 7.08);
+	tpat_nodeset_bcr4bp bcNodes = bcr4bpr_SE2SEM(seNodes, &bcSys, 7.08);
 	bcNodes.saveToMat("data/SEM_Nodes.mat");
 	return 0;
 }

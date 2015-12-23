@@ -1,5 +1,5 @@
 /**
- *  @file tpat_traj_bcr4bpr.cpp
+ *  @file tpat_traj_bcr4bp.cpp
  *	@brief Derivative of tpat_traj, specific to BCR4BPR
  *
  *	@author Andrew Cox
@@ -29,7 +29,7 @@
 
 #include "tpat.hpp"
 
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 
 #include "tpat_exceptions.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
@@ -43,7 +43,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr *sys) : tpat_traj(sys){
+tpat_traj_bcr4bp::tpat_traj_bcr4bp(tpat_sys_data_bcr4bpr *sys) : tpat_traj(sys){
 	initExtraParam();
 }//====================================================
 
@@ -51,7 +51,7 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr *sys) : tpat_traj(sys
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr &t) : tpat_traj(t){
+tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_traj_bcr4bp &t) : tpat_traj(t){
 	initExtraParam();
 }//====================================================
 
@@ -59,7 +59,7 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr &t) : tpat_traj(t){
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_arc_data &a) : tpat_traj(a){
+tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_arc_data &a) : tpat_traj(a){
 	initExtraParam();
 }//====================================================
 
@@ -74,7 +74,7 @@ tpat_traj_bcr4bpr::tpat_traj_bcr4bpr(const tpat_arc_data &a) : tpat_traj(a){
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis, radians
  */
-double tpat_traj_bcr4bpr::getTheta0(){
+double tpat_traj_bcr4bp::getTheta0(){
 	tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
 	return bcSys->getTheta0();
 }//====================================================
@@ -83,7 +83,7 @@ double tpat_traj_bcr4bpr::getTheta0(){
  *	@return the angle between the P2/P3 line (projected into the inertial XY plane)
  *	and the inertial x-axis, radians
  */
-double tpat_traj_bcr4bpr::getPhi0(){
+double tpat_traj_bcr4bp::getPhi0(){
 	tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
 	return bcSys->getPhi0();
 }//====================================================
@@ -92,7 +92,7 @@ double tpat_traj_bcr4bpr::getPhi0(){
  *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital
  *	plane, radians
  */
-double tpat_traj_bcr4bpr::getGamma(){
+double tpat_traj_bcr4bp::getGamma(){
 	tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
 	return bcSys->getGamma();
 }//====================================================
@@ -103,7 +103,7 @@ double tpat_traj_bcr4bpr::getGamma(){
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
  */
-std::vector<double> tpat_traj_bcr4bpr::get_dqdT(int ix){
+std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
 	if(ix < 0)
 		ix += steps.size();
 
@@ -116,7 +116,7 @@ std::vector<double> tpat_traj_bcr4bpr::get_dqdT(int ix){
  *	@param dqdT a pointer to the dqdT vector; this MUST have at least 6 elements,
  *	or the function will read unallocated memory.
  */
-void tpat_traj_bcr4bpr::set_dqdT(int ix, double *dqdT){
+void tpat_traj_bcr4bp::set_dqdT(int ix, double *dqdT){
 	if(ix < 0)
 		ix += steps.size();
 
@@ -129,9 +129,9 @@ void tpat_traj_bcr4bpr::set_dqdT(int ix, double *dqdT){
  *	@param ix the index of the step; if < 0, it will count backwards from the end
  *	@param dqdT a vector (6 elements) representing the dqdT vector
  */
-void tpat_traj_bcr4bpr::set_dqdT(int ix, std::vector<double> dqdT){
+void tpat_traj_bcr4bp::set_dqdT(int ix, std::vector<double> dqdT){
 	if(dqdT.size() != 6)
-		throw tpat_exception("tpat_traj_bcr4bpr::set_dqdT: Cannot accept a dqdT with anything other than 6 elements");
+		throw tpat_exception("tpat_traj_bcr4bp::set_dqdT: Cannot accept a dqdT with anything other than 6 elements");
 
 	set_dqdT(ix, &(dqdT[0]));
 }//====================================================
@@ -143,7 +143,7 @@ void tpat_traj_bcr4bpr::set_dqdT(int ix, std::vector<double> dqdT){
 /**
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
-void tpat_traj_bcr4bpr::initExtraParam(){
+void tpat_traj_bcr4bp::initExtraParam(){
 	// This function in tpat_traj was already called, so 
 	// numExtraParam has been set to 1 and a row size has
 	// been appended for the time variable
@@ -157,7 +157,7 @@ void tpat_traj_bcr4bpr::initExtraParam(){
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj_bcr4bpr::saveToMat(const char* filename){
+void tpat_traj_bcr4bp::saveToMat(const char* filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional

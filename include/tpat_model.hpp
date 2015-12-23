@@ -138,15 +138,7 @@ public:
 	virtual void multShoot_createContCons(iterationData*, tpat_nodeset*);
 	virtual void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
 	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetDeltaV(iterationData*t, tpat_constraint, int);
-	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetState(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetTOF(iterationData*, tpat_constraint, int);
+	virtual double multShoot_getSlackVarVal(iterationData*, tpat_constraint);
 
 	/**
 	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -221,6 +213,17 @@ protected:
 		tpat_event::YZ_PLANE, tpat_event::CRASH, tpat_event::APSE, tpat_event::DIST};
 
 	void copyMe(const tpat_model&);
+	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetDeltaV(iterationData*, tpat_constraint, int);
+	virtual double multShoot_targetDeltaV_compSlackVar(iterationData*, tpat_constraint);
+	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int);
+	virtual double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint);
+	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetState(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetTOF(iterationData*, tpat_constraint, int);
 };
 
 #endif

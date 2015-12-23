@@ -35,14 +35,14 @@
 #include "tpat_correction_engine.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_node.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
@@ -1863,7 +1863,7 @@ void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr *sysData, double *pri
  *
  *  @return a BCR4BPR Trajectory object
  */
-tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *bcSys, double t0){
+tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *bcSys, double t0){
     if(crTraj.getSysData()->getPrimID(0) != 10 || crTraj.getSysData()->getPrimID(1) != 399){
         throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
@@ -1873,7 +1873,7 @@ tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_traj_bcr4bpr bcTraj(bcSys);
+    tpat_traj_bcr4bp bcTraj(bcSys);
 
     double charL2 = crTraj.getSysData()->getCharL();
     double charT2 = crTraj.getSysData()->getCharT();
@@ -1925,7 +1925,7 @@ tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *
  *
  *  @return a BCR4BPR nodeset
  */
-tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bcr4bpr *bcSys, double t0){
+tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bcr4bpr *bcSys, double t0){
     if(crNodes.getSysData()->getPrimID(0) != 10 || crNodes.getSysData()->getPrimID(1) != 399){
         throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
     }
@@ -1935,7 +1935,7 @@ tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bc
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_nodeset_bcr4bpr bcNodes(bcSys);
+    tpat_nodeset_bcr4bp bcNodes(bcSys);
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();

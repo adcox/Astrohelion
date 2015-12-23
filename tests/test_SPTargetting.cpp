@@ -4,7 +4,7 @@
 
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 
 
@@ -14,7 +14,7 @@ void testSP_ExactTarget(){
 	double t0 = 51.23235;
 	double tof = 5;
 
-	tpat_nodeset_bcr4bpr nodes0(IC, &semSys, t0, tof, 2);
+	tpat_nodeset_bcr4bp nodes0(IC, &semSys, t0, tof, 2);
 
 	double spConData = 100/semSys.getCharL();
 	printf("100 km in SEM system = %.6f non-dim units\n", spConData);
@@ -28,13 +28,13 @@ void testSP_ExactTarget(){
 	// corrector.setVerbose(ALL_MSG);
 	corrector.setVarTime(false);
 	corrector.multShoot(&nodes0);
-	tpat_nodeset_bcr4bpr cNodes = corrector.getBCR4BPR_Output();
+	tpat_nodeset_bcr4bp cNodes = corrector.getBCR4BPR_Output();
 
 	printf("Corrected Nodes:\n");
 	cNodes.print();
 
 	// Get SP location at epoch corresponding to final node
-	tpat_nodeset_bcr4bpr spNode(cNodes, 1, 1);
+	tpat_nodeset_bcr4bp spNode(cNodes, 1, 1);
 	printf("Saddle Point Node:\n");
 	spNode.print();
 }

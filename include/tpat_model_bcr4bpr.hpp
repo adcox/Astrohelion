@@ -46,19 +46,22 @@ public:
 	void sim_saveIntegratedData(double*, double, tpat_traj*);
 	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, verbosity_t);
 
-	// Corrector function
+	// Multiple Shooting functions
 	void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
 	void multShoot_createContCons(iterationData*, tpat_nodeset*);
 	void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
+	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
+
+protected:
 	void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int);
 	void multShoot_targetExContCons(iterationData*, tpat_constraint, int);
 	void multShoot_targetState(iterationData*, tpat_constraint, int);
 	void multShoot_targetDeltaV(iterationData*, tpat_constraint, int);
 	void multShoot_targetDist(iterationData*, tpat_constraint, int);
+	double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint);
 	void multShoot_targetSP(iterationData*, tpat_constraint, int);
 	void multShoot_targetSP_mag(iterationData*, tpat_constraint, int);
-	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

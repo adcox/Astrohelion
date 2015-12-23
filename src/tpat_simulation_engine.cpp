@@ -28,9 +28,9 @@
 #include "tpat_simulation_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 #include "tpat_body_data.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
@@ -115,7 +115,7 @@ void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
             break;
         case tpat_sys_data::BCR4BPR_SYS:
             sysData = static_cast<tpat_sys_data_bcr4bpr *>(s.sysData);
-            traj = new tpat_traj_bcr4bpr(*static_cast<tpat_traj_bcr4bpr *>(s.traj));
+            traj = new tpat_traj_bcr4bp(*static_cast<tpat_traj_bcr4bp *>(s.traj));
             break;
         default:
             throw tpat_exception("tpat_simulation_engine::copyEngine: Cannot copy engine with unknown type");
@@ -268,10 +268,10 @@ tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
  *
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
  */
-tpat_traj_bcr4bpr tpat_simulation_engine::getBCR4BPR_Traj() const{
+tpat_traj_bcr4bp tpat_simulation_engine::getBCR4BPR_Traj() const{
     if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
         // Make a copy and return it
-        tpat_traj_bcr4bpr temp( *( static_cast<tpat_traj_bcr4bpr *>(traj) ) );
+        tpat_traj_bcr4bp temp( *( static_cast<tpat_traj_bcr4bp *>(traj) ) );
         return temp;
     }
     else{
@@ -494,7 +494,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
             printVerb(verbose == ALL_MSG, "  initializing BCR4BPR trajectory\n");
             tpat_sys_data_bcr4bpr* data = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
             eomParams = data;
-            traj = new tpat_traj_bcr4bpr(data);
+            traj = new tpat_traj_bcr4bp(data);
 			break;
         }
 		default:

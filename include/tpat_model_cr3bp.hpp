@@ -45,11 +45,13 @@ public:
 	void sim_saveIntegratedData(double*, double, tpat_traj*);
 	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, verbosity_t);
 
-	// Corrector Functions
+	// Multiple shooting Functions
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
+	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
+
+protected:
 	void multShoot_targetJC(iterationData*, tpat_constraint, int);
 	void multShoot_targetPseudoArc(iterationData*, tpat_constraint, int);
-	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
 };
 
 #endif

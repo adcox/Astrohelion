@@ -39,20 +39,20 @@ class tpat_sys_data_bcr4bpr;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset_bcr4bpr : public tpat_nodeset{
+class tpat_nodeset_bcr4bp : public tpat_nodeset{
 
 public:
 	// *structors
-	tpat_nodeset_bcr4bpr(tpat_sys_data_bcr4bpr*);
-	tpat_nodeset_bcr4bpr(double[6], tpat_sys_data_bcr4bpr*, double, double, int);
-	tpat_nodeset_bcr4bpr(std::vector<double>, tpat_sys_data_bcr4bpr*, double, double, int);
-	tpat_nodeset_bcr4bpr(double[6], tpat_sys_data_bcr4bpr*, double, double, int,
+	tpat_nodeset_bcr4bp(tpat_sys_data_bcr4bpr*);
+	tpat_nodeset_bcr4bp(double[6], tpat_sys_data_bcr4bpr*, double, double, int);
+	tpat_nodeset_bcr4bp(std::vector<double>, tpat_sys_data_bcr4bpr*, double, double, int);
+	tpat_nodeset_bcr4bp(double[6], tpat_sys_data_bcr4bpr*, double, double, int,
 		node_distro_t);
-	tpat_nodeset_bcr4bpr(std::vector<double>, tpat_sys_data_bcr4bpr*, double, double, int,
+	tpat_nodeset_bcr4bp(std::vector<double>, tpat_sys_data_bcr4bpr*, double, double, int,
 		node_distro_t);
-	tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr&, int, int);
-	tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr&);
-	tpat_nodeset_bcr4bpr(const tpat_arc_data&);
+	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&, int, int);
+	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&);
+	tpat_nodeset_bcr4bp(const tpat_arc_data&);
 
 	// Operators
 

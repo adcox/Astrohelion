@@ -33,7 +33,7 @@
 
 // Forward declarations
 class tpat_constraint;
-class tpat_nodeset_bcr4bpr;
+class tpat_nodeset_bcr4bp;
 class tpat_nodeset_cr3bp;
 class tpat_simulation_engine;
 class tpat_sys_data_bcr4bpr;
@@ -98,7 +98,7 @@ class tpat_correction_engine{
 		verbosity_t isVerbose() const;
 		bool isFindingEvent() const;
 		tpat_nodeset_cr3bp getCR3BP_Output();
-		tpat_nodeset_bcr4bpr getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp getBCR4BPR_Output();
 		bool usesEqualArcTime() const;
 		bool usesVarTime() const;
 

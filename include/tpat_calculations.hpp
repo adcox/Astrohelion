@@ -38,10 +38,10 @@
 #include <vector>
 
 // Forward declarations
-class tpat_nodeset_bcr4bpr;
+class tpat_nodeset_bcr4bp;
 class tpat_sys_data_bcr4bpr;
 class tpat_traj;
-class tpat_traj_bcr4bpr;
+class tpat_traj_bcr4bp;
 class tpat_nodeset_cr3bp;
 class tpat_sys_data_cr3bp;
 class tpat_traj_cr3bp;
@@ -121,8 +121,8 @@ tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, dou
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr*, double*);
 void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr*, double*);
-tpat_traj_bcr4bpr bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr*, double);
-tpat_nodeset_bcr4bpr bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr*, double);
+tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr*, double);
+tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr*, double);
 void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
 
 #endif

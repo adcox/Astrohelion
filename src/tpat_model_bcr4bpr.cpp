@@ -30,9 +30,9 @@
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_eigen_defs.hpp"
-#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_event.hpp"
 #include "tpat_node.hpp"
@@ -142,7 +142,7 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(double* y, double t, tpat_traj* 
 
     traj->appendStep(step);
     
-    tpat_traj_bcr4bpr *bcTraj = static_cast<tpat_traj_bcr4bpr*>(traj);
+    tpat_traj_bcr4bp *bcTraj = static_cast<tpat_traj_bcr4bp*>(traj);
     bcTraj->set_dqdT(-1, dqdT);
 }//=====================================================
 
@@ -176,7 +176,7 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
 
     // Create a nodeset for this particular type of system
     printVerb(verbose == ALL_MSG, "  Creating nodeset for event location\n");
-    tpat_nodeset_bcr4bpr eventNodeset(IC, bcSys, t0,
+    tpat_nodeset_bcr4bp eventNodeset(IC, bcSys, t0,
         tof, 2, tpat_nodeset::DISTRO_TIME);
 
     // Constraint to keep first node unchanged
@@ -208,7 +208,7 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
 
     // Because we set findEvent to true, this output nodeset should contain
     // the full (42 or 48 element) final state
-    tpat_nodeset_bcr4bpr correctedNodes = corrector.getBCR4BPR_Output();
+    tpat_nodeset_bcr4bp correctedNodes = corrector.getBCR4BPR_Output();
 
     std::vector<double> state = correctedNodes.getNode(-1).getPosVelState();
     std::vector<double> extra = correctedNodes.getNode(-1).getExtraParams();
@@ -243,7 +243,7 @@ void tpat_model_bcr4bpr::multShoot_initDesignVec(iterationData *it, tpat_nodeset
     // Append the Epoch for each node
     if(it->varTime){
         // epochs come after ALL the TOFs have been added
-        tpat_nodeset_bcr4bpr *bcSet = static_cast<tpat_nodeset_bcr4bpr *>(set);
+        tpat_nodeset_bcr4bp *bcSet = static_cast<tpat_nodeset_bcr4bp *>(set);
         for(int n = 0; n < bcSet->getNumNodes(); n++){
             it->X.push_back(bcSet->getEpoch(n));
         }
@@ -287,7 +287,7 @@ void tpat_model_bcr4bpr::multShoot_getSimICs(iterationData *it, tpat_nodeset *se
     
     std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
     *tof = it->varTime ? it->X[6*it->numNodes+n] : set->getTOF(n);
-    tpat_nodeset_bcr4bpr *bcSet = static_cast<tpat_nodeset_bcr4bpr *>(set);
+    tpat_nodeset_bcr4bp *bcSet = static_cast<tpat_nodeset_bcr4bp *>(set);
     *t0 = it->varTime ? it->X[7*it->numNodes-1+n] : bcSet->getEpoch(n);
 }//============================================================
 
@@ -456,6 +456,18 @@ void tpat_model_bcr4bpr::multShoot_targetDist(iterationData* it, tpat_constraint
     it->DF[it->totalFree*row0 + 6*n + 1] = dy/h;
     it->DF[it->totalFree*row0 + 6*n + 2] = dz/h;
 
+    if(it->varTime){
+        // Epoch dependencies from primary positions
+        double dhdr_data[] = {-dx/h, -dy/h, -dz/h};
+        std::vector<double> primVel = getPrimVel(t0, sysData);
+    
+        Eigen::RowVector3d dhdr = Eigen::Map<Eigen::RowVector3d>(dhdr_data, 1, 3);
+        Eigen::Vector3d drdT = Eigen::Map<Eigen::Vector3d>(&(primVel[Pix*3]), 3, 1);
+        
+        double prod = dhdr*drdT;
+        it->DF[it->totalFree*row0 + 7*it->numNodes - 1 + n] = prod;
+    }
+
     // Extra stuff for inequality constraints
     if(con.getType() == tpat_constraint::MIN_DIST || 
         con.getType() == tpat_constraint::MAX_DIST ){
@@ -467,25 +479,60 @@ void tpat_model_bcr4bpr::multShoot_targetDist(iterationData* it, tpat_constraint
         int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
         int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
 
+        // printf("Dist from P%d is %f (%s %f)\n", Pix, h,
+        //     con.getType() == tpat_constraint::MIN_DIST ? "Min" : "Max", conData[1]);
+        // printf("  Slack Var^2 = %e\n", it->X[slackCol]*it->X[slackCol]);
         // Subtract squared slack variable from constraint
         it->FX[row0] += sign*it->X[slackCol]*it->X[slackCol];
 
         // Partial with respect to slack variable
         it->DF[it->totalFree*row0 + slackCol] = sign*2*it->X[slackCol];
-
-        // Epoch dependencies from primary positions
-        double dhdr_data[] = {-dx/h, -dy/h, -dz/h};
-        std::vector<double> primVel = getPrimVel(t0, sysData);
-
-        if(it->varTime){
-            Eigen::RowVector3d dhdr = Eigen::Map<Eigen::RowVector3d>(dhdr_data, 1, 3);
-            Eigen::Vector3d drdT = Eigen::Map<Eigen::Vector3d>(&(primVel[Pix*3]), 3, 1);
-            
-            double prod = dhdr*drdT;
-            it->DF[it->totalFree*row0 + 7*it->numNodes - 1 + n] = prod;
-        }
     }
 }// End of targetDist() =========================================
+
+/**
+ *  @brief  Compute the value of the slack variable for inequality distance constraints
+ *  @details This function computes a value for the slack variable in an
+ *  inequality distance constraint. If the constraint is already met by the initial
+ *  design, using this value will prevent the multiple shooting algorithm from
+ *  searching all over for the propper value.
+ *  
+ *  Note: This method overrides the base class function to add functionality for non-zero epochs
+ * 
+ *  @param it the iteration data object for the multiple shooting process
+ *  @param con the constraint the slack variable applies to
+ *  @return the value of the slack variable that minimizes the constraint function
+ *  without setting the slack variable equal to zero
+ */
+double tpat_model_bcr4bpr::multShoot_targetDist_compSlackVar(iterationData* it, tpat_constraint con){
+    std::vector<double> conData = con.getData();
+    int n = con.getNode();
+    int Pix = (int)(conData[0]);    // index of primary 
+    // Get the node epoch either from the design vector or from the original set of nodes
+    double t0 = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
+    tpat_sys_data *sysData = it->sysData;
+
+    // Get the primary position
+    std::vector<double> primPos = getPrimPos(t0, sysData);
+
+    // Get distance between node and primary in x, y, and z-coordinates
+    double dx = it->X[6*n+0] - primPos[Pix*3+0];
+    double dy = it->X[6*n+1] - primPos[Pix*3+1];
+    double dz = it->X[6*n+2] - primPos[Pix*3+2];
+
+    double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
+    int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
+    double diff = conData[1] - h;
+
+    /*  If diff and sign have the same sign (+/-), then the constraint
+     *  is satisfied, so compute the value of the slack variable that 
+     *  sets the constraint function equal to zero. Otherwise, choose 
+     *  a small value of the slack variable but don't set it to zero as 
+     *  that will make the partials zero and will prevent the mulitple
+     *  shooting algorithm from updating the slack variable
+     */
+    return diff*sign > 0 ? sqrt(std::abs(diff)) : 1e-4;
+}//==========================================================
 
 /**
  *  @brief Compute partials and constraints for all nodes constrained with <tt>DELTA_V</tt> or
@@ -505,24 +552,17 @@ void tpat_model_bcr4bpr::multShoot_targetDeltaV(iterationData* it, tpat_constrai
     // Call base function to take care of most of the constraint computations and partials
     tpat_model::multShoot_targetDeltaV(it, con, c);
 
-    // Add partials w.r.t. epoch time
-    int row0 = it->conRows[c];
+    if(it->varTime){
+        // Add partials w.r.t. epoch time
+        int row0 = it->conRows[c];
 
-    // Compute total deltaV magnitude
-    for(int n = 0; n < it->numNodes-1; n++){
-        // compute magnitude of DV between node n and n+1
-        double dvMag = sqrt(it->deltaVs[n*3]*it->deltaVs[n*3] +
-        it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
-        it->deltaVs[n*3+2]*it->deltaVs[n*3+2]);
+        // Compute total deltaV magnitude
+        for(int n = 0; n < it->numNodes-1; n++){
+            // Compute parial w.r.t. node n+1 (where velocity is discontinuous)
+            double dFdq_n2_data[] = {0, 0, 0, -2*it->deltaVs[n*3], -2*it->deltaVs[n*3+1], -2*it->deltaVs[n*3+2]};
+            Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
-        // Compute parial w.r.t. node n+1 (where velocity is discontinuous)
-        double dFdq_ndf_data[] = {0, 0, 0, -1*it->deltaVs[n*3]/dvMag, 
-            -1*it->deltaVs[n*3+1]/dvMag, -1*it->deltaVs[n*3+2]/dvMag};
-
-        Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_ndf_data, 1, 6);
-
-        // Compute partial w.r.t. epoch time n
-        if(it->varTime){
+            // Compute partial w.r.t. epoch time n
             std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1, 1);
 
             Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
@@ -806,7 +846,7 @@ tpat_nodeset* tpat_model_bcr4bpr::multShoot_createOutput(iterationData *it, tpat
 
     // Create a nodeset with the same system data as the input
     tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(it->sysData);
-    tpat_nodeset_bcr4bpr *nodeset_out = new tpat_nodeset_bcr4bpr(bcSys);
+    tpat_nodeset_bcr4bp *nodeset_out = new tpat_nodeset_bcr4bp(bcSys);
 
     int numNodes = (int)(it->origNodes.size());
     for(int i = 0; i < numNodes; i++){

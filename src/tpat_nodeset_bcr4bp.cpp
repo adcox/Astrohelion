@@ -1,5 +1,5 @@
 /**
- *  @file tpat_nodeset_bcr4bpr.cpp
+ *  @file tpat_nodeset_bcr4bp.cpp
  *	@brief Derivative of tpat_nodeset, specific to BCR4BPR
  *
  *	@author Andrew Cox
@@ -29,7 +29,7 @@
 
 #include "tpat.hpp"
 
-#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 
 #include "tpat_node.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
@@ -42,7 +42,7 @@
  *	@brief Construct a nodeset with no data other than the system
  *	@param data system data object describing the system the nodes exist in
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(tpat_sys_data_bcr4bpr *data) : tpat_nodeset(data){
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(tpat_sys_data_bcr4bpr *data) : tpat_nodeset(data){
 	initExtraParam();
 }
 
@@ -58,7 +58,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(tpat_sys_data_bcr4bpr *data) : tpat_n
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -78,7 +78,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr *
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -97,7 +97,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -116,7 +116,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(double IC[6], tpat_sys_data_bcr4bpr *
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -130,7 +130,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(std::vector<double> IC, tpat_sys_data
  *	@param first index of the first node to be included in the new nodeset
  *	@param last index of the last node to be included in the new nodeset
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &orig, int first,
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp &orig, int first,
 	int last) : tpat_nodeset(orig, first, last){}
 
 /**
@@ -140,13 +140,13 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr &orig, int
  *	handle copying the generic fields like state and tofs
  *	@param n a nodeset reference
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_nodeset_bcr4bpr& n) : tpat_nodeset(n) {}
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp& n) : tpat_nodeset(n) {}
 
 /**
  *	@brief Create a BCR4BPR nodeset from its base class
  *	@param a an arc data reference
  */
-tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_arc_data &a) : tpat_nodeset(a) {}
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_arc_data &a) : tpat_nodeset(a) {}
 
 /**
  *	@brief Auto-generate epochs for all nodes
@@ -157,7 +157,7 @@ tpat_nodeset_bcr4bpr::tpat_nodeset_bcr4bpr(const tpat_arc_data &a) : tpat_nodese
  *
  *	@param t0 the epoch for the first node
  */
-void tpat_nodeset_bcr4bpr::initEpochs(double t0){
+void tpat_nodeset_bcr4bp::initEpochs(double t0){
 	
 	// Compute epoch times for each node
 	double ellapsed = t0;
@@ -177,7 +177,7 @@ void tpat_nodeset_bcr4bpr::initEpochs(double t0){
  *	time, compute the epoch for each node assuming time
  *	flows continuously through all nodes
  */
-void tpat_nodeset_bcr4bpr::initEpochs(){
+void tpat_nodeset_bcr4bp::initEpochs(){
 	double ellapsed = 0;
 	for(size_t n = 0; n < steps.size(); n++){
 		tpat_node *node = static_cast<tpat_node*>(&(steps[n]));
@@ -203,7 +203,7 @@ void tpat_nodeset_bcr4bpr::initEpochs(){
  *	@param ix node index; if < 0, will count backwards from the end of the nodeset
  *	return the non-dimensional epoch time associated with the specified node
  */
-double tpat_nodeset_bcr4bpr::getEpoch(int ix) const {
+double tpat_nodeset_bcr4bp::getEpoch(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
 
@@ -218,7 +218,7 @@ double tpat_nodeset_bcr4bpr::getEpoch(int ix) const {
  *
  *	@param node a new node to append to the end of the set
  */
-void tpat_nodeset_bcr4bpr::appendNode(tpat_node node){
+void tpat_nodeset_bcr4bp::appendNode(tpat_node node){
 	tpat_nodeset::appendNode(node);
 	initEpochs();
 }//====================================================
@@ -232,7 +232,7 @@ void tpat_nodeset_bcr4bpr::appendNode(tpat_node node){
  *	@param ix node index; if < 0, will count backwards from end of nodeset
  *	@param node a new node to insert
  */
-void tpat_nodeset_bcr4bpr::insertNode(int ix, tpat_node node){
+void tpat_nodeset_bcr4bp::insertNode(int ix, tpat_node node){
 	tpat_nodeset::insertNode(ix, node);
 	initEpochs();
 }//====================================================
@@ -245,7 +245,7 @@ void tpat_nodeset_bcr4bpr::insertNode(int ix, tpat_node node){
  *
  *	@param ix node index; if < 0, will count backwards from end of nodeset
  */
-void tpat_nodeset_bcr4bpr::deleteNode(int ix){
+void tpat_nodeset_bcr4bp::deleteNode(int ix){
 	tpat_nodeset::deleteNode(ix);
 	initEpochs();
 }//====================================================
@@ -257,7 +257,7 @@ void tpat_nodeset_bcr4bpr::deleteNode(int ix){
 /**
  *	@brief Initialize the extra param vector to hold info specific to this nodeset
  */
-void tpat_nodeset_bcr4bpr::initExtraParam(){
+void tpat_nodeset_bcr4bp::initExtraParam(){
 	// This function in tpat_nodeset was already called, so 
 	// numExtraParam has been set to 1 and a row size has
 	// been appended for the TOF variable
@@ -272,7 +272,7 @@ void tpat_nodeset_bcr4bpr::initExtraParam(){
  *	@param filename a relative or absolute filepath to a mat file. Note
  *	the extension MUST be ".mat"
  */
-void tpat_nodeset_bcr4bpr::saveToMat(const char *filename){
+void tpat_nodeset_bcr4bp::saveToMat(const char *filename){
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -303,7 +303,7 @@ void tpat_nodeset_bcr4bpr::saveToMat(const char *filename){
 /**
  *	@brief Display a textual representation of this object in the standard output
  */
-void tpat_nodeset_bcr4bpr::print() const{
+void tpat_nodeset_bcr4bp::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n", sysData->getTypeStr().c_str(), steps.size());
 	for (size_t n = 0; n < steps.size(); n++){
 		std::vector<double> node = steps[n].getPosVelState();

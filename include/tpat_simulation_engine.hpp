@@ -28,7 +28,7 @@
 #include <vector>
 
 // Forward declarations
-class tpat_traj_bcr4bpr;
+class tpat_traj_bcr4bp;
 class tpat_traj_cr3bp;
 class tpat_traj_cr3bp_ltvp;
 
@@ -130,7 +130,7 @@ class tpat_simulation_engine{
 		void addEvent(tpat_event::event_t, int, bool);
 		void addEvent(tpat_event);
 		double getAbsTol() const;
-		tpat_traj_bcr4bpr getBCR4BPR_Traj() const;
+		tpat_traj_bcr4bp getBCR4BPR_Traj() const;
 		tpat_traj_cr3bp getCR3BP_Traj() const;
 		tpat_traj_cr3bp_ltvp getCR3BP_LTVP_Traj() const;
 		std::vector<tpat_event> getEndEvents() const;

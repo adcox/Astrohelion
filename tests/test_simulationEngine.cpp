@@ -4,7 +4,7 @@
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bpr.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 #include "tpat_constants.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
@@ -52,7 +52,7 @@ void test_bcr4bpr_sim(){
 	bcEngine.setVerbose(true);
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
-	tpat_traj_bcr4bpr bcTraj = bcEngine.getBCR4BPR_Traj();
+	tpat_traj_bcr4bp bcTraj = bcEngine.getBCR4BPR_Traj();
 	cout << "Trajectory contains " << bcTraj.getLength() << " points" << endl;
 	bcTraj.saveToMat("data/bcHaloManifoldProp.mat");
 }
@@ -82,7 +82,7 @@ void test_bcr4bpr_events(){
 	engine.addEvent(tpat_event::XY_PLANE, 0, true);
 	engine.runSim(ic, t0, 2*PI);
 
-	tpat_traj_bcr4bpr traj = engine.getBCR4BPR_Traj();
+	tpat_traj_bcr4bp traj = engine.getBCR4BPR_Traj();
 	traj.saveToMat("data/BC_HaloManifold.mat");
 }
 

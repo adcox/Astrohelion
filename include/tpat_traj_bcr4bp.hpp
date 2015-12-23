@@ -34,13 +34,13 @@ class tpat_sys_data_bcr4bpr;
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_traj_bcr4bpr : public tpat_traj{
+class tpat_traj_bcr4bp : public tpat_traj{
 
 public:
 	// *structors
-	tpat_traj_bcr4bpr(tpat_sys_data_bcr4bpr*);
-	tpat_traj_bcr4bpr(const tpat_traj_bcr4bpr&);
-	tpat_traj_bcr4bpr(const tpat_arc_data&);
+	tpat_traj_bcr4bp(tpat_sys_data_bcr4bpr*);
+	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
+	tpat_traj_bcr4bp(const tpat_arc_data&);
 	
 	// Set and Get Functions
 	double getTheta0();

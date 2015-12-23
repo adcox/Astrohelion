@@ -203,6 +203,34 @@ void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n
 }//============================================================
 
 /**
+ *  @brief Compute the value of a slack variable for an inequality constraint.
+ *  @details Computing the value of the slack variable can avoid unneccessary 
+ *  shooting iterations when the inequality constraint is already met. If the 
+ *  inequality constraint is met, the value returned by this function will make
+ *  the constraint function evaluate to zero.
+ *  
+ *  Note: This function should be called after the state variable vector has 
+ *  been initialized by the multiple shooting algorithm
+ * 
+ *  @param it the iterationData object associated with the multiple shooting process
+ *  @param con the inequality constraint for which the slack variable is being computed
+ * 
+ *  @return The value of the slack variable that minimizes the constraint function
+ *  without setting the slack variable to zero
+ */
+double tpat_model::multShoot_getSlackVarVal(iterationData *it, tpat_constraint con){
+	switch(con.getType()){
+		case tpat_constraint::MAX_DIST:
+		case tpat_constraint::MIN_DIST:
+			return multShoot_targetDist_compSlackVar(it, con);
+		case tpat_constraint::MAX_DELTA_V:
+			return multShoot_targetDeltaV_compSlackVar(it, con);
+		default:
+			throw tpat_exception("tpat_model::multShoot_getSlackVarVal: Cannot compute slack variable values for equality constraints");
+	}
+}//===========================================================
+
+/**
  *	@brief Compute constraint function and partial derivative values for a constraint
  *	
  *	This function provides a framework for most of the constraints available to all models.
@@ -485,6 +513,46 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
 }// End of targetDist() =========================================
 
 /**
+ *  @brief Compute the value of the slack variable for inequality distance constraints
+ *  @details This function computes a value for the slack variable in an
+ *  inequality distance constraint. If the constraint is already met by the initial
+ *  design, using this value will prevent the multiple shooting algorithm from
+ *  searching all over for the propper value.
+ * 
+ *  @param it the iteration data object for the multiple shooting process
+ *  @param con the constraint the slack variable applies to
+ *  @return the value of the slack variable
+ */
+double tpat_model::multShoot_targetDist_compSlackVar(iterationData* it, tpat_constraint con){
+	std::vector<double> conData = con.getData();
+	int n = con.getNode();
+	int Pix = (int)(conData[0]);	// index of primary	
+	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
+	tpat_sys_data *sysData = it->sysData;
+
+	// Get the primary position
+	std::vector<double> primPos = getPrimPos(t, sysData);
+
+	// Get distance between node and primary in x, y, and z-coordinates
+	double dx = it->X[6*n+0] - primPos[Pix*3+0];
+	double dy = it->X[6*n+1] - primPos[Pix*3+1];
+	double dz = it->X[6*n+2] - primPos[Pix*3+2];
+
+	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
+	int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
+    double diff = conData[1] - h;
+
+    /*  If diff and sign have the same sign (+/-), then the constraint
+     *  is satisfied, so compute the value of the slack variable that 
+     *  sets the constraint function equal to zero. Otherwise, choose 
+     *  a small value of the slack variable but don't set it to zero as 
+     *  that will make the partials zero and will prevent the mulitple
+     *  shooting algorithm from updating the slack variable
+     */
+    return diff*sign > 0 ? sqrt(std::abs(diff)) : 1e-4;
+}//==========================================================
+
+/**
  *	@brief Compute partials and constraints for all nodes constrained with <tt>DELTA_V</tt> or
  *	<tt>MIN_DELTA_V</tt>
  *
@@ -563,6 +631,27 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 		it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
 	}
 }//==============================================
+
+double tpat_model::multShoot_targetDeltaV_compSlackVar(iterationData *it, tpat_constraint con){
+	// double totalDV = 0;
+	// for(int n = 0; n < it->numNodes-1; n++){
+	// 	// compute squared magnitude of DV between node n and n+1
+	// 	// This takes the form v_n,f - v_n+1,0
+	// 	totalDV += it->deltaVs[n*3]*it->deltaVs[n*3] +
+	// 		it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
+	// 		it->deltaVs[n*3+2]*it->deltaVs[n*3+2];
+	// }
+	// // Value of the constraint function
+	// double F = totalDV - con.getData()[0];
+	
+	// No info about delta-Vs between segments exists yet because nothing
+	// has been integrated... return a constant for now
+	return 1e-2;
+
+	// If F < 0, the constraint is satisfied, so choose a slack variable
+	// that sets F = 0; else choose a small slack variable value
+	// return F < 0 ? sqrt(std::abs(F)) : 1e-4;
+}//=============================================
 
 /**
  *	@brief Compute partials and constraint function values for time-of-flight constraints

@@ -29,7 +29,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_exceptions.hpp" 
-#include "tpat_nodeset_bcr4bpr.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_utilities.hpp"
@@ -80,7 +80,7 @@ void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 				nodeset_out = new tpat_nodeset_cr3bp (* static_cast<tpat_nodeset_cr3bp *>(e.nodeset_out));
 				break;
 			case tpat_sys_data::BCR4BPR_SYS:
-				nodeset_out = new tpat_nodeset_bcr4bpr (*static_cast<tpat_nodeset_bcr4bpr *>(e.nodeset_out));
+				nodeset_out = new tpat_nodeset_bcr4bp (*static_cast<tpat_nodeset_bcr4bp *>(e.nodeset_out));
 				break;
 			default: nodeset_out = 0; break;
 		}
@@ -180,11 +180,11 @@ tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
  *
  *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
  */
-tpat_nodeset_bcr4bpr tpat_correction_engine::getBCR4BPR_Output(){
+tpat_nodeset_bcr4bp tpat_correction_engine::getBCR4BPR_Output(){
 	if(createdNodesetOut){
 		if(nodeset_out->getSysData()->getType() == tpat_sys_data::BCR4BPR_SYS){
 			// Create a copy of the nodeset, return it
-			tpat_nodeset_bcr4bpr temp( *(static_cast<tpat_nodeset_bcr4bpr *>(nodeset_out)) );
+			tpat_nodeset_bcr4bp temp( *(static_cast<tpat_nodeset_bcr4bp *>(nodeset_out)) );
 			return temp;
 		}else{
 			throw tpat_exception("tpat_correction_engine::getBCR4BPR_Output: Wrong system type");
@@ -363,7 +363,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 				break;
 			case tpat_constraint::MAX_DIST:
 			case tpat_constraint::MIN_DIST:
-				it.X.push_back(1e-4);			// initial value for slack variable
+				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);	// remember where this slack variable is hiding
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for DIST as well
@@ -381,7 +381,7 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 						 * of which constraint it is assigned to; value of slack
 						 * variable will be recomputed later
 						 */
-						it.X.push_back(1e-4);
+						it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
 						it.numSlack++;
 						it.slackAssignCon.push_back(c);
 					}

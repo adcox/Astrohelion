@@ -1961,11 +1961,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr *bcSys, double t0){
         Eigen::Vector3d accel = -(1/k - mu)*s/pow(ds,3) - (mu - nu)*e/pow(de,3) - nu*m/pow(dm,3);
 
         err = accel.norm();
-        printColor(YELLOW, "Iteration %02d: ||A|| = %.6e\n", count, err);
-        // printf("  a = %f\n  b = %f\n  c = %f\n", a, b, c);
-        // printf("  spPos = [%f, %f, %f]\n", spPos(0), spPos(1), spPos(2));
-        // printf("  ds = %f\n  de = %f\n  dm = %f\n", ds, de, dm);
-        // printf("  k = %f\n  mu = %f\n  nu = %f\n", k, mu, nu);
+        // printColor(YELLOW, "Iteration %02d: ||A|| = %.6e\n", count, err);
         if(err > okErr){
             // Partial derivatives; Create Jacobian
             Matrix3Rd J;

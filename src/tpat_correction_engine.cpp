@@ -360,6 +360,9 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 				break;
 			case tpat_constraint::SP_RANGE:
 				addToRows = 1;
+				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
+				it.slackAssignCon.push_back(c);
+				it.numSlack++;
 				break;
 			case tpat_constraint::MAX_DIST:
 			case tpat_constraint::MIN_DIST:

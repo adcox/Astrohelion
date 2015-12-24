@@ -7,6 +7,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_utilities.hpp"
 
@@ -104,12 +105,26 @@ void checkFamilyContLS(){
 	}
 }//=========================================
 
+void checkSPPos(){
+	tpat_sys_data_bcr4bpr sys("Sun", "Earth", "Moon");
+	double epoch = 100;
+	Eigen::Vector3d trueSPPos(99.8234686455801, 0.000601308121756233, 0.000183265107710598);
+	try{
+		Eigen::Vector3d calcSPPos = bcr4bpr_getSPLoc(&sys, epoch);
+		Eigen::Vector3d diff = trueSPPos - calcSPPos;
+		cout << "Saddle Point Position Calc Test: " << (diff.norm() < 1e-10 ? PASS : FAIL) << endl;
+	}catch(tpat_diverge &e){
+		cout << "Saddle Point Position Calc test: " << FAIL << " (Diverged)" << endl;
+	}
+}//==========================================
+
 int main(void){
 
 	checkLPts();
 	checkUDDots();
 	checkDate2EpochTime();
 	checkFamilyContLS();
+	checkSPPos();
 
 	return 0;
 }//=========================================

@@ -124,6 +124,7 @@ void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr*, double*);
 tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr*, double);
 tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr*, double);
 void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
+Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr*, double);
 
 #endif
 //END

@@ -1916,6 +1916,91 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, tpat_sys_data_bcr4bpr *b
 }//==================================================
 
 /**
+ *  @brief Compute the location of the saddle point for a specific bicircular system
+ *  and epoch
+ *  @details This function uses a Newton-Raphson procedure to locate the zeros of the local
+ *  acceleration field.
+ *  @throws tpat_diverge if the Newton-Raphson procedure cannot converge
+ *  @param bcSys system data object describing the bicircular system
+ *  @param t0 the epoch at which the saddle point's location is computed
+ * 
+ *  @return the location of the saddle pointin BCR4BP rotating coordinates
+ */
+Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr *bcSys, double t0){
+
+    // Compute approximate SP location using 3-body dynamics
+    tpat_sys_data_cr3bp subSys(bcSys->getPrimary(0), bcSys->getPrimary(1));
+    double a = 2*subSys.getMu() - 1;
+    double b = 4*subSys.getMu()*subSys.getMu() - 4*subSys.getMu() + 2;
+    double c = 2*pow(subSys.getMu(), 3) - 3*subSys.getMu()*subSys.getMu() + 3*subSys.getMu() - 1;
+    
+    // x-coordinate in bcr4bpr
+    Eigen::Vector3d spPos((-b + sqrt(b*b - 4*a*c))/(2*a*bcSys->getK()), 0, 0);
+
+    // Get primary positions
+    double primPos[9];
+    bcr4bpr_getPrimaryPos(t0, bcSys, primPos);
+    
+    double err = 1;
+    double okErr = 1e-10;
+    int maxIts = 20;
+    int count = 0;
+    while(count < maxIts && err > okErr){
+        
+        Eigen::Vector3d s(spPos(0) - primPos[0], spPos(1) - primPos[1], spPos(2) - primPos[2]);
+        Eigen::Vector3d e(spPos(0) - primPos[3], spPos(1) - primPos[4], spPos(2) - primPos[5]);
+        Eigen::Vector3d m(spPos(0) - primPos[6], spPos(1) - primPos[7], spPos(2) - primPos[8]);
+        double ds = s.norm();
+        double de = e.norm();
+        double dm = m.norm();
+        double k = bcSys->getK();
+        double mu = bcSys->getMu();
+        double nu = bcSys->getNu();
+
+        // Compute acceleration due to three primaries
+        Eigen::Vector3d accel = -(1/k - mu)*s/pow(ds,3) - (mu - nu)*e/pow(de,3) - nu*m/pow(dm,3);
+
+        err = accel.norm();
+        printColor(YELLOW, "Iteration %02d: ||A|| = %.6e\n", count, err);
+        // printf("  a = %f\n  b = %f\n  c = %f\n", a, b, c);
+        // printf("  spPos = [%f, %f, %f]\n", spPos(0), spPos(1), spPos(2));
+        // printf("  ds = %f\n  de = %f\n  dm = %f\n", ds, de, dm);
+        // printf("  k = %f\n  mu = %f\n  nu = %f\n", k, mu, nu);
+        if(err > okErr){
+            // Partial derivatives; Create Jacobian
+            Matrix3Rd J;
+            J(0,0) = -(1/k - mu)*(1/pow(ds,3) - 3*s(0)*s(0)/pow(ds,5)) -
+                (mu-nu)*(1/pow(de,3) - 3*e(0)*e(0)/pow(de,5)) - nu*(1/pow(dm,3) - 3*m(0)*m(0)/pow(dm,5));
+            J(0,1) = (1/k - mu)*3*s(0)*s(1)/pow(ds,5) + (mu - nu)*3*e(0)*e(1)/pow(de,5) +
+                nu*3*m(0)*m(1)/pow(dm,5);
+            J(0,2) = (1/k - mu)*3*s(0)*s(2)/pow(ds,5) + (mu - nu)*3*e(0)*e(2)/pow(de,5) +
+                nu*3*m(0)*m(2)/pow(dm,5);
+            J(1,1) = -(1/k - mu)*(1/pow(ds,3) - 3*s(1)*s(1)/pow(ds,5)) -
+                (mu-nu)*(1/pow(de,3) - 3*e(1)*e(1)/pow(de,5)) - nu*(1/pow(dm,3) - 3*m(1)*m(1)/pow(dm,5));
+            J(1,2) = (1/k - mu)*3*s(1)*s(2)/pow(ds,5) + (mu - nu)*3*e(1)*e(2)/pow(de,5) +
+                nu*3*m(1)*m(2)/pow(dm,5);
+            J(2,2) = -(1/k - mu)*(1/pow(ds,3) - 3*s(2)*s(2)/pow(ds,5)) -
+                (mu-nu)*(1/pow(de,3) - 3*e(2)*e(2)/pow(de,5)) - nu*(1/pow(dm,3) - 3*m(2)*m(2)/pow(dm,5));
+            J(1,0) = J(0,1);
+            J(2,0) = J(0,2);
+            J(2,1) = J(1,2);
+
+            // Solve linear system of equations using LU Decomposition
+            accel *= -1;
+            Eigen::FullPivLU<Matrix3Rd> lu(J);
+            Eigen::Vector3d posDiff = lu.solve(accel);
+            spPos += posDiff;
+        }
+        count++;
+    }
+    
+    if(err <= okErr)
+        return spPos;
+    else
+        throw tpat_diverge("tpat_calculations::bcr4bpr_getSPLoc: Could not converge on SP location");
+}//=====================================================
+
+/**
  *  @brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset
  *
  *  @param crNodes a CR3BP Sun-Earth nodeset

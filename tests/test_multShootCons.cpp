@@ -395,7 +395,7 @@ void testBCR4BPCons(){
 
 	// MIN_DIST
 	printColor(BOLDBLACK, "MIN_DIST Constraint\n");
-	matchDistConData[1] = 0.3;
+	matchDistConData[1] = 1.1;
 	matchDistCon.setData(matchDistConData, 2);
 	matchDistCon.setType(tpat_constraint::MIN_DIST);
 	halfLyapNodeset.clearConstraints();
@@ -404,7 +404,6 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		correctedSet.saveToMat("CorrectedSet.mat");
 		finalState = correctedSet.getState(matchDistCon.getNode());
 		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
@@ -417,8 +416,8 @@ void testBCR4BPCons(){
 
 	// MAX_DIST
 	printColor(BOLDBLACK, "MAX_DIST Constraint\n");
-	// matchDistConData[1] = 1.1;
-	matchDistConData[1] = 2;
+	matchDistConData[1] = 0.9;
+	// matchDistConData[1] = 2;
 	matchDistCon.setData(matchDistConData, 2);
 	matchDistCon.setType(tpat_constraint::MAX_DIST);
 	halfLyapNodeset.clearConstraints();
@@ -427,7 +426,6 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		correctedSet.saveToMat("CorrectedSet.mat");
 		finalState = correctedSet.getState(matchDistCon.getNode());
 		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
@@ -436,7 +434,6 @@ void testBCR4BPCons(){
 		std::cout << "MAX_DIST Constraint: " << FAIL << std::endl;
 	}
 
-	// waitForUser();
 
 	// MAX_DELTA_V
 	printColor(BOLDBLACK, "MAX_DELTA_V Constraint\n");
@@ -446,7 +443,7 @@ void testBCR4BPCons(){
 	halfLyapNodeset.setState(6, state);	// Perturb the velocity of this state to create a discontinuity
 	std::vector<int> dvNodes {6};
 	halfLyapNodeset.setVelConNodes_allBut(dvNodes);	// Allow the perturbed node to have a delta-v
-	double maxDVConData = 0.01*0.01;
+	double maxDVConData = 0.03*0.03;
 	tpat_constraint dVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
@@ -475,7 +472,6 @@ void testBCR4BPCons(){
 	try{
 		iterationData itData = corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		correctedSet.saveToMat("CorrectedSet.mat");
 		for(size_t i = 0; i < itData.deltaVs.size(); i+=3){
 			totalDV += pow(itData.deltaVs[i], 2) + pow(itData.deltaVs[i+1], 2) +
 				pow(itData.deltaVs[i+2], 2);
@@ -523,13 +519,29 @@ void testBCR4BPCons(){
 	}catch(tpat_diverge &e){
 		std::cout << "APSE Constraint: " << FAIL << std::endl;
 	}
+
+	// Saddle Point, Exact
+	printColor(BOLDBLACK, "SP Constraint\n");
+	double spData = 0;
+	tpat_constraint spCon(tpat_constraint::SP, 5, &spData, 1);
+	halfLyapNodeset.clearConstraints();
+	halfLyapNodeset.addConstraint(spCon);
+	finiteDiff(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(spCon.getNode());
+		finalState.delete(finalState.begin()+3, finalState.end());
+	}catch(tpat_diverge &e){
+		std::cout << "SP Constraint: " << FAIL << std::endl;
+	}
 }
 
 /**
  *  @brief Test all constraint types available to ensure they converge correctly
  */
 int main(void){
-	testCR3BPCons();
+	// testCR3BPCons();
 	testBCR4BPCons();
 
 	return EXIT_SUCCESS;

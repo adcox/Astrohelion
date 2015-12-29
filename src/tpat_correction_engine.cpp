@@ -496,8 +496,13 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 		// Compute Delta-Vs between node segments
 		for(int n = 0; n < it.numNodes - 1; n++){
 			std::vector<double> lastState = it.allSegs[n].getState(-1);
+			// velCon has false for a velocity state if there is a discontinuity between v_n,f and v_n+1
+			std::vector<bool> velCon = it.nodeset->getNode(n+1).getVelCon();
 			for(int s = 3; s < 6; s++){
-				it.deltaVs[n*3+s-3] = lastState[s] - it.X[6*(n+1)+s];
+				// Compute difference in velocity; if velCon[s-3] is true, then velocity
+				// should be continuous and any difference is numerical error, so set to
+				// zero by multiplying by not-true
+				it.deltaVs[n*3+s-3] = !velCon[s-3]*(lastState[s] - it.X[6*(n+1)+s]);
 			}
 		}
 

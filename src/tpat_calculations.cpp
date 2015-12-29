@@ -294,7 +294,7 @@ int cr3bp_ltvp_simple_EOMs(double t, const double s[], double sdot[], void *para
 /**
  *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
- *   @param t time at integration step (unused)
+ *   @param t epoch at integration step
  *   @param s the 48-d state vector
  *   @param sdot the 48-d state derivative vector
  *   @param params points to additional integration parameters wrapped in an 
@@ -313,11 +313,13 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     double r_data[3] = {0};
     std::copy(s, s+3, r_data);
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
+    // Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(s, 3, 1);
 
     // Put velocity states into a 3-element column vector
     double v_data[3] = {0};
     std::copy(s+3, s+6, v_data);
     Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
+    // Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(s+3, 3, 1);
 
     // Create relative position vectors between s/c and primaries
     Eigen::Vector3d r_p1, r_p2, r_p3;
@@ -348,24 +350,24 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
             nu*r_p3/pow(d3, 3);
 
     // Compute psuedo-potential
-    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-                3*pow(r_p3(0),2)/pow(d3,5));
+    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(0)*r_p1(0)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2(0)*r_p2(0)/pow(d2,5)) - nu*(1/pow(d3,3) -
+                3*r_p3(0)*r_p3(0)/pow(d3,5));
     double dxdy = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) +
             (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
             nu*3*r_p3(0)*r_p3(1)/pow(d3,5);
     double dxdz = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
             (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
             nu*3*r_p3(0)*r_p3(2)/pow(d3,5);
-    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*pow(r_p3(1),2)/pow(d3,5));
+    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(1)*r_p1(1)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2(1)*r_p2(1)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*r_p3(1)*r_p3(1)/pow(d3,5));
     double dydz = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
             (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
             nu*3*r_p3(1)*r_p3(2)/pow(d3,5);
-    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*pow(r_p3(2),2)/pow(d3,5));
+    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*r_p1(2)*r_p1(2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2(2)*r_p2(2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*r_p3(2)*r_p3(2)/pow(d3,5));
 
     // Create A matrix for STM derivative
     double aData[] = {  0, 0, 0, 1, 0, 0,
@@ -448,7 +450,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
 /**
  *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
- *   @param t time at integration step (unused)
+ *   @param t epoch at integration step
  *   @param s the 6-d state vector
  *   @param sdot the 6-d state derivative vector
  *   @param params points to additional integration parameters wrapped in an 

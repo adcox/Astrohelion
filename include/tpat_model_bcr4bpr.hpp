@@ -50,6 +50,7 @@ public:
 	void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
 	void multShoot_createContCons(iterationData*, tpat_nodeset*);
 	void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
+	double multShoot_getSlackVarVal(iterationData*, tpat_constraint);
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
 	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
 
@@ -62,6 +63,7 @@ protected:
 	double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint);
 	void multShoot_targetSP(iterationData*, tpat_constraint, int);
 	void multShoot_targetSP_mag(iterationData*, tpat_constraint, int);
+	double multShoot_targetSPMag_compSlackVar(iterationData*, tpat_constraint);
 };
 
 #endif

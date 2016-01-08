@@ -43,13 +43,13 @@ void test_bcr4bpr_sim(){
 	tpat_sys_data_bcr4bpr bcSys("sun", "earth", "moon");
 	tpat_simulation_engine bcEngine(&bcSys);
 
-	double haloCross177_IC[] = {100.0359099212, 	0, 					285.85225655914e-05, 
+	double haloCross177_IC[] = {0.0359099212, 		0, 					285.85225655914e-05, 
 								0.0405130514527453, 0.114452371350509, 	0.0310985198400586};
 	double t0 = 2.57;
 	
-	bcEngine.setVarStepSize(NO_MSG);
+	bcEngine.setVarStepSize(false);
 	bcEngine.setNumSteps(500);
-	bcEngine.setVerbose(true);
+	bcEngine.setVerbose(ALL_MSG);
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
 	tpat_traj_bcr4bp bcTraj = bcEngine.getBCR4BPR_Traj();
@@ -73,7 +73,7 @@ void test_cr3bp_events(){
 
 void test_bcr4bpr_events(){
 	tpat_sys_data_bcr4bpr sys("sun", "earth", "moon");
-	double ic[] = {100.0359099212, 	0, 					285.85225655914e-05, 
+	double ic[] = {0.0359099212, 		0, 	285.85225655914e-05, 
 					0.0405130514527453, 0, 	0.0310985198400586};
 	double t0 = 2.57;
 

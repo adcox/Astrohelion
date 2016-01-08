@@ -37,7 +37,6 @@
 #include <algorithm>
 #include <cmath>
 #include <Eigen/Dense>
-#include <gsl/gsl_linalg.h>
 #include <vector>
 
 //-----------------------------------------------------

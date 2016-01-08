@@ -53,15 +53,20 @@ void finiteDiff(tpat_nodeset *nodeset){
 	it = corrector.multShoot(nodeset);
 	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
 	MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
-
-	double pertSize = 1e-8;
 	MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
+
+	double pertSize = 1e-7;
 	for(int i = 0; i < it.totalFree; i++){
+		// Perterb one variable
 		std::vector<double> pertX = it.X0;
 		pertX[i] += pertSize;
 		it.X = pertX;
+
+		// Run corrector for one iteration to get new FX values
 		iterationData pertIt = corrector.multShoot(it);
 		Eigen::VectorXd newFX = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+		
+		// Compute new column of DF by dividing difference in FX vectors by the size of the perturbation
 		Eigen::VectorXd col = (newFX - FX)/std::abs(pertSize);
 		DFest.block(0, i, it.totalCons, 1) = col;
 	}
@@ -76,10 +81,12 @@ void finiteDiff(tpat_nodeset *nodeset){
 	// Divide each element by the magnitude of the DF element to get a relative difference magnitude
 	for(int r = 0; r < diff.rows(); r++){
 		for(int c = 0; c < diff.cols(); c++){
-			if(DF_abs(r,c) != 0)	// Don't divide by zero, obviously
+			// Don't divide by zero, obviously, but also don't divide zero by another small number
+			if(DF_abs(r,c) != 0 && DFest(r,c) != 0)
 				diff(r,c) = diff(r,c)/DF_abs(r,c);
 		}
 	}
+	toCSV(diff, "Diff.csv");
 
 	Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
 	Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
@@ -97,7 +104,7 @@ void finiteDiff(tpat_nodeset *nodeset){
 		for(long r = 0; r < rowMax.size(); r++){
 			if(r == 0 && it.totalCons > 0){
 				printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
-			}else if(conCount < it.totalCons && r >= it.conRows[conCount+1]){
+			}else if(conCount < (int)(it.allCons.size()) && r >= it.conRows[conCount+1]){
 				conCount++;
 				printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
 			}
@@ -328,8 +335,11 @@ void testCR3BPCons(){
 
 void testBCR4BPCons(){
 	tpat_sys_data_bcr4bpr sys("sun", "earth", "moon");
-	double ic[] = {99.18886503808, 0.00267453509779252, 6.82940156780485e-05, -0.000123170516283809, -0.0112246703481597, -2.38334057821979e-06};	// SE L1
-	double T = 205.1445;	// SE L1 Period
+	// double ic[] = {99.18886503808, 0.00267453509779252, 6.82940156780485e-05, -0.000123170516283809, -0.0112246703481597, -2.38334057821979e-06};	// SE L1
+	// double ic[] = {0.9918886503808 - (1 - sys.getMu()), 0.00267453509779252, 6.82940156780485e-05, -0.000123170516283809, -0.0112246703481597, -2.38334057821979e-06};	// SE L1
+	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
+	// double T = 205.1445;	// SE L1 Period
+	double T = 268;
 	tpat_nodeset_bcr4bp halfLyapNodeset(ic, &sys, 0, T, 8);	// Create a nodeset
 	std::vector<double> initState, finalState;
 	tpat_nodeset_bcr4bp correctedSet(&sys);
@@ -339,7 +349,7 @@ void testBCR4BPCons(){
 
 	// STATE
 	printColor(BOLDBLACK, "STATE Constraint\n");
-	double stateConData[] = {98.98, 0.45, NAN, NAN, NAN, NAN};
+	double stateConData[] = {-0.77, 0.5, NAN, NAN, NAN, NAN};
 	tpat_constraint stateCon(tpat_constraint::STATE, 7, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
 	finiteDiff(&halfLyapNodeset);
@@ -358,6 +368,7 @@ void testBCR4BPCons(){
 	tpat_constraint matchAllCon(tpat_constraint::MATCH_ALL, 7, &matchAllConData, 1);
 	halfLyapNodeset.clearConstraints();
 	halfLyapNodeset.addConstraint(matchAllCon);
+	halfLyapNodeset.print();
 	finiteDiff(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
@@ -368,7 +379,6 @@ void testBCR4BPCons(){
 	}catch(tpat_diverge &e){
 		std::cout << "MATCH_ALL Constraint: " << FAIL << std::endl;
 	}
-
 
 	// MATCH_CUST
 	printColor(BOLDBLACK, "MATCH_CUST Constraint\n");
@@ -426,8 +436,6 @@ void testBCR4BPCons(){
 		std::cout << "MIN_DIST Constraint: " << FAIL << std::endl;
 	}
 
-	// waitForUser();
-
 	// MAX_DIST
 	printColor(BOLDBLACK, "MAX_DIST Constraint\n");
 	matchDistConData[1] = 0.9;
@@ -448,12 +456,12 @@ void testBCR4BPCons(){
 		std::cout << "MAX_DIST Constraint: " << FAIL << std::endl;
 	}
 
-
 	// MAX_DELTA_V
 	printColor(BOLDBLACK, "MAX_DELTA_V Constraint\n");
 	std::vector<double> state = halfLyapNodeset.getState(6);
 	state[3] += 0.01;
 	state[4] += 0.1;
+	state[5] += 0.001;
 	halfLyapNodeset.setState(6, state);	// Perturb the velocity of this state to create a discontinuity
 	std::vector<int> dvNodes {6};
 	halfLyapNodeset.setVelConNodes_allBut(dvNodes);	// Allow the perturbed node to have a delta-v
@@ -536,7 +544,7 @@ void testBCR4BPCons(){
 
 	// Saddle Point, Exact
 	printColor(BOLDBLACK, "SP Constraint\n");
-	double IC[] = {98.529563503083, 1.18065951206182, 0.00114414803935654, 0.270235338496738, -0.222413502966165, 1.71361901677108e-05};
+	double IC[] = {-1.470436496917, 1.18065951206182, 0.00114414803935654, 0.270235338496738, -0.222413502966165, 1.71361901677108e-05};
 	double t0 = 51.23235;
 	double tof = 5;
 	tpat_nodeset_bcr4bp nodes0(IC, &sys, t0, tof, 2);
@@ -576,7 +584,7 @@ void testBCR4BPCons(){
 		bcr4bpr_simple_EOMs(correctedSet.getEpoch(spCon.getNode()), &(finalState[0]), stateDot, &sys);
 
 		// Adjust derivative from EOMs to remove terms from rotating frame
-		stateDot[3] += -2*sys.getK()*finalState[4] - sys.getK()*sys.getK()*finalState[0];
+		stateDot[3] += -2*sys.getK()*finalState[4] - sys.getK()*sys.getK()*finalState[0] - sys.getK()*sys.getK()*(1/sys.getK() - sys.getMu());
 		stateDot[4] += 2*sys.getK()*finalState[3] - sys.getK()*sys.getK()*finalState[1];
 		double accel = sqrt(stateDot[3]*stateDot[3] + stateDot[4]*stateDot[4] + stateDot[5]*stateDot[5]);
 

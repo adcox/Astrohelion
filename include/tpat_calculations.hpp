@@ -42,6 +42,7 @@ class tpat_nodeset_bcr4bp;
 class tpat_sys_data_bcr4bpr;
 class tpat_traj;
 class tpat_traj_bcr4bp;
+class tpat_nodeset;
 class tpat_nodeset_cr3bp;
 class tpat_sys_data_cr3bp;
 class tpat_traj_cr3bp;
@@ -101,6 +102,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, dou
 MatrixXRd getMirrorMat(mirror_t);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 double getStabilityIndex(std::vector<cdouble>);
+void finiteDiff_checkMultShoot(tpat_nodeset*);
 
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);

@@ -369,14 +369,14 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(iterationData* it, tpat_cons
     tpat_model::multShoot_targetPosVelCons(it, con, row0);
 
     // Add epoch dependencies for this model
-    int n = con.getNode();
-    std::vector<double> conData = con.getData();
-    std::vector<double> last_dqdT = it->allSegs.at(n-1).getExtraParam(-1, 1);
+    if(it->varTime){
+        int n = con.getNode();
+        std::vector<double> conData = con.getData();
+        std::vector<double> last_dqdT = it->allSegs.at(n-1).getExtraParam(-1, 1);
 
-    // Loop through conData
-    for(size_t s = 0; s < conData.size(); s++){
-        if(!isnan(conData[s])){
-            if(it->varTime){
+        // Loop through conData
+        for(size_t s = 0; s < conData.size(); s++){
+            if(!isnan(conData[s])){
                 // Epoch dependencies
                 it->DF[it->totalFree*(row0+s) + 7*it->numNodes-1+n-1] = last_dqdT[s];
             }
@@ -642,7 +642,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint c
     // Evaluate three constraint function values 
     Eigen::Vector3d conEval;
     conEval.noalias() = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
-
+    
     // Parials w.r.t. node position r
     double dFdq_data[9] = {0};
     dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -

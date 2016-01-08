@@ -108,11 +108,15 @@ void checkFamilyContLS(){
 void checkSPPos(){
 	tpat_sys_data_bcr4bpr sys("Sun", "Earth", "Moon");
 	double epoch = 100;
-	Eigen::Vector3d trueSPPos(99.8234686455801, 0.000601308121756233, 0.000183265107710598);
+	Eigen::Vector3d trueSPPos(-0.176227312079519, 0.000601308121756233, 0.000183265107710598);
 	try{
 		Eigen::Vector3d calcSPPos = bcr4bpr_getSPLoc(&sys, epoch);
 		Eigen::Vector3d diff = trueSPPos - calcSPPos;
 		cout << "Saddle Point Position Calc Test: " << (diff.norm() < 1e-10 ? PASS : FAIL) << endl;
+		if(diff.norm() >= 1e-10){
+			printf("  True Position      : [%.15f, %f, %f]\n", trueSPPos(0), trueSPPos(1), trueSPPos(2));
+			printf("  Calculated Position: [%.15f, %f, %f]\n", calcSPPos(0), calcSPPos(1), calcSPPos(2));
+		}
 	}catch(tpat_diverge &e){
 		cout << "Saddle Point Position Calc test: " << FAIL << " (Diverged)" << endl;
 	}

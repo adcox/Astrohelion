@@ -14,7 +14,6 @@
 
 #include "cspice/SpiceUsr.h"
 #include <Eigen/Dense>
-#include "gsl/gsl_linalg.h"
 
 #include <cstdlib>
 #include <iostream>

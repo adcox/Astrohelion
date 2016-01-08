@@ -110,9 +110,6 @@ simEngineTest: $(OBJECTS)
 sortEigTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sortEigs.cpp -o $(BIN)/$@
 
-spTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_SPTargetting.cpp -o $(BIN)/$@
-
 sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
 
@@ -162,7 +159,6 @@ list:
 	@- echo "  nodesetTest - Test the nodeset object and functions"
 	@- echo "  simEngineTest - Test the simulation engine"
 	@- echo "  sortEigTest - Test the eigenvalue sorting algorithm"
-	@- echo "  spTest - Test the saddle point targeting capabilities"
 	@- echo "  sysSwitchTest - Test functions that convert trajectories between systems and models"
 	@- echo "  utilityTest - Test the utility function library"
 	@- echo "  temp - test some temporary file"

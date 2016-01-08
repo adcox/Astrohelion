@@ -4,9 +4,6 @@
  *	@brief Provides easy include for all headers in the TPAT library
  */
 
-#ifndef H_TPAT_ALL_INCLUDE
-#define H_TPAT_ALL_INCLUDE
-
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
@@ -32,5 +29,3 @@
 #include "tpat_traj_cr3bp_ltvp.hpp"
 #include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
-
-#endif

@@ -51,7 +51,6 @@
 #include <Eigen/Dense>
 #include <Eigen/LU>
 #include <Eigen/SVD>
-#include "gsl/gsl_linalg.h"
 
 #include <algorithm>
 #include <cmath>
@@ -313,13 +312,11 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     double r_data[3] = {0};
     std::copy(s, s+3, r_data);
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
-    // Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(s, 3, 1);
 
     // Put velocity states into a 3-element column vector
     double v_data[3] = {0};
     std::copy(s+3, s+6, v_data);
     Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
-    // Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(s+3, 3, 1);
 
     // Create relative position vectors between s/c and primaries
     Eigen::Vector3d r_p1, r_p2, r_p3;
@@ -347,7 +344,8 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // Compute acceleration using matrix math
     Eigen::Vector3d accel;
     accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
-            nu*r_p3/pow(d3, 3);
+        nu*r_p3/pow(d3, 3);
+    accel[0] += k*k*(1/k - mu);     // Add extra term for new base point
 
     // Compute psuedo-potential
     double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(0)*r_p1(0)/pow(d1,5)) -
@@ -390,23 +388,23 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // for P1 because its velocity is zero in the rotating frame
     double dfdr2[18] = {0};   double dfdr3[18] = {0};
 
-    dfdr2[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
+    dfdr2[9] = -1/pow(d2,3) + 3*r_p2(0)*r_p2(0)/pow(d2,5);        //dxdx2
     dfdr2[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
     dfdr2[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
-    dfdr2[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
+    dfdr2[13] = -1/pow(d2,3) + 3*r_p2(1)*r_p2(1)/pow(d2,5);       //dydy2
     dfdr2[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
-    dfdr2[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
+    dfdr2[17] = -1/pow(d2,3) + 3*r_p2(2)*r_p2(2)/pow(d2,5);       //dzdz2
 
     dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
     dfdr2[15] = dfdr2[11];
     dfdr2[16] = dfdr2[14];
 
-    dfdr3[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
+    dfdr3[9] = -1/pow(d3,3) + 3*r_p3(0)*r_p3(0)/pow(d3,5);        //dxdx3
     dfdr3[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
     dfdr3[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
-    dfdr3[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
+    dfdr3[13] = -1/pow(d3,3) + 3*r_p3(1)*r_p3(1)/pow(d3,5);       //dydy3
     dfdr3[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
-    dfdr3[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
+    dfdr3[17] = -1/pow(d3,3) + 3*r_p3(2)*r_p3(2)/pow(d3,5);       //dzdz3
 
     dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
     dfdr3[15] = dfdr3[11];
@@ -443,7 +441,6 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     std::copy(phiDotPtr, phiDotPtr+36, sdot+6);
     std::copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
 
-    // printf("sdot: [%.4f %.4f %.4f %.4f %.4f %.4f]\n", sdot[0], sdot[1], sdot[2], sdot[3], sdot[4], sdot[5]);
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
 
@@ -501,7 +498,8 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     // Compute acceleration using matrix math
     Eigen::Vector3d accel;
     accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
-            nu*r_p3/pow(d3, 3);
+        nu*r_p3/pow(d3, 3);
+    accel[0] += k*k*(1/k - mu);     // Add extra term for new base point
 
     // Save derivatives to output vector
     double *accelPtr = accel.data();
@@ -1068,6 +1066,83 @@ double getStabilityIndex(std::vector<cdouble> eigs){
         }
     }
     return NAN;
+}//====================================================
+
+/**
+ *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  by computing each partial derivative numerically via forward differencing.
+ * 
+ *  @param nodeset A nodeset with some constraints
+ */
+void finiteDiff_checkMultShoot(tpat_nodeset *nodeset){
+    printf("Finite Diff: Checking DF matrix... ");
+    // Create multiple shooter that will only do 1 iteration
+    tpat_correction_engine corrector;
+    corrector.setMaxIts(1);
+    corrector.setVerbose(NO_MSG);
+    corrector.setIgnoreDiverge(true);
+
+    // Run multiple shooter to get X, FX, and DF
+    iterationData it;
+    it = corrector.multShoot(nodeset);
+    Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
+    MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
+    MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
+
+    double pertSize = 1e-8;
+    for(int i = 0; i < it.totalFree; i++){
+        std::vector<double> pertX = it.X0;
+        pertX[i] += pertSize;
+        it.X = pertX;
+        iterationData pertIt = corrector.multShoot(it);
+        Eigen::VectorXd newFX = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+        Eigen::VectorXd col = (newFX - FX)/std::abs(pertSize);
+        DFest.block(0, i, it.totalCons, 1) = col;
+    }
+
+    MatrixXRd diff = DF - DFest;
+    MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
+
+    // toCSV(DF, "DF.csv");
+    // toCSV(DFest, "DFest.csv");
+    diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
+
+    // Divide each element by the magnitude of the DF element to get a relative difference magnitude
+    for(int r = 0; r < diff.rows(); r++){
+        for(int c = 0; c < diff.cols(); c++){
+            if(DF_abs(r,c) != 0)    // Don't divide by zero, obviously
+                diff(r,c) = diff(r,c)/DF_abs(r,c);
+        }
+    }
+    // toCSV(diff, "Diff.csv");
+
+    Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
+    Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
+
+    double rowMaxMax = rowMax.maxCoeff();
+    double colMaxMax = colMax.maxCoeff();
+    int errScalar = 10000;
+
+    if(rowMaxMax < errScalar*pertSize && colMaxMax < errScalar*colMaxMax){
+        printColor(BOLDGREEN, "No significant errors!\n");
+    }else{
+        printColor(BOLDRED, "Significant errors!\n");
+        printf("Maximum relative difference between computed DF and estimated DF\n");
+        int conCount = 0;
+        for(long r = 0; r < rowMax.size(); r++){
+            if(r == 0 && it.totalCons > 0){
+                printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
+            }else if(conCount < (int)(it.allCons.size()) && r >= it.conRows[conCount+1]){
+                conCount++;
+                printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
+            }
+            printColor(rowMax[r] > errScalar*pertSize ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+        }
+        for(long c = 0; c < colMax.size(); c++){
+            printColor(colMax[c] > errScalar*pertSize ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+        }
+    }
 }//====================================================
 
 //-----------------------------------------------------
@@ -1790,26 +1865,29 @@ void bcr4bpr_getPrimaryPos(double t, tpat_sys_data_bcr4bpr *sysData, double *pri
     double theta0 = sysData->getTheta0();
     double phi0 = sysData->getPhi0();
     double gamma = sysData->getGamma();
+    double ratio = sysData->getCharLRatio();
 
     // Compute the angles for the system at the specified time
     double theta = theta0 + k*t;
-    double phi = phi0 + sqrt(mu/pow(sysData->getCharLRatio(), 3)) * t;
+    double phi = phi0 + sqrt(mu/pow(ratio, 3)) * t;
 
     // P1 position
-    primPos[0] = -mu;
+    // primPos[0] = -mu;    // original derivation
+    primPos[0] = -1/k;        // new derivation
     primPos[1] = 0;
     primPos[2] = 0;
 
     // P2 position
-    primPos[3] = 1/k - mu - nu/mu*sysData->getCharLRatio() * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[4] = -nu/mu*sysData->getCharLRatio() * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[5] = nu/mu*sysData->getCharLRatio() * cos(phi) * sin(gamma);
+    // primPos[3] = 1/k - mu - nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[3] = -nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[4] = -nu/mu*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+    primPos[5] = nu/mu*ratio * cos(phi) * sin(gamma);
 
     // P3 position
-    primPos[6] = 1/k - mu + (1 - nu/mu)*sysData->getCharLRatio() * 
-        (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[7] = (1 - nu/mu)*sysData->getCharLRatio() * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[8] = (nu/mu - 1)*sysData->getCharLRatio() * cos(phi)*sin(gamma);
+    // primPos[6] = 1/k - mu + (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[6] = (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[7] = (1 - nu/mu)*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+    primPos[8] = (nu/mu - 1)*ratio * cos(phi)*sin(gamma);
 }//================================================
 
 /**
@@ -1828,9 +1906,10 @@ void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr *sysData, double *pri
     double theta0 = sysData->getTheta0();
     double phi0 = sysData->getPhi0();
     double gamma = sysData->getGamma();
+    double ratio = sysData->getCharLRatio();
 
     double thetaDot = k;
-    double phiDot = sqrt(mu/pow(sysData->getCharLRatio(), 3));
+    double phiDot = sqrt(mu/pow(ratio, 3));
 
     double theta = theta0 + thetaDot*t;
     double phi = phi0 + phiDot * t;    
@@ -1846,13 +1925,13 @@ void bcr4bpr_getPrimaryVel(double t, tpat_sys_data_bcr4bpr *sysData, double *pri
     v_P2P3Line[2] = phiDot*sin(phi)*sin(gamma);
 
     // Multiply by radii of P2 and P3 to get their velocities
-    primVel[3] = v_P2P3Line[0] * (-nu/mu)*sysData->getCharLRatio();
-    primVel[4] = v_P2P3Line[1] * (-nu/mu)*sysData->getCharLRatio();
-    primVel[5] = v_P2P3Line[2] * (-nu/mu)*sysData->getCharLRatio();
+    primVel[3] = v_P2P3Line[0] * (-nu/mu)*ratio;
+    primVel[4] = v_P2P3Line[1] * (-nu/mu)*ratio;
+    primVel[5] = v_P2P3Line[2] * (-nu/mu)*ratio;
 
-    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*sysData->getCharLRatio();
-    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*sysData->getCharLRatio();
-    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*sysData->getCharLRatio();
+    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*ratio;
+    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*ratio;
+    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*ratio;
 }//===================================================================
 
 /**
@@ -1937,8 +2016,8 @@ Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr *bcSys, double t0){
     double c = 2*pow(subSys.getMu(), 3) - 3*subSys.getMu()*subSys.getMu() + 3*subSys.getMu() - 1;
     
     // x-coordinate in bcr4bpr
-    Eigen::Vector3d spPos((-b + sqrt(b*b - 4*a*c))/(2*a*bcSys->getK()), 0, 0);
-
+    Eigen::Vector3d spPos((-b + sqrt(b*b - 4*a*c))/(2*a*bcSys->getK()) - (1/bcSys->getK() - bcSys->getMu()), 0, 0);
+    
     // Get primary positions
     double primPos[9];
     bcr4bpr_getPrimaryPos(t0, bcSys, primPos);
@@ -2031,7 +2110,9 @@ tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, tpat_sys_data_bcr
         std::vector<double> bcNodeState;
         std::vector<double> crNode = crNodes.getNode(n).getPosVelState();
         for(int r = 0; r < ((int)crNode.size()); r++){
-            if(r < 3)   // Convert position
+            if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
+                bcNodeState.push_back(crNode[r]*charL2/charL3 - (1.0/bcSys->getK() - bcSys->getMu()));
+            else if(r < 3)   // Convert position
                 bcNodeState.push_back(crNode[r]*charL2/charL3);
             else  // Convert velocity
                 bcNodeState.push_back(crNode[r]*(charL2/charL3)*(charT3/charT2));

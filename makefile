@@ -24,8 +24,8 @@ LIB := lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-# CFLAGS += -W -Wall -Wextra -pedantic -O3
-CFLAGS += -W -Wall -Wextra -pedantic -g
+CFLAGS += -W -Wall -Wextra -pedantic -O3
+# CFLAGS += -W -Wall -Wextra -pedantic -g
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -95,7 +95,7 @@ ifeq ($(UNAME_S), Linux)
 else ifeq ($(UNAME_S), Darwin)
 	@echo Installing OS X libraries and headers
 	@if [ ! -d $(SYS_INC_DIR) ]; then mkdir $(SYS_INC_DIR); fi
-	cp $(INC)/*.hpp $(SYS_INC_DIR)
+	cp -r $(INC)/* $(SYS_INC_DIR)
 	cp $(LIB)/libtpat.a /usr/local/lib/
 	cp $(LIB)/libtpat.dylib /usr/local/lib/
 endif

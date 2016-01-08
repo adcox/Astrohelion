@@ -84,6 +84,7 @@ void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, st
 	// Check to make sure P1 is P2's parent
 	if(p2Data.getParent().compare(p1Data.getName()) == 0 && p2Data.getParent().compare(p1Data.getName()) == 0){
 		double k = 1.0/100.0;	// Scaling factor to make non-dimensional numbers nicer
+		// double k = 1.0;
 		charL = k * p2Data.getOrbitRad();
 		charM = k * (p1Data.getMass() + p2Data.getMass() + p3Data.getMass());
 		double charLRatio = p3Data.getOrbitRad()/charL;

@@ -24,8 +24,8 @@ LIB := ../lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-#CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
-CFLAGS += -W -Wall -Wextra -Weffc++ -pedantic -O3
+CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
+# CFLAGS += -W -Wall -Wextra -Weffc++ -pedantic -O3
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -101,7 +101,10 @@ generateLissTom: $(OBJECTS)
 
 prop: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) PropFromScienceOrbits.cpp -o $(BIN)/$@
-	
+
+lpfSample: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) SampleLPFTraj.cpp -o $(BIN)/$@
+
 manPeri: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) EML2Halo_UM_Man_Periapses.cpp -o $(BIN)/$@
 	

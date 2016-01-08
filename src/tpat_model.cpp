@@ -164,8 +164,12 @@ void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set){
     for(int n = 1; n < set->getNumNodes(); n++){
         // Get a vector specifying which velocity states are continuous from the nodeset
         std::vector<bool> velCon = set->getNode(n).getVelCon();
+        // If not continuous, put NAN into the constraint data; else unity
+        double vxCon = velCon[0] ? 1 : NAN;
+        double vyCon = velCon[1] ? 1 : NAN;
+        double vzCon = velCon[2] ? 1 : NAN;
         // Force all positions to be continuous, use specified velocity continuities
-        std::vector<double> contStates {1,1,1,(double)velCon[0],(double)velCon[1],(double)velCon[2]};
+        std::vector<double> contStates {1,1,1, vxCon, vyCon, vzCon};
         // Create a constraint
         tpat_constraint continuity(tpat_constraint::CONT_PV, n, contStates);
         // Save constraint to total constraint vector
@@ -315,12 +319,11 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 	
 	// Loop through conData
 	for(size_t s = 0; s < conData.size(); s++){
-		if(conData[s] == 1){
+		if(!isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			it->FX[row0+s] = lastState[s] - it->X[6*n+s];
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
-			
 			for(size_t x = 0; x < 6; x++){
 				// put STM elements into DF matrix
 				it->DF[it->totalFree*(row0+s) + 6*(n-1)+x] = stm(s,x);
@@ -646,6 +649,8 @@ double tpat_model::multShoot_targetDeltaV_compSlackVar(iterationData *it, tpat_c
 	
 	// No info about delta-Vs between segments exists yet because nothing
 	// has been integrated... return a constant for now
+	(void) it;
+	(void) con;
 	return 1e-2;
 
 	// If F < 0, the constraint is satisfied, so choose a slack variable

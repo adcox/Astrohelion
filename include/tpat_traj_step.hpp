@@ -31,8 +31,8 @@ class tpat_traj_step : public tpat_arc_step{
 
 public:
 	// *structors
-	tpat_traj_step(double*, double);
-	tpat_traj_step(double*, double, double*, double*);
+	tpat_traj_step(const double*, double);
+	tpat_traj_step(const double*, double, const double*, const double*);
 	tpat_traj_step(const tpat_traj_step&);
 	tpat_traj_step(const tpat_arc_step&);
 

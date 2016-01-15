@@ -35,8 +35,13 @@
  * 		any dynamic models you wish
  *	* Define behavior for dealing with those types of constraints in the
  *		dynamic models
+ *	* Add the constraint type to the models multShoot_applyConstraint()
+ *		function so it will be called by the corrector
  *	* Add the constraint type to the corrector initializer so it knows how
  *		many rows the constraint occupies
+ *	* If the constraint uses slack variables, write a function to compute
+ *		the default value of the slack variable (if possible) in the relevant
+ *		model and update the multShoot_getSlackVarVal() function.
  *
  *	@author Andrew Cox
  *	@version August 3, 2015
@@ -103,7 +108,25 @@ class tpat_constraint{
 		 	SP_RANGE,	/*!< Constrain the node to be within a specified range of the saddle point
 		 				 *	(BCR4BPR only). Place the index of the node you want to constrain in 
 		 				 * 	the <tt>node</tt> variable; The first element of <tt>data</tt> should
-		 				 * 	hold the maximum allowable distance from the saddle point in non-dim units
+		 				 * 	hold the maximum allowable acceleration from the saddle point (zero) in non-dim units
+		 				 */
+		 	SP_DIST, 	/*!< Constrain the node to be at a specified non-dimensional distance
+		 				 *	from the saddle point (BCR4BPR only). Place the index of the node you wish
+		 				 *	to constrain in the <tt>node</tt> variable; The first element of <tt>data</tt>
+		 				 *	should contain the desired distance from the saddle point
+		 				 *	in non-dim units, and the 2-10 elements should contain coefficients
+		 				 * 	for a 2nd-order polynomial approximation of the saddle point's location
+		 				 * 	as a function of epoch time. To generate these coefficients, run the
+		 				 * 	function bcr4bpr_spLoc_polyFit and input the epoch of the node you wish 
+		 				 * 	to constrain. The function returns the coefficients of three second-order
+		 				 * 	functions in Epoch time: one for the x-position, one for y, and one for z.
+		 				 * 	The 2-10 elements of <tt>data</tt> should be in the following order:<br>
+		 				 * 	<br>2nd-order x coeff.<br>1st-order x coeff.<br>0th-order x coeff<br>
+		 				 * 	2nd-order y coeff.<br>etc.
+		 				 */
+		 	SP_MAX_DIST,/*!< Constrain the node to be at or below a specified non-dimensional
+		 				 *	distance from the saddle point. All data fields should be entered in 
+		 				 *	same way as for SP_DIST
 		 				 */
 		 	JC, 		/*!< Constrain the node to have a specific Jacobi constant (CR3BP only)
 		 				 * 	Place the index of the node you want to cosntraint in the <tt>node</tt>
@@ -154,7 +177,7 @@ class tpat_constraint{
 		tpat_constraint();
 		tpat_constraint(constraint_t);
 		tpat_constraint(constraint_t, int, std::vector<double>);
-		tpat_constraint(constraint_t, int, double*, int);
+		tpat_constraint(constraint_t, int, const double*, int);
 		tpat_constraint(const tpat_constraint&);
 		~tpat_constraint();
 		
@@ -168,7 +191,7 @@ class tpat_constraint{
 		void setType(constraint_t);
 		void setNode(int);
 		void setData(std::vector<double>);
-		void setData(double*, int);
+		void setData(const double*, int);
 
 		void print() const;
 		const char* getTypeStr() const;

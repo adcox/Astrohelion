@@ -67,14 +67,10 @@ tpat_constraint::tpat_constraint(constraint_t type, int node, std::vector<double
  *	@param data data vector
  *	@param data_len the number of elements in d_len
  */
-tpat_constraint::tpat_constraint(constraint_t type, int node, double* data, int data_len){
+tpat_constraint::tpat_constraint(constraint_t type, int node, const double* data, int data_len){
 	this->type = type;
 	this->node = node;
-	this->data.reserve(data_len);
-
-	for(int j = 0; j < data_len; j++){
-		this->data.push_back(data[j]);
-	}
+	this->data.insert(this->data.begin(), data, data + data_len);
 }//============================================
 
 /**
@@ -166,7 +162,8 @@ void tpat_constraint::setData(std::vector<double> d){ data = d; }
  *  @param dat an array of data values
  *  @param len number of elements in <tt>dat</tt>
  */
-void tpat_constraint::setData(double *dat, int len){
+void tpat_constraint::setData(const double *dat, int len){
+	data.clear();
 	data.insert(data.begin(), dat, dat+len);
 }
 
@@ -200,6 +197,8 @@ const char* tpat_constraint::getConTypeStr(tpat_constraint::constraint_t t){
 		case tpat_constraint::JC: { return "JC"; break; }
 		case tpat_constraint::SP: { return "SP"; break; }
 		case tpat_constraint::SP_RANGE: { return "SP_RANGE"; break; }
+		case tpat_constraint::SP_DIST: { return "SP_DIST"; break; }
+		case tpat_constraint::SP_MAX_DIST: { return "SP_MAX_DIST"; break; }
 		case tpat_constraint::TOF: { return "TOF"; break; }
 		case tpat_constraint::APSE: {return "APS"; break; }
 		case tpat_constraint::CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }

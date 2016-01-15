@@ -39,7 +39,7 @@
  *	@param state an array of 6 position and velocity states (non-dim)
  *	@param tof the non-dimensional time-of-flight
  */
-tpat_node::tpat_node(double *state, double tof){
+tpat_node::tpat_node(const double *state, double tof){
 	initArrays();
 	std::copy(state, state+6, posVelState);
 	extraParam[0] = tof;

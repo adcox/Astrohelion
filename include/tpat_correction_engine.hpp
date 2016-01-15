@@ -62,6 +62,17 @@ struct iterationData{
 		std::vector<tpat_constraint> allCons;	//!< A list of all constraints
 		std::vector<int> slackAssignCon;		//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows;				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
+		
+		/**
+		 * A scalar coefficient for each free variable type to scale them to the appropriate magnitude.
+		 * These scalings should make numerical processes more successful but must be reversed before
+		 * the free variables are passed into various computation functions (e.g. simulations). Thus,
+		 * every constraint computation function (stored in the models) is responsible for reversing any
+		 * scaling necessary to accurately compute constraints and partial derivatives.
+		 */
+		std::vector<double> freeVarScale;
+
+		// VectorXd freeVarShift;					//!< A scalar shift for each free variable to center them for numerical happiness
 
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
 		int count = 0;				//!< Count of number of iterations through corrections process
@@ -152,11 +163,10 @@ class tpat_correction_engine{
 		/** Whether or not the engine is ready to be cleaned and/or deconstructed */
 		bool isClean = true;
 
-		void copyEngine(const tpat_correction_engine&);
-
-		Eigen::VectorXd solveUpdateEq(iterationData*);
-
 		void cleanEngine();
+		void copyEngine(const tpat_correction_engine&);
+		void reportConMags(iterationData*);
+		Eigen::VectorXd solveUpdateEq(iterationData*);
 };
 
 #endif

@@ -382,7 +382,12 @@ void checkAndReThrowSpiceErr(const char* customMsg){
     }
 }//============================================
 
-
+/**
+ *  @brief Save a matrix as a CSV file to be read by Excel or Matlab
+ * 
+ *  @param m the matrix
+ *  @param filename Filename of the csv file (include the .csv extension!)
+ */
 void toCSV(MatrixXRd m, const char* filename){
     std::ofstream outFile(filename, std::ios::out);
     

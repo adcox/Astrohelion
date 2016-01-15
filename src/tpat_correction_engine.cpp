@@ -315,6 +315,9 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 	tpat_model *model = set->getSysData()->getModel();
 	model->multShoot_initDesignVec(&it, set);
 
+	// Set up scaling
+	model->multShoot_scaleDesignVec(&it);
+	
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
 	it.allCons.clear();
@@ -362,6 +365,13 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);
 				it.numSlack++;
+				break;
+			case tpat_constraint::SP_MAX_DIST:
+				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
+				it.slackAssignCon.push_back(c);
+				it.numSlack++;
+			case tpat_constraint::SP_DIST:
+				addToRows = 1;
 				break;
 			case tpat_constraint::MAX_DIST:
 			case tpat_constraint::MIN_DIST:
@@ -418,11 +428,11 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 		it.totalCons += addToRows;
 	}// END of loop through constraints
 
-	// Save the initial free variable vector
-	it.X0 = it.X;
-
 	// Determine the number of free/design variables based on the system type
 	it.totalFree = it.X.size();
+
+	// Save the initial free variable vector
+	it.X0 = it.X;
 
 	printVerb(verbose == ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
 	printVerb(verbose == ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
@@ -513,7 +523,7 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 		// Solve for newX and copy into working vector X
 		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
 		Eigen::VectorXd newX = solveUpdateEq(&it);
-		
+
 		it.X.clear();
 		it.X.insert(it.X.begin(), newX.data(), newX.data()+it.totalFree);
 
@@ -521,13 +531,18 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 		Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
 		double err_cons = FX.norm();
 
+		if(verbose == ALL_MSG)
+			reportConMags(&it);
+
 		// Compute error: difference between subsequent free variable vectors
-		Eigen::VectorXd diff = newX - oldX;
-		double err_it = diff.norm();
+		// Eigen::VectorXd diff = newX - oldX;
+		// double err_it = diff.norm();
 
 		// Choose the lower of the two?
-		err = err_cons < err_it ? err_cons : err_it;
-		std::string errType = err_cons < err_it ? "||F||" : "||X - X_old||";
+		// err = err_cons < err_it ? err_cons : err_it;
+		// std::string errType = err_cons < err_it ? "||F||" : "||X - X_old||";
+		err = err_cons;
+		std::string errType = "||F||";
 
 		it.count++;
 		printVerbColor((findEvent && verbose == ALL_MSG) || (!findEvent && verbose > NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
@@ -582,7 +597,7 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it->X[0]), it->totalFree, 1);
 	MatrixXRd J = Eigen::Map<MatrixXRd>(&(it->DF[0]), it->totalCons, it->totalFree);
 	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it->FX[0]), it->totalCons, 1);
-	
+
 	// change sign for matrix multiplication
 	FX *= -1;
 
@@ -611,6 +626,11 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 			MatrixXRd JT = J.transpose();
 			MatrixXRd G = J*JT;
 
+			toCSV(J, "DF_cpp.csv");
+			toCSV(FX, "FX_cpp.csv");
+			toCSV(oldX, "X_cpp.csv");
+
+			// waitForUser();
 			/* Use LU decomposition to invert the Gramm matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 			lies in the column-space of J^T, or in the orthogonal complement of
@@ -638,6 +658,19 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 
 	return oldX + X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
+
+void tpat_correction_engine::reportConMags(iterationData *it){
+	int conCount = 0;
+	for(long r = 0; r < (int)(it->FX.size()); r++){
+        if(r == 0 && it->totalCons > 0){
+            printf("Node %d %s Constraint:\n", it->allCons[conCount].getNode(), it->allCons[conCount].getTypeStr());
+        }else if(conCount < (int)(it->allCons.size()) && r >= it->conRows[conCount+1]){
+            conCount++;
+            printf("Node %d %s Constraint:\n", it->allCons[conCount].getNode(), it->allCons[conCount].getTypeStr());
+        }
+        printf("  ||row %03zu||: %.6e\n", r, std::abs(it->FX[r]));
+    }
+}//===============================================================
 
 /**
  *	@brief clean up data so that engine can be used again (or deconstructed safely)

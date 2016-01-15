@@ -85,6 +85,7 @@ void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, st
 	if(p2Data.getParent().compare(p1Data.getName()) == 0 && p2Data.getParent().compare(p1Data.getName()) == 0){
 		double k = 1.0/100.0;	// Scaling factor to make non-dimensional numbers nicer
 		// double k = 1.0;
+		
 		charL = k * p2Data.getOrbitRad();
 		charM = k * (p1Data.getMass() + p2Data.getMass() + p3Data.getMass());
 		double charLRatio = p3Data.getOrbitRad()/charL;
@@ -216,6 +217,18 @@ void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile){
 	saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;
+	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[0]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
+
+	matvar_t *nu_var = Mat_VarCreate("Nu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[1]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, nu_var, "Nu", MAT_COMPRESSION_NONE);
+
+	matvar_t *k_var = Mat_VarCreate("K", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[2]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, k_var, "K", MAT_COMPRESSION_NONE);
+
+	matvar_t *ratio_var = Mat_VarCreate("CharLRatio", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[3]), MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, ratio_var, "CharLRatio", MAT_COMPRESSION_NONE);
+
 	matvar_t *theta0_var = Mat_VarCreate("Theta0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[4]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, theta0_var, "Theta0", MAT_COMPRESSION_NONE);
 
@@ -224,6 +237,8 @@ void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile){
 
 	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[6]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, gamma_var, "Gamma", MAT_COMPRESSION_NONE);
+
+
 }//===================================================
 
 /**

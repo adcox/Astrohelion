@@ -345,7 +345,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     Eigen::Vector3d accel;
     accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
         nu*r_p3/pow(d3, 3);
-    accel[0] += k*k*(1/k - mu);     // Add extra term for new base point
+    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
 
     // Compute psuedo-potential
     double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(0)*r_p1(0)/pow(d1,5)) -
@@ -499,14 +499,13 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
     Eigen::Vector3d accel;
     accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
         nu*r_p3/pow(d3, 3);
-    accel[0] += k*k*(1/k - mu);     // Add extra term for new base point
+    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
 
     // Save derivatives to output vector
     double *accelPtr = accel.data();
 
     std::copy(s+3, s+6, sdot);
     std::copy(accelPtr, accelPtr+3, sdot+3);
-
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
 
@@ -1068,6 +1067,16 @@ double getStabilityIndex(std::vector<cdouble> eigs){
     return NAN;
 }//====================================================
 
+double getTotalDV(const iterationData *it){
+    double total = 0;
+    for(size_t n = 0; n < it->deltaVs.size()/3; n++){
+        total += sqrt(it->deltaVs[3*n + 0]*it->deltaVs[3*n + 0] +
+            it->deltaVs[3*n + 1]*it->deltaVs[3*n + 1] + 
+            it->deltaVs[3*n + 2]*it->deltaVs[3*n + 2]);
+    }
+    return total;
+}//=====================================================
+
 /**
  *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
  *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
@@ -1092,30 +1101,63 @@ void finiteDiff_checkMultShoot(tpat_nodeset *nodeset){
 
     double pertSize = 1e-8;
     for(int i = 0; i < it.totalFree; i++){
-        std::vector<double> pertX = it.X0;
-        pertX[i] += pertSize;
+        std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
+        pertX[i] += pertSize;                   // add perturbation
+        it.X = pertX;                           // Copy into iteration data
+        iterationData pertIt = corrector.multShoot(it);     // Correct perturbed state
+        Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+        // Do another process for opposite direction
+        pertX = it.X0;
+        pertX[i] -= pertSize;
         it.X = pertX;
-        iterationData pertIt = corrector.multShoot(it);
-        Eigen::VectorXd newFX = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
-        Eigen::VectorXd col = (newFX - FX)/std::abs(pertSize);
+        pertIt = corrector.multShoot(it);
+        Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+        // An iteration for twice the perturbation up
+        pertX = it.X0;
+        pertX[i] += 2*pertSize;
+        it.X = pertX;
+        pertIt = corrector.multShoot(it);
+        Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+        // An iteration for twice the perturbation down
+        pertX = it.X0;
+        pertX[i] -= 2*pertSize;
+        it.X = pertX;
+        pertIt = corrector.multShoot(it);
+        Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+
+        // Compute central difference
+        Eigen::VectorXd col = (-1*FX_2up + 8*FX_up - 8*FX_down + FX_2down)/std::abs(12*pertSize);   // Five-point stencil
+        // Eigen::VectorXd col = (FX_up - FX_down)/std::abs(2*pertSize);   // Central Difference
+        // Eigen::VectorXd col = (FX_up - FX)/std::abs(pertSize);       // Forward difference
         DFest.block(0, i, it.totalCons, 1) = col;
     }
 
     MatrixXRd diff = DF - DFest;
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
+    MatrixXRd DFest_abs = DFest.cwiseAbs();
 
-    // toCSV(DF, "DF.csv");
-    // toCSV(DFest, "DFest.csv");
+    toCSV(DF, "DF.csv");
+    toCSV(DFest, "DFest.csv");
     diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
 
     // Divide each element by the magnitude of the DF element to get a relative difference magnitude
-    for(int r = 0; r < diff.rows(); r++){
-        for(int c = 0; c < diff.cols(); c++){
-            if(DF_abs(r,c) != 0)    // Don't divide by zero, obviously
-                diff(r,c) = diff(r,c)/DF_abs(r,c);
-        }
-    }
-    // toCSV(diff, "Diff.csv");
+    // for(int r = 0; r < diff.rows(); r++){
+    //     for(int c = 0; c < diff.cols(); c++){
+            // If one of the elements is zero, let the difference just be the difference; no division
+            // if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
+            //     diff(r,c) = diff(r,c)/DF_abs(r,c);
+
+            // if(r == 50 && c == 98){
+            //     printf("DF(50, 98) = %.4e\n", DF(r,c));
+            //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
+            // }
+    //     }
+    // }
+    toCSV(diff, "Diff.csv");
 
     Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
     Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
@@ -1132,15 +1174,15 @@ void finiteDiff_checkMultShoot(tpat_nodeset *nodeset){
         int conCount = 0;
         for(long r = 0; r < rowMax.size(); r++){
             if(r == 0 && it.totalCons > 0){
-                printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
+                printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
             }else if(conCount < (int)(it.allCons.size()) && r >= it.conRows[conCount+1]){
                 conCount++;
-                printf("%s Constraint:\n", it.allCons[conCount].getTypeStr());
+                printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
             }
-            printColor(rowMax[r] > errScalar*pertSize ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+            printColor(rowMax[r] > errScalar*pertSize || isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
         }
         for(long c = 0; c < colMax.size(); c++){
-            printColor(colMax[c] > errScalar*pertSize ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+            printColor(colMax[c] > errScalar*pertSize || isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
         }
     }
 }//====================================================
@@ -2076,6 +2118,60 @@ Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr *bcSys, double t0){
     else
         throw tpat_diverge("tpat_calculations::bcr4bpr_getSPLoc: Could not converge on SP location");
 }//=====================================================
+
+/**
+ *  @brief Compute coefficients for 2nd-order polynomials in Epoch time that
+ *  describe the x, y, and z coordinates of the saddle point.
+ *  @details This function employs least squares to compute the coefficients. The
+ *  number of points used and time span searched are hard coded in the function.
+ * 
+ *  @param bcSys data about the bicircular system
+ *  @param T0 the "center" epoch; points are generated within +/- timeSpan of this
+ *  epoch
+ * 
+ *  @return a 3x3 matrix of coefficients. The first column contains the coefficients
+ *  for the x-position approximation, the second column contains the y-position 
+ *  coefficients, etc. The first row holds the second-order coefficients, 
+ *  the second row holds the first-order coefficients, and the final row holds the
+ *  0th order coefficients. To compute the saddle point's location at an epoch T,
+ *  you can solve for x, y, and z with the following equation:
+ *  
+ *      [x, y, z] = [T*T, T, 1]*[Coefficient Matrix]
+ */
+MatrixXRd bcr4bpr_spLoc_polyFit(tpat_sys_data_bcr4bpr *bcSys, double T0){
+    const int STATE_SIZE = 3;   // predicting three position states
+    double tSpan = 24*3600/bcSys->getCharT();   // Amount of time to span before and after T0
+    int numPts = 100;
+    double dT = 2*tSpan/((double)(numPts-1));
+
+    MatrixXRd indVarMat(numPts, 3); // i.e. Vandermonde matrix
+    MatrixXRd depVarMat(numPts, STATE_SIZE);
+    for(int row = 0; row < 100; row++){
+        double T = -tSpan + row*dT;     // Let T0 = 0 to center data and hopefully avoid numerical issues
+        Eigen::Vector3d spPos = bcr4bpr_getSPLoc(bcSys, T + T0);
+        indVarMat(row, 0) = T*T;
+        indVarMat(row, 1) = T;
+        indVarMat(row, 2) = 1;
+        depVarMat.block(row, 0, 1, 3) = spPos.transpose();
+        // row++;
+    }
+
+    // Create Gramm matrix
+    MatrixXRd G(indVarMat.cols(), indVarMat.cols());
+    G.noalias() = indVarMat.transpose()*indVarMat;
+
+    // Use 2nd-order polynomial fit; solve GC = A.transpose()*B for C
+    MatrixXRd C = G.fullPivLu().solve(indVarMat.transpose()*depVarMat);
+    
+    // C holds the coefficients for the centered data set, need to adjust 
+    // these coefficients for non-centered data (see notebook notes from 2/15)
+    Eigen::RowVector3d linTerms = C.row(1) - 2*T0*C.row(0);
+    Eigen::RowVector3d shiftTerms = C.row(0)*T0*T0 - C.row(1)*T0 + C.row(2);
+    C.block(1,0,1,3) = linTerms;
+    C.block(2,0,1,3) = shiftTerms;
+    
+    return C;
+}//=================================================
 
 /**
  *  @brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset

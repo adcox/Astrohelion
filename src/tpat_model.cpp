@@ -148,6 +148,31 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set){
 	}
 }//============================================================
 
+
+void tpat_model::multShoot_scaleDesignVec(iterationData *it){
+	// TO-DO: intelligent computation of constraint values
+	it->freeVarScale.push_back(2);		// Position
+	it->freeVarScale.push_back(3);		// Velocity
+	it->freeVarScale.push_back(1);		// Acceleration
+	it->freeVarScale.push_back(4);		// Time
+	it->freeVarScale.push_back(10);		// Jacobi
+
+	// Loop through all nodes and scale position, velocity, and time variables
+	for(int n = 0; n < it->numNodes; n++){
+		it->X[6*n+0] *= it->freeVarScale[0];	// position
+		it->X[6*n+1] *= it->freeVarScale[0];
+		it->X[6*n+2] *= it->freeVarScale[0];
+		it->X[6*n+3] *= it->freeVarScale[1];	// velocity
+		it->X[6*n+4] *= it->freeVarScale[1];
+		it->X[6*n+5] *= it->freeVarScale[1];
+		
+		if(it->varTime){
+			if( (it->equalArcTime && n == 0) || (!it->equalArcTime && n < it->numNodes-1) )
+				it->X[6*it->numNodes+n] *= it->freeVarScale[3];	// Time
+		}
+	}
+}//===================================================
+
 /**
  *	@brief Create continuity constraints for the correction algorithm; this function
  *	creates position and velocity constraints.
@@ -197,13 +222,29 @@ void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set){
 void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n,
 	double *ic, double *t0, double *tof){
 	
+	// Get data from free variable vector
 	std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
+
+	// printf("Getting sim ICs for Node %d:\n[%.4f %.4f %.4f %.4f %4.f %.4f]\n",
+	// 	n, ic[0], ic[1], ic[2], ic[3], ic[4], ic[5]);
+
+	// Reverse Scaling
+	for(int i = 0; i < 6; i++){
+		ic[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+	}
+
 	if(it->varTime){
+		// Get data
 		*tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
+		// Reverse scaling
+		*tof /= it->freeVarScale[3];	// Time scaling
 	}else{
 		*tof = set->getTOF(n);
 	}
 	*t0 = 0;
+
+	// printf("Reverse Scaled: [%.4f %.4f %.4f %.4f %4.f %.4f], tof = %.4f\n",
+	// 	ic[0], ic[1], ic[2], ic[3], ic[4], ic[5], *tof);
 }//============================================================
 
 /**
@@ -321,12 +362,14 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 	for(size_t s = 0; s < conData.size(); s++){
 		if(!isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
-			it->FX[row0+s] = lastState[s] - it->X[6*n+s];
+			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+			it->FX[row0+s] = lastState[s]*scale - it->X[6*n+s];
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
 			for(size_t x = 0; x < 6; x++){
 				// put STM elements into DF matrix
-				it->DF[it->totalFree*(row0+s) + 6*(n-1)+x] = stm(s,x);
+				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+				it->DF[it->totalFree*(row0+s) + 6*(n-1)+x] = stm(s,x)*scale/scale2;
 				// Negative identity matrix
 				if(s == x)
 					it->DF[it->totalFree*(row0+s) + 6*n+x] = -1;
@@ -344,9 +387,9 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 				
 				// Column of state derivatives: [vel; accel]
 				if(s < 3)
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3];
+					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[3];
 				else{					
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3];
+					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[3];
 				}
 			}
 		}
@@ -389,7 +432,9 @@ void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, i
 	for(int s = 0; s < ((int)con.getData().size()); s++){
 		if(!isnan(conData[s])){
 			if(s < 6){
-				it->FX[row0+count] = it->X[6*n+s] - conData[s];
+				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+				
+				it->FX[row0+count] = it->X[6*n+s] - conData[s]*scale;
 				it->DF[it->totalFree*(row0 + count) + 6*n + s] = 1;
 				count++;
 			}else{
@@ -482,14 +527,14 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
 	std::vector<double> primPos = getPrimPos(t, sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*n+0] - primPos[Pix*3+0];
-	double dy = it->X[6*n+1] - primPos[Pix*3+1];
-	double dz = it->X[6*n+2] - primPos[Pix*3+2];
+	double dx = it->X[6*n+0] - primPos[Pix*3+0]*it->freeVarScale[0];
+	double dy = it->X[6*n+1] - primPos[Pix*3+1]*it->freeVarScale[0];
+	double dz = it->X[6*n+2] - primPos[Pix*3+2]*it->freeVarScale[0];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
 	// Compute difference between desired distance and true distance
-	it->FX[row0] = h - conData[1];
+	it->FX[row0] = h - conData[1]*it->freeVarScale[0];
 
 	// Partials with respect to node position states
 	it->DF[it->totalFree*row0 + 6*n + 0] = dx/h;
@@ -537,13 +582,13 @@ double tpat_model::multShoot_targetDist_compSlackVar(iterationData* it, tpat_con
 	std::vector<double> primPos = getPrimPos(t, sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*n+0] - primPos[Pix*3+0];
-	double dy = it->X[6*n+1] - primPos[Pix*3+1];
-	double dz = it->X[6*n+2] - primPos[Pix*3+2];
+	double dx = it->X[6*n+0] - primPos[Pix*3+0]*it->freeVarScale[0];
+	double dy = it->X[6*n+1] - primPos[Pix*3+1]*it->freeVarScale[0];
+	double dz = it->X[6*n+2] - primPos[Pix*3+2]*it->freeVarScale[0];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 	int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
-    double diff = conData[1] - h;
+    double diff = conData[1]*it->freeVarScale[0] - h;
 
     /*  If diff and sign have the same sign (+/-), then the constraint
      *  is satisfied, so compute the value of the slack variable that 
@@ -575,52 +620,67 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 
 	int row0 = it->conRows[c];
 
+	// Don't allow dividing by zero, but otherwise scale by value to keep order ~1
+	double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0]*it->freeVarScale[1];
+
 	// Compute total deltaV magnitude
 	double totalDV = 0;
 	for(int n = 0; n < it->numNodes-1; n++){
-		// compute squared magnitude of DV between node n and n+1
+		// compute magnitude of DV between node n and n+1
 		// This takes the form v_n,f - v_n+1,0
-		double dvMag = it->deltaVs[n*3]*it->deltaVs[n*3] +
-			it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
-			it->deltaVs[n*3+2]*it->deltaVs[n*3+2];
+		double dvx = it->deltaVs[n*3] * it->freeVarScale[1];
+		double dvy = it->deltaVs[n*3+1]*it->freeVarScale[1];
+		double dvz = it->deltaVs[n*3+2]*it->freeVarScale[1];
+		double dvMag = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
 
-		totalDV += dvMag;
+		// If dvMag is zero, don't bother computing partials; they're all equal to zero but the
+		// computation will try to divide by zero which is problematic...
+		if(dvMag > 0){
+			totalDV += dvMag;
 
-		// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
-		double dFdq_n2_data[] = {0, 0, 0, -2*it->deltaVs[n*3], -2*it->deltaVs[n*3+1], -2*it->deltaVs[n*3+2]};
-		Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
+			// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
+			double dFdq_n2_data[] = {0, 0, 0, -dvx/dvMag, -dvy/dvMag, -dvz/dvMag};
+			Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
-		// Get info about the final state/accel of the integrated segment
-		MatrixXRd stm = it->allSegs[n].getSTM(-1);
+			// Get info about the final state/accel of the integrated segment
+			MatrixXRd stm = it->allSegs[n].getSTM(-1);
 
-		// Partial w.r.t. integrated path (newSeg) from node n
-		Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
+			// Partial w.r.t. integrated path (newSeg) from node n
+			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
+			
+			// Adjust scaling of STM after multiplication (easier here)
+			dFdq_nf.segment(0, 3) *= it->freeVarScale[1]/it->freeVarScale[0];
 
-		for(int i = 0; i < 6; i++){
-			it->DF[it->totalFree*row0 + 6*(n+1) + i] += dFdq_n2(0, i);
-			it->DF[it->totalFree*row0 + 6*n + i] += dFdq_nf(0, i);
-		}
+			for(int i = 0; i < 6; i++){
+				it->DF[it->totalFree*row0 + 6*(n+1) + i] += dFdq_n2(0, i)/dvMax*it->freeVarScale[1];	// Not sure why this scaling factor belongs here...
+				it->DF[it->totalFree*row0 + 6*n + i] += dFdq_nf(0, i)/dvMax;
+			}
 
-		// Compute partial w.r.t. integration time n
-		if(it->varTime){
-			// Derivative of the final state of arc n
-			std::vector<double> state_dot_data;
-			std::vector<double> lastState = it->allSegs[n].getState(-1);
-			std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
-			state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
-			state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
-			Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
+			// Compute partial w.r.t. integration time n
+			if(it->varTime){
+				// Derivative of the final state of arc n
+				std::vector<double> state_dot_data;
+				std::vector<double> lastState = it->allSegs[n].getState(-1);
+				std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
+				state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
+				state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
+				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
 
-			double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-			int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n;
+				// Scale derivatives
+				state_dot.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[3];
+				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[3];
 
-			Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
-			it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n(0);
+				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n;
+
+				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
+				it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n(0)/dvMax;
+			}
 		}
 	}
 	
 	// Copute the difference between the actual deltaV and the desired deltaV
-	it->FX[row0] = totalDV - con.getData()[0];
+	it->FX[row0] = con.getData()[0] == 0 ? totalDV : totalDV/dvMax - 1;
 
 	if(con.getType() == tpat_constraint::MAX_DELTA_V){
 		// figure out which of the slack variables correspond to this constraint
@@ -630,6 +690,8 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 		// which column of the DF matrix the slack variable is in
 		int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
 		
+		// printf("MAX_DELTA_V Constraint Details:\n");
+		// printf("Total DV")
 		it->FX[row0] += it->X[slackCol]*it->X[slackCol];
 		it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
 	}
@@ -680,7 +742,7 @@ void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int
 	}
 	
 	// subtract the desired TOF from the constraint to finish its computation
-	it->FX[row0] -= con.getData()[0];
+	it->FX[row0] -= con.getData()[0]*it->freeVarScale[3];
 }//===============================================
 
 /**
@@ -695,25 +757,29 @@ void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, in
 	int Pix = (int)(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	tpat_sys_data *sysData = it->sysData;
-
+	double sr = it->freeVarScale[0];
+	double sv = it->freeVarScale[1];
 	// Get the primary position
 	std::vector<double> primPos = getPrimPos(t, sysData);
 
-	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*n+0] - primPos[Pix*3+0];
-	double dy = it->X[6*n+1] - primPos[Pix*3+1];
-	double dz = it->X[6*n+2] - primPos[Pix*3+2];
+	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
+	double dx = it->X[6*n+0]/sr - primPos[Pix*3+0];
+	double dy = it->X[6*n+1]/sr - primPos[Pix*3+1];
+	double dz = it->X[6*n+2]/sr - primPos[Pix*3+2];
+	double vx = it->X[6*n+3]/sv;
+	double vy = it->X[6*n+4]/sv;
+	double vz = it->X[6*n+5]/sv;
 
-	// Constraint function: r_dot = 0 
-	it->FX[row0] = dx*(it->X[6*n+3]) + dy*(it->X[6*n+4]) + dz*(it->X[6*n+5]);
+	// Constraint function: r_dot = 0 (using non-scaled coordinates)
+	it->FX[row0] = dx*vx + dy*vy + dz*vz;
 
 	// Partials of F w.r.t. node state
-	it->DF[it->totalFree*row0 + 6*n+0] = it->X[6*n+3];
-	it->DF[it->totalFree*row0 + 6*n+1] = it->X[6*n+4];
-	it->DF[it->totalFree*row0 + 6*n+2] = it->X[6*n+5];
-	it->DF[it->totalFree*row0 + 6*n+3] = dx;
-	it->DF[it->totalFree*row0 + 6*n+4] = dy;
-	it->DF[it->totalFree*row0 + 6*n+5] = dz;
+	it->DF[it->totalFree*row0 + 6*n+0] = vx/sr;
+	it->DF[it->totalFree*row0 + 6*n+1] = vy/sr;
+	it->DF[it->totalFree*row0 + 6*n+2] = vz/sr;
+	it->DF[it->totalFree*row0 + 6*n+3] = dx/sv;
+	it->DF[it->totalFree*row0 + 6*n+4] = dy/sv;
+	it->DF[it->totalFree*row0 + 6*n+5] = dz/sv;
 }//===============================================
 
 

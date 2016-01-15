@@ -322,5 +322,22 @@ void tpat_nodeset_bcr4bp::print() const{
 			nodeCons[c].print();
 		}
 	}
+	printf(" Velocity Discontinuities allowed at nodes ");
+	char velEl[] = {'x', 'y', 'z'};
+	bool anyDiscon = false;
+	for(size_t n = 0; n < steps.size(); n++){
+		tpat_node node = static_cast<tpat_node>(steps[n]);
+		std::vector<bool> velCon = node.getVelCon();
+		for(size_t i = 0; i < velCon.size(); i++){
+			if(!velCon[i]){
+				printf("%zuv_%c, ", n, velEl[i]);
+				anyDiscon = true;
+			}
+		}
+	}
+	if(!anyDiscon)
+		printf("None\n");
+	else
+		printf("\n");
 }//====================================================
 

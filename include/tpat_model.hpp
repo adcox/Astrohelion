@@ -135,6 +135,7 @@ public:
 	virtual std::vector<double> getPrimVel(double t, tpat_sys_data *sysData) = 0;
 
 	virtual void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
+	virtual void multShoot_scaleDesignVec(iterationData*);
 	virtual void multShoot_createContCons(iterationData*, tpat_nodeset*);
 	virtual void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
 	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int);

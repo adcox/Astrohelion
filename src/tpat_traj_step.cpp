@@ -37,7 +37,7 @@
  *	state at one step along an integrated arc
  *	@param t the non-dimensional time associated with the state
  */
-tpat_traj_step::tpat_traj_step(double *state, double t){
+tpat_traj_step::tpat_traj_step(const double *state, double t){
 	initArrays();
 	std::copy(state, state+6, posVelState);
 	extraParam[0] = t;
@@ -53,9 +53,7 @@ tpat_traj_step::tpat_traj_step(double *state, double t){
  *	@param stm a 36-element vector containing the STM elements for
  *	this step on the arc
  */
-tpat_traj_step::tpat_traj_step(double *state, double t,
-	double *accel, double *stm){
-	
+tpat_traj_step::tpat_traj_step(const double *state, double t, const double *accel, const double *stm){
 	initArrays();
 	std::copy(state, state+6, posVelState);
 	extraParam[0] = t;

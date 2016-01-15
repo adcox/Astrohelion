@@ -47,6 +47,8 @@ tpat_model_bcr4bpr::tpat_model_bcr4bpr() : tpat_model(MODEL_CR3BP) {
     extraStates = 6;
     allowedCons.push_back(tpat_constraint::SP);
     allowedCons.push_back(tpat_constraint::SP_RANGE);
+    allowedCons.push_back(tpat_constraint::SP_DIST);
+    allowedCons.push_back(tpat_constraint::SP_MAX_DIST);
 }//==============================================
 
 /**
@@ -120,30 +122,21 @@ std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, tpat_sys_data *sysD
  *  @param traj a pointer to the trajectory we should store the data in
  */
 void tpat_model_bcr4bpr::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
-    // Save the position and velocity states
-    double state[6];
-    std::copy(y, y+6, state);
 
-    // Save STM
-    double stmElm[36];
-    std::copy(y+6, y+42, stmElm);
-
-	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
+	// Cast the system data to the appropriate derivative type
     tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr*>(traj->getSysData());
 
     // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
-    bcr4bpr_simple_EOMs(0, y, dsdt, bcSys);
-
-    double dqdT[6];
-    std::copy(y+42, y+48, dqdT);
+    bcr4bpr_simple_EOMs(t, y, dsdt, bcSys);
     
-    tpat_traj_step step(state, t, dsdt+3, stmElm);
+    // step(state, time, accel, stm) - y(0:5) holds the state, y(6:41) holds the STM
+    tpat_traj_step step(y, t, dsdt+3, y+6);
 
     traj->appendStep(step);
     
     tpat_traj_bcr4bp *bcTraj = static_cast<tpat_traj_bcr4bp*>(traj);
-    bcTraj->set_dqdT(-1, dqdT);
+    bcTraj->set_dqdT(-1, y+42); // dqdT is stored in y(42:47)
 }//=====================================================
 
 /**
@@ -314,6 +307,8 @@ double tpat_model_bcr4bpr::multShoot_getSlackVarVal(iterationData *it, tpat_cons
     switch(con.getType()){
         case tpat_constraint::SP_RANGE:
             return multShoot_targetSPMag_compSlackVar(it, con);
+        case tpat_constraint::SP_MAX_DIST:
+            return multShoot_targetSP_maxDist_compSlackVar(it, con);
         default:
             return tpat_model::multShoot_getSlackVarVal(it, con);
     }
@@ -344,6 +339,10 @@ void tpat_model_bcr4bpr::multShoot_applyConstraint(iterationData *it, tpat_const
             break;
         case tpat_constraint::SP_RANGE:
             multShoot_targetSP_mag(it, con, c);
+            break;
+        case tpat_constraint::SP_DIST:
+        case tpat_constraint::SP_MAX_DIST:
+            multShoot_targetSP_dist(it, con, c);
             break;
         default: break;
     }
@@ -584,19 +583,32 @@ void tpat_model_bcr4bpr::multShoot_targetDeltaV(iterationData* it, tpat_constrai
         // Add partials w.r.t. epoch time
         int row0 = it->conRows[c];
 
-        // Compute total deltaV magnitude
+        // Don't allow dividing by zero, but otherwise scale by value to keep order ~1
+        double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0];
+
         for(int n = 0; n < it->numNodes-1; n++){
-            // Compute parial w.r.t. node n+1 (where velocity is discontinuous)
-            double dFdq_n2_data[] = {0, 0, 0, -2*it->deltaVs[n*3], -2*it->deltaVs[n*3+1], -2*it->deltaVs[n*3+2]};
-            Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
+            // compute magnitude of DV between node n and n+1
+            // This takes the form v_n,f - v_n+1,0
+            double dvMag = sqrt(it->deltaVs[n*3]*it->deltaVs[n*3] +
+                it->deltaVs[n*3+1]*it->deltaVs[n*3+1] + 
+                it->deltaVs[n*3+2]*it->deltaVs[n*3+2]);
 
-            // Compute partial w.r.t. epoch time n
-            std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1, 1);
+            // Don't bother computing partials if this dv is zero; all partials will equal zero
+            // but the computation would divide by zero too, which would be... unfortunate.
+            if(dvMag > 0){
+                // Compute parial w.r.t. node n+1 (where velocity is discontinuous)
+                double dFdq_n2_data[] = {0, 0, 0, -1/dvMag*it->deltaVs[n*3], -1/dvMag*it->deltaVs[n*3+1],
+                    -1/dvMag*it->deltaVs[n*3+2]};
+                Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
-            Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
-            MatrixXRd dFdT_n;
-            dFdT_n.noalias() = -1*dFdq_n2*dqdT;
-            it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n(0);
+                // Compute partial w.r.t. epoch time n
+                std::vector<double> last_dqdT = it->allSegs.at(n).getExtraParam(-1, 1);
+
+                Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
+                MatrixXRd dFdT_n;
+                dFdT_n.noalias() = -1*dFdq_n2*dqdT;
+                it->DF[it->totalFree*row0 + 7*it->numNodes-1+n] = dFdT_n(0)/dvMax;
+            }
         }
     }
 }//==============================================
@@ -643,24 +655,33 @@ void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint c
     Eigen::Vector3d conEval;
     conEval.noalias() = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
     
+    // printf("Node %d: Saddle Point Constraint Data:", n);
+    // printf("Epoch = %.16f\n", epoch);
+    // printf("s = [%.16f, %.16f %.16f], mag = %.16f\n", r_p1(0), r_p1(1), r_p1(2), d1);
+    // printf("e = [%.16f, %.16f %.16f], mag = %.16f\n", r_p2(0), r_p2(1), r_p2(2), d2);
+    // printf("m = [%.16f, %.16f %.16f], mag = %.16f\n", r_p3(0), r_p3(1), r_p3(2), d3);
+    // printf("mu = %.16f\n", mu);
+    // printf("nu = %.16f\n", nu);
+    // printf("FX = [%.16f, %.16f %.16f]\n", conEval(0), conEval(1), conEval(2));
+
     // Parials w.r.t. node position r
     double dFdq_data[9] = {0};
     dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
-                3*pow(r_p3(0),2)/pow(d3,5));     //dxdx
+        (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+        3*pow(r_p3(0),2)/pow(d3,5));     //dxdx
     dFdq_data[1] = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) + 
-            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
-            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);   //dxdy
+        (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
+        nu*3*r_p3(0)*r_p3(1)/pow(d3,5);   //dxdy
     dFdq_data[2] = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
-            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);   //dxdz
+        (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
+        nu*3*r_p3(0)*r_p3(2)/pow(d3,5);   //dxdz
     dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
     dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - 
-            nu*(1/pow(d3,3) - 3*pow(r_p3(1),2)/pow(d3,5));   //dydy
+        (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - 
+        nu*(1/pow(d3,3) - 3*pow(r_p3(1),2)/pow(d3,5));   //dydy
     dFdq_data[5] = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
-            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);   //dydz
+        (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
+        nu*3*r_p3(1)*r_p3(2)/pow(d3,5);   //dydz
     dFdq_data[6] = dFdq_data[2];    //dzdx = dxdz
     dFdq_data[7] = dFdq_data[5];    //dzdy = dydz
     dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
@@ -730,6 +751,17 @@ void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint c
     }
 }// End of SP Targeting ==============================
 
+/**
+ *  @brief Compute partials and constraint values for nodes constrained with <tt>SP_RANGE</tt>
+ *  @details This function computes one constraint value and one row of partials for the Jacobian
+ *  because the total acceleration magnitude is targeted rather than individual acceleration 
+ *  vector components. The FX and DF matrices are update in place by editing their values 
+ *  stored in <tt>it</tt>
+ * 
+ *  @param it the iterationData object holding the current data for the corrections process
+ *  @param con the constraint being applied
+ *  @param row0 the index of the first row for this constraint
+ */
 void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constraint con, int c){
 
     int row0 = it->conRows[c];
@@ -841,7 +873,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
     double *FX = &(it->FX[0]);
     double *DF = &(it->DF[0]);
 
-    FX[row0] = A.squaredNorm()/(Amax*Amax) - 1;
+    FX[row0] = A.squaredNorm()/(Amax*Amax) - 1;     // Found this one converges MUCH better
     // FX[row0] = A.squaredNorm() - Amax*Amax;
     
     std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + 6*n);
@@ -862,8 +894,21 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
 
     // Partial with respect to slack variable
     it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
+    
+    // printf("Node %d %s Con: Slack Var = %.4e\n", n, con.getTypeStr(), it->X[slackCol]);
 }// End of SP Targeting (Magnitude) ==============================
 
+/**
+ *  @brief Compute an initial value for the slack variable for an SP_RANGE inequality constraint 
+ *  @details If the constraint is satisified, the slack variable must be set such that the 
+ *  constraint function evaluates to zero; that value is computed here. If the constraint is not
+ *  satisfied, a small value is returned.
+ * 
+ *  @param it the iterationData object holding the current data for the corrections process
+ *  @param con the constraint being applied
+ * 
+ *  @return the initial value for the slack variable associated with an SP_RANGE constraint
+ */
 double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(iterationData *it, tpat_constraint con){
     int n = con.getNode();
     double Amax = con.getData()[0];
@@ -905,8 +950,113 @@ double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(iterationData *it,
      *  that will make the partials zero and will prevent the mulitple
      *  shooting algorithm from updating the slack variable
      */
-    return diff > 0 ? sqrt(std::abs(diff)) : 1e-4;
+    return diff > 0 ? sqrt(diff) : 1e-4;
 }//======================================================
+
+/**
+ *  @brief Compute an initial value for the slack variable for an SP_DIST inequality constraint 
+ *  @details If the constraint is satisified, the slack variable must be set such that the 
+ *  constraint function evaluates to zero; that value is computed here. If the constraint is not
+ *  satisfied, a small value is returned.
+ * 
+ *  @param it the iterationData object holding the current data for the corrections process
+ *  @param con the constraint being applied
+ * 
+ *  @return the initial value for the slack variable associated with an SP_DIST constraint
+ */
+double tpat_model_bcr4bpr::multShoot_targetSP_maxDist_compSlackVar(iterationData *it, tpat_constraint con){
+    int n = con.getNode();
+    double T = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);  //epoch at node
+    std::vector<double> coeff = con.getData();
+
+    // Compute SP position from polynomial approximation
+    Eigen::Vector3d spPos;
+    spPos(0) = T*T*coeff[1] + T*coeff[2] + coeff[3];
+    spPos(1) = T*T*coeff[4] + T*coeff[5] + coeff[6];
+    spPos(2) = T*T*coeff[7] + T*coeff[8] + coeff[9];
+
+    double *X = &(it->X[0]);
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+6*n, 3, 1);   // Position vector
+
+    Eigen::Vector3d dist = r - spPos;
+    double diff = coeff[0]*coeff[0] - dist.squaredNorm();
+    
+    return diff > 0 ? sqrt(diff) : 1e-4;
+}//===================================================
+
+/**
+ *  @brief Compute partials and constraint values for node constrained with <tt>SP_DIST</tt>
+ *  and <tt>SP_MAX_DIST</tt>. 
+ *  @details One constraint value and one row of partials are computed. This constraint uses
+ *  2nd-order polynomials to approximate the saddle point's location as a function of epoch 
+ *  and then targets a node to be at or within a set radius of the saddle point.
+ * 
+ *  @param it the iterationData object holding the current data for the corrections process
+ *  @param con the constraint being applied
+ *  @param row0 the index of the first row for this constraint
+ */
+void tpat_model_bcr4bpr::multShoot_targetSP_dist(iterationData *it, tpat_constraint con, int c){
+    int row0 = it->conRows[c];
+    int n = con.getNode();
+    double T = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);  //epoch at node
+    // tpat_sys_data_bcr4bpr *bcSysData = static_cast<tpat_sys_data_bcr4bpr *> (it->sysData);
+    std::vector<double> coeff = con.getData();
+
+    // Compute SP position from polynomial approximation
+    Eigen::Vector3d spPos;
+    spPos(0) = T*T*coeff[1] + T*coeff[2] + coeff[3];
+    spPos(1) = T*T*coeff[4] + T*coeff[5] + coeff[6];
+    spPos(2) = T*T*coeff[7] + T*coeff[8] + coeff[9];
+
+    double *X = &(it->X[0]);
+    double *DF = &(it->DF[0]);
+    double *FX = &(it->FX[0]);
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+6*n, 3, 1);   // Position vector
+
+    Eigen::Vector3d dist = r - spPos;
+
+    // FX[row0] = dist.squaredNorm() - coeff[0]*coeff[0];
+    double d = dist.norm();
+    FX[row0] = d - coeff[0];    // This one converges much more quickly!
+
+    // Compute partials w.r.t. node states
+    // DF[it->totalFree*row0 + 6*n+0] = 2*dist(0);
+    // DF[it->totalFree*row0 + 6*n+1] = 2*dist(1);
+    // DF[it->totalFree*row0 + 6*n+2] = 2*dist(2);
+    DF[it->totalFree*row0 + 6*n+0] = dist(0)/d;
+    DF[it->totalFree*row0 + 6*n+1] = dist(1)/d;
+    DF[it->totalFree*row0 + 6*n+2] = dist(2)/d;
+
+    // printf("Dist from Approx SP = [%.4f, %.4f, %.4f]\n", dist(0), dist(1), dist(2));
+    // printf("  r = [%.4f, %.4f, %.4f]\n", r(0), r(1), r(2));
+    // printf("  sp_pos = [%.4f, %.4f, %.4f]\n", spPos(0), spPos(1), spPos(2));
+
+    // Compute partials w.r.t. epoch Time
+    if(it->varTime){
+        // DF[it->totalFree*row0 + 7*it->numNodes-1+n] = -2*dist(0)*(2*coeff[1]*T + coeff[2]) -
+        //     2*dist(1)*(2*coeff[4]*T + coeff[5]) - 2*dist(2)*(2*coeff[7]*T + coeff[8]);
+        DF[it->totalFree*row0 + 7*it->numNodes-1+n] = -1/d*dist(0)*(2*coeff[1]*T + coeff[2]) -
+            1/d*dist(1)*(2*coeff[4]*T + coeff[5]) - 1/d*dist(2)*(2*coeff[7]*T + coeff[8]);
+    }
+
+    if(con.getType() == tpat_constraint::SP_MAX_DIST){
+        // figure out which of the slack variables correspond to this constraint
+        std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
+            it->slackAssignCon.end(), c);
+
+        // which column of the DF matrix the slack variable is in
+        int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
+
+        // Add squared slack variable from constraint
+        it->FX[row0] += it->X[slackCol]*it->X[slackCol];
+
+        // Partial with respect to slack variable
+        it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
+        // printf("Node %d distance to SP = %.4f km\n", n, dist.norm()*bcSysData->getCharL());
+        // if(FX[row0] < 0)
+        //     FX[row0]= 0;
+    }
+}//===================================================
 
 /**
  *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 

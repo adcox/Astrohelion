@@ -122,22 +122,16 @@ std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysDat
  *  @param traj a pointer to the trajectory we should store the data in
  */
 void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
-    // Save the position and velocity states
-    double state[6];
-    std::copy(y, y+6, state);
-
-    // Save STM
-    double stmElm[36];
-    std::copy(y+6, y+42, stmElm);
 
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
 
     // Compute acceleration (elements 3 - 5)
     double dsdt[6] = {0};
-    cr3bp_simple_EOMs(0, y, dsdt, crSys);
+    cr3bp_simple_EOMs(t, y, dsdt, crSys);
 
-    tpat_traj_step step(state, t, dsdt+3, stmElm);
+    // step(state, time, accel, stm) - y(0:5) holds the state, y(6:41) holds the STM
+    tpat_traj_step step(y, t, dsdt+3, y+6);
     traj->appendStep(step);
 
     tpat_traj_cr3bp *cr3bpTraj = static_cast<tpat_traj_cr3bp*>(traj);    
@@ -146,7 +140,7 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
 
 /**
  *  @brief Use a correction algorithm to accurately locate an event crossing
- *
+ * 
  *  The simulation engine calls this function if and when it determines that an event 
  *  has been crossed. To accurately locate the event, we employ differential corrections
  *  and find the exact event occurence in space and time.
@@ -258,7 +252,20 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
-    double *nodeState = &(it->X[6*n]);
+    double nodeState[6];
+    std::copy(&(it->X[6*n]), &(it->X[6*n])+6, nodeState);
+    
+    double sr = it->freeVarScale[0];
+    double sv = it->freeVarScale[1];    
+
+    // Reverse scaling to compute Jacobi at the node
+    for(int i = 0; i < 6; i++){
+        double scale = i < 3 ? sr : sv;
+        nodeState[i] /= scale;
+    }
+
+    // printf("Node State = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f]\n", nodeState[0],
+    //     nodeState[1], nodeState[2], nodeState[3], nodeState[4], nodeState[5]);
     double nodeJC = cr3bp_getJacobi(nodeState, mu);
     
     // temp variables to make equations more readable; compute partials w.r.t. node state
@@ -273,12 +280,14 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
     double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
 
     it->FX[row0] = nodeJC - conData[0];
-    it->DF[it->totalFree*row0 + 6*n + 0] = -2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x;    //dFdx
-    it->DF[it->totalFree*row0 + 6*n + 1] = -2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y;                      //dFdy
-    it->DF[it->totalFree*row0 + 6*n + 2] = -2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3);                            //dFdz
-    it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx;   //dFdx_dot
-    it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy;   //dFdy_dot
-    it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz;   //dFdz_dot
+    // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
+
+    it->DF[it->totalFree*row0 + 6*n + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
+    it->DF[it->totalFree*row0 + 6*n + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
+    it->DF[it->totalFree*row0 + 6*n + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
+    it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx/sv;   //dFdx_dot
+    it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy/sv;   //dFdy_dot
+    it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz/sv;   //dFdz_dot
 }//=============================================
 
 /**
@@ -340,18 +349,30 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_n
 
     int numNodes = (int)(it->origNodes.size());
     for(int i = 0; i < numNodes; i++){
-        tpat_node node(&(it->X[i*6]), NAN);
+        double state[6];
+        std::copy(&(it->X[i*6]), &(it->X[i*6])+6, state);
+
+        // Reverse scaling
+        for(int i = 0; i < 6; i++){
+            state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+        }
+
+        tpat_node node(state, NAN);
         node.setVelCon(nodes_in->getNode(i).getVelCon());
         node.setConstraints(nodes_in->getNode(i).getConstraints());
 
         if(i + 1 < numNodes){
-            node.setTOF(it->equalArcTime ? it->X[numNodes*6]/(numNodes-1) : it->X[numNodes*6 + i]);
+            // Get TOF, reverse variable scaling, save to node
+            double tof = it->equalArcTime ? it->X[numNodes*6]/(numNodes-1) : it->X[numNodes*6 + i];
+            tof /= it->freeVarScale[3];
+            node.setTOF(tof);
+
             // Set Jacobi Constant
-            node.setExtraParam(1, cr3bp_getJacobi(&(it->X[i*6]), crSys->getMu()));
+            node.setExtraParam(1, cr3bp_getJacobi(state, crSys->getMu()));
         }else{
             node.setTOF(NAN);
             // Set Jacobi Constant
-            node.setExtraParam(1, cr3bp_getJacobi(&(it->X[i*6]), crSys->getMu()));
+            node.setExtraParam(1, cr3bp_getJacobi(state, crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the

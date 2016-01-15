@@ -47,6 +47,8 @@ class tpat_nodeset_cr3bp;
 class tpat_sys_data_cr3bp;
 class tpat_traj_cr3bp;
 
+struct iterationData;
+
 /**
  *	@brief Describes the plane a periodic orbit can be mirrored across
  */
@@ -97,12 +99,13 @@ int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 // General Utility Functions
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
-MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, double);
 MatrixXRd getMirrorMat(mirror_t);
-std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 double getStabilityIndex(std::vector<cdouble>);
+double getTotalDV(const iterationData*);
 void finiteDiff_checkMultShoot(tpat_nodeset*);
+MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
+std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 
 // CR3BP Utility Functions
 void cr3bp_getUDDots(double, double, double, double, double*);
@@ -125,6 +128,7 @@ void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr*, double*);
 void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr*, double*);
 tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr*, double);
 tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr*, double);
+MatrixXRd bcr4bpr_spLoc_polyFit(tpat_sys_data_bcr4bpr*, double);
 void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
 Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr*, double);
 

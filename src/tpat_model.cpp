@@ -153,9 +153,7 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it){
 	// TO-DO: intelligent computation of constraint values
 	it->freeVarScale.push_back(2);		// Position
 	it->freeVarScale.push_back(3);		// Velocity
-	it->freeVarScale.push_back(1);		// Acceleration
 	it->freeVarScale.push_back(4);		// Time
-	it->freeVarScale.push_back(10);		// Jacobi
 
 	// Loop through all nodes and scale position, velocity, and time variables
 	for(int n = 0; n < it->numNodes; n++){
@@ -168,7 +166,7 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it){
 		
 		if(it->varTime){
 			if( (it->equalArcTime && n == 0) || (!it->equalArcTime && n < it->numNodes-1) )
-				it->X[6*it->numNodes+n] *= it->freeVarScale[3];	// Time
+				it->X[6*it->numNodes+n] *= it->freeVarScale[2];	// Time
 		}
 	}
 }//===================================================
@@ -225,9 +223,6 @@ void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n
 	// Get data from free variable vector
 	std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
 
-	// printf("Getting sim ICs for Node %d:\n[%.4f %.4f %.4f %.4f %4.f %.4f]\n",
-	// 	n, ic[0], ic[1], ic[2], ic[3], ic[4], ic[5]);
-
 	// Reverse Scaling
 	for(int i = 0; i < 6; i++){
 		ic[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
@@ -237,14 +232,12 @@ void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n
 		// Get data
 		*tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
 		// Reverse scaling
-		*tof /= it->freeVarScale[3];	// Time scaling
+		*tof /= it->freeVarScale[2];	// Time scaling
 	}else{
 		*tof = set->getTOF(n);
 	}
 	*t0 = 0;
 
-	// printf("Reverse Scaled: [%.4f %.4f %.4f %.4f %4.f %.4f], tof = %.4f\n",
-	// 	ic[0], ic[1], ic[2], ic[3], ic[4], ic[5], *tof);
 }//============================================================
 
 /**
@@ -387,9 +380,9 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 				
 				// Column of state derivatives: [vel; accel]
 				if(s < 3)
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[3];
+					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
 				else{					
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[3];
+					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
 				}
 			}
 		}
@@ -667,8 +660,8 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
 
 				// Scale derivatives
-				state_dot.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[3];
-				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[3];
+				state_dot.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[2];
+				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[2];
 
 				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n;
@@ -742,7 +735,7 @@ void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int
 	}
 	
 	// subtract the desired TOF from the constraint to finish its computation
-	it->FX[row0] -= con.getData()[0]*it->freeVarScale[3];
+	it->FX[row0] -= con.getData()[0]*it->freeVarScale[2];
 }//===============================================
 
 /**

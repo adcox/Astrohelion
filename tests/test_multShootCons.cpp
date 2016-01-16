@@ -492,61 +492,60 @@ void testBCR4BPCons(){
 	tpat_nodeset_bcr4bp nodes0(IC, &sys, t0, tof, 5);
 	corrector.setTol(1e-11);
 	// nodes0.saveToMat("SP_TestCase.mat");
-	// waitForUser();
 
-	// double spData = 0;
-	// tpat_constraint spCon(tpat_constraint::SP, 2, &spData, 1);
-	// nodes0.addConstraint(spCon);
-	// finiteDiff_checkMultShoot(&nodes0);
-	// try{
-	// 	corrector.multShoot(&nodes0);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(spCon.getNode());
-	// 	finalState.erase(finalState.begin()+3, finalState.end());
+	double spData = 0;
+	tpat_constraint spCon(tpat_constraint::SP, 2, &spData, 1);
+	nodes0.addConstraint(spCon);
+	finiteDiff_checkMultShoot(&nodes0);
+	try{
+		corrector.multShoot(&nodes0);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(spCon.getNode());
+		finalState.erase(finalState.begin()+3, finalState.end());
 
-	// 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getNode()));
-	// 	double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
-	// 	std::cout << "SP Constraint: " << (diff < 1e-10 ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "SP Constraint: " << FAIL << std::endl;
-	// }
+		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getNode()));
+		double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
+		std::cout << "SP Constraint: " << (diff < 1e-10 ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "SP Constraint: " << FAIL << std::endl;
+	}
 
-	// // Saddle Point, Range
-	// printColor(BOLDBLACK, "SP Range Constraint\n");
-	// double maxR = 40;	// km
-	// double maxA = (5.358e-8*maxR - 2.3313e-8)/1000*sys.getCharT()*sys.getCharT()/sys.getCharL();
-	// printf("Maximum Accel  = %e (non-dim)\n", maxA);
-	// tpat_constraint spConRange(tpat_constraint::SP_RANGE, 2, &maxA, 1);
-	// nodes0.clearConstraints();
-	// nodes0.addConstraint(spConRange);
-	// finiteDiff_checkMultShoot(&nodes0);
-	// try{
-	// 	corrector.multShoot(&nodes0);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(spCon.getNode());
+	// Saddle Point, Range
+	printColor(BOLDBLACK, "SP Range Constraint\n");
+	double maxR = 40;	// km
+	double maxA = (5.358e-8*maxR - 2.3313e-8)/1000*sys.getCharT()*sys.getCharT()/sys.getCharL();
+	printf("Maximum Accel  = %e (non-dim)\n", maxA);
+	tpat_constraint spConRange(tpat_constraint::SP_RANGE, 2, &maxA, 1);
+	nodes0.clearConstraints();
+	nodes0.addConstraint(spConRange);
+	finiteDiff_checkMultShoot(&nodes0);
+	try{
+		corrector.multShoot(&nodes0);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(spCon.getNode());
 
-	// 	// Compute the state derivative at the node to get acceleration
-	// 	double stateDot[6];
-	// 	bcr4bpr_simple_EOMs(correctedSet.getEpoch(spCon.getNode()), &(finalState[0]), stateDot, &sys);
+		// Compute the state derivative at the node to get acceleration
+		double stateDot[6];
+		bcr4bpr_simple_EOMs(correctedSet.getEpoch(spCon.getNode()), &(finalState[0]), stateDot, &sys);
 
-	// 	// Adjust derivative from EOMs to remove terms from rotating frame
-	// 	stateDot[3] += -2*sys.getK()*finalState[4] - sys.getK()*sys.getK()*finalState[0] - sys.getK()*sys.getK()*(1/sys.getK() - sys.getMu());
-	// 	stateDot[4] += 2*sys.getK()*finalState[3] - sys.getK()*sys.getK()*finalState[1];
-	// 	double accel = sqrt(stateDot[3]*stateDot[3] + stateDot[4]*stateDot[4] + stateDot[5]*stateDot[5]);
+		// Adjust derivative from EOMs to remove terms from rotating frame
+		stateDot[3] += -2*sys.getK()*finalState[4] - sys.getK()*sys.getK()*finalState[0] - sys.getK()*sys.getK()*(1/sys.getK() - sys.getMu());
+		stateDot[4] += 2*sys.getK()*finalState[3] - sys.getK()*sys.getK()*finalState[1];
+		double accel = sqrt(stateDot[3]*stateDot[3] + stateDot[4]*stateDot[4] + stateDot[5]*stateDot[5]);
 
-	// 	// Compute the location of the SP
-	// 	finalState.erase(finalState.begin()+3, finalState.end());
-	// 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getNode()));
-	// 	double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
+		// Compute the location of the SP
+		finalState.erase(finalState.begin()+3, finalState.end());
+		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getNode()));
+		double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
 
-	// 	std::cout << "SP Range Constraint: " << (accel <= maxA ? PASS : FAIL) << std::endl;
-	// 	printf("Accel = %e, Max Accel = %e\n", accel, maxA);
-	// 	printf("Distance from SP = %.4f km\n", diff*sys.getCharL());
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "SP Range Constraint: " << FAIL << std::endl;
-	// }
+		std::cout << "SP Range Constraint: " << (accel <= maxA ? PASS : FAIL) << std::endl;
+		printf("Accel = %e, Max Accel = %e\n", accel, maxA);
+		printf("Distance from SP = %.4f km\n", diff*sys.getCharL());
+	}catch(tpat_diverge &e){
+		std::cout << "SP Range Constraint: " << FAIL << std::endl;
+	}
 
-	// Saddle Point, Approx. Location, Distance Range
+	//Saddle Point, Approx. Location, Distance Range
 	printColor(BOLDBLACK, "SP DIST Constraint\n");
 	MatrixXRd coeff = bcr4bpr_spLoc_polyFit(&sys, nodes0.getEpoch(2));
 	toCSV(coeff, "PolyFitCoeff.csv");
@@ -624,8 +623,8 @@ void testBCR4BPCons(){
  */
 int main(void){
 	// testCR3BP_SE_Cons();
-	testCR3BP_EM_Cons();
-	// testBCR4BPCons();
+	// testCR3BP_EM_Cons();
+	testBCR4BPCons();
 
 	return EXIT_SUCCESS;
 }

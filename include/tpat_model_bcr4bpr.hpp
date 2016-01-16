@@ -48,6 +48,7 @@ public:
 
 	// Multiple Shooting functions
 	void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
+	void multShoot_scaleDesignVec(iterationData*);
 	void multShoot_createContCons(iterationData*, tpat_nodeset*);
 	void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
 	double multShoot_getSlackVarVal(iterationData*, tpat_constraint);

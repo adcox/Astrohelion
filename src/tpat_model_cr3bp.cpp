@@ -363,8 +363,15 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_n
 
         if(i + 1 < numNodes){
             // Get TOF, reverse variable scaling, save to node
-            double tof = it->equalArcTime ? it->X[numNodes*6]/(numNodes-1) : it->X[numNodes*6 + i];
-            tof /= it->freeVarScale[3];
+            double tof;
+            if(it->varTime){
+                // Get data
+                tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+i];
+                // Reverse scaling
+                tof /= it->freeVarScale[2];    // Time scaling
+            }else{
+                tof = nodes_in->getTOF(i);
+            }
             node.setTOF(tof);
 
             // Set Jacobi Constant

@@ -58,7 +58,7 @@ public:
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 	// *structors
-	tpat_nodeset(tpat_sys_data*);
+	tpat_nodeset(const tpat_sys_data*);
 	tpat_nodeset(const tpat_nodeset&);
 	tpat_nodeset(const tpat_arc_data&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
@@ -85,13 +85,13 @@ public:
 	void clearConstraints();
 	void print() const;
 	void reverseOrder();
-	void saveToMat(const char*);
+	void saveToMat(const char*) const;
 	void initExtraParam();
 
 protected:
-	void initSetFromICs(double[6], tpat_sys_data*, double, double, int, node_distro_t);
-	void initSetFromTraj(tpat_traj, tpat_sys_data*, int, node_distro_t);
-	void saveTOFs(mat_t*);
+	void initSetFromICs(double[6], const tpat_sys_data*, double, double, int, node_distro_t);
+	void initSetFromTraj(tpat_traj, const tpat_sys_data*, int, node_distro_t);
+	void saveTOFs(mat_t*) const;
 
 };
 

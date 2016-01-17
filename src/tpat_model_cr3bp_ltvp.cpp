@@ -66,7 +66,7 @@ tpat_model_cr3bp_ltvp& tpat_model_cr3bp_ltvp::operator =(const tpat_model_cr3bp_
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
-tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getSimpleEOM_fcn(){
+tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getSimpleEOM_fcn() const{
 	return &cr3bp_ltvp_simple_EOMs;
 }//==============================================
 
@@ -74,7 +74,7 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getSimpleEOM_fcn(){
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
-tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn(){
+tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn() const{
 	return &cr3bp_ltvp_EOMs;
 }//==============================================
 
@@ -86,10 +86,10 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn(){
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, tpat_sys_data *sysData){
+std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, const tpat_sys_data *sysData) const{
     (void)t;
     double primPos[6] = {0};
-    tpat_sys_data_cr3bp_ltvp crSys(*static_cast<tpat_sys_data_cr3bp_ltvp *>(sysData));
+    const tpat_sys_data_cr3bp_ltvp crSys(*static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData));
 
     primPos[0] = -1*crSys.getMu();
     primPos[3] = 1 - crSys.getMu();
@@ -105,7 +105,7 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, tpat_sys_data *s
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
-std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, tpat_sys_data *sysData){
+std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, const tpat_sys_data *sysData) const{
     (void)t;
     (void)sysData;
     double primVel[6] = {0};
@@ -120,7 +120,7 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, tpat_sys_data *s
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
+void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj) const{
 	// Save the position and velocity states
     double state[6];
     std::copy(y, y+6, state);
@@ -130,11 +130,12 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
     std::copy(y+6, y+42, stmElm);
 
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    tpat_sys_data_cr3bp_ltvp *ltSys = static_cast<tpat_sys_data_cr3bp_ltvp*>(traj->getSysData());
+    const tpat_sys_data_cr3bp_ltvp *ltSys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(traj->getSysData());
 
     // Compute acceleration (elements 3 - 5)
     double dsdt[6] = {0};
-    cr3bp_ltvp_simple_EOMs(t, y, dsdt, ltSys);
+    eomParamStruct paramStruct(ltSys);
+    cr3bp_ltvp_simple_EOMs(t, y, dsdt, &paramStruct);
 
     tpat_traj_step step(state, t, dsdt+3, stmElm);
     traj->appendStep(step);
@@ -167,7 +168,7 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    double *ic, double t0, double tof, verbosity_t verbose){
+    double *ic, double t0, double tof, verbosity_t verbose) const{
 
     return true;
 }//=======================================================
@@ -186,7 +187,7 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
  */
-tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
-    tpat_sys_data_cr3bp_ltvp *sys = static_cast<tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
+tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent) const{
+    const tpat_sys_data_cr3bp_ltvp *sys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
     return new tpat_nodeset_cr3bp(sys);
 }//====================================================

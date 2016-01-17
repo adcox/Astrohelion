@@ -43,10 +43,10 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 
 		tpat_sys_data_cr3bp& operator=(const tpat_sys_data_cr3bp&);
 		
-		tpat_model* getModel();
+		const tpat_model* getModel() const;
 		double getMu() const;
 
-		void saveToMat(mat_t*);
+		void saveToMat(mat_t*) const;
 		void readFromMat(mat_t*);
 		
 	protected:

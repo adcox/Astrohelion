@@ -129,7 +129,7 @@ tpat_sys_data_bcr4bpr& tpat_sys_data_bcr4bpr::operator= (const tpat_sys_data_bcr
  *	@brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
-tpat_model* tpat_sys_data_bcr4bpr::getModel() { return &model; }
+const tpat_model* tpat_sys_data_bcr4bpr::getModel() const { return &model; }
 
 /**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
@@ -194,7 +194,7 @@ void tpat_sys_data_bcr4bpr::setGamma(double t){ otherParams.at(6) = t; }
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
-void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile){
+void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
@@ -217,25 +217,32 @@ void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile){
 	saveVar(matFile, p3_var, "P3", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[0]), MAT_F_DONT_COPY_DATA);
+	double mu = otherParams[0];
+	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 
-	matvar_t *nu_var = Mat_VarCreate("Nu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[1]), MAT_F_DONT_COPY_DATA);
+	double nu = otherParams[1];
+	matvar_t *nu_var = Mat_VarCreate("Nu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &nu, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, nu_var, "Nu", MAT_COMPRESSION_NONE);
 
-	matvar_t *k_var = Mat_VarCreate("K", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[2]), MAT_F_DONT_COPY_DATA);
+	double k = otherParams[2];
+	matvar_t *k_var = Mat_VarCreate("K", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &k, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, k_var, "K", MAT_COMPRESSION_NONE);
 
-	matvar_t *ratio_var = Mat_VarCreate("CharLRatio", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[3]), MAT_F_DONT_COPY_DATA);
+	double r = otherParams[3];
+	matvar_t *ratio_var = Mat_VarCreate("CharLRatio", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &r, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, ratio_var, "CharLRatio", MAT_COMPRESSION_NONE);
 
-	matvar_t *theta0_var = Mat_VarCreate("Theta0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[4]), MAT_F_DONT_COPY_DATA);
+	double t = otherParams[4];
+	matvar_t *theta0_var = Mat_VarCreate("Theta0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &t, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, theta0_var, "Theta0", MAT_COMPRESSION_NONE);
 
-	matvar_t *phi0_var = Mat_VarCreate("Phi0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[5]), MAT_F_DONT_COPY_DATA);
+	double p = otherParams[5];
+	matvar_t *phi0_var = Mat_VarCreate("Phi0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &p, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, phi0_var, "Phi0", MAT_COMPRESSION_NONE);
 
-	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[6]), MAT_F_DONT_COPY_DATA);
+	double g = otherParams[6];
+	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &g, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, gamma_var, "Gamma", MAT_COMPRESSION_NONE);
 
 

@@ -16,9 +16,8 @@
 using namespace std;
 
 void test_cr3bp_sim(){
-	tpat_simulation_engine simEngine;
-
 	tpat_sys_data_cr3bp sys("earth", "moon");
+	tpat_simulation_engine simEngine(&sys);
 
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 

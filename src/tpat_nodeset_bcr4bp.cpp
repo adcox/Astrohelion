@@ -42,7 +42,7 @@
  *	@brief Construct a nodeset with no data other than the system
  *	@param data system data object describing the system the nodes exist in
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(tpat_sys_data_bcr4bpr *data) : tpat_nodeset(data){
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_sys_data_bcr4bpr *data) : tpat_nodeset(data){
 	initExtraParam();
 }
 
@@ -58,7 +58,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(tpat_sys_data_bcr4bpr *data) : tpat_nod
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], const tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -78,7 +78,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], tpat_sys_data_bcr4bpr *da
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -97,7 +97,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, tpat_sys_data_b
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], const tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -116,7 +116,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], tpat_sys_data_bcr4bpr *da
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -272,7 +272,7 @@ void tpat_nodeset_bcr4bp::initExtraParam(){
  *	@param filename a relative or absolute filepath to a mat file. Note
  *	the extension MUST be ".mat"
  */
-void tpat_nodeset_bcr4bp::saveToMat(const char *filename){
+void tpat_nodeset_bcr4bp::saveToMat(const char *filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional

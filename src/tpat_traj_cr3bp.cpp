@@ -47,7 +47,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-tpat_traj_cr3bp::tpat_traj_cr3bp(tpat_sys_data_cr3bp *sys) : tpat_traj(sys){
+tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_sys_data_cr3bp *sys) : tpat_traj(sys){
 	initExtraParam();
 }//====================================================
 
@@ -83,7 +83,7 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_arc_data &a) : tpat_traj(a){
  *	@see tpat_traj::operator +()
  */
 tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
-	tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp*>(nodes.getSysData());
+	const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp*>(nodes.getSysData());
 	tpat_simulation_engine simEngine(sys);
 	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
 	tpat_traj_cr3bp totalTraj(sys);
@@ -156,7 +156,7 @@ void tpat_traj_cr3bp::initExtraParam(){
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj_cr3bp::saveToMat(const char* filename){
+void tpat_traj_cr3bp::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional

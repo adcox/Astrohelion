@@ -70,7 +70,7 @@ class tpat_arc_data{
 
 public:
 	// *structors
-	tpat_arc_data(tpat_sys_data*);
+	tpat_arc_data(const tpat_sys_data*);
 	tpat_arc_data(const tpat_arc_data&);
 	virtual ~tpat_arc_data();
 
@@ -86,7 +86,7 @@ public:
 	std::vector<double> getState(int) const;
 	tpat_arc_step getStep(int) const;
 	MatrixXRd getSTM(int) const;
-	tpat_sys_data* getSysData();
+	const tpat_sys_data* getSysData() const;
 	double getTol() const;
 
 	void appendStep(tpat_arc_step);
@@ -101,7 +101,7 @@ public:
 	/**
 	 *	@brief Saves the object to a Matlab binary file
 	 */
-	virtual void saveToMat(const char*) = 0;
+	virtual void saveToMat(const char*) const = 0;
 
 	/**
 	 *	@brief Displays a useful messages about the object
@@ -115,7 +115,7 @@ protected:
 	std::vector<tpat_arc_step> steps;
 
 	/** A pointer to the system data object that describes the system this arc exists in */
-	tpat_sys_data *sysData = 0;
+	const tpat_sys_data *sysData;
 
 	/** 
 	 *	Number of variables stored in the extraParam vector. This
@@ -134,11 +134,11 @@ protected:
 	double tol = 0;
 
 	void copyMe(const tpat_arc_data&);
-	void saveAccel(mat_t*);
-	void saveExtraParam(mat_t*, int, const char*);
-	void saveState(mat_t*);
-	void saveState(mat_t*, const char*);
-	void saveSTMs(mat_t*);
+	void saveAccel(mat_t*) const;
+	void saveExtraParam(mat_t*, int, const char*) const;
+	void saveState(mat_t*) const;
+	void saveState(mat_t*, const char*) const;
+	void saveSTMs(mat_t*) const;
 };
 
 

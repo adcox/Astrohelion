@@ -53,7 +53,7 @@ class tpat_traj : public tpat_arc_data{
 
 public:
 	// *structors
-	tpat_traj(tpat_sys_data*);
+	tpat_traj(const tpat_sys_data*);
 	tpat_traj(const tpat_traj&);
 	tpat_traj(const tpat_arc_data&);
 	
@@ -68,14 +68,14 @@ public:
 	void setTime(int, double);
 	
 	// Utility Functions
-	void saveToMat(const char*);
+	void saveToMat(const char*) const;
 	void print() const;
 	void initExtraParam();
 	tpat_nodeset discretize(int) const;
 
 protected:
 
-	void saveTime(mat_t*);
+	void saveTime(mat_t*) const;
 };
 
 #endif

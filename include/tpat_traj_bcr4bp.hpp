@@ -38,7 +38,7 @@ class tpat_traj_bcr4bp : public tpat_traj{
 
 public:
 	// *structors
-	tpat_traj_bcr4bp(tpat_sys_data_bcr4bpr*);
+	tpat_traj_bcr4bp(const tpat_sys_data_bcr4bpr*);
 	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
 	tpat_traj_bcr4bp(const tpat_arc_data&);
 	
@@ -51,7 +51,7 @@ public:
 	void set_dqdT(int, double*);
 	void set_dqdT(int, std::vector<double>);
 
-	void saveToMat(const char*);
+	void saveToMat(const char*) const;
 private:
 
 	void initExtraParam();

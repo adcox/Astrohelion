@@ -67,7 +67,7 @@ tpat_model_cr3bp& tpat_model_cr3bp::operator =(const tpat_model_cr3bp &m){
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
-tpat_model::eom_fcn tpat_model_cr3bp::getSimpleEOM_fcn(){
+tpat_model::eom_fcn tpat_model_cr3bp::getSimpleEOM_fcn() const{
 	return &cr3bp_simple_EOMs;
 }//==============================================
 
@@ -75,7 +75,7 @@ tpat_model::eom_fcn tpat_model_cr3bp::getSimpleEOM_fcn(){
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
-tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn(){
+tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn() const{
 	return &cr3bp_EOMs;
 }//==============================================
 
@@ -87,10 +87,10 @@ tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn(){
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysData){
+std::vector<double> tpat_model_cr3bp::getPrimPos(double t, const tpat_sys_data *sysData) const{
     (void)t;
     double primPos[6] = {0};
-    tpat_sys_data_cr3bp crSys(*static_cast<tpat_sys_data_cr3bp *>(sysData));
+    const tpat_sys_data_cr3bp crSys(*static_cast<const tpat_sys_data_cr3bp *>(sysData));
     
     primPos[0] = -1*crSys.getMu();
     primPos[3] = 1 - crSys.getMu();
@@ -106,7 +106,7 @@ std::vector<double> tpat_model_cr3bp::getPrimPos(double t, tpat_sys_data *sysDat
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
-std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysData){
+std::vector<double> tpat_model_cr3bp::getPrimVel(double t, const tpat_sys_data *sysData) const{
     (void)t;
     (void)sysData;
     double primVel[6] = {0};
@@ -121,14 +121,15 @@ std::vector<double> tpat_model_cr3bp::getPrimVel(double t, tpat_sys_data *sysDat
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj){
+void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj) const{
 
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
+    const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(traj->getSysData());
 
     // Compute acceleration (elements 3 - 5)
     double dsdt[6] = {0};
-    cr3bp_simple_EOMs(t, y, dsdt, crSys);
+    eomParamStruct paramStruct(crSys);
+    cr3bp_simple_EOMs(t, y, dsdt, &paramStruct);
 
     // step(state, time, accel, stm) - y(0:5) holds the state, y(6:41) holds the STM
     tpat_traj_step step(y, t, dsdt+3, y+6);
@@ -156,9 +157,9 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    double *ic, double t0, double tof, verbosity_t verbose){
+    double *ic, double t0, double tof, verbosity_t verbose) const{
 
-    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp*>(traj->getSysData());
+    const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(traj->getSysData());
 
     // Create a nodeset for this particular type of system
     printVerb(verbose == ALL_MSG, "  Creating nodeset for event location\n");
@@ -220,7 +221,7 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c){
+void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c) const{
 
     // Let the base class do its thing first
     tpat_model::multShoot_applyConstraint(it, con, c);
@@ -245,10 +246,10 @@ void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constra
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con, int row0){
+void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     int n = con.getNode();
-    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *> (it->sysData);
+    const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *> (it->sysData);
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
@@ -297,7 +298,7 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constraint con, int row0){
+void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
 
     if(row0 != it->totalCons-1)
@@ -341,10 +342,10 @@ void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constra
  *
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent){
+tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent) const{
 
     // Create a nodeset with the same system data as the input
-    tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(it->sysData);
+    const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(it->sysData);
     tpat_nodeset_cr3bp *nodeset_out = new tpat_nodeset_cr3bp(crSys);
 
     int numNodes = (int)(it->origNodes.size());

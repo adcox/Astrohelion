@@ -23,7 +23,8 @@
 #include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_event.hpp"
-
+#include "tpat_sys_data.hpp"
+ 
 #include <vector>
 
 // Forward Declarations
@@ -33,6 +34,17 @@ class tpat_nodeset;
 class tpat_traj;
 class tpat_sys_data;
 struct iterationData;
+
+/**
+ *  @brief Container for EOM parameters
+ * 
+ *  @param sys A system data object
+ *  @return a reference to this struct
+ */
+struct eomParamStruct{
+	eomParamStruct(const tpat_sys_data *sys) : sysData(sys) {}
+	const tpat_sys_data *sysData;
+};
 
 /**
  *	@brief A base class that defines the behavior of a dynamical model and provides
@@ -103,7 +115,7 @@ public:
 	 *	The EOM function must be a non-member function; we store them in the 
 	 *	tpat_calculations.cpp file
 	 */
-	virtual eom_fcn getSimpleEOM_fcn() = 0;
+	virtual eom_fcn getSimpleEOM_fcn() const = 0;
 
 	/**
 	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
@@ -112,7 +124,7 @@ public:
 	 *	The EOM function must be a non-member function; we store them in the 
 	 *	tpat_calculations.cpp file
 	 */
-	virtual eom_fcn getFullEOM_fcn() = 0;
+	virtual eom_fcn getFullEOM_fcn() const = 0;
 
 	/**
 	 *	@brief Compute the positions of all primaries
@@ -122,7 +134,7 @@ public:
 	 *	@return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
-	virtual std::vector<double> getPrimPos(double t, tpat_sys_data *sysData) = 0;
+	virtual std::vector<double> getPrimPos(double t, const tpat_sys_data *sysData) const = 0;
 
 	/**
 	 *	@brief Compute the velocities of all primaries
@@ -132,14 +144,14 @@ public:
 	 *	@return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
-	virtual std::vector<double> getPrimVel(double t, tpat_sys_data *sysData) = 0;
+	virtual std::vector<double> getPrimVel(double t, const tpat_sys_data *sysData) const = 0;
 
-	virtual void multShoot_initDesignVec(iterationData*, tpat_nodeset*);
-	virtual void multShoot_scaleDesignVec(iterationData*);
-	virtual void multShoot_createContCons(iterationData*, tpat_nodeset*);
-	virtual void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*);
-	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
-	virtual double multShoot_getSlackVarVal(iterationData*, tpat_constraint);
+	virtual void multShoot_initDesignVec(iterationData*, tpat_nodeset*) const;
+	virtual void multShoot_scaleDesignVec(iterationData*, tpat_nodeset*) const;
+	virtual void multShoot_createContCons(iterationData*, tpat_nodeset*) const;
+	virtual void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*) const;
+	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
+	virtual double multShoot_getSlackVarVal(iterationData*, tpat_constraint)const ;
 
 	/**
 	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -157,7 +169,7 @@ public:
 	 *
 	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual tpat_nodeset* multShoot_createOutput(iterationData* it, tpat_nodeset *nodes_in, bool findEvent) = 0;
+	virtual tpat_nodeset* multShoot_createOutput(iterationData* it, tpat_nodeset *nodes_in, bool findEvent) const = 0;
 
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing
@@ -177,7 +189,7 @@ public:
 	 *  has been appended to the trajectory's data vectors.
 	 */
 	virtual bool sim_locateEvent(tpat_event event, tpat_traj *traj,
-    	double *ic, double t0, double tof, verbosity_t verbose) = 0;
+    	double *ic, double t0, double tof, verbosity_t verbose) const = 0;
 
 	/**
 	 *	@brief Takes an input state and time and saves the data to the trajectory
@@ -186,7 +198,7 @@ public:
 	 *	@param t the time at the current integration state
 	 *	@param traj a pointer to the trajectory we should store the data in
 	 */
-	virtual void sim_saveIntegratedData(double *y, double t, tpat_traj* traj) = 0;
+	virtual void sim_saveIntegratedData(double *y, double t, tpat_traj* traj) const = 0;
 
 	// Set and Get Functions
 	int getCoreStateSize() const;
@@ -214,17 +226,17 @@ protected:
 		tpat_event::YZ_PLANE, tpat_event::CRASH, tpat_event::APSE, tpat_event::DIST};
 
 	void copyMe(const tpat_model&);
-	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetDeltaV(iterationData*, tpat_constraint, int);
-	virtual double multShoot_targetDeltaV_compSlackVar(iterationData*, tpat_constraint);
-	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int);
-	virtual double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint);
-	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetState(iterationData*, tpat_constraint, int);
-	virtual void multShoot_targetTOF(iterationData*, tpat_constraint, int);
+	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int) const;
+	virtual void multShoot_targetDeltaV(iterationData*, tpat_constraint, int) const;
+	virtual double multShoot_targetDeltaV_compSlackVar(iterationData*, tpat_constraint) const;
+	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int) const;
+	virtual double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint) const;
+	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int) const;
+	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int) const;
+	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int) const;
+	virtual void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int) const;
+	virtual void multShoot_targetState(iterationData*, tpat_constraint, int) const;
+	virtual void multShoot_targetTOF(iterationData*, tpat_constraint, int) const;
 };
 
 #endif

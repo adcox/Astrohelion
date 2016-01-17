@@ -89,7 +89,7 @@ void tpat_sys_data_cr3bp::initFromPrimNames(std::string P1, std::string P2){
  *	@brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
-tpat_model* tpat_sys_data_cr3bp::getModel() { return &model; }
+const tpat_model* tpat_sys_data_cr3bp::getModel() const { return &model; }
 
 /**
  *	@brief Copy constructor
@@ -116,7 +116,7 @@ double tpat_sys_data_cr3bp::getMu() const { return otherParams.at(0); }
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
-void tpat_sys_data_cr3bp::saveToMat(mat_t *matFile){
+void tpat_sys_data_cr3bp::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
 
 	if(primaries.size() < 2){
@@ -137,8 +137,9 @@ void tpat_sys_data_cr3bp::saveToMat(mat_t *matFile){
 	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 
-	dims[1] = 1;	
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[0]), MAT_F_DONT_COPY_DATA);
+	dims[1] = 1;
+	double mu = otherParams[0];
+	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 }//===================================================
 

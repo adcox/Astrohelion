@@ -43,7 +43,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(tpat_sys_data_cr3bp_ltvp* sys) : tpat_traj(sys){
+tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp* sys) : tpat_traj(sys){
 	initExtraParam();
 }//====================================================
 
@@ -141,7 +141,7 @@ void tpat_traj_cr3bp_ltvp::initExtraParam(){
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj_cr3bp_ltvp::saveToMat(const char* filename){
+void tpat_traj_cr3bp_ltvp::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional

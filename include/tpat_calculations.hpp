@@ -112,25 +112,25 @@ void cr3bp_getUDDots(double, double, double, double, double*);
 double cr3bp_getJacobi(const double s[], double);
 double cr3bp_getVel_withC(const double s[], double, double, int);
 void cr3bp_getEquilibPt(tpat_sys_data_cr3bp, int, double, double[3]);
-tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, tpat_sys_data_cr3bp*, double, double, double);
-tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, tpat_sys_data_cr3bp*, double, double, double, double);
-tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp, tpat_sys_data_cr3bp*, double, double, double);
-tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp, tpat_sys_data_cr3bp*, double, double, double, double);
+tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, const tpat_sys_data_cr3bp*, double, double, double);
+tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, const tpat_sys_data_cr3bp*, double, double, double, double);
+tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp, const tpat_sys_data_cr3bp*, double, double, double);
+tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp, const tpat_sys_data_cr3bp*, double, double, double, double);
 std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t, double);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double);
 
 // BCR4BPR Utility Functions
-void bcr4bpr_getPrimaryPos(double, tpat_sys_data_bcr4bpr*, double*);
-void bcr4bpr_getPrimaryVel(double, tpat_sys_data_bcr4bpr*, double*);
-tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, tpat_sys_data_bcr4bpr*, double);
-tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, tpat_sys_data_bcr4bpr*, double);
-MatrixXRd bcr4bpr_spLoc_polyFit(tpat_sys_data_bcr4bpr*, double);
+void bcr4bpr_getPrimaryPos(double, const tpat_sys_data_bcr4bpr*, double*);
+void bcr4bpr_getPrimaryVel(double, const tpat_sys_data_bcr4bpr*, double*);
+tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, const tpat_sys_data_bcr4bpr*, double);
+tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, const tpat_sys_data_bcr4bpr*, double);
+MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr*, double);
 void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
-Eigen::Vector3d bcr4bpr_getSPLoc(tpat_sys_data_bcr4bpr*, double);
+Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr*, double);
 
 #endif
 //END

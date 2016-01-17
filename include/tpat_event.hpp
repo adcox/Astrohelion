@@ -93,10 +93,12 @@ class tpat_event{
 		};
 
 		// *structors
-		tpat_event();
-		tpat_event(tpat_sys_data*, event_t, int, bool);
-		tpat_event(tpat_sys_data*, event_t, int, bool, double*);
+		tpat_event(const tpat_sys_data*);
+		tpat_event(const tpat_sys_data*, event_t, int, bool);
+		tpat_event(const tpat_sys_data*, event_t, int, bool, double*);
 		tpat_event(const tpat_event&);
+		void createEvent(event_t, int, bool);
+		void createEvent(event_t, int, bool, double*);
 		~tpat_event();
 		
 		// Operators
@@ -119,6 +121,7 @@ class tpat_event{
 		bool stopOnEvent() const;
 
 		void setDir(int);
+		void setType(event_t);
 		void setStopCount(int);
 		void setSysData(tpat_sys_data*);
 
@@ -158,7 +161,7 @@ class tpat_event{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData;
 
-		tpat_sys_data* sysData; 	//!< Copy of the system data pointer
+		const tpat_sys_data* sysData; 	//!< Copy of the system data pointer
 
 		void copyEvent(const tpat_event&);
 		void initEvent(event_t, int, bool, double*);

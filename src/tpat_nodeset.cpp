@@ -47,7 +47,7 @@
  *	@brief Construct a nodeset for the specified system
  *	@param sys a pointer to a system data object
  */
-tpat_nodeset::tpat_nodeset(tpat_sys_data *sys) : tpat_arc_data(sys){
+tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_arc_data(sys){
 	initExtraParam();
 }//====================================================
 
@@ -326,7 +326,7 @@ void tpat_nodeset::reverseOrder() {
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_nodeset::saveToMat(const char* filename){
+void tpat_nodeset::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -363,7 +363,7 @@ void tpat_nodeset::saveToMat(const char* filename){
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t0, double tof, int numNodes, 
+void tpat_nodeset::initSetFromICs(double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes, 
 		node_distro_t type){
 	// Set up the simulation engine
 	tpat_simulation_engine engine(sysData);
@@ -487,7 +487,7 @@ void tpat_nodeset::initSetFromICs(double IC[6], tpat_sys_data *sysData, double t
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void tpat_nodeset::initSetFromTraj(tpat_traj traj, tpat_sys_data *sysData, int numNodes, node_distro_t type){
+void tpat_nodeset::initSetFromTraj(tpat_traj traj, const tpat_sys_data *sysData, int numNodes, node_distro_t type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getState(0);
@@ -500,7 +500,7 @@ void tpat_nodeset::initSetFromTraj(tpat_traj traj, tpat_sys_data *sysData, int n
  *	@brief Save time-of-flight values to a mat file
  *	@param matFile a pointer to the open mat file
  */
-void tpat_nodeset::saveTOFs(mat_t *matFile){
+void tpat_nodeset::saveTOFs(mat_t *matFile) const{
 	saveExtraParam(matFile, 0, "TOFs");
 }//==============================================
 

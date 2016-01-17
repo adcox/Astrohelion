@@ -43,7 +43,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-tpat_traj_bcr4bp::tpat_traj_bcr4bp(tpat_sys_data_bcr4bpr *sys) : tpat_traj(sys){
+tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_sys_data_bcr4bpr *sys) : tpat_traj(sys){
 	initExtraParam();
 }//====================================================
 
@@ -75,7 +75,7 @@ tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_arc_data &a) : tpat_traj(a){
  *	@return the angle between the P1/P2 line and the inertial x-axis, radians
  */
 double tpat_traj_bcr4bp::getTheta0(){
-	tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
+	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
 	return bcSys->getTheta0();
 }//====================================================
 
@@ -84,7 +84,7 @@ double tpat_traj_bcr4bp::getTheta0(){
  *	and the inertial x-axis, radians
  */
 double tpat_traj_bcr4bp::getPhi0(){
-	tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
+	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
 	return bcSys->getPhi0();
 }//====================================================
 
@@ -93,7 +93,7 @@ double tpat_traj_bcr4bp::getPhi0(){
  *	plane, radians
  */
 double tpat_traj_bcr4bp::getGamma(){
-	tpat_sys_data_bcr4bpr *bcSys = static_cast<tpat_sys_data_bcr4bpr *>(sysData);
+	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
 	return bcSys->getGamma();
 }//====================================================
 
@@ -157,7 +157,7 @@ void tpat_traj_bcr4bp::initExtraParam(){
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj_bcr4bp::saveToMat(const char* filename){
+void tpat_traj_bcr4bp::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional

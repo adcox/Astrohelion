@@ -43,7 +43,7 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 
 		tpat_sys_data_bcr4bpr& operator=(const tpat_sys_data_bcr4bpr&);
 		
-		tpat_model* getModel();
+		const tpat_model* getModel() const;
 
 		double getMu() const;
 		double getNu() const;
@@ -58,7 +58,7 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 		void setPhi0(double p);
 		void setGamma(double g);
 
-		void saveToMat(mat_t*);
+		void saveToMat(mat_t*) const;
 		void readFromMat(mat_t*);
 
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */

@@ -125,7 +125,7 @@ bool tpat_model::supportsEvent(tpat_event::event_t type) const{
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */
-void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set){
+void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set) const{
 	// Create the initial state vector
 	it->X.clear();
 
@@ -149,11 +149,39 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set){
 }//============================================================
 
 
-void tpat_model::multShoot_scaleDesignVec(iterationData *it){
-	// TO-DO: intelligent computation of constraint values
-	it->freeVarScale.push_back(2);		// Position
-	it->freeVarScale.push_back(3);		// Velocity
-	it->freeVarScale.push_back(4);		// Time
+void tpat_model::multShoot_scaleDesignVec(iterationData *it, tpat_nodeset *set) const{
+	// Group all like variables and then compute the largest magnitude of each
+	Eigen::VectorXd allPos(3*it->numNodes);
+	Eigen::VectorXd allVel(3*it->numNodes);
+	Eigen::VectorXd allTOF(it->numNodes - 1);
+	for(int n = 0; n < it->numNodes; n++){
+		allPos(3*n+0) = it->X[6*n+0];
+		allPos(3*n+1) = it->X[6*n+1];
+		allPos(3*n+2) = it->X[6*n+2];
+		allVel(3*n+0) = it->X[6*n+3];
+		allVel(3*n+1) = it->X[6*n+4];
+		allVel(3*n+2) = it->X[6*n+5];
+
+		if(n < it->numNodes - 1){
+			if(it->varTime){
+				// Get data
+				allTOF[n] = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
+			}else{
+				allTOF[n] = set->getTOF(n);
+			}
+		}
+	}
+	double maxPos = allPos.cwiseAbs().maxCoeff();
+	double maxVel = allVel.cwiseAbs().maxCoeff();
+	double maxTime = allVel.cwiseAbs().maxCoeff();
+	
+	// Scale each variable type by its maximum so that all values are between -1 and +1
+	it->freeVarScale[0] = maxPos == 0 ? 1 : 1/maxPos;		// Position scalar
+	it->freeVarScale[1] = maxVel == 0 ? 1 : 1/maxVel;		// Velocity scalar
+	it->freeVarScale[2] = maxTime == 0 ? 1 : 1/maxTime;		// TOF scalar
+
+	printf("Variable Scalings:\n  Pos = %.6f\n  Vel = %.6f\n  TOF = %.5f\n", 
+		it->freeVarScale[0], it->freeVarScale[1], it->freeVarScale[2]);
 
 	// Loop through all nodes and scale position, velocity, and time variables
 	for(int n = 0; n < it->numNodes; n++){
@@ -182,7 +210,7 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it){
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */	
-void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set){
+void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set) const{
 	// Create position and velocity constraints
     for(int n = 1; n < set->getNumNodes(); n++){
         // Get a vector specifying which velocity states are continuous from the nodeset
@@ -218,7 +246,7 @@ void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set){
  *	@param tof a pointer to a double the time-of-flight on the segment.
  */
 void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n,
-	double *ic, double *t0, double *tof){
+	double *ic, double *t0, double *tof) const{
 	
 	// Get data from free variable vector
 	std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
@@ -256,7 +284,7 @@ void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n
  *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
  */
-double tpat_model::multShoot_getSlackVarVal(iterationData *it, tpat_constraint con){
+double tpat_model::multShoot_getSlackVarVal(iterationData *it, tpat_constraint con) const{
 	switch(con.getType()){
 		case tpat_constraint::MAX_DIST:
 		case tpat_constraint::MIN_DIST:
@@ -284,7 +312,7 @@ double tpat_model::multShoot_getSlackVarVal(iterationData *it, tpat_constraint c
  *	@param c the index of the constraint within the total constraint vector (which is, in
  *	turn, stored in the iteration data)
  */	
-void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c){
+void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c) const{
 
 	int row0 = it->conRows[c];
 
@@ -340,7 +368,7 @@ void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint co
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0) const{
 	int n = con.getNode();
 	if(n == 0)
 		throw tpat_exception("tpat_model::multShoot_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
@@ -399,7 +427,7 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0) const{
 	// Do absoluately nothing
 	(void)it;
 	(void)con;
@@ -416,7 +444,7 @@ void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	// Allow user to constrain all 6 states
@@ -447,7 +475,7 @@ void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, i
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con, int row0) const{
 	// Only allow matching 6 states, not TOF (state 7)
 	int n = con.getNode();
 	int cn = con.getData()[0];
@@ -474,7 +502,7 @@ void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int count = 0;
@@ -507,17 +535,16 @@ void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint co
  *	@param con a copy of the constraint object
  *	@param c the index of this constraint in the constraint vector object
  */
-void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, int c){
+void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, int c) const{
 
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int Pix = (int)(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
-	tpat_sys_data *sysData = it->sysData;
 
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, sysData);
+	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
 	double dx = it->X[6*n+0] - primPos[Pix*3+0]*it->freeVarScale[0];
@@ -564,15 +591,14 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
  *  @param con the constraint the slack variable applies to
  *  @return the value of the slack variable
  */
-double tpat_model::multShoot_targetDist_compSlackVar(iterationData* it, tpat_constraint con){
+double tpat_model::multShoot_targetDist_compSlackVar(iterationData* it, tpat_constraint con) const{
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int Pix = (int)(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
-	tpat_sys_data *sysData = it->sysData;
 
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, sysData);
+	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
 	double dx = it->X[6*n+0] - primPos[Pix*3+0]*it->freeVarScale[0];
@@ -609,7 +635,7 @@ double tpat_model::multShoot_targetDist_compSlackVar(iterationData* it, tpat_con
  *	@param con the constraint being applied
  *	@param c the index of the first row for this constraint
  */
-void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, int c){
+void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, int c) const{
 
 	int row0 = it->conRows[c];
 
@@ -690,7 +716,7 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 	}
 }//==============================================
 
-double tpat_model::multShoot_targetDeltaV_compSlackVar(iterationData *it, tpat_constraint con){
+double tpat_model::multShoot_targetDeltaV_compSlackVar(iterationData *it, tpat_constraint con) const{
 	// double totalDV = 0;
 	// for(int n = 0; n < it->numNodes-1; n++){
 	// 	// compute squared magnitude of DV between node n and n+1
@@ -719,7 +745,7 @@ double tpat_model::multShoot_targetDeltaV_compSlackVar(iterationData *it, tpat_c
  *	This method *should* provide full functionality for any model; only 1's and 0's are
  *	used to relate TOFs.
  */
-void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int row0) const{
 	if(! it->varTime)
 		throw tpat_exception("tpat_model::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
@@ -744,16 +770,17 @@ void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int
  *	This method *should* provide full functionality for any autonomous model. Non-
  *	autonomous models will need to modify the function to account for epoch time
  */
-void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0){
+void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int Pix = (int)(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
-	tpat_sys_data *sysData = it->sysData;
+	
 	double sr = it->freeVarScale[0];
 	double sv = it->freeVarScale[1];
+	
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, sysData);
+	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
 	double dx = it->X[6*n+0]/sr - primPos[Pix*3+0];

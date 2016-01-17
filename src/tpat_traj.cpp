@@ -45,7 +45,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param data a pointer to a system data object
  */
-tpat_traj::tpat_traj(tpat_sys_data *data) : tpat_arc_data(data) {
+tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_arc_data(data) {
 	initExtraParam();
 }//====================================================
 
@@ -196,7 +196,7 @@ tpat_nodeset tpat_traj::discretize(int numNodes) const{
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj::saveToMat(const char* filename){
+void tpat_traj::saveToMat(const char* filename) const{
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 
 	 *	used containing the software, version, and date in it. If a header
@@ -231,7 +231,7 @@ void tpat_traj::print() const {
  *	@brief Save the times at each integration step
  *	@param file a pointer to an open Mat file
  */
-void tpat_traj::saveTime(mat_t *file){
+void tpat_traj::saveTime(mat_t *file) const{
 	saveExtraParam(file, 0, "Time");
 }//====================================================
 

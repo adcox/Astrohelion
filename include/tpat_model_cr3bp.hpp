@@ -38,20 +38,20 @@ public:
 	tpat_model_cr3bp& operator=(const tpat_model_cr3bp&);
 
 	// Core Functions
-	tpat_model::eom_fcn getFullEOM_fcn();
-	tpat_model::eom_fcn getSimpleEOM_fcn();
-	std::vector<double> getPrimPos(double, tpat_sys_data*);
-	std::vector<double> getPrimVel(double, tpat_sys_data*);
-	void sim_saveIntegratedData(double*, double, tpat_traj*);
-	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, verbosity_t);
+	tpat_model::eom_fcn getFullEOM_fcn() const;
+	tpat_model::eom_fcn getSimpleEOM_fcn() const;
+	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
+	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
+	void sim_saveIntegratedData(double*, double, tpat_traj*) const;
+	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, verbosity_t) const;
 
 	// Multiple shooting Functions
-	void multShoot_applyConstraint(iterationData*, tpat_constraint, int);
-	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool);
+	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
+	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool) const;
 
 protected:
-	void multShoot_targetJC(iterationData*, tpat_constraint, int);
-	void multShoot_targetPseudoArc(iterationData*, tpat_constraint, int);
+	void multShoot_targetJC(iterationData*, tpat_constraint, int) const;
+	void multShoot_targetPseudoArc(iterationData*, tpat_constraint, int) const;
 };
 
 #endif

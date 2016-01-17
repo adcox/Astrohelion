@@ -48,7 +48,7 @@ class tpat_sys_data_bcr4bpr;
  */
 struct iterationData{
 	public:
-		tpat_sys_data *sysData;					//!< A pointer to the system data object used for this corrections process
+		const tpat_sys_data *sysData;			//!< A pointer to the system data object used for this corrections process
 		tpat_nodeset *nodeset;					//!< A pointer to the nodeset input for this corrections process
 		std::vector<double> X0;					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X;					//!< Free-Variable Vector
@@ -72,8 +72,6 @@ struct iterationData{
 		 */
 		std::vector<double> freeVarScale;
 
-		// VectorXd freeVarShift;					//!< A scalar shift for each free variable to center them for numerical happiness
-
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
 		int count = 0;				//!< Count of number of iterations through corrections process
 
@@ -88,6 +86,19 @@ struct iterationData{
 /**
  *	@brief An engine object to perform corrections, such as multiple shooting.
  *
+ *	### Multiple Shooting Algorithm
+ *	The multiple shooting algorithm is initiated by calling the multShoot() function. 
+ *	Typical use calls the version which requires a nodeset pointer as the only input.
+ *	
+ *	Best Practices:
+ *	
+ *	- Variable scaling may be turned on to (hopefully) improve numerical performance when
+ *	some variables have different orders of magnitude. Basic testing has revealed that
+ *	this scaling has a positive effect when the scaling constants are relatively mild
+ *	(e.g., with magnitudes between 10^-2 and 10). If larger scaling factors are required,
+ *	it may be disadvantageous to scale the variables. In this case, it may be necessary to 
+ *	reformulate the problem to shift large variables.
+ *	
  *	@author Andrew Cox
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
@@ -111,6 +122,7 @@ class tpat_correction_engine{
 		tpat_nodeset_cr3bp getCR3BP_Output();
 		tpat_nodeset_bcr4bp getBCR4BPR_Output();
 		bool usesEqualArcTime() const;
+		bool usesScaledVars() const;
 		bool usesVarTime() const;
 
 		void setEqualArcTime(bool);
@@ -118,6 +130,7 @@ class tpat_correction_engine{
 		void setIgnoreDiverge(bool);
 		void setFindEvent(bool);
 		void setMaxIts(int);
+		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
 		void setVerbose(verbosity_t);
@@ -156,6 +169,9 @@ class tpat_correction_engine{
 
 		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
 		bool ignoreDiverge = false;
+
+		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
+		bool scaleVars = false;
 
 		/** The output nodeset, constructed from the corrected arcs */
 		tpat_nodeset *nodeset_out = 0;

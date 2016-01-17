@@ -116,8 +116,8 @@ public:
 class tpat_simulation_engine{
 	public:
 		// Constructors
-		tpat_simulation_engine();
-		tpat_simulation_engine(tpat_sys_data*);
+		// tpat_simulation_engine();
+		tpat_simulation_engine(const tpat_sys_data*);
 		tpat_simulation_engine(const tpat_simulation_engine&);	//copy constructor
 		
 		//Destructor
@@ -147,7 +147,7 @@ class tpat_simulation_engine{
 		void setNumSteps(int);
 		void setRelTol(double);
 		void setRevTime(bool);
-		void setSysData(tpat_sys_data*);
+		void setSysData(const tpat_sys_data*);
 		void setVerbose(verbosity_t);
 		void setVarStepSize(bool);
 
@@ -165,7 +165,7 @@ class tpat_simulation_engine{
 
 	private:
 		/** A pointer to a system data object; contains characteristic quantities, among other things */
-		tpat_sys_data *sysData;
+		const tpat_sys_data *sysData;
 
 		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
 		tpat_traj *traj = 0;

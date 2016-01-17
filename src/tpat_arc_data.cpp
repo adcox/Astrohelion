@@ -40,8 +40,8 @@
  *	@param sys a pointer to a system data object that describes
  *	the system this trajectory is integrated in
  */
-tpat_arc_data::tpat_arc_data(tpat_sys_data *sys){
-	sysData = sys;
+tpat_arc_data::tpat_arc_data(const tpat_sys_data *sys) : sysData(sys){
+	// sysData = sys;
 }//====================================================
 
 /**
@@ -233,7 +233,7 @@ MatrixXRd tpat_arc_data::getSTM(int ix) const{
  *	@brief Retrieve the a pointer to the system data object associated with this arc
  *	@return a pointer to the system data object associated with this arc
  */
-tpat_sys_data* tpat_arc_data::getSysData() { return sysData; }
+const tpat_sys_data* tpat_arc_data::getSysData() const { return sysData; }
 
 /**
  *	@brief Retrieve the tolerance with which data in this object was computed
@@ -316,7 +316,7 @@ void tpat_arc_data::copyMe(const tpat_arc_data &d){
  *	@brief Save the acceleration vector to file
  *	@param matFile a pointer to the destination mat-file
  */
-void tpat_arc_data::saveAccel(mat_t *matFile){
+void tpat_arc_data::saveAccel(mat_t *matFile) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> accel_colMaj(3*steps.size());
@@ -339,7 +339,7 @@ void tpat_arc_data::saveAccel(mat_t *matFile){
  *	@param varIx the index of the parameter
  *	@param name the name of the variable being saved
  */
-void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name){
+void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name) const{
 	if(varIx > numExtraParam || varIx < 0)
 		throw tpat_exception("Could not save extra parameter; index out of bounds");
 
@@ -369,7 +369,7 @@ void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name){
  *	@brief Save the state vector [pos, vel] to a file
  *	@param matFile a pointer to the destination matlab file 
  */
-void tpat_arc_data::saveState(mat_t *matFile){
+void tpat_arc_data::saveState(mat_t *matFile) const{
 	saveState(matFile, "State");
 }//==================================================
 
@@ -378,7 +378,7 @@ void tpat_arc_data::saveState(mat_t *matFile){
  *	@param matFile a pointer to the destination matlab file 
  *	@param varName the name of the variable (e.g. "state" or "nodes")
  */
-void tpat_arc_data::saveState(mat_t *matFile, const char* varName){
+void tpat_arc_data::saveState(mat_t *matFile, const char* varName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> posVel(6*steps.size());
@@ -418,7 +418,7 @@ void tpat_arc_data::saveState(mat_t *matFile, const char* varName){
  *	compatibility with existing MATLAB scripts
  *	@param matFile a pointer to the destination matlab file 
  */
-void tpat_arc_data::saveSTMs(mat_t *matFile){
+void tpat_arc_data::saveSTMs(mat_t *matFile) const{
 	// Create one large vector to put all the STM elements in
 	std::vector<double> allSTMEl(steps.size()*36);
 	for (size_t n = 0; n < steps.size(); n++){

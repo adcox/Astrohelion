@@ -75,7 +75,7 @@ tpat_sys_data_cr3bp_ltvp& tpat_sys_data_cr3bp_ltvp::operator= (const tpat_sys_da
  *	@brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
-tpat_model* tpat_sys_data_cr3bp_ltvp::getModel() { return &model; }
+const tpat_model* tpat_sys_data_cr3bp_ltvp::getModel() const { return &model; }
 
 /**
  *	@brief Get the non-dimensional thrust for P3 in this system
@@ -135,7 +135,7 @@ void tpat_sys_data_cr3bp_ltvp::setM0Dim(double d){ otherParams[3] = d/charM; }
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
-void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile){
+void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
 
 	if(primaries.size() < 2){
@@ -157,15 +157,19 @@ void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile){
 	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;	
-	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[0]), MAT_F_DONT_COPY_DATA);
+	double mu = otherParams[0];
+	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 
-	matvar_t *thrust_var = Mat_VarCreate("Thrust", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[1]), MAT_F_DONT_COPY_DATA);
+	double T = otherParams[1];
+	matvar_t *thrust_var = Mat_VarCreate("Thrust", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &T, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, thrust_var, "Thrust", MAT_COMPRESSION_NONE);
 
-	matvar_t *imp_var = Mat_VarCreate("Isp", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[2]), MAT_F_DONT_COPY_DATA);
+	double I = otherParams[2];
+	matvar_t *imp_var = Mat_VarCreate("Isp", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &I, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, imp_var, "Isp", MAT_COMPRESSION_NONE);
 
-	matvar_t *mass_var = Mat_VarCreate("Mass0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(otherParams[3]), MAT_F_DONT_COPY_DATA);
+	double m = otherParams[3];
+	matvar_t *mass_var = Mat_VarCreate("Mass0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &m, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, mass_var, "Mass0", MAT_COMPRESSION_NONE);
 }//===================================================

@@ -39,7 +39,7 @@ class tpat_traj_cr3bp : public tpat_traj{
 
 public:
 	// *structors
-	tpat_traj_cr3bp(tpat_sys_data_cr3bp*);
+	tpat_traj_cr3bp(const tpat_sys_data_cr3bp*);
 	tpat_traj_cr3bp(const tpat_traj_cr3bp&);
 	tpat_traj_cr3bp(const tpat_arc_data&);
 	
@@ -49,7 +49,7 @@ public:
 	double getJacobi(int) const;
 
 	void setJacobi(int, double);
-	void saveToMat(const char*);
+	void saveToMat(const char*) const;
 private:
 	void initExtraParam();
 	

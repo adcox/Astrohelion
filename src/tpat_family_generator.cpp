@@ -1048,7 +1048,7 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd 
 	double *X = newFreeVarVec.data();
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
-	tpat_sys_data_cr3bp *sys = static_cast<tpat_sys_data_cr3bp *>(familyItData.sysData);
+	const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(familyItData.sysData);
 	tpat_nodeset_cr3bp newMember(sys);
 
 	for(int n = 0; n < familyItData.numNodes; n++){

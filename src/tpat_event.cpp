@@ -40,8 +40,14 @@
 //      *structors
 //-----------------------------------------------------
 
-/** @brief Default, do-nothing constructor */
-tpat_event::tpat_event(){}
+/**
+ *  @brief Basic constructor
+ *  @details Use one of the two createEvent() functions to initialize the rest
+ *  of the event object
+ * 
+ *  @param data a system data object that describes the system this event will occur in
+ */
+tpat_event::tpat_event(const tpat_sys_data *data) : sysData(data) {}
 
 /**
  *	@brief Create an event
@@ -50,16 +56,12 @@ tpat_event::tpat_event(){}
  *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
  *	primary and miss distance, use the customizable constructor.
  *
- *	@param data a system data object that describes the system this event will occur in
  *	@param t the event type
  *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
-tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
-	// Create constraint data based on the type by calling the more detailed constructor
-	sysData = data;
-
+void tpat_event::createEvent(event_t t, int dir, bool willStop){
 	switch(t){
 		case YZ_PLANE:
 		case XZ_PLANE:
@@ -77,6 +79,43 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
 		default: 
 			throw tpat_exception("tpat_event::tpat_event: Creating event with no type");
 	}
+}//===================================================
+
+/**
+ *	@brief Create an event with custom specifications
+ *	
+ *	Rather than using the default parameters, this constructor allows you to
+ *	create more specialized events.
+ *
+ *	@param t the event type
+ *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	direction, -1 (-) direction, and 0 both directions.
+ *	@param willStop whether or not this event should stop the integration
+ *	@param params an array of doubles that give the constructor extra information. No
+ *	specific size is required, but params must have at least as many elements as the 
+ *	event type will expect (otherwise it will read uninitialized memory).
+ *
+ *	@see tpat_event::event_t
+ */
+void tpat_event::createEvent(event_t t, int dir, bool willStop, double *params){
+	initEvent(t, dir, willStop, params);
+}//====================================================
+
+/**
+ *	@brief Create an event
+ *
+ *	Note that creating a CRASH event using this constructor will default to a crash
+ *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
+ *	primary and miss distance, use the customizable constructor.
+ *
+ *	@param data a system data object that describes the system this event will occur in
+ *	@param t the event type
+ *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	direction, -1 (-) direction, and 0 both directions.
+ *	@param willStop whether or not this event should stop the integration
+ */
+tpat_event::tpat_event(const tpat_sys_data *data, event_t t, int dir, bool willStop) : sysData(data){
+	createEvent(t, dir, willStop);
 }//================================================
 
 
@@ -97,8 +136,7 @@ tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir, bool willStop){
  *
  *	@see tpat_event::event_t
  */
-tpat_event::tpat_event(tpat_sys_data *data, event_t t, int dir , bool willStop, double* params){
-	sysData = data;
+tpat_event::tpat_event(const tpat_sys_data *data, event_t t, int dir , bool willStop, double* params) : sysData(data){
 	initEvent(t, dir, willStop, params);
 }//==========================================
 
@@ -398,7 +436,7 @@ double tpat_event::getDist(const double y[6], double t) const{
 		}
 		case JC:
 		{
-			tpat_sys_data_cr3bp *crSys = static_cast<tpat_sys_data_cr3bp *>(sysData);
+			const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(sysData);
 			d = conData[0] - cr3bp_getJacobi(y, crSys->getMu());
 			break;
 		}

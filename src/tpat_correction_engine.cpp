@@ -116,13 +116,19 @@ tpat_correction_engine& tpat_correction_engine::operator =(const tpat_correction
 bool tpat_correction_engine::usesVarTime() const { return varTime; }
 
 /**
- *	@brief Retrieve whether or not we are force all segments to have the same length
+ *	@brief Retrieve whether or not we force all segments to have the same length
  *	(in time).
  *
  *	This setting only applies if variable time is turned on.
  *	@return whether or not each arc will be forced to have the same length in time
  */
 bool tpat_correction_engine::usesEqualArcTime() const { return equalArcTime; }
+
+/**
+ *  @brief Retrieve whether or not the multiple shooting algorithm uses variable scaling
+ *  @return whether or not the multiple shooting algorithm uses variable scaling
+ */
+bool tpat_correction_engine::usesScaledVars() const { return scaleVars; }
 
 /**
  *  @brief Retrieve the verbosity setting
@@ -249,6 +255,13 @@ void tpat_correction_engine::setVerbose(verbosity_t b){ verbose = b; }
 void tpat_correction_engine::setMaxIts(int i){ maxIts = i; }
 
 /**
+ *  @brief Set the scaleVar flag
+ * 
+ *  @param b whether or not the multiple shooting algorithm should use variable scaling
+ */
+void tpat_correction_engine::setScaleVars(bool b){ scaleVars = b; }
+
+/**
  *	@brief Set the error tolerance
  *	@param d errors below this value will be considered negligible
  */
@@ -312,12 +325,14 @@ iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
 	printVerb(verbose == ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the nodeset
-	tpat_model *model = set->getSysData()->getModel();
+	const tpat_model *model = set->getSysData()->getModel();
 	model->multShoot_initDesignVec(&it, set);
 
 	// Set up scaling
-	model->multShoot_scaleDesignVec(&it);
-	
+	it.freeVarScale.assign(4, 1);	// Assign all variable scalings to be one -> NOTE: ADD MORE ENTRIES IF YOU NEED MORE!!
+	if(scaleVars)
+		model->multShoot_scaleDesignVec(&it, set);
+
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
 	it.allCons.clear();

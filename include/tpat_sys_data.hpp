@@ -77,7 +77,7 @@ class tpat_sys_data{
 		 *	@brief Retrieve the model that governs the motion for this system type
 		 *	@return the model that governs the motion for this system type
 		 */
-		virtual tpat_model* getModel() = 0;
+		virtual const tpat_model* getModel() const = 0;
 		
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
@@ -89,7 +89,7 @@ class tpat_sys_data{
 		 *	@brief Save the system data object to a file
 		 *	@param matFile a pointer to an open mat file
 		 */
-		virtual void saveToMat(mat_t *matFile) = 0;
+		virtual void saveToMat(mat_t *matFile) const = 0;
 		
 	protected:
 		/** Number of primaries that exist in this system */

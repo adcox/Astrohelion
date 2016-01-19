@@ -55,7 +55,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_sys_data_cr3bp *data) : tpat_n
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], const tpat_sys_data_cr3bp *data, double tof,
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const double IC[6], const tpat_sys_data_cr3bp *data, double tof,
 	int numNodes, node_distro_t type) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -90,7 +90,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, const tpat_sys_da
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(double IC[6], const tpat_sys_data_cr3bp *data, double tof, 
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const double IC[6], const tpat_sys_data_cr3bp *data, double tof, 
 	int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();

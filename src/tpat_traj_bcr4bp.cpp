@@ -116,7 +116,7 @@ std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
  *	@param dqdT a pointer to the dqdT vector; this MUST have at least 6 elements,
  *	or the function will read unallocated memory.
  */
-void tpat_traj_bcr4bp::set_dqdT(int ix, double *dqdT){
+void tpat_traj_bcr4bp::set_dqdT(int ix, const double *dqdT){
 	if(ix < 0)
 		ix += steps.size();
 

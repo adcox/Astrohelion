@@ -42,12 +42,12 @@ public:
 	tpat_model::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
 	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
-	void sim_saveIntegratedData(double*, double, tpat_traj*) const;
-	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, verbosity_t) const;
+	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
+	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, verbosity_t) const;
 
 	// Multiple shooting Functions
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool) const;
+	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
 
 protected:
 	void multShoot_targetJC(iterationData*, tpat_constraint, int) const;

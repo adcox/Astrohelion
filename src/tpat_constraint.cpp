@@ -37,7 +37,7 @@
  */
 tpat_constraint::tpat_constraint(){
 	data.clear();
-}//============================================
+}//====================================================
 
 /**
  *	@brief Construct a constraint with specified constraint type
@@ -46,7 +46,7 @@ tpat_constraint::tpat_constraint(){
 tpat_constraint::tpat_constraint(constraint_t type){
 	this->type = type;
 	data.clear();
-}//============================================
+}//====================================================
 
 /**
  *	@brief Construct a constraint with specified constraint type and data values
@@ -58,7 +58,7 @@ tpat_constraint::tpat_constraint(constraint_t type, int node, std::vector<double
 	this->type = type;
 	this->node = node;
 	this->data = data;
-}//============================================
+}//====================================================
 
 /**
  *	@brief Construct a constraint with specified constraint type, and data values
@@ -71,17 +71,15 @@ tpat_constraint::tpat_constraint(constraint_t type, int node, const double* data
 	this->type = type;
 	this->node = node;
 	this->data.insert(this->data.begin(), data, data + data_len);
-}//============================================
+}//====================================================
 
 /**
  *	@brief Create a copy of the specified constraint
  *	@param c a constraint
  */
 tpat_constraint::tpat_constraint(const tpat_constraint& c){
-	type = c.type;
-	node = c.node;
-	data = c.data;
-}//============================================
+	copyMe(c);
+}//====================================================
 
 /**
  *	@brief Destructor
@@ -100,11 +98,9 @@ tpat_constraint::~tpat_constraint(){
  *	@return this constraint, now equal to c
  */
 tpat_constraint& tpat_constraint::operator =(const tpat_constraint& c){
-	type = c.type;
-	node = c.node;
-	data = c.data;
+	copyMe(c);
 	return *this;
-}//============================================
+}//====================================================
 
 //-----------------------------------------------------
 // 		Set and Get Functions
@@ -136,7 +132,7 @@ int tpat_constraint::countConstrainedStates() const{
 		count += !std::isnan(data.at(n));
 	}
 	return count;
-}//============================================
+}//====================================================
 
 /**
  *	@brief Set the constraint type
@@ -165,19 +161,28 @@ void tpat_constraint::setData(std::vector<double> d){ data = d; }
 void tpat_constraint::setData(const double *dat, int len){
 	data.clear();
 	data.insert(data.begin(), dat, dat+len);
-}
+}//====================================================
 
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
 
 /**
+ *  @brief Copy the constraint
+ * 
+ *  @param c reference to a constraint object
+ */
+void tpat_constraint::copyMe(const tpat_constraint &c){
+	type = c.type;
+	node = c.node;
+	data = c.data;
+}//====================================================
+
+/**
  *  @brief Get a human-redable string representing the constraint type
  *  @return a human-redable string representing the constraint type
  */
-const char* tpat_constraint::getTypeStr() const{
-	return getConTypeStr(type);
-}
+const char* tpat_constraint::getTypeStr() const{ return getConTypeStr(type); }
 
 /**
  *	@param t a constraint type
@@ -206,7 +211,7 @@ const char* tpat_constraint::getConTypeStr(tpat_constraint::constraint_t t){
 		case tpat_constraint::PSEUDOARC: { return "PSEUDO-ARCLENGTH"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}
-}//========================================
+}//====================================================
 
 /**
  *	@brief Print this constraint and its data to the standard output.
@@ -217,4 +222,4 @@ void tpat_constraint::print() const {
 		printf("%12.5f ", data[n]);
 	}
 	printf("\n");
-}//========================================
+}//====================================================

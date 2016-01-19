@@ -125,7 +125,7 @@ bool tpat_model::supportsEvent(tpat_event::event_t type) const{
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */
-void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set) const{
+void tpat_model::multShoot_initDesignVec(iterationData *it, const tpat_nodeset *set) const{
 	// Create the initial state vector
 	it->X.clear();
 
@@ -149,7 +149,7 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, tpat_nodeset *set) c
 }//============================================================
 
 
-void tpat_model::multShoot_scaleDesignVec(iterationData *it, tpat_nodeset *set) const{
+void tpat_model::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset *set) const{
 	// Group all like variables and then compute the largest magnitude of each
 	Eigen::VectorXd allPos(3*it->numNodes);
 	Eigen::VectorXd allVel(3*it->numNodes);
@@ -210,7 +210,7 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it, tpat_nodeset *set) 
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */	
-void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set) const{
+void tpat_model::multShoot_createContCons(iterationData *it, const tpat_nodeset *set) const{
 	// Create position and velocity constraints
     for(int n = 1; n < set->getNumNodes(); n++){
         // Get a vector specifying which velocity states are continuous from the nodeset
@@ -245,7 +245,7 @@ void tpat_model::multShoot_createContCons(iterationData *it, tpat_nodeset *set) 
  *	@param t0 a pointer to a double representing the initial time (epoch)
  *	@param tof a pointer to a double the time-of-flight on the segment.
  */
-void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n,
+void tpat_model::multShoot_getSimICs(const iterationData *it, const tpat_nodeset *set, int n,
 	double *ic, double *t0, double *tof) const{
 	
 	// Get data from free variable vector
@@ -284,7 +284,7 @@ void tpat_model::multShoot_getSimICs(iterationData *it, tpat_nodeset *set, int n
  *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
  */
-double tpat_model::multShoot_getSlackVarVal(iterationData *it, tpat_constraint con) const{
+double tpat_model::multShoot_getSlackVarVal(const iterationData *it, tpat_constraint con) const{
 	switch(con.getType()){
 		case tpat_constraint::MAX_DIST:
 		case tpat_constraint::MIN_DIST:
@@ -591,7 +591,7 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
  *  @param con the constraint the slack variable applies to
  *  @return the value of the slack variable
  */
-double tpat_model::multShoot_targetDist_compSlackVar(iterationData* it, tpat_constraint con) const{
+double tpat_model::multShoot_targetDist_compSlackVar(const iterationData* it, tpat_constraint con) const{
 	std::vector<double> conData = con.getData();
 	int n = con.getNode();
 	int Pix = (int)(conData[0]);	// index of primary	
@@ -716,7 +716,7 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 	}
 }//==============================================
 
-double tpat_model::multShoot_targetDeltaV_compSlackVar(iterationData *it, tpat_constraint con) const{
+double tpat_model::multShoot_targetDeltaV_compSlackVar(const iterationData *it, tpat_constraint con) const{
 	// double totalDV = 0;
 	// for(int n = 0; n < it->numNodes-1; n++){
 	// 	// compute squared magnitude of DV between node n and n+1

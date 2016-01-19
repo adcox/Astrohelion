@@ -197,6 +197,8 @@ class tpat_constraint{
 		const char* getTypeStr() const;
 		static const char* getConTypeStr(constraint_t);
 	private:
+		void copyMe(const tpat_constraint&);
+		
 		constraint_t type = NONE;	//!< The type of constraint
 		int node = 0;				//!< Node index that this constraint applies to
 		std::vector<double> data;	//!< Data for this constraint

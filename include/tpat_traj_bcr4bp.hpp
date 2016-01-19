@@ -48,7 +48,7 @@ public:
 	double getGamma();
 	std::vector<double> get_dqdT(int);
 
-	void set_dqdT(int, double*);
+	void set_dqdT(int, const double*);
 	void set_dqdT(int, std::vector<double>);
 
 	void saveToMat(const char*) const;

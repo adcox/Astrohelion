@@ -58,7 +58,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_sys_data_bcr4bpr *data) : tp
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], const tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
@@ -97,7 +97,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(double IC[6], const tpat_sys_data_bcr4bpr *data, 
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data_bcr4bpr *data, 
 	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
 
 	initExtraParam();

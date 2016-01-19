@@ -103,7 +103,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, dou
 MatrixXRd getMirrorMat(mirror_t);
 double getStabilityIndex(std::vector<cdouble>);
 double getTotalDV(const iterationData*);
-void finiteDiff_checkMultShoot(tpat_nodeset*);
+void finiteDiff_checkMultShoot(const tpat_nodeset*);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 

@@ -43,9 +43,9 @@ class tpat_nodeset_cr3bp : public tpat_nodeset{
 public:
 	// *structors
 	tpat_nodeset_cr3bp(const tpat_sys_data_cr3bp*);
-	tpat_nodeset_cr3bp(double[6], const tpat_sys_data_cr3bp*, double, int);
+	tpat_nodeset_cr3bp(const double[6], const tpat_sys_data_cr3bp*, double, int);
 	tpat_nodeset_cr3bp(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
-	tpat_nodeset_cr3bp(double[6], const tpat_sys_data_cr3bp*, double, int, node_distro_t);
+	tpat_nodeset_cr3bp(const double[6], const tpat_sys_data_cr3bp*, double, int, node_distro_t);
 	tpat_nodeset_cr3bp(std::vector<double>, const tpat_sys_data_cr3bp*, double, int, node_distro_t);
 	tpat_nodeset_cr3bp(tpat_traj_cr3bp, int);
 	tpat_nodeset_cr3bp(tpat_traj_cr3bp, int, node_distro_t);

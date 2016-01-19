@@ -401,7 +401,7 @@ void tpat_simulation_engine::setNumSteps(int n){ numSteps = n; }
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
  */
-void tpat_simulation_engine::runSim(double *ic, double tof){
+void tpat_simulation_engine::runSim(const double *ic, double tof){
 	runSim(ic, 0, tof);
 }//=======================================================
 
@@ -446,7 +446,7 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double to
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
  */
-void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
+void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
     printVerbColor(verbose == ALL_MSG, GREEN, "Running simulation...\n");
     if(!isClean){
         cleanEngine();
@@ -526,7 +526,7 @@ void tpat_simulation_engine::runSim(double *ic, double t0, double tof){
  *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
  *  @param t_dim the dimension of t
  */
-void tpat_simulation_engine::integrate(double ic[], double t[], int t_dim){
+void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_dim){
     // Save tolerance for trajectory
     traj->setTol(absTol > relTol ? absTol : relTol);
     const tpat_model *model = sysData->getModel();

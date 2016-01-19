@@ -121,7 +121,7 @@ std::vector<double> tpat_model_cr3bp::getPrimVel(double t, const tpat_sys_data *
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj) const{
+void tpat_model_cr3bp::sim_saveIntegratedData(const double* y, double t, tpat_traj* traj) const{
 
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(traj->getSysData());
@@ -157,7 +157,7 @@ void tpat_model_cr3bp::sim_saveIntegratedData(double* y, double t, tpat_traj* tr
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    double *ic, double t0, double tof, verbosity_t verbose) const{
+    const double *ic, double t0, double tof, verbosity_t verbose) const{
 
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(traj->getSysData());
 
@@ -342,7 +342,7 @@ void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constra
  *
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent) const{
+tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
 
     // Create a nodeset with the same system data as the input
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(it->sysData);

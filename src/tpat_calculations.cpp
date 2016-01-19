@@ -67,7 +67,7 @@
  *  @param s the 42-d state vector
  *  @param sdot the 42-d state derivative vector
  *  @param *params pointer to extra parameters required for integration. For this
- *  function, the pointer points to a cr3bp system data object
+ *  function, the pointer points to an eomParamStruct object
  */
 int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
     (void)t;
@@ -132,7 +132,7 @@ int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
  *  @param t time at integration step (unused)
  *  @param s the 6-d state vector
  *  @param sdot the 6-d state derivative vector
- *  @param params points to a cr3bp system data object
+ *  @param params points to an eomParamStruct object
  */
 int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
     (void)t;
@@ -168,7 +168,7 @@ int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
  *  the 7th is mass, and the final 36 are STM elements
  *  @param sdot the 43-d state derivative vector
  *  @param *params pointer to extra parameters required for integration. For this
- *  function, the pointer points to a cr3bp system data object
+ *  function, the pointer points to an eomParamStruct object
  */
 int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
     // Extract mu from params
@@ -265,7 +265,7 @@ int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
  *  @param t time at integration step (unused)
  *  @param s the 7-d state vector
  *  @param sdot the 7-d state derivative vector
- *  @param params points to a cr3bp system data object
+ *  @param params points to an eomParamStruct object
  */
 int cr3bp_ltvp_simple_EOMs(double t, const double s[], double sdot[], void *params){
     // tpat_sys_data_cr3bp_ltvp *sysData = static_cast<tpat_sys_data_cr3bp_ltvp *>(params);
@@ -306,8 +306,7 @@ int cr3bp_ltvp_simple_EOMs(double t, const double s[], double sdot[], void *para
  *   @param t epoch at integration step
  *   @param s the 48-d state vector
  *   @param sdot the 48-d state derivative vector
- *   @param params points to additional integration parameters wrapped in an 
- *  <tt>tpat_sys_data_bcr4bpr</tt> data object.
+ *   @param params points to an eomParamStruct object
  */
 int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
@@ -462,8 +461,7 @@ int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
  *   @param t epoch at integration step
  *   @param s the 6-d state vector
  *   @param sdot the 6-d state derivative vector
- *   @param params points to additional integration parameters wrapped in an 
- *  <tt>tpat_sys_data_bcr4bpr</tt> data object.
+ *   @param params points to an eomParamStruct object
  */
 int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
@@ -1098,7 +1096,7 @@ double getTotalDV(const iterationData *it){
  * 
  *  @param nodeset A nodeset with some constraints
  */
-void finiteDiff_checkMultShoot(tpat_nodeset *nodeset){
+void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     printf("Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
     tpat_correction_engine corrector;
@@ -1154,8 +1152,8 @@ void finiteDiff_checkMultShoot(tpat_nodeset *nodeset){
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
     MatrixXRd DFest_abs = DFest.cwiseAbs();
 
-    toCSV(DF, "DF.csv");
-    toCSV(DFest, "DFest.csv");
+    toCSV(DF, "FiniteDiff_DF.csv");
+    toCSV(DFest, "FiniteDiff_DFest.csv");
     diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
 
     // Divide each element by the magnitude of the DF element to get a relative difference magnitude
@@ -1171,7 +1169,7 @@ void finiteDiff_checkMultShoot(tpat_nodeset *nodeset){
             // }
     //     }
     // }
-    toCSV(diff, "Diff.csv");
+    toCSV(diff, "FiniteDiff_Diff.csv");
 
     Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
     Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
@@ -2249,6 +2247,7 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr *bcSys, double T0){
  *  in this data object
  */
 void bcr4bpr_orientAtEpoch(double et, tpat_sys_data_bcr4bpr *sysData){
+    // Both theta and phi are approximately equal to zero at REF_EPOCH
     double time_nonDim = (et - tpat_sys_data_bcr4bpr::REF_EPOCH)/sysData->getCharT();
     
     // Compute theta and phi

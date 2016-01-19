@@ -120,7 +120,7 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, const tpat_sys_d
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_traj* traj) const{
+void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, tpat_traj* traj) const{
 	// Save the position and velocity states
     double state[6];
     std::copy(y, y+6, state);
@@ -168,7 +168,14 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(double* y, double t, tpat_tra
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    double *ic, double t0, double tof, verbosity_t verbose) const{
+    const double *ic, double t0, double tof, verbosity_t verbose) const{
+
+    (void) event;
+    (void) traj;
+    (void) ic;
+    (void) t0;
+    (void) tof;
+    (void) verbose;
 
     return true;
 }//=======================================================
@@ -187,7 +194,9 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
  */
-tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(iterationData *it, tpat_nodeset *nodes_in, bool findEvent) const{
+tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
+    (void) it;
+    (void) findEvent;
     const tpat_sys_data_cr3bp_ltvp *sys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
     return new tpat_nodeset_cr3bp(sys);
 }//====================================================

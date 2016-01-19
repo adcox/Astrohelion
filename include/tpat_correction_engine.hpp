@@ -49,7 +49,7 @@ class tpat_sys_data_bcr4bpr;
 struct iterationData{
 	public:
 		const tpat_sys_data *sysData;			//!< A pointer to the system data object used for this corrections process
-		tpat_nodeset *nodeset;					//!< A pointer to the nodeset input for this corrections process
+		const tpat_nodeset *nodeset;					//!< A pointer to the nodeset input for this corrections process
 		std::vector<double> X0;					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X;					//!< Free-Variable Vector
 		std::vector<double> FX;					//!< Constraint Function Vector
@@ -136,7 +136,7 @@ class tpat_correction_engine{
 		void setVerbose(verbosity_t);
 		
 		// Utility/Action functions
-		iterationData multShoot(tpat_nodeset*);
+		iterationData multShoot(const tpat_nodeset*);
 		iterationData multShoot(iterationData);
 
 	private:
@@ -181,7 +181,7 @@ class tpat_correction_engine{
 
 		void cleanEngine();
 		void copyEngine(const tpat_correction_engine&);
-		void reportConMags(iterationData*);
+		void reportConMags(const iterationData*);
 		Eigen::VectorXd solveUpdateEq(iterationData*);
 };
 

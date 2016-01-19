@@ -43,17 +43,17 @@ public:
 	tpat_model::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
 	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
-	void sim_saveIntegratedData(double*, double, tpat_traj*) const;
-	bool sim_locateEvent(tpat_event, tpat_traj*, double*, double, double, verbosity_t) const;
+	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
+	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, verbosity_t) const;
 
 	// Multiple Shooting functions
-	void multShoot_initDesignVec(iterationData*, tpat_nodeset*) const;
-	void multShoot_scaleDesignVec(iterationData*, tpat_nodeset*) const;
-	void multShoot_createContCons(iterationData*, tpat_nodeset*) const;
-	void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*) const;
-	double multShoot_getSlackVarVal(iterationData*, tpat_constraint) const;
+	void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
+	void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;
+	void multShoot_createContCons(iterationData*, const tpat_nodeset*) const;
+	void multShoot_getSimICs(const iterationData*, const tpat_nodeset*, int, double*, double*, double*) const;
+	double multShoot_getSlackVarVal(const iterationData*, tpat_constraint) const;
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	tpat_nodeset* multShoot_createOutput(iterationData*, tpat_nodeset*, bool) const;
+	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
 
 protected:
 	void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int) const;
@@ -61,12 +61,12 @@ protected:
 	void multShoot_targetState(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetDeltaV(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetDist(iterationData*, tpat_constraint, int) const;
-	double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint) const;
+	double multShoot_targetDist_compSlackVar(const iterationData*, tpat_constraint) const;
 	void multShoot_targetSP(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetSP_mag(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetSP_dist(iterationData*, tpat_constraint, int) const;
-	double multShoot_targetSPMag_compSlackVar(iterationData*, tpat_constraint) const;
-	double multShoot_targetSP_maxDist_compSlackVar(iterationData*, tpat_constraint) const;
+	double multShoot_targetSPMag_compSlackVar(const iterationData*, tpat_constraint) const;
+	double multShoot_targetSP_maxDist_compSlackVar(const iterationData*, tpat_constraint) const;
 };
 
 #endif

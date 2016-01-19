@@ -363,7 +363,7 @@ void tpat_nodeset::saveToMat(const char* filename) const{
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-void tpat_nodeset::initSetFromICs(double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes, 
+void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes, 
 		node_distro_t type){
 	// Set up the simulation engine
 	tpat_simulation_engine engine(sysData);

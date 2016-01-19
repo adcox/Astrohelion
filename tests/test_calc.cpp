@@ -126,7 +126,7 @@ void checkOrientAtEpoch(){
 	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
 
 	tpat_sys_data_bcr4bpr sys("Sun", "Earth", "moon");
-	double T0 = leaveHaloEpoch/sys.getCharT();
+	double T0 = (leaveHaloEpoch - tpat_sys_data_bcr4bpr::REF_EPOCH)/sys.getCharT();
 	tpat_sys_data_bcr4bpr sys_shifted = sys;
 	bcr4bpr_orientAtEpoch(leaveHaloEpoch, &sys_shifted);
 	
@@ -143,14 +143,16 @@ void checkOrientAtEpoch(){
 
 		bool samePos = true, sameVel = true;
 		for(int n = 0; n < 9; n++){
-			if(primPos1[n] != primPos2[n])
+			if( !tpat_util::aboutEquals(primPos1[n], primPos2[n], 1e-4) )
 				samePos = false;
-			if(primVel1[n] != primVel2[n])
+			if( !tpat_util::aboutEquals(primVel1[n], primVel2[n], 1e-4) )
 				sameVel = false;
 		}
 
 		cout << "Epoch " << i << ": Position: " << (samePos ? PASS : FAIL) << " Velocity: " << (sameVel ? PASS : FAIL) << endl;
 		if(!samePos){
+			printf("P1 Pos1 = [%.4f, %.4f, %.4f], P1 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[0],
+				primPos1[1], primPos1[2], primPos2[0], primPos2[1], primPos2[2]);
 			printf("P2 Pos1 = [%.4f, %.4f, %.4f], P2 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[3],
 				primPos1[4], primPos1[5], primPos2[3], primPos2[4], primPos2[5]);
 			printf("P3 Pos1 = [%.4f, %.4f, %.4f], P3 Pos 2 (shifted epoch) = [%.4f, %.4f, %.4f]\n", primPos1[6],

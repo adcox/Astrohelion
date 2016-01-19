@@ -37,7 +37,11 @@ struct iterationData;
 
 /**
  *  @brief Container for EOM parameters
- * 
+ *  @details At the current time, this object stores only the system data object pointer.
+ *  Since the GSL functions demand a null pointer and the system data pointers owned by
+ *  most objects are const-modified, this object serves as a non-const wrapper for 
+ *  the system data pointers.
+ *  
  *  @param sys A system data object
  *  @return a reference to this struct
  */
@@ -146,12 +150,12 @@ public:
 	 */
 	virtual std::vector<double> getPrimVel(double t, const tpat_sys_data *sysData) const = 0;
 
-	virtual void multShoot_initDesignVec(iterationData*, tpat_nodeset*) const;
-	virtual void multShoot_scaleDesignVec(iterationData*, tpat_nodeset*) const;
-	virtual void multShoot_createContCons(iterationData*, tpat_nodeset*) const;
-	virtual void multShoot_getSimICs(iterationData*, tpat_nodeset*, int, double*, double*, double*) const;
+	virtual void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
+	virtual void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;
+	virtual void multShoot_createContCons(iterationData*, const tpat_nodeset*) const;
+	virtual void multShoot_getSimICs(const iterationData*, const tpat_nodeset*, int, double*, double*, double*) const;
 	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	virtual double multShoot_getSlackVarVal(iterationData*, tpat_constraint)const ;
+	virtual double multShoot_getSlackVarVal(const iterationData*, tpat_constraint)const ;
 
 	/**
 	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -169,7 +173,7 @@ public:
 	 *
 	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual tpat_nodeset* multShoot_createOutput(iterationData* it, tpat_nodeset *nodes_in, bool findEvent) const = 0;
+	virtual tpat_nodeset* multShoot_createOutput(const iterationData* it, const tpat_nodeset *nodes_in, bool findEvent) const = 0;
 
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing
@@ -189,7 +193,7 @@ public:
 	 *  has been appended to the trajectory's data vectors.
 	 */
 	virtual bool sim_locateEvent(tpat_event event, tpat_traj *traj,
-    	double *ic, double t0, double tof, verbosity_t verbose) const = 0;
+    	const double *ic, double t0, double tof, verbosity_t verbose) const = 0;
 
 	/**
 	 *	@brief Takes an input state and time and saves the data to the trajectory
@@ -198,7 +202,7 @@ public:
 	 *	@param t the time at the current integration state
 	 *	@param traj a pointer to the trajectory we should store the data in
 	 */
-	virtual void sim_saveIntegratedData(double *y, double t, tpat_traj* traj) const = 0;
+	virtual void sim_saveIntegratedData(const double *y, double t, tpat_traj* traj) const = 0;
 
 	// Set and Get Functions
 	int getCoreStateSize() const;
@@ -228,9 +232,9 @@ protected:
 	void copyMe(const tpat_model&);
 	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int) const;
 	virtual void multShoot_targetDeltaV(iterationData*, tpat_constraint, int) const;
-	virtual double multShoot_targetDeltaV_compSlackVar(iterationData*, tpat_constraint) const;
+	virtual double multShoot_targetDeltaV_compSlackVar(const iterationData*, tpat_constraint) const;
 	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int) const;
-	virtual double multShoot_targetDist_compSlackVar(iterationData*, tpat_constraint) const;
+	virtual double multShoot_targetDist_compSlackVar(const iterationData*, tpat_constraint) const;
 	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int) const;
 	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int) const;
 	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int) const;

@@ -89,7 +89,7 @@ public:
 	void initExtraParam();
 
 protected:
-	void initSetFromICs(double[6], const tpat_sys_data*, double, double, int, node_distro_t);
+	void initSetFromICs(const double[6], const tpat_sys_data*, double, double, int, node_distro_t);
 	void initSetFromTraj(tpat_traj, const tpat_sys_data*, int, node_distro_t);
 	void saveTOFs(mat_t*) const;
 

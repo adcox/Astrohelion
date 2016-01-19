@@ -152,9 +152,9 @@ class tpat_simulation_engine{
 		void setVarStepSize(bool);
 
 		// Simulation Methods
-		void runSim(double*, double);
+		void runSim(const double*, double);
 		void runSim(std::vector<double>, double);
-		void runSim(double*, double, double);
+		void runSim(const double*, double, double);
 		void runSim(std::vector<double>, double, double);
 		
 		// Utility Functions
@@ -213,7 +213,7 @@ class tpat_simulation_engine{
 		/** Number of steps to take (only applies when varStepSize = false) */
 		double numSteps = 1000;
 
-		void integrate(double[], double[], int);
+		void integrate(const double*, const double*, int);
 		bool locateEvents(const double*, double);
 		void cleanEngine();
 		void copyEngine(const tpat_simulation_engine&);

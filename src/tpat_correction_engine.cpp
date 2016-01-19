@@ -296,14 +296,14 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	@param set a pointer to a nodeset
  *	@return the iteration data object for this corrections process
  */
-iterationData tpat_correction_engine::multShoot(tpat_nodeset *set){
+iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	if(!isClean)
 		cleanEngine();
 
 	isClean = false;
 
 	// Make sure all constraints have the propper node numbers
-	set->updateCons();
+	// set->updateCons();
 
 	// Create structure to store iteration data for easy sharing
 	iterationData it;
@@ -674,7 +674,7 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 	return oldX + X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
 
-void tpat_correction_engine::reportConMags(iterationData *it){
+void tpat_correction_engine::reportConMags(const iterationData *it){
 	int conCount = 0;
 	for(long r = 0; r < (int)(it->FX.size()); r++){
         if(r == 0 && it->totalCons > 0){

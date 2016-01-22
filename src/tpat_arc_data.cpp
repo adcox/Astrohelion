@@ -90,7 +90,7 @@ tpat_arc_data& tpat_arc_data::operator =(const tpat_arc_data &d){
  *	@param rhs the right-hand-side of the addition operation
  *	@return a reference to the concatenated arc_data object
  */
-tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
+tpat_arc_data& tpat_arc_data::operator +=(const tpat_arc_data &rhs){
 	if( *sysData != *(rhs.sysData))
 		throw tpat_exception("tpat_arc_data::+: Cannot concatenate data sets from different systems");
 
@@ -130,6 +130,49 @@ tpat_arc_data& tpat_arc_data::operator +(const tpat_arc_data &rhs){
 
 	return *this;
 }//====================================================
+
+// tpat_arc_data& operator +(const tpat_arc_data &lhs, const tpat_arc_data &rhs){
+// 	if( *(lhs.sysData) != *(rhs.sysData) )
+// 		throw tpat_exception("tpat_arc_data::+: Cannot concatenate data sets from different systems");
+
+// 	if(lhs.steps.size() == 0){
+// 		return tpat_arc_data(rhs);
+// 	}
+
+// 	if(rhs.steps.size() == 0){
+// 		return tpat_arc_data(lhs);
+// 	}
+
+// 	tpat_arc_data temp = lhs;
+
+// 	int skipShift = 0;
+// 	double newTol = lhs.tol > rhs.tol ? lhs.tol : rhs.tol;
+// 	if(newTol == 0)
+// 		temp.tol = 1e-9;
+
+// 	if(lhs.steps[0] == rhs.steps[0])
+// 		skipShift = 1;
+
+// 	// Delete data from the lhs if anything is duplicated; chose LHS because it will serve nodesets better
+// 	if(skipShift > 0)
+// 		temp.steps.erase(steps.end()-skipShift, steps.end());
+
+// 	size_t lhs_numSteps = temp.steps.size();
+
+// 	// Copy data from rhs
+// 	temp.steps.insert(temp.steps.end(), rhs.steps.begin(), rhs.steps.end());
+
+// 	// Adjust STMs (Assuming arcs are continuous)
+// 	MatrixXRd lhs_lastSTM = temp.steps[lhs_numSteps-1].getSTM(); 	// PHI(t1, t0)
+// 	for(size_t n = lhs_numSteps; n < temp.steps.size(); n++){
+// 		MatrixXRd oldSTM = temp.steps[n].getSTM();	// PHI(t2, t1)
+
+// 		// Multiply PHI(t2, t1)*PHI(t1, t0) to get PHI(t2, t0)
+// 		temp.steps[n].setSTM(oldSTM*lhs_lastSTM);
+// 	}
+
+// 	return temp;
+// }//===================================================
 
 //-----------------------------------------------------
 //      Set and Get Functions

@@ -32,6 +32,8 @@
 #include "tpat_traj_bcr4bp.hpp"
 
 #include "tpat_exceptions.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
+#include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_utilities.hpp"
 
@@ -61,6 +63,42 @@ tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_traj_bcr4bp &t) : tpat_traj(t){
  */
 tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_arc_data &a) : tpat_traj(a){
 	initExtraParam();
+}//====================================================
+
+/**
+ *	@brief Create a trajectory from a nodeset
+ *
+ *	This algorithm will concatenate trajectories integrated from each node in 
+ *	the nodeset. It does not check to make sure the arcs are continuous; that
+ *	is up to you. The trajectory is constructed via a simulation engine that ignores
+ *	crashes as we assume the initial nodeset has been propagated to either ignore
+ *	or avoid the primaries; will not challenge that behavior. Each node is integrated
+ *	for the associated time-of-flight and added (via operator +()) to a trajectory object.
+ *
+ *	@param nodes a nodeset
+ *	@return a trajectory formed from the integrated nodeset
+ *	
+ *	@see tpat_traj::operator +()
+ */
+tpat_traj_bcr4bp tpat_traj_bcr4bp::fromNodeset(tpat_nodeset_bcr4bp nodes){
+	const tpat_sys_data_bcr4bpr *sys = static_cast<const tpat_sys_data_bcr4bpr*>(nodes.getSysData());
+	tpat_simulation_engine simEngine(sys);
+	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
+	tpat_traj_bcr4bp totalTraj(sys);
+
+	for(int n = 0; n < nodes.getNumNodes()-1; n++){
+		simEngine.setRevTime(nodes.getTOF(n) < 0);
+		simEngine.runSim(nodes.getState(n), nodes.getEpoch(n), nodes.getTOF(n));
+
+		if(n == 0){
+			totalTraj = simEngine.getBCR4BPR_Traj();
+		}else{
+			tpat_traj_bcr4bp temp = simEngine.getBCR4BPR_Traj();
+			totalTraj += temp;
+		}
+	}
+
+	return totalTraj;
 }//====================================================
 
 //-----------------------------------------------------

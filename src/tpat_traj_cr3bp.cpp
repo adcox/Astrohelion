@@ -95,8 +95,8 @@ tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
 		if(n == 0){
 			totalTraj = simEngine.getCR3BP_Traj();
 		}else{
-			tpat_traj_cr3bp temp = totalTraj + simEngine.getCR3BP_Traj();
-			totalTraj = temp;
+			tpat_traj_cr3bp temp = simEngine.getCR3BP_Traj();
+			totalTraj += temp;
 		}
 	}
 
@@ -106,6 +106,35 @@ tpat_traj_cr3bp tpat_traj_cr3bp::fromNodeset(tpat_nodeset_cr3bp nodes){
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------
+
+/**
+ *	@brief Concatenate two trajectory objects
+ *
+ * 	When adding A + B, if the final state of A and initial state
+ *	of B are the same, this algorithm will skip the initial state
+ *	of B in the concatenation to avoid duplicating a state. This
+ *	method also overrides the base class behavior and forces time to be
+ *	continuous along the concatentated trajectory regardless of whether
+ *	the final state of A and in itial state of B are the same
+ *
+ *	@param rhs the right-hand-side of the addition operation
+ *	@return a reference to the concatenated arc_data object
+ */
+tpat_arc_data& tpat_traj_cr3bp::operator +=(const tpat_arc_data &rhs){
+	// Create a copy of rhs (it is const)
+	tpat_traj temp(rhs);
+
+	// Shift the time in temp by the final time in this trajectory
+	double tf = getTime(-1);
+	for(int s = 0; s < temp.getLength(); s++){
+		double t = tf + temp.getTime(s);
+		temp.setTime(s, t);
+	}
+
+	tpat_arc_data::operator +=(temp);
+
+	return *this;
+}//====================================================
 
 //-----------------------------------------------------
 //      Set and Get Functions

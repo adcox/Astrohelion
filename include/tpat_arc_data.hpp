@@ -76,7 +76,7 @@ public:
 
 	// Operators
 	tpat_arc_data& operator =(const tpat_arc_data&);
-	virtual tpat_arc_data& operator +(const tpat_arc_data&);
+	virtual tpat_arc_data& operator +=(const tpat_arc_data&);
 
 	// Set and Get functions
 	std::vector<double> getAccel(int) const;
@@ -88,7 +88,7 @@ public:
 	MatrixXRd getSTM(int) const;
 	const tpat_sys_data* getSysData() const;
 	double getTol() const;
-
+	
 	void appendStep(tpat_arc_step);
 	void setAccel(int, std::vector<double>);
 	void setState(int, std::vector<double>);

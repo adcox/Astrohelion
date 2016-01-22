@@ -1,7 +1,8 @@
 /**
- *	Attempt to replicate LPF trajectory
+ *	Attempt to replicate LPF trajectory that patches a SE manifold
+ *	to a 1:3 resonant orbit
  *
- *	To compile: g++ --std=c++11 -ltpat -Wall -pedantic SampleLPFTraj.cpp -o a.out
+ *	To compile: g++ --std=c++11 -ltpat -Wall -pedantic LPF_1-3-Res.cpp -o a.out
  */
 
 #include "tpat_all_includes.hpp"
@@ -10,68 +11,63 @@
 #include <cstdio>
 
 int main(void){
-	tpat_sys_data_cr3bp crSys("sun", "earth");
+	tpat_sys_data_cr3bp seSys("sun", "earth");
+	tpat_sys_data_cr3bp emSys("earth", "moon");
 	tpat_sys_data_bcr4bpr bcSys("Sun", "Earth", "Moon");
 	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
-	
 
-	// Determine geometry at t0 so that we can start at T = 0;
-	bcr4bpr_orientAtEpoch(leaveHaloEpoch, &bcSys);
 	// double t0 = leaveHaloEpoch/bcSys.getCharT();	 // (Big number, let's avoid this)
 	double t0 = 0;
 
 	int numHaloNodes = 8;
 	int numManNodes = 10;
+	int numResNodes = 40;
 
 	// Simulate from SE line backwards to beginning of manifold
-	double IC[] = {1.000287361135506, 0, 0.000009622676738, 0.043512678073230,
-		0.132592205936539, 0.019177430186551};
-	double tf = -2.566028939144172;
+	double IC[] = {1.001990975157441, 0, 0.000266392751420, 0.019779727575305, 0.041544455161967, 0.007099432234216};
+	double tf = -2.618819626347190;
+
+	double resIC[] = {0.661595270304142, 0.447542832021962, 0, 0.280878992941660, 0.759320138643845, 0};
+	double resEpoch = 5.274288671852568e+08;
+	double resTOF = 18.521059309999998;
+
+	// Orient BC4BP system for the correct epoch
+	bcr4bpr_orientAtEpoch(leaveHaloEpoch, &bcSys);
+
+	// Create the resonant orbit via simulation
+	tpat_simulation_engine engine(&emSys);
+	// engine.runSim(resIC, 2.1*resTOF);
+	// tpat_traj_cr3bp resTraj = engine.getCR3BP_Traj();
+	// resTraj.shiftAllTimes((resEpoch - leaveHaloEpoch)/emSys.getCharT());
+	// tpat_traj_cr3bp resTraj_SE = cr3bp_EM2SE(resTraj, &seSys, bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
+	// resTraj.saveToMat("resTraj_EM.mat");
+	// resTraj_SE.saveToMat("resTraj_SE.mat");
+
+	tpat_nodeset_cr3bp resNodes(resIC, &emSys, 2*resTOF, numResNodes);	// Propagate in EM system
+	tpat_nodeset_cr3bp resNodes_SE = cr3bp_EM2SE(resNodes, &seSys, (resEpoch-leaveHaloEpoch)/emSys.getCharT(),
+		bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
+	tpat_nodeset_bcr4bp resNodes_4B = bcr4bpr_SE2SEM(resNodes_SE, &bcSys, (resEpoch - leaveHaloEpoch)/bcSys.getCharT());
+
+	// resNodes.saveToMat("resNodes_EM.mat");
+	// resNodes_SE.saveToMat("resNodes_SE.mat");
+
+	// waitForUser();
 
 	// Generate nodesets for the halo manifold and the halo itself, both in reverse time
-	tpat_nodeset_cr3bp manData(IC, &crSys, tf, numManNodes);
-	tpat_nodeset_cr3bp haloData(manData.getNode(-1).getPosVelState(), &crSys, -PI, numHaloNodes);
-
-	// manData.print();
-	// haloData.print();
+	tpat_nodeset_cr3bp manData(IC, &seSys, tf, numManNodes);
+	tpat_nodeset_cr3bp haloData(manData.getNode(-1).getPosVelState(), &seSys, -PI, numHaloNodes);
 
 	// Concatenate nodesets;
 	manData.deleteNode(-1);
 	tpat_nodeset_cr3bp manToHaloData = manData + haloData;
 
-	// manToHaloData.print();
-
 	// Change to BCR4BPR System
 	tpat_nodeset_bcr4bp manToHalo_bcNodes = bcr4bpr_SE2SEM(manToHaloData, &bcSys, t0);
-	// manToHalo_bcNodes.print();
 	manToHalo_bcNodes.reverseOrder();
-	// manToHalo_bcNodes.print();
-
-	// Get a node that (roughly) splits the last segment in half
-	tpat_simulation_engine engine(&bcSys);
-	double segTOF = 14.4*manToHalo_bcNodes.getTOF(-2)/16.0;
-	engine.runSim(manToHalo_bcNodes.getNode(-2).getPosVelState(), manToHalo_bcNodes.getEpoch(-2), segTOF);
-	tpat_traj_bcr4bp finalSeg = engine.getBCR4BPR_Traj();
-
-	// Make the segment leading up to this new node shorter (TOF)
-	tpat_node nodeBefore = manToHalo_bcNodes.getNode(-2);
-
-	// Create the intermediate node
-	tpat_node node(finalSeg.getState(-1), nodeBefore.getTOF() - segTOF);
-	nodeBefore.setTOF(segTOF);
-
-	// Delete second to last node, replace with edited nodeBefore
-	manToHalo_bcNodes.deleteNode(-2);
-	manToHalo_bcNodes.insertNode(-1, nodeBefore);
-
-	// Insert intermediate node before the final node
-	manToHalo_bcNodes.insertNode(-1, node);
 
 	// Make all nodes continuous in velocity
 	std::vector<int> notContinuous = std::vector<int>();
 	manToHalo_bcNodes.setVelConNodes_allBut(notContinuous);
-
-	// manToHalo_bcNodes.print();
 
 	// Correct to be continuous
 	tpat_correction_engine corrector = tpat_correction_engine();
@@ -80,21 +76,30 @@ int main(void){
 	corrector.setScaleVars(false);
 	corrector.multShoot(&manToHalo_bcNodes);
 	tpat_nodeset_bcr4bp contNodes = corrector.getBCR4BPR_Output();
-
-	// Propagate past final node until a negative XZ plane crossing (hopefully near SP)
-	double maxTOF = 5.0/bcSys.getK();
-	engine.addEvent(tpat_event::XZ_PLANE, -1, true);
-	engine.runSim(contNodes.getNode(-1).getPosVelState(), t0, maxTOF);
-	tpat_traj_bcr4bp newArc = engine.getBCR4BPR_Traj();
 	
-	// Create a nodeset from the arc segment
-	double newArcTOF = newArc.getTime(-1);
-	double numNewArcNodes = 5;
-	tpat_nodeset_bcr4bp evolveSegNodes(contNodes.getNode(-1).getPosVelState(), &bcSys, t0, newArcTOF, numNewArcNodes);
+	corrector.multShoot(&resNodes_4B);
+	tpat_nodeset_bcr4bp resNodes_4BC = corrector.getBCR4BPR_Output();
 
-	// Concatenate into one large nodeset
+	// double maxTOF = 5.0/bcSys.getK();
+	// engine.addEvent(tpat_event::XZ_PLANE, -1, true);
+	// engine.runSim(contNodes.getNode(-1).getPosVelState(), t0, maxTOF);
+	// tpat_traj_bcr4bp newArc = engine.getBCR4BPR_Traj();
+	
+	// Concatenate resonant orbit nodes 
 	contNodes.deleteNode(-1);
-	tpat_nodeset_bcr4bp fullNodeset = contNodes + evolveSegNodes;
+	tpat_nodeset_bcr4bp fullNodeset = contNodes + resNodes_4BC;
+
+	// // Create a nodeset from the arc segment
+	// double newArcTOF = newArc.getTime(-1);
+	// double numNewArcNodes = 5;
+	// tpat_nodeset_bcr4bp evolveSegNodes(contNodes.getNode(-1).getPosVelState(), &bcSys, t0, newArcTOF, numNewArcNodes);
+
+	// // Concatenate into one large nodeset
+	// contNodes.deleteNode(-1);
+	// tpat_nodeset_bcr4bp fullNodeset = contNodes + evolveSegNodes;
+
+	fullNodeset.saveToMat("temp.mat");
+	waitForUser();
 
 	// Get a subset of the full nodeset for corrections; don't want the halo nodes to change
 	tpat_nodeset_bcr4bp workingNodes(fullNodeset, numHaloNodes-1, fullNodeset.getNumNodes());

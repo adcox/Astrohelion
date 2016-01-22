@@ -45,6 +45,9 @@ public:
 	
 	static tpat_traj_cr3bp fromNodeset(tpat_nodeset_cr3bp);
 	
+	// Operators
+	tpat_arc_data& operator +=(const tpat_arc_data&);
+	
 	// Set and Get Functions
 	double getJacobi(int) const;
 

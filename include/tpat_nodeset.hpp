@@ -73,7 +73,7 @@ public:
 	int getNumNodes() const;
 	double getTOF(int) const;
 	double getTotalTOF() const;
-
+	
 	void addConstraint(tpat_constraint);
 	virtual void appendNode(tpat_node);
 	virtual void deleteNode(int);

@@ -56,6 +56,7 @@
 #include <cmath>
 #include <cstring>
 #include <string>
+#include <typeinfo>
 
 //-----------------------------------------------------
 //      Equations of Motion
@@ -1156,17 +1157,17 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     toCSV(DFest, "FiniteDiff_DFest.csv");
     diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
 
-    // Divide each element by the magnitude of the DF element to get a relative difference magnitude
+    // // Divide each element by the magnitude of the DF element to get a relative difference magnitude
     // for(int r = 0; r < diff.rows(); r++){
-        // for(int c = 0; c < diff.cols(); c++){
-            // If one of the elements is zero, let the difference just be the difference; no division
-            // if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
-            //     diff(r,c) = diff(r,c)/DF_abs(r,c);
+    //     for(int c = 0; c < diff.cols(); c++){
+    //         // If one of the elements is zero, let the difference just be the difference; no division
+    //         if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
+    //             diff(r,c) = diff(r,c)/DF_abs(r,c);
 
-            // if(r == 50 && c == 98){
-            //     printf("DF(50, 98) = %.4e\n", DF(r,c));
-            //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
-            // }
+    //         // if(r == 50 && c == 98){
+    //         //     printf("DF(50, 98) = %.4e\n", DF(r,c));
+    //         //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
+    //         // }
     //     }
     // }
     toCSV(diff, "FiniteDiff_Diff.csv");
@@ -1575,6 +1576,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  to the ecliptic; this value is held constant.
  */
 tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, const tpat_sys_data_cr3bp *SESys, double thetaE0, double thetaM0, double gamma){
+
     // Create a trajectory in the Sun-Earth system
     tpat_traj_cr3bp SETraj(SESys);
 
@@ -1618,7 +1620,7 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, const tpat_sys_data_cr3bp *S
  *
  *  @param EMNodes a CR3BP Earth-Moon nodeset
  *  @param SESys a Sun-Earth CR3BP system data object
- *  @param t0 epoch associated with the first node
+ *  @param t0 epoch associated with the first node (Earth-Moon non-dimesional time)
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1628,6 +1630,7 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, const tpat_sys_data_cr3bp *S
  */
 tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, const tpat_sys_data_cr3bp *SESys, double t0, double thetaE0, double thetaM0,
     double gamma){
+
 
     tpat_nodeset_cr3bp SENodes(SESys);
 
@@ -1720,7 +1723,7 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, const tpat_sys_data_cr3bp *E
  *
  *  @param SENodes a CR3BP Sun-Earth nodeset
  *  @param EMSys an Earth-Moon CR3BP system data object
- *  @param t0 epoch associated with the first node
+ *  @param t0 epoch associated with the first node (Sun-Earth non-dimensional time)
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1766,7 +1769,7 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, const tpat_sys_data_c
  *  @brief Transform a single state from EM coordinates to SE coordinates
  *
  *  @param state_EM a 6- or 9-element state vector
- *  @param t non-dimensional time associated with the state
+ *  @param t Earth-Moon non-dimensional time associated with the Earth-Moon state
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -2026,6 +2029,9 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
                 bcState[r] = crState[r]*charL2/charL3;
             else if(r < 6)  // Convert velocity
                 bcState[r] = crState[r]*(charL2/charL3)*(charT3/charT2);
+
+            if(r == 0)  // Shift origin to P2-P3 barycenter
+                bcState[r] -= (1/bcSys->getK() - bcSys->getMu());
         }
 
         // Convert acceleration
@@ -2056,7 +2062,7 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
  *  @param crNodes a CR3BP Sun-Earth nodeset
  *  @param bcSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
  *  scaling and orientation at time t = 0
- *  @param t0 the epoch at the first node on the CR3BP nodeset
+ *  @param t0 the epoch at the first node in BCR4BPR non-dimensional time units
  *
  *  @return a BCR4BPR nodeset
  */

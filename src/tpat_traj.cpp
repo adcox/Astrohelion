@@ -69,34 +69,6 @@ tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
 //      Operators
 //-----------------------------------------------------
 
-/**
- *	@brief Concatenate two trajectory objects
- *
- * 	When adding A + B, if the final state of A and initial state
- *	of B are the same, this algorithm will skip the initial state
- *	of B in the concatenation to avoid duplicating a state. This
- *	method also overrides the base class behavior and forces time to be
- *	continuous along the concatentated trajectory regardless of whether
- *	the final state of A and in itial state of B are the same
- *
- *	@param rhs the right-hand-side of the addition operation
- *	@return a reference to the concatenated arc_data object
- */
-tpat_arc_data& tpat_traj::operator +(const tpat_arc_data &rhs){
-	// Create a copy of rhs (it is const)
-	tpat_traj temp(rhs);
-
-	// Shift the time in temp by the final time in this trajectory
-	double tf = getTime(-1);
-	for(int s = 0; s < temp.getLength(); s++){
-		double t = tf + temp.getTime(s);
-		temp.setTime(s, t);
-	}
-
-	tpat_arc_data::operator +(temp);
-
-	return *this;
-}//====================================================
 
 //-----------------------------------------------------
 //      Set and Get Functions
@@ -142,6 +114,20 @@ void tpat_traj::setTime(int ix, double val){
 
 	tpat_traj_step *step = static_cast<tpat_traj_step*>(&(steps[ix]));
 	step->setTime(val);
+}//====================================================
+
+/**
+ *  @brief Shift all time values by a constant amount
+ *  @details This can be useful for use with the EM2SE and SE2EM functions
+ * 
+ *  @param amount a constant, non-dimensional time shift to apply to 
+ *  all time values for points on this trajectory
+ */
+void tpat_traj::shiftAllTimes(double amount){
+	for(size_t i = 0; i < steps.size(); i++){
+		tpat_traj_step *step = static_cast<tpat_traj_step*>(&(steps[i]));
+		step->setTime(step->getTime() + amount);
+	}
 }//====================================================
 
 //-----------------------------------------------------

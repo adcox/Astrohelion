@@ -99,7 +99,7 @@ int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 // General Utility Functions
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
-std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, tpat_traj_cr3bp*, int, double);
+std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, const tpat_traj_cr3bp*, int, double);
 MatrixXRd getMirrorMat(mirror_t);
 double getStabilityIndex(std::vector<cdouble>);
 double getTotalDV(const iterationData*);

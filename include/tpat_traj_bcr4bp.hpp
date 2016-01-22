@@ -25,6 +25,7 @@
 
 // Forward Declarations
 class tpat_sys_data_bcr4bpr;
+class tpat_nodeset_bcr4bp;
 
 /**
  *	@brief A derivative class of the tpat_traj object that
@@ -41,7 +42,8 @@ public:
 	tpat_traj_bcr4bp(const tpat_sys_data_bcr4bpr*);
 	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
 	tpat_traj_bcr4bp(const tpat_arc_data&);
-	
+	static tpat_traj_bcr4bp fromNodeset(tpat_nodeset_bcr4bp);
+
 	// Set and Get Functions
 	double getTheta0();
 	double getPhi0();

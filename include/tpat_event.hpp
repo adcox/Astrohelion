@@ -60,9 +60,21 @@ class tpat_event{
 		 */
 		enum event_t {
 			NONE,		//!< No type has been specified; cannot be used in integration
-			YZ_PLANE,	//!< Event occurs when trajectory crosses an YZ-plane 
-			XZ_PLANE,	//!< Event occurs when trajectory crosses an XZ-plane
-			XY_PLANE,	//!< Event occurs when trajectory crosses an XY-plane
+			YZ_PLANE,	/*!< Event occurs when trajectory crosses an YZ-plane. By default, 
+						 *	this plane occurs at x = 0, but a custom x-coordinate may be 
+						 *	specified by placing the value of that coordinate in the 
+						 *	<tt>param</tt> array.
+						 */
+			XZ_PLANE,	/*!< Event occurs when trajectory crosses an XZ-plane. By default, 
+						 *	this plane occurs at y = 0, but a custom y-coordinate may be 
+						 *	specified by placing the value of that coordinate in the 
+						 *	<tt>param</tt> array.
+						 */
+			XY_PLANE,	/*!< Event occurs when trajectory crosses an XY-plane. By default, 
+						 *	this plane occurs at z = 0, but a custom z-coordinate may be 
+						 *	specified by placing the value of that coordinate in the 
+						 *	<tt>param</tt> array.
+						 */
 			CRASH,		/*!< Event occurs when trajectory falls below minimum acceptable
 		 				 * 	altitude or the surface of one of the system primaries.
 		 				 *	The <tt>param</tt> array should have the first element specifying the 

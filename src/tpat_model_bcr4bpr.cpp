@@ -821,16 +821,149 @@ void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint c
  */
 void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constraint con, int c) const{
 
+    // int row0 = it->conRows[c];
+    // int n = con.getNode();
+    // double Amax = con.getData()[0];
+    // int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
+    // double t0 = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getExtraParam(1);
+
+    // const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
+    // double sr = it->freeVarScale[0];
+
+    // std::vector<double> primPosData = getPrimPos(t0, it->sysData);
+
+    // // Get primary positions at the specified epoch time
+    // Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
+
+    // double *X = &(it->X[0]);
+    // Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+6*n, 3, 1);   // Position vector
+
+    // // Create relative position vectors between s/c and primaries
+    // Eigen::Vector3d r_p1 = r/sr - primPos.row(0).transpose();
+    // Eigen::Vector3d r_p2 = r/sr - primPos.row(1).transpose();
+    // Eigen::Vector3d r_p3 = r/sr - primPos.row(2).transpose();
+
+    // double d1 = r_p1.norm();
+    // double d2 = r_p2.norm();
+    // double d3 = r_p3.norm();
+
+    // double k = bcSysData->getK();
+    // double mu = bcSysData->getMu();
+    // double nu = bcSysData->getNu();
+
+    // // Compute the acceleration vector at this point
+    // Eigen::Vector3d A;
+    // A.noalias() = -(1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2,3) - nu*r_p3/pow(d3, 3);
+
+    // // Parials w.r.t. node position r
+    // double dFdq_data[9] = {0};
+    // dFdq_data[0] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(0),2)/pow(d1,5)) -
+    //     (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(0),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+    //     3*pow(r_p3(0),2)/pow(d3,5));     //dxdx
+    // dFdq_data[1] = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) + 
+    //     (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
+    //     nu*3*r_p3(0)*r_p3(1)/pow(d3,5);   //dxdy
+    // dFdq_data[2] = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
+    //     (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
+    //     nu*3*r_p3(0)*r_p3(2)/pow(d3,5);   //dxdz
+    // dFdq_data[3] = dFdq_data[1];    // dydx = dxdy
+    // dFdq_data[4] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(1),2)/pow(d1,5)) -
+    //     (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(1),2)/pow(d2,5)) - 
+    //     nu*(1/pow(d3,3) - 3*pow(r_p3(1),2)/pow(d3,5));   //dydy
+    // dFdq_data[5] = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
+    //     (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
+    //     nu*3*r_p3(1)*r_p3(2)/pow(d3,5);   //dydz
+    // dFdq_data[6] = dFdq_data[2];    //dzdx = dxdz
+    // dFdq_data[7] = dFdq_data[5];    //dzdy = dydz
+    // dFdq_data[8] = -(1/k - mu)*(1/pow(d1,3) - 3*pow(r_p1(2),2)/pow(d1,5)) -
+    //     (mu-nu)*(1/pow(d2,3) - 3*pow(r_p2(2),2)/pow(d2,5)) - nu*(1/pow(d3,3) - 
+    //     3*pow(r_p3(2),2)/pow(d3,5)); //dzdz
+
+    // Matrix3Rd dAdq = Eigen::Map<Matrix3Rd>(dFdq_data, 3, 3);
+    // Eigen::Vector3d dFdq;
+    // dFdq.noalias() = 2*dAdq*A/(sr*Amax*Amax);
+    // // dFdq.noalias() = 2*dAdq*A/sr;
+
+    // // Copy data into the correct vectors/matrices
+    // double* dFdq_ptr = dFdq.data();
+
+    // double *FX = &(it->FX[0]);
+    // double *DF = &(it->DF[0]);
+
+    // FX[row0] = A.squaredNorm()/(Amax*Amax) - 1;     // Found this one converges MUCH better
+    // // FX[row0] = A.squaredNorm() - Amax*Amax;
+    
+    // std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + 6*n);
+
+    // if(it->varTime){
+    //     // Get primary velocities at the specified epoch time
+    //     std::vector<double> primVelData = getPrimVel(t0, it->sysData);
+    //     Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
+
+    //     // Compute partials of state w.r.t. primary positions; dont' compute partials
+    //     // for P1 because its velocity is zero in the rotating frame
+    //     double dfdr2_data[18] = {0};   double dfdr3_data[18] = {0};
+
+    //     dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
+    //     dfdr2_data[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
+    //     dfdr2_data[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
+    //     dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
+    //     dfdr2_data[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
+    //     dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
+
+    //     dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
+    //     dfdr2_data[15] = dfdr2_data[11];
+    //     dfdr2_data[16] = dfdr2_data[14];
+
+    //     dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
+    //     dfdr3_data[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
+    //     dfdr3_data[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
+    //     dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
+    //     dfdr3_data[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
+    //     dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
+
+    //     dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
+    //     dfdr3_data[15] = dfdr3_data[11];
+    //     dfdr3_data[16] = dfdr3_data[14];
+
+    //     Matrix3Rd dFdr2 = Eigen::Map<Matrix3Rd>(dfdr2_data+9, 3, 3);
+    //     Matrix3Rd dFdr3 = Eigen::Map<Matrix3Rd>(dfdr3_data+9, 3, 3);
+
+    //     // scale matrices by constants
+    //     dFdr2 *= -1*(mu - nu)/sr;
+    //     dFdr3 *= -1*nu/sr;
+
+    //     Eigen::VectorXd dAdT;
+    //     dAdT.noalias() = A.transpose()*dFdr2*primVel.row(1).transpose() + A.transpose()*dFdr3*primVel.row(2).transpose();
+    //     dAdT *= 2*sr/(Amax*Amax*it->freeVarScale[3]);
+    //     // dAdT *= 2*sr/it->freeVarScale[3];
+
+    //     int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
+    //     DF[it->totalFree*row0 + epochCol] = dAdT(0);
+    // }
+
+    // // figure out which of the slack variables correspond to this constraint
+    // std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
+    //     it->slackAssignCon.end(), c);
+
+    // // which column of the DF matrix the slack variable is in
+    // int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
+
+    // // Add squared slack variable from constraint
+    // it->FX[row0] += it->X[slackCol]*it->X[slackCol];
+
+    // // Partial with respect to slack variable
+    // it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
+    
+    // // printf("Node %d %s Con: Slack Var = %.4e\n", n, con.getTypeStr(), it->X[slackCol]);
+
     int row0 = it->conRows[c];
     int n = con.getNode();
     double Amax = con.getData()[0];
-    int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
-    double t0 = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getExtraParam(1);
-
+    double epoch = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getExtraParam(1);
     const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
-    double sr = it->freeVarScale[0];
 
-    std::vector<double> primPosData = getPrimPos(t0, it->sysData);
+    std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
 
     // Get primary positions at the specified epoch time
     Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
@@ -839,9 +972,9 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+6*n, 3, 1);   // Position vector
 
     // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1 = r/sr - primPos.row(0).transpose();
-    Eigen::Vector3d r_p2 = r/sr - primPos.row(1).transpose();
-    Eigen::Vector3d r_p3 = r/sr - primPos.row(2).transpose();
+    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
+    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
+    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
 
     double d1 = r_p1.norm();
     double d2 = r_p2.norm();
@@ -881,65 +1014,65 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
 
     Matrix3Rd dAdq = Eigen::Map<Matrix3Rd>(dFdq_data, 3, 3);
     Eigen::Vector3d dFdq;
-    // dFdq.noalias() = 2*dAdq*A/(sr*Amax*Amax);
-    dFdq.noalias() = 2*dAdq*A/sr;
+    dFdq.noalias() = 2*dAdq*A/(Amax*Amax);
+    // dFdq.noalias() = 2*dAdq*A;
+
+    // Get primary velocities at the specified epoch time
+    std::vector<double> primVelData = getPrimVel(epoch, it->sysData);
+    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
+
+    // Compute partials of state w.r.t. primary positions; dont' compute partials
+    // for P1 because its velocity is zero in the rotating frame
+    double dfdr2_data[18] = {0};   double dfdr3_data[18] = {0};
+
+    dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
+    dfdr2_data[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
+    dfdr2_data[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
+    dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
+    dfdr2_data[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
+    dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
+
+    dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
+    dfdr2_data[15] = dfdr2_data[11];
+    dfdr2_data[16] = dfdr2_data[14];
+
+    dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
+    dfdr3_data[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
+    dfdr3_data[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
+    dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
+    dfdr3_data[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
+    dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
+
+    dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
+    dfdr3_data[15] = dfdr3_data[11];
+    dfdr3_data[16] = dfdr3_data[14];
+
+    Matrix3Rd dFdr2 = Eigen::Map<Matrix3Rd>(dfdr2_data+9, 3, 3);
+    Matrix3Rd dFdr3 = Eigen::Map<Matrix3Rd>(dfdr3_data+9, 3, 3);
+
+    // scale matrices by constants
+    dFdr2 *= -1*(mu - nu);
+    dFdr3 *= -1*nu;
+
+    Eigen::VectorXd dAdT;
+    dAdT.noalias() = A.transpose()*dFdr2*primVel.row(1).transpose() + A.transpose()*dFdr3*primVel.row(2).transpose();
+    dAdT *= 2/(Amax*Amax);
+    // dAdT *= 2;
 
     // Copy data into the correct vectors/matrices
     double* dFdq_ptr = dFdq.data();
+    double* dFdT_ptr = dAdT.data();
 
     double *FX = &(it->FX[0]);
     double *DF = &(it->DF[0]);
 
-    // FX[row0] = A.squaredNorm()/(Amax*Amax) - 1;     // Found this one converges MUCH better
-    FX[row0] = A.squaredNorm() - Amax*Amax;
+    FX[row0] = A.squaredNorm()/(Amax*Amax) - 1;
+    // FX[row0] = A.squaredNorm() - Amax*Amax;
     
     std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + 6*n);
 
     if(it->varTime){
-        // Get primary velocities at the specified epoch time
-        std::vector<double> primVelData = getPrimVel(t0, it->sysData);
-        Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
-
-        // Compute partials of state w.r.t. primary positions; dont' compute partials
-        // for P1 because its velocity is zero in the rotating frame
-        double dfdr2_data[18] = {0};   double dfdr3_data[18] = {0};
-
-        dfdr2_data[9] = -1/pow(d2,3) + 3*pow(r_p2(0),2)/pow(d2,5);        //dxdx2
-        dfdr2_data[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
-        dfdr2_data[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
-        dfdr2_data[13] = -1/pow(d2,3) + 3*pow(r_p2(1),2)/pow(d2,5);       //dydy2
-        dfdr2_data[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
-        dfdr2_data[17] = -1/pow(d2,3) + 3*pow(r_p2(2),2)/pow(d2,5);       //dzdz2
-
-        dfdr2_data[12] = dfdr2_data[10];      // Fill in symmetric matrix
-        dfdr2_data[15] = dfdr2_data[11];
-        dfdr2_data[16] = dfdr2_data[14];
-
-        dfdr3_data[9] = -1/pow(d3,3) + 3*pow(r_p3(0),2)/pow(d3,5);        //dxdx3
-        dfdr3_data[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
-        dfdr3_data[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
-        dfdr3_data[13] = -1/pow(d3,3) + 3*pow(r_p3(1),2)/pow(d3,5);       //dydy3
-        dfdr3_data[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
-        dfdr3_data[17] = -1/pow(d3,3) + 3*pow(r_p3(2),2)/pow(d3,5);       //dzdz3
-
-        dfdr3_data[12] = dfdr3_data[10];      // Fill in symmetric matrix
-        dfdr3_data[15] = dfdr3_data[11];
-        dfdr3_data[16] = dfdr3_data[14];
-
-        Matrix3Rd dFdr2 = Eigen::Map<Matrix3Rd>(dfdr2_data+9, 3, 3);
-        Matrix3Rd dFdr3 = Eigen::Map<Matrix3Rd>(dfdr3_data+9, 3, 3);
-
-        // scale matrices by constants
-        dFdr2 *= -1*(mu - nu)/sr;
-        dFdr3 *= -1*nu/sr;
-
-        Eigen::VectorXd dAdT;
-        dAdT.noalias() = A.transpose()*dFdr2*primVel.row(1).transpose() + A.transpose()*dFdr3*primVel.row(2).transpose();
-        // dAdT *= 2*sr/(Amax*Amax*it->freeVarScale[3]);
-        dAdT *= 2*sr/it->freeVarScale[3];
-        
-        int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
-        DF[it->totalFree*row0 + epochCol] = dAdT(0);
+        std::copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*row0 + 7*it->numNodes-1+n);
     }
 
     // figure out which of the slack variables correspond to this constraint
@@ -954,8 +1087,6 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
 
     // Partial with respect to slack variable
     it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
-    
-    // printf("Node %d %s Con: Slack Var = %.4e\n", n, con.getTypeStr(), it->X[slackCol]);
 }// End of SP Targeting (Magnitude) ==============================
 
 /**
@@ -983,7 +1114,6 @@ double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(const iterationDat
     // Get primary positions at the specified epoch time
     Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
 
-    // double *X = &(it->X[0]);
     double rData[3];
     std::copy(&(it->X[0]), &(it->X[0])+3, rData);
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(rData, 3, 1);   // Position vector
@@ -1218,7 +1348,3 @@ tpat_nodeset* tpat_model_bcr4bpr::multShoot_createOutput(const iterationData *it
 
     return nodeset_out;
 }//====================================================
-
-
-
-

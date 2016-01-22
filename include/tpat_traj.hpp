@@ -58,7 +58,6 @@ public:
 	tpat_traj(const tpat_arc_data&);
 	
 	// Operators
-	tpat_arc_data& operator +(const tpat_arc_data&);
 
 	// Set and Get Functions
 	double getTime(int) const;
@@ -66,6 +65,8 @@ public:
 
 	void appendStep(tpat_traj_step);
 	void setTime(int, double);
+
+	void shiftAllTimes(double);
 	
 	// Utility Functions
 	void saveToMat(const char*) const;

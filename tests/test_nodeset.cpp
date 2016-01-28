@@ -29,6 +29,7 @@
 #include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
+#include "tpat_traj_bcr4bp.hpp"
 #include "tpat_exceptions.hpp"
 
 #include <cmath>
@@ -67,17 +68,20 @@ void test_concat_CR3BP(){
 
 	set4.appendNode(tpat_node(node4, 0));
 
-	tpat_nodeset_cr3bp sum1 = set1 + set2;
+	tpat_nodeset_cr3bp sum1 = set1;
+	sum1 += set2;
 	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
 	sum1.print();
 
-	tpat_nodeset_cr3bp sum2 = set1 + set3;
+	tpat_nodeset_cr3bp sum2 = set1;
+	sum2 += set3;
 	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
 	sum2.print();
 	
 	try{
 		cout << "Testing sum of different systems: ";
-		tpat_nodeset_cr3bp sum3 = set1 + set4;
+		tpat_nodeset_cr3bp sum3 = set1;
+		sum3 += set4;
 		cout << FAIL << endl;
 	}catch(tpat_exception &e){
 		cout << PASS << endl;
@@ -136,15 +140,31 @@ int main(void){
 	corrector.setVerbose(ALL_MSG);
 	corrector.multShoot(&crSet);
 
+	crSet.saveToMat("data/crSet.mat");
+	tpat_nodeset_cr3bp crTemp(&emData);
+	crTemp.readFromMat("data/crSet.mat");
+	
 	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 	test_createBCR4BPRNodeset(&semData);
 	corrector.setVerbose(ALL_MSG);
 	corrector.multShoot(bcSet);
 
-	// Memory clean-up
-	delete bcSet;
+	bcSet->saveToMat("data/bcSet.mat");
+	tpat_nodeset_bcr4bp bcTemp(&semData);
+	bcTemp.readFromMat("data/bcSet.mat");
 
 	test_concat_CR3BP();
 
+	printf("Testing Save/Read functions on CR3BP Nodeset\n");
+	cout << "Same Final State: " << (crSet.getState(-1) == crTemp.getState(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final TOF: " << (crSet.getTOF(-1) == crTemp.getTOF(-1) ? PASS : FAIL) << endl;
+
+	printf("Testing Save/Read functions on BC4BP Nodeset\n");
+	cout << "Same Final State: " << (bcSet->getState(-1) == bcTemp.getState(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final TOF: " << (bcSet->getTOF(-1) == bcTemp.getTOF(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Epoch: " << (bcSet->getEpoch(-1) == bcTemp.getEpoch(-1) ? PASS : FAIL) << endl;
+	
+	// Memory clean-up
+	delete bcSet;
 	return 0;
 }

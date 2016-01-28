@@ -211,3 +211,22 @@ void tpat_traj_cr3bp::saveToMat(const char* filename) const{
 
 	Mat_Close(matfp);
 }//========================================
+
+/**
+ *  @brief Populate data in this trajectory from a matlab file
+ * 
+ *  @param filepath the path to the matlab data file
+ */
+void tpat_traj_cr3bp::readFromMat(const char *filepath){
+	tpat_traj::readFromMat(filepath);
+
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_traj: Could not load data from file");
+	}
+
+	readExtraParamFromMat(matfp, 1, "Jacobi");
+
+	Mat_Close(matfp);
+}//====================================================

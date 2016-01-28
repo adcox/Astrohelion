@@ -85,6 +85,8 @@ class tpat_sys_data{
 		system_t getType() const;
 		std::string getTypeStr() const;
 
+		virtual void saveToMat(const char*) const;
+
 		/**
 		 *	@brief Save the system data object to a file
 		 *	@param matFile a pointer to an open mat file
@@ -117,5 +119,11 @@ class tpat_sys_data{
 		system_t type = UNDEF_SYS;
 
 		void copyData(const tpat_sys_data&);
+
+		/**
+		 *  @brief Read the system data object from a Matlab data file
+		 *  @param matfile A pointer to the open matfile
+		 */
+		virtual void readFromMat(mat_t *matfile) = 0;
 };
 #endif

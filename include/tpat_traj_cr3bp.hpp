@@ -52,10 +52,13 @@ public:
 	double getJacobi(int) const;
 
 	void setJacobi(int, double);
+
+	// Utility
+	void readFromMat(const char*);
 	void saveToMat(const char*) const;
 private:
+
 	void initExtraParam();
-	
 };
 
 #endif

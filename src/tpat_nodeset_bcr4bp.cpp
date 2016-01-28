@@ -301,13 +301,32 @@ void tpat_nodeset_bcr4bp::saveToMat(const char *filename) const{
 }//====================================================
 
 /**
+ *  @brief Populate data in this nodeset from a matlab file
+ * 
+ *  @param filepath the path to the matlab data file
+ */
+void tpat_nodeset_bcr4bp::readFromMat(const char *filepath){
+	tpat_nodeset::readFromMat(filepath);
+	
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_nodeset: Could not load data from file");
+	}
+
+	readExtraParamFromMat(matfp, 1, "Epochs");
+
+	Mat_Close(matfp);
+}//====================================================
+
+/**
  *	@brief Display a textual representation of this object in the standard output
  */
 void tpat_nodeset_bcr4bp::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n", sysData->getTypeStr().c_str(), steps.size());
 	for (size_t n = 0; n < steps.size(); n++){
 		std::vector<double> node = steps[n].getPosVelState();
-		printf("  %02lu: @ %.2f, %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1, getEpoch(n),
+		printf("  %02lu: @ %.2f, %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n, getEpoch(n),
 			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
 		if(n < steps.size()-1){
 			printf("   TOF = %.8f\n", getTOF(n));

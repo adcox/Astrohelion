@@ -1104,7 +1104,8 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     corrector.setMaxIts(1);
     corrector.setVerbose(NO_MSG);
     corrector.setIgnoreDiverge(true);
-
+    // corrector.setScaleVars(true);
+    
     // Run multiple shooter to get X, FX, and DF
     iterationData it;
     it = corrector.multShoot(nodeset);
@@ -1992,6 +1993,49 @@ void bcr4bpr_getPrimaryVel(double t, const tpat_sys_data_bcr4bpr *sysData, doubl
 }//===================================================================
 
 /**
+ *  @brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
+ * 
+ *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  @param sysData a system data object containing information about the BCR4BP primaries
+ *  @param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
+ *  row-major order. The first three elements hold the acceleration of P1, etc.
+ */
+void bcr4bpr_getPrimaryAccel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primAccel){
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+    double theta0 = sysData->getTheta0();
+    double phi0 = sysData->getPhi0();
+    double gamma = sysData->getGamma();
+    double ratio = sysData->getCharLRatio();
+
+    double thetaDot = k;
+    double phiDot = sqrt(mu/pow(ratio, 3));
+
+    double theta = theta0 + thetaDot*t;
+    double phi = phi0 + phiDot * t;    
+
+    // P1 is stationary in this coordinate system
+    primAccel[0] = 0;  primAccel[1] = 0;  primAccel[2] = 0;
+
+    // Acceleration of P2-P3 line
+    double a_P2P3Line[3] = {0};
+    a_P2P3Line[0] = (-thetaDot*thetaDot - phiDot*phiDot)*(cos(theta)*cos(phi)*cos(gamma) + sin(theta)*sin(phi)) + 
+        2*thetaDot*phiDot*(cos(theta)*cos(phi) + sin(theta)*sin(phi)*cos(gamma));
+    a_P2P3Line[1] = -1*(phiDot - thetaDot)*(phiDot - thetaDot)*sin(phi - theta);
+    a_P2P3Line[2] = phiDot*phiDot*cos(phi)*sin(gamma);
+
+    // Multiply by radii of P2 and P3 to get their velocities
+    primAccel[3] = a_P2P3Line[0] * (-nu/mu)*ratio;
+    primAccel[4] = a_P2P3Line[1] * (-nu/mu)*ratio;
+    primAccel[5] = a_P2P3Line[2] * (-nu/mu)*ratio;
+
+    primAccel[6] = a_P2P3Line[0] * (1-nu/mu)*ratio;
+    primAccel[7] = a_P2P3Line[1] * (1-nu/mu)*ratio;
+    primAccel[8] = a_P2P3Line[2] * (1-nu/mu)*ratio;
+}//=====================================================================
+
+/**
  *  @brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
  *
  *  @param crTraj a CR3BP Sun-Earth trajectory
@@ -2108,6 +2152,127 @@ tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, const tpat_sys_da
     }
 
     return bcNodes;
+}//==================================================
+
+/**
+ *  @brief Transform a BCR4BPR Sun-Earth-Moon nodeset into a CR3BP Sun-Earth nodeset
+ *
+ *  @param bcNodes a BCR4BPR Sun-Earth-Moon nodeset
+ *  @param crSys a CR3BP Sun-Earth system data object; contains information about system
+ *  scaling
+ *
+ *  @return a BCR4BPR nodeset object
+ */
+tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_data_cr3bp *crSys){
+    if(crSys->getPrimID(0) != 10 || crSys->getPrimID(1) != 399){
+        throw tpat_exception("CR3BP system is not the Sun-Earth System");
+    }
+
+    if(bcNodes.getSysData()->getPrimID(0) != 10 || bcNodes.getSysData()->getPrimID(1) != 399 ||
+            bcNodes.getSysData()->getPrimID(2) != 301){
+        throw tpat_exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
+    }
+
+    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(bcNodes.getSysData());
+
+    // Create a BCR4BPR Trajectory
+    tpat_nodeset_cr3bp crNodes(crSys);
+
+    double charL2 = crSys->getCharL();
+    double charT2 = crSys->getCharT();
+    double charL3 = bcNodes.getSysData()->getCharL();
+    double charT3 = bcNodes.getSysData()->getCharT();
+
+    std::vector<double> blank(6, NAN);
+
+    for(int n = 0; n < bcNodes.getNumNodes(); n++){
+        std::vector<double> bcState = bcNodes.getState(n);
+        std::vector<double> crNodeState;
+
+        for(int r = 0; r < ((int)bcState.size()); r++){
+            if(r == 0)  // Shift origin to P2-P3 barycenter
+                crNodeState.push_back((bcState[r] + 1.0/bcSys->getK() - bcSys->getMu())*charL3/charL2);
+            else if(r < 3)   // Convert position
+                crNodeState.push_back(bcState[r]*charL3/charL2);
+            else if(r < 6)  // Convert velocity
+                crNodeState.push_back(bcState[r]*(charL3/charL2)*(charT2/charT3));
+        }
+
+        double tof = bcNodes.getTOF(n)*charT3/charT2;
+        tpat_node crNode(crNodeState, tof);
+        crNode.setExtraParam(1, cr3bp_getJacobi(&(crNodeState[0]), crSys->getMu()));
+        crNodes.appendNode(crNode);
+    }
+
+    return crNodes;
+}//==================================================
+
+/**
+ *  @brief Transform a BCR4BPR Sun-Earth-Moon trajectory into a CR3BP Sun-Earth nodeset
+ *
+ *  @param bcTraj a BCR4BPR Sun-Earth-Moon trajectory
+ *  @param crSys a CR3BP Sun-Earth system data object; contains information about system
+ *  scaling
+ *
+ *  @return a BCR4BPR Trajectory object
+ */
+tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp bcTraj, const tpat_sys_data_cr3bp *crSys){
+    if(crSys->getPrimID(0) != 10 || crSys->getPrimID(1) != 399){
+        throw tpat_exception("CR3BP system is not the Sun-Earth System");
+    }
+
+    if(bcTraj.getSysData()->getPrimID(0) != 10 || bcTraj.getSysData()->getPrimID(1) != 399 ||
+            bcTraj.getSysData()->getPrimID(2) != 301){
+        throw tpat_exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
+    }
+
+    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(bcTraj.getSysData());
+
+    // Create a BCR4BPR Trajectory
+    tpat_traj_cr3bp crTraj(crSys);
+
+    double charL2 = crSys->getCharL();
+    double charT2 = crSys->getCharT();
+    double charL3 = bcTraj.getSysData()->getCharL();
+    double charT3 = bcTraj.getSysData()->getCharT();
+
+    // double t0 = bcTraj.getTime(0);
+
+    for(int n = 0; n < bcTraj.getLength(); n++){
+        std::vector<double> bcState = bcTraj.getState(n);
+
+        double crState[6];
+        for(int r = 0; r < 6; r++){
+            if(r == 0){  // Shift origin to P2-P3 barycenter
+                crState[r] = (bcState[r] + 1.0/bcSys->getK() - bcSys->getMu())*charL3/charL2;
+            }else if(r < 3)   // Convert position
+                crState[r] = bcState[r]*charL3/charL2;
+            else if(r < 6)  // Convert velocity
+                crState[r] = bcState[r]*(charL3/charL2)*(charT2/charT3);
+        }
+
+        // Convert acceleration
+        std::vector<double> bcAccel = bcTraj.getAccel(n);
+        double crAccel[3];
+        for(int r = 0; r < 3; r++){
+            crAccel[r] = bcAccel[r]*(charL3/charL2)*(charT2/charT3)*(charT2/charT3);
+        }
+        
+        // double t = bcTraj.getTime(n)*charT3/charT2 - t0;
+        double t = bcTraj.getTime(n)*charT3/charT2;
+
+        // Bogus values for and STM
+        MatrixXRd stm = MatrixXRd::Identity(6,6);
+
+        // Create step
+        tpat_traj_step step(crState, t, crAccel, stm.data());
+        crTraj.appendStep(step);
+        
+        // Compute Jacobi constant
+        crTraj.setJacobi(-1, cr3bp_getJacobi(crState, crSys->getMu()));
+    }
+
+    return crTraj;
 }//==================================================
 
 /**
@@ -2246,7 +2411,7 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr *bcSys, double T0){
 }//=================================================
 
 /**
- *  @brief Orient a BCR4BPR system so that t = 0 corresponds to the specified epoch time
+ *  @brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
  *  
  *  @param et epoch time (seconds, J2000, UTC)
  *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
@@ -2266,6 +2431,7 @@ void bcr4bpr_orientAtEpoch(double et, tpat_sys_data_bcr4bpr *sysData){
 
     sysData->setTheta0(theta);
     sysData->setPhi0(phi);
+    sysData->setEpoch0(et);
 }//===========================================
 
 

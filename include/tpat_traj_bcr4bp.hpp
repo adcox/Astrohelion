@@ -42,6 +42,7 @@ public:
 	tpat_traj_bcr4bp(const tpat_sys_data_bcr4bpr*);
 	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
 	tpat_traj_bcr4bp(const tpat_arc_data&);
+	tpat_traj_bcr4bp(const char*);
 	static tpat_traj_bcr4bp fromNodeset(tpat_nodeset_bcr4bp);
 
 	// Set and Get Functions
@@ -53,6 +54,7 @@ public:
 	void set_dqdT(int, const double*);
 	void set_dqdT(int, std::vector<double>);
 
+	void readFromMat(const char*);
 	void saveToMat(const char*) const;
 private:
 

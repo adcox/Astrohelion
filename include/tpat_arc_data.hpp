@@ -99,7 +99,14 @@ public:
 	// Utility Functions
 
 	/**
+	 *  @brief Loads the object from a Matlab binary file
+	 *  @param filepath the filepath to the Matlab file
+	 */
+	virtual void readFromMat(const char *filepath) = 0;
+
+	/**
 	 *	@brief Saves the object to a Matlab binary file
+	 *	@param filepath
 	 */
 	virtual void saveToMat(const char*) const = 0;
 
@@ -134,11 +141,18 @@ protected:
 	double tol = 0;
 
 	void copyMe(const tpat_arc_data&);
+
+	void readStateFromMat(mat_t*, const char*);
+	void readAccelFromMat(mat_t*);
+	void readSTMFromMat(mat_t*);
+	void readExtraParamFromMat(mat_t*, int, const char*);
 	void saveAccel(mat_t*) const;
 	void saveExtraParam(mat_t*, int, const char*) const;
 	void saveState(mat_t*) const;
 	void saveState(mat_t*, const char*) const;
 	void saveSTMs(mat_t*) const;
+
+
 };
 
 

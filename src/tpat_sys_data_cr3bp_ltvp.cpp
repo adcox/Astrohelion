@@ -56,6 +56,21 @@ tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(std::string P1, std::string P
 }//===================================================
 
 /**
+ *  @brief Load the system data object from a Matlab data file
+ * 
+ *  @param filepath path to the data file
+ */
+tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(const char *filepath){
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_sys_data_cr3bp_ltvp: Could not load data from file");
+	}
+	readFromMat(matfp);
+	Mat_Close(matfp);
+}//===================================================
+
+/**
  *	@brief Copy constructor
  *	@param d
  */
@@ -132,6 +147,15 @@ void tpat_sys_data_cr3bp_ltvp::setIspDim(double d){ otherParams[2] = d/charT; }
 void tpat_sys_data_cr3bp_ltvp::setM0Dim(double d){ otherParams[3] = d/charM; }
 
 /**
+ *  @brief Save the system data to a matlab file
+ * 
+ *  @param filepath path to the data file
+ */
+void tpat_sys_data_cr3bp_ltvp::saveToMat(const char *filepath) const{
+	tpat_sys_data::saveToMat(filepath);
+}//==================================================
+
+/**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
@@ -172,4 +196,18 @@ void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile) const{
 	double m = otherParams[3];
 	matvar_t *mass_var = Mat_VarCreate("Mass0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &m, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, mass_var, "Mass0", MAT_COMPRESSION_NONE);
+}//===================================================
+
+/**
+ *	@brief Populate data fiels for this data object by reading the primaries'
+ *	names from a Mat file
+ *	@param matFile a pointer to the Mat file in question
+ */
+void tpat_sys_data_cr3bp_ltvp::readFromMat(mat_t *matFile){
+	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
+	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
+
+	initFromPrimNames(P1, P2);
+	otherParams[2] = readDoubleFromMat(matFile, "Isp");
+	otherParams[3] = readDoubleFromMat(matFile, "Mass0");
 }//===================================================

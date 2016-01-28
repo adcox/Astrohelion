@@ -34,7 +34,8 @@ class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 		tpat_sys_data_cr3bp_ltvp();
 		tpat_sys_data_cr3bp_ltvp(std::string, std::string, double, double, double);
 		tpat_sys_data_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp&);
-
+		tpat_sys_data_cr3bp_ltvp(const char*);
+		
 		tpat_sys_data_cr3bp_ltvp& operator=(const tpat_sys_data_cr3bp_ltvp&);
 		
 		const tpat_model* getModel() const;
@@ -50,12 +51,12 @@ class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 		void setThrust(double);
 		void setThrustDim(double);
 
+		void saveToMat(const char*) const;
 		void saveToMat(mat_t*) const;
-		
 	private:
 		/** The dynamic model that governs motion for this system*/
 		tpat_model_cr3bp_ltvp model;
-
+		void readFromMat(mat_t*);
 };
 
 #endif

@@ -130,6 +130,7 @@ class tpat_event{
 		
 		std::vector<double>* getState();
 		void incrementCount();
+		void reset();
 		bool stopOnEvent() const;
 
 		void setDir(int);
@@ -161,7 +162,7 @@ class tpat_event{
 
 		double dist = 100000;		//!< Distance to the event; must be able to change sign
 		double lastDist = 100000; 	//!< distance to event at previous iteration
-		double theTime = 0;			//!< Time at which the even occurs
+		double theTime = 0;			//!< Time at which the event occurs
 
 		/** State at which the event occurs; also used to store last state whenver
 		updateDist() is called so we can determine the direction */

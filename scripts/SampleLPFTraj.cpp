@@ -10,15 +10,13 @@
 #include <cstdio>
 
 int main(void){
-	tpat_sys_data_cr3bp crSys("sun", "earth");
+	tpat_sys_data_cr3bp seSys("sun", "earth");
 	tpat_sys_data_bcr4bpr bcSys("Sun", "Earth", "Moon");
 	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
 	
 
 	// Determine geometry at t0 so that we can start at T = 0;
 	bcr4bpr_orientAtEpoch(leaveHaloEpoch, &bcSys);
-	// double t0 = leaveHaloEpoch/bcSys.getCharT();	 // (Big number, let's avoid this)
-	double t0 = 0;
 
 	int numHaloNodes = 8;
 	int numManNodes = 10;
@@ -29,22 +27,24 @@ int main(void){
 	double tf = -2.566028939144172;
 
 	// Generate nodesets for the halo manifold and the halo itself, both in reverse time
-	tpat_nodeset_cr3bp manData(IC, &crSys, tf, numManNodes);
-	tpat_nodeset_cr3bp haloData(manData.getNode(-1).getPosVelState(), &crSys, -PI, numHaloNodes);
+	double haloTOF = -PI;
+	tpat_nodeset_cr3bp manData(IC, &seSys, tf, numManNodes);
+	tpat_nodeset_cr3bp haloData(manData.getNode(-1).getPosVelState(), &seSys, haloTOF, numHaloNodes);
 
 	// manData.print();
 	// haloData.print();
 
 	// Concatenate nodesets;
 	manData.deleteNode(-1);
-	tpat_nodeset_cr3bp manToHaloData = manData + haloData;
-
+	tpat_nodeset_cr3bp manToHaloData = manData;
+	manToHaloData += haloData;
+	// manToHaloData.print();
+	manToHaloData.reverseOrder();
 	// manToHaloData.print();
 
 	// Change to BCR4BPR System
+	double t0 = (0 - std::abs(haloTOF)*seSys.getCharT())/bcSys.getCharT();	// t = 0 occurs at the beginning of the manifold, so just subtract the halo TOF
 	tpat_nodeset_bcr4bp manToHalo_bcNodes = bcr4bpr_SE2SEM(manToHaloData, &bcSys, t0);
-	// manToHalo_bcNodes.print();
-	manToHalo_bcNodes.reverseOrder();
 	// manToHalo_bcNodes.print();
 
 	// Get a node that (roughly) splits the last segment in half
@@ -81,23 +81,30 @@ int main(void){
 	corrector.multShoot(&manToHalo_bcNodes);
 	tpat_nodeset_bcr4bp contNodes = corrector.getBCR4BPR_Output();
 
+	// contNodes.print();
+
 	// Propagate past final node until a negative XZ plane crossing (hopefully near SP)
 	double maxTOF = 5.0/bcSys.getK();
 	engine.addEvent(tpat_event::XZ_PLANE, -1, true);
-	engine.runSim(contNodes.getNode(-1).getPosVelState(), t0, maxTOF);
+	engine.runSim(contNodes.getNode(-1).getPosVelState(), contNodes.getEpoch(-1), maxTOF);
 	tpat_traj_bcr4bp newArc = engine.getBCR4BPR_Traj();
 	
 	// Create a nodeset from the arc segment
-	double newArcTOF = newArc.getTime(-1);
+	double newArcTOF = newArc.getTime(-1) - newArc.getTime(0);
 	double numNewArcNodes = 5;
-	tpat_nodeset_bcr4bp evolveSegNodes(contNodes.getNode(-1).getPosVelState(), &bcSys, t0, newArcTOF, numNewArcNodes);
+	tpat_nodeset_bcr4bp evolveSegNodes(contNodes.getNode(-1).getPosVelState(), &bcSys, contNodes.getEpoch(-1), newArcTOF, numNewArcNodes);
 
 	// Concatenate into one large nodeset
 	contNodes.deleteNode(-1);
-	tpat_nodeset_bcr4bp fullNodeset = contNodes + evolveSegNodes;
+	tpat_nodeset_bcr4bp fullNodeset = contNodes;
+	fullNodeset += evolveSegNodes;
+
+	// fullNodeset.print();
+	fullNodeset.saveToMat("LPF_FullSet.mat");
 
 	// Get a subset of the full nodeset for corrections; don't want the halo nodes to change
 	tpat_nodeset_bcr4bp workingNodes(fullNodeset, numHaloNodes-1, fullNodeset.getNumNodes());
+	// tpat_nodeset_bcr4bp workingNodes = fullNodeset;
 
 	// Constraint to fix first node and intersect SP twice
 	double maxR = 40;	// km
@@ -106,7 +113,9 @@ int main(void){
 	firstState.push_back(workingNodes.getEpoch(0));
 	tpat_constraint fixFirst(tpat_constraint::STATE, 0, firstState);
 	int sp1_node = numManNodes-1;
+	// int sp1_node = numHaloNodes-1 + numManNodes-1;
 	int sp2_node = workingNodes.getNumNodes()-1;
+
 	// tpat_constraint sp1(tpat_constraint::SP_RANGE, sp1_node, &maxA, 1);
 	// tpat_constraint sp2(tpat_constraint::SP_RANGE, sp2_node, &maxA, 1);
 	// tpat_constraint sp1(tpat_constraint::SP, sp1_node, workingNodes.getNode(sp1_node).getPosVelState());
@@ -120,8 +129,8 @@ int main(void){
 		coeff1(2,1), coeff1(0,2), coeff1(1,2), coeff1(2,2)};
 	double d2[] = {maxDist, coeff2(0,0), coeff2(1,0), coeff2(2,0), coeff2(0,1), coeff2(1,1),
 		coeff2(2,1), coeff2(0,2), coeff2(1,2), coeff2(2,2)};
-	tpat_constraint sp1(tpat_constraint::SP_MAX_DIST, sp1_node, d1, 10);
-	tpat_constraint sp2(tpat_constraint::SP_MAX_DIST, sp2_node, d2, 10);
+	tpat_constraint sp1(tpat_constraint::SP, sp1_node, d1, 10);
+	tpat_constraint sp2(tpat_constraint::SP, sp2_node, d2, 10);
 
 
 	// Correct to satisfy new constraints
@@ -132,11 +141,11 @@ int main(void){
 	notContinuous.push_back(workingNodes.getNumNodes()-3);
 	workingNodes.setVelConNodes_allBut(notContinuous);
 	workingNodes.print();
-	workingNodes.saveToMat("WorkingNodes.mat");
+	workingNodes.saveToMat("LPF_LoopySample_Uncorrected.mat");
 
 	printColor(BOLDBLACK, "\nAdding SP constraints and correcting...\n");
 	// corrector.setVerbose(ALL_MSG);
-	corrector.setMaxIts(100);
+	corrector.setMaxIts(50);
 	iterationData itBase = corrector.multShoot(&workingNodes);
 	tpat_nodeset_bcr4bp convergedNodes = corrector.getBCR4BPR_Output();
 
@@ -144,11 +153,7 @@ int main(void){
 	double charV = bcSys.getCharL()/bcSys.getCharT();
 	printf("Converged solution has a total delta-V of %.4f m/s\n", 1000*totalDV*bcSys.getCharL()/bcSys.getCharT());
 
-	convergedNodes.saveToMat("MinDV_LPF_Sample.mat");
-	waitForUser();
-
 	// Step Total Delta-V Down
-	
 	double approxDV_dim = std::floor(totalDV*100*charV)/100;	// round to nearest 10 m/s
 	printf("Rounded dv = %.2f m/s\n", approxDV_dim*1000);
 
@@ -156,6 +161,7 @@ int main(void){
 	double sp1ConData[] = {0,0,0,0,0,0,0,0,0,0};
 	tpat_constraint sp1Ineq(tpat_constraint::SP_MAX_DIST, sp1_node, sp1ConData, 10);
 	tpat_constraint sp2Ineq(tpat_constraint::SP_MAX_DIST, sp2_node, sp1ConData, 10);
+	maxDist = 0;							// Maximum distance from Saddle Point
 
 	// Create dummy constraint for maxDV; need to put in maximum DV in NONDIM units
 	tpat_constraint maxDVCon(tpat_constraint::MAX_DELTA_V, 0, &approxDV_dim, 1);
@@ -164,7 +170,9 @@ int main(void){
 	tpat_constraint activeSP1_Con = sp1;
 	tpat_constraint activeSP2_Con = sp2;
 
-	maxDist = 0;							// Maximum distance from Saddle Point
+	// Allow one more DV at Earth flyby
+	notContinuous.push_back(sp1.getNode()+1);
+	workingNodes.setVelConNodes_allBut(notContinuous);
 
 	printColor(BOLDBLACK, "\nBeginning Delta-V Step-Down Loop\n");
 
@@ -208,65 +216,65 @@ int main(void){
 			
 			printf("Could not converge... Attempting new SP Con OR increased distance\n");
 			bool converged = false;
-			while(!converged){
+			// while(!converged){
 
-				// If corrections still utilize exact targeting, switch to inequality and update coefficients
-				if(activeSP1_Con.getType() == tpat_constraint::SP){
-					// printf("Switching SP constraint type to SP_MAX_DIST\n");
-					maxDist = 10/bcSys.getCharL();	// Set to 10 km to start with
-					coeff1 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp1_node));
-					coeff2 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp2_node));
-					double d1[] = {maxDist, coeff1(0,0), coeff1(1,0), coeff1(2,0), coeff1(0,1), coeff1(1,1),
-						coeff1(2,1), coeff1(0,2), coeff1(1,2), coeff1(2,2)};
-					double d2[] = {maxDist, coeff2(0,0), coeff2(1,0), coeff2(2,0), coeff2(0,1), coeff2(1,1),
-						coeff2(2,1), coeff2(0,2), coeff2(1,2), coeff2(2,2)};
-					activeSP1_Con = sp1Ineq;
-					activeSP2_Con = sp2Ineq;
-					activeSP1_Con.setData(d1, 10);
-					activeSP2_Con.setData(d2, 10);
-				}else{
-					// If already using inequality, update maxDist
-					printf("Inner Loop: Updating SP_MAX_DIST coefficients\n");
-					coeff1 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp1_node));
-					coeff2 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp2_node));
-					double d1[] = {maxDist, coeff1(0,0), coeff1(1,0), coeff1(2,0), coeff1(0,1), coeff1(1,1),
-						coeff1(2,1), coeff1(0,2), coeff1(1,2), coeff1(2,2)};
-					double d2[] = {maxDist, coeff2(0,0), coeff2(1,0), coeff2(2,0), coeff2(0,1), coeff2(1,1),
-						coeff2(2,1), coeff2(0,2), coeff2(1,2), coeff2(2,2)};
-					activeSP1_Con.setData(d1, 10);
-					activeSP2_Con.setData(d2, 10);
-				}
+			// 	// If corrections still utilize exact targeting, switch to inequality and update coefficients
+			// 	if(activeSP1_Con.getType() == tpat_constraint::SP){
+			// 		// printf("Switching SP constraint type to SP_MAX_DIST\n");
+			// 		maxDist = 10/bcSys.getCharL();	// Set to 10 km to start with
+			// 		coeff1 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp1_node));
+			// 		coeff2 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp2_node));
+			// 		double d1[] = {maxDist, coeff1(0,0), coeff1(1,0), coeff1(2,0), coeff1(0,1), coeff1(1,1),
+			// 			coeff1(2,1), coeff1(0,2), coeff1(1,2), coeff1(2,2)};
+			// 		double d2[] = {maxDist, coeff2(0,0), coeff2(1,0), coeff2(2,0), coeff2(0,1), coeff2(1,1),
+			// 			coeff2(2,1), coeff2(0,2), coeff2(1,2), coeff2(2,2)};
+			// 		activeSP1_Con = sp1Ineq;
+			// 		activeSP2_Con = sp2Ineq;
+			// 		activeSP1_Con.setData(d1, 10);
+			// 		activeSP2_Con.setData(d2, 10);
+			// 	}else{
+			// 		// If already using inequality, update maxDist
+			// 		printf("Inner Loop: Updating SP_MAX_DIST coefficients\n");
+			// 		coeff1 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp1_node));
+			// 		coeff2 = bcr4bpr_spLoc_polyFit(&bcSys, convergedNodes.getEpoch(sp2_node));
+			// 		double d1[] = {maxDist, coeff1(0,0), coeff1(1,0), coeff1(2,0), coeff1(0,1), coeff1(1,1),
+			// 			coeff1(2,1), coeff1(0,2), coeff1(1,2), coeff1(2,2)};
+			// 		double d2[] = {maxDist, coeff2(0,0), coeff2(1,0), coeff2(2,0), coeff2(0,1), coeff2(1,1),
+			// 			coeff2(2,1), coeff2(0,2), coeff2(1,2), coeff2(2,2)};
+			// 		activeSP1_Con.setData(d1, 10);
+			// 		activeSP2_Con.setData(d2, 10);
+			// 	}
 				
-				convergedNodes.clearConstraints();
-				convergedNodes.addConstraint(activeSP1_Con);
-				convergedNodes.addConstraint(activeSP2_Con);
-				convergedNodes.addConstraint(maxDVCon);
-				convergedNodes.addConstraint(fixFirst);
+			// 	convergedNodes.clearConstraints();
+			// 	convergedNodes.addConstraint(activeSP1_Con);
+			// 	convergedNodes.addConstraint(activeSP2_Con);
+			// 	convergedNodes.addConstraint(maxDVCon);
+			// 	convergedNodes.addConstraint(fixFirst);
 				
-				try{
-					// convergedNodes.print();
-					// finiteDiff_checkMultShoot(&convergedNodes);
-					// waitForUser();
-					printf("Attempting to correct with DV = %.2f m/s and SP Dist = %.2f km\n",
-						dvMax*1000, maxDist*bcSys.getCharL());
-					iterationData itData = corrector.multShoot(&convergedNodes);
-					printf("Converged solution with DV = %.2f m/s and SP Dist = %.2f km\n",
-						getTotalDV(&itData)*charV*1000, maxDist*bcSys.getCharL());
-					convergedNodes = corrector.getBCR4BPR_Output();
-					converged = true;
+			// 	try{
+			// 		// convergedNodes.print();
+			// 		// finiteDiff_checkMultShoot(&convergedNodes);
+			// 		// waitForUser();
+			// 		printf("Attempting to correct with DV = %.2f m/s and SP Dist = %.2f km\n",
+			// 			dvMax*1000, maxDist*bcSys.getCharL());
+			// 		iterationData itData = corrector.multShoot(&convergedNodes);
+			// 		printf("Converged solution with DV = %.2f m/s and SP Dist = %.2f km\n",
+			// 			getTotalDV(&itData)*charV*1000, maxDist*bcSys.getCharL());
+			// 		convergedNodes = corrector.getBCR4BPR_Output();
+			// 		converged = true;
 
-					waitForUser();
-				}catch(tpat_diverge &e){
-					if(maxDist < 100/bcSys.getCharL()){
-						maxDist += 5/bcSys.getCharL();
-						printf("  Could not converge, increasing SP Dist to %.2f km\n", maxDist*bcSys.getCharL());
-					}
-					else{
-						printErr("Could not increase SP pass distance any more... exiting!");
-						break;
-					}
-				}
-			}// End of convergence loop
+			// 		// waitForUser();
+			// 	}catch(tpat_diverge &e){
+			// 		if(maxDist < 100/bcSys.getCharL()){
+			// 			maxDist += 5/bcSys.getCharL();
+			// 			printf("  Could not converge, increasing SP Dist to %.2f km\n", maxDist*bcSys.getCharL());
+			// 		}
+			// 		else{
+			// 			printErr("Could not increase SP pass distance any more... exiting!");
+			// 			break;
+			// 		}
+			// 	}
+			// }// End of convergence loop
 
 			// If convergence loop was exited instead of satisfied, kill the entire corrections process
 			if(!converged)
@@ -274,5 +282,5 @@ int main(void){
 		}// End of DV loop try-catch
 	}// End of DV Loop
 
-	convergedNodes.saveToMat("MinDV_LPF_Sample.mat");
+	convergedNodes.saveToMat("LPF_LoopySample_minDV.mat");
 }

@@ -221,3 +221,22 @@ void tpat_traj_bcr4bp::saveToMat(const char* filename) const{
 
 	Mat_Close(matfp);
 }//========================================
+
+/**
+ *  @brief Populate data in this nodeset from a matlab file
+ * 
+ *  @param filepath the path to the matlab data file
+ */
+void tpat_traj_bcr4bp::readFromMat(const char *filepath){
+	tpat_traj::readFromMat(filepath);
+	
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_traj_bcr4bp: Could not load data from file");
+	}
+
+	readExtraParamFromMat(matfp, 1, "dqdT");
+	
+	Mat_Close(matfp);
+}//====================================================

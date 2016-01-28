@@ -40,9 +40,7 @@
  *	@param sys a pointer to a system data object that describes
  *	the system this trajectory is integrated in
  */
-tpat_arc_data::tpat_arc_data(const tpat_sys_data *sys) : sysData(sys){
-	// sysData = sys;
-}//====================================================
+tpat_arc_data::tpat_arc_data(const tpat_sys_data *sys) : sysData(sys){}
 
 /**
  *	@brief Copy constructor
@@ -409,7 +407,7 @@ void tpat_arc_data::saveExtraParam(mat_t *matFile, int varIx, const char *name) 
 }//======================================================
 
 /**
- *	@brief Save the state vector [pos, vel] to a file
+ *	@brief Save the state vector [pos, vel] to a file with variable name "State"
  *	@param matFile a pointer to the destination matlab file 
  */
 void tpat_arc_data::saveState(mat_t *matFile) const{
@@ -419,7 +417,7 @@ void tpat_arc_data::saveState(mat_t *matFile) const{
 /**
  *	@brief Save the state vector [pos, vel] to a file
  *	@param matFile a pointer to the destination matlab file 
- *	@param varName the name of the variable (e.g. "state" or "nodes")
+ *	@param varName the name of the variable (e.g. "State" or "Nodes")
  */
 void tpat_arc_data::saveState(mat_t *matFile, const char* varName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
@@ -478,6 +476,148 @@ void tpat_arc_data::saveSTMs(mat_t *matFile) const{
 	matvar_t *matvar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "STM", MAT_COMPRESSION_NONE);
 }//=========================================
+
+/**
+ *  @brief Read the state vector for this arc_data object from a matlab data file
+ *  @details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  it clears the steps vector and then repopulates it with new tpat_arc_step objects
+ *  with state information read from the data file.
+ * 
+ *  @param matFile pointer to an open matlab data file
+ *  @param varName the name of the state variable (e.g., "State" or "Nodes")
+ */
+void tpat_arc_data::readStateFromMat(mat_t *matFile, const char* varName){
+	matvar_t *stateMat = Mat_VarRead(matFile, varName);
+	if(stateMat == NULL){
+		throw tpat_exception("Could not state data vector");
+	}else{
+		int numSteps = stateMat->dims[0];
+		steps.clear();
+		if(stateMat->dims[1] != 6){
+			throw tpat_exception("Incompatible data file: State width is not 6.");
+		}
+
+		if(stateMat->class_type == MAT_C_DOUBLE && stateMat->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(stateMat->data);
+
+			if(data != NULL){
+				for(int i = 0; i < numSteps; i++){
+					double state[] = {0,0,0,0,0,0};
+					state[0] = data[0*numSteps + i];
+					state[1] = data[1*numSteps + i];
+					state[2] = data[2*numSteps + i];
+					state[3] = data[3*numSteps + i];
+					state[4] = data[4*numSteps + i];
+					state[5] = data[5*numSteps + i];
+
+					tpat_arc_step step;
+					step.setPosVelState(state);
+					steps.push_back(step);
+				}
+			}
+		}else{
+			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(stateMat);
+}//===============================================
+
+void tpat_arc_data::readAccelFromMat(mat_t *matFile){
+	matvar_t *accelMat = Mat_VarRead(matFile, "Accel");
+	if(accelMat == NULL){
+		throw tpat_exception("Could not read data vector");
+	}else{
+		int numSteps = accelMat->dims[0];
+		if(accelMat->dims[1] != 3){
+			throw tpat_exception("Incompatible data file: Accel width is not 3.");
+		}
+
+		if(accelMat->class_type == MAT_C_DOUBLE && accelMat->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(accelMat->data);
+
+			if(data != NULL){
+				for(int i = 0; i < numSteps; i++){
+					double accel[] = {0,0,0};
+					accel[0] = data[0*numSteps + i];
+					accel[1] = data[1*numSteps + i];
+					accel[2] = data[2*numSteps + i];
+
+					steps[i].setAccel(accel);
+				}
+			}
+		}else{
+			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(accelMat);
+}//===============================================
+
+void tpat_arc_data::readSTMFromMat(mat_t *matFile){
+	matvar_t *allSTM = Mat_VarRead(matFile, "STM");
+	if(allSTM == NULL){
+		throw tpat_exception("Could not read data vector");
+	}else{
+		int numSteps = allSTM->dims[2];
+
+		if(allSTM->dims[0] != 6 || allSTM->dims[1] != 6){
+			throw tpat_exception("Incompatible data file: STM is not 6x6.");
+		}
+
+		if(allSTM->class_type == MAT_C_DOUBLE && allSTM->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(allSTM->data);
+
+			if(data != NULL){
+				for(int i = 0; i < numSteps; i++){
+					double stmEl[36];
+					for(int j = 0; j < 36; j++){
+						stmEl[j] = data[36*i + j];
+					}
+
+					MatrixXRd P = Eigen::Map<MatrixXRd>(stmEl, 6, 6);
+					steps[i].setSTM(P.transpose());
+				}
+			}
+		}else{
+			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(allSTM);
+}//===============================================
+
+void tpat_arc_data::readExtraParamFromMat(mat_t *matFile, int varIx, const char *varName){
+	if(varIx > numExtraParam || varIx < 0)
+		throw tpat_exception("Could not read extra parameter; index out of bounds");
+
+	// Get starting index of this extra param within a arc step's extra parameter vector
+	int ix0 = 0;
+	for(int i = 0; i < varIx; i++){ ix0 += extraParamRowSize[i]; }
+
+	matvar_t *matvar = Mat_VarRead(matFile, varName);
+	if(matvar == NULL){
+		throw tpat_exception("Could not read data vector");
+	}else{
+		int numSteps = matvar->dims[0];
+		if(matvar->dims[1] != ((size_t)extraParamRowSize[varIx])){
+			char message[64];
+			sprintf(message, "Incompatible data file: %s width is not %d", varName, extraParamRowSize[varIx]);
+			throw tpat_exception(message);
+		}
+
+		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(matvar->data);
+			if(data != NULL){
+				for(int i = 0; i < numSteps; i++){
+					for(int c = 0; c < extraParamRowSize[varIx]; c++){
+						steps[i].setExtraParam(ix0+c, data[c*numSteps + i]);
+					}
+				}
+			}
+		}else{
+			throw tpat_exception("tpat_arc_data::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(matvar);
+}//===============================================
 
 /**
  *	@brief Update the constraints for every node so that their node numberes

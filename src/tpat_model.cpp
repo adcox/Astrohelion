@@ -116,6 +116,34 @@ bool tpat_model::supportsEvent(tpat_event::event_t type) const{
 }//===================================================
 
 /**
+ *  @brief Determine the time derivative of the magnitude of a vector from a primary to
+ *  the body of interest, non-dimensional units
+ *  @details This derivation assumes the primary of interest is fixed in the frame the
+ *  spacecraft coordinates are expressed in. If this is not the case (i.e., the primary
+ *  moves in the working frame), this function will need to be overridden
+ * 
+ *  @param Pix Index of the primary
+ *  @param t Non-dimensional epoch to compute r-dot at
+ *  @param state six-element non-dimensional spacecraft state
+ *  @param sys system data object
+ *  @return Time derivative of the magnitude of a vector from a primary to the body
+ *  of interest, non-dimensional velocity units
+ */
+double tpat_model::getRDot(int Pix, double t, const double *state, const tpat_sys_data *sys) const{
+	
+	std::vector<double> primPos = getPrimPos(t, sys);
+    double dx = state[0] - primPos[3*Pix+0];
+    double dy = state[1] - primPos[3*Pix+1];
+    double dz = state[2] - primPos[3*Pix+2];
+
+    std::vector<double> primVel = getPrimVel(t, sys);
+    double num = dx*(state[3] - primVel[3*Pix+0]) + dy*(state[4] - primVel[3*Pix+1])+ dz*(state[5] - primVel[3*Pix+2]);
+
+    return num/sqrt(dx*dx + dy*dy + dz*dz);
+}//==================================================
+
+
+/**
  *	@brief Initialize the corrector's design vector with position and velocity states,
  *	and times-of-flight.
  *

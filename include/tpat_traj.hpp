@@ -56,11 +56,12 @@ public:
 	tpat_traj(const tpat_sys_data*);
 	tpat_traj(const tpat_traj&);
 	tpat_traj(const tpat_arc_data&);
-	
+
 	// Operators
 
 	// Set and Get Functions
 	double getTime(int) const;
+	double getTOF() const;
 	tpat_traj_step getStep(int) const;
 
 	void appendStep(tpat_traj_step);
@@ -69,13 +70,13 @@ public:
 	void shiftAllTimes(double);
 	
 	// Utility Functions
-	void saveToMat(const char*) const;
-	void print() const;
-	void initExtraParam();
 	tpat_nodeset discretize(int) const;
+	void initExtraParam();
+	void print() const;
+	void readFromMat(const char*);
+	void saveToMat(const char*) const;
 
 protected:
-
 	void saveTime(mat_t*) const;
 };
 

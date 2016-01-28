@@ -230,7 +230,9 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
     
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     if(matvar == NULL){
-        throw tpat_exception("tpat_utilities::readDoubleFromMat: Could not read variable from file");
+        char msg[256];
+        sprintf(msg, "tpat_utilities::readDoubleFromMat: Could not read %s from file", varName);
+        throw tpat_exception(msg);
     }else{
         switch(matvar->data_type){
             case MAT_T_UINT8:

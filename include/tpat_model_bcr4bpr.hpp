@@ -62,6 +62,7 @@ protected:
 	void multShoot_targetDeltaV(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetDist(iterationData*, tpat_constraint, int) const;
 	double multShoot_targetDist_compSlackVar(const iterationData*, tpat_constraint) const;
+	void multShoot_targetApse(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetSP(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetSP_mag(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetSP_dist(iterationData*, tpat_constraint, int) const;

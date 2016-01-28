@@ -784,6 +784,10 @@ void tpat_simulation_engine::cleanEngine(){
 
     eventOccurs.clear();
 
+    for(size_t e = 0; e < events.size(); e++){
+        events[e].reset();
+    }
+
     isClean = true;
 }//====================================================
 

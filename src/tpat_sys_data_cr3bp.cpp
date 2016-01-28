@@ -57,6 +57,21 @@ tpat_sys_data_cr3bp::tpat_sys_data_cr3bp(std::string P1, std::string P2){
 }//===================================================
 
 /**
+ *  @brief Load the system data object from a Matlab data file
+ * 
+ *  @param filepath path to the data file
+ */
+tpat_sys_data_cr3bp::tpat_sys_data_cr3bp(const char *filepath){
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_sys_data_cr3bp: Could not load data from file");
+	}
+	readFromMat(matfp);
+	Mat_Close(matfp);
+}//===================================================
+
+/**
  *	@brief Initialize all data fields using the names of the primaries
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary
@@ -111,6 +126,15 @@ tpat_sys_data_cr3bp& tpat_sys_data_cr3bp::operator= (const tpat_sys_data_cr3bp &
  *	@return the non-dimensional mass ratio for the system
  */
 double tpat_sys_data_cr3bp::getMu() const { return otherParams.at(0); }
+
+/**
+ *  @brief Save the system data to a matlab file
+ * 
+ *  @param filepath path to the data file
+ */
+void tpat_sys_data_cr3bp::saveToMat(const char *filepath) const{
+	tpat_sys_data::saveToMat(filepath);
+}//==================================================
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file

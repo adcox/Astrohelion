@@ -62,12 +62,15 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
 .PHONY: printVars
 
-all: calcTest linMotionTest matrixTest nodesetTest simEngineTest sysSwitchTest utilityTest
+all: calcTest linMotionTest nodesetTest simEngineTest sysSwitchTest utilityTest
 	
 
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
+
+bcSysTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_bcr4bprSysData.cpp -o $(BIN)/$@
 
 calcTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
@@ -114,6 +117,9 @@ sortEigTest: $(OBJECTS)
 sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
 
+trajTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_traj.cpp -o $(BIN)/$@
+
 utilityTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
 
@@ -146,6 +152,7 @@ printVars:
 
 list:
 	@- echo "You may choose from the following options:"
+	@- echo "  bcSysTest - test BC4BP system data, saving, loading, etc."
 	@- echo "  calcTest - test calculation functions"
 	@- echo "  correctorTest - test multiple shooting corrector"
 	@- echo "  familyOps - test the ability to locate orbits within a family"
@@ -161,6 +168,7 @@ list:
 	@- echo "  simEngineTest - Test the simulation engine"
 	@- echo "  sortEigTest - Test the eigenvalue sorting algorithm"
 	@- echo "  sysSwitchTest - Test functions that convert trajectories between systems and models"
+	@- echo "  trajTest - Test the trajectory objects"
 	@- echo "  utilityTest - Test the utility function library"
 	@- echo "  temp - test some temporary file"
 

@@ -1,8 +1,7 @@
 /**
- *	Attempt to replicate LPF trajectory that patches a SE manifold
- *	to a 1:3 resonant orbit
+ *	Generate a bunch of manifold arcs and correct them to be natural in the BC4BP
  *
- *	To compile: g++ --std=c++11 -ltpat -Wall -pedantic LPF_1-3-Res.cpp -o a.out
+ *	To compile: g++ --std=c++11 -ltpat -Wall -pedantic LPF_PropAllManifolds.cpp -o a.out
  */
 
 #include "tpat_all_includes.hpp"
@@ -17,6 +16,7 @@ int main(void){
 
 	tpat_correction_engine corrector = tpat_correction_engine();
 	tpat_sys_data_cr3bp seSys("sun", "earth");
+	tpat_sys_data_cr3bp emSys("earth", "moon");
 	tpat_sys_data_bcr4bpr bcSys("Sun", "Earth", "Moon");
 	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
 
@@ -42,7 +42,6 @@ int main(void){
 	tpat_event bcMaxDist(&bcSys, tpat_event::DIST, 0, true, bcMaxDist_data);
 	bcEngine.addEvent(bcMaxDist);
 
-	std::vector<tpat_traj_cr3bp> manifolds;
 	for(size_t n = 0; n < manICs.size(); n++){
 		printf("Manifold %03zu:\n", n);
 		// First, propagate to X = X_earth to leave the halo
@@ -106,52 +105,18 @@ int main(void){
 					char name[32];
 					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu.mat", n);
 					fullTraj.saveToMat(name);
+
+					tpat_traj_cr3bp fullTraj_SE = bcr4bpr_SEM2SE(fullTraj, &seSys);
+					// sprintf(name, "data/Traj%03zu_SE.mat", n);
+					// fullTraj_SE.saveToMat(name);
+
+					tpat_traj_cr3bp fullTraj_EM = cr3bp_SE2EM(fullTraj_SE, &emSys, bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
+					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu_EM.mat", n);
+					fullTraj_EM.saveToMat(name);
 				}catch(tpat_diverge &e){
 					printErr("  Unable to correct manifold %03zu to be continuous in BC4BP... darn!\n", n);
 				}
 			}
 		}
 	}
-
-
-	// // Generate nodesets for the halo manifold and the halo itself, both in reverse time
-	// tpat_nodeset_cr3bp manData(IC, &seSys, tf, numManNodes);
-	// tpat_nodeset_cr3bp haloData(manData.getNode(-1).getPosVelState(), &seSys, -PI, numHaloNodes);
-
-	// // Concatenate nodesets;
-	// manData.deleteNode(-1);
-	// tpat_nodeset_cr3bp manToHaloData = manData + haloData;
-
-	// // Change to BCR4BPR System
-	// tpat_nodeset_bcr4bp manToHalo_bcNodes = bcr4bpr_SE2SEM(manToHaloData, &bcSys, t0);
-	// manToHalo_bcNodes.reverseOrder();
-
-	// // Make all nodes continuous in velocity
-	// std::vector<int> notContinuous = std::vector<int>();
-	// manToHalo_bcNodes.setVelConNodes_allBut(notContinuous);
-
-	// // manToHalo_bcNodes.print();
-
-	// // Correct to be continuous
-	// tpat_correction_engine corrector = tpat_correction_engine();
-	// corrector.setVerbose(SOME_MSG);
-	// corrector.setTol(1e-10);
-	// corrector.setScaleVars(false);
-	// corrector.multShoot(&manToHalo_bcNodes);
-	// tpat_nodeset_bcr4bp contNodes = corrector.getBCR4BPR_Output();
-
-	// // Propagate past final node until a negative XZ plane crossing (hopefully near SP)
-	// double maxTOF = 5.0/bcSys.getK();
-	// engine.addEvent(tpat_event::XZ_PLANE, -1, true);
-	// engine.runSim(contNodes.getNode(-1).getPosVelState(), t0, maxTOF);
-	// tpat_traj_bcr4bp newArc = engine.getBCR4BPR_Traj();
-	
-	// // Create a nodeset from the arc segment
-	// double newArcTOF = newArc.getTime(-1);
-	// double numNewArcNodes = 5;
-	// tpat_nodeset_bcr4bp evolveSegNodes(contNodes.getNode(-1).getPosVelState(), &bcSys, t0, newArcTOF, numNewArcNodes);
-
-	// // Concatenate into one large nodeset
-	// contNodes.deleteNode(-1);
-	// tpat_nodeset_bcr4bp fullNodeset = contNodes + evolveSegNodes;
 }

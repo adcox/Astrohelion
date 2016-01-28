@@ -77,7 +77,7 @@ int main(){
 	}
 
 	// Save the data
-	size_t cols = 1+allPerturbing.size();
+	size_t cols = 1 + allPerturbing.size();
 	saveMatrixToFile("data/SPEffects.mat", "data", data, data.size()/cols, cols);
 
     // Unload the kernels
@@ -104,7 +104,7 @@ Eigen::Vector3d getSPLoc_Ephm(double et, std::vector<int> bodyIx){
 
 	// printf("Computing SP Location\n");
 	// Get positions of all bodies relative to SSB
-	ConstSpiceChar *obs = "SUN";		// observer: Sun
+	ConstSpiceChar *obs = "SSB";		// observer: SSB
 	ConstSpiceChar *abcorr = "NONE";	// Do not apply aberration corrections
 	ConstSpiceChar *ref = "ECLIPJ2000";	// reference frame: J2000, Ecliptic plane
 	ConstSpiceChar *GM_item = "GM";		// Retrieve GM for each body

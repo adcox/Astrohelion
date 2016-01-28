@@ -40,7 +40,8 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 		tpat_sys_data_bcr4bpr();
 		tpat_sys_data_bcr4bpr(std::string, std::string, std::string);
 		tpat_sys_data_bcr4bpr(const tpat_sys_data_bcr4bpr&);
-
+		tpat_sys_data_bcr4bpr(const char*);
+		
 		tpat_sys_data_bcr4bpr& operator=(const tpat_sys_data_bcr4bpr&);
 		
 		const tpat_model* getModel() const;
@@ -50,16 +51,18 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 		double getK() const;
 		double getCharLRatio() const;
 
+		double getEpoch0() const;
 		double getTheta0() const;
 		double getPhi0() const;
 		double getGamma() const;
 
+		void setEpoch0(double T);
 		void setTheta0(double t);
 		void setPhi0(double p);
 		void setGamma(double g);
 
+		void saveToMat(const char*) const;
 		void saveToMat(mat_t*) const;
-		void readFromMat(mat_t*);
 
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */
 		static double REF_EPOCH;	// 2005/06/21 18:21:35
@@ -69,6 +72,7 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 		tpat_model_bcr4bpr model;
 		
 		void initFromPrimNames(std::string, std::string, std::string);
+		void readFromMat(mat_t*);
 };
 
 #endif

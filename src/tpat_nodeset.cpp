@@ -256,7 +256,7 @@ void tpat_nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n", sysData->getTypeStr().c_str(), steps.size());
 	for (size_t n = 0; n < steps.size(); n++){
 		std::vector<double> node = steps[n].getPosVelState();
-		printf("  %02lu: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n+1,
+		printf("  %02lu: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n,
 			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
 		if(n < steps.size()-1){
 			printf("   TOF = %.8f\n", getTOF(n));
@@ -349,6 +349,24 @@ void tpat_nodeset::saveToMat(const char* filename) const{
 		// saveCons(matfp);
 		// saveVelCon(matfp);
 	}
+
+	Mat_Close(matfp);
+}//====================================================
+
+/**
+ *  @brief Populate data in this nodeset from a matlab file
+ * 
+ *  @param filepath the path to the matlab data file
+ */
+void tpat_nodeset::readFromMat(const char *filepath){
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_nodeset: Could not load data from file");
+	}
+
+	readStateFromMat(matfp, "Nodes");	// This function MUST be called before other data reading functions
+	readExtraParamFromMat(matfp, 0, "TOFs");
 
 	Mat_Close(matfp);
 }//====================================================

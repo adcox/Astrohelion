@@ -372,6 +372,9 @@ void tpat_model_bcr4bpr::multShoot_applyConstraint(iterationData *it, tpat_const
     int row0 = it->conRows[c];
 
     switch(con.getType()){
+        case tpat_constraint::APSE:
+            multShoot_targetApse(it, con, row0);
+            break;
         case tpat_constraint::SP:
             multShoot_targetSP(it, con, row0);
             break;
@@ -665,6 +668,47 @@ void tpat_model_bcr4bpr::multShoot_targetDeltaV(iterationData* it, tpat_constrai
         }
     }
 }//==============================================
+
+void tpat_model_bcr4bpr::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0) const{
+    std::vector<double> conData = con.getData();
+    int Pix = (int)(conData[0]);    // index of primary
+    int n = con.getNode();
+
+    double sr = it->freeVarScale[0];
+    double sv = it->freeVarScale[1];
+    double sT = it->freeVarScale[3];
+
+    int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
+    double t0 = it->varTime ? it->X[epochCol]/sT : it->origNodes.at(n).getExtraParam(1);
+
+    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(it->sysData);
+    double primPos[9], primVel[9], primAccel[9];
+
+    bcr4bpr_getPrimaryPos(t0, bcSys, primPos);
+    bcr4bpr_getPrimaryVel(t0, bcSys, primVel);
+    bcr4bpr_getPrimaryAccel(t0, bcSys, primAccel);
+
+    double dx = it->X[6*n+0]/sr - primPos[3*Pix+0];
+    double dy = it->X[6*n+1]/sr - primPos[3*Pix+1];
+    double dz = it->X[6*n+2]/sr - primPos[3*Pix+2];
+    double dvx = it->X[6*n+3]/sv - primVel[3*Pix+0];
+    double dvy = it->X[6*n+4]/sv - primVel[3*Pix+1];
+    double dvz = it->X[6*n+5]/sv - primVel[3*Pix+2];
+
+    it->FX[row0] = dx*dvx + dy*dvy + dz*dvz;
+
+    it->DF[it->totalFree*row0 + 6*n+0] = dvx/sr;
+    it->DF[it->totalFree*row0 + 6*n+1] = dvy/sr;
+    it->DF[it->totalFree*row0 + 6*n+2] = dvz/sr;
+    it->DF[it->totalFree*row0 + 6*n+3] = dx/sv;
+    it->DF[it->totalFree*row0 + 6*n+4] = dy/sv;
+    it->DF[it->totalFree*row0 + 6*n+5] = dz/sv;
+
+    if(it->varTime){
+        it->DF[it->totalFree*row0 + epochCol] = -1*(dvx*primVel[3*Pix+0] + dvy*primVel[3*Pix+1] + dvz*primVel[3*Pix+2])/sT;
+        it->DF[it->totalFree*row0 + epochCol] -= (dx*primAccel[3*Pix+0] + dy*primAccel[3*Pix+1] + dz*primAccel[3*Pix+2])/sT;
+    }
+}//===================================================
 
 /**
  *  @brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>

@@ -65,10 +65,10 @@ tpat_family_cr3bp::tpat_family_cr3bp(const char* filepath){
 	name = readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	double type = readDoubleFromMat(matfp, SORTTYPE_VAR_NAME);
 	sortType = static_cast<sortVar_t>((int)type);
-	
-	sysData.readFromMat(matfp);
+	// sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
+	sysData = tpat_sys_data_cr3bp(filepath);
 }//====================================================
 
 /**

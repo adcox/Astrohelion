@@ -62,7 +62,7 @@ public:
 	tpat_nodeset(const tpat_nodeset&);
 	tpat_nodeset(const tpat_arc_data&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
-
+	tpat_nodeset(const char*);
 	// Operators
 
 	// Set and Get Functions
@@ -83,6 +83,7 @@ public:
 
 	// Utility Functions
 	void clearConstraints();
+	void readFromMat(const char*);
 	void print() const;
 	void reverseOrder();
 	void saveToMat(const char*) const;

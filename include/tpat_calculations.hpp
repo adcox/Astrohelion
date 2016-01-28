@@ -126,8 +126,11 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, const tpat_sys_data_bcr4bpr*, double*);
 void bcr4bpr_getPrimaryVel(double, const tpat_sys_data_bcr4bpr*, double*);
+void bcr4bpr_getPrimaryAccel(double, const tpat_sys_data_bcr4bpr*, double*);
 tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, const tpat_sys_data_bcr4bpr*, double);
 tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, const tpat_sys_data_bcr4bpr*, double);
+tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp, const tpat_sys_data_cr3bp*);
+tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp, const tpat_sys_data_cr3bp*);
 MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr*, double);
 void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
 Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr*, double);

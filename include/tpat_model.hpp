@@ -150,6 +150,8 @@ public:
 	 */
 	virtual std::vector<double> getPrimVel(double t, const tpat_sys_data *sysData) const = 0;
 
+	virtual double getRDot(int, double, const double*, const tpat_sys_data*) const;
+
 	virtual void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
 	virtual void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;
 	virtual void multShoot_createContCons(iterationData*, const tpat_nodeset*) const;

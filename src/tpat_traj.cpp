@@ -87,6 +87,14 @@ double tpat_traj::getTime(int ix) const {
 }//====================================================
 
 /**
+ *  @brief Get the time of flight on this trajectory
+ *  @return time of flight on this trajectory, non-dimensional time
+ */
+double tpat_traj::getTOF() const {
+	return getTime(-1) - getTime(0);
+}//====================================================
+
+/**
  *	@brief Retrieve the specified step
  *	@param ix step index; if < 0, it will count backwards from end of trajectory
  *	@return the requested trajectory step object
@@ -228,4 +236,24 @@ void tpat_traj::initExtraParam(){
 	// ExtraParam = [time]
 	numExtraParam = 1;
 	extraParamRowSize.push_back(1);
+}//====================================================
+
+/**
+ *  @brief Populate data in this trajectory from a matlab file
+ * 
+ *  @param filepath the path to the matlab data file
+ */
+void tpat_traj::readFromMat(const char *filepath){
+
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_traj: Could not load data from file");
+	}
+	readStateFromMat(matfp, "State");
+	readAccelFromMat(matfp);
+	readSTMFromMat(matfp);
+	readExtraParamFromMat(matfp, 0, "Time");
+
+	Mat_Close(matfp);
 }//====================================================

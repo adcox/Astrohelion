@@ -43,7 +43,7 @@ double tpat_sys_data_bcr4bpr::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
 tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr() : tpat_sys_data(){
 	numPrimaries = 3;
 	type = tpat_sys_data::BCR4BPR_SYS;
-	otherParams.assign(7,0);
+	otherParams.assign(8,0);
 }//========================================
 
 /**
@@ -55,9 +55,28 @@ tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr() : tpat_sys_data(){
 tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(std::string P1, std::string P2, std::string P3){
 	numPrimaries = 3;
 	type = tpat_sys_data::BCR4BPR_SYS;
-	otherParams.assign(7,0);
+	otherParams.assign(8,0);
 
 	initFromPrimNames(P1, P2, P3);
+}//===================================================
+
+/**
+ *  @brief Load the system data object from a Matlab data file
+ * 
+ *  @param filepath path to the data file
+ */
+tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const char *filepath){
+	numPrimaries = 3;
+	type = tpat_sys_data::BCR4BPR_SYS;
+	otherParams.assign(8,0);
+
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw tpat_exception("tpat_sys_data_bcr4bpr: Could not open data file");
+	}
+	readFromMat(matfp);
+	Mat_Close(matfp);
 }//===================================================
 
 /**
@@ -104,6 +123,7 @@ void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, st
 		otherParams[4] = theta;
 		otherParams[5] = phi;
 		otherParams[6] = gamma;
+		otherParams[7] = REF_EPOCH;
 	}else{
 		throw tpat_exception("P1 must be the parent of P2 and P2 must be the parent of P3");
 	}
@@ -153,7 +173,17 @@ double tpat_sys_data_bcr4bpr::getK() const {
 	if(otherParams.size() != 7)
 		printf("");
 
-	return otherParams.at(2); }
+	return otherParams.at(2);
+}
+
+/**
+ *  @brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)
+ *  @details The angles Theta0 and Phi0 coincide with time T = 0, but this is
+ *  NOT the J2000 epoch T = 0; Rather, T = 0 is the epoch relative to some reference
+ *  epoch T0, which is returned by this function.
+ *  @return the epoch associated with T = 0 (seconds, J2000, UTC)
+ */
+double tpat_sys_data_bcr4bpr::getEpoch0() const { return otherParams.at(7); }
 
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
@@ -173,6 +203,16 @@ double tpat_sys_data_bcr4bpr::getPhi0() const { return otherParams.at(5); }
 double tpat_sys_data_bcr4bpr::getGamma() const { return otherParams.at(6); }
 
 /**
+ *  @brief Set the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
+ *  @details The angles Theta0 and Phi0 coincide with time T = 0, but this is
+ *  NOT the J2000 epoch T = 0; Rather, T = 0 is the epoch relative to some reference
+ *  epoch T0, which is set by this function.
+ * 
+ *  @param T the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
+ */
+void tpat_sys_data_bcr4bpr::setEpoch0(double T){ otherParams.at(7) = T; }
+
+/**
  *	@brief Set the angle theta0
  *	@param t angle in radians
  */
@@ -189,6 +229,15 @@ void tpat_sys_data_bcr4bpr::setPhi0(double t){ otherParams.at(5) = t; }
  *	@param t angle in radians
  */
 void tpat_sys_data_bcr4bpr::setGamma(double t){ otherParams.at(6) = t; }
+
+/**
+ *  @brief Save the system data to a matlab file
+ * 
+ *  @param filepath path to the data file
+ */
+void tpat_sys_data_bcr4bpr::saveToMat(const char *filepath) const{
+	tpat_sys_data::saveToMat(filepath);
+}//==================================================
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
@@ -245,7 +294,9 @@ void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile) const{
 	matvar_t *gamma_var = Mat_VarCreate("Gamma", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &g, MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, gamma_var, "Gamma", MAT_COMPRESSION_NONE);
 
-
+	double T = otherParams[7];
+	matvar_t *epoch_var = Mat_VarCreate("Epoch0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &T, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, epoch_var, "Epoch0", MAT_COMPRESSION_NONE);
 }//===================================================
 
 /**
@@ -261,6 +312,7 @@ void tpat_sys_data_bcr4bpr::readFromMat(mat_t *matFile){
 	otherParams[4] = readDoubleFromMat(matFile, "Theta0");
 	otherParams[5] = readDoubleFromMat(matFile, "Phi0");
 	otherParams[6] = readDoubleFromMat(matFile, "Gamma");
+	otherParams[7] = readDoubleFromMat(matFile, "Epoch0");
 }//====================================================
 
 

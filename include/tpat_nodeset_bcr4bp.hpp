@@ -63,6 +63,7 @@ public:
 	void insertNode(int, tpat_node);
 
 	// Utility Functions
+	void readFromMat(const char*);
 	void saveToMat(const char*) const;
 	void print() const;
 	

@@ -442,12 +442,8 @@ double tpat_event::getDist(const double y[6], double t) const{
 		}
 		case APSE:
 		{
-			std::vector<double> primPos = sysData->getModel()->getPrimPos(t, sysData);
 			int Pix = (int)(conData[0]);
-			double dx = y[0] - primPos[Pix*3 + 0];
-			double dy = y[1] - primPos[Pix*3 + 1];
-			double dz = y[2] - primPos[Pix*3 + 2];
-			d = dx*y[3] + dy*y[4] + dz*y[5];
+			d = sysData->getModel()->getRDot(Pix, t, y, sysData);
 			break;
 		}
 		case DIST:
@@ -506,4 +502,13 @@ void tpat_event::printStatus() const{
 	printf("  Dist: %e Last Dist: %e\n", dist, lastDist);
 }//======================================
 
-
+/**
+ *  @brief Reset the event to avoid any confusion when a simulation is rerun with the same event
+ */
+void tpat_event::reset(){
+	triggerCount = 0;
+	dist = 100000;
+	lastDist = 100000;
+	theTime = 0;
+	state.clear();
+}//======================================================

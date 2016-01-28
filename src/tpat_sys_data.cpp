@@ -182,4 +182,23 @@ std::string tpat_sys_data::getTypeStr() const{
 }//=================================================
 
 
-//
+void tpat_sys_data::saveToMat(const char *filepath) const{
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filepath, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		printErr("tpat_family_cr3bp::saveToMat: Error creating MAT file\n");
+	}else{
+		// save things
+		saveToMat(matfp);
+	}
+
+	Mat_Close(matfp);
+}//======================================================

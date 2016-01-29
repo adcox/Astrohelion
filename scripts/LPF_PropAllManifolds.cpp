@@ -103,7 +103,7 @@ int main(void){
 
 					// Save the trajectory to file
 					char name[32];
-					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu.mat", n);
+					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu_SEM.mat", n);
 					fullTraj.saveToMat(name);
 
 					tpat_traj_cr3bp fullTraj_SE = bcr4bpr_SEM2SE(fullTraj, &seSys);
@@ -113,6 +113,15 @@ int main(void){
 					tpat_traj_cr3bp fullTraj_EM = cr3bp_SE2EM(fullTraj_SE, &emSys, bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
 					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu_EM.mat", n);
 					fullTraj_EM.saveToMat(name);
+
+					tpat_traj_cr3bp fullTraj_ECI = cr3bp_rot2inert(fullTraj_EM, 0);
+					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu_ECI.mat", n);
+					fullTraj_ECI.saveToMat(name);
+
+					tpat_traj_cr3bp fullTraj_MCI = cr3bp_rot2inert(fullTraj_EM, 1);
+					sprintf(name, "data/LPF_4B_NaturalManifolds/Traj%03zu_MCI.mat", n);
+					fullTraj_MCI.saveToMat(name);
+
 				}catch(tpat_diverge &e){
 					printErr("  Unable to correct manifold %03zu to be continuous in BC4BP... darn!\n", n);
 				}

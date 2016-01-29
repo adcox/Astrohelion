@@ -1903,6 +1903,68 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
     return state_EM;
 }//====================================================
 
+/**
+ *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
+ * 
+ *  @param traj CR3BP trajectory
+ *  @param centerIx The index of the primary that will be the center of the inertial
+ *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
+ *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
+ *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
+ * 
+ *  @return A trajectory centered around the specified index in inertial, dimensional coordinates
+ */
+tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
+
+    if(centerIx < 0 || centerIx > 1){
+        throw tpat_exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+    }
+
+    const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(traj.getSysData());
+
+    tpat_traj_cr3bp inertTraj(sys);
+    double t = 0;
+    Matrix3Rd I = Matrix3Rd::Identity(3,3);
+
+    // Shift from Barycenter-centered coordinates to primary-centered coordinates
+    Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-sys->getMu()) : I.row(0)*(1 - sys->getMu());
+    
+    // Angular velocity of rotating frame relative to inertial, non-dim units
+    Eigen::RowVector3d omegaECI = I.row(2);
+
+    for(int i = 0; i < traj.getLength(); i++){
+        t = traj.getTime(i);
+        std::vector<double> state_rot = traj.getState(i);
+
+        double rotToInert[] = {cos(t), sin(t), 0, -sin(t), cos(t), 0, 0, 0, 1};
+        Matrix3Rd DCM_R2I = Eigen::Map<Matrix3Rd>(rotToInert);
+
+        Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0]));
+        Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
+
+        // Shift, rotate, scale coordinates into inertial, dimensional
+        Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*sys->getCharL();
+
+        // Transform velocity into inertial, dimensional
+        Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*sys->getCharL()/sys->getCharT();
+
+        // Concatenate data into a state vector
+        std::vector<double> stateInert;
+        stateInert.insert(stateInert.begin(), posInert.data(), posInert.data()+3);
+        stateInert.insert(stateInert.end(), velInert.data(), velInert.data()+3);
+
+        // Bogus values for accel and STM
+        double accel[] = {NAN, NAN, NAN};
+        MatrixXRd stm = MatrixXRd::Identity(6, 6);
+
+        tpat_traj_step step(&(stateInert[0]), t*sys->getCharT(), accel, stm.data());
+        inertTraj.appendStep(step);
+        inertTraj.setJacobi(-1, traj.getJacobi(i));
+    }
+
+    return inertTraj;
+}//==================================================================
+
 //-----------------------------------------------------
 //      BCR4BP Utility Functions
 //-----------------------------------------------------

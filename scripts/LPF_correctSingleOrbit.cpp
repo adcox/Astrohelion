@@ -11,7 +11,7 @@
 
 int main(void){
 
-	int orbNum = 8;
+	int orbNum = 83;
 
 	double extraTOF = 360*24*3600;
 	switch(orbNum){
@@ -115,8 +115,12 @@ int main(void){
 				bcEngine.runSim(bcCorrected.getState(-1), bcCorrected.getEpoch(-1), extraTOF/bcSys.getCharT());
 				tpat_traj_bcr4bp natArc = bcEngine.getBCR4BPR_Traj();
 				tpat_traj_bcr4bp fullTraj = tpat_traj_bcr4bp::fromNodeset(bcCorrected);
+				
+				fullTraj.saveToMat("fullTraj.mat");
+				natArc.saveToMat("natArc.mat");
+				
 				fullTraj += natArc;
-
+				
 				// Save the trajectory to file
 				char name[32];
 				sprintf(name, "data/Traj%03zu.mat", n);

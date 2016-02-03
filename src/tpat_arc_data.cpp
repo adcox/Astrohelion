@@ -124,6 +124,9 @@ tpat_arc_data& tpat_arc_data::operator +=(const tpat_arc_data &rhs){
 
 		// Multiply PHI(t2, t1)*PHI(t1, t0) to get PHI(t2, t0)
 		steps[n].setSTM(oldSTM*lhs_lastSTM);
+
+		// Update constraint step numbers
+		steps[n].setConstraintNodeNum(n);
 	}
 
 	return *this;

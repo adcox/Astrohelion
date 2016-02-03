@@ -120,7 +120,9 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, doubl
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
+tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp, int);
 tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp, int);
+std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t, double);
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double);
 

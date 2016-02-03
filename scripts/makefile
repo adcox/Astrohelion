@@ -110,6 +110,12 @@ prop: $(OBJECTS)
 lpf13: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_1-3-Res.cpp -o $(BIN)/$@
 
+lpf84: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_capture_084_correct.cpp -o $(BIN)/$@
+
+lpf86: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_capture_086_correct.cpp -o $(BIN)/$@
+
 lpfSample: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) SampleLPFTraj.cpp -o $(BIN)/$@
 

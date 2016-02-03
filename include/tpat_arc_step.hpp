@@ -73,6 +73,7 @@ public:
 	
 	void setAccel(double*);
 	void setAccel(std::vector<double>);
+	void setConstraintNodeNum(int);
 	void setExtraParam(int, double);
 	void setExtraParams(std::vector<double>);
 	void setPosVelState(double*);

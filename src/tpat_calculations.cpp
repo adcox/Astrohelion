@@ -1756,7 +1756,6 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, const tpat_sys_data_c
         tpat_node node(node_EM, tof);
         EMNodes.appendNode(node);
 
-
         if(n < SENodes.getNumNodes()-1){
             // Update epoch time
             epoch += SENodes.getTOF(n);
@@ -1924,34 +1923,12 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
 
     tpat_traj_cr3bp inertTraj(sys);
     double t = 0;
-    Matrix3Rd I = Matrix3Rd::Identity(3,3);
-
-    // Shift from Barycenter-centered coordinates to primary-centered coordinates
-    Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-sys->getMu()) : I.row(0)*(1 - sys->getMu());
-    
-    // Angular velocity of rotating frame relative to inertial, non-dim units
-    Eigen::RowVector3d omegaECI = I.row(2);
 
     for(int i = 0; i < traj.getLength(); i++){
         t = traj.getTime(i);
         std::vector<double> state_rot = traj.getState(i);
 
-        double rotToInert[] = {cos(t), sin(t), 0, -sin(t), cos(t), 0, 0, 0, 1};
-        Matrix3Rd DCM_R2I = Eigen::Map<Matrix3Rd>(rotToInert);
-
-        Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0]));
-        Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
-
-        // Shift, rotate, scale coordinates into inertial, dimensional
-        Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*sys->getCharL();
-
-        // Transform velocity into inertial, dimensional
-        Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*sys->getCharL()/sys->getCharT();
-
-        // Concatenate data into a state vector
-        std::vector<double> stateInert;
-        stateInert.insert(stateInert.begin(), posInert.data(), posInert.data()+3);
-        stateInert.insert(stateInert.end(), velInert.data(), velInert.data()+3);
+        std::vector<double> stateInert = cr3bp_rot2inert_state(state_rot, sys, t, centerIx);
 
         // Bogus values for accel and STM
         double accel[] = {NAN, NAN, NAN};
@@ -1963,6 +1940,91 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
     }
 
     return inertTraj;
+}//==================================================================
+
+/**
+ *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
+ * 
+ *  @param traj CR3BP nodeset
+ *  @param centerIx The index of the primary that will be the center of the inertial
+ *  frame. For example, if an Earth-Moon CR3BP nodeset is input, selecting 
+ *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
+ *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
+ * 
+ *  @return A nodeset centered around the specified index in inertial, dimensional coordinates
+ */
+tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp nodes, int centerIx){
+
+    if(centerIx < 0 || centerIx > 1){
+        throw tpat_exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+    }
+
+    const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(nodes.getSysData());
+
+    tpat_nodeset_cr3bp inertNodes(sys);
+    double t = 0;
+
+    for(int i = 0; i < nodes.getNumNodes(); i++){
+        std::vector<double> state_rot = nodes.getState(i);
+        std::vector<double> stateInert = cr3bp_rot2inert_state(state_rot, sys, t, centerIx);
+
+        double tof = i + 1 < nodes.getNumNodes() ? nodes.getTOF(i)*sys->getCharT() : NAN;
+        tpat_node node(stateInert, tof);
+        inertNodes.appendNode(node);
+
+        if(i < nodes.getNumNodes()-1)
+            t += nodes.getTOF(i);
+    }
+
+    return inertNodes;
+}//==================================================================
+
+/**
+ *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
+ * 
+ *  @param state_rot a 6-element non-dimensional state in rotating coordinates
+ *  @param sys a pointer to the CR3BP system the state exists in
+ *  @param t the non-dimensional time associated with the input state
+ *  @param centerIx The index of the primary that will be the center of the inertial
+ *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
+ *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
+ *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
+ * 
+ *  @return A state centered around the specified index in inertial, dimensional coordinates
+ */
+std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const tpat_sys_data_cr3bp *sys, 
+    double t, int centerIx){
+
+    if(centerIx < 0 || centerIx > 1){
+        throw tpat_exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+    }
+
+    Matrix3Rd I = Matrix3Rd::Identity(3,3);
+
+    // Shift from Barycenter-centered coordinates to primary-centered coordinates
+    Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-sys->getMu()) : I.row(0)*(1 - sys->getMu());
+    
+    // Angular velocity of rotating frame relative to inertial, non-dim units
+    Eigen::RowVector3d omegaECI = I.row(2);
+
+    double rotToInert[] = {cos(t), sin(t), 0, -sin(t), cos(t), 0, 0, 0, 1};
+    Matrix3Rd DCM_R2I = Eigen::Map<Matrix3Rd>(rotToInert);
+
+    Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0]));
+    Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
+
+    // Shift, rotate, scale coordinates into inertial, dimensional
+    Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*sys->getCharL();
+
+    // Transform velocity into inertial, dimensional
+    Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*sys->getCharL()/sys->getCharT();
+
+    // Concatenate data into a state vector
+    std::vector<double> stateInert;
+    stateInert.insert(stateInert.begin(), posInert.data(), posInert.data()+3);
+    stateInert.insert(stateInert.end(), velInert.data(), velInert.data()+3);
+
+    return stateInert;
 }//==================================================================
 
 //-----------------------------------------------------

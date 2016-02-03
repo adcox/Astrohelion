@@ -11,10 +11,13 @@
 
 int main(void){
 
+	tpat_sys_data_cr3bp seSys("sun", "earth");
+	tpat_sys_data_cr3bp emSys("earth", "moon");
+
 	// Load trajectory from file
-	int trajIx = 50;
+	int trajIx = 52;
 	char filename[128];
-	sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d.mat", trajIx);
+	sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d_SEM.mat", trajIx);
 
 	printf("Loading data from %s\n", filename);
 
@@ -29,14 +32,25 @@ int main(void){
 	double sp_xCoord = -0.173005958645270;		// Sun-Earth (no Moon) SP x-coord 
 	tpat_event sp_yzPlane(&bcSys, tpat_event::YZ_PLANE, 1, true, &sp_xCoord);
 	tpat_event sp_xzPlane(&bcSys, tpat_event::XZ_PLANE, 0, true);
+	
+	double earthIx = 1;
+	tpat_event earthApse(&bcSys, tpat_event::APSE, 0, true, &earthIx);
 
 	// propagate an arc to the SP YZ plane
 	sim.addEvent(sp_yzPlane);
 	sim.runSim(bcTraj.getState(0), bcTraj.getTime(0), tof);
 	tpat_traj_bcr4bp arcToSP1 = sim.getBCR4BPR_Traj();
 
+	// sim.clearEvents();
+	// sim.addEvent(earthApse);
+	// sim.runSim(arcToSP1.getState(-1), arcToSP1.getTime(-1), tof);
+	// tpat_traj_bcr4bp arcToPerigee = sim.getBCR4BPR_Traj();
+
 	// Propagate past Earth flyby to the SP YZ plane again
+	sim.clearEvents();
+	sim.addEvent(sp_yzPlane);
 	sim.runSim(arcToSP1.getState(-1), arcToSP1.getTime(-1), tof);
+	// sim.runSim(arcToPerigee.getState(-1), arcToPerigee.getTime(-1), tof);
 	tpat_traj_bcr4bp arcToSP2 = sim.getBCR4BPR_Traj();
 
 	// Propagate a little further to XZ plane
@@ -52,13 +66,18 @@ int main(void){
 	// Create nodesets from arcs
 	int numNodes1 = 10, numNodes2 = 10;
 	tpat_nodeset_bcr4bp nodesToSP1(arcToSP1.getState(0), &bcSys, arcToSP1.getTime(0), arcToSP1.getTOF(), numNodes1);
+	// tpat_nodeset_bcr4bp nodesToPerigee(arcToPerigee.getState(0), &bcSys, arcToPerigee.getTime(0), arcToPerigee.getTOF(), 2);
 	tpat_nodeset_bcr4bp nodesToSP2(arcToSP2.getState(0), &bcSys, arcToSP2.getTime(0), arcToSP2.getTOF(), numNodes2);
 
 	// Concatenate nodes into one big set
 	tpat_nodeset_bcr4bp allNodes = nodesToSP1;
 	allNodes.deleteNode(-1);
+	// allNodes += nodesToPerigee;
+	// allNodes.deleteNode(-1);
 	allNodes += nodesToSP2;
-	allNodes.saveToMat("allNodes.mat");
+
+	sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d_raw.mat", trajIx);
+	allNodes.saveToMat(filename);
 
 	// Create SP constraints and add to nodeset
 	tpat_constraint sp1Con(tpat_constraint::SP, numNodes1-1, NULL, 0);
@@ -68,7 +87,7 @@ int main(void){
 
 	// Allow velocity discontinuities
 	std::vector<int> dvNodes {numNodes1 - 2, allNodes.getNumNodes()-5};
-	allNodes.setVelConNodes_allBut(dvNodes);
+	allNodes.allowDV_at(dvNodes);
 
 	// Correct to encounter SP
 	tpat_correction_engine corrector;
@@ -85,12 +104,14 @@ int main(void){
 	// Attempt to step DV down by iteratively correcting with a maxDV constraint
 	printColor(BOLDBLACK, "\nBeginning Delta-V Step-Down Loop\n");
 
+	// dvNodes.push_back(numNodes1);
+	// allNodes.allowDV_at(dvNodes);
+
 	double approxDV_dim = std::floor(totalDV*1000*charV)/1000;	// round to nearest 1 m/s
 	tpat_constraint maxDVCon(tpat_constraint::MAX_DELTA_V, 0, &approxDV_dim, 1);	// wrong dimensions on DV, updated in loop
 
 	for(double dvMax = approxDV_dim; dvMax > 0.01; dvMax -= 0.001){
 		double dvMax_nonDim = dvMax/charV;
-		
 
 		maxDVCon.setData(&dvMax_nonDim, 1);
 		corNodes.clearConstraints();
@@ -117,4 +138,12 @@ int main(void){
 
 	sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d_corrected_minDV.mat", trajIx);
 	corNodes.saveToMat(filename);
+
+	tpat_nodeset_bcr4bp corNodes_SE = bcr4bpr_SEM2SE(corNodes, &seSys);
+	tpat_nodeset_cr3bp corNodes_EM = cr3bp_SE2EM(corNodes_SE, &emSys, bcSys.getEpoch0()*bcSys.getCharT()/seSys.getCharT(), 
+		bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
+	
+	tpat_nodeset_cr3bp corNodes_ECI = cr3bp_rot2inert(corNodes_EM, 0);
+	sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d_corrected_minDV_ECI.mat", trajIx);
+	corNodes_ECI.saveToMat(filename);
 }

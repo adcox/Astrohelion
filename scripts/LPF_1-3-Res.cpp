@@ -67,7 +67,7 @@ int main(void){
 
 	// Make all nodes continuous in velocity
 	std::vector<int> notContinuous = std::vector<int>();
-	manToHalo_bcNodes.setVelConNodes_allBut(notContinuous);
+	manToHalo_bcNodes.allowDV_at(notContinuous);
 
 	// Correct to be continuous
 	tpat_correction_engine corrector = tpat_correction_engine();
@@ -135,7 +135,7 @@ int main(void){
 	workingNodes.addConstraint(sp2);
 	notContinuous.push_back(sp1.getNode()-4);
 	notContinuous.push_back(workingNodes.getNumNodes()-3);
-	workingNodes.setVelConNodes_allBut(notContinuous);
+	workingNodes.allowDV_at(notContinuous);
 	workingNodes.print();
 	workingNodes.saveToMat("WorkingNodes.mat");
 

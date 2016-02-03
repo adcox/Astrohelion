@@ -69,7 +69,7 @@ int main(void){
 
 	// Make all nodes continuous in velocity
 	std::vector<int> notContinuous = std::vector<int>();
-	manToHalo_bcNodes.setVelConNodes_allBut(notContinuous);
+	manToHalo_bcNodes.allowDV_at(notContinuous);
 
 	// manToHalo_bcNodes.print();
 
@@ -139,7 +139,7 @@ int main(void){
 	workingNodes.addConstraint(sp2);
 	notContinuous.push_back(sp1.getNode()-4);
 	notContinuous.push_back(workingNodes.getNumNodes()-3);
-	workingNodes.setVelConNodes_allBut(notContinuous);
+	workingNodes.allowDV_at(notContinuous);
 	workingNodes.print();
 	workingNodes.saveToMat("LPF_LoopySample_Uncorrected.mat");
 
@@ -172,7 +172,7 @@ int main(void){
 
 	// Allow one more DV at Earth flyby
 	notContinuous.push_back(sp1.getNode()+1);
-	workingNodes.setVelConNodes_allBut(notContinuous);
+	workingNodes.allowDV_at(notContinuous);
 
 	printColor(BOLDBLACK, "\nBeginning Delta-V Step-Down Loop\n");
 

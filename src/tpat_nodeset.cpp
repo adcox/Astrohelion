@@ -182,7 +182,10 @@ void tpat_nodeset::addConstraint(tpat_constraint con){
 	if(con.getNode() >= 0 && con.getNode() < (int)(steps.size())){
 		steps[con.getNode()].addConstraint(con);
 	}else{
-		throw tpat_exception("tpat_nodeset::addConstraint: constraint node out of range");
+		char msg[256];
+		sprintf(msg, "tpat_nodeset::addConstraint: Cannot add %s constraint to node %d out of %d", con.getTypeStr(),
+			con.getNode(), (int)(steps.size()));
+		throw tpat_exception(msg);
 	}
 }//====================================================
 
@@ -220,12 +223,10 @@ void tpat_nodeset::insertNode(int ix, tpat_node node) {
 }//====================================================
 
 /**
- *	@brief Set all nodes to be continuous in velocity except for those
- *	specified
- *	@param ix a vector of node indices to make discontinuous in 
- *	velocity
+ *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified nodes
+ *	@param ix a vector of node indices that can have velocity discontinuities
  */
-void tpat_nodeset::setVelConNodes_allBut(std::vector<int> ix) {
+void tpat_nodeset::allowDV_at(std::vector<int> ix) {
 	for(size_t i = 0; i < steps.size()-1; i++){
 		tpat_node *np = static_cast<tpat_node*>(&(steps[i]));
 		// Check to see if the node should have continuous velocity
@@ -234,6 +235,26 @@ void tpat_nodeset::setVelConNodes_allBut(std::vector<int> ix) {
 		}else{
 			np->setVel_AllDiscon();
 		}
+	}
+}//====================================================
+
+/**
+ *  @brief Allow velocity discontinuities (i.e., delta-Vs) at all nodes
+ */
+void tpat_nodeset::allowDV_all(){
+	for(size_t i = 0; i < steps.size()-1; i++){
+		tpat_node *np = static_cast<tpat_node *>(&(steps[i]));
+		np->setVel_AllDiscon();
+	}
+}//====================================================
+
+/**
+ *  @brief Allow velocity discontinuities (i.e., delta-Vs) at none of the nodes
+ */
+void tpat_nodeset::allowDV_none(){
+	for(size_t i = 0; i < steps.size()-1; i++){
+		tpat_node *np = static_cast<tpat_node *>(&(steps[i]));
+		np->setVel_AllCon();
 	}
 }//====================================================
 

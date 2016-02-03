@@ -100,7 +100,7 @@ tpat_nodeset_cr3bp test_createCR3BPNodeset(tpat_sys_data_cr3bp *emData){
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
-	// crSet->setVelConNodes_allBut(velCon);
+	// crSet->allowDV_at(velCon);
 
 	// Add a constraint
 	// double data[] = {1,1,1,NAN,NAN,NAN};
@@ -127,7 +127,7 @@ void test_createBCR4BPRNodeset(tpat_sys_data_bcr4bpr *semData){
 
 	int nodes[] = {2,3};
 	vector<int> velCon(nodes, nodes+2);
-	bcSet->setVelConNodes_allBut(velCon);
+	bcSet->allowDV_at(velCon);
 
 	bcSet->print();
 }//==============================================

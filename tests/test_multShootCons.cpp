@@ -195,7 +195,7 @@ void testCR3BP_EM_Cons(){
 	state[3] += 0.01;
 	state[4] += 0.1;
 	halfLyapNodeset.setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
-	halfLyapNodeset.setVelConNodes_allBut(dvNodes);	// Allow the perturbed node to have a delta-v
+	halfLyapNodeset.allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
 	double maxDVConData = 0.01;
 	tpat_constraint dVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.clearConstraints();
@@ -414,7 +414,7 @@ void testBCR4BPCons(){
 	state[5] += 0.001;
 	halfLyapNodeset.setState(3, state);	// Perturb the velocity of this state to create a discontinuity
 	std::vector<int> dvNodes {3};
-	halfLyapNodeset.setVelConNodes_allBut(dvNodes);	// Allow the perturbed node to have a delta-v
+	halfLyapNodeset.allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
 	double maxDVConData = 0.03;
 	tpat_constraint dVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.clearConstraints();

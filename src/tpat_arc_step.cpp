@@ -250,6 +250,17 @@ void tpat_arc_step::setAccel(std::vector<double> a){
 }//====================================================
 
 /**
+ *  @brief Set the node number for all constraints stored in this step
+ * 
+ *  @param n The node number for the constraints; typically the index of this step
+ */
+void tpat_arc_step::setConstraintNodeNum(int n){
+	for(size_t i = 0; i < constraints.size(); i++){
+		constraints[i].setNode(n);
+	}
+}//====================================================
+
+/**
  *	@brief Set a specific extra parameter to a specific value
  *	
  *	If the extra parameter vector isn't large enough to store the

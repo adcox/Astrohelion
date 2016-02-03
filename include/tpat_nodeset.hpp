@@ -79,7 +79,9 @@ public:
 	virtual void deleteNode(int);
 	virtual void insertNode(int, tpat_node);
 
-	void setVelConNodes_allBut(std::vector<int>);
+	void allowDV_at(std::vector<int>);
+	void allowDV_all();
+	void allowDV_none();
 
 	// Utility Functions
 	void clearConstraints();

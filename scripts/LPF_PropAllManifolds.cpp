@@ -91,7 +91,7 @@ int main(void){
 
 				// Correct to be continuous
 				try{
-					corrector.setTol(1e-10);
+					corrector.setTol(1e-12);
 					corrector.multShoot(&bcNodes);
 
 					// Now propagate forward for a while from the final state

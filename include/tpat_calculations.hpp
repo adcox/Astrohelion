@@ -125,6 +125,7 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t, double);
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double, iterationData*);
 
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, const tpat_sys_data_bcr4bpr*, double*);

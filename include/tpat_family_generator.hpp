@@ -56,6 +56,8 @@ class tpat_family_generator{
 
 		// Set and Get
 		void setContType(cont_t);
+		void setMaxStepSize(double);
+		void setMinStepSize(double);
 		void setNumNodes(int);
 		void setNumOrbits(int);
 		void setSlopeThresh(double);
@@ -67,7 +69,9 @@ class tpat_family_generator{
 		// Operations & Utility
 		tpat_family_cr3bp cr3bp_generateAxial(const char*, double);
 		tpat_family_cr3bp cr3bp_generateButterfly(tpat_sys_data_cr3bp*, int);
+		tpat_family_cr3bp cr3bp_generateDRO(tpat_sys_data_cr3bp*);
 		tpat_family_cr3bp cr3bp_generateHalo(const char*, double);
+		tpat_family_cr3bp cr3bp_generateLPO(tpat_sys_data_cr3bp*);
 		tpat_family_cr3bp cr3bp_generateLyap(tpat_sys_data_cr3bp, int, double);
 		tpat_family_cr3bp cr3bp_generateVertical(const char*, double);
 		
@@ -83,6 +87,8 @@ class tpat_family_generator{
 		double step_simple = 0.0005;	//!< Step size in the independent variable when using simple continuation
 		double step_fitted_1 = 0.005;	//!< Step size in first ind. var. when using advanced continuation
 		double step_fitted_2 = 0.005;	//!< Step size in second ind. var. when using advanced continuation
+		double minStepSize = 1e-6;		//!< Minimum allowable step size
+		double maxStepSize = 0.05;		//!< Maximum allowable step size
 		int curveFitMem = 5;			//!< Number of points to use with Least-Squares algorithm
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2

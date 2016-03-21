@@ -249,6 +249,40 @@ int main(int argc, char *argv[]){
 			L1_Vert.saveToMat("../share/families/EM_L1_Vert_PAC.mat");
 			break;
 		}
+		case 10:
+		{
+			printf("Generating Earth-Moon DRO Family via Natural Parameter\n");
+			gen.setNumNodes(4);
+			gen.setStep_simple(0.001);
+			gen.setStep_fitted_1(0.01);
+			gen.setStep_fitted_2(0.01);
+			gen.setMaxStepSize(0.01);
+			gen.setNumOrbits(1000);
+			gen.setContType(tpat_family_generator::NAT_PARAM);
+
+			tpat_family_cr3bp DRO = gen.cr3bp_generateDRO(&sysData);
+			DRO.sortEigs();
+			DRO.setName("Earth-Moon DRO");
+			DRO.saveToMat("../share/families/EM_DRO.mat");
+			break;
+		}
+		case 11:
+		{
+			printf("Generating Earth-Moon LPO Family via Natural Parameter\n");
+			gen.setNumNodes(4);
+			gen.setStep_simple(0.001);
+			gen.setStep_fitted_1(0.01);
+			gen.setStep_fitted_2(0.01);
+			gen.setMaxStepSize(0.01);
+			gen.setNumOrbits(1000);
+			gen.setContType(tpat_family_generator::NAT_PARAM);
+
+			tpat_family_cr3bp LPO = gen.cr3bp_generateLPO(&sysData);
+			LPO.sortEigs();
+			LPO.setName("Earth-Moon LPO");
+			LPO.saveToMat("../share/families/EM_LPO.mat");
+			break;
+		}
 		case 999:
 		{
 			printf("Generating Earth-Moon L2 Northern Butterfly Family\n");

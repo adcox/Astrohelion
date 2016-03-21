@@ -64,6 +64,11 @@ Use valgrind to check for leaks:
 On my Macbook, I've created a file at <code>~/.valgrindrc</code> which specifies arguments for valgrind so I don't have to type out the lengthy code above, I just type <code>valgrind simEngineTest</code>. I've also created a file called <code>valgrindIgnore.supp</code> with code to tell valgrind to suppress memory leaks that come from system libraries that I have no control over.
 
 <h2>Coding Practice Notes</h2>
+<h3>Do's and Dont's</h3>
+<ul>
+	<li><b>Do</b> check that an index is valid before accessing via square brackets</li>
+</ul>
+
 <h3>"Right Way" to include</h3>
 Whether or not to include or use forward declaration:
 <ul>

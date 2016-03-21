@@ -82,6 +82,10 @@ tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
 double tpat_traj::getTime(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
+	
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj::getTime: invalid index");
+
 	tpat_traj_step step(steps[ix]);
 	return step.getTime();
 }//====================================================
@@ -91,7 +95,12 @@ double tpat_traj::getTime(int ix) const {
  *  @return time of flight on this trajectory, non-dimensional time
  */
 double tpat_traj::getTOF() const {
-	return getTime(-1) - getTime(0);
+	try{
+		return getTime(-1) - getTime(0);
+	}catch(tpat_exception &e){
+		printErr("Could not compute TOF; index error:\n");
+		throw(e);
+	}
 }//====================================================
 
 /**
@@ -102,6 +111,10 @@ double tpat_traj::getTOF() const {
 tpat_traj_step tpat_traj::getStep(int ix) const{
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj::getStep: invalid index");
+
 	return tpat_traj_step(steps[ix]);
 }//====================================================
 
@@ -119,6 +132,9 @@ void tpat_traj::appendStep(tpat_traj_step s){ steps.push_back(s); }
 void tpat_traj::setTime(int ix, double val){
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj::setTime: invalid index");
 
 	tpat_traj_step *step = static_cast<tpat_traj_step*>(&(steps[ix]));
 	step->setTime(val);

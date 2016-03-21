@@ -84,40 +84,52 @@ int main(void){
 	}
 
 	// waitForUser();
-	// Manually ID the two closest passes
-	int spNode1 = 9;
-	int spNode2 = 15;
 
-	tpat_constraint sp1Con(tpat_constraint::SP, spNode1, NULL, 0);
-	tpat_constraint sp2Con(tpat_constraint::SP, spNode2, NULL, 0);
-
-	std::vector<double> firstNode = capturedNodes.getState(0);
-	firstNode.push_back(capturedNodes.getEpoch(0));
-	tpat_constraint fixFirst(tpat_constraint::STATE, 0, firstNode);
+	// std::vector<double> firstNode = capturedNodes.getState(0);
+	// firstNode.push_back(capturedNodes.getEpoch(0));
+	// tpat_constraint fixFirst(tpat_constraint::STATE, 0, firstNode);
 
 	double maxDV = 1000/1000/bcSys.getCharL()*bcSys.getCharT();
 	tpat_constraint maxDVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDV, 1);
 
-	capturedNodes.addConstraint(sp1Con);
-	capturedNodes.addConstraint(sp2Con);
-	capturedNodes.addConstraint(fixFirst);
+	// capturedNodes.addConstraint(fixFirst);
 	// capturedNodes.addConstraint(maxDVCon);
 
 	// std::vector<int> dvNodes {5, 11, 17, 23, 29, 35, 41, 47, 53, 59, 65};
-	std::vector<int> dvNodes {1, 7, 12};
-
-	capturedNodes.allowDV_at(dvNodes);
+	// std::vector<int> dvNodes {1, 7, 12};
+	// capturedNodes.allowDV_at(dvNodes);
 
 	manNodes.deleteNode(-1);
 	manNodes += capturedNodes;
-	manNodes.print();
 
-	waitForUser();
+	// Manually ID the two closest passes
+	int spNode1 = 28;
+	int spNode2 = 34;
+
+	tpat_constraint sp1Con(tpat_constraint::SP, spNode1, NULL, 0);
+	tpat_constraint sp2Con(tpat_constraint::SP, spNode2, NULL, 0);
+
+	// Constraint to fix state on manifold arc to prevent halo
+	std::vector<double> firstNode = manNodes.getState(6);
+	firstNode.push_back(manNodes.getEpoch(6));
+	tpat_constraint fixFirst(tpat_constraint::STATE, 6, firstNode);
+
+	std::vector<int> dvNodes {8, 19, 31};
+	// for(int i = fixFirst.getNode()+1; i < manNodes.getNumNodes()-1; i+=4){
+	// 	if(i != spNode1 && i != spNode2)
+	// 		dvNodes.push_back(i);
+	// }
+	manNodes.allowDV_at(dvNodes);
+
+	manNodes.addConstraint(fixFirst);
+	manNodes.addConstraint(sp1Con);
+	manNodes.addConstraint(sp2Con);
+	manNodes.print();
 
 	tpat_correction_engine corrector;
 	corrector.setTol(1e-11);
-	corrector.setMaxIts(50);
-	iterationData itData = corrector.multShoot(&capturedNodes);
+	corrector.setMaxIts(100);
+	iterationData itData = corrector.multShoot(&manNodes);
 
 	double totalDV = getTotalDV(&itData);
 	double charV = bcSys.getCharL()/bcSys.getCharT();
@@ -154,36 +166,57 @@ int main(void){
 	// // dvNodes.push_back(numNodes1);
 	// // allNodes.allowDV_at(dvNodes);
 
-	// double approxDV_dim = std::floor(totalDV*1000*charV)/1000;	// round to nearest 1 m/s
+	double approxDV_dim = std::floor(totalDV*1000*charV)/1000;	// round to nearest 1 m/s
 	// tpat_constraint maxDVCon(tpat_constraint::MAX_DELTA_V, 0, &approxDV_dim, 1);	// wrong dimensions on DV, updated in loop
 
-	// for(double dvMax = approxDV_dim; dvMax > 0.01; dvMax -= 0.001){
-	// 	double dvMax_nonDim = dvMax/charV;
-		
+	double dvStep = 0.1;
+	if(approxDV_dim < 0.1)
+		dvStep = 0.001;
+	else if(approxDV_dim < 0.2)
+		dvStep = 0.01;
+	else if(approxDV_dim < 0.5)
+		dvStep = 0.05;
+	else
+		dvStep = 0.1;
 
-	// 	maxDVCon.setData(&dvMax_nonDim, 1);
-	// 	corNodes.clearConstraints();
-	// 	corNodes.addConstraint(sp1Con);
-	// 	corNodes.addConstraint(sp2Con);
-	// 	corNodes.addConstraint(maxDVCon);
-	// 	// corNodes.addConstraint(fixFirst);
+	printf("Set dvStep = %.4f km/s\n", dvStep);
+	
+	waitForUser();
+	dvNodes.clear();
+	for(int i = fixFirst.getNode()+1; i < manNodes.getNumNodes()-1; i++){
+		if(i != spNode1 && i != spNode2)
+			dvNodes.push_back(i);
+	}
 
-	// 	try{
-	// 		corrector.setMaxIts(40);
-	// 		// corrector.setVerbose(NO_MSG);
-	// 		// convergedNodes.print();
-	// 		printf("Attempting to correct with DV = %.2f m/s\n", dvMax*1000);
-	// 		itData = corrector.multShoot(&corNodes);
-	// 		printf("Converged solution with DV = %.2f m/s\n", getTotalDV(&itData)*charV*1000);
-	// 		corNodes = corrector.getBCR4BPR_Output();
+	corrector.setMaxIts(35);
+	for(double dvMax = approxDV_dim; dvMax >= 0; dvMax -= dvStep){
+		double dvMax_nonDim = dvMax/charV;
+
+		maxDVCon.setData(&dvMax_nonDim, 1);
+		corNodes.clearConstraints();
+		corNodes.addConstraint(sp1Con);
+		corNodes.addConstraint(sp2Con);
+		corNodes.addConstraint(maxDVCon);
+		corNodes.addConstraint(fixFirst);
+
+		try{
+			printf("Attempting to correct with DV = %.2f m/s\n", dvMax*1000);
+			itData = corrector.multShoot(&corNodes);
+			printf("Converged solution with DV = %.2f m/s\n", getTotalDV(&itData)*charV*1000);
+			corNodes = corrector.getBCR4BPR_Output();
 			
-	// 		// waitForUser();
-	// 	}catch(tpat_diverge &e){
-	// 		printf("Could not converge... exiting\n");
-	// 		break;
-	// 	}// End of DV loop try-catch
-	// }// End of DV Loop
+			// waitForUser();
+		}catch(tpat_diverge &e){
+			if(dvStep > 0.001){
+				dvMax += dvStep;
+				dvStep /= 2;
+			}else{
+				printf("Could not converge... exiting\n");
+				break;
+			}
+		}// End of DV loop try-catch
+	}// End of DV Loop
 
-	// sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d_corrected_minDV.mat", trajIx);
-	// corNodes.saveToMat(filename);
+	sprintf(filename, "data/LPF_4B_NaturalManifolds/Traj%03d_corrected_minDV.mat", trajIx);
+	corNodes.saveToMat(filename);
 }

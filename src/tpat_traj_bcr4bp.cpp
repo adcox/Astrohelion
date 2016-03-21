@@ -145,6 +145,9 @@ std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
 	if(ix < 0)
 		ix += steps.size();
 
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj_bcr4bp::getdqdT: invalid index");
+
 	return getExtraParam(ix, 1);
 }//====================================================
 
@@ -157,6 +160,9 @@ std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
 void tpat_traj_bcr4bp::set_dqdT(int ix, const double *dqdT){
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj_bcr4bp::setdqdT: invalid index");
 
 	for(int i = 0; i < 6; i++)
 		steps[ix].setExtraParam(1+i, dqdT[i]);

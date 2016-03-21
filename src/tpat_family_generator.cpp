@@ -28,6 +28,7 @@
 #include "tpat_family_generator.hpp"
 
 #include "tpat_ascii_output.hpp"
+#include "tpat_body_data.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_event.hpp"
 #include "tpat_eigen_defs.hpp"
@@ -151,6 +152,20 @@ void tpat_family_generator::setNumNodes(int n){ numNodes = n; }
  *	@param n the number of orbits
  */
 void tpat_family_generator::setNumOrbits(int n){ numOrbits = n; }
+
+/**
+ *  @brief Set the minimum step size for any of the stepping values
+ * 
+ *  @param s Nondimensional minimum step size
+ */
+void tpat_family_generator::setMinStepSize(double s){ minStepSize = s;}
+
+/**
+ *  @brief Set the maximum step size for any of the stepping values
+ * 
+ *  @param s Nondimensional maximum step size
+ */
+void tpat_family_generator::setMaxStepSize(double s){ maxStepSize = s;}
 
 //-----------------------------------------------------
 //      Operations and Utility
@@ -433,13 +448,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 }//====================================================
 
 /**
- *	@brief Generate a Lyapunov family in the CR3BP
- *
- *	Tuning:
- *
- *	- The L1 region is typically a little more sensitive, so try smaller step sizes
- *	- A good initial guess for r0 is 0.001; smaller values may be possible, but the
- *	  corrector often has trouble.
+ *	@brief Generate a Butterfly family in the CR3BP
  *	
  *	@param sysData represents the system the Lyapunov exists in
  *	@param LPt The Lagrange point number [1-5]
@@ -461,7 +470,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 	std::vector<double> icVec (ic, ic+6);
 	double tof = 2.8077;
 
-	printf("Correcting Halo...\n");
+	printf("Correcting Butterfly...\n");
 	// Correct to a periodic orbit
 	std::vector<int> fixed {4};
 	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed, tol);
@@ -479,15 +488,120 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 		std::vector<int> depVars {4, 6};
 		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
-		printf("Using continuation...\n");
+		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
 		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
+		printf("Using pseudo-arclength continuation...\n");
 		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
 	}
+	return fam;
+}//====================================================
+
+/**
+ *  @brief Generate the Distant Retrograde Orbit (DRO) family 
+ *  @details This family is initialized from a conic orbit with an orbital 
+ *  radius that corresponds to the minimum flyby altitude, or, if that value is 
+ *  less than 1 km, an altitude of 100 km.
+ * 
+ *  @param sysData System data object describing the CR3BP
+ *  @return A family of DROs
+ */
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateDRO(tpat_sys_data_cr3bp *sysData){
+	tpat_body_data P2Data = tpat_body_data(sysData->getPrimary(1));
+	double orbR = P2Data.getRadius() + 
+		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
+	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
+	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
+
+	double IC[] {1 - sysData->getMu() - orbR/sysData->getCharL(), 0, 0,
+				 0, orbV*sysData->getCharT()/sysData->getCharL(), 0};		// IC for a DRO from the conic
+	std::vector<double> icVec (IC, IC+6);
+
+	// printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/sysData->getCharT());
+
+	// waitForUser();
+	// Correct to be periodic
+	printf("Correcting initial DRO from conic...\n");
+	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), MIRROR_XZ, tol);
+
+	printf("Creating Family...\n");
+	tpat_family_cr3bp fam(*sysData);
+
+	if(contType == NAT_PARAM){
+		fam.setSortType(tpat_family_cr3bp::SORT_X);
+		std::vector<int> indVars {0, 4};			// Vary x and vy
+		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
+		std::vector<mirror_t> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
+
+		// Set the simple step size to be negative so that it moves away from P2
+		if(step_simple > 0)
+			step_simple *= -1;
+
+		printf("Using natural parameter continuation...\n");
+		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
+	}else if(contType == PSEUDO_ARC){
+		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
+		printf("Using pseudo-arclength continuation...\n");
+		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+	}
+
+	return fam;
+}//====================================================
+
+/**
+ *  @brief Generate the Low Prograde Orbit (LPO) family 
+ *  @details This family is initialized from a conic orbit with an orbital 
+ *  radius that corresponds to the minimum flyby altitude, or, if that value is 
+ *  less than 1 km, an altitude of 100 km.
+ * 
+ *  @param sysData System data object describing the CR3BP
+ *  @return A family of DROs
+ */
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *sysData){
+	tpat_body_data P2Data = tpat_body_data(sysData->getPrimary(1));
+	double orbR = P2Data.getRadius() + 
+		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
+	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
+	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
+
+	double IC[] {1 - sysData->getMu() - orbR/sysData->getCharL(), 0, 0,
+				 0, -orbV*sysData->getCharT()/sysData->getCharL(), 0};		// IC for a DRO from the conic
+	std::vector<double> icVec (IC, IC+6);
+
+	// printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/sysData->getCharT());
+
+	// waitForUser();
+	// Correct to be periodic
+	printf("Correcting initial LPO from conic...\n");
+	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), MIRROR_XZ, tol);
+
+	printf("Creating Family...\n");
+	tpat_family_cr3bp fam(*sysData);
+
+	if(contType == NAT_PARAM){
+		fam.setSortType(tpat_family_cr3bp::SORT_X);
+		std::vector<int> indVars {0, 4};			// Vary x and vy
+		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
+		std::vector<mirror_t> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
+
+		// Set the simple step size to be negative so that it moves away from P2
+		if(step_simple > 0)
+			step_simple *= -1;
+
+		printf("Using natural parameter continuation...\n");
+		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
+	}else if(contType == PSEUDO_ARC){
+		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
+		printf("Using pseudo-arclength continuation...\n");
+		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+	}
+
 	return fam;
 }//====================================================
 
@@ -540,6 +654,9 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 	double deltaVar2 = 1;
 
 	std::vector<tpat_traj_cr3bp> members;
+	bool diverged = false;
+	iterationData itData;
+
 	while(orbitCount < numOrbits){
 		tpat_traj_cr3bp perOrbit(&sys);
 		try{
@@ -551,109 +668,77 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol);
+			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, &itData);
+
+			diverged = false;
+			printf("Orbit %03d converged!\n", ((int)members.size()));
 		}catch(tpat_diverge &e){
-			break;
+			diverged = true;
 		}catch(tpat_linalg_err &e){
 			printErr("There was a linear algebra error during family continuation...\n");
 			break;
 		}
 
-		printf("Orbit %03d converged!\n", ((int)members.size()));
-
-		bool leftFamily = false;
-
 		// Check for large changes in period to detect leaving family
-		if(orbitCount > 2){
+		if(!diverged && orbitCount > 2){
 			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
 			double dTOF = std::abs(perOrbit.getTime(-1)) - std::abs(members[members.size()-1].getTime(-1));
 			double percChange = std::abs(dTOF/perOrbit.getTime(-1));
 			if(percChange > 0.25){
-				leftFamily = true;
 				printf("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Exiting...\n", perOrbit.getTime(-1));
-				break;
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTime(-1));
+				diverged = true;
 			}
 		}
 
-		if(!leftFamily){
+		if(diverged && orbitCount == 0){
+			printErr("Could not converge on the first family member; try a smaller step size\n");
+			break;
+		}else if(diverged && orbitCount > 0){
+			perOrbit = members.back();	// Use previous solution as the converged solution to get correct next guess
+
+			if(orbitCount <= numSimple){
+				if(step_simple > minStepSize){
+					step_simple = step_simple/2 > minStepSize ? step_simple/2 : minStepSize;
+					printf("  Decreased step size to %0.4e (min = %.4e)\n", step_simple, minStepSize);
+				}else{
+					printErr("Minimum step size reached, could not converge... exiting\n");
+					break;
+				}
+			}else{
+				double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
+
+				if(dq > minStepSize){
+					dq = dq/2 > minStepSize ? dq/2 : minStepSize;
+					printf("  Decreased step size to %0.4e (min = %.4e)\n", dq, minStepSize);
+
+					if(std::abs(indVarSlope) > slopeThresh)
+						step_fitted_1 = dq;
+					else
+						step_fitted_2 = dq;
+				}else{
+					printErr("Minimum step size reached, could not converge... exiting\n");
+					break;
+				}
+			}
+		}else{	// Did not diverge
+
+			// Save the computed orbit
 			members.push_back(perOrbit);
 			orbitCount++;
 
-			tof = perOrbit.getTime(-1);
+			// Check to see if we should update the step size
+			if(itData.count < 4 && orbitCount > numSimple){
+				double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
 
-			if(orbitCount < numSimple){
-				// Use simple continuation; copy the converged IC, step forward in the independent variable
-				IC = perOrbit.getState(0);
-				IC.at(indVar1) += step_simple;
-			}else{
-
-				// Compute the slope for the first time
-				if(orbitCount == numSimple){
-					deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
-					deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
-					indVarSlope = deltaVar1/deltaVar2;
-				}
-
-				// Use least-squares fitting to predict the value for the independent and dependent variables
-				std::vector<double> prevStates;
-				int first = ((int)members.size()) - curveFitMem < 0 ? 0 : ((int)members.size()) - curveFitMem;
-
-				for(size_t n = first; n < members.size(); n++){
-					std::vector<double> ic = members[n].getState(0);
-					prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
-					prevStates.push_back(members[n].getTime(-1));
-					prevStates.push_back(members[n].getJacobi(0));
-				}
-
-				// This will hold the input depVars plus the unused independent variable
-				std::vector<int> allDepVars;
-				std::vector<double> predictedIC;
-				if(std::abs(indVarSlope) > slopeThresh){
-					mirrorType = mirrorTypes[0];
-					// Use continuation in indVar1
-					IC.at(indVar1) = perOrbit.getState(0).at(indVar1) + tpat_util::sign(deltaVar1)*step_fitted_1;
-					fixStates.clear();
-					fixStates.push_back(indVar1);
-
-					// Use Least Squares to predict dependent vars and unusued ind. vars
-					allDepVars = depVarIx;
-					if(std::find(depVarIx.begin(), depVarIx.end(), indVar2) == depVarIx.end()){
-						allDepVars.push_back(indVar2);	// only add if it isn't already part of depVarIx
-					}
-					predictedIC = familyCont_LS(indVar1, IC.at(indVar1),
-						allDepVars, prevStates);
-				}else{
-					mirrorType = mirrorTypes[1];
-					// Use continuation in indVar2
-					IC.at(indVar2) = perOrbit.getState(0).at(indVar2) + tpat_util::sign(deltaVar2)*step_fitted_2;
-					fixStates.clear();
-					fixStates.push_back(indVar2);
-
-					// Use Least Squares to predict dependent vars and unusued ind. vars
-					allDepVars = depVarIx;
-					if(std::find(depVarIx.begin(), depVarIx.end(), indVar1) == depVarIx.end()){
-						allDepVars.push_back(indVar1);	// only add if it isn't already part of depVarIx
-					}
-					predictedIC = familyCont_LS(indVar2, IC.at(indVar2),
-						allDepVars, prevStates);
-				}
-
-				// Update IC with predicted variables
-				for(size_t n = 0; n < allDepVars.size(); n++){
-					int ix = allDepVars[n];
-					if(ix < 6)
-						IC[ix] = predictedIC[ix];
-					else if(ix == 6)
-						tof = predictedIC[ix];
+				if(dq < maxStepSize){
+					dq = 2*dq < maxStepSize ? 2*dq : maxStepSize;
+					printf("  Increased step size to %0.4e (max = %.4e)\n", dq, maxStepSize);
+					if(std::abs(indVarSlope) > slopeThresh)
+						step_fitted_1 = dq;
 					else
-						throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Cannot update independent variable; index out of range");
+						step_fitted_2 = dq;
 				}
-
-				// Update slope
-				deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
-				deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
-				indVarSlope = deltaVar1/deltaVar2;
 			}
 
 			// Compute eigenvalues
@@ -679,7 +764,84 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			tpat_family_member_cr3bp child(perOrbit);
 			child.setEigVals(eigVals);
 			fam->addMember(child);
-		}// End of leftFamily?
+		}
+
+		// Create next initial guess
+		tof = perOrbit.getTime(-1);
+
+		if(orbitCount < numSimple){
+			// Use simple continuation; copy the converged IC, step forward in the independent variable
+			IC = perOrbit.getState(0);
+			IC.at(indVar1) += step_simple;
+		}else{
+
+			// Compute the slope for the first time
+			if(orbitCount == numSimple){
+				deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
+				deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
+				indVarSlope = deltaVar1/deltaVar2;
+			}
+
+			// Use least-squares fitting to predict the value for the independent and dependent variables
+			std::vector<double> prevStates;
+			int first = ((int)members.size()) - curveFitMem < 0 ? 0 : ((int)members.size()) - curveFitMem;
+
+			for(size_t n = first; n < members.size(); n++){
+				std::vector<double> ic = members[n].getState(0);
+				prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
+				prevStates.push_back(members[n].getTime(-1));
+				prevStates.push_back(members[n].getJacobi(0));
+			}
+
+			// This will hold the input depVars plus the unused independent variable
+			std::vector<int> allDepVars;
+			std::vector<double> predictedIC;
+			if(std::abs(indVarSlope) > slopeThresh){
+				mirrorType = mirrorTypes[0];
+				// Use continuation in indVar1
+				IC.at(indVar1) = perOrbit.getState(0).at(indVar1) + tpat_util::sign(deltaVar1)*step_fitted_1;
+				fixStates.clear();
+				fixStates.push_back(indVar1);
+
+				// Use Least Squares to predict dependent vars and unusued ind. vars
+				allDepVars = depVarIx;
+				if(std::find(depVarIx.begin(), depVarIx.end(), indVar2) == depVarIx.end()){
+					allDepVars.push_back(indVar2);	// only add if it isn't already part of depVarIx
+				}
+				predictedIC = familyCont_LS(indVar1, IC.at(indVar1),
+					allDepVars, prevStates);
+			}else{
+				mirrorType = mirrorTypes[1];
+				// Use continuation in indVar2
+				IC.at(indVar2) = perOrbit.getState(0).at(indVar2) + tpat_util::sign(deltaVar2)*step_fitted_2;
+				fixStates.clear();
+				fixStates.push_back(indVar2);
+
+				// Use Least Squares to predict dependent vars and unusued ind. vars
+				allDepVars = depVarIx;
+				if(std::find(depVarIx.begin(), depVarIx.end(), indVar1) == depVarIx.end()){
+					allDepVars.push_back(indVar1);	// only add if it isn't already part of depVarIx
+				}
+				predictedIC = familyCont_LS(indVar2, IC.at(indVar2),
+					allDepVars, prevStates);
+			}
+
+			// Update IC with predicted variables
+			for(size_t n = 0; n < allDepVars.size(); n++){
+				int ix = allDepVars[n];
+				if(ix < 6)
+					IC[ix] = predictedIC[ix];
+				else if(ix == 6)
+					tof = predictedIC[ix];
+				else
+					throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Cannot update independent variable; index out of range");
+			}
+
+			// Update slope
+			deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
+			deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
+			indVarSlope = deltaVar1/deltaVar2;
+		}
 	}// end of while loop
 }//==================================================
 

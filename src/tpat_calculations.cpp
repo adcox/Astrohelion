@@ -611,6 +611,12 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
     const int STATE_SIZE = 8;
     const double EPS = 1e-14;
 
+    if(varHistory.size() < STATE_SIZE)
+        throw tpat_exception("tpat_calculations::familyCont_LS: Not enough data to create A matrix\n");
+
+    if(depVars.size() == 0)
+        throw tpat_exception("tpat_calculations::familyCont_LS: Not enough data to create B matrix\n");
+
     // Form A and B matrices
     std::vector<double> A_data;
     std::vector<double> B_data;
@@ -661,8 +667,8 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
         MatrixXRd A_lin = Eigen::Map<MatrixXRd>(&(A_lin_data[0]), varHistory.size()/STATE_SIZE, 2);
         Eigen::Matrix2d G;
         G.noalias() = A_lin.transpose()*A_lin;
-        Eigen::VectorXd C(depVars.size());
-        C.noalias() = G.fullPivLu().solve(A_lin.transpose()*B);
+
+        MatrixXRd C = G.fullPivLu().solve(A_lin.transpose()*B);
 
         Eigen::RowVector2d indMat(nextInd, 1);
 
@@ -1402,7 +1408,42 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates, double tol){
+    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates,
+    double tol){
+
+    iterationData itData;
+    return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
+}//====================================================================
+
+/**
+ *  @brief Compute a periodic orbit in the CR3BP system
+ *  @details This method ignores all crash events, so it is possible to compute a
+ *  periodic orbit that passes through a primary
+ *  
+ *  @param sys the dynamical system
+ *  @param IC non-dimensional initial state vector
+ *  @param period non-dimensional period for the orbit
+ *  @param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
+ *  may result in a more robust correction
+ *  @param order the number of revolutions about the system/primary this orbit completes before
+ *  it repeats periodically. Think of a period-3 DRO (order = 3) or a butterfly (order = 2)
+ *  @param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  @param fixedStates a vector containing the indices of which initial states
+ *  we would like to fix. Not all states are possible for each mirror condition.
+ *  See the enum definition for specific details.
+ *  @param itData a pointer to an iteration data object that contains data from the
+ *  multiple shooting run that corrects the periodic orbit; this is useful when
+ *  attempting to determine how well (or poorly) the multiple shooting algorithm
+ *  performed (e.g., for a variable step-size process)
+ *  
+ *  @return A periodic orbit. Note that this algorithm only enforces the mirror
+ *  condition at the initial state and halfway point. To increase the accuracy
+ *  of the periodic orbit, run it through a corrector to force the final state 
+ *  to equal the first
+ */
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
+    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates,
+    double tol, iterationData* itData){
 
     tpat_simulation_engine sim(sys);    // Engine to perform simulation
     sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
@@ -1508,7 +1549,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     corrector.setEqualArcTime(true);
 
     try{
-        corrector.multShoot(&halfOrbNodes);
+        *itData = corrector.multShoot(&halfOrbNodes);
         tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();
 
         // Make the nodeset into a trajectory

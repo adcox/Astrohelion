@@ -4,10 +4,10 @@ defineConstants;
 
 numOrbits = 50;
 
-% load('data/EML2_NButterfly_PeriStability');
-% famData = load('../share/families_natParam_checked/EM_L2_NButterfly.mat');
-load('data/EML1_Halo_PeriStability');
-famData = load('../share/families_pac_checked/EM_L1_Halo.mat');
+load('data/EML2_NButterfly_PeriStability');
+famData = load('../share/families_natParam_checked/EM_L2_NButterfly.mat');
+% load('data/EML1_Halo_PeriStability');
+% famData = load('../share/families_pac_checked/EM_L1_Halo.mat');
 
 % Make all indices positive
 StabilityIx = abs(StabilityIx);

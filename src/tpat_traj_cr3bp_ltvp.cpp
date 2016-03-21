@@ -79,6 +79,10 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arc_data &a) : tpat_traj(a
 double tpat_traj_cr3bp_ltvp::getJacobi(int ix) const{
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::getJacobi: invalid index");
+
 	tpat_arc_step step = steps[ix];
 	return step.getExtraParam(1);
 }//====================================================
@@ -91,6 +95,10 @@ double tpat_traj_cr3bp_ltvp::getJacobi(int ix) const{
 double tpat_traj_cr3bp_ltvp::getMass(int ix) const{
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::getMass: invalid index");
+
 	tpat_arc_step step = steps[ix];
 	return step.getExtraParam(2);
 }//====================================================
@@ -104,6 +112,9 @@ void tpat_traj_cr3bp_ltvp::setJacobi(int ix, double val){
 	if(ix < 0)
 		ix += steps.size();
 
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::setJacobi: invalid index");
+
 	steps[ix].setExtraParam(1, val);
 }//====================================================
 
@@ -115,6 +126,9 @@ void tpat_traj_cr3bp_ltvp::setJacobi(int ix, double val){
 void tpat_traj_cr3bp_ltvp::setMass(int ix, double val){
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::setMass: invalid index");
 
 	steps[ix].setExtraParam(2, val);
 }//====================================================

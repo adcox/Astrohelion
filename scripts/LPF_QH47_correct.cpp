@@ -1,7 +1,3 @@
-/**
- *	Generate a bunch of manifold arcs and correct them to be natural in the BC4BP
- */
-
 #include "tpat_all_includes.hpp"
 
 #include <cmath>
@@ -13,7 +9,7 @@ int main(void){
 	tpat_sys_data_cr3bp emSys("earth", "moon");
 
 	// Load trajectory from file
-	int trajIx = 39;
+	int trajIx = 47;
 	char filename[128];
 	sprintf(filename, "data/LPF_QH_4B_NaturalManifolds/Traj%03d_SEM.mat", trajIx);
 
@@ -28,59 +24,44 @@ int main(void){
 	// Create simulation engine, events to stop trajectory near SP for easy node placement
 	tpat_simulation_engine sim(&bcSys);
 	double sp_xCoord = -0.173005958645270;		// Sun-Earth (no Moon) SP x-coord 
-	tpat_event sp_yzPlane(&bcSys, tpat_event::YZ_PLANE, 1, true, &sp_xCoord);
+	tpat_event sp_yzPlane(&bcSys, tpat_event::YZ_PLANE, 0, true, &sp_xCoord);
 	tpat_event sp_xzPlane(&bcSys, tpat_event::XZ_PLANE, 0, true);
-	
-	double earthIx = 1;
-	tpat_event earthApse(&bcSys, tpat_event::APSE, 0, true, &earthIx);
 
-	// propagate an arc to the SP YZ plane
+	// Propagate arc to SP YZ plane
 	sim.addEvent(sp_yzPlane);
 	sim.runSim(bcTraj.getState(0), bcTraj.getTime(0), tof);
 	tpat_traj_bcr4bp arcToSP1 = sim.getBCR4BPR_Traj();
 
-	// sim.clearEvents();
-	// sim.addEvent(earthApse);
-	// sim.runSim(arcToSP1.getState(-1), arcToSP1.getTime(-1), tof);
-	// tpat_traj_bcr4bp arcToPerigee = sim.getBCR4BPR_Traj();
+	// Propagate arc out to near L2
+	double nearL2_xCoord = 0.75;
+	tpat_event nearL2_yzPlane(&bcSys, tpat_event::YZ_PLANE, 0, true, &nearL2_xCoord);
+	sim.clearEvents();
+	sim.addEvent(nearL2_yzPlane);
+	sim.runSim(arcToSP1.getState(-1), arcToSP1.getTime(-1), tof);
+	tpat_traj_bcr4bp arcToL2 = sim.getBCR4BPR_Traj();
 
-	// Propagate past Earth flyby to the SP YZ plane (again) or XZ plane
+	// Now propagate back to SP YZ plane
 	sim.clearEvents();
 	sim.addEvent(sp_yzPlane);
-	sim.runSim(arcToSP1.getState(-1), arcToSP1.getTime(-1), tof);
-	// sim.runSim(arcToPerigee.getState(-1), arcToPerigee.getTime(-1), tof);
+	sim.runSim(arcToL2.getState(-1), arcToL2.getTime(-1), tof);
 	tpat_traj_bcr4bp arcToSP2 = sim.getBCR4BPR_Traj();
 
-	// If y and y_dot have opposite signs, propagate to xz-plane
-	if((arcToSP2.getState(-1)[1])*(arcToSP2.getState(-1)[4]) < 0){
-		// Propagate a little further to XZ plane
-		sim.clearEvents();
-		sim.addEvent(sp_xzPlane);
-		sim.runSim(arcToSP2.getState(-1), arcToSP2.getTime(-1), tof);
-		tpat_traj_bcr4bp temp = sim.getBCR4BPR_Traj();
-		arcToSP2 += temp;	// Add this extra arc to the old one
-	}
-
-	// arcToSP1.saveToMat("arcToSP1.mat");
-	// arcToSP2.saveToMat("arcToSP2.mat");
-
 	// Create nodesets from arcs
-	int numNodes1 = 10, numNodes2 = 10;
+	int numNodes1 = 12;
+	int numNodes2 = 10;
+	int numNodes3 = 5;
+
 	tpat_nodeset_bcr4bp nodesToSP1(arcToSP1.getState(0), &bcSys, arcToSP1.getTime(0), arcToSP1.getTOF(), numNodes1);
-	// tpat_nodeset_bcr4bp nodesToPerigee(arcToPerigee.getState(0), &bcSys, arcToPerigee.getTime(0), arcToPerigee.getTOF(), 2);
-	tpat_nodeset_bcr4bp nodesToSP2(arcToSP2.getState(0), &bcSys, arcToSP2.getTime(0), arcToSP2.getTOF(), numNodes2);
+	tpat_nodeset_bcr4bp nodesToL2(arcToL2.getState(0), &bcSys, arcToL2.getTime(0), arcToL2.getTOF(), numNodes2);
+	tpat_nodeset_bcr4bp nodesToSP2(arcToSP2.getState(0), &bcSys, arcToSP2.getTime(0), arcToSP2.getTOF(), numNodes3);
 
 	// Concatenate nodes into one big set
 	tpat_nodeset_bcr4bp allNodes = nodesToSP1;
 	allNodes.deleteNode(-1);
-	// allNodes += nodesToPerigee;
-	// allNodes.deleteNode(-1);
+	allNodes += nodesToL2;
+	allNodes.deleteNode(-1);
 	allNodes += nodesToSP2;
 
-	sprintf(filename, "data/LPF_QH_4B_NaturalManifolds/Traj%03d_raw.mat", trajIx);
-	allNodes.saveToMat(filename);
-
-	// Create SP constraints and add to nodeset
 	tpat_constraint sp1Con(tpat_constraint::SP, numNodes1-1, NULL, 0);
 	tpat_constraint sp2Con(tpat_constraint::SP, allNodes.getNumNodes()-1, NULL, 0);
 	
@@ -89,9 +70,12 @@ int main(void){
 
 	allNodes.addConstraint(sp1Con);
 	allNodes.addConstraint(sp2Con);
+	// allNodes.addConstraint(fixFirst);
+	sprintf(filename, "data/LPF_QH_4B_NaturalManifolds/Traj%03d_raw.mat", trajIx);
+	allNodes.saveToMat(filename);
 
 	// Allow velocity discontinuities
-	std::vector<int> dvNodes {numNodes1 - 2, allNodes.getNumNodes()-5};
+	std::vector<int> dvNodes {sp1Con.getNode()-2, sp1Con.getNode()+3, sp1Con.getNode()+10};
 	allNodes.allowDV_at(dvNodes);
 
 	// Correct to encounter SP
@@ -123,14 +107,17 @@ int main(void){
 		double dvMax_nonDim = dvMax/charV;
 
 		maxDVCon.setData(&dvMax_nonDim, 1);
-
 		firstZ[2] = corNodes.getState(0)[2];
 		fixFirst.setData(firstZ);
+
 		corNodes.clearConstraints();
 		corNodes.addConstraint(sp1Con);
 		corNodes.addConstraint(sp2Con);
 		corNodes.addConstraint(maxDVCon);
 		corNodes.addConstraint(fixFirst);
+		// corNodes.print();
+
+		// waitForUser();
 
 		try{
 			corrector.setMaxIts(40);

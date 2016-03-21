@@ -190,7 +190,7 @@ int main(void){
 			fullSet += nodesPostFlyby;
 
 			std::vector<int> dvNodes {8, 11, 20, 30};
-			fullSet.setVelConNodes_allBut(dvNodes);
+			fullSet.allowDV_at(dvNodes);
 
 			// Fix initial manifold state
 			std::vector<double> initState = fullSet.getState(0);

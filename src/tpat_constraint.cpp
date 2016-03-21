@@ -86,7 +86,7 @@ tpat_constraint::tpat_constraint(const tpat_constraint& c){
  */
 tpat_constraint::~tpat_constraint(){
 	data.clear();
-}
+}//====================================================
 
 //-----------------------------------------------------
 // 		Operator Functions

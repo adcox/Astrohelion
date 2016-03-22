@@ -25,6 +25,7 @@
  
 #include "tpat_family_cr3bp.hpp"
 
+#include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
@@ -329,6 +330,8 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 	if(matches.size() == 0){
 		printErr("Could not locate any matches. The family either has too few members to facilitate an accurate search or the desired trajectory does not exist.\n");
 		return matchMembers;	// empty set
+	}else{
+		printColor(GREEN, "Located %zu matches; applying corrections\n", matches.size());
 	}
 
 	tpat_sys_data_cr3bp tempSys = sysData;
@@ -339,10 +342,14 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 		// Check to see if they are "close enough"
 		if(std::abs(dataSet->at(idx) - value) < matchTol){
 			matchMembers.push_back(members[idx]);
+			printf("  Candidate %d is close enough; no corrections required\n", n);
 		}else{	// If not, employ corrections
-			
+			printf("  Correcting candidate %d...\n", n);
 			// Create a nodeset and a constraint to make the orbit periodic
-			tpat_nodeset_cr3bp memberSet(members[idx].getIC(), &tempSys, members[idx].getTOF(), numNodes);
+			double tof = members[idx].getTOF();
+			int numNodes = tof > 2 ? floor(tof) : 2;
+
+			tpat_nodeset_cr3bp memberSet(members[idx].getIC(), &tempSys, tof, numNodes);
 			double end = numNodes-1;
 			double conData[] = {end,end,end,end,end,end};
 			tpat_constraint periodicCon(tpat_constraint::MATCH_CUST, 0, conData, 6);

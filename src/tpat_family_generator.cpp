@@ -605,6 +605,115 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *
 	return fam;
 }//====================================================
 
+tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *sysData, int p, int q){
+	double x = 0, vy = 0, T = 0;
+	int order = 0;
+	switch(p){
+		case 1:
+		{
+			switch(q){
+				case 1: x = 0.6339739688; vy = 0.8390456686; T = 5.43075997; order = 1; break;
+				case 2: x = 0.5140368985; vy = 1.2740998965; T = 12.32249803; order = 2; break;
+				case 3: x = 0.6097558619; vy = 1.0695212172; T = 18.52105931; order = 3; break;
+				case 4: x = 0.6647328846; vy = 0.9735457114; T = 24.75827998; order = 4; break;
+				case 5: x = 0.7165422857; vy = 0.8894024945; T = 30.98350896; order = 5; break;
+				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+			}
+			break;
+		}
+		case 2:
+		{
+			switch(q){
+				case 1: x = 1.1237405523; vy = -0.8620117202; T = 6.04619177; order = 3; break;
+				case 3: x = 0.5259693391; vy = 1.2027315054; T = 18.53612002; order = 3; break;
+				case 5: x = 0.6502418226; vy = 0.9609312003; T = 31.00065761; order = 5; break;
+				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+			}
+			break;
+		}
+		case 3:
+		{
+			switch(q){
+				case 1: x = 0.8525476977; vy = -0.4790301584; T = 6.35120050; order = 3; break;
+				case 2: x = 1.0929978357; vy = -0.6758673511; T = 11.74717118; order = 2; break;
+				case 4: x = 0.5522611666; vy = 1.1178451576; T = 24.74772340; order = 4; break;
+				case 5: x = 0.6047408300; vy = 1.0072641104; T = 30.97096176; order = 5; break;
+				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+			}
+			break;
+		}
+		case 4:
+		{
+			switch(q){
+				case 1: x = 0.531016298978725; vy = 0.529364977382337; T = 6.20854994765688; order = 3; break;
+				case 3: x = 1.13067423947448; vy = -0.646972098815793; T = 17.99449516; order = 3; break;
+				case 5: x = 0.7502059802; vy = 0.6870566313; T = 30.21938914; order = 3; break;
+				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+			}
+			break;
+		}
+		case 5:
+		{
+			switch(q){
+				case 1: x = 0.5464336946; vy = 0.2531922385; T = 6.30641755; order = 4; break;
+				case 2: x = 0.8484521141; vy = -0.2213536734; T = 13.03725695; order = 4; break;
+				case 3: x = 1.1076664385; vy = -0.7339807287; T = 18.38756543; order = 5; break;
+				case 4: x = 1.1514231706; vy = -0.6411329235; T = 24.29007804; order = 4; break;
+			}
+			break;
+		}
+		default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+	}
+
+	std::vector<double> ic {x, 0, 0, 0, vy, 0};		// Inititial state orthogonal to XZ plane
+	std::vector<int> fixed {0};						// Fix x to begin with
+	numNodes = T > 4 ? floor(T/2) : 2;
+
+	if(p == 4 && q == 3)
+		numNodes *= 2;
+	
+	printf("Correcting %d:%d Resonant Orbit...\n", p, q);
+	// Correct to a periodic orbit
+	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, ic, T, numNodes, order, MIRROR_XZ, fixed, tol);
+	// perOrbit.saveToMat("resOrbit_initSoln.mat");
+	// waitForUser();
+
+	printf("Creating Family...\n");
+	// Initialize variables and containers for data
+	tpat_family_cr3bp fam(*sysData);
+	fam.setSortType(tpat_family_cr3bp::SORT_X);
+
+	if(contType == NAT_PARAM){
+		// Butterfly-specific settings
+		fam.setSortType(tpat_family_cr3bp::SORT_X);
+		// std::vector<int> indVars {0,2};
+		std::vector<int> indVars {0, 4};
+		// std::vector<int> depVars {4,6};
+		std::vector<int> depVars {4, 6};
+		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+
+		printf("Using natural parameter continuation...\n");
+		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
+		
+		// Run the other direction too
+		step_simple *= -1;
+		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
+	}else if(contType == PSEUDO_ARC){
+		// Turn trajectory object into nodeset; double number of nodes
+		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+
+		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
+		printf("Using pseudo-arclength continuation...\n");
+		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+
+		// Run the other direction too
+		initDir[0] *= -1;
+		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+	}
+
+	return fam;
+}
+
 /**
  *	@brief Continue a family of orbits in the CR3BP
  *	
@@ -875,7 +984,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 	// TODO - Make these editable?
 	double stepSize = 0.001;
-	double maxStepSize = 0.01;
+	double maxStepSize = 0.5;
 	double minStepSize = 1e-7;
 
 	tpat_sys_data_cr3bp sys = fam->getSysData();
@@ -1154,6 +1263,11 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 		if(diffX < tol){
 			printErr("Solutions from pseudo-arc-length have ceased changing; ending continuation\n");
+			break;
+		}
+
+		if(diffX > 2*maxStepSize){
+			printErr("Solution changed by amount greater than maxStepSize; solution jumped, ending continuation\n");
 			break;
 		}
 		

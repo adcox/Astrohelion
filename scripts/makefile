@@ -83,6 +83,7 @@ list:
 	@- echo "  manPeri"
 	@- echo "  manTubeGridding"
 	@- echo "  spEffects"
+	@- echo "  synResGetOrbs - pull orbits from a few families that have periods commensurate with the Lunar synodic month"
 	@- echo "  propGrid"
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
@@ -144,6 +145,9 @@ manTubeGridding: $(OBJECTS)
 
 spEffects: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_LocateSP_ManyBodies.cpp -o $(BIN)/$@
+
+synResGetOrbs: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) LPF_synodicResonance_getOrbitFromFamily.cpp -o $(BIN)/$@
 
 propGrid: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) IceCube_IntegrateGridICs.cpp -o $(BIN)/$@

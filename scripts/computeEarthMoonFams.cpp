@@ -2,6 +2,7 @@
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_family_generator.hpp"
+#include "tpat_utilities.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -18,6 +19,14 @@ int main(int argc, char *argv[]){
 		printf("Please enter an integer to specify which Earth-Moon family to generate\n");
 		return EXIT_SUCCESS;
 	}
+
+	int p = 0;
+	int q = 0;
+	if(argc == 4){
+		p = atoi(argv[2]);
+		q = atoi(argv[3]);
+	}
+
 	// Create system data and generator family generator
 	tpat_sys_data_cr3bp sysData("earth", "Moon");
 	tpat_family_generator gen;
@@ -266,6 +275,12 @@ int main(int argc, char *argv[]){
 			DRO.saveToMat("../share/families/EM_DRO.mat");
 			break;
 		}
+		case 110:
+		{
+			printf("Generating Earth-Moon DRO Family via Pseudo Arclength\n");
+			printWarn("Not Yet Implemented");
+			break;	
+		}
 		case 11:
 		{
 			printf("Generating Earth-Moon LPO Family via Natural Parameter\n");
@@ -281,6 +296,58 @@ int main(int argc, char *argv[]){
 			LPO.sortEigs();
 			LPO.setName("Earth-Moon LPO");
 			LPO.saveToMat("../share/families/EM_LPO.mat");
+			break;
+		}
+		case 111:
+		{
+			printf("Generating Earth-Moon LPO Family via Pseudo Arclength\n");
+			printWarn("Not Yet Implemented");
+			break;	
+		}
+		case 12:
+		{
+			printf("Generating Earth-Moon DPO Family via Natural Parameter\n");
+			printWarn("Not Yet Implemented");
+			break;
+		}
+		case 112:
+		{
+			printf("Generating Earth-Moon DPO Family via Pseudo Arclength\n");
+			printWarn("Not Yet Implemented");
+			break;	
+		}
+		case 20:
+		{
+			printf("Generating Earth-Moon Resonant Orbit via Natural Parameter\n");
+			gen.setContType(tpat_family_generator::NAT_PARAM);
+			gen.setNumOrbits(1000);
+
+			tpat_family_cr3bp res = gen.cr3bp_generateRes(&sysData, p, q);
+			res.sortMembers();
+			res.sortEigs();
+
+			char famName[32], filename[128];
+			sprintf(famName, "Earth-Moon %d:%d", p, q);
+			sprintf(filename, "../share/families/EM_Res_%d_%d.mat", p, q);
+			res.setName(famName);
+			res.saveToMat(filename);
+			break;
+		}
+		case 201:
+		{
+			printf("Generating Earth-Moon Resonant Orbit via Pseudo Arclength\n");
+			gen.setContType(tpat_family_generator::PSEUDO_ARC);
+			gen.setNumOrbits(1000);
+			
+			tpat_family_cr3bp res = gen.cr3bp_generateRes(&sysData, p, q);
+			res.sortMembers();
+			res.sortEigs();
+
+			char famName[32], filename[128];
+			sprintf(famName, "Earth-Moon %d:%d", p, q);
+			sprintf(filename, "../share/families/EM_Res_%d_%d_PAC.mat", p, q);
+			res.setName(famName);
+			res.saveToMat(filename);
 			break;
 		}
 		case 999:

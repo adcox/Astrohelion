@@ -89,7 +89,7 @@ void tpat_sys_data_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 	primIDs.push_back(p2Data.getID());
 
 	// Check to make sure P1 is P2's parent
-	if(p2Data.getName().compare(p1Data.getName())){
+	if(p2Data.getParent().compare(p1Data.getName()) == 0){
 		charL = p2Data.getOrbitRad();
 		charM = p1Data.getMass() + p2Data.getMass();
 		charT = sqrt(pow(charL, 3)/(G*charM));
@@ -175,5 +175,9 @@ void tpat_sys_data_cr3bp::saveToMat(mat_t *matFile) const{
 void tpat_sys_data_cr3bp::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
+
+	numPrimaries = 2;
+	type = tpat_sys_data::CR3BP_SYS;
+	otherParams.assign(1,0);	// make mu = 0
 	initFromPrimNames(P1, P2);
 }//===================================================

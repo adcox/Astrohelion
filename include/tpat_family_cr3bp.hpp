@@ -102,7 +102,6 @@ class tpat_family_cr3bp{
 		sortVar_t sortType = SORT_NONE;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
-		double numNodes = 4;		//!< Number of nodes to use when representing a family member
 
 		const char* DATA_VAR_NAME = "MemberData";		//!< Variable name for family member data
 		const char* SORTTYPE_VAR_NAME = "SortType";		//!< Variable name for the sort type

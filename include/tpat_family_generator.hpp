@@ -73,6 +73,7 @@ class tpat_family_generator{
 		tpat_family_cr3bp cr3bp_generateHalo(const char*, double);
 		tpat_family_cr3bp cr3bp_generateLPO(tpat_sys_data_cr3bp*);
 		tpat_family_cr3bp cr3bp_generateLyap(tpat_sys_data_cr3bp, int, double);
+		tpat_family_cr3bp cr3bp_generateRes(tpat_sys_data_cr3bp*, int, int);
 		tpat_family_cr3bp cr3bp_generateVertical(const char*, double);
 		
 		void reset();

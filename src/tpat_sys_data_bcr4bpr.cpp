@@ -307,6 +307,10 @@ void tpat_sys_data_bcr4bpr::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P3 = readStringFromMat(matFile, "P3", MAT_T_UINT8, MAT_C_CHAR);
+	
+	numPrimaries = 3;
+	type = tpat_sys_data::BCR4BPR_SYS;
+	otherParams.assign(8,0);
 	initFromPrimNames(P1, P2, P3);
 
 	otherParams[4] = readDoubleFromMat(matFile, "Theta0");

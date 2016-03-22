@@ -207,6 +207,8 @@ void tpat_sys_data_cr3bp_ltvp::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
 
+	type = tpat_sys_data::CR3BP_LTVP_SYS;
+	otherParams.assign(4,0);
 	initFromPrimNames(P1, P2);
 	otherParams[2] = readDoubleFromMat(matFile, "Isp");
 	otherParams[3] = readDoubleFromMat(matFile, "Mass0");

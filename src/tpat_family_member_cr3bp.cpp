@@ -27,6 +27,8 @@
 
 #include "tpat_constants.hpp"
 #include "tpat_exceptions.hpp"
+#include "tpat_simulation_engine.hpp"
+#include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 
 //-----------------------------------------------------
@@ -45,6 +47,7 @@
  */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
 	double jc, double xAmp, double yAmp, double zAmp){
+	
 	IC.clear();
 	IC.insert(IC.begin(), ic, ic+6);
 	TOF = tof;
@@ -197,6 +200,20 @@ void tpat_family_member_cr3bp::setYAmplitude(double w){ yAmplitude = w; }
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
 void tpat_family_member_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
+
+/**
+ *  @brief Convert the family member object to a trajectory object
+ *  @details This function simply numerically integrates the IC for the
+ *  specified TOF to produce the trajectory object
+ * 
+ *  @param sys The system the family member exists in
+ *  @return A trajectory object
+ */
+tpat_traj_cr3bp tpat_family_member_cr3bp::toTraj(const tpat_sys_data_cr3bp *sys){
+	tpat_simulation_engine sim(sys);
+	sim.runSim(IC, TOF);
+	return sim.getCR3BP_Traj();
+}//====================================================
 
 //-----------------------------------------------------
 // 		Utility Functions

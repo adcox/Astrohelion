@@ -29,6 +29,7 @@
 #include <vector>
 
 class tpat_traj_cr3bp;
+class tpat_sys_data_cr3bp;
 
 /**
  *	@brief A data object to store information about a family member
@@ -62,6 +63,7 @@ class tpat_family_member_cr3bp{
 		void setXAmplitude(double);
 		void setYAmplitude(double);
 		void setZAmplitude(double);
+		tpat_traj_cr3bp toTraj(const tpat_sys_data_cr3bp*);
 
 	protected:
 		/** Vector of 6 eigenvalues; initialized to NAN by default */

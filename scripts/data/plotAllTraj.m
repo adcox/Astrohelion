@@ -2,7 +2,7 @@
 
 clear; clc; close all;
 defineConstants;
-colors = parula(10);
+colors = lines(5);
 fontSize = 18;
 lineWidth = 2;
 bcSys = bcr4bpR_getSysParam('sun', 'earth', 'moon');
@@ -26,9 +26,9 @@ dataDir = 'LPF_QH_4B_NaturalManifolds/';
 %
 %   Most promising candidates: 29, 34, 35, 37
 %   26-35, 37-40: two pass
-%   36, 41: Tightly captured
+%   36, 83: Tightly captured
 %   38: Loosely captured
-%
+%   37, 45, 51, 56, 57, 61, 84: multi-pass, perhaps easy to tweak
 %   1-25: Depart through L1
 %
 %   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,27 +71,25 @@ ix0 = 1; %1000; % start plotting data partway through to avoid some of the halo
 
 h_fig = figure(); hold on;
 % for i = 1:length(files)
-for i = [29, 34, 35, 37]
+for i = [37, 56, 61]
     o = load([dataDir, files(i).name]);
     % Plot all same color
-%     plot3(o.State(ix0:end,1)*bcSys.charL, o.State(ix0:end,2)*bcSys.charL,...
-%         o.State(ix0:end,3)*bcSys.charL, 'Color', colors(3,:), 'LineWidth', lineWidth);
+    plot3(o.State(ix0:end,1)*bcSys.charL, o.State(ix0:end,2)*bcSys.charL,...
+        o.State(ix0:end,3)*bcSys.charL, 'Color', colors(1,:), 'LineWidth', lineWidth);
 
     % Plot all different colors
-    plot3(o.State(ix0:end,1)*bcSys.charL, o.State(ix0:end,2)*bcSys.charL,...
-        o.State(ix0:end,3)*bcSys.charL, 'LineWidth', lineWidth);
+%     plot3(o.State(ix0:end,1)*bcSys.charL, o.State(ix0:end,2)*bcSys.charL,...
+%         o.State(ix0:end,3)*bcSys.charL, 'LineWidth', lineWidth);
     
     axis equal;
 end
 grid on; limits = axis;
 bcr4bpR_plotEnv('Sun', 'Earth', 'Moon', 't0', o.Time(1), 'tf', o.Time(end),...
-    'scale', bcSys.charL, 'plotsp', 'on', 'LineWidth', lineWidth);
+    'scale', bcSys.charL, 'plotsp', 'on', 'LineWidth', lineWidth, 'surf', 'off');
 hold off; axis(limits);
 xlabel('x, km');
 ylabel('y, km');
 zlabel('z, km');
-h = findobj(gca, 'type', 'surface');
-delete(h);
 set(gca, 'FontSize', fontSize, 'FontWeight', fontWeight);
 
 

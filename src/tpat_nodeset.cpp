@@ -97,15 +97,18 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ar
 
 /**
  *	@brief Retrieve the constraints for a specific node
- *	@param nodeIx the index of the node. If less than 0, it will
+ *	@param ix the index of the node. If less than 0, it will
  *	count backward from the end of the nodeset
  *	@return a vector of all constraints applied to the specified node
  */
-std::vector<tpat_constraint> tpat_nodeset::getNodeCons(int nodeIx) const{
-	if(nodeIx < 0)
-		nodeIx += steps.size();
+std::vector<tpat_constraint> tpat_nodeset::getNodeCons(int ix) const{
+	if(ix < 0)
+		ix += steps.size();
 
-	return steps[nodeIx].getConstraints();
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::getNodeCons: invalid index");
+
+	return steps[ix].getConstraints();
 }//====================================================
 
 /**
@@ -117,6 +120,9 @@ std::vector<tpat_constraint> tpat_nodeset::getNodeCons(int nodeIx) const{
 tpat_node tpat_nodeset::getNode(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::getNode: invalid index");
 
 	return tpat_node(steps[ix]);
 }//====================================================
@@ -148,6 +154,9 @@ int tpat_nodeset::getNumNodes() const { return steps.size(); }
 double tpat_nodeset::getTOF(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::getTOF: invalid index");
 
 	tpat_node node(steps[ix]);
 	return node.getTOF();
@@ -205,6 +214,10 @@ void tpat_nodeset::appendNode(tpat_node node){
 void tpat_nodeset::deleteNode(int ix){
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::deleteNode: invalid index");
+
 	steps.erase(steps.begin()+ix);
 	updateCons();
 }//====================================================

@@ -207,6 +207,9 @@ double tpat_nodeset_bcr4bp::getEpoch(int ix) const {
 	if(ix < 0)
 		ix += steps.size();
 
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset_bcr4bp::getEpoch: invalid index");
+
 	return steps[ix].getExtraParam(1);
 }//====================================================
 

@@ -194,6 +194,10 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arc_data &a) : tpat_nodeset(a)
 double tpat_nodeset_cr3bp::getJacobi(int ix) const{
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset_cr3bp::getJacobi: invalid index");
+
 	tpat_arc_step step = steps[ix];
 	return step.getExtraParam(1);
 }//====================================================
@@ -206,6 +210,9 @@ double tpat_nodeset_cr3bp::getJacobi(int ix) const{
 void tpat_nodeset_cr3bp::setJacobi(int ix, double val){
 	if(ix < 0)
 		ix += steps.size();
+
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset_cr3bp::setJacobi: invalid index");
 
 	steps[ix].setExtraParam(1, val);
 }//====================================================

@@ -21,7 +21,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
  
 #include "tpat_family_member_cr3bp.hpp"
 

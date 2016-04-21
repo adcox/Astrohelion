@@ -20,6 +20,8 @@
 #ifndef H_SIMENGINE
 #define H_SIMENGINE
 
+#include "tpat.hpp"
+ 
 #include "tpat_model.hpp"
 #include "tpat_event.hpp"
 #include "tpat_sys_data.hpp"
@@ -113,7 +115,7 @@ public:
  *	@version June 1, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_simulation_engine{
+class tpat_simulation_engine : public tpat{
 	public:
 		// Constructors
 		// tpat_simulation_engine();
@@ -127,7 +129,7 @@ class tpat_simulation_engine{
 		tpat_simulation_engine& operator =(const tpat_simulation_engine&);
 
 		// Set and get functions
-		void addEvent(tpat_event::event_t, int, bool);
+		void addEvent(tpat_event::tpat_event_tp, int, bool);
 		void addEvent(tpat_event);
 		double getAbsTol() const;
 		tpat_traj_bcr4bp getBCR4BPR_Traj() const;
@@ -140,7 +142,7 @@ class tpat_simulation_engine{
 		double getRelTol() const;
 		bool usesRevTime() const;
 		tpat_traj getTraj() const;
-		verbosity_t getVerbosity() const;
+		tpat_verbosity_tp getVerbosity() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
@@ -148,7 +150,7 @@ class tpat_simulation_engine{
 		void setRelTol(double);
 		void setRevTime(bool);
 		void setSysData(const tpat_sys_data*);
-		void setVerbose(verbosity_t);
+		void setVerbose(tpat_verbosity_tp);
 		void setVarStepSize(bool);
 
 		// Simulation Methods
@@ -185,7 +187,7 @@ class tpat_simulation_engine{
 		bool revTime = false;
 
 		/** Describes the verbosity of this engine */
-		verbosity_t verbose = NO_MSG;
+		tpat_verbosity_tp verbose = NO_MSG;
 
 		/** Whether or not to use variable step size when integrating */
 		bool varStepSize = true;

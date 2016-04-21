@@ -22,7 +22,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
  
 #include "tpat_correction_engine.hpp"
 
@@ -73,7 +72,7 @@ void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 	ignoreCrash = e.ignoreCrash;
 	
 	if(createdNodesetOut){
-		tpat_sys_data::system_t type = e.nodeset_out->getSysData()->getType();
+		tpat_sys_data::tpat_system_tp type = e.nodeset_out->getSysData()->getType();
 		switch(type){
 			case tpat_sys_data::CR3BP_SYS:
 				nodeset_out = new tpat_nodeset_cr3bp (* static_cast<tpat_nodeset_cr3bp *>(e.nodeset_out));
@@ -134,7 +133,7 @@ bool tpat_correction_engine::usesScaledVars() const { return scaleVars; }
  *  @brief Retrieve the verbosity setting
  *	@return whether or not the corrector will be verbose
  */
-verbosity_t tpat_correction_engine::isVerbose() const { return verbose; }
+tpat_verbosity_tp tpat_correction_engine::isVerbose() const { return verbose; }
 
 /**
  *  @brief Retrieve whether or not we are located an event crossing
@@ -246,7 +245,7 @@ void tpat_correction_engine::setIgnoreDiverge(bool b){ ignoreDiverge = b;}
  *	@brief Set verbosity
  *	@param b whether or not the corrector should be verbose in its outputs
  */
-void tpat_correction_engine::setVerbose(verbosity_t b){ verbose = b; }
+void tpat_correction_engine::setVerbose(tpat_verbosity_tp b){ verbose = b; }
 
 /**
  *	@brief Set maximum iterations
@@ -641,9 +640,9 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 			MatrixXRd JT = J.transpose();
 			MatrixXRd G = J*JT;
 
-			toCSV(J, "DF_cpp.csv");
-			toCSV(FX, "FX_cpp.csv");
-			toCSV(oldX, "X_cpp.csv");
+			// toCSV(J, "DF_cpp.csv");
+			// toCSV(FX, "FX_cpp.csv");
+			// toCSV(oldX, "X_cpp.csv");
 
 			// waitForUser();
 			/* Use LU decomposition to invert the Gramm matrix and find a vector

@@ -21,6 +21,8 @@
 #ifndef H_FAMILIY
 #define H_FAMILIY
 
+#include "tpat.hpp"
+ 
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 
@@ -38,7 +40,7 @@ class tpat_constraint;
  *
  *	Currently, this structure assumes family members are periodic.
  */
-class tpat_family_cr3bp{
+class tpat_family_cr3bp : public tpat{
 	public:
 		/**
 		 *	@brief How to sort members of this family
@@ -50,7 +52,7 @@ class tpat_family_cr3bp{
 		 *	The integer value of each type is set up to map to the index
 		 *	of the independent variable in the continuation process
 		 */
-		enum sortVar_t{
+		enum tpat_sortFam_tp{
 			SORT_X 		= 0,	//!< Sort by the x-coordinate in the IC
 			SORT_Y 		= 1,	//!< Sort by the y-coordinate in the IC
 			SORT_Z 		= 2,	//!< Sort by the z-coordinate in the IC
@@ -80,13 +82,13 @@ class tpat_family_cr3bp{
 		std::vector<tpat_family_member_cr3bp> getMemberByJacobi(double) const;
 		std::string getName() const;
 		int getNumMembers() const;
-		sortVar_t getSortType() const;
+		tpat_sortFam_tp getSortType() const;
 		const char* getSortTypeStr() const;
 		tpat_sys_data_cr3bp getSysData() const;
 		tpat_sys_data_cr3bp* getSysDataPtr();
 
 		void setName(std::string);
-		void setSortType(sortVar_t);
+		void setSortType(tpat_sortFam_tp);
 
 		// Utility and Operational Functions
 		std::vector<int> findBifurcations();
@@ -99,7 +101,7 @@ class tpat_family_cr3bp{
 		std::string name = "NULL";						//!< Descriptive name of the family
 		std::vector<tpat_family_member_cr3bp> members;	//!< Contains all family members
 		tpat_sys_data_cr3bp sysData;					//!< Describes the system this family exists in
-		sortVar_t sortType = SORT_NONE;					//!< Describes the most natural variable to sort family members by
+		tpat_sortFam_tp sortType = SORT_NONE;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 

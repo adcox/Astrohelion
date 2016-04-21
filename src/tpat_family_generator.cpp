@@ -23,7 +23,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
  
 #include "tpat_family_generator.hpp"
 
@@ -85,7 +84,7 @@ tpat_family_generator& tpat_family_generator::operator =(const tpat_family_gener
  *	@brief Set the continuation type/method
  *	@param t continuation type
  */
-void tpat_family_generator::setContType(cont_t t){ contType = t; }
+void tpat_family_generator::setContType(tpat_continuation_tp t){ contType = t; }
 
 /**
  *	@brief Set the slope threshold
@@ -230,7 +229,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	if(contType == NAT_PARAM){
 		std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
 		std::vector<int> depVars {0,6};	// Predict x and period with least squares
-		std::vector<mirror_t> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
+		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
 		if(step_simple > 0 && initStepSize < 0)
@@ -293,7 +292,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 	if(contType == NAT_PARAM){
 		std::vector<int> indVars {2, 0};	// Begin stepping in z, optionally use x
 		std::vector<int> depVars {5, 6}; 	// Predict y-dot and period with least squares
-		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
 		if(step_simple > 0 && initStepSize < 0)
@@ -358,7 +357,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	if(contType == NAT_PARAM){
 		std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
 		std::vector<int> depVars {4};	// Predict y-dot with least-squares
-		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
 		if(step_simple > 0 && initStepSize < 0)
@@ -417,7 +416,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 		indVars.push_back(0);	// We're going to fix the x-coordinate in the corrector to keep it from slipping
 		indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
 		std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
-		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 		cr3bp_natParamCont(&fam, linTraj, mirrorTypes, indVars, depVars, 1);
 
 	}else if(contType == PSEUDO_ARC){
@@ -486,7 +485,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 		std::vector<int> indVars {0, 2};
 		// std::vector<int> depVars {4,6};
 		std::vector<int> depVars {4, 6};
-		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 2);
@@ -535,7 +534,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateDRO(tpat_sys_data_cr3bp *
 		fam.setSortType(tpat_family_cr3bp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
-		std::vector<mirror_t> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
 
 		// Set the simple step size to be negative so that it moves away from P2
 		if(step_simple > 0)
@@ -587,7 +586,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *
 		fam.setSortType(tpat_family_cr3bp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
-		std::vector<mirror_t> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
 
 		// Set the simple step size to be negative so that it moves away from P2
 		if(step_simple > 0)
@@ -690,7 +689,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 		std::vector<int> indVars {0, 4};
 		// std::vector<int> depVars {4,6};
 		std::vector<int> depVars {4, 6};
-		std::vector<mirror_t> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
@@ -734,7 +733,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
  *	has order 2
  */
 void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj_cr3bp initialGuess,
-	std::vector<mirror_t> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
+	std::vector<tpat_mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
 
 	tpat_sys_data_cr3bp sys = fam->getSysData();
 
@@ -746,7 +745,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 
 	int indVar1 = indVarIx[0];
 	int indVar2 = indVarIx[1];
-	mirror_t mirrorType = mirrorTypes[0];
+	tpat_mirror_tp mirrorType = mirrorTypes[0];
 
 	// Initially assume that we're fixing indVar1
 	std::vector<int> fixStates;
@@ -973,7 +972,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
  * 	as the algorithm reads through the vector)
  */
 void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nodeset_cr3bp initialGuess,
-	mirror_t mirrorType, std::vector<int> initDir){
+	tpat_mirror_tp mirrorType, std::vector<int> initDir){
 
 	// Check inputs (Only applies to Constraint Method 1)
 	// if(periodicityIgnoreIx < 0 || periodicityIgnoreIx > 5)

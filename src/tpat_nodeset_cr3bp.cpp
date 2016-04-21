@@ -27,10 +27,9 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_nodeset_cr3bp.hpp"
 
+#include "tpat_exceptions.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 
@@ -56,7 +55,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_sys_data_cr3bp *data) : tpat_n
  *	@param type node distribution type
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const double IC[6], const tpat_sys_data_cr3bp *data, double tof,
-	int numNodes, node_distro_t type) : tpat_nodeset(data){
+	int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
 	initSetFromICs(IC, data, 0, tof, numNodes, type);
@@ -73,7 +72,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const double IC[6], const tpat_sys_data_c
  *	@param type node distribution type
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, const tpat_sys_data_cr3bp *data, double tof,
-	int numNodes, node_distro_t type) : tpat_nodeset(data){
+	int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
 	initSetFromICs(&(IC[0]), data, 0, tof, numNodes, type);
@@ -144,7 +143,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpa
  *	@param type the node distribution type
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
-	node_distro_t type) : tpat_nodeset(traj.getSysData()){
+	tpat_nodeDistro_tp type) : tpat_nodeset(traj.getSysData()){
 	
 	initExtraParam();
 	initSetFromTraj(traj, traj.getSysData(), numNodes, type);

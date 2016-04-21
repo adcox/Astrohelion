@@ -52,7 +52,7 @@ struct iterationData;
 /**
  *	@brief Describes the plane a periodic orbit can be mirrored across
  */
-enum mirror_t{
+enum tpat_mirror_tp{
 	MIRROR_XZ,		//!< Mirror over the XZ-Plane; x, z, and y-dot can be fixed if desired
 	MIRROR_XY,		//!< Mirror over the XY-Plane; x, y, and z-dot can be fixed if desired
 	MIRROR_YZ,		//!< Mirror over the YZ-Plane; y, z, and x-dot can be fixed if desired
@@ -63,7 +63,7 @@ enum mirror_t{
 /**
  *	@brief Describes the type of manifold, both stability and direction
  */
-enum manifold_t{
+enum tpat_manifold_tp{
 	MAN_U_P,	//!< Unstable, departing towards +x direction
 	MAN_U_M,	//!< Unstable, departing towards -x direction
 	MAN_S_P,	//!< Stable, arriving from +x direction
@@ -80,7 +80,7 @@ enum manifold_t{
  *	eigenvalues also come in pairs: 2 1.0 eigenvalues, or two real 
  *	eigenvalues that are reciprocals.
  */
-enum eigValSet_t{
+enum tpat_eigValSet_tp{
 	EIGSET_COMP_CONJ,	//!< Complex conjugate pair
 	EIGSET_ONES,		//!< Exactly equal to 1.0
 	EIGSET_REAL_RECIP	//!< Real, reciprocal pair
@@ -99,8 +99,8 @@ int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
 // General Utility Functions
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
-std::vector<tpat_traj_cr3bp> getManifolds(manifold_t, const tpat_traj_cr3bp*, int, double);
-MatrixXRd getMirrorMat(mirror_t);
+std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp, const tpat_traj_cr3bp*, int, double);
+MatrixXRd getMirrorMat(tpat_mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 double getTotalDV(const iterationData*);
 void finiteDiff_checkMultShoot(const tpat_nodeset*);
@@ -123,9 +123,9 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, doubl
 tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp, int);
 tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, mirror_t, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, mirror_t, std::vector<int>, double, iterationData*);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, tpat_mirror_tp, double);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double, iterationData*);
 
 // BCR4BPR Utility Functions
 void bcr4bpr_getPrimaryPos(double, const tpat_sys_data_bcr4bpr*, double*);

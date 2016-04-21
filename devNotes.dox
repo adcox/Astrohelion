@@ -15,13 +15,16 @@ This software has been tested on (and <i>should</i> work on) the following syste
 		<a href="http://www.gnu.org/software/gsl/">GNU Science Library</a> (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
 	</li>
 	<li>
-		<a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>: A matrix and linear algebra library. No installation is needed; this library is included with the source code.
+		<a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a>: A matrix and linear algebra library. No installation is needed; this header-only library is included with the source code.
 	</li>
 	<li>
 		<a href="http://sourceforge.net/projects/matio/">Mat I/O Library</a>: This library provides functions to convert from data types in C/C++ to MATLAB binary *.mat files. For testing, the library has been configured, built, and installed without specifying any non-default flags. This prevents the library from outputing version 7.3 format Mat files, but older versions work fine. Note that this library has its own dependencies; see their documentation for more details, but note that we didn't have to install anything extra; all dependencies were already included on our system.
 		<ul>
-			<li> Note on linux: Had to add /usr/local/lib to LD_LIBRARY_PATH and export in .bashrc </li>
+			<li> Note on linux: Had to add <tt>/usr/local/lib</tt> to LD_LIBRARY_PATH and export in .bashrc </li>
 		</ul>
+	</li>
+	<li>
+		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install, download the current realease and uncompress it. Copy all the files from the <tt>boost/</tt> directory (should be *.hpp files) to <tt>/usr/local/include/boost/</tt>. Additionally, compile and install the boost binaries and libraries by following the directions on the <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">boost webiste</a>. Use the default parameters, so the libraries should live in <tt>/usr/local/lib/</tt>, just like the libraries for GSL and MatIO.
 	</li>
 	<li>
 		<a href="http://naif.jpl.nasa.gov/naif/toolkit_C.html">NAIF SPICE</a>: This library 
@@ -51,7 +54,11 @@ First, open X11 from the Applications menu. Then, run the executable using the g
 <pre>
 	ddd -display :0.0 simEngineTest
 </pre>
-For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler. Alternatively, skip the GUI and run <code>gdb</code> from the terminal directly.
+For this to work, you must compile the executable with the debugging symbols; use the <code>-g</code> flag in the compiler. Alternatively, skip the GUI and run <code>gdb</code> from the terminal directly. Common commands include
+<pre>
+	gdb --args runAScript arg1 arg2		// Allows user to specify input arguments
+	gdb runAScript						// no input arguments
+</pre>
 
 <h3>Checking for Dependency Issues</h3>
 Run doxygen with the inheritance/dependency plots turned on (this is already set for this project).
@@ -70,7 +77,7 @@ On my Macbook, I've created a file at <code>~/.valgrindrc</code> which specifies
 </ul>
 
 <h3>"Right Way" to include</h3>
-Whether or not to include or use forward declaration:
+Say I'm writing class A and want to know whether or not to include or forward-declare class B:
 <ul>
 	<li> do nothing if: A makes no references at all to B </li>
 	<li> do nothing if: The only reference to B is in a friend declaration </li>

@@ -27,8 +27,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_traj.hpp"
 
 #include "tpat_exceptions.hpp"
@@ -266,6 +264,7 @@ void tpat_traj::readFromMat(const char *filepath){
 	if(NULL == matfp){
 		throw tpat_exception("tpat_traj: Could not load data from file");
 	}
+	initStepVectorFromMat(matfp, "State");
 	readStateFromMat(matfp, "State");
 	readAccelFromMat(matfp);
 	readSTMFromMat(matfp);

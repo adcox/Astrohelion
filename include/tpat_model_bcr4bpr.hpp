@@ -44,7 +44,7 @@ public:
 	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
 	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
 	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
-	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, verbosity_t) const;
+	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
 
 	// Multiple Shooting functions
 	void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;

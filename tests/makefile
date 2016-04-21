@@ -29,7 +29,7 @@ CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio cspice
+LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 # Options that are platform dependent
@@ -62,7 +62,7 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
 .PHONY: printVars
 
-all: calcTest linMotionTest nodesetTest simEngineTest sysSwitchTest utilityTest
+all: bcSysTest calcTest correctorTest familyOps eigenTest linMotionTest matioTest multShootCons nodesetTest simEngineTest sysSwitchTest trajTest utilityTest
 	
 
 ############################################################
@@ -71,6 +71,9 @@ all: calcTest linMotionTest nodesetTest simEngineTest sysSwitchTest utilityTest
 
 bcSysTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_bcr4bprSysData.cpp -o $(BIN)/$@
+
+boostTest:
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_boost.cpp -o $(BIN)/$@
 
 calcTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
@@ -92,9 +95,6 @@ lowThrustTest: $(OBJECTS)
 
 manifolds: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
-
-maps: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) CreateMap.cpp -o $(BIN)/$@
 
 matioTest: $(OBJ)/tpat_utilities.o
 	$(COMP) -I $(INC) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
@@ -160,7 +160,6 @@ list:
 	@- echo "  linMotionTest - Test the linear motion generator"
 	@- echo "  lowThrustTest - Test the low-thrust CR3BP EOM propagation"
 	@- echo "  manifolds - Test manifold generation"
-	@- echo "  maps - Test map generation"
 	@- echo "  matioTest - Test the MatIO library functions"
 	@- echo "  manyArcTest - Test the capability of the simulation engine to generate many arcs in sequence"
 	@- echo "  multShootCons - Test constraints in multiple shooting algorithms"

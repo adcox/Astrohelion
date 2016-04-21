@@ -23,8 +23,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_model.hpp"
 
 #include "tpat_correction_engine.hpp"
@@ -43,7 +41,7 @@
  *	@brief Default constructor
  *	@param type the model type
  */
-tpat_model::tpat_model(dynamicModel_t type){
+tpat_model::tpat_model(tpat_dynamicsModel_tp type){
 	modelType = type;
 }//===========================================
 
@@ -103,7 +101,7 @@ int tpat_model::getExtraStateSize() const { return extraStates; }
  *	@brief Determine whether the specified constraint type is supported in this model
  *	@return whether or not the specified constraint type is supported in this model
  */
-bool tpat_model::supportsCon(tpat_constraint::constraint_t type) const{
+bool tpat_model::supportsCon(tpat_constraint::tpat_constraint_tp type) const{
 	return std::find(allowedCons.begin(), allowedCons.end(), type) != allowedCons.end();
 }//===================================================
 
@@ -111,7 +109,7 @@ bool tpat_model::supportsCon(tpat_constraint::constraint_t type) const{
  *	@brief Determine whether the specified event type is supported in this model
  *	@return whether or not the specified event type is supported in this model
  */
-bool tpat_model::supportsEvent(tpat_event::event_t type) const{
+bool tpat_model::supportsEvent(tpat_event::tpat_event_tp type) const{
 	return std::find(allowedEvents.begin(), allowedEvents.end(), type) != allowedEvents.end();
 }//===================================================
 

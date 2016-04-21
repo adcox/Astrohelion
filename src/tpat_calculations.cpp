@@ -26,7 +26,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
 
 #include "tpat_calculations.hpp"
 
@@ -539,9 +538,12 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
  *  
  */
 double dateToEpochTime(const char *date){
-    // Load time kernel
-    char timeKernel[] = "/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/libTPAT/share/data_SPICE/naif0010.tls.pc";
-    // char timeKernel[] = "/home/andrew/Projects/Astrodynamics_Research/Code/C++/libTPAT/share/naif0010.tls.pc";
+    std::string spice_path = tpat::initializer.settings.spice_data_filepath;
+    std::string time_kernel = tpat::initializer.settings.spice_time_kernel;
+
+    char timeKernel[512];
+    sprintf(timeKernel, "%s%s", spice_path.c_str(), time_kernel.c_str());
+
     furnsh_c(timeKernel);
 
     if(failed_c()){
@@ -689,7 +691,7 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
  *  @param mirrorType describes how to mirror a 6-d state
  *  @return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
  */
-MatrixXRd getMirrorMat(mirror_t mirrorType){
+MatrixXRd getMirrorMat(tpat_mirror_tp mirrorType){
     switch(mirrorType){
         case MIRROR_XZ:
         {
@@ -932,7 +934,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
  *
  *  Notes: No support for epoch time (yet)
  */
-std::vector<tpat_traj_cr3bp> getManifolds(manifold_t type, const tpat_traj_cr3bp *perOrbit, int numMans, double tof){
+std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj_cr3bp *perOrbit, int numMans, double tof){
     // Get eigenvalues of monodromy matrix
     MatrixXRd mono = perOrbit->getSTM(-1);
 
@@ -1065,7 +1067,7 @@ double getStabilityIndex(std::vector<cdouble> eigs){
     double okErr = 1e-3;
     cdouble one(1,0);
 
-    std::vector<eigValSet_t> setTypes;
+    std::vector<tpat_eigValSet_tp> setTypes;
     setTypes.reserve(3);
 
     for(int set = 0; set < 3; set++){
@@ -1379,7 +1381,7 @@ void cr3bp_getEquilibPt(tpat_sys_data_cr3bp sysData, int L, double tol, double p
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, mirror_t mirrorType, double tol){
+    double period, tpat_mirror_tp mirrorType, double tol){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
     return cr3bp_getPeriodic(sys, IC, period, 2, 1, mirrorType, fixedStates, tol);
@@ -1408,7 +1410,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates,
+    double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol){
 
     iterationData itData;
@@ -1442,7 +1444,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  to equal the first
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, int numNodes, int order, mirror_t mirrorType, std::vector<int> fixedStates,
+    double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol, iterationData* itData){
 
     tpat_simulation_engine sim(sys);    // Engine to perform simulation

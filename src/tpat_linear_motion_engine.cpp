@@ -21,7 +21,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
 
 #include "tpat_linear_motion_engine.hpp"
 
@@ -121,7 +120,7 @@ void tpat_linear_motion_engine::setTol(double t){ tol = t; }
  *	@param type the motion type
  *	@return a human-redable string
  */
-const char* tpat_linear_motion_engine::getTypeStr(motion_t type) const{
+const char* tpat_linear_motion_engine::getTypeStr(tpat_linMotion_tp type) const{
 	switch(type){
 		case NONE: return "NONE";
 		case HYP: return "HYPERBOLIC";
@@ -252,7 +251,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
-tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], motion_t type, tpat_sys_data_cr3bp *sysData){
+tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], tpat_linMotion_tp type, tpat_sys_data_cr3bp *sysData){
 
 	return getCR3BPLinear(L, r0, 0, 0, type, sysData);
 }//====================================================
@@ -273,7 +272,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], m
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
 tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
-	motion_t type, tpat_sys_data_cr3bp *sysData){
+	tpat_linMotion_tp type, tpat_sys_data_cr3bp *sysData){
 
 	double mu = sysData->getMu();
 

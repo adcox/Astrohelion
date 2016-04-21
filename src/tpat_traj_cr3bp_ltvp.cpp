@@ -27,8 +27,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_traj_cr3bp_ltvp.hpp"
 
 

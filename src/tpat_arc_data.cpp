@@ -23,8 +23,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_arc_data.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_sys_data.hpp"
@@ -455,7 +453,7 @@ void tpat_arc_data::saveState(mat_t *matFile, const char* varName) const{
 	size_t dims[2] = {steps.size(), 6};
 	matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, varName, MAT_COMPRESSION_NONE);
-}
+}//======================================================
 
 /**
  *	@brief Save the STMs to a file; STMs are stored in a 6x6xn array for 
@@ -478,13 +476,39 @@ void tpat_arc_data::saveSTMs(mat_t *matFile) const{
 	size_t dims[3] = {6, 6, steps.size()};
 	matvar_t *matvar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, "STM", MAT_COMPRESSION_NONE);
-}//=========================================
+}//======================================================
+
+/**
+ *  @brief Initialize the vector of arc_step objects from a *.mat file
+ *  @details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  it clears the steps vector and then initializes it by calculating the number
+ *  of steps in the arc_data object from the state vector. Individual steps are
+ *  able to be called by index after this, though they will not contain data
+ *  until another function is called to populate the data fields with values from 
+ *  the *.mat file
+ * 
+ *  @param matFile pointer to an open matlab data file
+ *  @param varName the name of a variable that has as many rows as there are
+ *  steps along the data object. Valid variables typically include the time vector,
+ *  state matrix, or acceleration matrix
+ */
+void tpat_arc_data::initStepVectorFromMat(mat_t *matFile, const char* varName){
+	matvar_t *stateMat = Mat_VarRead(matFile, varName);
+	if(stateMat == NULL){
+		throw tpat_exception("tpat_arc_data::initStepVectorFromMat: Could not read state data vector");
+	}else{
+		int numSteps = stateMat->dims[0];
+		steps.clear();
+		tpat_arc_step blankStep;
+		steps.assign(numSteps, blankStep);	// Initialize array with a bunch of blank steps
+	}
+	Mat_VarFree(stateMat);
+}//======================================================
 
 /**
  *  @brief Read the state vector for this arc_data object from a matlab data file
- *  @details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
- *  it clears the steps vector and then repopulates it with new tpat_arc_step objects
- *  with state information read from the data file.
+ *  @details This function must be called after initStepVectorFromMat() as it
+ *  populates the step vector objects with state data
  * 
  *  @param matFile pointer to an open matlab data file
  *  @param varName the name of the state variable (e.g., "State" or "Nodes")
@@ -492,12 +516,20 @@ void tpat_arc_data::saveSTMs(mat_t *matFile) const{
 void tpat_arc_data::readStateFromMat(mat_t *matFile, const char* varName){
 	matvar_t *stateMat = Mat_VarRead(matFile, varName);
 	if(stateMat == NULL){
-		throw tpat_exception("Could not state data vector");
+		throw tpat_exception("tpat_arc_data::readStateFromMat: Could not read state data vector");
 	}else{
 		int numSteps = stateMat->dims[0];
-		steps.clear();
+		
+		if(steps.size() == 0){
+			throw tpat_exception("tpat_arc_data::readStateFromMat: Step vector has not been initialized!");
+		}
+
+		if(numSteps != (int)steps.size()){
+			throw tpat_exception("tpat_arc_data::readStateFromMat: State vector has a different size than the initialized step vector");
+		}
+
 		if(stateMat->dims[1] != 6){
-			throw tpat_exception("Incompatible data file: State width is not 6.");
+			throw tpat_exception("tpat_arc_data::readStateFromMat: Incompatible data file: State width is not 6.");
 		}
 
 		if(stateMat->class_type == MAT_C_DOUBLE && stateMat->data_type == MAT_T_DOUBLE){
@@ -513,13 +545,14 @@ void tpat_arc_data::readStateFromMat(mat_t *matFile, const char* varName){
 					state[4] = data[4*numSteps + i];
 					state[5] = data[5*numSteps + i];
 
-					tpat_arc_step step;
-					step.setPosVelState(state);
-					steps.push_back(step);
+					steps[i].setPosVelState(state);
+					// tpat_arc_step step;
+					// step.setPosVelState(state);
+					// steps.push_back(step);
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+			throw tpat_exception("tpat_arc_data::readStateFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(stateMat);
@@ -528,11 +561,20 @@ void tpat_arc_data::readStateFromMat(mat_t *matFile, const char* varName){
 void tpat_arc_data::readAccelFromMat(mat_t *matFile){
 	matvar_t *accelMat = Mat_VarRead(matFile, "Accel");
 	if(accelMat == NULL){
-		throw tpat_exception("Could not read data vector");
+		throw tpat_exception("tpat_arc_data::readAccelFromMat: Could not read data vector");
 	}else{
 		int numSteps = accelMat->dims[0];
+		
+		if(steps.size() == 0){
+			throw tpat_exception("tpat_arc_data::readAccelFromMat: Step vector has not been initialized!");
+		}
+
+		if(numSteps != (int)steps.size()){
+			throw tpat_exception("tpat_arc_data::readAccelFromMat: Accel vector has a different size than the initialized step vector");
+		}
+
 		if(accelMat->dims[1] != 3){
-			throw tpat_exception("Incompatible data file: Accel width is not 3.");
+			throw tpat_exception("tpat_arc_data::readAccelFromMat: Incompatible data file: Accel width is not 3.");
 		}
 
 		if(accelMat->class_type == MAT_C_DOUBLE && accelMat->data_type == MAT_T_DOUBLE){
@@ -549,7 +591,7 @@ void tpat_arc_data::readAccelFromMat(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+			throw tpat_exception("tpat_arc_data::readAccelFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(accelMat);
@@ -558,12 +600,20 @@ void tpat_arc_data::readAccelFromMat(mat_t *matFile){
 void tpat_arc_data::readSTMFromMat(mat_t *matFile){
 	matvar_t *allSTM = Mat_VarRead(matFile, "STM");
 	if(allSTM == NULL){
-		throw tpat_exception("Could not read data vector");
+		throw tpat_exception("tpat_arc_data::readSTMFromMat: Could not read data vector");
 	}else{
 		int numSteps = allSTM->dims[2];
 
+		if(steps.size() == 0){
+			throw tpat_exception("tpat_arc_data::readSTMFromMat: Step vector has not been initialized!");
+		}
+
+		if(numSteps != (int)steps.size()){
+			throw tpat_exception("tpat_arc_data::readSTMFromMat: STM vector has a different size than the initialized step vector");
+		}
+
 		if(allSTM->dims[0] != 6 || allSTM->dims[1] != 6){
-			throw tpat_exception("Incompatible data file: STM is not 6x6.");
+			throw tpat_exception("tpat_arc_data::readSTMFromMat: Incompatible data file: STM is not 6x6.");
 		}
 
 		if(allSTM->class_type == MAT_C_DOUBLE && allSTM->data_type == MAT_T_DOUBLE){
@@ -581,7 +631,7 @@ void tpat_arc_data::readSTMFromMat(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+			throw tpat_exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(allSTM);
@@ -589,7 +639,7 @@ void tpat_arc_data::readSTMFromMat(mat_t *matFile){
 
 void tpat_arc_data::readExtraParamFromMat(mat_t *matFile, int varIx, const char *varName){
 	if(varIx > numExtraParam || varIx < 0)
-		throw tpat_exception("Could not read extra parameter; index out of bounds");
+		throw tpat_exception("tpat_arc_data::readExtraParamFromMat: Could not read extra parameter; index out of bounds");
 
 	// Get starting index of this extra param within a arc step's extra parameter vector
 	int ix0 = 0;
@@ -597,12 +647,17 @@ void tpat_arc_data::readExtraParamFromMat(mat_t *matFile, int varIx, const char 
 
 	matvar_t *matvar = Mat_VarRead(matFile, varName);
 	if(matvar == NULL){
-		throw tpat_exception("Could not read data vector");
+		throw tpat_exception("tpat_arc_data::readExtraParamFromMat: Could not read data vector");
 	}else{
 		int numSteps = matvar->dims[0];
+		
+		if(steps.size() == 0){
+			throw tpat_exception("tpat_arc_data::readExtraParamFromMat: Step vector has not been initialized!");
+		}
+
 		if(matvar->dims[1] != ((size_t)extraParamRowSize[varIx])){
 			char message[64];
-			sprintf(message, "Incompatible data file: %s width is not %d", varName, extraParamRowSize[varIx]);
+			sprintf(message, "tpat_arc_data::readExtraParamFromMat: Incompatible data file: %s width is not %d", varName, extraParamRowSize[varIx]);
 			throw tpat_exception(message);
 		}
 

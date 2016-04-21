@@ -20,6 +20,8 @@
 #ifndef H_BODYDATA
 #define H_BODYDATA
 
+#include "tpat.hpp"
+ 
 #include <string>
 
 /**
@@ -32,7 +34,7 @@
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_body_data{
+class tpat_body_data : public tpat{
 	public:
 
 		// Constructors

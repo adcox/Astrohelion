@@ -47,9 +47,9 @@ public:
 	tpat_nodeset_bcr4bp(const double[6], const tpat_sys_data_bcr4bpr*, double, double, int);
 	tpat_nodeset_bcr4bp(std::vector<double>, const tpat_sys_data_bcr4bpr*, double, double, int);
 	tpat_nodeset_bcr4bp(const double[6], const tpat_sys_data_bcr4bpr*, double, double, int,
-		node_distro_t);
+		tpat_nodeDistro_tp);
 	tpat_nodeset_bcr4bp(std::vector<double>, const tpat_sys_data_bcr4bpr*, double, double, int,
-		node_distro_t);
+		tpat_nodeDistro_tp);
 	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&, int, int);
 	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&);
 	tpat_nodeset_bcr4bp(const tpat_arc_data&);

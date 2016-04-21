@@ -36,7 +36,7 @@
 /**
  * @brief Provides a scale larger than true/false to set verbosity for TPAT routines
  */
-enum verbosity_t{
+enum tpat_verbosity_tp{
 	NO_MSG 		= 0,	//!< Absolutely no messages
 	SOME_MSG	= 1,	//!< Some useful messages are printed to standard output
 	ALL_MSG		= 2		//!< All useful and not-so-useful messages are printed to standard output; helpful for debugging

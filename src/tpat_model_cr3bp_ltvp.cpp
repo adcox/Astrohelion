@@ -23,8 +23,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_model_cr3bp_ltvp.hpp"
 
 #include "tpat_calculations.hpp"
@@ -168,7 +166,7 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, tp
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    const double *ic, double t0, double tof, verbosity_t verbose) const{
+    const double *ic, double t0, double tof, tpat_verbosity_tp verbose) const{
 
     (void) event;
     (void) traj;

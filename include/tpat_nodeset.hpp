@@ -52,7 +52,7 @@ public:
 		 *
 		 *	Specified how nodes are distributed along an integrated trajectory
 		 */
-		enum node_distro_t {
+		enum tpat_nodeDistro_tp {
 			DISTRO_NONE, 	//!< There is no organizational method; nodes may be input by user.
 			DISTRO_TIME,	//!< Nodes spread evenly in time
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
@@ -92,8 +92,10 @@ public:
 	void initExtraParam();
 
 protected:
-	void initSetFromICs(const double[6], const tpat_sys_data*, double, double, int, node_distro_t);
-	void initSetFromTraj(tpat_traj, const tpat_sys_data*, int, node_distro_t);
+
+	void initSetFromICs(const double[6], const tpat_sys_data*, double, double, int, tpat_nodeDistro_tp);
+	void initSetFromTraj(tpat_traj, const tpat_sys_data*, int, tpat_nodeDistro_tp);
+	void initStepVectorFromMat(mat_t *, const char*);
 	void saveTOFs(mat_t*) const;
 
 };

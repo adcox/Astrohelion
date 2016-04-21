@@ -23,8 +23,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_model_bcr4bpr.hpp"
 
 #include "tpat_calculations.hpp"
@@ -158,7 +156,7 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(const double* y, double t, tpat_
  *  has been appended to the trajectory's data vectors.
  */
 bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
-    const double *ic, double t0, double tof, verbosity_t verbose) const{
+    const double *ic, double t0, double tof, tpat_verbosity_tp verbose) const{
 
     // **** Make sure you fix the epoch of the first node as well as the states
     double IC[7] = {0};

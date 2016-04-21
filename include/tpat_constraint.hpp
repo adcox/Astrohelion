@@ -21,6 +21,8 @@
 #ifndef H_CONSTRAINT
 #define H_CONSTRAINT
  
+#include "tpat.hpp"
+ 
 #include <string>
 #include <vector>
 
@@ -47,7 +49,7 @@
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_constraint{
+class tpat_constraint : public tpat{
 	public:
 		/**
 		 *	@brief Specify the type of constraint
@@ -55,7 +57,7 @@ class tpat_constraint{
 		 *	This type tells the correction engine how to interpret and apply the 
 		 *	information stored in this constraint object.
 		 */
-		enum constraint_t {
+		enum tpat_constraint_tp {
 			NONE, 		//!< No constraint type specified
 			STATE,		/*!< Constrain specific states to specified numeric values.
 		 			 	 * The <tt>node</tt> value represents the node to constraint,
@@ -175,31 +177,31 @@ class tpat_constraint{
 		};
 		
 		tpat_constraint();
-		tpat_constraint(constraint_t);
-		tpat_constraint(constraint_t, int, std::vector<double>);
-		tpat_constraint(constraint_t, int, const double*, int);
+		tpat_constraint(tpat_constraint_tp);
+		tpat_constraint(tpat_constraint_tp, int, std::vector<double>);
+		tpat_constraint(tpat_constraint_tp, int, const double*, int);
 		tpat_constraint(const tpat_constraint&);
 		~tpat_constraint();
 		
 		tpat_constraint& operator =(const tpat_constraint&);
 
-		constraint_t getType() const;
+		tpat_constraint_tp getType() const;
 		int getNode() const;
 		std::vector<double> getData() const;
 		int countConstrainedStates() const;
 
-		void setType(constraint_t);
+		void setType(tpat_constraint_tp);
 		void setNode(int);
 		void setData(std::vector<double>);
 		void setData(const double*, int);
 
 		void print() const;
 		const char* getTypeStr() const;
-		static const char* getConTypeStr(constraint_t);
+		static const char* getConTypeStr(tpat_constraint_tp);
 	private:
 		void copyMe(const tpat_constraint&);
 		
-		constraint_t type = NONE;	//!< The type of constraint
+		tpat_constraint_tp type = NONE;	//!< The type of constraint
 		int node = 0;				//!< Node index that this constraint applies to
 		std::vector<double> data;	//!< Data for this constraint
 };

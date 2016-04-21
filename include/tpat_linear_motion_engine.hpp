@@ -21,6 +21,8 @@
 #ifndef H_LIN_MOTION
 #define H_LIN_MOTION
 
+#include "tpat.hpp"
+ 
 // Forward delcarations
 class tpat_traj_cr3bp;
 class tpat_sys_data_cr3bp;
@@ -28,14 +30,14 @@ class tpat_sys_data_cr3bp;
 /**
  *	@brief An engine that will generate a trajectory from the linearized CR3BP EOMs
  */
-class tpat_linear_motion_engine{
+class tpat_linear_motion_engine : public tpat{
 	public:
 		/**
 		 *	@brief type of linear motion
 		 *
 		 *	This type tells the engine what kind of linearization to produce
 		 */
-		enum motion_t {
+		enum tpat_linMotion_tp {
 			NONE,	//!< No motion specified
 			HYP,	//!< Hyperbolic motion, applies only to linearizations near collinear points
 			ELLIP,	//!< Elliptical motion, applies only to linearizations near collinear points
@@ -60,12 +62,12 @@ class tpat_linear_motion_engine{
 		void setNumRevs(int);
 		void setTimeStep(double);
 		void setTol(double);
-		const char* getTypeStr(motion_t) const;
+		const char* getTypeStr(tpat_linMotion_tp) const;
 
 		// Misc
 		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_sys_data_cr3bp*);
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], motion_t, tpat_sys_data_cr3bp*);
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], double, double, motion_t, tpat_sys_data_cr3bp*);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_linMotion_tp, tpat_sys_data_cr3bp*);
+		tpat_traj_cr3bp getCR3BPLinear(int, double[3], double, double, tpat_linMotion_tp, tpat_sys_data_cr3bp*);
 		tpat_traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, tpat_sys_data_cr3bp*);
 	private:
 		/** @brief step size between points on linear motion trajectory */

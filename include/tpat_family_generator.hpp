@@ -21,6 +21,8 @@
 #ifndef H_FAMILY_GENERATOR
 #define H_FAMILY_GENERATOR
 
+#include "tpat.hpp"
+ 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_eigen_defs.hpp"
@@ -36,12 +38,12 @@ class tpat_traj_cr3bp;
 /**
  *	@brief An object to generate families of orbits
  */
-class tpat_family_generator{
+class tpat_family_generator : public tpat{
 	public:
 		/**
 		 *	@brief Type of continuation to use when generating a family
 		 */
-		enum cont_t{
+		enum tpat_continuation_tp{
 			NAT_PARAM,	//!< Use natural parameter continuation
 			PSEUDO_ARC	//!> Use pseudo arclength continuation
 		};
@@ -55,7 +57,7 @@ class tpat_family_generator{
 		tpat_family_generator& operator =(const tpat_family_generator&);
 
 		// Set and Get
-		void setContType(cont_t);
+		void setContType(tpat_continuation_tp);
 		void setMaxStepSize(double);
 		void setMinStepSize(double);
 		void setNumNodes(int);
@@ -79,7 +81,7 @@ class tpat_family_generator{
 		void reset();
 
 	private:
-		cont_t contType = NAT_PARAM;	//!< Type of continuation to use
+		tpat_continuation_tp contType = NAT_PARAM;	//!< Type of continuation to use
 		double tol = 1e-12;				//!< Tolerance for corrections
 
 		// Settings for Natural Parameter Continuation
@@ -95,8 +97,8 @@ class tpat_family_generator{
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 
 		void copyMe(const tpat_family_generator&);
-		void cr3bp_natParamCont(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<mirror_t>, std::vector<int>, std::vector<int>, int);
-		void cr3bp_pseudoArcCont(tpat_family_cr3bp*, tpat_nodeset_cr3bp, mirror_t, std::vector<int>);
+		void cr3bp_natParamCont(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<tpat_mirror_tp>, std::vector<int>, std::vector<int>, int);
+		void cr3bp_pseudoArcCont(tpat_family_cr3bp*, tpat_nodeset_cr3bp, tpat_mirror_tp, std::vector<int>);
 		tpat_nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, iterationData, std::vector<tpat_constraint>);
 };
 

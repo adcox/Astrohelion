@@ -21,7 +21,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
 
 #include "tpat_constraint.hpp"
 
@@ -43,7 +42,7 @@ tpat_constraint::tpat_constraint(){
  *	@brief Construct a constraint with specified constraint type
  *	@param type constraint type
  */
-tpat_constraint::tpat_constraint(constraint_t type){
+tpat_constraint::tpat_constraint(tpat_constraint_tp type){
 	this->type = type;
 	data.clear();
 }//====================================================
@@ -54,7 +53,7 @@ tpat_constraint::tpat_constraint(constraint_t type){
  *	@param node the node this constriant applies to
  *	@param data data vector (length n)
  */
-tpat_constraint::tpat_constraint(constraint_t type, int node, std::vector<double> data){
+tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, std::vector<double> data){
 	this->type = type;
 	this->node = node;
 	this->data = data;
@@ -67,7 +66,7 @@ tpat_constraint::tpat_constraint(constraint_t type, int node, std::vector<double
  *	@param data data vector
  *	@param data_len the number of elements in d_len
  */
-tpat_constraint::tpat_constraint(constraint_t type, int node, const double* data, int data_len){
+tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, const double* data, int data_len){
 	this->type = type;
 	this->node = node;
 	this->data.insert(this->data.begin(), data, data + data_len);
@@ -109,7 +108,7 @@ tpat_constraint& tpat_constraint::operator =(const tpat_constraint& c){
 /**
  *	@return what type of constraint this is
  */
-tpat_constraint::constraint_t tpat_constraint::getType() const { return type; }
+tpat_constraint::tpat_constraint_tp tpat_constraint::getType() const { return type; }
 
 /**
  *	@return the node number associated with this constraint
@@ -138,7 +137,7 @@ int tpat_constraint::countConstrainedStates() const{
  *	@brief Set the constraint type
  *	@param t the type
  */
-void tpat_constraint::setType(tpat_constraint::constraint_t t){ type = t; }
+void tpat_constraint::setType(tpat_constraint::tpat_constraint_tp t){ type = t; }
 
 /**
  *	@brief Set the node index this constraint applies to
@@ -188,7 +187,7 @@ const char* tpat_constraint::getTypeStr() const{ return getConTypeStr(type); }
  *	@param t a constraint type
  *	@return a human-readable string representing a constraint type
  */
-const char* tpat_constraint::getConTypeStr(tpat_constraint::constraint_t t){
+const char* tpat_constraint::getConTypeStr(tpat_constraint::tpat_constraint_tp t){
 	switch(t){
 		case tpat_constraint::NONE: { return "NONE"; break; }
 		case tpat_constraint::STATE: { return "STATE"; break; }

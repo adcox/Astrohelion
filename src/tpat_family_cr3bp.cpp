@@ -21,7 +21,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
  
 #include "tpat_family_cr3bp.hpp"
 
@@ -65,7 +64,7 @@ tpat_family_cr3bp::tpat_family_cr3bp(const char* filepath){
 	loadEigVals(matfp);
 	name = readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	double type = readDoubleFromMat(matfp, SORTTYPE_VAR_NAME);
-	sortType = static_cast<sortVar_t>((int)type);
+	sortType = static_cast<tpat_sortFam_tp>((int)type);
 	// sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
@@ -198,7 +197,7 @@ int tpat_family_cr3bp::getNumMembers() const { return members.size(); }
  *	@brief Determine which variable best naturally describes the flow of the family
  *	@return the sorting variable
  */
-tpat_family_cr3bp::sortVar_t tpat_family_cr3bp::getSortType() const { return sortType; }
+tpat_family_cr3bp::tpat_sortFam_tp tpat_family_cr3bp::getSortType() const { return sortType; }
 
 /**
  *	@brief Retrieve a string describing the sort type in human-readable format
@@ -242,7 +241,7 @@ void tpat_family_cr3bp::setName(std::string n){ name = n; }
  *	@brief Set the sort type for this family
  *	@param type the sort type
  */
-void tpat_family_cr3bp::setSortType(tpat_family_cr3bp::sortVar_t type){ sortType = type; }
+void tpat_family_cr3bp::setSortType(tpat_family_cr3bp::tpat_sortFam_tp type){ sortType = type; }
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
@@ -398,7 +397,7 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 	double okErr = 1e-3;
 	cdouble one(1,0);
 
-	eigValSet_t setTypes[3];
+	tpat_eigValSet_tp setTypes[3];
 
 	// Determine what "type" of eigenvalue pair we have
 	for(int set = 0; set < 3; set++){

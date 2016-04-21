@@ -29,7 +29,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
 
 #include "tpat_sys_data.hpp"
 #include "tpat_utilities.hpp"
@@ -159,9 +158,9 @@ double tpat_sys_data::getCharM() const { return charM; }
 double tpat_sys_data::getCharT() const { return charT; }
 
 /**
- *	@return the system_t type associated with this system
+ *	@return the tpat_system_tp type associated with this system
  */
-tpat_sys_data::system_t tpat_sys_data::getType() const { return type; }
+tpat_sys_data::tpat_system_tp tpat_sys_data::getType() const { return type; }
 
 /**
  *	@return a string (human-readable) version of the system type

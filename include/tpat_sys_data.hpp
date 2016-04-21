@@ -20,6 +20,8 @@
 #ifndef H_SYSDATA
 #define H_SYSDATA
 
+#include "tpat.hpp"
+ 
 #include "matio.h"
 #include <string>
 #include <vector>
@@ -40,7 +42,7 @@ class tpat_model;
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_sys_data{
+class tpat_sys_data : public tpat{
 
 	public:
 		/**
@@ -52,7 +54,7 @@ class tpat_sys_data{
 		 *	data type to use. Each derivative type will set its type variable to
 		 *	one of the type values.
 		 */
-		enum system_t {
+		enum tpat_system_tp {
 			UNDEF_SYS,		//!< System type is undefined
 			CR3BP_SYS,		//!< Circular Restricted 3-Body Problem
 			CR3BP_LTVP_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
@@ -82,7 +84,7 @@ class tpat_sys_data{
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
 		int getPrimID(int n) const;
-		system_t getType() const;
+		tpat_system_tp getType() const;
 		std::string getTypeStr() const;
 
 		virtual void saveToMat(const char*) const;
@@ -116,7 +118,7 @@ class tpat_sys_data{
 		std::vector<double> otherParams;
 
 		/** The type of system this data object describes */
-		system_t type = UNDEF_SYS;
+		tpat_system_tp type = UNDEF_SYS;
 
 		void copyData(const tpat_sys_data&);
 

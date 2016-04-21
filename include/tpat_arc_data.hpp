@@ -21,6 +21,8 @@
 #ifndef H_ARC_DATA
 #define H_ARC_DATA
 
+#include "tpat.hpp"
+ 
 #include "tpat_arc_step.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_sys_data.hpp"
@@ -66,7 +68,7 @@
  *	* Access to the system data object pointer that describes the system this arc was integrated in
  *	
  */
-class tpat_arc_data{
+class tpat_arc_data : public tpat{
 
 public:
 	// *structors
@@ -142,6 +144,7 @@ protected:
 
 	void copyMe(const tpat_arc_data&);
 
+	void initStepVectorFromMat(mat_t *, const char*);
 	void readStateFromMat(mat_t*, const char*);
 	void readAccelFromMat(mat_t*);
 	void readSTMFromMat(mat_t*);

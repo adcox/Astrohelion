@@ -21,6 +21,8 @@
 #ifndef H_FAMILY_MEMBER
 #define H_FAMILY_MEMBER
 
+#include "tpat.hpp"
+ 
 #include "tpat_constants.hpp"
 
 #include <algorithm>
@@ -38,7 +40,7 @@ class tpat_sys_data_cr3bp;
  *	orbit using the simulation engine with additional variables to describe the orbit
  *	for categorization purposes (e.g. the getMemberBy___ functions in tpat_family_cr3bp)
  */
-class tpat_family_member_cr3bp{
+class tpat_family_member_cr3bp : public tpat{
 	public:
 		tpat_family_member_cr3bp(){}
 		tpat_family_member_cr3bp(double*, double, double, double, double, double);

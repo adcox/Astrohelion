@@ -23,7 +23,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
  
 #include "tpat_simulation_engine.hpp"
 
@@ -178,7 +177,7 @@ bool tpat_simulation_engine::usesRevTime() const {return revTime;}
 /**
  *	@return whether or not the engine will be verbose in its outputs
  */
-verbosity_t tpat_simulation_engine::getVerbosity() const {return verbose;}
+tpat_verbosity_tp tpat_simulation_engine::getVerbosity() const {return verbose;}
 
 /**
  *  @return whether or not the engine uses variable step size
@@ -319,7 +318,7 @@ std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
  *  @param dir -1 for negative direction, +1 for positive, 0 for both
  *  @param stop whether or not to stop integration when this event occurs
  */
-void tpat_simulation_engine::addEvent(tpat_event::event_t type, int dir, bool stop){
+void tpat_simulation_engine::addEvent(tpat_event::tpat_event_tp type, int dir, bool stop){
     tpat_event temp(sysData, type, dir, stop);
     events.push_back(temp);
 }//======================================
@@ -348,7 +347,7 @@ void tpat_simulation_engine::setRevTime(bool b){ revTime = b; }
  *	@brief Specify the verbosity of the engine
  *	@param b whether or not the engine should output verbose statements
  */
-void tpat_simulation_engine::setVerbose(verbosity_t v){ verbose = v; }
+void tpat_simulation_engine::setVerbose(tpat_verbosity_tp v){ verbose = v; }
 
 /**
  *  @brief Specify whether or not the engine should use variable step size.

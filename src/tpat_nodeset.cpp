@@ -27,8 +27,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_nodeset.hpp"
 
 #include "tpat_exceptions.hpp"
@@ -399,11 +397,39 @@ void tpat_nodeset::readFromMat(const char *filepath){
 		throw tpat_exception("tpat_nodeset: Could not load data from file");
 	}
 
+	initStepVectorFromMat(matfp, "Nodes");
 	readStateFromMat(matfp, "Nodes");	// This function MUST be called before other data reading functions
 	readExtraParamFromMat(matfp, 0, "TOFs");
 
 	Mat_Close(matfp);
 }//====================================================
+
+/**
+ *  @brief Initialize the vector of node objects from a *.mat file
+ *  @details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  it clears the node vector and then initializes it by calculating the number
+ *  of nodes in the nodeset object from the state vector. Individual nodes are
+ *  able to be called by index after this, though they will not contain data
+ *  until another function is called to populate the data fields with values from 
+ *  the *.mat file
+ * 
+ *  @param matFile pointer to an open matlab data file
+ *  @param varName the name of a variable that has as many rows as there are
+ *  steps along the data object. Valid variables typically include the time vector,
+ *  state matrix, or acceleration matrix
+ */
+void tpat_nodeset::initStepVectorFromMat(mat_t *matFile, const char* varName){
+	matvar_t *stateMat = Mat_VarRead(matFile, varName);
+	if(stateMat == NULL){
+		throw tpat_exception("tpat_nodeset::initStepVectorFromMat: Could not read state data vector");
+	}else{
+		int numSteps = stateMat->dims[0];
+		steps.clear();
+		tpat_node blankNode;
+		steps.assign(numSteps, blankNode);	// Initialize array with a bunch of blank nodes
+	}
+	Mat_VarFree(stateMat);
+}//======================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -416,13 +442,13 @@ void tpat_nodeset::readFromMat(const char *filepath){
  *	@param type node distribution type
  */
 void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes, 
-		node_distro_t type){
+		tpat_nodeDistro_tp type){
 	// Set up the simulation engine
 	tpat_simulation_engine engine(sysData);
 	engine.setVerbose(SOME_MSG);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
 
-	node_distro_t nodeDistro = tpat_nodeset::DISTRO_NONE;
+	tpat_nodeDistro_tp nodeDistro = tpat_nodeset::DISTRO_NONE;
 
 	switch(type){
 		default:
@@ -539,7 +565,7 @@ void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysDa
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void tpat_nodeset::initSetFromTraj(tpat_traj traj, const tpat_sys_data *sysData, int numNodes, node_distro_t type){
+void tpat_nodeset::initSetFromTraj(tpat_traj traj, const tpat_sys_data *sysData, int numNodes, tpat_nodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getState(0);

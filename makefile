@@ -24,12 +24,12 @@ LIB := lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-CFLAGS += -W -Wall -Wextra -pedantic -O3
-# CFLAGS += -W -Wall -Wextra -pedantic -g
+#CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
+CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio cspice
+LIBS = gsl gslcblas matio cspice boost_filesystem
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 SYS_INC_DIR := /usr/local/include/tpat

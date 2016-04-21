@@ -20,6 +20,8 @@
 #ifndef H_MODEL_DEF
 #define H_MODEL_DEF
 
+#include "tpat.hpp"
+ 
 #include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_event.hpp"
@@ -83,13 +85,13 @@ struct eomParamStruct{
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_model{
+class tpat_model : public tpat{
 
 public:
 	/**
 	 *	@brief Describes the type of dynamic model; used for easy identification
 	 */
-	enum dynamicModel_t{
+	enum tpat_dynamicsModel_tp{
 		MODEL_NULL,			//!< Undefined type
 		MODEL_CR3BP,		//!< Circular Restricted, 3-Body Problem
 		MODEL_CR3BP_LTVP,	//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
@@ -105,7 +107,7 @@ public:
 	typedef int (*eom_fcn)(double, const double[], double[], void*);
 
 	// *structors
-	tpat_model(dynamicModel_t);
+	tpat_model(tpat_dynamicsModel_tp);
 	tpat_model(const tpat_model&);
 	virtual ~tpat_model();
 
@@ -195,7 +197,7 @@ public:
 	 *  has been appended to the trajectory's data vectors.
 	 */
 	virtual bool sim_locateEvent(tpat_event event, tpat_traj *traj,
-    	const double *ic, double t0, double tof, verbosity_t verbose) const = 0;
+    	const double *ic, double t0, double tof, tpat_verbosity_tp verbose) const = 0;
 
 	/**
 	 *	@brief Takes an input state and time and saves the data to the trajectory
@@ -210,17 +212,17 @@ public:
 	int getCoreStateSize() const;
 	int getSTMStateSize() const;
 	int getExtraStateSize() const;
-	bool supportsCon(tpat_constraint::constraint_t) const;
-	bool supportsEvent(tpat_event::event_t) const;
+	bool supportsCon(tpat_constraint::tpat_constraint_tp) const;
+	bool supportsEvent(tpat_event::tpat_event_tp) const;
 	
 protected:
-	dynamicModel_t modelType = MODEL_NULL;	//!< Describes the model type
+	tpat_dynamicsModel_tp modelType = MODEL_NULL;	//!< Describes the model type
 	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
 	int stmStates = 36;		//!< The number of states used to store the STM; will always be 36
 	int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 
 	/** A vector containing the all the types of constraints this model supports */
-	std::vector<tpat_constraint::constraint_t> allowedCons {tpat_constraint::NONE, tpat_constraint::STATE,
+	std::vector<tpat_constraint::tpat_constraint_tp> allowedCons {tpat_constraint::NONE, tpat_constraint::STATE,
 		tpat_constraint::MATCH_ALL, tpat_constraint::MATCH_CUST,
 		tpat_constraint::DIST, tpat_constraint::MIN_DIST, tpat_constraint::MAX_DIST,
 		tpat_constraint::MAX_DELTA_V, tpat_constraint::DELTA_V,
@@ -228,7 +230,7 @@ protected:
 		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX};
 
 	/** A vector containing all the types of events this model supports */
-	std::vector<tpat_event::event_t> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
+	std::vector<tpat_event::tpat_event_tp> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
 		tpat_event::YZ_PLANE, tpat_event::CRASH, tpat_event::APSE, tpat_event::DIST};
 
 	void copyMe(const tpat_model&);

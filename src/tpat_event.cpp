@@ -21,7 +21,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
 
 #include "tpat_event.hpp"
 
@@ -61,7 +60,7 @@ tpat_event::tpat_event(const tpat_sys_data *data) : sysData(data) {}
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
-void tpat_event::createEvent(event_t t, int dir, bool willStop){
+void tpat_event::createEvent(tpat_event_tp t, int dir, bool willStop){
 	switch(t){
 		case YZ_PLANE:
 		case XZ_PLANE:
@@ -95,9 +94,9 @@ void tpat_event::createEvent(event_t t, int dir, bool willStop){
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect (otherwise it will read uninitialized memory).
  *
- *	@see tpat_event::event_t
+ *	@see tpat_event::tpat_event_tp
  */
-void tpat_event::createEvent(event_t t, int dir, bool willStop, double *params){
+void tpat_event::createEvent(tpat_event_tp t, int dir, bool willStop, double *params){
 	initEvent(t, dir, willStop, params);
 }//====================================================
 
@@ -114,7 +113,7 @@ void tpat_event::createEvent(event_t t, int dir, bool willStop, double *params){
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
-tpat_event::tpat_event(const tpat_sys_data *data, event_t t, int dir, bool willStop) : sysData(data){
+tpat_event::tpat_event(const tpat_sys_data *data, tpat_event_tp t, int dir, bool willStop) : sysData(data){
 	createEvent(t, dir, willStop);
 }//================================================
 
@@ -134,16 +133,16 @@ tpat_event::tpat_event(const tpat_sys_data *data, event_t t, int dir, bool willS
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect (otherwise it will read uninitialized memory).
  *
- *	@see tpat_event::event_t
+ *	@see tpat_event::tpat_event_tp
  */
-tpat_event::tpat_event(const tpat_sys_data *data, event_t t, int dir , bool willStop, double* params) : sysData(data){
+tpat_event::tpat_event(const tpat_sys_data *data, tpat_event_tp t, int dir , bool willStop, double* params) : sysData(data){
 	initEvent(t, dir, willStop, params);
 }//==========================================
 
 /**
  *	@see tpat_event(data, t, dir, willStop, params)
  */
-void tpat_event::initEvent(event_t t, int dir, bool willStop, double* params){
+void tpat_event::initEvent(tpat_event_tp t, int dir, bool willStop, double* params){
 	type = t;
 	triggerDir = dir;
 	stop = willStop;
@@ -282,7 +281,7 @@ int tpat_event::getDir() const { return triggerDir; }
 /**
  *	@return the event type
  */
-tpat_event::event_t tpat_event::getType() const { return type; }
+tpat_event::tpat_event_tp tpat_event::getType() const { return type; }
 
 /**
  *	@return a human-readable string representing the event type
@@ -319,7 +318,7 @@ bool tpat_event::stopOnEvent() const { return stop; }
 /**
  *	@return the type of constraint this event will use to target the exact event occurence
  */
-tpat_constraint::constraint_t tpat_event::getConType() const { return conType; }
+tpat_constraint::tpat_constraint_tp tpat_event::getConType() const { return conType; }
 
 /**
  *	@return the constraint data used to target this exact event

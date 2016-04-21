@@ -21,6 +21,8 @@
 #ifndef H_EVENT
 #define H_EVENT
 
+#include "tpat.hpp"
+ 
 #include "tpat_constraint.hpp"
 #include "tpat_sys_data.hpp"
 
@@ -44,7 +46,7 @@
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_event{
+class tpat_event : public tpat{
 	public:
 		/**
 		 *	@brief The type of event
@@ -58,7 +60,7 @@ class tpat_event{
 		 *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane. By 
 		 * 	default, 0 is used, so the planes include the axes.
 		 */
-		enum event_t {
+		enum tpat_event_tp {
 			NONE,		//!< No type has been specified; cannot be used in integration
 			YZ_PLANE,	/*!< Event occurs when trajectory crosses an YZ-plane. By default, 
 						 *	this plane occurs at x = 0, but a custom x-coordinate may be 
@@ -85,7 +87,7 @@ class tpat_event{
 		 	JC, 		/*!< Event occurs when the Jacobi value reaches the specified value
 		 				 * 	of Jacobi Constant. Place this JC value in the first element of
 		 				 * 	the <tt>params</tt> vector present in the 
-		 				 * 	tpat_event(tpat_sys_data*, event_t, int, bool, double*) constructor.
+		 				 * 	tpat_event(tpat_sys_data*, tpat_event_tp, int, bool, double*) constructor.
 		 				 * 	This event can only be supported by dynamic models that have associated
 		 				 * 	system data objects that can be cast to cr3bp system data objects.
 		 				 */
@@ -106,11 +108,11 @@ class tpat_event{
 
 		// *structors
 		tpat_event(const tpat_sys_data*);
-		tpat_event(const tpat_sys_data*, event_t, int, bool);
-		tpat_event(const tpat_sys_data*, event_t, int, bool, double*);
+		tpat_event(const tpat_sys_data*, tpat_event_tp, int, bool);
+		tpat_event(const tpat_sys_data*, tpat_event_tp, int, bool, double*);
 		tpat_event(const tpat_event&);
-		void createEvent(event_t, int, bool);
-		void createEvent(event_t, int, bool, double*);
+		void createEvent(tpat_event_tp, int, bool);
+		void createEvent(tpat_event_tp, int, bool, double*);
 		~tpat_event();
 		
 		// Operators
@@ -120,12 +122,12 @@ class tpat_event{
 		
 		// Get and Set Functions
 		std::vector<double> getConData() const;
-		tpat_constraint::constraint_t getConType() const;
+		tpat_constraint::tpat_constraint_tp getConType() const;
 		int getDir() const;
 		double getTime() const;
 		int getStopCount() const;
 		int getTriggerCount() const;
-		event_t getType() const;
+		tpat_event_tp getType() const;
 		const char* getTypeStr() const;
 		
 		std::vector<double>* getState();
@@ -134,7 +136,7 @@ class tpat_event{
 		bool stopOnEvent() const;
 
 		void setDir(int);
-		void setType(event_t);
+		void setType(tpat_event_tp);
 		void setStopCount(int);
 		void setSysData(tpat_sys_data*);
 
@@ -145,7 +147,7 @@ class tpat_event{
 		void printStatus() const;
 	private:
 
-		event_t type = NONE; //!< The type of event this is
+		tpat_event_tp type = NONE; //!< The type of event this is
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */
 		int triggerDir = 0;
@@ -169,7 +171,7 @@ class tpat_event{
 		std::vector<double> state;
 
 		/** Type of constraint used by the shooting algorithm to locate this event */
-		tpat_constraint::constraint_t conType;
+		tpat_constraint::tpat_constraint_tp conType;
 
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData;
@@ -177,7 +179,7 @@ class tpat_event{
 		const tpat_sys_data* sysData; 	//!< Copy of the system data pointer
 
 		void copyEvent(const tpat_event&);
-		void initEvent(event_t, int, bool, double*);
+		void initEvent(tpat_event_tp, int, bool, double*);
 		double getDist(const double[6], double) const;
 		int getDir(const double[6], double) const;
 };

@@ -21,6 +21,8 @@
 #ifndef H_ARC_STEP
 #define H_ARC_STEP
 
+#include "tpat.hpp"
+ 
 #include "tpat_constraint.hpp"
 #include "tpat_eigen_defs.hpp"
 
@@ -44,7 +46,7 @@
  *		tpat_node class uses this data object to store information about velocity
  *		continuity
  */
-class tpat_arc_step{
+class tpat_arc_step : public tpat{
 
 public:
 	// *structors

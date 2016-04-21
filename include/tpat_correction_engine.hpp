@@ -21,6 +21,8 @@
 #ifndef H_CORRECTIONS
 #define H_CORRECTIONS
 
+#include "tpat.hpp"
+ 
 #include "tpat_constants.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_eigen_defs.hpp"
@@ -103,7 +105,7 @@ struct iterationData{
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_correction_engine{
+class tpat_correction_engine : public tpat{
 	public:
 		// *structors
 		/** Default, do-nothing constructor */
@@ -117,7 +119,7 @@ class tpat_correction_engine{
 		// Set and get functions
 		int getMaxIts() const;
 		double getTol() const;
-		verbosity_t isVerbose() const;
+		tpat_verbosity_tp isVerbose() const;
 		bool isFindingEvent() const;
 		tpat_nodeset_cr3bp getCR3BP_Output();
 		tpat_nodeset_bcr4bp getBCR4BPR_Output();
@@ -133,7 +135,7 @@ class tpat_correction_engine{
 		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
-		void setVerbose(verbosity_t);
+		void setVerbose(tpat_verbosity_tp);
 		
 		// Utility/Action functions
 		iterationData multShoot(const tpat_nodeset*);
@@ -141,7 +143,7 @@ class tpat_correction_engine{
 
 	private:
 		/** Describes how many messages to spit out */
-		verbosity_t verbose = SOME_MSG;
+		tpat_verbosity_tp verbose = SOME_MSG;
 
 		/** Whether or not to use variable time in the corrections process */
 		bool varTime = true;

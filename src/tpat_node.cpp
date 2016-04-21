@@ -23,8 +23,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_node.hpp"
 
 #include "tpat_arc_step.hpp"
@@ -33,6 +31,13 @@
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
+
+/**
+ *  @brief Default constructor; initializes arrays to default values
+ */
+tpat_node::tpat_node(){
+	initArrays();
+}//====================================================
 
 /**
  *	@brief Create a nodeset with a specified state and TOF

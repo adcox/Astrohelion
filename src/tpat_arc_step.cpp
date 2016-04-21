@@ -23,8 +23,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_arc_step.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_exceptions.hpp"

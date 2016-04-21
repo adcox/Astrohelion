@@ -27,8 +27,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_nodeset_bcr4bp.hpp"
 
 #include "tpat_node.hpp"
@@ -44,7 +42,7 @@
  */
 tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_sys_data_bcr4bpr *data) : tpat_nodeset(data){
 	initExtraParam();
-}
+}//====================================================
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -98,7 +96,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
  *	@param type node distribution type
  */
 tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data_bcr4bpr *data, 
-	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
+	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
 	initSetFromICs(IC, data, t0, tof, numNodes, type);
@@ -117,7 +115,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
  *	@param type node distribution type
  */
 tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_data_bcr4bpr *data, 
-	double t0, double tof, int numNodes, node_distro_t type) : tpat_nodeset(data){
+	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
 	initSetFromICs(&(IC[0]), data, t0, tof, numNodes, type);

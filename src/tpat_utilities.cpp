@@ -22,15 +22,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "tpat.hpp"
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_utilities.hpp"
 
+#include "cspice/SpiceZfc.h"    // prototypes for functions
 #include "matio.h"
 
 #include <complex>
 #include <fstream>
+#include <iostream>
 #include <string>
 
 /**
@@ -136,31 +137,64 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
     }
 }//=========================================================
 
+void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
+    if(NULL != matfp){
+        size_t dims[2] = {1, 1};
+        matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &data, MAT_F_DONT_COPY_DATA);
+        saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
+    }else{
+        printErr("tpat_utilities::saveDoubleToFile: Error creating mat file\n");
+    }
+}//========================================================
+
 /**
  * @brief Save a matrix of data to a Matlab .mat file
- * @details This function will save the transpose of the input matrix, so be 
- * sure to transpose after loading into Matlab
+ * @details The data passed in the <tt>data</tt> vector is transposed 
+ *  and saved to the specified Matlab file
  * 
  * @param filename name/path of the file
  * @param varName variable name
- * @param data vector of data
+ * @param data vector of data in row-major order
  * @param rows number of rows in the matrix
  * @param cols number of columns in the matrix
  */
 void saveMatrixToFile(const char* filename, const char* varName, std::vector<double> data, size_t rows, size_t cols){
+    mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+    saveMatrixToFile(matfp, varName, data, rows, cols);
+    Mat_Close(matfp);
+}//========================================================
+
+/**
+ *  @brief Save a matrix of data to an open matlab .mat file
+ *  @details The data passed in the <tt>data</tt> vector is transposed 
+ *  and saved to the specified Matlab file 
+ * 
+ *  @param matfp An open Matlab .mat file
+ *  @param varName name of the variable within the .mat file
+ *  @param data a vector of data in row-major order
+ *  @param rows number of rows in the matrix
+ *  @param cols number of columns in the matrix 
+ */
+void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> data, size_t rows, size_t cols){
     if(data.size() < rows*cols)
         throw tpat_exception("tpat_utilities::saveMatrixToFile: Input data has fewer elements than specified by the rows and cols arguments");
 
-    mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
     if(NULL != matfp){
-        size_t dims[2] = {cols, rows};
-        matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(data[0]), MAT_F_DONT_COPY_DATA);
+        size_t dims[2] = {rows, cols};
+
+        std::vector<double> data_trans(data.size());
+        for(size_t r = 0; r < rows; r++){
+            for(size_t c = 0; c < cols; c++){
+                data_trans[c*rows + r] = data[r*cols + c];
+            }
+        }
+
+        matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(data_trans[0]), MAT_F_DONT_COPY_DATA);
         saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
     }else{
         printErr("tpat_utilities::saveMatrixToFile: Error creating mat file\n");
     }
-    Mat_Close(matfp);
-}//========================================================
+}//=========================================================
 
 /**
  *  @brief Read a matrix of doubles from a .mat file

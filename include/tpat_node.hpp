@@ -33,6 +33,7 @@
 class tpat_node : public tpat_arc_step{
 public:
 	// *structors
+	tpat_node();
 	tpat_node(const double*, double);
 	tpat_node(std::vector<double>, double);
 	tpat_node(const tpat_node&);

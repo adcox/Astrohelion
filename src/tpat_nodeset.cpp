@@ -432,39 +432,81 @@ void tpat_nodeset::initStepVectorFromMat(mat_t *matFile, const char* varName){
 }//======================================================
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
- *	integrated trajectory into pieces (nodes)
- *	@param IC a set of initial conditions, non-dimensional units
+ *	@brief Compute a set of nodes by integrating from initial conditions
+ *	@param IC a set of initial conditions, non-dimensional units associated with the 
  *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type
+ *	@param distroType node distribution type
  */
-void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes, 
-		tpat_nodeDistro_tp type){
-	// Set up the simulation engine
-	tpat_simulation_engine engine(sysData);
-	engine.setVerbose(SOME_MSG);
-	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
+void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, 
+	int numNodes, tpat_nodeDistro_tp distroType){
 
-	tpat_nodeDistro_tp nodeDistro = tpat_nodeset::DISTRO_NONE;
+	if(numNodes < 2){
+		throw tpat_exception("tpat_nodeset::initSetFromICs: Nodeset must have at least two nodes!");
+	}
 
-	switch(type){
+	// Prepare to add nodes
+	steps.reserve(numNodes);
+
+	switch(distroType){
 		default:
 		case tpat_nodeset::DISTRO_NONE:
 			printWarn("Nodeset type is NONE or not specified, using DISTRO_TIME\n");
 		case tpat_nodeset::DISTRO_TIME:
-			engine.setVarStepSize(false);
-			engine.setNumSteps(numNodes);
-			nodeDistro = tpat_nodeset::DISTRO_TIME;
+			// Initialize using time
+			initSetFromICs_time(IC, sysData, t0, tof, numNodes);
 			break;
 		case tpat_nodeset::DISTRO_ARCLENGTH:
-			engine.setVarStepSize(true);
-			engine.setNumSteps(std::abs(tof)*500);
-			nodeDistro = tpat_nodeset::DISTRO_ARCLENGTH;
+			// Initialize using arclength
+			initSetFromICs_arclength(IC, sysData, t0, tof, numNodes);
 			break;
 	}
+}//==========================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
+ *	each segment has approximately the same time-of-flight.
+ *	@param IC a set of initial conditions, non-dimensional units associated with the 
+ *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
+ *	@param t0 time that corresponds to IC, non-dimensional
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ */
+void tpat_nodeset::initSetFromICs_time(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes){
+	tpat_simulation_engine engine(sysData);
+	engine.setVerbose(SOME_MSG);
+	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
+	engine.setRevTime(tof < 0);
+
+	double segTOF = tof/(numNodes-1);
+	std::vector<double> ic(IC, IC+6);
+	for(int n = 0; n < numNodes - 1; n++){
+		engine.runSim(ic, t0 + n*segTOF, segTOF);
+		tpat_traj traj = engine.getTraj();
+		steps.push_back(tpat_node(traj.getState(0), segTOF));
+		ic = traj.getState(-1);
+
+		if(n == numNodes-1){
+			steps.push_back(tpat_node(traj.getState(-1), NAN));
+		}
+	}
+}//==========================================================
+
+/**
+ *	@brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
+ *	each segment has approximately the same arclength in distance.
+ *	@param IC a set of initial conditions, non-dimensional units associated with the 
+ *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
+ *	@param t0 time that corresponds to IC, non-dimensional
+ *	@param tof duration of the simulation, non-dimensional
+ *	@param numNodes number of nodes to create, including IC
+ */
+void tpat_nodeset::initSetFromICs_arclength(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes){
+	tpat_simulation_engine engine(sysData);
+	engine.setVerbose(SOME_MSG);
+	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	// Run the simulation and get the trajectory
@@ -473,82 +515,46 @@ void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysDa
 
 	// Compute the total arc length using a linear approximation
 	double sumArclen = 0;
-	double desiredArclen = 0;
-	for (int n = 0; n < traj.getLength(); n++){
-		if(nodeDistro == tpat_nodeset::DISTRO_ARCLENGTH){
-			if(n > 0){
-				std::vector<double> state = traj.getState(n);
-				std::vector<double> prevState = traj.getState(n-1);
+	std::vector<double> allArcLen(traj.getLength()-1, 0);
+	std::vector<double> allTOF(traj.getLength()-1, 0);
 
-				// Compute the total length of the trajectory (approx.)
-				double dx = state[0] - prevState[0];
-				double dy = state[1] - prevState[1];
-				double dz = state[2] - prevState[2];
-				sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
-			}
-		}
-	}
-
-	desiredArclen = sumArclen/(numNodes-1);
-	sumArclen = 0;
-
-	std::vector<double> nodeStates;
-	std::vector<double> allTOFs;
-
-	int lastNode = 0;
-	for (int n = 0; n < traj.getLength(); n++){
-		if(nodeDistro == tpat_nodeset::DISTRO_ARCLENGTH){
-			if(n == 0){
-				std::vector<double> state = traj.getState(n);
-				nodeStates.insert(nodeStates.end(), state.begin(), state.end());
-			}else{
-				// Use linear approximation to compute distance between points
-				std::vector<double> state = traj.getState(n);
-				std::vector<double> prevState = traj.getState(n-1);
-
-				double dx = state[0] - prevState[0];
-				double dy = state[1] - prevState[1];
-				double dz = state[2] - prevState[2];
-				sumArclen += sqrt(dx*dx + dy*dy + dz*dz);
-
-				if(sumArclen > desiredArclen){
-					// Save this state as a node
-					nodeStates.insert(nodeStates.end(), state.begin(), state.end());
-					allTOFs.push_back(traj.getTime(n) - traj.getTime(lastNode));
-					lastNode = n;	// update
-					sumArclen = sumArclen - desiredArclen;	// reset, remember remainder
-				}
-			}
-		}else{
-			std::vector<double> state = traj.getState(n);
-			nodeStates.insert(nodeStates.end(), state.begin(), state.end());
-
-			// Compute the times-of-flight between nodes
-			if(n > 0)
-				allTOFs.push_back(traj.getTime(n) - traj.getTime(n-1));
-		}
-	}
-
-	// Add the last state if it hasn't been already for ARCLENGTH type
-	if(nodeDistro == tpat_nodeset::DISTRO_ARCLENGTH && lastNode < traj.getLength()-1){
-		int n = traj.getLength()-1;
+	for (int n = 1; n < traj.getLength(); n++){
 		std::vector<double> state = traj.getState(n);
-		nodeStates.insert(nodeStates.end(), state.begin(), state.end());
-		allTOFs.push_back(traj.getTime(n) - traj.getTime(lastNode));
+		std::vector<double> prevState = traj.getState(n-1);
+
+		// Compute the total length of the trajectory (approx.)
+		double dx = state[0] - prevState[0];
+		double dy = state[1] - prevState[1];
+		double dz = state[2] - prevState[2];
+		double d = sqrt(dx*dx + dy*dy + dz*dz);
+		
+		allTOF[n-1] = traj.getTime(n) - traj.getTime(n-1);
+		allArcLen[n-1] = d;
+		sumArclen += d;
+	}
+	double desiredArclen = sumArclen/(numNodes-1);
+
+	// Loop through again to create trajectory
+	sumArclen = 0;
+	double sumTOF = 0;
+	int prevNodeIx = 0;
+	for(size_t s = 0; s < allArcLen.size(); s++){
+		if(sumArclen < desiredArclen){
+			sumArclen += allArcLen[s];
+			sumTOF += allTOF[s];
+		}else{
+
+			tpat_node node(traj.getState(s+1), sumTOF);
+			steps.push_back(node);
+
+			prevNodeIx = s+1;
+			sumArclen = 0;
+			sumTOF = 0;
+		}
 	}
 
-	// Reserve space in the nodes and tof vectors
-	steps.reserve(numNodes);
-
-	// Create node objects from saved states and tofs
-	for(size_t i = 0; i < nodeStates.size()/6; i++){
-		std::vector<double> state;
-		state.insert(state.end(), nodeStates.begin()+i*6, nodeStates.begin()+(i+1)*6);
-		double tof = 0;
-		if(i < allTOFs.size())
-			tof = allTOFs[i];
-
-		tpat_node node(state, tof);
+	if(prevNodeIx < (int)allArcLen.size()){
+		tpat_node node(traj.getState(-1), sumTOF);
 		steps.push_back(node);
 	}
 }//==========================================================

@@ -94,6 +94,8 @@ public:
 protected:
 
 	void initSetFromICs(const double[6], const tpat_sys_data*, double, double, int, tpat_nodeDistro_tp);
+	void initSetFromICs_time(const double[6], const tpat_sys_data*, double, double, int);
+	void initSetFromICs_arclength(const double[6], const tpat_sys_data*, double, double, int);
 	void initSetFromTraj(tpat_traj, const tpat_sys_data*, int, tpat_nodeDistro_tp);
 	void initStepVectorFromMat(mat_t *, const char*);
 	void saveTOFs(mat_t*) const;

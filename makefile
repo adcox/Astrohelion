@@ -29,7 +29,7 @@ CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio cspice boost_filesystem
+LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 SYS_INC_DIR := /usr/local/include/tpat

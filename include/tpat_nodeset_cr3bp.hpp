@@ -59,6 +59,7 @@ public:
 	double getJacobi(int) const;
 	void setJacobi(int, double);
 
+protected:
 	// Utility
 	void initExtraParam();
 };

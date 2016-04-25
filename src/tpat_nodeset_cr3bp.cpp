@@ -167,7 +167,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp &orig, int first
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodeset(n) {
 	initExtraParam();
-}
+}//====================================================
 
 /**
  *	@brief Create a CR3BP nodeset from its base class
@@ -175,7 +175,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodes
  */
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arc_data &a) : tpat_nodeset(a) {
 	initExtraParam();
-}
+}//====================================================
 
 //-----------------------------------------------------
 //      Operators

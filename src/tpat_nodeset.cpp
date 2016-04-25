@@ -564,7 +564,10 @@ void tpat_nodeset::initSetFromICs_arclength(const double IC[6], const tpat_sys_d
  *
  *	This function relies on integration to generate nodes, so do not use this if
  *	the trajectory was created by a linearization or other method that uses something
- *	other than the non-linear dynamics to compute points along the trajectory.
+ *	other than the non-linear dynamics to compute points along the trajectory. Additionally,
+ *	if the input trajectory contains discontinuities in position, velocity, or time, this 
+ *	algorithm will fail to capture these discontinuities and could result in a very different
+ *	path.
  *
  *	@param traj a trajectory to make into a nodeset
  *	@param sysData a pointer to the system data object used to create traj (cannot extract from trajectory base class)

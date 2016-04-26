@@ -138,6 +138,7 @@ class tpat_event : public tpat{
 		void setDir(int);
 		void setType(tpat_event_tp);
 		void setStopCount(int);
+		void setStopOnEvent(bool);
 		void setSysData(tpat_sys_data*);
 
 		// Computations, etc.

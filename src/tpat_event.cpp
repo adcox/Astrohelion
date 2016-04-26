@@ -358,11 +358,18 @@ void tpat_event::setSysData(tpat_sys_data* data){ sysData = data; }
 
 /**
  *	@brief Set the number of triggers this event can endure before the simulation
- *	is forced to stop (if applicable, i.e. if stop = true)
+ *	is forced to stop (if applicable, i.e. if stopOnEvent() = true)
  *	@param c the maximum number of triggers; simulation will be stopped when this
  *	number of triggers occurs (not after)
  */
 void tpat_event::setStopCount(int c){ stopCount = c; }
+
+/**
+ *  @brief Set the flag that determines whether a simulation ends when the event occurs
+ * 
+ *  @param s Whether or not the simulation should stop when this event is triggered
+ */
+void tpat_event::setStopOnEvent(bool s){ stop = s; }
 
 //-----------------------------------------------------
 //      Computations, etc.

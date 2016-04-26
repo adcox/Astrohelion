@@ -29,6 +29,7 @@
 
 #include "tpat_nodeset.hpp"
 
+#include "tpat_event.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_node.hpp"
 #include "tpat_simulation_engine.hpp"
@@ -221,7 +222,9 @@ void tpat_nodeset::deleteNode(int ix){
 }//====================================================
 
 /**
- *	@brief Insert a node at the desired index
+ *	@brief Insert a node before the node at the specified index
+ *	@details Note that this function does not adjust the time of flight of 
+ *	any previous or subsequent nodes.
  *	@param ix node index; if < 0, will count backwards from end of nodeset
  *	@param node new node
  */
@@ -229,9 +232,101 @@ void tpat_nodeset::insertNode(int ix, tpat_node node) {
 	if(ix < 0)
 		ix += steps.size();
 
+	if(ix < 0 || ix > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::insertNode: invalid index");
+
 	steps.insert(steps.begin() + ix, node);
 	updateCons();
 }//====================================================
+
+/**
+ *  @brief Insert a node after the specified node at any locations where the
+ *  specified event occurs
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path
+ * 
+ *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
+ *  inserted after this node.
+ *  @param evt the event that identifies the node locations. If multiple occurences
+ *  are located, multiple nodes will be inserted. If the event does not occur,
+ *  no nodes are inserted
+ * 
+ *  @return the number of nodes created and inserted into the nodeset.
+ */
+int tpat_nodeset::createNodesAtEvent(int priorNodeIx, tpat_event evt){
+	std::vector<tpat_event> events(1, evt);
+	return createNodesAtEvents(priorNodeIx, events);
+}//====================================================
+
+/**
+ *  @brief Insert a node after the specified node at any locations where the
+ *  specified events occur
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path
+ * 
+ *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
+ *  inserted after this node.
+ *  @param events a vector of events that identify the node locations. If multiple occurences
+ *  are located, multiple nodes will be inserted. If nond of the events occur,
+ *  no nodes are inserted
+ * 
+ *  @return the number of nodes created and inserted into the nodeset.
+ */
+int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts){
+	if(priorNodeIx < 0)
+		priorNodeIx += steps.size();
+
+	if(priorNodeIx < 0 || priorNodeIx > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::createNodesAtEvent: invalid index");
+
+	// Create a simulation and add the event to it
+	tpat_simulation_engine engine(sysData);
+	engine.clearEvents();		// don't use crash events
+
+	for(size_t i = 0; i < evts.size(); i++){
+		evts[i].setStopOnEvent(false);	// Ignore stopping conditions that other processes may have imposed
+		engine.addEvent(evts[i]);
+	}
+	
+	engine.runSim(getState(priorNodeIx), getTOF(priorNodeIx));	// This will need to be modified for non-autonomous systems to include epoch
+	tpat_traj traj = engine.getTraj();
+
+	std::vector<tpat_event> events = engine.getEvents();
+	std::vector<eventRecord> evtRecs = engine.getEventRecords();
+	int evtCount = 0;
+	double sumTOF = 0, tof = 0;
+	for(size_t e = 0; e < evtRecs.size(); e++){
+		for(size_t i = 0; i < evts.size(); i++){
+
+			// If the event occured, find the corresponding trajectory state and add that to the nodeset
+			if(events[evtRecs[e].eventIx] == evts[i]){
+				steps.insert(steps.begin() + priorNodeIx + evtCount + 1, tpat_node(traj.getState(evtRecs[e].stepIx), NAN));
+				tof = traj.getTime(evtRecs[e].stepIx) - sumTOF;
+
+				if(tof > 1e-3){
+					tpat_node *prevNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
+					prevNode->setTOF(tof);
+	
+					sumTOF += tof;
+					evtCount++;
+				}
+			}
+		}
+	}
+
+	if(evtCount > 0){
+		// Update the TOF of the last node to flow nicely into the next node from the original set
+		tpat_node *priorNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
+		priorNode->setTOF(traj.getTime(-1) - sumTOF);
+
+		// Update all constraints to have the proper index values
+		updateCons();
+	}
+
+	return evtCount;
+}//=============================================
 
 /**
  *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified nodes
@@ -290,11 +385,8 @@ void tpat_nodeset::print() const{
 		std::vector<double> node = steps[n].getPosVelState();
 		printf("  %02lu: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n,
 			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
-		if(n < steps.size()-1){
-			printf("   TOF = %.8f\n", getTOF(n));
-		}else{
-			printf("\n");
-		}
+		
+		printf("   TOF = %.8f\n", getTOF(n));
 	}
 	printf(" Constraints:\n");
 	for(size_t n = 0; n < steps.size(); n++){
@@ -434,14 +526,12 @@ void tpat_nodeset::initStepVectorFromMat(mat_t *matFile, const char* varName){
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions
  *	@param IC a set of initial conditions, non-dimensional units associated with the 
- *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  *	@param distroType node distribution type
  */
-void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, 
-	int numNodes, tpat_nodeDistro_tp distroType){
+void tpat_nodeset::initSetFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
 
 	if(numNodes < 2){
 		throw tpat_exception("tpat_nodeset::initSetFromICs: Nodeset must have at least two nodes!");
@@ -456,11 +546,11 @@ void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysDa
 			printWarn("Nodeset type is NONE or not specified, using DISTRO_TIME\n");
 		case tpat_nodeset::DISTRO_TIME:
 			// Initialize using time
-			initSetFromICs_time(IC, sysData, t0, tof, numNodes);
+			initSetFromICs_time(IC, t0, tof, numNodes);
 			break;
 		case tpat_nodeset::DISTRO_ARCLENGTH:
 			// Initialize using arclength
-			initSetFromICs_arclength(IC, sysData, t0, tof, numNodes);
+			initSetFromICs_arclength(IC, t0, tof, numNodes);
 			break;
 	}
 }//==========================================================
@@ -468,13 +558,12 @@ void tpat_nodeset::initSetFromICs(const double IC[6], const tpat_sys_data *sysDa
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
  *	each segment has approximately the same time-of-flight.
- *	@param IC a set of initial conditions, non-dimensional units associated with the 
- *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
+ *	@param IC a set of initial conditions, non-dimensional
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void tpat_nodeset::initSetFromICs_time(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes){
+void tpat_nodeset::initSetFromICs_time(const double IC[6], double t0, double tof, int numNodes){
 	tpat_simulation_engine engine(sysData);
 	engine.setVerbose(SOME_MSG);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
@@ -488,7 +577,7 @@ void tpat_nodeset::initSetFromICs_time(const double IC[6], const tpat_sys_data *
 		steps.push_back(tpat_node(traj.getState(0), segTOF));
 		ic = traj.getState(-1);
 
-		if(n == numNodes-1){
+		if(n == numNodes-2){
 			steps.push_back(tpat_node(traj.getState(-1), NAN));
 		}
 	}
@@ -503,7 +592,7 @@ void tpat_nodeset::initSetFromICs_time(const double IC[6], const tpat_sys_data *
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void tpat_nodeset::initSetFromICs_arclength(const double IC[6], const tpat_sys_data *sysData, double t0, double tof, int numNodes){
+void tpat_nodeset::initSetFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
 	tpat_simulation_engine engine(sysData);
 	engine.setVerbose(SOME_MSG);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
@@ -539,24 +628,26 @@ void tpat_nodeset::initSetFromICs_arclength(const double IC[6], const tpat_sys_d
 	double sumTOF = 0;
 	int prevNodeIx = 0;
 	for(size_t s = 0; s < allArcLen.size(); s++){
+		
+		// Keep adding arclength between steps until the desired length is reached
 		if(sumArclen < desiredArclen){
 			sumArclen += allArcLen[s];
 			sumTOF += allTOF[s];
 		}else{
-
-			tpat_node node(traj.getState(s+1), sumTOF);
+			// reached desired length: save node
+			tpat_node node(traj.getState(prevNodeIx), sumTOF);
 			steps.push_back(node);
 
-			prevNodeIx = s+1;
+			// Reset counters and index variables
+			prevNodeIx = s+1;	// The current node is the beginning of the next segment
 			sumArclen = 0;
 			sumTOF = 0;
 		}
 	}
 
-	if(prevNodeIx < (int)allArcLen.size()){
-		tpat_node node(traj.getState(-1), sumTOF);
-		steps.push_back(node);
-	}
+	// Save the final state as the last node
+	steps.push_back(tpat_node(traj.getState(prevNodeIx), sumTOF));
+	steps.push_back(tpat_node(traj.getState(-1), NAN));
 }//==========================================================
 
 /**
@@ -574,13 +665,13 @@ void tpat_nodeset::initSetFromICs_arclength(const double IC[6], const tpat_sys_d
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void tpat_nodeset::initSetFromTraj(tpat_traj traj, const tpat_sys_data *sysData, int numNodes, tpat_nodeDistro_tp type){
+void tpat_nodeset::initSetFromTraj(tpat_traj traj, int numNodes, tpat_nodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getState(0);
 	std::copy(trajIC.begin(), trajIC.begin()+6, ic);
 	
-	initSetFromICs(ic, sysData, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
+	initSetFromICs(ic, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
 }//==============================================
 
 /**

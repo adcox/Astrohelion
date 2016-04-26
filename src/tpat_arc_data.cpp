@@ -558,6 +558,13 @@ void tpat_arc_data::readStateFromMat(mat_t *matFile, const char* varName){
 	Mat_VarFree(stateMat);
 }//===============================================
 
+/**
+ *  @brief Read acceleration data from a Matlab binary file
+ *  @details It is assumed that the matlab file contains one 3-element
+ *  double precision acceleration vector for each step along the solution.
+ * 
+ *  @param matFile Pointer to an open Matlab binary data file
+ */
 void tpat_arc_data::readAccelFromMat(mat_t *matFile){
 	matvar_t *accelMat = Mat_VarRead(matFile, "Accel");
 	if(accelMat == NULL){
@@ -597,6 +604,14 @@ void tpat_arc_data::readAccelFromMat(mat_t *matFile){
 	Mat_VarFree(accelMat);
 }//===============================================
 
+/**
+ *  @brief Read a set of State Transition Matrices (STMs) from the 
+ *  specified Matlab binary data file
+ *  @details It is assumed that there is one STM for each step, and
+ *  each STM is a 6x6 double matrix
+ * 
+ *  @param matFile Pointer to an open matlab file
+ */
 void tpat_arc_data::readSTMFromMat(mat_t *matFile){
 	matvar_t *allSTM = Mat_VarRead(matFile, "STM");
 	if(allSTM == NULL){
@@ -631,12 +646,25 @@ void tpat_arc_data::readSTMFromMat(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
+			throw tpat_exception("tpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(allSTM);
 }//===============================================
 
+/**
+ *  @brief Read in data corresponding to one of the extraParam variables
+ *  @details And n x m variable is loaded, where n is the number of steps in 
+ *  this arc_data object and m is the "row size" of the variable, stored in
+ *  <tt>extraParamRowSize[varIx]</tt>. The data must be a double array, consistent
+ *  with the extraParam vector.
+ * 
+ *  @param matFile pointer to the binary Matlab file containing the data
+ *  @param varIx The index of the parameter. This index is not necessarily the index of
+ *  first element of the parameter within the extraParam vector, but the element of
+ *  extraParamRowSize located at varIx *does* correspond to this variable.
+ *  @param varName The name of the variable within the Matlab file
+ */
 void tpat_arc_data::readExtraParamFromMat(mat_t *matFile, int varIx, const char *varName){
 	if(varIx > numExtraParam || varIx < 0)
 		throw tpat_exception("tpat_arc_data::readExtraParamFromMat: Could not read extra parameter; index out of bounds");

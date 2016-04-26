@@ -29,7 +29,9 @@
 
 #include "tpat_nodeset_bcr4bp.hpp"
 
+#include "tpat_event.hpp"
 #include "tpat_node.hpp"
+#include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_utilities.hpp"
 
@@ -60,7 +62,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(IC, data, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initSetFromICs(IC, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(t0);
 }//====================================================
 
@@ -80,7 +82,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(&(IC[0]), data, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initSetFromICs(&(IC[0]), t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(t0);
 }//====================================================
 
@@ -99,7 +101,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
 	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(IC, data, t0, tof, numNodes, type);
+	initSetFromICs(IC, t0, tof, numNodes, type);
 	initEpochs(t0);
 }//====================================================
 
@@ -118,7 +120,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
 	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(&(IC[0]), data, t0, tof, numNodes, type);
+	initSetFromICs(&(IC[0]), t0, tof, numNodes, type);
 	initEpochs(t0);
 }//====================================================
 
@@ -225,6 +227,76 @@ void tpat_nodeset_bcr4bp::appendNode(tpat_node node){
 }//====================================================
 
 /**
+ *  @brief Insert a node after the specified node at any locations where the
+ *  specified events occur
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path
+ * 
+ *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
+ *  inserted after this node.
+ *  @param events a vector of events that identify the node locations. If multiple occurences
+ *  are located, multiple nodes will be inserted. If nond of the events occur,
+ *  no nodes are inserted
+ * 
+ *  @return the number of nodes created and inserted into the nodeset.
+ */
+int tpat_nodeset_bcr4bp::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts){
+	if(priorNodeIx < 0)
+		priorNodeIx += steps.size();
+
+	if(priorNodeIx < 0 || priorNodeIx > ((int)steps.size()))
+		throw tpat_exception("tpat_nodeset::createNodesAtEvent: invalid index");
+
+	// Create a simulation and add the event to it
+	tpat_simulation_engine engine(sysData);
+	engine.clearEvents();		// don't use crash events
+
+	for(size_t i = 0; i < evts.size(); i++){
+		evts[i].setStopOnEvent(false);	// Ignore stopping conditions that other processes may have imposed
+		engine.addEvent(evts[i]);
+	}
+	
+	engine.runSim(getState(priorNodeIx), getEpoch(priorNodeIx), getTOF(priorNodeIx));	// This will need to be modified for non-autonomous systems to include epoch
+	tpat_traj traj = engine.getTraj();
+
+	double T0 = traj.getTime(0);
+	std::vector<tpat_event> events = engine.getEvents();
+	std::vector<eventRecord> evtRecs = engine.getEventRecords();
+	int evtCount = 0;
+	double sumTOF = 0, tof = 0;
+	for(size_t e = 0; e < evtRecs.size(); e++){
+		for(size_t i = 0; i < evts.size(); i++){
+
+			// If the event occured, find the corresponding trajectory state and add that to the nodeset
+			if(events[evtRecs[e].eventIx] == evts[i]){
+				steps.insert(steps.begin() + priorNodeIx + evtCount + 1, tpat_node(traj.getState(evtRecs[e].stepIx), NAN));
+				tof = traj.getTime(evtRecs[e].stepIx) - sumTOF - T0;
+
+				if(tof > 1e-3){
+					tpat_node *prevNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
+					prevNode->setTOF(tof);
+	
+					sumTOF += tof;
+					evtCount++;
+				}
+			}
+		}
+	}
+
+	if(evtCount > 0){
+		// Update the TOF of the last node to flow nicely into the next node from the original set
+		tpat_node *priorNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
+		priorNode->setTOF(traj.getTime(-1) - sumTOF - T0);
+
+		updateCons();	// Update all constraints to have the proper index values
+		initEpochs();	// Update all epochs so that time flows smoothly
+	}
+
+	return evtCount;
+}//=============================================
+
+/**
  *	@brief Insert a node to the nodeset
  *
  *	Epoch times are automatically generated and updated
@@ -329,11 +401,7 @@ void tpat_nodeset_bcr4bp::print() const{
 		std::vector<double> node = steps[n].getPosVelState();
 		printf("  %02lu: @ %.2f, %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n, getEpoch(n),
 			node.at(0), node.at(1), node.at(2), node.at(3), node.at(4), node.at(5));
-		if(n < steps.size()-1){
-			printf("   TOF = %.8f\n", getTOF(n));
-		}else{
-			printf("\n");
-		}
+		printf("   TOF = %.8f\n", getTOF(n));
 	}
 	printf(" Constraints:\n");
 	for(size_t n = 0; n < steps.size(); n++){

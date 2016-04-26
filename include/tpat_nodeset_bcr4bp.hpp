@@ -26,6 +26,7 @@
 #include "matio.h"
 
 // Forward Declarations
+class tpat_event;
 class tpat_sys_data_bcr4bpr;
 
 /**
@@ -59,6 +60,7 @@ public:
 	// Set and Get Functions
 	double getEpoch(int) const;
 	void appendNode(tpat_node);
+	int createNodesAtEvents(int, std::vector<tpat_event>);
 	void deleteNode(int);
 	void insertNode(int, tpat_node);
 

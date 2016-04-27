@@ -45,7 +45,11 @@ public:
 	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
 	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
 
-	// Corrector Functions
+	// Static Calculation Functions
+	static int fullEOMs(double, const double[], double[], void*);
+	static int simpleEOMs(double, const double[], double[], void*);
+
+	// Multiple Shooting Functions
 	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
 };
 

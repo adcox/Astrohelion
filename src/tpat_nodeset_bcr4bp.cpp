@@ -62,7 +62,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(IC, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromICs(IC, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(t0);
 }//====================================================
 
@@ -82,7 +82,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
 	double t0, double tof, int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(&(IC[0]), t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromICs(&(IC[0]), t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 	initEpochs(t0);
 }//====================================================
 
@@ -101,7 +101,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
 	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(IC, t0, tof, numNodes, type);
+	initFromICs(IC, t0, tof, numNodes, type);
 	initEpochs(t0);
 }//====================================================
 
@@ -120,7 +120,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
 	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(&(IC[0]), t0, tof, numNodes, type);
+	initFromICs(&(IC[0]), t0, tof, numNodes, type);
 	initEpochs(t0);
 }//====================================================
 

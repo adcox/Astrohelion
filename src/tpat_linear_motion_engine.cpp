@@ -173,11 +173,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 
 	// Locate Lagrange point
 	double LPtPos[3] = {0};
-	cr3bp_getEquilibPt(*sysData, L, tol, LPtPos);
+	tpat_model_cr3bp::getEquilibPt(sysData, L, tol, LPtPos);
 
 	// Get partial derivatives of pseudo potential
 	double ddots[6] = {0};
-	cr3bp_getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
+	tpat_model_cr3bp::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
 
 	tpat_traj_cr3bp linTraj(sysData);
 
@@ -229,7 +229,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 	// not enforced, but is still useful information
 	for(int i = 0; i < linTraj.getLength(); i++){
 		std::vector<double> state = linTraj.getState(i);
-		linTraj.setJacobi(i, cr3bp_getJacobi(&(state[0]), mu));
+		linTraj.setJacobi(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
 	}
 	
 	return linTraj;
@@ -278,11 +278,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 	// Locate Lagrange point
 	double LPtPos[3] = {0};
-	cr3bp_getEquilibPt(*sysData, L, tol, LPtPos);
+	tpat_model_cr3bp::getEquilibPt(sysData, L, tol, LPtPos);
 
 	// Get partial derivatives of pseudo potential
 	double ddots[6] = {0};
-	cr3bp_getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
+	tpat_model_cr3bp::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
 
 	double xi0 = r0[0];		// Initial x-variation
 	double eta0 = r0[1];	// Initial y-variation
@@ -514,7 +514,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 	// not enforced, but is still useful information
 	for(int i = 0; i < linTraj.getLength(); i++){
 		std::vector<double> state = linTraj.getState(i);
-		linTraj.setJacobi(i, cr3bp_getJacobi(&(state[0]), mu));
+		linTraj.setJacobi(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
 	}
 
 	return linTraj;

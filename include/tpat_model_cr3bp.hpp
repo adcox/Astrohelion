@@ -22,6 +22,9 @@
 
 #include "tpat_model.hpp"
 
+// Forward declarations
+class tpat_sys_data_cr3bp;
+
 /**
  *	@brief Derivative of tpat_model, specific to the CR3BP
  *
@@ -42,10 +45,19 @@ public:
 	tpat_model::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
 	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
+	
+	// Static Calculation Functions
+	static int fullEOMs(double, const double[], double[], void*);
+	static int simpleEOMs(double, const double[], double[], void*);
+	static void getEquilibPt(const tpat_sys_data_cr3bp*, int, double, double[3]);
+	static double getJacobi(const double[], double);
+	static void getUDDots(double, double, double, double, double* ddots);
+
+	// Simulation Engine Functions
 	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
 	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
 
-	// Multiple shooting Functions
+	// Multiple Shooting Functions
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
 	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
 

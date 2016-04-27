@@ -69,7 +69,7 @@ tpat_model_bcr4bpr& tpat_model_bcr4bpr::operator =(const tpat_model_bcr4bpr &m){
  *  for only the core states (i.e. simple)
  */
 tpat_model::eom_fcn tpat_model_bcr4bpr::getSimpleEOM_fcn() const{
-	return &bcr4bpr_simple_EOMs;
+	return &simpleEOMs;
 }//==============================================
 
 /**
@@ -77,7 +77,7 @@ tpat_model::eom_fcn tpat_model_bcr4bpr::getSimpleEOM_fcn() const{
  *  for all states (i.e. full)
  */
 tpat_model::eom_fcn tpat_model_bcr4bpr::getFullEOM_fcn() const{
-	return &bcr4bpr_EOMs;
+	return &fullEOMs;
 }//==============================================
 
 /**
@@ -91,7 +91,7 @@ tpat_model::eom_fcn tpat_model_bcr4bpr::getFullEOM_fcn() const{
 std::vector<double> tpat_model_bcr4bpr::getPrimPos(double t, const tpat_sys_data *sysData) const{
     double primPos[9];
     const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
-    bcr4bpr_getPrimaryPos(t, bcSys, primPos);
+    getPrimaryPos(t, bcSys, primPos);
 
     return std::vector<double>(primPos, primPos+9);
 }//==============================================
@@ -107,10 +107,14 @@ std::vector<double> tpat_model_bcr4bpr::getPrimPos(double t, const tpat_sys_data
 std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, const tpat_sys_data *sysData) const{
     double primVel[9];
     const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
-    bcr4bpr_getPrimaryVel(t, bcSys, primVel);
+    getPrimaryVel(t, bcSys, primVel);
 
     return std::vector<double>(primVel, primVel+9);
 }//==============================================
+
+//------------------------------------------------------------------------------------------------------
+//      Simulation Engine Functions
+//------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief Takes an input state and time and saves the data to the trajectory
@@ -127,7 +131,7 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(const double* y, double t, tpat_
     // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
     eomParamStruct paramStruct(bcSys);
-    bcr4bpr_simple_EOMs(t, y, dsdt, &paramStruct);
+    simpleEOMs(t, y, dsdt, &paramStruct);
     
     // step(state, time, accel, stm) - y(0:5) holds the state, y(6:41) holds the STM
     tpat_traj_step step(y, t, dsdt+3, y+6);
@@ -214,6 +218,10 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
     
     return true;
 }//=========================================================
+
+//------------------------------------------------------------------------------------------------------
+//      Multiple Shooting Functions
+//------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief Initialize the corrector's design vector with position and velocity states,
@@ -682,9 +690,9 @@ void tpat_model_bcr4bpr::multShoot_targetApse(iterationData *it, tpat_constraint
     const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(it->sysData);
     double primPos[9], primVel[9], primAccel[9];
 
-    bcr4bpr_getPrimaryPos(t0, bcSys, primPos);
-    bcr4bpr_getPrimaryVel(t0, bcSys, primVel);
-    bcr4bpr_getPrimaryAccel(t0, bcSys, primAccel);
+    getPrimaryPos(t0, bcSys, primPos);
+    getPrimaryVel(t0, bcSys, primVel);
+    getPrimaryAccel(t0, bcSys, primAccel);
 
     double dx = it->X[6*n+0]/sr - primPos[3*Pix+0];
     double dy = it->X[6*n+1]/sr - primPos[3*Pix+1];
@@ -1390,3 +1398,379 @@ tpat_nodeset* tpat_model_bcr4bpr::multShoot_createOutput(const iterationData *it
 
     return nodeset_out;
 }//====================================================
+
+//------------------------------------------------------------------------------------------------------
+//      Static Calculation Functions
+//------------------------------------------------------------------------------------------------------
+
+/**
+ *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *
+ *   @param t epoch at integration step
+ *   @param s the 48-d state vector
+ *   @param sdot the 48-d state derivative vector
+ *   @param params points to an eomParamStruct object
+ */
+int tpat_model_bcr4bpr::fullEOMs(double t, const double s[], double sdot[], void *params){
+    // Dereference the eom data object
+    // tpat_sys_data_bcr4bpr *sysData = static_cast<tpat_sys_data_bcr4bpr *>(params);
+    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
+    const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
+
+    // Put the positions of the three primaries in a 3x3 matrix
+    double primPosData[9] = {0};
+    getPrimaryPos(t, sysData, primPosData);
+    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
+
+    // Put the position states into a 3-element column vector
+    double r_data[3] = {0};
+    std::copy(s, s+3, r_data);
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
+
+    // Put velocity states into a 3-element column vector
+    double v_data[3] = {0};
+    std::copy(s+3, s+6, v_data);
+    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
+
+    // Create relative position vectors between s/c and primaries
+    Eigen::Vector3d r_p1, r_p2, r_p3;
+    r_p1.noalias() = r - primPos.row(0).transpose();
+    r_p2.noalias() = r - primPos.row(1).transpose();
+    r_p3.noalias() = r - primPos.row(2).transpose();
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
+    
+    // Save constants to short variables for readability
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+
+    // Create C-matrix
+    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
+    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
+
+    // truncated position vector used in EOMs
+    double r_trunc_data[3] = {0};
+    std::copy(s, s+2, r_trunc_data);
+    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
+
+    // Compute acceleration using matrix math
+    Eigen::Vector3d accel;
+    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
+        nu*r_p3/pow(d3, 3);
+    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
+
+    // Compute psuedo-potential
+    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(0)*r_p1(0)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2(0)*r_p2(0)/pow(d2,5)) - nu*(1/pow(d3,3) -
+                3*r_p3(0)*r_p3(0)/pow(d3,5));
+    double dxdy = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) +
+            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);
+    double dxdz = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);
+    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(1)*r_p1(1)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2(1)*r_p2(1)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*r_p3(1)*r_p3(1)/pow(d3,5));
+    double dydz = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
+            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
+            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);
+    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*r_p1(2)*r_p1(2)/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2(2)*r_p2(2)/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*r_p3(2)*r_p3(2)/pow(d3,5));
+
+    // Create A matrix for STM derivative
+    double aData[] = {  0, 0, 0, 1, 0, 0,
+                        0, 0, 0, 0, 1, 0,
+                        0, 0, 0, 0, 0, 1, 
+                        dxdx, dxdy, dxdz, c[0], c[1], c[2],
+                        dxdy, dydy, dydz, c[3], c[4], c[5],
+                        dxdz, dydz, dzdz, c[6], c[7], c[8]};
+    MatrixXRd A = Eigen::Map<MatrixXRd>(aData, 6, 6);
+
+    // Compute the STM derivative
+    double phiData[36];
+    std::copy(s+6, s+42, phiData);
+    MatrixXRd Phi = Eigen::Map<MatrixXRd>(phiData, 6, 6);
+
+    MatrixXRd PhiDot(6,6);
+    PhiDot.noalias() = A*Phi;
+
+    // Compute partials of state w.r.t. primary positions; dont' compute partials
+    // for P1 because its velocity is zero in the rotating frame
+    double dfdr2[18] = {0};   double dfdr3[18] = {0};
+
+    dfdr2[9] = -1/pow(d2,3) + 3*r_p2(0)*r_p2(0)/pow(d2,5);        //dxdx2
+    dfdr2[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
+    dfdr2[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
+    dfdr2[13] = -1/pow(d2,3) + 3*r_p2(1)*r_p2(1)/pow(d2,5);       //dydy2
+    dfdr2[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
+    dfdr2[17] = -1/pow(d2,3) + 3*r_p2(2)*r_p2(2)/pow(d2,5);       //dzdz2
+
+    dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
+    dfdr2[15] = dfdr2[11];
+    dfdr2[16] = dfdr2[14];
+
+    dfdr3[9] = -1/pow(d3,3) + 3*r_p3(0)*r_p3(0)/pow(d3,5);        //dxdx3
+    dfdr3[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
+    dfdr3[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
+    dfdr3[13] = -1/pow(d3,3) + 3*r_p3(1)*r_p3(1)/pow(d3,5);       //dydy3
+    dfdr3[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
+    dfdr3[17] = -1/pow(d3,3) + 3*r_p3(2)*r_p3(2)/pow(d3,5);       //dzdz3
+
+    dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
+    dfdr3[15] = dfdr3[11];
+    dfdr3[16] = dfdr3[14];
+
+    MatrixXRd DfDr2 = Eigen::Map<MatrixXRd>(dfdr2, 6, 3);
+    MatrixXRd DfDr3 = Eigen::Map<MatrixXRd>(dfdr3, 6, 3);
+    
+    // Scale by constants
+    DfDr2 *= -1*(mu-nu);
+    DfDr3 *= -1*nu;
+    
+    // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
+    double dqdT_data[6] = {0};
+    std::copy(s+42,s+48, dqdT_data);
+    Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(dqdT_data, 6, 1);
+
+    // Get the velocity of the primaries
+    double primVelData[9] = {0};
+    getPrimaryVel(t, sysData, primVelData);
+    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(primVelData, 3, 3);
+
+    // Compute derivative of dqdT
+    Eigen::VectorXd dot_dqdT;
+    dot_dqdT.noalias() = A*dqdT + DfDr2*(primVel.row(1).transpose()) + DfDr3*(primVel.row(2).transpose());
+
+    // Save derivatives to output vector
+    double *accelPtr = accel.data();
+    double *phiDotPtr = PhiDot.data();
+    double *dqdtDotPtr = dot_dqdT.data();
+
+    std::copy(s+3, s+6, sdot);
+    std::copy(accelPtr, accelPtr+3, sdot+3);
+    std::copy(phiDotPtr, phiDotPtr+36, sdot+6);
+    std::copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
+
+    return GSL_SUCCESS;
+}//============== END OF BCR4BPR EOMs ======================
+
+/**
+ *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *
+ *   @param t epoch at integration step
+ *   @param s the 6-d state vector
+ *   @param sdot the 6-d state derivative vector
+ *   @param params points to an eomParamStruct object
+ */
+int tpat_model_bcr4bpr::simpleEOMs(double t, const double s[], double sdot[], void *params){
+    // Dereference the eom data object
+    // tpat_sys_data_bcr4bpr *sysData = static_cast<tpat_sys_data_bcr4bpr *>(params);
+    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
+    const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
+
+    // Put the positions of the three primaries in a 3x3 matrix
+    double primPosData[9] = {0};
+    getPrimaryPos(t, sysData, primPosData);
+    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
+
+    // Put the position states into a 3-element column vector
+    double r_data[3] = {0};
+    std::copy(s, s+3, r_data);
+    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
+
+    // Put velocity states into a 3-element column vector
+    double v_data[3] = {0};
+    std::copy(s+3, s+6, v_data);
+    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
+
+    // Create relative position vectors between s/c and primaries
+    Eigen::Vector3d r_p1, r_p2, r_p3;
+    r_p1.noalias() = r - primPos.row(0).transpose();
+    r_p2.noalias() = r - primPos.row(1).transpose();
+    r_p3.noalias() = r - primPos.row(2).transpose();
+    double d1 = r_p1.norm();
+    double d2 = r_p2.norm();
+    double d3 = r_p3.norm();
+    
+    // Save constants to short variables for readability
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+
+    // Create C-matrix
+    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
+    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
+
+    // truncated position vector used in EOMs
+    double r_trunc_data[3] = {0};
+    std::copy(s, s+2, r_trunc_data);
+    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
+
+    // Compute acceleration using matrix math
+    Eigen::Vector3d accel;
+    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
+        nu*r_p3/pow(d3, 3);
+    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
+
+    // Save derivatives to output vector
+    double *accelPtr = accel.data();
+
+    std::copy(s+3, s+6, sdot);
+    std::copy(accelPtr, accelPtr+3, sdot+3);
+    return GSL_SUCCESS;
+}//============== END OF BCR4BPR EOMs ======================
+
+/**
+ *  @brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
+ *
+ *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  @param sysData a system data object containing information about the BCR4BP primaries
+ *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
+ *  row-major order. The first three elements are the position of P1, etc.
+ */
+void tpat_model_bcr4bpr::getPrimaryPos(double t, const tpat_sys_data_bcr4bpr *sysData, double *primPos){
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+    double theta0 = sysData->getTheta0();
+    double phi0 = sysData->getPhi0();
+    double gamma = sysData->getGamma();
+    double ratio = sysData->getCharLRatio();
+
+    // Compute the angles for the system at the specified time
+    double theta = theta0 + k*t;
+    double phi = phi0 + sqrt(mu/pow(ratio, 3)) * t;
+
+    // P1 position
+    // primPos[0] = -mu;    // original derivation
+    primPos[0] = -1/k;        // new derivation
+    primPos[1] = 0;
+    primPos[2] = 0;
+
+    // P2 position
+    // primPos[3] = 1/k - mu - nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[3] = -nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[4] = -nu/mu*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+    primPos[5] = nu/mu*ratio * cos(phi) * sin(gamma);
+
+    // P3 position
+    // primPos[6] = 1/k - mu + (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[6] = (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+    primPos[7] = (1 - nu/mu)*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+    primPos[8] = (nu/mu - 1)*ratio * cos(phi)*sin(gamma);
+}//================================================
+
+/**
+ *  @brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
+ *
+ *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  @param sysData a system data object containing information about the BCR4BP primaries
+ *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
+ *  row-major order. The first three elements hold the velocity of P1, etc.
+ */
+void tpat_model_bcr4bpr::getPrimaryVel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primVel){
+
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+    double theta0 = sysData->getTheta0();
+    double phi0 = sysData->getPhi0();
+    double gamma = sysData->getGamma();
+    double ratio = sysData->getCharLRatio();
+
+    double thetaDot = k;
+    double phiDot = sqrt(mu/pow(ratio, 3));
+
+    double theta = theta0 + thetaDot*t;
+    double phi = phi0 + phiDot * t;    
+
+    // P1 is stationary in this coordinate system
+    primVel[0] = 0;  primVel[1] = 0;  primVel[2] = 0;
+
+    // Angular velocity of P2-P3 line
+    double v_P2P3Line[3] = {0};
+    v_P2P3Line[0] = thetaDot*(sin(phi)*cos(theta) - cos(phi)*sin(theta)*cos(gamma)) + 
+        phiDot*(cos(phi)*sin(theta) - sin(phi)*cos(theta)*cos(gamma));
+    v_P2P3Line[1] = (phiDot - thetaDot)*cos(phi - theta);
+    v_P2P3Line[2] = phiDot*sin(phi)*sin(gamma);
+
+    // Multiply by radii of P2 and P3 to get their velocities
+    primVel[3] = v_P2P3Line[0] * (-nu/mu)*ratio;
+    primVel[4] = v_P2P3Line[1] * (-nu/mu)*ratio;
+    primVel[5] = v_P2P3Line[2] * (-nu/mu)*ratio;
+
+    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*ratio;
+    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*ratio;
+    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*ratio;
+}//===================================================================
+
+/**
+ *  @brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
+ * 
+ *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  @param sysData a system data object containing information about the BCR4BP primaries
+ *  @param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
+ *  row-major order. The first three elements hold the acceleration of P1, etc.
+ */
+void tpat_model_bcr4bpr::getPrimaryAccel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primAccel){
+    double k = sysData->getK();
+    double mu = sysData->getMu();
+    double nu = sysData->getNu();
+    double theta0 = sysData->getTheta0();
+    double phi0 = sysData->getPhi0();
+    double gamma = sysData->getGamma();
+    double ratio = sysData->getCharLRatio();
+
+    double thetaDot = k;
+    double phiDot = sqrt(mu/pow(ratio, 3));
+
+    double theta = theta0 + thetaDot*t;
+    double phi = phi0 + phiDot * t;    
+
+    // P1 is stationary in this coordinate system
+    primAccel[0] = 0;  primAccel[1] = 0;  primAccel[2] = 0;
+
+    // Acceleration of P2-P3 line
+    double a_P2P3Line[3] = {0};
+    a_P2P3Line[0] = (-thetaDot*thetaDot - phiDot*phiDot)*(cos(theta)*cos(phi)*cos(gamma) + sin(theta)*sin(phi)) + 
+        2*thetaDot*phiDot*(cos(theta)*cos(phi) + sin(theta)*sin(phi)*cos(gamma));
+    a_P2P3Line[1] = -1*(phiDot - thetaDot)*(phiDot - thetaDot)*sin(phi - theta);
+    a_P2P3Line[2] = phiDot*phiDot*cos(phi)*sin(gamma);
+
+    // Multiply by radii of P2 and P3 to get their velocities
+    primAccel[3] = a_P2P3Line[0] * (-nu/mu)*ratio;
+    primAccel[4] = a_P2P3Line[1] * (-nu/mu)*ratio;
+    primAccel[5] = a_P2P3Line[2] * (-nu/mu)*ratio;
+
+    primAccel[6] = a_P2P3Line[0] * (1-nu/mu)*ratio;
+    primAccel[7] = a_P2P3Line[1] * (1-nu/mu)*ratio;
+    primAccel[8] = a_P2P3Line[2] * (1-nu/mu)*ratio;
+}//=====================================================================
+
+/**
+ *  @brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
+ *  
+ *  @param et epoch time (seconds, J2000, UTC)
+ *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
+ *  in this data object
+ */
+void tpat_model_bcr4bpr::orientAtEpoch(double et, tpat_sys_data_bcr4bpr *sysData){
+    // Both theta and phi are approximately equal to zero at REF_EPOCH
+    double time_nonDim = (et - tpat_sys_data_bcr4bpr::REF_EPOCH)/sysData->getCharT();
+    
+    // Compute theta and phi
+    double theta = sysData->getK()*time_nonDim;
+    double phi = sqrt(sysData->getMu()/pow(sysData->getCharLRatio(), 3))*time_nonDim;
+
+    // Adjust theta and phi to be between 0 and 2*PI
+    theta -= floor(theta/(2*PI))*2*PI;
+    phi -= floor(phi/(2*PI))*2*PI;
+
+    sysData->setTheta0(theta);
+    sysData->setPhi0(phi);
+    sysData->setEpoch0(et);
+}//===========================================

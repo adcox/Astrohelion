@@ -73,8 +73,8 @@ public:
 	tpat_nodeset discretize(int) const;
 	void initExtraParam();
 	void print() const;
-	void readFromMat(const char*);
-	void saveToMat(const char*) const;
+	virtual void readFromMat(const char*);
+	virtual void saveToMat(const char*) const;
 
 protected:
 	void saveTime(mat_t*) const;

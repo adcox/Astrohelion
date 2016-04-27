@@ -400,7 +400,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 
 	// Get initial guess from linearization
 	double LPt_data[] = {0,0,0};
-	cr3bp_getEquilibPt(sysData, LPt, 1e-14, LPt_data);
+	tpat_model_cr3bp::getEquilibPt(fam.getSysDataPtr(), LPt, 1e-14, LPt_data);
 
 	// Begin solving - get linear approximation at ICs
 	double r0[] = {x0, 0, 0};
@@ -460,7 +460,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 		throw tpat_exception("tpat_family_generator::cr3bp_butterfly: LPts != 2 are not implemented");
 
 	double LPt_data[] = {0,0,0};
-	cr3bp_getEquilibPt(*sysData, LPt, 1e-14, LPt_data);
+	tpat_model_cr3bp::getEquilibPt(sysData, LPt, 1e-14, LPt_data);
 
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,

@@ -443,7 +443,7 @@ double tpat_event::getDist(const double y[6], double t) const{
 		case JC:
 		{
 			const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(sysData);
-			d = conData[0] - cr3bp_getJacobi(y, crSys->getMu());
+			d = conData[0] - tpat_model_cr3bp::getJacobi(y, crSys->getMu());
 			break;
 		}
 		case APSE:

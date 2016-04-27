@@ -43,11 +43,11 @@ void checkLPts(){
 	double L4_true[3] = {0.48784941573006, 0.866025403784439, 0};
 	double L5_true[3] = {0.48784941573006, -0.866025403784439, 0};
 
-	cr3bp_getEquilibPt(emSys, 1, 1e-14, L1);
-	cr3bp_getEquilibPt(emSys, 2, 1e-14, L2);
-	cr3bp_getEquilibPt(emSys, 3, 1e-14, L3);
-	cr3bp_getEquilibPt(emSys, 4, 1e-14, L4);
-	cr3bp_getEquilibPt(emSys, 5, 1e-14, L5);
+	tpat_model_cr3bp::getEquilibPt(&emSys, 1, 1e-14, L1);
+	tpat_model_cr3bp::getEquilibPt(&emSys, 2, 1e-14, L2);
+	tpat_model_cr3bp::getEquilibPt(&emSys, 3, 1e-14, L3);
+	tpat_model_cr3bp::getEquilibPt(&emSys, 4, 1e-14, L4);
+	tpat_model_cr3bp::getEquilibPt(&emSys, 5, 1e-14, L5);
 
 	cout << "  L1: " << (compareLPts(L1_true, L1, 1e-14) ? PASS : FAIL) << endl;
 	cout << "  L2: " << (compareLPts(L2_true, L2, 1e-14) ? PASS : FAIL) << endl;
@@ -62,7 +62,7 @@ void checkUDDots(){
 	double ans[] = {1.04726723737184, 0.976366381314081, -0.0236336186859191,
 		1.47677525977129, 1.47677525977129, 1.47976912234663};
 	double comp[6] = {0};
-	cr3bp_getUDDots(emSys.getMu(), 0.5, 0.5, 0.5, comp);
+	tpat_model_cr3bp::getUDDots(emSys.getMu(), 0.5, 0.5, 0.5, comp);
 
 	for(int i = 0; i < 6; i++){
 		cout << "  U(" << i << "): " << (abs(comp[i] - ans[i]) < 1e-12 ? PASS : FAIL) << endl;
@@ -128,7 +128,7 @@ void checkOrientAtEpoch(){
 	tpat_sys_data_bcr4bpr sys("Sun", "Earth", "moon");
 	double T0 = (leaveHaloEpoch - tpat_sys_data_bcr4bpr::REF_EPOCH)/sys.getCharT();
 	tpat_sys_data_bcr4bpr sys_shifted = sys;
-	bcr4bpr_orientAtEpoch(leaveHaloEpoch, &sys_shifted);
+	tpat_model_bcr4bpr::orientAtEpoch(leaveHaloEpoch, &sys_shifted);
 	
 	cout << "BCR4BP Orient At Epoch Test:" << endl;
 
@@ -136,10 +136,10 @@ void checkOrientAtEpoch(){
 	for(int i = 0; i < 3; i++){
 		double primPos1[9], primVel1[9], primPos2[9], primVel2[9];
 		
-		bcr4bpr_getPrimaryPos(T0 + epochs[i], &sys, primPos1);
-		bcr4bpr_getPrimaryVel(T0 + epochs[i], &sys, primVel1);
-		bcr4bpr_getPrimaryPos(epochs[i], &sys_shifted, primPos2);
-		bcr4bpr_getPrimaryVel(epochs[i], &sys_shifted, primVel2);
+		tpat_model_bcr4bpr::getPrimaryPos(T0 + epochs[i], &sys, primPos1);
+		tpat_model_bcr4bpr::getPrimaryVel(T0 + epochs[i], &sys, primVel1);
+		tpat_model_bcr4bpr::getPrimaryPos(epochs[i], &sys_shifted, primPos2);
+		tpat_model_bcr4bpr::getPrimaryVel(epochs[i], &sys_shifted, primVel2);
 
 		bool samePos = true, sameVel = true;
 		for(int n = 0; n < 9; n++){

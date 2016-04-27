@@ -46,9 +46,9 @@
 /**
  *	@brief Class containing useful utility-type functions
  *
- *	This class is not an "object", per se, but it stores static template functions
- *	that are useful for other tasks and allows the developer to specify the scope 
- * 	(public/private) of the methods if necessary
+ *	This class stores useful static functions and template functions. This functionality
+ *	is similar to tpat_calculations, but this class does not include functions related to
+ *	the complex mathematics involved in trajectory design.
  */
 class tpat_util{
 private:

@@ -89,18 +89,18 @@ public:
 
 	// Utility Functions
 	void clearConstraints();
-	void readFromMat(const char*);
-	void print() const;
+	virtual void readFromMat(const char*);
+	virtual void print() const;
 	void reverseOrder();
-	void saveToMat(const char*) const;
-	void initExtraParam();
+	virtual void saveToMat(const char*) const;
+	virtual void initExtraParam();
 
 protected:
 
-	void initSetFromICs(const double[6], double, double, int, tpat_nodeDistro_tp);
-	void initSetFromICs_time(const double[6], double, double, int);
-	void initSetFromICs_arclength(const double[6], double, double, int);
-	void initSetFromTraj(tpat_traj, int, tpat_nodeDistro_tp);
+	void initFromICs(const double[6], double, double, int, tpat_nodeDistro_tp);
+	void initFromICs_time(const double[6], double, double, int);
+	void initFromICs_arclength(const double[6], double, double, int);
+	void initFromTraj(tpat_traj, int, tpat_nodeDistro_tp);
 	void initStepVectorFromMat(mat_t *, const char*);
 	void saveTOFs(mat_t*) const;
 

@@ -58,7 +58,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const double IC[6], const tpat_sys_data_c
 	int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(IC, 0, tof, numNodes, type);
+	initFromICs(IC, 0, tof, numNodes, type);
 }//======================================================================
 
 /**
@@ -75,7 +75,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, const tpat_sys_da
 	int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(&(IC[0]), 0, tof, numNodes, type);
+	initFromICs(&(IC[0]), 0, tof, numNodes, type);
 }//=====================================================================
 
 /**
@@ -93,7 +93,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const double IC[6], const tpat_sys_data_c
 	int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(IC, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromICs(IC, 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 }//======================================================================
 
 /**
@@ -111,7 +111,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, const tpat_sys_da
 	int numNodes) : tpat_nodeset(data){
 
 	initExtraParam();
-	initSetFromICs(&(IC[0]), 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromICs(&(IC[0]), 0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
 }//======================================================================
 
 /**
@@ -128,7 +128,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(std::vector<double> IC, const tpat_sys_da
 tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes) : tpat_nodeset(traj.getSysData()){
 
 	initExtraParam();
-	initSetFromTraj(traj, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromTraj(traj, numNodes, tpat_nodeset::DISTRO_TIME);
 }//===========================================
 
 /**
@@ -146,7 +146,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(tpat_traj_cr3bp traj, int numNodes,
 	tpat_nodeDistro_tp type) : tpat_nodeset(traj.getSysData()){
 	
 	initExtraParam();
-	initSetFromTraj(traj, numNodes, type);
+	initFromTraj(traj, numNodes, type);
 }//===========================================
 
 /**

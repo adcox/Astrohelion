@@ -22,6 +22,9 @@
 
 #include "tpat_model.hpp"
 
+// Forward declarations
+class tpat_sys_data_bcr4bpr;
+
 /**
  *	@brief A derivative of the tpat_model class, specific to the BCR4BPR
  *
@@ -46,6 +49,14 @@ public:
 	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
 	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
 
+	// Static Calculation Functions
+	static int fullEOMs(double, const double[], double[], void*);
+	static int simpleEOMs(double, const double[], double[], void*);
+	static void getPrimaryPos(double, const tpat_sys_data_bcr4bpr*, double*);
+	static void getPrimaryVel(double, const tpat_sys_data_bcr4bpr*, double*);
+	static void getPrimaryAccel(double, const tpat_sys_data_bcr4bpr*, double*);
+	static void orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
+	
 	// Multiple Shooting functions
 	void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
 	void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;

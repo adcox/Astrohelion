@@ -575,10 +575,10 @@ void tpat_nodeset::initStepVectorFromMat(mat_t *matFile, const char* varName){
  *	@param numNodes number of nodes to create, including IC
  *	@param distroType node distribution type
  */
-void tpat_nodeset::initSetFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
+void tpat_nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
 
 	if(numNodes < 2){
-		throw tpat_exception("tpat_nodeset::initSetFromICs: Nodeset must have at least two nodes!");
+		throw tpat_exception("tpat_nodeset::initFromICs: Nodeset must have at least two nodes!");
 	}
 
 	// Prepare to add nodes
@@ -590,11 +590,11 @@ void tpat_nodeset::initSetFromICs(const double IC[6], double t0, double tof, int
 			printWarn("Nodeset type is NONE or not specified, using DISTRO_TIME\n");
 		case tpat_nodeset::DISTRO_TIME:
 			// Initialize using time
-			initSetFromICs_time(IC, t0, tof, numNodes);
+			initFromICs_time(IC, t0, tof, numNodes);
 			break;
 		case tpat_nodeset::DISTRO_ARCLENGTH:
 			// Initialize using arclength
-			initSetFromICs_arclength(IC, t0, tof, numNodes);
+			initFromICs_arclength(IC, t0, tof, numNodes);
 			break;
 	}
 }//==========================================================
@@ -607,7 +607,7 @@ void tpat_nodeset::initSetFromICs(const double IC[6], double t0, double tof, int
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void tpat_nodeset::initSetFromICs_time(const double IC[6], double t0, double tof, int numNodes){
+void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
 	tpat_simulation_engine engine(sysData);
 	engine.setVerbose(SOME_MSG);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
@@ -636,7 +636,7 @@ void tpat_nodeset::initSetFromICs_time(const double IC[6], double t0, double tof
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void tpat_nodeset::initSetFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
+void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
 	tpat_simulation_engine engine(sysData);
 	engine.setVerbose(SOME_MSG);
 	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
@@ -709,13 +709,13 @@ void tpat_nodeset::initSetFromICs_arclength(const double IC[6], double t0, doubl
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void tpat_nodeset::initSetFromTraj(tpat_traj traj, int numNodes, tpat_nodeDistro_tp type){
+void tpat_nodeset::initFromTraj(tpat_traj traj, int numNodes, tpat_nodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getState(0);
 	std::copy(trajIC.begin(), trajIC.begin()+6, ic);
 	
-	initSetFromICs(ic, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
+	initFromICs(ic, traj.getTime(0), traj.getTime(-1) - traj.getTime(0), numNodes, type);
 }//==============================================
 
 /**

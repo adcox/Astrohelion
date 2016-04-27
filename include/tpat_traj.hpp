@@ -61,7 +61,7 @@ public:
 
 	// Set and Get Functions
 	double getTime(int) const;
-	double getTOF() const;
+	double getTotalTOF() const;
 	tpat_traj_step getStep(int) const;
 
 	void appendStep(tpat_traj_step);

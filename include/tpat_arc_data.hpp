@@ -90,6 +90,14 @@ public:
 	MatrixXRd getSTM(int) const;
 	const tpat_sys_data* getSysData() const;
 	double getTol() const;
+
+	/**
+	 *  @brief Get the total time-of-flight on this arc
+	 *  @return the total time-of-flight on this arc, units consistent
+	 *  with the model or system
+	 */
+	virtual double getTotalTOF() const = 0;
+	
 	
 	void appendStep(tpat_arc_step);
 	void setAccel(int, std::vector<double>);

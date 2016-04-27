@@ -60,7 +60,7 @@ public:
 	// Set and Get Functions
 	double getEpoch(int) const;
 	void appendNode(tpat_node);
-	int createNodesAtEvents(int, std::vector<tpat_event>);
+	int createNodesAtEvents(int, std::vector<tpat_event>, double);
 	void deleteNode(int);
 	void insertNode(int, tpat_node);
 

@@ -124,6 +124,7 @@ void test_nodeManip(){
 
 	// Test delete node
 	set.deleteNode(0);
+	state = set.getState(0);
 	cout << "Delete Node: " << (state[0] == 1 && state[1] == 0 ? PASS : FAIL) << endl;
 
 	// Second test case: Generate orbit, use createNodesAtEvent and check the functionality, TOF computation, etc.

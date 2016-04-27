@@ -92,7 +92,7 @@ double tpat_traj::getTime(int ix) const {
  *  @brief Get the time of flight on this trajectory
  *  @return time of flight on this trajectory, non-dimensional time
  */
-double tpat_traj::getTOF() const {
+double tpat_traj::getTotalTOF() const {
 	try{
 		return getTime(-1) - getTime(0);
 	}catch(tpat_exception &e){

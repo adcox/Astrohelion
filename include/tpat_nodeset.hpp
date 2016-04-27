@@ -67,9 +67,9 @@ public:
 	// Operators
 
 	// Set and Get Functions
+	virtual double getEpoch(int) const;
 	std::vector<tpat_constraint> getNodeCons(int) const;
 	tpat_node getNode(int) const;
-
 	int getNumCons() const;
 	int getNumNodes() const;
 	double getTOF(int) const;
@@ -78,7 +78,8 @@ public:
 	void addConstraint(tpat_constraint);
 	virtual void appendNode(tpat_node);
 	int createNodesAtEvent(int, tpat_event);
-	virtual int createNodesAtEvents(int, std::vector<tpat_event>);
+	int createNodesAtEvents(int, std::vector<tpat_event>);
+	virtual int createNodesAtEvents(int, std::vector<tpat_event>, double);
 	virtual void deleteNode(int);
 	virtual void insertNode(int, tpat_node);
 

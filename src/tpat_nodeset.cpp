@@ -95,6 +95,22 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ar
 //-----------------------------------------------------
 
 /**
+ *	@brief Get the epoch for a specific node.
+ *	@details This function can be overridden for nonautonomous systems;
+ *	as a default, this function returns 0 regardless of the node index, 
+ *	as is the case for autonomous systems.
+ *	
+ *	@param ix node index; if less than 0, the index counts
+ *	backwards from the end of the nodeset
+ *	
+ *	@return non-dimensional time-of-flight between nodes ix and ix+1
+ */
+double tpat_nodeset::getEpoch(int ix) const {
+	(void) ix;
+	return 0;
+}//====================================================
+
+/**
  *	@brief Retrieve the constraints for a specific node
  *	@param ix the index of the node. If less than 0, it will
  *	count backward from the end of the nodeset
@@ -244,7 +260,8 @@ void tpat_nodeset::insertNode(int ix, tpat_node node) {
  *  specified event occurs
  *  @details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
- *  integrated path
+ *  integrated path. The minimum acceptable time between events is assumed to 
+ *  be 1e-2 nondimensional units.
  * 
  *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
  *  inserted after this node.
@@ -264,6 +281,28 @@ int tpat_nodeset::createNodesAtEvent(int priorNodeIx, tpat_event evt){
  *  specified events occur
  *  @details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path. The minimum acceptable time between events is assumed to 
+ *  be 1e-2 nondimensional units.
+ * 
+ *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
+ *  inserted after this node.
+ *  @param events a vector of events that identify the node locations. If multiple occurences
+ *  are located, multiple nodes will be inserted. If nond of the events occur,
+ *  no nodes are inserted
+ 
+ *  @return the number of nodes created and inserted into the nodeset.
+ *  @see createNodesAtEvent
+ *  @see createNodesAtEvents(int, std::vector<tpat_event>, double)
+ */
+int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts){
+	return createNodesAtEvents(priorNodeIx, evts, 1e-2);
+}//====================================================
+
+/**
+ *  @brief Insert a node after the specified node at any locations where the
+ *  specified events occur
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path
  * 
  *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
@@ -271,10 +310,12 @@ int tpat_nodeset::createNodesAtEvent(int priorNodeIx, tpat_event evt){
  *  @param events a vector of events that identify the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If nond of the events occur,
  *  no nodes are inserted
- * 
+ *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  times-of-flight greater than or equal to this amount
+ *  
  *  @return the number of nodes created and inserted into the nodeset.
  */
-int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts){
+int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts, double minTimeDiff){
 	if(priorNodeIx < 0)
 		priorNodeIx += steps.size();
 
@@ -290,9 +331,13 @@ int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> e
 		engine.addEvent(evts[i]);
 	}
 	
-	engine.runSim(getState(priorNodeIx), getTOF(priorNodeIx));	// This will need to be modified for non-autonomous systems to include epoch
+	// Get an arc that spans the entire segment less a small amount of time at the end
+	// to ensure that no new nodes are created with minTimeDiff of the next node
+	// This will need to be modified for non-autonomous systems to include epoch
+	engine.runSim(getState(priorNodeIx), getEpoch(priorNodeIx), getTOF(priorNodeIx) - minTimeDiff);
 	tpat_traj traj = engine.getTraj();
 
+	double T0 = traj.getTime(0);
 	std::vector<tpat_event> events = engine.getEvents();
 	std::vector<eventRecord> evtRecs = engine.getEventRecords();
 	int evtCount = 0;
@@ -302,10 +347,10 @@ int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> e
 
 			// If the event occured, find the corresponding trajectory state and add that to the nodeset
 			if(events[evtRecs[e].eventIx] == evts[i]){
-				steps.insert(steps.begin() + priorNodeIx + evtCount + 1, tpat_node(traj.getState(evtRecs[e].stepIx), NAN));
-				tof = traj.getTime(evtRecs[e].stepIx) - sumTOF;
+				tof = traj.getTime(evtRecs[e].stepIx) - sumTOF - T0;
 
-				if(tof > 1e-3){
+				if(tof > minTimeDiff){
+					steps.insert(steps.begin() + priorNodeIx + evtCount + 1, tpat_node(traj.getState(evtRecs[e].stepIx), NAN));
 					tpat_node *prevNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
 					prevNode->setTOF(tof);
 	
@@ -319,10 +364,9 @@ int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> e
 	if(evtCount > 0){
 		// Update the TOF of the last node to flow nicely into the next node from the original set
 		tpat_node *priorNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
-		priorNode->setTOF(traj.getTime(-1) - sumTOF);
+		priorNode->setTOF(traj.getTime(-1) + minTimeDiff - sumTOF - T0);
 
-		// Update all constraints to have the proper index values
-		updateCons();
+		updateCons();	// Update all constraints to have the proper index values
 	}
 
 	return evtCount;

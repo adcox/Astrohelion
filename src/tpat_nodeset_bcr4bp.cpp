@@ -241,59 +241,11 @@ void tpat_nodeset_bcr4bp::appendNode(tpat_node node){
  * 
  *  @return the number of nodes created and inserted into the nodeset.
  */
-int tpat_nodeset_bcr4bp::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts){
-	if(priorNodeIx < 0)
-		priorNodeIx += steps.size();
-
-	if(priorNodeIx < 0 || priorNodeIx > ((int)steps.size()))
-		throw tpat_exception("tpat_nodeset::createNodesAtEvent: invalid index");
-
-	// Create a simulation and add the event to it
-	tpat_simulation_engine engine(sysData);
-	engine.clearEvents();		// don't use crash events
-
-	for(size_t i = 0; i < evts.size(); i++){
-		evts[i].setStopOnEvent(false);	// Ignore stopping conditions that other processes may have imposed
-		engine.addEvent(evts[i]);
-	}
-	
-	engine.runSim(getState(priorNodeIx), getEpoch(priorNodeIx), getTOF(priorNodeIx));	// This will need to be modified for non-autonomous systems to include epoch
-	tpat_traj traj = engine.getTraj();
-
-	double T0 = traj.getTime(0);
-	std::vector<tpat_event> events = engine.getEvents();
-	std::vector<eventRecord> evtRecs = engine.getEventRecords();
-	int evtCount = 0;
-	double sumTOF = 0, tof = 0;
-	for(size_t e = 0; e < evtRecs.size(); e++){
-		for(size_t i = 0; i < evts.size(); i++){
-
-			// If the event occured, find the corresponding trajectory state and add that to the nodeset
-			if(events[evtRecs[e].eventIx] == evts[i]){
-				steps.insert(steps.begin() + priorNodeIx + evtCount + 1, tpat_node(traj.getState(evtRecs[e].stepIx), NAN));
-				tof = traj.getTime(evtRecs[e].stepIx) - sumTOF - T0;
-
-				if(tof > 1e-3){
-					tpat_node *prevNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
-					prevNode->setTOF(tof);
-	
-					sumTOF += tof;
-					evtCount++;
-				}
-			}
-		}
-	}
-
-	if(evtCount > 0){
-		// Update the TOF of the last node to flow nicely into the next node from the original set
-		tpat_node *priorNode = static_cast<tpat_node*>(&(steps[priorNodeIx + evtCount]));
-		priorNode->setTOF(traj.getTime(-1) - sumTOF - T0);
-
-		updateCons();	// Update all constraints to have the proper index values
-		initEpochs();	// Update all epochs so that time flows smoothly
-	}
-
-	return evtCount;
+int tpat_nodeset_bcr4bp::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts, double minTimeDiff){
+	// Do the default behavior, then make sure epochs are set correctly
+	int count = tpat_nodeset::createNodesAtEvents(priorNodeIx, evts, minTimeDiff);
+	initEpochs();
+	return count;
 }//=============================================
 
 /**

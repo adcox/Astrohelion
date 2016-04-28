@@ -204,7 +204,7 @@ const char* tpat_constraint::getConTypeStr(tpat_constraint::tpat_constraint_tp t
 		case tpat_constraint::SP_DIST: { return "SP_DIST"; break; }
 		case tpat_constraint::SP_MAX_DIST: { return "SP_MAX_DIST"; break; }
 		case tpat_constraint::TOF: { return "TOF"; break; }
-		case tpat_constraint::APSE: {return "APS"; break; }
+		case tpat_constraint::APSE: {return "APSE"; break; }
 		case tpat_constraint::CONT_PV: {return "CONTINUOUS_POSITION_VELOCITY"; break; }
 		case tpat_constraint::CONT_EX: { return "CONTINUOUS_EXTRA"; break; }
 		case tpat_constraint::PSEUDOARC: { return "PSEUDO-ARCLENGTH"; break; }

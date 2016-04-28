@@ -297,114 +297,114 @@ void testBCR4BPCons(){
 	tpat_correction_engine corrector;
 	printColor(BOLDBLACK, "Testing BCR4BP Multiple Shooting Constraints\n");
 
-	// // STATE
-	// printColor(BOLDBLACK, "STATE Constraint\n");
-	// double stateConData[] = {-0.77, 0.5, NAN, NAN, NAN, NAN};
-	// tpat_constraint stateCon(tpat_constraint::STATE, 4, stateConData, 6);
-	// halfLyapNodeset.addConstraint(stateCon);
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	corrector.multShoot(&halfLyapNodeset);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(stateCon.getNode());
-	// 	std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "STATE Constraint: " << FAIL << std::endl;
-	// }
+	// STATE
+	printColor(BOLDBLACK, "STATE Constraint\n");
+	double stateConData[] = {-0.77, 0.5, NAN, NAN, NAN, NAN};
+	tpat_constraint stateCon(tpat_constraint::STATE, 4, stateConData, 6);
+	halfLyapNodeset.addConstraint(stateCon);
+	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(stateCon.getNode());
+		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "STATE Constraint: " << FAIL << std::endl;
+	}
 
-	// // MATCH_ALL
-	// printColor(BOLDBLACK, "MATCH_ALL Constraint\n");
-	// double matchAllConData = 0;
-	// tpat_constraint matchAllCon(tpat_constraint::MATCH_ALL, 4, &matchAllConData, 1);
-	// halfLyapNodeset.clearConstraints();
-	// halfLyapNodeset.addConstraint(matchAllCon);
-	// // halfLyapNodeset.print();
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	corrector.multShoot(&halfLyapNodeset);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(matchAllCon.getNode());
-	// 	initState = correctedSet.getState(0);
-	// 	std::cout << "MATCH_ALL Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "MATCH_ALL Constraint: " << FAIL << std::endl;
-	// }
+	// MATCH_ALL
+	printColor(BOLDBLACK, "MATCH_ALL Constraint\n");
+	double matchAllConData = 0;
+	tpat_constraint matchAllCon(tpat_constraint::MATCH_ALL, 4, &matchAllConData, 1);
+	halfLyapNodeset.clearConstraints();
+	halfLyapNodeset.addConstraint(matchAllCon);
+	// halfLyapNodeset.print();
+	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(matchAllCon.getNode());
+		initState = correctedSet.getState(0);
+		std::cout << "MATCH_ALL Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "MATCH_ALL Constraint: " << FAIL << std::endl;
+	}
 
-	// // MATCH_CUST
-	// printColor(BOLDBLACK, "MATCH_CUST Constraint\n");
-	// double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
-	// tpat_constraint matchCustCon(tpat_constraint::MATCH_CUST, 4, matchCustConData, 6);
-	// halfLyapNodeset.clearConstraints();
-	// halfLyapNodeset.addConstraint(matchCustCon);
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	corrector.multShoot(&halfLyapNodeset);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(matchCustCon.getNode());
-	// 	initState = correctedSet.getState(0);
-	// 	finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
-	// 	initState.erase(initState.begin()+2, initState.end());
-	// 	std::cout << "MATCH_CUST Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "MATCH_CUST Constraint: " << FAIL << std::endl;
-	// }
+	// MATCH_CUST
+	printColor(BOLDBLACK, "MATCH_CUST Constraint\n");
+	double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
+	tpat_constraint matchCustCon(tpat_constraint::MATCH_CUST, 4, matchCustConData, 6);
+	halfLyapNodeset.clearConstraints();
+	halfLyapNodeset.addConstraint(matchCustCon);
+	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(matchCustCon.getNode());
+		initState = correctedSet.getState(0);
+		finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
+		initState.erase(initState.begin()+2, initState.end());
+		std::cout << "MATCH_CUST Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "MATCH_CUST Constraint: " << FAIL << std::endl;
+	}
 
-	// // DIST
-	// printColor(BOLDBLACK, "DIST Constraint\n");
-	// double matchDistConData[] = {1, 1.0};
-	// tpat_constraint matchDistCon(tpat_constraint::DIST, 3, matchDistConData, 2);
-	// halfLyapNodeset.clearConstraints();
-	// halfLyapNodeset.addConstraint(matchDistCon);
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	corrector.multShoot(&halfLyapNodeset);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(matchDistCon.getNode());
-	// 	std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
-	// 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	// 	std::cout << "DIST Constraint: " << (std::abs(dist - matchDistConData[1]) < 1e-12 ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "DIST Constraint: " << FAIL << std::endl;
-	// }
+	// DIST
+	printColor(BOLDBLACK, "DIST Constraint\n");
+	double matchDistConData[] = {1, 1.0};
+	tpat_constraint matchDistCon(tpat_constraint::DIST, 3, matchDistConData, 2);
+	halfLyapNodeset.clearConstraints();
+	halfLyapNodeset.addConstraint(matchDistCon);
+	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(matchDistCon.getNode());
+		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
+		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
+		std::cout << "DIST Constraint: " << (std::abs(dist - matchDistConData[1]) < 1e-12 ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "DIST Constraint: " << FAIL << std::endl;
+	}
 
-	// // MIN_DIST
-	// printColor(BOLDBLACK, "MIN_DIST Constraint\n");
-	// matchDistConData[1] = 1.1;
-	// matchDistCon.setData(matchDistConData, 2);
-	// matchDistCon.setType(tpat_constraint::MIN_DIST);
-	// halfLyapNodeset.clearConstraints();
-	// halfLyapNodeset.addConstraint(matchDistCon);
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	corrector.multShoot(&halfLyapNodeset);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(matchDistCon.getNode());
-	// 	std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
-	// 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	// 	std::cout << "MIN_DIST Constraint: " << (dist >= matchDistConData[1] ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "MIN_DIST Constraint: " << FAIL << std::endl;
-	// }
+	// MIN_DIST
+	printColor(BOLDBLACK, "MIN_DIST Constraint\n");
+	matchDistConData[1] = 1.1;
+	matchDistCon.setData(matchDistConData, 2);
+	matchDistCon.setType(tpat_constraint::MIN_DIST);
+	halfLyapNodeset.clearConstraints();
+	halfLyapNodeset.addConstraint(matchDistCon);
+	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(matchDistCon.getNode());
+		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
+		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
+		std::cout << "MIN_DIST Constraint: " << (dist >= matchDistConData[1] ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "MIN_DIST Constraint: " << FAIL << std::endl;
+	}
 
-	// // MAX_DIST
-	// printColor(BOLDBLACK, "MAX_DIST Constraint\n");
-	// matchDistConData[1] = 0.9;
-	// // matchDistConData[1] = 2;
-	// matchDistCon.setData(matchDistConData, 2);
-	// matchDistCon.setType(tpat_constraint::MAX_DIST);
-	// halfLyapNodeset.clearConstraints();
-	// halfLyapNodeset.addConstraint(matchDistCon);
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	corrector.multShoot(&halfLyapNodeset);
-	// 	correctedSet = corrector.getBCR4BPR_Output();
-	// 	finalState = correctedSet.getState(matchDistCon.getNode());
-	// 	std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
-	// 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	// 	std::cout << "MAX_DIST Constraint: " << (dist <= matchDistConData[1] ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "MAX_DIST Constraint: " << FAIL << std::endl;
-	// }
+	// MAX_DIST
+	printColor(BOLDBLACK, "MAX_DIST Constraint\n");
+	matchDistConData[1] = 0.9;
+	// matchDistConData[1] = 2;
+	matchDistCon.setData(matchDistConData, 2);
+	matchDistCon.setType(tpat_constraint::MAX_DIST);
+	halfLyapNodeset.clearConstraints();
+	halfLyapNodeset.addConstraint(matchDistCon);
+	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	try{
+		corrector.multShoot(&halfLyapNodeset);
+		correctedSet = corrector.getBCR4BPR_Output();
+		finalState = correctedSet.getState(matchDistCon.getNode());
+		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
+		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
+		std::cout << "MAX_DIST Constraint: " << (dist <= matchDistConData[1] ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "MAX_DIST Constraint: " << FAIL << std::endl;
+	}
 
 	// MAX_DELTA_V
 	printColor(BOLDBLACK, "MAX_DELTA_V Constraint\n");
@@ -525,7 +525,7 @@ void testBCR4BPCons(){
 
 		// Compute the state derivative at the node to get acceleration
 		double stateDot[6];
-		bcr4bpr_simple_EOMs(correctedSet.getEpoch(spCon.getNode()), &(finalState[0]), stateDot, &sys);
+		tpat_model_bcr4bpr::simpleEOMs(correctedSet.getEpoch(spCon.getNode()), &(finalState[0]), stateDot, &sys);
 
 		// Adjust derivative from EOMs to remove terms from rotating frame
 		stateDot[3] += -2*sys.getK()*finalState[4] - sys.getK()*sys.getK()*finalState[0] - sys.getK()*sys.getK()*(1/sys.getK() - sys.getMu());
@@ -621,8 +621,8 @@ void testBCR4BPCons(){
  *  @brief Test all constraint types available to ensure they converge correctly
  */
 int main(void){
-	// testCR3BP_SE_Cons();
-	// testCR3BP_EM_Cons();
+	testCR3BP_SE_Cons();
+	testCR3BP_EM_Cons();
 	testBCR4BPCons();
 
 	return EXIT_SUCCESS;

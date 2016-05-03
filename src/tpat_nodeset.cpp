@@ -488,7 +488,7 @@ void tpat_nodeset::initSetFromICs_time(const double IC[6], const tpat_sys_data *
 		steps.push_back(tpat_node(traj.getState(0), segTOF));
 		ic = traj.getState(-1);
 
-		if(n == numNodes-1){
+		if(n == numNodes-2){
 			steps.push_back(tpat_node(traj.getState(-1), NAN));
 		}
 	}

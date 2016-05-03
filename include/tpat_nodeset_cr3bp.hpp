@@ -57,7 +57,9 @@ public:
 
 	// Set and Get 
 	double getJacobi(int) const;
+	double getJacobiByIx(int) const;
 	void setJacobi(int, double);
+	void setJacobiByIx(int, double);
 
 protected:
 	// Utility

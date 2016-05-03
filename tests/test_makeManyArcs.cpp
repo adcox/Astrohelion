@@ -24,7 +24,7 @@ int main(){
 	std::vector<tpat_traj_cr3bp> allArcs;
 	for(int n = 0; n < scienceOrbitNodes.getNumNodes(); n++){
 		printf("Simulating Arc #%03d\n", n);
-		std::vector<double> nodeIC = scienceOrbitNodes.getNode(n).getPosVelState();
+		std::vector<double> nodeIC = scienceOrbitNodes.getNodeByIx(n).getState();
 		double tof = 4;
 		sim.runSim(nodeIC, tof);
 		allArcs.push_back(sim.getCR3BP_Traj());

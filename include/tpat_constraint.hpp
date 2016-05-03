@@ -175,6 +175,16 @@ class tpat_constraint : public tpat{
 						 *	the continuation step size.
 						 */
 		};
+
+		/**
+		 *  @brief Describes how a constraint is applied, i.e., what type of object is controlled
+		 *  by the constraint.
+		 */
+		enum tpat_conApp_tp{
+			APP_TO_NODE,	//!< Constraint applies to nodes
+			APP_TO_SEG,		//!< Constraint applies to segments
+			APP_TO_ARC		//!< Constraint applies to arcs (as a whole)
+		};
 		
 		tpat_constraint();
 		tpat_constraint(tpat_constraint_tp);
@@ -185,25 +195,31 @@ class tpat_constraint : public tpat{
 		
 		tpat_constraint& operator =(const tpat_constraint&);
 
-		tpat_constraint_tp getType() const;
-		int getNode() const;
-		std::vector<double> getData() const;
 		int countConstrainedStates() const;
+		
+		tpat_conApp_tp getAppType() const;
+		static const char* getConTypeStr(tpat_constraint_tp);
+		std::vector<double> getData() const;
+		int getNode() const;
+		tpat_constraint_tp getType() const;
+		const char* getTypeStr() const;
+		
+		void print() const;
 
 		void setType(tpat_constraint_tp);
 		void setNode(int);
 		void setData(std::vector<double>);
 		void setData(const double*, int);
-
-		void print() const;
-		const char* getTypeStr() const;
-		static const char* getConTypeStr(tpat_constraint_tp);
+		
+		
 	private:
 		void copyMe(const tpat_constraint&);
+		void setAppType();
 		
-		tpat_constraint_tp type = NONE;	//!< The type of constraint
-		int node = 0;				//!< Node index that this constraint applies to
-		std::vector<double> data;	//!< Data for this constraint
+		tpat_constraint_tp type = NONE;		//!< The type of constraint
+		tpat_conApp_tp appType = APP_TO_NODE;	//!< How this constraint is applied
+		int node = 0;						//!< Node index that this constraint applies to
+		std::vector<double> data;			//!< Data for this constraint
 };
 
 #endif

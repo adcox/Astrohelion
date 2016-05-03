@@ -302,7 +302,7 @@ std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
     if(traj != NULL && traj != 0){
         std::vector<tpat_event> endEvents;
         for(size_t i = 0; i < eventOccurs.size(); i++){
-            if(eventOccurs[i].stepIx == (traj->getLength() - 1)){
+            if(eventOccurs[i].stepIx == (traj->getNumNodes() - 1)){
                 endEvents.push_back(events[eventOccurs[i].eventIx]);
             }
         }
@@ -664,7 +664,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
-    printVerbColor(verbose == ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getLength()-1);
+    printVerbColor(verbose == ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
 
     // Summarize event occurrences
     for(size_t i = 0; i < eventOccurs.size(); i++){
@@ -701,7 +701,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
  *  @return whether or not the simulation should end (an event triggers killSim)
  */
 bool tpat_simulation_engine::locateEvents(const double *y, double t){
-    int numPts = traj->getLength();
+    int numPts = traj->getNumNodes();
     const tpat_model *model = sysData->getModel();
     
     // Look through all events
@@ -716,18 +716,18 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
-            double t0 = traj->getTime(-2);          // Time from the state before last
-            double ti = traj->getTime(-1);          // Time from the previous state
+            double t0 = traj->getTimeByIx(-2);          // Time from the state before last
+            double ti = traj->getTimeByIx(-1);          // Time from the previous state
             double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
 
             // Copy IC into vector - Use the state from two iterations ago to avoid
             // numerical problems when the previous state is REALLY close to the event
-            std::vector<double> generalIC = traj->getState(-2);
+            std::vector<double> generalIC = traj->getStateByIx(-2);
 
             if(verbose == ALL_MSG){
                 printColor(BLUE, "Step index = %d\n", numPts-1);
                 printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
-                    traj->getTime(-1), traj->getTime(-2));
+                    traj->getTimeByIx(-1), traj->getTimeByIx(-2));
                 printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
                     y[1], y[2], y[3], y[4], y[5]);
                 printColor(BLUE, "tof = %f\n", tof);
@@ -739,13 +739,13 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
             if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
-                int timeSize = traj->getLength();
+                int timeSize = traj->getNumNodes();
                 eventRecord rec(ev, timeSize - 1);
                 eventOccurs.push_back(rec);
 
                 // Update event state
-                std::vector<double> state = traj->getState(-1);
-                double lastT = traj->getTime(-1);
+                std::vector<double> state = traj->getStateByIx(-1);
+                double lastT = traj->getTimeByIx(-1);
                 events.at(ev).updateDist(&(state[0]), lastT);
                 
                 if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){

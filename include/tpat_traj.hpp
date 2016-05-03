@@ -25,7 +25,6 @@
 #include "matio.h"
 
 // Forward Declarations
-class tpat_traj_step;
 class tpat_nodeset;
 
 /**
@@ -57,16 +56,12 @@ public:
 	tpat_traj(const tpat_traj&);
 	tpat_traj(const tpat_arc_data&);
 
+	static tpat_traj fromNodeset(tpat_nodeset);
 	// Operators
 
 	// Set and Get Functions
-	double getTime(int) const;
-	double getTotalTOF() const;
-	tpat_traj_step getStep(int) const;
-
-	void appendStep(tpat_traj_step);
-	void setTime(int, double);
-
+	double getTimeByIx(int) const;
+	void setTimeByIx(int, double);
 	void shiftAllTimes(double);
 	
 	// Utility Functions

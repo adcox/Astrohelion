@@ -45,6 +45,7 @@ tpat_constraint::tpat_constraint(){
 tpat_constraint::tpat_constraint(tpat_constraint_tp type){
 	this->type = type;
 	data.clear();
+	setAppType();
 }//====================================================
 
 /**
@@ -57,6 +58,7 @@ tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, std::vector<
 	this->type = type;
 	this->node = node;
 	this->data = data;
+	setAppType();
 }//====================================================
 
 /**
@@ -70,6 +72,7 @@ tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, const double
 	this->type = type;
 	this->node = node;
 	this->data.insert(this->data.begin(), data, data + data_len);
+	setAppType();
 }//====================================================
 
 /**
@@ -106,6 +109,13 @@ tpat_constraint& tpat_constraint::operator =(const tpat_constraint& c){
 //-----------------------------------------------------
 
 /**
+ *  @brief Retrieve the application type for this constraint, i.e., what type of
+ *  objects it controls and can be applied to
+ *  @return the application type
+ */
+tpat_constraint::tpat_conApp_tp tpat_constraint::getAppType() const{ return appType; }
+
+/**
  *	@return what type of constraint this is
  */
 tpat_constraint::tpat_constraint_tp tpat_constraint::getType() const { return type; }
@@ -137,7 +147,10 @@ int tpat_constraint::countConstrainedStates() const{
  *	@brief Set the constraint type
  *	@param t the type
  */
-void tpat_constraint::setType(tpat_constraint::tpat_constraint_tp t){ type = t; }
+void tpat_constraint::setType(tpat_constraint::tpat_constraint_tp t){
+	type = t;
+	setAppType(); 	// Update, if necessary
+}
 
 /**
  *	@brief Set the node index this constraint applies to
@@ -172,6 +185,7 @@ void tpat_constraint::setData(const double *dat, int len){
  *  @param c reference to a constraint object
  */
 void tpat_constraint::copyMe(const tpat_constraint &c){
+	appType = c.appType;
 	type = c.type;
 	node = c.node;
 	data = c.data;
@@ -221,4 +235,21 @@ void tpat_constraint::print() const {
 		printf("%12.5f ", data[n]);
 	}
 	printf("\n");
+}//====================================================
+
+/**
+ *  @brief Set the application type appropriately based on the constraint type
+ */
+void tpat_constraint::setAppType(){
+	switch(type){
+		case tpat_constraint::PSEUDOARC:
+		case tpat_constraint::TOF:
+		case tpat_constraint::MAX_DELTA_V:
+		case tpat_constraint::DELTA_V:
+			appType = tpat_constraint::APP_TO_ARC;
+			break;
+		default:
+			appType = tpat_constraint::APP_TO_NODE;
+			break;
+	}
 }//====================================================

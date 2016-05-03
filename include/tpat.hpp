@@ -150,7 +150,7 @@ struct tpat_initializer {
 	tpat_settings settings;	//!< A collection of settings that various TPAT algorithms use
 
 	tpat_initializer(){
-		std::cout << "Constructing tpat_initializer";
+		std::cout << "Constructing tpat_initializer" << std::endl;
 	}
 
 	/**

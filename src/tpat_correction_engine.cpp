@@ -313,7 +313,7 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 
 	// Save original nodes for later access (particularly when variable time is off)
 	for(int n = 0; n < set->getNumNodes(); n++){
-		it.origNodes.push_back(set->getNode(n));
+		it.origNodes.push_back(set->getNodeByIx(n));
 	}
 
 	// Get some basic data from the input nodeset
@@ -339,11 +339,17 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 
 	// Add all extra constraints from the nodeset to the total constraint vector
 	for(int n = 0; n < set->getNumNodes(); n++){
-		std::vector<tpat_constraint> nodeCons = set->getNodeCons(n);
-		for(size_t c = 0; c < nodeCons.size(); c++){
-			it.allCons.push_back(nodeCons[c]);
-		}
+		std::vector<tpat_constraint> nodeCons = set->getNodeByIx(n).getConstraints();
+		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
+
+	for(int s = 0; s < set->getNumSegs(); s++){
+		std::vector<tpat_constraint> segCons = set->getSegByIx(s).getConstraints();
+		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
+	}
+
+	std::vector<tpat_constraint> arcCons = set->getArcConstraints();
+	it.allCons.insert(it.allCons.end(), arcCons.begin(), arcCons.end());
 
 	// Compute number of extra consraint functions to add
 	it.numSlack = 0;
@@ -518,9 +524,9 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 
 		// Compute Delta-Vs between node segments
 		for(int n = 0; n < it.numNodes - 1; n++){
-			std::vector<double> lastState = it.allSegs[n].getState(-1);
+			std::vector<double> lastState = it.allSegs[n].getStateByIx(-1);
 			// velCon has false for a velocity state if there is a discontinuity between v_n,f and v_n+1
-			std::vector<bool> velCon = it.nodeset->getNode(n+1).getVelCon();
+			std::vector<bool> velCon = it.nodeset->getNodeByIx(n+1).getVelCon();
 			for(int s = 3; s < 6; s++){
 				// Compute difference in velocity; if velCon[s-3] is true, then velocity
 				// should be continuous and any difference is numerical error, so set to

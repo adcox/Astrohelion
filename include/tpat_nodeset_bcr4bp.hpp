@@ -51,27 +51,17 @@ public:
 		tpat_nodeDistro_tp);
 	tpat_nodeset_bcr4bp(std::vector<double>, const tpat_sys_data_bcr4bpr*, double, double, int,
 		tpat_nodeDistro_tp);
-	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&, int, int);
+	// tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&, int, int);
 	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&);
 	tpat_nodeset_bcr4bp(const tpat_arc_data&);
 
 	// Operators
 
 	// Set and Get Functions
-	double getEpoch(int) const;
-	void appendNode(tpat_node);
-	int createNodesAtEvents(int, std::vector<tpat_event>, double);
-	void deleteNode(int);
-	void insertNode(int, tpat_node);
 
 	// Utility Functions
-	void readFromMat(const char*);
-	void saveToMat(const char*) const;
-	void print() const;
 	
 private:
-	void initEpochs();
-	void initEpochs(double);
 	void initExtraParam();
 };
 

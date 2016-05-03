@@ -31,7 +31,6 @@
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 /**
@@ -123,33 +122,30 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, const tpat_sys_d
  *  @param traj a pointer to the trajectory we should store the data in
  */
 void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, tpat_traj* traj) const{
-	// Save the position and velocity states
-    double state[6];
-    std::copy(y, y+6, state);
-
-    // Save STM
-    double stmElm[36];
-    std::copy(y+6, y+42, stmElm);
-
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const tpat_sys_data_cr3bp_ltvp *ltSys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(traj->getSysData());
 
-    // Compute acceleration (elements 3 - 5)
+    // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
     eomParamStruct paramStruct(ltSys);
     simpleEOMs(t, y, dsdt, &paramStruct);
+    
+    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
+    int id = traj->addNode(tpat_node(y, dsdt+3, t));
 
-    tpat_traj_step step(state, t, dsdt+3, stmElm);
-    traj->appendStep(step);
+    if(id > 0){
+        double tof = t - traj->getNode(id-1).getEpoch();
+        traj->addSeg(tpat_segment(id-1, id, tof, y+6));
+    }
 
     tpat_traj_cr3bp_ltvp *cr3bpTraj = static_cast<tpat_traj_cr3bp_ltvp*>(traj);
 
     // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
-    cr3bpTraj->setJacobi(-1, tpat_model_cr3bp::getJacobi(y, ltSys->getMu()));
+    cr3bpTraj->setJacobiByIx(-1, tpat_model_cr3bp::getJacobi(y, ltSys->getMu()));
 
     // Compute and save mass of s/c; assumes t began at 0
     double g0_nonDim = G_GRAV_0*ltSys->getCharT()*ltSys->getCharT()/ltSys->getCharL();
-    cr3bpTraj->setMass(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
+    cr3bpTraj->setMassByIx(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
 }//=====================================================
 
 /**

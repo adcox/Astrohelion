@@ -157,7 +157,7 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, const tpat_nodeset *
 
 	// Copy in the position and velocity states for each node
 	for(int n = 0; n < set->getNumNodes(); n++){
-		std::vector<double> state = set->getNode(n).getPosVelState();
+		std::vector<double> state = set->getNodeByIx(n).getState();
 		it->X.insert(it->X.end(), state.begin(), state.end());
 	}
 
@@ -167,8 +167,8 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, const tpat_nodeset *
 			it->X.insert(it->X.end(), set->getTotalTOF());
 		}else{
 			// Append the TOF for each node (except the last one, which isn't propagated)
-			for(int n = 0; n < set->getNumNodes()-1; n++){
-				it->X.insert(it->X.end(), set->getNode(n).getTOF());
+			for(int s = 0; s < set->getNumSegs(); s++){
+				it->X.insert(it->X.end(), set->getSegByIx(s).getTOF());
 			}
 		}
 	}
@@ -193,7 +193,7 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset 
 				// Get data
 				allTOF[n] = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
 			}else{
-				allTOF[n] = set->getTOF(n);
+				allTOF[n] = set->getTOFByIx(n);
 			}
 		}
 	}
@@ -240,7 +240,7 @@ void tpat_model::multShoot_createContCons(iterationData *it, const tpat_nodeset 
 	// Create position and velocity constraints
     for(int n = 1; n < set->getNumNodes(); n++){
         // Get a vector specifying which velocity states are continuous from the nodeset
-        std::vector<bool> velCon = set->getNode(n).getVelCon();
+        std::vector<bool> velCon = set->getNodeByIx(n).getVelCon();
         // If not continuous, put NAN into the constraint data; else unity
         double vxCon = velCon[0] ? 1 : NAN;
         double vyCon = velCon[1] ? 1 : NAN;
@@ -288,7 +288,7 @@ void tpat_model::multShoot_getSimICs(const iterationData *it, const tpat_nodeset
 		// Reverse scaling
 		*tof /= it->freeVarScale[2];	// Time scaling
 	}else{
-		*tof = set->getTOF(n);
+		*tof = set->getTOFByIx(n);
 	}
 	*t0 = 0;
 
@@ -400,9 +400,9 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 		throw tpat_exception("tpat_model::multShoot_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
 
 	// Get info about the arc that was integrated to reach node n
-	std::vector<double> lastState = it->allSegs.at(n-1).getState(-1);
-	std::vector<double> lastAccel = it->allSegs.at(n-1).getAccel(-1);
-	MatrixXRd stm = it->allSegs.at(n-1).getSTM(-1);
+	std::vector<double> lastState = it->allSegs.at(n-1).getStateByIx(-1);
+	std::vector<double> lastAccel = it->allSegs.at(n-1).getAccelByIx(-1);
+	MatrixXRd stm = it->allSegs.at(n-1).getSTMByIx(-1);
 	std::vector<double> conData = con.getData();
 	
 	// Loop through conData
@@ -688,7 +688,7 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 			Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
 			// Get info about the final state/accel of the integrated segment
-			MatrixXRd stm = it->allSegs[n].getSTM(-1);
+			MatrixXRd stm = it->allSegs[n].getSTMByIx(-1);
 
 			// Partial w.r.t. integrated path (newSeg) from node n
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
@@ -705,8 +705,8 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 			if(it->varTime){
 				// Derivative of the final state of arc n
 				std::vector<double> state_dot_data;
-				std::vector<double> lastState = it->allSegs[n].getState(-1);
-				std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
+				std::vector<double> lastState = it->allSegs[n].getStateByIx(-1);
+				std::vector<double> lastAccel = it->allSegs[n].getAccelByIx(-1);
 				state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
 				state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);

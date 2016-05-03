@@ -28,9 +28,9 @@ void test_cr3bp_sim(){
 	simEngine.runSim(ic, 2.77);
 	tpat_traj_cr3bp traj = simEngine.getCR3BP_Traj();
 
-	cout << "Trajectory contains " << traj.getLength() << " points" << endl;
+	cout << "Trajectory contains " << traj.getNumNodes() << " points" << endl;
 	
-	MatrixXRd lastSTM = traj.getSTM(traj.getLength()-1);
+	MatrixXRd lastSTM = traj.getSTMByIx(-1);
 	std::cout << lastSTM << std::endl;
 	// lastSTM.print("%12.4f");
 
@@ -52,7 +52,7 @@ void test_bcr4bpr_sim(){
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI);
 
 	tpat_traj_bcr4bp bcTraj = bcEngine.getBCR4BPR_Traj();
-	cout << "Trajectory contains " << bcTraj.getLength() << " points" << endl;
+	cout << "Trajectory contains " << bcTraj.getNumNodes() << " points" << endl;
 	bcTraj.saveToMat("data/bcHaloManifoldProp.mat");
 }
 

@@ -21,6 +21,8 @@
 #ifndef H_NEW_CLASS
 #define H_NEW_CLASS
 
+#include "tpat.hpp"
+
 // Forward Declarations
 
 
@@ -31,7 +33,7 @@
  *	@version 
  *	@copyright GNU GPL v3.0
  */
-class newClass{
+class newClass : public tpat{
 
 public:
 

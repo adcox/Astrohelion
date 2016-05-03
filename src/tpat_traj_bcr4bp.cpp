@@ -63,42 +63,6 @@ tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_arc_data &a) : tpat_traj(a){
 	initExtraParam();
 }//====================================================
 
-/**
- *	@brief Create a trajectory from a nodeset
- *
- *	This algorithm will concatenate trajectories integrated from each node in 
- *	the nodeset. It does not check to make sure the arcs are continuous; that
- *	is up to you. The trajectory is constructed via a simulation engine that ignores
- *	crashes as we assume the initial nodeset has been propagated to either ignore
- *	or avoid the primaries; will not challenge that behavior. Each node is integrated
- *	for the associated time-of-flight and added (via operator +()) to a trajectory object.
- *
- *	@param nodes a nodeset
- *	@return a trajectory formed from the integrated nodeset
- *	
- *	@see tpat_traj::operator +()
- */
-tpat_traj_bcr4bp tpat_traj_bcr4bp::fromNodeset(tpat_nodeset_bcr4bp nodes){
-	const tpat_sys_data_bcr4bpr *sys = static_cast<const tpat_sys_data_bcr4bpr*>(nodes.getSysData());
-	tpat_simulation_engine simEngine(sys);
-	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
-	tpat_traj_bcr4bp totalTraj(sys);
-
-	for(int n = 0; n < nodes.getNumNodes()-1; n++){
-		simEngine.setRevTime(nodes.getTOF(n) < 0);
-		simEngine.runSim(nodes.getState(n), nodes.getEpoch(n), nodes.getTOF(n));
-
-		if(n == 0){
-			totalTraj = simEngine.getBCR4BPR_Traj();
-		}else{
-			tpat_traj_bcr4bp temp = simEngine.getBCR4BPR_Traj();
-			totalTraj += temp;
-		}
-	}
-
-	return totalTraj;
-}//====================================================
-
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------
@@ -141,12 +105,12 @@ double tpat_traj_bcr4bp::getGamma(){
  */
 std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
+	if(ix < 0 || ix > ((int)nodes.size()))
 		throw tpat_exception("tpat_traj_bcr4bp::getdqdT: invalid index");
 
-	return getExtraParam(ix, 1);
+	return getExtraParam(ix, 0);
 }//====================================================
 
 /**
@@ -157,13 +121,13 @@ std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
  */
 void tpat_traj_bcr4bp::set_dqdT(int ix, const double *dqdT){
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
+	if(ix < 0 || ix > ((int)nodes.size()))
 		throw tpat_exception("tpat_traj_bcr4bp::setdqdT: invalid index");
 
 	for(int i = 0; i < 6; i++)
-		steps[ix].setExtraParam(1+i, dqdT[i]);
+		nodes[ix].setExtraParam(0+i, dqdT[i]);
 }//====================================================
 
 /**
@@ -186,12 +150,8 @@ void tpat_traj_bcr4bp::set_dqdT(int ix, std::vector<double> dqdT){
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
 void tpat_traj_bcr4bp::initExtraParam(){
-	// This function in tpat_traj was already called, so 
-	// numExtraParam has been set to 1 and a row size has
-	// been appended for the time variable
-
 	// Add another variable for dqdT
-	numExtraParam = 2;
+	numExtraParam = 1;
 	extraParamRowSize.push_back(6);
 }//====================================================
 

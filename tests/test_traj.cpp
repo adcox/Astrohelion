@@ -26,10 +26,10 @@ void testCR3BPTraj(){
 	crTemp.readFromMat("data/crTraj.mat");
 
 	printf("Testing Save/Read functions on CR3BP Trajectory\n");
-	cout << "Same Final State: " << (crTraj.getState(-1) == crTemp.getState(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final Accel: " << (crTraj.getAccel(-1) == crTemp.getAccel(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final Time: " << (crTraj.getTime(-1) == crTemp.getTime(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final STM: " << (crTraj.getSTM(-1) == crTemp.getSTM(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final State: " << (crTraj.getStateByIx(-1) == crTemp.getStateByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Accel: " << (crTraj.getAccelByIx(-1) == crTemp.getAccelByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Time: " << (crTraj.getTimeByIx(-1) == crTemp.getTimeByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final STM: " << (crTraj.getSTMByIx(-1) == crTemp.getSTMByIx(-1) ? PASS : FAIL) << endl;
 	cout << "Same Final Jacobi: " << (crTraj.getJacobi(-1) == crTemp.getJacobi(-1) ? PASS : FAIL) << endl;
 }
 
@@ -46,10 +46,10 @@ void testBC4BPTraj(){
 	bcTemp.readFromMat("data/bcTraj.mat");
 
 	printf("Testing Save/Read functions on CR3BP Trajectory\n");
-	cout << "Same Final State: " << (bcTraj.getState(-1) == bcTemp.getState(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final Accel: " << (bcTraj.getAccel(-1) == bcTemp.getAccel(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final Time: " << (bcTraj.getTime(-1) == bcTemp.getTime(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final STM: " << (bcTraj.getSTM(-1) == bcTemp.getSTM(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final State: " << (bcTraj.getStateByIx(-1) == bcTemp.getStateByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Accel: " << (bcTraj.getAccelByIx(-1) == bcTemp.getAccelByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Time: " << (bcTraj.getTimeByIx(-1) == bcTemp.getTimeByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final STM: " << (bcTraj.getSTMByIx(-1) == bcTemp.getSTMByIx(-1) ? PASS : FAIL) << endl;
 	cout << "Same Final dqdT: " << (bcTraj.get_dqdT(-1) == bcTemp.get_dqdT(-1) ? PASS : FAIL) << endl;
 }
 

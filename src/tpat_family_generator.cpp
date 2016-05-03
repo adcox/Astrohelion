@@ -280,7 +280,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 	sim.runSim(IC, period/3);	// 1/3 period should be long enough to fly 1/4 of the trajectory
 
 	tpat_traj_cr3bp quarterArc = sim.getCR3BP_Traj();
-	IC = quarterArc.getState(-1);
+	IC = quarterArc.getStateByIx(-1);
 
 	int numNodes = 3;
 	std::vector<int> fixStates {2}; // force z-dot to be non-zero
@@ -425,8 +425,8 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
 		tpat_sys_data_cr3bp sys(sysData);
 
 		// Get the initial state and tof from the linearization
-		std::vector<double> IC = linTraj.getState(0);
-		double tof = linTraj.getTime(-1);
+		std::vector<double> IC = linTraj.getStateByIx(0);
+		double tof = linTraj.getTimeByIx(-1);
 
 		// Correct the initial guess to a true periodic orbit; we need a full DF matrix
 		// for a CONVERGED family member to start PAC
@@ -752,8 +752,8 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 	fixStates.push_back(indVar1);
 
 	// Get info from the initial guess trajectory
-	std::vector<double> IC = initialGuess.getState(0);
-	double tof = initialGuess.getTime(-1);
+	std::vector<double> IC = initialGuess.getStateByIx(0);
+	double tof = initialGuess.getTimeByIx(-1);
 
 	// Initialize counters and storage containers
 	int orbitCount = 0;
@@ -790,11 +790,11 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 		// Check for large changes in period to detect leaving family
 		if(!diverged && orbitCount > 2){
 			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
-			double dTOF = std::abs(perOrbit.getTime(-1)) - std::abs(members[members.size()-1].getTime(-1));
-			double percChange = std::abs(dTOF/perOrbit.getTime(-1));
+			double dTOF = std::abs(perOrbit.getTimeByIx(-1)) - std::abs(members[members.size()-1].getTimeByIx(-1));
+			double percChange = std::abs(dTOF/perOrbit.getTimeByIx(-1));
 			if(percChange > 0.25){
 				printf("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTime(-1));
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTimeByIx(-1));
 				diverged = true;
 			}
 		}
@@ -850,7 +850,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			}
 
 			// Compute eigenvalues
-			MatrixXRd mono = perOrbit.getSTM(-1);
+			MatrixXRd mono = perOrbit.getSTMByIx(-1);
 
 			double monoErr = std::abs(1.0 - mono.determinant());
 			if(monoErr > 1e-5)
@@ -875,18 +875,18 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 		}
 
 		// Create next initial guess
-		tof = perOrbit.getTime(-1);
+		tof = perOrbit.getTimeByIx(-1);
 
 		if(orbitCount < numSimple){
 			// Use simple continuation; copy the converged IC, step forward in the independent variable
-			IC = perOrbit.getState(0);
+			IC = perOrbit.getStateByIx(0);
 			IC.at(indVar1) += step_simple;
 		}else{
 
 			// Compute the slope for the first time
 			if(orbitCount == numSimple){
-				deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
-				deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
+				deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVar1] - members[orbitCount-2].getStateByIx(0)[indVar1];
+				deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
 				indVarSlope = deltaVar1/deltaVar2;
 			}
 
@@ -895,10 +895,10 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			int first = ((int)members.size()) - curveFitMem < 0 ? 0 : ((int)members.size()) - curveFitMem;
 
 			for(size_t n = first; n < members.size(); n++){
-				std::vector<double> ic = members[n].getState(0);
+				std::vector<double> ic = members[n].getStateByIx(0);
 				prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
-				prevStates.push_back(members[n].getTime(-1));
-				prevStates.push_back(members[n].getJacobi(0));
+				prevStates.push_back(members[n].getTimeByIx(-1));
+				prevStates.push_back(members[n].getJacobiByIx(0));
 			}
 
 			// This will hold the input depVars plus the unused independent variable
@@ -907,7 +907,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			if(std::abs(indVarSlope) > slopeThresh){
 				mirrorType = mirrorTypes[0];
 				// Use continuation in indVar1
-				IC.at(indVar1) = perOrbit.getState(0).at(indVar1) + tpat_util::sign(deltaVar1)*step_fitted_1;
+				IC.at(indVar1) = perOrbit.getStateByIx(0).at(indVar1) + tpat_util::sign(deltaVar1)*step_fitted_1;
 				fixStates.clear();
 				fixStates.push_back(indVar1);
 
@@ -921,7 +921,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			}else{
 				mirrorType = mirrorTypes[1];
 				// Use continuation in indVar2
-				IC.at(indVar2) = perOrbit.getState(0).at(indVar2) + tpat_util::sign(deltaVar2)*step_fitted_2;
+				IC.at(indVar2) = perOrbit.getStateByIx(0).at(indVar2) + tpat_util::sign(deltaVar2)*step_fitted_2;
 				fixStates.clear();
 				fixStates.push_back(indVar2);
 
@@ -946,8 +946,8 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			}
 
 			// Update slope
-			deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
-			deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
+			deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVar1] - members[orbitCount-2].getStateByIx(0)[indVar1];
+			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
 			indVarSlope = deltaVar1/deltaVar2;
 		}
 	}// end of while loop
@@ -992,7 +992,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	printf("Correcting Initial Guess...\n");
 	
 	// Clear constraints and add new ones
-	familyMember.clearConstraints();
+	familyMember.clearAllConstraints();
 
 	/*	Constraint Method 1:
 	 *	* Apply a periodicity constraint that forces the first and final node to be collocated,
@@ -1282,7 +1282,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		orbitCount++;
 
 		// Compute eigenvalues
-		MatrixXRd mono = perOrbit.getSTM(-1);
+		MatrixXRd mono = perOrbit.getSTMByIx(-1);
 
 		double monoErr = std::abs(1.0 - mono.determinant());
 		if(monoErr > 1e-5)
@@ -1327,10 +1327,9 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd 
 	tpat_nodeset_cr3bp newMember(sys);
 
 	for(int n = 0; n < familyItData.numNodes; n++){
-		// tof stored in the element after all the nodes; NAN for last node
-		double tof = n < familyItData.numNodes - 1 ? X[6*familyItData.numNodes]/(familyItData.numNodes - 1) : NAN;
-		tpat_node node(X+6*n, tof);
-		newMember.appendNode(node);
+		newMember.addNode(tpat_node(X+6*n, 0));
+		if(n > 0)
+			newMember.addSeg(tpat_segment(n-1, n, X[6*familyItData.numNodes]/(familyItData.numNodes - 1)));
 	}
 
 	// Add same constraints

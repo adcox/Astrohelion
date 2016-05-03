@@ -30,7 +30,6 @@
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_traj.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 #include <cmath>
@@ -208,6 +207,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 		double xi0 = xAmp ? Axy*cos(phi) : -Axy/beta3 * cos(phi);
 		double eta0 = xAmp ? -Axy*beta3*sin(phi) : Axy*sin(phi);
 
+		int ID = 0, prev_ID = 0;
 		for(double t = 0; t < rots*period_xy; t += t_step){
 			xi = xi0*cos(s*t) + eta0/beta3*sin(s*t);
 			eta = eta0*cos(s*t) - beta3*xi0*sin(s*t);
@@ -218,8 +218,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 
 			double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-			tpat_traj_step step(state, t);
-			linTraj.appendStep(step);
+			ID = linTraj.addNode(tpat_node(state, 0));
+			if(t > 0)
+				linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+			prev_ID = ID;
 		}
 	}else{
 		throw tpat_exception("tpat_linear_motion_engine::getCR3BPLiss: Cannot compute Lissajous motion for anything other than the collinear points");
@@ -227,9 +230,9 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 
 	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
 	// not enforced, but is still useful information
-	for(int i = 0; i < linTraj.getLength(); i++){
-		std::vector<double> state = linTraj.getState(i);
-		linTraj.setJacobi(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
+	for(int i = 0; i < linTraj.getNumNodes(); i++){
+		std::vector<double> state = linTraj.getStateByIx(i);
+		linTraj.setJacobiByIx(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
 	}
 	
 	return linTraj;
@@ -300,6 +303,9 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 	// Out of plane frequency
 	double w_z = sqrt(-ddots[2]);
 
+	// counter variables
+	int ID = 0, prev_ID = 0;
+
 	if(L < 4){
 		// Compute eigenvalues analytically
 		double beta1 = 2 - (ddots[0] + ddots[1])/2;
@@ -327,8 +333,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					tpat_traj_step step(state, t);
-					linTraj.appendStep(step);
+					ID = linTraj.addNode(tpat_node(state, 0));
+					if(t > 0)
+						linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+					prev_ID = ID;
 				}
 				break;
 			}
@@ -350,8 +359,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					tpat_traj_step step(state, t);
-					linTraj.appendStep(step);
+					ID = linTraj.addNode(tpat_node(state, 0));
+					if(t > 0)
+						linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+					prev_ID = ID;
 				}
 	            break;
 			}
@@ -403,8 +415,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						tpat_traj_step step(state, t);
-						linTraj.appendStep(step);
+						ID = linTraj.addNode(tpat_node(state, 0));
+						if(t > 0)
+							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+						prev_ID = ID;
 					}
                 	break;
                 case NONE: // for default behavior
@@ -422,8 +437,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						tpat_traj_step step(state, t);
-						linTraj.appendStep(step);
+						ID = linTraj.addNode(tpat_node(state, 0));
+						if(t > 0)
+							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+						prev_ID = ID;
 					}
                 	break;
 				case MPO:
@@ -446,8 +464,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						tpat_traj_step step(state, t);
-						linTraj.appendStep(step);
+						ID = linTraj.addNode(tpat_node(state, 0));
+						if(t > 0)
+							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+						prev_ID = ID;
 					}
                 	break;
                 }
@@ -471,8 +492,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 				double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-				tpat_traj_step step(state, t);
-				linTraj.appendStep(step);
+				ID = linTraj.addNode(tpat_node(state, 0));
+				if(t > 0)
+					linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+				prev_ID = ID;
 			}
 		}else{
 			// Case III
@@ -497,8 +521,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						tpat_traj_step step(state, t);
-						linTraj.appendStep(step);
+						ID = linTraj.addNode(tpat_node(state, 0));
+						if(t > 0)
+							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+
+						prev_ID = ID;
 					}
 					break;	
 				case DIVERGE:
@@ -512,9 +539,9 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
 	// not enforced, but is still useful information
-	for(int i = 0; i < linTraj.getLength(); i++){
-		std::vector<double> state = linTraj.getState(i);
-		linTraj.setJacobi(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
+	for(int i = 0; i < linTraj.getNumNodes(); i++){
+		std::vector<double> state = linTraj.getStateByIx(i);
+		linTraj.setJacobiByIx(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
 	}
 
 	return linTraj;

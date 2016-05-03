@@ -44,11 +44,11 @@ public:
 	tpat_traj_cr3bp_ltvp(const tpat_arc_data&);
 	
 	// Set and Get Functions
-	double getJacobi(int) const;
-	double getMass(int) const;
+	double getJacobiByIx(int) const;
+	double getMassByIx(int) const;
 
-	void setJacobi(int, double);
-	void setMass(int, double);
+	void setJacobiByIx(int, double);
+	void setMassByIx(int, double);
 	
 	void saveToMat(const char*) const;
 private:

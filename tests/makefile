@@ -24,7 +24,7 @@ LIB := ../lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-#CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
 CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 

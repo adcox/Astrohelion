@@ -18,6 +18,7 @@
 #include "tpat_nodeset.hpp"
 #include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_segment.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
@@ -27,5 +28,4 @@
 #include "tpat_traj_bcr4bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"

@@ -33,7 +33,6 @@
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 /**
@@ -129,17 +128,21 @@ void tpat_model_cr3bp::sim_saveIntegratedData(const double* y, double t, tpat_tr
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(traj->getSysData());
 
-    // Compute acceleration (elements 3 - 5)
+    // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
     eomParamStruct paramStruct(crSys);
     simpleEOMs(t, y, dsdt, &paramStruct);
+    
+    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
+    int id = traj->addNode(tpat_node(y, dsdt+3, t));
 
-    // step(state, time, accel, stm) - y(0:5) holds the state, y(6:41) holds the STM
-    tpat_traj_step step(y, t, dsdt+3, y+6);
-    traj->appendStep(step);
+    if(id > 0){
+        double tof = t - traj->getNode(id-1).getEpoch();
+        traj->addSeg(tpat_segment(id-1, id, tof, y+6));
+    }
 
     tpat_traj_cr3bp *cr3bpTraj = static_cast<tpat_traj_cr3bp*>(traj);    
-    cr3bpTraj->setJacobi(-1, getJacobi(y, crSys->getMu()));
+    cr3bpTraj->setJacobiByIx(-1, getJacobi(y, crSys->getMu()));
 }//=====================================================
 
 /**
@@ -199,12 +202,12 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     // the full (42 or 48 element) final state
     tpat_nodeset_cr3bp correctedNodes = corrector.getCR3BP_Output();
 
-    std::vector<double> state = correctedNodes.getNode(-1).getPosVelState();
-    std::vector<double> extra = correctedNodes.getNode(-1).getExtraParams();
+    std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
+    std::vector<double> extra = correctedNodes.getNodeByIx(-1).getExtraParams();
     extra.insert(extra.begin(), state.begin(), state.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
-    double eventTime = correctedNodes.getTOF(0) + t0;
+    double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
     sim_saveIntegratedData(&(extra[0]), eventTime, traj);
@@ -364,29 +367,13 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, 
             state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
         }
 
-        tpat_node node(state, NAN);
-        node.setVelCon(nodes_in->getNode(i).getVelCon());
-        node.setConstraints(nodes_in->getNode(i).getConstraints());
+        tpat_node node(state, 0);
+        node.setVelCon(nodes_in->getNodeByIx(i).getVelCon());
+        node.setConstraints(nodes_in->getNodeByIx(i).getConstraints());
 
-        if(i + 1 < numNodes){
-            // Get TOF, reverse variable scaling, save to node
-            double tof;
-            if(it->varTime){
-                // Get data
-                tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+i];
-                // Reverse scaling
-                tof /= it->freeVarScale[2];    // Time scaling
-            }else{
-                tof = nodes_in->getTOF(i);
-            }
-            node.setTOF(tof);
-
+        if(i + 1 == numNodes){
             // Set Jacobi Constant
-            node.setExtraParam(1, getJacobi(state, crSys->getMu()));
-        }else{
-            node.setTOF(NAN);
-            // Set Jacobi Constant
-            node.setExtraParam(1, getJacobi(state, crSys->getMu()));
+            node.setExtraParam(0, getJacobi(state, crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
@@ -396,14 +383,35 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, 
             if(findEvent){
                 // Append the 36 STM elements to the node vector
                 tpat_traj lastSeg = it->allSegs.back();
-                MatrixXRd stm = lastSeg.getSTM(-1);
+                MatrixXRd stm = lastSeg.getSTMByIx(-1);
                 std::vector<double> extraParam(stm.data(), stm.data()+36);
                 
                 node.setExtraParams(extraParam);
             }
         }
 
-        nodeset_out->appendNode(node);
+        int id = nodeset_out->addNode(node);
+        nodeset_out->setJacobiByIx(id, getJacobi(&(state[0]), crSys->getMu()));
+
+        if(i > 0){
+            double tof;
+            if(it->varTime){
+                // Get data
+                tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+i-1];
+                // Reverse scaling
+                tof /= it->freeVarScale[2];    // Time scaling
+            }else{
+                tof = nodes_in->getTOFByIx(i-1);
+            }
+            tpat_segment seg(i-1, i, tof);
+            seg.setConstraints(nodes_in->getSegByIx(i-1).getConstraints());
+            nodeset_out->addSeg(seg);
+        }
+    }
+
+    std::vector<tpat_constraint> arcCons = nodes_in->getArcConstraints();
+    for(size_t i = 0; i < arcCons.size(); i++){
+        nodeset_out->addConstraint(arcCons[i]);
     }
 
     return nodeset_out;

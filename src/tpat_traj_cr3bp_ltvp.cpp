@@ -74,15 +74,14 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arc_data &a) : tpat_traj(a
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@return Jacobi at the specified step
  */
-double tpat_traj_cr3bp_ltvp::getJacobi(int ix) const{
+double tpat_traj_cr3bp_ltvp::getJacobiByIx(int ix) const{
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
-		throw tpat_exception("tpat_traj_cr3bp_ltvp::getJacobi: invalid index");
+	if(ix < 0 || ix > ((int)nodes.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::getJacobiByIx: invalid index");
 
-	tpat_arc_step step = steps[ix];
-	return step.getExtraParam(1);
+	return nodes[ix].getExtraParam(0);
 }//====================================================
 
 /**
@@ -90,15 +89,14 @@ double tpat_traj_cr3bp_ltvp::getJacobi(int ix) const{
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@return mass at the specified step (non-dim)
  */
-double tpat_traj_cr3bp_ltvp::getMass(int ix) const{
+double tpat_traj_cr3bp_ltvp::getMassByIx(int ix) const{
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
-		throw tpat_exception("tpat_traj_cr3bp_ltvp::getMass: invalid index");
+	if(ix < 0 || ix > ((int)nodes.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::getMassByIx: invalid index");
 
-	tpat_arc_step step = steps[ix];
-	return step.getExtraParam(2);
+	return nodes[ix].getExtraParam(1);
 }//====================================================
 
 /**
@@ -106,14 +104,14 @@ double tpat_traj_cr3bp_ltvp::getMass(int ix) const{
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@param val value of Jacobi
  */
-void tpat_traj_cr3bp_ltvp::setJacobi(int ix, double val){
+void tpat_traj_cr3bp_ltvp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
-		throw tpat_exception("tpat_traj_cr3bp_ltvp::setJacobi: invalid index");
+	if(ix < 0 || ix > ((int)nodes.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::setJacobiByIx: invalid index");
 
-	steps[ix].setExtraParam(1, val);
+	nodes[ix].setExtraParam(0, val);
 }//====================================================
 
 /**
@@ -121,14 +119,14 @@ void tpat_traj_cr3bp_ltvp::setJacobi(int ix, double val){
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@param val mass value (non-dim)
  */
-void tpat_traj_cr3bp_ltvp::setMass(int ix, double val){
+void tpat_traj_cr3bp_ltvp::setMassByIx(int ix, double val){
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
-		throw tpat_exception("tpat_traj_cr3bp_ltvp::setMass: invalid index");
+	if(ix < 0 || ix > ((int)nodes.size()))
+		throw tpat_exception("tpat_traj_cr3bp_ltvp::setMassByIx: invalid index");
 
-	steps[ix].setExtraParam(2, val);
+	nodes[ix].setExtraParam(1, val);
 }//====================================================
 
 //-----------------------------------------------------
@@ -139,12 +137,8 @@ void tpat_traj_cr3bp_ltvp::setMass(int ix, double val){
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
 void tpat_traj_cr3bp_ltvp::initExtraParam(){
-	// This function in tpat_traj was already called, so 
-	// numExtraParam has been set to 1 and a row size has
-	// been appended for the time variable
-
 	// Add another variable for Jacobi Constant, and one for mass
-	numExtraParam = 3;
+	numExtraParam = 2;
 	extraParamRowSize.push_back(1);	// add var for Jacobi
 	extraParamRowSize.push_back(1); // add var for Mass
 }//====================================================
@@ -172,8 +166,8 @@ void tpat_traj_cr3bp_ltvp::saveToMat(const char* filename) const{
 		saveState(matfp);
 		saveTime(matfp);
 		saveSTMs(matfp);
-		saveExtraParam(matfp, 1, "Jacobi");
-		saveExtraParam(matfp, 2, "Mass");
+		saveExtraParam(matfp, 0, "Jacobi");
+		saveExtraParam(matfp, 1, "Mass");
 		sysData->saveToMat(matfp);
 	}
 

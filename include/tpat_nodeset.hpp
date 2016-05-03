@@ -54,8 +54,8 @@ public:
 		 *	Specified how nodes are distributed along an integrated trajectory
 		 */
 		enum tpat_nodeDistro_tp {
-			DISTRO_NONE, 	//!< There is no organizational method; nodes may be input by user.
-			DISTRO_TIME,	//!< Nodes spread evenly in time
+			DISTRO_NONE, 		//!< There is no organizational method; nodes may be input by user.
+			DISTRO_TIME,		//!< Nodes spread evenly in time
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 	// *structors
@@ -64,31 +64,18 @@ public:
 	tpat_nodeset(const tpat_arc_data&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
 	tpat_nodeset(const char*);
+
 	// Operators
 
 	// Set and Get Functions
-	virtual double getEpoch(int) const;
-	std::vector<tpat_constraint> getNodeCons(int) const;
-	tpat_node getNode(int) const;
-	int getNumCons() const;
-	int getNumNodes() const;
-	double getTOF(int) const;
-	double getTotalTOF() const;
-	
-	void addConstraint(tpat_constraint);
-	virtual void appendNode(tpat_node);
-	int createNodesAtEvent(int, tpat_event);
-	int createNodesAtEvents(int, std::vector<tpat_event>);
-	virtual int createNodesAtEvents(int, std::vector<tpat_event>, double);
-	virtual void deleteNode(int);
-	virtual void insertNode(int, tpat_node);
-
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
+	int createNodesAtEvent(int, tpat_event);
+	int createNodesAtEvents(int, std::vector<tpat_event>);
+	virtual int createNodesAtEvents(int, std::vector<tpat_event>, double);
 
 	// Utility Functions
-	void clearConstraints();
 	virtual void readFromMat(const char*);
 	virtual void print() const;
 	void reverseOrder();
@@ -102,7 +89,6 @@ protected:
 	void initFromICs_arclength(const double[6], double, double, int);
 	void initFromTraj(tpat_traj, int, tpat_nodeDistro_tp);
 	void initStepVectorFromMat(mat_t *, const char*);
-	void saveTOFs(mat_t*) const;
 
 };
 

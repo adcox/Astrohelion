@@ -186,19 +186,46 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arc_data &a) : tpat_nodeset(a)
 //-----------------------------------------------------
 
 /**
+ *  @brief Get the Jacobi constant value associated with a node
+ *  with the specified ID
+ * 
+ *  @param id the ID of a node
+ *  @return the Jacobi constant value
+ */
+double tpat_nodeset_cr3bp::getJacobi(int id) const{
+	if(id < 0 || id >= (int)(nodeIDMap.size()))
+		throw tpat_exception("tpat_nodeset_cr3bp::getJacobi: Node ID out of range");
+
+	return nodes[nodeIDMap[id]].getExtraParam(0);
+}//====================================================
+
+/**
  *	@brief Retrieve the value of Jacobi's Constant at the specified step or node
  *	@param ix step index; if < 0, counts backwards from end of nodeset
  *	@return Jacobi at the specified step or node
  */
-double tpat_nodeset_cr3bp::getJacobi(int ix) const{
+double tpat_nodeset_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
+	if(ix < 0 || ix > ((int)nodes.size()))
 		throw tpat_exception("tpat_nodeset_cr3bp::getJacobi: invalid index");
 
-	tpat_arc_step step = steps[ix];
-	return step.getExtraParam(1);
+	return nodes[ix].getExtraParam(0);
+}//====================================================
+
+/**
+ *  @brief Set the Jacobi constant value associated with a node
+ *  with the specified ID
+ * 
+ *  @param id the ID of a node
+ *  @param jacobi Jacobi constant value
+ */
+void tpat_nodeset_cr3bp::setJacobi(int id, double jacobi){
+	if(id < 0 || id >= (int)(nodeIDMap.size()))
+		throw tpat_exception("tpat_nodeset_cr3bp::setJacobi: Node ID out of range");
+
+	nodes[nodeIDMap[id]].setExtraParam(0, jacobi);
 }//====================================================
 
 /**
@@ -206,14 +233,14 @@ double tpat_nodeset_cr3bp::getJacobi(int ix) const{
  *	@param ix step index; if < 0, counts backwards from end of nodeset
  *	@param val value of Jacobi
  */
-void tpat_nodeset_cr3bp::setJacobi(int ix, double val){
+void tpat_nodeset_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
-		ix += steps.size();
+		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)steps.size()))
+	if(ix < 0 || ix > ((int)nodes.size()))
 		throw tpat_exception("tpat_nodeset_cr3bp::setJacobi: invalid index");
 
-	steps[ix].setExtraParam(1, val);
+	nodes[ix].setExtraParam(0, val);
 }//====================================================
 
 //-----------------------------------------------------
@@ -224,11 +251,7 @@ void tpat_nodeset_cr3bp::setJacobi(int ix, double val){
  *	@brief Initialize the extra param vector for info specific to this nodeset
  */
 void tpat_nodeset_cr3bp::initExtraParam(){
-	// This function in tpat_nodeset was already called, so 
-	// numExtraParam has been set to 1 and a row size has
-	// been appended for the time-of-flight variable
-
 	// Add another variable for Jacobi Constant
-	numExtraParam = 2;
+	numExtraParam = 1;
 	extraParamRowSize.push_back(1);
 }//====================================================

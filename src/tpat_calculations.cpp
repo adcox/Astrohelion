@@ -43,7 +43,6 @@
 #include "tpat_traj.hpp"
 #include "tpat_traj_bcr4bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 #include "cspice/SpiceUsr.h"
@@ -472,7 +471,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
  */
 std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj_cr3bp *perOrbit, int numMans, double tof){
     // Get eigenvalues of monodromy matrix
-    MatrixXRd mono = perOrbit->getSTM(-1);
+    MatrixXRd mono = perOrbit->getSTMByIx(-1);
 
     Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)
@@ -524,12 +523,12 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
      *  in time and/or arclength
      */
     // Get a bunch of points to use as starting guesses for the manifolds
-    if(numMans > perOrbit->getLength()){
+    if(numMans > perOrbit->getNumNodes()){
         printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer\n");
-        numMans = perOrbit->getLength();
+        numMans = perOrbit->getNumNodes();
     }
 
-    double stepSize = ((double)perOrbit->getLength())/((double)numMans);
+    double stepSize = ((double)perOrbit->getNumNodes())/((double)numMans);
     std::vector<int> pointIx(numMans, NAN);
     for(int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
@@ -545,7 +544,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
     double charL = perOrbit->getSysData()->getCharL();
     for(int n = 0; n < numMans; n++){
         // Transform the eigenvectors to this updated time
-        MatrixXRd newVecs = perOrbit->getSTM(pointIx[n])*vecs;
+        MatrixXRd newVecs = perOrbit->getSTMByIx(pointIx[n])*vecs;
 
         // Pick the direction from one of the transformed eigenvectors
         Eigen::VectorXd direction(6);
@@ -576,7 +575,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
             direction *= -1;
 
         // Step away from the point on the arc in the direction of the eigenvector
-        std::vector<double> state = perOrbit->getState(pointIx[n]);
+        std::vector<double> state = perOrbit->getStateByIx(pointIx[n]);
         Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
         q0 += stepDist/charL * direction;
 
@@ -950,7 +949,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     }
     // halfOrbArc.saveToMat("HalfOrbArc.mat");
 
-    double halfOrbTOF = halfOrbArc.getTime(-1);
+    double halfOrbTOF = halfOrbArc.getTimeByIx(-1);
     double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);
 
     if(tofErr > 10)
@@ -974,20 +973,25 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
 
         // Make the nodeset into a trajectory
         tpat_traj_cr3bp halfPerTraj = tpat_traj_cr3bp::fromNodeset(correctedHalfPer);
-        double halfTOF = halfPerTraj.getTime(-1);
-        double halfPerTraj_len = halfPerTraj.getLength();
-        MatrixXRd halfPerSTM = halfPerTraj.getSTM(-1);
+        double halfTOF = halfPerTraj.getTimeByIx(-1);
+        double halfPerTraj_len = halfPerTraj.getNumNodes();
+        MatrixXRd halfPerSTM = halfPerTraj.getSTMByIx(-1);
         
         // Use Mirror theorem to create the second half of the orbit
         MatrixXRd mirrorMat = getMirrorMat(mirrorType);
         for(int i = halfPerTraj_len-2; i >= 0; i--){
             // Use mirroring to populate second half of the orbit
-            std::vector<double> state = halfPerTraj.getState(i);
+            std::vector<double> state = halfPerTraj.getStateByIx(i);
             Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
             Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
 
-            tpat_traj_step step(newStateVec.data(), 2*halfTOF - halfPerTraj.getTime(i));
-            halfPerTraj.appendStep(step);
+            tpat_node node;
+            node.setState(newStateVec.data());
+            node.setEpoch(2*halfTOF - halfPerTraj.getTimeByIx(i));
+
+            int id = halfPerTraj.addNode(node);
+            tpat_segment seg(id-1, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(id-1));
+            halfPerTraj.addSeg(seg);
         }
 
         // Compute the monodromy matrix from the half-period STM
@@ -1011,7 +1015,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
         monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
 
         // Set final STM of mirrored trajectory to the one computed here
-        halfPerTraj.setSTM(-1, monoMat);
+        halfPerTraj.setSTMByIx(-1, monoMat);
         
         return halfPerTraj;     // Now contains entire trajectory
     }catch(tpat_diverge &e){
@@ -1047,26 +1051,33 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, const tpat_sys_data_cr3bp *S
     double charTS = SESys->getCharT();                   // characteristic time in SE system
     double charLS = SESys->getCharL();                   // characteristic length in SE system
 
-    for(int n = 0; n < EMTraj.getLength(); n++){
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < EMTraj.getNumNodes(); n++){
 
         // Transform the state from EM coordinates to SE coordinates
-        std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
+        std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getStateByIx(n), EMTraj.getTimeByIx(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SESys->getMu());
 
         // Adjust time to correct non-dim units
-        double t = EMTraj.getTime(n)*charTE/charTS;
+        double t = EMTraj.getTimeByIx(n)*charTE/charTS;
 
         // Create bogus accel and STM
         double accel[] = {NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
         // Create a new step
-        tpat_traj_step step(&(state_SE[0]), t, accel, stm.data());
+        tpat_node node(&(state_SE[0]), accel, t);
+        SETraj.addNode(node);
 
-        SETraj.appendStep(step);
+        if(n > 0){            
+            SETraj.addSeg(tpat_segment(n-1, n, t - prev_t, prev_stm.data()));
+        }
         
         // Recompute Jacobi
-        SETraj.setJacobi(-1, tpat_model_cr3bp::getJacobi(&(state_SE[0]), SESys->getMu()));
+        SETraj.setJacobiByIx(-1, tpat_model_cr3bp::getJacobi(&(state_SE[0]), SESys->getMu()));
+        prev_stm = stm;
+        prev_t = t;
     }
 
     return SETraj; 
@@ -1105,18 +1116,23 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, const tpat_sys_data_c
     printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d TOFs\n", EMNodes.getNumNodes(),
         EMNodes.getNumNodes()-1);
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
-        std::vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
+        std::vector<double> state_SE = cr3bp_EM2SE_state(EMNodes.getNodeByIx(n).getState(), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys->getMu());
-
-        double tof = n + 1 < EMNodes.getNumNodes() ? EMNodes.getTOF(n)*charTE/charTS : NAN;
-        tpat_node node(node_SE, tof);
-        SENodes.appendNode(node);
-
+        
+        SENodes.addNode(tpat_node(state_SE, epoch*charTE/charTS));
 
         if(n < EMNodes.getNumNodes()-1){
             // Update epoch time
-            epoch += EMNodes.getTOF(n);
+            epoch += EMNodes.getTOFByIx(n);
         }
+    }
+
+    // Convert time units for segment TOFs
+    for(int s = 0; s < EMNodes.getNumSegs(); s++){
+        tpat_segment EMSeg = EMNodes.getSegByIx(s);
+        EMSeg.setTOF(EMSeg.getTOF()*charTE/charTS);
+        EMSeg.setSTM(MatrixXRd::Identity(6, 6));
+        SENodes.addSeg(EMSeg);
     }
 
     return SENodes;
@@ -1152,24 +1168,30 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, const tpat_sys_data_cr3bp *E
     double charTS = SETraj.getSysData()->getCharT(); // characteristic time in SE system
     double charLS = SETraj.getSysData()->getCharL(); // characteristic length in SE system
 
-    for(int n = 0; n < SETraj.getLength(); n++){
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < SETraj.getNumNodes(); n++){
         
         // Transform the state from SE coordinates to EM coordinates
-        std::vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
+        std::vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getStateByIx(n), SETraj.getTimeByIx(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, seSys->getMu());
         
         // Rescale Time
-        double t = SETraj.getTime(n)*charTS/charTE;
+        double t = SETraj.getTimeByIx(n)*charTS/charTE;
 
         // Bogus values for accel and STM
         double accel[] = {NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
-        tpat_traj_step step(&(state_EM[0]), t, accel, stm.data());
-        EMTraj.appendStep(step);
+        EMTraj.addNode(tpat_node(&(state_EM[0]), accel, t));
+        if(n > 0)
+            EMTraj.addSeg(tpat_segment(n-1, n, t - prev_t, prev_stm.data()));
 
         // Recompute Jacobi
-        EMTraj.setJacobi(-1, tpat_model_cr3bp::getJacobi(&(state_EM[0]), EMSys->getMu()));
+        EMTraj.setJacobiByIx(-1, tpat_model_cr3bp::getJacobi(&(state_EM[0]), EMSys->getMu()));
+
+        prev_t = t;
+        prev_stm = stm;
     }
 
     return EMTraj; 
@@ -1210,19 +1232,22 @@ tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, const tpat_sys_data_c
         SENodes.getNumNodes()-1);
     for(int n = 0; n < SENodes.getNumNodes(); n++){
         // Transform a single node
-        std::vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
+        std::vector<double> state_EM = cr3bp_SE2EM_state(SENodes.getNodeByIx(n).getState(), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys->getMu());
-
-        double tof = n + 1 < SENodes.getNumNodes() ? SENodes.getTOF(n)*charTS/charTE : NAN;
-        tpat_node node(node_EM, tof);
-        EMNodes.appendNode(node);
+        
+        EMNodes.addNode(tpat_node(state_EM, epoch*charTS/charTE));
 
         if(n < SENodes.getNumNodes()-1){
             // Update epoch time
-            epoch += SENodes.getTOF(n);
+            epoch += SENodes.getTOFByIx(n);
         }
     }
 
+    for(int s = 0; s < SENodes.getNumSegs(); s++){
+        tpat_segment SESeg = SENodes.getSegByIx(s);
+        SESeg.setTOF(SESeg.getTOF()*charTS/charTE);
+        SENodes.addSeg(SESeg);
+    }
     return EMNodes;
 }//=========================================================
 
@@ -1383,21 +1408,22 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
     const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(traj.getSysData());
 
     tpat_traj_cr3bp inertTraj(sys);
-    double t = 0;
-
-    for(int i = 0; i < traj.getLength(); i++){
-        t = traj.getTime(i);
-        std::vector<double> state_rot = traj.getState(i);
-
+    double t = 0, prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int i = 0; i < traj.getNumNodes(); i++){
+        t = traj.getTimeByIx(i);
+        std::vector<double> state_rot = traj.getStateByIx(i);
         std::vector<double> stateInert = cr3bp_rot2inert_state(state_rot, sys, t, centerIx);
 
         // Bogus values for accel and STM
         double accel[] = {NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
-        tpat_traj_step step(&(stateInert[0]), t*sys->getCharT(), accel, stm.data());
-        inertTraj.appendStep(step);
-        inertTraj.setJacobi(-1, traj.getJacobi(i));
+        inertTraj.addNode(tpat_node(&(stateInert[0]), accel, t*sys->getCharT()));
+        if(i > 0)
+            inertTraj.addSeg(tpat_segment(i-1, i, t - prev_t, stm.data()));
+        
+        inertTraj.setJacobiByIx(-1, traj.getJacobiByIx(i));
     }
 
     return inertTraj;
@@ -1426,15 +1452,19 @@ tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp nodes, int centerIx){
     double t = 0;
 
     for(int i = 0; i < nodes.getNumNodes(); i++){
-        std::vector<double> state_rot = nodes.getState(i);
+        std::vector<double> state_rot = nodes.getStateByIx(i);
         std::vector<double> stateInert = cr3bp_rot2inert_state(state_rot, sys, t, centerIx);
-
-        double tof = i + 1 < nodes.getNumNodes() ? nodes.getTOF(i)*sys->getCharT() : NAN;
-        tpat_node node(stateInert, tof);
-        inertNodes.appendNode(node);
+        
+        inertNodes.addNode(tpat_node(stateInert, nodes.getEpochByIx(i)*sys->getCharT()));
 
         if(i < nodes.getNumNodes()-1)
-            t += nodes.getTOF(i);
+            t += nodes.getTOFByIx(i);
+    }
+
+    for(int s = 0; s < nodes.getNumSegs(); s++){
+        tpat_segment seg_rot = nodes.getSegByIx(s);
+        seg_rot.setTOF(seg_rot.getTOF()*sys->getCharT());
+        inertNodes.addSeg(seg_rot);
     }
 
     return inertNodes;
@@ -1520,9 +1550,10 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
     double charT3 = bcSys->getCharT();
 
     std::vector<double> blank(6, NAN);
-
-    for(int n = 0; n < crTraj.getLength(); n++){
-        std::vector<double> crState = crTraj.getState(n);
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < crTraj.getNumNodes(); n++){
+        std::vector<double> crState = crTraj.getStateByIx(n);
 
         double bcState[6];
         for(int r = 0; r < 6; r++){
@@ -1536,22 +1567,27 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
         }
 
         // Convert acceleration
-        std::vector<double> crAccel = crTraj.getAccel(n);
+        std::vector<double> crAccel = crTraj.getAccelByIx(n);
         double bcAccel[3];
         for(int r = 0; r < 3; r++){
             bcAccel[r] = crAccel[r]*(charL2/charL3)*(charT3/charT2)*(charT3/charT2);
         }
         
-        double t = crTraj.getTime(n)*charT2/charT3 + t0;
+        double t = crTraj.getTimeByIx(n)*charT2/charT3 + t0;
 
         // Bogus values for dqdT and STM
         double dqdT[] = {NAN, NAN, NAN, NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6,6);
 
         // Create step
-        tpat_traj_step step(bcState, t, bcAccel, stm.data());
-        bcTraj.appendStep(step);
+        bcTraj.addNode(tpat_node(bcState, bcAccel, t));
         bcTraj.set_dqdT(-1, dqdT);
+
+        if(n > 0)
+            bcTraj.addSeg(tpat_segment(n-1, n, t - prev_t, prev_stm.data()));
+
+        prev_t = t;
+        prev_stm = stm;
     }
 
     return bcTraj;
@@ -1588,24 +1624,27 @@ tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, const tpat_sys_da
 
     for(int n = 0; n < crNodes.getNumNodes(); n++){
         std::vector<double> bcNodeState;
-        std::vector<double> crNode = crNodes.getNode(n).getPosVelState();
-        for(int r = 0; r < ((int)crNode.size()); r++){
+        std::vector<double> crNodeState = crNodes.getNodeByIx(n).getState();
+        for(int r = 0; r < ((int)crNodeState.size()); r++){
             if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
-                bcNodeState.push_back(crNode[r]*charL2/charL3 - (1.0/bcSys->getK() - bcSys->getMu()));
+                bcNodeState.push_back(crNodeState[r]*charL2/charL3 - (1.0/bcSys->getK() - bcSys->getMu()));
             else if(r < 3)   // Convert position
-                bcNodeState.push_back(crNode[r]*charL2/charL3);
+                bcNodeState.push_back(crNodeState[r]*charL2/charL3);
             else  // Convert velocity
-                bcNodeState.push_back(crNode[r]*(charL2/charL3)*(charT3/charT2));
+                bcNodeState.push_back(crNodeState[r]*(charL2/charL3)*(charT3/charT2));
         }
         
-        double tof = crNodes.getTOF(n)*charT2/charT3;
-        tpat_node bcNode(bcNodeState, tof);
-        bcNode.setExtraParam(1, ellapsed);  // set epoch
+        bcNodes.addNode(tpat_node(bcNodeState, ellapsed));
 
-        bcNodes.appendNode(bcNode);
         if(n < crNodes.getNumNodes()-1){
-            ellapsed += tof;
+            ellapsed += crNodes.getTOFByIx(n)*charT2/charT3;
         }
+    }
+
+    for(int s = 0; s < crNodes.getNumSegs(); s++){
+        tpat_segment crSeg = crNodes.getSegByIx(s);
+        crSeg.setTOF(crSeg.getTOF()*charT2/charT3);
+        bcNodes.addSeg(crSeg);
     }
 
     return bcNodes;
@@ -1643,7 +1682,7 @@ tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_d
     std::vector<double> blank(6, NAN);
 
     for(int n = 0; n < bcNodes.getNumNodes(); n++){
-        std::vector<double> bcState = bcNodes.getState(n);
+        std::vector<double> bcState = bcNodes.getStateByIx(n);
         std::vector<double> crNodeState;
 
         for(int r = 0; r < ((int)bcState.size()); r++){
@@ -1655,10 +1694,15 @@ tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_d
                 crNodeState.push_back(bcState[r]*(charL3/charL2)*(charT2/charT3));
         }
 
-        double tof = bcNodes.getTOF(n)*charT3/charT2;
-        tpat_node crNode(crNodeState, tof);
-        crNode.setExtraParam(1, tpat_model_cr3bp::getJacobi(&(crNodeState[0]), crSys->getMu()));
-        crNodes.appendNode(crNode);
+        tpat_node node(crNodeState, bcNodes.getEpochByIx(n)*charT3/charT2);
+        node.setExtraParam(0, tpat_model_cr3bp::getJacobi(&(crNodeState[0]), crSys->getMu()));
+        crNodes.addNode(node);
+    }
+
+    for(int s = 0; s < bcNodes.getNumSegs(); s++){
+        tpat_segment bcSeg = bcNodes.getSegByIx(s);
+        bcSeg.setTOF(bcSeg.getTOF()*charT3/charT2);
+        bcNodes.addSeg(bcSeg);
     }
 
     return crNodes;
@@ -1693,10 +1737,11 @@ tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp bcTraj, const tpat_sys_data_cr3
     double charL3 = bcTraj.getSysData()->getCharL();
     double charT3 = bcTraj.getSysData()->getCharT();
 
-    // double t0 = bcTraj.getTime(0);
-
-    for(int n = 0; n < bcTraj.getLength(); n++){
-        std::vector<double> bcState = bcTraj.getState(n);
+    // double t0 = bcTraj.getTimeByIx(0);
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < bcTraj.getNumNodes(); n++){
+        std::vector<double> bcState = bcTraj.getStateByIx(n);
 
         double crState[6];
         for(int r = 0; r < 6; r++){
@@ -1709,24 +1754,29 @@ tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp bcTraj, const tpat_sys_data_cr3
         }
 
         // Convert acceleration
-        std::vector<double> bcAccel = bcTraj.getAccel(n);
+        std::vector<double> bcAccel = bcTraj.getAccelByIx(n);
         double crAccel[3];
         for(int r = 0; r < 3; r++){
             crAccel[r] = bcAccel[r]*(charL3/charL2)*(charT2/charT3)*(charT2/charT3);
         }
         
-        // double t = bcTraj.getTime(n)*charT3/charT2 - t0;
-        double t = bcTraj.getTime(n)*charT3/charT2;
+        // double t = bcTraj.getTimeByIx(n)*charT3/charT2 - t0;
+        double t = bcTraj.getTimeByIx(n)*charT3/charT2;
 
         // Bogus values for and STM
         MatrixXRd stm = MatrixXRd::Identity(6,6);
 
         // Create step
-        tpat_traj_step step(crState, t, crAccel, stm.data());
-        crTraj.appendStep(step);
+        crTraj.addNode(tpat_node(crState, crAccel, t));
+
+        if(n > 0)
+            crTraj.addSeg(tpat_segment(n-1, n, t - prev_t, prev_stm.data()));
         
         // Compute Jacobi constant
-        crTraj.setJacobi(-1, tpat_model_cr3bp::getJacobi(crState, crSys->getMu()));
+        crTraj.setJacobiByIx(-1, tpat_model_cr3bp::getJacobi(crState, crSys->getMu()));
+
+        prev_t = t;
+        prev_stm = stm;
     }
 
     return crTraj;

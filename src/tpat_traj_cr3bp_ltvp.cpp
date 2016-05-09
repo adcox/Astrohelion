@@ -57,8 +57,36 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp &t) : tpat
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arc_data &a) : tpat_traj(a){
+tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arcset &a) : tpat_traj(a){
 	initExtraParam();
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @param sys pointer to a system data object; should be a 
+ *  CR3BP LTVP system as the pointer will be cast to that derived class
+ *  @return a pointer to the newly created trajectory
+ */
+tpat_traj_cr3bp_ltvp* tpat_traj_cr3bp_ltvp::create( const tpat_sys_data *sys) const{
+	const tpat_sys_data_cr3bp_ltvp *crSys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(sys);
+	return new tpat_traj_cr3bp_ltvp(crSys);
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack that is a 
+ *  duplicate of this object
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @return a pointer to the newly cloned trajectory
+ */
+tpat_traj_cr3bp_ltvp* tpat_traj_cr3bp_ltvp::clone() const{
+	return new tpat_traj_cr3bp_ltvp(*this);
 }//====================================================
 
 //-----------------------------------------------------
@@ -73,6 +101,7 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arc_data &a) : tpat_traj(a
  *	@brief Retrieve the value of Jacobi's Constant at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@return Jacobi at the specified step
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 double tpat_traj_cr3bp_ltvp::getJacobiByIx(int ix) const{
 	if(ix < 0)
@@ -88,6 +117,7 @@ double tpat_traj_cr3bp_ltvp::getJacobiByIx(int ix) const{
  *	@brief Retrieve the mass at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@return mass at the specified step (non-dim)
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 double tpat_traj_cr3bp_ltvp::getMassByIx(int ix) const{
 	if(ix < 0)
@@ -103,6 +133,7 @@ double tpat_traj_cr3bp_ltvp::getMassByIx(int ix) const{
  *	@brief Set Jacobi at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@param val value of Jacobi
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 void tpat_traj_cr3bp_ltvp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
@@ -118,6 +149,7 @@ void tpat_traj_cr3bp_ltvp::setJacobiByIx(int ix, double val){
  *	@brief Set mass at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@param val mass value (non-dim)
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 void tpat_traj_cr3bp_ltvp::setMassByIx(int ix, double val){
 	if(ix < 0)
@@ -164,7 +196,7 @@ void tpat_traj_cr3bp_ltvp::saveToMat(const char* filename) const{
 		printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
-		saveTime(matfp);
+		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
 		saveExtraParam(matfp, 0, "Jacobi");
 		saveExtraParam(matfp, 1, "Mass");

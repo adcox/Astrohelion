@@ -48,8 +48,13 @@ struct iterationData;
  *  @return a reference to this struct
  */
 struct eomParamStruct{
+	/**
+	 *  @brief Construct an EOM Parameter structure
+	 * 
+	 *  @param sys a pointer to a system data object
+	 */
 	eomParamStruct(const tpat_sys_data *sys) : sysData(sys) {}
-	const tpat_sys_data *sysData;
+	const tpat_sys_data *sysData;	//!< Pointer to a system data object that will be passed into the EOMs
 };
 
 /**

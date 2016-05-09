@@ -141,7 +141,7 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(const double* y, double t, tpat_
     }
     
     tpat_traj_bcr4bp *bcTraj = static_cast<tpat_traj_bcr4bp*>(traj);
-    bcTraj->set_dqdT(-1, y+42); // dqdT is stored in y(42:47)
+    bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
 }//=====================================================
 
 /**
@@ -234,6 +234,7 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
  *
  *  @param it a pointer to the corrector's iteration data structure
  *  @param set a pointer to the nodeset being corrected
+ *  @throws tpat_exception if equal arc times is turned ON; this has not been implemented for this system
  */
 void tpat_model_bcr4bpr::multShoot_initDesignVec(iterationData *it, const tpat_nodeset *set) const{
     // Call base class to do most of the work
@@ -252,9 +253,17 @@ void tpat_model_bcr4bpr::multShoot_initDesignVec(iterationData *it, const tpat_n
     }
 }//============================================================
 
+/**
+ *  @brief Scale the design variable vector so that all elements have approximately the 
+ *  same magnitude.
+ *  @details This can improve the corrections process, although it is not guaranteed to,
+ *  and CAN impede the corrections process as well. This function calls the default behavior in
+ *  tpat_model::multShoot_scaleDesignVec and then applies additional scaling on epoch variables.
+ * 
+ *  @param it iteraiton data object for the current corrections process
+ *  @param set the nodeset that corrections are being applied to
+ */
 void tpat_model_bcr4bpr::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset *set) const{
-    (void) set;
-
     tpat_model::multShoot_scaleDesignVec(it, set);   // Perform default behavior
     const tpat_nodeset_bcr4bp *bcSet = static_cast<const tpat_nodeset_bcr4bp *>(set);
 
@@ -441,6 +450,7 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(iterationData* it, tpat_cons
  *  @param it a pointer to the correctors iteration data structure
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
+ *  @throw tpat_exception if the constraint type index is not recognized
  */
 void tpat_model_bcr4bpr::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0) const{
     int n = con.getNode();
@@ -495,7 +505,7 @@ void tpat_model_bcr4bpr::multShoot_targetState(iterationData* it, tpat_constrain
                 it->DF[it->totalFree*(row0 + count) + 7*it->numNodes-1+n] = 1;
                 count++;
             }else{
-                throw tpat_exception("State constraints must have <= 6 elements");
+                printErr("tpat_model_bcr4bpr::multShoot_targetState: constraint has more than six elements...\n");
             }
         }
     }
@@ -869,7 +879,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint c
  * 
  *  @param it the iterationData object holding the current data for the corrections process
  *  @param con the constraint being applied
- *  @param row0 the index of the first row for this constraint
+ *  @param c the index of the constraint within the constraint vector
  */
 void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constraint con, int c) const{
 
@@ -1246,7 +1256,7 @@ double tpat_model_bcr4bpr::multShoot_targetSP_maxDist_compSlackVar(const iterati
  * 
  *  @param it the iterationData object holding the current data for the corrections process
  *  @param con the constraint being applied
- *  @param row0 the index of the first row for this constraint
+ *  @param c the index of the constraint within the storage vector
  */
 void tpat_model_bcr4bpr::multShoot_targetSP_dist(iterationData *it, tpat_constraint con, int c) const{
     int row0 = it->conRows[c];
@@ -1778,4 +1788,8 @@ void tpat_model_bcr4bpr::orientAtEpoch(double et, tpat_sys_data_bcr4bpr *sysData
     sysData->setTheta0(theta);
     sysData->setPhi0(phi);
     sysData->setEpoch0(et);
-}//===========================================
+}//====================================================
+
+
+
+

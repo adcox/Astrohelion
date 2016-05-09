@@ -30,12 +30,14 @@
 
 #include "matio.h"
 #include <vector>
+
 // Forward Declarations
+struct tpat_arc_piece;
 
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
  *	
- *	The arc_data object specifies default and mandatory behaviors for all derivative
+ *	The arcset object specifies default and mandatory behaviors for all derivative
  *	classes (i.e. tpat_traj and tpat_nodeset). All variables and data for an arc or 
  *	one of its derivative classes are declared and stored here; in other words, no 
  *	derivative classes declare class-specific data objects. This architecture has been
@@ -73,22 +75,26 @@
  *	@version April 28, 2016
  *	@copyright GNU GPL v3.0	
  */
-class tpat_arc_data : public tpat{
+class tpat_arcset : public tpat{
 
 public:
 	// *structors
-	tpat_arc_data(const tpat_sys_data*);
-	tpat_arc_data(const tpat_arc_data&);
-	virtual ~tpat_arc_data();
+	tpat_arcset(const tpat_sys_data*);
+	tpat_arcset(const tpat_arcset&);
+	virtual tpat_arcset* create( const tpat_sys_data* ) const = 0;	//!< Virtual constructor for creation
+	virtual tpat_arcset* clone() const = 0;							//!< Virtual constructor for copying
+
+	virtual ~tpat_arcset();
 
 	// Operators
-	tpat_arc_data& operator =(const tpat_arc_data&);
-	virtual tpat_arc_data& operator +=(const tpat_arc_data&);
+	tpat_arcset& operator =(const tpat_arcset&);
+	static void sum(const tpat_arcset*, const tpat_arcset*, tpat_arcset*);
 
 	// Set and Get functions
 	void addConstraint(tpat_constraint);
 	int addNode(tpat_node);
 	int addSeg(tpat_segment);
+	int appendSetAtNode(const tpat_arcset*, int, int, double);
 	void clearArcConstraints();
 	void clearAllConstraints();
 	void deleteNode(int);
@@ -96,10 +102,13 @@ public:
 	std::vector<double> getAccel(int) const;
 	std::vector<double> getAccelByIx(int) const;
 	std::vector<tpat_constraint> getArcConstraints() const;
+	std::vector<tpat_arc_piece> getChronoOrder() const;
 	std::vector<double> getCoord(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getExtraParam(int, int) const;
+	int getNextNodeID() const;
+	int getNextSegID() const;
 	tpat_node getNode(int) const;
 	tpat_node getNodeByIx(int) const;
 	int getNumCons() const;
@@ -116,6 +125,7 @@ public:
 	MatrixXRd getSTMByIx(int) const;
 	const tpat_sys_data* getSysData() const;
 	double getTol() const;
+	void putInChronoOrder();
 	void setAccel(int, std::vector<double>);
 	void setAccelByIx(int, std::vector<double>);
 	void setState(int, std::vector<double>);
@@ -126,6 +136,7 @@ public:
 	void setTol(double);
 
 	// Utility Functions
+	void printInChrono() const;
 
 	/**
 	 *  @brief Loads the object from a Matlab binary file
@@ -135,9 +146,9 @@ public:
 
 	/**
 	 *	@brief Saves the object to a Matlab binary file
-	 *	@param filepath
+	 *	@param filepath the filepath to the Matlab file
 	 */
-	virtual void saveToMat(const char*) const = 0;
+	virtual void saveToMat(const char *filepath) const = 0;
 
 	/**
 	 *	@brief Displays a useful messages about the object
@@ -195,7 +206,7 @@ protected:
 	int nextNodeID = 0;	//!< A counter that stores the next available node ID
 	int nextSegID = 0;	//!< A counter that stores the next available segment ID
 
-	void copyMe(const tpat_arc_data&);
+	void copyMe(const tpat_arcset&);
 
 	void initNodesSegsFromMat(mat_t *, const char*);
 	void readStateFromMat(mat_t*, const char*);
@@ -212,8 +223,56 @@ protected:
 	void saveState(mat_t*, const char*) const;
 	void saveSTMs(mat_t*) const;
 	void saveTOF(mat_t*, const char*) const;
-private:
+};//END OF tpat_arcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
-};
+/**
+ *  @brief A structure used to represent nodes and segments.
+ *  @details This structure is used when putting the arcset
+ *  object in chronological order
+ */
+struct tpat_arc_piece{
 
+	/**
+	 * @brief Enumerated type to describe the types of objects represented
+	 * by the piece
+	 * @details There are several types:
+	 * 	* NODE - represent a tpat_node object
+	 * 	* SEG - represent a tpat_segment object
+	 */
+	enum piece_tp {NODE, SEG};
+	piece_tp type;	//!< The type of object represented by this piece
+	int ID;	//!< The ID of the object represented by this piece
+
+	/**
+	 *  @brief Constructor
+	 * 
+	 *  @param tp the type of object represented by this piece
+	 *  @param id the ID of the object represented by this piece
+	 */
+	tpat_arc_piece(piece_tp tp, int id) : type(tp), ID(id){};
+
+	/**
+	 *  @brief Comparison operator
+	 * 
+	 *  @param lhs piece reference
+	 *  @param rhs piece reference
+	 * 
+	 *  @return true if the type and ID of the two pieces match
+	 */
+	friend bool operator ==(const tpat_arc_piece &lhs, const tpat_arc_piece &rhs){
+		return lhs.type == rhs.type && lhs.ID == rhs.ID;
+	}//================================================
+
+	/**
+	 *  @brief Comparison operator
+	 * 
+	 *  @param lhs piece reference
+	 *  @param rhs piece reference
+	 * 
+	 *  @return true if the type and ID of the two pieces do NOT match
+	 */
+	friend bool operator !=(const tpat_arc_piece &lhs, const tpat_arc_piece &rhs){
+		return !(lhs == rhs);
+	}//================================================
+};//END OF TPAT_ARC_PIECE//--//--//--//--//--//--//--//--//--//--//--//--//
 #endif

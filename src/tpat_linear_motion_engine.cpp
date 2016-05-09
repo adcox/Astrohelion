@@ -164,6 +164,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], t
  *	@param Az out-of-plane amplitude, non-dimensional units
  *	@param psi starting phase angle for out-of-plane motion
  *	@param sysData a pointer to a system data object
+ *	@throws tpat_exception if <tt>L</tt> is not 1, 2, or 3
  */
 tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi,
 	tpat_sys_data_cr3bp *sysData){
@@ -273,6 +274,8 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], t
  *	@return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
+ *	@throws tpat_exception if the <tt>type</tt> does not correspond with the specified Lagrange
+ *	point <tt>L</tt>
  */
 tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
 	tpat_linMotion_tp type, tpat_sys_data_cr3bp *sysData){

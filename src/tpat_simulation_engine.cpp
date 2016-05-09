@@ -99,6 +99,7 @@ tpat_simulation_engine::~tpat_simulation_engine(){
 /**
  *  Copy data from an input engine to this one
  *  @param s an input simulation engine
+ *  @throw tpat_exception if <tt>s</tt> has an unknown system data type
  */
 void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
 
@@ -220,6 +221,7 @@ tpat_traj tpat_simulation_engine::getTraj() const {
  *  than a generic one.
  *
  *  @return a CR3BP Trajectory object
+ *  @throws tpat_exception if the engine does not have a CR3BP result
  */
 tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
     if(sysData->getType() == tpat_sys_data::CR3BP_SYS){
@@ -243,6 +245,7 @@ tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
  *  than a generic one.
  *
  *  @return a CR3BP LTVP Trajectory object
+ *  @throws tpat_exception if the engine does not have a CR3BP_LTVP result
  */
 tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
     if(sysData->getType() == tpat_sys_data::CR3BP_LTVP_SYS){
@@ -266,6 +269,7 @@ tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
  *  than a generic one.
  *
  *  @return a BCR4BP, Rotating Coordinate Trajectory object
+ *  @throws tpat_exception if the engine does not have a BCR4BPR result
  */
 tpat_traj_bcr4bp tpat_simulation_engine::getBCR4BPR_Traj() const{
     if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
@@ -297,6 +301,7 @@ std::vector<eventRecord> tpat_simulation_engine::getEventRecords() const { retur
  *  @brief Retrieve a list of all events that fired at the last step
  *  of the simulation, potentially ending the run.
  *  @return a vector of events
+ *  @throws tpat_exception if the engine has not been run
  */
 std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
     if(traj != NULL && traj != 0){
@@ -345,7 +350,7 @@ void tpat_simulation_engine::setRevTime(bool b){ revTime = b; }
 
 /**
  *	@brief Specify the verbosity of the engine
- *	@param b whether or not the engine should output verbose statements
+ *	@param v whether or not the engine should output verbose statements
  */
 void tpat_simulation_engine::setVerbose(tpat_verbosity_tp v){ verbose = v; }
 
@@ -364,7 +369,7 @@ void tpat_simulation_engine::setAbsTol(double t){
     absTol = t;
     if(absTol > 1)
         printWarn("tpat_simulation_engine::setAbsTol: tolerance is greater than 1... just FYI\n");
-}
+}//====================================================
 
 /**
  *	@brief Specify the absolute integration tolerance, non-dimensional units
@@ -375,7 +380,7 @@ void tpat_simulation_engine::setRelTol(double t){
     relTol = t;
     if(relTol > 1)
         printWarn("tpat_simulation_engine::setAbsTol: tolerance is greater than 1... just FYI\n");
-}
+}//====================================================
 
 /**
  *  @brief Specify the number of steps the integrator must take during the 
@@ -426,6 +431,7 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double tof){
  *  @param tof the total integration time, or time-of-flight (non-dim units).
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
+ *  @throws tpat_exception if <tt>ic</tt> has fewer than 6 elements
  */
 void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double tof){
     if(ic.size() >= 6){
@@ -524,6 +530,7 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
  *  @param ic a 6-element initial state for the trajectory
  *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
  *  @param t_dim the dimension of t
+ *  @throws tpat_diverge if the integrator fails and cannot proceed
  */
 void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_dim){
     // Save tolerance for trajectory

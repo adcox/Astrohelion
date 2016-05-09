@@ -161,6 +161,8 @@ double tpat_correction_engine::getTol() const { return tol; }
  *	error if the corrections process has not been run or failed to produce an output.
  *
  *	@return a CR3BP nodeset object with the corrected trajectory data stored inside
+ *	@throws tpat_exception if the correction engine does not contain a CR3BP output,
+ *	or if no output has been created at all (i.e., a corrections algorithm has not been run)
  */
 tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
 	if(createdNodesetOut){
@@ -183,6 +185,8 @@ tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
  *	error if the corrections process has not been run or failed to produce an output.
  *
  *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
+ *	@throws tpat_exception if the correction engine does not contain a BCR4BPR output,
+ *	or if no output has been created at all (i.e., a corrections algorithm has not been run)
  */
 tpat_nodeset_bcr4bp tpat_correction_engine::getBCR4BPR_Output(){
 	if(createdNodesetOut){
@@ -269,7 +273,7 @@ void tpat_correction_engine::setTol(double d){
 
 	if(tol > 1)
 		printWarn("tpat_correction_engine::setTol: tolerance is greater than 1... just FYI\n");
-}
+}//====================================================
 
 /**
  *	@brief Set the findEven flag
@@ -294,6 +298,12 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	
  *	@param set a pointer to a nodeset
  *	@return the iteration data object for this corrections process
+ *	@throws tpat_diverge if the corrections process does not converge
+ *	@throws tpat_exception
+ *	* if the dynamic model associated with the input
+ *	nodeset does not support one or more of the nodeset's constraints
+ *	* if the input nodeset contains more than one delta-v constraint
+ *	* if the input nodeset contains more than one TOF constraint
  */
 iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	if(!isClean)
@@ -476,6 +486,7 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
  *  derivative types by the other implementation of multShoot()
  *  @return A corrected iterationData object
  *  @see multShoot(tpat_nodeset*)
+ *  @throws tpat_diverge if the multiple shooting process does not converge
  */
 iterationData tpat_correction_engine::multShoot(iterationData it){
 	it.count = 0;
@@ -611,6 +622,8 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
  *	@param it the iterationData object associated with the corrections process
  *
  *	@return the updated free variable vector \f$ \vec{X}_{n+1} \f$
+ *	@throws tpat_exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
+ *	This can be updated to use a least-squares solution (TODO)
  */
 Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
@@ -679,6 +692,12 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 	return oldX + X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
 
+/**
+ *  @brief Print out the magnitude of each constraint.
+ *  @details This can be useful when debugging to highlight which constraints are unsatisfied
+ * 
+ *  @param it pointer to an iterationData object associated with a corrections process
+ */
 void tpat_correction_engine::reportConMags(const iterationData *it){
 	int conCount = 0;
 	for(long r = 0; r < (int)(it->FX.size()); r++){
@@ -703,4 +722,8 @@ void tpat_correction_engine::cleanEngine(){
 
 	createdNodesetOut = false;
 	isClean = true;
-}//===================================
+}//====================================================
+
+
+
+

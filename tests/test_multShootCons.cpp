@@ -447,10 +447,11 @@ void testBCR4BPCons(){
 
 	// TOF
 	printColor(BOLDBLACK, "TOF Constraint\n");
-	double tofData = 2.5;
+	double tofData = 340.0;
 	tpat_constraint tofCon(tpat_constraint::TOF, 0, &tofData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(tofCon);
+	halfLyapNodeset.print();
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
 		corrector.multShoot(&halfLyapNodeset);
@@ -621,8 +622,8 @@ void testBCR4BPCons(){
  *  @brief Test all constraint types available to ensure they converge correctly
  */
 int main(void){
-	testCR3BP_SE_Cons();
-	testCR3BP_EM_Cons();
+	// testCR3BP_SE_Cons();
+	// testCR3BP_EM_Cons();
 	testBCR4BPCons();
 
 	return EXIT_SUCCESS;

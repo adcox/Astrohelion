@@ -247,6 +247,15 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	return axialFam;
 }//====================================================
 
+/**
+ *  @brief Generate a family of vertical orbits
+ * 
+ *  @param axialFamFile a pointer to a file containing the axial family at the same 
+ *  collinear point as the desired vertical family
+ *  @param initStepSize initial step size from the bifurcating axial orbit
+ * 
+ *  @return a family of vertical orbits
+ */
 tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
 	tpat_family_cr3bp axialFam(axialFamFile);
 
@@ -390,10 +399,11 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
  *	@param x0 the initial displacement from the Lagrange point along the x-axis.
  *
  *	@return a family of orbits
+ *	@throws tpat_exception if <tt>LPt</tt> is invalid
  */
 tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp sysData, int LPt, double x0){
 	if(LPt < 1 || LPt > 3)
-		throw tpat_exception("tpat_family_generator::cr3bp_generateLyap: Invalide LPt number");
+		throw tpat_exception("tpat_family_generator::cr3bp_generateLyap: Invalid LPt number");
 
 	// Initialize variables and containers for data
 	tpat_family_cr3bp fam(sysData);
@@ -451,9 +461,9 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
  *	
  *	@param sysData represents the system the Lyapunov exists in
  *	@param LPt The Lagrange point number [1-5]
- *	@param x0 the initial displacement from the Lagrange point along the x-axis.
  *
  *	@return a family of orbits
+ *	@throws tpat_exception if <tt>LPt</tt> is not equal to two (others not implemented)
  */
 tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_cr3bp *sysData, int LPt){
 	if(LPt != 2)
@@ -604,6 +614,16 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *
 	return fam;
 }//====================================================
 
+/**
+ *  @brief Compute a family of p:q resonant orbits
+ * 
+ *  @param sysData Earth-Moon CR3BP system data object (other systems not implemented)
+ *  @param p Resonance ratio numerator; the orbit completes p revolutions in an inertial frame
+ *  in the same amount of time as the CR3BP system completes q revolutions in an inertial frame.
+ *  @param q Resonance ratio denominator
+ *  @return A family of resonant orbits
+ *  @throws tpat_exception of the resonance ratio p:q is not implemented or recognized
+ */
 tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *sysData, int p, int q){
 	double x = 0, vy = 0, T = 0;
 	int order = 0;
@@ -731,6 +751,11 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
  *	@param order the multiplicity or order of the family; i.e. the number of revs around the primary
  *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
  *	has order 2
+ *	@throws tpat_exception if <tt>indVarIx</tt> has fewer than two elements
+ *	@throws tpat_exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
+ *	@throws tpat_exception if the eigenvalues of the monodromy matrix cannot be computed
+ *	@throws tpat_exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
+ *	out of range
  */
 void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj_cr3bp initialGuess,
 	std::vector<tpat_mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
@@ -970,6 +995,9 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
  *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
  * 	a step on any of the free variables, but only one step direction will be considered (the first one
  * 	as the algorithm reads through the vector)
+ * 	@throws tpat_exception if the mirrorType is not recognized
+ * 	@throws tpat_exception if the free variable vector contains fewer than six states
+ * 	@throws tpat_exception if the eigenvalues of the monodromy matrix cannot be computed
  */
 void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nodeset_cr3bp initialGuess,
 	tpat_mirror_tp mirrorType, std::vector<int> initDir){
@@ -1309,6 +1337,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
  *	@param convergedFreeVarVec a matrix containing the free variable vector of the previous
  *	(nearest) converged family member
  *	@param N a 1D nullspace vector that lies tangent to the family
+ *	@param stepSize scales the size of the step by scaling the nullspace vector
  *	@param familyItData an iterationData object containing corrections information about the
  *	previous (nearest) converged family member
  *	@param cons a vector of constraints to place on the nodeset
@@ -1354,7 +1383,7 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd 
 		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.rows()-1]);
 
 	return newMember;
-}
+}//====================================================
 
 /**
  *	@brief Reset all parameters to their default values
@@ -1369,6 +1398,6 @@ void tpat_family_generator::reset(){
 	numNodes = 3;
 	slopeThresh = 1;
 	tol = 1e-12;
-}//======================================
+}//====================================================
 
 //

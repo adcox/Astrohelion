@@ -21,7 +21,7 @@
 #ifndef H_TRAJECTORY
 #define H_TRAJECTORY
 
-#include "tpat_arc_data.hpp"
+#include "tpat_arcset.hpp"
 #include "matio.h"
 
 // Forward Declarations
@@ -46,18 +46,22 @@ class tpat_nodeset;
  *	@version August 29, 2015
  *	@copyright GNU GPL v3.0
  *	
- *	@see tpat_arc_data
+ *	@see tpat_arcset
  */
-class tpat_traj : public tpat_arc_data{
+class tpat_traj : public tpat_arcset{
 
 public:
 	// *structors
 	tpat_traj(const tpat_sys_data*);
 	tpat_traj(const tpat_traj&);
-	tpat_traj(const tpat_arc_data&);
-
+	tpat_traj(const tpat_arcset&);
+	virtual tpat_traj* create(const tpat_sys_data*) const;
+	virtual tpat_traj* clone() const;
 	static tpat_traj fromNodeset(tpat_nodeset);
+
 	// Operators
+	friend tpat_traj operator +(const tpat_traj&, const tpat_traj&);
+	virtual tpat_traj& operator +=(const tpat_traj&);
 
 	// Set and Get Functions
 	double getTimeByIx(int) const;
@@ -70,9 +74,6 @@ public:
 	void print() const;
 	virtual void readFromMat(const char*);
 	virtual void saveToMat(const char*) const;
-
-protected:
-	void saveTime(mat_t*) const;
 };
 
 #endif

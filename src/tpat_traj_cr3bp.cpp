@@ -60,8 +60,36 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_traj_cr3bp &t) : tpat_traj(t){
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_arc_data &a) : tpat_traj(a){
+tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_arcset &a) : tpat_traj(a){
 	initExtraParam();
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @param sys pointer to a system data object; should be a 
+ *  CR3BP system as the pointer will be cast to that derived class
+ *  @return a pointer to the newly created trajectory
+ */
+tpat_traj_cr3bp* tpat_traj_cr3bp::create( const tpat_sys_data *sys) const{
+	const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(sys);
+	return new tpat_traj_cr3bp(crSys);
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack that is a 
+ *  duplicate of this object
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ *  
+ *  @return a pointer to the newly cloned trajectory
+ */
+tpat_traj_cr3bp* tpat_traj_cr3bp::clone() const{
+	return new tpat_traj_cr3bp(*this);
 }//====================================================
 
 //-----------------------------------------------------
@@ -79,9 +107,9 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_arc_data &a) : tpat_traj(a){
  *	the final state of A and in itial state of B are the same
  *
  *	@param rhs the right-hand-side of the addition operation
- *	@return a reference to the concatenated arc_data object
+ *	@return a reference to the concatenated arcset object
  */
-tpat_arc_data& tpat_traj_cr3bp::operator +=(const tpat_arc_data &rhs){
+tpat_traj& tpat_traj_cr3bp::operator +=(const tpat_traj &rhs){
 	// Create a copy of rhs (it is const)
 	tpat_traj temp(rhs);
 
@@ -92,7 +120,8 @@ tpat_arc_data& tpat_traj_cr3bp::operator +=(const tpat_arc_data &rhs){
 		temp.setTimeByIx(s, t);
 	}
 
-	tpat_arc_data::operator +=(temp);
+	// throw tpat_exception("tpat_traj_cr3bp::operator +=: Not currently implemented!");
+	tpat_traj::operator +=(temp);
 
 	return *this;
 }//====================================================
@@ -105,6 +134,7 @@ tpat_arc_data& tpat_traj_cr3bp::operator +=(const tpat_arc_data &rhs){
  *	@brief Retrieve the value of Jacobi's Constant at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@return Jacobi at the specified step
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 double tpat_traj_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0)
@@ -120,6 +150,7 @@ double tpat_traj_cr3bp::getJacobiByIx(int ix) const{
  *	@brief Set Jacobi at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@param val value of Jacobi
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 void tpat_traj_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
@@ -166,9 +197,9 @@ void tpat_traj_cr3bp::saveToMat(const char* filename) const{
 	}else{
 		saveState(matfp);
 		saveAccel(matfp);
-		saveTime(matfp);
+		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
-		saveExtraParam(matfp, 1, "Jacobi");
+		saveExtraParam(matfp, 0, "Jacobi");
 		sysData->saveToMat(matfp);
 	}
 
@@ -179,6 +210,7 @@ void tpat_traj_cr3bp::saveToMat(const char* filename) const{
  *  @brief Populate data in this trajectory from a matlab file
  * 
  *  @param filepath the path to the matlab data file
+ *  @throws tpat_exception if the data file cannot be loaded
  */
 void tpat_traj_cr3bp::readFromMat(const char *filepath){
 	tpat_traj::readFromMat(filepath);
@@ -189,7 +221,7 @@ void tpat_traj_cr3bp::readFromMat(const char *filepath){
 		throw tpat_exception("tpat_traj: Could not load data from file");
 	}
 
-	readExtraParamFromMat(matfp, 1, "Jacobi");
+	readExtraParamFromMat(matfp, 0, "Jacobi");
 
 	Mat_Close(matfp);
 }//====================================================

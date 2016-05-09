@@ -51,7 +51,9 @@ public:
 	tpat_nodeset_cr3bp(tpat_traj_cr3bp, int, tpat_nodeDistro_tp);
 	tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&, int, int);
 	tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&);
-	tpat_nodeset_cr3bp(const tpat_arc_data&);
+	tpat_nodeset_cr3bp(const tpat_arcset&);
+	tpat_nodeset_cr3bp* create(const tpat_sys_data*) const;
+	tpat_nodeset_cr3bp* clone() const;
 
 	// Operators
 

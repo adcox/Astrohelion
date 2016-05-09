@@ -59,8 +59,36 @@ tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_traj_bcr4bp &t) : tpat_traj(t){
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_arc_data &a) : tpat_traj(a){
+tpat_traj_bcr4bp::tpat_traj_bcr4bp(const tpat_arcset &a) : tpat_traj(a){
 	initExtraParam();
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @param sys pointer to a system data object; should be a 
+ *  BCR4BPR system as the pointer will be cast to that derived class
+ *  @return a pointer to the newly created trajectory
+ */
+tpat_traj_bcr4bp* tpat_traj_bcr4bp::create( const tpat_sys_data *sys) const{
+	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr*>(sys);
+	return new tpat_traj_bcr4bp(bcSys);
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack that is a 
+ *  duplicate of this object
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @return a pointer to the newly cloned trajectory
+ */
+tpat_traj_bcr4bp* tpat_traj_bcr4bp::clone() const{
+	return new tpat_traj_bcr4bp(*this);
 }//====================================================
 
 //-----------------------------------------------------
@@ -102,8 +130,9 @@ double tpat_traj_bcr4bp::getGamma(){
  *	@return the i'th 6-element dqdT vector. If ix is negative, the count
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
+std::vector<double> tpat_traj_bcr4bp::get_dqdTByIx(int ix){
 	if(ix < 0)
 		ix += nodes.size();
 
@@ -118,8 +147,9 @@ std::vector<double> tpat_traj_bcr4bp::get_dqdT(int ix){
  *	@param ix the index of the step; if < 0, it will count backwards from the end
  *	@param dqdT a pointer to the dqdT vector; this MUST have at least 6 elements,
  *	or the function will read unallocated memory.
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
-void tpat_traj_bcr4bp::set_dqdT(int ix, const double *dqdT){
+void tpat_traj_bcr4bp::set_dqdTByIx(int ix, const double *dqdT){
 	if(ix < 0)
 		ix += nodes.size();
 
@@ -134,12 +164,13 @@ void tpat_traj_bcr4bp::set_dqdT(int ix, const double *dqdT){
  *	@brief Set the value of the dqdT vector for the specified step
  *	@param ix the index of the step; if < 0, it will count backwards from the end
  *	@param dqdT a vector (6 elements) representing the dqdT vector
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
-void tpat_traj_bcr4bp::set_dqdT(int ix, std::vector<double> dqdT){
+void tpat_traj_bcr4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 	if(dqdT.size() != 6)
 		throw tpat_exception("tpat_traj_bcr4bp::set_dqdT: Cannot accept a dqdT with anything other than 6 elements");
 
-	set_dqdT(ix, &(dqdT[0]));
+	set_dqdTByIx(ix, &(dqdT[0]));
 }//====================================================
 
 //-----------------------------------------------------
@@ -177,9 +208,9 @@ void tpat_traj_bcr4bp::saveToMat(const char* filename) const{
 	}else{
 		saveState(matfp);
 		saveAccel(matfp);
-		saveTime(matfp);
+		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
-		saveExtraParam(matfp, 1, "dqdT");
+		saveExtraParam(matfp, 0, "dqdT");
 		sysData->saveToMat(matfp);
 	}
 
@@ -190,6 +221,7 @@ void tpat_traj_bcr4bp::saveToMat(const char* filename) const{
  *  @brief Populate data in this nodeset from a matlab file
  * 
  *  @param filepath the path to the matlab data file
+ *  @throws tpat_exception if the Matlab file cannot be opened
  */
 void tpat_traj_bcr4bp::readFromMat(const char *filepath){
 	tpat_traj::readFromMat(filepath);
@@ -200,7 +232,9 @@ void tpat_traj_bcr4bp::readFromMat(const char *filepath){
 		throw tpat_exception("tpat_traj_bcr4bp: Could not load data from file");
 	}
 
-	readExtraParamFromMat(matfp, 1, "dqdT");
+	readExtraParamFromMat(matfp, 0, "dqdT");
 	
 	Mat_Close(matfp);
 }//====================================================
+
+

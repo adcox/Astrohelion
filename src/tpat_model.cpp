@@ -33,7 +33,8 @@
 #include "tpat_nodeset.hpp"
 #include "tpat_traj.hpp"
 #include "tpat_sys_data.hpp"
-
+#include "tpat_utilities.hpp"
+ 
 #include <algorithm>
 #include <cmath>
 
@@ -174,7 +175,15 @@ void tpat_model::multShoot_initDesignVec(iterationData *it, const tpat_nodeset *
 	}
 }//============================================================
 
-
+/**
+ *  @brief Scale the design variable vector so that all elements have approximately the 
+ *  same magnitude.
+ *  @details This can improve the corrections process, although it is not guaranteed to,
+ *  and CAN impede the corrections process as well.
+ * 
+ *  @param it iteraiton data object for the current corrections process
+ *  @param set the nodeset that corrections are being applied to
+ */
 void tpat_model::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset *set) const{
 	// Group all like variables and then compute the largest magnitude of each
 	Eigen::VectorXd allPos(3*it->numNodes);
@@ -309,6 +318,7 @@ void tpat_model::multShoot_getSimICs(const iterationData *it, const tpat_nodeset
  * 
  *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
+ *  @throws tpat_exception if the constraint type does not include a slack variable
  */
 double tpat_model::multShoot_getSlackVarVal(const iterationData *it, tpat_constraint con) const{
 	switch(con.getType()){
@@ -393,6 +403,7 @@ void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint co
  *	@param it a pointer to the correctors iteration data structure
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
+ *	@throws tpat_exception if the node ID stored in the constraint is zero
  */
 void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0) const{
 	int n = con.getNode();
@@ -485,7 +496,7 @@ void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, i
 				it->DF[it->totalFree*(row0 + count) + 6*n + s] = 1;
 				count++;
 			}else{
-				throw tpat_exception("State constraints must have <= 6 elements");
+				printErr("tpat_model::multShoot_targetState: State constraint has more than 6 elements...\n");
 			}
 		}
 	}
@@ -742,6 +753,15 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 	}
 }//==============================================
 
+/**
+ *  @brief Compute the slack variable value for a delta-V constraint
+ *  @details This function currently returns a hard-coded value of 1e-2
+ * 
+ *  @param it a pointer to the class containing all the data relevant to the corrections process
+ *	@param con the constraint being applied
+ * 
+ *  @return Ideal value of the slack variable
+ */
 double tpat_model::multShoot_targetDeltaV_compSlackVar(const iterationData *it, tpat_constraint con) const{
 	// double totalDV = 0;
 	// for(int n = 0; n < it->numNodes-1; n++){
@@ -763,13 +783,19 @@ double tpat_model::multShoot_targetDeltaV_compSlackVar(const iterationData *it, 
 	// If F < 0, the constraint is satisfied, so choose a slack variable
 	// that sets F = 0; else choose a small slack variable value
 	// return F < 0 ? sqrt(std::abs(F)) : 1e-4;
-}//=============================================
+}//====================================================
 
 /**
  *	@brief Compute partials and constraint function values for time-of-flight constraints
  *
  *	This method *should* provide full functionality for any model; only 1's and 0's are
  *	used to relate TOFs.
+ *	
+ *	@param it a pointer to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
+ *	
+ *	@throws tpat_exception if variable time is set to OFF
  */
 void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int row0) const{
 	if(! it->varTime)
@@ -788,13 +814,17 @@ void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int
 	
 	// subtract the desired TOF from the constraint to finish its computation
 	it->FX[row0] -= con.getData()[0]*it->freeVarScale[2];
-}//===============================================
+}//====================================================
 
 /**
  *	@brief Compute partials and constraint function values for apse constraints
  *
  *	This method *should* provide full functionality for any autonomous model. Non-
  *	autonomous models will need to modify the function to account for epoch time
+ *	
+ *	@param it a pointer to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  */
 void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
@@ -826,7 +856,7 @@ void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, in
 	it->DF[it->totalFree*row0 + 6*n+3] = dx/sv;
 	it->DF[it->totalFree*row0 + 6*n+4] = dy/sv;
 	it->DF[it->totalFree*row0 + 6*n+5] = dz/sv;
-}//===============================================
+}//====================================================
 
 
 

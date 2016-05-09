@@ -20,7 +20,7 @@ int main(void){
 	// tpat_simulation_engine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, mass/lowThrustSys.getCharM()};
 	sim.setSysData(&lowThrustSys);
-	sim.setVerbose(true);
+	sim.setVerbose(ALL_MSG);
 	sim.runSim(ic_lt, 5*tof);
 	
 	tpat_traj_cr3bp_ltvp lowThrustTraj = sim.getCR3BP_LTVP_Traj();

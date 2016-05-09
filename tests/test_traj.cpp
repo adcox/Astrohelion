@@ -30,7 +30,7 @@ void testCR3BPTraj(){
 	cout << "Same Final Accel: " << (crTraj.getAccelByIx(-1) == crTemp.getAccelByIx(-1) ? PASS : FAIL) << endl;
 	cout << "Same Final Time: " << (crTraj.getTimeByIx(-1) == crTemp.getTimeByIx(-1) ? PASS : FAIL) << endl;
 	cout << "Same Final STM: " << (crTraj.getSTMByIx(-1) == crTemp.getSTMByIx(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final Jacobi: " << (crTraj.getJacobi(-1) == crTemp.getJacobi(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Jacobi: " << (crTraj.getJacobiByIx(-1) == crTemp.getJacobiByIx(-1) ? PASS : FAIL) << endl;
 }
 
 void testBC4BPTraj(){
@@ -50,7 +50,7 @@ void testBC4BPTraj(){
 	cout << "Same Final Accel: " << (bcTraj.getAccelByIx(-1) == bcTemp.getAccelByIx(-1) ? PASS : FAIL) << endl;
 	cout << "Same Final Time: " << (bcTraj.getTimeByIx(-1) == bcTemp.getTimeByIx(-1) ? PASS : FAIL) << endl;
 	cout << "Same Final STM: " << (bcTraj.getSTMByIx(-1) == bcTemp.getSTMByIx(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final dqdT: " << (bcTraj.get_dqdT(-1) == bcTemp.get_dqdT(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final dqdT: " << (bcTraj.get_dqdTByIx(-1) == bcTemp.get_dqdTByIx(-1) ? PASS : FAIL) << endl;
 }
 
 

@@ -18,19 +18,21 @@
 # Paths for files
 INC := ../include
 SRC := ../src
+# OBJ := ../obj
 OBJ := ../obj_debug
 BIN := ../bin
 LIB := ../lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
-CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
+# LDFLAGS += -rdynamic
 
 # Options that are platform dependent
 UNAME_S := $(shell uname -s)
@@ -62,13 +64,16 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
 .PHONY: printVars
 
-all: bcSysTest calcTest correctorTest familyOps eigenTest linMotionTest matioTest multShootCons nodesetTest simEngineTest sysSwitchTest trajTest utilityTest
+all: arcDataTest bcSysTest calcTest correctorTest familyOps eigenTest linMotionTest matioTest multShootCons nodesetTest simEngineTest sysSwitchTest trajTest utilityTest
 	
 
 ############################################################
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
 
+arcDataTest: $(OBJECTS)
+	$(COMP) -I $(INC) $^ $(LDFLAGS) test_arcDataOps.cpp -o $(BIN)/$@
+	
 bcSysTest: $(OBJECTS)
 	$(COMP) -I $(INC) $^ $(LDFLAGS) test_bcr4bprSysData.cpp -o $(BIN)/$@
 
@@ -152,6 +157,7 @@ printVars:
 
 list:
 	@- echo "You may choose from the following options:"
+	@- echo "  arcDataTest - test basic linkable structure, adding and deleting nodes, etc."
 	@- echo "  bcSysTest - test BC4BP system data, saving, loading, etc."
 	@- echo "  calcTest - test calculation functions"
 	@- echo "  correctorTest - test multiple shooting corrector"

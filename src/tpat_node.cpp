@@ -27,8 +27,6 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat.hpp"
-
 #include "tpat_exceptions.hpp"
 #include "tpat_node.hpp"
 #include "tpat_utilities.hpp"
@@ -60,6 +58,7 @@ tpat_node::tpat_node(const double state[6], double epoch){
  * 
  *  @param state 6-element vector of state variables
  *  @param epoch epoch associated with this node
+ *  @throw tpat_exception if <tt>state</tt> does not have six elements
  */
 tpat_node::tpat_node(std::vector<double> state, double epoch){
 	initArrays();
@@ -90,6 +89,8 @@ tpat_node::tpat_node(const double state[6], const double accel[3], double epoch)
  *  @param state 6-element vector of state variables
  *  @param accel 3-element vector of acceleration values
  *  @param epoch epoch associated with this node
+ *  @throw tpat_exception if <tt>state</tt> does not have six elements
+ *  @throw tpat_exception if <tt>accel</tt> does not have three elements
  */
 tpat_node::tpat_node(std::vector<double> state, std::vector<double> accel, double epoch){
 	initArrays();
@@ -208,13 +209,12 @@ void tpat_node::clearConstraints(){ cons.clear(); }
 
 /**
  *	@brief Remove the specified constraint
- *	@param ix the index of the constraint. If the ix < 0, it will
- *	count backwards from the end of the set
+ *	@param ix the index of the constraint.
+ *	@throw tpat_exception if <tt>ix</tt> is out of bounds
  */
 void tpat_node::removeConstraint(int ix){
-	if(ix < 0)
-		ix += cons.size();
-	
+	if(ix < 0 || ix >= (int)(cons.size()))
+		throw tpat_exception("tpat_node:removeConstraint: index out of bounds");
 	cons.erase(cons.begin() + ix);
 }//====================================================
 
@@ -255,6 +255,7 @@ double tpat_node::getEpoch() const{ return epoch; }
  *	count backwards from the end of the array
  *	@return the value of the paramter associated with the 
  *	input index
+ *	@throw tpat_exception if <tt>ix</tt> is out of bounds
  */
 double tpat_node::getExtraParam(int ix) const {
 	if(ix < 0)
@@ -302,6 +303,7 @@ void tpat_node::setAccel(const double *a){
 /**
  *	@brief Set the acceleration vector for this node
  *	@param a a 3-element vector of non-dimensional accelerations
+ *	@throw tpat_exception if <tt>a</tt> does not have three elements
  */
 void tpat_node::setAccel(std::vector<double> a){
 	if(a.size() != 3)
@@ -385,6 +387,7 @@ void tpat_node::setState(const double *s){
  *	@brief Set the position-velocity state vector
  *	@param s a 6-element vector of non-dimensional position
  *	and velocity states
+ *	@throw tpat_exception if <tt>s</tt> does not have six elements
  */
 void tpat_node::setState(std::vector<double> s){
 	if(s.size() != 6)
@@ -427,6 +430,7 @@ void tpat_node::setVelCon(const bool data[3]){
  *	@param data a three-element boolean vector. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
+ *	@throw tpat_exception if <tt>data</tt> has fewer than three elements
  */
 void tpat_node::setVelCon(std::vector<bool> data){
 	if(data.size() < 3)
@@ -456,15 +460,17 @@ void tpat_node::setVelCon(bool xCon, bool yCon, bool zCon){
 
 /**
  *	@brief Copy a node into this one
- *	@param s a node reference
+ *	@param n a node reference
  */
 void tpat_node::copyMe(const tpat_node &n){
 	initArrays();
 	std::copy(n.state, n.state+6, state);
 	std::copy(n.accel, n.accel+3, accel);
+	epoch = n.epoch;
 	extraParam = n.extraParam;
 	flags = n.flags;
 	cons = n.cons;
+	tpat_linkable::copyMe(n);
 }//====================================================
 
 /**

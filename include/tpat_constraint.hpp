@@ -198,6 +198,7 @@ class tpat_constraint : public tpat{
 		int countConstrainedStates() const;
 		
 		tpat_conApp_tp getAppType() const;
+		static const char* getAppTypeStr(tpat_conApp_tp);
 		static const char* getConTypeStr(tpat_constraint_tp);
 		std::vector<double> getData() const;
 		int getNode() const;

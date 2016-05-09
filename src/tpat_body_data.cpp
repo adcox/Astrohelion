@@ -54,6 +54,7 @@ tpat_body_data::tpat_body_data(){
 /**
  *	@brief Construct a body by specifying its name; the other parameters are loaded from memory
  *	@param n the name of the body; NOTE: USE ALL LOWERCASE
+ *	@throws tpat_exception if the body cannot be located
  */
 tpat_body_data::tpat_body_data(std::string n){
 	name = n;

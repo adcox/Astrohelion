@@ -163,6 +163,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByTOF(double t
  *	@param value the desired value
  *	@param ix the index of the state variable [0, 5]
  *	@return a vector of matching family members (some may be interpolated/corrected)
+ *	@throws tpat_exception if <tt>ix</tt> is out of range
  */
 std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByStateVar(double value, int ix) const{
 	if(ix < 0 || ix > 5){
@@ -523,6 +524,7 @@ void tpat_family_cr3bp::loadMemberData(mat_t *matFile){
  *
  *	NOTE: the vector of family members MUST be populated before loading the eigenvalues
  *	@param matFile a pointer to the data file in question
+ *	@throws tpat_exception if the variable cannot be loaded
  */
 void tpat_family_cr3bp::loadEigVals(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
@@ -599,6 +601,8 @@ void tpat_family_cr3bp::sortEigs(){
  *	The family must be sorted (or be loaded from an already sorted family file) before
  *	you can retrieve family members. The process will run without sorting, but the results
  *	will likely be wonky.
+ *	
+ *	@throws tpat_exception if the sorting type is not recognized
  */
 void tpat_family_cr3bp::sortMembers(){
 	// Don't do any sorting if the sort type is NONE
@@ -710,6 +714,7 @@ void tpat_family_cr3bp::saveMembers(mat_t *matFile){
 /**
  *	@brief Save eigenvalue data to a mat file
  *	@param matFile a pointer to the mat file in question
+ *	@throws tpat_exception if a family member does not have six eigenvalues
  */
 void tpat_family_cr3bp::saveEigVals(mat_t *matFile){
 	if(members.size() > 0){

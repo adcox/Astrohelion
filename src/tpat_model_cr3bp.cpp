@@ -306,6 +306,8 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
  *  @param it a pointer to the corrector's iteration data structure
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
+ *  @throw tpat_exception if the pseudo arclength constraint is not listed as the final constraint
+ *  @throw tpat_exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
  */
 void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
@@ -528,6 +530,8 @@ int tpat_model_cr3bp::simpleEOMs(double t, const double s[], double sdot[], void
  *  @param tol the tolerance to use; if NAN is input, then a default value of 1e-14 will
  *  be used.
  *  @param pos a 3-element array to store the position of the Lagrange point
+ *  @throws tpat_diverge if the Newton-Raphson process fails to converge on the 
+ *  Lagrange point location
  */
 void tpat_model_cr3bp::getEquilibPt(const tpat_sys_data_cr3bp *sysData, int L, double tol, double pos[3]){
     if(L < 1 || L > 5){
@@ -587,7 +591,7 @@ void tpat_model_cr3bp::getEquilibPt(const tpat_sys_data_cr3bp *sysData, int L, d
     }
 
     if(L < 4 && std::abs(gamma - gamma_prev) > tol){
-        printErr("Could not converge on L%d\n", L);
+        throw tpat_diverge("tpat_model_cr3bp::getEquilibPt: Could not converge on Lagrange point.");
     }
 }//========================================
 

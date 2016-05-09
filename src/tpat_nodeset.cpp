@@ -46,7 +46,7 @@
  *	@brief Construct a nodeset for the specified system
  *	@param sys a pointer to a system data object
  */
-tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_arc_data(sys){
+tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_arcset(sys){
 	initExtraParam();
 }//====================================================
 
@@ -54,7 +54,7 @@ tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_arc_data(sys){
  *	@brief Create a nodeset from another nodeset
  *	@param n a nodeset reference
  */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arc_data (n){
+tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arcset (n){
 	initExtraParam();
 }//====================================================
 
@@ -62,7 +62,7 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arc_data (n){
  *	@brief Create a nodeset from its base object
  *	@param a an arc data object
  */
-tpat_nodeset::tpat_nodeset(const tpat_arc_data &a) : tpat_arc_data (a){
+tpat_nodeset::tpat_nodeset(const tpat_arcset &a) : tpat_arcset (a){
 	initExtraParam();
 }//====================================================
 
@@ -74,7 +74,7 @@ tpat_nodeset::tpat_nodeset(const tpat_arc_data &a) : tpat_arc_data (a){
  *	last is the same index as first, only one node (with index = first = last)
  *	will be put in the new nodeset
  */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_arc_data(n){
+tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_arcset(n){
 	(void) n;
 	(void) first;
 	(void) last;
@@ -91,9 +91,51 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ar
 	// 	steps.insert(steps.end(), n.steps[first]);
 }//====================================================
 
+/**
+ *  @brief Create a new nodeset object on the stack
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @param sys pointer to a system data object
+ *  @return a pointer to the newly created nodeset
+ */
+tpat_nodeset* tpat_nodeset::create( const tpat_sys_data *sys) const{
+	return new tpat_nodeset(sys);
+}//====================================================
+
+/**
+ *  @brief Create a new nodeset object on the stack that is a 
+ *  duplicate of this object
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @return a pointer to the newly cloned nodeset
+ */
+tpat_nodeset* tpat_nodeset::clone() const{
+	return new tpat_nodeset(*this);
+}//====================================================
+
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------
+
+tpat_nodeset operator +(const tpat_nodeset &lhs, const tpat_nodeset &rhs){
+	const tpat_nodeset lhs_cpy(lhs);
+	const tpat_nodeset rhs_cpy(rhs);
+	tpat_nodeset result(lhs.sysData);
+
+	tpat_arcset::sum(&lhs, &rhs, &result);
+
+	return result;
+}//====================================================
+
+tpat_nodeset& tpat_nodeset::operator +=(const tpat_nodeset &rhs){
+	tpat_nodeset temp = *this + rhs;
+	copyMe(temp);
+	return *this;
+}//====================================================
 
 //-----------------------------------------------------
 //      Set and Get Functions
@@ -130,7 +172,7 @@ int tpat_nodeset::createNodesAtEvent(int priorNodeIx, tpat_event evt){
  * 
  *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
  *  inserted after this node.
- *  @param events a vector of events that identify the node locations. If multiple occurences
+ *  @param evts a vector of events that identify the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If nond of the events occur,
  *  no nodes are inserted
  
@@ -156,6 +198,7 @@ int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> e
  *  times-of-flight greater than or equal to this amount
  *  
  *  @return the number of nodes created and inserted into the nodeset.
+ *  @throws tpat_exception if <tt>segID</tt> is out of bounds
  */
 int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, double minTimeDiff){
 	if(segID < 0 || segID >= (int)(segIDMap.size()))
@@ -186,7 +229,7 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 	std::vector<tpat_event> events = engine.getEvents();
 	std::vector<eventRecord> evtRecs = engine.getEventRecords();
 	int evtCount = 0, prevNodeID = origin.getID();
-	double sumTOF = 0, tof = 0;
+	double tof = 0;
 	for(size_t e = 0; e < evtRecs.size(); e++){
 		for(size_t i = 0; i < evts.size(); i++){
 
@@ -205,7 +248,7 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 					addSeg(tpat_segment(prevNodeID, newID, tof));
 
 					prevNodeID = newID;
-					sumTOF += tof;
+					T0 += tof;
 					evtCount++;
 				}
 			}
@@ -264,16 +307,30 @@ void tpat_nodeset::allowDV_none(){
 void tpat_nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", sysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
-	for (size_t n = 0; n < nodes.size(); n++){
-		std::vector<double> state = nodes[n].getState();
-		printf("  %02lu: %13.8f %13.8f %13.8f %13.8f %13.8f %13.8f", n,
-			state[0], state[1], state[2], state[3], state[4], state[5]);
-		
-		if(n < nodes.size()-1)
-			printf("   TOF = %.8f\n", getTOFByIx(n));
-		else
-			printf("   TOF = [N/A]\n");
+	printf("List of Nodes:\n");
+	for(size_t n = 0; n < nodeIDMap.size(); n++){
+		printf("  %02lu (ix %02d):", n, nodeIDMap[n]);
+		if(nodeIDMap[n] != tpat_linkable::INVALID_ID){
+			std::vector<double> state = nodes[nodeIDMap[n]].getState();
+			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
+				nodes[nodeIDMap[n]].getEpoch(), state[0], state[1], state[2], state[3],
+				state[4], state[5]);
+		}else{
+			printf(" [N/A]\n");
+		}
 	}
+
+	printf("List of Segments:\n");
+	for (size_t s = 0; s < segIDMap.size(); s++){
+		printf("  %02lu (ix %02d):", s, segIDMap[s]);
+		if(segIDMap[s] != tpat_linkable::INVALID_ID && segIDMap[s] < (int)(segs.size())){
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[segIDMap[s]].getOrigin(),
+				segs[segIDMap[s]].getTerminus(), segs[segIDMap[s]].getTOF());
+		}else{
+			printf(" [N/A]\n");
+		}
+	}
+
 	printf(" Constraints:\n");
 	for(size_t n = 0; n < nodes.size(); n++){
 		std::vector<tpat_constraint> nodeCons = nodes[n].getConstraints();
@@ -366,6 +423,7 @@ void tpat_nodeset::saveToMat(const char* filename) const{
  *  @brief Populate data in this nodeset from a matlab file
  * 
  *  @param filepath the path to the matlab data file
+ *  @throws tpat_exception if the file cannot be loaded
  */
 void tpat_nodeset::readFromMat(const char *filepath){
 	// Load the matlab file
@@ -387,8 +445,9 @@ void tpat_nodeset::readFromMat(const char *filepath){
  *	@param IC a set of initial conditions, non-dimensional units associated with the 
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
+ *	@param numNodes number of nodes to create, including IC (must be at least 2)
  *	@param distroType node distribution type
+ *	@throws tpat_exception if <tt>numNodes</tt> is less than two
  */
 void tpat_nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
 
@@ -448,7 +507,6 @@ void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, i
  *	@brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
  *	each segment has approximately the same arclength in distance.
  *	@param IC a set of initial conditions, non-dimensional units associated with the 
- *	@param sysData a pointer to a system data object describing the system the nodeset will exist in
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
@@ -484,6 +542,9 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 	}
 	double desiredArclen = sumArclen/(numNodes-1);
 
+	// Add one node to the set
+	int prevID = addNode(tpat_node(traj.getStateByIx(0), traj.getEpochByIx(0)));
+
 	// Loop through again to create trajectory
 	sumArclen = 0;
 	double sumTOF = 0;
@@ -496,22 +557,22 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 			sumTOF += allTOF[s];
 		}else{
 			// reached desired length: save node
-			addNode(tpat_node(traj.getStateByIx(prevNodeIx), traj.getEpochByIx(prevNodeIx)));
+			int id = addNode(tpat_node(traj.getStateByIx(s), traj.getEpochByIx(s)));
 			
-			if(s > 0)
-				addSeg(tpat_segment(s-1, s, sumTOF));
+			// Add a segment to link the previous node and this new one
+			addSeg(tpat_segment(prevID, id, sumTOF));
 
 			// Reset counters and index variables
 			prevNodeIx = s+1;	// The current node is the beginning of the next segment
 			sumArclen = 0;
 			sumTOF = 0;
+			prevID = id;
 		}
 	}
 
 	// Save the final state as the last node
-	int id = addNode(tpat_node(traj.getStateByIx(prevNodeIx), traj.getEpochByIx(prevNodeIx)));
 	int id2 = addNode(tpat_node(traj.getStateByIx(-1), traj.getEpochByIx(-1)));
-	addSeg(tpat_segment(id, id2, sumTOF));
+	addSeg(tpat_segment(prevID, id2, sumTOF));
 }//==========================================================
 
 /**
@@ -525,7 +586,6 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
  *	path.
  *
  *	@param traj a trajectory to make into a nodeset
- *	@param sysData a pointer to the system data object used to create traj (cannot extract from trajectory base class)
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */

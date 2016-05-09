@@ -41,10 +41,12 @@ public:
 	// *structors
 	tpat_traj_cr3bp(const tpat_sys_data_cr3bp*);
 	tpat_traj_cr3bp(const tpat_traj_cr3bp&);
-	tpat_traj_cr3bp(const tpat_arc_data&);
-	
+	tpat_traj_cr3bp(const tpat_arcset&);
+	tpat_traj_cr3bp* create(const tpat_sys_data*) const;
+	tpat_traj_cr3bp* clone() const;
+
 	// Operators
-	tpat_arc_data& operator +=(const tpat_arc_data&);
+	tpat_traj& operator +=(const tpat_traj&);
 	
 	// Set and Get Functions
 	double getJacobiByIx(int) const;

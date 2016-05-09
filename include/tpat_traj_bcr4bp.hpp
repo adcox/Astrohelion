@@ -41,18 +41,20 @@ public:
 	// *structors
 	tpat_traj_bcr4bp(const tpat_sys_data_bcr4bpr*);
 	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
-	tpat_traj_bcr4bp(const tpat_arc_data&);
+	tpat_traj_bcr4bp(const tpat_arcset&);
 	tpat_traj_bcr4bp(const char*);
-	static tpat_traj_bcr4bp fromNodeset(tpat_nodeset_bcr4bp);
+	tpat_traj_bcr4bp* create(const tpat_sys_data*) const;
+	tpat_traj_bcr4bp* clone() const;
+	//static tpat_traj_bcr4bp fromNodeset(tpat_nodeset_bcr4bp);
 
 	// Set and Get Functions
 	double getTheta0();
 	double getPhi0();
 	double getGamma();
-	std::vector<double> get_dqdT(int);
+	std::vector<double> get_dqdTByIx(int);
 
-	void set_dqdT(int, const double*);
-	void set_dqdT(int, std::vector<double>);
+	void set_dqdTByIx(int, const double*);
+	void set_dqdTByIx(int, std::vector<double>);
 
 	void readFromMat(const char*);
 	void saveToMat(const char*) const;

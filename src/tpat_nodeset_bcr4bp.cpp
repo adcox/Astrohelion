@@ -143,7 +143,35 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp& n) : tpat_no
  *	@brief Create a BCR4BPR nodeset from its base class
  *	@param a an arc data reference
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_arc_data &a) : tpat_nodeset(a) {}
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_arcset &a) : tpat_nodeset(a) {}
+
+/**
+ *  @brief Create a new nodeset object on the stack
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @param sys pointer to a system data object; should be a 
+ *  BCR4BPR system as the pointer will be cast to that derived class
+ *  @return a pointer to the newly created nodeset
+ */
+tpat_nodeset_bcr4bp* tpat_nodeset_bcr4bp::create( const tpat_sys_data *sys) const{
+	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr*>(sys);
+	return new tpat_nodeset_bcr4bp(bcSys);
+}//====================================================
+
+/**
+ *  @brief Create a new nodeset object on the stack that is a 
+ *  duplicate of this object
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @return a pointer to the newly cloned nodeset
+ */
+tpat_nodeset_bcr4bp* tpat_nodeset_bcr4bp::clone() const{
+	return new tpat_nodeset_bcr4bp(*this);
+}//====================================================
 
 //-----------------------------------------------------
 //      Operators

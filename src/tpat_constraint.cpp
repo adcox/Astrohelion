@@ -227,10 +227,24 @@ const char* tpat_constraint::getConTypeStr(tpat_constraint::tpat_constraint_tp t
 }//====================================================
 
 /**
+ *  @param t a constraint application type
+ *  @return a human-readable string representing an application type
+ */
+const char* tpat_constraint::getAppTypeStr(tpat_constraint::tpat_conApp_tp t){
+	switch(t){
+		case tpat_constraint::APP_TO_NODE: return "Nodes"; break;
+		case tpat_constraint::APP_TO_ARC: return "Whole Arcset"; break;
+		case tpat_constraint::APP_TO_SEG: return "Segments"; break;
+		default: return "Undefined!"; break;
+	}
+}//====================================================
+
+/**
  *	@brief Print this constraint and its data to the standard output.
  */
 void tpat_constraint::print() const {
-	printf("Constraint:\n  Type: %s\n  Node: %d\n  Data: ", getConTypeStr(type), node);
+	printf("Constraint:\n  Type: %s\n  Applies to: %s\n  Node: %d\n  Data: ",
+		getConTypeStr(type), getAppTypeStr(appType), node);
 	for(int n = 0; n < ((int)data.size()); n++){
 		printf("%12.5f ", data[n]);
 	}

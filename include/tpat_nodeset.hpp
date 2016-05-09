@@ -21,7 +21,7 @@
 #ifndef H_NODESET
 #define H_NODESET
 
-#include "tpat_arc_data.hpp"
+#include "tpat_arcset.hpp"
 #include "matio.h"
 
 // Forward Declarations
@@ -45,7 +45,7 @@ class tpat_traj;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset : public tpat_arc_data{
+class tpat_nodeset : public tpat_arcset{
 
 public:
 	/**
@@ -61,11 +61,15 @@ public:
 	// *structors
 	tpat_nodeset(const tpat_sys_data*);
 	tpat_nodeset(const tpat_nodeset&);
-	tpat_nodeset(const tpat_arc_data&);
+	tpat_nodeset(const tpat_arcset&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
 	tpat_nodeset(const char*);
-
+	virtual tpat_nodeset* create(const tpat_sys_data*) const;
+	virtual tpat_nodeset* clone() const;
+	
 	// Operators
+	friend tpat_nodeset operator +(const tpat_nodeset&, const tpat_nodeset&);
+	virtual tpat_nodeset& operator +=(const tpat_nodeset&);
 
 	// Set and Get Functions
 	void allowDV_at(std::vector<int>);
@@ -88,7 +92,6 @@ protected:
 	void initFromICs_time(const double[6], double, double, int);
 	void initFromICs_arclength(const double[6], double, double, int);
 	void initFromTraj(tpat_traj, int, tpat_nodeDistro_tp);
-	void initStepVectorFromMat(mat_t *, const char*);
 
 };
 

@@ -43,7 +43,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param data a pointer to a system data object
  */
-tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_arc_data(data) {
+tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_arcset(data) {
 	initExtraParam();
 }//====================================================
 
@@ -51,7 +51,7 @@ tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_arc_data(data) {
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arc_data(t) {
+tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arcset(t) {
 	initExtraParam();
 }//====================================================
 
@@ -59,7 +59,7 @@ tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arc_data(t) {
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj::tpat_traj(const tpat_arc_data &a) : tpat_arc_data(a) {
+tpat_traj::tpat_traj(const tpat_arcset &a) : tpat_arcset(a) {
 	initExtraParam();
 }//====================================================
 
@@ -81,7 +81,7 @@ tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
 	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
 	tpat_traj totalTraj(set.getSysData());
 
-	printWarn("tpat_traj::fromNodeset: The nodeset should probably be converted to chronological order first!!\n");
+	set.putInChronoOrder();
 
 	for(int s = 0; s < set.getNumSegs(); s++){
 		double tof = set.getSegByIx(s).getTOF();
@@ -100,10 +100,51 @@ tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
 	return totalTraj;
 }//====================================================
 
+/**
+ *  @brief Create a new trajectory object on the stack
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @param sys pointer to a system data object
+ *  @return a pointer to the newly created trajectory
+ */
+tpat_traj* tpat_traj::create( const tpat_sys_data *sys) const{
+	return new tpat_traj(sys);
+}//====================================================
+
+/**
+ *  @brief Create a new trajectory object on the stack that is a 
+ *  duplicate of this object
+ *  @details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  @return a pointer to the newly cloned trajectory
+ */
+tpat_traj* tpat_traj::clone() const{
+	return new tpat_traj(*this);
+}//====================================================
+
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------
 
+tpat_traj operator +(const tpat_traj &lhs, const tpat_traj &rhs){
+	const tpat_traj lhs_cpy(lhs);
+	const tpat_traj rhs_cpy(rhs);
+	tpat_traj result(lhs.sysData);
+
+	tpat_arcset::sum(&lhs, &rhs, &result);
+
+	return result;
+}//====================================================
+
+tpat_traj& tpat_traj::operator +=(const tpat_traj &rhs){
+	tpat_traj temp = *this + rhs;
+	copyMe(temp);
+	return *this;
+}//====================================================
 
 //-----------------------------------------------------
 //      Set and Get Functions
@@ -113,6 +154,7 @@ tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
  *	@brief Retrieve the time along the trajectory at a specific step
  *	@param ix node index; if < 0, it will count backwards from end of trajectory
  *	@return the non-dimensional time along the trajectory at the specified step
+ *	@throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 double tpat_traj::getTimeByIx(int ix) const {
 	if(ix < 0)
@@ -130,6 +172,7 @@ double tpat_traj::getTimeByIx(int ix) const {
  * 
  *	@param ix node index; if < 0, it will count backwards from end of trajectory
  *  @param t time associated with the node
+ *  @throws tpat_exception if <tt>ix</tt> is out of bounds
  */
 void tpat_traj::setTimeByIx(int ix, double t){
 	if(ix < 0)
@@ -168,6 +211,7 @@ void tpat_traj::shiftAllTimes(double amount){
  *	@param numNodes number of nodes, including both the initial and final states on 
  *	the trajectory, which are always included
  *	@return a nodeset with the specified number of nodes
+ *	@throws tpat_exception if <tt>numNodes</tt> is less than two
  */
 tpat_nodeset tpat_traj::discretize(int numNodes) const{
 	if(numNodes < 2)
@@ -237,14 +281,6 @@ void tpat_traj::print() const {
 }//====================================================
 
 /**
- *	@brief Save the times at each integration step
- *	@param file a pointer to an open Mat file
- */
-void tpat_traj::saveTime(mat_t *file) const{
-	saveExtraParam(file, 0, "Time");
-}//====================================================
-
-/**
  *	@brief Initialize the extra param vector for trajectory-specific info
  */
 void tpat_traj::initExtraParam(){
@@ -255,6 +291,7 @@ void tpat_traj::initExtraParam(){
  *  @brief Populate data in this trajectory from a matlab file
  * 
  *  @param filepath the path to the matlab data file
+ *  @throws tpat_exception if the data file cannot be opened
  */
 void tpat_traj::readFromMat(const char *filepath){
 

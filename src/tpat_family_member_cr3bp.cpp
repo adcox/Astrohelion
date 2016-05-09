@@ -62,7 +62,7 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
  */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
 	IC = traj.getStateByIx(0);
-	TOF = traj.getTimeByIx(-1);
+	TOF = traj.getTotalTOF();
 	JC = traj.getJacobiByIx(0);
 
 	std::vector<double> x = traj.getCoord(0);
@@ -156,6 +156,7 @@ double tpat_family_member_cr3bp::getZAmplitude() const { return zAmplitude; }
  *
  *	These should be the eigenvalues of the final STM and/or Monodromy matrix
  *	@param vals the eigenvalues
+ *	@throws tpat_exception if <tt>vals</tt> does not have six elements
  */
 void tpat_family_member_cr3bp::setEigVals(std::vector<cdouble> vals) {
 	if(vals.size() != 6)
@@ -166,10 +167,11 @@ void tpat_family_member_cr3bp::setEigVals(std::vector<cdouble> vals) {
 /**
  *	@brief Set the initial state
  *	@param ic The initial state (non-dim)
+ *	@throws tpat_exception if <tt>ic</tt> does not have six elements
  */
 void tpat_family_member_cr3bp::setIC( std::vector<double> ic ){
-if(ic.size() != 6)
-	throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
+	if(ic.size() != 6)
+		throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
 	IC = ic;
 }//====================================================
 

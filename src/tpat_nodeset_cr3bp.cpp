@@ -173,7 +173,7 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp& n) : tpat_nodes
  *	@brief Create a CR3BP nodeset from its base class
  *	@param a an arc data reference
  */
-tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_arcset &a) : tpat_nodeset(a) {
+tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_base_arcset &a) : tpat_nodeset(a) {
 	initExtraParam();
 }//====================================================
 

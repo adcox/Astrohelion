@@ -622,8 +622,8 @@ void testBCR4BPCons(){
  *  @brief Test all constraint types available to ensure they converge correctly
  */
 int main(void){
-	// testCR3BP_SE_Cons();
-	// testCR3BP_EM_Cons();
+	testCR3BP_SE_Cons();
+	testCR3BP_EM_Cons();
 	testBCR4BPCons();
 
 	return EXIT_SUCCESS;

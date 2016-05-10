@@ -53,7 +53,7 @@ public:
 		tpat_nodeDistro_tp);
 	// tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&, int, int);
 	tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp&);
-	tpat_nodeset_bcr4bp(const tpat_arcset&);
+	tpat_nodeset_bcr4bp(const tpat_base_arcset&);
 	tpat_nodeset_bcr4bp* create(const tpat_sys_data*) const;
 	tpat_nodeset_bcr4bp* clone() const;
 

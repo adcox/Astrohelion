@@ -143,7 +143,7 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp& n) : tpat_no
  *	@brief Create a BCR4BPR nodeset from its base class
  *	@param a an arc data reference
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_arcset &a) : tpat_nodeset(a) {}
+tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_base_arcset &a) : tpat_nodeset(a) {}
 
 /**
  *  @brief Create a new nodeset object on the stack

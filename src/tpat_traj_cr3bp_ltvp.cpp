@@ -57,7 +57,7 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp &t) : tpat
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_arcset &a) : tpat_traj(a){
+tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_base_arcset &a) : tpat_traj(a){
 	initExtraParam();
 }//====================================================
 

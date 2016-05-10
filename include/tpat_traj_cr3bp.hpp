@@ -41,7 +41,7 @@ public:
 	// *structors
 	tpat_traj_cr3bp(const tpat_sys_data_cr3bp*);
 	tpat_traj_cr3bp(const tpat_traj_cr3bp&);
-	tpat_traj_cr3bp(const tpat_arcset&);
+	tpat_traj_cr3bp(const tpat_base_arcset&);
 	tpat_traj_cr3bp* create(const tpat_sys_data*) const;
 	tpat_traj_cr3bp* clone() const;
 

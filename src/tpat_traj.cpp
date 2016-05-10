@@ -43,7 +43,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param data a pointer to a system data object
  */
-tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_arcset(data) {
+tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_base_arcset(data) {
 	initExtraParam();
 }//====================================================
 
@@ -51,7 +51,7 @@ tpat_traj::tpat_traj(const tpat_sys_data *data) : tpat_arcset(data) {
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arcset(t) {
+tpat_traj::tpat_traj(const tpat_traj &t) : tpat_base_arcset(t) {
 	initExtraParam();
 }//====================================================
 
@@ -59,7 +59,7 @@ tpat_traj::tpat_traj(const tpat_traj &t) : tpat_arcset(t) {
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj::tpat_traj(const tpat_arcset &a) : tpat_arcset(a) {
+tpat_traj::tpat_traj(const tpat_base_arcset &a) : tpat_base_arcset(a) {
 	initExtraParam();
 }//====================================================
 
@@ -135,7 +135,7 @@ tpat_traj operator +(const tpat_traj &lhs, const tpat_traj &rhs){
 	const tpat_traj rhs_cpy(rhs);
 	tpat_traj result(lhs.sysData);
 
-	tpat_arcset::sum(&lhs, &rhs, &result);
+	tpat_base_arcset::sum(&lhs, &rhs, &result);
 
 	return result;
 }//====================================================

@@ -18,8 +18,8 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef H_TPAT_ARCDATA
-#define H_TPAT_ARCDATA
+#ifndef H_TPAT_BASE_ARCSET
+#define H_TPAT_BASE_ARCSET
 
 #include "tpat.hpp"
 
@@ -75,26 +75,26 @@ struct tpat_arc_piece;
  *	@version April 28, 2016
  *	@copyright GNU GPL v3.0	
  */
-class tpat_arcset : public tpat{
+class tpat_base_arcset : public tpat{
 
 public:
 	// *structors
-	tpat_arcset(const tpat_sys_data*);
-	tpat_arcset(const tpat_arcset&);
-	virtual tpat_arcset* create( const tpat_sys_data* ) const = 0;	//!< Virtual constructor for creation
-	virtual tpat_arcset* clone() const = 0;							//!< Virtual constructor for copying
+	tpat_base_arcset(const tpat_sys_data*);
+	tpat_base_arcset(const tpat_base_arcset&);
+	virtual tpat_base_arcset* create( const tpat_sys_data* ) const = 0;	//!< Virtual constructor for creation
+	virtual tpat_base_arcset* clone() const = 0;							//!< Virtual constructor for copying
 
-	virtual ~tpat_arcset();
+	virtual ~tpat_base_arcset();
 
 	// Operators
-	tpat_arcset& operator =(const tpat_arcset&);
-	static void sum(const tpat_arcset*, const tpat_arcset*, tpat_arcset*);
+	tpat_base_arcset& operator =(const tpat_base_arcset&);
+	static void sum(const tpat_base_arcset*, const tpat_base_arcset*, tpat_base_arcset*);
 
 	// Set and Get functions
 	void addConstraint(tpat_constraint);
 	int addNode(tpat_node);
 	int addSeg(tpat_segment);
-	int appendSetAtNode(const tpat_arcset*, int, int, double);
+	int appendSetAtNode(const tpat_base_arcset*, int, int, double);
 	void clearArcConstraints();
 	void clearAllConstraints();
 	void deleteNode(int);
@@ -206,7 +206,7 @@ protected:
 	int nextNodeID = 0;	//!< A counter that stores the next available node ID
 	int nextSegID = 0;	//!< A counter that stores the next available segment ID
 
-	void copyMe(const tpat_arcset&);
+	void copyMe(const tpat_base_arcset&);
 
 	void initNodesSegsFromMat(mat_t *, const char*);
 	void readStateFromMat(mat_t*, const char*);
@@ -223,7 +223,7 @@ protected:
 	void saveState(mat_t*, const char*) const;
 	void saveSTMs(mat_t*) const;
 	void saveTOF(mat_t*, const char*) const;
-};//END OF tpat_arcset//--//--//--//--//--//--//--//--//--//--//--//--//
+};//END OF tpat_base_arcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
 /**
  *  @brief A structure used to represent nodes and segments.

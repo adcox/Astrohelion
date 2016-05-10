@@ -18,15 +18,15 @@
 # Paths for files
 INC := ../include
 SRC := ../src
-# OBJ := ../obj
-OBJ := ../obj_debug
+OBJ := ../obj
+# OBJ := ../obj_debug
 BIN := ../bin
 LIB := ../lib
 
 # Compiler specification and flags
 CXX := clang++ -std=c++11
-CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
-# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
+CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations

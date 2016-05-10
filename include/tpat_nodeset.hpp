@@ -21,7 +21,7 @@
 #ifndef H_NODESET
 #define H_NODESET
 
-#include "tpat_arcset.hpp"
+#include "tpat_base_arcset.hpp"
 #include "matio.h"
 
 // Forward Declarations
@@ -45,7 +45,7 @@ class tpat_traj;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset : public tpat_arcset{
+class tpat_nodeset : public tpat_base_arcset{
 
 public:
 	/**
@@ -61,7 +61,7 @@ public:
 	// *structors
 	tpat_nodeset(const tpat_sys_data*);
 	tpat_nodeset(const tpat_nodeset&);
-	tpat_nodeset(const tpat_arcset&);
+	tpat_nodeset(const tpat_base_arcset&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
 	tpat_nodeset(const char*);
 	virtual tpat_nodeset* create(const tpat_sys_data*) const;

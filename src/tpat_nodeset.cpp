@@ -46,7 +46,7 @@
  *	@brief Construct a nodeset for the specified system
  *	@param sys a pointer to a system data object
  */
-tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_arcset(sys){
+tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_base_arcset(sys){
 	initExtraParam();
 }//====================================================
 
@@ -54,7 +54,7 @@ tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_arcset(sys){
  *	@brief Create a nodeset from another nodeset
  *	@param n a nodeset reference
  */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arcset (n){
+tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_base_arcset (n){
 	initExtraParam();
 }//====================================================
 
@@ -62,7 +62,7 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_arcset (n){
  *	@brief Create a nodeset from its base object
  *	@param a an arc data object
  */
-tpat_nodeset::tpat_nodeset(const tpat_arcset &a) : tpat_arcset (a){
+tpat_nodeset::tpat_nodeset(const tpat_base_arcset &a) : tpat_base_arcset (a){
 	initExtraParam();
 }//====================================================
 
@@ -74,7 +74,7 @@ tpat_nodeset::tpat_nodeset(const tpat_arcset &a) : tpat_arcset (a){
  *	last is the same index as first, only one node (with index = first = last)
  *	will be put in the new nodeset
  */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_arcset(n){
+tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_base_arcset(n){
 	(void) n;
 	(void) first;
 	(void) last;
@@ -126,7 +126,7 @@ tpat_nodeset operator +(const tpat_nodeset &lhs, const tpat_nodeset &rhs){
 	const tpat_nodeset rhs_cpy(rhs);
 	tpat_nodeset result(lhs.sysData);
 
-	tpat_arcset::sum(&lhs, &rhs, &result);
+	tpat_base_arcset::sum(&lhs, &rhs, &result);
 
 	return result;
 }//====================================================

@@ -94,9 +94,7 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_family_member_cr3b
 /**
  *	@brief Destructor
  */
-tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){
-	IC.clear();
-}//===================================================
+tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){}
 
 
 //-----------------------------------------------------

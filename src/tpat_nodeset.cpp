@@ -91,6 +91,8 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ba
 	// 	steps.insert(steps.end(), n.steps[first]);
 }//====================================================
 
+tpat_nodeset::~tpat_nodeset(){}
+
 /**
  *  @brief Create a new nodeset object on the stack
  *  @details the <tt>delete</tt> function must be called to 
@@ -100,8 +102,8 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ba
  *  @param sys pointer to a system data object
  *  @return a pointer to the newly created nodeset
  */
-tpat_nodeset* tpat_nodeset::create( const tpat_sys_data *sys) const{
-	return new tpat_nodeset(sys);
+baseArcsetPtr tpat_nodeset::create( const tpat_sys_data *sys) const{
+	return baseArcsetPtr(new tpat_nodeset(sys));
 }//====================================================
 
 /**
@@ -113,8 +115,8 @@ tpat_nodeset* tpat_nodeset::create( const tpat_sys_data *sys) const{
  * 
  *  @return a pointer to the newly cloned nodeset
  */
-tpat_nodeset* tpat_nodeset::clone() const{
-	return new tpat_nodeset(*this);
+ baseArcsetPtr tpat_nodeset::clone() const{
+	return baseArcsetPtr(new tpat_nodeset(*this));
 }//====================================================
 
 //-----------------------------------------------------

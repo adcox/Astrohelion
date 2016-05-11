@@ -187,9 +187,9 @@ tpat_nodeset_cr3bp::tpat_nodeset_cr3bp(const tpat_base_arcset &a) : tpat_nodeset
  *  CR3BP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
-tpat_nodeset_cr3bp* tpat_nodeset_cr3bp::create( const tpat_sys_data *sys) const{
+baseArcsetPtr tpat_nodeset_cr3bp::create( const tpat_sys_data *sys) const{
 	const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(sys);
-	return new tpat_nodeset_cr3bp(crSys);
+	return baseArcsetPtr(new tpat_nodeset_cr3bp(crSys));
 }//====================================================
 
 /**
@@ -201,8 +201,8 @@ tpat_nodeset_cr3bp* tpat_nodeset_cr3bp::create( const tpat_sys_data *sys) const{
  * 
  *  @return a pointer to the newly cloned nodeset
  */
-tpat_nodeset_cr3bp* tpat_nodeset_cr3bp::clone() const{
-	return new tpat_nodeset_cr3bp(*this);
+baseArcsetPtr tpat_nodeset_cr3bp::clone() const{
+	return baseArcsetPtr(new tpat_nodeset_cr3bp(*this));
 }//====================================================
 
 //-----------------------------------------------------

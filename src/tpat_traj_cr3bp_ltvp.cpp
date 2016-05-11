@@ -71,9 +71,9 @@ tpat_traj_cr3bp_ltvp::tpat_traj_cr3bp_ltvp(const tpat_base_arcset &a) : tpat_tra
  *  CR3BP LTVP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created trajectory
  */
-tpat_traj_cr3bp_ltvp* tpat_traj_cr3bp_ltvp::create( const tpat_sys_data *sys) const{
+baseArcsetPtr tpat_traj_cr3bp_ltvp::create( const tpat_sys_data *sys) const{
 	const tpat_sys_data_cr3bp_ltvp *crSys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(sys);
-	return new tpat_traj_cr3bp_ltvp(crSys);
+	return baseArcsetPtr(new tpat_traj_cr3bp_ltvp(crSys));
 }//====================================================
 
 /**
@@ -85,8 +85,8 @@ tpat_traj_cr3bp_ltvp* tpat_traj_cr3bp_ltvp::create( const tpat_sys_data *sys) co
  * 
  *  @return a pointer to the newly cloned trajectory
  */
-tpat_traj_cr3bp_ltvp* tpat_traj_cr3bp_ltvp::clone() const{
-	return new tpat_traj_cr3bp_ltvp(*this);
+baseArcsetPtr tpat_traj_cr3bp_ltvp::clone() const{
+	return baseArcsetPtr(new tpat_traj_cr3bp_ltvp(*this));
 }//====================================================
 
 //-----------------------------------------------------

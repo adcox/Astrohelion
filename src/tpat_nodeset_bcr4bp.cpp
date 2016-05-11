@@ -155,9 +155,9 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_base_arcset &a) : tpat_nodes
  *  BCR4BPR system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
-tpat_nodeset_bcr4bp* tpat_nodeset_bcr4bp::create( const tpat_sys_data *sys) const{
+baseArcsetPtr tpat_nodeset_bcr4bp::create( const tpat_sys_data *sys) const{
 	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr*>(sys);
-	return new tpat_nodeset_bcr4bp(bcSys);
+	return baseArcsetPtr(new tpat_nodeset_bcr4bp(bcSys));
 }//====================================================
 
 /**
@@ -169,8 +169,8 @@ tpat_nodeset_bcr4bp* tpat_nodeset_bcr4bp::create( const tpat_sys_data *sys) cons
  * 
  *  @return a pointer to the newly cloned nodeset
  */
-tpat_nodeset_bcr4bp* tpat_nodeset_bcr4bp::clone() const{
-	return new tpat_nodeset_bcr4bp(*this);
+baseArcsetPtr tpat_nodeset_bcr4bp::clone() const{
+	return baseArcsetPtr(new tpat_nodeset_bcr4bp(*this));
 }//====================================================
 
 //-----------------------------------------------------

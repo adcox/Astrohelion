@@ -38,7 +38,7 @@
 /**
  *  @brief Default constructor
  */
-tpat_segment::tpat_segment(){ initArrays(); }
+tpat_segment::tpat_segment(){}
 
 /**
  *  @brief Construct a new segment
@@ -49,7 +49,6 @@ tpat_segment::tpat_segment(){ initArrays(); }
  *  @param tof time-of-flight along the segment
  */
 tpat_segment::tpat_segment(int originID, int terminusID, double tof){
-	initArrays();
 	addLink(originID);
 	addLink(terminusID);
 	this->tof = tof;
@@ -66,7 +65,6 @@ tpat_segment::tpat_segment(int originID, int terminusID, double tof){
  *  associated with this segment
  */
 tpat_segment::tpat_segment(int originID, int terminusID, double tof, const double stm_data[36]){
-	initArrays();
 	addLink(originID);
 	addLink(terminusID);
 	this->tof = tof;
@@ -83,11 +81,8 @@ tpat_segment::tpat_segment(const tpat_segment &s) : tpat_linkable(s){
 
 /**
  *  @brief Destructor
- *  @details Clears all data vectors
  */
-tpat_segment::~tpat_segment(){
-	cons.clear();
-}//====================================================
+// tpat_segment::~tpat_segment(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -283,17 +278,8 @@ void tpat_segment::setTOF(double t){ tof = t; }
  *	@param s a segment reference
  */
 void tpat_segment::copyMe(const tpat_segment &s){
-	// initArrays();
 	std::copy(s.stm, s.stm+36, stm);
 	cons = s.cons;
 	tof = s.tof;
 	tpat_linkable::copyMe(s);
-}//====================================================
-
-/**
- *	@brief Initialize all storage arrays
- */
-void tpat_segment::initArrays(){
-	for(int i = 0; i < 36; i++)
-		stm[i] = i % 7 == 0 ? 1 : 0;
 }//====================================================

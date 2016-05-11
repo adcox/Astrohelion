@@ -39,7 +39,7 @@
 /**
  *  @brief Default constructor
  */
-tpat_node::tpat_node(){ initArrays(); }
+tpat_node::tpat_node(){}
 
 /**
  *  @brief Construct a node object
@@ -48,7 +48,6 @@ tpat_node::tpat_node(){ initArrays(); }
  *  @param epoch epoch associated with this node
  */
 tpat_node::tpat_node(const double state[6], double epoch){
-	initArrays();
 	std::copy(state, state+6, this->state);
 	this->epoch = epoch;
 }//====================================================
@@ -61,7 +60,6 @@ tpat_node::tpat_node(const double state[6], double epoch){
  *  @throw tpat_exception if <tt>state</tt> does not have six elements
  */
 tpat_node::tpat_node(std::vector<double> state, double epoch){
-	initArrays();
 	if(state.size() != 6)
 		throw tpat_exception("tpat_node::constructor: state must have six elements");
 
@@ -77,7 +75,6 @@ tpat_node::tpat_node(std::vector<double> state, double epoch){
  *  @param epoch epoch associated with this node
  */
 tpat_node::tpat_node(const double state[6], const double accel[3], double epoch){
-	initArrays();
 	std::copy(state, state+6, this->state);
 	std::copy(accel, accel+3, this->accel);
 	this->epoch = epoch;
@@ -93,7 +90,6 @@ tpat_node::tpat_node(const double state[6], const double accel[3], double epoch)
  *  @throw tpat_exception if <tt>accel</tt> does not have three elements
  */
 tpat_node::tpat_node(std::vector<double> state, std::vector<double> accel, double epoch){
-	initArrays();
 	if(state.size() != 6)
 		throw tpat_exception("tpat_node::constructor: state vector must have six elements");
 
@@ -116,13 +112,8 @@ tpat_node::tpat_node(const tpat_node &n) : tpat_linkable(n){
 
 /**
  *  @brief Destructor
- *  @details Clears all data vectors
  */
-tpat_node::~tpat_node(){
-	extraParam.clear();
-	flags.clear();
-	cons.clear();
-}//====================================================
+// tpat_node::~tpat_node(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -463,7 +454,6 @@ void tpat_node::setVelCon(bool xCon, bool yCon, bool zCon){
  *	@param n a node reference
  */
 void tpat_node::copyMe(const tpat_node &n){
-	initArrays();
 	std::copy(n.state, n.state+6, state);
 	std::copy(n.accel, n.accel+3, accel);
 	epoch = n.epoch;
@@ -471,17 +461,4 @@ void tpat_node::copyMe(const tpat_node &n){
 	flags = n.flags;
 	cons = n.cons;
 	tpat_linkable::copyMe(n);
-}//====================================================
-
-/**
- *	@brief Initialize all storage arrays
- */
-void tpat_node::initArrays(){
-	for(int i = 0; i < 6; i++)
-		state[i] = NAN;
-
-	for(int i = 0; i < 3; i++)
-		accel[i] = NAN;
-
-	flags.assign(3, true);	// By default, all three velocity continuity flags are true
 }//====================================================

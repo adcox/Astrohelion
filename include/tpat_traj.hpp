@@ -55,8 +55,9 @@ public:
 	tpat_traj(const tpat_sys_data*);
 	tpat_traj(const tpat_traj&);
 	tpat_traj(const tpat_base_arcset&);
-	virtual tpat_traj* create(const tpat_sys_data*) const;
-	virtual tpat_traj* clone() const;
+	virtual ~tpat_traj();
+	virtual baseArcsetPtr create(const tpat_sys_data*) const;
+	virtual baseArcsetPtr clone() const;
 	static tpat_traj fromNodeset(tpat_nodeset);
 
 	// Operators

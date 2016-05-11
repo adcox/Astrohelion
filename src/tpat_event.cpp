@@ -235,10 +235,7 @@ void tpat_event::copyEvent(const tpat_event &ev){
 /**
  *	@brief Destructor
  */
-tpat_event::~tpat_event(){
-	state.clear();
-	conData.clear();
-}//=============================================
+tpat_event::~tpat_event(){}
 
 //-----------------------------------------------------
 //      Operator Functions
@@ -413,7 +410,6 @@ bool tpat_event::crossedEvent(const double y[6], double t) const{
  */
 void tpat_event::updateDist(const double y[6], double t){	
 	// update the dist variable using information from y
-	lastDist = dist;
 	dist = getDist(y, t);
 
 	// Save the state from y for later comparison

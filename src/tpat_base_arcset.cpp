@@ -58,14 +58,7 @@ tpat_base_arcset::tpat_base_arcset(const tpat_base_arcset &d) : sysData(d.sysDat
 /**
  *	@brief Destructor
  */
-tpat_base_arcset::~tpat_base_arcset(){
-	nodes.clear();
-	segs.clear();
-	nodeIDMap.clear();
-	segIDMap.clear();
-	cons.clear();
-	extraParamRowSize.clear();
-}//====================================================
+tpat_base_arcset::~tpat_base_arcset(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -78,6 +71,7 @@ tpat_base_arcset::~tpat_base_arcset(){
  */
 tpat_base_arcset& tpat_base_arcset::operator =(const tpat_base_arcset &d){
 	copyMe(d);
+	sysData = d.sysData;
 	return *this;
 }//====================================================
 
@@ -97,8 +91,8 @@ tpat_base_arcset& tpat_base_arcset::operator =(const tpat_base_arcset &d){
  *  the summing operation.
  */
 void tpat_base_arcset::sum(const tpat_base_arcset *lhs, const tpat_base_arcset *rhs, tpat_base_arcset *result){
-	tpat_base_arcset *lhs_cpy = lhs->clone();
-	tpat_base_arcset *rhs_cpy = rhs->clone();
+	baseArcsetPtr lhs_cpy = lhs->clone();
+	baseArcsetPtr rhs_cpy = rhs->clone();
 
 	lhs_cpy->putInChronoOrder();
 	rhs_cpy->putInChronoOrder();
@@ -107,10 +101,10 @@ void tpat_base_arcset::sum(const tpat_base_arcset *lhs, const tpat_base_arcset *
 
 	*result = *lhs_cpy;
 
-	result->appendSetAtNode(rhs_cpy, lhs_lastNodeID, rhs_firstNodeID, 0);
+	result->appendSetAtNode(rhs_cpy.get(), lhs_lastNodeID, rhs_firstNodeID, 0);
 
-	delete lhs_cpy;
-	delete rhs_cpy;
+	// delete lhs_cpy;
+	// delete rhs_cpy;
 }//====================================================
 
 //-----------------------------------------------------
@@ -278,14 +272,14 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 		throw tpat_exception("tpat_base_arcset::appendSetAtNode: linkTo_ID is out of bounds");
 
 	// Create a copy so we don't affect the original
-	tpat_base_arcset *set = arcset->clone();
+	baseArcsetPtr set = arcset->clone();
 
 	tpat_node linkTo_node = nodes[nodeIDMap[linkTo_ID]];
 	tpat_node linkFrom_node = set->getNode(linkFrom_ID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
 	if(!linkTo_node.isLinkedTo(tpat_linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(tpat_linkable::INVALID_ID)){
-		delete set;
+		// delete set;
 		throw tpat_exception("tpat_base_arcset::appendSetAtNode: specified nodes are not both open to a new link");
 	}
 
@@ -298,7 +292,7 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	bool linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
 
 	if(!linkTo_isOrigin && !linkFrom_isOrigin){
-		delete set;
+		// delete set;
 		throw tpat_exception("tpat_base_arcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
 	}
 
@@ -380,7 +374,7 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	}
 
 	// print();
-	delete set;	// Clean up allocated memory
+	// delete set;	// Clean up allocated memory
 	return addSeg(tpat_segment(origin, terminus, tof));
 }//====================================================
 
@@ -1197,7 +1191,7 @@ void tpat_base_arcset::copyMe(const tpat_base_arcset &d){
 	segs = d.segs;
 	segIDMap = d.segIDMap;
 	cons = d.cons;
-	sysData = d.sysData; // Copying ADDRESS of sys_data object
+	// sysData = d.sysData; // Copying ADDRESS of sys_data object
 	numExtraParam = d.numExtraParam;
 	extraParamRowSize = d.extraParamRowSize;
 	tol = d.tol;

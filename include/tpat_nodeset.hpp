@@ -64,8 +64,9 @@ public:
 	tpat_nodeset(const tpat_base_arcset&);
 	tpat_nodeset(const tpat_nodeset&, int, int);
 	tpat_nodeset(const char*);
-	virtual tpat_nodeset* create(const tpat_sys_data*) const;
-	virtual tpat_nodeset* clone() const;
+	virtual ~tpat_nodeset();
+	virtual baseArcsetPtr create(const tpat_sys_data*) const;
+	virtual baseArcsetPtr clone() const;
 	
 	// Operators
 	friend tpat_nodeset operator +(const tpat_nodeset&, const tpat_nodeset&);

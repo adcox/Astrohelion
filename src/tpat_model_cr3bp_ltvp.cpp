@@ -86,10 +86,10 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn() const{
 std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, const tpat_sys_data *sysData) const{
     (void)t;
     double primPos[6] = {0};
-    const tpat_sys_data_cr3bp_ltvp crSys(*static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData));
+    const tpat_sys_data_cr3bp_ltvp *crSys = static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData);
 
-    primPos[0] = -1*crSys.getMu();
-    primPos[3] = 1 - crSys.getMu();
+    primPos[0] = -1*crSys->getMu();
+    primPos[3] = 1 - crSys->getMu();
 
     return std::vector<double>(primPos, primPos+6);
 }//==============================================

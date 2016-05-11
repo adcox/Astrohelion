@@ -46,7 +46,7 @@ public:
 	tpat_node(const double[6], const double[3], double);
 	tpat_node(std::vector<double>, std::vector<double>, double);
 	tpat_node(const tpat_node&);
-	~tpat_node();
+	// ~tpat_node();
 
 	// Operators
 	tpat_node& operator =(const tpat_node&);
@@ -82,17 +82,16 @@ public:
 
 protected:
 	virtual void copyMe(const tpat_node&);
-	virtual void initArrays();
 
-	double state[6];	//!< Stores 3 position and 3 velocity states
-	double accel[3];	//!< Stores 3 acceleration states
+	double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
+	double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
 	/** Stores extra parameters like mass, costates, etc. */
 	std::vector<double> extraParam {};
 
-	/** Stores flags, which may be interpreted by derived classes */
-	std::vector<bool> flags {};
+	/** Stores flags, which are currently used to indicate continuity */
+	std::vector<bool> flags {true, true, true};
 
 	/** Stores constraints on this node (especially usefull in nodesets) */
 	std::vector<tpat_constraint> cons {};

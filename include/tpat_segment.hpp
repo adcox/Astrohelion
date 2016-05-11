@@ -49,7 +49,7 @@ public:
 	tpat_segment(int, int, double);
 	tpat_segment(int, int, double, const double[36]);
 	tpat_segment(const tpat_segment&);
-	~tpat_segment();
+	// ~tpat_segment();
 
 	// Operators
 	tpat_segment& operator =(const tpat_segment&);
@@ -77,10 +77,14 @@ public:
 
 protected:
 	virtual void copyMe(const tpat_segment&);
-	virtual void initArrays();
 
 	double tof = 0;			//!< Time-of-flight along this segment, units consistent with the system
-	double stm[36];			//!< 6x6 STM, stored in row-major order
+	double stm[36] = {	1, 0, 0, 0, 0, 0,
+						0, 1, 0, 0, 0, 0,
+						0, 0, 1, 0, 0, 0,
+						0, 0, 0, 1, 0, 0,
+						0, 0, 0, 0, 1, 0,
+						0, 0, 0, 0, 0, 1 };			//!< 6x6 STM, stored in row-major order
 
 	/** Stores constraints on this segment */
 	std::vector<tpat_constraint> cons {};

@@ -56,10 +56,7 @@ tpat_model::tpat_model(const tpat_model &m){
 /**
  *	@brief Deconstructor
  */
-tpat_model::~tpat_model(){
-	allowedCons.clear();
-	allowedEvents.clear();
-}//==============================
+tpat_model::~tpat_model(){}
 
 /**
  *	@brief Copy Operator

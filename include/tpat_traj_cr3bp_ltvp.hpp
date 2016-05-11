@@ -42,8 +42,8 @@ public:
 	tpat_traj_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp*);
 	tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp&);
 	tpat_traj_cr3bp_ltvp(const tpat_base_arcset&);
-	tpat_traj_cr3bp_ltvp* create(const tpat_sys_data*) const;
-	tpat_traj_cr3bp_ltvp* clone() const;
+	baseArcsetPtr create(const tpat_sys_data*) const;
+	baseArcsetPtr clone() const;
 
 	// Set and Get Functions
 	double getJacobiByIx(int) const;

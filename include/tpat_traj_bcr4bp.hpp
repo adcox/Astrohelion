@@ -43,8 +43,8 @@ public:
 	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
 	tpat_traj_bcr4bp(const tpat_base_arcset&);
 	tpat_traj_bcr4bp(const char*);
-	tpat_traj_bcr4bp* create(const tpat_sys_data*) const;
-	tpat_traj_bcr4bp* clone() const;
+	baseArcsetPtr create(const tpat_sys_data*) const;
+	baseArcsetPtr clone() const;
 	//static tpat_traj_bcr4bp fromNodeset(tpat_nodeset_bcr4bp);
 
 	// Set and Get Functions

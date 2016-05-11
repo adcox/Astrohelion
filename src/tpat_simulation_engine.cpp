@@ -73,8 +73,8 @@
  *  @param data a pointer to a system data object
  */
 tpat_simulation_engine::tpat_simulation_engine(const tpat_sys_data *data) : sysData(data){
-    events.clear();
-    eventOccurs.clear();
+    // events.clear();
+    // eventOccurs.clear();
     // sysData = data;
     createCrashEvents();
     printVerb(verbose == ALL_MSG, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
@@ -93,7 +93,9 @@ tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s) 
  */
 tpat_simulation_engine::~tpat_simulation_engine(){
     printVerb(verbose == ALL_MSG, "Destroying simulation engine...\n");
-    reset();    // Function handles deallocation and resetting of data
+    // reset();    // Function handles deallocation and resetting of data
+    if(!isClean)
+        delete traj;    // de-allocate the memory
 }//===========================================
 
 /**

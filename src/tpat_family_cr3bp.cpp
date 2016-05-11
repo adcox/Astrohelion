@@ -82,9 +82,7 @@ tpat_family_cr3bp::tpat_family_cr3bp(const tpat_family_cr3bp& fam){
 /**
  *	@brief Destructor
  */
-tpat_family_cr3bp::~tpat_family_cr3bp(){
-	members.clear();
-}
+tpat_family_cr3bp::~tpat_family_cr3bp(){}
 
 //-----------------------------------------------------
 // 		Operators

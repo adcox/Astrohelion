@@ -63,6 +63,8 @@ tpat_traj::tpat_traj(const tpat_base_arcset &a) : tpat_base_arcset(a) {
 	initExtraParam();
 }//====================================================
 
+tpat_traj::~tpat_traj(){}
+
 /**
  *	@brief Create a trajectory from a nodeset
  *
@@ -109,8 +111,8 @@ tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
  *  @param sys pointer to a system data object
  *  @return a pointer to the newly created trajectory
  */
-tpat_traj* tpat_traj::create( const tpat_sys_data *sys) const{
-	return new tpat_traj(sys);
+baseArcsetPtr tpat_traj::create( const tpat_sys_data *sys) const{
+	return baseArcsetPtr(new tpat_traj(sys));
 }//====================================================
 
 /**
@@ -122,8 +124,8 @@ tpat_traj* tpat_traj::create( const tpat_sys_data *sys) const{
  * 
  *  @return a pointer to the newly cloned trajectory
  */
-tpat_traj* tpat_traj::clone() const{
-	return new tpat_traj(*this);
+baseArcsetPtr tpat_traj::clone() const{
+	return baseArcsetPtr(new tpat_traj(*this));
 }//====================================================
 
 //-----------------------------------------------------

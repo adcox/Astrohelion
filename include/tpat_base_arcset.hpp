@@ -29,10 +29,17 @@
 #include "tpat_sys_data.hpp"
 
 #include "matio.h"
+#include <memory>
 #include <vector>
 
 // Forward Declarations
 struct tpat_arc_piece;
+class tpat_base_arcset;
+
+/**
+ * @brief Smart pointer to a tpat_base_arcset object
+ */
+typedef std::shared_ptr<tpat_base_arcset> baseArcsetPtr;
 
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
@@ -81,8 +88,8 @@ public:
 	// *structors
 	tpat_base_arcset(const tpat_sys_data*);
 	tpat_base_arcset(const tpat_base_arcset&);
-	virtual tpat_base_arcset* create( const tpat_sys_data* ) const = 0;	//!< Virtual constructor for creation
-	virtual tpat_base_arcset* clone() const = 0;							//!< Virtual constructor for copying
+	virtual baseArcsetPtr create( const tpat_sys_data* ) const = 0;		//!< Virtual constructor for creation
+	virtual baseArcsetPtr clone() const = 0;							//!< Virtual constructor for copying
 
 	virtual ~tpat_base_arcset();
 

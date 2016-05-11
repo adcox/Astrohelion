@@ -86,9 +86,7 @@ tpat_constraint::tpat_constraint(const tpat_constraint& c){
 /**
  *	@brief Destructor
  */
-tpat_constraint::~tpat_constraint(){
-	data.clear();
-}//====================================================
+tpat_constraint::~tpat_constraint(){}
 
 //-----------------------------------------------------
 // 		Operator Functions

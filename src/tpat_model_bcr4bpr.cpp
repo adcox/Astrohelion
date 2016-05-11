@@ -422,7 +422,7 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(iterationData* it, tpat_cons
 
         // Loop through conData
         for(size_t s = 0; s < conData.size(); s++){
-            if(!isnan(conData[s])){
+            if(!std::isnan(conData[s])){
                 double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
                 // Epoch dependencies
                 it->DF[it->totalFree*(row0+s) + 7*it->numNodes-1+n-1] = last_dqdT[s]*scale/it->freeVarScale[3];
@@ -481,7 +481,7 @@ void tpat_model_bcr4bpr::multShoot_targetState(iterationData* it, tpat_constrain
     
     int count = 0;  // Count # rows since some may be skipped (NAN)
     for(int s = 0; s < ((int)con.getData().size()); s++){
-        if(!isnan(conData[s])){
+        if(!std::isnan(conData[s])){
             if(s < 6){
                 double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
                 it->FX[row0+count] = it->X[6*n+s] - conData[s]*scale;

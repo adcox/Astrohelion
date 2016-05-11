@@ -407,7 +407,7 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 	
 	// Loop through conData
 	for(size_t s = 0; s < conData.size(); s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 			it->FX[row0+s] = lastState[s]*scale - it->X[6*n+s];
@@ -477,7 +477,7 @@ void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, i
 	
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(int s = 0; s < ((int)con.getData().size()); s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			if(s < 6){
 				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 				
@@ -534,7 +534,7 @@ void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint co
 	int count = 0;
 	
 	for(int s = 0; s < 6; s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			int cn = conData[0];
 			it->FX[row0 + count] = it->X[6*n+s] - it->X[6*cn+s];
 

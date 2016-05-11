@@ -274,7 +274,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
             case MAT_T_UINT32:
             case MAT_T_UINT64:
             {
-                uint *data = static_cast<uint *>(matvar->data);
+                unsigned int *data = static_cast<unsigned int *>(matvar->data);
                 if(data != NULL)
                     result = double(*data);
                 else

@@ -737,10 +737,10 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
                 conCount++;
                 printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
             }
-            printColor(rowMax[r] > errScalar*pertSize || isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+            printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
         }
         for(long c = 0; c < colMax.size(); c++){
-            printColor(colMax[c] > errScalar*pertSize || isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+            printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
         }
     }
 }//====================================================

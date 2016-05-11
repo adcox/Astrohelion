@@ -53,6 +53,11 @@ tpat_linkable::tpat_linkable(const tpat_linkable &obj){
 	copyMe(obj);
 }//====================================================
 
+/**
+ *  @brief Destructor
+ */
+tpat_linkable::~tpat_linkable(){}
+
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------

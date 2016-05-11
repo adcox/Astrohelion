@@ -70,12 +70,12 @@ class tpat_family_member_cr3bp : public tpat{
 	protected:
 		/** Vector of 6 eigenvalues; initialized to NAN by default */
 		std::vector<cdouble> eigVals {{NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}};
-		std::vector<double> IC {0,0,0,0,0,0};	//!< Initial state for this trajectory, non-dim units
-		double TOF = NAN;			//!< Time of flight for traj., non-dim units
-		double JC = NAN;			//!< Jacobi constant for traj., non-dimensional
-		double xAmplitude = NAN;		//!< Max width in x-direction, non-dim units
-		double yAmplitude = NAN;		//!< Max width in y-direction, non-dim units
-		double zAmplitude = NAN;		//!< Max width in z-direction, non-dim units
+		std::vector<double> IC {0,0,0,0,0,0};		//!< Initial state for this trajectory, non-dim units
+		double TOF = NAN;							//!< Time of flight for traj., non-dim units
+		double JC = NAN;							//!< Jacobi constant for traj., non-dimensional
+		double xAmplitude = NAN;					//!< Max width in x-direction, non-dim units
+		double yAmplitude = NAN;					//!< Max width in y-direction, non-dim units
+		double zAmplitude = NAN;					//!< Max width in z-direction, non-dim units
 
 		void copyMe(const tpat_family_member_cr3bp&);
 };

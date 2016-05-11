@@ -173,12 +173,12 @@ class tpat_simulation_engine : public tpat{
 		tpat_traj *traj = 0;
 
 		/** Vector of events to consider during integration */
-		std::vector<tpat_event> events;
+		std::vector<tpat_event> events {};
 
 		/**
 		 *	Contains data recroding which events happened and at which step in the integration
 		 */
-		std::vector<eventRecord> eventOccurs;
+		std::vector<eventRecord> eventOccurs {};
 		
 		/** a void pointer to some data object that contains data for the EOM function */
 		void *eomParams = 0;

@@ -406,7 +406,7 @@ void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint co
  *	@throws tpat_exception if the node ID stored in the constraint is zero
  */
 void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0) const{
-	int n = con.getNode();
+	int n = con.getID();
 	if(n == 0)
 		throw tpat_exception("tpat_model::multShoot_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
 
@@ -418,7 +418,7 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 	
 	// Loop through conData
 	for(size_t s = 0; s < conData.size(); s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 			it->FX[row0+s] = lastState[s]*scale - it->X[6*n+s];
@@ -483,12 +483,12 @@ void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint c
  */
 void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	int n = con.getID();
 	// Allow user to constrain all 6 states
 	
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(int s = 0; s < ((int)con.getData().size()); s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			if(s < 6){
 				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 				
@@ -514,7 +514,7 @@ void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, i
  */
 void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con, int row0) const{
 	// Only allow matching 6 states, not TOF (state 7)
-	int n = con.getNode();
+	int n = con.getID();
 	int cn = con.getData()[0];
 	for(int row = 0; row < 6; row++){
 		// Constrain the states of THIS node to be equal to the node 
@@ -541,11 +541,11 @@ void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con
  */
 void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	int n = con.getID();
 	int count = 0;
 	
 	for(int s = 0; s < 6; s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			int cn = conData[0];
 			it->FX[row0 + count] = it->X[6*n+s] - it->X[6*cn+s];
 
@@ -575,7 +575,7 @@ void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint co
 void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, int c) const{
 
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	int n = con.getID();
 	int Pix = (int)(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
@@ -630,7 +630,7 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
  */
 double tpat_model::multShoot_targetDist_compSlackVar(const iterationData* it, tpat_constraint con) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	int n = con.getID();
 	int Pix = (int)(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
@@ -828,7 +828,7 @@ void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int
  */
 void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	int n = con.getID();
 	int Pix = (int)(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	

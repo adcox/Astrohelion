@@ -257,7 +257,7 @@ void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constra
  */
 void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    int n = con.getNode();
+    int n = con.getID();
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *> (it->sysData);
 
     // Compute the value of Jacobi at this node

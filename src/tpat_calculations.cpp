@@ -542,7 +542,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
     }
 
     double stepSize = ((double)perOrbit->getNumNodes())/((double)numMans);
-    std::vector<int> pointIx(numMans, NAN);
+    std::vector<int> pointIx(numMans, 0);
     for(int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
     }
@@ -670,8 +670,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     // corrector.setScaleVars(true);
     
     // Run multiple shooter to get X, FX, and DF
-    iterationData it;
-    it = corrector.multShoot(nodeset);
+    iterationData it = corrector.multShoot(nodeset);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
@@ -751,15 +750,15 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
         int conCount = 0;
         for(long r = 0; r < rowMax.size(); r++){
             if(r == 0 && it.totalCons > 0){
-                printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
+                printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }else if(conCount < (int)(it.allCons.size()) && r >= it.conRows[conCount+1]){
                 conCount++;
-                printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
+                printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }
-            printColor(rowMax[r] > errScalar*pertSize || isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+            printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
         }
         for(long c = 0; c < colMax.size(); c++){
-            printColor(colMax[c] > errScalar*pertSize || isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+            printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
         }
     }
 }//====================================================
@@ -853,8 +852,9 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol){
 
-    iterationData itData;
-    return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
+    // iterationData itData;
+    // return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
+    return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, NULL);
 }//====================================================================
 
 /**

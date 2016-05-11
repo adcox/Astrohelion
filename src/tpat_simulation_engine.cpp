@@ -84,7 +84,7 @@ tpat_simulation_engine::tpat_simulation_engine(const tpat_sys_data *data) : sysD
  *  @brief Copy constructor
  *  @param s a simulation engine 
  */
-tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s){
+tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s) : sysData(s.sysData){
     copyEngine(s);
 }//=====================================
 
@@ -567,10 +567,10 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
     
     // Define ODE objects, define them conditionaly based on varStepSize
-    gsl_odeiv2_step *s;
-    gsl_odeiv2_control *c;
-    gsl_odeiv2_evolve *e;
-    gsl_odeiv2_driver *d;
+    gsl_odeiv2_step *s = NULL;
+    gsl_odeiv2_control *c = NULL;
+    gsl_odeiv2_evolve *e = NULL;
+    gsl_odeiv2_driver *d = NULL;
 
     if(varStepSize){
         printVerb(verbose == ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");

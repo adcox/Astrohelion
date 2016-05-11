@@ -15,18 +15,25 @@
 # Macros for compiling
 ############################################################
 
-# Paths for files
+# My headers
 INC := ../include
+# System headers; these are included to not throw warnings
+INC_SYS  := ../include_extern
+# Source files
 SRC := ../src
-OBJ := ../obj
-# OBJ := ../obj_debug
+# Destination directory for compiled objects; use one for optimized, second for debug versions
+# OBJ := ../obj
+OBJ := ../obj_debug
+# Directory for compiled binaries
 BIN := ../bin
+# Location of library dependencies
 LIB := ../lib
 
 # Compiler specification and flags
-CXX := clang++ -std=c++11
-# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
-CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+# CXX := clang++ -std=c++11
+CXX := g++-5 -std=c++11 -fopenmp
+CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -72,71 +79,71 @@ all: arcDataTest bcSysTest calcTest correctorTest familyOps eigenTest linMotionT
 ############################################################
 
 arcDataTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_arcDataOps.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_arcDataOps.cpp -o $(BIN)/$@
 	
 bcSysTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_bcr4bprSysData.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_bcr4bprSysData.cpp -o $(BIN)/$@
 
 boostTest:
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_boost.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_boost.cpp -o $(BIN)/$@
 
 calcTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
 
 correctorTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_corrector.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_corrector.cpp -o $(BIN)/$@
 
 familyOps: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
 
 eigenTest:
-	$(COMP) -I $(INC) test_eigen.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) test_eigen.cpp -o $(BIN)/$@
 
 linMotionTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
 
 lowThrustTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_cr3bp_lowThrust.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_cr3bp_lowThrust.cpp -o $(BIN)/$@
 
 manifolds: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
 
 matioTest: $(OBJ)/tpat_utilities.o
-	$(COMP) -I $(INC) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
 
 manyArcTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
 
 multShootCons: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_multShootCons.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_multShootCons.cpp -o $(BIN)/$@
 
 nodesetTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
 
 simEngineTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
 
 sortEigTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sortEigs.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_sortEigs.cpp -o $(BIN)/$@
 
 sysSwitchTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
 
 trajTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_traj.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_traj.cpp -o $(BIN)/$@
 
 utilityTest: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
 
 temp: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) temp_prop.cpp -o $(BIN)/$@	
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) temp_prop.cpp -o $(BIN)/$@	
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
-	$(COMP) -I $(INC) -c $< -o $@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) -c $< -o $@
 
 ############################################################
 ## UTILITY

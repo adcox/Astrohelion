@@ -168,13 +168,13 @@ class tpat_event : public tpat{
 
 		/** State at which the event occurs; also used to store last state whenver
 		updateDist() is called so we can determine the direction */
-		std::vector<double> state;
+		std::vector<double> state {};
 
 		/** Type of constraint used by the shooting algorithm to locate this event */
-		tpat_constraint::tpat_constraint_tp conType;
+		tpat_constraint::tpat_constraint_tp conType = tpat_constraint::NONE;
 
 		/** Data for the constraint used by the shooting algorithm to locate this event */
-		std::vector<double> conData;
+		std::vector<double> conData {};
 
 		const tpat_sys_data* sysData; 	//!< Copy of the system data pointer
 

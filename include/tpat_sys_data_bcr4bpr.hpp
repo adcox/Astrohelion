@@ -69,7 +69,7 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_bcr4bpr model;
+		tpat_model_bcr4bpr model = tpat_model_bcr4bpr();
 		
 		void initFromPrimNames(std::string, std::string, std::string);
 		void readFromMat(mat_t*);

@@ -156,9 +156,9 @@ struct tpat_initializer {
 	/**
 	 *  @brief Default constructor
 	 */
-	tpat_initializer(){
+	tpat_initializer() : settings(){
 		std::cout << "Constructing tpat_initializer" << std::endl;
-	}
+	}//================================================
 
 	/**
 	 *	@brief Initialize the library
@@ -233,7 +233,7 @@ struct tpat_initializer {
 
 	    // Turn GSL's error handler off; we will catch and handle the errors
 	    gsl_set_error_handler_off();
-	}
+	}//================================================
 
 	/**
 	 *	@brief Perform any duties necessary to safely shut down the library
@@ -256,6 +256,7 @@ public:
 	static bool isInit;									//!< Flag to prevent initializations happing lots of times
 
 	tpat();												//!< Default constructor
+	virtual ~tpat();									//!< Default destructor
 };
 
 

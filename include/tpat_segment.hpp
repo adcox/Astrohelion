@@ -49,7 +49,7 @@ public:
 	tpat_segment(int, int, double);
 	tpat_segment(int, int, double, const double[36]);
 	tpat_segment(const tpat_segment&);
-	virtual ~tpat_segment();
+	~tpat_segment();
 
 	// Operators
 	tpat_segment& operator =(const tpat_segment&);
@@ -83,7 +83,7 @@ protected:
 	double stm[36];			//!< 6x6 STM, stored in row-major order
 
 	/** Stores constraints on this segment */
-	std::vector<tpat_constraint> cons;
+	std::vector<tpat_constraint> cons {};
 };
 
 #endif

@@ -51,12 +51,12 @@ tpat_constraint::tpat_constraint(tpat_constraint_tp type){
 /**
  *	@brief Construct a constraint with specified constraint type and data values
  *	@param type constraint type
- *	@param node the node this constriant applies to
+ *	@param id the ID of the object this constriant applies to
  *	@param data data vector (length n)
  */
-tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, std::vector<double> data){
+tpat_constraint::tpat_constraint(tpat_constraint_tp type, int id, std::vector<double> data){
 	this->type = type;
-	this->node = node;
+	this->id = id;
 	this->data = data;
 	setAppType();
 }//====================================================
@@ -64,13 +64,13 @@ tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, std::vector<
 /**
  *	@brief Construct a constraint with specified constraint type, and data values
  *	@param type constraint type
- *	@param node the node this constriant applies to
+ *	@param id the ID of the object this constriant applies to
  *	@param data data vector
  *	@param data_len the number of elements in d_len
  */
-tpat_constraint::tpat_constraint(tpat_constraint_tp type, int node, const double* data, int data_len){
+tpat_constraint::tpat_constraint(tpat_constraint_tp type, int id, const double* data, int data_len){
 	this->type = type;
-	this->node = node;
+	this->id = id;
 	this->data.insert(this->data.begin(), data, data + data_len);
 	setAppType();
 }//====================================================
@@ -121,9 +121,9 @@ tpat_constraint::tpat_conApp_tp tpat_constraint::getAppType() const{ return appT
 tpat_constraint::tpat_constraint_tp tpat_constraint::getType() const { return type; }
 
 /**
- *	@return the node number associated with this constraint
+ *	@return the ID that identifies the object constrained by this constraint
  */
-int tpat_constraint::getNode() const { return node; }
+int tpat_constraint::getID() const { return id; }
 
 /**
  *	@return the data vector for this constraint
@@ -150,22 +150,22 @@ int tpat_constraint::countConstrainedStates() const{
 void tpat_constraint::setType(tpat_constraint::tpat_constraint_tp t){
 	type = t;
 	setAppType(); 	// Update, if necessary
-}
+}//====================================================
 
 /**
- *	@brief Set the node index this constraint applies to
- *	@param n node index
+ *	@brief Set the object ID this constraint applies to
+ *	@param n the ID
  */
-void tpat_constraint::setNode(int n){ node = n; }
+void tpat_constraint::setID(int n){ id = n; }
 
 /**
- *	Set the data for this node (should have nodeSize # elements)
+ *	Set the data for this id (should have nodeSize # elements)
  *	@param d the data, dimensions that match node dimensions
  */
 void tpat_constraint::setData(std::vector<double> d){ data = d; }
 
 /**
- *  @brief Set the data for this node
+ *  @brief Set the data for this constraint
  * 
  *  @param dat an array of data values
  *  @param len number of elements in <tt>dat</tt>
@@ -187,7 +187,7 @@ void tpat_constraint::setData(const double *dat, int len){
 void tpat_constraint::copyMe(const tpat_constraint &c){
 	appType = c.appType;
 	type = c.type;
-	node = c.node;
+	id = c.id;
 	data = c.data;
 }//====================================================
 
@@ -243,8 +243,8 @@ const char* tpat_constraint::getAppTypeStr(tpat_constraint::tpat_conApp_tp t){
  *	@brief Print this constraint and its data to the standard output.
  */
 void tpat_constraint::print() const {
-	printf("Constraint:\n  Type: %s\n  Applies to: %s\n  Node: %d\n  Data: ",
-		getConTypeStr(type), getAppTypeStr(appType), node);
+	printf("Constraint:\n  Type: %s\n  Applies to: %s (ID %d)\n  Data: ",
+		getConTypeStr(type), getAppTypeStr(appType), id);
 	for(int n = 0; n < ((int)data.size()); n++){
 		printf("%12.5f ", data[n]);
 	}

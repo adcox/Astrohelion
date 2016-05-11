@@ -315,11 +315,9 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	// set->updateCons();
 
 	// Create structure to store iteration data for easy sharing
-	iterationData it;
+	iterationData it(set);
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
 	it.equalArcTime = equalArcTime;
-	it.sysData = set->getSysData();
-	it.nodeset = set;
 
 	// Save original nodes for later access (particularly when variable time is off)
 	for(int n = 0; n < set->getNumNodes(); n++){
@@ -347,17 +345,19 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	it.allCons.clear();
 	model->multShoot_createContCons(&it, set);
 
-	// Add all extra constraints from the nodeset to the total constraint vector
+	// Add all node constraints
 	for(int n = 0; n < set->getNumNodes(); n++){
 		std::vector<tpat_constraint> nodeCons = set->getNodeByIx(n).getConstraints();
 		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
+	// Add all segment constraints
 	for(int s = 0; s < set->getNumSegs(); s++){
 		std::vector<tpat_constraint> segCons = set->getSegByIx(s).getConstraints();
 		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
 	}
 
+	// Add all arcset constraints
 	std::vector<tpat_constraint> arcCons = set->getArcConstraints();
 	it.allCons.insert(it.allCons.end(), arcCons.begin(), arcCons.end());
 
@@ -365,8 +365,8 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	it.numSlack = 0;
 
 	// Initialize vector to keep track of which row each constraint begins on
-	// Also add slack variables to the 
-	it.conRows.assign(it.allCons.size(), NAN);	// Fill with NAN
+	// Also add slack variables to the design variable vector
+	it.conRows.assign(it.allCons.size(), -1);	// Fill with -1
 	int conRow = 0;
 	bool foundDVCon = false;
 	bool foundTOFCon = false;
@@ -375,7 +375,7 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 		tpat_constraint con = it.allCons[c];
 
 		if(!model->supportsCon(con.getType()))
-			throw tpat_exception("tpat_correction_engine::correct: The dynamic model does not support one of the constraints!");
+			throw tpat_exception("tpat_correction_engine::multShoot: The dynamic model does not support one of the constraints!");
 
 		switch(con.getType()){
 			case tpat_constraint::CONT_PV:
@@ -428,7 +428,7 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 						it.slackAssignCon.push_back(c);
 					}
 				}else{
-					throw tpat_exception("You can only apply ONE delta-V constraint");
+					throw tpat_exception("tpat_correction_engine::multShoot: You can only apply ONE delta-V constraint");
 				}
 				break;
 			case tpat_constraint::JC:
@@ -436,12 +436,12 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 				break;
 			case tpat_constraint::TOF:
 				if(!varTime)
-					printWarn("Attempting to constraint TOF without variable time... won't work!");
+					printWarn("tpat_correction_engine::multShoot: Attempting to constraint TOF without variable time... won't work!");
 				
 				if(!foundTOFCon)
 					addToRows = 1;
 				else
-					throw tpat_exception("You can only apply ONE TOF constraint");
+					throw tpat_exception("tpat_correction_engine::multShoot: You can only apply ONE TOF constraint");
 				break;
 			case tpat_constraint::APSE:
 				addToRows = 1;
@@ -702,10 +702,10 @@ void tpat_correction_engine::reportConMags(const iterationData *it){
 	int conCount = 0;
 	for(long r = 0; r < (int)(it->FX.size()); r++){
         if(r == 0 && it->totalCons > 0){
-            printf("Node %d %s Constraint:\n", it->allCons[conCount].getNode(), it->allCons[conCount].getTypeStr());
+            printf("Node %d %s Constraint:\n", it->allCons[conCount].getID(), it->allCons[conCount].getTypeStr());
         }else if(conCount < (int)(it->allCons.size()) && r >= it->conRows[conCount+1]){
             conCount++;
-            printf("Node %d %s Constraint:\n", it->allCons[conCount].getNode(), it->allCons[conCount].getTypeStr());
+            printf("Node %d %s Constraint:\n", it->allCons[conCount].getID(), it->allCons[conCount].getTypeStr());
         }
         printf("  ||row %03zu||: %.6e\n", r, std::abs(it->FX[r]));
     }

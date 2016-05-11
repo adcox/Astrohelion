@@ -321,9 +321,9 @@ void tpat_node::setEpoch(double e){ epoch = e; }
  *  @brief Set the node number for all constraints stored in this node
  *  @param n The node number for the constraints; typically the index of this node
  */
-void tpat_node::setConstraintNodeNum(int n){
+void tpat_node::setConstraintID(int n){
 	for(size_t i = 0; i < cons.size(); i++){
-		cons[i].setNode(n);
+		cons[i].setID(n);
 	}
 }//====================================================
 

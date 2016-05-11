@@ -51,7 +51,7 @@ tpat_base_arcset::tpat_base_arcset(const tpat_sys_data *sys) : sysData(sys){}
  *	@brief Copy constructor
  *	@param d an arcset reference
  */
-tpat_base_arcset::tpat_base_arcset(const tpat_base_arcset &d){
+tpat_base_arcset::tpat_base_arcset(const tpat_base_arcset &d) : sysData(d.sysData){
 	copyMe(d);
 }//====================================================
 
@@ -128,7 +128,7 @@ void tpat_base_arcset::sum(const tpat_base_arcset *lhs, const tpat_base_arcset *
  *  constraint application type is unknown
  */
 void tpat_base_arcset::addConstraint(tpat_constraint con){
-	int id = con.getNode();
+	int id = con.getID();
 	switch(con.getAppType()){
 		case tpat_constraint::APP_TO_NODE:
 			if(id < 0 || id >= (int)(nodeIDMap.size()))
@@ -1701,20 +1701,6 @@ void tpat_base_arcset::saveTOF(mat_t *matFile, const char* varName) const{
 	matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
 	saveVar(matFile, matvar, varName, MAT_COMPRESSION_NONE);
 }//=====================================================
-
-/**
- *	@brief Update the constraints for every node so that their node numberes
- * 	match the node/step they belong to.
- */
-void tpat_base_arcset::updateCons(){
-	for(size_t n = 0; n < nodes.size(); n++){
-		std::vector<tpat_constraint> nodeCons = nodes[n].getConstraints();
-		for(size_t c = 0; c < nodeCons.size(); c++){
-			nodeCons[c].setNode(n);
-		}
-		nodes[n].setConstraints(nodeCons);
-	}
-}//====================================================
 
 
 

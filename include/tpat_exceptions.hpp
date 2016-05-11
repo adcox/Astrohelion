@@ -23,6 +23,7 @@
 
 #include <exception>
 #include <stdexcept>
+#include <string>
 
 /**
  *	@brief Base Exception class for all my exceptions
@@ -42,10 +43,14 @@ class tpat_exception : public std::exception{
 
 		/** @brief describe the exception */
 		virtual const char* what() const throw(){
-			return msg;
+			return msg.c_str();
 		}
+
+		tpat_exception(const tpat_exception &e) : msg(e.msg){}
+
 	protected:
-		const char *msg;	//!< Custom error message
+		std::string msg;
+		// char *msg;	//!< Custom error message
 };
 
 /**
@@ -68,7 +73,7 @@ class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
 		
 		/** @brief describe the exception */
 		const char* what() const throw(){
-	    	return msg;
+	    	return msg.c_str();
 	  	}
 };
 
@@ -92,7 +97,7 @@ class tpat_diverge : public tpat_exception, std::runtime_error{
 		
 		/** @brief describe the exception */
 		const char* what() const throw(){
-			return msg;
+			return msg.c_str();
 		}
 };
 
@@ -115,7 +120,7 @@ class tpat_linalg_err : public tpat_exception, std::runtime_error{
 		
 		/** @brief describe the exception */
 		const char* what() const throw(){
-			return msg;
+			return msg.c_str();
 		}
 };
 

@@ -210,7 +210,7 @@ void tpat_event::initEvent(tpat_event_tp t, int dir, bool willStop, double* para
 /**
  *	@brief copy constructor
  */
-tpat_event::tpat_event(const tpat_event &ev){
+tpat_event::tpat_event(const tpat_event &ev) : sysData(ev.sysData){
 	copyEvent(ev);
 }//==========================================
 

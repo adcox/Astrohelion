@@ -172,11 +172,8 @@ double tpat_sys_data_bcr4bpr::getCharLRatio() const { return otherParams.at(3); 
  *	@return the scaling constant for this system
  */
 double tpat_sys_data_bcr4bpr::getK() const {
-	if(otherParams.size() != 7)
-		printf("");
-
 	return otherParams.at(2);
-}
+}//====================================================
 
 /**
  *  @brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)

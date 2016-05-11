@@ -427,13 +427,13 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(iterationData* it, tpat_cons
 
     // Add epoch dependencies for this model
     if(it->varTime){
-        int n = con.getNode();
+        int n = con.getID();
         std::vector<double> conData = con.getData();
         std::vector<double> last_dqdT = it->allSegs.at(n-1).getExtraParam(-1, 0);
 
         // Loop through conData
         for(size_t s = 0; s < conData.size(); s++){
-            if(!isnan(conData[s])){
+            if(!std::isnan(conData[s])){
                 double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
                 // Epoch dependencies
                 it->DF[it->totalFree*(row0+s) + 7*it->numNodes-1+n-1] = last_dqdT[s]*scale/it->freeVarScale[3];
@@ -453,7 +453,7 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(iterationData* it, tpat_cons
  *  @throw tpat_exception if the constraint type index is not recognized
  */
 void tpat_model_bcr4bpr::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0) const{
-    int n = con.getNode();
+    int n = con.getID();
     if(con.getData()[0] == 0){
         /* Add time-continuity constraints if applicable; we need to match
         the epoch time of node n to the sum of node n-1's epoch and TOF */
@@ -488,12 +488,12 @@ void tpat_model_bcr4bpr::multShoot_targetExContCons(iterationData *it, tpat_cons
  */
 void tpat_model_bcr4bpr::multShoot_targetState(iterationData* it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    int n = con.getNode();
+    int n = con.getID();
     // Allow user to constrain all 7 states
     
     int count = 0;  // Count # rows since some may be skipped (NAN)
     for(int s = 0; s < ((int)con.getData().size()); s++){
-        if(!isnan(conData[s])){
+        if(!std::isnan(conData[s])){
             if(s < 6){
                 double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
                 it->FX[row0+count] = it->X[6*n+s] - conData[s]*scale;
@@ -524,7 +524,7 @@ void tpat_model_bcr4bpr::multShoot_targetState(iterationData* it, tpat_constrain
 void tpat_model_bcr4bpr::multShoot_targetDist(iterationData* it, tpat_constraint con, int c) const{
 
     std::vector<double> conData = con.getData();
-    int n = con.getNode();
+    int n = con.getID();
     int Pix = (int)(conData[0]);    // index of primary
     int row0 = it->conRows[c];
     double sr = it->freeVarScale[0];    // Position scalar
@@ -602,7 +602,7 @@ void tpat_model_bcr4bpr::multShoot_targetDist(iterationData* it, tpat_constraint
  */
 double tpat_model_bcr4bpr::multShoot_targetDist_compSlackVar(const iterationData* it, tpat_constraint con) const{
     std::vector<double> conData = con.getData();
-    int n = con.getNode();
+    int n = con.getID();
     int Pix = (int)(conData[0]);    // index of primary 
     double sr = it->freeVarScale[0];
     double sT = it->freeVarScale[3];
@@ -690,7 +690,7 @@ void tpat_model_bcr4bpr::multShoot_targetDeltaV(iterationData* it, tpat_constrai
 void tpat_model_bcr4bpr::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     int Pix = (int)(conData[0]);    // index of primary
-    int n = con.getNode();
+    int n = con.getID();
 
     double sr = it->freeVarScale[0];
     double sv = it->freeVarScale[1];
@@ -741,7 +741,7 @@ void tpat_model_bcr4bpr::multShoot_targetApse(iterationData *it, tpat_constraint
  */
 void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint con, int row0) const{
 
-    int n = con.getNode();
+    int n = con.getID();
     int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
     double t0 = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getEpoch();
 
@@ -884,7 +884,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP(iterationData* it, tpat_constraint c
 void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constraint con, int c) const{
 
     // int row0 = it->conRows[c];
-    // int n = con.getNode();
+    // int n = con.getID();
     // double Amax = con.getData()[0];
     // int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
     // double t0 = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getEpoch();
@@ -1020,7 +1020,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
     // // printf("Node %d %s Con: Slack Var = %.4e\n", n, con.getTypeStr(), it->X[slackCol]);
 
     int row0 = it->conRows[c];
-    int n = con.getNode();
+    int n = con.getID();
     double Amax = con.getData()[0];
     double epoch = it->varTime ? it->X[7*it->numNodes-1+n] : it->origNodes.at(n).getEpoch();
     const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
@@ -1163,7 +1163,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(iterationData* it, tpat_constrai
  *  @return the initial value for the slack variable associated with an SP_RANGE constraint
  */
 double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(const iterationData *it, tpat_constraint con) const{
-    int n = con.getNode();
+    int n = con.getID();
     double Amax = con.getData()[0];
     int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
     double t0 = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getEpoch();
@@ -1222,7 +1222,7 @@ double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(const iterationDat
  *  @return the initial value for the slack variable associated with an SP_DIST constraint
  */
 double tpat_model_bcr4bpr::multShoot_targetSP_maxDist_compSlackVar(const iterationData *it, tpat_constraint con) const{
-    int n = con.getNode();
+    int n = con.getID();
     int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
     double T = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getEpoch();
 
@@ -1260,7 +1260,7 @@ double tpat_model_bcr4bpr::multShoot_targetSP_maxDist_compSlackVar(const iterati
  */
 void tpat_model_bcr4bpr::multShoot_targetSP_dist(iterationData *it, tpat_constraint con, int c) const{
     int row0 = it->conRows[c];
-    int n = con.getNode();
+    int n = con.getID();
     int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
     double T = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->origNodes.at(n).getEpoch();
 

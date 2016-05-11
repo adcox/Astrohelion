@@ -46,7 +46,7 @@ public:
 	tpat_node(const double[6], const double[3], double);
 	tpat_node(std::vector<double>, std::vector<double>, double);
 	tpat_node(const tpat_node&);
-	virtual ~tpat_node();
+	~tpat_node();
 
 	// Operators
 	tpat_node& operator =(const tpat_node&);
@@ -68,7 +68,7 @@ public:
 	void setAccel(const double*);
 	void setAccel(std::vector<double>);
 	void setConstraints(std::vector<tpat_constraint>);
-	void setConstraintNodeNum(int);
+	void setConstraintID(int);
 	void setEpoch(double);
 	void setExtraParam(int, double);
 	void setExtraParams(std::vector<double>);
@@ -89,13 +89,13 @@ protected:
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
 	/** Stores extra parameters like mass, costates, etc. */
-	std::vector<double> extraParam;
+	std::vector<double> extraParam {};
 
 	/** Stores flags, which may be interpreted by derived classes */
-	std::vector<bool> flags;
+	std::vector<bool> flags {};
 
 	/** Stores constraints on this node (especially usefull in nodesets) */
-	std::vector<tpat_constraint> cons;
+	std::vector<tpat_constraint> cons {};
 };
 
 #endif

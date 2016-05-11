@@ -30,7 +30,7 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 bool stateDiffBelowTol(std::vector<double> data, double *correct, double tol){
 	double sum = 0;
 	for(size_t i = 0; i < data.size(); i++){
-		if(!isnan(correct[i]))
+		if(!std::isnan(correct[i]))
 			sum += pow(data[i] - correct[i], 2);
 	}
 	return sqrt(sum) < tol;
@@ -61,7 +61,7 @@ void testCR3BP_SE_Cons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
-		finalState = correctedSet.getState(stateCon.getNode());
+		finalState = correctedSet.getState(stateCon.getID());
 		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
 		std::cout << "STATE Constraint: " << FAIL << std::endl;
@@ -90,7 +90,7 @@ void testCR3BP_EM_Cons(){
 		// corrector.setVerbose(ALL_MSG);
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
-		finalState = correctedSet.getState(stateCon.getNode());
+		finalState = correctedSet.getState(stateCon.getID());
 		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
 		std::cout << "STATE Constraint: " << FAIL << std::endl;
@@ -106,7 +106,7 @@ void testCR3BP_EM_Cons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
-		finalState = correctedSet.getState(matchAllCon.getNode());
+		finalState = correctedSet.getState(matchAllCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		std::cout << "MATCH_ALL Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -123,7 +123,7 @@ void testCR3BP_EM_Cons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
-		finalState = correctedSet.getState(matchCustCon.getNode());
+		finalState = correctedSet.getState(matchCustCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
 		initState.erase(initState.begin()+2, initState.end());
@@ -143,7 +143,7 @@ void testCR3BP_EM_Cons(){
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
 		correctedSet.saveToMat("CR_EM_DIST_corrected.mat");
-		finalState = correctedSet.getState(matchDistCon.getNode());
+		finalState = correctedSet.getState(matchDistCon.getID());
 		double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(),2) + pow(finalState[1], 2));
 		std::cout << "DIST Constraint: " << (std::abs(dist - matchDistConData[1]) < 1e-12 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -162,7 +162,7 @@ void testCR3BP_EM_Cons(){
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
 		correctedSet.saveToMat("CR_EM_MIN_DIST_corrected.mat");
-		finalState = correctedSet.getState(matchDistCon.getNode());
+		finalState = correctedSet.getState(matchDistCon.getID());
 		double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
 		std::cout << "MIN_DIST Constraint: " << (dist >= matchDistConData[1] ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -181,7 +181,7 @@ void testCR3BP_EM_Cons(){
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
 		correctedSet.saveToMat("CR_EM_MAX_DIST_corrected.mat");
-		finalState = correctedSet.getState(matchDistCon.getNode());
+		finalState = correctedSet.getState(matchDistCon.getID());
 		double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
 		std::cout << "MAX_DIST Constraint: " << (dist <= matchDistConData[1] ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -273,7 +273,7 @@ void testCR3BP_EM_Cons(){
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getCR3BP_Output();
 		correctedSet.saveToMat("CR_EM_APSE_corrected.mat");
-		finalState = correctedSet.getState(apseCon.getNode());
+		finalState = correctedSet.getState(apseCon.getID());
 		const tpat_model *model = sys.getModel();
 		std::vector<double> primPos = model->getPrimPos(0, &sys);
 		double dx = finalState[0] - primPos[apseData*3 + 0];
@@ -306,7 +306,7 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(stateCon.getNode());
+		finalState = correctedSet.getState(stateCon.getID());
 		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
 		std::cout << "STATE Constraint: " << FAIL << std::endl;
@@ -323,7 +323,7 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(matchAllCon.getNode());
+		finalState = correctedSet.getState(matchAllCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		std::cout << "MATCH_ALL Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -340,7 +340,7 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(matchCustCon.getNode());
+		finalState = correctedSet.getState(matchCustCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
 		initState.erase(initState.begin()+2, initState.end());
@@ -359,8 +359,8 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(matchDistCon.getNode());
-		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
+		finalState = correctedSet.getState(matchDistCon.getID());
+		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
 		std::cout << "DIST Constraint: " << (std::abs(dist - matchDistConData[1]) < 1e-12 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -378,8 +378,8 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(matchDistCon.getNode());
-		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
+		finalState = correctedSet.getState(matchDistCon.getID());
+		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
 		std::cout << "MIN_DIST Constraint: " << (dist >= matchDistConData[1] ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -398,8 +398,8 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(matchDistCon.getNode());
-		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getNode()), &sys);
+		finalState = correctedSet.getState(matchDistCon.getID());
+		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
 		std::cout << "MAX_DIST Constraint: " << (dist <= matchDistConData[1] ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -472,9 +472,9 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&halfLyapNodeset);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(apseCon.getNode());
+		finalState = correctedSet.getState(apseCon.getID());
 		const tpat_model *model = sys.getModel();
-		double rdot = model->getRDot(apseData, correctedSet.getEpoch(apseCon.getNode()), &(finalState[0]), &sys);
+		double rdot = model->getRDot(apseData, correctedSet.getEpoch(apseCon.getID()), &(finalState[0]), &sys);
 		std::cout << "APSE Constraint: " << (std::abs(rdot) < 1e-12 ? PASS : FAIL) << std::endl;
 		printf("rdot = %.4e\n", rdot);
 	}catch(tpat_diverge &e){
@@ -500,10 +500,10 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&nodes0);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(spCon.getNode());
+		finalState = correctedSet.getState(spCon.getID());
 		finalState.erase(finalState.begin()+3, finalState.end());
 
-		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getNode()));
+		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getID()));
 		double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
 		std::cout << "SP Constraint: " << (diff < 1e-10 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -522,11 +522,11 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&nodes0);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(spCon.getNode());
+		finalState = correctedSet.getState(spCon.getID());
 
 		// Compute the state derivative at the node to get acceleration
 		double stateDot[6];
-		tpat_model_bcr4bpr::simpleEOMs(correctedSet.getEpoch(spCon.getNode()), &(finalState[0]), stateDot, &sys);
+		tpat_model_bcr4bpr::simpleEOMs(correctedSet.getEpoch(spCon.getID()), &(finalState[0]), stateDot, &sys);
 
 		// Adjust derivative from EOMs to remove terms from rotating frame
 		stateDot[3] += -2*sys.getK()*finalState[4] - sys.getK()*sys.getK()*finalState[0] - sys.getK()*sys.getK()*(1/sys.getK() - sys.getMu());
@@ -535,7 +535,7 @@ void testBCR4BPCons(){
 
 		// Compute the location of the SP
 		finalState.erase(finalState.begin()+3, finalState.end());
-		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getNode()));
+		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getID()));
 		double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
 
 		std::cout << "SP Range Constraint: " << (accel <= maxA ? PASS : FAIL) << std::endl;
@@ -560,8 +560,8 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&nodes0);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(spDistCon.getNode());
-		double T = correctedSet.getEpoch(spDistCon.getNode());
+		finalState = correctedSet.getState(spDistCon.getID());
+		double T = correctedSet.getEpoch(spDistCon.getID());
 
 		// Compute the approximate location of SP
 		Eigen::RowVector3d indVarMat;
@@ -573,7 +573,7 @@ void testBCR4BPCons(){
 		
 		// Compute errors
 		double diff = sqrt(pow(spPos_approx(0) - finalState[0], 2) + pow(spPos_approx(1) - finalState[1], 2) + pow(spPos_approx(2) - finalState[2], 2));
-		double epochShift = nodes0.getEpoch(spDistCon.getNode()) - T;
+		double epochShift = nodes0.getEpoch(spDistCon.getID()) - T;
 		Eigen::Vector3d approxDiff = spPos_approx - spPos;
 
 		std::cout << "SP Dist Constraint: " << (std::abs(diff - maxDist) < 1e-12 ? PASS : FAIL) << std::endl;
@@ -593,8 +593,8 @@ void testBCR4BPCons(){
 	try{
 		corrector.multShoot(&nodes0);
 		correctedSet = corrector.getBCR4BPR_Output();
-		finalState = correctedSet.getState(spMaxDistCon.getNode());
-		double T = correctedSet.getEpoch(spMaxDistCon.getNode());
+		finalState = correctedSet.getState(spMaxDistCon.getID());
+		double T = correctedSet.getEpoch(spMaxDistCon.getID());
 
 		// Compute the approximate location of SP
 		Eigen::RowVector3d indVarMat;
@@ -606,7 +606,7 @@ void testBCR4BPCons(){
 		
 		// Compute errors
 		double diff = sqrt(pow(spPos_approx(0) - finalState[0], 2) + pow(spPos_approx(1) - finalState[1], 2) + pow(spPos_approx(2) - finalState[2], 2));
-		double epochShift = nodes0.getEpoch(spMaxDistCon.getNode()) - T;
+		double epochShift = nodes0.getEpoch(spMaxDistCon.getID()) - T;
 		Eigen::Vector3d approxDiff = spPos_approx - spPos;
 
 		std::cout << "SP Max Dist Constraint: " << (std::abs(diff) <= maxDist ? PASS : FAIL) << std::endl;

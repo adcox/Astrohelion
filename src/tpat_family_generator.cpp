@@ -788,7 +788,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 
 	std::vector<tpat_traj_cr3bp> members;
 	bool diverged = false;
-	iterationData itData;
+	iterationData *itData = NULL;
 
 	while(orbitCount < numOrbits){
 		tpat_traj_cr3bp perOrbit(&sys);
@@ -801,7 +801,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, &itData);
+			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, itData);
 
 			diverged = false;
 			printf("Orbit %03d converged!\n", ((int)members.size()));
@@ -861,7 +861,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			orbitCount++;
 
 			// Check to see if we should update the step size
-			if(itData.count < 4 && orbitCount > numSimple){
+			if(itData->count < 4 && orbitCount > numSimple){
 				double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
 
 				if(dq < maxStepSize){
@@ -1109,7 +1109,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
-	iterationData familyItData;
+	iterationData familyItData(&familyMember);
 	try{
 		familyItData = corrector.multShoot(&familyMember);
 	}catch(tpat_diverge &e){

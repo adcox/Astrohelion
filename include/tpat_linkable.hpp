@@ -41,7 +41,8 @@ public:
 	// *structors
 	tpat_linkable();
 	tpat_linkable(const tpat_linkable&);
-
+	virtual ~tpat_linkable();
+	
 	// Operators
 	tpat_linkable& operator =(const tpat_linkable&);
 	friend bool operator ==(const tpat_linkable&, const tpat_linkable&);

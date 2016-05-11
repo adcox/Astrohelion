@@ -56,7 +56,7 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 		
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_cr3bp model;
+		tpat_model_cr3bp model = tpat_model_cr3bp();
 };
 
 #endif

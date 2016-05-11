@@ -55,7 +55,7 @@ class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 		void saveToMat(mat_t*) const;
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_cr3bp_ltvp model;
+		tpat_model_cr3bp_ltvp model = tpat_model_cr3bp_ltvp();
 		void readFromMat(mat_t*);
 };
 

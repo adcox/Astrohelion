@@ -50,20 +50,34 @@ class tpat_sys_data_bcr4bpr;
  */
 struct iterationData{
 	public:
-		const tpat_sys_data *sysData;			//!< A pointer to the system data object used for this corrections process
-		const tpat_nodeset *nodeset;					//!< A pointer to the nodeset input for this corrections process
-		std::vector<double> X0;					//!< Initial, uncorrected free-variable vector
-		std::vector<double> X;					//!< Free-Variable Vector
-		std::vector<double> FX;					//!< Constraint Function Vector
-		std::vector<double> DF;					//!< Jacobian Matrix
-		std::vector<double> deltaVs;			//!< nx3 vector of non-dim delta-Vs
-		std::vector<double> primPos;			//!< Store the positions of the primaries
-		std::vector<double> primVel;			//!< Store the velocities of the primaries
-		std::vector<tpat_node> origNodes;		//!< Store the original nodes that birthed this correction process
-		std::vector<tpat_traj> allSegs;			//!< A collection of all integrated segments
-		std::vector<tpat_constraint> allCons;	//!< A list of all constraints
-		std::vector<int> slackAssignCon;		//!< Indices of constraints, index of entry corresponds to a slack variable
-		std::vector<int> conRows;				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
+
+		iterationData(const tpat_nodeset *set) : sysData(set->getSysData()), nodeset(set){}
+
+		iterationData(const iterationData &it) : sysData(it.nodeset->getSysData()), nodeset(it.nodeset){
+			copyMe(it);
+		}//============================================
+
+		iterationData& operator =(const iterationData &it){
+			copyMe(it);
+			sysData = it.sysData;	// Copying ADDRESS!
+			nodeset = it.nodeset;	// Copying ADDRESS!
+			return *this;
+		}//============================================
+
+		const tpat_sys_data *sysData;				//!< A pointer to the system data object used for this corrections process
+		const tpat_nodeset *nodeset;				//!< A pointer to the nodeset input for this corrections process
+		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
+		std::vector<double> X {};					//!< Free-Variable Vector
+		std::vector<double> FX {};					//!< Constraint Function Vector
+		std::vector<double> DF {};					//!< Jacobian Matrix
+		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
+		std::vector<double> primPos {};				//!< Store the positions of the primaries
+		std::vector<double> primVel {};				//!< Store the velocities of the primaries
+		std::vector<tpat_node> origNodes {};		//!< Store the original nodes that birthed this correction process
+		std::vector<tpat_traj> allSegs {};			//!< A collection of all integrated segments
+		std::vector<tpat_constraint> allCons {};	//!< A list of all constraints
+		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
+		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
 		
 		/**
 		 * A scalar coefficient for each free variable type to scale them to the appropriate magnitude.
@@ -72,7 +86,7 @@ struct iterationData{
 		 * every constraint computation function (stored in the models) is responsible for reversing any
 		 * scaling necessary to accurately compute constraints and partial derivatives.
 		 */
-		std::vector<double> freeVarScale;
+		std::vector<double> freeVarScale {};
 
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
 		int count = 0;				//!< Count of number of iterations through corrections process
@@ -83,6 +97,29 @@ struct iterationData{
 
 		bool varTime = true;		//!< Whether or not the simulation is using variable time
 		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
+	protected:
+		void copyMe(const iterationData &it){
+			X0 = it.X0;
+			X = it.X;
+			FX = it.FX;
+			DF = it.DF;
+			deltaVs = it.deltaVs;
+			primPos = it.primPos;
+			primVel = it.primVel;
+			origNodes = it.origNodes;
+			allSegs = it.allSegs;
+			allCons = it.allCons;
+			slackAssignCon = it.slackAssignCon;
+			conRows = it.conRows;
+			freeVarScale = it.freeVarScale;
+			numNodes = it.numNodes;
+			count = it.count;
+			numSlack = it.numSlack;
+			totalCons = it.totalCons;
+			totalFree = it.totalFree;
+			varTime = it.varTime;
+			equalArcTime = it.equalArcTime;
+		}//============================================
 };
 
 /**

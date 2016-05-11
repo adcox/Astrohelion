@@ -548,7 +548,6 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 	// Loop through again to create trajectory
 	sumArclen = 0;
 	double sumTOF = 0;
-	int prevNodeIx = 0;
 	for(size_t s = 0; s < allArcLen.size(); s++){
 		
 		// Keep adding arclength between steps until the desired length is reached
@@ -563,7 +562,6 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 			addSeg(tpat_segment(prevID, id, sumTOF));
 
 			// Reset counters and index variables
-			prevNodeIx = s+1;	// The current node is the beginning of the next segment
 			sumArclen = 0;
 			sumTOF = 0;
 			prevID = id;

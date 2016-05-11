@@ -155,17 +155,15 @@ public:
 	 */
 	virtual void print() const = 0;
 
-	void updateCons();
-
 protected:
 	/** A pointer to the system data object that the describes the system this arc exists in */
 	const tpat_sys_data *sysData;
 
 	/** Contains all nodes or integration steps along an arc data object */
-	std::vector<tpat_node> nodes;
+	std::vector<tpat_node> nodes {};
 
 	/** Contains all segments that link the nodes of this object */
-	std::vector<tpat_segment> segs;
+	std::vector<tpat_segment> segs {};
 
 	/** Each entry corresponds to one node ID. The value of the entry is 
 	 * the index of the node in the <tt>nodes</tt> array. If the value is
@@ -174,7 +172,7 @@ protected:
 	 * The current implementation requires that nextNodeID begin at 0  
 	 * and increment by one through all integers.
 	 */
-	std::vector<int> nodeIDMap;
+	std::vector<int> nodeIDMap {};
 
 	/**
 	 * Each entry corresponds to one segment ID. The value of the entry is
@@ -184,10 +182,10 @@ protected:
 	 * The current implementation requires that nextSegID begin at 0 and increment
 	 * by one through all integers.
 	 */
-	std::vector<int> segIDMap;
+	std::vector<int> segIDMap {};
 
 	/** A set of constraints that apply to the arc data object as a whole */
-	std::vector<tpat_constraint> cons;
+	std::vector<tpat_constraint> cons {};
 
 	/** 
 	 *	Number of variables stored in the extraParam vector. This
@@ -200,7 +198,7 @@ protected:
 	 *	Number of elements in each extra parameter. This parameter
 	 *	should be set by the constructor of all derived classes
 	 */
-	std::vector<int> extraParamRowSize;
+	std::vector<int> extraParamRowSize {};
 
 	double tol = 0;		//!< Tolerance used to compute this data
 	int nextNodeID = 0;	//!< A counter that stores the next available node ID

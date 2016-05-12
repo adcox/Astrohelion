@@ -26,6 +26,12 @@
 
 // Forward Declarations
 class tpat_nodeset;
+class tpat_traj;
+
+/**
+ * @brief Smart pointer to a tpat_traj object
+ */
+typedef std::shared_ptr<tpat_traj> trajPtr;
 
 /**
  *	@brief Contains information about a series of continuous states along a trajectory.

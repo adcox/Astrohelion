@@ -520,7 +520,9 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
 		it.DF.assign(it.totalCons*it.totalFree, 0);
 		it.deltaVs.assign(3*it.numNodes, 0);
+		it.allSegs.assign(it.numNodes-1, tpat_traj(it.sysData));
 
+		// #pragma omp parallel for firstprivate(simEngine)
 		for(int n = 0; n < it.numNodes-1; n++){
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0;
@@ -530,7 +532,8 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 
 			simEngine.setRevTime(tof < 0);
 			simEngine.runSim(ic, t0, tof);
-			it.allSegs.push_back(simEngine.getTraj());
+			it.allSegs[n] = simEngine.getTraj();
+			// it.allSegs.push_back(simEngine.getTraj());
 		}// end of loop through nodes
 
 		// Compute Delta-Vs between node segments

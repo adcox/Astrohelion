@@ -94,8 +94,8 @@ tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s) 
 tpat_simulation_engine::~tpat_simulation_engine(){
     printVerb(verbose == ALL_MSG, "Destroying simulation engine...\n");
     // reset();    // Function handles deallocation and resetting of data
-    if(!isClean)
-        delete traj;    // de-allocate the memory
+    // if(!isClean)
+        // delete traj;    // de-allocate the memory
 }//===========================================
 
 /**
@@ -105,23 +105,25 @@ tpat_simulation_engine::~tpat_simulation_engine(){
  */
 void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
 
-    // Copy the trajectory object using the correct casting
-    switch(sysData->getType()){
-        case tpat_sys_data::CR3BP_SYS:
-            sysData = static_cast<const tpat_sys_data_cr3bp *>(s.sysData);
-            traj = new tpat_traj_cr3bp(*static_cast<tpat_traj_cr3bp *>(s.traj));
-            break;
-        case tpat_sys_data::CR3BP_LTVP_SYS:
-            sysData = static_cast<const tpat_sys_data_cr3bp_ltvp *>(s.sysData);
-            traj = new tpat_traj_cr3bp_ltvp(*static_cast<tpat_traj_cr3bp_ltvp *>(s.traj));
-            break;
-        case tpat_sys_data::BCR4BPR_SYS:
-            sysData = static_cast<const tpat_sys_data_bcr4bpr *>(s.sysData);
-            traj = new tpat_traj_bcr4bp(*static_cast<tpat_traj_bcr4bp *>(s.traj));
-            break;
-        default:
-            throw tpat_exception("tpat_simulation_engine::copyEngine: Cannot copy engine with unknown type");
-    }
+    baseArcsetPtr temp = s.traj->clone();
+    traj.reset(static_cast<tpat_traj *>(temp.get()));
+    // // Copy the trajectory object using the correct casting
+    // switch(sysData->getType()){
+    //     case tpat_sys_data::CR3BP_SYS:
+    //         sysData = static_cast<const tpat_sys_data_cr3bp *>(s.sysData);
+    //         traj = new tpat_traj_cr3bp(*static_cast<tpat_traj_cr3bp *>(s.traj));
+    //         break;
+    //     case tpat_sys_data::CR3BP_LTVP_SYS:
+    //         sysData = static_cast<const tpat_sys_data_cr3bp_ltvp *>(s.sysData);
+    //         traj = new tpat_traj_cr3bp_ltvp(*static_cast<tpat_traj_cr3bp_ltvp *>(s.traj));
+    //         break;
+    //     case tpat_sys_data::BCR4BPR_SYS:
+    //         sysData = static_cast<const tpat_sys_data_bcr4bpr *>(s.sysData);
+    //         traj = new tpat_traj_bcr4bp(*static_cast<tpat_traj_bcr4bp *>(s.traj));
+    //         break;
+    //     default:
+    //         throw tpat_exception("tpat_simulation_engine::copyEngine: Cannot copy engine with unknown type");
+    // }
 
     eomParams = 0;                              // void*, will get set again by the runSim() method
     revTime = s.revTime;
@@ -231,7 +233,7 @@ tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
          * into a specific CR3BP trajectory pointer, then dereference
          * and return a COPY of the trajectory
          */
-        tpat_traj_cr3bp temp( *(static_cast<tpat_traj_cr3bp *>(traj) ) );
+        tpat_traj_cr3bp temp( *(static_cast<tpat_traj_cr3bp *>(traj.get()) ) );
         return temp;
     }else{
         throw tpat_exception("tpat_simulation_engine::getCR3BP_Traj: Wrong system type");
@@ -255,7 +257,7 @@ tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
          * into a specific CR3BP trajectory pointer, then dereference
          * and return a COPY of the trajectory
          */
-        tpat_traj_cr3bp_ltvp temp( *(static_cast<tpat_traj_cr3bp_ltvp *>(traj) ) );
+        tpat_traj_cr3bp_ltvp temp( *(static_cast<tpat_traj_cr3bp_ltvp *>(traj.get()) ) );
         return temp;
     }else{
         throw tpat_exception("tpat_simulation_engine::getCR3BP_LTVP_Traj: Wrong system type");
@@ -276,7 +278,7 @@ tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
 tpat_traj_bcr4bp tpat_simulation_engine::getBCR4BPR_Traj() const{
     if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
         // Make a copy and return it
-        tpat_traj_bcr4bp temp( *( static_cast<tpat_traj_bcr4bp *>(traj) ) );
+        tpat_traj_bcr4bp temp( *( static_cast<tpat_traj_bcr4bp *>(traj.get()) ) );
         return temp;
     }
     else{
@@ -306,7 +308,7 @@ std::vector<eventRecord> tpat_simulation_engine::getEventRecords() const { retur
  *  @throws tpat_exception if the engine has not been run
  */
 std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
-    if(traj != NULL && traj != 0){
+    if(traj.get() != NULL && traj.get() != 0){
         std::vector<tpat_event> endEvents;
         for(size_t i = 0; i < eventOccurs.size(); i++){
             if(eventOccurs[i].stepIx == (traj->getNumNodes() - 1)){
@@ -486,7 +488,8 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
             const tpat_sys_data_cr3bp* data = static_cast<const tpat_sys_data_cr3bp *>(sysData);
             eomParamStruct paramStruct(data);
             eomParams = &paramStruct;
-            traj = new tpat_traj_cr3bp(data);
+
+            traj.reset(new tpat_traj_cr3bp(data));  // Put the dynamically allocated trajectory in the smart pointer
 			break;
         }
         case tpat_sys_data::CR3BP_LTVP_SYS:
@@ -495,7 +498,7 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
             const tpat_sys_data_cr3bp_ltvp* data = static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData);
             eomParamStruct paramStruct(data);
             eomParams = &paramStruct;
-            traj = new tpat_traj_cr3bp_ltvp(data);
+            traj.reset(new tpat_traj_cr3bp_ltvp(data));
             break;
         }
 		case tpat_sys_data::BCR4BPR_SYS:
@@ -504,7 +507,7 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
             const tpat_sys_data_bcr4bpr* data = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
             eomParamStruct paramStruct(data);
             eomParams = &paramStruct;
-            traj = new tpat_traj_bcr4bp(data);
+            traj.reset(new tpat_traj_bcr4bp(data));
 			break;
         }
 		default:
@@ -593,7 +596,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     }
 
     // Save the initial state, time, and STM
-    model->sim_saveIntegratedData(y, t[0], traj);
+    model->sim_saveIntegratedData(y, t[0], traj.get());
 
     // Update all event functions with IC
     printVerb(verbose == ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
@@ -629,7 +632,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
                 break;
 
             // Put newly integrated state and time into state vector
-            model->sim_saveIntegratedData(y, t0, traj);
+            model->sim_saveIntegratedData(y, t0, traj.get());
         }
     }else{
         // Integrate each segment between the input times
@@ -659,7 +662,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            model->sim_saveIntegratedData(y, t0, traj);
+            model->sim_saveIntegratedData(y, t0, traj.get());
         }
     }
 
@@ -745,7 +748,7 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
+            if(model->sim_locateEvent(events.at(ev), traj.get(), &(generalIC[0]), t0, tof, verbose)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getNumNodes();
@@ -786,8 +789,8 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
  */
 void tpat_simulation_engine::cleanEngine(){
     printVerb(verbose == ALL_MSG, "Cleaning the engine...\n");
-    delete traj;    // de-allocate the memory
-    traj = 0;       // set pointer to 0 (null pointer)
+    // delete traj;    // de-allocate the memory
+    // traj = 0;       // set pointer to 0 (null pointer)
     eomParams = 0;  // set pointer to 0 (null pointer)
 
     eventOccurs.clear();

@@ -170,8 +170,9 @@ class tpat_simulation_engine : public tpat{
 		const tpat_sys_data *sysData;
 
 		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
-		tpat_traj *traj = 0;
-
+		// tpat_traj *traj = 0;
+		trajPtr traj;
+		
 		/** Vector of events to consider during integration */
 		std::vector<tpat_event> events {};
 

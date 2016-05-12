@@ -102,9 +102,6 @@ void tpat_base_arcset::sum(const tpat_base_arcset *lhs, const tpat_base_arcset *
 	*result = *lhs_cpy;
 
 	result->appendSetAtNode(rhs_cpy.get(), lhs_lastNodeID, rhs_firstNodeID, 0);
-
-	// delete lhs_cpy;
-	// delete rhs_cpy;
 }//====================================================
 
 //-----------------------------------------------------
@@ -196,25 +193,25 @@ int tpat_base_arcset::addSeg(tpat_segment s){
 			if(linkedNodeIx != tpat_linkable::INVALID_ID){
 
 				// See if the node is linked to any other segments
-				tpat_node theNode = nodes[linkedNodeIx];
+				tpat_node *theNode = &(nodes[linkedNodeIx]);
 				int secondaryLinks = 0;
 				for(int j = 0; j < tpat_linkable::NUM_LINKS; j++){
 					// Check to make sure the link is to a real segment
-					if(theNode.getLink(j) != tpat_linkable::INVALID_ID){
-						int nearSegIx = segIDMap[theNode.getLink(j)];
+					if(theNode->getLink(j) != tpat_linkable::INVALID_ID){
+						int nearSegIx = segIDMap[theNode->getLink(j)];
 						// Make sure the segment is real
 						if(nearSegIx != tpat_linkable::INVALID_ID){
 							secondaryLinks++;
 							// If the node is linked to another segment, get that segment and compare it to this one
-							tpat_segment nearSeg = segs[nearSegIx];
-							bool sameLinkType = nearSeg.getLink(i) == linkedNodeID;
-							bool sameTimeDir = nearSeg.getTOF()*s.getTOF() > 0;
+							tpat_segment *nearSeg = &(segs[nearSegIx]);
+							bool sameLinkType = nearSeg->getLink(i) == linkedNodeID;
+							bool sameTimeDir = nearSeg->getTOF()*s.getTOF() > 0;
 
 							if(sameLinkType && i == tpat_segment::TERM_IX){
 								throw tpat_exception("tpat_base_arcset::addSeg: would create node with two terminating segments");
 							}else if(sameLinkType && sameTimeDir){
 								// either a time collision (both terminate) or parallel structure (both originate)
-								printf("Nearby segment w/ ID %d originates at node %d and terminates at node %d\n", nearSeg.getID(), nearSeg.getOrigin(), nearSeg.getTerminus());
+								printf("Nearby segment w/ ID %d originates at node %d and terminates at node %d\n", nearSeg->getID(), nearSeg->getOrigin(), nearSeg->getTerminus());
 								printf("The new seg (ID %d) originates at node %d and terminates at node %d\n", s.getID(), s.getOrigin(), s.getTerminus());
 								throw tpat_exception("tpat_base_arcset::addSeg: either time collision or parallel structure");
 							}else if(!sameLinkType && !sameTimeDir){
@@ -232,7 +229,7 @@ int tpat_base_arcset::addSeg(tpat_segment s){
 					foundValidLink = true;
 
 				if(foundValidLink){
-					nodes[linkedNodeIx].addLink(nextSegID);		// OK, looks good from here; node will check for duplicate linkage
+					theNode->addLink(nextSegID);		// OK, looks good from here; node will check for duplicate linkage
 					// printf("Node (ID %d) is now linked to segment (ID %d)\n", theNode.getID(), nextSegID);
 				}
 			}else{
@@ -278,10 +275,8 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	tpat_node linkFrom_node = set->getNode(linkFrom_ID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
-	if(!linkTo_node.isLinkedTo(tpat_linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(tpat_linkable::INVALID_ID)){
-		// delete set;
+	if(!linkTo_node.isLinkedTo(tpat_linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(tpat_linkable::INVALID_ID))
 		throw tpat_exception("tpat_base_arcset::appendSetAtNode: specified nodes are not both open to a new link");
-	}
 
 	// Determine if linkTo_node is the origin or terminus of a segment
 	// printf("linkToNode has links [%d, %d]\n", linkTo_node.getLink(0), linkTo_node.getLink(1));
@@ -291,10 +286,8 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	tpat_segment linkFrom_seg = set->getSeg(linkFrom_node.getLink(0) == tpat_linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
 	bool linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
 
-	if(!linkTo_isOrigin && !linkFrom_isOrigin){
-		// delete set;
+	if(!linkTo_isOrigin && !linkFrom_isOrigin)
 		throw tpat_exception("tpat_base_arcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
-	}
 
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
@@ -374,7 +367,6 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	}
 
 	// print();
-	// delete set;	// Clean up allocated memory
 	return addSeg(tpat_segment(origin, terminus, tof));
 }//====================================================
 
@@ -450,24 +442,24 @@ void tpat_base_arcset::deleteNode(int id){
 			if(segs[linkedSegIxs[0]].getTerminus() == id || segs[linkedSegIxs[1]].getTerminus() == id){
 				// Get the segment that terminates at this node, and the segment that originates at this node
 				int termSegIx = segs[linkedSegIxs[0]].getTerminus() == id ? 0 : 1;
-				tpat_segment termSeg = segs[linkedSegIxs[termSegIx]];
-				tpat_segment origSeg = segs[linkedSegIxs[(termSegIx + 1) % 2]];
+				tpat_segment *termSeg = &(segs[linkedSegIxs[termSegIx]]);
+				tpat_segment *origSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
 
 				// printf("  > Segment (ID %d) terminates at node (ID %d)\n", termSeg.getID(), id);
 				// printf("  > Segment (ID %d) originates at node (ID %d)\n", origSeg.getID(), id);
 
 				// Just to check
-				if(termSeg.getTOF()*origSeg.getTOF() < 0){
+				if(termSeg->getTOF()*origSeg->getTOF() < 0){
 					throw tpat_exception("tpat_base_arcset::deleteNode: I made an incorrect assumption about origin/terminus TOF direction!");
 				}
 
 				// Create a new segment
-				tpat_segment combo(termSeg.getOrigin(), origSeg.getTerminus(), termSeg.getTOF() + origSeg.getTOF());
+				tpat_segment combo(termSeg->getOrigin(), origSeg->getTerminus(), termSeg->getTOF() + origSeg->getTOF());
 
 				// Replace the two segments with the new combined one
-				deleteSeg(termSeg.getID());
+				deleteSeg(termSeg->getID());
 				// print();
-				deleteSeg(origSeg.getID());
+				deleteSeg(origSeg->getID());
 				// print();
 				addSeg(combo);
 			}else{
@@ -481,8 +473,8 @@ void tpat_base_arcset::deleteNode(int id){
 				}
 
 				int revSegIx = segs[linkedSegIxs[0]].getTOF() < 0 ? 0 : 1;
-				tpat_segment revSeg = segs[linkedSegIxs[revSegIx]];
-				tpat_segment forwardSeg = segs[linkedSegIxs[(revSegIx+1) % 2]];
+				tpat_segment *revSeg = &(segs[linkedSegIxs[revSegIx]]);
+				tpat_segment *forwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
 
 				/*	It is possible that, in this case, the segment that originates from this node and proceeds
 				 * 	in reverse time does not terminate at a node, but links to a forward-propagated segment instead.
@@ -491,17 +483,17 @@ void tpat_base_arcset::deleteNode(int id){
 				 * 	segment to replace the reverse and forward time segments that originated from this node.
 				 */
 				tpat_segment combo;
-				if(revSeg.getTerminus() != tpat_linkable::INVALID_ID){
-					combo = tpat_segment(revSeg.getTerminus(), forwardSeg.getTerminus(), std::abs(revSeg.getTOF()) + forwardSeg.getTOF());
+				if(revSeg->getTerminus() != tpat_linkable::INVALID_ID){
+					combo = tpat_segment(revSeg->getTerminus(), forwardSeg->getTerminus(), std::abs(revSeg->getTOF()) + forwardSeg->getTOF());
 				}else{
-					if(forwardSeg.getTerminus() == tpat_linkable::INVALID_ID)
+					if(forwardSeg->getTerminus() == tpat_linkable::INVALID_ID)
 						throw tpat_exception("tpat_base_arcset::deleteNode: Cannot delete node as both segments terminate at other segments");
-					combo = tpat_segment(forwardSeg.getTerminus(), revSeg.getTerminus(), revSeg.getTOF() - forwardSeg.getTOF());
+					combo = tpat_segment(forwardSeg->getTerminus(), revSeg->getTerminus(), revSeg->getTOF() - forwardSeg->getTOF());
 				}
 
 				// Replace the two segments with the new one
-				deleteSeg(revSeg.getID());
-				deleteSeg(forwardSeg.getID());
+				deleteSeg(revSeg->getID());
+				deleteSeg(forwardSeg->getID());
 				addSeg(combo);
 			}
 		}else if(linkedSegIxs.size() == 1){
@@ -543,16 +535,16 @@ void tpat_base_arcset::deleteSeg(int id){
 	if(segIx != tpat_linkable::INVALID_ID){
 		// printf("Deleting segment (ID %d)\n", id);
 
-		tpat_segment seg = segs[segIx];
+		tpat_segment *seg = &(segs[segIx]);
 		// printf("  Retrieved segment (ID %d)\n", seg.getID());
 		for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
-			if(seg.getLink(i) != tpat_linkable::INVALID_ID){
-				int nodeIx = nodeIDMap[seg.getLink(i)];
+			if(seg->getLink(i) != tpat_linkable::INVALID_ID){
+				int nodeIx = nodeIDMap[seg->getLink(i)];
 				if(nodeIx != tpat_linkable::INVALID_ID){
-					// printf("  * Trying to remove a link to segment (ID %d) from node (ID %d)\n", seg.getID(), nodes[nodeIx].getID());
+					// printf("  * Trying to remove a link to segment (ID %d) from node (ID %d)\n", seg->getID(), nodes[nodeIx].getID());
 					nodes[nodeIx].removeLink(id);
 				}else{
-					// printf("Unable to remove link to segment (ID %d) from node (ID %d)\n", seg.getLink(i), id);
+					// printf("Unable to remove link to segment (ID %d) from node (ID %d)\n", seg->getLink(i), id);
 				}
 			}
 		}

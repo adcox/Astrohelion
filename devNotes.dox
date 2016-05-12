@@ -99,4 +99,9 @@ Include Order (my convention:)
 	<li> Global header files, like string, vector, etc. </li>
 </ol>
 
+<h2>Optimizing Code</h2>
+<ul>
+	<li> Check out <a href="http://stackoverflow.com/questions/11445619/profiling-c-on-mac-os-x">these</a> instructions for profiling code on OS X</li>
+	<li> Creating copies of objects can be <em>very</em> expensive! Use pointers to objects whenever possible and practical!</li>
+</ul>
 */

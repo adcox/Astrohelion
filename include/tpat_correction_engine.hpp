@@ -51,12 +51,24 @@ class tpat_sys_data_bcr4bpr;
 struct iterationData{
 	public:
 
+		/**
+		 *  @brief Construct a new iterationData object
+		 *  @param set pointer to the nodeset being corrected
+		 */
 		iterationData(const tpat_nodeset *set) : sysData(set->getSysData()), nodeset(set){}
 
+		/**
+		 *  @brief Copy constructor
+		 *  @param it reference to another iterationData object
+		 */
 		iterationData(const iterationData &it) : sysData(it.nodeset->getSysData()), nodeset(it.nodeset){
 			copyMe(it);
 		}//============================================
 
+		/**
+		 *  @brief Assignment operator
+		 *  @param it reference to another iterationData object
+		 */
 		iterationData& operator =(const iterationData &it){
 			copyMe(it);
 			sysData = it.sysData;	// Copying ADDRESS!
@@ -73,8 +85,7 @@ struct iterationData{
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
 		std::vector<double> primPos {};				//!< Store the positions of the primaries
 		std::vector<double> primVel {};				//!< Store the velocities of the primaries
-		std::vector<tpat_node> origNodes {};		//!< Store the original nodes that birthed this correction process
-		std::vector<tpat_traj> allSegs {};			//!< A collection of all integrated segments
+		std::vector<tpat_traj> propSegs {};			//!< A collection of all propagated segments
 		std::vector<tpat_constraint> allCons {};	//!< A list of all constraints
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
@@ -97,7 +108,12 @@ struct iterationData{
 
 		bool varTime = true;		//!< Whether or not the simulation is using variable time
 		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
+	
 	protected:
+		/**
+		 *  @brief Copy all parameters from one iterationData object to another
+		 *  @param it reference to source iterationData object
+		 */
 		void copyMe(const iterationData &it){
 			X0 = it.X0;
 			X = it.X;
@@ -106,8 +122,7 @@ struct iterationData{
 			deltaVs = it.deltaVs;
 			primPos = it.primPos;
 			primVel = it.primVel;
-			origNodes = it.origNodes;
-			allSegs = it.allSegs;
+			propSegs = it.propSegs;
 			allCons = it.allCons;
 			slackAssignCon = it.slackAssignCon;
 			conRows = it.conRows;
@@ -158,8 +173,6 @@ class tpat_correction_engine : public tpat{
 		double getTol() const;
 		tpat_verbosity_tp isVerbose() const;
 		bool isFindingEvent() const;
-		tpat_nodeset_cr3bp getCR3BP_Output();
-		tpat_nodeset_bcr4bp getBCR4BPR_Output();
 		bool usesEqualArcTime() const;
 		bool usesScaledVars() const;
 		bool usesVarTime() const;
@@ -175,8 +188,8 @@ class tpat_correction_engine : public tpat{
 		void setVerbose(tpat_verbosity_tp);
 		
 		// Utility/Action functions
-		iterationData multShoot(const tpat_nodeset*);
-		iterationData multShoot(iterationData);
+		iterationData multShoot(const tpat_nodeset*, tpat_nodeset*);
+		iterationData multShoot(iterationData, tpat_nodeset*);
 
 	private:
 		/** Describes how many messages to spit out */
@@ -197,9 +210,6 @@ class tpat_correction_engine : public tpat{
 		 */
 		double tol = 1e-12;
 
-		/** Whether or not space has been dynamically allocated for nodeset_out */
-		bool createdNodesetOut = false;
-
 		/** Flag to turn on when this algorithm is being used to locate an event */
 		bool findEvent = false;
 
@@ -211,9 +221,6 @@ class tpat_correction_engine : public tpat{
 
 		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
 		bool scaleVars = false;
-
-		/** The output nodeset, constructed from the corrected arcs */
-		tpat_nodeset *nodeset_out = 0;
 
 		/** Whether or not the engine is ready to be cleaned and/or deconstructed */
 		bool isClean = true;

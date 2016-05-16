@@ -195,12 +195,22 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param it an iteration data object containing all info from the corrections process
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
+ *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
  */
-tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
+void tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
     (void) it;
     (void) findEvent;
-    const tpat_sys_data_cr3bp_ltvp *sys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
-    return new tpat_nodeset_cr3bp(sys);
+    (void) nodes_in;
+    (void) nodes_out;
+}//====================================================
+
+/**
+ *  @brief Perform model-specific initializations on the iterationData object
+ *  @param it pointer to the object to be initialized
+ */
+void tpat_model_cr3bp_ltvp::multShoot_initIterData(iterationData *it) const{
+    it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp_ltvp(static_cast<const tpat_sys_data_cr3bp_ltvp *>(it->sysData)));
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

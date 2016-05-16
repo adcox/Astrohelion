@@ -45,7 +45,6 @@ void testCR3BP_SE_Cons(){
 	double ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
 	double T = 3.293141367224790;
 	tpat_nodeset_cr3bp halfLyapNodeset(ic, &sys, T/1.25, 8);	// Create a nodeset
-
 	std::vector<double> initState, finalState;
 	tpat_nodeset_cr3bp correctedSet(&sys);
 
@@ -59,8 +58,8 @@ void testCR3BP_SE_Cons(){
 	halfLyapNodeset.addConstraint(stateCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(stateCon.getID());
 		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -88,8 +87,8 @@ void testCR3BP_EM_Cons(){
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
 		// corrector.setVerbose(ALL_MSG);
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(stateCon.getID());
 		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -104,8 +103,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(matchAllCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchAllCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		std::cout << "MATCH_ALL Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
@@ -121,8 +120,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(matchCustCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchCustCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
@@ -140,8 +139,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(matchDistCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		correctedSet.saveToMat("CR_EM_DIST_corrected.mat");
 		finalState = correctedSet.getState(matchDistCon.getID());
 		double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(),2) + pow(finalState[1], 2));
@@ -159,8 +158,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(matchDistCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		correctedSet.saveToMat("CR_EM_MIN_DIST_corrected.mat");
 		finalState = correctedSet.getState(matchDistCon.getID());
 		double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
@@ -178,8 +177,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(matchDistCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		correctedSet.saveToMat("CR_EM_MAX_DIST_corrected.mat");
 		finalState = correctedSet.getState(matchDistCon.getID());
 		double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
@@ -202,8 +201,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(dVCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		iterationData itData = corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		iterationData itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		correctedSet.saveToMat("CR_EM_MAX_DV_corrected.mat");
 		double totalDV = getTotalDV(&itData);
 		std::cout << "MAX_DELTA_V Constraint: " << (totalDV <= maxDVConData ? PASS : FAIL) << std::endl;
@@ -220,8 +219,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(dVCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		iterationData itData = corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		iterationData itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		correctedSet.saveToMat("CR_EM_DV_corrected.mat");
 		double totalDV = getTotalDV(&itData);
 		std::cout << "DELTA_V Constraint: " << (std::abs(totalDV - maxDVConData) < 1e-10 ? PASS : FAIL) << std::endl;
@@ -237,8 +236,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(jacobiCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		double jacobi = correctedSet.getJacobiByIx(0);
 		std::cout << "JC Constraint: " << (std::abs(jacobi - jacobiData) < 1e-12 ? PASS : FAIL) << std::endl;
 		printf("Desired value = %.4f, actual value = %.4f\n", jacobiData, jacobi);
@@ -254,8 +253,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(tofCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		double totalTOF = correctedSet.getTotalTOF();
 		std::cout << "TOF Constraint: " << (std::abs(totalTOF - tofData) < 1e-12 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -270,8 +269,8 @@ void testCR3BP_EM_Cons(){
 	halfLyapNodeset.addConstraint(apseCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getCR3BP_Output();
+		tpat_nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		correctedSet.saveToMat("CR_EM_APSE_corrected.mat");
 		finalState = correctedSet.getState(apseCon.getID());
 		const tpat_model *model = sys.getModel();
@@ -304,8 +303,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(stateCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(stateCon.getID());
 		std::cout << "STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -321,8 +320,8 @@ void testBCR4BPCons(){
 	// halfLyapNodeset.print();
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchAllCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		std::cout << "MATCH_ALL Constraint: " << (stateDiffBelowTol(finalState, initState, 1e-12) ? PASS : FAIL) << std::endl;
@@ -338,8 +337,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(matchCustCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchCustCon.getID());
 		initState = correctedSet.getStateByIx(0);
 		finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
@@ -357,8 +356,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(matchDistCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchDistCon.getID());
 		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
@@ -376,8 +375,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(matchDistCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchDistCon.getID());
 		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
@@ -396,8 +395,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(matchDistCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(matchDistCon.getID());
 		std::vector<double> primPos = sys.getModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
 		double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
@@ -421,7 +420,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(dVCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		iterationData itData = corrector.multShoot(&halfLyapNodeset);
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		iterationData itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		double totalDV = getTotalDV(&itData);
 		std::cout << "MAX_DELTA_V Constraint: " << (totalDV <= maxDVConData ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -437,8 +437,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(dVCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		iterationData itData = corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		iterationData itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		double totalDV = getTotalDV(&itData);
 		std::cout << "DELTA_V Constraint: " << (std::abs(totalDV - maxDVConData) < 1e-12 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -454,8 +454,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.print();
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		double totalTOF = correctedSet.getTotalTOF();
 		std::cout << "TOF Constraint: " << (std::abs(totalTOF - tofData) < 1e-12 ? PASS : FAIL) << std::endl;
 	}catch(tpat_diverge &e){
@@ -470,8 +470,8 @@ void testBCR4BPCons(){
 	halfLyapNodeset.addConstraint(apseCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset);
 	try{
-		corrector.multShoot(&halfLyapNodeset);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(apseCon.getID());
 		const tpat_model *model = sys.getModel();
 		double rdot = model->getRDot(apseData, correctedSet.getEpoch(apseCon.getID()), &(finalState[0]), &sys);
@@ -498,8 +498,8 @@ void testBCR4BPCons(){
 	nodes0.addConstraint(spCon);
 	finiteDiff_checkMultShoot(&nodes0);
 	try{
-		corrector.multShoot(&nodes0);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&nodes0, &correctedSet);
 		finalState = correctedSet.getState(spCon.getID());
 		finalState.erase(finalState.begin()+3, finalState.end());
 
@@ -520,8 +520,8 @@ void testBCR4BPCons(){
 	nodes0.addConstraint(spConRange);
 	finiteDiff_checkMultShoot(&nodes0);
 	try{
-		corrector.multShoot(&nodes0);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&nodes0, &correctedSet);
 		finalState = correctedSet.getState(spCon.getID());
 
 		// Compute the state derivative at the node to get acceleration
@@ -558,8 +558,8 @@ void testBCR4BPCons(){
 	nodes0.addConstraint(spDistCon);
 	finiteDiff_checkMultShoot(&nodes0);
 	try{
-		corrector.multShoot(&nodes0);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&nodes0, &correctedSet);
 		finalState = correctedSet.getState(spDistCon.getID());
 		double T = correctedSet.getEpoch(spDistCon.getID());
 
@@ -591,8 +591,8 @@ void testBCR4BPCons(){
 	nodes0.addConstraint(spMaxDistCon);
 	finiteDiff_checkMultShoot(&nodes0);
 	try{
-		corrector.multShoot(&nodes0);
-		correctedSet = corrector.getBCR4BPR_Output();
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&nodes0, &correctedSet);
 		finalState = correctedSet.getState(spMaxDistCon.getID());
 		double T = correctedSet.getEpoch(spMaxDistCon.getID());
 

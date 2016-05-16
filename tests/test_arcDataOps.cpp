@@ -215,7 +215,6 @@ void tryDeleteMiddleNode(){
 	std::cout << "Delete middle node (LINEAR, FORWARD TIME): ";
 	try{
 		set.deleteNode(1);
-		// set.print();
 		tpat_segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
 		if(seg.getOrigin() == 0 && seg.getTerminus() == 2 && std::abs(seg.getTOF() - 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
@@ -223,12 +222,12 @@ void tryDeleteMiddleNode(){
 			std::cout << FAIL << std::endl;
 	}catch(tpat_exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "  Delete another middle node: ";
 	try{
 		set.deleteNode(2);
-		// set.print();
 		tpat_segment seg = set.getSeg(sID_last+2);
 		if(seg.getOrigin() == 0 && seg.getTerminus() == 3 && std::abs(seg.getTOF() - 3.3) < 1e-4)
 			std::cout << PASS << std::endl;
@@ -237,7 +236,7 @@ void tryDeleteMiddleNode(){
 		}
 	}catch(tpat_exception &e){
 		std::cout << FAIL << std::endl;
-		throw e;
+		printf("  %s\n", e.what());
 	}
 }//==================================================
 
@@ -268,6 +267,7 @@ void tryDeleteMiddleNode_revTime(){
 			std::cout << FAIL << std::endl;
 	}catch(tpat_exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "  Delete another middle node: ";
@@ -282,7 +282,7 @@ void tryDeleteMiddleNode_revTime(){
 		}
 	}catch(tpat_exception &e){
 		std::cout << FAIL << std::endl;
-		throw e;
+		printf("  %s\n", e.what());
 	}
 }//====================================================
 
@@ -313,7 +313,7 @@ void tryDeleteMiddleNode_doubleSource1(){
 			std::cout << FAIL << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
-		throw e;
+		printf("  %s\n", e.what());
 	}
 }//==================================================
 
@@ -341,7 +341,7 @@ void tryDeleteMiddleNode_doubleSource2(){
 			std::cout << FAIL << std::endl;
 	}catch(tpat_exception &e){
 		std::cout << FAIL << std::endl;
-		throw e;
+		printf("  %s\n", e.what());
 	}
 }//==================================================
 
@@ -369,7 +369,7 @@ void tryDeleteMiddleNode_doubleSource3(){
 			std::cout << FAIL << std::endl;
 	}catch(tpat_exception &e){
 		std::cout << FAIL << std::endl;
-		throw e;
+		printf("  %s\n", e.what());
 	}
 }//==================================================
 
@@ -877,6 +877,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Append two (+) time sets at end node: ";
@@ -890,6 +891,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Append two (+) time sets in the middle: ";
@@ -903,6 +905,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Create time collision with (+) and (+) time sets: ";
@@ -916,6 +919,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Create time collision with (+) and (+) time sets, again: ";
@@ -929,6 +933,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Create time collision with (-) and (-) time sets: ";
@@ -942,6 +947,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Create time collision with (-) and (-) time sets, again: ";
@@ -955,6 +961,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Create time collision with (+) and (-) time sets: ";
@@ -968,6 +975,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 
 	std::cout << "Create time collision with (+) and (-) time sets again: ";
@@ -981,6 +989,7 @@ void tryAppendSet_errs(){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
+		printf("  %s\n", e.what());
 	}
 }//=================================================
 

@@ -202,12 +202,16 @@ int tpat_base_arcset::addSeg(tpat_segment s){
 						// Make sure the segment is real
 						if(nearSegIx != tpat_linkable::INVALID_ID){
 							secondaryLinks++;
+
 							// If the node is linked to another segment, get that segment and compare it to this one
-							tpat_segment *nearSeg = &(segs[nearSegIx]);
+							const tpat_segment *nearSeg = &(segs[nearSegIx]);
 							bool sameLinkType = nearSeg->getLink(i) == linkedNodeID;
 							bool sameTimeDir = nearSeg->getTOF()*s.getTOF() > 0;
 
 							if(sameLinkType && i == tpat_segment::TERM_IX){
+								print();
+								printErr("Adding segment (ID %d) O: %d, T: %d\n", s.getID(), s.getOrigin(), s.getTerminus());
+								printErr("Conflict at node (ID %d): seg (ID %d) also terminates here!\n", linkedNodeID, nearSeg->getID());
 								throw tpat_exception("tpat_base_arcset::addSeg: would create node with two terminating segments");
 							}else if(sameLinkType && sameTimeDir){
 								// either a time collision (both terminate) or parallel structure (both originate)
@@ -419,16 +423,16 @@ void tpat_base_arcset::deleteNode(int id){
 		
 		// printf("Attempting to delete node (ID %d)\n", id);
 		// Get the node we're deleting
-		tpat_node theNode = nodes[nodeIx];
+		const tpat_node *theNode = &(nodes[nodeIx]);
 
 		// Get the indices of any segments this node is linked to
 		std::vector<int> linkedSegIxs;
 		for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
-			if(theNode.getLink(i) != tpat_linkable::INVALID_ID){
-				int segIx = segIDMap[theNode.getLink(i)];
+			if(theNode->getLink(i) != tpat_linkable::INVALID_ID){
+				int segIx = segIDMap[theNode->getLink(i)];
 				if(segIx != tpat_linkable::INVALID_ID){
 					linkedSegIxs.push_back(segIx);
-					// printf("  linked to segment (ID %d) at index %d\n", theNode.getLink(i), segIx);
+					// printf("  linked to segment (ID %d) at index %d\n", theNode->getLink(i), segIx);
 				}
 			}
 		}
@@ -442,11 +446,11 @@ void tpat_base_arcset::deleteNode(int id){
 			if(segs[linkedSegIxs[0]].getTerminus() == id || segs[linkedSegIxs[1]].getTerminus() == id){
 				// Get the segment that terminates at this node, and the segment that originates at this node
 				int termSegIx = segs[linkedSegIxs[0]].getTerminus() == id ? 0 : 1;
-				tpat_segment *termSeg = &(segs[linkedSegIxs[termSegIx]]);
-				tpat_segment *origSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
+				const tpat_segment *termSeg = &(segs[linkedSegIxs[termSegIx]]);
+				const tpat_segment *origSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
 
-				// printf("  > Segment (ID %d) terminates at node (ID %d)\n", termSeg.getID(), id);
-				// printf("  > Segment (ID %d) originates at node (ID %d)\n", origSeg.getID(), id);
+				// printf("  > Segment (ID %d) terminates at node (ID %d)\n", termSeg->getID(), id);
+				// printf("  > Segment (ID %d) originates at node (ID %d)\n", origSeg->getID(), id);
 
 				// Just to check
 				if(termSeg->getTOF()*origSeg->getTOF() < 0){
@@ -456,11 +460,12 @@ void tpat_base_arcset::deleteNode(int id){
 				// Create a new segment
 				tpat_segment combo(termSeg->getOrigin(), origSeg->getTerminus(), termSeg->getTOF() + origSeg->getTOF());
 
+				// Get the IDs of the segments; deleting id1 will change what origSeg points to, which will affect the getID() return value
+				int id1 = termSeg->getID(), id2 = origSeg->getID();
+
 				// Replace the two segments with the new combined one
-				deleteSeg(termSeg->getID());
-				// print();
-				deleteSeg(origSeg->getID());
-				// print();
+				deleteSeg(id1);	// CANNOT USE *termSeg pointer AFTER THIS LINE
+				deleteSeg(id2);	// CANNOT USE *origSeg pointer AFTER THIS LINE
 				addSeg(combo);
 			}else{
 				// Both must originate at node and have opposite time directions
@@ -473,8 +478,8 @@ void tpat_base_arcset::deleteNode(int id){
 				}
 
 				int revSegIx = segs[linkedSegIxs[0]].getTOF() < 0 ? 0 : 1;
-				tpat_segment *revSeg = &(segs[linkedSegIxs[revSegIx]]);
-				tpat_segment *forwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
+				const tpat_segment *revSeg = &(segs[linkedSegIxs[revSegIx]]);
+				const tpat_segment *forwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
 
 				/*	It is possible that, in this case, the segment that originates from this node and proceeds
 				 * 	in reverse time does not terminate at a node, but links to a forward-propagated segment instead.
@@ -491,9 +496,12 @@ void tpat_base_arcset::deleteNode(int id){
 					combo = tpat_segment(forwardSeg->getTerminus(), revSeg->getTerminus(), revSeg->getTOF() - forwardSeg->getTOF());
 				}
 
+				// Get the IDs of the segments; deleting id1 will change what forwardSeg points to, which will affect the getID() return value
+				int id1 = revSeg->getID(), id2 = forwardSeg->getID();
+
 				// Replace the two segments with the new one
-				deleteSeg(revSeg->getID());
-				deleteSeg(forwardSeg->getID());
+				deleteSeg(id1);	// CANNOT USE *revSeg pointer AFTER THIS LINE
+				deleteSeg(id2);	// CANNOT USE *forwardSeg pointer AFTER THIS LINE
 				addSeg(combo);
 			}
 		}else if(linkedSegIxs.size() == 1){
@@ -506,9 +514,12 @@ void tpat_base_arcset::deleteNode(int id){
 		nodeIDMap[id] = tpat_linkable::INVALID_ID;				// This ID will never be used again, set to INVALID_ID
 
 		// Update vector that maps ID values to storage indices
-		for(size_t n = id+1; n < nodeIDMap.size(); n++){
-			if(nodeIDMap[n] != tpat_linkable::INVALID_ID)
-				nodeIDMap[n]--;										// Decrement all indices after the node we just removed
+		for(size_t n = 0; n < nodeIDMap.size(); n++){
+			if(nodeIDMap[n] != tpat_linkable::INVALID_ID){
+				// Decrement all indices after the node we just removed
+				if(nodeIDMap[n] > nodeIx)
+					nodeIDMap[n]--;
+			}
 		}
 	}else{
 		printf("Cannot Delete: Node with ID %02d was not located\n", id);
@@ -535,8 +546,8 @@ void tpat_base_arcset::deleteSeg(int id){
 	if(segIx != tpat_linkable::INVALID_ID){
 		// printf("Deleting segment (ID %d)\n", id);
 
-		tpat_segment *seg = &(segs[segIx]);
-		// printf("  Retrieved segment (ID %d)\n", seg.getID());
+		const tpat_segment *seg = &(segs[segIx]);
+		// printf("  Retrieved segment (ID %d)\n", seg->getID());
 		for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
 			if(seg->getLink(i) != tpat_linkable::INVALID_ID){
 				int nodeIx = nodeIDMap[seg->getLink(i)];
@@ -549,12 +560,14 @@ void tpat_base_arcset::deleteSeg(int id){
 			}
 		}
 
-		segs.erase(segs.begin() + segIx);
+		segs.erase(segs.begin() + segIx);	// CANNOT USE *seg pointer AFTER THIS LINE
 
 		segIDMap[id] = tpat_linkable::INVALID_ID;
-		for(size_t s = id+1; s < segIDMap.size(); s++){
-			if(segIDMap[s] != tpat_linkable::INVALID_ID)
-				segIDMap[s]--;
+		for(size_t s = 0; s < segIDMap.size(); s++){
+			if(segIDMap[s] != tpat_linkable::INVALID_ID){
+				if(segIDMap[s] > segIx)
+					segIDMap[s]--;
+			}
 		}
 	}else{
 		// printf("Cannot Delete: Segment with ID %02d was not located\n", id);
@@ -604,7 +617,6 @@ std::vector<tpat_constraint> tpat_base_arcset::getArcConstraints() const { retur
  *  @brief Determine what order to place the nodes and segments of this object
  *  into to achieve a chronological progression in forward time.
  * 
- *  @param set the arcset object to order
  *  @return a vector of tpat_arc_piece objects that represent the chronological 
  *  order of the nodes and segments
  */
@@ -750,11 +762,14 @@ double tpat_base_arcset::getEpochByIx(int ix) const{
  *	
  *	@param ix the index of the extra parameter
  *	@return a vector containing the extra parameter at the specified step and index
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws tpat_exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
  */
 std::vector<double> tpat_base_arcset::getExtraParam(int n, int ix) const{
 	if(n < 0)
 		n += nodes.size();
+
+	if(n < 0 || n >= (int)(nodes.size()))
+		throw tpat_exception("tpat_base_arcset::getExtraParam: node index out of bounds");
 
 	if(ix < 0 || ix >= (int)(extraParamRowSize.size()))
 		throw tpat_exception("tpat_base_arcset::getExtraParam: parameter index out of bounds");

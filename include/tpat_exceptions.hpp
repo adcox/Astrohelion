@@ -46,11 +46,15 @@ class tpat_exception : public std::exception{
 			return msg.c_str();
 		}
 
+		/**
+		 *  @brief Copy constructor
+		 * 
+		 *  @param e reference to another exception object
+		 */
 		tpat_exception(const tpat_exception &e) : msg(e.msg){}
 
 	protected:
-		std::string msg;
-		// char *msg;	//!< Custom error message
+		std::string msg;	//!< Custom error message
 };
 
 /**

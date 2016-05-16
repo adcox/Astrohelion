@@ -54,108 +54,26 @@
 //-----------------------------------------------------
 
 /**
- *  @brief Construct a new simulation engine. 
- *
- *  Most variables will be intiailized, but
- *  you MUST set the system data via <tt>setSysData()</tt>
- */
-// tpat_simulation_engine::tpat_simulation_engine(){
-//     events.clear();
-//     eventOccurs.clear();
-//     printVerb(verbose == ALL_MSG, "Created Simulation Engine\n");
-// }//===========================================
-
-/**
  *  @brief Construct a simulation engine for a specific dynamical system
- *
- *  This constructor will also create the default crash event detectors
- *
- *  @param data a pointer to a system data object
  */
-tpat_simulation_engine::tpat_simulation_engine(const tpat_sys_data *data) : sysData(data){
-    // events.clear();
-    // eventOccurs.clear();
-    // sysData = data;
-    createCrashEvents();
-    printVerb(verbose == ALL_MSG, "Created Simulation Engine for %s system\n", data->getTypeStr().c_str());
+tpat_simulation_engine::tpat_simulation_engine(){
+    printVerb(verbose == ALL_MSG, "Created Simulation Engine\n");
 }//===========================================
 
 /**
  *  @brief Copy constructor
  *  @param s a simulation engine 
  */
-tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s) : sysData(s.sysData){
-    copyEngine(s);
+tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s){
+    copyMe(s);
 }//=====================================
 
 /**
- *  @brief Free memory and clean up
+ *  @brief Default destructor
  */
 tpat_simulation_engine::~tpat_simulation_engine(){
     printVerb(verbose == ALL_MSG, "Destroying simulation engine...\n");
-    // reset();    // Function handles deallocation and resetting of data
-    // if(!isClean)
-        // delete traj;    // de-allocate the memory
 }//===========================================
-
-/**
- *  Copy data from an input engine to this one
- *  @param s an input simulation engine
- *  @throw tpat_exception if <tt>s</tt> has an unknown system data type
- */
-void tpat_simulation_engine::copyEngine(const tpat_simulation_engine &s){
-
-    baseArcsetPtr temp = s.traj->clone();
-    traj.reset(static_cast<tpat_traj *>(temp.get()));
-    // // Copy the trajectory object using the correct casting
-    // switch(sysData->getType()){
-    //     case tpat_sys_data::CR3BP_SYS:
-    //         sysData = static_cast<const tpat_sys_data_cr3bp *>(s.sysData);
-    //         traj = new tpat_traj_cr3bp(*static_cast<tpat_traj_cr3bp *>(s.traj));
-    //         break;
-    //     case tpat_sys_data::CR3BP_LTVP_SYS:
-    //         sysData = static_cast<const tpat_sys_data_cr3bp_ltvp *>(s.sysData);
-    //         traj = new tpat_traj_cr3bp_ltvp(*static_cast<tpat_traj_cr3bp_ltvp *>(s.traj));
-    //         break;
-    //     case tpat_sys_data::BCR4BPR_SYS:
-    //         sysData = static_cast<const tpat_sys_data_bcr4bpr *>(s.sysData);
-    //         traj = new tpat_traj_bcr4bp(*static_cast<tpat_traj_bcr4bp *>(s.traj));
-    //         break;
-    //     default:
-    //         throw tpat_exception("tpat_simulation_engine::copyEngine: Cannot copy engine with unknown type");
-    // }
-
-    eomParams = 0;                              // void*, will get set again by the runSim() method
-    revTime = s.revTime;
-    verbose = s.verbose;
-    varStepSize = s.varStepSize;
-    simpleIntegration = s.simpleIntegration;
-    isClean = s.isClean;
-    absTol = s.absTol;
-    relTol = s.relTol;
-    dtGuess = s.dtGuess;
-    numSteps = s.numSteps;
-    events = s.events;
-    eventOccurs = s.eventOccurs;
-}//=====================================
-
-/**
- *  Create default crash events for the system
- */
-void tpat_simulation_engine::createCrashEvents(){
-    if(!madeCrashEvents){
-        for(int p = 0; p < sysData->getNumPrimaries(); p++){
-            // Put primary index # into an array, create event
-            double Pix = (double)p;
-            tpat_event crashEvt(sysData, tpat_event::CRASH, 0, true, &Pix);
-            // Add event to list by default
-            addEvent(crashEvt);
-        }
-        madeCrashEvents = true;
-    }else{
-        printWarn("Crash events have already been created!\n");
-    }
-}//=====================================
 
 //-----------------------------------------------------
 //      Operator Functions
@@ -166,7 +84,7 @@ void tpat_simulation_engine::createCrashEvents(){
  *  @param s another simulation engine
  */
 tpat_simulation_engine& tpat_simulation_engine::operator =(const tpat_simulation_engine& s){
-    copyEngine(s);
+    copyMe(s);
     return *this;
 }//=====================================
 
@@ -207,86 +125,6 @@ double tpat_simulation_engine::getRelTol() const {return relTol;}
 int tpat_simulation_engine::getNumSteps() const { return numSteps; }
 
 /**
- *  @brief Retrieve the trajectory as a generic trajectory object
- *  @return a trajectory object
- */
-tpat_traj tpat_simulation_engine::getTraj() const {
-    // Make a copy and return that
-    tpat_traj temp (*traj);
-    return temp;
-}//==============================================================
-
-/**
- *  @brief Retrieve the CR3BP trajectory. 
- *
- *  To avoid static casts in driver programs,
- *  we create several different getTraj() type functions that will perform
- *  the static cast and return the specific type of trajectory object rather
- *  than a generic one.
- *
- *  @return a CR3BP Trajectory object
- *  @throws tpat_exception if the engine does not have a CR3BP result
- */
-tpat_traj_cr3bp tpat_simulation_engine::getCR3BP_Traj() const{
-    if(sysData->getType() == tpat_sys_data::CR3BP_SYS){
-        /* Use a static cast to convert the general trajectory pointer
-         * into a specific CR3BP trajectory pointer, then dereference
-         * and return a COPY of the trajectory
-         */
-        tpat_traj_cr3bp temp( *(static_cast<tpat_traj_cr3bp *>(traj.get()) ) );
-        return temp;
-    }else{
-        throw tpat_exception("tpat_simulation_engine::getCR3BP_Traj: Wrong system type");
-    }
-}//==============================================
-
-/**
- *  @brief Retrieve the CR3BP LTVP trajectory. 
- *
- *  To avoid static casts in driver programs,
- *  we create several different getTraj() type functions that will perform
- *  the static cast and return the specific type of trajectory object rather
- *  than a generic one.
- *
- *  @return a CR3BP LTVP Trajectory object
- *  @throws tpat_exception if the engine does not have a CR3BP_LTVP result
- */
-tpat_traj_cr3bp_ltvp tpat_simulation_engine::getCR3BP_LTVP_Traj() const{
-    if(sysData->getType() == tpat_sys_data::CR3BP_LTVP_SYS){
-        /* Use a static cast to convert the general trajectory pointer
-         * into a specific CR3BP trajectory pointer, then dereference
-         * and return a COPY of the trajectory
-         */
-        tpat_traj_cr3bp_ltvp temp( *(static_cast<tpat_traj_cr3bp_ltvp *>(traj.get()) ) );
-        return temp;
-    }else{
-        throw tpat_exception("tpat_simulation_engine::getCR3BP_LTVP_Traj: Wrong system type");
-    }
-}//==============================================
-
-/**
- *  @brief Retrieve the BCR4BPR trajectory. 
- *
- *  To avoid static casts in driver programs,
- *  we create several different getTraj() type functions that will perform
- *  the static cast and return the specific type of trajectory object rather
- *  than a generic one.
- *
- *  @return a BCR4BP, Rotating Coordinate Trajectory object
- *  @throws tpat_exception if the engine does not have a BCR4BPR result
- */
-tpat_traj_bcr4bp tpat_simulation_engine::getBCR4BPR_Traj() const{
-    if(sysData->getType() == tpat_sys_data::BCR4BPR_SYS){
-        // Make a copy and return it
-        tpat_traj_bcr4bp temp( *( static_cast<tpat_traj_bcr4bp *>(traj.get()) ) );
-        return temp;
-    }
-    else{
-        throw tpat_exception("tpat_simulation_engine::getBCR4BPR_Traj: Wrong system type");
-    }
-}//=====================================
-
-/**
  *  @brief Retrieve a vector of all events being watched for the current simulation
  *  @return a vector of events
  */
@@ -304,33 +142,21 @@ std::vector<eventRecord> tpat_simulation_engine::getEventRecords() const { retur
 /**
  *  @brief Retrieve a list of all events that fired at the last step
  *  of the simulation, potentially ending the run.
+ *  @param traj pointer to the trajectory that was integrated
  *  @return a vector of events
  *  @throws tpat_exception if the engine has not been run
  */
-std::vector<tpat_event> tpat_simulation_engine::getEndEvents() const{
-    if(traj.get() != NULL && traj.get() != 0){
-        std::vector<tpat_event> endEvents;
+std::vector<tpat_event> tpat_simulation_engine::getEndEvents(tpat_traj *traj) const{
+    std::vector<tpat_event> endEvents;
+    if(traj != NULL && traj != 0){
         for(size_t i = 0; i < eventOccurs.size(); i++){
             if(eventOccurs[i].stepIx == (traj->getNumNodes() - 1)){
                 endEvents.push_back(events[eventOccurs[i].eventIx]);
             }
         }
-        return endEvents;
-    }else{
-        throw tpat_exception("tpat_simulation_engine::getEndEvents: No trajectory object exists. Please run a sim before querying end events");
     }
+    return endEvents;
 }//============================================
-
-/**
- *  @brief Add an event for this integration
- *  @param type the event type
- *  @param dir -1 for negative direction, +1 for positive, 0 for both
- *  @param stop whether or not to stop integration when this event occurs
- */
-void tpat_simulation_engine::addEvent(tpat_event::tpat_event_tp type, int dir, bool stop){
-    tpat_event temp(sysData, type, dir, stop);
-    events.push_back(temp);
-}//======================================
 
 /**
  *  @brief Add an event for this integration
@@ -341,10 +167,10 @@ void tpat_simulation_engine::addEvent(tpat_event evt){
 }//======================================
 
 /**
- *	@brief Specify the system the engine will be using for integration
- *	@param d a system data object
+ *  @brief Determine whether or not crash events are created for each simulation
+ *  @return whether or not crash events are created for each simulation
  */
-void tpat_simulation_engine::setSysData(const tpat_sys_data *d){ sysData = d; }
+bool tpat_simulation_engine::makesCrashEvents() const { return makeCrashEvents; }
 
 /**
  *	@brief Specify whether or not the engine should run in reverse time
@@ -387,6 +213,14 @@ void tpat_simulation_engine::setRelTol(double t){
 }//====================================================
 
 /**
+ *  @brief Tell the simulation engine whether or not to make crash events at the
+ *  beginning of the simulation
+ * 
+ *  @param b whether or not to create crash-detection events for each primary
+ */
+void tpat_simulation_engine::setMakeCrashEvents(bool b){ makeCrashEvents = b; }
+
+/**
  *  @brief Specify the number of steps the integrator must take during the 
  *  the integration. 
  *
@@ -408,9 +242,10 @@ void tpat_simulation_engine::setNumSteps(int n){ numSteps = n; }
  *	@param tof the total integration time, or time-of-flight (non-dim units)
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
+ *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void tpat_simulation_engine::runSim(const double *ic, double tof){
-	runSim(ic, 0, tof);
+void tpat_simulation_engine::runSim(const double *ic, double tof, tpat_traj *traj){
+	runSim(ic, 0, tof, traj);
 }//=======================================================
 
 /**
@@ -421,9 +256,10 @@ void tpat_simulation_engine::runSim(const double *ic, double tof){
  *  @param tof the total integration time, or time-of-flight (non-dim units)
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
+ *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void tpat_simulation_engine::runSim(std::vector<double> ic, double tof){
-    runSim(ic, 0, tof);
+void tpat_simulation_engine::runSim(std::vector<double> ic, double tof, tpat_traj *traj){
+    runSim(ic, 0, tof, traj);
 }//=======================================================
 
 /**
@@ -435,12 +271,13 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double tof){
  *  @param tof the total integration time, or time-of-flight (non-dim units).
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
+ *  @param traj pointer to a trajectory object to store the output trajectory
  *  @throws tpat_exception if <tt>ic</tt> has fewer than 6 elements
  */
-void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double tof){
+void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double tof, tpat_traj *traj){
     if(ic.size() >= 6){
         std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), t0, tof);
+        runSim(&(tempIC[0]), t0, tof, traj);
     }else{
         throw tpat_exception("IC must have at least six elements");
     }
@@ -454,12 +291,16 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double to
  *	@param tof time-of-flight, non-dimensional time units
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
+ *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
+void tpat_simulation_engine::runSim(const double *ic, double t0, double tof, tpat_traj *traj){
     printVerbColor(verbose == ALL_MSG, GREEN, "Running simulation...\n");
     if(!isClean){
         cleanEngine();
     }
+
+    if(makeCrashEvents)
+        createCrashEvents(traj->getSysData());
 
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
@@ -480,42 +321,11 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
         }
     }
 
-	switch(sysData->getType()){
-		case tpat_sys_data::CR3BP_SYS:
-		{
-            // Initialize trajectory
-            printVerb(verbose == ALL_MSG, "  initializing CR3BP trajectory\n");
-            const tpat_sys_data_cr3bp* data = static_cast<const tpat_sys_data_cr3bp *>(sysData);
-            eomParamStruct paramStruct(data);
-            eomParams = &paramStruct;
-
-            traj.reset(new tpat_traj_cr3bp(data));  // Put the dynamically allocated trajectory in the smart pointer
-			break;
-        }
-        case tpat_sys_data::CR3BP_LTVP_SYS:
-        {
-            printVerb(verbose == ALL_MSG, "  initializing CR3BP LTVP trajectory\n");
-            const tpat_sys_data_cr3bp_ltvp* data = static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData);
-            eomParamStruct paramStruct(data);
-            eomParams = &paramStruct;
-            traj.reset(new tpat_traj_cr3bp_ltvp(data));
-            break;
-        }
-		case tpat_sys_data::BCR4BPR_SYS:
-        {
-            printVerb(verbose == ALL_MSG, "  initializing BCR4BPR trajectory\n");
-            const tpat_sys_data_bcr4bpr* data = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
-            eomParamStruct paramStruct(data);
-            eomParams = &paramStruct;
-            traj.reset(new tpat_traj_bcr4bp(data));
-			break;
-        }
-		default:
-			throw tpat_exception("Cannot simulate for this system type");
-	}
+    eomParamStruct paramStruct(traj->getSysData());
+    eomParams = &paramStruct;
 
     // Run the simulation
-    integrate(ic, &(t_span.front()), varStepSize ? 2 : numSteps);
+    integrate(ic, &(t_span.front()), varStepSize ? 2 : numSteps, traj);
 
     isClean = false;
 }//============================================
@@ -535,12 +345,14 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof){
  *  @param ic a 6-element initial state for the trajectory
  *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
  *  @param t_dim the dimension of t
+ *  @param traj pointer to a trajectory object to store the output trajectory
+ *  
  *  @throws tpat_diverge if the integrator fails and cannot proceed
  */
-void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_dim){
+void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_dim, tpat_traj *traj){
     // Save tolerance for trajectory
     traj->setTol(absTol > relTol ? absTol : relTol);
-    const tpat_model *model = sysData->getModel();
+    const tpat_model *model = traj->getSysData()->getModel();
 
     // Get the dimension of the state vector for integration
     int core = model->getCoreStateSize();
@@ -596,7 +408,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     }
 
     // Save the initial state, time, and STM
-    model->sim_saveIntegratedData(y, t[0], traj.get());
+    model->sim_saveIntegratedData(y, t[0], traj);
 
     // Update all event functions with IC
     printVerb(verbose == ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
@@ -626,13 +438,13 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
                 throw tpat_diverge("Integration did not succeed");
             }
 
-            killSim = locateEvents(y, t0);
+            killSim = locateEvents(y, t0, traj);
 
             if(killSim)
                 break;
 
             // Put newly integrated state and time into state vector
-            model->sim_saveIntegratedData(y, t0, traj.get());
+            model->sim_saveIntegratedData(y, t0, traj);
         }
     }else{
         // Integrate each segment between the input times
@@ -655,14 +467,14 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
                     throw tpat_diverge("Integration did not succeed");
                 }
 
-                killSim = locateEvents(y, t0);
+                killSim = locateEvents(y, t0, traj);
             }
 
             if(killSim)
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            model->sim_saveIntegratedData(y, t0, traj.get());
+            model->sim_saveIntegratedData(y, t0, traj);
         }
     }
 
@@ -710,11 +522,12 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
  *
  *  @param y the most recent state on the integrated arc.
  *  @param t the time associated with y
+ *  @param traj pointer to a trajectory object to store the output trajectory
  *  @return whether or not the simulation should end (an event triggers killSim)
  */
-bool tpat_simulation_engine::locateEvents(const double *y, double t){
+bool tpat_simulation_engine::locateEvents(const double *y, double t, tpat_traj *traj){
     int numPts = traj->getNumNodes();
-    const tpat_model *model = sysData->getModel();
+    const tpat_model *model = traj->getSysData()->getModel();
     
     // Look through all events
     for(int ev = 0; ev < ((int)events.size()); ev++){
@@ -748,7 +561,7 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj.get(), &(generalIC[0]), t0, tof, verbose)){
+            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getNumNodes();
@@ -789,10 +602,7 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t){
  */
 void tpat_simulation_engine::cleanEngine(){
     printVerb(verbose == ALL_MSG, "Cleaning the engine...\n");
-    // delete traj;    // de-allocate the memory
-    // traj = 0;       // set pointer to 0 (null pointer)
     eomParams = 0;  // set pointer to 0 (null pointer)
-
     eventOccurs.clear();
 
     for(size_t e = 0; e < events.size(); e++){
@@ -800,6 +610,23 @@ void tpat_simulation_engine::cleanEngine(){
     }
 
     isClean = true;
+}//====================================================
+
+/**
+ *  Create default crash events for the system
+ *  @param sysData pointer to the system data object for the simulation
+ */
+void tpat_simulation_engine::createCrashEvents(const tpat_sys_data *sysData){
+    if(!madeCrashEvents){
+        for(int p = 0; p < sysData->getNumPrimaries(); p++){
+            // Put primary index # into an array, create event
+            double Pix = (double)p;
+            tpat_event crashEvt(sysData, tpat_event::CRASH, 0, true, &Pix);
+            // Add event to list by default
+            addEvent(crashEvt);
+        }
+        madeCrashEvents = true;
+    }
 }//====================================================
 
 /**
@@ -822,7 +649,8 @@ void tpat_simulation_engine::reset(){
     dtGuess = 1e-6;
     numSteps = 1000;
     madeCrashEvents = false;
-}//==========================================
+    makeCrashEvents = true;
+}//====================================================
 
 /**
  *  Clear all events from the simulation, including any created by default.
@@ -831,4 +659,27 @@ void tpat_simulation_engine::clearEvents(){
     printVerb(verbose == ALL_MSG, "Clearing all events...\n");
     events.clear();
     madeCrashEvents = false;
-}//==========================================
+}//====================================================
+
+/**
+ *  Copy data from an input engine to this one
+ *  @param s an input simulation engine
+ *  @throw tpat_exception if <tt>s</tt> has an unknown system data type
+ */
+void tpat_simulation_engine::copyMe(const tpat_simulation_engine &s){
+    eomParams = 0;  // void*, will get set again by the runSim() method
+    revTime = s.revTime;
+    verbose = s.verbose;
+    varStepSize = s.varStepSize;
+    simpleIntegration = s.simpleIntegration;
+    isClean = s.isClean;
+    absTol = s.absTol;
+    relTol = s.relTol;
+    dtGuess = s.dtGuess;
+    numSteps = s.numSteps;
+    events = s.events;
+    eventOccurs = s.eventOccurs;
+    makeCrashEvents = s.makeCrashEvents;
+    madeCrashEvents = s.madeCrashEvents;
+}//====================================================
+

@@ -359,8 +359,8 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 			tpat_correction_engine corrector;
 			corrector.setTol(1e-11);
 			try{
-				corrector.multShoot(&memberSet);
-				tpat_nodeset_cr3bp newNodes = corrector.getCR3BP_Output();
+				tpat_nodeset_cr3bp newNodes(&tempSys);
+				corrector.multShoot(&memberSet, &newNodes);
 				
 				tpat_traj_cr3bp newTraj = tpat_traj_cr3bp::fromNodeset(newNodes);
 				tpat_family_member_cr3bp newMember(newTraj);

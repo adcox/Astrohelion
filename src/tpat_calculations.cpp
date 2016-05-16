@@ -552,7 +552,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
     vecs.transposeInPlace();    // Transpose so eigenvectors are columns
 
     // NOW, copute the manifolds!
-    tpat_simulation_engine sim(perOrbit->getSysData());
+    tpat_simulation_engine sim;
     double stepDist = 200;
     double charL = perOrbit->getSysData()->getCharL();
     for(int n = 0; n < numMans; n++){
@@ -593,8 +593,9 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
         q0 += stepDist/charL * direction;
 
         // Simulate for some time to generate a manifold arc
-        sim.runSim(q0.data(), tof);
-        allManifolds.push_back(sim.getCR3BP_Traj());
+        tpat_traj_cr3bp traj(static_cast<const tpat_sys_data_cr3bp *>(perOrbit->getSysData()));
+        sim.runSim(q0.data(), tof, &traj);
+        allManifolds.push_back(traj);
     }
 
     return allManifolds;
@@ -668,9 +669,9 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     corrector.setVerbose(NO_MSG);
     corrector.setIgnoreDiverge(true);
     // corrector.setScaleVars(true);
-    
+
     // Run multiple shooter to get X, FX, and DF
-    iterationData it = corrector.multShoot(nodeset);
+    iterationData it = corrector.multShoot(nodeset, NULL);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
@@ -680,28 +681,28 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
         it.X = pertX;                           // Copy into iteration data
-        iterationData pertIt = corrector.multShoot(it);     // Correct perturbed state
+        iterationData pertIt = corrector.multShoot(it, NULL);     // Correct perturbed state
         Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // Do another process for opposite direction
         pertX = it.X0;
         pertX[i] -= pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
+        pertIt = corrector.multShoot(it, NULL);
         Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // An iteration for twice the perturbation up
         pertX = it.X0;
         pertX[i] += 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
+        pertIt = corrector.multShoot(it, NULL);
         Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // An iteration for twice the perturbation down
         pertX = it.X0;
         pertX[i] -= 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
+        pertIt = corrector.multShoot(it, NULL);
         Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
 
@@ -891,7 +892,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol, iterationData* itData){
 
-    tpat_simulation_engine sim(sys);    // Engine to perform simulation
+    tpat_simulation_engine sim;    // Engine to perform simulation
     sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
     sim.setRelTol(sim.getAbsTol());
     sim.clearEvents();                  // Ignore any crashes into the primaries
@@ -966,11 +967,11 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     tpat_constraint finalStateCon(tpat_constraint::STATE, numNodes-1, mirrorCon1, 6);
 
     // Run the sim until the event is triggered
-    sim.runSim(IC, period);
-    tpat_traj_cr3bp halfOrbArc = sim.getCR3BP_Traj();
+    tpat_traj_cr3bp halfOrbArc(sys);
+    sim.runSim(IC, period, &halfOrbArc);
     
     // Check to make sure the simulation ended with the event (not running out of time)
-    std::vector<tpat_event> endEvts = sim.getEndEvents();
+    std::vector<tpat_event> endEvts = sim.getEndEvents(&halfOrbArc);
     if(std::find(endEvts.begin(), endEvts.end(), mirrorEvt) == endEvts.end()){
         printErr("tpat_calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
     }
@@ -995,8 +996,8 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     corrector.setEqualArcTime(true);
 
     try{
-        *itData = corrector.multShoot(&halfOrbNodes);
-        tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();
+        tpat_nodeset_cr3bp correctedHalfPer(sys);
+        *itData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
 
         // Make the nodeset into a trajectory
         tpat_traj_cr3bp halfPerTraj = tpat_traj_cr3bp::fromNodeset(correctedHalfPer);

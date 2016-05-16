@@ -36,9 +36,9 @@ int main(void){
 	nodeset.addConstraint(perpCrossEnd);
 
 	tpat_correction_engine corrector;
+	tpat_nodeset_cr3bp correctedNodeset(&sys);
 	// corrector.setVerbose(true);
-	corrector.multShoot(&nodeset);
-	tpat_nodeset_cr3bp correctedNodeset = corrector.getCR3BP_Output();
+	corrector.multShoot(&nodeset, &correctedNodeset);
 	correctedNodeset.saveToMat("resNodes_Corrected.mat");
 
 	//----------------------------------------//
@@ -62,10 +62,10 @@ int main(void){
 
 	halo.print();
 
+	tpat_nodeset_cr3bp correctedHalo(&sys);
 	corrector.setVarTime(true);
 	corrector.setEqualArcTime(true);
-	corrector.multShoot(&halo);
-	tpat_nodeset_cr3bp correctedHalo = corrector.getCR3BP_Output();
+	corrector.multShoot(&halo, &correctedHalo);
 	correctedHalo.saveToMat("CorrectedHalo.mat");
 
 	return EXIT_SUCCESS;

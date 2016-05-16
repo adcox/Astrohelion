@@ -181,7 +181,7 @@ void tpat_traj_bcr4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
 void tpat_traj_bcr4bp::initExtraParam(){
-	// Add another variable for dqdT
+	// Add a variable for dqdT
 	numExtraParam = 1;
 	extraParamRowSize.push_back(6);
 }//====================================================

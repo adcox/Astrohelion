@@ -408,9 +408,9 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
 		throw tpat_exception("tpat_model::multShoot_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
 
 	// Get info about the arc that was integrated to reach node n
-	std::vector<double> lastState = it->allSegs.at(n-1).getStateByIx(-1);
-	std::vector<double> lastAccel = it->allSegs.at(n-1).getAccelByIx(-1);
-	MatrixXRd stm = it->allSegs.at(n-1).getSTMByIx(-1);
+	std::vector<double> lastState = it->propSegs.at(n-1).getStateByIx(-1);
+	std::vector<double> lastAccel = it->propSegs.at(n-1).getAccelByIx(-1);
+	MatrixXRd stm = it->propSegs.at(n-1).getSTMByIx(-1);
 	std::vector<double> conData = con.getData();
 	
 	// Loop through conData
@@ -696,7 +696,7 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 			Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
 			// Get info about the final state/accel of the integrated segment
-			MatrixXRd stm = it->allSegs[n].getSTMByIx(-1);
+			MatrixXRd stm = it->propSegs[n].getSTMByIx(-1);
 
 			// Partial w.r.t. integrated path (newSeg) from node n
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
@@ -713,8 +713,8 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 			if(it->varTime){
 				// Derivative of the final state of arc n
 				std::vector<double> state_dot_data;
-				std::vector<double> lastState = it->allSegs[n].getStateByIx(-1);
-				std::vector<double> lastAccel = it->allSegs[n].getAccelByIx(-1);
+				std::vector<double> lastState = it->propSegs[n].getStateByIx(-1);
+				std::vector<double> lastAccel = it->propSegs[n].getAccelByIx(-1);
 				state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
 				state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);

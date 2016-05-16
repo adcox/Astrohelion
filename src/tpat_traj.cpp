@@ -63,6 +63,9 @@ tpat_traj::tpat_traj(const tpat_base_arcset &a) : tpat_base_arcset(a) {
 	initExtraParam();
 }//====================================================
 
+/**
+ *  @brief Default destructor
+ */
 tpat_traj::~tpat_traj(){}
 
 /**
@@ -79,7 +82,7 @@ tpat_traj::~tpat_traj(){}
  *	@return a trajectory formed from the integrated nodeset
  */
 tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
-	tpat_simulation_engine simEngine(set.getSysData());
+	tpat_simulation_engine simEngine;
 	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
 	tpat_traj totalTraj(set.getSysData());
 
@@ -89,12 +92,12 @@ tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
 		double tof = set.getSegByIx(s).getTOF();
 		simEngine.setRevTime(tof < 0);
 		tpat_node origin = set.getNode(set.getSegByIx(s).getOrigin());
-		simEngine.runSim(origin.getState(), origin.getEpoch(), tof);
+		tpat_traj temp(set.getSysData());
+		simEngine.runSim(origin.getState(), origin.getEpoch(), tof, &temp);
 
 		if(s == 0){
-			totalTraj = simEngine.getTraj();
+			totalTraj = temp;
 		}else{
-			tpat_traj temp = simEngine.getTraj();
 			totalTraj += temp;
 		}
 	}
@@ -132,6 +135,18 @@ baseArcsetPtr tpat_traj::clone() const{
 //      Operators
 //-----------------------------------------------------
 
+/**
+ *  @brief Combine two trajectories.
+ *  @details This function concatenates two trajectory objects. It is assumed
+ *  that the first state on <tt>rhs</tt> is identical to the final state on
+ *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
+ *  (chronologically) <tt>lhs</tt>
+ * 
+ *  @param lhs reference to a trajectory object
+ *  @param rhs reference to a trajectory object
+ * 
+ *  @return the concatenation of lhs + rhs.
+ */
 tpat_traj operator +(const tpat_traj &lhs, const tpat_traj &rhs){
 	const tpat_traj lhs_cpy(lhs);
 	const tpat_traj rhs_cpy(rhs);
@@ -142,6 +157,13 @@ tpat_traj operator +(const tpat_traj &lhs, const tpat_traj &rhs){
 	return result;
 }//====================================================
 
+/**
+ *  @brief Concatenate this object with another trajectory
+ * 
+ *  @param rhs reference to a trajectory object
+ *  @return the concatenation of this and <tt>rhs</tt>
+ *  @see operator +()
+ */
 tpat_traj& tpat_traj::operator +=(const tpat_traj &rhs){
 	tpat_traj temp = *this + rhs;
 	copyMe(temp);

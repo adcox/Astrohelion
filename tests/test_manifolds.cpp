@@ -16,9 +16,9 @@ int main(){
 
 	printf("Found %zu matches!\n", halos.size());
 
-	tpat_simulation_engine sim(&sysData);
-	sim.runSim(halos[0].getIC(), halos[0].getTOF());
-	tpat_traj_cr3bp aHalo = sim.getCR3BP_Traj();
+	tpat_simulation_engine sim;
+	tpat_traj_cr3bp aHalo(&sysData);
+	sim.runSim(halos[0].getIC(), halos[0].getTOF(), &aHalo);
 	aHalo.saveToMat("data/halo_JC312.mat");
 
 	std::vector<tpat_traj_cr3bp> manifolds = getManifolds(MAN_S_P, &aHalo, 20, 2*PI);

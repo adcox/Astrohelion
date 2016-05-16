@@ -50,7 +50,8 @@ public:
 	static int simpleEOMs(double, const double[], double[], void*);
 
 	// Multiple Shooting Functions
-	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
+	void multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool, tpat_nodeset*) const;
+	void multShoot_initIterData(iterationData *it) const;
 };
 
 #endif

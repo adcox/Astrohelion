@@ -91,6 +91,9 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ba
 	// 	steps.insert(steps.end(), n.steps[first]);
 }//====================================================
 
+/**
+ *  @brief Default Destructor
+ */
 tpat_nodeset::~tpat_nodeset(){}
 
 /**
@@ -123,7 +126,19 @@ baseArcsetPtr tpat_nodeset::create( const tpat_sys_data *sys) const{
 //      Operators
 //-----------------------------------------------------
 
-tpat_nodeset operator +(const tpat_nodeset &lhs, const tpat_nodeset &rhs){
+/**
+ *  @brief Combine two nodesets.
+ *  @details This function concatenates two nodeset objects. It is assumed
+ *  that the first state on <tt>rhs</tt> is identical to the final state on
+ *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
+ *  (chronologically) <tt>lhs</tt>
+ * 
+ *  @param lhs reference to a nodeset object
+ *  @param rhs reference to a nodeset object
+ * 
+ *  @return the concatenation of lhs + rhs.
+ */
+ tpat_nodeset operator +(const tpat_nodeset &lhs, const tpat_nodeset &rhs){
 	const tpat_nodeset lhs_cpy(lhs);
 	const tpat_nodeset rhs_cpy(rhs);
 	tpat_nodeset result(lhs.sysData);
@@ -133,6 +148,13 @@ tpat_nodeset operator +(const tpat_nodeset &lhs, const tpat_nodeset &rhs){
 	return result;
 }//====================================================
 
+/**
+ *  @brief Concatenate this object with another nodeset
+ * 
+ *  @param rhs reference to a nodeset object
+ *  @return the concatenation of this and <tt>rhs</tt>
+ *  @see operator +()
+ */
 tpat_nodeset& tpat_nodeset::operator +=(const tpat_nodeset &rhs){
 	tpat_nodeset temp = *this + rhs;
 	copyMe(temp);
@@ -212,9 +234,9 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 	tpat_node terminus = nodes[nodeIDMap[seg.getTerminus()]];
 
 	// Create a simulation engine and add the events to it
-	tpat_simulation_engine engine(sysData);
+	tpat_simulation_engine engine;
 	engine.setRevTime(seg.getTOF() < 0);
-	engine.clearEvents();
+	engine.setMakeCrashEvents(false);
 	for(size_t i = 0; i < evts.size(); i++){
 		evts[i].setStopOnEvent(false);		// Ignore stopping conditions that other processes may have imposed
 		engine.addEvent(evts[i]);
@@ -224,8 +246,8 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 	 * 	to ensure that no new nodes are created with TOF less than minTimeDiff
 	 */
 	double segTOF = seg.getTOF() < 0 ? seg.getTOF() + std::abs(minTimeDiff) : seg.getTOF() - std::abs(minTimeDiff);
-	engine.runSim(origin.getState(), origin.getEpoch(), segTOF);
-	tpat_traj traj = engine.getTraj();
+	tpat_traj traj(sysData);
+	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
 
 	double T0 = traj.getEpochByIx(0);
 	std::vector<tpat_event> events = engine.getEvents();
@@ -485,9 +507,9 @@ void tpat_nodeset::initFromICs(const double IC[6], double t0, double tof, int nu
  *	@param numNodes number of nodes to create, including IC
  */
 void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
-	tpat_simulation_engine engine(sysData);
+	tpat_simulation_engine engine;
 	engine.setVerbose(SOME_MSG);
-	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
+	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	int id = addNode(tpat_node(IC, t0));
@@ -495,8 +517,8 @@ void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, i
 	double segTOF = tof/(numNodes-1);
 	std::vector<double> ic(IC, IC+6);
 	for(int n = 0; n < numNodes-1; n++){
-		engine.runSim(ic, t0 + n*segTOF, segTOF);
-		tpat_traj traj = engine.getTraj();
+		tpat_traj traj(sysData);
+		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);
 
 		id = addNode(tpat_node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
 		addSeg(tpat_segment(id-1, id, segTOF));
@@ -514,14 +536,14 @@ void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, i
  *	@param numNodes number of nodes to create, including IC
  */
 void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
-	tpat_simulation_engine engine(sysData);
+	tpat_simulation_engine engine;
 	engine.setVerbose(SOME_MSG);
-	engine.clearEvents();	// Don't use default crash events to avoid infinite loop
+	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	// Run the simulation and get the trajectory
-	engine.runSim(IC, t0, tof);
-	tpat_traj traj = engine.getTraj();
+	tpat_traj traj(sysData);
+	engine.runSim(IC, t0, tof, &traj);
 
 	// Compute the total arc length using a linear approximation
 	double sumArclen = 0;

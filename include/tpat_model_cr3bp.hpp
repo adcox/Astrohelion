@@ -59,8 +59,9 @@ public:
 
 	// Multiple Shooting Functions
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
-
+	void multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool, tpat_nodeset*) const;
+	void multShoot_initIterData(iterationData *it) const;
+	
 protected:
 	void multShoot_targetJC(iterationData*, tpat_constraint, int) const;
 	void multShoot_targetPseudoArc(iterationData*, tpat_constraint, int) const;

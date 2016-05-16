@@ -159,6 +159,12 @@ public:
 
 	virtual double getRDot(int, double, const double*, const tpat_sys_data*) const;
 
+	/**
+	 *  @brief Do any model-specific initializations for the iterationData object
+	 *  @param it a pointer to the iterationData object for the multiple shooting process
+	 */
+	virtual void multShoot_initIterData(iterationData *it) const = 0;
+
 	virtual void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
 	virtual void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;
 	virtual void multShoot_createContCons(iterationData*, const tpat_nodeset*) const;
@@ -179,10 +185,11 @@ public:
 	 *  @param it an iteration data object containing all info from the corrections process
 	 *	@param nodes_in a pointer to the original, uncorrected nodeset
 	 *	@param findEvent whether or not this correction process is locating an event
-	 *
+	 *	@param nodesOut pointer to a nodeset object that will contain the results of
+	 *	the shooting process
 	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual tpat_nodeset* multShoot_createOutput(const iterationData* it, const tpat_nodeset *nodes_in, bool findEvent) const = 0;
+	virtual void multShoot_createOutput(const iterationData* it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodesOut) const = 0;
 
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing

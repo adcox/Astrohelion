@@ -121,16 +121,6 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
 }//====================================================
 
 /**
- *	@brief Create a nodeset as a subset of another
- *	@param orig Original nodeset
- *	@param first index of the first node to be included in the new nodeset
- *	@param last index of the last node to be included in the new nodeset
- */
-// tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp &orig, int first,
-// 	int last) : tpat_nodeset(orig, first, last){
-// }
-
-/**
  *	@brief Copy input nodeset. 
  *
  *	This function calls the base-class copy constructor to

@@ -284,11 +284,11 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 
 	// The axial family has ICs at the x-axis; I want the vertical family to have ICs at the top of their figure 8's,
 	// so the first step is to integrate to that point
-	tpat_simulation_engine sim(vertFam.getSysDataPtr());
-	sim.addEvent(tpat_event::XZ_PLANE, 0, true);	// Stop integrated at XZ plane, going opposite direction as initial state
-	sim.runSim(IC, period/3);	// 1/3 period should be long enough to fly 1/4 of the trajectory
+	tpat_simulation_engine sim;
+	sim.addEvent(tpat_event(vertFam.getSysDataPtr(), tpat_event::XZ_PLANE, 0, true));	// Stop integrated at XZ plane, going opposite direction as initial state
+	tpat_traj_cr3bp quarterArc(vertFam.getSysDataPtr());
+	sim.runSim(IC, period/3, &quarterArc);	// 1/3 period should be long enough to fly 1/4 of the trajectory
 
-	tpat_traj_cr3bp quarterArc = sim.getCR3BP_Traj();
 	IC = quarterArc.getStateByIx(-1);
 
 	int numNodes = 3;
@@ -1110,8 +1110,10 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
 	iterationData familyItData(&familyMember);
+	tpat_nodeset_cr3bp perNodes(static_cast<const tpat_sys_data_cr3bp *>(initialGuess.getSysData()));
+
 	try{
-		familyItData = corrector.multShoot(&familyMember);
+		familyItData = corrector.multShoot(&familyMember, &perNodes);
 	}catch(tpat_diverge &e){
 		printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge initial guess!\n");
 	}catch(tpat_linalg_err &e){
@@ -1234,7 +1236,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		try{
 			while(stepSize >= minStepSize){
 				try{
-					familyItData = corrector.multShoot(&newMember);
+					familyItData = corrector.multShoot(&newMember, &perNodes);
 
 					// If convergence was fast, take bigger steps
 					if(familyItData.count < 5){
@@ -1302,8 +1304,6 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
-		tpat_nodeset_cr3bp perNodes = corrector.getCR3BP_Output();
-
 		tpat_traj_cr3bp perOrbit = tpat_traj_cr3bp::fromNodeset(perNodes);
 
 		members.push_back(perOrbit);

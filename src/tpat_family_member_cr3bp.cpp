@@ -209,9 +209,10 @@ void tpat_family_member_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
  *  @return A trajectory object
  */
 tpat_traj_cr3bp tpat_family_member_cr3bp::toTraj(const tpat_sys_data_cr3bp *sys){
-	tpat_simulation_engine sim(sys);
-	sim.runSim(IC, TOF);
-	return sim.getCR3BP_Traj();
+	tpat_simulation_engine sim;
+	tpat_traj_cr3bp traj(sys);
+	sim.runSim(IC, TOF, &traj);
+	return traj;
 }//====================================================
 
 //-----------------------------------------------------

@@ -212,7 +212,7 @@ int main(void){
 	tpat_sys_data_cr3bp emData("earth", "moon");
 	tpat_nodeset_cr3bp crSet = test_createCR3BPNodeset(&emData);
 	// corrector.setVerbose(ALL_MSG);
-	corrector.multShoot(&crSet);
+	corrector.multShoot(&crSet, NULL);
 
 	crSet.saveToMat("data/crSet.mat");
 	tpat_nodeset_cr3bp crTemp(&emData);
@@ -221,7 +221,7 @@ int main(void){
 	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 	test_createBCR4BPRNodeset(&semData);
 	// corrector.setVerbose(ALL_MSG);
-	corrector.multShoot(bcSet);
+	corrector.multShoot(bcSet, NULL);
 
 	bcSet->saveToMat("data/bcSet.mat");
 	tpat_nodeset_bcr4bp bcTemp(&semData);

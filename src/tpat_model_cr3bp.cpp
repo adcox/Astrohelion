@@ -187,8 +187,12 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     corrector.setTol(traj->getTol());
     corrector.setVerbose(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
+
+    // Because we set findEvent to true, this output nodeset should contain
+    // the full (42 or 48 element) final state
+    tpat_nodeset_cr3bp correctedNodes(crSys);
     try{
-        corrector.multShoot(&eventNodeset);
+        corrector.multShoot(&eventNodeset, &correctedNodes);
     }catch(tpat_diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;
@@ -196,10 +200,6 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
         printErr("LinAlg Err while locating event; bug in corrector!\n");
         return false;
     }
-
-    // Because we set findEvent to true, this output nodeset should contain
-    // the full (42 or 48 element) final state
-    tpat_nodeset_cr3bp correctedNodes = corrector.getCR3BP_Output();
 
     std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
     std::vector<double> extra = correctedNodes.getNodeByIx(-1).getExtraParams();
@@ -246,6 +246,14 @@ void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constra
         default: break;
     }
 }//=========================================================
+
+/**
+ *  @brief Perform model-specific initializations on the iterationData object
+ *  @param it pointer to the object to be initialized
+ */
+void tpat_model_cr3bp::multShoot_initIterData(iterationData *it) const{
+    it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp(static_cast<const tpat_sys_data_cr3bp *>(it->sysData)));
+}//====================================================
 
 /**
  *  @brief Compute constraint function and partial derivative values for a Jacobi Constraint
@@ -349,16 +357,17 @@ void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constra
  *  @param it an iteration data object containing all info from the corrections process
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
- *
+ *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
+void tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
 
     // Create a nodeset with the same system data as the input
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(it->sysData);
-    tpat_nodeset_cr3bp *nodeset_out = new tpat_nodeset_cr3bp(crSys);
+    tpat_nodeset_cr3bp *nodeset_out = static_cast<tpat_nodeset_cr3bp *>(nodes_out);
 
-    int numNodes = (int)(it->origNodes.size());
+    int numNodes = (int)(it->numNodes);
     for(int i = 0; i < numNodes; i++){
         double state[6];
         std::copy(&(it->X[i*6]), &(it->X[i*6])+6, state);
@@ -383,7 +392,7 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, 
             information*/
             if(findEvent){
                 // Append the 36 STM elements to the node vector
-                tpat_traj lastSeg = it->allSegs.back();
+                tpat_traj lastSeg = it->propSegs.back();
                 MatrixXRd stm = lastSeg.getSTMByIx(-1);
                 std::vector<double> extraParam(stm.data(), stm.data()+36);
                 
@@ -414,8 +423,6 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, 
     for(size_t i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);
     }
-
-    return nodeset_out;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

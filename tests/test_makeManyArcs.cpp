@@ -20,14 +20,15 @@ int main(){
 	tpat_sys_data_cr3bp sys("earth", "moon");
 	tpat_nodeset_cr3bp scienceOrbitNodes(IC, &sys, tof, 10);
 
-	tpat_simulation_engine sim(&sys);
+	tpat_simulation_engine sim;
 	std::vector<tpat_traj_cr3bp> allArcs;
 	for(int n = 0; n < scienceOrbitNodes.getNumNodes(); n++){
 		printf("Simulating Arc #%03d\n", n);
 		std::vector<double> nodeIC = scienceOrbitNodes.getNodeByIx(n).getState();
 		double tof = 4;
-		sim.runSim(nodeIC, tof);
-		allArcs.push_back(sim.getCR3BP_Traj());
+		tpat_traj_cr3bp traj(&sys);
+		sim.runSim(nodeIC, tof, &traj);
+		allArcs.push_back(traj);
 	}
 
 	return EXIT_SUCCESS;

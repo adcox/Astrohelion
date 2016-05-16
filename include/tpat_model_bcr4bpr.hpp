@@ -59,12 +59,13 @@ public:
 	
 	// Multiple Shooting functions
 	void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
+	void multShoot_initIterData(iterationData *it) const;
 	void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;
 	void multShoot_createContCons(iterationData*, const tpat_nodeset*) const;
 	void multShoot_getSimICs(const iterationData*, const tpat_nodeset*, int, double*, double*, double*) const;
 	double multShoot_getSlackVarVal(const iterationData*, tpat_constraint) const;
 	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
+	void multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool, tpat_nodeset*) const;
 
 protected:
 	void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int) const;

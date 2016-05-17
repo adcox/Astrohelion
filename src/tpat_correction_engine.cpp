@@ -28,6 +28,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_exceptions.hpp" 
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
@@ -243,7 +244,7 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	* if the input nodeset contains more than one delta-v constraint
  *	* if the input nodeset contains more than one TOF constraint
  */
-iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set, tpat_nodeset *nodesOut){
+tpat_multShoot_data tpat_correction_engine::multShoot(const tpat_nodeset *set, tpat_nodeset *nodesOut){
 	if(nodesOut != NULL && *(set->getSysData()) != *(nodesOut->getSysData()))
 		throw tpat_exception("tpat_correction_engine::multShoot: Input and Output nodesets must use the same system data object");
 
@@ -252,11 +253,8 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set, tpat_no
 
 	isClean = false;
 
-	// Make sure all constraints have the propper node numbers
-	// set->updateCons();
-
 	// Create structure to store iteration data for easy sharing
-	iterationData it(set);
+	tpat_multShoot_data it(set);
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
 	it.equalArcTime = equalArcTime;
 
@@ -415,18 +413,18 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set, tpat_no
 }//==========================================================
 
 /**
- *  @brief Run a multiple shooting algorithm given an iterationData object
+ *  @brief Run a multiple shooting algorithm given an tpat_multShoot_data object
  * 
- *  @param it A completely formed iterationData object that describes a 
+ *  @param it A completely formed tpat_multShoot_data object that describes a 
  *  multiple shooting problem. These are created from tpat_nodeset and its
  *  derivative types by the other implementation of multShoot()
  *  @param nodesOut pointer to a nodeset object that will contain the results 
  *  of the shooting process
- *  @return A corrected iterationData object
+ *  @return A corrected tpat_multShoot_data object
  *  @see multShoot(tpat_nodeset*)
  *  @throws tpat_diverge if the multiple shooting process does not converge
  */
-iterationData tpat_correction_engine::multShoot(iterationData it, tpat_nodeset *nodesOut){
+tpat_multShoot_data tpat_correction_engine::multShoot(tpat_multShoot_data it, tpat_nodeset *nodesOut){
 	it.count = 0;
 
 	// create a simulation engine
@@ -462,31 +460,29 @@ iterationData tpat_correction_engine::multShoot(iterationData it, tpat_nodeset *
 		// initialize a vector of trajectory objects to store each propagated segment
 		it.sysData->getModel()->multShoot_initIterData(&it);
 
-		for(int n = 0; n < it.numNodes-1; n++){
+		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
 			// Get simulation conditions from design vector via dynamic model implementation
-			double t0 = 0;
-			double tof = 0;
+			double t0 = 0, tof = 0;
 			double ic[] = {0,0,0,0,0,0};
-			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, n, ic, &t0, &tof);
+			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, it.nodeset->getSeg(s).getID(),
+				ic, &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
-			// tpat_traj traj(it.sysData);
-			simEngine.runSim(ic, t0, tof, &(it.propSegs[n]));
-			// simEngine.runSim(ic, t0, tof, &traj);
-			// it.propSegs[n] = traj;
-			// it.propSegs[n] = simEngine.getTraj();
-		}// end of loop through nodes
+			simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
+		}
 
 		// Compute Delta-Vs between node segments
-		for(int n = 0; n < it.numNodes - 1; n++){
-			std::vector<double> lastState = it.propSegs[n].getStateByIx(-1);
-			// velCon has false for a velocity state if there is a discontinuity between v_n,f and v_n+1
-			std::vector<bool> velCon = it.nodeset->getNodeByIx(n+1).getVelCon();
-			for(int s = 3; s < 6; s++){
-				// Compute difference in velocity; if velCon[s-3] is true, then velocity
+		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
+			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
+			int termNodeIx = it.nodeset->getNodeIx(it.nodeset->getSegByIx(s).getTerminus());
+			// velCon has false for a velocity state if there is a discontinuity between
+			// the terminus of the segment and the terminal node
+			std::vector<bool> velCon = it.nodeset->getSegByIx(s).getVelCon();
+			for(int i = 3; i < 6; i++){
+				// Compute difference in velocity; if velCon[i-3] is true, then velocity
 				// should be continuous and any difference is numerical error, so set to
 				// zero by multiplying by not-true
-				it.deltaVs[n*3+s-3] = !velCon[s-3]*(lastState[s] - it.X[6*(n+1)+s]);
+				it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
 			}
 		}
 
@@ -528,8 +524,14 @@ iterationData tpat_correction_engine::multShoot(iterationData it, tpat_nodeset *
 		throw tpat_diverge();
 	}
 
-	if(nodesOut != NULL)
-		it.sysData->getModel()->multShoot_createOutput(&it, it.nodeset, findEvent, nodesOut);
+	if(nodesOut != NULL){
+		try{
+			it.sysData->getModel()->multShoot_createOutput(&it, it.nodeset, findEvent, nodesOut);
+		}catch(tpat_exception &e){
+			printErr("tpat_correction_engine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
+			throw e;
+		}
+	}
 	
 	return it;
 }//=====================================================
@@ -563,13 +565,13 @@ iterationData tpat_correction_engine::multShoot(iterationData it, tpat_nodeset *
  *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
- *	@param it the iterationData object associated with the corrections process
+ *	@param it the tpat_multShoot_data object associated with the corrections process
  *
  *	@return the updated free variable vector \f$ \vec{X}_{n+1} \f$
  *	@throws tpat_exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
-Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
+Eigen::VectorXd tpat_correction_engine::solveUpdateEq(tpat_multShoot_data* it){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it->X[0]), it->totalFree, 1);
 	MatrixXRd J = Eigen::Map<MatrixXRd>(&(it->DF[0]), it->totalCons, it->totalFree);
@@ -640,9 +642,9 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
  *  @brief Print out the magnitude of each constraint.
  *  @details This can be useful when debugging to highlight which constraints are unsatisfied
  * 
- *  @param it pointer to an iterationData object associated with a corrections process
+ *  @param it pointer to an tpat_multShoot_data object associated with a corrections process
  */
-void tpat_correction_engine::reportConMags(const iterationData *it){
+void tpat_correction_engine::reportConMags(const tpat_multShoot_data *it){
 	int conCount = 0;
 	for(long r = 0; r < (int)(it->FX.size()); r++){
         if(r == 0 && it->totalCons > 0){

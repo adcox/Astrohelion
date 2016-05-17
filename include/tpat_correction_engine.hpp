@@ -35,107 +35,13 @@
 
 // Forward declarations
 class tpat_constraint;
+class tpat_multShoot_data;
 class tpat_nodeset_bcr4bp;
 class tpat_nodeset_cr3bp;
 class tpat_simulation_engine;
 class tpat_sys_data_bcr4bpr;
 
-/**
- *	@brief a custom data class to encapsulate data used in each iteration
- *	of the corrections process.
- *
- *	This data object can be passed to other functions, allowing us to break 
- *	the master corrections loop into smaller functions without requiring an
- *	obscene amount of arguments to be passed in.
- */
-struct iterationData{
-	public:
 
-		/**
-		 *  @brief Construct a new iterationData object
-		 *  @param set pointer to the nodeset being corrected
-		 */
-		iterationData(const tpat_nodeset *set) : sysData(set->getSysData()), nodeset(set){}
-
-		/**
-		 *  @brief Copy constructor
-		 *  @param it reference to another iterationData object
-		 */
-		iterationData(const iterationData &it) : sysData(it.nodeset->getSysData()), nodeset(it.nodeset){
-			copyMe(it);
-		}//============================================
-
-		/**
-		 *  @brief Assignment operator
-		 *  @param it reference to another iterationData object
-		 */
-		iterationData& operator =(const iterationData &it){
-			copyMe(it);
-			sysData = it.sysData;	// Copying ADDRESS!
-			nodeset = it.nodeset;	// Copying ADDRESS!
-			return *this;
-		}//============================================
-
-		const tpat_sys_data *sysData;				//!< A pointer to the system data object used for this corrections process
-		const tpat_nodeset *nodeset;				//!< A pointer to the nodeset input for this corrections process
-		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
-		std::vector<double> X {};					//!< Free-Variable Vector
-		std::vector<double> FX {};					//!< Constraint Function Vector
-		std::vector<double> DF {};					//!< Jacobian Matrix
-		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
-		std::vector<double> primPos {};				//!< Store the positions of the primaries
-		std::vector<double> primVel {};				//!< Store the velocities of the primaries
-		std::vector<tpat_traj> propSegs {};			//!< A collection of all propagated segments
-		std::vector<tpat_constraint> allCons {};	//!< A list of all constraints
-		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
-		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
-		
-		/**
-		 * A scalar coefficient for each free variable type to scale them to the appropriate magnitude.
-		 * These scalings should make numerical processes more successful but must be reversed before
-		 * the free variables are passed into various computation functions (e.g. simulations). Thus,
-		 * every constraint computation function (stored in the models) is responsible for reversing any
-		 * scaling necessary to accurately compute constraints and partial derivatives.
-		 */
-		std::vector<double> freeVarScale {};
-
-		int numNodes = 0;			//!< Number of nodes in the entire nodeset
-		int count = 0;				//!< Count of number of iterations through corrections process
-
-		int numSlack = 0;			//!< number of slack variables
-		int totalCons = 0;			//!< Total # constraints -> # rows of DF
-		int totalFree = 0;			//!< Total # free var. -> # cols of DF
-
-		bool varTime = true;		//!< Whether or not the simulation is using variable time
-		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
-	
-	protected:
-		/**
-		 *  @brief Copy all parameters from one iterationData object to another
-		 *  @param it reference to source iterationData object
-		 */
-		void copyMe(const iterationData &it){
-			X0 = it.X0;
-			X = it.X;
-			FX = it.FX;
-			DF = it.DF;
-			deltaVs = it.deltaVs;
-			primPos = it.primPos;
-			primVel = it.primVel;
-			propSegs = it.propSegs;
-			allCons = it.allCons;
-			slackAssignCon = it.slackAssignCon;
-			conRows = it.conRows;
-			freeVarScale = it.freeVarScale;
-			numNodes = it.numNodes;
-			count = it.count;
-			numSlack = it.numSlack;
-			totalCons = it.totalCons;
-			totalFree = it.totalFree;
-			varTime = it.varTime;
-			equalArcTime = it.equalArcTime;
-		}//============================================
-};
 
 /**
  *	@brief An engine object to perform corrections, such as multiple shooting.
@@ -188,8 +94,8 @@ class tpat_correction_engine : public tpat{
 		void setVerbose(tpat_verbosity_tp);
 		
 		// Utility/Action functions
-		iterationData multShoot(const tpat_nodeset*, tpat_nodeset*);
-		iterationData multShoot(iterationData, tpat_nodeset*);
+		tpat_multShoot_data multShoot(const tpat_nodeset*, tpat_nodeset*);
+		tpat_multShoot_data multShoot(tpat_multShoot_data, tpat_nodeset*);
 
 	private:
 		/** Describes how many messages to spit out */
@@ -227,8 +133,8 @@ class tpat_correction_engine : public tpat{
 
 		void cleanEngine();
 		void copyEngine(const tpat_correction_engine&);
-		void reportConMags(const iterationData*);
-		Eigen::VectorXd solveUpdateEq(iterationData*);
+		void reportConMags(const tpat_multShoot_data*);
+		Eigen::VectorXd solveUpdateEq(tpat_multShoot_data*);
 };
 
 #endif

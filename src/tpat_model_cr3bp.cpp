@@ -29,6 +29,7 @@
 #include "tpat_correction_engine.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_event.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
@@ -229,7 +230,7 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c) const{
+void tpat_model_cr3bp::multShoot_applyConstraint(tpat_multShoot_data *it, tpat_constraint con, int c) const{
 
     // Let the base class do its thing first
     tpat_model::multShoot_applyConstraint(it, con, c);
@@ -248,10 +249,10 @@ void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constra
 }//=========================================================
 
 /**
- *  @brief Perform model-specific initializations on the iterationData object
+ *  @brief Perform model-specific initializations on the tpat_multShoot_data object
  *  @param it pointer to the object to be initialized
  */
-void tpat_model_cr3bp::multShoot_initIterData(iterationData *it) const{
+void tpat_model_cr3bp::multShoot_initIterData(tpat_multShoot_data *it) const{
     it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp(static_cast<const tpat_sys_data_cr3bp *>(it->sysData)));
 }//====================================================
 
@@ -262,15 +263,15 @@ void tpat_model_cr3bp::multShoot_initIterData(iterationData *it) const{
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con, int row0) const{
+void tpat_model_cr3bp::multShoot_targetJC(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    int n = con.getID();
+    int nodeIx = it->nodeset->getNodeIx(con.getID());
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *> (it->sysData);
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
     double nodeState[6];
-    std::copy(&(it->X[6*n]), &(it->X[6*n])+6, nodeState);
+    std::copy(&(it->X[6*nodeIx]), &(it->X[6*nodeIx])+6, nodeState);
     
     double sr = it->freeVarScale[0];
     double sv = it->freeVarScale[1];    
@@ -299,12 +300,12 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
     it->FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    it->DF[it->totalFree*row0 + 6*n + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
-    it->DF[it->totalFree*row0 + 6*n + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
-    it->DF[it->totalFree*row0 + 6*n + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
-    it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx/sv;   //dFdx_dot
-    it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy/sv;   //dFdy_dot
-    it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz/sv;   //dFdz_dot
+    it->DF[it->totalFree*row0 + 6*nodeIx + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
+    it->DF[it->totalFree*row0 + 6*nodeIx + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
+    it->DF[it->totalFree*row0 + 6*nodeIx + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
+    it->DF[it->totalFree*row0 + 6*nodeIx + 3] = -2*vx/sv;   //dFdx_dot
+    it->DF[it->totalFree*row0 + 6*nodeIx + 4] = -2*vy/sv;   //dFdy_dot
+    it->DF[it->totalFree*row0 + 6*nodeIx + 5] = -2*vz/sv;   //dFdz_dot
 }//=============================================
 
 /**
@@ -316,7 +317,7 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
  *  @throw tpat_exception if the pseudo arclength constraint is not listed as the final constraint
  *  @throw tpat_exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
  */
-void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constraint con, int row0) const{
+void tpat_model_cr3bp::multShoot_targetPseudoArc(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
 
     if(row0 != it->totalCons-1)
@@ -361,16 +362,16 @@ void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constra
  *  shooting process
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-void tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
+void tpat_model_cr3bp::multShoot_createOutput(const tpat_multShoot_data *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
 
     // Create a nodeset with the same system data as the input
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(it->sysData);
     tpat_nodeset_cr3bp *nodeset_out = static_cast<tpat_nodeset_cr3bp *>(nodes_out);
 
-    int numNodes = (int)(it->numNodes);
-    for(int i = 0; i < numNodes; i++){
+    std::vector<int> newNodeIDs;
+    for(int n = 0; n < it->numNodes; n++){
         double state[6];
-        std::copy(&(it->X[i*6]), &(it->X[i*6])+6, state);
+        std::copy(it->X.begin()+n*6, it->X.begin()+n*6+6, state);
 
         // Reverse scaling
         for(int i = 0; i < 6; i++){
@@ -378,10 +379,9 @@ void tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpa
         }
 
         tpat_node node(state, 0);
-        node.setVelCon(nodes_in->getNodeByIx(i).getVelCon());
-        node.setConstraints(nodes_in->getNodeByIx(i).getConstraints());
+        node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
 
-        if(i + 1 == numNodes){
+        if(n+1 == it->numNodes){
             // Set Jacobi Constant
             node.setExtraParam(0, getJacobi(state, crSys->getMu()));
 
@@ -400,23 +400,31 @@ void tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpa
             }
         }
 
-        int id = nodeset_out->addNode(node);
-        nodeset_out->setJacobiByIx(id, getJacobi(&(state[0]), crSys->getMu()));
+        // Add the node to the output nodeset and save the new ID
+        newNodeIDs.push_back(nodeset_out->addNode(node));
+        nodeset_out->setJacobi(newNodeIDs.back(), getJacobi(state, crSys->getMu()));
+    }
 
-        if(i > 0){
-            double tof;
-            if(it->varTime){
-                // Get data
-                tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+i-1];
-                // Reverse scaling
-                tof /= it->freeVarScale[2];    // Time scaling
-            }else{
-                tof = nodes_in->getTOFByIx(i-1);
-            }
-            tpat_segment seg(i-1, i, tof);
-            seg.setConstraints(nodes_in->getSegByIx(i-1).getConstraints());
-            nodeset_out->addSeg(seg);
+    double tof;
+    int prevOriginIx, prevTermIx;
+    for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+        tpat_segment seg = it->nodeset->getSegByIx(s);
+        prevOriginIx = it->nodeset->getNodeIx(seg.getOrigin());
+        prevTermIx = it->nodeset->getNodeIx(seg.getTerminus());
+
+        if(it->varTime){
+            // Get data
+            tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->nodeset->getNumSegs()) : it->X[6*it->numNodes+s];
+            // Reverse scaling
+            tof /= it->freeVarScale[2];     // TOF scaling
+        }else{
+            tof = seg.getTOF();
         }
+
+        tpat_segment newSeg(newNodeIDs[prevOriginIx], newNodeIDs[prevTermIx], tof);
+        newSeg.setConstraints(seg.getConstraints());
+        newSeg.setVelCon(seg.getVelCon());
+        nodeset_out->addSeg(newSeg);
     }
 
     std::vector<tpat_constraint> arcCons = nodes_in->getArcConstraints();

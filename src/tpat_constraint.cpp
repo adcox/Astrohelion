@@ -260,6 +260,10 @@ void tpat_constraint::setAppType(){
 		case tpat_constraint::DELTA_V:
 			appType = tpat_constraint::APP_TO_ARC;
 			break;
+		case tpat_constraint::CONT_PV:
+		case tpat_constraint::CONT_EX:
+			appType = tpat_constraint::APP_TO_SEG;
+			break;
 		default:
 			appType = tpat_constraint::APP_TO_NODE;
 			break;

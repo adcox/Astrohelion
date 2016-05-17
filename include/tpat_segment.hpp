@@ -66,6 +66,7 @@ public:
 	std::vector<double> getSTMElements() const;
 	int getTerminus() const;
 	double getTOF() const;
+	std::vector<bool> getVelCon() const;
 	void removeConstraint(int);
 	void setConstraints(std::vector<tpat_constraint>);
 	void setOrigin(int);
@@ -74,9 +75,17 @@ public:
 	void setSTM(MatrixXRd);
 	void setSTM(const double*);
 	void setSTM(std::vector<double>);
+	void setVel_AllCon();
+	void setVel_AllDiscon();
+	void setVelCon(const bool[3]);
+	void setVelCon(std::vector<bool>);
+	void setVelCon(bool, bool, bool);
 
 protected:
 	virtual void copyMe(const tpat_segment&);
+
+	/** Stores flags, which are currently used to indicate continuity */
+	std::vector<bool> flags {true, true, true};
 
 	double tof = 0;			//!< Time-of-flight along this segment, units consistent with the system
 	double stm[36] = {	1, 0, 0, 0, 0, 0,

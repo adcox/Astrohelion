@@ -26,6 +26,7 @@
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
 #include "tpat_exceptions.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_nodeset_bcr4bp.hpp"

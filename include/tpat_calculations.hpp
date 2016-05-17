@@ -38,16 +38,15 @@
 #include <vector>
 
 // Forward declarations
+class tpat_multShoot_data;
+class tpat_nodeset;
 class tpat_nodeset_bcr4bp;
+class tpat_nodeset_cr3bp;
 class tpat_sys_data_bcr4bpr;
+class tpat_sys_data_cr3bp;
 class tpat_traj;
 class tpat_traj_bcr4bp;
-class tpat_nodeset;
-class tpat_nodeset_cr3bp;
-class tpat_sys_data_cr3bp;
 class tpat_traj_cr3bp;
-
-struct iterationData;
 
 /**
  *	@brief Describes the plane a periodic orbit can be mirrored across
@@ -92,7 +91,7 @@ std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<dou
 std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp, const tpat_traj_cr3bp*, int, double);
 MatrixXRd getMirrorMat(tpat_mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
-double getTotalDV(const iterationData*);
+double getTotalDV(const tpat_multShoot_data*);
 void finiteDiff_checkMultShoot(const tpat_nodeset*);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
@@ -112,7 +111,7 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, tpat_mirror_tp, double);
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double, iterationData*);
+tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double, tpat_multShoot_data*);
 
 // BCR4BPR Utility Functions
 tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, const tpat_sys_data_bcr4bpr*, double);

@@ -33,6 +33,7 @@
 #include "tpat_constants.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_exceptions.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
@@ -641,10 +642,10 @@ double getStabilityIndex(std::vector<cdouble> eigs){
 /**
  *  @brief Compute the total delta-V along a corrected nodeset
  * 
- *  @param it pointer to an iterationData object associated with a corrections process
+ *  @param it pointer to an tpat_multShoot_data object associated with a corrections process
  *  @return the total delta-V, units consistent with the nodeset's stored velocity states
  */
-double getTotalDV(const iterationData *it){
+double getTotalDV(const tpat_multShoot_data *it){
     double total = 0;
     for(size_t n = 0; n < it->deltaVs.size()/3; n++){
         total += sqrt(it->deltaVs[3*n + 0]*it->deltaVs[3*n + 0] +
@@ -671,7 +672,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     // corrector.setScaleVars(true);
 
     // Run multiple shooter to get X, FX, and DF
-    iterationData it = corrector.multShoot(nodeset, NULL);
+    tpat_multShoot_data it = corrector.multShoot(nodeset, NULL);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
@@ -681,7 +682,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
         it.X = pertX;                           // Copy into iteration data
-        iterationData pertIt = corrector.multShoot(it, NULL);     // Correct perturbed state
+        tpat_multShoot_data pertIt = corrector.multShoot(it, NULL);     // Correct perturbed state
         Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // Do another process for opposite direction
@@ -853,7 +854,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
     double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol){
 
-    // iterationData itData;
+    // tpat_multShoot_data itData;
     // return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
     return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, NULL);
 }//====================================================================
@@ -890,7 +891,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  */
 tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
     double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
-    double tol, iterationData* itData){
+    double tol, tpat_multShoot_data* itData){
 
     tpat_simulation_engine sim;    // Engine to perform simulation
     sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);

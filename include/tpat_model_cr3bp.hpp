@@ -58,13 +58,13 @@ public:
 	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
 
 	// Multiple Shooting Functions
-	void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	void multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool, tpat_nodeset*) const;
-	void multShoot_initIterData(iterationData *it) const;
+	void multShoot_applyConstraint(tpat_multShoot_data*, tpat_constraint, int) const;
+	void multShoot_createOutput(const tpat_multShoot_data*, const tpat_nodeset*, bool, tpat_nodeset*) const;
+	void multShoot_initIterData(tpat_multShoot_data *it) const;
 	
 protected:
-	void multShoot_targetJC(iterationData*, tpat_constraint, int) const;
-	void multShoot_targetPseudoArc(iterationData*, tpat_constraint, int) const;
+	void multShoot_targetJC(tpat_multShoot_data*, tpat_constraint, int) const;
+	void multShoot_targetPseudoArc(tpat_multShoot_data*, tpat_constraint, int) const;
 };
 
 #endif

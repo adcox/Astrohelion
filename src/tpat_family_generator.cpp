@@ -34,6 +34,7 @@
 #include "tpat_family_cr3bp.hpp"
 #include "tpat_family_member_cr3bp.hpp"
 #include "tpat_linear_motion_engine.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
@@ -788,7 +789,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 
 	std::vector<tpat_traj_cr3bp> members;
 	bool diverged = false;
-	iterationData *itData = NULL;
+	tpat_multShoot_data *itData = NULL;
 
 	while(orbitCount < numOrbits){
 		tpat_traj_cr3bp perOrbit(&sys);
@@ -1109,7 +1110,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
-	iterationData familyItData(&familyMember);
+	tpat_multShoot_data familyItData(&familyMember);
 	tpat_nodeset_cr3bp perNodes(static_cast<const tpat_sys_data_cr3bp *>(initialGuess.getSysData()));
 
 	try{
@@ -1338,12 +1339,12 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
  *	(nearest) converged family member
  *	@param N a 1D nullspace vector that lies tangent to the family
  *	@param stepSize scales the size of the step by scaling the nullspace vector
- *	@param familyItData an iterationData object containing corrections information about the
+ *	@param familyItData an tpat_multShoot_data object containing corrections information about the
  *	previous (nearest) converged family member
  *	@param cons a vector of constraints to place on the nodeset
  */
 tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
-	Eigen::VectorXd N, double stepSize, iterationData familyItData, std::vector<tpat_constraint> cons){
+	Eigen::VectorXd N, double stepSize, tpat_multShoot_data familyItData, std::vector<tpat_constraint> cons){
 
 	/**
 	 *	Step forwards away from previously converged solution

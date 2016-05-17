@@ -28,6 +28,7 @@
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
@@ -198,7 +199,7 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  */
-void tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
+void tpat_model_cr3bp_ltvp::multShoot_createOutput(const tpat_multShoot_data *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
     (void) it;
     (void) findEvent;
     (void) nodes_in;
@@ -206,10 +207,10 @@ void tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, cons
 }//====================================================
 
 /**
- *  @brief Perform model-specific initializations on the iterationData object
+ *  @brief Perform model-specific initializations on the tpat_multShoot_data object
  *  @param it pointer to the object to be initialized
  */
-void tpat_model_cr3bp_ltvp::multShoot_initIterData(iterationData *it) const{
+void tpat_model_cr3bp_ltvp::multShoot_initIterData(tpat_multShoot_data *it) const{
     it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp_ltvp(static_cast<const tpat_sys_data_cr3bp_ltvp *>(it->sysData)));
 }//====================================================
 

@@ -63,7 +63,6 @@ public:
 	std::vector<double> getExtraParams() const;
 	int getNumCons() const;
 	std::vector<double> getState() const;
-	std::vector<bool> getVelCon() const;
 	void removeConstraint(int);
 	void setAccel(const double*);
 	void setAccel(std::vector<double>);
@@ -74,11 +73,6 @@ public:
 	void setExtraParams(std::vector<double>);
 	void setState(const double*);
 	void setState(std::vector<double>);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(const bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
 
 protected:
 	virtual void copyMe(const tpat_node&);
@@ -89,9 +83,6 @@ protected:
 
 	/** Stores extra parameters like mass, costates, etc. */
 	std::vector<double> extraParam {};
-
-	/** Stores flags, which are currently used to indicate continuity */
-	std::vector<bool> flags {true, true, true};
 
 	/** Stores constraints on this node (especially usefull in nodesets) */
 	std::vector<tpat_constraint> cons {};

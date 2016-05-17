@@ -289,35 +289,35 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 }//====================================================
 
 /**
- *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified nodes
- *	@param ix a vector of node indices that can have velocity discontinuities
+ *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
+ *	@param id a vector of segment IDs that can have velocity discontinuities
  */
-void tpat_nodeset::allowDV_at(std::vector<int> ix) {
-	for(size_t i = 0; i < nodes.size(); i++){
+void tpat_nodeset::allowDV_at(std::vector<int> id) {
+	for(size_t i = 0; i < segs.size(); i++){
 		// Check to see if the node should have continuous velocity
-		if(std::find(ix.begin(), ix.end(), i) == ix.end()){
-			nodes[i].setVel_AllCon();
+		if(std::find(id.begin(), id.end(), segs[i].getID()) == id.end()){
+			segs[i].setVel_AllCon();
 		}else{
-			nodes[i].setVel_AllDiscon();
+			segs[i].setVel_AllDiscon();
 		}
 	}
 }//====================================================
 
 /**
- *  @brief Allow velocity discontinuities (i.e., delta-Vs) at all nodes
+ *  @brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
  */
 void tpat_nodeset::allowDV_all(){
-	for(size_t i = 0; i < nodes.size()-1; i++){
-		nodes[i].setVel_AllDiscon();
+	for(size_t i = 0; i < segs.size(); i++){
+		segs[i].setVel_AllDiscon();
 	}
 }//====================================================
 
 /**
- *  @brief Allow velocity discontinuities (i.e., delta-Vs) at none of the nodes
+ *  @brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
  */
 void tpat_nodeset::allowDV_none(){
-	for(size_t i = 0; i < nodes.size()-1; i++){
-		nodes[i].setVel_AllCon();
+	for(size_t i = 0; i < segs.size(); i++){
+		segs[i].setVel_AllCon();
 	}
 }//====================================================
 
@@ -372,14 +372,14 @@ void tpat_nodeset::print() const{
 		cons[c].print();
 	}
 
-	printf(" Velocity Discontinuities allowed at nodes ");
+	printf(" Velocity Discontinuities allowed on segments: ");
 	char velEl[] = {'x', 'y', 'z'};
 	bool anyDiscon = false;
-	for(size_t n = 0; n < nodes.size(); n++){
-		std::vector<bool> velCon = nodes[n].getVelCon();
+	for(size_t s = 0; s < segs.size(); s++){
+		std::vector<bool> velCon = segs[s].getVelCon();
 		for(size_t i = 0; i < velCon.size(); i++){
 			if(!velCon[i]){
-				printf("%zuv_%c, ", n, velEl[i]);
+				printf("%zuv_%c, ", s, velEl[i]);
 				anyDiscon = true;
 			}
 		}
@@ -404,11 +404,6 @@ void tpat_nodeset::reverseOrder() {
 		segs[s].setTerminus(o);
 		segs[s].setTOF(segs[s].getTOF()*-1);
 	}
-
-	// Make first node discontinuous in velocity (no preceding node)
-	nodes[0].setVel_AllDiscon();
-	// and the last node continuous (no previous info about its continuity)
-	nodes[nodes.size()-1].setVel_AllCon();
 }//====================================================
 
 /**

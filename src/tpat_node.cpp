@@ -343,20 +343,6 @@ void tpat_node::setExtraParam(int ix, double val){
 }//====================================================
 
 /**
- *	@brief Retrieve a vector describing which of the velocity states
- *	should be made continuous with the node before this one in a nodeset.
- *
- *	@return a 3-element boolean vector. The first element describes
- *	whether or not the x-velocity is continuous, the second describes
- *	the y-velocity continuity, etc.
- */
-std::vector<bool> tpat_node::getVelCon() const {
-	std::vector<bool> temp;
-	temp.insert(temp.end(), flags.begin(), flags.begin()+3);
-	return temp;
-}//====================================================
-
-/**
  *	@brief Replace the extra parameter vector for this node
  *	@param p a new extra paremeter vector
  */
@@ -386,65 +372,6 @@ void tpat_node::setState(std::vector<double> s){
 	std::copy(s.begin(), s.begin()+6, state);
 }//====================================================
 
-/**
- *	@brief Set all velocity states to be continuous
- */
-void tpat_node::setVel_AllCon(){
-	flags[0] = true;
-	flags[1] = true;
-	flags[2] = true;
-}//====================================================
-
-/**
- *	@brief Set all velocity states to be discontinuous
- */
-void tpat_node::setVel_AllDiscon(){
-	flags[0] = false;
-	flags[1] = false;
-	flags[2] = false;
-}//====================================================
-
-/**
- *	@brief Set the continuity for all three velocity states
- *	@param data a three-element boolean array. Each element
- *	corresponds to one of the velocity states in the order
- *	[v_x, v_y, v_z]
- */
-void tpat_node::setVelCon(const bool data[3]){
-	flags[0] = data[0];
-	flags[1] = data[1];
-	flags[2] = data[2];
-}//====================================================
-
-/**
- *	@brief Set the continuity for all three velocity states
- *	@param data a three-element boolean vector. Each element
- *	corresponds to one of the velocity states in the order
- *	[v_x, v_y, v_z]
- *	@throw tpat_exception if <tt>data</tt> has fewer than three elements
- */
-void tpat_node::setVelCon(std::vector<bool> data){
-	if(data.size() < 3)
-		throw tpat_exception("tpat_node::setVelCon: Need at least three velocity continuity booleans");
-
-	std::copy(data.begin(), data.begin()+3, flags.begin());
-}//====================================================
-
-/**
- *	@brief Set the continuity for all three velocity states
- *	@param xCon whether or not the x-velocity component should 
- *	be continuous with the node before this one
- *	@param yCon whether or not the y-velocity component should 
- *	be continuous with the node before this one
- *	@param zCon whether or not the z-velocity component should 
- *	be continuous with the node before this one
- */
-void tpat_node::setVelCon(bool xCon, bool yCon, bool zCon){
-	flags[0] = xCon;
-	flags[1] = yCon;
-	flags[2] = zCon;
-}//====================================================
-
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
@@ -458,7 +385,6 @@ void tpat_node::copyMe(const tpat_node &n){
 	std::copy(n.accel, n.accel+3, accel);
 	epoch = n.epoch;
 	extraParam = n.extraParam;
-	flags = n.flags;
 	cons = n.cons;
 	tpat_linkable::copyMe(n);
 }//====================================================

@@ -861,6 +861,19 @@ tpat_node tpat_base_arcset::getNodeByIx(int ix) const{
 }//=====================================================
 
 /**
+ *  @brief Retrieve the index of a specific node within the node storage vector
+ * 
+ *  @param id node ID
+ *  @return the index of the node with the specified ID within the storage vector
+ */
+int tpat_base_arcset::getNodeIx(int id) const{
+	if(id < 0 || id >= (int)(nodeIDMap.size()))
+		throw tpat_exception("tpat_base_arcset::getNodeIx: Inavlid ID; out of bounds");
+
+	return nodeIDMap[id];
+}//====================================================
+
+/**
  *  @brief Retrieve a specific node
  * 
  *  @param id the ID of the desired node
@@ -897,6 +910,19 @@ tpat_segment tpat_base_arcset::getSegByIx(int ix) const{
 
 	return segs[ix];
 }//=====================================================
+
+/**
+ *  @brief Retrieve the index of a specific node within the node storage vector
+ * 
+ *  @param id node ID
+ *  @return the index of the node with the specified ID within the storage vector
+ */
+int tpat_base_arcset::getSegIx(int id) const{
+	if(id < 0 || id >= (int)(segIDMap.size()))
+		throw tpat_exception("tpat_base_arcset::getSegIx: Inavlid ID; out of bounds");
+
+	return segIDMap[id];
+}//====================================================
 
 /**
  *  @brief Retrieve the state vector associated with a node
@@ -1019,7 +1045,8 @@ double tpat_base_arcset::getTol() const { return tol; }
 double tpat_base_arcset::getTotalTOF() const{
 	double total = 0;
 	for(size_t s = 0; s < segs.size(); s++){
-		total += std::abs(segs[s].getTOF());
+		total += segs[s].getTOF();
+		// total += std::abs(segs[s].getTOF());
 	}
 	return total;
 }//=================================================

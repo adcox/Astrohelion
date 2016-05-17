@@ -118,6 +118,7 @@ public:
 	int getNextSegID() const;
 	tpat_node getNode(int) const;
 	tpat_node getNodeByIx(int) const;
+	int getNodeIx(int) const;
 	int getNumCons() const;
 	int getNumNodes() const;
 	int getNumSegs() const;
@@ -126,6 +127,7 @@ public:
 	virtual double getTotalTOF() const;
 	tpat_segment getSeg(int) const;
 	tpat_segment getSegByIx(int) const;
+	int getSegIx(int) const;
 	std::vector<double> getState(int) const;
 	std::vector<double> getStateByIx(int) const;
 	MatrixXRd getSTM(int) const;

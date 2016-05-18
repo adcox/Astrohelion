@@ -47,9 +47,9 @@
 #include <cspice/SpiceZdf.h>	// typedefs for SPICE objects, like SpiceDouble
 #include <gsl/gsl_errno.h>
 
-#include <pwd.h>
+#include <pwd.h>				// Get user ID and other system information
 
-namespace fs = boost::filesystem;
+namespace fs = boost::filesystem;	// shortened for readability
 
 /**
  * Type that represents the OS this code is running/compiled on
@@ -57,7 +57,7 @@ namespace fs = boost::filesystem;
 enum tpat_os_type {windows, apple, linux};
 
 /**
- * 
+ * Type that defines the class of operating system
  */
 static const tpat_os_type TPAT_OS_TYPE =
 #ifdef _WIN32
@@ -85,6 +85,10 @@ static char SPICE_ERR_ACTION[] = "return";
 /** The type of message type SPICE should return to us */
 static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 
+/**
+ *  @brief A structure that contains default settings and functions to load
+ *  settings from an XML file
+ */
 struct tpat_settings{
 	/** Absolute path to a directory containing SPICE kernels used by this software */
 	std::string spice_data_filepath = "~/SPICE/data/";
@@ -149,9 +153,12 @@ struct tpat_initializer {
 	
 	tpat_settings settings;	//!< A collection of settings that various TPAT algorithms use
 
-	tpat_initializer(){
-		std::cout << "Constructing tpat_initializer";
-	}
+	/**
+	 *  @brief Default constructor
+	 */
+	tpat_initializer() : settings(){
+		std::cout << "Constructing tpat_initializer" << std::endl;
+	}//================================================
 
 	/**
 	 *	@brief Initialize the library
@@ -226,7 +233,7 @@ struct tpat_initializer {
 
 	    // Turn GSL's error handler off; we will catch and handle the errors
 	    gsl_set_error_handler_off();
-	}
+	}//================================================
 
 	/**
 	 *	@brief Perform any duties necessary to safely shut down the library
@@ -236,12 +243,20 @@ struct tpat_initializer {
 	}
 };
 
+/**
+ *  @brief An object that serves as a parent to all TPAT objects.
+ *  @details This object's sole purpose is to load settings from
+ *  an XML file when any of the TPAT objects are instantiated. Static
+ *  objects are used to ensure that only one copy of the initializer
+ *  and settings structures are constructed
+ */
 class tpat{
 public:
-	static tpat_initializer initializer;				// Create one to initialize the system	
+	static tpat_initializer initializer;				//!< Create one to initialize the system	
 	static bool isInit;									//!< Flag to prevent initializations happing lots of times
 
-	tpat();
+	tpat();												//!< Default constructor
+	virtual ~tpat();									//!< Default destructor
 };
 
 

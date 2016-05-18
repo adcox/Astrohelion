@@ -71,6 +71,11 @@ tpat_sys_data_cr3bp::tpat_sys_data_cr3bp(const char *filepath){
 }//===================================================
 
 /**
+ *  @brief Destructor
+ */
+tpat_sys_data_cr3bp::~tpat_sys_data_cr3bp(){}
+
+/**
  *	@brief Initialize all data fields using the names of the primaries
  *	@param P1 the name of the larger primary
  *	@param P2 the name of the smaller primary

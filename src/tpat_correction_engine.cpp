@@ -28,6 +28,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_exceptions.hpp" 
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_simulation_engine.hpp"
@@ -67,33 +68,16 @@ void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
 	equalArcTime = e.equalArcTime;
 	maxIts = e.maxIts;
 	tol = e.tol;
-	createdNodesetOut = e.createdNodesetOut;
 	findEvent = e.findEvent;
 	ignoreCrash = e.ignoreCrash;
-	
-	if(createdNodesetOut){
-		tpat_sys_data::tpat_system_tp type = e.nodeset_out->getSysData()->getType();
-		switch(type){
-			case tpat_sys_data::CR3BP_SYS:
-				nodeset_out = new tpat_nodeset_cr3bp (* static_cast<tpat_nodeset_cr3bp *>(e.nodeset_out));
-				break;
-			case tpat_sys_data::BCR4BPR_SYS:
-				nodeset_out = new tpat_nodeset_bcr4bp (*static_cast<tpat_nodeset_bcr4bp *>(e.nodeset_out));
-				break;
-			default: nodeset_out = 0; break;
-		}
-	}else{
-		nodeset_out = 0;
-	}
-}//=================================================
+}//====================================================
 
 //-----------------------------------------------------
 //      Operator Functions
 //-----------------------------------------------------
 
 /**
- *	@brief Copy operator; make a copy of the input correction engine. The dynamically allocated
- *	<tt>nodeset_out</tt> is copied, if possible, or set to 0 (it's a pointer) otherwise.
+ *	@brief Copy operator; make a copy of the input correction engine.
  *
  *	@param e
  *	@return this correction engine
@@ -153,50 +137,6 @@ int tpat_correction_engine::getMaxIts() const { return maxIts; }
  *	less than this value are considered negligible
  */
 double tpat_correction_engine::getTol() const { return tol; }
-
-/**
- *	@brief Retrieve the output CR3BP nodeset (after corrections). 
- *
- *	Note that this method will throw an
- *	error if the corrections process has not been run or failed to produce an output.
- *
- *	@return a CR3BP nodeset object with the corrected trajectory data stored inside
- */
-tpat_nodeset_cr3bp tpat_correction_engine::getCR3BP_Output(){
-	if(createdNodesetOut){
-		if(nodeset_out->getSysData()->getType() == tpat_sys_data::CR3BP_SYS){
-			// Create a copy of the nodeset, return it
-			tpat_nodeset_cr3bp temp( *(static_cast<tpat_nodeset_cr3bp *>(nodeset_out)) );
-			return temp;
-		}else{
-			throw tpat_exception("tpat_correction_engine::getCR3BP_Output: Wrong system type");
-		}
-	}else{
-		throw tpat_exception("tpat_correction_engine::getCR3BP_Output: Output nodeset has not been created, cannot return CR3BP output");
-	}
-}//=========================================
-
-/**
- *	@brief Retrieve the output BCR4BPR nodeset (after corrections). 
- *
- *	Note that this method will throw an
- *	error if the corrections process has not been run or failed to produce an output.
- *
- *	@return a BCR4BPR nodeset object with the corrected trajectory data stored inside
- */
-tpat_nodeset_bcr4bp tpat_correction_engine::getBCR4BPR_Output(){
-	if(createdNodesetOut){
-		if(nodeset_out->getSysData()->getType() == tpat_sys_data::BCR4BPR_SYS){
-			// Create a copy of the nodeset, return it
-			tpat_nodeset_bcr4bp temp( *(static_cast<tpat_nodeset_bcr4bp *>(nodeset_out)) );
-			return temp;
-		}else{
-			throw tpat_exception("tpat_correction_engine::getBCR4BPR_Output: Wrong system type");
-		}
-	}else{
-		throw tpat_exception("tpat_correction_engine::getBCR4BPR_Output: Output nodeset has not been created, cannot return CR3BP output");
-	}
-}//==================================================
 
 /**
  *	@brief Set varTime
@@ -269,7 +209,7 @@ void tpat_correction_engine::setTol(double d){
 
 	if(tol > 1)
 		printWarn("tpat_correction_engine::setTol: tolerance is greater than 1... just FYI\n");
-}
+}//====================================================
 
 /**
  *	@brief Set the findEven flag
@@ -292,29 +232,31 @@ void tpat_correction_engine::setFindEvent(bool b){ findEvent = b; }
  *	by the simulation engine, and the step size is fixed to force the usage of the 
  *	Adams-Bashforth Adams-Moulton method.
  *	
- *	@param set a pointer to a nodeset
+ *	@param set pointer to the nodeset that needs to be corrected
+ *	@param nodesOut pointer to the nodeset object that will contain the results of
+ *	the shooting process
  *	@return the iteration data object for this corrections process
+ *	@throws tpat_diverge if the corrections process does not converge
+ *	@throws tpat_exception
+ *	* if the input and output nodesets contain different system data objects
+ *	* if the dynamic model associated with the input
+ *	nodeset does not support one or more of the nodeset's constraints
+ *	* if the input nodeset contains more than one delta-v constraint
+ *	* if the input nodeset contains more than one TOF constraint
  */
-iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
+tpat_multShoot_data tpat_correction_engine::multShoot(const tpat_nodeset *set, tpat_nodeset *nodesOut){
+	if(nodesOut != NULL && *(set->getSysData()) != *(nodesOut->getSysData()))
+		throw tpat_exception("tpat_correction_engine::multShoot: Input and Output nodesets must use the same system data object");
+
 	if(!isClean)
 		cleanEngine();
 
 	isClean = false;
 
-	// Make sure all constraints have the propper node numbers
-	// set->updateCons();
-
 	// Create structure to store iteration data for easy sharing
-	iterationData it;
+	tpat_multShoot_data it(set);
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
 	it.equalArcTime = equalArcTime;
-	it.sysData = set->getSysData();
-	it.nodeset = set;
-
-	// Save original nodes for later access (particularly when variable time is off)
-	for(int n = 0; n < set->getNumNodes(); n++){
-		it.origNodes.push_back(set->getNode(n));
-	}
 
 	// Get some basic data from the input nodeset
 	it.numNodes = set->getNumNodes();
@@ -337,20 +279,28 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	it.allCons.clear();
 	model->multShoot_createContCons(&it, set);
 
-	// Add all extra constraints from the nodeset to the total constraint vector
+	// Add all node constraints
 	for(int n = 0; n < set->getNumNodes(); n++){
-		std::vector<tpat_constraint> nodeCons = set->getNodeCons(n);
-		for(size_t c = 0; c < nodeCons.size(); c++){
-			it.allCons.push_back(nodeCons[c]);
-		}
+		std::vector<tpat_constraint> nodeCons = set->getNodeByIx(n).getConstraints();
+		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
+
+	// Add all segment constraints
+	for(int s = 0; s < set->getNumSegs(); s++){
+		std::vector<tpat_constraint> segCons = set->getSegByIx(s).getConstraints();
+		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
+	}
+
+	// Add all arcset constraints
+	std::vector<tpat_constraint> arcCons = set->getArcConstraints();
+	it.allCons.insert(it.allCons.end(), arcCons.begin(), arcCons.end());
 
 	// Compute number of extra consraint functions to add
 	it.numSlack = 0;
 
 	// Initialize vector to keep track of which row each constraint begins on
-	// Also add slack variables to the 
-	it.conRows.assign(it.allCons.size(), NAN);	// Fill with NAN
+	// Also add slack variables to the design variable vector
+	it.conRows.assign(it.allCons.size(), -1);	// Fill with -1
 	int conRow = 0;
 	bool foundDVCon = false;
 	bool foundTOFCon = false;
@@ -359,7 +309,7 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 		tpat_constraint con = it.allCons[c];
 
 		if(!model->supportsCon(con.getType()))
-			throw tpat_exception("tpat_correction_engine::correct: The dynamic model does not support one of the constraints!");
+			throw tpat_exception("tpat_correction_engine::multShoot: The dynamic model does not support one of the constraints!");
 
 		switch(con.getType()){
 			case tpat_constraint::CONT_PV:
@@ -412,7 +362,7 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 						it.slackAssignCon.push_back(c);
 					}
 				}else{
-					throw tpat_exception("You can only apply ONE delta-V constraint");
+					throw tpat_exception("tpat_correction_engine::multShoot: You can only apply ONE delta-V constraint");
 				}
 				break;
 			case tpat_constraint::JC:
@@ -420,12 +370,12 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 				break;
 			case tpat_constraint::TOF:
 				if(!varTime)
-					printWarn("Attempting to constraint TOF without variable time... won't work!");
+					printWarn("tpat_correction_engine::multShoot: Attempting to constraint TOF without variable time... won't work!");
 				
 				if(!foundTOFCon)
 					addToRows = 1;
 				else
-					throw tpat_exception("You can only apply ONE TOF constraint");
+					throw tpat_exception("tpat_correction_engine::multShoot: You can only apply ONE TOF constraint");
 				break;
 			case tpat_constraint::APSE:
 				addToRows = 1;
@@ -459,23 +409,26 @@ iterationData tpat_correction_engine::multShoot(const tpat_nodeset *set){
 	}
 	
 	// Run the multiple shooting process
-	return multShoot(it);
+	return multShoot(it, nodesOut);
 }//==========================================================
 
 /**
- *  @brief Run a multiple shooting algorithm given an iterationData object
+ *  @brief Run a multiple shooting algorithm given an tpat_multShoot_data object
  * 
- *  @param it A completely formed iterationData object that describes a 
+ *  @param it A completely formed tpat_multShoot_data object that describes a 
  *  multiple shooting problem. These are created from tpat_nodeset and its
  *  derivative types by the other implementation of multShoot()
- *  @return A corrected iterationData object
+ *  @param nodesOut pointer to a nodeset object that will contain the results 
+ *  of the shooting process
+ *  @return A corrected tpat_multShoot_data object
  *  @see multShoot(tpat_nodeset*)
+ *  @throws tpat_diverge if the multiple shooting process does not converge
  */
-iterationData tpat_correction_engine::multShoot(iterationData it){
+tpat_multShoot_data tpat_correction_engine::multShoot(tpat_multShoot_data it, tpat_nodeset *nodesOut){
 	it.count = 0;
 
 	// create a simulation engine
-	tpat_simulation_engine simEngine(it.sysData);
+	tpat_simulation_engine simEngine;
 	simEngine.setVerbose(verbose);
 	
 	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
@@ -494,38 +447,42 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 	}
 
 	// Define values for use in corrections loop
-	double err = 1e10;
+	double err = 10*tol;
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
 		it.DF.clear();
 		it.deltaVs.clear();
-		it.allSegs.clear();
+		it.propSegs.clear();
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
 		it.DF.assign(it.totalCons*it.totalFree, 0);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
-		for(int n = 0; n < it.numNodes-1; n++){
+		// initialize a vector of trajectory objects to store each propagated segment
+		it.sysData->getModel()->multShoot_initIterData(&it);
+
+		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
 			// Get simulation conditions from design vector via dynamic model implementation
-			double t0 = 0;
-			double tof = 0;
+			double t0 = 0, tof = 0;
 			double ic[] = {0,0,0,0,0,0};
-			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, n, ic, &t0, &tof);
+			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, it.nodeset->getSeg(s).getID(),
+				ic, &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
-			simEngine.runSim(ic, t0, tof);
-			it.allSegs.push_back(simEngine.getTraj());
-		}// end of loop through nodes
+			simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
+		}
 
 		// Compute Delta-Vs between node segments
-		for(int n = 0; n < it.numNodes - 1; n++){
-			std::vector<double> lastState = it.allSegs[n].getState(-1);
-			// velCon has false for a velocity state if there is a discontinuity between v_n,f and v_n+1
-			std::vector<bool> velCon = it.nodeset->getNode(n+1).getVelCon();
-			for(int s = 3; s < 6; s++){
-				// Compute difference in velocity; if velCon[s-3] is true, then velocity
+		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
+			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
+			int termNodeIx = it.nodeset->getNodeIx(it.nodeset->getSegByIx(s).getTerminus());
+			// velCon has false for a velocity state if there is a discontinuity between
+			// the terminus of the segment and the terminal node
+			std::vector<bool> velCon = it.nodeset->getSegByIx(s).getVelCon();
+			for(int i = 3; i < 6; i++){
+				// Compute difference in velocity; if velCon[i-3] is true, then velocity
 				// should be continuous and any difference is numerical error, so set to
 				// zero by multiplying by not-true
-				it.deltaVs[n*3+s-3] = !velCon[s-3]*(lastState[s] - it.X[6*(n+1)+s]);
+				it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
 			}
 		}
 
@@ -567,9 +524,15 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
 		throw tpat_diverge();
 	}
 
-	nodeset_out = it.sysData->getModel()->multShoot_createOutput(&it, it.nodeset, findEvent);
-	createdNodesetOut = true;
-
+	if(nodesOut != NULL){
+		try{
+			it.sysData->getModel()->multShoot_createOutput(&it, it.nodeset, findEvent, nodesOut);
+		}catch(tpat_exception &e){
+			printErr("tpat_correction_engine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
+			throw e;
+		}
+	}
+	
 	return it;
 }//=====================================================
 
@@ -602,11 +565,13 @@ iterationData tpat_correction_engine::multShoot(iterationData it){
  *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
- *	@param it the iterationData object associated with the corrections process
+ *	@param it the tpat_multShoot_data object associated with the corrections process
  *
  *	@return the updated free variable vector \f$ \vec{X}_{n+1} \f$
+ *	@throws tpat_exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
+ *	This can be updated to use a least-squares solution (TODO)
  */
-Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
+Eigen::VectorXd tpat_correction_engine::solveUpdateEq(tpat_multShoot_data* it){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it->X[0]), it->totalFree, 1);
 	MatrixXRd J = Eigen::Map<MatrixXRd>(&(it->DF[0]), it->totalCons, it->totalFree);
@@ -673,14 +638,20 @@ Eigen::VectorXd tpat_correction_engine::solveUpdateEq(iterationData* it){
 	return oldX + X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
 
-void tpat_correction_engine::reportConMags(const iterationData *it){
+/**
+ *  @brief Print out the magnitude of each constraint.
+ *  @details This can be useful when debugging to highlight which constraints are unsatisfied
+ * 
+ *  @param it pointer to an tpat_multShoot_data object associated with a corrections process
+ */
+void tpat_correction_engine::reportConMags(const tpat_multShoot_data *it){
 	int conCount = 0;
 	for(long r = 0; r < (int)(it->FX.size()); r++){
         if(r == 0 && it->totalCons > 0){
-            printf("Node %d %s Constraint:\n", it->allCons[conCount].getNode(), it->allCons[conCount].getTypeStr());
+            printf("Node %d %s Constraint:\n", it->allCons[conCount].getID(), it->allCons[conCount].getTypeStr());
         }else if(conCount < (int)(it->allCons.size()) && r >= it->conRows[conCount+1]){
             conCount++;
-            printf("Node %d %s Constraint:\n", it->allCons[conCount].getNode(), it->allCons[conCount].getTypeStr());
+            printf("Node %d %s Constraint:\n", it->allCons[conCount].getID(), it->allCons[conCount].getTypeStr());
         }
         printf("  ||row %03zu||: %.6e\n", r, std::abs(it->FX[r]));
     }
@@ -691,10 +662,9 @@ void tpat_correction_engine::reportConMags(const iterationData *it){
  */
 void tpat_correction_engine::cleanEngine(){
 	printVerb(verbose == ALL_MSG, "Cleaning the engine...\n");
-	if(createdNodesetOut){
-		delete nodeset_out;
-	}
-
-	createdNodesetOut = false;
 	isClean = true;
-}//===================================
+}//====================================================
+
+
+
+

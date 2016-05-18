@@ -322,7 +322,7 @@ void printWarn(const char*, ...);
 void printVerb(bool, const char*, ...);
 void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
-int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
+//int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 double readDoubleFromMat(mat_t*, const char*);
 MatrixXRd readMatrixFromMat(const char*, const char*);
 std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);

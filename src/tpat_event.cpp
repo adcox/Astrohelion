@@ -59,6 +59,8 @@ tpat_event::tpat_event(const tpat_sys_data *data) : sysData(data) {}
  *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
+ *	@throws tpat_exception if this constructor is called for an event type that requires data
+ *	@throws tpat_exception if the event type is not recognized
  */
 void tpat_event::createEvent(tpat_event_tp t, int dir, bool willStop){
 	switch(t){
@@ -134,6 +136,9 @@ tpat_event::tpat_event(const tpat_sys_data *data, tpat_event_tp t, int dir, bool
  *	event type will expect (otherwise it will read uninitialized memory).
  *
  *	@see tpat_event::tpat_event_tp
+ *	@throws tpat_exception if the dynamic model does not support this event type
+ *	@throws tpat_exception if the event type is not recognized
+ *	@throws tpat_exception if data values refer to invalid indices
  */
 tpat_event::tpat_event(const tpat_sys_data *data, tpat_event_tp t, int dir , bool willStop, double* params) : sysData(data){
 	initEvent(t, dir, willStop, params);
@@ -205,7 +210,7 @@ void tpat_event::initEvent(tpat_event_tp t, int dir, bool willStop, double* para
 /**
  *	@brief copy constructor
  */
-tpat_event::tpat_event(const tpat_event &ev){
+tpat_event::tpat_event(const tpat_event &ev) : sysData(ev.sysData){
 	copyEvent(ev);
 }//==========================================
 
@@ -230,10 +235,7 @@ void tpat_event::copyEvent(const tpat_event &ev){
 /**
  *	@brief Destructor
  */
-tpat_event::~tpat_event(){
-	state.clear();
-	conData.clear();
-}//=============================================
+tpat_event::~tpat_event(){}
 
 //-----------------------------------------------------
 //      Operator Functions
@@ -408,7 +410,6 @@ bool tpat_event::crossedEvent(const double y[6], double t) const{
  */
 void tpat_event::updateDist(const double y[6], double t){	
 	// update the dist variable using information from y
-	lastDist = dist;
 	dist = getDist(y, t);
 
 	// Save the state from y for later comparison
@@ -422,6 +423,7 @@ void tpat_event::updateDist(const double y[6], double t){
  *	@param y a 6-element state vector representing the current integration state
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return the distance
+ *	@throws tpat_exception if the event type associated with this event is not implemented
  */
 double tpat_event::getDist(const double y[6], double t) const{
 	double d = 0;
@@ -467,7 +469,7 @@ double tpat_event::getDist(const double y[6], double t) const{
 	}
 
 	return d;
-}//=====================================
+}//====================================================
 
 /**
  *	@brief Get the direction of propagation for the event by comparing an input state <tt>y</tt>
@@ -476,6 +478,7 @@ double tpat_event::getDist(const double y[6], double t) const{
  *	@param y a 6-element state vector
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return positive or negative one to correspond with the sign
+ *	@throws tpat_exception if the event type associated with this event is not implemented
  */
 int tpat_event::getDir(const double y[6], double t) const{
 	double d = 0;
@@ -497,7 +500,7 @@ int tpat_event::getDir(const double y[6], double t) const{
 	}
 
 	return (int)(d*dt/std::abs(d*dt));
-}//==============================================
+}//====================================================
 
 /**
  *	@brief Print out a discription of the event
@@ -506,7 +509,7 @@ void tpat_event::printStatus() const{
 	printf("Event: Type = %s, Trigger Dir = %d, KillSim = %s\n", getTypeStr(), triggerDir, 
 		stop ? "YES" : "NO");
 	printf("  Dist: %e Last Dist: %e\n", dist, lastDist);
-}//======================================
+}//====================================================
 
 /**
  *  @brief Reset the event to avoid any confusion when a simulation is rerun with the same event
@@ -517,4 +520,10 @@ void tpat_event::reset(){
 	lastDist = 100000;
 	theTime = 0;
 	state.clear();
-}//======================================================
+}//====================================================
+
+
+
+
+
+

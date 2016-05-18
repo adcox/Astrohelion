@@ -41,17 +41,16 @@ public:
 	// *structors
 	tpat_traj_cr3bp(const tpat_sys_data_cr3bp*);
 	tpat_traj_cr3bp(const tpat_traj_cr3bp&);
-	tpat_traj_cr3bp(const tpat_arc_data&);
-	
-	static tpat_traj_cr3bp fromNodeset(tpat_nodeset_cr3bp);
-	
+	tpat_traj_cr3bp(const tpat_base_arcset&);
+	baseArcsetPtr create(const tpat_sys_data*) const;
+	baseArcsetPtr clone() const;
+
 	// Operators
-	tpat_arc_data& operator +=(const tpat_arc_data&);
+	tpat_traj& operator +=(const tpat_traj&);
 	
 	// Set and Get Functions
-	double getJacobi(int) const;
-
-	void setJacobi(int, double);
+	double getJacobiByIx(int) const;
+	void setJacobiByIx(int, double);
 
 	// Utility
 	void readFromMat(const char*);

@@ -24,7 +24,6 @@
  
 #include "tpat_model.hpp"
 #include "tpat_event.hpp"
-#include "tpat_sys_data.hpp"
 #include "tpat_traj.hpp"
  
 #include <vector>
@@ -33,6 +32,7 @@
 class tpat_traj_bcr4bp;
 class tpat_traj_cr3bp;
 class tpat_traj_cr3bp_ltvp;
+class tpat_sys_data;
 
 /**
  *	@brief A small structure to store event occurrence records
@@ -118,8 +118,7 @@ public:
 class tpat_simulation_engine : public tpat{
 	public:
 		// Constructors
-		// tpat_simulation_engine();
-		tpat_simulation_engine(const tpat_sys_data*);
+		tpat_simulation_engine();
 		tpat_simulation_engine(const tpat_simulation_engine&);	//copy constructor
 		
 		//Destructor
@@ -129,56 +128,45 @@ class tpat_simulation_engine : public tpat{
 		tpat_simulation_engine& operator =(const tpat_simulation_engine&);
 
 		// Set and get functions
-		void addEvent(tpat_event::tpat_event_tp, int, bool);
 		void addEvent(tpat_event);
 		double getAbsTol() const;
-		tpat_traj_bcr4bp getBCR4BPR_Traj() const;
-		tpat_traj_cr3bp getCR3BP_Traj() const;
-		tpat_traj_cr3bp_ltvp getCR3BP_LTVP_Traj() const;
-		std::vector<tpat_event> getEndEvents() const;
+		std::vector<tpat_event> getEndEvents(tpat_traj*) const;
 		std::vector<tpat_event> getEvents() const;
 		std::vector<eventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
+		bool makesCrashEvents() const;
 		bool usesRevTime() const;
-		tpat_traj getTraj() const;
 		tpat_verbosity_tp getVerbosity() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
+		void setMakeCrashEvents(bool);
 		void setNumSteps(int);
 		void setRelTol(double);
 		void setRevTime(bool);
-		void setSysData(const tpat_sys_data*);
 		void setVerbose(tpat_verbosity_tp);
 		void setVarStepSize(bool);
 
 		// Simulation Methods
-		void runSim(const double*, double);
-		void runSim(std::vector<double>, double);
-		void runSim(const double*, double, double);
-		void runSim(std::vector<double>, double, double);
+		void runSim(const double*, double, tpat_traj*);
+		void runSim(std::vector<double>, double, tpat_traj*);
+		void runSim(const double*, double, double, tpat_traj*);
+		void runSim(std::vector<double>, double, double, tpat_traj*);
 		
 		// Utility Functions
 		void clearEvents();
-		void createCrashEvents();
 		void reset();
 		
 
 	private:
-		/** A pointer to a system data object; contains characteristic quantities, among other things */
-		const tpat_sys_data *sysData;
-
-		/** Pointer to a trajectory object; is set to non-null value when integration occurs */
-		tpat_traj *traj = 0;
-
 		/** Vector of events to consider during integration */
-		std::vector<tpat_event> events;
+		std::vector<tpat_event> events {};
 
 		/**
 		 *	Contains data recroding which events happened and at which step in the integration
 		 */
-		std::vector<eventRecord> eventOccurs;
+		std::vector<eventRecord> eventOccurs {};
 		
 		/** a void pointer to some data object that contains data for the EOM function */
 		void *eomParams = 0;
@@ -200,6 +188,9 @@ class tpat_simulation_engine : public tpat{
 		 run, the engine is no longer clean and will need to be cleaned before running another sim */
 		bool isClean = true;
 
+		/** Whether or not crash events should be created for the simulation */
+		bool makeCrashEvents = true;
+
 		/** Whether or not the default crash events have been created */
 		bool madeCrashEvents = false;
 
@@ -215,10 +206,11 @@ class tpat_simulation_engine : public tpat{
 		/** Number of steps to take (only applies when varStepSize = false) */
 		double numSteps = 1000;
 
-		void integrate(const double*, const double*, int);
-		bool locateEvents(const double*, double);
 		void cleanEngine();
-		void copyEngine(const tpat_simulation_engine&);
+		void copyMe(const tpat_simulation_engine&);
+		void createCrashEvents(const tpat_sys_data*);
+		void integrate(const double*, const double*, int, tpat_traj*);
+		bool locateEvents(const double*, double, tpat_traj*);
 };
 
 #endif

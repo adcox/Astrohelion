@@ -61,9 +61,9 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
  *	@param traj a trajectory reference
  */
 tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
-	IC = traj.getState(0);
-	TOF = traj.getTime(-1);
-	JC = traj.getJacobi(0);
+	IC = traj.getStateByIx(0);
+	TOF = traj.getTotalTOF();
+	JC = traj.getJacobiByIx(0);
 
 	std::vector<double> x = traj.getCoord(0);
 	std::vector<double> y = traj.getCoord(1);
@@ -94,9 +94,7 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_family_member_cr3b
 /**
  *	@brief Destructor
  */
-tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){
-	IC.clear();
-}//===================================================
+tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){}
 
 
 //-----------------------------------------------------
@@ -156,6 +154,7 @@ double tpat_family_member_cr3bp::getZAmplitude() const { return zAmplitude; }
  *
  *	These should be the eigenvalues of the final STM and/or Monodromy matrix
  *	@param vals the eigenvalues
+ *	@throws tpat_exception if <tt>vals</tt> does not have six elements
  */
 void tpat_family_member_cr3bp::setEigVals(std::vector<cdouble> vals) {
 	if(vals.size() != 6)
@@ -166,10 +165,11 @@ void tpat_family_member_cr3bp::setEigVals(std::vector<cdouble> vals) {
 /**
  *	@brief Set the initial state
  *	@param ic The initial state (non-dim)
+ *	@throws tpat_exception if <tt>ic</tt> does not have six elements
  */
 void tpat_family_member_cr3bp::setIC( std::vector<double> ic ){
-if(ic.size() != 6)
-	throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
+	if(ic.size() != 6)
+		throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
 	IC = ic;
 }//====================================================
 
@@ -209,9 +209,10 @@ void tpat_family_member_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
  *  @return A trajectory object
  */
 tpat_traj_cr3bp tpat_family_member_cr3bp::toTraj(const tpat_sys_data_cr3bp *sys){
-	tpat_simulation_engine sim(sys);
-	sim.runSim(IC, TOF);
-	return sim.getCR3BP_Traj();
+	tpat_simulation_engine sim;
+	tpat_traj_cr3bp traj(sys);
+	sim.runSim(IC, TOF, &traj);
+	return traj;
 }//====================================================
 
 //-----------------------------------------------------

@@ -156,6 +156,7 @@ void tpat_sys_data_cr3bp_ltvp::saveToMat(const char *filepath) const{
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
+ *	@throws tpat_exception if the number of primaries is incorrect
  */
 void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};

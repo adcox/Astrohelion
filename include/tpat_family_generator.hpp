@@ -99,7 +99,7 @@ class tpat_family_generator : public tpat{
 		void copyMe(const tpat_family_generator&);
 		void cr3bp_natParamCont(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<tpat_mirror_tp>, std::vector<int>, std::vector<int>, int);
 		void cr3bp_pseudoArcCont(tpat_family_cr3bp*, tpat_nodeset_cr3bp, tpat_mirror_tp, std::vector<int>);
-		tpat_nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, iterationData, std::vector<tpat_constraint>);
+		tpat_nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, tpat_multShoot_data, std::vector<tpat_constraint>);
 };
 
 #endif

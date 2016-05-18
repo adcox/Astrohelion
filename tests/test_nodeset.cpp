@@ -25,13 +25,15 @@
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
+#include "tpat_exceptions.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_bcr4bp.hpp"
-#include "tpat_exceptions.hpp"
+#include "tpat_utilities.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -52,32 +54,38 @@ void test_concat_CR3BP(){
 	tpat_nodeset_cr3bp set3(&sys);
 	tpat_nodeset_cr3bp set4(&emSys);
 
-	double node1[] = {1,0,0,0,0,0};
-	double node2[] = {2,1,0,0,0,0};
-	double node3[] = {3,0,1,0,0,0};
-	double node4[] = {4,0,0,1,0,0};
+	double state1[] = {1,0,0,0,0,0};
+	double state2[] = {2,1,0,0,0,0};
+	double state3[] = {3,0,1,0,0,0};
+	double state4[] = {4,0,0,1,0,0};
 
-	set1.appendNode(tpat_node(node1, 0));
-	set1.appendNode(tpat_node(node2, 0));
-	
-	set2.appendNode(tpat_node(node3, 0));
-	set2.appendNode(tpat_node(node4, 0));
-	
-	set3.appendNode(tpat_node(node2, 0));
-	set3.appendNode(tpat_node(node3, 0));
-	set3.appendNode(tpat_node(node4, 0));
+	set1.addNode(tpat_node(state1, 0));
+	set1.addNode(tpat_node(state2, 1.1));
+	set1.addSeg(tpat_segment(0, 1, 1.1));
 
-	set4.appendNode(tpat_node(node4, 0));
+	set2.addNode(tpat_node(state3, 0));
+	set2.addNode(tpat_node(state4, 2.2));
+	set2.addSeg(tpat_segment(0, 1, 2.2));
 
-	tpat_nodeset_cr3bp sum1 = set1;
-	sum1 += set2;
-	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
-	sum1.print();
+	set3.addNode(tpat_node(state2, 3.3));
+	set3.addNode(tpat_node(state3, 4.4));
+	set3.addNode(tpat_node(state4, 5.5));
+	set3.addSeg(tpat_segment(0, 1, 1.1));
+	set3.addSeg(tpat_segment(1, 2, 1.1));
+
+	set4.addNode(tpat_node(state4, 0));
+
+	tpat_nodeset_cr3bp sum1 = set1 + set2;
+	bool checkSum1 = sum1.getStateByIx(0)[0] == 1 && sum1.getStateByIx(1)[0] == 2 && sum1.getStateByIx(2)[0] == 4;
+	cout << "CR3BP Nodeset operator+ : " << (checkSum1 ? PASS : FAIL) << endl;
+	// sum1.print();
 
 	tpat_nodeset_cr3bp sum2 = set1;
 	sum2 += set3;
-	printf("Concat nodesets: Should have nodes with x from 1 to 4\n");
-	sum2.print();
+	bool checkSum2 = sum2.getStateByIx(0)[0] == 1 && sum2.getStateByIx(1)[0] == 2 && 
+		sum2.getStateByIx(2)[0] == 3 && sum2.getStateByIx(3)[0] == 4;
+	cout << "CR3BP Nodeset operator+= : " << (checkSum2 ? PASS : FAIL) << endl;
+	// sum2.print();
 	
 	try{
 		cout << "Testing sum of different systems: ";
@@ -86,8 +94,7 @@ void test_concat_CR3BP(){
 		cout << FAIL << endl;
 	}catch(tpat_exception &e){
 		cout << PASS << endl;
-	}
-	catch(...){
+	}catch(exception &e){
 		cout << FAIL << endl;
 	}
 }//=======================================
@@ -102,37 +109,18 @@ void test_nodeManip(){
 	double node2[] = {2,0,0,0,0,0};
 	double node3[] = {3,0,0,0,0,0};
 	double node4[] = {4,0,0,0,0,0};
-	double node5[] = {0,1,0,0,0,0};
-	double node6[] = {0,0,1,0,0,0};
-	set.appendNode(tpat_node(node1, 0.1));
-	set.appendNode(tpat_node(node2, 0.2));
-	set.appendNode(tpat_node(node3, 0.3));
-	set.appendNode(tpat_node(node4, 0.4));
 
-	set.insertNode(0, tpat_node(node5, -0.1));
-
-	std::vector<double> state = set.getState(0);
-	cout << "Insert Node: " << (state[0] == 0 && state[1] == 1 ? PASS : FAIL) << endl;
-
-	try{
-		cout << "Throw index error: ";
-		set.insertNode(-9, tpat_node(node5, 0));
-		cout << FAIL << endl;
-	}catch(tpat_exception &e){
-		cout << PASS << endl;
-	}
-
-	// Test delete node
-	set.deleteNode(0);
-	state = set.getState(0);
-	cout << "Delete Node: " << (state[0] == 1 && state[1] == 0 ? PASS : FAIL) << endl;
+	set.addNode(tpat_node(node1, 0.1));
+	set.addNode(tpat_node(node2, 0.2));
+	set.addNode(tpat_node(node3, 0.3));
+	set.addNode(tpat_node(node4, 0.4));
 
 	// Second test case: Generate orbit, use createNodesAtEvent and check the functionality, TOF computation, etc.
 	tpat_nodeset_cr3bp set2(emDRO_ic, &sys, emDRO_T, 2);
 	set2.saveToMat("emDRO_2Nodes.mat");
 	cout << "CR3BP Nodeset generated from ICs (saved to emDRO_2Nodes.mat):" << endl;
 	cout << "  Correct number of nodes: " << (set2.getNumNodes() == 2 ? PASS : FAIL) << endl;
-	cout << "  Correct TOFs: " << (set2.getTOF(0) == emDRO_T && std::isnan(set2.getTOF(1)) ? PASS : FAIL) << endl;	
+	cout << "  Correct TOFs: " << (set2.getTOFByIx(0) == emDRO_T ? PASS : FAIL) << endl;	
 
 	double xMoonData = 1 - sys.getMu();
 	tpat_event xMoonEvt(&sys, tpat_event::YZ_PLANE, 0, true, &xMoonData);
@@ -140,12 +128,14 @@ void test_nodeManip(){
 	std::vector<tpat_event> events {xMoonEvt, xzPlaneEvt};
 
 	set2.createNodesAtEvents(0, events);
+	set2.putInChronoOrder();
+	// set2.printInChrono();
 	set2.saveToMat("emDRO_newNodes.mat");
 	cout << "CR3BP createNodesAtEvents (saved to emDRO_newNodes.mat):" << endl;
 	cout << "  Correct number of nodes: " << (set2.getNumNodes() == 5 ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) state: " << (set2.getState(1)[0] == xMoonData ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) state: " << (set2.getState(2)[1] == 0 ? PASS : FAIL) << endl;
-	cout << "  Correct node(3) state: " << (set2.getState(3)[0] == xMoonData ? PASS : FAIL) << endl;
+	cout << "  Correct node(1) state: " << (set2.getStateByIx(1)[0] == xMoonData ? PASS : FAIL) << endl;
+	cout << "  Correct node(2) state: " << (set2.getStateByIx(2)[1] == 0 ? PASS : FAIL) << endl;
+	cout << "  Correct node(3) state: " << (set2.getStateByIx(3)[0] == xMoonData ? PASS : FAIL) << endl;
 	cout << "  Correct total TOF: " << (set2.getTotalTOF() == emDRO_T ? PASS : FAIL) << endl;
 	set2.print();
 
@@ -156,19 +146,21 @@ void test_nodeManip(){
 	tpat_nodeset_bcr4bp set3(qho_ic, &bcSys, qho_T0, qho_Period, 2);
 	cout << "BC4BP Nodeset generated from ICs:" << endl;
 	cout << "  Correct number of nodes: " << (set3.getNumNodes() == 2 ? PASS : FAIL) << endl;
-	cout << "  Correct TOFs: " << (set3.getTOF(0) == qho_Period ? PASS : FAIL) << endl;
-	cout << "  Correct Epochs: " << (set3.getEpoch(0) == qho_T0 && set3.getEpoch(1) == qho_T0 + qho_Period ? PASS : FAIL) << endl;
+	cout << "  Correct TOFs: " << (set3.getTOFByIx(0) == qho_Period ? PASS : FAIL) << endl;
+	cout << "  Correct Epochs: " << (set3.getEpochByIx(0) == qho_T0 && set3.getEpochByIx(1) == qho_T0 + qho_Period ? PASS : FAIL) << endl;
 	set3.print();
 
 	tpat_event sem_xzPlaneEvt(&bcSys, tpat_event::XZ_PLANE, 0, false);
 	set3.createNodesAtEvent(0, sem_xzPlaneEvt);
+	set3.putInChronoOrder();
+	// set3.printInChrono();
 	set3.saveToMat("semQHO_newNodes.mat");
 	cout << "BC4BP createNodesAtEvent (saved to semQHO_newNodes.mat):" << endl;
 	cout << "  Correct number of nodes: " << (set3.getNumNodes() == 4 ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) state: " << (set3.getState(1)[1] == 0 ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) epoch: " << (set3.getEpoch(1) == qho_T0 + set3.getTOF(0) ? PASS : FAIL) << endl;
-	cout << "  Correct node(2) state: " << (set3.getState(2)[1] == 0 ? PASS : FAIL) << endl;
-	cout << "  Correct node(2) epoch: " << (set3.getEpoch(2) == qho_T0 + set3.getTOF(0) + set3.getTOF(1) ? PASS : FAIL) << endl;
+	cout << "  Correct node(1) state: " << (set3.getStateByIx(1)[1] == 0 ? PASS : FAIL) << endl;
+	cout << "  Correct node(1) epoch: " << (set3.getEpochByIx(1) == qho_T0 + set3.getTOFByIx(0) ? PASS : FAIL) << endl;
+	cout << "  Correct node(2) state: " << (set3.getStateByIx(2)[1] == 0 ? PASS : FAIL) << endl;
+	cout << "  Correct node(2) epoch: " << (set3.getEpochByIx(2) == qho_T0 + set3.getTOFByIx(0) + set3.getTOFByIx(1) ? PASS : FAIL) << endl;
 	cout << "  Correct total TOF: " << (set3.getTotalTOF() == qho_Period ? PASS : FAIL) << endl;
 	cout << "Total TOF = " << set3.getTotalTOF() << endl;
 	set3.print();
@@ -220,8 +212,8 @@ int main(void){
 
 	tpat_sys_data_cr3bp emData("earth", "moon");
 	tpat_nodeset_cr3bp crSet = test_createCR3BPNodeset(&emData);
-	corrector.setVerbose(ALL_MSG);
-	corrector.multShoot(&crSet);
+	// corrector.setVerbose(ALL_MSG);
+	corrector.multShoot(&crSet, NULL);
 
 	crSet.saveToMat("data/crSet.mat");
 	tpat_nodeset_cr3bp crTemp(&emData);
@@ -229,8 +221,8 @@ int main(void){
 	
 	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
 	test_createBCR4BPRNodeset(&semData);
-	corrector.setVerbose(ALL_MSG);
-	corrector.multShoot(bcSet);
+	// corrector.setVerbose(ALL_MSG);
+	corrector.multShoot(bcSet, NULL);
 
 	bcSet->saveToMat("data/bcSet.mat");
 	tpat_nodeset_bcr4bp bcTemp(&semData);
@@ -239,13 +231,13 @@ int main(void){
 	test_concat_CR3BP();
 
 	printf("Testing Save/Read functions on CR3BP Nodeset\n");
-	cout << "Same Final State: " << (crSet.getState(-1) == crTemp.getState(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final TOF: " << (std::isnan(crSet.getTOF(-1)) && std::isnan(crTemp.getTOF(-1)) ? PASS : FAIL) << endl;
+	cout << "Same Final State: " << (crSet.getStateByIx(-1) == crTemp.getStateByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final TOF: " << (crSet.getTOFByIx(-1) == crTemp.getTOFByIx(-1) ? PASS : FAIL) << endl;
 
 	printf("Testing Save/Read functions on BC4BP Nodeset\n");
-	cout << "Same Final State: " << (bcSet->getState(-1) == bcTemp.getState(-1) ? PASS : FAIL) << endl;
-	cout << "Same Final TOF: " << (std::isnan(bcSet->getTOF(-1)) && std::isnan(bcTemp.getTOF(-1)) ? PASS : FAIL) << endl;
-	cout << "Same Final Epoch: " << (bcSet->getEpoch(-1) == bcTemp.getEpoch(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final State: " << (bcSet->getStateByIx(-1) == bcTemp.getStateByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final TOF: " << (bcSet->getTOFByIx(-1) == bcTemp.getTOFByIx(-1) ? PASS : FAIL) << endl;
+	cout << "Same Final Epoch: " << (bcSet->getEpochByIx(-1) == bcTemp.getEpochByIx(-1) ? PASS : FAIL) << endl;
 	
 	printf("Testing Node Insert/Delete/InsertAtEvent\n");
 	test_nodeManip();

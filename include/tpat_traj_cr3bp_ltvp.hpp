@@ -41,14 +41,16 @@ public:
 	// *structors
 	tpat_traj_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp*);
 	tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp&);
-	tpat_traj_cr3bp_ltvp(const tpat_arc_data&);
-	
-	// Set and Get Functions
-	double getJacobi(int) const;
-	double getMass(int) const;
+	tpat_traj_cr3bp_ltvp(const tpat_base_arcset&);
+	baseArcsetPtr create(const tpat_sys_data*) const;
+	baseArcsetPtr clone() const;
 
-	void setJacobi(int, double);
-	void setMass(int, double);
+	// Set and Get Functions
+	double getJacobiByIx(int) const;
+	double getMassByIx(int) const;
+
+	void setJacobiByIx(int, double);
+	void setMassByIx(int, double);
 	
 	void saveToMat(const char*) const;
 private:

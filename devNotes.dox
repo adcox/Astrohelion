@@ -24,7 +24,7 @@ This software has been tested on (and <i>should</i> work on) the following syste
 		</ul>
 	</li>
 	<li>
-		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install, download the current realease and uncompress it. Copy all the files from the <tt>boost/</tt> directory (should be *.hpp files) to <tt>/usr/local/include/boost/</tt>. Additionally, compile and install the boost binaries and libraries by following the directions on the <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">boost webiste</a>. Use the default parameters, so the libraries should live in <tt>/usr/local/lib/</tt>, just like the libraries for GSL and MatIO.
+		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install, download the current realease and uncompress it. Copy all the files from the <tt>boost/</tt> directory (should be *.hpp files) to <tt>/usr/local/include/boost/</tt>. Additionally, compile and install the boost binaries by following the directions on <a href="https://solarianprogrammer.com/2016/03/06/compiling-boost-gcc-5-clang-mac-os-x/">this website</a>. The Boost libraries <em>must</em> be compiled using the same compiler as the TPAT code; Most recently (2016-05-11), I am using the gcc 5.3.0 compiler g++-5 . This is unable to create the dynamic libraries (*.dylib) but creates the static libraries just fine. I've uninstalled previous versions of Boost that were compiled with clang to avoid clashes. Otherwise, use the default install location (don't specifiy a --prefix argument) so the binaries should live in <tt>/usr/local/lib/</tt>, just like the libraries for GSL and MatIO. Other useful build instructions are listed <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">here</a>. 
 	</li>
 	<li>
 		<a href="http://naif.jpl.nasa.gov/naif/toolkit_C.html">NAIF SPICE</a>: This library 
@@ -45,9 +45,6 @@ This software has been tested on (and <i>should</i> work on) the following syste
 	</li>
 </ul>
 
-<h2>To-Do List</h2>
-<i>This has been moved to BitBucket's issue tracker</i>
-
 <h2>Debugging</h2>
 <h3>In General</h3>
 First, open X11 from the Applications menu. Then, run the executable using the graphic debugging library:
@@ -59,6 +56,13 @@ For this to work, you must compile the executable with the debugging symbols; us
 	gdb --args runAScript arg1 arg2		// Allows user to specify input arguments
 	gdb runAScript						// no input arguments
 </pre>
+
+<h3>Checking Linked (Dynamically) Libraries</h3>
+Run 
+<pre>
+	oTool -L path/to/bin
+</pre>
+to retrieve a list of all the dynamic libraries linked to the executable binary, as well as the locations of those libraries. Note that static libraries are not included in this listing.
 
 <h3>Checking for Dependency Issues</h3>
 Run doxygen with the inheritance/dependency plots turned on (this is already set for this project).
@@ -95,4 +99,9 @@ Include Order (my convention:)
 	<li> Global header files, like string, vector, etc. </li>
 </ol>
 
+<h2>Optimizing Code</h2>
+<ul>
+	<li> Check out <a href="http://stackoverflow.com/questions/11445619/profiling-c-on-mac-os-x">these</a> instructions for profiling code on OS X</li>
+	<li> Creating copies of objects can be <em>very</em> expensive! Use pointers to objects whenever possible and practical!</li>
+</ul>
 */

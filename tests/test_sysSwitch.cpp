@@ -22,9 +22,9 @@ int main(void){
 	// Try converting Earth-Moon to Sun-Earth
 	double haloIC[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
-	tpat_simulation_engine engine(&emSys);
-	engine.runSim(haloIC, 2.77);
-	tpat_traj_cr3bp emHalo = engine.getCR3BP_Traj();
+	tpat_simulation_engine engine;
+	tpat_traj_cr3bp emHalo(&emSys);
+	engine.runSim(haloIC, 2.77, &emHalo);
 	emHalo.saveToMat("data/EM_Halo.mat");
 
 	tpat_nodeset_cr3bp emNodes(haloIC, &emSys, 2.77, 10, tpat_nodeset::DISTRO_TIME);
@@ -38,9 +38,8 @@ int main(void){
 
 	// Try converting Sun-Earth to Earth-Moon
 	engine.reset();
-	engine.setSysData(&seSys);
-	engine.runSim(haloIC, 2.77);
-	tpat_traj_cr3bp seTraj = engine.getCR3BP_Traj();
+	tpat_traj_cr3bp seTraj(&seSys);
+	engine.runSim(haloIC, 2.77, &seTraj);
 	seTraj.saveToMat("data/SE_Traj.mat");
 
 	tpat_nodeset_cr3bp seNodes(haloIC, &seSys, 2.77, 10, tpat_nodeset::DISTRO_ARCLENGTH);

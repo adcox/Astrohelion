@@ -98,9 +98,9 @@ class tpat_family_cr3bp : public tpat{
 
 
 	protected:
-		std::string name = "NULL";						//!< Descriptive name of the family
-		std::vector<tpat_family_member_cr3bp> members;	//!< Contains all family members
-		tpat_sys_data_cr3bp sysData;					//!< Describes the system this family exists in
+		std::string name = "NULL";								//!< Descriptive name of the family
+		std::vector<tpat_family_member_cr3bp> members {};		//!< Contains all family members
+		tpat_sys_data_cr3bp sysData = tpat_sys_data_cr3bp();	//!< Describes the system this family exists in
 		tpat_sortFam_tp sortType = SORT_NONE;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute

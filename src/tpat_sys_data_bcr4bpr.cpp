@@ -63,6 +63,7 @@ tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(std::string P1, std::string P2, std
  *  @brief Load the system data object from a Matlab data file
  * 
  *  @param filepath path to the data file
+ *  @throws tpat_exception if the data file cannot be loaded
  */
 tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const char *filepath){
 	numPrimaries = 3;
@@ -83,6 +84,8 @@ tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const char *filepath){
  *	@param P1 name of the largest primary in the entire system
  *	@param P2 name of the larger primary in the secondary system
  *	@param P3 name of the smaller primary int he secondary system
+ *	@throws tpat_exception if the system architecture is incorrect, i.e.
+ *	P1 must be the parent of P2 and P2 must be the parent of P3
  */
 void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, std::string P3){
 	tpat_body_data p1Data(P1);
@@ -169,11 +172,8 @@ double tpat_sys_data_bcr4bpr::getCharLRatio() const { return otherParams.at(3); 
  *	@return the scaling constant for this system
  */
 double tpat_sys_data_bcr4bpr::getK() const {
-	if(otherParams.size() != 7)
-		printf("");
-
 	return otherParams.at(2);
-}
+}//====================================================
 
 /**
  *  @brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)

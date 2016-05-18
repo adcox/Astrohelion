@@ -21,7 +21,7 @@ bool testSumInt(){
 	bool check2 = tpat_util::sum(vecData) == 15;
 
 	return check1 && check2;
-}
+}//====================================================
 
 bool testSumDouble(){
 	double data[] = {1.0, 1.1, 1.2, 1.3, 1.4};
@@ -31,7 +31,7 @@ bool testSumDouble(){
 	bool check2 = tpat_util::sum(vecData) == 6;
 
 	return check1 && check2;
-}
+}//====================================================
 
 bool testMeanInt(){
 	int data[] = {2,4,5,1};
@@ -41,7 +41,7 @@ bool testMeanInt(){
 	bool check2 = tpat_util::mean(vecData) == 3;
 
 	return check1 && check2;
-}
+}//====================================================
 
 bool testMeanDouble(){
 	double data[] = {1.1, 2.2, 3.3, 4.4, 5.5};
@@ -51,7 +51,7 @@ bool testMeanDouble(){
 	bool check2 = tpat_util::mean(vecData) == 3.3;
 
 	return check1 && check2;
-}
+}//====================================================
 
 bool test_concatVec(){
 	vector<double> v1(2,1);
@@ -61,7 +61,7 @@ bool test_concatVec(){
 	concatAns[3] = 2;
 
 	return tpat_util::concatVecs(v1, v2) == concatAns;
-}
+}//====================================================
 
 bool test_concatVecInt(){
 	vector<int> v1(2,1);
@@ -71,7 +71,7 @@ bool test_concatVecInt(){
 	concatAns[3] = 2;
 
 	return tpat_util::concatVecs(v1, v2) == concatAns;
-}
+}//====================================================
 
 bool test_permute(){
 	int numSpots = 3;
@@ -117,7 +117,6 @@ bool test_getSpiceName(){
 }//=================================================
 
 int main(void){
-
 	cout << "Test sum<int>: " << (testSumInt() ? PASS : FAIL) << endl;
 	cout << "Test sum<double>: " << (testSumDouble() ? PASS : FAIL) << endl;
 	cout << "Test mean<int>: " << (testMeanInt() ? PASS : FAIL) << endl;
@@ -128,4 +127,4 @@ int main(void){
 	cout << "Test SpiceIDFromName(): " << (test_getSpiceID() ? PASS : FAIL) << endl;
 	cout << "Test NameFromSpiceID(): " << (test_getSpiceName() ? PASS : FAIL) << endl;
 	return 0;
-}
+}//====================================================

@@ -137,6 +137,13 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
     }
 }//=========================================================
 
+/**
+ *  @brief Save a single double-precision value to a Matlab file
+ * 
+ *  @param matfp a pointer to the matlab output file
+ *  @param varName the name of the variable
+ *  @param data data value
+ */
 void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
     if(NULL != matfp){
         size_t dims[2] = {1, 1};
@@ -173,7 +180,9 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
  *  @param varName name of the variable within the .mat file
  *  @param data a vector of data in row-major order
  *  @param rows number of rows in the matrix
- *  @param cols number of columns in the matrix 
+ *  @param cols number of columns in the matrix
+ *  @throws tpat_exception if <tt>data</tt> does not have enough elements
+ *  to construct a matrix with the specified number of rows and columns
  */
 void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> data, size_t rows, size_t cols){
     if(data.size() < rows*cols)
@@ -205,6 +214,7 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
  *  @return a column-major-order vector containing the data from the desired matrix
  *  @throws tpat_exception if the file cannot be opened, if the variable doesn't exist,
  *  or if the variable contains something other than doubles
+ *  @throws tpat_exception if the data file cannot be opened or the variable cannot be read
  */
 MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  
@@ -390,7 +400,7 @@ std::string getNameFromSpiceID(int ID){
  */
 SpiceInt getSpiceIDFromName(const char *name){
     ConstSpiceChar *name_spice = static_cast<ConstSpiceChar*>(name);
-    SpiceInt code = NAN;
+    SpiceInt code = 0;
     SpiceBoolean found = false;
 
     bodn2c_c(name_spice, &code, &found);

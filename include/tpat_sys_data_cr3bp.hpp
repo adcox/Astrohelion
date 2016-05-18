@@ -41,6 +41,7 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 		tpat_sys_data_cr3bp(std::string, std::string);
 		tpat_sys_data_cr3bp(const tpat_sys_data_cr3bp&);
 		tpat_sys_data_cr3bp(const char*);
+		virtual ~tpat_sys_data_cr3bp();
 		
 		tpat_sys_data_cr3bp& operator=(const tpat_sys_data_cr3bp&);
 		
@@ -56,7 +57,7 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 		
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_cr3bp model;
+		tpat_model_cr3bp model = tpat_model_cr3bp();
 };
 
 #endif

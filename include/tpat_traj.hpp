@@ -21,12 +21,17 @@
 #ifndef H_TRAJECTORY
 #define H_TRAJECTORY
 
-#include "tpat_arc_data.hpp"
+#include "tpat_base_arcset.hpp"
 #include "matio.h"
 
 // Forward Declarations
-class tpat_traj_step;
 class tpat_nodeset;
+class tpat_traj;
+
+/**
+ * @brief Smart pointer to a tpat_traj object
+ */
+typedef std::shared_ptr<tpat_traj> trajPtr;
 
 /**
  *	@brief Contains information about a series of continuous states along a trajectory.
@@ -47,26 +52,27 @@ class tpat_nodeset;
  *	@version August 29, 2015
  *	@copyright GNU GPL v3.0
  *	
- *	@see tpat_arc_data
+ *	@see tpat_base_arcset
  */
-class tpat_traj : public tpat_arc_data{
+class tpat_traj : public tpat_base_arcset{
 
 public:
 	// *structors
 	tpat_traj(const tpat_sys_data*);
 	tpat_traj(const tpat_traj&);
-	tpat_traj(const tpat_arc_data&);
+	tpat_traj(const tpat_base_arcset&);
+	virtual ~tpat_traj();
+	virtual baseArcsetPtr create(const tpat_sys_data*) const;
+	virtual baseArcsetPtr clone() const;
+	static tpat_traj fromNodeset(tpat_nodeset);
 
 	// Operators
+	friend tpat_traj operator +(const tpat_traj&, const tpat_traj&);
+	virtual tpat_traj& operator +=(const tpat_traj&);
 
 	// Set and Get Functions
-	double getTime(int) const;
-	double getTotalTOF() const;
-	tpat_traj_step getStep(int) const;
-
-	void appendStep(tpat_traj_step);
-	void setTime(int, double);
-
+	double getTimeByIx(int) const;
+	void setTimeByIx(int, double);
 	void shiftAllTimes(double);
 	
 	// Utility Functions
@@ -75,9 +81,6 @@ public:
 	void print() const;
 	virtual void readFromMat(const char*);
 	virtual void saveToMat(const char*) const;
-
-protected:
-	void saveTime(mat_t*) const;
 };
 
 #endif

@@ -28,10 +28,10 @@
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 /**
@@ -87,10 +87,10 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn() const{
 std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, const tpat_sys_data *sysData) const{
     (void)t;
     double primPos[6] = {0};
-    const tpat_sys_data_cr3bp_ltvp crSys(*static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData));
+    const tpat_sys_data_cr3bp_ltvp *crSys = static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData);
 
-    primPos[0] = -1*crSys.getMu();
-    primPos[3] = 1 - crSys.getMu();
+    primPos[0] = -1*crSys->getMu();
+    primPos[3] = 1 - crSys->getMu();
 
     return std::vector<double>(primPos, primPos+6);
 }//==============================================
@@ -123,33 +123,30 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, const tpat_sys_d
  *  @param traj a pointer to the trajectory we should store the data in
  */
 void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, tpat_traj* traj) const{
-	// Save the position and velocity states
-    double state[6];
-    std::copy(y, y+6, state);
-
-    // Save STM
-    double stmElm[36];
-    std::copy(y+6, y+42, stmElm);
-
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const tpat_sys_data_cr3bp_ltvp *ltSys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(traj->getSysData());
 
-    // Compute acceleration (elements 3 - 5)
+    // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
     eomParamStruct paramStruct(ltSys);
     simpleEOMs(t, y, dsdt, &paramStruct);
+    
+    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
+    int id = traj->addNode(tpat_node(y, dsdt+3, t));
 
-    tpat_traj_step step(state, t, dsdt+3, stmElm);
-    traj->appendStep(step);
+    if(id > 0){
+        double tof = t - traj->getNode(id-1).getEpoch();
+        traj->addSeg(tpat_segment(id-1, id, tof, y+6));
+    }
 
     tpat_traj_cr3bp_ltvp *cr3bpTraj = static_cast<tpat_traj_cr3bp_ltvp*>(traj);
 
     // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
-    cr3bpTraj->setJacobi(-1, tpat_model_cr3bp::getJacobi(y, ltSys->getMu()));
+    cr3bpTraj->setJacobiByIx(-1, tpat_model_cr3bp::getJacobi(y, ltSys->getMu()));
 
     // Compute and save mass of s/c; assumes t began at 0
     double g0_nonDim = G_GRAV_0*ltSys->getCharT()*ltSys->getCharT()/ltSys->getCharL();
-    cr3bpTraj->setMass(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
+    cr3bpTraj->setMassByIx(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
 }//=====================================================
 
 /**
@@ -199,12 +196,22 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param it an iteration data object containing all info from the corrections process
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
+ *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
  */
-tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
+void tpat_model_cr3bp_ltvp::multShoot_createOutput(const tpat_multShoot_data *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
     (void) it;
     (void) findEvent;
-    const tpat_sys_data_cr3bp_ltvp *sys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
-    return new tpat_nodeset_cr3bp(sys);
+    (void) nodes_in;
+    (void) nodes_out;
+}//====================================================
+
+/**
+ *  @brief Perform model-specific initializations on the tpat_multShoot_data object
+ *  @param it pointer to the object to be initialized
+ */
+void tpat_model_cr3bp_ltvp::multShoot_initIterData(tpat_multShoot_data *it) const{
+    it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp_ltvp(static_cast<const tpat_sys_data_cr3bp_ltvp *>(it->sysData)));
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

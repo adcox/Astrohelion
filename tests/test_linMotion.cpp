@@ -27,11 +27,11 @@ void testEllip(){
 	tpat_traj_cr3bp traj = engine.getCR3BPLinear(1, r, tpat_linear_motion_engine::ELLIP, &sys);
 	
 	for(int i = 0; i < 6; i++){
-		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	cout << "  state(9, " << 0 << "): " << ( abs(traj.getState(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	cout << "  state(9, " << 1 << "): " << ( abs(traj.getState(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
 }
 
 void testHyp(){
@@ -44,11 +44,11 @@ void testHyp(){
 	tpat_traj_cr3bp traj = engine.getCR3BPLinear(2, r, tpat_linear_motion_engine::HYP, &sys);
 	
 	for(int i = 0; i < 6; i++){
-		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	cout << "  state(9, " << 0 << "): " << ( abs(traj.getState(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	cout << "  state(9, " << 1 << "): " << ( abs(traj.getState(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
 }
 
 void testSPO(){
@@ -61,11 +61,11 @@ void testSPO(){
 	tpat_traj_cr3bp traj = engine.getCR3BPLinear(4, r, tpat_linear_motion_engine::SPO, &sys);
 
 	for(int i = 0; i < 6; i++){
-		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	cout << "  state(9, " << 0 << "): " << ( abs(traj.getState(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	cout << "  state(9, " << 1 << "): " << ( abs(traj.getState(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
 }
 
 void testLPO(){
@@ -78,11 +78,11 @@ void testLPO(){
 	tpat_traj_cr3bp traj = engine.getCR3BPLinear(5, r, tpat_linear_motion_engine::LPO, &sys);
 	
 	for(int i = 0; i < 6; i++){
-		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	cout << "  state(9, " << 0 << "): " << ( abs(traj.getState(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	cout << "  state(9, " << 1 << "): " << ( abs(traj.getState(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
 }
 
 void testMPO(){
@@ -95,11 +95,11 @@ void testMPO(){
 	tpat_traj_cr3bp traj = engine.getCR3BPLinear(5, r, tpat_linear_motion_engine::MPO, &sys);
 	
 	for(int i = 0; i < 6; i++){
-		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	cout << "  state(9, " << 0 << "): " << ( abs(traj.getState(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	cout << "  state(9, " << 1 << "): " << ( abs(traj.getState(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
 }
 
 void testConverge(){
@@ -113,11 +113,11 @@ void testConverge(){
 	tpat_traj_cr3bp traj = engine.getCR3BPLinear(4, r, tpat_linear_motion_engine::CONVERGE, &sys);
 	
 	for(int i = 0; i < 6; i++){
-		cout << "  state(0, " << i << "): " << ( abs(traj.getState(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	cout << "  state(9, " << 0 << "): " << ( abs(traj.getState(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	cout << "  state(9, " << 1 << "): " << ( abs(traj.getState(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
+	cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
 }
 
 int main(void){

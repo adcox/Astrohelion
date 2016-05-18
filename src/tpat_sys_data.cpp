@@ -50,11 +50,7 @@ tpat_sys_data::tpat_sys_data(const tpat_sys_data& d){
 /**
  *	@brief Destructor
  */
-tpat_sys_data::~tpat_sys_data(){
-	primaries.clear();
-	primIDs.clear();
-	otherParams.clear();
-}//============================================
+tpat_sys_data::~tpat_sys_data(){}
 
 /**
  *	@brief Copy the system data object
@@ -180,7 +176,11 @@ std::string tpat_sys_data::getTypeStr() const{
 	}
 }//=================================================
 
-
+/**
+ *  @brief Save the system data object to a file
+ * 
+ *  @param filepath relative or absolute path to the file
+ */
 void tpat_sys_data::saveToMat(const char *filepath) const{
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 

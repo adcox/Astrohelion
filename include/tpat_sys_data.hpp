@@ -100,10 +100,10 @@ class tpat_sys_data : public tpat{
 		int numPrimaries = 0;
 
 		/** Vector containing names of primaries */
-		std::vector<std::string> primaries;
+		std::vector<std::string> primaries {};
 
 		/** Vector containing IDs for primaries */
-		std::vector<int> primIDs;
+		std::vector<int> primIDs {};
 
 		/** Characteristic length (km) */
 		double charL = 0;
@@ -115,7 +115,7 @@ class tpat_sys_data : public tpat{
 		double charM = 0;
 
 		/** Vector containing other parameters, like mu, k, nu, etc. */
-		std::vector<double> otherParams;
+		std::vector<double> otherParams {};
 
 		/** The type of system this data object describes */
 		tpat_system_tp type = UNDEF_SYS;

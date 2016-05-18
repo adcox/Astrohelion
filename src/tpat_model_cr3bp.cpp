@@ -29,11 +29,11 @@
 #include "tpat_correction_engine.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_event.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 /**
@@ -88,10 +88,10 @@ tpat_model::eom_fcn tpat_model_cr3bp::getFullEOM_fcn() const{
 std::vector<double> tpat_model_cr3bp::getPrimPos(double t, const tpat_sys_data *sysData) const{
     (void)t;
     double primPos[6] = {0};
-    const tpat_sys_data_cr3bp crSys(*static_cast<const tpat_sys_data_cr3bp *>(sysData));
+    const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(sysData);
     
-    primPos[0] = -1*crSys.getMu();
-    primPos[3] = 1 - crSys.getMu();
+    primPos[0] = -1*crSys->getMu();
+    primPos[3] = 1 - crSys->getMu();
 
     return std::vector<double>(primPos, primPos+6);
 }//==============================================
@@ -107,9 +107,8 @@ std::vector<double> tpat_model_cr3bp::getPrimPos(double t, const tpat_sys_data *
 std::vector<double> tpat_model_cr3bp::getPrimVel(double t, const tpat_sys_data *sysData) const{
     (void)t;
     (void)sysData;
-    double primVel[6] = {0};
     
-    return std::vector<double>(primVel, primVel+6);
+    return std::vector<double>(6, 0);
 }//==============================================
 
 
@@ -129,17 +128,21 @@ void tpat_model_cr3bp::sim_saveIntegratedData(const double* y, double t, tpat_tr
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(traj->getSysData());
 
-    // Compute acceleration (elements 3 - 5)
+    // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
     eomParamStruct paramStruct(crSys);
     simpleEOMs(t, y, dsdt, &paramStruct);
+    
+    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
+    int id = traj->addNode(tpat_node(y, dsdt+3, t));
 
-    // step(state, time, accel, stm) - y(0:5) holds the state, y(6:41) holds the STM
-    tpat_traj_step step(y, t, dsdt+3, y+6);
-    traj->appendStep(step);
+    if(id > 0){
+        double tof = t - traj->getNode(id-1).getEpoch();
+        traj->addSeg(tpat_segment(id-1, id, tof, y+6));
+    }
 
     tpat_traj_cr3bp *cr3bpTraj = static_cast<tpat_traj_cr3bp*>(traj);    
-    cr3bpTraj->setJacobi(-1, getJacobi(y, crSys->getMu()));
+    cr3bpTraj->setJacobiByIx(-1, getJacobi(y, crSys->getMu()));
 }//=====================================================
 
 /**
@@ -185,8 +188,12 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
     corrector.setTol(traj->getTol());
     corrector.setVerbose(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
+
+    // Because we set findEvent to true, this output nodeset should contain
+    // the full (42 or 48 element) final state
+    tpat_nodeset_cr3bp correctedNodes(crSys);
     try{
-        corrector.multShoot(&eventNodeset);
+        corrector.multShoot(&eventNodeset, &correctedNodes);
     }catch(tpat_diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;
@@ -195,16 +202,12 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
         return false;
     }
 
-    // Because we set findEvent to true, this output nodeset should contain
-    // the full (42 or 48 element) final state
-    tpat_nodeset_cr3bp correctedNodes = corrector.getCR3BP_Output();
-
-    std::vector<double> state = correctedNodes.getNode(-1).getPosVelState();
-    std::vector<double> extra = correctedNodes.getNode(-1).getExtraParams();
+    std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
+    std::vector<double> extra = correctedNodes.getNodeByIx(-1).getExtraParams();
     extra.insert(extra.begin(), state.begin(), state.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
-    double eventTime = correctedNodes.getTOF(0) + t0;
+    double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
     sim_saveIntegratedData(&(extra[0]), eventTime, traj);
@@ -227,7 +230,7 @@ bool tpat_model_cr3bp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c) const{
+void tpat_model_cr3bp::multShoot_applyConstraint(tpat_multShoot_data *it, tpat_constraint con, int c) const{
 
     // Let the base class do its thing first
     tpat_model::multShoot_applyConstraint(it, con, c);
@@ -246,21 +249,29 @@ void tpat_model_cr3bp::multShoot_applyConstraint(iterationData *it, tpat_constra
 }//=========================================================
 
 /**
+ *  @brief Perform model-specific initializations on the tpat_multShoot_data object
+ *  @param it pointer to the object to be initialized
+ */
+void tpat_model_cr3bp::multShoot_initIterData(tpat_multShoot_data *it) const{
+    it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp(static_cast<const tpat_sys_data_cr3bp *>(it->sysData)));
+}//====================================================
+
+/**
  *  @brief Compute constraint function and partial derivative values for a Jacobi Constraint
  *
  *  @param it a pointer to the corrector's iteration data structure
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
  */
-void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con, int row0) const{
+void tpat_model_cr3bp::multShoot_targetJC(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    int n = con.getNode();
+    int nodeIx = it->nodeset->getNodeIx(con.getID());
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *> (it->sysData);
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
     double nodeState[6];
-    std::copy(&(it->X[6*n]), &(it->X[6*n])+6, nodeState);
+    std::copy(&(it->X[6*nodeIx]), &(it->X[6*nodeIx])+6, nodeState);
     
     double sr = it->freeVarScale[0];
     double sv = it->freeVarScale[1];    
@@ -289,12 +300,12 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
     it->FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    it->DF[it->totalFree*row0 + 6*n + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
-    it->DF[it->totalFree*row0 + 6*n + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
-    it->DF[it->totalFree*row0 + 6*n + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
-    it->DF[it->totalFree*row0 + 6*n + 3] = -2*vx/sv;   //dFdx_dot
-    it->DF[it->totalFree*row0 + 6*n + 4] = -2*vy/sv;   //dFdy_dot
-    it->DF[it->totalFree*row0 + 6*n + 5] = -2*vz/sv;   //dFdz_dot
+    it->DF[it->totalFree*row0 + 6*nodeIx + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
+    it->DF[it->totalFree*row0 + 6*nodeIx + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
+    it->DF[it->totalFree*row0 + 6*nodeIx + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
+    it->DF[it->totalFree*row0 + 6*nodeIx + 3] = -2*vx/sv;   //dFdx_dot
+    it->DF[it->totalFree*row0 + 6*nodeIx + 4] = -2*vy/sv;   //dFdy_dot
+    it->DF[it->totalFree*row0 + 6*nodeIx + 5] = -2*vz/sv;   //dFdz_dot
 }//=============================================
 
 /**
@@ -303,8 +314,10 @@ void tpat_model_cr3bp::multShoot_targetJC(iterationData* it, tpat_constraint con
  *  @param it a pointer to the corrector's iteration data structure
  *  @param con the constraint being applied
  *  @param row0 the row this constraint begins on
+ *  @throw tpat_exception if the pseudo arclength constraint is not listed as the final constraint
+ *  @throw tpat_exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
  */
-void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constraint con, int row0) const{
+void tpat_model_cr3bp::multShoot_targetPseudoArc(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
 
     if(row0 != it->totalCons-1)
@@ -345,48 +358,32 @@ void tpat_model_cr3bp::multShoot_targetPseudoArc(iterationData *it, tpat_constra
  *  @param it an iteration data object containing all info from the corrections process
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
- *
+ *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
+void tpat_model_cr3bp::multShoot_createOutput(const tpat_multShoot_data *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
 
     // Create a nodeset with the same system data as the input
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *>(it->sysData);
-    tpat_nodeset_cr3bp *nodeset_out = new tpat_nodeset_cr3bp(crSys);
+    tpat_nodeset_cr3bp *nodeset_out = static_cast<tpat_nodeset_cr3bp *>(nodes_out);
 
-    int numNodes = (int)(it->origNodes.size());
-    for(int i = 0; i < numNodes; i++){
+    std::vector<int> newNodeIDs;
+    for(int n = 0; n < it->numNodes; n++){
         double state[6];
-        std::copy(&(it->X[i*6]), &(it->X[i*6])+6, state);
+        std::copy(it->X.begin()+n*6, it->X.begin()+n*6+6, state);
 
         // Reverse scaling
         for(int i = 0; i < 6; i++){
             state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
         }
 
-        tpat_node node(state, NAN);
-        node.setVelCon(nodes_in->getNode(i).getVelCon());
-        node.setConstraints(nodes_in->getNode(i).getConstraints());
+        tpat_node node(state, 0);
+        node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
 
-        if(i + 1 < numNodes){
-            // Get TOF, reverse variable scaling, save to node
-            double tof;
-            if(it->varTime){
-                // Get data
-                tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+i];
-                // Reverse scaling
-                tof /= it->freeVarScale[2];    // Time scaling
-            }else{
-                tof = nodes_in->getTOF(i);
-            }
-            node.setTOF(tof);
-
+        if(n+1 == it->numNodes){
             // Set Jacobi Constant
-            node.setExtraParam(1, getJacobi(state, crSys->getMu()));
-        }else{
-            node.setTOF(NAN);
-            // Set Jacobi Constant
-            node.setExtraParam(1, getJacobi(state, crSys->getMu()));
+            node.setExtraParam(0, getJacobi(state, crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
@@ -395,18 +392,45 @@ tpat_nodeset* tpat_model_cr3bp::multShoot_createOutput(const iterationData *it, 
             information*/
             if(findEvent){
                 // Append the 36 STM elements to the node vector
-                tpat_traj lastSeg = it->allSegs.back();
-                MatrixXRd stm = lastSeg.getSTM(-1);
+                tpat_traj lastSeg = it->propSegs.back();
+                MatrixXRd stm = lastSeg.getSTMByIx(-1);
                 std::vector<double> extraParam(stm.data(), stm.data()+36);
                 
                 node.setExtraParams(extraParam);
             }
         }
 
-        nodeset_out->appendNode(node);
+        // Add the node to the output nodeset and save the new ID
+        newNodeIDs.push_back(nodeset_out->addNode(node));
+        nodeset_out->setJacobi(newNodeIDs.back(), getJacobi(state, crSys->getMu()));
     }
 
-    return nodeset_out;
+    double tof;
+    int prevOriginIx, prevTermIx;
+    for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+        tpat_segment seg = it->nodeset->getSegByIx(s);
+        prevOriginIx = it->nodeset->getNodeIx(seg.getOrigin());
+        prevTermIx = it->nodeset->getNodeIx(seg.getTerminus());
+
+        if(it->varTime){
+            // Get data
+            tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->nodeset->getNumSegs()) : it->X[6*it->numNodes+s];
+            // Reverse scaling
+            tof /= it->freeVarScale[2];     // TOF scaling
+        }else{
+            tof = seg.getTOF();
+        }
+
+        tpat_segment newSeg(newNodeIDs[prevOriginIx], newNodeIDs[prevTermIx], tof);
+        newSeg.setConstraints(seg.getConstraints());
+        newSeg.setVelCon(seg.getVelCon());
+        nodeset_out->addSeg(newSeg);
+    }
+
+    std::vector<tpat_constraint> arcCons = nodes_in->getArcConstraints();
+    for(size_t i = 0; i < arcCons.size(); i++){
+        nodeset_out->addConstraint(arcCons[i]);
+    }
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -520,6 +544,8 @@ int tpat_model_cr3bp::simpleEOMs(double t, const double s[], double sdot[], void
  *  @param tol the tolerance to use; if NAN is input, then a default value of 1e-14 will
  *  be used.
  *  @param pos a 3-element array to store the position of the Lagrange point
+ *  @throws tpat_diverge if the Newton-Raphson process fails to converge on the 
+ *  Lagrange point location
  */
 void tpat_model_cr3bp::getEquilibPt(const tpat_sys_data_cr3bp *sysData, int L, double tol, double pos[3]){
     if(L < 1 || L > 5){
@@ -579,7 +605,7 @@ void tpat_model_cr3bp::getEquilibPt(const tpat_sys_data_cr3bp *sysData, int L, d
     }
 
     if(L < 4 && std::abs(gamma - gamma_prev) > tol){
-        printErr("Could not converge on L%d\n", L);
+        throw tpat_diverge("tpat_model_cr3bp::getEquilibPt: Could not converge on Lagrange point.");
     }
 }//========================================
 

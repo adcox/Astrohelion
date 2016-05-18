@@ -1460,140 +1460,109 @@ int tpat_model_bcr4bpr::fullEOMs(double t, const double s[], double sdot[], void
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
     getPrimaryPos(t, sysData, primPosData);
-    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
-
-    // Put the position states into a 3-element column vector
-    double r_data[3] = {0};
-    std::copy(s, s+3, r_data);
-    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
-
-    // Put velocity states into a 3-element column vector
-    double v_data[3] = {0};
-    std::copy(s+3, s+6, v_data);
-    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
 
     // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1, r_p2, r_p3;
-    r_p1.noalias() = r - primPos.row(0).transpose();
-    r_p2.noalias() = r - primPos.row(1).transpose();
-    r_p3.noalias() = r - primPos.row(2).transpose();
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
+    double r_p1[] = {s[0] - primPosData[0], s[1] - primPosData[1], s[2] - primPosData[2]};
+    double r_p2[] = {s[0] - primPosData[3], s[1] - primPosData[4], s[2] - primPosData[5]};
+    double r_p3[] = {s[0] - primPosData[6], s[1] - primPosData[7], s[2] - primPosData[8]};
+    double d1 = std::sqrt(r_p1[0]*r_p1[0] + r_p1[1]*r_p1[1] + r_p1[2]*r_p1[2]);
+    double d2 = std::sqrt(r_p2[0]*r_p2[0] + r_p2[1]*r_p2[1] + r_p2[2]*r_p2[2]);
+    double d3 = std::sqrt(r_p3[0]*r_p3[0] + r_p3[1]*r_p3[1] + r_p3[2]*r_p3[2]);
     
     // Save constants to short variables for readability
     double k = sysData->getK();
     double mu = sysData->getMu();
     double nu = sysData->getNu();
 
-    // Create C-matrix
-    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
-    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
+    // Velocity
+    std::copy(s+3, s+6, sdot);
 
-    // truncated position vector used in EOMs
-    double r_trunc_data[3] = {0};
-    std::copy(s, s+2, r_trunc_data);
-    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
-
-    // Compute acceleration using matrix math
-    Eigen::Vector3d accel;
-    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
-        nu*r_p3/pow(d3, 3);
-    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
+    // Compute acceleration
+    sdot[3] = 2*k*s[4] + k*k*(s[0] + 1/k - mu) - (1/k - mu)*(s[0] - primPosData[0])/pow(d1,3) -
+        (mu-nu)*(s[0] - primPosData[3])/pow(d2,3) - nu*(s[0] - primPosData[6])/pow(d3,3);
+    sdot[4] = -2*k*s[3] + k*k*s[1] - (1/k - mu)*(s[1] - primPosData[1])/pow(d1,3) -
+        (mu-nu)*(s[1] - primPosData[4])/pow(d2,3) - nu*(s[1] - primPosData[7])/pow(d3,3);
+    sdot[5] = -1*(1/k - mu)*(s[2] - primPosData[2])/pow(d1,3) -
+        (mu-nu)*(s[2] - primPosData[5])/pow(d2,3) - nu*(s[2] - primPosData[8])/pow(d3,3);
 
     // Compute psuedo-potential
-    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(0)*r_p1(0)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*r_p2(0)*r_p2(0)/pow(d2,5)) - nu*(1/pow(d3,3) -
-                3*r_p3(0)*r_p3(0)/pow(d3,5));
-    double dxdy = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) +
-            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
-            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);
-    double dxdz = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
-            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);
-    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(1)*r_p1(1)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*r_p2(1)*r_p2(1)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*r_p3(1)*r_p3(1)/pow(d3,5));
-    double dydz = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
-            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);
-    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*r_p1(2)*r_p1(2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*r_p2(2)*r_p2(2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*r_p3(2)*r_p3(2)/pow(d3,5));
+    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1[0]*r_p1[0]/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2[0]*r_p2[0]/pow(d2,5)) - nu*(1/pow(d3,3) -
+                3*r_p3[0]*r_p3[0]/pow(d3,5));
+    double dxdy = (1/k - mu)*3*r_p1[0]*r_p1[1]/pow(d1,5) +
+            (mu - nu)*3*r_p2[0]*r_p2[1]/pow(d2,5) +
+            nu*3*r_p3[0]*r_p3[1]/pow(d3,5);
+    double dxdz = (1/k - mu)*3*r_p1[0]*r_p1[2]/pow(d1,5) +
+            (mu - nu)*3*r_p2[0]*r_p2[2]/pow(d2,5) +
+            nu*3*r_p3[0]*r_p3[2]/pow(d3,5);
+    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1[1]*r_p1[1]/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2[1]*r_p2[1]/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*r_p3[1]*r_p3[1]/pow(d3,5));
+    double dydz = (1/k - mu)*3*r_p1[1]*r_p1[2]/pow(d1,5) +
+            (mu - nu)*3*r_p2[1]*r_p2[2]/pow(d2,5) +
+            nu*3*r_p3[1]*r_p3[2]/pow(d3,5);
+    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*r_p1[2]*r_p1[2]/pow(d1,5)) -
+            (mu-nu)*(1/pow(d2,3) - 3*r_p2[2]*r_p2[2]/pow(d2,5)) - nu*(1/pow(d3,3) -
+            3*r_p3[2]*r_p3[2]/pow(d3,5));
 
-    // Create A matrix for STM derivative
-    double aData[] = {  0, 0, 0, 1, 0, 0,
-                        0, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1, 
-                        dxdx, dxdy, dxdz, c[0], c[1], c[2],
-                        dxdy, dydy, dydz, c[3], c[4], c[5],
-                        dxdz, dydz, dzdz, c[6], c[7], c[8]};
-    MatrixXRd A = Eigen::Map<MatrixXRd>(aData, 6, 6);
-
-    // Compute the STM derivative
-    double phiData[36];
-    std::copy(s+6, s+42, phiData);
-    MatrixXRd Phi = Eigen::Map<MatrixXRd>(phiData, 6, 6);
-
-    MatrixXRd PhiDot(6,6);
-    PhiDot.noalias() = A*Phi;
+    /*  Compute the STM Derivative 
+     *  PhiDot = A * Phi
+     *  s[6] through s[42] represent the STM, Phi, in row-major order 
+     *  sdot [6] through [42] is thus the derivative of the STM
+     */
+    std::copy(s+24, s+42, sdot+6); // First three rows are the last three rows of Phi
+    for(int i = 0; i < 6; i++){
+        sdot[24+i] = dxdx*s[6+i] + dxdy*s[12+i] + dxdz*s[18+i] + 2*k*s[30+i];
+        sdot[30+i] = dxdy*s[6+i] + dydy*s[12+i] + dydz*s[18+i] - 2*k*s[24+i];
+        sdot[36+i] = dxdz*s[6+i] + dydz*s[12+i] + dzdz*s[18+i];
+    }   // Last three rows are a combo of A and Phi
+    
 
     // Compute partials of state w.r.t. primary positions; dont' compute partials
     // for P1 because its velocity is zero in the rotating frame
     double dfdr2[18] = {0};   double dfdr3[18] = {0};
 
-    dfdr2[9] = -1/pow(d2,3) + 3*r_p2(0)*r_p2(0)/pow(d2,5);        //dxdx2
-    dfdr2[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
-    dfdr2[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
-    dfdr2[13] = -1/pow(d2,3) + 3*r_p2(1)*r_p2(1)/pow(d2,5);       //dydy2
-    dfdr2[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
-    dfdr2[17] = -1/pow(d2,3) + 3*r_p2(2)*r_p2(2)/pow(d2,5);       //dzdz2
+    dfdr2[9] = -1*(mu-nu) * (-1/pow(d2,3) + 3*r_p2[0]*r_p2[0]/pow(d2,5));       //dxdx2
+    dfdr2[10] = -1*(mu-nu) * (3*r_p2[0]*r_p2[1]/pow(d2,5));                     //dxdy2
+    dfdr2[11] = -1*(mu-nu) * (3*r_p2[0]*r_p2[2]/pow(d2,5));                     //dxdz2
+    dfdr2[13] = -1*(mu-nu) * (-1/pow(d2,3) + 3*r_p2[1]*r_p2[1]/pow(d2,5));      //dydy2
+    dfdr2[14] = -1*(mu-nu) * (3*r_p2[1]*r_p2[2]/pow(d2,5));                     //dydz2
+    dfdr2[17] = -1*(mu-nu) * (-1/pow(d2,3) + 3*r_p2[2]*r_p2[2]/pow(d2,5));      //dzdz2
 
     dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
     dfdr2[15] = dfdr2[11];
     dfdr2[16] = dfdr2[14];
 
-    dfdr3[9] = -1/pow(d3,3) + 3*r_p3(0)*r_p3(0)/pow(d3,5);        //dxdx3
-    dfdr3[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
-    dfdr3[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
-    dfdr3[13] = -1/pow(d3,3) + 3*r_p3(1)*r_p3(1)/pow(d3,5);       //dydy3
-    dfdr3[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
-    dfdr3[17] = -1/pow(d3,3) + 3*r_p3(2)*r_p3(2)/pow(d3,5);       //dzdz3
+    dfdr3[9] = -nu * (-1/pow(d3,3) + 3*r_p3[0]*r_p3[0]/pow(d3,5));              //dxdx3
+    dfdr3[10] = -nu * (3*r_p3[0]*r_p3[1]/pow(d3,5));                            //dxdy3
+    dfdr3[11] = -nu * (3*r_p3[0]*r_p3[2]/pow(d3,5));                            //dxdz3
+    dfdr3[13] = -nu * (-1/pow(d3,3) + 3*r_p3[1]*r_p3[1]/pow(d3,5));             //dydy3
+    dfdr3[14] = -nu * (3*r_p3[1]*r_p3[2]/pow(d3,5));                            //dydz3
+    dfdr3[17] = -nu * (-1/pow(d3,3) + 3*r_p3[2]*r_p3[2]/pow(d3,5));             //dzdz3
 
     dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
     dfdr3[15] = dfdr3[11];
     dfdr3[16] = dfdr3[14];
-
-    MatrixXRd DfDr2 = Eigen::Map<MatrixXRd>(dfdr2, 6, 3);
-    MatrixXRd DfDr3 = Eigen::Map<MatrixXRd>(dfdr3, 6, 3);
     
-    // Scale by constants
-    DfDr2 *= -1*(mu-nu);
-    DfDr3 *= -1*nu;
-    
-    // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
-    double dqdT_data[6] = {0};
-    std::copy(s+42,s+48, dqdT_data);
-    Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(dqdT_data, 6, 1);
-
-    // Get the velocity of the primaries
+    // Compute time derivative of dqdT
+    std::copy(s+45, s+48, sdot+42);     // First three rows are the same as the last three rows of dqdT
     double primVelData[9] = {0};
     getPrimaryVel(t, sysData, primVelData);
-    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(primVelData, 3, 3);
 
-    // Compute derivative of dqdT
-    Eigen::VectorXd dot_dqdT;
-    dot_dqdT.noalias() = A*dqdT + DfDr2*(primVel.row(1).transpose()) + DfDr3*(primVel.row(2).transpose());
-
-    // Save derivatives to output vector
-    double *accelPtr = accel.data();
-    double *phiDotPtr = PhiDot.data();
-    double *dqdtDotPtr = dot_dqdT.data();
-
-    std::copy(s+3, s+6, sdot);
-    std::copy(accelPtr, accelPtr+3, sdot+3);
-    std::copy(phiDotPtr, phiDotPtr+36, sdot+6);
-    std::copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
+    // For the final three rows, first compute the product of A*dqdT
+    sdot[45] = dxdx*s[42] + dxdy*s[43] + dxdz*s[44] + 2*k*s[46];
+    sdot[46] = dxdy*s[42] + dydy*s[43] + dydz*s[44] - 2*k*s[45];
+    sdot[47] = dxdz*s[42] + dydz*s[43] + dzdz*s[44];
+    
+    // Next, add product of df/dr_2 and v_2
+    sdot[45] += dfdr2[9]*primVelData[3] + dfdr2[10]*primVelData[4] + dfdr2[11]*primVelData[5];
+    sdot[46] += dfdr2[12]*primVelData[3] + dfdr2[13]*primVelData[4] + dfdr2[14]*primVelData[5];
+    sdot[47] += dfdr2[15]*primVelData[3] + dfdr2[16]*primVelData[4] + dfdr2[17]*primVelData[5];
+    
+    // Finally, add product of df/dr_3 and v_3
+    sdot[45] += dfdr3[9]*primVelData[6] + dfdr3[10]*primVelData[7] + dfdr3[11]*primVelData[8];
+    sdot[46] += dfdr3[12]*primVelData[6] + dfdr3[13]*primVelData[7] + dfdr3[14]*primVelData[8];
+    sdot[47] += dfdr3[15]*primVelData[6] + dfdr3[16]*primVelData[7] + dfdr3[17]*primVelData[8];
 
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
@@ -1608,59 +1577,37 @@ int tpat_model_bcr4bpr::fullEOMs(double t, const double s[], double sdot[], void
  */
 int tpat_model_bcr4bpr::simpleEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
-    // tpat_sys_data_bcr4bpr *sysData = static_cast<tpat_sys_data_bcr4bpr *>(params);
     eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
     const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
     getPrimaryPos(t, sysData, primPosData);
-    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
-
-    // Put the position states into a 3-element column vector
-    double r_data[3] = {0};
-    std::copy(s, s+3, r_data);
-    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
-
-    // Put velocity states into a 3-element column vector
-    double v_data[3] = {0};
-    std::copy(s+3, s+6, v_data);
-    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
 
     // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1, r_p2, r_p3;
-    r_p1.noalias() = r - primPos.row(0).transpose();
-    r_p2.noalias() = r - primPos.row(1).transpose();
-    r_p3.noalias() = r - primPos.row(2).transpose();
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
+    double r_p1[] = {s[0] - primPosData[0], s[1] - primPosData[1], s[2] - primPosData[2]};
+    double r_p2[] = {s[0] - primPosData[3], s[1] - primPosData[4], s[2] - primPosData[5]};
+    double r_p3[] = {s[0] - primPosData[6], s[1] - primPosData[7], s[2] - primPosData[8]};
+    double d1 = std::sqrt(r_p1[0]*r_p1[0] + r_p1[1]*r_p1[1] + r_p1[2]*r_p1[2]);
+    double d2 = std::sqrt(r_p2[0]*r_p2[0] + r_p2[1]*r_p2[1] + r_p2[2]*r_p2[2]);
+    double d3 = std::sqrt(r_p3[0]*r_p3[0] + r_p3[1]*r_p3[1] + r_p3[2]*r_p3[2]);
     
     // Save constants to short variables for readability
     double k = sysData->getK();
     double mu = sysData->getMu();
     double nu = sysData->getNu();
 
-    // Create C-matrix
-    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
-    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
-
-    // truncated position vector used in EOMs
-    double r_trunc_data[3] = {0};
-    std::copy(s, s+2, r_trunc_data);
-    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
-
-    // Compute acceleration using matrix math
-    Eigen::Vector3d accel;
-    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
-        nu*r_p3/pow(d3, 3);
-    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
-
-    // Save derivatives to output vector
-    double *accelPtr = accel.data();
-
+    // Velocity
     std::copy(s+3, s+6, sdot);
-    std::copy(accelPtr, accelPtr+3, sdot+3);
+
+    // Compute acceleration
+    sdot[3] = 2*k*s[4] + k*k*(s[0] + 1/k - mu) - (1/k - mu)*(s[0] - primPosData[0])/pow(d1,3) -
+        (mu-nu)*(s[0] - primPosData[3])/pow(d2,3) - nu*(s[0] - primPosData[6])/pow(d3,3);
+    sdot[4] = -2*k*s[3] + k*k*s[1] - (1/k - mu)*(s[1] - primPosData[1])/pow(d1,3) -
+        (mu-nu)*(s[1] - primPosData[4])/pow(d2,3) - nu*(s[1] - primPosData[7])/pow(d3,3);
+    sdot[5] = -1*(1/k - mu)*(s[2] - primPosData[2])/pow(d1,3) -
+        (mu-nu)*(s[2] - primPosData[5])/pow(d2,3) - nu*(s[2] - primPosData[8])/pow(d3,3);
+
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
 

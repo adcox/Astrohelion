@@ -454,50 +454,63 @@ int tpat_model_cr3bp::fullEOMs(double t, const double s[], double sdot[], void *
     
     double mu = sysData->getMu();
 
-    double x = s[0];    double y = s[1];    double z = s[2];
-    double xdot = s[3]; double ydot = s[4];
+    // double x = s[0];    double y = s[1];    double z = s[2];
+    // double xdot = s[3]; double ydot = s[4];
 
     // compute distance to primaries
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
+    double d = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
+    double r = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
 
-    sdot[0] = s[3];
-    sdot[1] = s[4];
-    sdot[2] = s[5];
+    // Position derivatives = velocity
+    std::copy(s+3, s+6, sdot);
 
-    sdot[3] =   2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3);
-    sdot[4] =  -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3);
-    sdot[5] =  -(1-mu)*z/pow(d,3) - mu*z/pow(r,3); 
+    // Velocity derivatives = acceleraiton
+    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3);
+    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3);
+    sdot[5] =  -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3); 
 
     /*
      * Next step, compute STM
      */
     
-    // Create A Matrix
-    double ddots[6];
-    getUDDots(mu, x, y, z, ddots);
+    // // Create A Matrix
+    double ddots[6];    // {dxdx, dydy, dzdz, dxdy, dxdz, dydz}
+    getUDDots(mu, s[0], s[1], s[2], ddots);
 
-    double a_data[] = { 0, 0, 0, 1, 0, 0,
-                        0, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1,
-                        ddots[0], ddots[3], ddots[4], 0, 2, 0,
-                        ddots[3], ddots[1], ddots[5], -2, 0, 0,
-                        ddots[4], ddots[5], ddots[2], 0, 0, 0};
-    MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
+    // double a_data[] = { 0, 0, 0, 1, 0, 0,
+    //                     0, 0, 0, 0, 1, 0,
+    //                     0, 0, 0, 0, 0, 1,
+    //                     ddots[0], ddots[3], ddots[4], 0, 2, 0,
+    //                     ddots[3], ddots[1], ddots[5], -2, 0, 0,
+    //                     ddots[4], ddots[5], ddots[2], 0, 0, 0};
+    // MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
 
-    // Copy the STM states into a sub-array
-    double stmElements[36];
-    std::copy(s+6, s+42, stmElements);
+    // // Copy the STM states into a sub-array
+    // double stmElements[36];
+    // std::copy(s+6, s+42, stmElements);
 
-    // Turn sub-array into matrix object for math stuffs
-    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
+    // // Turn sub-array into matrix object for math stuffs
+    // MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
     
-    // Compute derivative of STM
-    MatrixXRd phiDot = A*phi;
+    // // Compute derivative of STM
+    // MatrixXRd phiDot = A*phi;
 
-    // Copy the elements of phiDot into the derivative array
-    double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData+36, sdot+6);
+
+    /*  Compute the STM Derivative 
+     *  PhiDot = A * Phi
+     *  s[6] through s[42] represent the STM, Phi, in row-major order 
+     *  sdot [6] through [42] is thus the derivative of the STM
+     */
+    std::copy(s+24, s+42, sdot+6); // First three rows are the last three rows of Phi
+    for(int i = 0; i < 6; i++){
+        sdot[24+i] = ddots[0]*s[6+i] + ddots[3]*s[12+i] + ddots[4]*s[18+i] + 2*s[30+i];
+        sdot[30+i] = ddots[3]*s[6+i] + ddots[1]*s[12+i] + ddots[5]*s[18+i] - 2*s[24+i];
+        sdot[36+i] = ddots[4]*s[6+i] + ddots[5]*s[12+i] + ddots[2]*s[18+i];
+    }   // Last three rows are a combo of A and Phi
+
+    // // Copy the elements of phiDot into the derivative array
+    // double *phiDotData = phiDot.data();
+    // std::copy(phiDotData, phiDotData+36, sdot+6);
 
     return GSL_SUCCESS;
 }//===============================================================

@@ -474,7 +474,8 @@ void tpat_model_bcr4bpr::multShoot_targetExContCons(tpat_multShoot_data *it, tpa
         if(it->varTime){
             ms_varMap_obj T0_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
             ms_varMap_obj Tf_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
-            ms_varMap_obj tof_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF, con.getID());
+            ms_varMap_obj tof_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+                it->equalArcTime ? tpat_linkable::INVALID_ID : con.getID());
             
             double T0 = it->X[T0_var.row0]/it->freeVarScale[3];
             double tof = it->equalArcTime ? it->X[tof_var.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var.row0];

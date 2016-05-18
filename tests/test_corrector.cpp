@@ -2,7 +2,9 @@
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_multShoot_data.hpp"
+#include "tpat_nodeset_bcr4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
+#include "tpat_sys_data_bcr4bpr.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
@@ -15,7 +17,7 @@ static const char* PASS = BOLDGREEN "PASS" RESET;
 static const char* FAIL = BOLDRED "FAIL" RESET;
 
 void correctEMRes(){
-	printColor(BOLDBLACK, "Correct EM 2:5 Resonant Orbit:\n");
+	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit:\n");
 	tpat_sys_data_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -61,7 +63,7 @@ void correctEMRes(){
 }//====================================================
 
 void correctEMRes_EqualArcTime(){
-	printColor(BOLDBLACK, "Correct EM 2:5 Resonant Orbit (Equal Arc Time):\n");
+	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Equal Arc Time):\n");
 	double IC_halo[] = {0.9900, 0, -0.0203, 0, -1.0674, 0};
 	double tof_halo = 1.8632;
 	tpat_sys_data_cr3bp sys("earth", "moon");
@@ -98,7 +100,7 @@ void correctEMRes_EqualArcTime(){
 }//====================================================
 
 void correctEMRes_revTime(){
-	printColor(BOLDBLACK, "Correct EM 2:5 Resonant Orbit (Reverse Time):\n");
+	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time):\n");
 	tpat_sys_data_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -142,7 +144,7 @@ void correctEMRes_revTime(){
 }//====================================================
 
 void correctEMRes_doubleSource(){
-	printColor(BOLDBLACK, "Correct EM 2:5 Resonant Orbit (Reverse Time):\n");
+	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time):\n");
 	tpat_sys_data_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -192,7 +194,7 @@ void correctEMRes_doubleSource(){
 }//====================================================
 
 void correctEMRes_doubleSource_irregular(){
-	printColor(BOLDBLACK, "Correct EM 2:5 Resonant Orbit (Reverse Time, irrgularly spaced nodes):\n");
+	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time, irrgularly spaced nodes):\n");
 	tpat_sys_data_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -250,6 +252,169 @@ void correctEMRes_doubleSource_irregular(){
 	}
 }//====================================================
 
+void correctSEMHalo(){
+	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo:\n");
+	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
+	double tof = 310;
+
+	tpat_nodeset_bcr4bp nodeset(haloIC, &sys, 0, tof, 7);
+	nodeset.saveToMat("bc4bp_halo_raw.mat");
+	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
+	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+
+	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
+	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
+	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+
+	nodeset.addConstraint(perpCross);
+	nodeset.addConstraint(xzPlaneCon0);
+	nodeset.addConstraint(xzPlaneConF);
+
+	tpat_correction_engine corrector;
+	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	
+	try{
+		// corrector.setVerbose(true);
+		corrector.multShoot(&nodeset, &correctedNodeset);
+		cout << "Successful correction: " << PASS << endl;
+	}catch(tpat_diverge &e){
+		cout << "Successful correction: " << FAIL << endl;
+	}catch(tpat_exception &e){
+		cout << "Successful correction: " << FAIL << endl;
+		printErr("%s\n", e.what());
+	}
+
+	correctedNodeset.saveToMat("bc4bp_halo.mat");
+}//====================================================
+
+void correctSEMHalo_revTime(){
+	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Reverse Time):\n");
+	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
+	double tof = -310;
+
+	tpat_nodeset_bcr4bp nodeset(haloIC, &sys, 0, tof, 7);
+	nodeset.saveToMat("bc4bp_halo_raw.mat");
+
+	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
+	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+
+	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
+	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
+	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+
+	nodeset.addConstraint(perpCross);
+	nodeset.addConstraint(xzPlaneCon0);
+	nodeset.addConstraint(xzPlaneConF);
+
+	tpat_correction_engine corrector;
+	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	
+	try{
+		// corrector.setVerbose(true);
+		corrector.multShoot(&nodeset, &correctedNodeset);
+		cout << "Successful correction: " << PASS << endl;
+	}catch(tpat_diverge &e){
+		cout << "Successful correction: " << FAIL << endl;
+	}catch(tpat_exception &e){
+		cout << "Successful correction: " << FAIL << endl;
+		printErr("%s\n", e.what());
+	}
+	correctedNodeset.saveToMat("bc4bp_halo.mat");
+}//====================================================
+
+void correctSEMHalo_doubleSource(){
+	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Double Source):\n");
+	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
+	double tof = 310;
+
+	tpat_nodeset_bcr4bp posTimeArc(haloIC, &sys, 0, tof/2, 4);
+	tpat_nodeset_bcr4bp revTimeArc(haloIC, &sys, 0, -tof/2, 4);
+
+	tpat_nodeset_bcr4bp nodeset = posTimeArc;
+	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
+
+	// nodeset.print();
+	// nodeset.printInChrono();
+
+	// nodeset.saveToMat("bc4bp_halo_raw.mat");
+	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
+	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+
+	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
+	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
+	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+
+	nodeset.addConstraint(perpCross);
+	nodeset.addConstraint(xzPlaneCon0);
+	nodeset.addConstraint(xzPlaneConF);
+
+	tpat_correction_engine corrector;
+	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	
+	try{
+		// corrector.setVerbose(true);
+		corrector.multShoot(&nodeset, &correctedNodeset);
+		cout << "Successful correction: " << PASS << endl;
+	}catch(tpat_diverge &e){
+		cout << "Successful correction: " << FAIL << endl;
+	}catch(tpat_exception &e){
+		cout << "Successful correction: " << FAIL << endl;
+		printErr("%s\n", e.what());
+	}
+
+	// correctedNodeset.saveToMat("bc4bp_halo.mat");
+}//====================================================
+
+void correctSEMHalo_doubleSource_irregular(){
+	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Double Source, Irregular Nodes):\n");
+	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
+	double tof = 310;
+
+	tpat_nodeset_bcr4bp posTimeArc(haloIC, &sys, 0, tof/2, 4);
+	tpat_nodeset_bcr4bp revTimeArc(haloIC, &sys, 0, -tof/2, 4);
+
+	tpat_nodeset_bcr4bp nodeset = posTimeArc;
+	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
+
+	nodeset.deleteNode(1);
+	nodeset.deleteNode(5);
+	// nodeset.print();
+	// nodeset.printInChrono();
+
+	// nodeset.saveToMat("bc4bp_halo_raw.mat");
+	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
+	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+
+	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
+	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
+	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+
+	nodeset.addConstraint(perpCross);
+	nodeset.addConstraint(xzPlaneCon0);
+	nodeset.addConstraint(xzPlaneConF);
+
+	tpat_correction_engine corrector;
+	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	
+	try{
+		// corrector.setVerbose(true);
+		corrector.setTol(5e-12);
+		corrector.multShoot(&nodeset, &correctedNodeset);
+		cout << "Successful correction: " << PASS << endl;
+	}catch(tpat_diverge &e){
+		cout << "Successful correction: " << FAIL << endl;
+	}catch(tpat_exception &e){
+		cout << "Successful correction: " << FAIL << endl;
+		printErr("%s\n", e.what());
+	}
+
+	// correctedNodeset.saveToMat("bc4bp_halo.mat");
+}//====================================================
+
 int main(void){
 	correctEMRes();
 	correctEMRes_EqualArcTime();	
@@ -257,5 +422,9 @@ int main(void){
 	correctEMRes_doubleSource();
 	correctEMRes_doubleSource_irregular();
 	
+	correctSEMHalo();
+	correctSEMHalo_revTime();
+	correctSEMHalo_doubleSource();
+	correctSEMHalo_doubleSource_irregular();
 	return EXIT_SUCCESS;
 }

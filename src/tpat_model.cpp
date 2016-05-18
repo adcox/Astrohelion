@@ -311,6 +311,11 @@ void tpat_model::multShoot_getSimICs(const tpat_multShoot_data *it, const tpat_n
 		*tof /= it->freeVarScale[2]; 	// Time scaling
 	}
 	*t0 = 0;
+
+	// printf("  ID = %02d\n", s);
+	// printf("  Origin Node = %02d\n", it->nodeset->getSeg(s).getOrigin());
+	// printf("  tof = %.4f\n", *tof);
+	// printf("  t0 = %.4f\n", *t0);
 }//============================================================
 
 /**
@@ -421,6 +426,7 @@ void tpat_model::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constr
 
 	// Get index of segment
 	int segIx = it->nodeset->getSegIx(segID);
+	printf("Trageting position/velocity continuity at segment: ID = %d, ix = %d\n", segID, segIx);
 	std::vector<double> lastState = it->propSegs[segIx].getStateByIx(-1);
 	std::vector<double> lastAccel = it->propSegs[segIx].getAccelByIx(-1);
 	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);

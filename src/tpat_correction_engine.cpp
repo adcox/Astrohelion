@@ -461,16 +461,19 @@ tpat_multShoot_data tpat_correction_engine::multShoot(tpat_multShoot_data it, tp
 		it.sysData->getModel()->multShoot_initIterData(&it);
 
 		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
+			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
 			double ic[] = {0,0,0,0,0,0};
-			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, it.nodeset->getSeg(s).getID(),
+			it.sysData->getModel()->multShoot_getSimICs(&it, it.nodeset, it.nodeset->getSegByIx(s).getID(),
 				ic, &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
 		}
 
+		// waitForUser();
+		
 		// Compute Delta-Vs between node segments
 		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
 			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);

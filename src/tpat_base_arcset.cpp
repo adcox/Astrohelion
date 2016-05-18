@@ -581,12 +581,18 @@ void tpat_base_arcset::deleteSeg(int id){
  *  @param id the ID of a node
  *  @return the acceleration vector
  *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws tpat_exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> tpat_base_arcset::getAccel(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
 		throw tpat_exception("tpat_base_arcset::getAccel: Node ID out of range");
 
-	return nodes[nodeIDMap[id]].getAccel();
+	int ix = nodeIDMap[id];
+	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+		return nodes[ix].getAccel();
+	}else{
+		throw tpat_exception("tpat_base_arcset::getAccel: Could not locate the node with the specified ID");
+	}
 }//====================================================
 
 /**
@@ -724,12 +730,18 @@ std::vector<double> tpat_base_arcset::getCoord(int ix) const{
  *  @param id the ID of a node
  *  @return the epoch
  *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws tpat_exception if the node with the specified ID is not located in the nodeIDMap
  */
 double tpat_base_arcset::getEpoch(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
 		throw tpat_exception("tpat_base_arcset::getEpoch: Node ID out of range");
 
-	return nodes[nodeIDMap[id]].getEpoch();
+	int ix = nodeIDMap[id];
+	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+		return nodes[ix].getEpoch();
+	}else{
+		throw tpat_exception("tpat_base_arcset::getEpoch: Could not locate the node with the specified ID");
+	}
 }//====================================================
 
 /**
@@ -865,6 +877,7 @@ tpat_node tpat_base_arcset::getNodeByIx(int ix) const{
  * 
  *  @param id node ID
  *  @return the index of the node with the specified ID within the storage vector
+ *  @throws tpat_exception if <tt>id</tt> is out of bounds
  */
 int tpat_base_arcset::getNodeIx(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
@@ -916,6 +929,7 @@ tpat_segment tpat_base_arcset::getSegByIx(int ix) const{
  * 
  *  @param id node ID
  *  @return the index of the node with the specified ID within the storage vector
+ *  @throws tpat_exception if <tt>id</tt> is out of bounds
  */
 int tpat_base_arcset::getSegIx(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
@@ -931,12 +945,18 @@ int tpat_base_arcset::getSegIx(int id) const{
  *  @param id the ID of a node
  *  @return the state vector
  *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws tpat_exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> tpat_base_arcset::getState(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
 		throw tpat_exception("tpat_base_arcset::getState: Node ID out of range");
 
-	return nodes[nodeIDMap[id]].getState();
+	int ix = nodeIDMap[id];
+	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+		return nodes[ix].getState();
+	}else{
+		throw tpat_exception("tpat_base_arcset::getState: Could not locate the node with the specified ID");
+	}
 }//====================================================
 
 /**
@@ -966,12 +986,18 @@ std::vector<double> tpat_base_arcset::getStateByIx(int ix) const{
  *  @param id the ID of a segment
  *  @return the STM
  *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws tpat_exception if the segment with the specified ID is not located in the segIDMap
  */
 MatrixXRd tpat_base_arcset::getSTM(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
 		throw tpat_exception("tpat_base_arcset::getSTM: Node ID out of range");
 
-	return segs[segIDMap[id]].getSTM();
+	int ix = segIDMap[id];
+	if(ix != tpat_linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+		return segs[ix].getSTM();
+	}else{
+		throw tpat_exception("tpat_base_arcset::getSTM: Could not locate the segment with the specified ID");
+	}
 }//====================================================
 
 /**
@@ -1005,12 +1031,18 @@ const tpat_sys_data* tpat_base_arcset::getSysData() const { return sysData; }
  *  @param id the ID of a segment
  *  @return the time-of-flight
  *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws tpat_exception if the segment with the specified ID is not located in the segIDMap
  */
 double tpat_base_arcset::getTOF(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
 		throw tpat_exception("tpat_base_arcset::getTOF: Segment ID out of range");
 
-	return segs[segIDMap[id]].getTOF();
+	int ix = segIDMap[id];
+	if(ix != tpat_linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+		return segs[ix].getTOF();
+	}else{
+		throw tpat_exception("tpat_base_arcset::getTOF: Could not locate the segment with the specified ID");
+	}
 }//====================================================
 /**
  *	@brief Get the time-of-flight for a specific segment

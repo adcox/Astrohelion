@@ -145,7 +145,8 @@ void tryDeleteSeg(){
 	int sID = set.addSeg(s);
 	set.deleteSeg(sID);
 	
-	std::cout << "Delete segment: " << (set.getNumSegs() == 0 && set.getNode(n1ID).getLink(0) == ivID && set.getNode(n2ID).getLink(0) == ivID ? PASS : FAIL) << std::endl;
+	std::cout << "Delete segment: " << (set.getNumSegs() == 0 &&
+		set.getNode(n1ID).getLink(0) == ivID && set.getNode(n2ID).getLink(0) == ivID ? PASS : FAIL) << std::endl;
 }//==================================================
 
 /**
@@ -201,6 +202,8 @@ bool tryDeleteLastNode(){
  *  "heals" itself properly
  */
 void tryDeleteMiddleNode(){
+	int invID = tpat_linkable::INVALID_ID;
+
 	tpat_nodeset set(&sys);
 	set.addNode(tpat_node(state1, 0));
 	set.addNode(tpat_node(state2, 1.1));
@@ -225,6 +228,14 @@ void tryDeleteMiddleNode(){
 		printf("  %s\n", e.what());
 	}
 
+	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
+		set.getNodeIx(1) == invID && set.getNodeIx(2) == 1 &&
+		set.getNodeIx(3) == 2 && set.getNodeIx(4) == 3 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
+		set.getSegIx(1) == invID && set.getSegIx(2) == 0 &&
+		set.getSegIx(3) == 1 ? PASS : FAIL) << std::endl;
+
 	std::cout << "  Delete another middle node: ";
 	try{
 		set.deleteNode(2);
@@ -238,6 +249,13 @@ void tryDeleteMiddleNode(){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
+	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
+		set.getNodeIx(1) == invID && set.getNodeIx(2) == invID &&
+		set.getNodeIx(3) == 1 && set.getNodeIx(4) == 2 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
+		set.getSegIx(1) == invID && set.getSegIx(2) == invID &&
+		set.getSegIx(3) == 0 && set.getSegIx(4) == invID && set.getSegIx(5) == 1 ? PASS : FAIL) << std::endl;
 }//==================================================
 
 /**
@@ -245,6 +263,7 @@ void tryDeleteMiddleNode(){
  *  progresses linearly in reverse time
  */
 void tryDeleteMiddleNode_revTime(){
+	int invID = tpat_linkable::INVALID_ID;
 	tpat_nodeset set(&sys);
 	set.addNode(tpat_node(state1, 0));
 	set.addNode(tpat_node(state2, -1.1));
@@ -270,6 +289,14 @@ void tryDeleteMiddleNode_revTime(){
 		printf("  %s\n", e.what());
 	}
 
+	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
+		set.getNodeIx(1) == invID && set.getNodeIx(2) == 1 &&
+		set.getNodeIx(3) == 2 && set.getNodeIx(4) == 3 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
+		set.getSegIx(1) == invID && set.getSegIx(2) == 0 &&
+		set.getSegIx(3) == 1 ? PASS : FAIL) << std::endl;
+
 	std::cout << "  Delete another middle node: ";
 	try{
 		set.deleteNode(2);
@@ -284,6 +311,14 @@ void tryDeleteMiddleNode_revTime(){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
+
+	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
+		set.getNodeIx(1) == invID && set.getNodeIx(2) == invID &&
+		set.getNodeIx(3) == 1 && set.getNodeIx(4) == 2 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
+		set.getSegIx(1) == invID && set.getSegIx(2) == invID &&
+		set.getSegIx(3) == 0 && set.getSegIx(4) == invID && set.getSegIx(5) == 1 ? PASS : FAIL) << std::endl;
 }//====================================================
 
 /**
@@ -291,6 +326,7 @@ void tryDeleteMiddleNode_revTime(){
  *  @details Make sure the arcset is healed properly.
  */
 void tryDeleteMiddleNode_doubleSource1(){
+	int invID = tpat_linkable::INVALID_ID;
 	tpat_nodeset set(&sys);
 	set.addNode(tpat_node(state1, 0));
 	set.addNode(tpat_node(state2, -1.1));
@@ -315,6 +351,13 @@ void tryDeleteMiddleNode_doubleSource1(){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
+
+	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == invID && 
+		set.getNodeIx(1) == 0 && set.getNodeIx(2) == 1 &&
+		set.getNodeIx(3) == 2 && set.getNodeIx(4) == 3 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID && set.getSegIx(1) == 0 &&
+		set.getSegIx(2) == invID && set.getSegIx(3) == 1 && set.getSegIx(4) == 2 ? PASS : FAIL) << std::endl;
 }//==================================================
 
 /**

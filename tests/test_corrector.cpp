@@ -155,9 +155,8 @@ void correctEMRes_doubleSource(){
 	tpat_nodeset_cr3bp nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
-	nodeset.print();
-	nodeset.printInChrono();
-	waitForUser();
+	// nodeset.print();
+	// nodeset.printInChrono();
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
@@ -206,14 +205,10 @@ void correctEMRes_doubleSource_irregular(){
 	tpat_nodeset_cr3bp nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
-	nodeset.deleteNode(2);
-	nodeset.deleteNode(5);
-	nodeset.deleteNode(11);
-	nodeset.deleteNode(12);
-
-	nodeset.print();
-	nodeset.printInChrono();
-	waitForUser();
+	// nodeset.print();
+	// nodeset.printInChrono();
+	// nodeset.printNodeIDMap();
+	// nodeset.printSegIDMap();
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
@@ -237,6 +232,8 @@ void correctEMRes_doubleSource_irregular(){
 	nodeset.putInChronoOrder();
 	// nodeset.print();
 	// nodeset.printInChrono();
+	// nodeset.printNodeIDMap();
+	// nodeset.printSegIDMap();
 
 	tpat_correction_engine corrector;
 	tpat_nodeset_cr3bp correctedNodeset(&sys);
@@ -254,10 +251,11 @@ void correctEMRes_doubleSource_irregular(){
 }//====================================================
 
 int main(void){
-	// correctEMRes();
-	// correctEMRes_EqualArcTime();	
-	// correctEMRes_revTime();
-	// correctEMRes_doubleSource();
+	correctEMRes();
+	correctEMRes_EqualArcTime();	
+	correctEMRes_revTime();
+	correctEMRes_doubleSource();
 	correctEMRes_doubleSource_irregular();
+	
 	return EXIT_SUCCESS;
 }

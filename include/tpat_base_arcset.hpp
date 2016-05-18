@@ -146,7 +146,9 @@ public:
 
 	// Utility Functions
 	void printInChrono() const;
-
+	void printNodeIDMap() const;
+	void printSegIDMap() const;
+	
 	/**
 	 *  @brief Loads the object from a Matlab binary file
 	 *  @param filepath the filepath to the Matlab file

@@ -316,7 +316,7 @@ void tpat_model_bcr4bpr::multShoot_createContCons(tpat_multShoot_data *it, const
     if(it->varTime){
         std::vector<double> zero {0};
         for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-            tpat_constraint timeCont(tpat_constraint::CONT_EX, s, zero);   // 0th is for Epoch Time
+            tpat_constraint timeCont(tpat_constraint::CONT_EX, it->nodeset->getSegByIx(s).getID(), zero);   // 0 value is for Epoch Time
             it->allCons.push_back(timeCont);
         }
     }

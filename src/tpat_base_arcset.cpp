@@ -1331,6 +1331,30 @@ void tpat_base_arcset::printInChrono() const{
 }//====================================================
 
 /**
+ *  @brief Print nodeIDMap to standard output
+ */
+void tpat_base_arcset::printNodeIDMap() const{
+	for(size_t i = 0; i < nodeIDMap.size(); i++){
+		if(i % 20 == 0)
+			printf("----------------\n%4s -> %4s\n----------------\n", "ID", "Ix");
+
+		printf("%4zu -> %4d\n", i, nodeIDMap[i]);
+	}
+}//====================================================
+
+/**
+ *  @brief Print segIDMap to standard output
+ */
+void tpat_base_arcset::printSegIDMap() const{
+	for(size_t i = 0; i < segIDMap.size(); i++){
+		if(i % 20 == 0)
+			printf("----------------\n%4s -> %4s\n----------------\n", "ID", "Ix");
+
+		printf("%4zu -> %4d\n", i, segIDMap[i]);
+	}
+}//====================================================
+
+/**
  *  @brief Read the state vector for this arcset object from a matlab data file
  *  @details This function must be called after initNodeSegsFromMat() as it
  *  populates the step vector objects with state data

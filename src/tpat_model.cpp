@@ -266,7 +266,7 @@ void tpat_model::multShoot_createContCons(tpat_multShoot_data *it, const tpat_no
 		contStates[4] = velCon[1] ? 1 : NAN;
 		contStates[5] = velCon[2] ? 1 : NAN;
 		// Create a constraint
-		tpat_constraint con(tpat_constraint::CONT_PV, s, contStates, 6);
+		tpat_constraint con(tpat_constraint::CONT_PV, set->getSegByIx(s).getID(), contStates, 6);
 		// Save constraint to constraint vector
 		it->allCons.push_back(con);
 	}
@@ -426,7 +426,6 @@ void tpat_model::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constr
 
 	// Get index of segment
 	int segIx = it->nodeset->getSegIx(segID);
-	printf("Trageting position/velocity continuity at segment: ID = %d, ix = %d\n", segID, segIx);
 	std::vector<double> lastState = it->propSegs[segIx].getStateByIx(-1);
 	std::vector<double> lastAccel = it->propSegs[segIx].getAccelByIx(-1);
 	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);

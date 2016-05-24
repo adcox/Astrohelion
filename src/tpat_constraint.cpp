@@ -129,6 +129,38 @@ int tpat_constraint::getID() const { return id; }
 std::vector<double> tpat_constraint::getData() const { return data; }
 
 /**
+ *  @brief Retrieve the first data value that is not an NAN
+ *  @return The value of the first data value. If no data
+ *  value is located, NAN is returned.
+ *  @see getFirstDataValue(int*)
+ */
+double tpat_constraint::getFirstDataValue() const{
+	int ix = 0;
+	return getFirstDataValue(&ix);
+}//====================================================
+
+/**
+ *  @brief Retrieve the first data value that is not an NAN
+ * 
+ *  @param ix The index of the first data value will be
+ *  stored in this integer. If no data value is located,
+ *  ix will be set to -1.
+ *  @return The value of the first data value. If no data
+ *  value is located, NAN is returned.
+ */
+double tpat_constraint::getFirstDataValue(int *ix) const{
+	for(size_t i = 0; i < data.size(); i++){
+		if(!std::isnan(data[i])){
+			*ix = (int)i;
+			return data[i];
+		}
+	}
+
+	*ix = -1;
+	return NAN;
+}//====================================================
+
+/**
  *	@return a count of the constrained states; certain constraint types, 
  *	like MATCH_CUST, give the option of constraining a subset of the entire
  *	node.

@@ -742,7 +742,7 @@ int main(void){
 	// First, run with equalArcTime = false
 	// testCR3BP_SE_Cons(false);
 	// testCR3BP_EM_Cons(false);
-	// testBCR4BPCons(false);
+	testBCR4BPCons(false);
 
 	// testCR3BP_SE_Cons(true);
 	// testCR3BP_EM_Cons(true);

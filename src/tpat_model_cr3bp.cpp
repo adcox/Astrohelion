@@ -267,13 +267,14 @@ void tpat_model_cr3bp::multShoot_initIterData(tpat_multShoot_data *it) const{
  */
 void tpat_model_cr3bp::multShoot_targetJC(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    int nodeIx = it->nodeset->getNodeIx(con.getID());
+    ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    // int nodeIx = it->nodeset->getNodeIx(con.getID());
     const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp *> (it->sysData);
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
     double nodeState[6];
-    std::copy(&(it->X[6*nodeIx]), &(it->X[6*nodeIx])+6, nodeState);
+    std::copy(&(it->X[state_var.row0]), &(it->X[state_var.row0])+6, nodeState);
     
     double sr = it->freeVarScale[0];
     double sv = it->freeVarScale[1];    
@@ -302,12 +303,12 @@ void tpat_model_cr3bp::multShoot_targetJC(tpat_multShoot_data* it, tpat_constrai
     it->FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    it->DF[it->totalFree*row0 + 6*nodeIx + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
-    it->DF[it->totalFree*row0 + 6*nodeIx + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
-    it->DF[it->totalFree*row0 + 6*nodeIx + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
-    it->DF[it->totalFree*row0 + 6*nodeIx + 3] = -2*vx/sv;   //dFdx_dot
-    it->DF[it->totalFree*row0 + 6*nodeIx + 4] = -2*vy/sv;   //dFdy_dot
-    it->DF[it->totalFree*row0 + 6*nodeIx + 5] = -2*vz/sv;   //dFdz_dot
+    it->DF[it->totalFree*row0 + state_var.row0 + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
+    it->DF[it->totalFree*row0 + state_var.row0 + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
+    it->DF[it->totalFree*row0 + state_var.row0 + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
+    it->DF[it->totalFree*row0 + state_var.row0 + 3] = -2*vx/sv;   //dFdx_dot
+    it->DF[it->totalFree*row0 + state_var.row0 + 4] = -2*vy/sv;   //dFdy_dot
+    it->DF[it->totalFree*row0 + state_var.row0 + 5] = -2*vz/sv;   //dFdz_dot
 }//=============================================
 
 /**
@@ -372,8 +373,9 @@ void tpat_model_cr3bp::multShoot_createOutput(const tpat_multShoot_data *it, con
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
+        ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getNodeByIx(n).getID());
         double state[6];
-        std::copy(it->X.begin()+n*6, it->X.begin()+n*6+6, state);
+        std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
 
         // Reverse scaling
         for(int i = 0; i < 6; i++){
@@ -413,8 +415,10 @@ void tpat_model_cr3bp::multShoot_createOutput(const tpat_multShoot_data *it, con
         tpat_segment seg = it->nodeset->getSegByIx(s);
 
         if(it->varTime){
+            ms_varMap_obj tofVar = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+                it->equalArcTime ? tpat_linkable::INVALID_ID : seg.getID());
             // Get data
-            tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->nodeset->getNumSegs()) : it->X[6*it->numNodes+s];
+            tof = it->equalArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
             // Reverse scaling
             tof /= it->freeVarScale[2];     // TOF scaling
         }else{

@@ -227,6 +227,8 @@ class tpat_constraint : public tpat{
 		static const char* getConTypeStr(tpat_constraint_tp);
 		std::vector<double> getData() const;
 		int getID() const;
+		double getFirstDataValue() const;
+		double getFirstDataValue(int*) const;
 		tpat_constraint_tp getType() const;
 		const char* getTypeStr() const;
 		

@@ -157,10 +157,10 @@ void test_nodeManip(){
 	set3.saveToMat("semQHO_newNodes.mat");
 	cout << "BC4BP createNodesAtEvent (saved to semQHO_newNodes.mat):" << endl;
 	cout << "  Correct number of nodes: " << (set3.getNumNodes() == 4 ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) state: " << (set3.getStateByIx(1)[1] == 0 ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) epoch: " << (set3.getEpochByIx(1) == qho_T0 + set3.getTOFByIx(0) ? PASS : FAIL) << endl;
-	cout << "  Correct node(2) state: " << (set3.getStateByIx(2)[1] == 0 ? PASS : FAIL) << endl;
-	cout << "  Correct node(2) epoch: " << (set3.getEpochByIx(2) == qho_T0 + set3.getTOFByIx(0) + set3.getTOFByIx(1) ? PASS : FAIL) << endl;
+	cout << "  Correct node(1) state: " << (std::abs(set3.getStateByIx(1)[1]) < 1e-12 ? PASS : FAIL) << endl;
+	cout << "  Correct node(1) epoch: " << (std::abs(set3.getEpochByIx(1) - qho_T0 - set3.getTOFByIx(0)) < 1e-12 ? PASS : FAIL) << endl;
+	cout << "  Correct node(2) state: " << (std::abs(set3.getStateByIx(2)[1]) < 1e-12 ? PASS : FAIL) << endl;
+	cout << "  Correct node(2) epoch: " << (std::abs(set3.getEpochByIx(2) - qho_T0 - set3.getTOFByIx(0)) < 1e-12 + set3.getTOFByIx(1) ? PASS : FAIL) << endl;
 	cout << "  Correct total TOF: " << (set3.getTotalTOF() == qho_Period ? PASS : FAIL) << endl;
 	cout << "Total TOF = " << set3.getTotalTOF() << endl;
 	set3.print();

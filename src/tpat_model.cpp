@@ -204,18 +204,21 @@ void tpat_model::multShoot_scaleDesignVec(tpat_multShoot_data *it, const tpat_no
 	Eigen::VectorXd allVel(3*it->numNodes);
 	Eigen::VectorXd allTOF(set->getNumSegs());
 	for(int n = 0; n < it->numNodes; n++){
-		allPos(3*n+0) = it->X[6*n+0];
-		allPos(3*n+1) = it->X[6*n+1];
-		allPos(3*n+2) = it->X[6*n+2];
-		allVel(3*n+0) = it->X[6*n+3];
-		allVel(3*n+1) = it->X[6*n+4];
-		allVel(3*n+2) = it->X[6*n+5];
+		ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getNodeByIx(n).getID());
+		allPos(3*n+0) = it->X[stateVar.row0+0];
+		allPos(3*n+1) = it->X[stateVar.row0+1];
+		allPos(3*n+2) = it->X[stateVar.row0+2];
+		allVel(3*n+0) = it->X[stateVar.row0+3];
+		allVel(3*n+1) = it->X[stateVar.row0+4];
+		allVel(3*n+2) = it->X[stateVar.row0+5];
 	}
 
 	for(int s = 0; s < set->getNumSegs(); s++){
-		if(it->varTime)
-			allTOF[s] = it->equalArcTime ? it->X[6*it->numNodes]/(set->getNumSegs()) : it->X[6*it->numNodes+s];
-		else
+		if(it->varTime){
+			ms_varMap_obj tofVar = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+				it->equalArcTime ? tpat_linkable::INVALID_ID : set->getSegByIx(s).getID());
+			allTOF[s] = it->equalArcTime ? it->X[tofVar.row0]/(set->getNumSegs()) : it->X[tofVar.row0];
+		}else
 			allTOF[s] = set->getTOFByIx(s);
 	}
 
@@ -233,21 +236,24 @@ void tpat_model::multShoot_scaleDesignVec(tpat_multShoot_data *it, const tpat_no
 
 	// Loop through all nodes and scale position and velocity
 	for(int n = 0; n < it->numNodes; n++){
-		it->X[6*n+0] *= it->freeVarScale[0];	// position
-		it->X[6*n+1] *= it->freeVarScale[0];
-		it->X[6*n+2] *= it->freeVarScale[0];
-		it->X[6*n+3] *= it->freeVarScale[1];	// velocity
-		it->X[6*n+4] *= it->freeVarScale[1];
-		it->X[6*n+5] *= it->freeVarScale[1];
+		ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getNodeByIx(n).getID());
+		it->X[stateVar.row0+0] *= it->freeVarScale[0];	// position
+		it->X[stateVar.row0+1] *= it->freeVarScale[0];
+		it->X[stateVar.row0+2] *= it->freeVarScale[0];
+		it->X[stateVar.row0+3] *= it->freeVarScale[1];	// velocity
+		it->X[stateVar.row0+4] *= it->freeVarScale[1];
+		it->X[stateVar.row0+5] *= it->freeVarScale[1];
 	}
 
 	// Scale all times-of-flight
 	if(it->varTime){
-		if(it->equalArcTime)
-			it->X[6*it->numNodes] *= it->freeVarScale[2];	// TOF
-		else{
+		if(it->equalArcTime){
+			ms_varMap_obj tofVar = it->getVarMap_obj(ms_varMap_obj::TOF_TOTAL, tpat_linkable::INVALID_ID);
+			it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
+		}else{
 			for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-				it->X[6*it->numNodes+s] *= it->freeVarScale[2];	// TOF
+				ms_varMap_obj tofVar = it->getVarMap_obj(ms_varMap_obj::TOF, it->nodeset->getSegByIx(s).getID());
+				it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
 			}
 		}
 	}
@@ -446,24 +452,26 @@ void tpat_model::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tpat_const
 	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);
 
 	// Get index of origin node
-	int origIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getOrigin());
-	int termIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getTerminus());
+	ms_varMap_obj state0_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getSeg(segID).getOrigin());
+	ms_varMap_obj statef_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getSeg(segID).getTerminus());
+	// int origIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getOrigin());
+	// int termIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getTerminus());
 
 	// Loop through conData
 	for(size_t s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-			it->FX[row0+s] = lastState[s]*scale - it->X[6*termIx+s];
+			it->FX[row0+s] = lastState[s]*scale - it->X[statef_var.row0+s];
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
 			for(size_t x = 0; x < 6; x++){
 				// put STM elements into DF matrix
 				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-				it->DF[it->totalFree*(row0+s) + 6*origIx+x] = stm(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+s) + state0_var.row0 + x] = stm(s,x)*scale/scale2;
 				// Negative identity matrix
 				if(s == x)
-					it->DF[it->totalFree*(row0+s) + 6*termIx+x] = -1;
+					it->DF[it->totalFree*(row0+s) + statef_var.row0+x] = -1;
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
@@ -474,14 +482,16 @@ void tpat_model::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tpat_const
 				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
 				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 
+				ms_varMap_obj tofVar = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+					it->equalArcTime ? tpat_linkable::INVALID_ID : segID);
 				// If equal arc time is enabled, all time derivatives are in one column
-				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
+				// int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
 				
 				// Column of state derivatives: [vel; accel]
 				if(s < 3)
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
 				else{					
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
 				}
 			}
 		}
@@ -501,25 +511,48 @@ void tpat_model::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tpat_const
  *	@param it a pointer to the correctors iteration data structure
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
+ *	
+ *	@throws tpat_exception if the constraint data is not properly formatted
  */
 void tpat_model::multShoot_targetCont_PosVel_Seg(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
 	int segID1 = con.getID();
-	std::vector<double> conData = con.getData();
+	int ix = 0;
+	int segID2 = (int)(con.getFirstDataValue(&ix));
+	if(ix < 0)
+		throw tpat_exception("tpat_model::multShoot_targetCont_PosVel_Seg: No segment ID was located in the cosntraint data vector");
 
-	if(conData.size() < 1)
-		throw tpat_exception("tpat_model::multShoot_targetCont_PosVel_Seg: Constraint data does not have enough entries");
+	std::vector<double> conData = con.getData();
 
 	// Get segment index
 	int segIx1 = it->nodeset->getSegIx(segID1);
-	int segIx2 = it->nodeset->getSegIx(conData[0]);
+	int segIx2 = it->nodeset->getSegIx(segID2);
 
-	int origIx1 = it->nodeset->getNodeIx(it->nodeset->getSeg(segID1).getOrigin());
-	int origIx2 = it->nodeset->getNodeIx(it->nodeset->getSeg(conData[0]).getOrigin());
+	ms_varMap_obj state01_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getSeg(segID1).getOrigin());
+	ms_varMap_obj state02_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getSeg(segID2).getOrigin());
+
+	// int origIx1 = it->nodeset->getNodeIx(it->nodeset->getSeg(segID1).getOrigin());
+	// int origIx2 = it->nodeset->getNodeIx(it->nodeset->getSeg(segID2).getOrigin());
 
 	std::vector<double> state1 = it->propSegs[segIx1].getStateByIx(-1);
 	std::vector<double> state2 = it->propSegs[segIx2].getStateByIx(-1);
 	MatrixXRd stm1 = it->propSegs[segIx1].getSTMByIx(-1);
 	MatrixXRd stm2 = it->propSegs[segIx2].getSTMByIx(-1);
+
+	std::vector<double> lastAccel1, lastAccel2;
+	ms_varMap_obj tof1_var(ms_varMap_obj::TOF), tof2_var(ms_varMap_obj::TOF);
+	double timeCoeff = 1;
+	if(it->varTime){
+		lastAccel1 = it->propSegs[segIx1].getAccelByIx(-1);
+		lastAccel2 = it->propSegs[segIx2].getAccelByIx(-1);
+
+		tof1_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+			it->equalArcTime ? tpat_linkable::INVALID_ID : segID1);
+		tof2_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+			it->equalArcTime ? tpat_linkable::INVALID_ID : segID2);
+
+		// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
+		timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+	}
 
 	// Loop through conData
 	int count = 0;
@@ -533,29 +566,19 @@ void tpat_model::multShoot_targetCont_PosVel_Seg(tpat_multShoot_data *it, tpat_c
 			for(size_t x = 0; x < 6; x++){
 				// putu STM elements into DF matrix
 				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-				it->DF[it->totalFree*(row0+count) + 6*origIx1+x] = stm1(s,x)*scale/scale2;
-				it->DF[it->totalFree*(row0+count) + 6*origIx2+x] = -stm2(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+count) + state01_var.row0+x] = stm1(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+count) + state02_var.row0+x] = -stm2(s,x)*scale/scale2;
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
 			if(it->varTime){
-				std::vector<double> lastAccel1 = it->propSegs[segIx1].getAccelByIx(-1);
-				std::vector<double> lastAccel2 = it->propSegs[segIx2].getAccelByIx(-1);
-
-				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-
-				// If equal arc time is enabled, all time derivatives are in one column
-				int timeCol1 = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx1;
-				int timeCol2 = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx2;
-
 				// Column of state derivatives: [vel; accel]
 				if(s < 3){
-					it->DF[it->totalFree*(row0+count) + timeCol1] = timeCoeff*state1[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
-					it->DF[it->totalFree*(row0+count) + timeCol2] = -timeCoeff*state2[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*state1[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*state2[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
 				}else{
-					it->DF[it->totalFree*(row0+count) + timeCol1] = timeCoeff*lastAccel1[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
-					it->DF[it->totalFree*(row0+count) + timeCol2] = -timeCoeff*lastAccel2[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*lastAccel1[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*lastAccel2[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
 				}
 			}
 
@@ -609,7 +632,8 @@ void tpat_model::multShoot_targetCont_Ex_Seg(tpat_multShoot_data *it, tpat_const
  */
 void tpat_model::multShoot_targetState(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int nodeIx = it->nodeset->getNodeIx(con.getID());
+	ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 
 	// Allow user to constrain 6 states	
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
@@ -618,8 +642,8 @@ void tpat_model::multShoot_targetState(tpat_multShoot_data* it, tpat_constraint 
 			if(s < 6){
 				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 				
-				it->FX[row0+count] = it->X[6*nodeIx+s] - conData[s]*scale;
-				it->DF[it->totalFree*(row0 + count) + 6*nodeIx + s] = 1;
+				it->FX[row0+count] = it->X[state_var.row0+s] - conData[s]*scale;
+				it->DF[it->totalFree*(row0 + count) + state_var.row0 + s] = 1;
 				count++;
 			}else{
 				printErr("tpat_model::multShoot_targetState: State constraint has more than 6 elements...\n");
@@ -637,22 +661,29 @@ void tpat_model::multShoot_targetState(tpat_multShoot_data* it, tpat_constraint 
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
+ *	
+ *	@throws tpat_exception if the constraint data vector is not properly formatted
  */
 void tpat_model::multShoot_targetMatchAll(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+	if(con.getData().size() < 1)
+		throw tpat_exception("tpat_model::multShoot_targetMatchAll: No segment ID was located in the cosntraint data vector");
+
 	// Only allow matching 6 states, not TOF (state 7)
-	int nodeIx = it->nodeset->getNodeIx(con.getID());
-	int otherNodeIx = it->nodeset->getNodeIx(con.getData()[0]);
+	ms_varMap_obj state1_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+	ms_varMap_obj state2_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getData()[0]);
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
+	// int otherNodeIx = it->nodeset->getNodeIx(con.getData()[0]);
 	
 	for(int row = 0; row < 6; row++){
 		// Constrain the states of THIS node to be equal to the node 
 		// with index stored in conData[0]
-		it->FX[row0+row] = it->X[6*nodeIx+row] - it->X[6*otherNodeIx+row];
+		it->FX[row0+row] = it->X[state1_var.row0+row] - it->X[state2_var.row0+row];
 
 		// Partial of this constraint wrt THIS node = I
-		it->DF[it->totalFree*(row0 + row) + 6*nodeIx + row] = 1;
+		it->DF[it->totalFree*(row0 + row) + state1_var.row0 + row] = 1;
 
 		// Partial of this constraint wrt other node = -I
-		it->DF[it->totalFree*(row0 + row) + 6*otherNodeIx+row] = -1;
+		it->DF[it->totalFree*(row0 + row) + state2_var.row0 + row] = -1;
 	}
 }//=============================================
 
@@ -667,20 +698,27 @@ void tpat_model::multShoot_targetMatchAll(tpat_multShoot_data* it, tpat_constrai
  *	@param row0 the index of the row this constraint begins at
  */
 void tpat_model::multShoot_targetMatchCust(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+	int ix = 0;
+	int ID2 = (int)(con.getFirstDataValue(&ix));
+	if(ix < 0)
+		throw tpat_exception("tpat_model::multShoot_targetMatchCust: No segment ID was located in the cosntraint data vector");
+
 	std::vector<double> conData = con.getData();
-	int nodeIx = it->nodeset->getNodeIx(con.getID());
-	int otherNodeIx = it->nodeset->getNodeIx(conData[0]);
+	ms_varMap_obj state1_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+	ms_varMap_obj state2_var = it->getVarMap_obj(ms_varMap_obj::STATE, ID2);
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
+	// int otherNodeIx = it->nodeset->getNodeIx(conData[0]);
 	int count = 0;
 	
 	for(int s = 0; s < 6; s++){
 		if(!std::isnan(conData[s])){
-			it->FX[row0 + count] = it->X[6*nodeIx+s] - it->X[6*otherNodeIx+s];
+			it->FX[row0 + count] = it->X[state1_var.row0+s] - it->X[state2_var.row0+s];
 
 			// partial of this constraint wrt THIS node = 1
-			it->DF[it->totalFree*(row0 + count) + 6*nodeIx+s] = 1;
+			it->DF[it->totalFree*(row0 + count) + state1_var.row0+s] = 1;
 
 			// partial of this constraint wrt other node = -1
-			it->DF[it->totalFree*(row0 + count) + 6*otherNodeIx+s] = -1;
+			it->DF[it->totalFree*(row0 + count) + state2_var.row0+s] = -1;
 
 			count++;
 		}
@@ -691,9 +729,10 @@ void tpat_model::multShoot_targetMatchCust(tpat_multShoot_data* it, tpat_constra
  *	@brief Compute partials and constraint functions for nodes constrained with <tt>DIST</tt>, 
  *	<tt>MIN_DIST</tt>, or <tt>MAX_DIST</tt>
  *
- *	This method *should* provide full functionality for any model; It calls the getPrimPos() 
+ *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
  *	functions, which all models define and uses dynamic-independent computations to populate
- *	the constraint vector and Jacobian matrix.
+ *	the constraint vector and Jacobian matrix. Nonautonomous models will need to include time
+ *	dependencies.
  *
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
@@ -701,7 +740,8 @@ void tpat_model::multShoot_targetMatchCust(tpat_multShoot_data* it, tpat_constra
  */
 void tpat_model::multShoot_targetDist(tpat_multShoot_data* it, tpat_constraint con, int c) const{
 	std::vector<double> conData = con.getData();
-	int nodeIx = it->nodeset->getNodeIx(con.getID());
+	ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = (int)(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
@@ -710,9 +750,9 @@ void tpat_model::multShoot_targetDist(tpat_multShoot_data* it, tpat_constraint c
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*nodeIx+0] - primPos[Pix*3+0]*it->freeVarScale[0];
-	double dy = it->X[6*nodeIx+1] - primPos[Pix*3+1]*it->freeVarScale[0];
-	double dz = it->X[6*nodeIx+2] - primPos[Pix*3+2]*it->freeVarScale[0];
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0]*it->freeVarScale[0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1]*it->freeVarScale[0];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2]*it->freeVarScale[0];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
@@ -720,9 +760,9 @@ void tpat_model::multShoot_targetDist(tpat_multShoot_data* it, tpat_constraint c
 	it->FX[row0] = h - conData[1]*it->freeVarScale[0];
 
 	// Partials with respect to node position states
-	it->DF[it->totalFree*row0 + 6*nodeIx + 0] = dx/h;
-	it->DF[it->totalFree*row0 + 6*nodeIx + 1] = dy/h;
-	it->DF[it->totalFree*row0 + 6*nodeIx + 2] = dz/h;
+	it->DF[it->totalFree*row0 + state_var.row0 + 0] = dx/h;
+	it->DF[it->totalFree*row0 + state_var.row0 + 1] = dy/h;
+	it->DF[it->totalFree*row0 + state_var.row0 + 2] = dz/h;
 
 	// Extra stuff for inequality constraints
 	if(con.getType() == tpat_constraint::MIN_DIST || 
@@ -756,7 +796,8 @@ void tpat_model::multShoot_targetDist(tpat_multShoot_data* it, tpat_constraint c
  */
 double tpat_model::multShoot_targetDist_compSlackVar(const tpat_multShoot_data* it, tpat_constraint con) const{
 	std::vector<double> conData = con.getData();
-	int nodeIx = it->nodeset->getNodeIx(con.getID());
+	ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = (int)(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
@@ -764,9 +805,9 @@ double tpat_model::multShoot_targetDist_compSlackVar(const tpat_multShoot_data* 
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*nodeIx+0] - primPos[Pix*3+0]*it->freeVarScale[0];
-	double dy = it->X[6*nodeIx+1] - primPos[Pix*3+1]*it->freeVarScale[0];
-	double dz = it->X[6*nodeIx+2] - primPos[Pix*3+2]*it->freeVarScale[0];
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0]*it->freeVarScale[0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1]*it->freeVarScale[0];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2]*it->freeVarScale[0];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 	int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
@@ -834,12 +875,14 @@ void tpat_model::multShoot_targetDeltaV(tpat_multShoot_data* it, tpat_constraint
 			// Adjust scaling of STM after multiplication (easier here)
 			dFdq_nf.segment(0, 3) *= it->freeVarScale[1]/it->freeVarScale[0];
 
-			int origIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getOrigin());
-			int termIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getTerminus());
+			ms_varMap_obj state0_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getSegByIx(s).getOrigin());
+			ms_varMap_obj statef_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getSegByIx(s).getTerminus());
+			// int origIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getOrigin());
+			// int termIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getTerminus());
 
 			for(int i = 0; i < 6; i++){
-				it->DF[it->totalFree*row0 + 6*termIx + i] += dFdq_n2(0, i)/dvMax*it->freeVarScale[1];	// Not sure why this scaling factor belongs here...
-				it->DF[it->totalFree*row0 + 6*origIx + i] += dFdq_nf(0, i)/dvMax;
+				it->DF[it->totalFree*row0 + statef_var.row0 + i] += dFdq_n2(0, i)/dvMax*it->freeVarScale[1];	// Not sure why this scaling factor belongs here...
+				it->DF[it->totalFree*row0 + state0_var.row0 + i] += dFdq_nf(0, i)/dvMax;
 			}
 
 			// Compute partial w.r.t. segment time-of-flight
@@ -857,10 +900,12 @@ void tpat_model::multShoot_targetDeltaV(tpat_multShoot_data* it, tpat_constraint
 				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[2];
 
 				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+s;
+				ms_varMap_obj tof_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+					it->equalArcTime ? tpat_linkable::INVALID_ID : it->nodeset->getSegByIx(s).getID());
+				// int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+s;
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
-				it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n(0)/dvMax;
+				it->DF[it->totalFree*row0 + tof_var.row0] = timeCoeff*dFdt_n(0)/dvMax;
 			}
 		}
 	}
@@ -932,13 +977,15 @@ void tpat_model::multShoot_targetTOF(tpat_multShoot_data *it, tpat_constraint co
 		throw tpat_exception("tpat_model::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
 	if(it->equalArcTime){
-		it->FX[row0] = it->X[6*it->numNodes];
-		it->DF[it->totalFree*row0 + 6*it->numNodes] = 1;
+		ms_varMap_obj tof_var = it->getVarMap_obj(ms_varMap_obj::TOF_TOTAL, tpat_linkable::INVALID_ID);
+		it->FX[row0] = it->X[tof_var.row0];
+		it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 	}else{
 		// Sum all TOF for total, set partials w.r.t. integration times equal to one
 		for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-			it->FX[row0] += it->X[6*it->numNodes+s];
-			it->DF[it->totalFree*row0 + 6*it->numNodes+s] = 1;
+			ms_varMap_obj tof_var = it->getVarMap_obj(ms_varMap_obj::TOF, it->nodeset->getSegByIx(s).getID());
+			it->FX[row0] += it->X[tof_var.row0];
+			it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 		}
 	}
 	
@@ -958,7 +1005,8 @@ void tpat_model::multShoot_targetTOF(tpat_multShoot_data *it, tpat_constraint co
  */
 void tpat_model::multShoot_targetApse(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int nodeIx = it->nodeset->getNodeIx(con.getID());
+	ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = (int)(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	
@@ -969,23 +1017,23 @@ void tpat_model::multShoot_targetApse(tpat_multShoot_data *it, tpat_constraint c
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
-	double dx = it->X[6*nodeIx+0]/sr - primPos[Pix*3+0];
-	double dy = it->X[6*nodeIx+1]/sr - primPos[Pix*3+1];
-	double dz = it->X[6*nodeIx+2]/sr - primPos[Pix*3+2];
-	double vx = it->X[6*nodeIx+3]/sv;
-	double vy = it->X[6*nodeIx+4]/sv;
-	double vz = it->X[6*nodeIx+5]/sv;
+	double dx = it->X[state_var.row0+0]/sr - primPos[Pix*3+0];
+	double dy = it->X[state_var.row0+1]/sr - primPos[Pix*3+1];
+	double dz = it->X[state_var.row0+2]/sr - primPos[Pix*3+2];
+	double vx = it->X[state_var.row0+3]/sv;
+	double vy = it->X[state_var.row0+4]/sv;
+	double vz = it->X[state_var.row0+5]/sv;
 
 	// Constraint function: r_dot = 0 (using non-scaled coordinates)
 	it->FX[row0] = dx*vx + dy*vy + dz*vz;
 
 	// Partials of F w.r.t. node state
-	it->DF[it->totalFree*row0 + 6*nodeIx+0] = vx/sr;
-	it->DF[it->totalFree*row0 + 6*nodeIx+1] = vy/sr;
-	it->DF[it->totalFree*row0 + 6*nodeIx+2] = vz/sr;
-	it->DF[it->totalFree*row0 + 6*nodeIx+3] = dx/sv;
-	it->DF[it->totalFree*row0 + 6*nodeIx+4] = dy/sv;
-	it->DF[it->totalFree*row0 + 6*nodeIx+5] = dz/sv;
+	it->DF[it->totalFree*row0 + state_var.row0+0] = vx/sr;
+	it->DF[it->totalFree*row0 + state_var.row0+1] = vy/sr;
+	it->DF[it->totalFree*row0 + state_var.row0+2] = vz/sr;
+	it->DF[it->totalFree*row0 + state_var.row0+3] = dx/sv;
+	it->DF[it->totalFree*row0 + state_var.row0+4] = dy/sv;
+	it->DF[it->totalFree*row0 + state_var.row0+5] = dz/sv;
 }//====================================================
 
 

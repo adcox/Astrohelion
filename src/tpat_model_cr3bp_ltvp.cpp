@@ -34,6 +34,7 @@
 #include "tpat_traj_cr3bp_ltvp.hpp"
 #include "tpat_utilities.hpp"
 
+#include <gsl/gsl_errno.h>
 /**
  *  @brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic Model
  */
@@ -211,7 +212,8 @@ void tpat_model_cr3bp_ltvp::multShoot_createOutput(const tpat_multShoot_data *it
  *  @param it pointer to the object to be initialized
  */
 void tpat_model_cr3bp_ltvp::multShoot_initIterData(tpat_multShoot_data *it) const{
-    it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp_ltvp(static_cast<const tpat_sys_data_cr3bp_ltvp *>(it->sysData)));
+    tpat_traj_cr3bp_ltvp traj(static_cast<const tpat_sys_data_cr3bp_ltvp *>(it->sysData));
+    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

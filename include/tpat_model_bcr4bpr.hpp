@@ -68,8 +68,9 @@ public:
 	void multShoot_createOutput(const tpat_multShoot_data*, const tpat_nodeset*, bool, tpat_nodeset*) const;
 
 protected:
-	void multShoot_targetPosVelCons(tpat_multShoot_data*, tpat_constraint, int) const;
-	void multShoot_targetExContCons(tpat_multShoot_data*, tpat_constraint, int) const;
+	void multShoot_targetCont_PosVel(tpat_multShoot_data*, tpat_constraint, int) const;
+	void multShoot_targetCont_Ex(tpat_multShoot_data*, tpat_constraint, int) const;
+	void multShoot_targetCont_Ex_Seg(tpat_multShoot_data*, tpat_constraint, int) const;
 	void multShoot_targetState(tpat_multShoot_data*, tpat_constraint, int) const;
 	void multShoot_targetDeltaV(tpat_multShoot_data*, tpat_constraint, int) const;
 	void multShoot_targetDist(tpat_multShoot_data*, tpat_constraint, int) const;

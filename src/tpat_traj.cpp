@@ -98,7 +98,9 @@ tpat_traj tpat_traj::fromNodeset(tpat_nodeset set){
 		if(s == 0){
 			totalTraj = temp;
 		}else{
+			// Use += so that each piece is put into chronological order, even though this significantly increases run time
 			totalTraj += temp;
+			// totalTraj.appendSetAtNode(&temp, totalTraj.getNodeByIx(-1).getID(), 0, 0);
 		}
 	}
 

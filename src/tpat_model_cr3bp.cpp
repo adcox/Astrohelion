@@ -36,6 +36,7 @@
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
 
+#include <gsl/gsl_errno.h>
 /**
  *  @brief Construct a CR3BP Dynamic Model
  */
@@ -253,7 +254,8 @@ void tpat_model_cr3bp::multShoot_applyConstraint(tpat_multShoot_data *it, tpat_c
  *  @param it pointer to the object to be initialized
  */
 void tpat_model_cr3bp::multShoot_initIterData(tpat_multShoot_data *it) const{
-    it->propSegs.assign(it->numNodes-1, tpat_traj_cr3bp(static_cast<const tpat_sys_data_cr3bp *>(it->sysData)));
+    tpat_traj_cr3bp traj(static_cast<const tpat_sys_data_cr3bp *>(it->sysData));
+    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
 }//====================================================
 
 /**
@@ -406,11 +408,9 @@ void tpat_model_cr3bp::multShoot_createOutput(const tpat_multShoot_data *it, con
     }
 
     double tof;
-    int prevOriginIx, prevTermIx;
+    int newOrigID, newTermID;
     for(int s = 0; s < it->nodeset->getNumSegs(); s++){
         tpat_segment seg = it->nodeset->getSegByIx(s);
-        prevOriginIx = it->nodeset->getNodeIx(seg.getOrigin());
-        prevTermIx = it->nodeset->getNodeIx(seg.getTerminus());
 
         if(it->varTime){
             // Get data
@@ -421,7 +421,11 @@ void tpat_model_cr3bp::multShoot_createOutput(const tpat_multShoot_data *it, con
             tof = seg.getTOF();
         }
 
-        tpat_segment newSeg(newNodeIDs[prevOriginIx], newNodeIDs[prevTermIx], tof);
+        newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
+        int termID = seg.getTerminus();
+        newTermID = termID == tpat_linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        
+        tpat_segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
         nodeset_out->addSeg(newSeg);
@@ -472,29 +476,8 @@ int tpat_model_cr3bp::fullEOMs(double t, const double s[], double sdot[], void *
     /*
      * Next step, compute STM
      */
-    
-    // // Create A Matrix
     double ddots[6];    // {dxdx, dydy, dzdz, dxdy, dxdz, dydz}
     getUDDots(mu, s[0], s[1], s[2], ddots);
-
-    // double a_data[] = { 0, 0, 0, 1, 0, 0,
-    //                     0, 0, 0, 0, 1, 0,
-    //                     0, 0, 0, 0, 0, 1,
-    //                     ddots[0], ddots[3], ddots[4], 0, 2, 0,
-    //                     ddots[3], ddots[1], ddots[5], -2, 0, 0,
-    //                     ddots[4], ddots[5], ddots[2], 0, 0, 0};
-    // MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
-
-    // // Copy the STM states into a sub-array
-    // double stmElements[36];
-    // std::copy(s+6, s+42, stmElements);
-
-    // // Turn sub-array into matrix object for math stuffs
-    // MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
-    
-    // // Compute derivative of STM
-    // MatrixXRd phiDot = A*phi;
-
 
     /*  Compute the STM Derivative 
      *  PhiDot = A * Phi
@@ -507,10 +490,6 @@ int tpat_model_cr3bp::fullEOMs(double t, const double s[], double sdot[], void *
         sdot[30+i] = ddots[3]*s[6+i] + ddots[1]*s[12+i] + ddots[5]*s[18+i] - 2*s[24+i];
         sdot[36+i] = ddots[4]*s[6+i] + ddots[5]*s[12+i] + ddots[2]*s[18+i];
     }   // Last three rows are a combo of A and Phi
-
-    // // Copy the elements of phiDot into the derivative array
-    // double *phiDotData = phiDot.data();
-    // std::copy(phiDotData, phiDotData+36, sdot+6);
 
     return GSL_SUCCESS;
 }//===============================================================
@@ -531,20 +510,20 @@ int tpat_model_cr3bp::simpleEOMs(double t, const double s[], double sdot[], void
     const tpat_sys_data_cr3bp *sysData = static_cast<const tpat_sys_data_cr3bp *>(paramStruct->sysData);
     double mu = sysData->getMu();
 
-    double x = s[0];    double y = s[1];    double z = s[2];
-    double xdot = s[3]; double ydot = s[4];
+    // double x = s[0];    double y = s[1];    double z = s[2];
+    // double xdot = s[3]; double ydot = s[4];
 
     // compute distance to primaries
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
+    double d = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );
+    double r = sqrt( (s[0] - 1+mu)*(s[0] - 1+mu) + s[1]*s[1] + s[2]*s[2] );
 
-    sdot[0] = s[3];
-    sdot[1] = s[4];
-    sdot[2] = s[5];
+    // Position derivatives = velocity
+    std::copy(s+3, s+6, sdot);
 
-    sdot[3] =   2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3);
-    sdot[4] =  -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3);
-    sdot[5] =  -(1-mu)*z/pow(d,3) - mu*z/pow(r,3);
+    // Velocity derivatives = acceleraiton
+    sdot[3] =   2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3);
+    sdot[4] =  -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3);
+    sdot[5] =  -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3); 
 
     return GSL_SUCCESS;
 }//=====================================================

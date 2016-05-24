@@ -38,6 +38,7 @@
 #include <vector>
 
 // Forward declarations
+class tpat_correction_engine;
 class tpat_multShoot_data;
 class tpat_nodeset;
 class tpat_nodeset_bcr4bp;
@@ -93,6 +94,7 @@ MatrixXRd getMirrorMat(tpat_mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 double getTotalDV(const tpat_multShoot_data*);
 void finiteDiff_checkMultShoot(const tpat_nodeset*);
+void finiteDiff_checkMultShoot(const tpat_nodeset*, tpat_correction_engine);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 

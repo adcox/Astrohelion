@@ -137,8 +137,6 @@ class tpat_multShoot_data{
 		std::vector<double> FX {};					//!< Constraint Function Vector
 		std::vector<double> DF {};					//!< Jacobian Matrix
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
-		std::vector<double> primPos {};				//!< Store the positions of the primaries
-		std::vector<double> primVel {};				//!< Store the velocities of the primaries
 		std::vector<tpat_traj> propSegs {};			//!< A collection of all propagated segments
 		std::vector<tpat_constraint> allCons {};	//!< A list of all constraints
 		std::vector<ms_varMap_obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector

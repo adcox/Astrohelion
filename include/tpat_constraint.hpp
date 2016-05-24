@@ -33,6 +33,7 @@
  * 	**Adding a New Constraint**
  * 	* Create a new enumerated type and document it fully
  * 	* Update the getTypStr() function
+ * 	* Update the segAppType() function
  *	* Add the new constraint type to the list of accepted constraints for
  * 		any dynamic models you wish
  *	* Define behavior for dealing with those types of constraints in the
@@ -58,7 +59,10 @@ class tpat_constraint : public tpat{
 		 *	information stored in this constraint object.
 		 */
 		enum tpat_constraint_tp {
-			NONE, 		//!< No constraint type specified
+			NONE, 		/*!< No constraint type specified. This type may be used as a
+						 * placeholder, but attempting to complete a corrections process
+						 * with a constraint of this type will result in a thrown exception
+						 */
 			STATE,		/*!< Constrain specific states to specified numeric values.
 		 			 	 * The <tt>id</tt> value represents the node to constrain,
 		 			 	 * and the <tt>data</tt> vector contains values for each state.
@@ -145,26 +149,47 @@ class tpat_constraint : public tpat{
 		 				 *	seven to be an apse relative to P1, I would set <tt>id</tt> 
 		 				 *	to 7 and set <tt>data</tt> to [0, NAN, NAN, NAN, NAN, NAN]
 		 				 */
-		 	CONT_PV,	/*!< Constrain a node to be continuous with the previous node in 
-						 * the set in the specified position and velocity states. The
-						 * <tt>id</tt> value specifies the index of the node, and the
+		 	CONT_PV,	/*!< Constrain a segment to be continuous with its terminal node in 
+						 * the specified position and velocity states. The
+						 * <tt>id</tt> value specifies the ID of the node, and the
 						 * <tt>data</tt> field specifies which states must be continuous.
-						 * For example, if I want the propagation from node 4 to node 5 to
+						 * For example, if I want the propagation along segment 4 to
 						 * be continuous in all position states and x_dot, then I would set
-						 * <tt>id</tt> to 5 and <tt>data</tt> to [1 1 1 1 NAN NAN]. Values
+						 * <tt>id</tt> to 4 and <tt>data</tt> to [1 1 1 1 NAN NAN]. Values
 						 * of NAN tell the algorithm not to force continuity in that state,
 						 * so in this example y_dot and z_dot are allowed to be discontinous.
 						 * NOTE: These constraints are applied automatically by the corrections
 						 * algorithm: DO NOT CREATE THESE.
 						 */
 			CONT_EX,	/*!< Constrain one of the extra parameters stored in a nodeset to be
-						 * continuous between nodes. This may apply to epoch time, spacecraft mass,
-						 * etc. Place the node ID in <tt>id</tt> and the index of the extra
+						 * continuous along a segment. This may apply to epoch time, spacecraft mass,
+						 * etc. Place the segment ID in <tt>id</tt> and the index of the extra
 						 * parameter in the first data field, i.e. <tt>data[0]</tt>. The specified
 						 * node will then be made continuous with the previous node in the nodeset
 						 * provided it isn't the first one.
 						 * NOTE: These constraints are applied automatically by the corrections
 						 * algorithm: DO NOT CREATE THESE.
+						 * 
+						 * **Parameter Indices**
+						 * * 0 - Epoch
+						 * * 1 - Mass		[Not Implemented]
+						 * * 2 - Attitude 	[Not Implemented]
+						 */
+			SEG_CONT_PV,/*!< Constrain a segment to be continuous with another segment at their 
+						 * terminal nodes in position and/or velocity. This situation may occur 
+						 * if the corrections process shoots forward in time from one node and backward
+						 * in time from another node; the two propagations may meet in the middle. Place 
+						 * the ID of one of the segments in the <tt>id</tt> field, and the ID of the other 
+						 * segment in the <tt>data</tt> field, one entry for each state that should be
+						 * continuous. For example, to constrain the terminal points of segments
+						 * 1 and 2 to be continuous in position, set <tt>id</tt> to 1 and set
+						 * <tt>data</tt> to <tt>[2, 2, 2, NAN, NAN, NAN]</tt>
+						 */
+			SEG_CONT_EX,/*!< Constrain a segement to be continuous with another segment at their
+						 * terminal nodes in some extra parameter, such as epoch or mass. Place
+						 * the ID of one segment in <tt>id</tt>, the ID of the other segment in 
+						 * <tt>data[0]</tt> and the parameter index in the elements after [0].
+						 *	@see CONT_EX for a list of parameter indices
 						 */
 			PSEUDOARC 	/*!< Pseudo arc-length continuation constraint. This forces a trajectory to
 						 *	be in the same family as the input arc. The <tt>id</tt> attribute is 

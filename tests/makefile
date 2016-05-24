@@ -32,6 +32,7 @@ LIB := ../lib
 # Compiler specification and flags
 # CXX := clang++ -std=c++11
 CXX := g++-5 -std=c++11 -fopenmp
+# CXX := g++-5 -std=c++11
 CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
 # CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
@@ -39,13 +40,15 @@ COMP := $(CXX) $(CFLAGS)
 # Library names and locations
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
-# LDFLAGS += -rdynamic
 
 # Options that are platform dependent
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S), Linux)
 	LDFLAGS += -L /usr/local/lib
 endif
+
+# This should make it easier to read symbols in stack trace (hypothetically)
+LDFLAGS += -Wl,-export_dynamic
 
 # Get JUST the filenames, no filepaths, of the source files
 SRC_FILES := $(notdir $(shell find $(SRC)/*.cpp))
@@ -59,7 +62,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp tpat_utilities.hpp
+IMPORTANT_HEADERS := tpat_ascii_output.hpp tpat_constants.hpp tpat_utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################

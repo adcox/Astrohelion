@@ -149,11 +149,15 @@ double tpat_model::getRDot(int Pix, double t, const double *state, const tpat_sy
  *
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
+ *	
+ *	@throws tpat_exception if equalArcTime is set to true (within the correction engine) and
+ *	the nodeset to be corrected includes segments that are propagated in both forward and
+ *	reverse time.
  */
 void tpat_model::multShoot_initDesignVec(tpat_multShoot_data *it, const tpat_nodeset *set) const{
 	// Create the initial state vector
 	it->X.clear();
-	it->freeVarScale.clear();
+	it->freeVarMap.clear();
 
 	// Copy in the position and velocity states for each node
 	int rowNum = 0;
@@ -166,6 +170,12 @@ void tpat_model::multShoot_initDesignVec(tpat_multShoot_data *it, const tpat_nod
 
 	if(it->varTime){		
 		if(it->equalArcTime){
+			// Make sure all times-of-flight have the same sign
+			for(int s = 1; s < set->getNumSegs(); s++){
+				if(set->getSegByIx(s).getTOF() * set->getSegByIx(s-1).getTOF() < 0)
+					throw tpat_exception("tpat_model::multShoot_initDesignVec: EqualArcTime is ON and times-of-flight have different signs... cannot proceed");
+			}
+
 			// Append the total TOF for the arc
 			it->freeVarMap.push_back(ms_varMap_obj(ms_varMap_obj::TOF_TOTAL, (int)(it->X.size()), -1));
 			it->X.insert(it->X.end(), set->getTotalTOF());
@@ -259,16 +269,18 @@ void tpat_model::multShoot_createContCons(tpat_multShoot_data *it, const tpat_no
 	for(int s = 0; s < set->getNumSegs(); s++){
 		// Force all positions to be continuous
 		double contStates[] = {1, 1, 1, 1, 1, 1};
-		// Get a vector specifying which velocity states are continuous
-		std::vector<bool> velCon = set->getSegByIx(s).getVelCon();
-		// If not continuous, put NAN into the constraint data; else unity
-		contStates[3] = velCon[0] ? 1 : NAN;
-		contStates[4] = velCon[1] ? 1 : NAN;
-		contStates[5] = velCon[2] ? 1 : NAN;
-		// Create a constraint
-		tpat_constraint con(tpat_constraint::CONT_PV, set->getSegByIx(s).getID(), contStates, 6);
-		// Save constraint to constraint vector
-		it->allCons.push_back(con);
+		if(set->getSegByIx(s).getTerminus() != tpat_linkable::INVALID_ID){
+			// Get a vector specifying which velocity states are continuous
+			std::vector<bool> velCon = set->getSegByIx(s).getVelCon();
+			// If not continuous, put NAN into the constraint data; else unity
+			contStates[3] = velCon[0] ? 1 : NAN;
+			contStates[4] = velCon[1] ? 1 : NAN;
+			contStates[5] = velCon[2] ? 1 : NAN;
+			// Create a constraint
+			tpat_constraint con(tpat_constraint::CONT_PV, set->getSegByIx(s).getID(), contStates, 6);
+			// Save constraint to constraint vector
+			it->allCons.push_back(con);
+		}
 	}
 
 	// Next, create other continuity constraints via the CONT_EX constraint type
@@ -370,11 +382,17 @@ void tpat_model::multShoot_applyConstraint(tpat_multShoot_data *it, tpat_constra
 	switch(con.getType()){
 		case tpat_constraint::CONT_PV:
 			// Apply position-velocity continuity constraints
-			multShoot_targetPosVelCons(it, con, row0);
+			multShoot_targetCont_PosVel(it, con, row0);
+			break;
+		case tpat_constraint::SEG_CONT_PV:
+			multShoot_targetCont_PosVel_Seg(it, con, row0);
+			break;
+		case tpat_constraint::SEG_CONT_EX:
+			multShoot_targetCont_Ex_Seg(it, con, row0);
 			break;
 		case tpat_constraint::CONT_EX:
 			// Apply extra continuity constraints
-			multShoot_targetExContCons(it, con, row0);
+			multShoot_targetCont_Ex(it, con, row0);
 			break;
 		case tpat_constraint::STATE:
 			multShoot_targetState(it, con, row0);
@@ -408,26 +426,23 @@ void tpat_model::multShoot_applyConstraint(tpat_multShoot_data *it, tpat_constra
  *	@brief Compute position and velocity constraint values and partial derivatives
  *
  *	This function computes and stores the default position continuity constraints as well
- *	as velocity constraints for all nodes marked continuous in velocity. The delta-Vs
- *	between arc segments and node states are recorded, and the partial derivatives of each
- *	node with respect to other nodes and integration time are all computed
- *	and placed in the appropriate spots in the Jacobian matrix.
+ *	as velocity constraints for all nodes marked continuous in velocity. The partial 
+ *	derivatives of each node with respect to other nodes and integration time are all 
+ *	computed and placed in the appropriate spots in the Jacobian matrix.
  *
  *	Derived models may replace this function.
  *
  *	@param it a pointer to the correctors iteration data structure
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
- *	@throws tpat_exception if the node ID stored in the constraint is zero
  */
-void tpat_model::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+void tpat_model::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
 	int segID = con.getID();	// get segment ID
 	std::vector<double> conData = con.getData();
 
 	// Get index of segment
 	int segIx = it->nodeset->getSegIx(segID);
 	std::vector<double> lastState = it->propSegs[segIx].getStateByIx(-1);
-	std::vector<double> lastAccel = it->propSegs[segIx].getAccelByIx(-1);
 	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);
 
 	// Get index of origin node
@@ -454,7 +469,8 @@ void tpat_model::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constr
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
 			if(it->varTime){
-				
+				std::vector<double> lastAccel = it->propSegs[segIx].getAccelByIx(-1);
+
 				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
 				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 
@@ -470,7 +486,83 @@ void tpat_model::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constr
 			}
 		}
 	}
-}//=========================================================
+}//====================================================
+
+/**
+ *  @brief Compute segment position and velocity constraint values and partial derivatives.
+ *  
+ *  This function computes and stores the position and velocity continuity constraints for
+ *  segment-to-segment links. The partial derivatives of this constraint with respect to
+ *  the origin node states and times-of-flight on each segment are computed and stored
+ *  in the DF matrix. 
+ *
+ *	Derived models may extend or replace this function.
+ *
+ *	@param it a pointer to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
+ */
+void tpat_model::multShoot_targetCont_PosVel_Seg(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+	int segID1 = con.getID();
+	std::vector<double> conData = con.getData();
+
+	if(conData.size() < 1)
+		throw tpat_exception("tpat_model::multShoot_targetCont_PosVel_Seg: Constraint data does not have enough entries");
+
+	// Get segment index
+	int segIx1 = it->nodeset->getSegIx(segID1);
+	int segIx2 = it->nodeset->getSegIx(conData[0]);
+
+	int origIx1 = it->nodeset->getNodeIx(it->nodeset->getSeg(segID1).getOrigin());
+	int origIx2 = it->nodeset->getNodeIx(it->nodeset->getSeg(conData[0]).getOrigin());
+
+	std::vector<double> state1 = it->propSegs[segIx1].getStateByIx(-1);
+	std::vector<double> state2 = it->propSegs[segIx2].getStateByIx(-1);
+	MatrixXRd stm1 = it->propSegs[segIx1].getSTMByIx(-1);
+	MatrixXRd stm2 = it->propSegs[segIx2].getSTMByIx(-1);
+
+	// Loop through conData
+	int count = 0;
+	for(size_t s = 0; s < conData.size(); s++){
+		if(!std::isnan(conData[s])){
+			// This state is constrained to be continuous; compute error
+			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+			it->FX[row0+count] = (state1[s]- state2[s])*scale;
+
+			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
+			for(size_t x = 0; x < 6; x++){
+				// putu STM elements into DF matrix
+				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+				it->DF[it->totalFree*(row0+count) + 6*origIx1+x] = stm1(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+count) + 6*origIx2+x] = -stm2(s,x)*scale/scale2;
+			}
+
+			// Compute partials of F w.r.t. times-of-flight
+			if(it->varTime){
+				std::vector<double> lastAccel1 = it->propSegs[segIx1].getAccelByIx(-1);
+				std::vector<double> lastAccel2 = it->propSegs[segIx2].getAccelByIx(-1);
+
+				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
+				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+
+				// If equal arc time is enabled, all time derivatives are in one column
+				int timeCol1 = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx1;
+				int timeCol2 = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx2;
+
+				// Column of state derivatives: [vel; accel]
+				if(s < 3){
+					it->DF[it->totalFree*(row0+count) + timeCol1] = timeCoeff*state1[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + timeCol2] = -timeCoeff*state2[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+				}else{
+					it->DF[it->totalFree*(row0+count) + timeCol1] = timeCoeff*lastAccel1[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + timeCol2] = -timeCoeff*lastAccel2[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+				}
+			}
+
+			count++;
+		}
+	}
+}//====================================================
 
 /**
  *	@brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
@@ -482,13 +574,29 @@ void tpat_model::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constr
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::multShoot_targetExContCons(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+void tpat_model::multShoot_targetCont_Ex(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
 	// Do absoluately nothing
 	(void)it;
 	(void)con;
 	(void)row0;
 }//======================================================
 
+/**
+ *	@brief Computes continuity constraints for constraints with the <tt>SEG_CONT_EX</tt> type.
+ *
+ *	In this base model, no behavior is defined for extra constraints. It is intended to enforce
+ *	continuity constraints like epoch (time) continuity, mass continuity, etc.
+ *
+ *	@param it a pointer to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
+ */
+void tpat_model::multShoot_targetCont_Ex_Seg(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+	// Do absoluately nothing
+	(void)it;
+	(void)con;
+	(void)row0;
+}//======================================================
 /**
  *	@brief Compute partials and constraint functions for nodes constrained with <tt>STATE</tt>.
  *

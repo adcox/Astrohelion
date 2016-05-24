@@ -6,6 +6,8 @@
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_utilities.hpp"
 
+#include <iostream>
+
 #define RESET   "\033[0m"					/**< Reset ASCII text to default values */
 #define BOLDRED     "\033[1m\033[31m"		/**< Make ASCII text bold and red */
 #define BOLDGREEN   "\033[1m\033[32m"		/**< Make ASCII text bold and green */
@@ -167,9 +169,9 @@ bool tryDeleteFirstNode(){
 
 	try{
 		set.deleteNode(0);
-		return false;
-	}catch(tpat_exception &e){
 		return true;
+	}catch(tpat_exception &e){
+		return false;
 	}
 }//==================================================
 
@@ -190,9 +192,9 @@ bool tryDeleteLastNode(){
 	set.addSeg(s);
 	try{
 		set.deleteNode(set.getNumNodes()-1);
-		return false;
-	}catch(tpat_exception &e){
 		return true;
+	}catch(tpat_exception &e){
+		return false;
 	}
 }//==================================================
 
@@ -535,8 +537,60 @@ void testPutInChrono(){
 
 	std::vector<tpat_arc_piece> set5_pieces = set5.getChronoOrder();
 	set5.printInChrono();
-
 	std::cout << "  Shuffled Mixed Time Set: " << (pieceVecsAreEqual(set5_pieces, set5_ans) ? PASS : FAIL) << std::endl;
+
+	// Mixed Time Set, Linked Segments
+	tpat_nodeset set6(&sys);
+	set6.addNode(tpat_node(state1, 0));
+	set6.addNode(tpat_node(state2, 1.1));
+	// set6.addNode(tpat_node(state3, 2.2));
+	// set6.addNode(tpat_node(state4, -1.1));
+	set6.addNode(tpat_node(state5, -2.2));
+	set6.addSeg(tpat_segment(0, 1, 1.1));
+	set6.addSeg(tpat_segment(1, -1, 1.1));
+	set6.addSeg(tpat_segment(2, -1, -1.1));
+
+	double segLinkData[] = {2, 2, 2, NAN, NAN, NAN};
+	tpat_constraint segLinkCon(tpat_constraint::SEG_CONT_PV, 1, segLinkData, 6);
+	set6.addConstraint(segLinkCon);
+	// set6.print();
+
+	std::vector<tpat_arc_piece> set6_ans;
+	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
+	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
+	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
+	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
+	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+
+	std::vector<tpat_arc_piece> set6_pieces = set6.getChronoOrder();
+	set6.printInChrono();
+	std::cout << "  Linked Seg Set: " << (pieceVecsAreEqual(set6_pieces, set6_ans) ? PASS : FAIL) << std::endl;
+
+	// Mixed Time Set, Linked Segments, reversed constraint IDs
+	tpat_nodeset set7(&sys);
+	set7.addNode(tpat_node(state1, 0));
+	set7.addNode(tpat_node(state2, 1.1));
+	set7.addNode(tpat_node(state5, -2.2));
+	set7.addSeg(tpat_segment(0, 1, 1.1));
+	set7.addSeg(tpat_segment(1, -1, 1.1));
+	set7.addSeg(tpat_segment(2, -1, -1.1));
+
+	double segLinkData2[] = {1, 1, 1, NAN, NAN, NAN};
+	tpat_constraint segLinkCon2(tpat_constraint::SEG_CONT_PV, 2, segLinkData2, 6);
+	set7.addConstraint(segLinkCon2);
+
+	std::vector<tpat_arc_piece> set7_ans;
+	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
+	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
+	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
+	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
+	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+
+	std::vector<tpat_arc_piece> set7_pieces = set7.getChronoOrder();
+	set7.printInChrono();
+	std::cout << "  Linked Seg Set #2: " << (pieceVecsAreEqual(set7_pieces, set7_ans) ? PASS : FAIL) << std::endl;
 }//====================================================
 
 void testPutInChrono2(){
@@ -661,7 +715,7 @@ void tryAppendSet(){
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 1.3);
 	// forSet1.print();
 	std::vector<tpat_arc_piece> chrono = forSet1.getChronoOrder();
-	// printSetInChrono(chrono, forSet1);
+	// forSet1.printInChrono();
 
 	std::vector<tpat_arc_piece> chrono_ans;
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
@@ -677,7 +731,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
 
 	std::cout << "Append (+) time set to beginning of (+) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	forSet1 = forwardSet;
@@ -685,7 +739,7 @@ void tryAppendSet(){
 
 	segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 1.3);
 	chrono = forSet1.getChronoOrder();
-	// printSetInChrono(chrono, forSet1);
+	// forSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
@@ -701,7 +755,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
 
 	std::cout << "Append (+) time set to end of (+) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	forSet1 = forwardSet;
@@ -709,7 +763,7 @@ void tryAppendSet(){
 
 	segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 0);
 	chrono = forSet1.getChronoOrder();
-	// printSetInChrono(chrono, forSet1);
+	// forSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
@@ -723,7 +777,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
 
 	std::cout << "Append (+) time set to beginning of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	forSet1 = forwardSet;
@@ -731,7 +785,7 @@ void tryAppendSet(){
 
 	segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 0);
 	chrono = forSet1.getChronoOrder();
-	// printSetInChrono(chrono, forSet1);
+	// forSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
@@ -745,7 +799,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
 
 	std::cout << "Append (+) time set to end of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	tpat_nodeset revSet1 = revSet;
@@ -753,7 +807,7 @@ void tryAppendSet(){
 
 	segID = revSet1.appendSetAtNode(&revSet2, 2, 0, -1.3);
 	chrono = revSet1.getChronoOrder();
-	// printSetInChrono(chrono, revSet1);
+	// revSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
@@ -769,7 +823,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
 
 	std::cout << "Append (-) time set to beginning of (-) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	revSet1 = revSet;
@@ -777,7 +831,7 @@ void tryAppendSet(){
 
 	segID = revSet1.appendSetAtNode(&revSet2, 0, 2, -1.3);
 	chrono = revSet1.getChronoOrder();
-	// printSetInChrono(chrono, revSet1);
+	// revSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
@@ -793,7 +847,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
 
 	std::cout << "Append (-) time set to end of (-) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	revSet1 = revSet;
@@ -801,7 +855,7 @@ void tryAppendSet(){
 
 	segID = revSet1.appendSetAtNode(&revSet2, 2, 0, 0);
 	chrono = revSet1.getChronoOrder();
-	// printSetInChrono(chrono, revSet1);
+	// revSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
@@ -815,7 +869,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
 
 	std::cout << "Append (-) time set to beginning of (-) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	revSet1 = revSet;
@@ -823,7 +877,7 @@ void tryAppendSet(){
 
 	segID = revSet1.appendSetAtNode(&revSet2, 0, 2, 0);
 	chrono = revSet1.getChronoOrder();
-	// printSetInChrono(chrono, revSet1);
+	// revSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
@@ -837,7 +891,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
 
 	std::cout << "Append (-) time set to end of (-) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	forSet1 = forwardSet;
@@ -846,7 +900,7 @@ void tryAppendSet(){
 	segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 1.3);
 
 	chrono = forSet1.getChronoOrder();
-	// printSetInChrono(chrono, forSet1);
+	// forSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
@@ -862,7 +916,7 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF > 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
 
 	//****************************************
 	forSet1 = forwardSet;
@@ -871,7 +925,7 @@ void tryAppendSet(){
 	segID = forSet1.appendSetAtNode(&revSet1, 0, 0, -1.3);
 
 	chrono = forSet1.getChronoOrder();
-	// printSetInChrono(chrono, forSet1);
+	// forSet1.printInChrono();
 
 	chrono_ans.clear();
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
@@ -887,8 +941,30 @@ void tryAppendSet(){
 	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF < 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
-	std::cout << "  >> New segment is has correct TOF: " << (forSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
 
+	//****************************************
+	forSet1 = forwardSet;
+	revSet1 = revSet;
+
+	segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 0);
+
+	chrono = forSet1.getChronoOrder();
+	// forSet1.printInChrono();
+
+	chrono_ans.clear();
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
+	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+
+	std::cout << "Append (-) time set to beginning of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
+	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(1).getTOF() ? PASS : FAIL) << std::endl;
 }//=================================================
 
 /**

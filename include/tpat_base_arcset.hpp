@@ -104,6 +104,7 @@ public:
 	int appendSetAtNode(const tpat_base_arcset*, int, int, double);
 	void clearArcConstraints();
 	void clearAllConstraints();
+	std::vector<int> concatArcset(const tpat_base_arcset*);
 	void deleteNode(int);
 	void deleteSeg(int);
 	std::vector<double> getAccel(int) const;
@@ -232,6 +233,8 @@ protected:
 	void saveState(mat_t*, const char*) const;
 	void saveSTMs(mat_t*) const;
 	void saveTOF(mat_t*, const char*) const;
+
+	std::vector<tpat_arc_piece> sortArcset(int, std::vector<tpat_arc_piece>) const;
 };//END OF tpat_base_arcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
 /**

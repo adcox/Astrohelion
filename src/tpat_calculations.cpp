@@ -663,13 +663,27 @@ double getTotalDV(const tpat_multShoot_data *it){
  *  @param nodeset A nodeset with some constraints
  */
 void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
+    tpat_correction_engine engine;  // Create engine with default settings
+    finiteDiff_checkMultShoot(nodeset, engine);
+}//====================================================
+
+/**
+ *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  by computing each partial derivative numerically via forward differencing.
+ * 
+ *  @param nodeset A nodeset with some constraints
+ *  @param engine correction engine object configured with the appropriate settings (i.e.,
+ *  equal arc time, scaling variables, etc.). Note that the maxIts, verbosity, and ignoreDiverge
+ *  attributes of the engine will be overridden by this function.
+ */
+void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset, tpat_correction_engine engine){
     printf("Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
-    tpat_correction_engine corrector;
+    tpat_correction_engine corrector(engine);
     corrector.setMaxIts(1);
     corrector.setVerbose(NO_MSG);
     corrector.setIgnoreDiverge(true);
-    // corrector.setScaleVars(true);
 
     // Run multiple shooter to get X, FX, and DF
     tpat_multShoot_data it = corrector.multShoot(nodeset, NULL);
@@ -678,6 +692,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
 
     double pertSize = 1e-8;
+    #pragma omp parallel for firstprivate(it, corrector)
     for(int i = 0; i < it.totalFree; i++){
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
@@ -714,6 +729,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
         DFest.block(0, i, it.totalCons, 1) = col;
     }
 
+
     MatrixXRd diff = DF - DFest;
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
     MatrixXRd DFest_abs = DFest.cwiseAbs();
@@ -735,7 +751,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     //         // }
     //     }
     // }
-    toCSV(diff, "FiniteDiff_Diff.csv");
+    // toCSV(diff, "FiniteDiff_Diff.csv");
 
     Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
     Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();

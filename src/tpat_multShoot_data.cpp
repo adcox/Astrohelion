@@ -39,15 +39,17 @@
  *  @brief Construct a new tpat_multShoot_data object
  *  @param set pointer to the nodeset being corrected
  */
-tpat_multShoot_data::tpat_multShoot_data(const tpat_nodeset *set) : sysData(set->getSysData()), nodeset(set){}
+tpat_multShoot_data::tpat_multShoot_data(const tpat_nodeset *set) : sysData(set->getSysData()), nodeset(set){
+	numNodes = set->getNumNodes();
+}//====================================================
 
 /**
  *  @brief Copy constructor
  *  @param it reference to another tpat_multShoot_data object
  */
-tpat_multShoot_data::tpat_multShoot_data(const tpat_multShoot_data &it) : sysData(it.nodeset->getSysData()), nodeset(it.nodeset){
+tpat_multShoot_data::tpat_multShoot_data(const tpat_multShoot_data &it) : sysData(it.sysData), nodeset(it.nodeset){
 	copyMe(it);
-}//============================================
+}//====================================================
 
 //-----------------------------------------------------
 //      Operators
@@ -114,13 +116,11 @@ void tpat_multShoot_data::copyMe(const tpat_multShoot_data &it){
 	FX = it.FX;
 	numNodes = it.numNodes;
 	numSlack = it.numSlack;
-	primPos = it.primPos;
-	primVel = it.primVel;
 	propSegs = it.propSegs;
 	slackAssignCon = it.slackAssignCon;
 	totalCons = it.totalCons;
 	totalFree = it.totalFree;
 	varTime = it.varTime;
 	X = it.X;
-	X0 = it.X0;
+	X0 = it.X0;				
 }//============================================

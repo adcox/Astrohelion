@@ -36,6 +36,7 @@
 #include "tpat_node.hpp"
 #include "tpat_utilities.hpp"
 
+#include <gsl/gsl_errno.h>
 /**
  *  @brief Construct a BCR4BP Dynamic Model
  */
@@ -241,9 +242,6 @@ void tpat_model_bcr4bpr::multShoot_initDesignVec(tpat_multShoot_data *it, const 
     // Call base class to do most of the work
     tpat_model::multShoot_initDesignVec(it, set);
 
-    if(it->equalArcTime)
-        throw tpat_exception("tpat_model_bcr4bpr::multShoot_initDesignVec: Equal Arc Times have not been implemented in this Model (yet)!");
-
     // Append the Epoch for each node
     if(it->varTime){
         // epochs come after ALL the TOFs have been added
@@ -260,7 +258,8 @@ void tpat_model_bcr4bpr::multShoot_initDesignVec(tpat_multShoot_data *it, const 
  *  @param it pointer to the object to be initialized
  */
 void tpat_model_bcr4bpr::multShoot_initIterData(tpat_multShoot_data *it) const{
-    it->propSegs.assign(it->numNodes-1, tpat_traj_bcr4bp(static_cast<const tpat_sys_data_bcr4bpr *>(it->sysData)));
+    tpat_traj_bcr4bp traj(static_cast<const tpat_sys_data_bcr4bpr *>(it->sysData));
+    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
 }//====================================================
 
 /**
@@ -316,8 +315,10 @@ void tpat_model_bcr4bpr::multShoot_createContCons(tpat_multShoot_data *it, const
     if(it->varTime){
         std::vector<double> zero {0};
         for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-            tpat_constraint timeCont(tpat_constraint::CONT_EX, it->nodeset->getSegByIx(s).getID(), zero);   // 0 value is for Epoch Time
-            it->allCons.push_back(timeCont);
+            if(it->nodeset->getSegByIx(s).getTerminus() != tpat_linkable::INVALID_ID){
+                tpat_constraint timeCont(tpat_constraint::CONT_EX, it->nodeset->getSegByIx(s).getID(), zero);   // 0 value is for Epoch Time
+                it->allCons.push_back(timeCont);
+            }
         }
     }
 }//============================================================
@@ -433,9 +434,9 @@ void tpat_model_bcr4bpr::multShoot_applyConstraint(tpat_multShoot_data *it, tpat
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
  */
-void tpat_model_bcr4bpr::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+void tpat_model_bcr4bpr::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
     // Call base function first to do most of the work
-    tpat_model::multShoot_targetPosVelCons(it, con, row0);
+    tpat_model::multShoot_targetCont_PosVel(it, con, row0);
 
     // Add epoch dependencies for this model
     if(it->varTime){
@@ -446,11 +447,13 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpa
         ms_varMap_obj epoch_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
 
         // Loop through conData
+        int count = 0;
         for(size_t s = 0; s < conData.size(); s++){
             if(!std::isnan(conData[s])){
                 double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
                 // Epoch dependencies
-                it->DF[it->totalFree*(row0+s) + epoch_var.row0 + segIx] = last_dqdT[s]*scale/it->freeVarScale[3];
+                it->DF[it->totalFree*(row0+count) + epoch_var.row0] = last_dqdT[s]*scale/it->freeVarScale[3];
+                count++;
             }
         }
     }
@@ -464,31 +467,63 @@ void tpat_model_bcr4bpr::multShoot_targetPosVelCons(tpat_multShoot_data* it, tpa
  *  @param it a pointer to the correctors iteration data structure
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
- *  @throw tpat_exception if the constraint type index is not recognized
  */
-void tpat_model_bcr4bpr::multShoot_targetExContCons(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
-    int segIx = it->nodeset->getSegIx(con.getID());
-    if(con.getData()[0] == 0){
-        /* Add time-continuity constraints if applicable; we need to match
-        the epoch time of node n to the sum of node n-1's epoch and TOF */
-        if(it->varTime){
-            ms_varMap_obj T0_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
-            ms_varMap_obj Tf_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
-            ms_varMap_obj tof_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
-                it->equalArcTime ? tpat_linkable::INVALID_ID : con.getID());
-            
-            double T0 = it->X[T0_var.row0]/it->freeVarScale[3];
-            double tof = it->equalArcTime ? it->X[tof_var.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var.row0];
-            tof /= it->freeVarScale[2];
-            double T1 = it->X[Tf_var.row0]/it->freeVarScale[3];
+void tpat_model_bcr4bpr::multShoot_targetCont_Ex(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+    /* Add time-continuity constraints if applicable; we need to match
+    the epoch time of node n to the sum of node n-1's epoch and TOF */
+    if(it->varTime){
+        int segIx = it->nodeset->getSegIx(con.getID());
+        ms_varMap_obj T0_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
+        ms_varMap_obj Tf_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
+        ms_varMap_obj tof_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+            it->equalArcTime ? tpat_linkable::INVALID_ID : con.getID());
+        
+        double T0 = it->X[T0_var.row0]/it->freeVarScale[3];
+        double tof = it->equalArcTime ? it->X[tof_var.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var.row0];
+        tof /= it->freeVarScale[2];
+        double T1 = it->X[Tf_var.row0]/it->freeVarScale[3];
 
-            it->FX[row0] = T1 - (T0 + tof);
-            it->DF[it->totalFree*(row0) + tof_var.row0] = -1/it->freeVarScale[2];
-            it->DF[it->totalFree*(row0) + T0_var.row0] = -1/it->freeVarScale[3];
-            it->DF[it->totalFree*(row0) + Tf_var.row0] = 1/it->freeVarScale[3];
-        }
-    }else{
-        throw tpat_exception("tpat_model_bcr4bpr::multShoot_createExContCons: Unrecognized extra constraint index");
+        it->FX[row0] = T1 - (T0 + tof);
+        it->DF[it->totalFree*(row0) + tof_var.row0] = -1/it->freeVarScale[2];
+        it->DF[it->totalFree*(row0) + tof_var.row0] /= it->equalArcTime ? it->nodeset->getNumSegs() : 1.0;
+        it->DF[it->totalFree*(row0) + T0_var.row0] = -1/it->freeVarScale[3];
+        it->DF[it->totalFree*(row0) + Tf_var.row0] = 1/it->freeVarScale[3];
+    }
+}//=========================================================
+
+/**
+ *  @brief Computes continuity constraints for constraints with the <tt>SEG_CONT_EX</tt> type.
+ *
+ *  This function overrides the base model function
+ *
+ *  @param it a pointer to the correctors iteration data structure
+ *  @param con the constraint being applied
+ *  @param row0 the first row this constraint applies to
+ */
+void tpat_model_bcr4bpr::multShoot_targetCont_Ex_Seg(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+    if(it->varTime){
+        int segIx1 = it->nodeset->getSegIx(con.getID());
+        int segIx2 = it->nodeset->getSegIx(con.getData()[0]);
+
+        ms_varMap_obj T0_var1 = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx1).getOrigin());
+        ms_varMap_obj T0_var2 = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx2).getOrigin());
+        ms_varMap_obj tof_var1 = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+            it->equalArcTime ? tpat_linkable::INVALID_ID : con.getID());
+        ms_varMap_obj tof_var2 = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
+            it->equalArcTime ? tpat_linkable::INVALID_ID : con.getData()[0]);
+
+        double T01 = it->X[T0_var1.row0]/it->freeVarScale[3];
+        double T02 = it->X[T0_var2.row0]/it->freeVarScale[3];
+        double tof1 = it->equalArcTime ? it->X[tof_var1.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var1.row0];
+        double tof2 = it->equalArcTime ? it->X[tof_var2.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var2.row0];
+        tof1 /= it->freeVarScale[2];
+        tof2 /= it->freeVarScale[2];
+
+        it->FX[row0] = T01 + tof1 - (T02 + tof2);
+        it->DF[it->totalFree*row0 + T0_var1.row0] = 1/it->freeVarScale[3];
+        it->DF[it->totalFree*row0 + T0_var2.row0] = -1/it->freeVarScale[3];
+        it->DF[it->totalFree*row0 + tof_var1.row0] = 1/it->freeVarScale[2];
+        it->DF[it->totalFree*row0 + tof_var2.row0] = -1/it->freeVarScale[2];
     }
 }//=========================================================
 
@@ -1412,11 +1447,9 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
     }
 
     double tof;
-    int prevOriginIx, prevTermIx;
+    int newOrigID, newTermID;
     for(int s = 0; s < it->nodeset->getNumSegs(); s++){
         tpat_segment seg = it->nodeset->getSegByIx(s);
-        prevOriginIx = it->nodeset->getNodeIx(seg.getOrigin());
-        prevTermIx = it->nodeset->getNodeIx(seg.getTerminus());
 
         if(it->varTime){
             // Get data
@@ -1427,7 +1460,11 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
             tof = seg.getTOF();
         }
 
-        tpat_segment newSeg(newNodeIDs[prevOriginIx], newNodeIDs[prevTermIx], tof);
+        newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
+        int termID = seg.getTerminus();
+        newTermID = termID == tpat_linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        
+        tpat_segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
         nodeset_out->addSeg(newSeg);

@@ -239,7 +239,8 @@ protected:
 		tpat_constraint::DIST, tpat_constraint::MIN_DIST, tpat_constraint::MAX_DIST,
 		tpat_constraint::MAX_DELTA_V, tpat_constraint::DELTA_V,
 		tpat_constraint::TOF, tpat_constraint::APSE,
-		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX};
+		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX,
+		tpat_constraint::SEG_CONT_PV, tpat_constraint::SEG_CONT_EX};
 
 	/** A vector containing all the types of events this model supports */
 	std::vector<tpat_event::tpat_event_tp> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
@@ -251,10 +252,12 @@ protected:
 	virtual double multShoot_targetDeltaV_compSlackVar(const tpat_multShoot_data*, tpat_constraint) const;
 	virtual void multShoot_targetDist(tpat_multShoot_data*, tpat_constraint, int) const;
 	virtual double multShoot_targetDist_compSlackVar(const tpat_multShoot_data*, tpat_constraint) const;
-	virtual void multShoot_targetExContCons(tpat_multShoot_data*, tpat_constraint, int) const;
+	virtual void multShoot_targetCont_Ex(tpat_multShoot_data*, tpat_constraint, int) const;
+	virtual void multShoot_targetCont_Ex_Seg(tpat_multShoot_data*, tpat_constraint, int) const;
 	virtual void multShoot_targetMatchAll(tpat_multShoot_data*, tpat_constraint, int) const;
 	virtual void multShoot_targetMatchCust(tpat_multShoot_data*, tpat_constraint, int) const;
-	virtual void multShoot_targetPosVelCons(tpat_multShoot_data*, tpat_constraint, int) const;
+	virtual void multShoot_targetCont_PosVel(tpat_multShoot_data*, tpat_constraint, int) const;
+	virtual void multShoot_targetCont_PosVel_Seg(tpat_multShoot_data*, tpat_constraint, int) const;
 	virtual void multShoot_targetState(tpat_multShoot_data*, tpat_constraint, int) const;
 	virtual void multShoot_targetTOF(tpat_multShoot_data*, tpat_constraint, int) const;
 };

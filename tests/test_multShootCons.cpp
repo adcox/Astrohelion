@@ -41,7 +41,7 @@ bool stateDiffBelowTol(std::vector<double> data, std::vector<double> correct, do
 	return stateDiffBelowTol(data, &(correct[0]), tol);
 }
 
-void testCR3BP_SE_Cons(){
+void testCR3BP_SE_Cons(bool equalArcTime){
 	tpat_sys_data_cr3bp sys("sun", "earth");
 	double ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
 	double T = 3.293141367224790;
@@ -50,6 +50,7 @@ void testCR3BP_SE_Cons(){
 	tpat_nodeset_cr3bp correctedSet(&sys);
 
 	tpat_correction_engine corrector;
+	corrector.setEqualArcTime(equalArcTime);
 	printColor(BOLDBLACK, "Testing Sun-Earth CR3BP Multiple Shooting Constraints\n");
 
 	// STATE
@@ -57,7 +58,7 @@ void testCR3BP_SE_Cons(){
 	double stateConData[] = {0.9934, 0.001, NAN, NAN, NAN, NAN};
 	tpat_constraint stateCon(tpat_constraint::STATE, 7, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -68,7 +69,8 @@ void testCR3BP_SE_Cons(){
 	}	
 }//====================================================
 
-void testCR3BP_EM_Cons(){
+void testCR3BP_EM_Cons(bool equalArcTime){
+
 	tpat_sys_data_cr3bp sys("earth", "moon");
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
@@ -78,6 +80,7 @@ void testCR3BP_EM_Cons(){
 	tpat_nodeset_cr3bp correctedSet(&sys);
 
 	tpat_correction_engine corrector;
+	corrector.setEqualArcTime(equalArcTime);
 	printColor(BOLDBLACK, "Testing Earth-Moon CR3BP Multiple Shooting Constraints\n");
 
 	// STATE
@@ -85,7 +88,7 @@ void testCR3BP_EM_Cons(){
 	double stateConData[] = {0.9, 0.1, NAN, NAN, NAN, NAN};
 	tpat_constraint stateCon(tpat_constraint::STATE, 4, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		// corrector.setVerbose(ALL_MSG);
 		tpat_nodeset_cr3bp correctedSet(&sys);
@@ -102,7 +105,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint matchAllCon(tpat_constraint::MATCH_ALL, 4, &matchAllConData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchAllCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -119,7 +122,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint matchCustCon(tpat_constraint::MATCH_CUST, 4, matchCustConData, 6);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchCustCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -138,7 +141,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint matchDistCon(tpat_constraint::DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -157,7 +160,7 @@ void testCR3BP_EM_Cons(){
 	matchDistCon.setType(tpat_constraint::MIN_DIST);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -176,7 +179,7 @@ void testCR3BP_EM_Cons(){
 	matchDistCon.setType(tpat_constraint::MAX_DIST);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -200,7 +203,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint dVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		tpat_multShoot_data itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -218,7 +221,7 @@ void testCR3BP_EM_Cons(){
 	dVCon.setType(tpat_constraint::DELTA_V);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		tpat_multShoot_data itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -235,7 +238,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint jacobiCon(tpat_constraint::JC, 0, &jacobiData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(jacobiCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -252,7 +255,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint tofCon(tpat_constraint::TOF, 0, &tofData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(tofCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -269,7 +272,7 @@ void testCR3BP_EM_Cons(){
 	tpat_constraint apseCon(tpat_constraint::APSE, 4, &apseData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(apseCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -285,9 +288,49 @@ void testCR3BP_EM_Cons(){
 	}catch(tpat_diverge &e){
 		std::cout << "APSE Constraint: " << FAIL << std::endl;
 	}
-}
 
-void testBCR4BPCons(){
+	// SEG_CONT_PV
+	printColor(BOLDBLACK, "SEG_CONT_PV Constraint\n");
+
+	tpat_nodeset_cr3bp forwardArc(ic, &sys, T/2, 4);
+	tpat_nodeset_cr3bp reverseArc(ic, &sys, -T/2.1, 4);
+	tpat_nodeset_cr3bp doubleSrcLyap = forwardArc;
+	doubleSrcLyap.appendSetAtNode(&reverseArc, 0, 0, 0);
+	// doubleSrcLyap.print();
+	// doubleSrcLyap.printInChrono();
+
+	double contData[] = {4, 4, NAN, 4, 4, NAN};
+	tpat_constraint contCon(tpat_constraint::SEG_CONT_PV, 2, contData, 6);
+	doubleSrcLyap.addConstraint(contCon);
+
+	try{
+		finiteDiff_checkMultShoot(&doubleSrcLyap, corrector);
+		try{
+			tpat_nodeset_cr3bp correctedSet(&sys);
+			tpat_multShoot_data it = corrector.multShoot(&doubleSrcLyap, &correctedSet);
+			tpat_traj forwardTraj = it.propSegs[correctedSet.getSegIx(contCon.getID())];
+			tpat_traj reverseTraj = it.propSegs[correctedSet.getSegIx(contData[0])];
+			std::vector<double> for_lastState = forwardTraj.getStateByIx(-1);
+			std::vector<double> rev_lastState = reverseTraj.getStateByIx(-1);
+			double sum = 0;
+			for(int i = 0; i < 6; i++){
+				if(!std::isnan(contData[i]))
+					sum += pow(for_lastState[i] - rev_lastState[i], 2);
+			}
+			double dist = std::sqrt(sum);
+			std::cout << "SEG_CONT_PV Constraint: " << (std::abs(dist) < 1e-12 ? PASS : FAIL) << std::endl;
+		}catch(tpat_diverge &e){
+			std::cout << "SEG_CONT_PV Constraint: " << FAIL << std::endl;
+		}
+
+		if(equalArcTime)
+			std::cout << "SEG_CONT_PV Constraint (equalArcTime): " << FAIL << std::endl;
+	}catch(tpat_exception &e){
+		std::cout << "SEG_CONT_PV Constraint (equalArcTime): " << PASS << std::endl;
+	}
+}//====================================================
+
+void testBCR4BPCons(bool equalArcTime){
 	tpat_sys_data_bcr4bpr sys("sun", "earth", "moon");
 	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
 	double T = 313;	// SE L1 Period
@@ -296,6 +339,7 @@ void testBCR4BPCons(){
 	tpat_nodeset_bcr4bp correctedSet(&sys);
 
 	tpat_correction_engine corrector;
+	corrector.setEqualArcTime(equalArcTime);
 	printColor(BOLDBLACK, "Testing BCR4BP Multiple Shooting Constraints\n");
 
 	// STATE
@@ -303,7 +347,7 @@ void testBCR4BPCons(){
 	double stateConData[] = {-0.77, 0.5, NAN, NAN, NAN, NAN};
 	tpat_constraint stateCon(tpat_constraint::STATE, 4, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -320,7 +364,7 @@ void testBCR4BPCons(){
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchAllCon);
 	// halfLyapNodeset.print();
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -337,7 +381,7 @@ void testBCR4BPCons(){
 	tpat_constraint matchCustCon(tpat_constraint::MATCH_CUST, 4, matchCustConData, 6);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchCustCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -356,7 +400,7 @@ void testBCR4BPCons(){
 	tpat_constraint matchDistCon(tpat_constraint::DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -375,7 +419,7 @@ void testBCR4BPCons(){
 	matchDistCon.setType(tpat_constraint::MIN_DIST);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -395,7 +439,7 @@ void testBCR4BPCons(){
 	matchDistCon.setType(tpat_constraint::MAX_DIST);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(matchDistCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -420,7 +464,7 @@ void testBCR4BPCons(){
 	tpat_constraint dVCon(tpat_constraint::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		tpat_multShoot_data itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -437,7 +481,7 @@ void testBCR4BPCons(){
 	dVCon.setType(tpat_constraint::DELTA_V);
 	halfLyapNodeset.clearAllConstraints();
 	halfLyapNodeset.addConstraint(dVCon);
-	finiteDiff_checkMultShoot(&halfLyapNodeset);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
 		tpat_nodeset_bcr4bp correctedSet(&sys);
 		tpat_multShoot_data itData = corrector.multShoot(&halfLyapNodeset, &correctedSet);
@@ -448,68 +492,68 @@ void testBCR4BPCons(){
 	}
 
 	// TOF
-	// printColor(BOLDBLACK, "TOF Constraint\n");
-	// double tofData = 340.0;
-	// tpat_constraint tofCon(tpat_constraint::TOF, 0, &tofData, 1);
-	// halfLyapNodeset.clearAllConstraints();
-	// halfLyapNodeset.addConstraint(tofCon);
+	printColor(BOLDBLACK, "TOF Constraint\n");
+	double tofData = 340.0;
+	tpat_constraint tofCon(tpat_constraint::TOF, 0, &tofData, 1);
+	halfLyapNodeset.clearAllConstraints();
+	halfLyapNodeset.addConstraint(tofCon);
 	// halfLyapNodeset.print();
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	tpat_nodeset_bcr4bp correctedSet(&sys);
-	// 	corrector.multShoot(&halfLyapNodeset, &correctedSet);
-	// 	double totalTOF = correctedSet.getTotalTOF();
-	// 	std::cout << "TOF Constraint: " << (std::abs(totalTOF - tofData) < 1e-12 ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "TOF Constraint: " << FAIL << std::endl;
-	// }
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
+	try{
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
+		double totalTOF = correctedSet.getTotalTOF();
+		std::cout << "TOF Constraint: " << (std::abs(totalTOF - tofData) < 1e-12 ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "TOF Constraint: " << FAIL << std::endl;
+	}
 
 	// APSE
-	// printColor(BOLDBLACK, "APSE Constraint\n");
-	// double apseData = 2;
-	// tpat_constraint apseCon(tpat_constraint::APSE, 4, &apseData, 1);
-	// halfLyapNodeset.clearAllConstraints();
-	// halfLyapNodeset.addConstraint(apseCon);
-	// finiteDiff_checkMultShoot(&halfLyapNodeset);
-	// try{
-	// 	tpat_nodeset_bcr4bp correctedSet(&sys);
-	// 	corrector.multShoot(&halfLyapNodeset, &correctedSet);
-	// 	finalState = correctedSet.getState(apseCon.getID());
-	// 	const tpat_model *model = sys.getModel();
-	// 	double rdot = model->getRDot(apseData, correctedSet.getEpoch(apseCon.getID()), &(finalState[0]), &sys);
-	// 	std::cout << "APSE Constraint: " << (std::abs(rdot) < 1e-12 ? PASS : FAIL) << std::endl;
-	// 	printf("rdot = %.4e\n", rdot);
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "APSE Constraint: " << FAIL << std::endl;
-	// }
+	printColor(BOLDBLACK, "APSE Constraint\n");
+	double apseData = 2;
+	tpat_constraint apseCon(tpat_constraint::APSE, 4, &apseData, 1);
+	halfLyapNodeset.clearAllConstraints();
+	halfLyapNodeset.addConstraint(apseCon);
+	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
+	try{
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&halfLyapNodeset, &correctedSet);
+		finalState = correctedSet.getState(apseCon.getID());
+		const tpat_model *model = sys.getModel();
+		double rdot = model->getRDot(apseData, correctedSet.getEpoch(apseCon.getID()), &(finalState[0]), &sys);
+		std::cout << "APSE Constraint: " << (std::abs(rdot) < 1e-12 ? PASS : FAIL) << std::endl;
+		printf("rdot = %.4e\n", rdot);
+	}catch(tpat_diverge &e){
+		std::cout << "APSE Constraint: " << FAIL << std::endl;
+	}
 
 
-	// // Saddle Point, Exact
-	// printColor(BOLDBLACK, "SP Constraint\n");
-	// double IC[] = {-0.71200455, 0.16675922, 0.02755461, 0.01186449, -0.00004723, -0.0010737};
-	// double t0 = 10207.19;
-	// // double t0 = 0;
-	// double tof = 51.32;
-	// tpat_nodeset_bcr4bp nodes0(IC, &sys, t0, tof, 5);
-	// corrector.setTol(1e-11);
-	// // nodes0.saveToMat("SP_TestCase.mat");
+	// Saddle Point, Exact
+	printColor(BOLDBLACK, "SP Constraint\n");
+	double IC[] = {-0.71200455, 0.16675922, 0.02755461, 0.01186449, -0.00004723, -0.0010737};
+	double t0 = 10207.19;
+	// double t0 = 0;
+	double tof = 51.32;
+	tpat_nodeset_bcr4bp nodes0(IC, &sys, t0, tof, 5);
+	corrector.setTol(1e-11);
+	// nodes0.saveToMat("SP_TestCase.mat");
 
-	// double spData = 0;
-	// tpat_constraint spCon(tpat_constraint::SP, 2, &spData, 1);
-	// nodes0.addConstraint(spCon);
-	// finiteDiff_checkMultShoot(&nodes0);
-	// try{
-	// 	tpat_nodeset_bcr4bp correctedSet(&sys);
-	// 	corrector.multShoot(&nodes0, &correctedSet);
-	// 	finalState = correctedSet.getState(spCon.getID());
-	// 	finalState.erase(finalState.begin()+3, finalState.end());
+	double spData = 0;
+	tpat_constraint spCon(tpat_constraint::SP, 2, &spData, 1);
+	nodes0.addConstraint(spCon);
+	finiteDiff_checkMultShoot(&nodes0, corrector);
+	try{
+		tpat_nodeset_bcr4bp correctedSet(&sys);
+		corrector.multShoot(&nodes0, &correctedSet);
+		finalState = correctedSet.getState(spCon.getID());
+		finalState.erase(finalState.begin()+3, finalState.end());
 
-	// 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getID()));
-	// 	double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
-	// 	std::cout << "SP Constraint: " << (diff < 1e-10 ? PASS : FAIL) << std::endl;
-	// }catch(tpat_diverge &e){
-	// 	std::cout << "SP Constraint: " << FAIL << std::endl;
-	// }
+		Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getID()));
+		double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
+		std::cout << "SP Constraint: " << (diff < 1e-10 ? PASS : FAIL) << std::endl;
+	}catch(tpat_diverge &e){
+		std::cout << "SP Constraint: " << FAIL << std::endl;
+	}
 	
 	// // Saddle Point, Range
 	// printColor(BOLDBLACK, "SP Range Constraint\n");
@@ -617,15 +661,91 @@ void testBCR4BPCons(){
 	// }catch(tpat_diverge &e){
 	// 	std::cout << "SP Max Dist Constraint: " << FAIL << std::endl;
 	// }
+
+	// SEG_CONT_PV
+	printColor(BOLDBLACK, "SEG_CONT_PV Constraint\n");
+
+	tpat_nodeset_bcr4bp forwardArc(ic, &sys, 0, T/2, 4);
+	forwardArc.deleteNode(3);
+	tpat_nodeset_bcr4bp reverseArc(ic, &sys, T, -T/2, 4);
+	reverseArc.deleteNode(3);
+	tpat_nodeset_bcr4bp doubleSrcLyap = forwardArc;
+	doubleSrcLyap.concatArcset(&reverseArc);
+	// doubleSrcLyap.appendSetAtNode(&reverseArc, 0, 0, 0);
+
+	double contData[] = {4, 4, NAN, 4, 4, NAN};
+	tpat_constraint contCon(tpat_constraint::SEG_CONT_PV, 2, contData, 6);
+	doubleSrcLyap.addConstraint(contCon);
+
+	// doubleSrcLyap.print();
+	// doubleSrcLyap.printInChrono();
+
+	try{
+		finiteDiff_checkMultShoot(&doubleSrcLyap, corrector);
+		try{
+			tpat_nodeset_bcr4bp correctedSet(&sys);
+			tpat_multShoot_data it = corrector.multShoot(&doubleSrcLyap, &correctedSet);
+			tpat_traj forwardTraj = it.propSegs[correctedSet.getSegIx(contCon.getID())];
+			tpat_traj reverseTraj = it.propSegs[correctedSet.getSegIx(contData[0])];
+			std::vector<double> for_lastState = forwardTraj.getStateByIx(-1);
+			std::vector<double> rev_lastState = reverseTraj.getStateByIx(-1);
+			double sum = 0;
+			for(int i = 0; i < 6; i++){
+				if(!std::isnan(contData[i]))
+					sum += pow(for_lastState[i] - rev_lastState[i], 2);
+			}
+			double dist = std::sqrt(sum);
+			std::cout << "SEG_CONT_PV Constraint: " << (std::abs(dist) < 1e-12 ? PASS : FAIL) << std::endl;
+		}catch(tpat_diverge &e){
+			std::cout << "SEG_CONT_PV Constraint: " << FAIL << std::endl;
+		}
+
+		if(equalArcTime)
+			std::cout << "SEG_CONT_PV Constraint (equalArcTime): " << FAIL << std::endl;
+	}catch(tpat_exception &e){
+		std::cout << "SEG_CONT_PV Constraint (equalArcTime): " << PASS << std::endl;
+	}
+
+	// SEG_CONT_EX
+	printColor(BOLDBLACK, "SEG_CONT_EX Constraint\n");
+	doubleSrcLyap.clearAllConstraints();
+
+	double contExData[] = {4, 0};
+	tpat_constraint extraContCon(tpat_constraint::SEG_CONT_EX, 2, contExData, 2);
+	doubleSrcLyap.addConstraint(extraContCon);
+
+	try{
+		finiteDiff_checkMultShoot(&doubleSrcLyap, corrector);
+		try{
+			tpat_nodeset_bcr4bp correctedSet(&sys);
+			tpat_multShoot_data it = corrector.multShoot(&doubleSrcLyap, &correctedSet);
+			tpat_traj forwardTraj = it.propSegs[correctedSet.getSegIx(contCon.getID())];
+			tpat_traj reverseTraj = it.propSegs[correctedSet.getSegIx(contData[0])];
+			std::cout << "SEG_CONT_EX Constraint: " << 
+				(std::abs(forwardTraj.getEpochByIx(-1) - reverseTraj.getEpochByIx(-1)) < 1e-12 ? PASS : FAIL) <<
+				std::endl;
+		}catch(tpat_diverge &e){
+			std::cout << "SEG_CONT_EX Constraint: " << FAIL << std::endl;
+		}
+
+		if(equalArcTime)
+			std::cout << "SEG_CONT_PV Constraint (equalArcTime): " << FAIL << std::endl;
+	}catch(tpat_exception &e){
+		std::cout << "SEG_CONT_PV Constraint (equalArcTime): " << PASS << std::endl;
+	}
 }//====================================================
 
 /**
  *  @brief Test all constraint types available to ensure they converge correctly
  */
 int main(void){
-	// testCR3BP_SE_Cons();
-	// testCR3BP_EM_Cons();
-	testBCR4BPCons();
+	// First, run with equalArcTime = false
+	// testCR3BP_SE_Cons(false);
+	// testCR3BP_EM_Cons(false);
+	// testBCR4BPCons(false);
 
+	// testCR3BP_SE_Cons(true);
+	// testCR3BP_EM_Cons(true);
+	testBCR4BPCons(true);
 	return EXIT_SUCCESS;
 }

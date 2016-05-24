@@ -25,6 +25,7 @@
 
 #include "tpat_constraint.hpp"
 
+#include <cmath>
 #include <vector>
 // Forward Declarations
 

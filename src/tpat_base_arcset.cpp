@@ -217,6 +217,8 @@ int tpat_base_arcset::addSeg(tpat_segment s){
 								// either a time collision (both terminate) or parallel structure (both originate)
 								printf("Nearby segment w/ ID %d originates at node %d and terminates at node %d\n", nearSeg->getID(), nearSeg->getOrigin(), nearSeg->getTerminus());
 								printf("The new seg (ID %d) originates at node %d and terminates at node %d\n", s.getID(), s.getOrigin(), s.getTerminus());
+								print();
+								printInChrono();
 								throw tpat_exception("tpat_base_arcset::addSeg: either time collision or parallel structure");
 							}else if(!sameLinkType && !sameTimeDir){
 								// parallel structure
@@ -263,11 +265,15 @@ int tpat_base_arcset::addSeg(tpat_segment s){
  *  will be retained, the other deleted, and segments rerouted accordingly.
  *  
  *  @return the ID of a new segment that links the old and new arcset objects
+ *	@throws tpat_exception if the two arcset objects have different system data objects
  *  @throws tpat_exception if either ID is out of bounds
  *  @throws tpat_exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
 int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo_ID, int linkFrom_ID, double tof){
+	if(arcset->sysData != sysData)
+		throw tpat_exception("tpat_base_arcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
+
 	// First, check to make sure the specified nodes are valid
 	if(linkTo_ID < 0 || linkTo_ID >= (int)(nodeIDMap.size()))
 		throw tpat_exception("tpat_base_arcset::appendSetAtNode: linkTo_ID is out of bounds");
@@ -324,31 +330,7 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 
 	// A mapping vector: index is the old node ID, value is the new node ID
 	// All new IDs are initialized to the default INVALID_ID value
-	std::vector<int> map_oldID_to_newID(set->getNextNodeID(), tpat_linkable::INVALID_ID);
-
-	// Add all nodes from set to this object and keep track of new IDs
-	for(int n = 0; n < set->getNumNodes(); n++){
-		tpat_node node = set->getNodeByIx(n);
-
-		// Remove all links to segments; these will be added back when the segments are added to this new arcset object
-		node.clearLinks();
-		map_oldID_to_newID[node.getID()] = addNode(node);
-	}
-
-	// Add all segments from set to this object and update the link IDs
-	// The act of adding the segment will update the links in the newly added nodes
-	for(int s = 0; s < set->getNumSegs(); s++){
-		tpat_segment seg = set->getSegByIx(s);
-		
-		// Remap the origin and terminus to the new IDs
-		if(seg.getOrigin() != tpat_linkable::INVALID_ID)
-			seg.setOrigin(map_oldID_to_newID[seg.getOrigin()]);
-
-		if(seg.getTerminus() != tpat_linkable::INVALID_ID)
-			seg.setTerminus(map_oldID_to_newID[seg.getTerminus()]);
-
-		addSeg(seg);
-	}
+	std::vector<int> map_oldID_to_newID = concatArcset(set.get());
 
 	// Add a new segment to link the nodes from [set] to [this object]
 	int origin = tpat_linkable::INVALID_ID, terminus = tpat_linkable::INVALID_ID;
@@ -390,6 +372,63 @@ void tpat_base_arcset::clearAllConstraints(){
 	for(size_t n = 0; n < nodes.size(); n++){ nodes[n].clearConstraints(); }
 	for(size_t s = 0; s < segs.size(); s++){ segs[s].clearConstraints(); }
 	cons.clear();
+}//====================================================
+
+/**
+ *  @brief Concatenate two arcset objects
+ *  @details The nodes, segments and constraints are copied from one arcset to another
+ *  without creating or deleting any nodes or segments; i.e., the arcset object will
+ *  include two independent "flows" without a segment to connect them
+ * 
+ *  @param set pointer to an arcset object
+ *  @return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
+ *  in this object; the index of the vector is the old node ID and the value is the 
+ *  new node ID. If a node does not exist for one of the old ID values, a new value 
+ *  equivalent to <tt>tpat_linkable::INVALID_ID</tt> is stored in the associated 
+ *  vector element.
+ *  
+ *  @throws tpat_exception if the input arcset does not have the same system data object as this one
+ */
+std::vector<int> tpat_base_arcset::concatArcset(const tpat_base_arcset *set){
+	if(set->sysData != sysData)
+		throw tpat_exception("tpat_base_arcset::concatArcset: Cannot concatenate two arcsets with different system data objects");
+
+	// A mapping vector: index is the old node ID, value is the new node ID
+	// All new IDs are initialized to the default INVALID_ID value
+	std::vector<int> map_oldID_to_newID(set->getNextNodeID(), tpat_linkable::INVALID_ID);
+
+	// Add all nodes from set to this object and keep track of new IDs
+	for(int n = 0; n < set->getNumNodes(); n++){
+		tpat_node node = set->getNodeByIx(n);
+
+		// Remove all links to segments; these will be added back when the segments are added to this new arcset object
+		node.clearLinks();
+		map_oldID_to_newID[node.getID()] = addNode(node);
+	}
+
+	// Add all segments from set to this object and update the link IDs
+	// The act of adding the segment will update the links in the newly added nodes
+	for(int s = 0; s < set->getNumSegs(); s++){
+		tpat_segment seg = set->getSegByIx(s);
+		
+		// Remap the origin and terminus to the new IDs
+		if(seg.getOrigin() != tpat_linkable::INVALID_ID)
+			seg.setOrigin(map_oldID_to_newID[seg.getOrigin()]);
+
+		if(seg.getTerminus() != tpat_linkable::INVALID_ID)
+			seg.setTerminus(map_oldID_to_newID[seg.getTerminus()]);
+
+		addSeg(seg);
+	}
+
+	// Copy all constraints
+	std::vector<tpat_constraint> arcCons = set->getArcConstraints();
+	cons.insert(cons.end(), arcCons.begin(), arcCons.end());
+
+	// Update tolerance to the larger of the two tolerances
+	tol = set->getTol() > tol ? set->getTol() : tol;
+
+	return map_oldID_to_newID;
 }//====================================================
 
 /**
@@ -505,8 +544,8 @@ void tpat_base_arcset::deleteNode(int id){
 				addSeg(combo);
 			}
 		}else if(linkedSegIxs.size() == 1){
-			// Must be either first or last point, cannot delete!
-			throw tpat_exception("tpat_base_arcset::deleteNode: Node is only linked to one segment and must, therefore, be the first or last node and cannot be deleted");
+			// Must be either the first or last point, so update the one linked segment
+			segs[linkedSegIxs[0]].removeLink(id);
 		}else{ /* Not linked to anything, just delete it! */ }
 
 
@@ -627,19 +666,39 @@ std::vector<tpat_constraint> tpat_base_arcset::getArcConstraints() const { retur
  *  order of the nodes and segments
  */
 std::vector<tpat_arc_piece> tpat_base_arcset::getChronoOrder() const{
-	
+	// printf("* Beginning getChronoOrder()\n");
 	std::vector<tpat_arc_piece> pieces;
 	if(nodes.size() == 0){
-		printErr("tpat_base_arcset::getChronoOrder: First node is invalid... exiting\n");
+		printErr("tpat_base_arcset::getChronoOrder: No nodes... exiting\n");
 		return pieces;
 	}
 
-	tpat_node node0 = nodes[0];
+	return sortArcset(nodes[0].getID(), pieces);
+}//====================================================
+
+/**
+ *  @brief Sort the arcset into chronological order beginning at a specified node
+ *  @details [long description]
+ * 
+ *  @param ID the ID of a node in the arcset
+ *  @return a vector of tpat_arc_piece objects that represent the chronological 
+ *  order of the nodes and segments that make up the section of the arcset that
+ *  contains the specified node
+ *  
+ *  @throws tpat_exception if the ID is out of bounds
+ */
+std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpat_arc_piece> prevPieces) const{
+	if(ID < 0 || ID >= nextNodeID)
+		throw tpat_exception("tpat_base_arcset::sortArcset: ID out of bounds");
+
+	std::vector<tpat_arc_piece> pieces;
+
+	tpat_node node0 = nodes[nodeIDMap[ID]];
 	// printf("Beginning with node ID %d\n", node0.getID());
 
 	pieces.push_back(tpat_arc_piece(tpat_arc_piece::NODE, node0.getID()));
 	for(int dir = 1; dir > -2; dir -= 2){
-		// printf("Direction is %s\n", dir > 0 ? "[FORWARD]" : "[BACKWARD]");
+		// printf("  Direction is %s\n", dir > 0 ? "[FORWARD]" : "[BACKWARD]");
 
 		bool go = true;
 		tpat_node node = node0;
@@ -651,7 +710,7 @@ std::vector<tpat_arc_piece> tpat_base_arcset::getChronoOrder() const{
 				if(node.getLink(i) != tpat_linkable::INVALID_ID){
 
 					tpat_segment seg = getSeg(node.getLink(i));
-					// printf(" (checking out segment ID %d): ", seg.getID());
+					// printf("   (checking out segment ID %d): ", seg.getID());
 
 					if(dir > 0 && ((seg.getTerminus() == node.getID() && seg.getTOF() < 0) || (seg.getOrigin() == node.getID() && seg.getTOF() > 0))){
 						// This segment moves forward in time from node
@@ -677,7 +736,7 @@ std::vector<tpat_arc_piece> tpat_base_arcset::getChronoOrder() const{
 							nextNodeID = seg.getTerminus();
 
 						if(nextNodeID != tpat_linkable::INVALID_ID){
-							// printf("Next node has ID %d\n", nextNodeID);
+							// printf("  Next node has ID %d\n", nextNodeID);
 							node = getNode(nextNodeID);
 
 							if(dir > 0)
@@ -685,9 +744,71 @@ std::vector<tpat_arc_piece> tpat_base_arcset::getChronoOrder() const{
 							else
 								pieces.insert(pieces.begin(), tpat_arc_piece(tpat_arc_piece::NODE, node.getID()));
 						}else{
-							// printf("No next node, switching direction...\n");
-							// The segment terminates/originates without a node; end this string
-							// TODO - This is where we would implement a segment-to-segment link
+							// The segment terminates/originates without a node; Look for a link to
+							// another segment OR end this section
+
+							int linkedSegID = tpat_linkable::INVALID_ID;
+							for(size_t c = 0; c < cons.size(); c++){
+								if(cons[c].getType() == tpat_constraint::SEG_CONT_PV){
+									// Check to see if this constraint is linked to this node at all
+									int ID0 = cons[c].getID(), ID1 = tpat_linkable::INVALID_ID;
+									std::vector<double> data = cons[c].getData();
+									for(size_t d = 0; d < data.size(); d++){
+										if(!std::isnan(data[d])){
+											ID1 = (int)(data[d]);
+											break;
+										}
+									}
+									if(ID0 == seg.getID()){
+										linkedSegID = ID1;
+										break;
+									}else if(ID1 == seg.getID()){
+										linkedSegID = ID0;
+										break;
+									}
+									// Didn't find the correct link, keep looking
+								}
+							}
+
+							if(linkedSegID != tpat_linkable::INVALID_ID){
+								// printf(">Found seg-2-seg link with segment %d\n", linkedSegID);
+								
+								// Check to see if the identified segment has already been counted
+								bool alreadyUsed = false;
+								for(size_t p = 0; p < prevPieces.size(); p++){
+									if(prevPieces[p].type == tpat_arc_piece::SEG && 
+										prevPieces[p].ID == linkedSegID){
+										
+										alreadyUsed = true;
+										break;
+									}
+								}
+
+								// Also check the current segment
+								if(!alreadyUsed){
+									for(size_t p = 0; p < pieces.size(); p++){
+										if(pieces[p].type == tpat_arc_piece::SEG && pieces[p].ID == linkedSegID){
+											alreadyUsed = true;
+											break;
+										}
+									}
+								}
+
+								if(!alreadyUsed){
+									// Located a segment that links to this one, go recursive!
+									tpat_segment linkedSeg = segs[segIDMap[linkedSegID]];
+									int linkedNodeID = linkedSeg.getOrigin();
+									if(linkedNodeID != tpat_linkable::INVALID_ID){
+										// Concatenate the pieces I've arranged so far and the previously arranged ones; order is unimportant here
+										std::vector<tpat_arc_piece> allPieces = pieces;
+										allPieces.insert(allPieces.begin(), prevPieces.begin(), prevPieces.end());
+										std::vector<tpat_arc_piece> section = sortArcset(linkedNodeID, allPieces);
+
+										// Append newly arranged section of pieces to the total vector (order IS important here)
+										pieces.insert(dir > 0 ? pieces.end() : pieces.begin(), section.begin(), section.end());
+									}
+								}
+							}
 							go = false;
 						}
 
@@ -1257,7 +1378,6 @@ void tpat_base_arcset::copyMe(const tpat_base_arcset &d){
 	segs = d.segs;
 	segIDMap = d.segIDMap;
 	cons = d.cons;
-	// sysData = d.sysData; // Copying ADDRESS of sys_data object
 	numExtraParam = d.numExtraParam;
 	extraParamRowSize = d.extraParamRowSize;
 	tol = d.tol;

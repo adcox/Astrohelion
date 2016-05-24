@@ -32,26 +32,10 @@
  */
 class tpat_exception : public std::exception{
 	public:
-		/** @brief Default constructor */
-		tpat_exception() : msg("Custom exception!") {}
-		
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_exception(const char* m) : msg(m) {}
-
-		/** @brief describe the exception */
-		virtual const char* what() const throw(){
-			return msg.c_str();
-		}
-
-		/**
-		 *  @brief Copy constructor
-		 * 
-		 *  @param e reference to another exception object
-		 */
-		tpat_exception(const tpat_exception &e) : msg(e.msg){}
+		tpat_exception();
+		tpat_exception(const char*);
+		tpat_exception(const tpat_exception&);
+		virtual const char* what() const throw();
 
 	protected:
 		std::string msg;	//!< Custom error message
@@ -66,19 +50,9 @@ class tpat_exception : public std::exception{
  */
 class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
 	public:
-		/** @brief Default constructor */
-		tpat_sizeMismatch() : tpat_exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
-		
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_sizeMismatch(const char* m) : tpat_exception(m), std::runtime_error(m) {}
-		
-		/** @brief describe the exception */
-		const char* what() const throw(){
-	    	return msg.c_str();
-	  	}
+		tpat_sizeMismatch();
+		tpat_sizeMismatch(const char*);
+		const char* what() const throw();
 };
 
 /**
@@ -90,19 +64,9 @@ class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
  */
 class tpat_diverge : public tpat_exception, std::runtime_error{
 	public:
-		/** Default constructor */
-		tpat_diverge() : tpat_exception("Did not converge!"), std::runtime_error("Did not converge!"){}
-
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_diverge(const char* m) : tpat_exception(m), std::runtime_error(m) {}
-		
-		/** @brief describe the exception */
-		const char* what() const throw(){
-			return msg.c_str();
-		}
+		tpat_diverge();
+		tpat_diverge(const char*);
+		const char* what() const throw();
 };
 
 /** 
@@ -113,19 +77,9 @@ class tpat_diverge : public tpat_exception, std::runtime_error{
  */
 class tpat_linalg_err : public tpat_exception, std::runtime_error{
 	public:
-		/** Default constructor */
-		tpat_linalg_err() : tpat_exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
-
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_linalg_err(const char* m) : tpat_exception(m), std::runtime_error(m) {}
-		
-		/** @brief describe the exception */
-		const char* what() const throw(){
-			return msg.c_str();
-		}
+		tpat_linalg_err();
+		tpat_linalg_err(const char*);
+		const char* what() const throw();
 };
 
 #endif

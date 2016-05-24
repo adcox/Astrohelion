@@ -54,22 +54,23 @@ tpat_correction_engine::tpat_correction_engine(const tpat_correction_engine &e){
 /**
  *	@brief Destructor
  */
-tpat_correction_engine::~tpat_correction_engine(){
-	cleanEngine();
-}//=================================================
+tpat_correction_engine::~tpat_correction_engine(){}
 
 /**
  *	@brief Copy all engine variables
  *	@param e an engine reference
  */
 void tpat_correction_engine::copyEngine(const tpat_correction_engine &e){
-	verbose = e.verbose;
-	varTime = e.varTime;
-	equalArcTime = e.equalArcTime;
-	maxIts = e.maxIts;
-	tol = e.tol;
-	findEvent = e.findEvent;
-	ignoreCrash = e.ignoreCrash;
+	verbose = e.verbose;//
+	varTime = e.varTime;//
+	equalArcTime = e.equalArcTime;//
+	maxIts = e.maxIts;//
+	tol = e.tol;//
+	findEvent = e.findEvent;//
+	ignoreCrash = e.ignoreCrash;//
+	ignoreDiverge = e.ignoreDiverge;
+	scaleVars = e.scaleVars;
+	isClean = e.isClean;
 }//====================================================
 
 //-----------------------------------------------------
@@ -257,9 +258,6 @@ tpat_multShoot_data tpat_correction_engine::multShoot(const tpat_nodeset *set, t
 	tpat_multShoot_data it(set);
 	it.varTime = varTime;	// Save in structure to pass easily to other functions
 	it.equalArcTime = equalArcTime;
-
-	// Get some basic data from the input nodeset
-	it.numNodes = set->getNumNodes();
 	
 	printVerb(verbose == ALL_MSG, "Multiple Shooting Algorithm:\n");
 	printVerb(verbose == ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
@@ -314,6 +312,8 @@ tpat_multShoot_data tpat_correction_engine::multShoot(const tpat_nodeset *set, t
 		switch(con.getType()){
 			case tpat_constraint::CONT_PV:
 			case tpat_constraint::CONT_EX:
+			case tpat_constraint::SEG_CONT_PV:
+			case tpat_constraint::SEG_CONT_EX:
 			case tpat_constraint::STATE:
 			case tpat_constraint::MATCH_CUST:
 				addToRows = con.countConstrainedStates();
@@ -477,15 +477,18 @@ tpat_multShoot_data tpat_correction_engine::multShoot(tpat_multShoot_data it, tp
 		// Compute Delta-Vs between node segments
 		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
 			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-			int termNodeIx = it.nodeset->getNodeIx(it.nodeset->getSegByIx(s).getTerminus());
-			// velCon has false for a velocity state if there is a discontinuity between
-			// the terminus of the segment and the terminal node
-			std::vector<bool> velCon = it.nodeset->getSegByIx(s).getVelCon();
-			for(int i = 3; i < 6; i++){
-				// Compute difference in velocity; if velCon[i-3] is true, then velocity
-				// should be continuous and any difference is numerical error, so set to
-				// zero by multiplying by not-true
-				it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
+			int termID = it.nodeset->getSegByIx(s).getTerminus();
+			if(termID != tpat_linkable::INVALID_ID){
+				int termNodeIx = it.nodeset->getNodeIx(termID);
+				// velCon has false for a velocity state if there is a discontinuity between
+				// the terminus of the segment and the terminal node
+				std::vector<bool> velCon = it.nodeset->getSegByIx(s).getVelCon();
+				for(int i = 3; i < 6; i++){
+					// Compute difference in velocity; if velCon[i-3] is true, then velocity
+					// should be continuous and any difference is numerical error, so set to
+					// zero by multiplying by not-true
+					it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
+				}
 			}
 		}
 

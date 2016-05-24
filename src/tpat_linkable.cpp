@@ -219,7 +219,7 @@ void tpat_linkable::setID(int id){ ID = id; }
 void tpat_linkable::setLink(int ix, int id) {
 	if(ix >= 0 && ix < NUM_LINKS){
 		links[ix] = id;
-		if(links[(ix+1) % NUM_LINKS] == id){
+		if(links[(ix+1) % NUM_LINKS] == id && id != INVALID_ID){
 			throw tpat_exception("linkable::setLink: Cannot link both slots to same ID");
 		}
 	}else{

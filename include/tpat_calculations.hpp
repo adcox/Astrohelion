@@ -38,21 +38,21 @@
 #include <vector>
 
 // Forward declarations
-class tpat_nodeset_bcr4bp;
-class tpat_sys_data_bcr4bpr;
-class tpat_traj;
-class tpat_traj_bcr4bp;
-class tpat_nodeset;
-class tpat_nodeset_cr3bp;
-class tpat_sys_data_cr3bp;
-class tpat_traj_cr3bp;
-
-struct iterationData;
+class TPAT_Correction_Engine;
+class TPAT_MultShoot_Data;
+class TPAT_Nodeset;
+class TPAT_Nodeset_BC4BP;
+class TPAT_Nodeset_CR3BP;
+class TPAT_Sys_Data_BC4BP;
+class TPAT_Sys_Data_CR3BP;
+class TPAT_Traj;
+class TPAT_Traj_BC4BP;
+class TPAT_Traj_CR3BP;
 
 /**
  *	@brief Describes the plane a periodic orbit can be mirrored across
  */
-enum tpat_mirror_tp{
+enum class TPAT_Mirror_Tp{
 	MIRROR_XZ,		//!< Mirror over the XZ-Plane; x, z, and y-dot can be fixed if desired
 	MIRROR_XY,		//!< Mirror over the XY-Plane; x, y, and z-dot can be fixed if desired
 	MIRROR_YZ,		//!< Mirror over the YZ-Plane; y, z, and x-dot can be fixed if desired
@@ -63,11 +63,11 @@ enum tpat_mirror_tp{
 /**
  *	@brief Describes the type of manifold, both stability and direction
  */
-enum tpat_manifold_tp{
-	MAN_U_P,	//!< Unstable, departing towards +x direction
-	MAN_U_M,	//!< Unstable, departing towards -x direction
-	MAN_S_P,	//!< Stable, arriving from +x direction
-	MAN_S_M		//!< Stable, arriving from -x direction
+enum class TPAT_Manifold_Tp{
+	Man_U_P,	//!< Unstable, departing towards +x direction
+	Man_U_M,	//!< Unstable, departing towards -x direction
+	Man_S_P,	//!< Stable, arriving from +x direction
+	Man_S_M		//!< Stable, arriving from -x direction
 };
 
 /**
@@ -80,64 +80,48 @@ enum tpat_manifold_tp{
  *	eigenvalues also come in pairs: 2 1.0 eigenvalues, or two real 
  *	eigenvalues that are reciprocals.
  */
-enum tpat_eigValSet_tp{
+enum class TPAT_EigValSet_Tp{
 	EIGSET_COMP_CONJ,	//!< Complex conjugate pair
 	EIGSET_ONES,		//!< Exactly equal to 1.0
 	EIGSET_REAL_RECIP	//!< Real, reciprocal pair
 };
 
-// Equations of motion
-int cr3bp_EOMs(double, const double[], double[], void*);
-int cr3bp_simple_EOMs(double, const double[], double[], void*);
-
-int cr3bp_ltvp_EOMs(double, const double[], double[], void*);
-int cr3bp_ltvp_simple_EOMs(double, const double[], double[], void*);
-
-int bcr4bpr_EOMs(double, const double[], double[], void*);
-int bcr4bpr_simple_EOMs(double, const double[], double[], void*);
-
 // General Utility Functions
 double dateToEpochTime(const char*);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
-std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp, const tpat_traj_cr3bp*, int, double);
-MatrixXRd getMirrorMat(tpat_mirror_tp);
+std::vector<TPAT_Traj_CR3BP> getManifolds(TPAT_Manifold_Tp, const TPAT_Traj_CR3BP*, int, double);
+MatrixXRd getMirrorMat(TPAT_Mirror_Tp);
 double getStabilityIndex(std::vector<cdouble>);
-double getTotalDV(const iterationData*);
-void finiteDiff_checkMultShoot(const tpat_nodeset*);
+double getTotalDV(const TPAT_MultShoot_Data*);
+void finiteDiff_checkMultShoot(const TPAT_Nodeset*);
+void finiteDiff_checkMultShoot(const TPAT_Nodeset*, TPAT_Correction_Engine);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 
 // CR3BP Utility Functions
-void cr3bp_getUDDots(double, double, double, double, double*);
-double cr3bp_getJacobi(const double s[], double);
 double cr3bp_getVel_withC(const double s[], double, double, int);
-void cr3bp_getEquilibPt(tpat_sys_data_cr3bp, int, double, double[3]);
-tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp, const tpat_sys_data_cr3bp*, double, double, double);
-tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp, const tpat_sys_data_cr3bp*, double, double, double, double);
-tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp, const tpat_sys_data_cr3bp*, double, double, double);
-tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp, const tpat_sys_data_cr3bp*, double, double, double, double);
+TPAT_Traj_CR3BP cr3bp_EM2SE(TPAT_Traj_CR3BP, const TPAT_Sys_Data_CR3BP*, double, double, double);
+TPAT_Nodeset_CR3BP cr3bp_EM2SE(TPAT_Nodeset_CR3BP, const TPAT_Sys_Data_CR3BP*, double, double, double, double);
+TPAT_Traj_CR3BP cr3bp_SE2EM(TPAT_Traj_CR3BP, const TPAT_Sys_Data_CR3BP*, double, double, double);
+TPAT_Nodeset_CR3BP cr3bp_SE2EM(TPAT_Nodeset_CR3BP, const TPAT_Sys_Data_CR3BP*, double, double, double, double);
 std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
-tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp, int);
-tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp, int);
-std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, tpat_mirror_tp, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double);
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp*, std::vector<double>, double, int, int, tpat_mirror_tp, std::vector<int>, double, iterationData*);
+TPAT_Nodeset_CR3BP cr3bp_rot2inert(TPAT_Nodeset_CR3BP, int);
+TPAT_Traj_CR3BP cr3bp_rot2inert(TPAT_Traj_CR3BP, int);
+std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const TPAT_Sys_Data_CR3BP*, double, int);
+TPAT_Traj_CR3BP cr3bp_getPeriodic(const TPAT_Sys_Data_CR3BP*, std::vector<double>, double, TPAT_Mirror_Tp, double);
+TPAT_Traj_CR3BP cr3bp_getPeriodic(const TPAT_Sys_Data_CR3BP*, std::vector<double>, double, int, int, TPAT_Mirror_Tp, std::vector<int>, double);
+TPAT_Traj_CR3BP cr3bp_getPeriodic(const TPAT_Sys_Data_CR3BP*, std::vector<double>, double, int, int, TPAT_Mirror_Tp, std::vector<int>, double, TPAT_MultShoot_Data*);
 
 // BCR4BPR Utility Functions
-void bcr4bpr_getPrimaryPos(double, const tpat_sys_data_bcr4bpr*, double*);
-void bcr4bpr_getPrimaryVel(double, const tpat_sys_data_bcr4bpr*, double*);
-void bcr4bpr_getPrimaryAccel(double, const tpat_sys_data_bcr4bpr*, double*);
-tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp, const tpat_sys_data_bcr4bpr*, double);
-tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp, const tpat_sys_data_bcr4bpr*, double);
-tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp, const tpat_sys_data_cr3bp*);
-tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp, const tpat_sys_data_cr3bp*);
-MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr*, double);
-void bcr4bpr_orientAtEpoch(double, tpat_sys_data_bcr4bpr*);
-Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr*, double);
+TPAT_Traj_BC4BP bcr4bpr_SE2SEM(TPAT_Traj_CR3BP, const TPAT_Sys_Data_BC4BP*, double);
+TPAT_Nodeset_BC4BP bcr4bpr_SE2SEM(TPAT_Nodeset_CR3BP, const TPAT_Sys_Data_BC4BP*, double);
+TPAT_Traj_BC4BP bcr4bpr_SEM2SE(TPAT_Traj_BC4BP, const TPAT_Sys_Data_CR3BP*);
+TPAT_Nodeset_BC4BP bcr4bpr_SEM2SE(TPAT_Nodeset_BC4BP, const TPAT_Sys_Data_CR3BP*);
+MatrixXRd bcr4bpr_spLoc_polyFit(const TPAT_Sys_Data_BC4BP*, double);
+Eigen::Vector3d bcr4bpr_getSPLoc(const TPAT_Sys_Data_BC4BP*, double);
 
 #endif
 //END

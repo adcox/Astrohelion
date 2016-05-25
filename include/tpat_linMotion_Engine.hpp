@@ -24,31 +24,32 @@
 #include "tpat.hpp"
  
 // Forward delcarations
-class tpat_traj_cr3bp;
-class tpat_sys_data_cr3bp;
+class TPAT_Traj_CR3BP;
+class TPAT_Sys_Data_CR3BP;
+
+/**
+ *	@brief type of linear motion
+ *
+ *	This type tells the engine what kind of linearization to produce
+ */
+enum class TPAT_LinMotion_Tp {
+	NONE,	//!< No motion specified
+	HYP,	//!< Hyperbolic motion, applies only to linearizations near collinear points
+	ELLIP,	//!< Elliptical motion, applies only to linearizations near collinear points
+	SPO,	//!< Short-Period Orbit, applies only to Case I linearizations near triangular points
+	LPO,	//!< Long-Period Orbit, applies only to Case I linearizations near triangular points
+	MPO,	//!< Mixed-Period Orbit, applies only to Case I linearizations near triangular points
+	CONVERGE,	//!< Convergent motion, applies only to Case III linearizations near triangular points
+	DIVERGE		//!< Divergent motion, applies only to Case III linearizations near triangular points
+};	
 
 /**
  *	@brief An engine that will generate a trajectory from the linearized CR3BP EOMs
  */
-class tpat_linear_motion_engine : public tpat{
+class TPAT_LinMotion_Engine : public TPAT{
 	public:
-		/**
-		 *	@brief type of linear motion
-		 *
-		 *	This type tells the engine what kind of linearization to produce
-		 */
-		enum tpat_linMotion_tp {
-			NONE,	//!< No motion specified
-			HYP,	//!< Hyperbolic motion, applies only to linearizations near collinear points
-			ELLIP,	//!< Elliptical motion, applies only to linearizations near collinear points
-			SPO,	//!< Short-Period Orbit, applies only to Case I linearizations near triangular points
-			LPO,	//!< Long-Period Orbit, applies only to Case I linearizations near triangular points
-			MPO,	//!< Mixed-Period Orbit, applies only to Case I linearizations near triangular points
-			CONVERGE,	//!< Convergent motion, applies only to Case III linearizations near triangular points
-			DIVERGE};	//!< Divergent motion, applies only to Case III linearizations near triangular points
-
 		// *structors
-		tpat_linear_motion_engine();
+		TPAT_LinMotion_Engine();
 
 		// Operators
 
@@ -62,13 +63,13 @@ class tpat_linear_motion_engine : public tpat{
 		void setNumRevs(int);
 		void setTimeStep(double);
 		void setTol(double);
-		const char* getTypeStr(tpat_linMotion_tp) const;
+		const char* getTypeStr(TPAT_LinMotion_Tp) const;
 
 		// Misc
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_sys_data_cr3bp*);
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], tpat_linMotion_tp, tpat_sys_data_cr3bp*);
-		tpat_traj_cr3bp getCR3BPLinear(int, double[3], double, double, tpat_linMotion_tp, tpat_sys_data_cr3bp*);
-		tpat_traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, tpat_sys_data_cr3bp*);
+		TPAT_Traj_CR3BP getCR3BPLinear(int, double[3], TPAT_Sys_Data_CR3BP*);
+		TPAT_Traj_CR3BP getCR3BPLinear(int, double[3], TPAT_LinMotion_Tp, TPAT_Sys_Data_CR3BP*);
+		TPAT_Traj_CR3BP getCR3BPLinear(int, double[3], double, double, TPAT_LinMotion_Tp, TPAT_Sys_Data_CR3BP*);
+		TPAT_Traj_CR3BP getCR3BPLiss(int, double, bool, double, double, double, TPAT_Sys_Data_CR3BP*);
 	private:
 		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;

@@ -1,5 +1,5 @@
 /**
- *	@file tpat_family_member_cr3bp.cpp
+ *	@file tpat_fammember_cr3bp.cpp
  *	@brief Data object for CR3BP family members
  */
 /*
@@ -22,11 +22,11 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include "tpat_family_member_cr3bp.hpp"
+#include "tpat_famMember_cr3bp.hpp"
 
 #include "tpat_constants.hpp"
 #include "tpat_exceptions.hpp"
-#include "tpat_simulation_engine.hpp"
+#include "tpat_sim_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 
@@ -44,7 +44,7 @@
  *	@param yAmp the maximum amplitude in the y-direction (non-dim)
  *	@param zAmp the maximum amplitude in the z-direction (non-dim)
  */
-tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
+TPAT_FamMember_CR3BP::TPAT_FamMember_CR3BP(double *ic, double tof,
 	double jc, double xAmp, double yAmp, double zAmp){
 	
 	IC.clear();
@@ -60,10 +60,10 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(double *ic, double tof,
  *	@brief Create a family member from a trajectory object
  *	@param traj a trajectory reference
  */
-tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
-	IC = traj.getState(0);
-	TOF = traj.getTime(-1);
-	JC = traj.getJacobi(0);
+TPAT_FamMember_CR3BP::TPAT_FamMember_CR3BP(const TPAT_Traj_CR3BP traj){
+	IC = traj.getStateByIx(0);
+	TOF = traj.getTotalTOF();
+	JC = traj.getJacobiByIx(0);
 
 	std::vector<double> x = traj.getCoord(0);
 	std::vector<double> y = traj.getCoord(1);
@@ -87,16 +87,14 @@ tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_traj_cr3bp traj){
  *	@brief Copy constructor
  *	@param mem a family member reference
  */
-tpat_family_member_cr3bp::tpat_family_member_cr3bp(const tpat_family_member_cr3bp& mem){
+TPAT_FamMember_CR3BP::TPAT_FamMember_CR3BP(const TPAT_FamMember_CR3BP& mem){
 	copyMe(mem);
 }//====================================================
 
 /**
  *	@brief Destructor
  */
-tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){
-	IC.clear();
-}//===================================================
+TPAT_FamMember_CR3BP::~TPAT_FamMember_CR3BP(){}
 
 
 //-----------------------------------------------------
@@ -107,7 +105,7 @@ tpat_family_member_cr3bp::~tpat_family_member_cr3bp(){
  *	@brief Assignment operator
  *	@param mem a family member reference
  */
-tpat_family_member_cr3bp& tpat_family_member_cr3bp::operator= (const tpat_family_member_cr3bp& mem){
+TPAT_FamMember_CR3BP& TPAT_FamMember_CR3BP::operator= (const TPAT_FamMember_CR3BP& mem){
 	copyMe(mem);
 	return *this;
 }//====================================================
@@ -119,57 +117,59 @@ tpat_family_member_cr3bp& tpat_family_member_cr3bp::operator= (const tpat_family
 /**
  *	@brief Retrieve a vector of eigenvalues (of the final STM, likely the Monodromy matrix)
  */
-std::vector<cdouble> tpat_family_member_cr3bp::getEigVals() const { return eigVals; }
+std::vector<cdouble> TPAT_FamMember_CR3BP::getEigVals() const { return eigVals; }
 
 /**
  *	@brief Retrieve the initial state for this trajectory (non-dim)
  */
-std::vector<double> tpat_family_member_cr3bp::getIC() const { return IC; }
+std::vector<double> TPAT_FamMember_CR3BP::getIC() const { return IC; }
 
 /**
  *	@brief Retrieve the Time-Of-Flight along this trajectory (non-dim)
  */
-double tpat_family_member_cr3bp::getTOF() const { return TOF; }
+double TPAT_FamMember_CR3BP::getTOF() const { return TOF; }
 
 /**
  *	@brief Retrieve the Jacobi Constant for this trajectory
  */
-double tpat_family_member_cr3bp::getJacobi() const { return JC; }
+double TPAT_FamMember_CR3BP::getJacobi() const { return JC; }
 
 /**
  *	@brief Retrieve the maximum amplitude in the x-direction
  */
-double tpat_family_member_cr3bp::getXAmplitude() const { return xAmplitude; }
+double TPAT_FamMember_CR3BP::getXAmplitude() const { return xAmplitude; }
 
 /**
  *	@brief Retrieve the maximum amplitude in the y-direction
  */
-double tpat_family_member_cr3bp::getYAmplitude() const { return yAmplitude; }
+double TPAT_FamMember_CR3BP::getYAmplitude() const { return yAmplitude; }
 
 /**
  *	@brief Retrieve the maximum amplitude in the z-direction
  */
-double tpat_family_member_cr3bp::getZAmplitude() const { return zAmplitude; }
+double TPAT_FamMember_CR3BP::getZAmplitude() const { return zAmplitude; }
 
 /**
  *	@brief Set the eigenvalues for this orbit
  *
  *	These should be the eigenvalues of the final STM and/or Monodromy matrix
  *	@param vals the eigenvalues
+ *	@throws TPAT_Exception if <tt>vals</tt> does not have six elements
  */
-void tpat_family_member_cr3bp::setEigVals(std::vector<cdouble> vals) {
+void TPAT_FamMember_CR3BP::setEigVals(std::vector<cdouble> vals) {
 	if(vals.size() != 6)
-		throw tpat_exception("tpat_family_member_cr3bp::setEigVals: There must be 6 eigenvalues");
+		throw TPAT_Exception("TPAT_FamMember_CR3BP::setEigVals: There must be 6 eigenvalues");
 	eigVals = vals;
 }//====================================================
 
 /**
  *	@brief Set the initial state
  *	@param ic The initial state (non-dim)
+ *	@throws TPAT_Exception if <tt>ic</tt> does not have six elements
  */
-void tpat_family_member_cr3bp::setIC( std::vector<double> ic ){
-if(ic.size() != 6)
-	throw tpat_exception("tpat_family_member_cr3bp::setIC: There must be 6 elements!");
+void TPAT_FamMember_CR3BP::setIC( std::vector<double> ic ){
+	if(ic.size() != 6)
+		throw TPAT_Exception("TPAT_FamMember_CR3BP::setIC: There must be 6 elements!");
 	IC = ic;
 }//====================================================
 
@@ -177,28 +177,28 @@ if(ic.size() != 6)
  *	@brief Set the time-of-flight
  *	@param tof The time-of-flight (non-dim)
  */
-void tpat_family_member_cr3bp::setTOF( double tof ){ TOF = tof; }
+void TPAT_FamMember_CR3BP::setTOF( double tof ){ TOF = tof; }
 
 /**
  *	@brief Set the Jacobi Constant
  *	@param jc The Jacobi Constant (non-dim)
  */
-void tpat_family_member_cr3bp::setJacobi( double jc ){ JC = jc; }
+void TPAT_FamMember_CR3BP::setJacobi( double jc ){ JC = jc; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_family_member_cr3bp::setXAmplitude(double w){ xAmplitude = w; }
+void TPAT_FamMember_CR3BP::setXAmplitude(double w){ xAmplitude = w; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_family_member_cr3bp::setYAmplitude(double w){ yAmplitude = w; }
+void TPAT_FamMember_CR3BP::setYAmplitude(double w){ yAmplitude = w; }
 
 /**
  *	@brief Set the width of this trajectory in the x-direction (non-dim)
  */
-void tpat_family_member_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
+void TPAT_FamMember_CR3BP::setZAmplitude(double w){ zAmplitude = w; }
 
 /**
  *  @brief Convert the family member object to a trajectory object
@@ -208,10 +208,11 @@ void tpat_family_member_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
  *  @param sys The system the family member exists in
  *  @return A trajectory object
  */
-tpat_traj_cr3bp tpat_family_member_cr3bp::toTraj(const tpat_sys_data_cr3bp *sys){
-	tpat_simulation_engine sim(sys);
-	sim.runSim(IC, TOF);
-	return sim.getCR3BP_Traj();
+TPAT_Traj_CR3BP TPAT_FamMember_CR3BP::toTraj(const TPAT_Sys_Data_CR3BP *sys){
+	TPAT_Sim_Engine sim;
+	TPAT_Traj_CR3BP traj(sys);
+	sim.runSim(IC, TOF, &traj);
+	return traj;
 }//====================================================
 
 //-----------------------------------------------------
@@ -222,7 +223,7 @@ tpat_traj_cr3bp tpat_family_member_cr3bp::toTraj(const tpat_sys_data_cr3bp *sys)
  *	@brief Copy an input family member into this one
  *	@param mem some other family member
  */
-void tpat_family_member_cr3bp::copyMe(const tpat_family_member_cr3bp& mem){
+void TPAT_FamMember_CR3BP::copyMe(const TPAT_FamMember_CR3BP& mem){
 	eigVals = mem.eigVals;
 	IC = mem.IC;
 	JC = mem.JC;

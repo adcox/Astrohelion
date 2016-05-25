@@ -137,6 +137,13 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
     }
 }//=========================================================
 
+/**
+ *  @brief Save a single double-precision value to a Matlab file
+ * 
+ *  @param matfp a pointer to the matlab output file
+ *  @param varName the name of the variable
+ *  @param data data value
+ */
 void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
     if(NULL != matfp){
         size_t dims[2] = {1, 1};
@@ -173,11 +180,13 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
  *  @param varName name of the variable within the .mat file
  *  @param data a vector of data in row-major order
  *  @param rows number of rows in the matrix
- *  @param cols number of columns in the matrix 
+ *  @param cols number of columns in the matrix
+ *  @throws TPAT_Exception if <tt>data</tt> does not have enough elements
+ *  to construct a matrix with the specified number of rows and columns
  */
 void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> data, size_t rows, size_t cols){
     if(data.size() < rows*cols)
-        throw tpat_exception("tpat_utilities::saveMatrixToFile: Input data has fewer elements than specified by the rows and cols arguments");
+        throw TPAT_Exception("tpat_utilities::saveMatrixToFile: Input data has fewer elements than specified by the rows and cols arguments");
 
     if(NULL != matfp){
         size_t dims[2] = {rows, cols};
@@ -203,14 +212,15 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
  *  @param varName the name of the variable/matrix to read from the file
  * 
  *  @return a column-major-order vector containing the data from the desired matrix
- *  @throws tpat_exception if the file cannot be opened, if the variable doesn't exist,
+ *  @throws TPAT_Exception if the file cannot be opened, if the variable doesn't exist,
  *  or if the variable contains something other than doubles
+ *  @throws TPAT_Exception if the data file cannot be opened or the variable cannot be read
  */
 MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  
     mat_t *matfp = Mat_Open(filename, MAT_ACC_RDONLY);
     if(matfp ==  NULL)
-        throw tpat_exception("tpat_utilities::readMatrixFromFile: Could not open data file\n");
+        throw TPAT_Exception("tpat_utilities::readMatrixFromFile: Could not open data file\n");
 
     // For debugging, to print a list of all variables in the file
     // matvar_t *tempvar;
@@ -223,7 +233,7 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
     matvar_t *matvar = Mat_VarRead(matfp, varName);
     if(matvar == NULL){
         Mat_Close(matfp);
-        throw tpat_exception("tpat_utilities::readMatrixFromFile: Could not read variable data");
+        throw TPAT_Exception("tpat_utilities::readMatrixFromFile: Could not read variable data");
     }else{
 
         if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
@@ -247,7 +257,7 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
         }else{
             Mat_VarFree(matvar);
             Mat_Close(matfp);
-            throw tpat_exception("tpat_utilities::readMatrixFromFile: Incompatible data file: unsupported data type/class");
+            throw TPAT_Exception("tpat_utilities::readMatrixFromFile: Incompatible data file: unsupported data type/class");
         }
     }
 }//==========================================================
@@ -257,7 +267,7 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  *  @param matFile a pointer to the matlab file in quesiton
  *  @param varName the name of the variable in the mat file
  *  @return the value of the variable
- *  @throws tpat_exception if there is trouble reading or parsing the variable
+ *  @throws TPAT_Exception if there is trouble reading or parsing the variable
  */
 double readDoubleFromMat(mat_t *matFile, const char* varName){
     double result = 2;
@@ -266,7 +276,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
     if(matvar == NULL){
         char msg[256];
         sprintf(msg, "tpat_utilities::readDoubleFromMat: Could not read %s from file", varName);
-        throw tpat_exception(msg);
+        throw TPAT_Exception(msg);
     }else{
         switch(matvar->data_type){
             case MAT_T_UINT8:
@@ -274,11 +284,11 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
             case MAT_T_UINT32:
             case MAT_T_UINT64:
             {
-                uint *data = static_cast<uint *>(matvar->data);
+                unsigned int *data = static_cast<unsigned int *>(matvar->data);
                 if(data != NULL)
                     result = double(*data);
                 else
-                    throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+                    throw TPAT_Exception("tpat_utilities::readDoubleFromMat: No data");
                 break;
             }
             case MAT_T_INT8:
@@ -290,7 +300,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
                 if(data != NULL)
                     result = double(*data);
                 else
-                    throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+                    throw TPAT_Exception("tpat_utilities::readDoubleFromMat: No data");
                 break;
             }
             case MAT_T_SINGLE:
@@ -300,11 +310,11 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
                 if(data != NULL)
                     result = double(*data);
                 else
-                    throw tpat_exception("tpat_utilities::readDoubleFromMat: No data");
+                    throw TPAT_Exception("tpat_utilities::readDoubleFromMat: No data");
                 break;
             }
             default:
-                throw tpat_exception("tpat_utilities::readDoubleFromMat: incompatible data-type");
+                throw TPAT_Exception("tpat_utilities::readDoubleFromMat: incompatible data-type");
         }
     }
 
@@ -320,7 +330,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
  *  @param aType the expected variable type (e.g. MAT_T_UINT8)
  *  @param aClass the expected variable class (e.g. MAT_C_CHAR)
  *  @return the string
- *  @throws tpat_exception if there is trouble reading or parsing the variable.
+ *  @throws TPAT_Exception if there is trouble reading or parsing the variable.
  */
 std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types aType,
     matio_classes aClass){
@@ -328,7 +338,7 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
     std::string result = "";
     matvar_t *matvar = Mat_VarRead(matFile, varName);
     if(matvar == NULL){
-        throw tpat_exception("tpat_utilities::readStringFromMat: Could not read variable from file");
+        throw TPAT_Exception("tpat_utilities::readStringFromMat: Could not read variable from file");
     }else{
         if(matvar->class_type == aClass && matvar->data_type == aType){
             char *data = static_cast<char *>(matvar->data);
@@ -336,10 +346,10 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
             if(data != NULL){
                 result = std::string(data, matvar->dims[1]);
             }else{
-                throw tpat_exception("tpat_utilities::readStringFromMat: No data");
+                throw TPAT_Exception("tpat_utilities::readStringFromMat: No data");
             }
         }else{
-            throw tpat_exception("tpat_utilities::readStringFromMat: Incompatible data file: unsupported data type/class");
+            throw TPAT_Exception("tpat_utilities::readStringFromMat: Incompatible data file: unsupported data type/class");
         }
     }
 
@@ -390,23 +400,23 @@ std::string getNameFromSpiceID(int ID){
  */
 SpiceInt getSpiceIDFromName(const char *name){
     ConstSpiceChar *name_spice = static_cast<ConstSpiceChar*>(name);
-    SpiceInt code = NAN;
+    SpiceInt code = 0;
     SpiceBoolean found = false;
 
     bodn2c_c(name_spice, &code, &found);
 
     if(!found)
-        throw tpat_exception("tpat_utilities::getSpiceIDFromName: Could not find a body name from that SPICE ID");
+        throw TPAT_Exception("tpat_utilities::getSpiceIDFromName: Could not find a body name from that SPICE ID");
     else
         return code;
 }//============================================
 
 /**
- *  @brief Check to see if SPICE failed; if it did, throw a tpat_exception with
+ *  @brief Check to see if SPICE failed; if it did, throw a TPAT_Exception with
  *  a custom error message
  * 
- *  @param customMsg A message for the tpat_exception object
- *  @throws tpat_exception if an error occured
+ *  @param customMsg A message for the TPAT_Exception object
+ *  @throws TPAT_Exception if an error occured
  */
 void checkAndReThrowSpiceErr(const char* customMsg){
     if(failed_c()){
@@ -414,7 +424,7 @@ void checkAndReThrowSpiceErr(const char* customMsg){
         getmsg_c("short", 25, errMsg);
         printErr("Spice Error: %s\n", errMsg);
         reset_c();  // reset error status
-        throw tpat_exception(customMsg);
+        throw TPAT_Exception(customMsg);
     }
 }//============================================
 

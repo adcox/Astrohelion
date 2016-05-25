@@ -1,6 +1,6 @@
 /**
  *  @file tpat_model_cr3bp_ltvp.cpp
- *  @brief Derivative of tpat_model, specific to CR3BP-LTVP
+ *  @brief Derivative of TPAT_Model, specific to CR3BP-LTVP
  */
  
 /*
@@ -28,35 +28,36 @@
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_event.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj_cr3bp_ltvp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
+#include <gsl/gsl_errno.h>
 /**
  *  @brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic Model
  */
-tpat_model_cr3bp_ltvp::tpat_model_cr3bp_ltvp() : tpat_model(MODEL_CR3BP_LTVP) {
+TPAT_Model_CR3BP_LTVP::TPAT_Model_CR3BP_LTVP() : TPAT_Model(MODEL_CR3BP_LTVP) {
     coreStates = 6;
     stmStates = 36;
     extraStates = 0;
-    allowedCons.push_back(tpat_constraint::JC);
-    allowedEvents.push_back(tpat_event::JC);
+    allowedCons.push_back(TPAT_Constraint_Tp::JC);
+    allowedEvents.push_back(TPAT_Event_Tp::JC);
 }//==============================================
 
 /**
  *  @brief Copy Constructor
  *  @param m a model reference
  */ 
-tpat_model_cr3bp_ltvp::tpat_model_cr3bp_ltvp(const tpat_model_cr3bp_ltvp &m) : tpat_model(m) {}
+TPAT_Model_CR3BP_LTVP::TPAT_Model_CR3BP_LTVP(const TPAT_Model_CR3BP_LTVP &m) : TPAT_Model(m) {}
 
 /**
  *  @brief Assignment operator
  *  @param m a model reference
  */
-tpat_model_cr3bp_ltvp& tpat_model_cr3bp_ltvp::operator =(const tpat_model_cr3bp_ltvp &m){
-	tpat_model::operator =(m);
+TPAT_Model_CR3BP_LTVP& TPAT_Model_CR3BP_LTVP::operator =(const TPAT_Model_CR3BP_LTVP &m){
+	TPAT_Model::operator =(m);
 	return *this;
 }//==============================================
 
@@ -64,16 +65,16 @@ tpat_model_cr3bp_ltvp& tpat_model_cr3bp_ltvp::operator =(const tpat_model_cr3bp_
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
-tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getSimpleEOM_fcn() const{
-	return &cr3bp_ltvp_simple_EOMs;
+TPAT_Model::eom_fcn TPAT_Model_CR3BP_LTVP::getSimpleEOM_fcn() const{
+	return &simpleEOMs;
 }//==============================================
 
 /**
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
-tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn() const{
-	return &cr3bp_ltvp_EOMs;
+TPAT_Model::eom_fcn TPAT_Model_CR3BP_LTVP::getFullEOM_fcn() const{
+	return &fullEOMs;
 }//==============================================
 
 /**
@@ -84,13 +85,13 @@ tpat_model::eom_fcn tpat_model_cr3bp_ltvp::getFullEOM_fcn() const{
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, const tpat_sys_data *sysData) const{
+std::vector<double> TPAT_Model_CR3BP_LTVP::getPrimPos(double t, const TPAT_Sys_Data *sysData) const{
     (void)t;
     double primPos[6] = {0};
-    const tpat_sys_data_cr3bp_ltvp crSys(*static_cast<const tpat_sys_data_cr3bp_ltvp *>(sysData));
+    const TPAT_Sys_Data_CR3BP_LTVP *crSys = static_cast<const TPAT_Sys_Data_CR3BP_LTVP *>(sysData);
 
-    primPos[0] = -1*crSys.getMu();
-    primPos[3] = 1 - crSys.getMu();
+    primPos[0] = -1*crSys->getMu();
+    primPos[3] = 1 - crSys->getMu();
 
     return std::vector<double>(primPos, primPos+6);
 }//==============================================
@@ -103,13 +104,17 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimPos(double t, const tpat_sys_d
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
-std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, const tpat_sys_data *sysData) const{
+std::vector<double> TPAT_Model_CR3BP_LTVP::getPrimVel(double t, const TPAT_Sys_Data *sysData) const{
     (void)t;
     (void)sysData;
     double primVel[6] = {0};
     
     return std::vector<double>(primVel, primVel+6);
 }//==============================================
+
+//------------------------------------------------------------------------------------------------------
+//      Simulation Engine Functions
+//------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief Takes an input state and time and saves the data to the trajectory
@@ -118,34 +123,31 @@ std::vector<double> tpat_model_cr3bp_ltvp::getPrimVel(double t, const tpat_sys_d
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, tpat_traj* traj) const{
-	// Save the position and velocity states
-    double state[6];
-    std::copy(y, y+6, state);
-
-    // Save STM
-    double stmElm[36];
-    std::copy(y+6, y+42, stmElm);
-
+void TPAT_Model_CR3BP_LTVP::sim_saveIntegratedData(const double* y, double t, TPAT_Traj* traj) const{
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    const tpat_sys_data_cr3bp_ltvp *ltSys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(traj->getSysData());
+    const TPAT_Sys_Data_CR3BP_LTVP *ltSys = static_cast<const TPAT_Sys_Data_CR3BP_LTVP*>(traj->getSysData());
 
-    // Compute acceleration (elements 3 - 5)
+    // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
     eomParamStruct paramStruct(ltSys);
-    cr3bp_ltvp_simple_EOMs(t, y, dsdt, &paramStruct);
+    simpleEOMs(t, y, dsdt, &paramStruct);
+    
+    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
+    int id = traj->addNode(TPAT_Node(y, dsdt+3, t));
 
-    tpat_traj_step step(state, t, dsdt+3, stmElm);
-    traj->appendStep(step);
+    if(id > 0){
+        double tof = t - traj->getNode(id-1).getEpoch();
+        traj->addSeg(TPAT_Segment(id-1, id, tof, y+6));
+    }
 
-    tpat_traj_cr3bp_ltvp *cr3bpTraj = static_cast<tpat_traj_cr3bp_ltvp*>(traj);
+    TPAT_Traj_CR3BP_LTVP *cr3bpTraj = static_cast<TPAT_Traj_CR3BP_LTVP*>(traj);
 
     // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
-    cr3bpTraj->setJacobi(-1, cr3bp_getJacobi(y, ltSys->getMu()));
+    cr3bpTraj->setJacobiByIx(-1, TPAT_Model_CR3BP::getJacobi(y, ltSys->getMu()));
 
     // Compute and save mass of s/c; assumes t began at 0
     double g0_nonDim = G_GRAV_0*ltSys->getCharT()*ltSys->getCharT()/ltSys->getCharL();
-    cr3bpTraj->setMass(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
+    cr3bpTraj->setMassByIx(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
 }//=====================================================
 
 /**
@@ -165,8 +167,8 @@ void tpat_model_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, tp
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
-    const double *ic, double t0, double tof, tpat_verbosity_tp verbose) const{
+bool TPAT_Model_CR3BP_LTVP::sim_locateEvent(TPAT_Event event, TPAT_Traj* traj,
+    const double *ic, double t0, double tof, TPAT_Verbosity_Tp verbose) const{
 
     (void) event;
     (void) traj;
@@ -177,6 +179,10 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
 
     return true;
 }//=======================================================
+
+//------------------------------------------------------------------------------------------------------
+//      Multiple Shooting Functions
+//------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -191,10 +197,164 @@ bool tpat_model_cr3bp_ltvp::sim_locateEvent(tpat_event event, tpat_traj* traj,
  *  @param it an iteration data object containing all info from the corrections process
  *  @param nodes_in a pointer to the original, uncorrected nodeset
  *  @param findEvent whether or not this correction process is locating an event
+ *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
  */
-tpat_nodeset* tpat_model_cr3bp_ltvp::multShoot_createOutput(const iterationData *it, const tpat_nodeset *nodes_in, bool findEvent) const{
+void TPAT_Model_CR3BP_LTVP::multShoot_createOutput(const TPAT_MultShoot_Data *it, const TPAT_Nodeset *nodes_in, bool findEvent, TPAT_Nodeset *nodes_out) const{
     (void) it;
     (void) findEvent;
-    const tpat_sys_data_cr3bp_ltvp *sys = static_cast<const tpat_sys_data_cr3bp_ltvp*>(nodes_in->getSysData());
-    return new tpat_nodeset_cr3bp(sys);
+    (void) nodes_in;
+    (void) nodes_out;
 }//====================================================
+
+/**
+ *  @brief Perform model-specific initializations on the TPAT_MultShoot_Data object
+ *  @param it pointer to the object to be initialized
+ */
+void TPAT_Model_CR3BP_LTVP::multShoot_initIterData(TPAT_MultShoot_Data *it) const{
+    TPAT_Traj_CR3BP_LTVP traj(static_cast<const TPAT_Sys_Data_CR3BP_LTVP *>(it->sysData));
+    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
+}//====================================================
+
+//------------------------------------------------------------------------------------------------------
+//      Static Calculation Functions
+//------------------------------------------------------------------------------------------------------
+
+/**
+ *  @brief Integrate the equations of motion for the CR3BP LTVP
+ *  @param t the current time of the integration
+ *  @param s the 43-d state vector. The first 6 elements are position and velocity,
+ *  the 7th is mass, and the final 36 are STM elements
+ *  @param sdot the 43-d state derivative vector
+ *  @param *params pointer to extra parameters required for integration. For this
+ *  function, the pointer points to an eomParamStruct object
+ */
+int TPAT_Model_CR3BP_LTVP::fullEOMs(double t, const double s[], double sdot[], void *params){
+    // Extract mu from params
+    // TPAT_Sys_Data_CR3BP_LTVP *sysData = static_cast<TPAT_Sys_Data_CR3BP_LTVP *>(params);
+    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
+    const TPAT_Sys_Data_CR3BP_LTVP *sysData = static_cast<const TPAT_Sys_Data_CR3BP_LTVP *>(paramStruct->sysData);
+
+    double mu = sysData->getMu();
+    double T = sysData->getThrust();
+    double Isp = sysData->getIsp();
+    double charT = sysData->getCharT();
+    double charL = sysData->getCharL();
+
+    double x = s[0];    double y = s[1];    double z = s[2];
+    double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
+    
+    double g0_nonDim = (G_GRAV_0/charL)*charT*charT;
+    double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
+
+    // compute distance to primaries and velocity magnitude
+    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
+    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
+    double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);
+
+    sdot[0] = s[3];
+    sdot[1] = s[4];
+    sdot[2] = s[5];
+
+    sdot[3] = 2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3) - T/(m*v)*(xdot - y);
+    sdot[4] = -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3) - T/(m*v)*(ydot + x);
+    sdot[5] = -(1-mu)*z/pow(d,3) - mu*z/pow(r,3) - T/(m*v)*zdot; 
+
+    /*
+     * Next step, compute STM
+     */
+    
+    // Partials of x_ddot w.r.t. state variables
+    double dxdx = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((x + mu),2)/pow(d,5) + 
+        3*mu*pow((x + mu - 1), 2)/pow(r,5) + (T/m)*(xdot - y)*(ydot + x)/pow(v,3);
+    double dxdy = 3*(1-mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5) +
+        (T/m)*(v*v + (xdot - y)*(xdot - y))/pow(v,3);
+    double dxdz = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5);
+    double dxdxdot = -1*(T/m)*(v*v - (xdot - y)*(xdot - y))/pow(v,3);
+    double dxdydot = (T/m)*(xdot - y)*(ydot + x)/pow(v,3);
+    double dxdzdot = (T/m)*(xdot - y)*zdot/pow(v,3);
+
+    // Partials of y_ddot w.r.t. state variables
+    double dydx = 3*(1 - mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5) - 
+        (T/m)*(v*v - (ydot + x)*(ydot + x))/pow(v,3);
+    double dydy = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*y*y/pow(d,5) + 3*mu*y*y/pow(r,5) +
+        +(T/m)*(ydot + x)*(xdot - y)/pow(v,3);
+    double dydz = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5);
+    double dydxdot = -2 + (T/m)*(ydot + x)*(xdot - y)/pow(v,3);
+    double dydydot = -1*(T/m)*(v*v - (ydot + x)*(ydot + x))/pow(v,3);
+    double dydzdot = (T/m)*(ydot + x)*zdot/pow(v,3);
+
+    // Partials of z_ddot w.r.t. state variables
+    double dzdx = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5) + (T/m)*(ydot + x)*zdot/pow(v,3);
+    double dzdy = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5) - (T/m)*(xdot - y)*zdot/pow(v,3);
+    double dzdz = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*z*z/pow(d,5) + 3*mu*z*z/pow(r,5);
+    double dzdxdot = (T/m)*zdot*(xdot - y)/pow(v,3);
+    double dzdydot = (T/m)*zdot*(ydot + x)/pow(v,3);
+    double dzdzdot = -1*(T/m)*(v*v - zdot*zdot)/pow(v,3);
+
+    // Create A Matrix
+    double a_data[] = { 0,    0,    0,    1,       0,       0,
+                        0,    0,    0,    0,       1,       0,
+                        0,    0,    0,    0,       0,       1,
+                        dxdx, dxdy, dxdz, dxdxdot, dxdydot, dxdzdot,
+                        dydx, dydy, dydz, dydxdot, dydydot, dydzdot,
+                        dzdx, dzdy, dzdz, dzdxdot, dzdydot, dzdzdot};
+    MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
+
+    // Copy the STM states into a sub-array
+    double stmElements[36];
+    std::copy(s+6, s+42, stmElements);
+
+    // Turn sub-array into matrix object for math stuffs
+    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
+
+    // Compute derivative of STM
+    MatrixXRd phiDot(6,6);
+    phiDot.noalias() = A*phi;     // use noalias() to avoid creating an unnecessary temporary matrix in Eigen library
+
+    // Copy the elements of phiDot into the derivative array
+    double *phiDotData = phiDot.data();
+    std::copy(phiDotData, phiDotData+36, sdot+6);
+
+    return GSL_SUCCESS;
+}//===============================================================
+
+/**
+ *  @brief Integrate the equations of motion for the CR3BP LTVP without the STM
+ *  @param t time at integration step (unused)
+ *  @param s the 7-d state vector
+ *  @param sdot the 7-d state derivative vector
+ *  @param params points to an eomParamStruct object
+ */
+int TPAT_Model_CR3BP_LTVP::simpleEOMs(double t, const double s[], double sdot[], void *params){
+    // TPAT_Sys_Data_CR3BP_LTVP *sysData = static_cast<TPAT_Sys_Data_CR3BP_LTVP *>(params);
+    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
+    const TPAT_Sys_Data_CR3BP_LTVP *sysData = static_cast<const TPAT_Sys_Data_CR3BP_LTVP *>(paramStruct->sysData);
+
+    double mu = sysData->getMu();
+    double T = sysData->getThrust();
+    double Isp = sysData->getIsp();
+    double charT = sysData->getCharT();
+    double charL = sysData->getCharL();
+
+    double x = s[0];    double y = s[1];    double z = s[2];
+    double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
+    
+    double g0_nonDim = G_GRAV_0/charL*charT*charT;
+    double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
+
+    // compute distance to primaries and velocity magnitude
+    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
+    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
+    double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);
+
+    sdot[0] = s[3];
+    sdot[1] = s[4];
+    sdot[2] = s[5];
+
+    sdot[3] = 2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3) - T/(m*v)*(xdot - y);
+    sdot[4] = -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3) - T/(m*v)*(ydot + x);
+    sdot[5] = -(1-mu)*z/pow(d,3) - mu*z/pow(r,3) - T/(m*v)*zdot; 
+
+    return GSL_SUCCESS;
+}//=====================================================

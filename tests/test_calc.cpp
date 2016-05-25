@@ -7,7 +7,7 @@
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_utilities.hpp"
 
@@ -29,7 +29,7 @@ bool compareLPts(double *actual, double *computed, double tol){
 
 void checkLPts(){
 	printf("\nChecking Lagrange Points (Earth-Moon):\n");
-	tpat_sys_data_cr3bp emSys("earth", "moon");
+	TPAT_Sys_Data_CR3BP emSys("earth", "moon");
 
 	double L1[3] = {0};
 	double L2[3] = {0};
@@ -43,11 +43,11 @@ void checkLPts(){
 	double L4_true[3] = {0.48784941573006, 0.866025403784439, 0};
 	double L5_true[3] = {0.48784941573006, -0.866025403784439, 0};
 
-	cr3bp_getEquilibPt(emSys, 1, 1e-14, L1);
-	cr3bp_getEquilibPt(emSys, 2, 1e-14, L2);
-	cr3bp_getEquilibPt(emSys, 3, 1e-14, L3);
-	cr3bp_getEquilibPt(emSys, 4, 1e-14, L4);
-	cr3bp_getEquilibPt(emSys, 5, 1e-14, L5);
+	TPAT_Model_CR3BP::getEquilibPt(&emSys, 1, 1e-14, L1);
+	TPAT_Model_CR3BP::getEquilibPt(&emSys, 2, 1e-14, L2);
+	TPAT_Model_CR3BP::getEquilibPt(&emSys, 3, 1e-14, L3);
+	TPAT_Model_CR3BP::getEquilibPt(&emSys, 4, 1e-14, L4);
+	TPAT_Model_CR3BP::getEquilibPt(&emSys, 5, 1e-14, L5);
 
 	cout << "  L1: " << (compareLPts(L1_true, L1, 1e-14) ? PASS : FAIL) << endl;
 	cout << "  L2: " << (compareLPts(L2_true, L2, 1e-14) ? PASS : FAIL) << endl;
@@ -58,11 +58,11 @@ void checkLPts(){
 
 void checkUDDots(){
 	printf("\nChecking Pseudo-Potential DDots (Earth-Moon):\n");
-	tpat_sys_data_cr3bp emSys("earth", "moon");
+	TPAT_Sys_Data_CR3BP emSys("earth", "moon");
 	double ans[] = {1.04726723737184, 0.976366381314081, -0.0236336186859191,
 		1.47677525977129, 1.47677525977129, 1.47976912234663};
 	double comp[6] = {0};
-	cr3bp_getUDDots(emSys.getMu(), 0.5, 0.5, 0.5, comp);
+	TPAT_Model_CR3BP::getUDDots(emSys.getMu(), 0.5, 0.5, 0.5, comp);
 
 	for(int i = 0; i < 6; i++){
 		cout << "  U(" << i << "): " << (abs(comp[i] - ans[i]) < 1e-12 ? PASS : FAIL) << endl;
@@ -106,7 +106,7 @@ void checkFamilyContLS(){
 }//=========================================
 
 void checkSPPos(){
-	tpat_sys_data_bcr4bpr sys("Sun", "Earth", "Moon");
+	TPAT_Sys_Data_BC4BP sys("Sun", "Earth", "Moon");
 	double epoch = 100;
 	Eigen::Vector3d trueSPPos(-0.176227312079519, 0.000601308121756233, 0.000183265107710598);
 	try{
@@ -117,7 +117,7 @@ void checkSPPos(){
 			printf("  True Position      : [%.15f, %f, %f]\n", trueSPPos(0), trueSPPos(1), trueSPPos(2));
 			printf("  Calculated Position: [%.15f, %f, %f]\n", calcSPPos(0), calcSPPos(1), calcSPPos(2));
 		}
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Saddle Point Position Calc test: " << FAIL << " (Diverged)" << endl;
 	}
 }//==========================================
@@ -125,10 +125,10 @@ void checkSPPos(){
 void checkOrientAtEpoch(){
 	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
 
-	tpat_sys_data_bcr4bpr sys("Sun", "Earth", "moon");
-	double T0 = (leaveHaloEpoch - tpat_sys_data_bcr4bpr::REF_EPOCH)/sys.getCharT();
-	tpat_sys_data_bcr4bpr sys_shifted = sys;
-	bcr4bpr_orientAtEpoch(leaveHaloEpoch, &sys_shifted);
+	TPAT_Sys_Data_BC4BP sys("Sun", "Earth", "moon");
+	double T0 = (leaveHaloEpoch - TPAT_Sys_Data_BC4BP::REF_EPOCH)/sys.getCharT();
+	TPAT_Sys_Data_BC4BP sys_shifted = sys;
+	TPAT_Model_BC4BP::orientAtEpoch(leaveHaloEpoch, &sys_shifted);
 	
 	cout << "BCR4BP Orient At Epoch Test:" << endl;
 
@@ -136,16 +136,16 @@ void checkOrientAtEpoch(){
 	for(int i = 0; i < 3; i++){
 		double primPos1[9], primVel1[9], primPos2[9], primVel2[9];
 		
-		bcr4bpr_getPrimaryPos(T0 + epochs[i], &sys, primPos1);
-		bcr4bpr_getPrimaryVel(T0 + epochs[i], &sys, primVel1);
-		bcr4bpr_getPrimaryPos(epochs[i], &sys_shifted, primPos2);
-		bcr4bpr_getPrimaryVel(epochs[i], &sys_shifted, primVel2);
+		TPAT_Model_BC4BP::getPrimaryPos(T0 + epochs[i], &sys, primPos1);
+		TPAT_Model_BC4BP::getPrimaryVel(T0 + epochs[i], &sys, primVel1);
+		TPAT_Model_BC4BP::getPrimaryPos(epochs[i], &sys_shifted, primPos2);
+		TPAT_Model_BC4BP::getPrimaryVel(epochs[i], &sys_shifted, primVel2);
 
 		bool samePos = true, sameVel = true;
 		for(int n = 0; n < 9; n++){
-			if( !tpat_util::aboutEquals(primPos1[n], primPos2[n], 1e-4) )
+			if( !TPAT_Util::aboutEquals(primPos1[n], primPos2[n], 1e-4) )
 				samePos = false;
-			if( !tpat_util::aboutEquals(primVel1[n], primVel2[n], 1e-4) )
+			if( !TPAT_Util::aboutEquals(primVel1[n], primVel2[n], 1e-4) )
 				sameVel = false;
 		}
 

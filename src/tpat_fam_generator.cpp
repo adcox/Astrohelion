@@ -1,5 +1,5 @@
 /**
- *	@file tpat_family_generator.cpp
+ *	@file tpat_fam_generator.cpp
  *	@brief Generate families of orbits
  *
  *	So far, this only applies to the CR3BP
@@ -24,18 +24,19 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include "tpat_family_generator.hpp"
+#include "tpat_fam_generator.hpp"
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_body_data.hpp"
 #include "tpat_constraint.hpp"
 #include "tpat_event.hpp"
 #include "tpat_eigen_defs.hpp"
-#include "tpat_family_cr3bp.hpp"
-#include "tpat_family_member_cr3bp.hpp"
-#include "tpat_linear_motion_engine.hpp"
+#include "tpat_fam_cr3bp.hpp"
+#include "tpat_famMember_cr3bp.hpp"
+#include "tpat_linMotion_engine.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_simulation_engine.hpp"
+#include "tpat_sim_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
@@ -51,17 +52,17 @@
 /**
  *	@brief simple, do-nothing constructor
  */
-tpat_family_generator::tpat_family_generator(){}
+TPAT_Fam_Generator::TPAT_Fam_Generator(){}
 
 /** 
  *	@brief Copy constructor
  *	@param f a family generator reference
  */
-tpat_family_generator::tpat_family_generator(const tpat_family_generator &f){
+TPAT_Fam_Generator::TPAT_Fam_Generator(const TPAT_Fam_Generator &f){
 	copyMe(f);
 }//====================================================
 
-tpat_family_generator::~tpat_family_generator(){}
+TPAT_Fam_Generator::~TPAT_Fam_Generator(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -71,7 +72,7 @@ tpat_family_generator::~tpat_family_generator(){}
  *	@brief Copy operator
  *	@param f a family generator reference
  */
-tpat_family_generator& tpat_family_generator::operator =(const tpat_family_generator &f){
+TPAT_Fam_Generator& TPAT_Fam_Generator::operator =(const TPAT_Fam_Generator &f){
 	copyMe(f);
 	return *this;
 }//====================================================
@@ -84,7 +85,7 @@ tpat_family_generator& tpat_family_generator::operator =(const tpat_family_gener
  *	@brief Set the continuation type/method
  *	@param t continuation type
  */
-void tpat_family_generator::setContType(tpat_continuation_tp t){ contType = t; }
+void TPAT_Fam_Generator::setContType(TPAT_Continuation_Tp t){ contType = t; }
 
 /**
  *	@brief Set the slope threshold
@@ -97,7 +98,7 @@ void tpat_family_generator::setContType(tpat_continuation_tp t){ contType = t; }
  *
  *	@param d the slope threshold
  */
-void tpat_family_generator::setSlopeThresh(double d){ slopeThresh = std::abs(d); }
+void TPAT_Fam_Generator::setSlopeThresh(double d){ slopeThresh = std::abs(d); }
 
 /** 
  *	@brief Set the step size we take when performing simple continuation
@@ -105,7 +106,7 @@ void tpat_family_generator::setSlopeThresh(double d){ slopeThresh = std::abs(d);
  *	The default value is 0.0005
  *	@param d the step size, non-dimensional units
  */
-void tpat_family_generator::setStep_simple(double d){ step_simple = d; }
+void TPAT_Fam_Generator::setStep_simple(double d){ step_simple = d; }
 
 /** 
  *	@brief Set the step size we take when performing advanced continuation
@@ -114,7 +115,7 @@ void tpat_family_generator::setStep_simple(double d){ step_simple = d; }
  *	The default value is 0.005
  *	@param d the step size, non-dimensional units
  */
-void tpat_family_generator::setStep_fitted_1(double d){ step_fitted_1 = d; }
+void TPAT_Fam_Generator::setStep_fitted_1(double d){ step_fitted_1 = d; }
 
 /** 
  *	@brief Set the step size we take when performing advanced continuation
@@ -123,7 +124,7 @@ void tpat_family_generator::setStep_fitted_1(double d){ step_fitted_1 = d; }
  *	The default value is 0.005
  *	@param d the step size, non-dimensional units
  */
-void tpat_family_generator::setStep_fitted_2(double d){ step_fitted_2 = d; }
+void TPAT_Fam_Generator::setStep_fitted_2(double d){ step_fitted_2 = d; }
 
 /**
  * @brief  Set the corrector tolerance for the family generator
@@ -134,7 +135,7 @@ void tpat_family_generator::setStep_fitted_2(double d){ step_fitted_2 = d; }
  * 
  * @param t corrector tolerance, non-dimensional
  */
-void tpat_family_generator::setTol(double t){ tol = t; }
+void TPAT_Fam_Generator::setTol(double t){ tol = t; }
 
 /**
  *	@brief Set the number of nodes used for corrections processes
@@ -142,7 +143,7 @@ void tpat_family_generator::setTol(double t){ tol = t; }
  *	The default value is 3
  *	@param n the number of nodes
  */
-void tpat_family_generator::setNumNodes(int n){ numNodes = n; }
+void TPAT_Fam_Generator::setNumNodes(int n){ numNodes = n; }
 
 /**
  *	@brief Set the maximum number of orbits for this family
@@ -150,21 +151,21 @@ void tpat_family_generator::setNumNodes(int n){ numNodes = n; }
  *	The default value is 500
  *	@param n the number of orbits
  */
-void tpat_family_generator::setNumOrbits(int n){ numOrbits = n; }
+void TPAT_Fam_Generator::setNumOrbits(int n){ numOrbits = n; }
 
 /**
  *  @brief Set the minimum step size for any of the stepping values
  * 
  *  @param s Nondimensional minimum step size
  */
-void tpat_family_generator::setMinStepSize(double s){ minStepSize = s;}
+void TPAT_Fam_Generator::setMinStepSize(double s){ minStepSize = s;}
 
 /**
  *  @brief Set the maximum step size for any of the stepping values
  * 
  *  @param s Nondimensional maximum step size
  */
-void tpat_family_generator::setMaxStepSize(double s){ maxStepSize = s;}
+void TPAT_Fam_Generator::setMaxStepSize(double s){ maxStepSize = s;}
 
 //-----------------------------------------------------
 //      Operations and Utility
@@ -174,7 +175,7 @@ void tpat_family_generator::setMaxStepSize(double s){ maxStepSize = s;}
  *	@brief Copy this object from the specified guy
  *	@param f the source family generator
  */
-void tpat_family_generator::copyMe(const tpat_family_generator &f){
+void TPAT_Fam_Generator::copyMe(const TPAT_Fam_Generator &f){
 	numOrbits = f.numOrbits;
 	numSimple = f.numSimple;
 	step_simple = f.step_simple;
@@ -199,10 +200,10 @@ void tpat_family_generator::copyMe(const tpat_family_generator &f){
  *	@param initStepSize the initial step-off in the z-dot direction
  *	@return an axial family
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize){
-	tpat_family_cr3bp lyapFam(lyapFamFile);
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize){
+	TPAT_Fam_CR3BP lyapFam(lyapFamFile);
 
-	tpat_family_cr3bp axialFam(lyapFam.getSysData());
+	TPAT_Fam_CR3BP axialFam(lyapFam.getSysData());
 
 	// Try to find bifurcations
 	lyapFam.sortMembers();
@@ -223,34 +224,43 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateAxial(const char* lyapFam
 	std::vector<int> fixStates {5};	// force z-dot to be non-zero
 	IC[5] += initStepSize;
 
-	tpat_traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysDataPtr(), IC, period,
-		numNodes, 1, MIRROR_X_AX_H, fixStates, tol);
+	TPAT_Traj_CR3BP firstAxial = cr3bp_getPeriodic(axialFam.getSysDataPtr(), IC, period,
+		numNodes, 1, TPAT_Mirror_Tp::MIRROR_X_AX_H, fixStates, tol);
 
-	if(contType == NAT_PARAM){
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
 		std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
 		std::vector<int> depVars {0,6};	// Predict x and period with least squares
-		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_X_AX_H, MIRROR_X_AX_V};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes {TPAT_Mirror_Tp::MIRROR_X_AX_H, TPAT_Mirror_Tp::MIRROR_X_AX_V};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
 		if(step_simple > 0 && initStepSize < 0)
 			step_simple *= -1;
 
 		cr3bp_natParamCont(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
-	}else if(contType == PSEUDO_ARC){
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		tpat_nodeset_cr3bp initGuess(firstAxial, 2*numNodes-1);
+		TPAT_Nodeset_CR3BP initGuess(firstAxial, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 		std::vector<int> initDir {0, 0, 0, 0, 0, sign};
-		cr3bp_pseudoArcCont(&axialFam, initGuess, MIRROR_X_AX_H, initDir);
+		cr3bp_pseudoArcCont(&axialFam, initGuess, TPAT_Mirror_Tp::MIRROR_X_AX_H, initDir);
 	}
 	return axialFam;
 }//====================================================
 
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
-	tpat_family_cr3bp axialFam(axialFamFile);
+/**
+ *  @brief Generate a family of vertical orbits
+ * 
+ *  @param axialFamFile a pointer to a file containing the axial family at the same 
+ *  collinear point as the desired vertical family
+ *  @param initStepSize initial step size from the bifurcating axial orbit
+ * 
+ *  @return a family of vertical orbits
+ */
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
+	TPAT_Fam_CR3BP axialFam(axialFamFile);
 
-	tpat_family_cr3bp vertFam(axialFam.getSysData());
+	TPAT_Fam_CR3BP vertFam(axialFam.getSysData());
 
 	// Try to find bifurcations
 	axialFam.sortMembers();
@@ -275,38 +285,38 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
 
 	// The axial family has ICs at the x-axis; I want the vertical family to have ICs at the top of their figure 8's,
 	// so the first step is to integrate to that point
-	tpat_simulation_engine sim(vertFam.getSysDataPtr());
-	sim.addEvent(tpat_event::XZ_PLANE, 0, true);	// Stop integrated at XZ plane, going opposite direction as initial state
-	sim.runSim(IC, period/3);	// 1/3 period should be long enough to fly 1/4 of the trajectory
+	TPAT_Sim_Engine sim;
+	sim.addEvent(TPAT_Event(vertFam.getSysDataPtr(), TPAT_Event_Tp::XZ_PLANE, 0, true));	// Stop integrated at XZ plane, going opposite direction as initial state
+	TPAT_Traj_CR3BP quarterArc(vertFam.getSysDataPtr());
+	sim.runSim(IC, period/3, &quarterArc);	// 1/3 period should be long enough to fly 1/4 of the trajectory
 
-	tpat_traj_cr3bp quarterArc = sim.getCR3BP_Traj();
-	IC = quarterArc.getState(-1);
+	IC = quarterArc.getStateByIx(-1);
 
 	int numNodes = 3;
 	std::vector<int> fixStates {2}; // force z-dot to be non-zero
 	IC[2] += initStepSize;
 
-	tpat_traj_cr3bp firstVertical = cr3bp_getPeriodic(vertFam.getSysDataPtr(), IC, period,
-		numNodes, 2, MIRROR_XZ, fixStates, tol);
+	TPAT_Traj_CR3BP firstVertical = cr3bp_getPeriodic(vertFam.getSysDataPtr(), IC, period,
+		numNodes, 2, TPAT_Mirror_Tp::MIRROR_XZ, fixStates, tol);
 
-	if(contType == NAT_PARAM){
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
 		std::vector<int> indVars {2, 0};	// Begin stepping in z, optionally use x
 		std::vector<int> depVars {5, 6}; 	// Predict y-dot and period with least squares
-		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes {TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
 		if(step_simple > 0 && initStepSize < 0)
 			step_simple *= -1;
 
 		cr3bp_natParamCont(&vertFam, firstVertical, mirrorTypes, indVars, depVars, 2);
-	}else if(contType == PSEUDO_ARC){
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		tpat_nodeset_cr3bp initGuess(firstVertical, 2*numNodes-1);
+		TPAT_Nodeset_CR3BP initGuess(firstVertical, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
-		cr3bp_pseudoArcCont(&vertFam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&vertFam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 
 	return vertFam;
@@ -327,10 +337,10 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateVertical(const char* axia
  *	@param initStepSize the size of the initial step away from the bifurcating
  *	Lyapunov orbit (non-dimensional units)
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize){
-	tpat_family_cr3bp lyapFam(lyapFamFile);
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize){
+	TPAT_Fam_CR3BP lyapFam(lyapFamFile);
 	
-	tpat_family_cr3bp haloFam(lyapFam.getSysData());	
+	TPAT_Fam_CR3BP haloFam(lyapFam.getSysData());	
 
 	// Try to find bifurcations
 	lyapFam.sortMembers();
@@ -351,27 +361,27 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
 	std::vector<int> fixStates {2};	// force z to be out of plane
 	IC[2] += initStepSize;
 
-	tpat_traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysDataPtr(), IC, period,
-		numNodes, 1, MIRROR_XZ, fixStates, tol);
+	TPAT_Traj_CR3BP firstHalo = cr3bp_getPeriodic(haloFam.getSysDataPtr(), IC, period,
+		numNodes, 1, TPAT_Mirror_Tp::MIRROR_XZ, fixStates, tol);
 
-	if(contType == NAT_PARAM){
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
 		std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
 		std::vector<int> depVars {4};	// Predict y-dot with least-squares
-		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes {TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
 		if(step_simple > 0 && initStepSize < 0)
 			step_simple *= -1;
 
 		cr3bp_natParamCont(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
-	}else if(contType == PSEUDO_ARC){
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
 
 		// Turn trajectory object into nodeset; double number of nodes
-		tpat_nodeset_cr3bp initGuess(firstHalo, 2*numNodes-1);
+		TPAT_Nodeset_CR3BP initGuess(firstHalo, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
-		cr3bp_pseudoArcCont(&haloFam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&haloFam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 	return haloFam;
 }//=======================================================
@@ -390,57 +400,58 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateHalo(const char* lyapFamF
  *	@param x0 the initial displacement from the Lagrange point along the x-axis.
  *
  *	@return a family of orbits
+ *	@throws TPAT_Exception if <tt>LPt</tt> is invalid
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp sysData, int LPt, double x0){
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateLyap(TPAT_Sys_Data_CR3BP sysData, int LPt, double x0){
 	if(LPt < 1 || LPt > 3)
-		throw tpat_exception("tpat_family_generator::cr3bp_generateLyap: Invalide LPt number");
+		throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_generateLyap: Invalid LPt number");
 
 	// Initialize variables and containers for data
-	tpat_family_cr3bp fam(sysData);
+	TPAT_Fam_CR3BP fam(sysData);
 
 	// Get initial guess from linearization
 	double LPt_data[] = {0,0,0};
-	cr3bp_getEquilibPt(sysData, LPt, 1e-14, LPt_data);
+	TPAT_Model_CR3BP::getEquilibPt(fam.getSysDataPtr(), LPt, 1e-14, LPt_data);
 
 	// Begin solving - get linear approximation at ICs
 	double r0[] = {x0, 0, 0};
-	tpat_linear_motion_engine linEngine;
-	tpat_traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
-		tpat_linear_motion_engine::ELLIP, fam.getSysDataPtr());
+	TPAT_LinMotion_Engine linEngine;
+	TPAT_Traj_CR3BP linTraj = linEngine.getCR3BPLinear(LPt, r0,
+		TPAT_LinMotion_Tp::ELLIP, fam.getSysDataPtr());
 
-	fam.setSortType(tpat_family_cr3bp::SORT_X);
+	fam.setSortType(TPAT_SortFam_Tp::SORT_X);
 
-	if(contType == NAT_PARAM){
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
 	
 		std::vector<int> indVars;
 		indVars.push_back(0);	// We're going to fix the x-coordinate in the corrector to keep it from slipping
 		indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
 		std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
-		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes {TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 		cr3bp_natParamCont(&fam, linTraj, mirrorTypes, indVars, depVars, 1);
 
-	}else if(contType == PSEUDO_ARC){
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
 
 		// Make a copy of sysData so we can pass in a pointer
-		tpat_sys_data_cr3bp sys(sysData);
+		TPAT_Sys_Data_CR3BP sys(sysData);
 
 		// Get the initial state and tof from the linearization
-		std::vector<double> IC = linTraj.getState(0);
-		double tof = linTraj.getTime(-1);
+		std::vector<double> IC = linTraj.getStateByIx(0);
+		double tof = linTraj.getTimeByIx(-1);
 
 		// Correct the initial guess to a true periodic orbit; we need a full DF matrix
 		// for a CONVERGED family member to start PAC
 		std::vector<int> fixStates {0};
 		int order = 1;
-		tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, MIRROR_XZ, fixStates, tol);
+		TPAT_Traj_CR3BP perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, TPAT_Mirror_Tp::MIRROR_XZ, fixStates, tol);
 
 		// Turn trajectory object into nodeset; double number of nodes
-		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		TPAT_Nodeset_CR3BP initGuess(perOrbit, 2*numNodes-1);
 
 		// Apply Pseudo Arclength Continuation: Ignore y (ix = 0) for periodicity, force y to equal 0 at node 0
 		int sign = IC[0] - LPt_data[0] < 0 ? -1 : 1;	// force the first step to be away from Lagrange point
 		std::vector<int> initDir {sign, 0, 0, 0, 0, 0};
-		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 
 	return fam;
@@ -451,16 +462,16 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLyap(tpat_sys_data_cr3bp 
  *	
  *	@param sysData represents the system the Lyapunov exists in
  *	@param LPt The Lagrange point number [1-5]
- *	@param x0 the initial displacement from the Lagrange point along the x-axis.
  *
  *	@return a family of orbits
+ *	@throws TPAT_Exception if <tt>LPt</tt> is not equal to two (others not implemented)
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_cr3bp *sysData, int LPt){
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateButterfly(TPAT_Sys_Data_CR3BP *sysData, int LPt){
 	if(LPt != 2)
-		throw tpat_exception("tpat_family_generator::cr3bp_butterfly: LPts != 2 are not implemented");
+		throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_butterfly: LPts != 2 are not implemented");
 
 	double LPt_data[] = {0,0,0};
-	cr3bp_getEquilibPt(*sysData, LPt, 1e-14, LPt_data);
+	TPAT_Model_CR3BP::getEquilibPt(sysData, LPt, 1e-14, LPt_data);
 
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
@@ -472,30 +483,30 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
 	printf("Correcting Butterfly...\n");
 	// Correct to a periodic orbit
 	std::vector<int> fixed {4};
-	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, MIRROR_XZ, fixed, tol);
+	TPAT_Traj_CR3BP perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, TPAT_Mirror_Tp::MIRROR_XZ, fixed, tol);
 
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
-	tpat_family_cr3bp fam(*sysData);
+	TPAT_Fam_CR3BP fam(*sysData);
 
-	if(contType == NAT_PARAM){
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
 		// Butterfly-specific settings
-		fam.setSortType(tpat_family_cr3bp::SORT_X);
+		fam.setSortType(TPAT_SortFam_Tp::SORT_X);
 		// std::vector<int> indVars {0,2};
 		std::vector<int> indVars {0, 2};
 		// std::vector<int> depVars {4,6};
 		std::vector<int> depVars {4, 6};
-		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes {TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 2);
-	}else if(contType == PSEUDO_ARC){
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		TPAT_Nodeset_CR3BP initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 	return fam;
 }//====================================================
@@ -509,8 +520,8 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateButterfly(tpat_sys_data_c
  *  @param sysData System data object describing the CR3BP
  *  @return A family of DROs
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateDRO(tpat_sys_data_cr3bp *sysData){
-	tpat_body_data P2Data = tpat_body_data(sysData->getPrimary(1));
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateDRO(TPAT_Sys_Data_CR3BP *sysData){
+	TPAT_Body_Data P2Data = TPAT_Body_Data(sysData->getPrimary(1));
 	double orbR = P2Data.getRadius() + 
 		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
@@ -525,16 +536,16 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateDRO(tpat_sys_data_cr3bp *
 	// waitForUser();
 	// Correct to be periodic
 	printf("Correcting initial DRO from conic...\n");
-	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), MIRROR_XZ, tol);
+	TPAT_Traj_CR3BP perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), TPAT_Mirror_Tp::MIRROR_XZ, tol);
 
 	printf("Creating Family...\n");
-	tpat_family_cr3bp fam(*sysData);
+	TPAT_Fam_CR3BP fam(*sysData);
 
-	if(contType == NAT_PARAM){
-		fam.setSortType(tpat_family_cr3bp::SORT_X);
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
+		fam.setSortType(TPAT_SortFam_Tp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
-		std::vector<tpat_mirror_tp> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes{TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative so that it moves away from P2
 		if(step_simple > 0)
@@ -542,11 +553,11 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateDRO(tpat_sys_data_cr3bp *
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
-	}else if(contType == PSEUDO_ARC){
-		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
+		TPAT_Nodeset_CR3BP initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 
 	return fam;
@@ -561,8 +572,8 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateDRO(tpat_sys_data_cr3bp *
  *  @param sysData System data object describing the CR3BP
  *  @return A family of DROs
  */
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *sysData){
-	tpat_body_data P2Data = tpat_body_data(sysData->getPrimary(1));
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateLPO(TPAT_Sys_Data_CR3BP *sysData){
+	TPAT_Body_Data P2Data = TPAT_Body_Data(sysData->getPrimary(1));
 	double orbR = P2Data.getRadius() + 
 		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
@@ -577,16 +588,16 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *
 	// waitForUser();
 	// Correct to be periodic
 	printf("Correcting initial LPO from conic...\n");
-	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), MIRROR_XZ, tol);
+	TPAT_Traj_CR3BP perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), TPAT_Mirror_Tp::MIRROR_XZ, tol);
 
 	printf("Creating Family...\n");
-	tpat_family_cr3bp fam(*sysData);
+	TPAT_Fam_CR3BP fam(*sysData);
 
-	if(contType == NAT_PARAM){
-		fam.setSortType(tpat_family_cr3bp::SORT_X);
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
+		fam.setSortType(TPAT_SortFam_Tp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
-		std::vector<tpat_mirror_tp> mirrorTypes{MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes{TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative so that it moves away from P2
 		if(step_simple > 0)
@@ -594,17 +605,27 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateLPO(tpat_sys_data_cr3bp *
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
-	}else if(contType == PSEUDO_ARC){
-		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
+		TPAT_Nodeset_CR3BP initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 
 	return fam;
 }//====================================================
 
-tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *sysData, int p, int q){
+/**
+ *  @brief Compute a family of p:q resonant orbits
+ * 
+ *  @param sysData Earth-Moon CR3BP system data object (other systems not implemented)
+ *  @param p Resonance ratio numerator; the orbit completes p revolutions in an inertial frame
+ *  in the same amount of time as the CR3BP system completes q revolutions in an inertial frame.
+ *  @param q Resonance ratio denominator
+ *  @return A family of resonant orbits
+ *  @throws TPAT_Exception of the resonance ratio p:q is not implemented or recognized
+ */
+TPAT_Fam_CR3BP TPAT_Fam_Generator::cr3bp_generateRes(TPAT_Sys_Data_CR3BP *sysData, int p, int q){
 	double x = 0, vy = 0, T = 0;
 	int order = 0;
 	switch(p){
@@ -616,7 +637,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 				case 3: x = 0.6097558619; vy = 1.0695212172; T = 18.52105931; order = 3; break;
 				case 4: x = 0.6647328846; vy = 0.9735457114; T = 24.75827998; order = 4; break;
 				case 5: x = 0.7165422857; vy = 0.8894024945; T = 30.98350896; order = 5; break;
-				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+				default: throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_generateRes: Unsupported resonance ratio\n");
 			}
 			break;
 		}
@@ -626,7 +647,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 				case 1: x = 1.1237405523; vy = -0.8620117202; T = 6.04619177; order = 3; break;
 				case 3: x = 0.5259693391; vy = 1.2027315054; T = 18.53612002; order = 3; break;
 				case 5: x = 0.6502418226; vy = 0.9609312003; T = 31.00065761; order = 5; break;
-				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+				default: throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_generateRes: Unsupported resonance ratio\n");
 			}
 			break;
 		}
@@ -637,7 +658,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 				case 2: x = 1.0929978357; vy = -0.6758673511; T = 11.74717118; order = 2; break;
 				case 4: x = 0.5522611666; vy = 1.1178451576; T = 24.74772340; order = 4; break;
 				case 5: x = 0.6047408300; vy = 1.0072641104; T = 30.97096176; order = 5; break;
-				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+				default: throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_generateRes: Unsupported resonance ratio\n");
 			}
 			break;
 		}
@@ -647,7 +668,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 				case 1: x = 0.531016298978725; vy = 0.529364977382337; T = 6.20854994765688; order = 3; break;
 				case 3: x = 1.13067423947448; vy = -0.646972098815793; T = 17.99449516; order = 3; break;
 				case 5: x = 0.7502059802; vy = 0.6870566313; T = 30.21938914; order = 3; break;
-				default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+				default: throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_generateRes: Unsupported resonance ratio\n");
 			}
 			break;
 		}
@@ -661,7 +682,7 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 			}
 			break;
 		}
-		default: throw tpat_exception("tpat_family_generator::cr3bp_generateRes: Unsupported resonance ratio\n");
+		default: throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_generateRes: Unsupported resonance ratio\n");
 	}
 
 	std::vector<double> ic {x, 0, 0, 0, vy, 0};		// Inititial state orthogonal to XZ plane
@@ -673,23 +694,23 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 	
 	printf("Correcting %d:%d Resonant Orbit...\n", p, q);
 	// Correct to a periodic orbit
-	tpat_traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, ic, T, numNodes, order, MIRROR_XZ, fixed, tol);
+	TPAT_Traj_CR3BP perOrbit = cr3bp_getPeriodic(sysData, ic, T, numNodes, order, TPAT_Mirror_Tp::MIRROR_XZ, fixed, tol);
 	// perOrbit.saveToMat("resOrbit_initSoln.mat");
 	// waitForUser();
 
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
-	tpat_family_cr3bp fam(*sysData);
-	fam.setSortType(tpat_family_cr3bp::SORT_X);
+	TPAT_Fam_CR3BP fam(*sysData);
+	fam.setSortType(TPAT_SortFam_Tp::SORT_X);
 
-	if(contType == NAT_PARAM){
+	if(contType == TPAT_Continuation_Tp::NAT_PARAM){
 		// Butterfly-specific settings
-		fam.setSortType(tpat_family_cr3bp::SORT_X);
+		fam.setSortType(TPAT_SortFam_Tp::SORT_X);
 		// std::vector<int> indVars {0,2};
 		std::vector<int> indVars {0, 4};
 		// std::vector<int> depVars {4,6};
 		std::vector<int> depVars {4, 6};
-		std::vector<tpat_mirror_tp> mirrorTypes {MIRROR_XZ, MIRROR_XZ};
+		std::vector<TPAT_Mirror_Tp> mirrorTypes {TPAT_Mirror_Tp::MIRROR_XZ, TPAT_Mirror_Tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
@@ -697,17 +718,17 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
 		// Run the other direction too
 		step_simple *= -1;
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
-	}else if(contType == PSEUDO_ARC){
+	}else if(contType == TPAT_Continuation_Tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		tpat_nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		TPAT_Nodeset_CR3BP initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 
 		// Run the other direction too
 		initDir[0] *= -1;
-		cr3bp_pseudoArcCont(&fam, initGuess, MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(&fam, initGuess, TPAT_Mirror_Tp::MIRROR_XZ, initDir);
 	}
 
 	return fam;
@@ -731,29 +752,34 @@ tpat_family_cr3bp tpat_family_generator::cr3bp_generateRes(tpat_sys_data_cr3bp *
  *	@param order the multiplicity or order of the family; i.e. the number of revs around the primary
  *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
  *	has order 2
+ *	@throws TPAT_Exception if <tt>indVarIx</tt> has fewer than two elements
+ *	@throws TPAT_Exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
+ *	@throws TPAT_Exception if the eigenvalues of the monodromy matrix cannot be computed
+ *	@throws TPAT_Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
+ *	out of range
  */
-void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj_cr3bp initialGuess,
-	std::vector<tpat_mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
+void TPAT_Fam_Generator::cr3bp_natParamCont(TPAT_Fam_CR3BP *fam, TPAT_Traj_CR3BP initialGuess,
+	std::vector<TPAT_Mirror_Tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
 
-	tpat_sys_data_cr3bp sys = fam->getSysData();
+	TPAT_Sys_Data_CR3BP sys = fam->getSysData();
 
 	if(indVarIx.size() < 2)
-		throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Must specify two independent variables");
+		throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_natParamCont: Must specify two independent variables");
 
 	if(mirrorTypes.size() != indVarIx.size())
-		throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: there must be an equal number of ind. vars and mirror types");
+		throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_natParamCont: there must be an equal number of ind. vars and mirror types");
 
 	int indVar1 = indVarIx[0];
 	int indVar2 = indVarIx[1];
-	tpat_mirror_tp mirrorType = mirrorTypes[0];
+	TPAT_Mirror_Tp mirrorType = mirrorTypes[0];
 
 	// Initially assume that we're fixing indVar1
 	std::vector<int> fixStates;
 	fixStates.push_back(indVar1);
 
 	// Get info from the initial guess trajectory
-	std::vector<double> IC = initialGuess.getState(0);
-	double tof = initialGuess.getTime(-1);
+	std::vector<double> IC = initialGuess.getStateByIx(0);
+	double tof = initialGuess.getTimeByIx(-1);
 
 	// Initialize counters and storage containers
 	int orbitCount = 0;
@@ -761,12 +787,12 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 	double deltaVar1 = 1;
 	double deltaVar2 = 1;
 
-	std::vector<tpat_traj_cr3bp> members;
+	std::vector<TPAT_Traj_CR3BP> members;
 	bool diverged = false;
-	iterationData itData;
+	TPAT_MultShoot_Data *itData = NULL;
 
 	while(orbitCount < numOrbits){
-		tpat_traj_cr3bp perOrbit(&sys);
+		TPAT_Traj_CR3BP perOrbit(&sys);
 		try{
 			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);
@@ -776,13 +802,13 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, &itData);
+			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, itData);
 
 			diverged = false;
 			printf("Orbit %03d converged!\n", ((int)members.size()));
-		}catch(tpat_diverge &e){
+		}catch(TPAT_Diverge &e){
 			diverged = true;
-		}catch(tpat_linalg_err &e){
+		}catch(TPAT_LinAlg_Err &e){
 			printErr("There was a linear algebra error during family continuation...\n");
 			break;
 		}
@@ -790,11 +816,11 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 		// Check for large changes in period to detect leaving family
 		if(!diverged && orbitCount > 2){
 			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
-			double dTOF = std::abs(perOrbit.getTime(-1)) - std::abs(members[members.size()-1].getTime(-1));
-			double percChange = std::abs(dTOF/perOrbit.getTime(-1));
+			double dTOF = std::abs(perOrbit.getTimeByIx(-1)) - std::abs(members[members.size()-1].getTimeByIx(-1));
+			double percChange = std::abs(dTOF/perOrbit.getTimeByIx(-1));
 			if(percChange > 0.25){
 				printf("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTime(-1));
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTimeByIx(-1));
 				diverged = true;
 			}
 		}
@@ -836,7 +862,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			orbitCount++;
 
 			// Check to see if we should update the step size
-			if(itData.count < 4 && orbitCount > numSimple){
+			if(itData->count < 4 && orbitCount > numSimple){
 				double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
 
 				if(dq < maxStepSize){
@@ -850,7 +876,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			}
 
 			// Compute eigenvalues
-			MatrixXRd mono = perOrbit.getSTM(-1);
+			MatrixXRd mono = perOrbit.getSTMByIx(-1);
 
 			double monoErr = std::abs(1.0 - mono.determinant());
 			if(monoErr > 1e-5)
@@ -858,7 +884,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			
 			Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
 		    if(eigensolver.info() != Eigen::Success)
-		        throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
+		        throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
 
 		    Eigen::VectorXcd vals = eigensolver.eigenvalues();
 		    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
@@ -869,24 +895,24 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			// waitForUser();
 
 			// Add orbit to family
-			tpat_family_member_cr3bp child(perOrbit);
+			TPAT_FamMember_CR3BP child(perOrbit);
 			child.setEigVals(eigVals);
 			fam->addMember(child);
 		}
 
 		// Create next initial guess
-		tof = perOrbit.getTime(-1);
+		tof = perOrbit.getTimeByIx(-1);
 
 		if(orbitCount < numSimple){
 			// Use simple continuation; copy the converged IC, step forward in the independent variable
-			IC = perOrbit.getState(0);
+			IC = perOrbit.getStateByIx(0);
 			IC.at(indVar1) += step_simple;
 		}else{
 
 			// Compute the slope for the first time
 			if(orbitCount == numSimple){
-				deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
-				deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
+				deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVar1] - members[orbitCount-2].getStateByIx(0)[indVar1];
+				deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
 				indVarSlope = deltaVar1/deltaVar2;
 			}
 
@@ -895,10 +921,10 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			int first = ((int)members.size()) - curveFitMem < 0 ? 0 : ((int)members.size()) - curveFitMem;
 
 			for(size_t n = first; n < members.size(); n++){
-				std::vector<double> ic = members[n].getState(0);
+				std::vector<double> ic = members[n].getStateByIx(0);
 				prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
-				prevStates.push_back(members[n].getTime(-1));
-				prevStates.push_back(members[n].getJacobi(0));
+				prevStates.push_back(members[n].getTimeByIx(-1));
+				prevStates.push_back(members[n].getJacobiByIx(0));
 			}
 
 			// This will hold the input depVars plus the unused independent variable
@@ -907,7 +933,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			if(std::abs(indVarSlope) > slopeThresh){
 				mirrorType = mirrorTypes[0];
 				// Use continuation in indVar1
-				IC.at(indVar1) = perOrbit.getState(0).at(indVar1) + tpat_util::sign(deltaVar1)*step_fitted_1;
+				IC.at(indVar1) = perOrbit.getStateByIx(0).at(indVar1) + TPAT_Util::sign(deltaVar1)*step_fitted_1;
 				fixStates.clear();
 				fixStates.push_back(indVar1);
 
@@ -921,7 +947,7 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 			}else{
 				mirrorType = mirrorTypes[1];
 				// Use continuation in indVar2
-				IC.at(indVar2) = perOrbit.getState(0).at(indVar2) + tpat_util::sign(deltaVar2)*step_fitted_2;
+				IC.at(indVar2) = perOrbit.getStateByIx(0).at(indVar2) + TPAT_Util::sign(deltaVar2)*step_fitted_2;
 				fixStates.clear();
 				fixStates.push_back(indVar2);
 
@@ -942,12 +968,12 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
 				else if(ix == 6)
 					tof = predictedIC[ix];
 				else
-					throw tpat_exception("tpat_family_generator::cr3bp_natParamCont: Cannot update independent variable; index out of range");
+					throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_natParamCont: Cannot update independent variable; index out of range");
 			}
 
 			// Update slope
-			deltaVar1 = members[orbitCount-1].getState(0)[indVar1] - members[orbitCount-2].getState(0)[indVar1];
-			deltaVar2 = members[orbitCount-1].getState(0)[indVar2] - members[orbitCount-2].getState(0)[indVar2];
+			deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVar1] - members[orbitCount-2].getStateByIx(0)[indVar1];
+			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
 			indVarSlope = deltaVar1/deltaVar2;
 		}
 	}// end of while loop
@@ -970,29 +996,32 @@ void tpat_family_generator::cr3bp_natParamCont(tpat_family_cr3bp *fam, tpat_traj
  *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
  * 	a step on any of the free variables, but only one step direction will be considered (the first one
  * 	as the algorithm reads through the vector)
+ * 	@throws TPAT_Exception if the mirrorType is not recognized
+ * 	@throws TPAT_Exception if the free variable vector contains fewer than six states
+ * 	@throws TPAT_Exception if the eigenvalues of the monodromy matrix cannot be computed
  */
-void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nodeset_cr3bp initialGuess,
-	tpat_mirror_tp mirrorType, std::vector<int> initDir){
+void TPAT_Fam_Generator::cr3bp_pseudoArcCont(TPAT_Fam_CR3BP *fam, TPAT_Nodeset_CR3BP initialGuess,
+	TPAT_Mirror_Tp mirrorType, std::vector<int> initDir){
 
 	// Check inputs (Only applies to Constraint Method 1)
 	// if(periodicityIgnoreIx < 0 || periodicityIgnoreIx > 5)
-	// 	throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: Periodicity Ignore Index out of range");
+	// 	throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Periodicity Ignore Index out of range");
 
 	// if(fixToVal_ix < 0 || fixToVal_ix > 7)
-	// 	throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: FixToVal Index out of range");
+	// 	throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_pseudoArcCont: FixToVal Index out of range");
 
 	// TODO - Make these editable?
 	double stepSize = 0.001;
 	double maxStepSize = 0.5;
 	double minStepSize = 1e-7;
 
-	tpat_sys_data_cr3bp sys = fam->getSysData();
-	tpat_nodeset_cr3bp familyMember(initialGuess);	// Copy the input initial guess
+	TPAT_Sys_Data_CR3BP sys = fam->getSysData();
+	TPAT_Nodeset_CR3BP familyMember(initialGuess);	// Copy the input initial guess
 
 	printf("Correcting Initial Guess...\n");
 	
 	// Clear constraints and add new ones
-	familyMember.clearConstraints();
+	familyMember.clearAllConstraints();
 
 	/*	Constraint Method 1:
 	 *	* Apply a periodicity constraint that forces the first and final node to be collocated,
@@ -1016,19 +1045,19 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	// Create a periodicity constraint
 	double periodicConData[] = {0,0,0,0,0,0};
 	periodicConData[periodicityIgnoreIx] = NAN;
-	tpat_constraint periodicCon(tpat_constraint::MATCH_CUST, familyMember.getNumNodes()-1, periodicConData, 6);
+	TPAT_Constraint periodicCon(TPAT_Constraint_Tp::MATCH_CUST, familyMember.getNumNodes()-1, periodicConData, 6);
 
-	tpat_constraint extraCon;
+	TPAT_Constraint extraCon;
 	if(fixToVal_ix < 6){
 		double extraCon_data[] = {NAN, NAN, NAN, NAN, NAN, NAN};
 		extraCon_data[fixToVal_ix] = fixToVal_val;
-		extraCon = tpat_constraint(tpat_constraint::STATE, 0, extraCon_data, 6);
+		extraCon = TPAT_Constraint(TPAT_Constraint_Tp::STATE, 0, extraCon_data, 6);
 	}else if(fixToVal_ix == 6){
 		double val = fixToVal_val;
-		extraCon = tpat_constraint(tpat_constraint::TOF, 0, &val, 1);
+		extraCon = TPAT_Constraint(TPAT_Constraint_Tp::TOF, 0, &val, 1);
 	}else if(fixToVal_ix == 7){
 		double val = fixToVal_val;
-		extraCon = tpat_constraint(tpat_constraint::JC, 0, &val, 1);
+		extraCon = TPAT_Constraint(TPAT_Constraint_Tp::JC, 0, &val, 1);
 	}
 
 	familyMember.addConstraint(periodicCon);
@@ -1042,52 +1071,54 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	 */
 	double perpCross_data[] = {NAN,NAN,NAN,NAN,NAN,NAN};
 	switch(mirrorType){
-		case MIRROR_XZ:
+		case TPAT_Mirror_Tp::MIRROR_XZ:
 			perpCross_data[1] = 0;
 			perpCross_data[3] = 0;
 			perpCross_data[5] = 0;
             break;
-        case MIRROR_YZ:
+        case TPAT_Mirror_Tp::MIRROR_YZ:
             perpCross_data[0] = 0;
 			perpCross_data[3] = 0;
 			perpCross_data[5] = 0;
             break;
-        case MIRROR_XY:
+        case TPAT_Mirror_Tp::MIRROR_XY:
             perpCross_data[2] = 0;
 			perpCross_data[3] = 0;
 			perpCross_data[4] = 0;
             break;
-        case MIRROR_X_AX_H:
-        case MIRROR_X_AX_V:
+        case TPAT_Mirror_Tp::MIRROR_X_AX_H:
+        case TPAT_Mirror_Tp::MIRROR_X_AX_V:
         	perpCross_data[1] = 0;
 			perpCross_data[2] = 0;
 			perpCross_data[3] = 0;
             break;
         default:
-            throw tpat_exception("Mirror type either not defined or not implemented");
+            throw TPAT_Exception("Mirror type either not defined or not implemented");
 	}
 	// constrain perpendicular crossings and periodicity
-	tpat_constraint perpCross1_Con(tpat_constraint::STATE, 0, perpCross_data, 6);
-	tpat_constraint perpCross2_Con(tpat_constraint::STATE, familyMember.getNumNodes()-1, perpCross_data, 6);
+	TPAT_Constraint perpCross1_Con(TPAT_Constraint_Tp::STATE, 0, perpCross_data, 6);
+	TPAT_Constraint perpCross2_Con(TPAT_Constraint_Tp::STATE, familyMember.getNumNodes()-1, perpCross_data, 6);
 
 	familyMember.addConstraint(perpCross1_Con);
 	familyMember.addConstraint(perpCross2_Con);
 
-	std::vector<tpat_constraint> constraints {perpCross1_Con, perpCross2_Con};
+	std::vector<TPAT_Constraint> constraints {perpCross1_Con, perpCross2_Con};
 
 	// Correct the nodeset to retrieve a free-variable vector for a family member
-	tpat_correction_engine corrector;
+	TPAT_Correction_Engine corrector;
 	corrector.setVarTime(true);			// Variable time MUST be enabled for PAC
 	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
-	iterationData familyItData;
+	TPAT_MultShoot_Data familyItData(&familyMember);
+	TPAT_Nodeset_CR3BP perNodes(static_cast<const TPAT_Sys_Data_CR3BP *>(initialGuess.getSysData()));
+
 	try{
-		familyItData = corrector.multShoot(&familyMember);
-	}catch(tpat_diverge &e){
-		printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge initial guess!\n");
-	}catch(tpat_linalg_err &e){
-		printErr("tpat_family_generator::cr3bp_pseudoArcCont: There was a linear algebra error...\n");
+		familyItData = corrector.multShoot(&familyMember, &perNodes);
+	}catch(TPAT_Diverge &e){
+		printErr("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Could not converge initial guess!\n");
+	}catch(TPAT_LinAlg_Err &e){
+		printErr("TPAT_Fam_Generator::cr3bp_pseudoArcCont: There was a linear algebra error...\n");
 	}
 
 	printf("Applying continuation to compute family...\n");
@@ -1097,7 +1128,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 	Eigen::VectorXd convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 	Eigen::VectorXd prevN(familyItData.totalFree, 1);
 	
-	std::vector<tpat_traj_cr3bp> members;
+	std::vector<TPAT_Traj_CR3BP> members;
 
 	while(orbitCount < numOrbits){
 
@@ -1122,7 +1153,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		printf("DF has dimensions %ld x %ld\n", DF.rows(), DF.cols());
 		// Check to make sure the IS a nullspace
 		if(N.rows() == 1){
-			printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is zero-dimensional; cannot proceed...\n");
+			printErr("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Nullspace is zero-dimensional; cannot proceed...\n");
 			return;
 		}		
 
@@ -1137,7 +1168,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		printf("Choosing Nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
 		if(orbitCount == 0){
 			if(N.cols() > 1){
-				printErr("tpat_family_generator::cr3bp_pseudoArcCont: Nullspace is multidimensional on first iteration; unsure how to proceed...\n");
+				printErr("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Nullspace is multidimensional on first iteration; unsure how to proceed...\n");
 				return;
 			}
 
@@ -1197,7 +1228,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));
 
-		tpat_nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
+		TPAT_Nodeset_CR3BP newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
@@ -1206,7 +1237,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		try{
 			while(stepSize >= minStepSize){
 				try{
-					familyItData = corrector.multShoot(&newMember);
+					familyItData = corrector.multShoot(&newMember, &perNodes);
 
 					// If convergence was fast, take bigger steps
 					if(familyItData.count < 5){
@@ -1220,9 +1251,9 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 					// Exit this loop; we converged!
 					break;
-				}catch(tpat_diverge &e){
+				}catch(TPAT_Diverge &e){
 					if(stepSize > minStepSize){
-						printWarn("tpat_family_generator::cr3bp_pseudoArcCont: Corrector diverged... trying smaller step size\n");
+						printWarn("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Corrector diverged... trying smaller step size\n");
 
 						// Decrease step size and try again
 						stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
@@ -1231,14 +1262,14 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 						// Re-Create the initial guess using the new step size
 						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
 					}else{
-						printErr("tpat_family_generator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
+						printErr("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
 						killLoop = true;
 						break;
 					}
 				}
 			}
-		}catch(tpat_linalg_err &e){
-			printErr("tpat_family_generator::cr3bp_pseudoArcCont: There was a linear algebra error...\n");
+		}catch(TPAT_LinAlg_Err &e){
+			printErr("TPAT_Fam_Generator::cr3bp_pseudoArcCont: There was a linear algebra error...\n");
 			killLoop = true;
 		}
 
@@ -1249,7 +1280,7 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 
 		
 		if(familyItData.totalFree < 6)
-			throw tpat_exception("tpat_family_generator::PAC algorithm expects at least 6 states in the free variable vector");
+			throw TPAT_Exception("TPAT_Fam_Generator::PAC algorithm expects at least 6 states in the free variable vector");
 		// Check to see if the converged family vector is significantly different from previously computed family member
 		// Note that only the first 6 states (the IC for the trajectory) is checked; differences in other nodes 
 		// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
@@ -1274,15 +1305,13 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
-		tpat_nodeset_cr3bp perNodes = corrector.getCR3BP_Output();
-
-		tpat_traj_cr3bp perOrbit = tpat_traj_cr3bp::fromNodeset(perNodes);
+		TPAT_Traj_CR3BP perOrbit = TPAT_Traj_CR3BP::fromNodeset(perNodes);
 
 		members.push_back(perOrbit);
 		orbitCount++;
 
 		// Compute eigenvalues
-		MatrixXRd mono = perOrbit.getSTM(-1);
+		MatrixXRd mono = perOrbit.getSTMByIx(-1);
 
 		double monoErr = std::abs(1.0 - mono.determinant());
 		if(monoErr > 1e-5)
@@ -1290,13 +1319,13 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
 		
 		Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
 	    if(eigensolver.info() != Eigen::Success)
-	        throw tpat_exception("tpat_family_generator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
+	        throw TPAT_Exception("TPAT_Fam_Generator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
 
 	    Eigen::VectorXcd vals = eigensolver.eigenvalues();
 	    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 		// Add orbit to family
-		tpat_family_member_cr3bp child(perOrbit);
+		TPAT_FamMember_CR3BP child(perOrbit);
 		child.setEigVals(eigVals);
 		fam->addMember(child);
 	}// end of while loop
@@ -1309,12 +1338,13 @@ void tpat_family_generator::cr3bp_pseudoArcCont(tpat_family_cr3bp *fam, tpat_nod
  *	@param convergedFreeVarVec a matrix containing the free variable vector of the previous
  *	(nearest) converged family member
  *	@param N a 1D nullspace vector that lies tangent to the family
- *	@param familyItData an iterationData object containing corrections information about the
+ *	@param stepSize scales the size of the step by scaling the nullspace vector
+ *	@param familyItData an TPAT_MultShoot_Data object containing corrections information about the
  *	previous (nearest) converged family member
  *	@param cons a vector of constraints to place on the nodeset
  */
-tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
-	Eigen::VectorXd N, double stepSize, iterationData familyItData, std::vector<tpat_constraint> cons){
+TPAT_Nodeset_CR3BP TPAT_Fam_Generator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
+	Eigen::VectorXd N, double stepSize, TPAT_MultShoot_Data familyItData, std::vector<TPAT_Constraint> cons){
 
 	/**
 	 *	Step forwards away from previously converged solution
@@ -1323,14 +1353,13 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd 
 	double *X = newFreeVarVec.data();
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
-	const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(familyItData.sysData);
-	tpat_nodeset_cr3bp newMember(sys);
+	const TPAT_Sys_Data_CR3BP *sys = static_cast<const TPAT_Sys_Data_CR3BP *>(familyItData.sysData);
+	TPAT_Nodeset_CR3BP newMember(sys);
 
 	for(int n = 0; n < familyItData.numNodes; n++){
-		// tof stored in the element after all the nodes; NAN for last node
-		double tof = n < familyItData.numNodes - 1 ? X[6*familyItData.numNodes]/(familyItData.numNodes - 1) : NAN;
-		tpat_node node(X+6*n, tof);
-		newMember.appendNode(node);
+		newMember.addNode(TPAT_Node(X+6*n, 0));
+		if(n > 0)
+			newMember.addSeg(TPAT_Segment(n-1, n, X[6*familyItData.numNodes]/(familyItData.numNodes - 1)));
 	}
 
 	// Add same constraints
@@ -1347,7 +1376,7 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd 
 	// Append the step size
 	pacCon_data.insert(pacCon_data.end(), stepSize);
 	// Create the actual constraint
-	tpat_constraint pacCon(tpat_constraint::PSEUDOARC, familyItData.numNodes-1, pacCon_data);
+	TPAT_Constraint pacCon(TPAT_Constraint_Tp::PSEUDOARC, familyItData.numNodes-1, pacCon_data);
 	newMember.addConstraint(pacCon);
 
 	// Outputs for debugging and sanity checks
@@ -1355,12 +1384,12 @@ tpat_nodeset_cr3bp tpat_family_generator::cr3bp_getNextPACGuess(Eigen::VectorXd 
 		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.rows()-1]);
 
 	return newMember;
-}
+}//====================================================
 
 /**
  *	@brief Reset all parameters to their default values
  */
-void tpat_family_generator::reset(){
+void TPAT_Fam_Generator::reset(){
 	numOrbits = 500;
 	numSimple = 3;
 	step_simple = 0.0005;
@@ -1370,6 +1399,6 @@ void tpat_family_generator::reset(){
 	numNodes = 3;
 	slopeThresh = 1;
 	tol = 1e-12;
-}//======================================
+}//====================================================
 
 //

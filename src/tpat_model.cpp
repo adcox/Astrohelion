@@ -29,11 +29,13 @@
 #include "tpat_event.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_exceptions.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset.hpp"
 #include "tpat_traj.hpp"
 #include "tpat_sys_data.hpp"
-
+#include "tpat_utilities.hpp"
+ 
 #include <algorithm>
 #include <cmath>
 
@@ -41,29 +43,26 @@
  *	@brief Default constructor
  *	@param type the model type
  */
-tpat_model::tpat_model(tpat_dynamicsModel_tp type){
+TPAT_Model::TPAT_Model(tpat_dynamicsModel_tp type){
 	modelType = type;
 }//===========================================
 
 /**
  *	@brief Copy constructor
  */
-tpat_model::tpat_model(const tpat_model &m){
+TPAT_Model::TPAT_Model(const TPAT_Model &m){
 	copyMe(m);
 }//===========================================
 
 /**
  *	@brief Deconstructor
  */
-tpat_model::~tpat_model(){
-	allowedCons.clear();
-	allowedEvents.clear();
-}//==============================
+TPAT_Model::~TPAT_Model(){}
 
 /**
  *	@brief Copy Operator
  */	
-tpat_model& tpat_model::operator =(const tpat_model &m){
+TPAT_Model& TPAT_Model::operator =(const TPAT_Model &m){
 	copyMe(m);
 	return *this;
 }//============================================
@@ -72,7 +71,7 @@ tpat_model& tpat_model::operator =(const tpat_model &m){
  *	@brief Copies all data from a dynamic model into this one
  *	@param m another dynamic model
  */
-void tpat_model::copyMe(const tpat_model &m){
+void TPAT_Model::copyMe(const TPAT_Model &m){
 	modelType = m.modelType;
 	coreStates = m.coreStates;
 	stmStates = m.stmStates;
@@ -83,25 +82,25 @@ void tpat_model::copyMe(const tpat_model &m){
  *	@brief Retrieve the number of core states
  *	@return the number of core states
  */
-int tpat_model::getCoreStateSize() const { return coreStates; }
+int TPAT_Model::getCoreStateSize() const { return coreStates; }
 
 /**
  *	@brief Retrieve the number of STM elements stored in the state vector
  *	@return the number of STM elements stored in the state vector
  */
-int tpat_model::getSTMStateSize() const { return stmStates; }
+int TPAT_Model::getSTMStateSize() const { return stmStates; }
 
 /**
  *	@brief Retrieve the number of extra states stored after the core states and STM elements
  *	@return the number of extra states stored after the core states and STM elements
  */
-int tpat_model::getExtraStateSize() const { return extraStates; }
+int TPAT_Model::getExtraStateSize() const { return extraStates; }
 
 /**
  *	@brief Determine whether the specified constraint type is supported in this model
  *	@return whether or not the specified constraint type is supported in this model
  */
-bool tpat_model::supportsCon(tpat_constraint::tpat_constraint_tp type) const{
+bool TPAT_Model::supportsCon(TPAT_Constraint_Tp type) const{
 	return std::find(allowedCons.begin(), allowedCons.end(), type) != allowedCons.end();
 }//===================================================
 
@@ -109,7 +108,7 @@ bool tpat_model::supportsCon(tpat_constraint::tpat_constraint_tp type) const{
  *	@brief Determine whether the specified event type is supported in this model
  *	@return whether or not the specified event type is supported in this model
  */
-bool tpat_model::supportsEvent(tpat_event::tpat_event_tp type) const{
+bool TPAT_Model::supportsEvent(TPAT_Event_Tp type) const{
 	return std::find(allowedEvents.begin(), allowedEvents.end(), type) != allowedEvents.end();
 }//===================================================
 
@@ -127,7 +126,7 @@ bool tpat_model::supportsEvent(tpat_event::tpat_event_tp type) const{
  *  @return Time derivative of the magnitude of a vector from a primary to the body
  *  of interest, non-dimensional velocity units
  */
-double tpat_model::getRDot(int Pix, double t, const double *state, const tpat_sys_data *sys) const{
+double TPAT_Model::getRDot(int Pix, double t, const double *state, const TPAT_Sys_Data *sys) const{
 	
 	std::vector<double> primPos = getPrimPos(t, sys);
     double dx = state[0] - primPos[3*Pix+0];
@@ -150,53 +149,82 @@ double tpat_model::getRDot(int Pix, double t, const double *state, const tpat_sy
  *
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
+ *	
+ *	@throws TPAT_Exception if equalArcTime is set to true (within the correction engine) and
+ *	the nodeset to be corrected includes segments that are propagated in both forward and
+ *	reverse time.
  */
-void tpat_model::multShoot_initDesignVec(iterationData *it, const tpat_nodeset *set) const{
+void TPAT_Model::multShoot_initDesignVec(TPAT_MultShoot_Data *it, const TPAT_Nodeset *set) const{
 	// Create the initial state vector
 	it->X.clear();
+	it->freeVarMap.clear();
 
 	// Copy in the position and velocity states for each node
+	int rowNum = 0;
 	for(int n = 0; n < set->getNumNodes(); n++){
-		std::vector<double> state = set->getNode(n).getPosVelState();
+		std::vector<double> state = set->getNodeByIx(n).getState();
+		rowNum = it->X.size();
 		it->X.insert(it->X.end(), state.begin(), state.end());
+		MSVarMap_Key key(MSVarType::STATE, set->getNodeByIx(n).getID());
+		it->freeVarMap[key] = MSVarMap_Obj(key, rowNum);
 	}
 
 	if(it->varTime){		
 		if(it->equalArcTime){
+			// Make sure all times-of-flight have the same sign
+			for(int s = 1; s < set->getNumSegs(); s++){
+				if(set->getSegByIx(s).getTOF() * set->getSegByIx(s-1).getTOF() < 0)
+					throw TPAT_Exception("TPAT_Model::multShoot_initDesignVec: EqualArcTime is ON and times-of-flight have different signs... cannot proceed");
+			}
+
 			// Append the total TOF for the arc
+			MSVarMap_Key key(MSVarType::TOF_TOTAL, TPAT_Linkable::INVALID_ID);
+			it->freeVarMap[key] = MSVarMap_Obj(key, (int)(it->X.size()));
 			it->X.insert(it->X.end(), set->getTotalTOF());
 		}else{
-			// Append the TOF for each node (except the last one, which isn't propagated)
-			for(int n = 0; n < set->getNumNodes()-1; n++){
-				it->X.insert(it->X.end(), set->getNode(n).getTOF());
+			// Append the TOF for each segment
+			for(int s = 0; s < set->getNumSegs(); s++){
+				MSVarMap_Key key(MSVarType::TOF, set->getSegByIx(s).getID());
+				it->freeVarMap[key] = MSVarMap_Obj(key, (int)(it->X.size()));
+				it->X.insert(it->X.end(), set->getSegByIx(s).getTOF());
 			}
 		}
 	}
 }//============================================================
 
-
-void tpat_model::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset *set) const{
+/**
+ *  @brief Scale the design variable vector so that all elements have approximately the 
+ *  same magnitude.
+ *  @details This can improve the corrections process, although it is not guaranteed to,
+ *  and CAN impede the corrections process as well.
+ * 
+ *  @param it iteraiton data object for the current corrections process
+ *  @param set the nodeset that corrections are being applied to
+ */
+void TPAT_Model::multShoot_scaleDesignVec(TPAT_MultShoot_Data *it, const TPAT_Nodeset *set) const{
 	// Group all like variables and then compute the largest magnitude of each
 	Eigen::VectorXd allPos(3*it->numNodes);
 	Eigen::VectorXd allVel(3*it->numNodes);
-	Eigen::VectorXd allTOF(it->numNodes - 1);
+	Eigen::VectorXd allTOF(set->getNumSegs());
 	for(int n = 0; n < it->numNodes; n++){
-		allPos(3*n+0) = it->X[6*n+0];
-		allPos(3*n+1) = it->X[6*n+1];
-		allPos(3*n+2) = it->X[6*n+2];
-		allVel(3*n+0) = it->X[6*n+3];
-		allVel(3*n+1) = it->X[6*n+4];
-		allVel(3*n+2) = it->X[6*n+5];
-
-		if(n < it->numNodes - 1){
-			if(it->varTime){
-				// Get data
-				allTOF[n] = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
-			}else{
-				allTOF[n] = set->getTOF(n);
-			}
-		}
+		MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
+		allPos(3*n+0) = it->X[stateVar.row0+0];
+		allPos(3*n+1) = it->X[stateVar.row0+1];
+		allPos(3*n+2) = it->X[stateVar.row0+2];
+		allVel(3*n+0) = it->X[stateVar.row0+3];
+		allVel(3*n+1) = it->X[stateVar.row0+4];
+		allVel(3*n+2) = it->X[stateVar.row0+5];
 	}
+
+	for(int s = 0; s < set->getNumSegs(); s++){
+		if(it->varTime){
+			MSVarMap_Obj tofVar = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+				it->equalArcTime ? TPAT_Linkable::INVALID_ID : set->getSegByIx(s).getID());
+			allTOF[s] = it->equalArcTime ? it->X[tofVar.row0]/(set->getNumSegs()) : it->X[tofVar.row0];
+		}else
+			allTOF[s] = set->getTOFByIx(s);
+	}
+
 	double maxPos = allPos.cwiseAbs().maxCoeff();
 	double maxVel = allVel.cwiseAbs().maxCoeff();
 	double maxTime = allVel.cwiseAbs().maxCoeff();
@@ -209,18 +237,27 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset 
 	printf("Variable Scalings:\n  Pos = %.6f\n  Vel = %.6f\n  TOF = %.5f\n", 
 		it->freeVarScale[0], it->freeVarScale[1], it->freeVarScale[2]);
 
-	// Loop through all nodes and scale position, velocity, and time variables
+	// Loop through all nodes and scale position and velocity
 	for(int n = 0; n < it->numNodes; n++){
-		it->X[6*n+0] *= it->freeVarScale[0];	// position
-		it->X[6*n+1] *= it->freeVarScale[0];
-		it->X[6*n+2] *= it->freeVarScale[0];
-		it->X[6*n+3] *= it->freeVarScale[1];	// velocity
-		it->X[6*n+4] *= it->freeVarScale[1];
-		it->X[6*n+5] *= it->freeVarScale[1];
-		
-		if(it->varTime){
-			if( (it->equalArcTime && n == 0) || (!it->equalArcTime && n < it->numNodes-1) )
-				it->X[6*it->numNodes+n] *= it->freeVarScale[2];	// Time
+		MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
+		it->X[stateVar.row0+0] *= it->freeVarScale[0];	// position
+		it->X[stateVar.row0+1] *= it->freeVarScale[0];
+		it->X[stateVar.row0+2] *= it->freeVarScale[0];
+		it->X[stateVar.row0+3] *= it->freeVarScale[1];	// velocity
+		it->X[stateVar.row0+4] *= it->freeVarScale[1];
+		it->X[stateVar.row0+5] *= it->freeVarScale[1];
+	}
+
+	// Scale all times-of-flight
+	if(it->varTime){
+		if(it->equalArcTime){
+			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVarType::TOF_TOTAL, TPAT_Linkable::INVALID_ID);
+			it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
+		}else{
+			for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+				MSVarMap_Obj tofVar = it->getVarMap_obj(MSVarType::TOF, it->nodeset->getSegByIx(s).getID());
+				it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
+			}
 		}
 	}
 }//===================================================
@@ -236,22 +273,24 @@ void tpat_model::multShoot_scaleDesignVec(iterationData *it, const tpat_nodeset 
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
  */	
-void tpat_model::multShoot_createContCons(iterationData *it, const tpat_nodeset *set) const{
+void TPAT_Model::multShoot_createContCons(TPAT_MultShoot_Data *it, const TPAT_Nodeset *set) const{
 	// Create position and velocity constraints
-    for(int n = 1; n < set->getNumNodes(); n++){
-        // Get a vector specifying which velocity states are continuous from the nodeset
-        std::vector<bool> velCon = set->getNode(n).getVelCon();
-        // If not continuous, put NAN into the constraint data; else unity
-        double vxCon = velCon[0] ? 1 : NAN;
-        double vyCon = velCon[1] ? 1 : NAN;
-        double vzCon = velCon[2] ? 1 : NAN;
-        // Force all positions to be continuous, use specified velocity continuities
-        std::vector<double> contStates {1,1,1, vxCon, vyCon, vzCon};
-        // Create a constraint
-        tpat_constraint continuity(tpat_constraint::CONT_PV, n, contStates);
-        // Save constraint to total constraint vector
-        it->allCons.push_back(continuity);
-    }
+	for(int s = 0; s < set->getNumSegs(); s++){
+		// Force all positions to be continuous
+		double contStates[] = {1, 1, 1, 1, 1, 1};
+		if(set->getSegByIx(s).getTerminus() != TPAT_Linkable::INVALID_ID){
+			// Get a vector specifying which velocity states are continuous
+			std::vector<bool> velCon = set->getSegByIx(s).getVelCon();
+			// If not continuous, put NAN into the constraint data; else unity
+			contStates[3] = velCon[0] ? 1 : NAN;
+			contStates[4] = velCon[1] ? 1 : NAN;
+			contStates[5] = velCon[2] ? 1 : NAN;
+			// Create a constraint
+			TPAT_Constraint con(TPAT_Constraint_Tp::CONT_PV, set->getSegByIx(s).getID(), contStates, 6);
+			// Save constraint to constraint vector
+			it->allCons.push_back(con);
+		}
+	}
 
 	// Next, create other continuity constraints via the CONT_EX constraint type
 	// These may include time continuity for non-autonomous systems, or mass continuity
@@ -266,16 +305,18 @@ void tpat_model::multShoot_createContCons(iterationData *it, const tpat_nodeset 
  *
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
- *	@param n the index of the node that serves as the initial state
+ *	@param s the ID of the segment being propagated
  *	@param ic a pointer to a 6-element initial state array
  *	@param t0 a pointer to a double representing the initial time (epoch)
  *	@param tof a pointer to a double the time-of-flight on the segment.
  */
-void tpat_model::multShoot_getSimICs(const iterationData *it, const tpat_nodeset *set, int n,
+void TPAT_Model::multShoot_getSimICs(const TPAT_MultShoot_Data *it, const TPAT_Nodeset *set, int s,
 	double *ic, double *t0, double *tof) const{
-	
-	// Get data from free variable vector
-	std::copy(it->X.begin()+6*n, it->X.begin()+6*(n+1), ic);
+	(void) set;
+
+	// Retrieve  representative object and get data from free var vec
+	MSVarMap_Obj state = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(s).getOrigin());
+	std::copy(it->X.begin()+state.row0, it->X.begin()+state.row0 + state.nRows, ic);
 
 	// Reverse Scaling
 	for(int i = 0; i < 6; i++){
@@ -283,15 +324,19 @@ void tpat_model::multShoot_getSimICs(const iterationData *it, const tpat_nodeset
 	}
 
 	if(it->varTime){
-		// Get data
-		*tof = it->equalArcTime ? it->X[6*it->numNodes]/(it->numNodes - 1) : it->X[6*it->numNodes+n];
+		// Retrieve  representative object and get data from free var vec
+		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+			it->equalArcTime ? -1 : s);
+		*tof = it->equalArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
 		// Reverse scaling
-		*tof /= it->freeVarScale[2];	// Time scaling
-	}else{
-		*tof = set->getTOF(n);
+		*tof /= it->freeVarScale[2]; 	// Time scaling
 	}
 	*t0 = 0;
 
+	// printf("  ID = %02d\n", s);
+	// printf("  Origin Node = %02d\n", it->nodeset->getSeg(s).getOrigin());
+	// printf("  tof = %.4f\n", *tof);
+	// printf("  t0 = %.4f\n", *t0);
 }//============================================================
 
 /**
@@ -304,21 +349,22 @@ void tpat_model::multShoot_getSimICs(const iterationData *it, const tpat_nodeset
  *  Note: This function should be called after the state variable vector has 
  *  been initialized by the multiple shooting algorithm
  * 
- *  @param it the iterationData object associated with the multiple shooting process
+ *  @param it the TPAT_MultShoot_Data object associated with the multiple shooting process
  *  @param con the inequality constraint for which the slack variable is being computed
  * 
  *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
+ *  @throws TPAT_Exception if the constraint type does not include a slack variable
  */
-double tpat_model::multShoot_getSlackVarVal(const iterationData *it, tpat_constraint con) const{
+double TPAT_Model::multShoot_getSlackVarVal(const TPAT_MultShoot_Data *it, TPAT_Constraint con) const{
 	switch(con.getType()){
-		case tpat_constraint::MAX_DIST:
-		case tpat_constraint::MIN_DIST:
+		case TPAT_Constraint_Tp::MAX_DIST:
+		case TPAT_Constraint_Tp::MIN_DIST:
 			return multShoot_targetDist_compSlackVar(it, con);
-		case tpat_constraint::MAX_DELTA_V:
+		case TPAT_Constraint_Tp::MAX_DELTA_V:
 			return multShoot_targetDeltaV_compSlackVar(it, con);
 		default:
-			throw tpat_exception("tpat_model::multShoot_getSlackVarVal: Cannot compute slack variable values for equality constraints");
+			throw TPAT_Exception("TPAT_Model::multShoot_getSlackVarVal: Cannot compute slack variable values for equality constraints");
 	}
 }//===========================================================
 
@@ -338,41 +384,47 @@ double tpat_model::multShoot_getSlackVarVal(const iterationData *it, tpat_constr
  *	@param c the index of the constraint within the total constraint vector (which is, in
  *	turn, stored in the iteration data)
  */	
-void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint con, int c) const{
+void TPAT_Model::multShoot_applyConstraint(TPAT_MultShoot_Data *it, TPAT_Constraint con, int c) const{
 
 	int row0 = it->conRows[c];
 
 	switch(con.getType()){
-		case tpat_constraint::CONT_PV:
+		case TPAT_Constraint_Tp::CONT_PV:
 			// Apply position-velocity continuity constraints
-			multShoot_targetPosVelCons(it, con, row0);
+			multShoot_targetCont_PosVel(it, con, row0);
 			break;
-		case tpat_constraint::CONT_EX:
+		case TPAT_Constraint_Tp::SEG_CONT_PV:
+			multShoot_targetCont_PosVel_Seg(it, con, row0);
+			break;
+		case TPAT_Constraint_Tp::SEG_CONT_EX:
+			multShoot_targetCont_Ex_Seg(it, con, row0);
+			break;
+		case TPAT_Constraint_Tp::CONT_EX:
 			// Apply extra continuity constraints
-			multShoot_targetExContCons(it, con, row0);
+			multShoot_targetCont_Ex(it, con, row0);
 			break;
-		case tpat_constraint::STATE:
+		case TPAT_Constraint_Tp::STATE:
 			multShoot_targetState(it, con, row0);
 			break;
-		case tpat_constraint::MATCH_ALL:
+		case TPAT_Constraint_Tp::MATCH_ALL:
 			multShoot_targetMatchAll(it, con, row0);
 			break;
-		case tpat_constraint::MATCH_CUST:
+		case TPAT_Constraint_Tp::MATCH_CUST:
 			multShoot_targetMatchCust(it, con, row0);
 			break;
-		case tpat_constraint::MAX_DIST:
-		case tpat_constraint::MIN_DIST:
-		case tpat_constraint::DIST:
+		case TPAT_Constraint_Tp::MAX_DIST:
+		case TPAT_Constraint_Tp::MIN_DIST:
+		case TPAT_Constraint_Tp::DIST:
 			multShoot_targetDist(it, con, c);
 			break;
-		case tpat_constraint::DELTA_V:
-		case tpat_constraint::MAX_DELTA_V:
+		case TPAT_Constraint_Tp::DELTA_V:
+		case TPAT_Constraint_Tp::MAX_DELTA_V:
 			multShoot_targetDeltaV(it, con, c);
 			break;
-		case tpat_constraint::TOF:
+		case TPAT_Constraint_Tp::TOF:
 			multShoot_targetTOF(it, con, row0);
 			break;
-		case tpat_constraint::APSE:
+		case TPAT_Constraint_Tp::APSE:
 			multShoot_targetApse(it, con, row0);
 			break;	
 		default: break;
@@ -383,10 +435,9 @@ void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint co
  *	@brief Compute position and velocity constraint values and partial derivatives
  *
  *	This function computes and stores the default position continuity constraints as well
- *	as velocity constraints for all nodes marked continuous in velocity. The delta-Vs
- *	between arc segments and node states are recorded, and the partial derivatives of each
- *	node with respect to other nodes and integration time are all computed
- *	and placed in the appropriate spots in the Jacobian matrix.
+ *	as velocity constraints for all nodes marked continuous in velocity. The partial 
+ *	derivatives of each node with respect to other nodes and integration time are all 
+ *	computed and placed in the appropriate spots in the Jacobian matrix.
  *
  *	Derived models may replace this function.
  *
@@ -394,54 +445,150 @@ void tpat_model::multShoot_applyConstraint(iterationData *it, tpat_constraint co
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint con, int row0) const{
-	int n = con.getNode();
-	if(n == 0)
-		throw tpat_exception("tpat_model::multShoot_targetPosVelCons: Cannot constraint node 0 to be continuous with node -1");
-
-	// Get info about the arc that was integrated to reach node n
-	std::vector<double> lastState = it->allSegs.at(n-1).getState(-1);
-	std::vector<double> lastAccel = it->allSegs.at(n-1).getAccel(-1);
-	MatrixXRd stm = it->allSegs.at(n-1).getSTM(-1);
+void TPAT_Model::multShoot_targetCont_PosVel(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
+	int segID = con.getID();	// get segment ID
 	std::vector<double> conData = con.getData();
-	
+
+	// Get index of segment
+	int segIx = it->nodeset->getSegIx(segID);
+	std::vector<double> lastState = it->propSegs[segIx].getStateByIx(-1);
+	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);
+
+	// Get index of origin node
+	MSVarMap_Obj state0_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID).getOrigin());
+	MSVarMap_Obj statef_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID).getTerminus());
+	// int origIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getOrigin());
+	// int termIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getTerminus());
+
 	// Loop through conData
 	for(size_t s = 0; s < conData.size(); s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-			it->FX[row0+s] = lastState[s]*scale - it->X[6*n+s];
+			it->FX[row0+s] = lastState[s]*scale - it->X[statef_var.row0+s];
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
 			for(size_t x = 0; x < 6; x++){
 				// put STM elements into DF matrix
 				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-				it->DF[it->totalFree*(row0+s) + 6*(n-1)+x] = stm(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+s) + state0_var.row0 + x] = stm(s,x)*scale/scale2;
 				// Negative identity matrix
 				if(s == x)
-					it->DF[it->totalFree*(row0+s) + 6*n+x] = -1;
+					it->DF[it->totalFree*(row0+s) + statef_var.row0+x] = -1;
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
 			if(it->varTime){
-				
+				std::vector<double> lastAccel = it->propSegs[segIx].getAccelByIx(-1);
+
 				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
 				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 
+				MSVarMap_Obj tofVar = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+					it->equalArcTime ? TPAT_Linkable::INVALID_ID : segID);
 				// If equal arc time is enabled, all time derivatives are in one column
-				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n-1;
+				// int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
 				
 				// Column of state derivatives: [vel; accel]
 				if(s < 3)
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
 				else{					
-					it->DF[it->totalFree*(row0+s) + timeCol] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
 				}
 			}
 		}
 	}
-}//=========================================================
+}//====================================================
+
+/**
+ *  @brief Compute segment position and velocity constraint values and partial derivatives.
+ *  
+ *  This function computes and stores the position and velocity continuity constraints for
+ *  segment-to-segment links. The partial derivatives of this constraint with respect to
+ *  the origin node states and times-of-flight on each segment are computed and stored
+ *  in the DF matrix. 
+ *
+ *	Derived models may extend or replace this function.
+ *
+ *	@param it a pointer to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
+ *	
+ *	@throws TPAT_Exception if the constraint data is not properly formatted
+ */
+void TPAT_Model::multShoot_targetCont_PosVel_Seg(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
+	int segID1 = con.getID();
+	int ix = 0;
+	int segID2 = (int)(con.getFirstDataValue(&ix));
+	if(ix < 0)
+		throw TPAT_Exception("TPAT_Model::multShoot_targetCont_PosVel_Seg: No segment ID was located in the cosntraint data vector");
+
+	std::vector<double> conData = con.getData();
+
+	// Get segment index
+	int segIx1 = it->nodeset->getSegIx(segID1);
+	int segIx2 = it->nodeset->getSegIx(segID2);
+
+	MSVarMap_Obj state01_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID1).getOrigin());
+	MSVarMap_Obj state02_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID2).getOrigin());
+
+	// int origIx1 = it->nodeset->getNodeIx(it->nodeset->getSeg(segID1).getOrigin());
+	// int origIx2 = it->nodeset->getNodeIx(it->nodeset->getSeg(segID2).getOrigin());
+
+	std::vector<double> state1 = it->propSegs[segIx1].getStateByIx(-1);
+	std::vector<double> state2 = it->propSegs[segIx2].getStateByIx(-1);
+	MatrixXRd stm1 = it->propSegs[segIx1].getSTMByIx(-1);
+	MatrixXRd stm2 = it->propSegs[segIx2].getSTMByIx(-1);
+
+	std::vector<double> lastAccel1, lastAccel2;
+	MSVarMap_Obj tof1_var(MSVarType::TOF), tof2_var(MSVarType::TOF);
+	double timeCoeff = 1;
+	if(it->varTime){
+		lastAccel1 = it->propSegs[segIx1].getAccelByIx(-1);
+		lastAccel2 = it->propSegs[segIx2].getAccelByIx(-1);
+
+		tof1_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+			it->equalArcTime ? TPAT_Linkable::INVALID_ID : segID1);
+		tof2_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+			it->equalArcTime ? TPAT_Linkable::INVALID_ID : segID2);
+
+		// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
+		timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+	}
+
+	// Loop through conData
+	int count = 0;
+	for(size_t s = 0; s < conData.size(); s++){
+		if(!std::isnan(conData[s])){
+			// This state is constrained to be continuous; compute error
+			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+			it->FX[row0+count] = (state1[s]- state2[s])*scale;
+
+			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
+			for(size_t x = 0; x < 6; x++){
+				// putu STM elements into DF matrix
+				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+				it->DF[it->totalFree*(row0+count) + state01_var.row0+x] = stm1(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+count) + state02_var.row0+x] = -stm2(s,x)*scale/scale2;
+			}
+
+			// Compute partials of F w.r.t. times-of-flight
+			if(it->varTime){
+				// Column of state derivatives: [vel; accel]
+				if(s < 3){
+					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*state1[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*state2[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+				}else{
+					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*lastAccel1[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*lastAccel2[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+				}
+			}
+
+			count++;
+		}
+	}
+}//====================================================
 
 /**
  *	@brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
@@ -453,7 +600,7 @@ void tpat_model::multShoot_targetPosVelCons(iterationData* it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint con, int row0) const{
+void TPAT_Model::multShoot_targetCont_Ex(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
 	// Do absoluately nothing
 	(void)it;
 	(void)con;
@@ -461,7 +608,23 @@ void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint c
 }//======================================================
 
 /**
- *	@brief Compute partials and constraint functions for nodes constrained with <tt>STATE</tt>.
+ *	@brief Computes continuity constraints for constraints with the <tt>TPAT_Constraint_Tp::SEG_CONT_EX</tt> type.
+ *
+ *	In this base model, no behavior is defined for extra constraints. It is intended to enforce
+ *	continuity constraints like epoch (time) continuity, mass continuity, etc.
+ *
+ *	@param it a pointer to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
+ */
+void TPAT_Model::multShoot_targetCont_Ex_Seg(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
+	// Do absoluately nothing
+	(void)it;
+	(void)con;
+	(void)row0;
+}//======================================================
+/**
+ *	@brief Compute partials and constraint functions for nodes constrained with <tt>TPAT_Constraint_Tp::STATE</tt>.
  *
  *	This method *should* provide full state constraining for any model; the STM and identity 
  *	matrices are used to relate node states and integrated states.
@@ -470,29 +633,30 @@ void tpat_model::multShoot_targetExContCons(iterationData *it, tpat_constraint c
  *	@param con the constraint being applied
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, int row0) const{
+void TPAT_Model::multShoot_targetState(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
-	// Allow user to constrain all 6 states
-	
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
+
+	// Allow user to constrain 6 states	
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(int s = 0; s < ((int)con.getData().size()); s++){
-		if(!isnan(conData[s])){
+		if(!std::isnan(conData[s])){
 			if(s < 6){
 				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 				
-				it->FX[row0+count] = it->X[6*n+s] - conData[s]*scale;
-				it->DF[it->totalFree*(row0 + count) + 6*n + s] = 1;
+				it->FX[row0+count] = it->X[state_var.row0+s] - conData[s]*scale;
+				it->DF[it->totalFree*(row0 + count) + state_var.row0 + s] = 1;
 				count++;
 			}else{
-				throw tpat_exception("State constraints must have <= 6 elements");
+				printErr("TPAT_Model::multShoot_targetState: State constraint has more than 6 elements...\n");
 			}
 		}
-	}
+	}	
 }//=================================================
 
 /**
- *	@brief Compute partials and constraint functions for nodes constrained with <tt>MATCH_ALL</tt>
+ *	@brief Compute partials and constraint functions for nodes constrained with <tt>TPAT_Constraint_Tp::MATCH_ALL</tt>
  *
  *	This method *should* provide full functionality for any model; only 1's and 0's are applied
  *	to the Jacobian matrix.
@@ -500,26 +664,34 @@ void tpat_model::multShoot_targetState(iterationData* it, tpat_constraint con, i
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
+ *	
+ *	@throws TPAT_Exception if the constraint data vector is not properly formatted
  */
-void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con, int row0) const{
+void TPAT_Model::multShoot_targetMatchAll(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
+	if(con.getData().size() < 1)
+		throw TPAT_Exception("TPAT_Model::multShoot_targetMatchAll: No segment ID was located in the cosntraint data vector");
+
 	// Only allow matching 6 states, not TOF (state 7)
-	int n = con.getNode();
-	int cn = con.getData()[0];
+	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVarType::STATE, con.getData()[0]);
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
+	// int otherNodeIx = it->nodeset->getNodeIx(con.getData()[0]);
+	
 	for(int row = 0; row < 6; row++){
 		// Constrain the states of THIS node to be equal to the node 
 		// with index stored in conData[0]
-		it->FX[row0+row] = it->X[6*n+row] - it->X[6*cn+row];
+		it->FX[row0+row] = it->X[state1_var.row0+row] - it->X[state2_var.row0+row];
 
 		// Partial of this constraint wrt THIS node = I
-		it->DF[it->totalFree*(row0 + row) + 6*n + row] = 1;
+		it->DF[it->totalFree*(row0 + row) + state1_var.row0 + row] = 1;
 
 		// Partial of this constraint wrt other node = -I
-		it->DF[it->totalFree*(row0 + row) + 6*cn+row] = -1;
+		it->DF[it->totalFree*(row0 + row) + state2_var.row0 + row] = -1;
 	}
 }//=============================================
 
 /**
- *	@brief Compute partials and constraint functions for nodes constrained with <tt>MATCH_CUST</tt>
+ *	@brief Compute partials and constraint functions for nodes constrained with <tt>TPAT_Constraint_Tp::MATCH_CUST</tt>
  *
  *	This method *should* provide full functionality for any model; Only 1's and 0's are applied
  *	to the Jacobian matrix.
@@ -528,21 +700,28 @@ void tpat_model::multShoot_targetMatchAll(iterationData* it, tpat_constraint con
  *	@param con a copy of the constraint object
  *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint con, int row0) const{
+void TPAT_Model::multShoot_targetMatchCust(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
+	int ix = 0;
+	int ID2 = (int)(con.getFirstDataValue(&ix));
+	if(ix < 0)
+		throw TPAT_Exception("TPAT_Model::multShoot_targetMatchCust: No segment ID was located in the cosntraint data vector");
+
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVarType::STATE, ID2);
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
+	// int otherNodeIx = it->nodeset->getNodeIx(conData[0]);
 	int count = 0;
 	
 	for(int s = 0; s < 6; s++){
-		if(!isnan(conData[s])){
-			int cn = conData[0];
-			it->FX[row0 + count] = it->X[6*n+s] - it->X[6*cn+s];
+		if(!std::isnan(conData[s])){
+			it->FX[row0 + count] = it->X[state1_var.row0+s] - it->X[state2_var.row0+s];
 
 			// partial of this constraint wrt THIS node = 1
-			it->DF[it->totalFree*(row0 + count) + 6*n+s] = 1;
+			it->DF[it->totalFree*(row0 + count) + state1_var.row0+s] = 1;
 
 			// partial of this constraint wrt other node = -1
-			it->DF[it->totalFree*(row0 + count) + 6*cn+s] = -1;
+			it->DF[it->totalFree*(row0 + count) + state2_var.row0+s] = -1;
 
 			count++;
 		}
@@ -550,21 +729,22 @@ void tpat_model::multShoot_targetMatchCust(iterationData* it, tpat_constraint co
 }//===============================================
 
 /**
- *	@brief Compute partials and constraint functions for nodes constrained with <tt>DIST</tt>, 
- *	<tt>MIN_DIST</tt>, or <tt>MAX_DIST</tt>
+ *	@brief Compute partials and constraint functions for nodes constrained with <tt>TPAT_Constraint_Tp::DIST</tt>, 
+ *	<tt>TPAT_Constraint_Tp::MIN_DIST</tt>, or <tt>TPAT_Constraint_Tp::MAX_DIST</tt>
  *
- *	This method *should* provide full functionality for any model; It calls the getPrimPos() 
+ *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
  *	functions, which all models define and uses dynamic-independent computations to populate
- *	the constraint vector and Jacobian matrix.
+ *	the constraint vector and Jacobian matrix. Nonautonomous models will need to include time
+ *	dependencies.
  *
  *	@param it a pointer to the class containing all the data relevant to the corrections process
  *	@param con a copy of the constraint object
  *	@param c the index of this constraint in the constraint vector object
  */
-void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, int c) const{
-
+void TPAT_Model::multShoot_targetDist(TPAT_MultShoot_Data* it, TPAT_Constraint con, int c) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = (int)(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
@@ -573,9 +753,9 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*n+0] - primPos[Pix*3+0]*it->freeVarScale[0];
-	double dy = it->X[6*n+1] - primPos[Pix*3+1]*it->freeVarScale[0];
-	double dz = it->X[6*n+2] - primPos[Pix*3+2]*it->freeVarScale[0];
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0]*it->freeVarScale[0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1]*it->freeVarScale[0];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2]*it->freeVarScale[0];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
@@ -583,20 +763,20 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
 	it->FX[row0] = h - conData[1]*it->freeVarScale[0];
 
 	// Partials with respect to node position states
-	it->DF[it->totalFree*row0 + 6*n + 0] = dx/h;
-	it->DF[it->totalFree*row0 + 6*n + 1] = dy/h;
-	it->DF[it->totalFree*row0 + 6*n + 2] = dz/h;
+	it->DF[it->totalFree*row0 + state_var.row0 + 0] = dx/h;
+	it->DF[it->totalFree*row0 + state_var.row0 + 1] = dy/h;
+	it->DF[it->totalFree*row0 + state_var.row0 + 2] = dz/h;
 
 	// Extra stuff for inequality constraints
-	if(con.getType() == tpat_constraint::MIN_DIST || 
-		con.getType() == tpat_constraint::MAX_DIST ){
+	if(con.getType() == TPAT_Constraint_Tp::MIN_DIST || 
+		con.getType() == TPAT_Constraint_Tp::MAX_DIST ){
 		// figure out which of the slack variables correspond to this constraint
 		std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
 			it->slackAssignCon.end(), c);
 
 		// which column of the DF matrix the slack variable is in
 		int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
-		int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
+		int sign = con.getType() == TPAT_Constraint_Tp::MAX_DIST ? 1 : -1;
 
 		// Subtract squared slack variable from constraint
 		it->FX[row0] += sign*it->X[slackCol]*it->X[slackCol];
@@ -617,9 +797,10 @@ void tpat_model::multShoot_targetDist(iterationData* it, tpat_constraint con, in
  *  @param con the constraint the slack variable applies to
  *  @return the value of the slack variable
  */
-double tpat_model::multShoot_targetDist_compSlackVar(const iterationData* it, tpat_constraint con) const{
+double TPAT_Model::multShoot_targetDist_compSlackVar(const TPAT_MultShoot_Data* it, TPAT_Constraint con) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = (int)(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
@@ -627,12 +808,12 @@ double tpat_model::multShoot_targetDist_compSlackVar(const iterationData* it, tp
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[6*n+0] - primPos[Pix*3+0]*it->freeVarScale[0];
-	double dy = it->X[6*n+1] - primPos[Pix*3+1]*it->freeVarScale[0];
-	double dz = it->X[6*n+2] - primPos[Pix*3+2]*it->freeVarScale[0];
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0]*it->freeVarScale[0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1]*it->freeVarScale[0];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2]*it->freeVarScale[0];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
-	int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
+	int sign = con.getType() == TPAT_Constraint_Tp::MAX_DIST ? 1 : -1;
     double diff = conData[1]*it->freeVarScale[0] - h;
 
     /*  If diff and sign have the same sign (+/-), then the constraint
@@ -646,7 +827,7 @@ double tpat_model::multShoot_targetDist_compSlackVar(const iterationData* it, tp
 }//==========================================================
 
 /**
- *	@brief Compute partials and constraints for all nodes constrained with <tt>DELTA_V</tt> or
+ *	@brief Compute partials and constraints for all nodes constrained with <tt>TPAT_Constraint_Tp::DELTA_V</tt> or
  *	<tt>MIN_DELTA_V</tt>
  *
  *	Because the delta-V constraint applies to the entire trajectory, the constraint function values
@@ -661,7 +842,7 @@ double tpat_model::multShoot_targetDist_compSlackVar(const iterationData* it, tp
  *	@param con the constraint being applied
  *	@param c the index of the first row for this constraint
  */
-void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, int c) const{
+void TPAT_Model::multShoot_targetDeltaV(TPAT_MultShoot_Data* it, TPAT_Constraint con, int c) const{
 
 	int row0 = it->conRows[c];
 
@@ -670,12 +851,12 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 
 	// Compute total deltaV magnitude
 	double totalDV = 0;
-	for(int n = 0; n < it->numNodes-1; n++){
-		// compute magnitude of DV between node n and n+1
+	for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+		// compute magnitude of DV between segment s and its terminal point
 		// This takes the form v_n,f - v_n+1,0
-		double dvx = it->deltaVs[n*3] * it->freeVarScale[1];
-		double dvy = it->deltaVs[n*3+1]*it->freeVarScale[1];
-		double dvz = it->deltaVs[n*3+2]*it->freeVarScale[1];
+		double dvx = it->deltaVs[s*3] * it->freeVarScale[1];
+		double dvy = it->deltaVs[s*3+1]*it->freeVarScale[1];
+		double dvz = it->deltaVs[s*3+2]*it->freeVarScale[1];
 		double dvMag = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
 
 		// If dvMag is zero, don't bother computing partials; they're all equal to zero but the
@@ -683,30 +864,36 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 		if(dvMag > 0){
 			totalDV += dvMag;
 
-			// Compute parial w.r.t. node n+1 (where velocity is discontinuous)
+			// Compute parial w.r.t. terminus node (where velocity is discontinuous)
 			double dFdq_n2_data[] = {0, 0, 0, -dvx/dvMag, -dvy/dvMag, -dvz/dvMag};
 			Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
 			// Get info about the final state/accel of the integrated segment
-			MatrixXRd stm = it->allSegs[n].getSTM(-1);
 
-			// Partial w.r.t. integrated path (newSeg) from node n
+			MatrixXRd stm = it->propSegs[s].getSTMByIx(-1);
+
+			// Partial w.r.t. integrated path (newSeg) from origin node
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
 			
 			// Adjust scaling of STM after multiplication (easier here)
 			dFdq_nf.segment(0, 3) *= it->freeVarScale[1]/it->freeVarScale[0];
 
+			MSVarMap_Obj state0_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSegByIx(s).getOrigin());
+			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSegByIx(s).getTerminus());
+			// int origIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getOrigin());
+			// int termIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getTerminus());
+
 			for(int i = 0; i < 6; i++){
-				it->DF[it->totalFree*row0 + 6*(n+1) + i] += dFdq_n2(0, i)/dvMax*it->freeVarScale[1];	// Not sure why this scaling factor belongs here...
-				it->DF[it->totalFree*row0 + 6*n + i] += dFdq_nf(0, i)/dvMax;
+				it->DF[it->totalFree*row0 + statef_var.row0 + i] += dFdq_n2(0, i)/dvMax*it->freeVarScale[1];	// Not sure why this scaling factor belongs here...
+				it->DF[it->totalFree*row0 + state0_var.row0 + i] += dFdq_nf(0, i)/dvMax;
 			}
 
-			// Compute partial w.r.t. integration time n
+			// Compute partial w.r.t. segment time-of-flight
 			if(it->varTime){
-				// Derivative of the final state of arc n
+				// Derivative of the final state of segment s
 				std::vector<double> state_dot_data;
-				std::vector<double> lastState = it->allSegs[n].getState(-1);
-				std::vector<double> lastAccel = it->allSegs[n].getAccel(-1);
+				std::vector<double> lastState = it->propSegs[s].getStateByIx(-1);
+				std::vector<double> lastAccel = it->propSegs[s].getAccelByIx(-1);
 				state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
 				state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
@@ -716,10 +903,12 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[2];
 
 				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-				int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+n;
+				MSVarMap_Obj tof_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+					it->equalArcTime ? TPAT_Linkable::INVALID_ID : it->nodeset->getSegByIx(s).getID());
+				// int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+s;
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
-				it->DF[it->totalFree*row0 + timeCol] = timeCoeff*dFdt_n(0)/dvMax;
+				it->DF[it->totalFree*row0 + tof_var.row0] = timeCoeff*dFdt_n(0)/dvMax;
 			}
 		}
 	}
@@ -727,7 +916,7 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 	// Copute the difference between the actual deltaV and the desired deltaV
 	it->FX[row0] = con.getData()[0] == 0 ? totalDV : totalDV/dvMax - 1;
 
-	if(con.getType() == tpat_constraint::MAX_DELTA_V){
+	if(con.getType() == TPAT_Constraint_Tp::MAX_DELTA_V){
 		// figure out which of the slack variables correspond to this constraint
 		std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(),
 			it->slackAssignCon.end(), c);
@@ -735,14 +924,23 @@ void tpat_model::multShoot_targetDeltaV(iterationData* it, tpat_constraint con, 
 		// which column of the DF matrix the slack variable is in
 		int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
 		
-		// printf("MAX_DELTA_V Constraint Details:\n");
+		// printf("TPAT_Constraint_Tp::MAX_DELTA_V Constraint Details:\n");
 		// printf("Total DV")
 		it->FX[row0] += it->X[slackCol]*it->X[slackCol];
 		it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
 	}
 }//==============================================
 
-double tpat_model::multShoot_targetDeltaV_compSlackVar(const iterationData *it, tpat_constraint con) const{
+/**
+ *  @brief Compute the slack variable value for a delta-V constraint
+ *  @details This function currently returns a hard-coded value of 1e-2
+ * 
+ *  @param it a pointer to the class containing all the data relevant to the corrections process
+ *	@param con the constraint being applied
+ * 
+ *  @return Ideal value of the slack variable
+ */
+double TPAT_Model::multShoot_targetDeltaV_compSlackVar(const TPAT_MultShoot_Data *it, TPAT_Constraint con) const{
 	// double totalDV = 0;
 	// for(int n = 0; n < it->numNodes-1; n++){
 	// 	// compute squared magnitude of DV between node n and n+1
@@ -763,42 +961,55 @@ double tpat_model::multShoot_targetDeltaV_compSlackVar(const iterationData *it, 
 	// If F < 0, the constraint is satisfied, so choose a slack variable
 	// that sets F = 0; else choose a small slack variable value
 	// return F < 0 ? sqrt(std::abs(F)) : 1e-4;
-}//=============================================
+}//====================================================
 
 /**
  *	@brief Compute partials and constraint function values for time-of-flight constraints
  *
  *	This method *should* provide full functionality for any model; only 1's and 0's are
  *	used to relate TOFs.
+ *	
+ *	@param it a pointer to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
+ *	
+ *	@throws TPAT_Exception if variable time is set to OFF
  */
-void tpat_model::multShoot_targetTOF(iterationData *it, tpat_constraint con, int row0) const{
+void TPAT_Model::multShoot_targetTOF(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
 	if(! it->varTime)
-		throw tpat_exception("tpat_model::multShoot_targetTOF: Cannot target TOF when variable time is off!");
+		throw TPAT_Exception("TPAT_Model::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
 	if(it->equalArcTime){
-		it->FX[row0] = it->X[6*it->numNodes];
-		it->DF[it->totalFree*row0 + 6*it->numNodes] = 1;
+		MSVarMap_Obj tof_var = it->getVarMap_obj(MSVarType::TOF_TOTAL, TPAT_Linkable::INVALID_ID);
+		it->FX[row0] = it->X[tof_var.row0];
+		it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 	}else{
 		// Sum all TOF for total, set partials w.r.t. integration times equal to one
-		for(int i = 0; i < it->numNodes-1; i++){
-			it->FX[row0] += it->X[6*it->numNodes+i];
-			it->DF[it->totalFree*row0 + 6*it->numNodes+i] = 1;
+		for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVarType::TOF, it->nodeset->getSegByIx(s).getID());
+			it->FX[row0] += it->X[tof_var.row0];
+			it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 		}
 	}
 	
 	// subtract the desired TOF from the constraint to finish its computation
 	it->FX[row0] -= con.getData()[0]*it->freeVarScale[2];
-}//===============================================
+}//====================================================
 
 /**
  *	@brief Compute partials and constraint function values for apse constraints
  *
  *	This method *should* provide full functionality for any autonomous model. Non-
  *	autonomous models will need to modify the function to account for epoch time
+ *	
+ *	@param it a pointer to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  */
-void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, int row0) const{
+void TPAT_Model::multShoot_targetApse(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int n = con.getNode();
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = (int)(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	
@@ -809,24 +1020,24 @@ void tpat_model::multShoot_targetApse(iterationData *it, tpat_constraint con, in
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
-	double dx = it->X[6*n+0]/sr - primPos[Pix*3+0];
-	double dy = it->X[6*n+1]/sr - primPos[Pix*3+1];
-	double dz = it->X[6*n+2]/sr - primPos[Pix*3+2];
-	double vx = it->X[6*n+3]/sv;
-	double vy = it->X[6*n+4]/sv;
-	double vz = it->X[6*n+5]/sv;
+	double dx = it->X[state_var.row0+0]/sr - primPos[Pix*3+0];
+	double dy = it->X[state_var.row0+1]/sr - primPos[Pix*3+1];
+	double dz = it->X[state_var.row0+2]/sr - primPos[Pix*3+2];
+	double vx = it->X[state_var.row0+3]/sv;
+	double vy = it->X[state_var.row0+4]/sv;
+	double vz = it->X[state_var.row0+5]/sv;
 
 	// Constraint function: r_dot = 0 (using non-scaled coordinates)
 	it->FX[row0] = dx*vx + dy*vy + dz*vz;
 
 	// Partials of F w.r.t. node state
-	it->DF[it->totalFree*row0 + 6*n+0] = vx/sr;
-	it->DF[it->totalFree*row0 + 6*n+1] = vy/sr;
-	it->DF[it->totalFree*row0 + 6*n+2] = vz/sr;
-	it->DF[it->totalFree*row0 + 6*n+3] = dx/sv;
-	it->DF[it->totalFree*row0 + 6*n+4] = dy/sv;
-	it->DF[it->totalFree*row0 + 6*n+5] = dz/sv;
-}//===============================================
+	it->DF[it->totalFree*row0 + state_var.row0+0] = vx/sr;
+	it->DF[it->totalFree*row0 + state_var.row0+1] = vy/sr;
+	it->DF[it->totalFree*row0 + state_var.row0+2] = vz/sr;
+	it->DF[it->totalFree*row0 + state_var.row0+3] = dx/sv;
+	it->DF[it->totalFree*row0 + state_var.row0+4] = dy/sv;
+	it->DF[it->totalFree*row0 + state_var.row0+5] = dz/sv;
+}//====================================================
 
 
 

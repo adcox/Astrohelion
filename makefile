@@ -15,16 +15,24 @@
 # Macros for compiling
 ############################################################
 
-# Paths for files
+# My headers
 INC := include
+# System headers; these are included to not throw warnings
+INC_SYS  := include_extern
+# Source files
 SRC := src
+# Destination directory for compiled objects; use one for optimized, second for debug versions
 OBJ := obj
+# OBJ := obj_debug
+# Directory for compiled binaries
 BIN := bin
+# Location of library dependencies
 LIB := lib
 
 # Compiler specification and flags
-CXX := clang++ -std=c++11
-#CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
+# CXX := clang++ -std=c++11
+CXX := g++-5 -std=c++11 -fopenmp
+# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
 CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
@@ -104,17 +112,17 @@ libtpat.a: $(OBJECTS)
 	ar rcs $(LIB)/$@ $^
 
 libtpat.so: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
 libtpat.dylib: $(OBJECTS)
-	$(COMP) -I $(INC) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
-	$(COMP) -I $(INC) -c $< -o $@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) -c $< -o $@
 
 ############################################################
 ## UTILITY

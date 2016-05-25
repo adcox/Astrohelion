@@ -21,38 +21,72 @@
 #ifndef H_TPAT_NODE
 #define H_TPAT_NODE
 
-#include "tpat_arc_step.hpp"
+#include "tpat_linkable.hpp"
+
+#include "tpat_constraint.hpp"
+
+#include <cmath>
+#include <vector>
+// Forward Declarations
+
 
 /**
- *	@brief Derived from tpat_arc_step with specific calls for nodes
+ *	@brief A brief description
  *
- *	Values Stored in ExtraParam:
- *	* 0 	- 	Node time-of-flight
- *	* 1 	- 	Epoch (BCR4BP)
+ *	@author Andrew Cox
+ *	@version 
+ *	@copyright GNU GPL v3.0
  */
-class tpat_node : public tpat_arc_step{
+class TPAT_Node : public TPAT_Linkable{
+
 public:
 	// *structors
-	tpat_node();
-	tpat_node(const double*, double);
-	tpat_node(std::vector<double>, double);
-	tpat_node(const tpat_node&);
-	tpat_node(const tpat_arc_step&);
-	
-	// Set and Get Functions
-	double getTOF() const;
-	std::vector<bool> getVelCon() const;
+	TPAT_Node();
+	TPAT_Node(const double[6], double);
+	TPAT_Node(std::vector<double>, double);
+	TPAT_Node(const double[6], const double[3], double);
+	TPAT_Node(std::vector<double>, std::vector<double>, double);
+	TPAT_Node(const TPAT_Node&);
+	// ~TPAT_Node();
 
-	void setTOF(double);
-	void setVel_AllCon();
-	void setVel_AllDiscon();
-	void setVelCon(bool[3]);
-	void setVelCon(std::vector<bool>);
-	void setVelCon(bool, bool, bool);
+	// Operators
+	TPAT_Node& operator =(const TPAT_Node&);
+	friend bool operator ==(const TPAT_Node&, const TPAT_Node&);
+	friend bool operator !=(const TPAT_Node&, const TPAT_Node&);
 
-private:
-	void initArrays();
-	
+	// Set and Get functions
+	void addConstraint(TPAT_Constraint);
+	void clearConstraints();
+	std::vector<double> getAccel() const;
+	std::vector<TPAT_Constraint> getConstraints() const;
+	double getEpoch() const;
+	double getExtraParam(int) const;
+	std::vector<double> getExtraParams() const;
+	int getNumCons() const;
+	std::vector<double> getState() const;
+	void removeConstraint(int);
+	void setAccel(const double*);
+	void setAccel(std::vector<double>);
+	void setConstraints(std::vector<TPAT_Constraint>);
+	void setConstraintID(int);
+	void setEpoch(double);
+	void setExtraParam(int, double);
+	void setExtraParams(std::vector<double>);
+	void setState(const double*);
+	void setState(std::vector<double>);
+
+protected:
+	virtual void copyMe(const TPAT_Node&);
+
+	double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
+	double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
+	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
+
+	/** Stores extra parameters like mass, costates, etc. */
+	std::vector<double> extraParam {};
+
+	/** Stores constraints on this node (especially usefull in nodesets) */
+	std::vector<TPAT_Constraint> cons {};
 };
 
 #endif

@@ -25,10 +25,10 @@ int main(){
 	int int32Test = -5;
 	int int64Test = -7;
 
-	uint uint8Test = 2;
-	uint uint16Test = 4;
-	uint uint32Test = 6;
-	uint uint64Test = 8;
+	unsigned int uint8Test = 2;
+	unsigned int uint16Test = 4;
+	unsigned int uint32Test = 6;
+	unsigned int uint64Test = 8;
 
 	double doubleTest = PI;
 
@@ -96,16 +96,16 @@ int main(){
 		printf("\nUnsigned Integers:\n");
 
 		val = readDoubleFromMat(matReadFile, "UInt8Test");
-		cout << "UInt 8 Test: " << (uint8Test == (uint)val ? PASS : FAIL) << endl;
+		cout << "UInt 8 Test: " << (uint8Test == (unsigned int)val ? PASS : FAIL) << endl;
 
 		val = readDoubleFromMat(matReadFile, "UInt16Test");
-		cout << "UInt 16 Test: " << (uint16Test == (uint)val ? PASS : FAIL) << endl;
+		cout << "UInt 16 Test: " << (uint16Test == (unsigned int)val ? PASS : FAIL) << endl;
 
 		val = readDoubleFromMat(matReadFile, "UInt32Test");
-		cout << "UInt 32 Test: " << (uint32Test == (uint)val ? PASS : FAIL) << endl;
+		cout << "UInt 32 Test: " << (uint32Test == (unsigned int)val ? PASS : FAIL) << endl;
 
 		val = readDoubleFromMat(matReadFile, "UInt64Test");
-		cout << "UInt 64 Test: " << (uint64Test == (uint)val ? PASS : FAIL) << endl;
+		cout << "UInt 64 Test: " << (uint64Test == (unsigned int)val ? PASS : FAIL) << endl;
 
 		printf("\nHigher Precision Numbers:\n");
 

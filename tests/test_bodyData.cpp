@@ -10,7 +10,7 @@
 using namespace std;
 
 int main(){
-	tpat_body_data B("earth");
+	TPAT_Body_Data B("earth");
 
 	cout << "Body: " << B.getName() << "\n";
 	cout << "  Mass: " << B.getMass() << " kg\n";

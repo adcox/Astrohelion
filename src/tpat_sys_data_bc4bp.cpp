@@ -1,6 +1,6 @@
 /**
- *	@file tpat_sys_data_bcr4bpr.cpp
- *	@brief Derivative of tpat_sys_data, specific to BCR4BPR
+ *	@file tpat_sys_data_bc4bp.cpp
+ *	@brief Derivative of TPAT_Sys_Data, specific to BCR4BPR
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 
@@ -22,7 +22,7 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
  
 #include "tpat_body_data.hpp"
 #include "tpat_constants.hpp"
@@ -34,14 +34,14 @@
 #include <exception>
 
 // Static variable initialization
-double tpat_sys_data_bcr4bpr::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
+double TPAT_Sys_Data_BC4BP::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
 
 /**
  *	@brief Default constructor
  */
-tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr() : tpat_sys_data(){
+TPAT_Sys_Data_BC4BP::TPAT_Sys_Data_BC4BP() : TPAT_Sys_Data(){
 	numPrimaries = 3;
-	type = tpat_sys_data::BCR4BPR_SYS;
+	type = TPAT_System_Tp::BCR4BPR_SYS;
 	otherParams.assign(8,0);
 }//========================================
 
@@ -51,9 +51,9 @@ tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr() : tpat_sys_data(){
  *	@param P2 the name of the medium primary; P2 must orbit P1
  *	@param P3 the name of the smallest primary; P3 must orbit P2
  */
-tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(std::string P1, std::string P2, std::string P3){
+TPAT_Sys_Data_BC4BP::TPAT_Sys_Data_BC4BP(std::string P1, std::string P2, std::string P3){
 	numPrimaries = 3;
-	type = tpat_sys_data::BCR4BPR_SYS;
+	type = TPAT_System_Tp::BCR4BPR_SYS;
 	otherParams.assign(8,0);
 
 	initFromPrimNames(P1, P2, P3);
@@ -63,16 +63,17 @@ tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(std::string P1, std::string P2, std
  *  @brief Load the system data object from a Matlab data file
  * 
  *  @param filepath path to the data file
+ *  @throws TPAT_Exception if the data file cannot be loaded
  */
-tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const char *filepath){
+TPAT_Sys_Data_BC4BP::TPAT_Sys_Data_BC4BP(const char *filepath){
 	numPrimaries = 3;
-	type = tpat_sys_data::BCR4BPR_SYS;
+	type = TPAT_System_Tp::BCR4BPR_SYS;
 	otherParams.assign(8,0);
 
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
-		throw tpat_exception("tpat_sys_data_bcr4bpr: Could not open data file");
+		throw TPAT_Exception("TPAT_Sys_Data_BC4BP: Could not open data file");
 	}
 	readFromMat(matfp);
 	Mat_Close(matfp);
@@ -83,11 +84,13 @@ tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const char *filepath){
  *	@param P1 name of the largest primary in the entire system
  *	@param P2 name of the larger primary in the secondary system
  *	@param P3 name of the smaller primary int he secondary system
+ *	@throws TPAT_Exception if the system architecture is incorrect, i.e.
+ *	P1 must be the parent of P2 and P2 must be the parent of P3
  */
-void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, std::string P3){
-	tpat_body_data p1Data(P1);
-	tpat_body_data p2Data(P2);
-	tpat_body_data p3Data(P3);
+void TPAT_Sys_Data_BC4BP::initFromPrimNames(std::string P1, std::string P2, std::string P3){
+	TPAT_Body_Data p1Data(P1);
+	TPAT_Body_Data p2Data(P2);
+	TPAT_Body_Data p3Data(P3);
 
 	primaries.clear();
 	primaries.push_back(p1Data.getName());
@@ -124,7 +127,7 @@ void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, st
 		otherParams[6] = gamma;
 		otherParams[7] = REF_EPOCH;
 	}else{
-		throw tpat_exception("P1 must be the parent of P2 and P2 must be the parent of P3");
+		throw TPAT_Exception("P1 must be the parent of P2 and P2 must be the parent of P3");
 	}
 }//===================================================
 
@@ -132,15 +135,15 @@ void tpat_sys_data_bcr4bpr::initFromPrimNames(std::string P1, std::string P2, st
  *	@brief Copy constructor
  *	@param d
  */
-tpat_sys_data_bcr4bpr::tpat_sys_data_bcr4bpr(const tpat_sys_data_bcr4bpr &d) : tpat_sys_data(d){}
+TPAT_Sys_Data_BC4BP::TPAT_Sys_Data_BC4BP(const TPAT_Sys_Data_BC4BP &d) : TPAT_Sys_Data(d){}
 
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a BCR4BPR system data object
  *	@return this system data object
  */
-tpat_sys_data_bcr4bpr& tpat_sys_data_bcr4bpr::operator= (const tpat_sys_data_bcr4bpr &d){
-	tpat_sys_data::operator= (d);
+TPAT_Sys_Data_BC4BP& TPAT_Sys_Data_BC4BP::operator= (const TPAT_Sys_Data_BC4BP &d){
+	TPAT_Sys_Data::operator= (d);
 	return *this;
 }//=====================================
 
@@ -148,32 +151,29 @@ tpat_sys_data_bcr4bpr& tpat_sys_data_bcr4bpr::operator= (const tpat_sys_data_bcr
  *	@brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
-const tpat_model* tpat_sys_data_bcr4bpr::getModel() const { return &model; }
+const TPAT_Model* TPAT_Sys_Data_BC4BP::getModel() const { return &model; }
 
 /**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */
-double tpat_sys_data_bcr4bpr::getMu() const { return otherParams.at(0); }
+double TPAT_Sys_Data_BC4BP::getMu() const { return otherParams.at(0); }
 
 /**
  *	@return the non-dimensional mass ratio for P3
  */
-double tpat_sys_data_bcr4bpr::getNu() const { return otherParams.at(1); }
+double TPAT_Sys_Data_BC4BP::getNu() const { return otherParams.at(1); }
 
 /**
  *	@return the ratio between P3's orbital radius and P2's orbital radius, non-dimensional units
  */
-double tpat_sys_data_bcr4bpr::getCharLRatio() const { return otherParams.at(3); }
+double TPAT_Sys_Data_BC4BP::getCharLRatio() const { return otherParams.at(3); }
 
 /**
  *	@return the scaling constant for this system
  */
-double tpat_sys_data_bcr4bpr::getK() const {
-	if(otherParams.size() != 7)
-		printf("");
-
+double TPAT_Sys_Data_BC4BP::getK() const {
 	return otherParams.at(2);
-}
+}//====================================================
 
 /**
  *  @brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)
@@ -182,24 +182,24 @@ double tpat_sys_data_bcr4bpr::getK() const {
  *  epoch T0, which is returned by this function.
  *  @return the epoch associated with T = 0 (seconds, J2000, UTC)
  */
-double tpat_sys_data_bcr4bpr::getEpoch0() const { return otherParams.at(7); }
+double TPAT_Sys_Data_BC4BP::getEpoch0() const { return otherParams.at(7); }
 
 /**
  *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
  *	angle in radians
  */
-double tpat_sys_data_bcr4bpr::getTheta0() const { return otherParams.at(4); }
+double TPAT_Sys_Data_BC4BP::getTheta0() const { return otherParams.at(4); }
 
 /**
  *	@return the angle between the P2/P3 line (projected onto inertial XY plane) and the 
  *	x-axis at time t = 0, angle in radians
  */
-double tpat_sys_data_bcr4bpr::getPhi0() const { return otherParams.at(5); }
+double TPAT_Sys_Data_BC4BP::getPhi0() const { return otherParams.at(5); }
 
 /**
  *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane, radians.
  */
-double tpat_sys_data_bcr4bpr::getGamma() const { return otherParams.at(6); }
+double TPAT_Sys_Data_BC4BP::getGamma() const { return otherParams.at(6); }
 
 /**
  *  @brief Set the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
@@ -209,40 +209,40 @@ double tpat_sys_data_bcr4bpr::getGamma() const { return otherParams.at(6); }
  * 
  *  @param T the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
  */
-void tpat_sys_data_bcr4bpr::setEpoch0(double T){ otherParams.at(7) = T; }
+void TPAT_Sys_Data_BC4BP::setEpoch0(double T){ otherParams.at(7) = T; }
 
 /**
  *	@brief Set the angle theta0
  *	@param t angle in radians
  */
-void tpat_sys_data_bcr4bpr::setTheta0(double t){ otherParams.at(4) = t; }
+void TPAT_Sys_Data_BC4BP::setTheta0(double t){ otherParams.at(4) = t; }
 
 /**
  *	@brief Set the angle phi0
  *	@param t angle in radians
  */
-void tpat_sys_data_bcr4bpr::setPhi0(double t){ otherParams.at(5) = t; }
+void TPAT_Sys_Data_BC4BP::setPhi0(double t){ otherParams.at(5) = t; }
 
 /**
  *	@brief Set the angle gamma
  *	@param t angle in radians
  */
-void tpat_sys_data_bcr4bpr::setGamma(double t){ otherParams.at(6) = t; }
+void TPAT_Sys_Data_BC4BP::setGamma(double t){ otherParams.at(6) = t; }
 
 /**
  *  @brief Save the system data to a matlab file
  * 
  *  @param filepath path to the data file
  */
-void tpat_sys_data_bcr4bpr::saveToMat(const char *filepath) const{
-	tpat_sys_data::saveToMat(filepath);
+void TPAT_Sys_Data_BC4BP::saveToMat(const char *filepath) const{
+	TPAT_Sys_Data::saveToMat(filepath);
 }//==================================================
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
  */
-void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile) const{
+void TPAT_Sys_Data_BC4BP::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
@@ -302,13 +302,13 @@ void tpat_sys_data_bcr4bpr::saveToMat(mat_t *matFile) const{
  *	@brief Load system data from a mat file
  *	@param matFile a pointer to the mat file in question
  */
-void tpat_sys_data_bcr4bpr::readFromMat(mat_t *matFile){
+void TPAT_Sys_Data_BC4BP::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P3 = readStringFromMat(matFile, "P3", MAT_T_UINT8, MAT_C_CHAR);
 	
 	numPrimaries = 3;
-	type = tpat_sys_data::BCR4BPR_SYS;
+	type = TPAT_System_Tp::BCR4BPR_SYS;
 	otherParams.assign(8,0);
 	initFromPrimNames(P1, P2, P3);
 

@@ -23,29 +23,22 @@
 
 #include <exception>
 #include <stdexcept>
+#include <string>
 
 /**
  *	@brief Base Exception class for all my exceptions
  *
  *	By catching this base class, I catch all custom exceptions
  */
-class tpat_exception : public std::exception{
+class TPAT_Exception : public std::exception{
 	public:
-		/** @brief Default constructor */
-		tpat_exception() : msg("Custom exception!") {}
-		
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_exception(const char* m) : msg(m) {}
+		TPAT_Exception();
+		TPAT_Exception(const char*);
+		TPAT_Exception(const TPAT_Exception&);
+		virtual const char* what() const throw();
 
-		/** @brief describe the exception */
-		virtual const char* what() const throw(){
-			return msg;
-		}
 	protected:
-		const char *msg;	//!< Custom error message
+		std::string msg;	//!< Custom error message
 };
 
 /**
@@ -55,21 +48,11 @@ class tpat_exception : public std::exception{
  * 	Size mismatch means two matrices cannot be added, subtracted, or multiplied 
  *  because they do not have the appropriate dimensions
  */
-class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
+class TPAT_SizeMismatch : public TPAT_Exception, std::runtime_error{
 	public:
-		/** @brief Default constructor */
-		tpat_sizeMismatch() : tpat_exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
-		
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_sizeMismatch(const char* m) : tpat_exception(m), std::runtime_error(m) {}
-		
-		/** @brief describe the exception */
-		const char* what() const throw(){
-	    	return msg;
-	  	}
+		TPAT_SizeMismatch();
+		TPAT_SizeMismatch(const char*);
+		const char* what() const throw();
 };
 
 /**
@@ -79,21 +62,11 @@ class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
  *	This exception should be thrown when the solution fails to converge (or diverges)
  *	and provides a way for the calling function to gracefully handle the divergence
  */
-class tpat_diverge : public tpat_exception, std::runtime_error{
+class TPAT_Diverge : public TPAT_Exception, std::runtime_error{
 	public:
-		/** Default constructor */
-		tpat_diverge() : tpat_exception("Did not converge!"), std::runtime_error("Did not converge!"){}
-
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_diverge(const char* m) : tpat_exception(m), std::runtime_error(m) {}
-		
-		/** @brief describe the exception */
-		const char* what() const throw(){
-			return msg;
-		}
+		TPAT_Diverge();
+		TPAT_Diverge(const char*);
+		const char* what() const throw();
 };
 
 /** 
@@ -102,21 +75,11 @@ class tpat_diverge : public tpat_exception, std::runtime_error{
  *	This exception should be thrown for cases like trying to factor singular
  *	matrices, taking the deteriminant of a non-square matrix, etc.
  */
-class tpat_linalg_err : public tpat_exception, std::runtime_error{
+class TPAT_LinAlg_Err : public TPAT_Exception, std::runtime_error{
 	public:
-		/** Default constructor */
-		tpat_linalg_err() : tpat_exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
-
-		/**
-		 *	@brief Create an exception with a custom message
-		 *	@param m a message
-		 */
-		tpat_linalg_err(const char* m) : tpat_exception(m), std::runtime_error(m) {}
-		
-		/** @brief describe the exception */
-		const char* what() const throw(){
-			return msg;
-		}
+		TPAT_LinAlg_Err();
+		TPAT_LinAlg_Err(const char*);
+		const char* what() const throw();
 };
 
 #endif

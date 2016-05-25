@@ -23,30 +23,35 @@
 #include "tpat_model.hpp"
 
 /**
- *	@brief Derivative of tpat_model, specific to the CR3BP-LTVP
+ *	@brief Derivative of TPAT_Model, specific to the CR3BP-LTVP
  *
  *	Under construction. Simulation is fully supported in this model,
  *	but the corrections process will fall back to the base model 
  *	behavior, which may produce unexpected results.
  */
-class tpat_model_cr3bp_ltvp : public tpat_model{
+class TPAT_Model_CR3BP_LTVP : public TPAT_Model{
 public:
-	tpat_model_cr3bp_ltvp();
-	tpat_model_cr3bp_ltvp(const tpat_model_cr3bp_ltvp&);
-	~tpat_model_cr3bp_ltvp() {}
+	TPAT_Model_CR3BP_LTVP();
+	TPAT_Model_CR3BP_LTVP(const TPAT_Model_CR3BP_LTVP&);
+	~TPAT_Model_CR3BP_LTVP() {}
 	
-	tpat_model_cr3bp_ltvp& operator=(const tpat_model_cr3bp_ltvp&);
+	TPAT_Model_CR3BP_LTVP& operator=(const TPAT_Model_CR3BP_LTVP&);
 
 	// Core Functions
-	tpat_model::eom_fcn getFullEOM_fcn() const;
-	tpat_model::eom_fcn getSimpleEOM_fcn() const;
-	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
-	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
-	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
-	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
+	TPAT_Model::eom_fcn getFullEOM_fcn() const;
+	TPAT_Model::eom_fcn getSimpleEOM_fcn() const;
+	std::vector<double> getPrimPos(double, const TPAT_Sys_Data*) const;
+	std::vector<double> getPrimVel(double, const TPAT_Sys_Data*) const;
+	void sim_saveIntegratedData(const double*, double, TPAT_Traj*) const;
+	bool sim_locateEvent(TPAT_Event, TPAT_Traj*, const double*, double, double, TPAT_Verbosity_Tp) const;
 
-	// Corrector Functions
-	tpat_nodeset* multShoot_createOutput(const iterationData*, const tpat_nodeset*, bool) const;
+	// Static Calculation Functions
+	static int fullEOMs(double, const double[], double[], void*);
+	static int simpleEOMs(double, const double[], double[], void*);
+
+	// Multiple Shooting Functions
+	void multShoot_createOutput(const TPAT_MultShoot_Data*, const TPAT_Nodeset*, bool, TPAT_Nodeset*) const;
+	void multShoot_initIterData(TPAT_MultShoot_Data *it) const;
 };
 
 #endif

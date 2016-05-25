@@ -17,7 +17,7 @@ int main(int argc, char *argv[]){
 	}
 
 	char settingsFilepath[256];
-	sprintf(settingsFilepath, "%s%s", pw->pw_dir, "/.config/tpat");
+	sprintf(settingsFilepath, "%s%s", pw->pw_dir, "/.config/TPAT");
 
 	// Check to see if the directory exists; if it doesn't, create it.
 	fs::path p(settingsFilepath);

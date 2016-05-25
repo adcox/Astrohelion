@@ -34,13 +34,13 @@
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_body_data : public tpat{
+class TPAT_Body_Data : public TPAT{
 	public:
 
 		// Constructors
-		tpat_body_data();	// Copy constructor is defined by compiler, should be fine
-		tpat_body_data(std::string);
-		tpat_body_data(double m, double R, double r, double mu, std::string name, std::string parent);
+		TPAT_Body_Data();	// Copy constructor is defined by compiler, should be fine
+		TPAT_Body_Data(std::string);
+		TPAT_Body_Data(double m, double R, double r, double mu, std::string name, std::string parent);
 
 		// Set and Get Functions
 		double getRadius();

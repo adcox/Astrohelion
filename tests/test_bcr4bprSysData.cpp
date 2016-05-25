@@ -2,7 +2,7 @@
  *	Test the System Data structure
  */
 
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
 #include "tpat_ascii_output.hpp"
 #include <iostream>
 #include <cstdio>
@@ -14,7 +14,7 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 int main(void){
 
-	tpat_sys_data_bcr4bpr semData("sun", "earth", "moon");
+	TPAT_Sys_Data_BC4BP semData("sun", "earth", "moon");
 
 	cout << "Data for system:" << endl;
 	cout << "  Type: " << semData.getTypeStr() << endl;
@@ -31,7 +31,7 @@ int main(void){
 
 	printf("Testing Save/Load functionality...\n");
 	semData.saveToMat("semData.mat");
-	tpat_sys_data_bcr4bpr loadedData("semData.mat");
+	TPAT_Sys_Data_BC4BP loadedData("semData.mat");
 
 	cout << "Same CharL: " << (semData.getCharL() == loadedData.getCharL() ? PASS : FAIL) << endl;
 	cout << "Same CharT: " << (semData.getCharT() == loadedData.getCharT() ? PASS : FAIL) << endl;

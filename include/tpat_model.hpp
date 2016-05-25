@@ -30,12 +30,12 @@
 #include <vector>
 
 // Forward Declarations
-class tpat_constraint;
-class tpat_event;
-class tpat_nodeset;
-class tpat_traj;
-class tpat_sys_data;
-struct iterationData;
+class TPAT_Constraint;
+class TPAT_Event;
+class TPAT_Nodeset;
+class TPAT_Traj;
+class TPAT_Sys_Data;
+class TPAT_MultShoot_Data;
 
 /**
  *  @brief Container for EOM parameters
@@ -48,8 +48,13 @@ struct iterationData;
  *  @return a reference to this struct
  */
 struct eomParamStruct{
-	eomParamStruct(const tpat_sys_data *sys) : sysData(sys) {}
-	const tpat_sys_data *sysData;
+	/**
+	 *  @brief Construct an EOM Parameter structure
+	 * 
+	 *  @param sys a pointer to a system data object
+	 */
+	eomParamStruct(const TPAT_Sys_Data *sys) : sysData(sys) {}
+	const TPAT_Sys_Data *sysData;	//!< Pointer to a system data object that will be passed into the EOMs
 };
 
 /**
@@ -61,7 +66,7 @@ struct eomParamStruct{
  *	and, as such, only provides a framework and some common methods for other derived
  *	methods.
  *
- *	The tpat_simulation_engine and tpat_correction_engine make heavy use of dynamic 
+ *	The TPAT_Sim_Engine and TPAT_Correction_Engine make heavy use of dynamic 
  *	models to generalize their code. This allows the developer to easily implement
  *	new dynamic models for use in the simulator and corrector without making major
  *	modifications to their code.
@@ -85,7 +90,7 @@ struct eomParamStruct{
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_model : public tpat{
+class TPAT_Model : public TPAT{
 
 public:
 	/**
@@ -107,12 +112,12 @@ public:
 	typedef int (*eom_fcn)(double, const double[], double[], void*);
 
 	// *structors
-	tpat_model(tpat_dynamicsModel_tp);
-	tpat_model(const tpat_model&);
-	virtual ~tpat_model();
+	TPAT_Model(tpat_dynamicsModel_tp);
+	TPAT_Model(const TPAT_Model&);
+	virtual ~TPAT_Model();
 
 	// Operators
-	tpat_model& operator =(const tpat_model&);
+	TPAT_Model& operator =(const TPAT_Model&);
 
 	/**
 	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
@@ -140,7 +145,7 @@ public:
 	 *	@return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
-	virtual std::vector<double> getPrimPos(double t, const tpat_sys_data *sysData) const = 0;
+	virtual std::vector<double> getPrimPos(double t, const TPAT_Sys_Data *sysData) const = 0;
 
 	/**
 	 *	@brief Compute the velocities of all primaries
@@ -150,16 +155,22 @@ public:
 	 *	@return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
-	virtual std::vector<double> getPrimVel(double t, const tpat_sys_data *sysData) const = 0;
+	virtual std::vector<double> getPrimVel(double t, const TPAT_Sys_Data *sysData) const = 0;
 
-	virtual double getRDot(int, double, const double*, const tpat_sys_data*) const;
+	virtual double getRDot(int, double, const double*, const TPAT_Sys_Data*) const;
 
-	virtual void multShoot_initDesignVec(iterationData*, const tpat_nodeset*) const;
-	virtual void multShoot_scaleDesignVec(iterationData*, const tpat_nodeset*) const;
-	virtual void multShoot_createContCons(iterationData*, const tpat_nodeset*) const;
-	virtual void multShoot_getSimICs(const iterationData*, const tpat_nodeset*, int, double*, double*, double*) const;
-	virtual void multShoot_applyConstraint(iterationData*, tpat_constraint, int) const;
-	virtual double multShoot_getSlackVarVal(const iterationData*, tpat_constraint)const ;
+	/**
+	 *  @brief Do any model-specific initializations for the TPAT_MultShoot_Data object
+	 *  @param it a pointer to the TPAT_MultShoot_Data object for the multiple shooting process
+	 */
+	virtual void multShoot_initIterData(TPAT_MultShoot_Data *it) const = 0;
+
+	virtual void multShoot_initDesignVec(TPAT_MultShoot_Data*, const TPAT_Nodeset*) const;
+	virtual void multShoot_scaleDesignVec(TPAT_MultShoot_Data*, const TPAT_Nodeset*) const;
+	virtual void multShoot_createContCons(TPAT_MultShoot_Data*, const TPAT_Nodeset*) const;
+	virtual void multShoot_getSimICs(const TPAT_MultShoot_Data*, const TPAT_Nodeset*, int, double*, double*, double*) const;
+	virtual void multShoot_applyConstraint(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual double multShoot_getSlackVarVal(const TPAT_MultShoot_Data*, TPAT_Constraint)const ;
 
 	/**
 	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -174,10 +185,11 @@ public:
 	 *  @param it an iteration data object containing all info from the corrections process
 	 *	@param nodes_in a pointer to the original, uncorrected nodeset
 	 *	@param findEvent whether or not this correction process is locating an event
-	 *
+	 *	@param nodesOut pointer to a nodeset object that will contain the results of
+	 *	the shooting process
 	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual tpat_nodeset* multShoot_createOutput(const iterationData* it, const tpat_nodeset *nodes_in, bool findEvent) const = 0;
+	virtual void multShoot_createOutput(const TPAT_MultShoot_Data* it, const TPAT_Nodeset *nodes_in, bool findEvent, TPAT_Nodeset *nodesOut) const = 0;
 
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing
@@ -196,8 +208,8 @@ public:
 	 *  @return wether or not the event has been located. If it has, a new point
 	 *  has been appended to the trajectory's data vectors.
 	 */
-	virtual bool sim_locateEvent(tpat_event event, tpat_traj *traj,
-    	const double *ic, double t0, double tof, tpat_verbosity_tp verbose) const = 0;
+	virtual bool sim_locateEvent(TPAT_Event event, TPAT_Traj *traj,
+    	const double *ic, double t0, double tof, TPAT_Verbosity_Tp verbose) const = 0;
 
 	/**
 	 *	@brief Takes an input state and time and saves the data to the trajectory
@@ -206,14 +218,14 @@ public:
 	 *	@param t the time at the current integration state
 	 *	@param traj a pointer to the trajectory we should store the data in
 	 */
-	virtual void sim_saveIntegratedData(const double *y, double t, tpat_traj* traj) const = 0;
+	virtual void sim_saveIntegratedData(const double *y, double t, TPAT_Traj* traj) const = 0;
 
 	// Set and Get Functions
 	int getCoreStateSize() const;
 	int getSTMStateSize() const;
 	int getExtraStateSize() const;
-	bool supportsCon(tpat_constraint::tpat_constraint_tp) const;
-	bool supportsEvent(tpat_event::tpat_event_tp) const;
+	bool supportsCon(TPAT_Constraint_Tp) const;
+	bool supportsEvent(TPAT_Event_Tp) const;
 	
 protected:
 	tpat_dynamicsModel_tp modelType = MODEL_NULL;	//!< Describes the model type
@@ -222,29 +234,32 @@ protected:
 	int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 
 	/** A vector containing the all the types of constraints this model supports */
-	std::vector<tpat_constraint::tpat_constraint_tp> allowedCons {tpat_constraint::NONE, tpat_constraint::STATE,
-		tpat_constraint::MATCH_ALL, tpat_constraint::MATCH_CUST,
-		tpat_constraint::DIST, tpat_constraint::MIN_DIST, tpat_constraint::MAX_DIST,
-		tpat_constraint::MAX_DELTA_V, tpat_constraint::DELTA_V,
-		tpat_constraint::TOF, tpat_constraint::APSE,
-		tpat_constraint::CONT_PV, tpat_constraint::CONT_EX};
+	std::vector<TPAT_Constraint_Tp> allowedCons {TPAT_Constraint_Tp::NONE, TPAT_Constraint_Tp::STATE,
+		TPAT_Constraint_Tp::MATCH_ALL, TPAT_Constraint_Tp::MATCH_CUST,
+		TPAT_Constraint_Tp::DIST, TPAT_Constraint_Tp::MIN_DIST, TPAT_Constraint_Tp::MAX_DIST,
+		TPAT_Constraint_Tp::MAX_DELTA_V, TPAT_Constraint_Tp::DELTA_V,
+		TPAT_Constraint_Tp::TOF, TPAT_Constraint_Tp::APSE,
+		TPAT_Constraint_Tp::CONT_PV, TPAT_Constraint_Tp::CONT_EX,
+		TPAT_Constraint_Tp::SEG_CONT_PV, TPAT_Constraint_Tp::SEG_CONT_EX};
 
 	/** A vector containing all the types of events this model supports */
-	std::vector<tpat_event::tpat_event_tp> allowedEvents {tpat_event::NONE, tpat_event::XY_PLANE, tpat_event::XZ_PLANE,
-		tpat_event::YZ_PLANE, tpat_event::CRASH, tpat_event::APSE, tpat_event::DIST};
+	std::vector<TPAT_Event_Tp> allowedEvents {TPAT_Event_Tp::NONE, TPAT_Event_Tp::XY_PLANE, TPAT_Event_Tp::XZ_PLANE,
+		TPAT_Event_Tp::YZ_PLANE, TPAT_Event_Tp::CRASH, TPAT_Event_Tp::APSE, TPAT_Event_Tp::DIST};
 
-	void copyMe(const tpat_model&);
-	virtual void multShoot_targetApse(iterationData*, tpat_constraint, int) const;
-	virtual void multShoot_targetDeltaV(iterationData*, tpat_constraint, int) const;
-	virtual double multShoot_targetDeltaV_compSlackVar(const iterationData*, tpat_constraint) const;
-	virtual void multShoot_targetDist(iterationData*, tpat_constraint, int) const;
-	virtual double multShoot_targetDist_compSlackVar(const iterationData*, tpat_constraint) const;
-	virtual void multShoot_targetExContCons(iterationData*, tpat_constraint, int) const;
-	virtual void multShoot_targetMatchAll(iterationData*, tpat_constraint, int) const;
-	virtual void multShoot_targetMatchCust(iterationData*, tpat_constraint, int) const;
-	virtual void multShoot_targetPosVelCons(iterationData*, tpat_constraint, int) const;
-	virtual void multShoot_targetState(iterationData*, tpat_constraint, int) const;
-	virtual void multShoot_targetTOF(iterationData*, tpat_constraint, int) const;
+	void copyMe(const TPAT_Model&);
+	virtual void multShoot_targetApse(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetDeltaV(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual double multShoot_targetDeltaV_compSlackVar(const TPAT_MultShoot_Data*, TPAT_Constraint) const;
+	virtual void multShoot_targetDist(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual double multShoot_targetDist_compSlackVar(const TPAT_MultShoot_Data*, TPAT_Constraint) const;
+	virtual void multShoot_targetCont_Ex(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetCont_Ex_Seg(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetMatchAll(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetMatchCust(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetCont_PosVel(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetCont_PosVel_Seg(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetState(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	virtual void multShoot_targetTOF(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
 };
 
 #endif

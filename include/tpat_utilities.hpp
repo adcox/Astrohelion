@@ -46,11 +46,11 @@
 /**
  *	@brief Class containing useful utility-type functions
  *
- *	This class is not an "object", per se, but it stores static template functions
- *	that are useful for other tasks and allows the developer to specify the scope 
- * 	(public/private) of the methods if necessary
+ *	This class stores useful static functions and template functions. This functionality
+ *	is similar to tpat_calculations, but this class does not include functions related to
+ *	the complex mathematics involved in trajectory design.
  */
-class tpat_util{
+class TPAT_Util{
 private:
 	/**
 	 *	@brief Worker function to compute permutations via recursion
@@ -322,7 +322,7 @@ void printWarn(const char*, ...);
 void printVerb(bool, const char*, ...);
 void printColor(const char*, const char*, ...);
 void printVerbColor(bool, const char*, const char*, ...);
-int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
+//int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 double readDoubleFromMat(mat_t*, const char*);
 MatrixXRd readMatrixFromMat(const char*, const char*);
 std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);

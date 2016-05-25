@@ -6,7 +6,7 @@
 
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_simulation_engine.hpp"
+#include "tpat_sim_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 
@@ -17,17 +17,18 @@ int main(){
 	double tof = 0.137;	// enough time to complete ~1 rev
 
 	// Generate a set of nodes around the arc
-	tpat_sys_data_cr3bp sys("earth", "moon");
-	tpat_nodeset_cr3bp scienceOrbitNodes(IC, &sys, tof, 10);
+	TPAT_Sys_Data_CR3BP sys("earth", "moon");
+	TPAT_Nodeset_CR3BP scienceOrbitNodes(IC, &sys, tof, 10);
 
-	tpat_simulation_engine sim(&sys);
-	std::vector<tpat_traj_cr3bp> allArcs;
+	TPAT_Sim_Engine sim;
+	std::vector<TPAT_Traj_CR3BP> allArcs;
 	for(int n = 0; n < scienceOrbitNodes.getNumNodes(); n++){
 		printf("Simulating Arc #%03d\n", n);
-		std::vector<double> nodeIC = scienceOrbitNodes.getNode(n).getPosVelState();
+		std::vector<double> nodeIC = scienceOrbitNodes.getNodeByIx(n).getState();
 		double tof = 4;
-		sim.runSim(nodeIC, tof);
-		allArcs.push_back(sim.getCR3BP_Traj());
+		TPAT_Traj_CR3BP traj(&sys);
+		sim.runSim(nodeIC, tof, &traj);
+		allArcs.push_back(traj);
 	}
 
 	return EXIT_SUCCESS;

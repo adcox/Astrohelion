@@ -36,25 +36,21 @@
 /**
  *	@brief Create a new system data object and initialize all values to zero.
  */
-tpat_sys_data::tpat_sys_data(){}
+TPAT_Sys_Data::TPAT_Sys_Data(){}
 
 /**
  *	@brief Copy constructor
  *
  *	@param d a system data object
  */
-tpat_sys_data::tpat_sys_data(const tpat_sys_data& d){
+TPAT_Sys_Data::TPAT_Sys_Data(const TPAT_Sys_Data& d){
 	copyData(d);
 }//============================================
 
 /**
  *	@brief Destructor
  */
-tpat_sys_data::~tpat_sys_data(){
-	primaries.clear();
-	primIDs.clear();
-	otherParams.clear();
-}//============================================
+TPAT_Sys_Data::~TPAT_Sys_Data(){}
 
 /**
  *	@brief Copy the system data object
@@ -62,7 +58,7 @@ tpat_sys_data::~tpat_sys_data(){
  *	@param d a system data object
  *	@return this data object, set to equal the input object
  */
-tpat_sys_data& tpat_sys_data::operator =(const tpat_sys_data &d){
+TPAT_Sys_Data& TPAT_Sys_Data::operator =(const TPAT_Sys_Data &d){
 	copyData(d);
 	return *this;
 }//==========================================
@@ -75,7 +71,7 @@ tpat_sys_data& tpat_sys_data::operator =(const tpat_sys_data &d){
  *	@param rhs
  *	@return whether or not they are the same
  */
-bool operator ==(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
+bool operator ==(const TPAT_Sys_Data &lhs, const TPAT_Sys_Data &rhs){
 	if(lhs.type != rhs.type)
 		return false;
 
@@ -98,7 +94,7 @@ bool operator ==(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
  *	@param rhs
  *	@return whether or not they are different
  */
-bool operator !=(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
+bool operator !=(const TPAT_Sys_Data &lhs, const TPAT_Sys_Data &rhs){
 	return ! operator==(lhs, rhs);
 }//===========================================
 
@@ -106,7 +102,7 @@ bool operator !=(const tpat_sys_data &lhs, const tpat_sys_data &rhs){
  *	@brief Copy this system data object
  *	@param d a system data reference
  */
-void tpat_sys_data::copyData(const tpat_sys_data &d){
+void TPAT_Sys_Data::copyData(const TPAT_Sys_Data &d){
 	charL = d.charL;
 	charT = d.charT;
 	charM = d.charM;
@@ -119,14 +115,14 @@ void tpat_sys_data::copyData(const tpat_sys_data &d){
 /**
  *	@return the number of primaries this system models
  */
-int tpat_sys_data::getNumPrimaries() const { return primaries.size(); }
+int TPAT_Sys_Data::getNumPrimaries() const { return primaries.size(); }
 
 /**
  *	@brief Retrieve the name of one of the system primaries
  *	@param n the "index" of the primary, starts at 0
  *	@return the name of the n'th primary
  */
-std::string tpat_sys_data::getPrimary(int n) const{ 
+std::string TPAT_Sys_Data::getPrimary(int n) const{ 
 	try{
 		return primaries.at(n);
 	}catch(std::out_of_range &err){
@@ -140,48 +136,52 @@ std::string tpat_sys_data::getPrimary(int n) const{
  *	@param n the index of the primary, starts at 0
  *	@return a unique numerical ID for this primary; useful for comparing systems
  */
-int tpat_sys_data::getPrimID(int n) const{ return primIDs.at(n); }
+int TPAT_Sys_Data::getPrimID(int n) const{ return primIDs.at(n); }
 
 /**
  *	@return the characteristic length (km) associated with this system
  */
-double tpat_sys_data::getCharL() const { return charL; }
+double TPAT_Sys_Data::getCharL() const { return charL; }
 
 /**
  *	@return the charactersitic mass (kg) associated with this system
  */
-double tpat_sys_data::getCharM() const { return charM; }
+double TPAT_Sys_Data::getCharM() const { return charM; }
 
 /**
  *	@return the characteristic time (s) associated with this system
  */
-double tpat_sys_data::getCharT() const { return charT; }
+double TPAT_Sys_Data::getCharT() const { return charT; }
 
 /**
  *	@return the tpat_system_tp type associated with this system
  */
-tpat_sys_data::tpat_system_tp tpat_sys_data::getType() const { return type; }
+TPAT_System_Tp TPAT_Sys_Data::getType() const { return type; }
 
 /**
  *	@return a string (human-readable) version of the system type
  */
-std::string tpat_sys_data::getTypeStr() const{
+std::string TPAT_Sys_Data::getTypeStr() const{
 	switch (type){
-		case tpat_sys_data::UNDEF_SYS:
+		case TPAT_System_Tp::UNDEF_SYS:
 			return "Undefined System Type";
-		case tpat_sys_data::CR3BP_SYS:
+		case TPAT_System_Tp::CR3BP_SYS:
 			return "CR3BP";
-		case tpat_sys_data::CR3BP_LTVP_SYS:
+		case TPAT_System_Tp::CR3BP_LTVP_SYS:
 			return "CR3BP, Low Thrust, Velocity-Pointing";
-		case tpat_sys_data::BCR4BPR_SYS:
+		case TPAT_System_Tp::BCR4BPR_SYS:
 			return "BCR4BP, Rotating Coord.";
 		default:
 			return "Unrecognized value... May be a bug";
 	}
 }//=================================================
 
-
-void tpat_sys_data::saveToMat(const char *filepath) const{
+/**
+ *  @brief Save the system data object to a file
+ * 
+ *  @param filepath relative or absolute path to the file
+ */
+void TPAT_Sys_Data::saveToMat(const char *filepath) const{
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 
 	 *	used containing the software, version, and date in it. If a header
@@ -193,7 +193,7 @@ void tpat_sys_data::saveToMat(const char *filepath) const{
 	 */
 	mat_t *matfp = Mat_CreateVer(filepath, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		printErr("tpat_family_cr3bp::saveToMat: Error creating MAT file\n");
+		printErr("TPAT_Fam_CR3BP::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things
 		saveToMat(matfp);

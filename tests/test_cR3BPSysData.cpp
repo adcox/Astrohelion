@@ -11,7 +11,7 @@ using namespace std;
 
 int main(void){
 
-	tpat_sys_data_cr3bp emData("earth", "moon");
+	TPAT_Sys_Data_CR3BP emData("earth", "moon");
 
 	cout << "Data for Sun-Earth System:" << endl;
 	cout << "  Type: " << emData.getTypeStr() << endl;
@@ -22,7 +22,7 @@ int main(void){
 	cout << "  charM: " << emData.getCharM() << " kg" << endl;
 	printf("  mu: %.5e\n", emData.getMu());
 
-	tpat_sys_data_cr3bp seData("sun", "earth");
+	TPAT_Sys_Data_CR3BP seData("sun", "earth");
 	cout << "Data for Sun-Earth System:" << endl;
 	cout << "  Type: " << seData.getTypeStr() << endl;
 	cout << "  P1: " << seData.getPrimary(0) << endl;

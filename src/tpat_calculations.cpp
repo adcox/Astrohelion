@@ -33,17 +33,17 @@
 #include "tpat_constants.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_exceptions.hpp"
+#include "tpat_multShoot_data.hpp"
 #include "tpat_node.hpp"
-#include "tpat_nodeset_bcr4bp.hpp"
+#include "tpat_nodeset_bc4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_simulation_engine.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sim_engine.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp_ltvp.hpp"
 #include "tpat_traj.hpp"
-#include "tpat_traj_bcr4bp.hpp"
+#include "tpat_traj_bc4bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
-#include "tpat_traj_step.hpp"
 #include "tpat_utilities.hpp"
 
 #include "cspice/SpiceUsr.h"
@@ -56,470 +56,6 @@
 #include <cstring>
 #include <string>
 #include <typeinfo>
-
-//-----------------------------------------------------
-//      Equations of Motion
-//-----------------------------------------------------
-
-/**
- *  @brief Integrate the equations of motion for the CR3BP
- *  @param t the current time of the integration; not used for this system
- *  @param s the 42-d state vector
- *  @param sdot the 42-d state derivative vector
- *  @param *params pointer to extra parameters required for integration. For this
- *  function, the pointer points to an eomParamStruct object
- */
-int cr3bp_EOMs(double t, const double s[], double sdot[], void *params){
-    (void)t;
-
-    // Extract mu from params
-    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_cr3bp *sysData = static_cast<const tpat_sys_data_cr3bp *>(paramStruct->sysData);
-    
-    double mu = sysData->getMu();
-
-    double x = s[0];    double y = s[1];    double z = s[2];
-    double xdot = s[3]; double ydot = s[4];
-
-    // compute distance to primaries
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
-
-    sdot[0] = s[3];
-    sdot[1] = s[4];
-    sdot[2] = s[5];
-
-    sdot[3] =   2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3);
-    sdot[4] =  -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3);
-    sdot[5] =  -(1-mu)*z/pow(d,3) - mu*z/pow(r,3); 
-
-    /*
-     * Next step, compute STM
-     */
-    
-    // Create A Matrix
-    double ddots[6];
-    cr3bp_getUDDots(mu, x, y, z, ddots);
-
-    double a_data[] = { 0, 0, 0, 1, 0, 0,
-                        0, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1,
-                        ddots[0], ddots[3], ddots[4], 0, 2, 0,
-                        ddots[3], ddots[1], ddots[5], -2, 0, 0,
-                        ddots[4], ddots[5], ddots[2], 0, 0, 0};
-    MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
-
-    // Copy the STM states into a sub-array
-    double stmElements[36];
-    std::copy(s+6, s+42, stmElements);
-
-    // Turn sub-array into matrix object for math stuffs
-    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
-    
-    
-    // Compute derivative of STM
-    MatrixXRd phiDot = A*phi;
-
-    // Copy the elements of phiDot into the derivative array
-    double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData+36, sdot+6);
-
-    return GSL_SUCCESS;
-}//===============================================================
-
-/**
- *  @brief Integrate the equations of motion for the CR3BP without the STM
- *  @param t time at integration step (unused)
- *  @param s the 6-d state vector
- *  @param sdot the 6-d state derivative vector
- *  @param params points to an eomParamStruct object
- */
-int cr3bp_simple_EOMs(double t, const double s[], double sdot[], void *params){
-    (void)t;
-    
-    // Extract mu from params
-    // tpat_sys_data_cr3bp *sysData = static_cast<tpat_sys_data_cr3bp *>(params);
-    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_cr3bp *sysData = static_cast<const tpat_sys_data_cr3bp *>(paramStruct->sysData);
-    double mu = sysData->getMu();
-
-    double x = s[0];    double y = s[1];    double z = s[2];
-    double xdot = s[3]; double ydot = s[4];
-
-    // compute distance to primaries
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
-
-    sdot[0] = s[3];
-    sdot[1] = s[4];
-    sdot[2] = s[5];
-
-    sdot[3] =   2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3);
-    sdot[4] =  -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3);
-    sdot[5] =  -(1-mu)*z/pow(d,3) - mu*z/pow(r,3);
-
-    return GSL_SUCCESS;
-}//=====================================================
-
-/**
- *  @brief Integrate the equations of motion for the CR3BP LTVP
- *  @param t the current time of the integration
- *  @param s the 43-d state vector. The first 6 elements are position and velocity,
- *  the 7th is mass, and the final 36 are STM elements
- *  @param sdot the 43-d state derivative vector
- *  @param *params pointer to extra parameters required for integration. For this
- *  function, the pointer points to an eomParamStruct object
- */
-int cr3bp_ltvp_EOMs(double t, const double s[], double sdot[], void *params){
-    // Extract mu from params
-    // tpat_sys_data_cr3bp_ltvp *sysData = static_cast<tpat_sys_data_cr3bp_ltvp *>(params);
-    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_cr3bp_ltvp *sysData = static_cast<const tpat_sys_data_cr3bp_ltvp *>(paramStruct->sysData);
-
-    double mu = sysData->getMu();
-    double T = sysData->getThrust();
-    double Isp = sysData->getIsp();
-    double charT = sysData->getCharT();
-    double charL = sysData->getCharL();
-
-    double x = s[0];    double y = s[1];    double z = s[2];
-    double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
-    
-    double g0_nonDim = (G_GRAV_0/charL)*charT*charT;
-    double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
-
-    // compute distance to primaries and velocity magnitude
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
-    double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);
-
-    sdot[0] = s[3];
-    sdot[1] = s[4];
-    sdot[2] = s[5];
-
-    sdot[3] = 2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3) - T/(m*v)*(xdot - y);
-    sdot[4] = -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3) - T/(m*v)*(ydot + x);
-    sdot[5] = -(1-mu)*z/pow(d,3) - mu*z/pow(r,3) - T/(m*v)*zdot; 
-
-    /*
-     * Next step, compute STM
-     */
-    
-    // Partials of x_ddot w.r.t. state variables
-    double dxdx = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((x + mu),2)/pow(d,5) + 
-        3*mu*pow((x + mu - 1), 2)/pow(r,5) + (T/m)*(xdot - y)*(ydot + x)/pow(v,3);
-    double dxdy = 3*(1-mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5) +
-        (T/m)*(v*v + (xdot - y)*(xdot - y))/pow(v,3);
-    double dxdz = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5);
-    double dxdxdot = -1*(T/m)*(v*v - (xdot - y)*(xdot - y))/pow(v,3);
-    double dxdydot = (T/m)*(xdot - y)*(ydot + x)/pow(v,3);
-    double dxdzdot = (T/m)*(xdot - y)*zdot/pow(v,3);
-
-    // Partials of y_ddot w.r.t. state variables
-    double dydx = 3*(1 - mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5) - 
-        (T/m)*(v*v - (ydot + x)*(ydot + x))/pow(v,3);
-    double dydy = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*y*y/pow(d,5) + 3*mu*y*y/pow(r,5) +
-        +(T/m)*(ydot + x)*(xdot - y)/pow(v,3);
-    double dydz = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5);
-    double dydxdot = -2 + (T/m)*(ydot + x)*(xdot - y)/pow(v,3);
-    double dydydot = -1*(T/m)*(v*v - (ydot + x)*(ydot + x))/pow(v,3);
-    double dydzdot = (T/m)*(ydot + x)*zdot/pow(v,3);
-
-    // Partials of z_ddot w.r.t. state variables
-    double dzdx = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5) + (T/m)*(ydot + x)*zdot/pow(v,3);
-    double dzdy = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5) - (T/m)*(xdot - y)*zdot/pow(v,3);
-    double dzdz = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*z*z/pow(d,5) + 3*mu*z*z/pow(r,5);
-    double dzdxdot = (T/m)*zdot*(xdot - y)/pow(v,3);
-    double dzdydot = (T/m)*zdot*(ydot + x)/pow(v,3);
-    double dzdzdot = -1*(T/m)*(v*v - zdot*zdot)/pow(v,3);
-
-    // Create A Matrix
-    double a_data[] = { 0,    0,    0,    1,       0,       0,
-                        0,    0,    0,    0,       1,       0,
-                        0,    0,    0,    0,       0,       1,
-                        dxdx, dxdy, dxdz, dxdxdot, dxdydot, dxdzdot,
-                        dydx, dydy, dydz, dydxdot, dydydot, dydzdot,
-                        dzdx, dzdy, dzdz, dzdxdot, dzdydot, dzdzdot};
-    MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
-
-    // Copy the STM states into a sub-array
-    double stmElements[36];
-    std::copy(s+6, s+42, stmElements);
-
-    // Turn sub-array into matrix object for math stuffs
-    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 6, 6);
-
-    // Compute derivative of STM
-    MatrixXRd phiDot(6,6);
-    phiDot.noalias() = A*phi;     // use noalias() to avoid creating an unnecessary temporary matrix in Eigen library
-
-    // Copy the elements of phiDot into the derivative array
-    double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData+36, sdot+6);
-
-    return GSL_SUCCESS;
-}//===============================================================
-
-/**
- *  @brief Integrate the equations of motion for the CR3BP LTVP without the STM
- *  @param t time at integration step (unused)
- *  @param s the 7-d state vector
- *  @param sdot the 7-d state derivative vector
- *  @param params points to an eomParamStruct object
- */
-int cr3bp_ltvp_simple_EOMs(double t, const double s[], double sdot[], void *params){
-    // tpat_sys_data_cr3bp_ltvp *sysData = static_cast<tpat_sys_data_cr3bp_ltvp *>(params);
-    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_cr3bp_ltvp *sysData = static_cast<const tpat_sys_data_cr3bp_ltvp *>(paramStruct->sysData);
-
-    double mu = sysData->getMu();
-    double T = sysData->getThrust();
-    double Isp = sysData->getIsp();
-    double charT = sysData->getCharT();
-    double charL = sysData->getCharL();
-
-    double x = s[0];    double y = s[1];    double z = s[2];
-    double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
-    
-    double g0_nonDim = G_GRAV_0/charL*charT*charT;
-    double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
-
-    // compute distance to primaries and velocity magnitude
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
-    double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);
-
-    sdot[0] = s[3];
-    sdot[1] = s[4];
-    sdot[2] = s[5];
-
-    sdot[3] = 2*ydot + x - (1-mu)*(x+mu)/pow(d,3) - mu*(x-1+mu)/pow(r,3) - T/(m*v)*(xdot - y);
-    sdot[4] = -2*xdot + y - (1-mu) * y/pow(d,3) - mu*y/pow(r,3) - T/(m*v)*(ydot + x);
-    sdot[5] = -(1-mu)*z/pow(d,3) - mu*z/pow(r,3) - T/(m*v)*zdot; 
-
-    return GSL_SUCCESS;
-}//=====================================================
-
-/**
- *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
- *
- *   @param t epoch at integration step
- *   @param s the 48-d state vector
- *   @param sdot the 48-d state derivative vector
- *   @param params points to an eomParamStruct object
- */
-int bcr4bpr_EOMs(double t, const double s[], double sdot[], void *params){
-    // Dereference the eom data object
-    // tpat_sys_data_bcr4bpr *sysData = static_cast<tpat_sys_data_bcr4bpr *>(params);
-    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
-
-    // Put the positions of the three primaries in a 3x3 matrix
-    double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, sysData, primPosData);
-    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
-
-    // Put the position states into a 3-element column vector
-    double r_data[3] = {0};
-    std::copy(s, s+3, r_data);
-    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
-
-    // Put velocity states into a 3-element column vector
-    double v_data[3] = {0};
-    std::copy(s+3, s+6, v_data);
-    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
-
-    // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1, r_p2, r_p3;
-    r_p1.noalias() = r - primPos.row(0).transpose();
-    r_p2.noalias() = r - primPos.row(1).transpose();
-    r_p3.noalias() = r - primPos.row(2).transpose();
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
-    
-    // Save constants to short variables for readability
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-
-    // Create C-matrix
-    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
-    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
-
-    // truncated position vector used in EOMs
-    double r_trunc_data[3] = {0};
-    std::copy(s, s+2, r_trunc_data);
-    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
-
-    // Compute acceleration using matrix math
-    Eigen::Vector3d accel;
-    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
-        nu*r_p3/pow(d3, 3);
-    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
-
-    // Compute psuedo-potential
-    double dxdx = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(0)*r_p1(0)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*r_p2(0)*r_p2(0)/pow(d2,5)) - nu*(1/pow(d3,3) -
-                3*r_p3(0)*r_p3(0)/pow(d3,5));
-    double dxdy = (1/k - mu)*3*r_p1(0)*r_p1(1)/pow(d1,5) +
-            (mu - nu)*3*r_p2(0)*r_p2(1)/pow(d2,5) +
-            nu*3*r_p3(0)*r_p3(1)/pow(d3,5);
-    double dxdz = (1/k - mu)*3*r_p1(0)*r_p1(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2(0)*r_p2(2)/pow(d2,5) +
-            nu*3*r_p3(0)*r_p3(2)/pow(d3,5);
-    double dydy = k*k - (1/k - mu)*(1/pow(d1,3) - 3*r_p1(1)*r_p1(1)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*r_p2(1)*r_p2(1)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*r_p3(1)*r_p3(1)/pow(d3,5));
-    double dydz = (1/k - mu)*3*r_p1(1)*r_p1(2)/pow(d1,5) +
-            (mu - nu)*3*r_p2(1)*r_p2(2)/pow(d2,5) +
-            nu*3*r_p3(1)*r_p3(2)/pow(d3,5);
-    double dzdz = -(1/k - mu)*(1/pow(d1,3) - 3*r_p1(2)*r_p1(2)/pow(d1,5)) -
-            (mu-nu)*(1/pow(d2,3) - 3*r_p2(2)*r_p2(2)/pow(d2,5)) - nu*(1/pow(d3,3) -
-            3*r_p3(2)*r_p3(2)/pow(d3,5));
-
-    // Create A matrix for STM derivative
-    double aData[] = {  0, 0, 0, 1, 0, 0,
-                        0, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1, 
-                        dxdx, dxdy, dxdz, c[0], c[1], c[2],
-                        dxdy, dydy, dydz, c[3], c[4], c[5],
-                        dxdz, dydz, dzdz, c[6], c[7], c[8]};
-    MatrixXRd A = Eigen::Map<MatrixXRd>(aData, 6, 6);
-
-    // Compute the STM derivative
-    double phiData[36];
-    std::copy(s+6, s+42, phiData);
-    MatrixXRd Phi = Eigen::Map<MatrixXRd>(phiData, 6, 6);
-
-    MatrixXRd PhiDot(6,6);
-    PhiDot.noalias() = A*Phi;
-
-    // Compute partials of state w.r.t. primary positions; dont' compute partials
-    // for P1 because its velocity is zero in the rotating frame
-    double dfdr2[18] = {0};   double dfdr3[18] = {0};
-
-    dfdr2[9] = -1/pow(d2,3) + 3*r_p2(0)*r_p2(0)/pow(d2,5);        //dxdx2
-    dfdr2[10] = 3*r_p2(0)*r_p2(1)/pow(d2,5);                  //dxdy2
-    dfdr2[11] = 3*r_p2(0)*r_p2(2)/pow(d2,5);                  //dxdz2
-    dfdr2[13] = -1/pow(d2,3) + 3*r_p2(1)*r_p2(1)/pow(d2,5);       //dydy2
-    dfdr2[14] = 3*r_p2(1)*r_p2(2)/pow(d2,5);                  //dydz2
-    dfdr2[17] = -1/pow(d2,3) + 3*r_p2(2)*r_p2(2)/pow(d2,5);       //dzdz2
-
-    dfdr2[12] = dfdr2[10];      // Fill in symmetric matrix
-    dfdr2[15] = dfdr2[11];
-    dfdr2[16] = dfdr2[14];
-
-    dfdr3[9] = -1/pow(d3,3) + 3*r_p3(0)*r_p3(0)/pow(d3,5);        //dxdx3
-    dfdr3[10] = 3*r_p3(0)*r_p3(1)/pow(d3,5);                  //dxdy3
-    dfdr3[11] = 3*r_p3(0)*r_p3(2)/pow(d3,5);                  //dxdz3
-    dfdr3[13] = -1/pow(d3,3) + 3*r_p3(1)*r_p3(1)/pow(d3,5);       //dydy3
-    dfdr3[14] = 3*r_p3(1)*r_p3(2)/pow(d3,5);                  //dydz3
-    dfdr3[17] = -1/pow(d3,3) + 3*r_p3(2)*r_p3(2)/pow(d3,5);       //dzdz3
-
-    dfdr3[12] = dfdr3[10];      // Fill in symmetric matrix
-    dfdr3[15] = dfdr3[11];
-    dfdr3[16] = dfdr3[14];
-
-    MatrixXRd DfDr2 = Eigen::Map<MatrixXRd>(dfdr2, 6, 3);
-    MatrixXRd DfDr3 = Eigen::Map<MatrixXRd>(dfdr3, 6, 3);
-    
-    // Scale by constants
-    DfDr2 *= -1*(mu-nu);
-    DfDr3 *= -1*nu;
-    
-    // Pull the state derivative w.r.t. Epoch time from the large state vector; create column vector
-    double dqdT_data[6] = {0};
-    std::copy(s+42,s+48, dqdT_data);
-    Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(dqdT_data, 6, 1);
-
-    // Get the velocity of the primaries
-    double primVelData[9] = {0};
-    bcr4bpr_getPrimaryVel(t, sysData, primVelData);
-    Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(primVelData, 3, 3);
-
-    // Compute derivative of dqdT
-    Eigen::VectorXd dot_dqdT;
-    dot_dqdT.noalias() = A*dqdT + DfDr2*(primVel.row(1).transpose()) + DfDr3*(primVel.row(2).transpose());
-
-    // Save derivatives to output vector
-    double *accelPtr = accel.data();
-    double *phiDotPtr = PhiDot.data();
-    double *dqdtDotPtr = dot_dqdT.data();
-
-    std::copy(s+3, s+6, sdot);
-    std::copy(accelPtr, accelPtr+3, sdot+3);
-    std::copy(phiDotPtr, phiDotPtr+36, sdot+6);
-    std::copy(dqdtDotPtr, dqdtDotPtr+6, sdot+42);
-
-    return GSL_SUCCESS;
-}//============== END OF BCR4BPR EOMs ======================
-
-/**
- *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
- *
- *   @param t epoch at integration step
- *   @param s the 6-d state vector
- *   @param sdot the 6-d state derivative vector
- *   @param params points to an eomParamStruct object
- */
-int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params){
-    // Dereference the eom data object
-    // tpat_sys_data_bcr4bpr *sysData = static_cast<tpat_sys_data_bcr4bpr *>(params);
-    eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
-
-    // Put the positions of the three primaries in a 3x3 matrix
-    double primPosData[9] = {0};
-    bcr4bpr_getPrimaryPos(t, sysData, primPosData);
-    Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(primPosData, 3, 3);
-
-    // Put the position states into a 3-element column vector
-    double r_data[3] = {0};
-    std::copy(s, s+3, r_data);
-    Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(r_data, 3, 1);
-
-    // Put velocity states into a 3-element column vector
-    double v_data[3] = {0};
-    std::copy(s+3, s+6, v_data);
-    Eigen::Vector3d v = Eigen::Map<Eigen::Vector3d>(v_data, 3, 1);
-
-    // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1, r_p2, r_p3;
-    r_p1.noalias() = r - primPos.row(0).transpose();
-    r_p2.noalias() = r - primPos.row(1).transpose();
-    r_p3.noalias() = r - primPos.row(2).transpose();
-    double d1 = r_p1.norm();
-    double d2 = r_p2.norm();
-    double d3 = r_p3.norm();
-    
-    // Save constants to short variables for readability
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-
-    // Create C-matrix
-    double c[] = {0, 2*k, 0, -2*k, 0, 0, 0, 0, 0};
-    MatrixXRd C = Eigen::Map<MatrixXRd>(c, 3, 3);
-
-    // truncated position vector used in EOMs
-    double r_trunc_data[3] = {0};
-    std::copy(s, s+2, r_trunc_data);
-    Eigen::Vector3d r_trunc = Eigen::Map<Eigen::Vector3d>(r_trunc_data, 3, 1);
-
-    // Compute acceleration using matrix math
-    Eigen::Vector3d accel;
-    accel.noalias() = C*v + k*k*r_trunc - (1/k - mu)*r_p1/pow(d1, 3) - (mu - nu)*r_p2/pow(d2, 3) - 
-        nu*r_p3/pow(d3, 3);
-    accel[0] += k*(1 - mu*k);     // Add extra term for new base point
-
-    // Save derivatives to output vector
-    double *accelPtr = accel.data();
-
-    std::copy(s+3, s+6, sdot);
-    std::copy(accelPtr, accelPtr+3, sdot+3);
-    return GSL_SUCCESS;
-}//============== END OF BCR4BPR EOMs ======================
 
 //-----------------------------------------------------
 //      General Utility Functions
@@ -535,11 +71,12 @@ int bcr4bpr_simple_EOMs(double t, const double s[], double sdot[], void *params)
  *  the Julian date.
  *
  *  @return the J2000 epoch time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
- *  
+ *  @throws TPAT_Exception if the SPICE kernels cannot be loaded: the kernel names and
+ *  filepaths are located in the settings XML file
  */
 double dateToEpochTime(const char *date){
-    std::string spice_path = tpat::initializer.settings.spice_data_filepath;
-    std::string time_kernel = tpat::initializer.settings.spice_time_kernel;
+    std::string spice_path = TPAT::initializer.settings.spice_data_filepath;
+    std::string time_kernel = TPAT::initializer.settings.spice_time_kernel;
 
     char timeKernel[512];
     sprintf(timeKernel, "%s%s", spice_path.c_str(), time_kernel.c_str());
@@ -551,7 +88,7 @@ double dateToEpochTime(const char *date){
         getmsg_c("short", 25, errMsg);
         printErr("Spice Error: %s\n", errMsg);
         reset_c();  // reset error status
-        throw tpat_exception("Could not load SPICE time kernel");
+        throw TPAT_Exception("Could not load SPICE time kernel");
     }
 
     // Convert the date to epoch time
@@ -565,7 +102,7 @@ double dateToEpochTime(const char *date){
         getmsg_c("short", 25, errMsg);
         printErr("Spice Error: %s\n", errMsg);
         reset_c();  // reset error status
-        throw tpat_exception("Could not unload SPICE time kernel");
+        throw TPAT_Exception("Could not unload SPICE time kernel");
     }
 
     return et;
@@ -608,16 +145,18 @@ double dateToEpochTime(const char *date){
  *  continuation. indVarIx would be 0 to represent x. We input the value of x
  *  for the next orbit in the family (nextInd) and specify which variables (from
  *  the 8-element "state") we would like to have predicted by least-squares.
+ *  @throws TPAT_Exception if the <tt>varHistory</tt> vector contains fewer than 
+ *  8 elements or if the <tt>depVars</tt> vector has no data
  */
 std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int> depVars, std::vector<double> varHistory){
     const int STATE_SIZE = 8;
     const double EPS = 1e-14;
 
     if(varHistory.size() < STATE_SIZE)
-        throw tpat_exception("tpat_calculations::familyCont_LS: Not enough data to create A matrix\n");
+        throw TPAT_Exception("tpat_calculations::familyCont_LS: Not enough data to create A matrix\n");
 
     if(depVars.size() == 0)
-        throw tpat_exception("tpat_calculations::familyCont_LS: Not enough data to create B matrix\n");
+        throw TPAT_Exception("tpat_calculations::familyCont_LS: Not enough data to create B matrix\n");
 
     // Form A and B matrices
     std::vector<double> A_data;
@@ -691,9 +230,9 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
  *  @param mirrorType describes how to mirror a 6-d state
  *  @return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
  */
-MatrixXRd getMirrorMat(tpat_mirror_tp mirrorType){
+MatrixXRd getMirrorMat(TPAT_Mirror_Tp mirrorType){
     switch(mirrorType){
-        case MIRROR_XZ:
+        case TPAT_Mirror_Tp::MIRROR_XZ:
         {
             double data[] = {1, 0, 0, 0, 0, 0,
                             0, -1, 0, 0, 0, 0,
@@ -703,8 +242,8 @@ MatrixXRd getMirrorMat(tpat_mirror_tp mirrorType){
                             0, 0, 0, 0, 0, -1};
             return Eigen::Map<MatrixXRd>(data, 6, 6);
         }
-        case MIRROR_X_AX_H:
-        case MIRROR_X_AX_V:
+        case TPAT_Mirror_Tp::MIRROR_X_AX_H:
+        case TPAT_Mirror_Tp::MIRROR_X_AX_V:
         {
             double data[] = {1, 0, 0, 0, 0, 0,
                             0, -1, 0, 0, 0, 0,
@@ -776,7 +315,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
 
     // Generate all permutations of the indices 0 through 5
     std::vector<int> vals {0,1,2,3,4,5};
-    std::vector<int> ixPerms = tpat_util::generatePerms<int>(vals);
+    std::vector<int> ixPerms = TPAT_Util::generatePerms<int>(vals);
     cdouble predict[6];
     std::copy(e1.begin(), e1.end(), predict);
 
@@ -931,16 +470,26 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
 }//=====================================================
 
 /**
- *
- *  Notes: No support for epoch time (yet)
+ *  @brief Compute manifolds of a CR3BP trajectory
+ *  @details [long description]
+ * 
+ *  @param type The type of manifolds to generate
+ *  @param perOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
+ *  so this function also performs well for nearly periodic segments of quasi-periodic
+ *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
+ *  @param numMans The number of manifolds to generate
+ *  @param tof Time-of-flight along each manifold arc after stepping off the specified orbit
+ *  @return a vector of trajectory objects, one for each manifold arc.
+ *  @throws TPAT_Exception if the eigenvalues cannot be computed, or if only one
+ *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
  */
-std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj_cr3bp *perOrbit, int numMans, double tof){
+std::vector<TPAT_Traj_CR3BP> getManifolds(TPAT_Manifold_Tp type, const TPAT_Traj_CR3BP *perOrbit, int numMans, double tof){
     // Get eigenvalues of monodromy matrix
-    MatrixXRd mono = perOrbit->getSTM(-1);
+    MatrixXRd mono = perOrbit->getSTMByIx(-1);
 
     Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)
-        throw tpat_exception("tpat_calculations::getManifolds: Could not compute eigenvalues of monodromy matrix");
+        throw TPAT_Exception("tpat_calculations::getManifolds: Could not compute eigenvalues of monodromy matrix");
 
     Eigen::VectorXcd vals = eigensolver.eigenvalues();
     MatrixXRcd eigVecs = eigensolver.eigenvectors();
@@ -968,7 +517,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
         }
     }
 
-    std::vector<tpat_traj_cr3bp> allManifolds;
+    std::vector<TPAT_Traj_CR3BP> allManifolds;
 
     if(nonCenterVals.size() == 0){
         printWarn("tpat_calculations::getManifolds: No stable/unstable eigenvalues were found\n");
@@ -976,7 +525,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
     }
 
     if(nonCenterVals.size() == 1){
-        throw tpat_exception("tpat_calculations::getManifolds: Only found one stable/unstable eigenvalue");
+        throw TPAT_Exception("tpat_calculations::getManifolds: Only found one stable/unstable eigenvalue");
     }
 
     if(nonCenterVals.size() > 2){
@@ -988,28 +537,28 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
      *  in time and/or arclength
      */
     // Get a bunch of points to use as starting guesses for the manifolds
-    if(numMans > perOrbit->getLength()){
+    if(numMans > perOrbit->getNumNodes()){
         printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer\n");
-        numMans = perOrbit->getLength();
+        numMans = perOrbit->getNumNodes();
     }
 
-    double stepSize = ((double)perOrbit->getLength())/((double)numMans);
-    std::vector<int> pointIx(numMans, NAN);
+    double stepSize = ((double)perOrbit->getNumNodes())/((double)numMans);
+    std::vector<int> pointIx(numMans, 0);
     for(int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
     }
 
-    std::vector<double> realVecs = tpat_util::real(nonCenterVecs);
+    std::vector<double> realVecs = TPAT_Util::real(nonCenterVecs);
     MatrixXRd vecs = Eigen::Map<MatrixXRd>(&(realVecs[0]), nonCenterVecs.size()/6, 6);
     vecs.transposeInPlace();    // Transpose so eigenvectors are columns
 
     // NOW, copute the manifolds!
-    tpat_simulation_engine sim(perOrbit->getSysData());
+    TPAT_Sim_Engine sim;
     double stepDist = 200;
     double charL = perOrbit->getSysData()->getCharL();
     for(int n = 0; n < numMans; n++){
         // Transform the eigenvectors to this updated time
-        MatrixXRd newVecs = perOrbit->getSTM(pointIx[n])*vecs;
+        MatrixXRd newVecs = perOrbit->getSTMByIx(pointIx[n])*vecs;
 
         // Pick the direction from one of the transformed eigenvectors
         Eigen::VectorXd direction(6);
@@ -1017,7 +566,7 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
             Eigen::VectorXd eigVec = newVecs.col(v);
             double mag = sqrt(eigVec(0)*eigVec(0) + 
                 eigVec(1)*eigVec(1) + eigVec(2)*eigVec(2));
-            if(type == MAN_U_P || type == MAN_U_M){
+            if(type == TPAT_Manifold_Tp::Man_U_P || type == TPAT_Manifold_Tp::Man_U_M){
                 if(std::abs(nonCenterVals[v]) > 1){
                     direction = eigVec/mag;
                     sim.setRevTime(false);
@@ -1033,20 +582,21 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
         }
 
         // Make sure it is pointing in +x direction
-        direction *= tpat_util::sign(direction(0));
+        direction *= TPAT_Util::sign(direction(0));
         
         // Orient according to specified type
-        if(type == MAN_U_M || type == MAN_S_M)
+        if(type == TPAT_Manifold_Tp::Man_U_M || type == TPAT_Manifold_Tp::Man_S_M)
             direction *= -1;
 
         // Step away from the point on the arc in the direction of the eigenvector
-        std::vector<double> state = perOrbit->getState(pointIx[n]);
+        std::vector<double> state = perOrbit->getStateByIx(pointIx[n]);
         Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
         q0 += stepDist/charL * direction;
 
         // Simulate for some time to generate a manifold arc
-        sim.runSim(q0.data(), tof);
-        allManifolds.push_back(sim.getCR3BP_Traj());
+        TPAT_Traj_CR3BP traj(static_cast<const TPAT_Sys_Data_CR3BP *>(perOrbit->getSysData()));
+        sim.runSim(q0.data(), tof, &traj);
+        allManifolds.push_back(traj);
     }
 
     return allManifolds;
@@ -1057,17 +607,18 @@ std::vector<tpat_traj_cr3bp> getManifolds(tpat_manifold_tp type, const tpat_traj
  *  @details This algorithm assumes the orbit is periodic and that the eigenvalues 
  *  have been sorted (so they come in pairs).
  * 
- *  @param eigVals A 6-element vector of eigenvalues associated with a periodic orbit
+ *  @param eigs A 6-element vector of eigenvalues associated with a periodic orbit
  *  @return the stability index, or NAN if no real, reciprocal eigenvalue pair is found
+ *  @throws TPAT_Exception if <tt>eigs</tt> does not have six elements
  */
 double getStabilityIndex(std::vector<cdouble> eigs){
     if(eigs.size() != 6)
-        throw tpat_exception("tpat_calculations::getStabilityIndex: Must input 6 eigenvalues!");
+        throw TPAT_Exception("tpat_calculations::getStabilityIndex: Must input 6 eigenvalues!");
 
     double okErr = 1e-3;
     cdouble one(1,0);
 
-    std::vector<tpat_eigValSet_tp> setTypes;
+    std::vector<TPAT_EigValSet_Tp> setTypes;
     setTypes.reserve(3);
 
     for(int set = 0; set < 3; set++){
@@ -1075,12 +626,12 @@ double getStabilityIndex(std::vector<cdouble> eigs){
         double sumDistFromOne = (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
 
         if(sumImag > okErr){
-            setTypes[set] = EIGSET_COMP_CONJ;
+            setTypes[set] = TPAT_EigValSet_Tp::EIGSET_COMP_CONJ;
         }else{
             if(sumDistFromOne < okErr){
-                setTypes[set] = EIGSET_ONES;
+                setTypes[set] = TPAT_EigValSet_Tp::EIGSET_ONES;
             }else{
-                setTypes[set] = EIGSET_REAL_RECIP;
+                setTypes[set] = TPAT_EigValSet_Tp::EIGSET_REAL_RECIP;
                 return 0.5*std::real(eigs[set*2] + eigs[set*2 + 1]);
             }
         }
@@ -1088,7 +639,13 @@ double getStabilityIndex(std::vector<cdouble> eigs){
     return NAN;
 }//====================================================
 
-double getTotalDV(const iterationData *it){
+/**
+ *  @brief Compute the total delta-V along a corrected nodeset
+ * 
+ *  @param it pointer to an TPAT_MultShoot_Data object associated with a corrections process
+ *  @return the total delta-V, units consistent with the nodeset's stored velocity states
+ */
+double getTotalDV(const TPAT_MultShoot_Data *it){
     double total = 0;
     for(size_t n = 0; n < it->deltaVs.size()/3; n++){
         total += sqrt(it->deltaVs[3*n + 0]*it->deltaVs[3*n + 0] +
@@ -1105,49 +662,63 @@ double getTotalDV(const iterationData *it){
  * 
  *  @param nodeset A nodeset with some constraints
  */
-void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
+void finiteDiff_checkMultShoot(const TPAT_Nodeset *nodeset){
+    TPAT_Correction_Engine engine;  // Create engine with default settings
+    finiteDiff_checkMultShoot(nodeset, engine);
+}//====================================================
+
+/**
+ *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  by computing each partial derivative numerically via forward differencing.
+ * 
+ *  @param nodeset A nodeset with some constraints
+ *  @param engine correction engine object configured with the appropriate settings (i.e.,
+ *  equal arc time, scaling variables, etc.). Note that the maxIts, verbosity, and ignoreDiverge
+ *  attributes of the engine will be overridden by this function.
+ */
+void finiteDiff_checkMultShoot(const TPAT_Nodeset *nodeset, TPAT_Correction_Engine engine){
     printf("Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
-    tpat_correction_engine corrector;
+    TPAT_Correction_Engine corrector(engine);
     corrector.setMaxIts(1);
-    corrector.setVerbose(NO_MSG);
+    corrector.setVerbose(TPAT_Verbosity_Tp::NO_MSG);
     corrector.setIgnoreDiverge(true);
-    // corrector.setScaleVars(true);
-    
+
     // Run multiple shooter to get X, FX, and DF
-    iterationData it;
-    it = corrector.multShoot(nodeset);
+    TPAT_MultShoot_Data it = corrector.multShoot(nodeset, NULL);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
 
     double pertSize = 1e-8;
+    #pragma omp parallel for firstprivate(it, corrector)
     for(int i = 0; i < it.totalFree; i++){
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
         it.X = pertX;                           // Copy into iteration data
-        iterationData pertIt = corrector.multShoot(it);     // Correct perturbed state
+        TPAT_MultShoot_Data pertIt = corrector.multShoot(it, NULL);     // Correct perturbed state
         Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // Do another process for opposite direction
         pertX = it.X0;
         pertX[i] -= pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
+        pertIt = corrector.multShoot(it, NULL);
         Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // An iteration for twice the perturbation up
         pertX = it.X0;
         pertX[i] += 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
+        pertIt = corrector.multShoot(it, NULL);
         Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // An iteration for twice the perturbation down
         pertX = it.X0;
         pertX[i] -= 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it);
+        pertIt = corrector.multShoot(it, NULL);
         Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
 
@@ -1157,6 +728,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
         // Eigen::VectorXd col = (FX_up - FX)/std::abs(pertSize);       // Forward difference
         DFest.block(0, i, it.totalCons, 1) = col;
     }
+
 
     MatrixXRd diff = DF - DFest;
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
@@ -1179,7 +751,7 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
     //         // }
     //     }
     // }
-    toCSV(diff, "FiniteDiff_Diff.csv");
+    // toCSV(diff, "FiniteDiff_Diff.csv");
 
     Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
     Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
@@ -1196,15 +768,15 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
         int conCount = 0;
         for(long r = 0; r < rowMax.size(); r++){
             if(r == 0 && it.totalCons > 0){
-                printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
+                printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }else if(conCount < (int)(it.allCons.size()) && r >= it.conRows[conCount+1]){
                 conCount++;
-                printf("Node %d %s Constraint:\n", it.allCons[conCount].getNode(), it.allCons[conCount].getTypeStr());
+                printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }
-            printColor(rowMax[r] > errScalar*pertSize || isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+            printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
         }
         for(long c = 0; c < colMax.size(); c++){
-            printColor(colMax[c] > errScalar*pertSize || isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+            printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
         }
     }
 }//====================================================
@@ -1212,53 +784,6 @@ void finiteDiff_checkMultShoot(const tpat_nodeset *nodeset){
 //-----------------------------------------------------
 //      CR3BP Utility Functions
 //-----------------------------------------------------
-
-/**
- *  @brief Compute the second derivatives of the pseudo-potential function
- *
- *  @param mu the mass ratio of the system, non-dimensional
- *  @param x coordinate, non-dimensional units 
- *  @param y coordinate, non-dimensional units 
- *  @param z coordinate, non-dimensional units 
- *  @param ddots a pointer to a 6-element double array where the function will store 
- *  values for {Uxx, Uyy, Uzz, Uxy, Uxz, Uyz}. Note that Uyx = Uxy, etc.
- */
-void cr3bp_getUDDots(double mu, double x, double y, double z, double* ddots){
-    // compute distance to primaries
-    double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
-    double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
-
-    // Uxx
-    ddots[0] = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((x + mu),2)/pow(d,5) + 
-        3*mu*pow((x + mu - 1), 2)/pow(r,5);
-    // Uyy
-    ddots[1] = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*y*y/pow(d,5) + 3*mu*y*y/pow(r,5);
-    // Uzz
-    ddots[2] = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*z*z/pow(d,5) + 3*mu*z*z/pow(r,5);
-
-    // Uxy
-    ddots[3] = 3*(1-mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5);
-    // Uxz
-    ddots[4] = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5);
-    // Uyz
-    ddots[5] = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5);
-}//========================================================
-
-/**
- *  @brief Compute the Jacobi Constant for the CR3BP
- *
- *  @param s the state vector; only the position and velocity states are required
- *  @param mu the non-dimensional system mass ratio
- *
- *  @return the Jacobi Constant at this specific state and system
- */
-double cr3bp_getJacobi(const double s[], double mu){
-    double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
-    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
-    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
-    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
-    return 2*U - v_squared;
-}//================================================
 
 /**
  *  @brief Compute the magnitude of a velocity component given Jacobi Constant
@@ -1270,6 +795,7 @@ double cr3bp_getJacobi(const double s[], double mu){
  *  @param C Jacobi constant value
  *  @param velIxToFind index of the velocity component to compute (i.e. 3, 4, or 5)
  *  @return the magnitude of vx (3), vy (4), or vz (5).
+ *  @throws TPAT_Exception if <tt>velIxToFind</tt> is out of bounds
  */
 double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind){
     double v_squared = 0;
@@ -1277,7 +803,7 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
         case 3: v_squared = s[4]*s[4] + s[5]*s[5]; break;
         case 4: v_squared = s[3]*s[3] + s[5]*s[5]; break;
         case 5: v_squared = s[3]*s[3] + s[4]*s[4]; break;
-        default: throw tpat_exception("tpat_utilities::cr3bp_getVel_withC: velocity index is invalid\n");
+        default: throw TPAT_Exception("tpat_utilities::cr3bp_getVel_withC: velocity index is invalid\n");
     }
     
     double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
@@ -1287,77 +813,6 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
     // Solve for the desired velocity component
     return sqrt(2*U - v_squared - C);
 }//=================================================
-
-/**
- *  @brief Compute the location of a Lagrange point in the CR3BP
- *
- *  @param sysData object describing the particular CR3BP
- *  @param L the Lagrange point number, 1 to 5
- *  @param tol the tolerance to use; if NAN is input, then a default value of 1e-14 will
- *  be used.
- *  @param pos a 3-element array to store the position of the Lagrange point
- */
-void cr3bp_getEquilibPt(tpat_sys_data_cr3bp sysData, int L, double tol, double pos[3]){
-    if(L < 1 || L > 5){
-        throw tpat_exception("Invalid Lagrange Point");
-    }
-
-    if(tol == NAN){
-        tol = 1e-14;
-    }
-
-    double mu = sysData.getMu();
-    pos[0] = 0;
-    pos[1] = 0;
-    pos[2] = 0;
-
-    double gamma;
-    double gamma_prev = -999;
-    int count = 0;
-    const int maxCount = 20;
-
-    switch(L){
-        case 1:
-            gamma = 0.1;    // Initial guess is 10% of orbital radius
-            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){   // Newton-Raphson for L1
-                gamma_prev = gamma;
-                gamma = gamma - ( mu/(gamma*gamma) - (1-mu)/pow(1-gamma, 2) - gamma - mu + 1)/
-                    ( -2*mu/pow(gamma,3) - 2*(1-mu)/pow(1-gamma,3) - 1 );
-                count++;
-            }
-            pos[0] = 1 - mu - gamma;
-            break;
-        case 2:
-            gamma = 0.1;    // Initial guess is 10% of orbital radius
-            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){
-                gamma_prev = gamma;
-                gamma = gamma - ( -1*mu/(gamma*gamma) - (1-mu)/pow(1+gamma, 2) - mu + 1 + gamma)/
-                    ( 2*mu/pow(gamma, 3) + 2*(1-mu)/pow(1+gamma, 3) + 1 );
-                count++;
-            }
-            pos[0] = 1 - mu + gamma;
-            break;
-        case 3:
-            gamma = 1;  // Initial guess is 100% of orbital radius
-            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){
-                gamma_prev = gamma;
-                gamma = gamma - ( mu/pow(-1 - gamma, 2) + (1-mu)/(gamma*gamma) - mu - gamma)/
-                    ( -2*mu/pow(1+gamma,3) - 2*(1-mu)/pow(gamma, 3) - 1);
-                count++;
-            }
-            pos[0] = -1*mu - gamma;
-            break;
-        case 4:
-        case 5:
-            pos[0] = 0.5 - mu;
-            pos[1] = L == 4 ? sin(PI/3) : -1*sin(PI/3);
-            break;
-    }
-
-    if(L < 4 && std::abs(gamma - gamma_prev) > tol){
-        printErr("Could not converge on L%d\n", L);
-    }
-}//========================================
 
 /**
  *  @brief Compute a periodic orbit in the CR3BP system
@@ -1374,14 +829,15 @@ void cr3bp_getEquilibPt(tpat_sys_data_cr3bp sysData, int L, double tol, double p
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
  *  @param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  @param tol tolerance to use in the corrections process
  *  
  *  @return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, tpat_mirror_tp mirrorType, double tol){
+TPAT_Traj_CR3BP cr3bp_getPeriodic(const TPAT_Sys_Data_CR3BP *sys, std::vector<double> IC,
+    double period, TPAT_Mirror_Tp mirrorType, double tol){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
     return cr3bp_getPeriodic(sys, IC, period, 2, 1, mirrorType, fixedStates, tol);
@@ -1403,18 +859,20 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  @param fixedStates a vector containing the indices of which initial states
  *  we would like to fix. Not all states are possible for each mirror condition.
  *  See the enum definition for specific details.
+ *  @param tol tolerance to use in the corrections process
  *  
  *  @return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
+TPAT_Traj_CR3BP cr3bp_getPeriodic(const TPAT_Sys_Data_CR3BP *sys, std::vector<double> IC,
+    double period, int numNodes, int order, TPAT_Mirror_Tp mirrorType, std::vector<int> fixedStates,
     double tol){
 
-    iterationData itData;
-    return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
+    // TPAT_MultShoot_Data itData;
+    // return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
+    return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, NULL);
 }//====================================================================
 
 /**
@@ -1433,6 +891,7 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  @param fixedStates a vector containing the indices of which initial states
  *  we would like to fix. Not all states are possible for each mirror condition.
  *  See the enum definition for specific details.
+ *  @param tol tolerance to use in the corrections process
  *  @param itData a pointer to an iteration data object that contains data from the
  *  multiple shooting run that corrects the periodic orbit; this is useful when
  *  attempting to determine how well (or poorly) the multiple shooting algorithm
@@ -1442,52 +901,55 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
+ *  @throws TPAT_Exception if <tt>mirrorType</tt> is invalid
+ *  @throws TPAT_Diverge if the multiple shooting algorithm cannot converge on a 
+ *  mirrored solution.
  */
-tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<double> IC,
-    double period, int numNodes, int order, tpat_mirror_tp mirrorType, std::vector<int> fixedStates,
-    double tol, iterationData* itData){
+TPAT_Traj_CR3BP cr3bp_getPeriodic(const TPAT_Sys_Data_CR3BP *sys, std::vector<double> IC,
+    double period, int numNodes, int order, TPAT_Mirror_Tp mirrorType, std::vector<int> fixedStates,
+    double tol, TPAT_MultShoot_Data* itData){
 
-    tpat_simulation_engine sim(sys);    // Engine to perform simulation
+    TPAT_Sim_Engine sim;    // Engine to perform simulation
     sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
     sim.setRelTol(sim.getAbsTol());
     sim.clearEvents();                  // Ignore any crashes into the primaries
     std::vector<int> zeroStates;        // Which states must be zero to ensure a perpendicular crossing
 
-    tpat_event mirrorEvt(sys);
+    TPAT_Event mirrorEvt(sys);
     // Determine which states must be zero for mirroring
     switch(mirrorType){
-        case MIRROR_XZ:
+        case TPAT_Mirror_Tp::MIRROR_XZ:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(5);    // z-dot
-            mirrorEvt.createEvent(tpat_event::XZ_PLANE, 0, true);     // Tell the sim to quit once it reaches the XZ plane
+            mirrorEvt.createEvent(TPAT_Event_Tp::XZ_PLANE, 0, true);     // Tell the sim to quit once it reaches the XZ plane
             break;
-        case MIRROR_YZ:
+        case TPAT_Mirror_Tp::MIRROR_YZ:
             zeroStates.push_back(0);    // x
             zeroStates.push_back(4);    // y-dot
             zeroStates.push_back(5);    // z-dot
-            mirrorEvt.createEvent(tpat_event::YZ_PLANE, 0, true);
+            mirrorEvt.createEvent(TPAT_Event_Tp::YZ_PLANE, 0, true);
             break;
-        case MIRROR_XY:
+        case TPAT_Mirror_Tp::MIRROR_XY:
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(4);    // y-dot
-            mirrorEvt.createEvent(tpat_event::YZ_PLANE, 0, true);
+            mirrorEvt.createEvent(TPAT_Event_Tp::YZ_PLANE, 0, true);
             break;
-        case MIRROR_X_AX_H:
+        case TPAT_Mirror_Tp::MIRROR_X_AX_H:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            mirrorEvt.createEvent(tpat_event::XZ_PLANE, 0, true);
+            mirrorEvt.createEvent(TPAT_Event_Tp::XZ_PLANE, 0, true);
             break;
-        case MIRROR_X_AX_V:
+        case TPAT_Mirror_Tp::MIRROR_X_AX_V:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            mirrorEvt.createEvent(tpat_event::XY_PLANE, 0, true);
+            mirrorEvt.createEvent(TPAT_Event_Tp::XY_PLANE, 0, true);
             break;
         default:
-            throw tpat_exception("Mirror type either not defined or not implemented");
+            throw TPAT_Exception("Mirror type either not defined or not implemented");
     }
     // sim.setVerbose(true);
     mirrorEvt.setStopCount(order);
@@ -1518,58 +980,63 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
         }
     }
 
-    tpat_constraint initStateCon(tpat_constraint::STATE, 0, mirrorCon0, 6);
-    tpat_constraint finalStateCon(tpat_constraint::STATE, numNodes-1, mirrorCon1, 6);
+    TPAT_Constraint initStateCon(TPAT_Constraint_Tp::STATE, 0, mirrorCon0, 6);
+    TPAT_Constraint finalStateCon(TPAT_Constraint_Tp::STATE, numNodes-1, mirrorCon1, 6);
 
     // Run the sim until the event is triggered
-    sim.runSim(IC, period);
-    tpat_traj_cr3bp halfOrbArc = sim.getCR3BP_Traj();
+    TPAT_Traj_CR3BP halfOrbArc(sys);
+    sim.runSim(IC, period, &halfOrbArc);
     
     // Check to make sure the simulation ended with the event (not running out of time)
-    std::vector<tpat_event> endEvts = sim.getEndEvents();
+    std::vector<TPAT_Event> endEvts = sim.getEndEvents(&halfOrbArc);
     if(std::find(endEvts.begin(), endEvts.end(), mirrorEvt) == endEvts.end()){
         printErr("tpat_calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
     }
     // halfOrbArc.saveToMat("HalfOrbArc.mat");
 
-    double halfOrbTOF = halfOrbArc.getTime(-1);
+    double halfOrbTOF = halfOrbArc.getTimeByIx(-1);
     double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);
 
     if(tofErr > 10)
         printWarn("tpat_calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
 
     // Create a nodeset from arc
-    tpat_nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, tpat_nodeset::DISTRO_TIME);
+    TPAT_Nodeset_CR3BP halfOrbNodes(halfOrbArc, numNodes, TPAT_Nodeset::DISTRO_TIME);
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
 
     // Use differential corrections to enforce the mirror conditions
-    tpat_correction_engine corrector;
+    TPAT_Correction_Engine corrector;
     corrector.setTol(tol);
     corrector.setIgnoreCrash(true); // Corrector also ignores crash events
     corrector.setVarTime(true);
     corrector.setEqualArcTime(true);
 
     try{
-        *itData = corrector.multShoot(&halfOrbNodes);
-        tpat_nodeset_cr3bp correctedHalfPer = corrector.getCR3BP_Output();
+        TPAT_Nodeset_CR3BP correctedHalfPer(sys);
+        *itData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
 
         // Make the nodeset into a trajectory
-        tpat_traj_cr3bp halfPerTraj = tpat_traj_cr3bp::fromNodeset(correctedHalfPer);
-        double halfTOF = halfPerTraj.getTime(-1);
-        double halfPerTraj_len = halfPerTraj.getLength();
-        MatrixXRd halfPerSTM = halfPerTraj.getSTM(-1);
+        TPAT_Traj_CR3BP halfPerTraj = TPAT_Traj_CR3BP::fromNodeset(correctedHalfPer);
+        double halfTOF = halfPerTraj.getTimeByIx(-1);
+        double halfPerTraj_len = halfPerTraj.getNumNodes();
+        MatrixXRd halfPerSTM = halfPerTraj.getSTMByIx(-1);
         
         // Use Mirror theorem to create the second half of the orbit
         MatrixXRd mirrorMat = getMirrorMat(mirrorType);
         for(int i = halfPerTraj_len-2; i >= 0; i--){
             // Use mirroring to populate second half of the orbit
-            std::vector<double> state = halfPerTraj.getState(i);
+            std::vector<double> state = halfPerTraj.getStateByIx(i);
             Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
             Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
 
-            tpat_traj_step step(newStateVec.data(), 2*halfTOF - halfPerTraj.getTime(i));
-            halfPerTraj.appendStep(step);
+            TPAT_Node node;
+            node.setState(newStateVec.data());
+            node.setEpoch(2*halfTOF - halfPerTraj.getTimeByIx(i));
+
+            int id = halfPerTraj.addNode(node);
+            TPAT_Segment seg(id-1, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(id-1));
+            halfPerTraj.addSeg(seg);
         }
 
         // Compute the monodromy matrix from the half-period STM
@@ -1593,11 +1060,11 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
         monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
 
         // Set final STM of mirrored trajectory to the one computed here
-        halfPerTraj.setSTM(-1, monoMat);
+        halfPerTraj.setSTMByIx(-1, monoMat);
         
         return halfPerTraj;     // Now contains entire trajectory
-    }catch(tpat_diverge &e){
-        throw tpat_diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
+    }catch(TPAT_Diverge &e){
+        throw TPAT_Diverge("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
     }
 }//================================================
 
@@ -1619,36 +1086,43 @@ tpat_traj_cr3bp cr3bp_getPeriodic(const tpat_sys_data_cr3bp *sys, std::vector<do
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, const tpat_sys_data_cr3bp *SESys, double thetaE0, double thetaM0, double gamma){
+TPAT_Traj_CR3BP cr3bp_EM2SE(TPAT_Traj_CR3BP EMTraj, const TPAT_Sys_Data_CR3BP *SESys, double thetaE0, double thetaM0, double gamma){
 
     // Create a trajectory in the Sun-Earth system
-    tpat_traj_cr3bp SETraj(SESys);
+    TPAT_Traj_CR3BP SETraj(SESys);
 
     double charTE = EMTraj.getSysData()->getCharT();     // characteristic time in EM system
     double charLE = EMTraj.getSysData()->getCharL();     // characteristic length in EM system
     double charTS = SESys->getCharT();                   // characteristic time in SE system
     double charLS = SESys->getCharL();                   // characteristic length in SE system
 
-    for(int n = 0; n < EMTraj.getLength(); n++){
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < EMTraj.getNumNodes(); n++){
 
         // Transform the state from EM coordinates to SE coordinates
-        std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getState(n), EMTraj.getTime(n), thetaE0,
+        std::vector<double> state_SE = cr3bp_EM2SE_state(EMTraj.getStateByIx(n), EMTraj.getTimeByIx(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, SESys->getMu());
 
         // Adjust time to correct non-dim units
-        double t = EMTraj.getTime(n)*charTE/charTS;
+        double t = EMTraj.getTimeByIx(n)*charTE/charTS;
 
         // Create bogus accel and STM
         double accel[] = {NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
         // Create a new step
-        tpat_traj_step step(&(state_SE[0]), t, accel, stm.data());
+        TPAT_Node node(&(state_SE[0]), accel, t);
+        SETraj.addNode(node);
 
-        SETraj.appendStep(step);
+        if(n > 0){            
+            SETraj.addSeg(TPAT_Segment(n-1, n, t - prev_t, prev_stm.data()));
+        }
         
         // Recompute Jacobi
-        SETraj.setJacobi(-1, cr3bp_getJacobi(&(state_SE[0]), SESys->getMu()));
+        SETraj.setJacobiByIx(-1, TPAT_Model_CR3BP::getJacobi(&(state_SE[0]), SESys->getMu()));
+        prev_stm = stm;
+        prev_t = t;
     }
 
     return SETraj; 
@@ -1672,11 +1146,11 @@ tpat_traj_cr3bp cr3bp_EM2SE(tpat_traj_cr3bp EMTraj, const tpat_sys_data_cr3bp *S
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, const tpat_sys_data_cr3bp *SESys, double t0, double thetaE0, double thetaM0,
+TPAT_Nodeset_CR3BP cr3bp_EM2SE(TPAT_Nodeset_CR3BP EMNodes, const TPAT_Sys_Data_CR3BP *SESys, double t0, double thetaE0, double thetaM0,
     double gamma){
 
 
-    tpat_nodeset_cr3bp SENodes(SESys);
+    TPAT_Nodeset_CR3BP SENodes(SESys);
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
@@ -1686,19 +1160,26 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, const tpat_sys_data_c
     double epoch = t0;
     printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d TOFs\n", EMNodes.getNumNodes(),
         EMNodes.getNumNodes()-1);
+
+    EMNodes.putInChronoOrder();
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
-        std::vector<double> node_SE = cr3bp_EM2SE_state(EMNodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
+        std::vector<double> state_SE = cr3bp_EM2SE_state(EMNodes.getNodeByIx(n).getState(), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys->getMu());
-
-        double tof = n + 1 < EMNodes.getNumNodes() ? EMNodes.getTOF(n)*charTE/charTS : NAN;
-        tpat_node node(node_SE, tof);
-        SENodes.appendNode(node);
-
+        
+        SENodes.addNode(TPAT_Node(state_SE, epoch*charTE/charTS));
 
         if(n < EMNodes.getNumNodes()-1){
             // Update epoch time
-            epoch += EMNodes.getTOF(n);
+            epoch += EMNodes.getTOFByIx(n);
         }
+    }
+
+    // Convert time units for segment TOFs
+    for(int s = 0; s < EMNodes.getNumSegs(); s++){
+        TPAT_Segment EMSeg = EMNodes.getSegByIx(s);
+        EMSeg.setTOF(EMSeg.getTOF()*charTE/charTS);
+        EMSeg.setSTM(MatrixXRd::Identity(6, 6));
+        SENodes.addSeg(EMSeg);
     }
 
     return SENodes;
@@ -1722,36 +1203,42 @@ tpat_nodeset_cr3bp cr3bp_EM2SE(tpat_nodeset_cr3bp EMNodes, const tpat_sys_data_c
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, const tpat_sys_data_cr3bp *EMSys, double thetaE0, double thetaM0, double gamma){
+TPAT_Traj_CR3BP cr3bp_SE2EM(TPAT_Traj_CR3BP SETraj, const TPAT_Sys_Data_CR3BP *EMSys, double thetaE0, double thetaM0, double gamma){
     // Create a trajectory in the Earth-Moon system
-    tpat_traj_cr3bp EMTraj(EMSys);
+    TPAT_Traj_CR3BP EMTraj(EMSys);
 
     // Shift coordinates to EM barcyenter from SE barycenter
-    const tpat_sys_data_cr3bp *seSys = static_cast<const tpat_sys_data_cr3bp*>(SETraj.getSysData());
+    const TPAT_Sys_Data_CR3BP *seSys = static_cast<const TPAT_Sys_Data_CR3BP*>(SETraj.getSysData());
 
     double charTE = EMSys->getCharT();               // characteristic time in EM system
     double charLE = EMSys->getCharL();               // characteristic length in EM system
     double charTS = SETraj.getSysData()->getCharT(); // characteristic time in SE system
     double charLS = SETraj.getSysData()->getCharL(); // characteristic length in SE system
 
-    for(int n = 0; n < SETraj.getLength(); n++){
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < SETraj.getNumNodes(); n++){
         
         // Transform the state from SE coordinates to EM coordinates
-        std::vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getState(n), SETraj.getTime(n), thetaE0,
+        std::vector<double> state_EM = cr3bp_SE2EM_state(SETraj.getStateByIx(n), SETraj.getTimeByIx(n), thetaE0,
             thetaM0, gamma, charLE, charTE, charLS, charTS, seSys->getMu());
         
         // Rescale Time
-        double t = SETraj.getTime(n)*charTS/charTE;
+        double t = SETraj.getTimeByIx(n)*charTS/charTE;
 
         // Bogus values for accel and STM
         double accel[] = {NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
-        tpat_traj_step step(&(state_EM[0]), t, accel, stm.data());
-        EMTraj.appendStep(step);
+        EMTraj.addNode(TPAT_Node(&(state_EM[0]), accel, t));
+        if(n > 0)
+            EMTraj.addSeg(TPAT_Segment(n-1, n, t - prev_t, prev_stm.data()));
 
         // Recompute Jacobi
-        EMTraj.setJacobi(-1, cr3bp_getJacobi(&(state_EM[0]), EMSys->getMu()));
+        EMTraj.setJacobiByIx(-1, TPAT_Model_CR3BP::getJacobi(&(state_EM[0]), EMSys->getMu()));
+
+        prev_t = t;
+        prev_stm = stm;
     }
 
     return EMTraj; 
@@ -1775,36 +1262,41 @@ tpat_traj_cr3bp cr3bp_SE2EM(tpat_traj_cr3bp SETraj, const tpat_sys_data_cr3bp *E
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-tpat_nodeset_cr3bp cr3bp_SE2EM(tpat_nodeset_cr3bp SENodes, const tpat_sys_data_cr3bp *EMSys, double t0, double thetaE0, double thetaM0,
+TPAT_Nodeset_CR3BP cr3bp_SE2EM(TPAT_Nodeset_CR3BP SENodes, const TPAT_Sys_Data_CR3BP *EMSys, double t0, double thetaE0, double thetaM0,
     double gamma){
 
-    tpat_nodeset_cr3bp EMNodes(EMSys);
+    TPAT_Nodeset_CR3BP EMNodes(EMSys);
 
     double charTE = EMSys->getCharT();                   // characteristic time in EM system
     double charLE = EMSys->getCharL();                   // characteristic length in EM system
     double charTS = SENodes.getSysData()->getCharT();    // characteristic time in SE system
     double charLS = SENodes.getSysData()->getCharL();    // characteristic length in SE system
 
-    const tpat_sys_data_cr3bp *SESys = static_cast<const tpat_sys_data_cr3bp*>(SENodes.getSysData());
+    const TPAT_Sys_Data_CR3BP *SESys = static_cast<const TPAT_Sys_Data_CR3BP*>(SENodes.getSysData());
 
     double epoch = t0;
     printColor(BLUE, "Converting SE to EM\nSE Sys:\n  %d Nodes\n  %d TOFs\n", SENodes.getNumNodes(),
         SENodes.getNumNodes()-1);
+
+    SENodes.putInChronoOrder();
     for(int n = 0; n < SENodes.getNumNodes(); n++){
         // Transform a single node
-        std::vector<double> node_EM = cr3bp_SE2EM_state(SENodes.getNode(n).getPosVelState(), epoch, thetaE0, thetaM0,
+        std::vector<double> state_EM = cr3bp_SE2EM_state(SENodes.getNodeByIx(n).getState(), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, SESys->getMu());
-
-        double tof = n + 1 < SENodes.getNumNodes() ? SENodes.getTOF(n)*charTS/charTE : NAN;
-        tpat_node node(node_EM, tof);
-        EMNodes.appendNode(node);
+        
+        EMNodes.addNode(TPAT_Node(state_EM, epoch*charTS/charTE));
 
         if(n < SENodes.getNumNodes()-1){
             // Update epoch time
-            epoch += SENodes.getTOF(n);
+            epoch += SENodes.getTOFByIx(n);
         }
     }
 
+    for(int s = 0; s < SENodes.getNumSegs(); s++){
+        TPAT_Segment SESeg = SENodes.getSegByIx(s);
+        SESeg.setTOF(SESeg.getTOF()*charTS/charTE);
+        EMNodes.addSeg(SESeg);
+    }
     return EMNodes;
 }//=========================================================
 
@@ -1956,30 +1448,31 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  * 
  *  @return A trajectory centered around the specified index in inertial, dimensional coordinates
  */
-tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
+TPAT_Traj_CR3BP cr3bp_rot2inert(TPAT_Traj_CR3BP traj, int centerIx){
 
     if(centerIx < 0 || centerIx > 1){
-        throw tpat_exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+        throw TPAT_Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
     }
 
-    const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(traj.getSysData());
+    const TPAT_Sys_Data_CR3BP *sys = static_cast<const TPAT_Sys_Data_CR3BP *>(traj.getSysData());
 
-    tpat_traj_cr3bp inertTraj(sys);
-    double t = 0;
-
-    for(int i = 0; i < traj.getLength(); i++){
-        t = traj.getTime(i);
-        std::vector<double> state_rot = traj.getState(i);
-
+    TPAT_Traj_CR3BP inertTraj(sys);
+    double t = 0, prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int i = 0; i < traj.getNumNodes(); i++){
+        t = traj.getTimeByIx(i);
+        std::vector<double> state_rot = traj.getStateByIx(i);
         std::vector<double> stateInert = cr3bp_rot2inert_state(state_rot, sys, t, centerIx);
 
         // Bogus values for accel and STM
         double accel[] = {NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6, 6);
 
-        tpat_traj_step step(&(stateInert[0]), t*sys->getCharT(), accel, stm.data());
-        inertTraj.appendStep(step);
-        inertTraj.setJacobi(-1, traj.getJacobi(i));
+        inertTraj.addNode(TPAT_Node(&(stateInert[0]), accel, t*sys->getCharT()));
+        if(i > 0)
+            inertTraj.addSeg(TPAT_Segment(i-1, i, t - prev_t, stm.data()));
+        
+        inertTraj.setJacobiByIx(-1, traj.getJacobiByIx(i));
     }
 
     return inertTraj;
@@ -1988,7 +1481,7 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
 /**
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  @param traj CR3BP nodeset
+ *  @param nodes CR3BP nodeset
  *  @param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP nodeset is input, selecting 
  *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
@@ -1996,27 +1489,31 @@ tpat_traj_cr3bp cr3bp_rot2inert(tpat_traj_cr3bp traj, int centerIx){
  * 
  *  @return A nodeset centered around the specified index in inertial, dimensional coordinates
  */
-tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp nodes, int centerIx){
+TPAT_Nodeset_CR3BP cr3bp_rot2inert(TPAT_Nodeset_CR3BP nodes, int centerIx){
 
     if(centerIx < 0 || centerIx > 1){
-        throw tpat_exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+        throw TPAT_Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
     }
 
-    const tpat_sys_data_cr3bp *sys = static_cast<const tpat_sys_data_cr3bp *>(nodes.getSysData());
+    const TPAT_Sys_Data_CR3BP *sys = static_cast<const TPAT_Sys_Data_CR3BP *>(nodes.getSysData());
 
-    tpat_nodeset_cr3bp inertNodes(sys);
+    TPAT_Nodeset_CR3BP inertNodes(sys);
     double t = 0;
-
+    nodes.putInChronoOrder();
     for(int i = 0; i < nodes.getNumNodes(); i++){
-        std::vector<double> state_rot = nodes.getState(i);
+        std::vector<double> state_rot = nodes.getStateByIx(i);
         std::vector<double> stateInert = cr3bp_rot2inert_state(state_rot, sys, t, centerIx);
-
-        double tof = i + 1 < nodes.getNumNodes() ? nodes.getTOF(i)*sys->getCharT() : NAN;
-        tpat_node node(stateInert, tof);
-        inertNodes.appendNode(node);
+        
+        inertNodes.addNode(TPAT_Node(stateInert, nodes.getEpochByIx(i)*sys->getCharT()));
 
         if(i < nodes.getNumNodes()-1)
-            t += nodes.getTOF(i);
+            t += nodes.getTOFByIx(i);
+    }
+
+    for(int s = 0; s < nodes.getNumSegs(); s++){
+        TPAT_Segment seg_rot = nodes.getSegByIx(s);
+        seg_rot.setTOF(seg_rot.getTOF()*sys->getCharT());
+        inertNodes.addSeg(seg_rot);
     }
 
     return inertNodes;
@@ -2034,12 +1531,13 @@ tpat_nodeset_cr3bp cr3bp_rot2inert(tpat_nodeset_cr3bp nodes, int centerIx){
  *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
  * 
  *  @return A state centered around the specified index in inertial, dimensional coordinates
+ *  @throw TPAT_Exception if <tt>centerIx</tt> is out of bounds
  */
-std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const tpat_sys_data_cr3bp *sys, 
+std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const TPAT_Sys_Data_CR3BP *sys, 
     double t, int centerIx){
 
     if(centerIx < 0 || centerIx > 1){
-        throw tpat_exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+        throw TPAT_Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
     }
 
     Matrix3Rd I = Matrix3Rd::Identity(3,3);
@@ -2074,134 +1572,6 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const t
 //      BCR4BP Utility Functions
 //-----------------------------------------------------
 
-
-/**
- *  @brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
- *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
- *  row-major order. The first three elements are the position of P1, etc.
- */
-void bcr4bpr_getPrimaryPos(double t, const tpat_sys_data_bcr4bpr *sysData, double *primPos){
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-    double theta0 = sysData->getTheta0();
-    double phi0 = sysData->getPhi0();
-    double gamma = sysData->getGamma();
-    double ratio = sysData->getCharLRatio();
-
-    // Compute the angles for the system at the specified time
-    double theta = theta0 + k*t;
-    double phi = phi0 + sqrt(mu/pow(ratio, 3)) * t;
-
-    // P1 position
-    // primPos[0] = -mu;    // original derivation
-    primPos[0] = -1/k;        // new derivation
-    primPos[1] = 0;
-    primPos[2] = 0;
-
-    // P2 position
-    // primPos[3] = 1/k - mu - nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[3] = -nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[4] = -nu/mu*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[5] = nu/mu*ratio * cos(phi) * sin(gamma);
-
-    // P3 position
-    // primPos[6] = 1/k - mu + (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[6] = (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[7] = (1 - nu/mu)*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[8] = (nu/mu - 1)*ratio * cos(phi)*sin(gamma);
-}//================================================
-
-/**
- *  @brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
- *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
- *  row-major order. The first three elements hold the velocity of P1, etc.
- */
-void bcr4bpr_getPrimaryVel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primVel){
-
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-    double theta0 = sysData->getTheta0();
-    double phi0 = sysData->getPhi0();
-    double gamma = sysData->getGamma();
-    double ratio = sysData->getCharLRatio();
-
-    double thetaDot = k;
-    double phiDot = sqrt(mu/pow(ratio, 3));
-
-    double theta = theta0 + thetaDot*t;
-    double phi = phi0 + phiDot * t;    
-
-    // P1 is stationary in this coordinate system
-    primVel[0] = 0;  primVel[1] = 0;  primVel[2] = 0;
-
-    // Angular velocity of P2-P3 line
-    double v_P2P3Line[3] = {0};
-    v_P2P3Line[0] = thetaDot*(sin(phi)*cos(theta) - cos(phi)*sin(theta)*cos(gamma)) + 
-        phiDot*(cos(phi)*sin(theta) - sin(phi)*cos(theta)*cos(gamma));
-    v_P2P3Line[1] = (phiDot - thetaDot)*cos(phi - theta);
-    v_P2P3Line[2] = phiDot*sin(phi)*sin(gamma);
-
-    // Multiply by radii of P2 and P3 to get their velocities
-    primVel[3] = v_P2P3Line[0] * (-nu/mu)*ratio;
-    primVel[4] = v_P2P3Line[1] * (-nu/mu)*ratio;
-    primVel[5] = v_P2P3Line[2] * (-nu/mu)*ratio;
-
-    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*ratio;
-    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*ratio;
-    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*ratio;
-}//===================================================================
-
-/**
- *  @brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
- * 
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
- *  row-major order. The first three elements hold the acceleration of P1, etc.
- */
-void bcr4bpr_getPrimaryAccel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primAccel){
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-    double theta0 = sysData->getTheta0();
-    double phi0 = sysData->getPhi0();
-    double gamma = sysData->getGamma();
-    double ratio = sysData->getCharLRatio();
-
-    double thetaDot = k;
-    double phiDot = sqrt(mu/pow(ratio, 3));
-
-    double theta = theta0 + thetaDot*t;
-    double phi = phi0 + phiDot * t;    
-
-    // P1 is stationary in this coordinate system
-    primAccel[0] = 0;  primAccel[1] = 0;  primAccel[2] = 0;
-
-    // Acceleration of P2-P3 line
-    double a_P2P3Line[3] = {0};
-    a_P2P3Line[0] = (-thetaDot*thetaDot - phiDot*phiDot)*(cos(theta)*cos(phi)*cos(gamma) + sin(theta)*sin(phi)) + 
-        2*thetaDot*phiDot*(cos(theta)*cos(phi) + sin(theta)*sin(phi)*cos(gamma));
-    a_P2P3Line[1] = -1*(phiDot - thetaDot)*(phiDot - thetaDot)*sin(phi - theta);
-    a_P2P3Line[2] = phiDot*phiDot*cos(phi)*sin(gamma);
-
-    // Multiply by radii of P2 and P3 to get their velocities
-    primAccel[3] = a_P2P3Line[0] * (-nu/mu)*ratio;
-    primAccel[4] = a_P2P3Line[1] * (-nu/mu)*ratio;
-    primAccel[5] = a_P2P3Line[2] * (-nu/mu)*ratio;
-
-    primAccel[6] = a_P2P3Line[0] * (1-nu/mu)*ratio;
-    primAccel[7] = a_P2P3Line[1] * (1-nu/mu)*ratio;
-    primAccel[8] = a_P2P3Line[2] * (1-nu/mu)*ratio;
-}//=====================================================================
-
 /**
  *  @brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
  *
@@ -2211,18 +1581,20 @@ void bcr4bpr_getPrimaryAccel(double t, const tpat_sys_data_bcr4bpr *sysData, dou
  *  @param t0 the epoch at the initial point on the CR3BP Trajectory
  *
  *  @return a BCR4BPR Trajectory object
+ *  @throw TPAT_Exception if <tt>crTraj</tt> is not a Sun-Earth trajectory or if <tt>bcSys</tt> is
+ *  not the Sun-Earth-Moon system.
  */
-tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4bpr *bcSys, double t0){
+TPAT_Traj_BC4BP bcr4bpr_SE2SEM(TPAT_Traj_CR3BP crTraj, const TPAT_Sys_Data_BC4BP *bcSys, double t0){
     if(crTraj.getSysData()->getPrimID(0) != 10 || crTraj.getSysData()->getPrimID(1) != 399){
-        throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
+        throw TPAT_Exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
     if(bcSys->getPrimID(0) != 10 || bcSys->getPrimID(1) != 399 || bcSys->getPrimID(2) != 301){
-        throw tpat_exception("BCR4BPR system is not Sun-Earth-Moon");
+        throw TPAT_Exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_traj_bcr4bp bcTraj(bcSys);
+    TPAT_Traj_BC4BP bcTraj(bcSys);
 
     double charL2 = crTraj.getSysData()->getCharL();
     double charT2 = crTraj.getSysData()->getCharT();
@@ -2230,9 +1602,10 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
     double charT3 = bcSys->getCharT();
 
     std::vector<double> blank(6, NAN);
-
-    for(int n = 0; n < crTraj.getLength(); n++){
-        std::vector<double> crState = crTraj.getState(n);
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < crTraj.getNumNodes(); n++){
+        std::vector<double> crState = crTraj.getStateByIx(n);
 
         double bcState[6];
         for(int r = 0; r < 6; r++){
@@ -2246,22 +1619,27 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
         }
 
         // Convert acceleration
-        std::vector<double> crAccel = crTraj.getAccel(n);
+        std::vector<double> crAccel = crTraj.getAccelByIx(n);
         double bcAccel[3];
         for(int r = 0; r < 3; r++){
             bcAccel[r] = crAccel[r]*(charL2/charL3)*(charT3/charT2)*(charT3/charT2);
         }
         
-        double t = crTraj.getTime(n)*charT2/charT3 + t0;
+        double t = crTraj.getTimeByIx(n)*charT2/charT3 + t0;
 
         // Bogus values for dqdT and STM
         double dqdT[] = {NAN, NAN, NAN, NAN, NAN, NAN};
         MatrixXRd stm = MatrixXRd::Identity(6,6);
 
         // Create step
-        tpat_traj_step step(bcState, t, bcAccel, stm.data());
-        bcTraj.appendStep(step);
-        bcTraj.set_dqdT(-1, dqdT);
+        bcTraj.addNode(TPAT_Node(bcState, bcAccel, t));
+        bcTraj.set_dqdTByIx(-1, dqdT);
+
+        if(n > 0)
+            bcTraj.addSeg(TPAT_Segment(n-1, n, t - prev_t, prev_stm.data()));
+
+        prev_t = t;
+        prev_stm = stm;
     }
 
     return bcTraj;
@@ -2276,18 +1654,20 @@ tpat_traj_bcr4bp bcr4bpr_SE2SEM(tpat_traj_cr3bp crTraj, const tpat_sys_data_bcr4
  *  @param t0 the epoch at the first node in BCR4BPR non-dimensional time units
  *
  *  @return a BCR4BPR nodeset
+ *  @throw TPAT_Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>bcSys</tt> is
+ *  not the Sun-Earth-Moon system.
  */
-tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, const tpat_sys_data_bcr4bpr *bcSys, double t0){
+TPAT_Nodeset_BC4BP bcr4bpr_SE2SEM(TPAT_Nodeset_CR3BP crNodes, const TPAT_Sys_Data_BC4BP *bcSys, double t0){
     if(crNodes.getSysData()->getPrimID(0) != 10 || crNodes.getSysData()->getPrimID(1) != 399){
-        throw tpat_exception("CR3BP trajectory is not in the Sun-Earth System");
+        throw TPAT_Exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
     if(bcSys->getPrimID(0) != 10 || bcSys->getPrimID(1) != 399 || bcSys->getPrimID(2) != 301){
-        throw tpat_exception("BCR4BPR system is not Sun-Earth-Moon");
+        throw TPAT_Exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
     // Create a BCR4BPR Trajectory
-    tpat_nodeset_bcr4bp bcNodes(bcSys);
+    TPAT_Nodeset_BC4BP bcNodes(bcSys);
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();
@@ -2295,27 +1675,31 @@ tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, const tpat_sys_da
     double charT3 = bcSys->getCharT();
 
     double ellapsed = t0;
+    crNodes.putInChronoOrder();
 
     for(int n = 0; n < crNodes.getNumNodes(); n++){
         std::vector<double> bcNodeState;
-        std::vector<double> crNode = crNodes.getNode(n).getPosVelState();
-        for(int r = 0; r < ((int)crNode.size()); r++){
+        std::vector<double> crNodeState = crNodes.getNodeByIx(n).getState();
+        for(int r = 0; r < ((int)crNodeState.size()); r++){
             if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
-                bcNodeState.push_back(crNode[r]*charL2/charL3 - (1.0/bcSys->getK() - bcSys->getMu()));
+                bcNodeState.push_back(crNodeState[r]*charL2/charL3 - (1.0/bcSys->getK() - bcSys->getMu()));
             else if(r < 3)   // Convert position
-                bcNodeState.push_back(crNode[r]*charL2/charL3);
+                bcNodeState.push_back(crNodeState[r]*charL2/charL3);
             else  // Convert velocity
-                bcNodeState.push_back(crNode[r]*(charL2/charL3)*(charT3/charT2));
+                bcNodeState.push_back(crNodeState[r]*(charL2/charL3)*(charT3/charT2));
         }
         
-        double tof = crNodes.getTOF(n)*charT2/charT3;
-        tpat_node bcNode(bcNodeState, tof);
-        bcNode.setExtraParam(1, ellapsed);  // set epoch
+        bcNodes.addNode(TPAT_Node(bcNodeState, ellapsed));
 
-        bcNodes.appendNode(bcNode);
         if(n < crNodes.getNumNodes()-1){
-            ellapsed += tof;
+            ellapsed += crNodes.getTOFByIx(n)*charT2/charT3;
         }
+    }
+
+    for(int s = 0; s < crNodes.getNumSegs(); s++){
+        TPAT_Segment crSeg = crNodes.getSegByIx(s);
+        crSeg.setTOF(crSeg.getTOF()*charT2/charT3);
+        bcNodes.addSeg(crSeg);
     }
 
     return bcNodes;
@@ -2329,21 +1713,23 @@ tpat_nodeset_bcr4bp bcr4bpr_SE2SEM(tpat_nodeset_cr3bp crNodes, const tpat_sys_da
  *  scaling
  *
  *  @return a BCR4BPR nodeset object
+ *  @throw TPAT_Exception if <tt>crSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
+ *  not in the Sun-Earth-Moon system.
  */
-tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_data_cr3bp *crSys){
+TPAT_Nodeset_BC4BP bcr4bpr_SEM2SE(TPAT_Nodeset_BC4BP bcNodes, const TPAT_Sys_Data_CR3BP *crSys){
     if(crSys->getPrimID(0) != 10 || crSys->getPrimID(1) != 399){
-        throw tpat_exception("CR3BP system is not the Sun-Earth System");
+        throw TPAT_Exception("CR3BP system is not the Sun-Earth System");
     }
 
     if(bcNodes.getSysData()->getPrimID(0) != 10 || bcNodes.getSysData()->getPrimID(1) != 399 ||
             bcNodes.getSysData()->getPrimID(2) != 301){
-        throw tpat_exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
+        throw TPAT_Exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
     }
 
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(bcNodes.getSysData());
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP *>(bcNodes.getSysData());
 
     // Create a BCR4BPR Trajectory
-    tpat_nodeset_cr3bp crNodes(crSys);
+    TPAT_Nodeset_CR3BP crNodes(crSys);
 
     double charL2 = crSys->getCharL();
     double charT2 = crSys->getCharT();
@@ -2351,9 +1737,9 @@ tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_d
     double charT3 = bcNodes.getSysData()->getCharT();
 
     std::vector<double> blank(6, NAN);
-
+    bcNodes.putInChronoOrder();
     for(int n = 0; n < bcNodes.getNumNodes(); n++){
-        std::vector<double> bcState = bcNodes.getState(n);
+        std::vector<double> bcState = bcNodes.getStateByIx(n);
         std::vector<double> crNodeState;
 
         for(int r = 0; r < ((int)bcState.size()); r++){
@@ -2365,10 +1751,15 @@ tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_d
                 crNodeState.push_back(bcState[r]*(charL3/charL2)*(charT2/charT3));
         }
 
-        double tof = bcNodes.getTOF(n)*charT3/charT2;
-        tpat_node crNode(crNodeState, tof);
-        crNode.setExtraParam(1, cr3bp_getJacobi(&(crNodeState[0]), crSys->getMu()));
-        crNodes.appendNode(crNode);
+        TPAT_Node node(crNodeState, bcNodes.getEpochByIx(n)*charT3/charT2);
+        node.setExtraParam(0, TPAT_Model_CR3BP::getJacobi(&(crNodeState[0]), crSys->getMu()));
+        crNodes.addNode(node);
+    }
+
+    for(int s = 0; s < bcNodes.getNumSegs(); s++){
+        TPAT_Segment bcSeg = bcNodes.getSegByIx(s);
+        bcSeg.setTOF(bcSeg.getTOF()*charT3/charT2);
+        bcNodes.addSeg(bcSeg);
     }
 
     return crNodes;
@@ -2382,31 +1773,34 @@ tpat_nodeset_bcr4bp bcr4bpr_SEM2SE(tpat_nodeset_bcr4bp bcNodes, const tpat_sys_d
  *  scaling
  *
  *  @return a BCR4BPR Trajectory object
+ *  @throw TPAT_Exception if <tt>crSys</tt> is not a Sun-Earth system or if <tt>bcTraj</tt> is
+ *  not in the Sun-Earth-Moon system.
  */
-tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp bcTraj, const tpat_sys_data_cr3bp *crSys){
+TPAT_Traj_BC4BP bcr4bpr_SEM2SE(TPAT_Traj_BC4BP bcTraj, const TPAT_Sys_Data_CR3BP *crSys){
     if(crSys->getPrimID(0) != 10 || crSys->getPrimID(1) != 399){
-        throw tpat_exception("CR3BP system is not the Sun-Earth System");
+        throw TPAT_Exception("CR3BP system is not the Sun-Earth System");
     }
 
     if(bcTraj.getSysData()->getPrimID(0) != 10 || bcTraj.getSysData()->getPrimID(1) != 399 ||
             bcTraj.getSysData()->getPrimID(2) != 301){
-        throw tpat_exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
+        throw TPAT_Exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
     }
 
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(bcTraj.getSysData());
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP *>(bcTraj.getSysData());
 
     // Create a BCR4BPR Trajectory
-    tpat_traj_cr3bp crTraj(crSys);
+    TPAT_Traj_CR3BP crTraj(crSys);
 
     double charL2 = crSys->getCharL();
     double charT2 = crSys->getCharT();
     double charL3 = bcTraj.getSysData()->getCharL();
     double charT3 = bcTraj.getSysData()->getCharT();
 
-    // double t0 = bcTraj.getTime(0);
-
-    for(int n = 0; n < bcTraj.getLength(); n++){
-        std::vector<double> bcState = bcTraj.getState(n);
+    // double t0 = bcTraj.getTimeByIx(0);
+    double prev_t = 0;
+    MatrixXRd prev_stm;
+    for(int n = 0; n < bcTraj.getNumNodes(); n++){
+        std::vector<double> bcState = bcTraj.getStateByIx(n);
 
         double crState[6];
         for(int r = 0; r < 6; r++){
@@ -2419,24 +1813,29 @@ tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp bcTraj, const tpat_sys_data_cr3
         }
 
         // Convert acceleration
-        std::vector<double> bcAccel = bcTraj.getAccel(n);
+        std::vector<double> bcAccel = bcTraj.getAccelByIx(n);
         double crAccel[3];
         for(int r = 0; r < 3; r++){
             crAccel[r] = bcAccel[r]*(charL3/charL2)*(charT2/charT3)*(charT2/charT3);
         }
         
-        // double t = bcTraj.getTime(n)*charT3/charT2 - t0;
-        double t = bcTraj.getTime(n)*charT3/charT2;
+        // double t = bcTraj.getTimeByIx(n)*charT3/charT2 - t0;
+        double t = bcTraj.getTimeByIx(n)*charT3/charT2;
 
         // Bogus values for and STM
         MatrixXRd stm = MatrixXRd::Identity(6,6);
 
         // Create step
-        tpat_traj_step step(crState, t, crAccel, stm.data());
-        crTraj.appendStep(step);
+        crTraj.addNode(TPAT_Node(crState, crAccel, t));
+
+        if(n > 0)
+            crTraj.addSeg(TPAT_Segment(n-1, n, t - prev_t, prev_stm.data()));
         
         // Compute Jacobi constant
-        crTraj.setJacobi(-1, cr3bp_getJacobi(crState, crSys->getMu()));
+        crTraj.setJacobiByIx(-1, TPAT_Model_CR3BP::getJacobi(crState, crSys->getMu()));
+
+        prev_t = t;
+        prev_stm = stm;
     }
 
     return crTraj;
@@ -2447,16 +1846,18 @@ tpat_traj_bcr4bp bcr4bpr_SEM2SE(tpat_traj_bcr4bp bcTraj, const tpat_sys_data_cr3
  *  and epoch
  *  @details This function uses a Newton-Raphson procedure to locate the zeros of the local
  *  acceleration field.
- *  @throws tpat_diverge if the Newton-Raphson procedure cannot converge
+ *  @throws TPAT_Diverge if the Newton-Raphson procedure cannot converge
  *  @param bcSys system data object describing the bicircular system
  *  @param t0 the epoch at which the saddle point's location is computed
  * 
  *  @return the location of the saddle pointin BCR4BP rotating coordinates
+ *  @throw TPAT_Diverge if the multiple shooting algorithm cannot converge on the
+ *  saddle point location
  */
-Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr *bcSys, double t0){
+Eigen::Vector3d bcr4bpr_getSPLoc(const TPAT_Sys_Data_BC4BP *bcSys, double t0){
 
     // Compute approximate SP location using 3-body dynamics
-    tpat_sys_data_cr3bp subSys(bcSys->getPrimary(0), bcSys->getPrimary(1));
+    TPAT_Sys_Data_CR3BP subSys(bcSys->getPrimary(0), bcSys->getPrimary(1));
     double a = 2*subSys.getMu() - 1;
     double b = 4*subSys.getMu()*subSys.getMu() - 4*subSys.getMu() + 2;
     double c = 2*pow(subSys.getMu(), 3) - 3*subSys.getMu()*subSys.getMu() + 3*subSys.getMu() - 1;
@@ -2466,7 +1867,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr *bcSys, double t0){
     
     // Get primary positions
     double primPos[9];
-    bcr4bpr_getPrimaryPos(t0, bcSys, primPos);
+    TPAT_Model_BC4BP::getPrimaryPos(t0, bcSys, primPos);
     
     double err = 1;
     double okErr = 1e-10;
@@ -2520,7 +1921,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr *bcSys, double t0){
     if(err <= okErr)
         return spPos;
     else
-        throw tpat_diverge("tpat_calculations::bcr4bpr_getSPLoc: Could not converge on SP location");
+        throw TPAT_Diverge("tpat_calculations::bcr4bpr_getSPLoc: Could not converge on SP location");
 }//=====================================================
 
 /**
@@ -2542,7 +1943,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const tpat_sys_data_bcr4bpr *bcSys, double t0){
  *  
  *      [x, y, z] = [T*T, T, 1]*[Coefficient Matrix]
  */
-MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr *bcSys, double T0){
+MatrixXRd bcr4bpr_spLoc_polyFit(const TPAT_Sys_Data_BC4BP *bcSys, double T0){
     const int STATE_SIZE = 3;   // predicting three position states
     double tSpan = 24*3600/bcSys->getCharT();   // Amount of time to span before and after T0
     int numPts = 100;
@@ -2576,30 +1977,6 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const tpat_sys_data_bcr4bpr *bcSys, double T0){
     
     return C;
 }//=================================================
-
-/**
- *  @brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
- *  
- *  @param et epoch time (seconds, J2000, UTC)
- *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
- *  in this data object
- */
-void bcr4bpr_orientAtEpoch(double et, tpat_sys_data_bcr4bpr *sysData){
-    // Both theta and phi are approximately equal to zero at REF_EPOCH
-    double time_nonDim = (et - tpat_sys_data_bcr4bpr::REF_EPOCH)/sysData->getCharT();
-    
-    // Compute theta and phi
-    double theta = sysData->getK()*time_nonDim;
-    double phi = sqrt(sysData->getMu()/pow(sysData->getCharLRatio(), 3))*time_nonDim;
-
-    // Adjust theta and phi to be between 0 and 2*PI
-    theta -= floor(theta/(2*PI))*2*PI;
-    phi -= floor(phi/(2*PI))*2*PI;
-
-    sysData->setTheta0(theta);
-    sysData->setPhi0(phi);
-    sysData->setEpoch0(et);
-}//===========================================
 
 
 

@@ -34,56 +34,14 @@
 #include <vector>
 
 // Forward declarations
-class tpat_constraint;
-class tpat_nodeset_bcr4bp;
-class tpat_nodeset_cr3bp;
-class tpat_simulation_engine;
-class tpat_sys_data_bcr4bpr;
+class TPAT_Constraint;
+class TPAT_MultShoot_Data;
+class TPAT_Nodeset_BC4BP;
+class TPAT_Nodeset_CR3BP;
+class TPAT_Sim_Engine;
+class TPAT_Sys_Data_BC4BP;
 
-/**
- *	@brief a custom data class to encapsulate data used in each iteration
- *	of the corrections process.
- *
- *	This data object can be passed to other functions, allowing us to break 
- *	the master corrections loop into smaller functions without requiring an
- *	obscene amount of arguments to be passed in.
- */
-struct iterationData{
-	public:
-		const tpat_sys_data *sysData;			//!< A pointer to the system data object used for this corrections process
-		const tpat_nodeset *nodeset;					//!< A pointer to the nodeset input for this corrections process
-		std::vector<double> X0;					//!< Initial, uncorrected free-variable vector
-		std::vector<double> X;					//!< Free-Variable Vector
-		std::vector<double> FX;					//!< Constraint Function Vector
-		std::vector<double> DF;					//!< Jacobian Matrix
-		std::vector<double> deltaVs;			//!< nx3 vector of non-dim delta-Vs
-		std::vector<double> primPos;			//!< Store the positions of the primaries
-		std::vector<double> primVel;			//!< Store the velocities of the primaries
-		std::vector<tpat_node> origNodes;		//!< Store the original nodes that birthed this correction process
-		std::vector<tpat_traj> allSegs;			//!< A collection of all integrated segments
-		std::vector<tpat_constraint> allCons;	//!< A list of all constraints
-		std::vector<int> slackAssignCon;		//!< Indices of constraints, index of entry corresponds to a slack variable
-		std::vector<int> conRows;				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
-		
-		/**
-		 * A scalar coefficient for each free variable type to scale them to the appropriate magnitude.
-		 * These scalings should make numerical processes more successful but must be reversed before
-		 * the free variables are passed into various computation functions (e.g. simulations). Thus,
-		 * every constraint computation function (stored in the models) is responsible for reversing any
-		 * scaling necessary to accurately compute constraints and partial derivatives.
-		 */
-		std::vector<double> freeVarScale;
 
-		int numNodes = 0;			//!< Number of nodes in the entire nodeset
-		int count = 0;				//!< Count of number of iterations through corrections process
-
-		int numSlack = 0;			//!< number of slack variables
-		int totalCons = 0;			//!< Total # constraints -> # rows of DF
-		int totalFree = 0;			//!< Total # free var. -> # cols of DF
-
-		bool varTime = true;		//!< Whether or not the simulation is using variable time
-		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
-};
 
 /**
  *	@brief An engine object to perform corrections, such as multiple shooting.
@@ -105,24 +63,22 @@ struct iterationData{
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_correction_engine : public tpat{
+class TPAT_Correction_Engine : public TPAT{
 	public:
 		// *structors
 		/** Default, do-nothing constructor */
-		tpat_correction_engine(){}
-		tpat_correction_engine(const tpat_correction_engine&);
-		~tpat_correction_engine();
+		TPAT_Correction_Engine(){}
+		TPAT_Correction_Engine(const TPAT_Correction_Engine&);
+		~TPAT_Correction_Engine();
 
 		// Operators
-		tpat_correction_engine& operator =(const tpat_correction_engine &e);
+		TPAT_Correction_Engine& operator =(const TPAT_Correction_Engine &e);
 
 		// Set and get functions
 		int getMaxIts() const;
 		double getTol() const;
-		tpat_verbosity_tp isVerbose() const;
+		TPAT_Verbosity_Tp isVerbose() const;
 		bool isFindingEvent() const;
-		tpat_nodeset_cr3bp getCR3BP_Output();
-		tpat_nodeset_bcr4bp getBCR4BPR_Output();
 		bool usesEqualArcTime() const;
 		bool usesScaledVars() const;
 		bool usesVarTime() const;
@@ -135,15 +91,15 @@ class tpat_correction_engine : public tpat{
 		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
-		void setVerbose(tpat_verbosity_tp);
+		void setVerbose(TPAT_Verbosity_Tp);
 		
 		// Utility/Action functions
-		iterationData multShoot(const tpat_nodeset*);
-		iterationData multShoot(iterationData);
+		TPAT_MultShoot_Data multShoot(const TPAT_Nodeset*, TPAT_Nodeset*);
+		TPAT_MultShoot_Data multShoot(TPAT_MultShoot_Data, TPAT_Nodeset*);
 
 	private:
 		/** Describes how many messages to spit out */
-		tpat_verbosity_tp verbose = SOME_MSG;
+		TPAT_Verbosity_Tp verbose = TPAT_Verbosity_Tp::SOME_MSG;
 
 		/** Whether or not to use variable time in the corrections process */
 		bool varTime = true;
@@ -160,9 +116,6 @@ class tpat_correction_engine : public tpat{
 		 */
 		double tol = 1e-12;
 
-		/** Whether or not space has been dynamically allocated for nodeset_out */
-		bool createdNodesetOut = false;
-
 		/** Flag to turn on when this algorithm is being used to locate an event */
 		bool findEvent = false;
 
@@ -175,16 +128,13 @@ class tpat_correction_engine : public tpat{
 		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
 		bool scaleVars = false;
 
-		/** The output nodeset, constructed from the corrected arcs */
-		tpat_nodeset *nodeset_out = 0;
-
 		/** Whether or not the engine is ready to be cleaned and/or deconstructed */
 		bool isClean = true;
 
 		void cleanEngine();
-		void copyEngine(const tpat_correction_engine&);
-		void reportConMags(const iterationData*);
-		Eigen::VectorXd solveUpdateEq(iterationData*);
+		void copyEngine(const TPAT_Correction_Engine&);
+		void reportConMags(const TPAT_MultShoot_Data*);
+		Eigen::VectorXd solveUpdateEq(TPAT_MultShoot_Data*);
 };
 
 #endif

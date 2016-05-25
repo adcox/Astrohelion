@@ -24,35 +24,37 @@
 #include "tpat_traj.hpp"
 
 // Forward Declarations
-class tpat_sys_data_bcr4bpr;
-class tpat_nodeset_bcr4bp;
+class TPAT_Sys_Data_BC4BP;
+class TPAT_Nodeset_BC4BP;
 
 /**
- *	@brief A derivative class of the tpat_traj object that
+ *	@brief A derivative class of the TPAT_Traj object that
  *	contains trajectory information specific to the CR3BP
  *
  *	@author Andrew Cox
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_traj_bcr4bp : public tpat_traj{
+class TPAT_Traj_BC4BP : public TPAT_Traj{
 
 public:
 	// *structors
-	tpat_traj_bcr4bp(const tpat_sys_data_bcr4bpr*);
-	tpat_traj_bcr4bp(const tpat_traj_bcr4bp&);
-	tpat_traj_bcr4bp(const tpat_arc_data&);
-	tpat_traj_bcr4bp(const char*);
-	static tpat_traj_bcr4bp fromNodeset(tpat_nodeset_bcr4bp);
+	TPAT_Traj_BC4BP(const TPAT_Sys_Data_BC4BP*);
+	TPAT_Traj_BC4BP(const TPAT_Traj_BC4BP&);
+	TPAT_Traj_BC4BP(const TPAT_Base_Arcset&);
+	TPAT_Traj_BC4BP(const char*);
+	baseArcsetPtr create(const TPAT_Sys_Data*) const;
+	baseArcsetPtr clone() const;
+	//static TPAT_Traj_BC4BP fromNodeset(TPAT_Nodeset_BC4BP);
 
 	// Set and Get Functions
 	double getTheta0();
 	double getPhi0();
 	double getGamma();
-	std::vector<double> get_dqdT(int);
+	std::vector<double> get_dqdTByIx(int);
 
-	void set_dqdT(int, const double*);
-	void set_dqdT(int, std::vector<double>);
+	void set_dqdTByIx(int, const double*);
+	void set_dqdTByIx(int, std::vector<double>);
 
 	void readFromMat(const char*);
 	void saveToMat(const char*) const;

@@ -30,25 +30,25 @@
 #include <string>
 #include <vector>
 
-class tpat_traj_cr3bp;
-class tpat_sys_data_cr3bp;
+class TPAT_Traj_CR3BP;
+class TPAT_Sys_Data_CR3BP;
 
 /**
  *	@brief A data object to store information about a family member
  *	
  *	The purpose of this object is to store just enough information to re-create the
  *	orbit using the simulation engine with additional variables to describe the orbit
- *	for categorization purposes (e.g. the getMemberBy___ functions in tpat_family_cr3bp)
+ *	for categorization purposes (e.g. the getMemberBy___ functions in TPAT_Fam_CR3BP)
  */
-class tpat_family_member_cr3bp : public tpat{
+class TPAT_FamMember_CR3BP : public TPAT{
 	public:
-		tpat_family_member_cr3bp(){}
-		tpat_family_member_cr3bp(double*, double, double, double, double, double);
-		tpat_family_member_cr3bp(const tpat_traj_cr3bp);
-		tpat_family_member_cr3bp(const tpat_family_member_cr3bp&);
-		~tpat_family_member_cr3bp();
+		TPAT_FamMember_CR3BP(){}
+		TPAT_FamMember_CR3BP(double*, double, double, double, double, double);
+		TPAT_FamMember_CR3BP(const TPAT_Traj_CR3BP);
+		TPAT_FamMember_CR3BP(const TPAT_FamMember_CR3BP&);
+		~TPAT_FamMember_CR3BP();
 
-		tpat_family_member_cr3bp& operator= (const tpat_family_member_cr3bp&);
+		TPAT_FamMember_CR3BP& operator= (const TPAT_FamMember_CR3BP&);
 
 		std::vector<cdouble> getEigVals() const;
 		std::vector<double> getIC() const;
@@ -65,19 +65,19 @@ class tpat_family_member_cr3bp : public tpat{
 		void setXAmplitude(double);
 		void setYAmplitude(double);
 		void setZAmplitude(double);
-		tpat_traj_cr3bp toTraj(const tpat_sys_data_cr3bp*);
+		TPAT_Traj_CR3BP toTraj(const TPAT_Sys_Data_CR3BP*);
 
 	protected:
 		/** Vector of 6 eigenvalues; initialized to NAN by default */
 		std::vector<cdouble> eigVals {{NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}};
-		std::vector<double> IC {0,0,0,0,0,0};	//!< Initial state for this trajectory, non-dim units
-		double TOF = NAN;			//!< Time of flight for traj., non-dim units
-		double JC = NAN;			//!< Jacobi constant for traj., non-dimensional
-		double xAmplitude = NAN;		//!< Max width in x-direction, non-dim units
-		double yAmplitude = NAN;		//!< Max width in y-direction, non-dim units
-		double zAmplitude = NAN;		//!< Max width in z-direction, non-dim units
+		std::vector<double> IC {0,0,0,0,0,0};		//!< Initial state for this trajectory, non-dim units
+		double TOF = NAN;							//!< Time of flight for traj., non-dim units
+		double JC = NAN;							//!< Jacobi constant for traj., non-dimensional
+		double xAmplitude = NAN;					//!< Max width in x-direction, non-dim units
+		double yAmplitude = NAN;					//!< Max width in y-direction, non-dim units
+		double zAmplitude = NAN;					//!< Max width in z-direction, non-dim units
 
-		void copyMe(const tpat_family_member_cr3bp&);
+		void copyMe(const TPAT_FamMember_CR3BP&);
 };
 
 #endif

@@ -21,15 +21,16 @@
 #ifndef H_NODESET
 #define H_NODESET
 
-#include "tpat_arc_data.hpp"
+#include "tpat_base_arcset.hpp"
 #include "matio.h"
 
 // Forward Declarations
-class tpat_node;
-class tpat_traj;
+class TPAT_Event;
+class TPAT_Node;
+class TPAT_Traj;
 
 /**
- *	@brief Similar to tpat_traj, but only holds state data at specific "nodes"
+ *	@brief Similar to TPAT_Traj, but only holds state data at specific "nodes"
  * 
  *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
  *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
@@ -38,13 +39,13 @@ class tpat_traj;
  *	In addition to nodes, a nodeset stores information about the constraints that should
  *	be applied when the nodeset is passed through a corrections algorithm
  *
- *	@see tpat_node
+ *	@see TPAT_Node
  *
  *	@author Andrew Cox
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset : public tpat_arc_data{
+class TPAT_Nodeset : public TPAT_Base_Arcset{
 
 public:
 	/**
@@ -53,52 +54,45 @@ public:
 		 *	Specified how nodes are distributed along an integrated trajectory
 		 */
 		enum tpat_nodeDistro_tp {
-			DISTRO_NONE, 	//!< There is no organizational method; nodes may be input by user.
-			DISTRO_TIME,	//!< Nodes spread evenly in time
+			DISTRO_NONE, 		//!< There is no organizational method; nodes may be input by user.
+			DISTRO_TIME,		//!< Nodes spread evenly in time
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 	// *structors
-	tpat_nodeset(const tpat_sys_data*);
-	tpat_nodeset(const tpat_nodeset&);
-	tpat_nodeset(const tpat_arc_data&);
-	tpat_nodeset(const tpat_nodeset&, int, int);
-	tpat_nodeset(const char*);
+	TPAT_Nodeset(const TPAT_Sys_Data*);
+	TPAT_Nodeset(const TPAT_Nodeset&);
+	TPAT_Nodeset(const TPAT_Base_Arcset&);
+	TPAT_Nodeset(const TPAT_Nodeset&, int, int);
+	TPAT_Nodeset(const char*);
+	virtual ~TPAT_Nodeset();
+	virtual baseArcsetPtr create(const TPAT_Sys_Data*) const;
+	virtual baseArcsetPtr clone() const;
+	
 	// Operators
+	friend TPAT_Nodeset operator +(const TPAT_Nodeset&, const TPAT_Nodeset&);
+	virtual TPAT_Nodeset& operator +=(const TPAT_Nodeset&);
 
 	// Set and Get Functions
-	std::vector<tpat_constraint> getNodeCons(int) const;
-	tpat_node getNode(int) const;
-
-	int getNumCons() const;
-	int getNumNodes() const;
-	double getTOF(int) const;
-	double getTotalTOF() const;
-	
-	void addConstraint(tpat_constraint);
-	virtual void appendNode(tpat_node);
-	virtual void deleteNode(int);
-	virtual void insertNode(int, tpat_node);
-
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
+	int createNodesAtEvent(int, TPAT_Event);
+	int createNodesAtEvents(int, std::vector<TPAT_Event>);
+	virtual int createNodesAtEvents(int, std::vector<TPAT_Event>, double);
 
 	// Utility Functions
-	void clearConstraints();
-	void readFromMat(const char*);
-	void print() const;
+	virtual void readFromMat(const char*);
+	virtual void print() const;
 	void reverseOrder();
-	void saveToMat(const char*) const;
-	void initExtraParam();
+	virtual void saveToMat(const char*) const;
+	virtual void initExtraParam();
 
 protected:
 
-	void initSetFromICs(const double[6], const tpat_sys_data*, double, double, int, tpat_nodeDistro_tp);
-	void initSetFromICs_time(const double[6], const tpat_sys_data*, double, double, int);
-	void initSetFromICs_arclength(const double[6], const tpat_sys_data*, double, double, int);
-	void initSetFromTraj(tpat_traj, const tpat_sys_data*, int, tpat_nodeDistro_tp);
-	void initStepVectorFromMat(mat_t *, const char*);
-	void saveTOFs(mat_t*) const;
+	void initFromICs(const double[6], double, double, int, tpat_nodeDistro_tp);
+	void initFromICs_time(const double[6], double, double, int);
+	void initFromICs_arclength(const double[6], double, double, int);
+	void initFromTraj(TPAT_Traj, int, tpat_nodeDistro_tp);
 
 };
 

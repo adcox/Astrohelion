@@ -32,7 +32,7 @@
 #include "tpat_event.hpp"
 #include "tpat_exceptions.hpp"
 #include "tpat_node.hpp"
-#include "tpat_simulation_engine.hpp"
+#include "tpat_sim_engine.hpp"
 #include "tpat_traj.hpp"
 #include "tpat_utilities.hpp"
 
@@ -46,7 +46,7 @@
  *	@brief Construct a nodeset for the specified system
  *	@param sys a pointer to a system data object
  */
-tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_base_arcset(sys){
+TPAT_Nodeset::TPAT_Nodeset(const TPAT_Sys_Data *sys) : TPAT_Base_Arcset(sys){
 	initExtraParam();
 }//====================================================
 
@@ -54,7 +54,7 @@ tpat_nodeset::tpat_nodeset(const tpat_sys_data *sys) : tpat_base_arcset(sys){
  *	@brief Create a nodeset from another nodeset
  *	@param n a nodeset reference
  */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_base_arcset (n){
+TPAT_Nodeset::TPAT_Nodeset(const TPAT_Nodeset &n) : TPAT_Base_Arcset (n){
 	initExtraParam();
 }//====================================================
 
@@ -62,7 +62,7 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n) : tpat_base_arcset (n){
  *	@brief Create a nodeset from its base object
  *	@param a an arc data object
  */
-tpat_nodeset::tpat_nodeset(const tpat_base_arcset &a) : tpat_base_arcset (a){
+TPAT_Nodeset::TPAT_Nodeset(const TPAT_Base_Arcset &a) : TPAT_Base_Arcset (a){
 	initExtraParam();
 }//====================================================
 
@@ -74,16 +74,16 @@ tpat_nodeset::tpat_nodeset(const tpat_base_arcset &a) : tpat_base_arcset (a){
  *	last is the same index as first, only one node (with index = first = last)
  *	will be put in the new nodeset
  */
-tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_base_arcset(n){
+TPAT_Nodeset::TPAT_Nodeset(const TPAT_Nodeset &n, int first, int last) : TPAT_Base_Arcset(n){
 	(void) n;
 	(void) first;
 	(void) last;
 
-	throw tpat_exception("tpat_nodeset::tpat_nodeset: Not yet implemented!\n");
+	throw TPAT_Exception("TPAT_Nodeset::TPAT_Nodeset: Not yet implemented!\n");
 	// steps.clear();
 
 	// if(first < 0 || last > (int)(n.steps.size()))
-	// 	throw tpat_exception("tpat_nodeset::tpat_node: node index out of bounds");
+	// 	throw TPAT_Exception("TPAT_Nodeset::TPAT_Node: node index out of bounds");
 	
 	// if(last > first)	// Insert a range
 	// 	steps.insert(steps.end(), n.steps.begin()+first, n.steps.begin()+last);
@@ -94,7 +94,7 @@ tpat_nodeset::tpat_nodeset(const tpat_nodeset &n, int first, int last) : tpat_ba
 /**
  *  @brief Default Destructor
  */
-tpat_nodeset::~tpat_nodeset(){}
+TPAT_Nodeset::~TPAT_Nodeset(){}
 
 /**
  *  @brief Create a new nodeset object on the stack
@@ -105,8 +105,8 @@ tpat_nodeset::~tpat_nodeset(){}
  *  @param sys pointer to a system data object
  *  @return a pointer to the newly created nodeset
  */
-baseArcsetPtr tpat_nodeset::create( const tpat_sys_data *sys) const{
-	return baseArcsetPtr(new tpat_nodeset(sys));
+baseArcsetPtr TPAT_Nodeset::create( const TPAT_Sys_Data *sys) const{
+	return baseArcsetPtr(new TPAT_Nodeset(sys));
 }//====================================================
 
 /**
@@ -118,8 +118,8 @@ baseArcsetPtr tpat_nodeset::create( const tpat_sys_data *sys) const{
  * 
  *  @return a pointer to the newly cloned nodeset
  */
- baseArcsetPtr tpat_nodeset::clone() const{
-	return baseArcsetPtr(new tpat_nodeset(*this));
+ baseArcsetPtr TPAT_Nodeset::clone() const{
+	return baseArcsetPtr(new TPAT_Nodeset(*this));
 }//====================================================
 
 //-----------------------------------------------------
@@ -138,12 +138,12 @@ baseArcsetPtr tpat_nodeset::create( const tpat_sys_data *sys) const{
  * 
  *  @return the concatenation of lhs + rhs.
  */
- tpat_nodeset operator +(const tpat_nodeset &lhs, const tpat_nodeset &rhs){
-	const tpat_nodeset lhs_cpy(lhs);
-	const tpat_nodeset rhs_cpy(rhs);
-	tpat_nodeset result(lhs.sysData);
+ TPAT_Nodeset operator +(const TPAT_Nodeset &lhs, const TPAT_Nodeset &rhs){
+	const TPAT_Nodeset lhs_cpy(lhs);
+	const TPAT_Nodeset rhs_cpy(rhs);
+	TPAT_Nodeset result(lhs.sysData);
 
-	tpat_base_arcset::sum(&lhs, &rhs, &result);
+	TPAT_Base_Arcset::sum(&lhs, &rhs, &result);
 
 	return result;
 }//====================================================
@@ -155,8 +155,8 @@ baseArcsetPtr tpat_nodeset::create( const tpat_sys_data *sys) const{
  *  @return the concatenation of this and <tt>rhs</tt>
  *  @see operator +()
  */
-tpat_nodeset& tpat_nodeset::operator +=(const tpat_nodeset &rhs){
-	tpat_nodeset temp = *this + rhs;
+TPAT_Nodeset& TPAT_Nodeset::operator +=(const TPAT_Nodeset &rhs){
+	TPAT_Nodeset temp = *this + rhs;
 	copyMe(temp);
 	return *this;
 }//====================================================
@@ -181,8 +181,8 @@ tpat_nodeset& tpat_nodeset::operator +=(const tpat_nodeset &rhs){
  * 
  *  @return the number of nodes created and inserted into the nodeset.
  */
-int tpat_nodeset::createNodesAtEvent(int priorNodeIx, tpat_event evt){
-	std::vector<tpat_event> events(1, evt);
+int TPAT_Nodeset::createNodesAtEvent(int priorNodeIx, TPAT_Event evt){
+	std::vector<TPAT_Event> events(1, evt);
 	return createNodesAtEvents(priorNodeIx, events);
 }//====================================================
 
@@ -202,9 +202,9 @@ int tpat_nodeset::createNodesAtEvent(int priorNodeIx, tpat_event evt){
  
  *  @return the number of nodes created and inserted into the nodeset.
  *  @see createNodesAtEvent
- *  @see createNodesAtEvents(int, std::vector<tpat_event>, double)
+ *  @see createNodesAtEvents(int, std::vector<TPAT_Event>, double)
  */
-int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> evts){
+int TPAT_Nodeset::createNodesAtEvents(int priorNodeIx, std::vector<TPAT_Event> evts){
 	return createNodesAtEvents(priorNodeIx, evts, 1e-2);
 }//====================================================
 
@@ -222,19 +222,19 @@ int tpat_nodeset::createNodesAtEvents(int priorNodeIx, std::vector<tpat_event> e
  *  times-of-flight greater than or equal to this amount
  *  
  *  @return the number of nodes created and inserted into the nodeset.
- *  @throws tpat_exception if <tt>segID</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>segID</tt> is out of bounds
  */
-int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, double minTimeDiff){
+int TPAT_Nodeset::createNodesAtEvents(int segID, std::vector<TPAT_Event> evts, double minTimeDiff){
 	if(segID < 0 || segID >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_nodeset::createNodesAtEvents: Segment ID is out of bounds");
+		throw TPAT_Exception("TPAT_Nodeset::createNodesAtEvents: Segment ID is out of bounds");
 
 	// Get a copy of the segment we are replacing
-	tpat_segment seg = segs[segIDMap[segID]];
-	tpat_node origin = nodes[nodeIDMap[seg.getOrigin()]];
-	tpat_node terminus = nodes[nodeIDMap[seg.getTerminus()]];
+	TPAT_Segment seg = segs[segIDMap[segID]];
+	TPAT_Node origin = nodes[nodeIDMap[seg.getOrigin()]];
+	TPAT_Node terminus = nodes[nodeIDMap[seg.getTerminus()]];
 
 	// Create a simulation engine and add the events to it
-	tpat_simulation_engine engine;
+	TPAT_Sim_Engine engine;
 	engine.setRevTime(seg.getTOF() < 0);
 	engine.setMakeCrashEvents(false);
 	for(size_t i = 0; i < evts.size(); i++){
@@ -246,12 +246,12 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 	 * 	to ensure that no new nodes are created with TOF less than minTimeDiff
 	 */
 	double segTOF = seg.getTOF() < 0 ? seg.getTOF() + std::abs(minTimeDiff) : seg.getTOF() - std::abs(minTimeDiff);
-	tpat_traj traj(sysData);
+	TPAT_Traj traj(sysData);
 	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
 
 	double T0 = traj.getEpochByIx(0);
-	std::vector<tpat_event> events = engine.getEvents();
-	std::vector<eventRecord> evtRecs = engine.getEventRecords();
+	std::vector<TPAT_Event> events = engine.getEvents();
+	std::vector<TPAT_Sim_EventRecord> evtRecs = engine.getEventRecords();
 	int evtCount = 0, prevNodeID = origin.getID();
 	double tof = 0;
 	for(size_t e = 0; e < evtRecs.size(); e++){
@@ -268,8 +268,8 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 				tof = traj.getEpochByIx(stepIx) - T0;
 
 				if(tof > minTimeDiff){
-					int newID = addNode(tpat_node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
-					addSeg(tpat_segment(prevNodeID, newID, tof));
+					int newID = addNode(TPAT_Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
+					addSeg(TPAT_Segment(prevNodeID, newID, tof));
 
 					prevNodeID = newID;
 					T0 += tof;
@@ -282,7 +282,7 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
 	if(evtCount > 0){
 		// Add a final segment connecting the last node to the original terminus
 		tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
-		addSeg(tpat_segment(prevNodeID, terminus.getID(), tof));
+		addSeg(TPAT_Segment(prevNodeID, terminus.getID(), tof));
 	}
 
 	return evtCount;
@@ -292,7 +292,7 @@ int tpat_nodeset::createNodesAtEvents(int segID, std::vector<tpat_event> evts, d
  *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
  *	@param id a vector of segment IDs that can have velocity discontinuities
  */
-void tpat_nodeset::allowDV_at(std::vector<int> id) {
+void TPAT_Nodeset::allowDV_at(std::vector<int> id) {
 	for(size_t i = 0; i < segs.size(); i++){
 		// Check to see if the node should have continuous velocity
 		if(std::find(id.begin(), id.end(), segs[i].getID()) == id.end()){
@@ -306,7 +306,7 @@ void tpat_nodeset::allowDV_at(std::vector<int> id) {
 /**
  *  @brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
  */
-void tpat_nodeset::allowDV_all(){
+void TPAT_Nodeset::allowDV_all(){
 	for(size_t i = 0; i < segs.size(); i++){
 		segs[i].setVel_AllDiscon();
 	}
@@ -315,7 +315,7 @@ void tpat_nodeset::allowDV_all(){
 /**
  *  @brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
  */
-void tpat_nodeset::allowDV_none(){
+void TPAT_Nodeset::allowDV_none(){
 	for(size_t i = 0; i < segs.size(); i++){
 		segs[i].setVel_AllCon();
 	}
@@ -328,13 +328,13 @@ void tpat_nodeset::allowDV_none(){
 /**
  *	@brief Display a textual representation of this object in the standard output
  */
-void tpat_nodeset::print() const{
+void TPAT_Nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", sysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
 	for(size_t n = 0; n < nodeIDMap.size(); n++){
 		printf("  %02lu (ix %02d):", n, nodeIDMap[n]);
-		if(nodeIDMap[n] != tpat_linkable::INVALID_ID){
+		if(nodeIDMap[n] != TPAT_Linkable::INVALID_ID){
 			std::vector<double> state = nodes[nodeIDMap[n]].getState();
 			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
 				nodes[nodeIDMap[n]].getEpoch(), state[0], state[1], state[2], state[3],
@@ -347,7 +347,7 @@ void tpat_nodeset::print() const{
 	printf("List of Segments:\n");
 	for (size_t s = 0; s < segIDMap.size(); s++){
 		printf("  %02lu (ix %02d):", s, segIDMap[s]);
-		if(segIDMap[s] != tpat_linkable::INVALID_ID && segIDMap[s] < (int)(segs.size())){
+		if(segIDMap[s] != TPAT_Linkable::INVALID_ID && segIDMap[s] < (int)(segs.size())){
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[segIDMap[s]].getOrigin(),
 				segs[segIDMap[s]].getTerminus(), segs[segIDMap[s]].getTOF());
 		}else{
@@ -357,13 +357,13 @@ void tpat_nodeset::print() const{
 
 	printf(" Constraints:\n");
 	for(size_t n = 0; n < nodes.size(); n++){
-		std::vector<tpat_constraint> nodeCons = nodes[n].getConstraints();
+		std::vector<TPAT_Constraint> nodeCons = nodes[n].getConstraints();
 		for(size_t c = 0; c < nodeCons.size(); c++){
 			nodeCons[c].print();
 		}
 	}
 	for(size_t s = 0; s < segs.size(); s++){
-		std::vector<tpat_constraint> segCons = segs[s].getConstraints();
+		std::vector<TPAT_Constraint> segCons = segs[s].getConstraints();
 		for(size_t c = 0; c < segCons.size(); c++){
 			segCons[c].print();
 		}
@@ -397,7 +397,7 @@ void tpat_nodeset::print() const{
  *	constraint the same states even though the node indices 
  *	have changed.
  */
-void tpat_nodeset::reverseOrder() {
+void TPAT_Nodeset::reverseOrder() {
 	for(size_t s = 0; s < segs.size(); s++){
 		int o = segs[s].getOrigin();
 		segs[s].setOrigin(segs[s].getTerminus());
@@ -410,7 +410,7 @@ void tpat_nodeset::reverseOrder() {
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_nodeset::saveToMat(const char* filename) const{
+void TPAT_Nodeset::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -442,13 +442,13 @@ void tpat_nodeset::saveToMat(const char* filename) const{
  *  @brief Populate data in this nodeset from a matlab file
  * 
  *  @param filepath the path to the matlab data file
- *  @throws tpat_exception if the file cannot be loaded
+ *  @throws TPAT_Exception if the file cannot be loaded
  */
-void tpat_nodeset::readFromMat(const char *filepath){
+void TPAT_Nodeset::readFromMat(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
-		throw tpat_exception("tpat_nodeset: Could not load data from file");
+		throw TPAT_Exception("TPAT_Nodeset: Could not load data from file");
 	}
 
 	initNodesSegsFromMat(matfp, "Nodes");	// This function MUST be called before other data reading functions
@@ -466,12 +466,12 @@ void tpat_nodeset::readFromMat(const char *filepath){
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC (must be at least 2)
  *	@param distroType node distribution type
- *	@throws tpat_exception if <tt>numNodes</tt> is less than two
+ *	@throws TPAT_Exception if <tt>numNodes</tt> is less than two
  */
-void tpat_nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
+void TPAT_Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
 
 	if(numNodes < 2){
-		throw tpat_exception("tpat_nodeset::initFromICs: Nodeset must have at least two nodes!");
+		throw TPAT_Exception("TPAT_Nodeset::initFromICs: Nodeset must have at least two nodes!");
 	}
 
 	// Prepare to add nodes
@@ -480,13 +480,13 @@ void tpat_nodeset::initFromICs(const double IC[6], double t0, double tof, int nu
 
 	switch(distroType){
 		default:
-		case tpat_nodeset::DISTRO_NONE:
+		case TPAT_Nodeset::DISTRO_NONE:
 			printWarn("Nodeset type is NONE or not specified, using DISTRO_TIME\n");
-		case tpat_nodeset::DISTRO_TIME:
+		case TPAT_Nodeset::DISTRO_TIME:
 			// Initialize using time
 			initFromICs_time(IC, t0, tof, numNodes);
 			break;
-		case tpat_nodeset::DISTRO_ARCLENGTH:
+		case TPAT_Nodeset::DISTRO_ARCLENGTH:
 			// Initialize using arclength
 			initFromICs_arclength(IC, t0, tof, numNodes);
 			break;
@@ -501,22 +501,22 @@ void tpat_nodeset::initFromICs(const double IC[6], double t0, double tof, int nu
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
-	tpat_simulation_engine engine;
-	engine.setVerbose(SOME_MSG);
+void TPAT_Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
+	TPAT_Sim_Engine engine;
+	engine.setVerbose(TPAT_Verbosity_Tp::SOME_MSG);
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
-	int id = addNode(tpat_node(IC, t0));
+	int id = addNode(TPAT_Node(IC, t0));
 
 	double segTOF = tof/(numNodes-1);
 	std::vector<double> ic(IC, IC+6);
 	for(int n = 0; n < numNodes-1; n++){
-		tpat_traj traj(sysData);
+		TPAT_Traj traj(sysData);
 		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);
 
-		id = addNode(tpat_node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
-		addSeg(tpat_segment(id-1, id, segTOF));
+		id = addNode(TPAT_Node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
+		addSeg(TPAT_Segment(id-1, id, segTOF));
 
 		ic = traj.getStateByIx(-1);
 	}
@@ -530,14 +530,14 @@ void tpat_nodeset::initFromICs_time(const double IC[6], double t0, double tof, i
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
-	tpat_simulation_engine engine;
-	engine.setVerbose(SOME_MSG);
+void TPAT_Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
+	TPAT_Sim_Engine engine;
+	engine.setVerbose(TPAT_Verbosity_Tp::SOME_MSG);
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	// Run the simulation and get the trajectory
-	tpat_traj traj(sysData);
+	TPAT_Traj traj(sysData);
 	engine.runSim(IC, t0, tof, &traj);
 
 	// Compute the total arc length using a linear approximation
@@ -562,7 +562,7 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 	double desiredArclen = sumArclen/(numNodes-1);
 
 	// Add one node to the set
-	int prevID = addNode(tpat_node(traj.getStateByIx(0), traj.getEpochByIx(0)));
+	int prevID = addNode(TPAT_Node(traj.getStateByIx(0), traj.getEpochByIx(0)));
 
 	// Loop through again to create trajectory
 	sumArclen = 0;
@@ -575,10 +575,10 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 			sumTOF += allTOF[s];
 		}else{
 			// reached desired length: save node
-			int id = addNode(tpat_node(traj.getStateByIx(s), traj.getEpochByIx(s)));
+			int id = addNode(TPAT_Node(traj.getStateByIx(s), traj.getEpochByIx(s)));
 			
 			// Add a segment to link the previous node and this new one
-			addSeg(tpat_segment(prevID, id, sumTOF));
+			addSeg(TPAT_Segment(prevID, id, sumTOF));
 
 			// Reset counters and index variables
 			sumArclen = 0;
@@ -588,8 +588,8 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
 	}
 
 	// Save the final state as the last node
-	int id2 = addNode(tpat_node(traj.getStateByIx(-1), traj.getEpochByIx(-1)));
-	addSeg(tpat_segment(prevID, id2, sumTOF));
+	int id2 = addNode(TPAT_Node(traj.getStateByIx(-1), traj.getEpochByIx(-1)));
+	addSeg(TPAT_Segment(prevID, id2, sumTOF));
 }//==========================================================
 
 /**
@@ -606,7 +606,7 @@ void tpat_nodeset::initFromICs_arclength(const double IC[6], double t0, double t
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void tpat_nodeset::initFromTraj(tpat_traj traj, int numNodes, tpat_nodeDistro_tp type){
+void TPAT_Nodeset::initFromTraj(TPAT_Traj traj, int numNodes, tpat_nodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getStateByIx(0);
@@ -618,7 +618,7 @@ void tpat_nodeset::initFromTraj(tpat_traj traj, int numNodes, tpat_nodeDistro_tp
 /**
  *	@brief Initialize the extraParam vector to hold nodeset-specific data
  */
-void tpat_nodeset::initExtraParam(){
+void TPAT_Nodeset::initExtraParam(){
 	// Nothing to do right now!
 }//==============================================
 

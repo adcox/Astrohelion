@@ -28,24 +28,24 @@
 #include <string>
 
 /**
- *	@brief A derivative class of the tpat_sys_data object which
+ *	@brief A derivative class of the TPAT_Sys_Data object which
  *	contains information specific to the CR3BP
  *
  *	@author Andrew Cox
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_sys_data_cr3bp : public tpat_sys_data{
+class TPAT_Sys_Data_CR3BP : public TPAT_Sys_Data{
 	public:
-		tpat_sys_data_cr3bp();
-		tpat_sys_data_cr3bp(std::string, std::string);
-		tpat_sys_data_cr3bp(const tpat_sys_data_cr3bp&);
-		tpat_sys_data_cr3bp(const char*);
-		virtual ~tpat_sys_data_cr3bp();
+		TPAT_Sys_Data_CR3BP();
+		TPAT_Sys_Data_CR3BP(std::string, std::string);
+		TPAT_Sys_Data_CR3BP(const TPAT_Sys_Data_CR3BP&);
+		TPAT_Sys_Data_CR3BP(const char*);
+		virtual ~TPAT_Sys_Data_CR3BP();
 		
-		tpat_sys_data_cr3bp& operator=(const tpat_sys_data_cr3bp&);
+		TPAT_Sys_Data_CR3BP& operator=(const TPAT_Sys_Data_CR3BP&);
 		
-		const tpat_model* getModel() const;
+		const TPAT_Model* getModel() const;
 		double getMu() const;
 
 		void saveToMat(const char*) const;
@@ -57,7 +57,7 @@ class tpat_sys_data_cr3bp : public tpat_sys_data{
 		
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_cr3bp model = tpat_model_cr3bp();
+		TPAT_Model_CR3BP model = TPAT_Model_CR3BP();
 };
 
 #endif

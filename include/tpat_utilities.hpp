@@ -50,7 +50,7 @@
  *	is similar to tpat_calculations, but this class does not include functions related to
  *	the complex mathematics involved in trajectory design.
  */
-class tpat_util{
+class TPAT_Util{
 private:
 	/**
 	 *	@brief Worker function to compute permutations via recursion

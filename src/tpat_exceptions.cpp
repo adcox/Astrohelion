@@ -13,23 +13,23 @@
 /**
  *  @brief Default constructor
  */
-tpat_exception::tpat_exception() : msg("Custom exception!") {}
+TPAT_Exception::TPAT_Exception() : msg("Custom exception!") {}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-tpat_exception::tpat_exception(const char* m) : msg(m) {}
+TPAT_Exception::TPAT_Exception(const char* m) : msg(m) {}
 
 /**
  *  @brief Copy constructor
  * 
  *  @param e reference to another exception object
  */
-tpat_exception::tpat_exception(const tpat_exception &e) : msg(e.msg){}
+TPAT_Exception::TPAT_Exception(const TPAT_Exception &e) : msg(e.msg){}
 
 /** @brief describe the exception */
-const char* tpat_exception::what() const throw(){
+const char* TPAT_Exception::what() const throw(){
 	// void *array[10];
 	// size_t size = backtrace(array, 10);
 	// backtrace_symbols_fd(array, size, STDERR_FILENO);
@@ -47,20 +47,20 @@ const char* tpat_exception::what() const throw(){
 }
 
 //-----------------------------------------------------------------------------
-//  ** TPAT_SIZEMISMATCH Functions **
+//  ** TPAT_SIZEMISTPAT_Constraint_Tp::MATCH_ Functions **
 //-----------------------------------------------------------------------------
 
 /** @brief Default constructor */
-tpat_sizeMismatch::tpat_sizeMismatch() : tpat_exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
+TPAT_SizeMismatch::TPAT_SizeMismatch() : TPAT_Exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-tpat_sizeMismatch::tpat_sizeMismatch(const char* m) : tpat_exception(m), std::runtime_error(m) {}
+TPAT_SizeMismatch::TPAT_SizeMismatch(const char* m) : TPAT_Exception(m), std::runtime_error(m) {}
 
 /** @brief describe the exception */
-const char* tpat_sizeMismatch::what() const throw(){
+const char* TPAT_SizeMismatch::what() const throw(){
 	return msg.c_str();
 }
 
@@ -70,16 +70,16 @@ const char* tpat_sizeMismatch::what() const throw(){
 //-----------------------------------------------------------------------------
 
 /** Default constructor */
-tpat_diverge::tpat_diverge() : tpat_exception("Did not converge!"), std::runtime_error("Did not converge!"){}
+TPAT_Diverge::TPAT_Diverge() : TPAT_Exception("Did not converge!"), std::runtime_error("Did not converge!"){}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-tpat_diverge::tpat_diverge(const char* m) : tpat_exception(m), std::runtime_error(m) {}
+TPAT_Diverge::TPAT_Diverge(const char* m) : TPAT_Exception(m), std::runtime_error(m) {}
 
 /** @brief describe the exception */
-const char* tpat_diverge::what() const throw(){
+const char* TPAT_Diverge::what() const throw(){
 	return msg.c_str();
 }
 
@@ -88,15 +88,15 @@ const char* tpat_diverge::what() const throw(){
 //-----------------------------------------------------------------------------
 
 /** Default constructor */
-tpat_linalg_err::tpat_linalg_err() : tpat_exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
+TPAT_LinAlg_Err::TPAT_LinAlg_Err() : TPAT_Exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
 
 /**
  *	@brief Create an exception with a custom message
  *	@param m a message
  */
-tpat_linalg_err::tpat_linalg_err(const char* m) : tpat_exception(m), std::runtime_error(m) {}
+TPAT_LinAlg_Err::TPAT_LinAlg_Err(const char* m) : TPAT_Exception(m), std::runtime_error(m) {}
 
 /** @brief describe the exception */
-const char* tpat_linalg_err::what() const throw(){
+const char* TPAT_LinAlg_Err::what() const throw(){
 	return msg.c_str();
 }

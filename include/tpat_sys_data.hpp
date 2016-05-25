@@ -27,7 +27,23 @@
 #include <vector>
 
 //forward declarations
-class tpat_model;
+class TPAT_Model;
+
+/**
+ *	@brief Specifies the type of dynamical system
+ *	
+ *	Describes the type of system described by this data object. This
+ *	is useful when a function or object specifies only the super-class
+ *	TPAT_Sys_Data and the user needs to determine which derivative
+ *	data type to use. Each derivative type will set its type variable to
+ *	one of the type values.
+ */
+enum class TPAT_System_Tp {
+	UNDEF_SYS,		//!< System type is undefined
+	CR3BP_SYS,		//!< Circular Restricted 3-Body Problem
+	CR3BP_LTVP_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
+	BCR4BPR_SYS 	//!< Bi-Circular Restricted 4-Body Problem, rotating frame
+};
 
 /**
  *	@brief Contains information about a system, like mass ratio, primary names, etc.
@@ -42,34 +58,18 @@ class tpat_model;
  *	@version May 15, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_sys_data : public tpat{
+class TPAT_Sys_Data : public TPAT{
 
 	public:
-		/**
-		 *	@brief Specifies the type of dynamical system
-		 *	
-		 *	Describes the type of system described by this data object. This
-		 *	is useful when a function or object specifies only the super-class
-		 *	tpat_sys_data and the user needs to determine which derivative
-		 *	data type to use. Each derivative type will set its type variable to
-		 *	one of the type values.
-		 */
-		enum tpat_system_tp {
-			UNDEF_SYS,		//!< System type is undefined
-			CR3BP_SYS,		//!< Circular Restricted 3-Body Problem
-			CR3BP_LTVP_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
-			BCR4BPR_SYS 	//!< Bi-Circular Restricted 4-Body Problem, rotating frame
-		};
-
-		tpat_sys_data();
-		tpat_sys_data(const tpat_sys_data&);
-		virtual ~tpat_sys_data();
+		TPAT_Sys_Data();
+		TPAT_Sys_Data(const TPAT_Sys_Data&);
+		virtual ~TPAT_Sys_Data();
 		
 
-		tpat_sys_data& operator =(const tpat_sys_data&);
+		TPAT_Sys_Data& operator =(const TPAT_Sys_Data&);
 
-		friend bool operator ==(const tpat_sys_data&, const tpat_sys_data&);
-		friend bool operator !=(const tpat_sys_data&, const tpat_sys_data&);
+		friend bool operator ==(const TPAT_Sys_Data&, const TPAT_Sys_Data&);
+		friend bool operator !=(const TPAT_Sys_Data&, const TPAT_Sys_Data&);
 
 		double getCharL() const;
 		double getCharM() const;
@@ -79,12 +79,12 @@ class tpat_sys_data : public tpat{
 		 *	@brief Retrieve the model that governs the motion for this system type
 		 *	@return the model that governs the motion for this system type
 		 */
-		virtual const tpat_model* getModel() const = 0;
+		virtual const TPAT_Model* getModel() const = 0;
 		
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
 		int getPrimID(int n) const;
-		tpat_system_tp getType() const;
+		TPAT_System_Tp getType() const;
 		std::string getTypeStr() const;
 
 		virtual void saveToMat(const char*) const;
@@ -118,9 +118,9 @@ class tpat_sys_data : public tpat{
 		std::vector<double> otherParams {};
 
 		/** The type of system this data object describes */
-		tpat_system_tp type = UNDEF_SYS;
+		TPAT_System_Tp type = TPAT_System_Tp::UNDEF_SYS;
 
-		void copyData(const tpat_sys_data&);
+		void copyData(const TPAT_Sys_Data&);
 
 		/**
 		 *  @brief Read the system data object from a Matlab data file

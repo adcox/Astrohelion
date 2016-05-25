@@ -15,7 +15,7 @@
 static const char* PASS = BOLDGREEN "PASS" RESET;
 static const char* FAIL = BOLDRED "FAIL" RESET;
 
-tpat_sys_data_cr3bp sys("earth", "moon");
+TPAT_Sys_Data_CR3BP sys("earth", "moon");
 double state1[] = {1, 0, 0, 0, 0, 0};
 double state2[] = {2, 2, 0, 0, 0, 0};
 double state3[] = {3, 0, 3, 0, 0, 0};
@@ -23,15 +23,15 @@ double state4[] = {4, 0, 0, 4, 0, 0};
 double state5[] = {5, 0, 0, 0, 5, 0};
 
 /**
- *  @brief Create a basic tpat_linkable object (in this case, a node) and test the functions
+ *  @brief Create a basic TPAT_Linkable object (in this case, a node) and test the functions
  *  to ensure everything works properly
  */
 void testCreateLinkable(){
-	int ivID = tpat_linkable::INVALID_ID;
+	int ivID = TPAT_Linkable::INVALID_ID;
 
-	tpat_node n(state1, 10);
+	TPAT_Node n(state1, 10);
 
-	std::cout << "Testing tpat_linkable Creation:" << std::endl;
+	std::cout << "Testing TPAT_Linkable Creation:" << std::endl;
 	std::cout << "  Initial links are emtpy: " << (n.getLink(0) == ivID && n.getLink(1) == ivID ? PASS : FAIL) << std::endl;
 
 	// Add one link; second slot should still have INVALID_ID
@@ -52,7 +52,7 @@ void testCreateLinkable(){
 	try{
 		n.addLink(8);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}
 
@@ -66,7 +66,7 @@ void testCreateLinkable(){
 		n.addLink(3);
 		n.addLink(3);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}
 
@@ -85,24 +85,24 @@ void testCreateLinkable(){
  *  @brief Create an arcset out of a set of nodes and segments; test basic_arcset functionality
  */
 void testCreateArcset(){
-	int ivID = tpat_linkable::INVALID_ID;
+	int ivID = TPAT_Linkable::INVALID_ID;
 
-	tpat_nodeset set(&sys);
+	TPAT_Nodeset set(&sys);
 
-	tpat_node n1(state1, 10);
-	tpat_node n2(state2, 25);
+	TPAT_Node n1(state1, 10);
+	TPAT_Node n2(state2, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
 
-	tpat_segment s(n1ID, n2ID, 15);
-	tpat_segment s_bad1(n1ID, 999, 12);
-	tpat_segment s_bad2(n2ID, 987, 12);
+	TPAT_Segment s(n1ID, n2ID, 15);
+	TPAT_Segment s_bad1(n1ID, 999, 12);
+	TPAT_Segment s_bad2(n2ID, 987, 12);
 
 	int sID = set.addSeg(s);
 
-	tpat_node node1 = set.getNode(n1ID);
-	tpat_node node2 = set.getNode(n2ID);
+	TPAT_Node node1 = set.getNode(n1ID);
+	TPAT_Node node2 = set.getNode(n2ID);
 
 	std::cout << "Testing Arcset Creation:" << std::endl;
 	std::cout << "  basic node initialization: " << (n1.getEpoch() == 10 && n1.getLink(0) == ivID && n1.getLink(1) == ivID ? PASS : FAIL) << std::endl;
@@ -116,7 +116,7 @@ void testCreateArcset(){
 	try{
 		set.addSeg(s_bad1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}
 
@@ -124,7 +124,7 @@ void testCreateArcset(){
 	try{
 		set.addSeg(s_bad2);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}
 }//==================================================
@@ -133,16 +133,16 @@ void testCreateArcset(){
  *  @brief Try to delete a segment from a simiple 2-node set
  */
 void tryDeleteSeg(){
-	int ivID = tpat_linkable::INVALID_ID;
+	int ivID = TPAT_Linkable::INVALID_ID;
 
-	tpat_nodeset set(&sys);
-	tpat_node n1(state1, 10);
-	tpat_node n2(state2, 25);
+	TPAT_Nodeset set(&sys);
+	TPAT_Node n1(state1, 10);
+	TPAT_Node n2(state2, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
 
-	tpat_segment s(n1ID, n2ID, 15);
+	TPAT_Segment s(n1ID, n2ID, 15);
 
 	int sID = set.addSeg(s);
 	set.deleteSeg(sID);
@@ -157,20 +157,20 @@ void tryDeleteSeg(){
  *  @return wether or not the test was successful
  */
 bool tryDeleteFirstNode(){
-	tpat_nodeset set(&sys);
-	tpat_node n1(state1, 10);
-	tpat_node n2(state2, 25);
+	TPAT_Nodeset set(&sys);
+	TPAT_Node n1(state1, 10);
+	TPAT_Node n2(state2, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
 
-	tpat_segment s(n1ID, n2ID, 15);
+	TPAT_Segment s(n1ID, n2ID, 15);
 	set.addSeg(s);
 
 	try{
 		set.deleteNode(0);
 		return true;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		return false;
 	}
 }//==================================================
@@ -181,19 +181,19 @@ bool tryDeleteFirstNode(){
  *  @return wether or not the test was successful
  */
 bool tryDeleteLastNode(){
-	tpat_nodeset set(&sys);
-	tpat_node n1(state1, 10);
-	tpat_node n2(state2, 25);
+	TPAT_Nodeset set(&sys);
+	TPAT_Node n1(state1, 10);
+	TPAT_Node n2(state2, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
 
-	tpat_segment s(n1ID, n2ID, 15);
+	TPAT_Segment s(n1ID, n2ID, 15);
 	set.addSeg(s);
 	try{
 		set.deleteNode(set.getNumNodes()-1);
 		return true;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		return false;
 	}
 }//==================================================
@@ -204,28 +204,28 @@ bool tryDeleteLastNode(){
  *  "heals" itself properly
  */
 void tryDeleteMiddleNode(){
-	int invID = tpat_linkable::INVALID_ID;
+	int invID = TPAT_Linkable::INVALID_ID;
 
-	tpat_nodeset set(&sys);
-	set.addNode(tpat_node(state1, 0));
-	set.addNode(tpat_node(state2, 1.1));
-	set.addNode(tpat_node(state3, 2.2));
-	set.addNode(tpat_node(state4, 3.3));
-	set.addNode(tpat_node(state5, 4.4));
-	set.addSeg(tpat_segment(0, 1, 1.1));
-	set.addSeg(tpat_segment(1, 2, 1.1));
-	set.addSeg(tpat_segment(2, 3, 1.1));
-	int sID_last = set.addSeg(tpat_segment(3, 4, 1.1));
+	TPAT_Nodeset set(&sys);
+	set.addNode(TPAT_Node(state1, 0));
+	set.addNode(TPAT_Node(state2, 1.1));
+	set.addNode(TPAT_Node(state3, 2.2));
+	set.addNode(TPAT_Node(state4, 3.3));
+	set.addNode(TPAT_Node(state5, 4.4));
+	set.addSeg(TPAT_Segment(0, 1, 1.1));
+	set.addSeg(TPAT_Segment(1, 2, 1.1));
+	set.addSeg(TPAT_Segment(2, 3, 1.1));
+	int sID_last = set.addSeg(TPAT_Segment(3, 4, 1.1));
 
 	std::cout << "Delete middle node (LINEAR, FORWARD TIME): ";
 	try{
 		set.deleteNode(1);
-		tpat_segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
+		TPAT_Segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
 		if(seg.getOrigin() == 0 && seg.getTerminus() == 2 && std::abs(seg.getTOF() - 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
 			std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
@@ -241,13 +241,13 @@ void tryDeleteMiddleNode(){
 	std::cout << "  Delete another middle node: ";
 	try{
 		set.deleteNode(2);
-		tpat_segment seg = set.getSeg(sID_last+2);
+		TPAT_Segment seg = set.getSeg(sID_last+2);
 		if(seg.getOrigin() == 0 && seg.getTerminus() == 3 && std::abs(seg.getTOF() - 3.3) < 1e-4)
 			std::cout << PASS << std::endl;
 		else{
 			std::cout << FAIL << std::endl;
 		}
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
@@ -265,28 +265,28 @@ void tryDeleteMiddleNode(){
  *  progresses linearly in reverse time
  */
 void tryDeleteMiddleNode_revTime(){
-	int invID = tpat_linkable::INVALID_ID;
-	tpat_nodeset set(&sys);
-	set.addNode(tpat_node(state1, 0));
-	set.addNode(tpat_node(state2, -1.1));
-	set.addNode(tpat_node(state3, -2.2));
-	set.addNode(tpat_node(state4, -3.3));
-	set.addNode(tpat_node(state5, -4.4));
-	set.addSeg(tpat_segment(0, 1, -1.1));
-	set.addSeg(tpat_segment(1, 2, -1.1));
-	set.addSeg(tpat_segment(2, 3, -1.1));
-	int sID_last = set.addSeg(tpat_segment(3, 4, -1.1));
+	int invID = TPAT_Linkable::INVALID_ID;
+	TPAT_Nodeset set(&sys);
+	set.addNode(TPAT_Node(state1, 0));
+	set.addNode(TPAT_Node(state2, -1.1));
+	set.addNode(TPAT_Node(state3, -2.2));
+	set.addNode(TPAT_Node(state4, -3.3));
+	set.addNode(TPAT_Node(state5, -4.4));
+	set.addSeg(TPAT_Segment(0, 1, -1.1));
+	set.addSeg(TPAT_Segment(1, 2, -1.1));
+	set.addSeg(TPAT_Segment(2, 3, -1.1));
+	int sID_last = set.addSeg(TPAT_Segment(3, 4, -1.1));
 
 	std::cout << "Delete middle node (LINEAR, REVERSE TIME): ";
 	try{
 		set.deleteNode(1);
 		// set.print();
-		tpat_segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
+		TPAT_Segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
 		if(seg.getOrigin() == 0 && seg.getTerminus() == 2 && std::abs(seg.getTOF() + 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
 			std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
@@ -303,13 +303,13 @@ void tryDeleteMiddleNode_revTime(){
 	try{
 		set.deleteNode(2);
 		// set.print();
-		tpat_segment seg = set.getSeg(sID_last+2);
+		TPAT_Segment seg = set.getSeg(sID_last+2);
 		if(seg.getOrigin() == 0 && seg.getTerminus() == 3 && std::abs(seg.getTOF() + 3.3) < 1e-4)
 			std::cout << PASS << std::endl;
 		else{
 			std::cout << FAIL << std::endl;
 		}
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
@@ -328,23 +328,23 @@ void tryDeleteMiddleNode_revTime(){
  *  @details Make sure the arcset is healed properly.
  */
 void tryDeleteMiddleNode_doubleSource1(){
-	int invID = tpat_linkable::INVALID_ID;
-	tpat_nodeset set(&sys);
-	set.addNode(tpat_node(state1, 0));
-	set.addNode(tpat_node(state2, -1.1));
-	set.addNode(tpat_node(state3, -2.2));
-	set.addNode(tpat_node(state4, 1.1));
-	set.addNode(tpat_node(state5, 2.2));
-	set.addSeg(tpat_segment(0, 1, -1.1));
-	set.addSeg(tpat_segment(1, 2, -1.1));
-	set.addSeg(tpat_segment(0, 3, 1.1));
-	int sID_last = set.addSeg(tpat_segment(3, 4, 1.1));
+	int invID = TPAT_Linkable::INVALID_ID;
+	TPAT_Nodeset set(&sys);
+	set.addNode(TPAT_Node(state1, 0));
+	set.addNode(TPAT_Node(state2, -1.1));
+	set.addNode(TPAT_Node(state3, -2.2));
+	set.addNode(TPAT_Node(state4, 1.1));
+	set.addNode(TPAT_Node(state5, 2.2));
+	set.addSeg(TPAT_Segment(0, 1, -1.1));
+	set.addSeg(TPAT_Segment(1, 2, -1.1));
+	set.addSeg(TPAT_Segment(0, 3, 1.1));
+	int sID_last = set.addSeg(TPAT_Segment(3, 4, 1.1));
 
 	std::cout << "Delete middle node (DOULBE DIRECTION 1): ";
 	try{
 		set.deleteNode(0);
 		// set.print();
-		tpat_segment seg = set.getSeg(sID_last+1);
+		TPAT_Segment seg = set.getSeg(sID_last+1);
 		if(seg.getOrigin() == 1 && seg.getTerminus() == 3 && std::abs(seg.getTOF() - 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
@@ -367,24 +367,24 @@ void tryDeleteMiddleNode_doubleSource1(){
  *  the forward time segment has no terminal point
  */
 void tryDeleteMiddleNode_doubleSource2(){
-	tpat_nodeset set(&sys);
-	set.addNode(tpat_node(state1, 0));
-	set.addNode(tpat_node(state2, -1.1));
-	set.addNode(tpat_node(state3, -2.2));
-	set.addSeg(tpat_segment(0, 1, -1.1));
-	set.addSeg(tpat_segment(1, 2, -1.1));
-	int sID_last = set.addSeg(tpat_segment(0, tpat_linkable::INVALID_ID, 1.1));
+	TPAT_Nodeset set(&sys);
+	set.addNode(TPAT_Node(state1, 0));
+	set.addNode(TPAT_Node(state2, -1.1));
+	set.addNode(TPAT_Node(state3, -2.2));
+	set.addSeg(TPAT_Segment(0, 1, -1.1));
+	set.addSeg(TPAT_Segment(1, 2, -1.1));
+	int sID_last = set.addSeg(TPAT_Segment(0, TPAT_Linkable::INVALID_ID, 1.1));
 
 	std::cout << "Delete middle node (DOULBE DIRECTION 2): ";
 	try{
 		set.deleteNode(0);
 		// set.print();
-		tpat_segment seg = set.getSeg(sID_last+1);
-		if(seg.getOrigin() == 1 && seg.getTerminus() == tpat_linkable::INVALID_ID && std::abs(seg.getTOF() - 2.2) < 1e-4)
+		TPAT_Segment seg = set.getSeg(sID_last+1);
+		if(seg.getOrigin() == 1 && seg.getTerminus() == TPAT_Linkable::INVALID_ID && std::abs(seg.getTOF() - 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
 			std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
@@ -395,30 +395,30 @@ void tryDeleteMiddleNode_doubleSource2(){
  *  the reverse time segment has no terminal point
  */
 void tryDeleteMiddleNode_doubleSource3(){
-	tpat_nodeset set(&sys);
-	set.addNode(tpat_node(state1, 0));
-	set.addNode(tpat_node(state2, 1.1));
-	set.addNode(tpat_node(state3, 2.2));
-	set.addSeg(tpat_segment(0, tpat_linkable::INVALID_ID, -1.1));
-	set.addSeg(tpat_segment(0, 1, 1.1));
-	int sID_last = set.addSeg(tpat_segment(1, 2, 1.1));
+	TPAT_Nodeset set(&sys);
+	set.addNode(TPAT_Node(state1, 0));
+	set.addNode(TPAT_Node(state2, 1.1));
+	set.addNode(TPAT_Node(state3, 2.2));
+	set.addSeg(TPAT_Segment(0, TPAT_Linkable::INVALID_ID, -1.1));
+	set.addSeg(TPAT_Segment(0, 1, 1.1));
+	int sID_last = set.addSeg(TPAT_Segment(1, 2, 1.1));
 
 	std::cout << "Delete middle node (DOULBE DIRECTION 3): ";
 	try{
 		set.deleteNode(0);
 		// set.print();
-		tpat_segment seg = set.getSeg(sID_last+1);
-		if(seg.getOrigin() == 1 && seg.getTerminus() == tpat_linkable::INVALID_ID && std::abs(seg.getTOF() + 2.2) < 1e-4)
+		TPAT_Segment seg = set.getSeg(sID_last+1);
+		if(seg.getOrigin() == 1 && seg.getTerminus() == TPAT_Linkable::INVALID_ID && std::abs(seg.getTOF() + 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
 			std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << FAIL << std::endl;
 		printf("  %s\n", e.what());
 	}
 }//==================================================
 
-bool pieceVecsAreEqual(std::vector<tpat_arc_piece> v1, std::vector<tpat_arc_piece> v2){
+bool pieceVecsAreEqual(std::vector<TPAT_Arc_Piece> v1, std::vector<TPAT_Arc_Piece> v2){
 	if(v1.size() != v2.size())
 		return false;
 
@@ -433,162 +433,162 @@ bool pieceVecsAreEqual(std::vector<tpat_arc_piece> v1, std::vector<tpat_arc_piec
 void testPutInChrono(){
 	std::cout << "Testing getChronoOrder() function:" << std::endl;
 	// Forward time set
-	tpat_nodeset set1(&sys);
-	set1.addNode(tpat_node(state1, 0));
-	set1.addNode(tpat_node(state2, 1.1));
-	set1.addNode(tpat_node(state3, 2.2));
-	set1.addSeg(tpat_segment(0, 1, 1.1));
-	set1.addSeg(tpat_segment(1, 2, 1.1));
+	TPAT_Nodeset set1(&sys);
+	set1.addNode(TPAT_Node(state1, 0));
+	set1.addNode(TPAT_Node(state2, 1.1));
+	set1.addNode(TPAT_Node(state3, 2.2));
+	set1.addSeg(TPAT_Segment(0, 1, 1.1));
+	set1.addSeg(TPAT_Segment(1, 2, 1.1));
 
-	std::vector<tpat_arc_piece> set1_ans;
-	set1_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	set1_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set1_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	set1_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set1_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	std::vector<TPAT_Arc_Piece> set1_ans;
+	set1_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	set1_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set1_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	set1_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set1_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
-	std::vector<tpat_arc_piece> set1_pieces = set1.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set1_pieces = set1.getChronoOrder();
 	set1.printInChrono();
 
 	std::cout << "  Forward Time Set: " << (pieceVecsAreEqual(set1_pieces, set1_ans) ? PASS : FAIL) << std::endl;
 
 	// Reverse time set
-	tpat_nodeset set2(&sys);
-	set2.addNode(tpat_node(state1, 0));
-	set2.addNode(tpat_node(state2, -1.1));
-	set2.addNode(tpat_node(state3, -2.2));
-	set2.addSeg(tpat_segment(0, 1, -1.1));
-	set2.addSeg(tpat_segment(1, 2, -1.1));
+	TPAT_Nodeset set2(&sys);
+	set2.addNode(TPAT_Node(state1, 0));
+	set2.addNode(TPAT_Node(state2, -1.1));
+	set2.addNode(TPAT_Node(state3, -2.2));
+	set2.addSeg(TPAT_Segment(0, 1, -1.1));
+	set2.addSeg(TPAT_Segment(1, 2, -1.1));
 
-	std::vector<tpat_arc_piece> set2_ans;
-	set2_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	set2_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set2_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	set2_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set2_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	std::vector<TPAT_Arc_Piece> set2_ans;
+	set2_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	set2_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set2_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	set2_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set2_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
 
-	std::vector<tpat_arc_piece> set2_pieces = set2.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set2_pieces = set2.getChronoOrder();
 	set2.printInChrono();
 
 	std::cout << "  Reverse Time Set: " << (pieceVecsAreEqual(set2_pieces, set2_ans) ? PASS : FAIL) << std::endl;
 
 	// Shuffled forward time
-	tpat_nodeset set3(&sys);
-	set3.addNode(tpat_node(state2, 1.1));
-	set3.addNode(tpat_node(state1, 0));
-	set3.addNode(tpat_node(state3, 2.2));
-	set3.addSeg(tpat_segment(1, 0, 1.1));
-	set3.addSeg(tpat_segment(0, 2, 1.1));
+	TPAT_Nodeset set3(&sys);
+	set3.addNode(TPAT_Node(state2, 1.1));
+	set3.addNode(TPAT_Node(state1, 0));
+	set3.addNode(TPAT_Node(state3, 2.2));
+	set3.addSeg(TPAT_Segment(1, 0, 1.1));
+	set3.addSeg(TPAT_Segment(0, 2, 1.1));
 	
-	std::vector<tpat_arc_piece> set3_ans;
-	set3_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	set3_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set3_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	set3_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set3_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	std::vector<TPAT_Arc_Piece> set3_ans;
+	set3_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	set3_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set3_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	set3_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set3_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
-	std::vector<tpat_arc_piece> set3_pieces = set3.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set3_pieces = set3.getChronoOrder();
 	set3.printInChrono();
 
 	std::cout << "  Shuffled forward Time Set: " << (pieceVecsAreEqual(set3_pieces, set3_ans) ? PASS : FAIL) << std::endl;
 
 	// Shuffled reverse time
-	tpat_nodeset set4(&sys);
-	set4.addNode(tpat_node(state2, -1.1));
-	set4.addNode(tpat_node(state1, 0));
-	set4.addNode(tpat_node(state3, -2.2));
-	set4.addSeg(tpat_segment(1, 0, -1.1));
-	set4.addSeg(tpat_segment(0, 2, -1.1));
+	TPAT_Nodeset set4(&sys);
+	set4.addNode(TPAT_Node(state2, -1.1));
+	set4.addNode(TPAT_Node(state1, 0));
+	set4.addNode(TPAT_Node(state3, -2.2));
+	set4.addSeg(TPAT_Segment(1, 0, -1.1));
+	set4.addSeg(TPAT_Segment(0, 2, -1.1));
 	
-	std::vector<tpat_arc_piece> set4_ans;
-	set4_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	set4_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set4_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	set4_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set4_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
+	std::vector<TPAT_Arc_Piece> set4_ans;
+	set4_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	set4_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set4_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	set4_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set4_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
 
-	std::vector<tpat_arc_piece> set4_pieces = set4.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set4_pieces = set4.getChronoOrder();
 	set4.printInChrono();
 
 	std::cout << "  Shuffled reverse Time Set: " << (pieceVecsAreEqual(set4_pieces, set4_ans) ? PASS : FAIL) << std::endl;
 
 	// Mixed time set
-	tpat_nodeset set5(&sys);
-	set5.addNode(tpat_node(state1, 2.2));
-	set5.addNode(tpat_node(state2, 0));
-	set5.addNode(tpat_node(state3, 1.1));
-	set5.addNode(tpat_node(state4, -2.2));
-	set5.addNode(tpat_node(state5, -1.1));
-	set5.addSeg(tpat_segment(4, 3, -1.1));
-	set5.addSeg(tpat_segment(1, 2, 1.1));
-	set5.addSeg(tpat_segment(1, 4, -1.1));
-	set5.addSeg(tpat_segment(2, 0, 1.1));
+	TPAT_Nodeset set5(&sys);
+	set5.addNode(TPAT_Node(state1, 2.2));
+	set5.addNode(TPAT_Node(state2, 0));
+	set5.addNode(TPAT_Node(state3, 1.1));
+	set5.addNode(TPAT_Node(state4, -2.2));
+	set5.addNode(TPAT_Node(state5, -1.1));
+	set5.addSeg(TPAT_Segment(4, 3, -1.1));
+	set5.addSeg(TPAT_Segment(1, 2, 1.1));
+	set5.addSeg(TPAT_Segment(1, 4, -1.1));
+	set5.addSeg(TPAT_Segment(2, 0, 1.1));
 	
-	std::vector<tpat_arc_piece> set5_ans;
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	set5_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	std::vector<TPAT_Arc_Piece> set5_ans;
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	set5_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
 
-	std::vector<tpat_arc_piece> set5_pieces = set5.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set5_pieces = set5.getChronoOrder();
 	set5.printInChrono();
 	std::cout << "  Shuffled Mixed Time Set: " << (pieceVecsAreEqual(set5_pieces, set5_ans) ? PASS : FAIL) << std::endl;
 
 	// Mixed Time Set, Linked Segments
-	tpat_nodeset set6(&sys);
-	set6.addNode(tpat_node(state1, 0));
-	set6.addNode(tpat_node(state2, 1.1));
-	// set6.addNode(tpat_node(state3, 2.2));
-	// set6.addNode(tpat_node(state4, -1.1));
-	set6.addNode(tpat_node(state5, -2.2));
-	set6.addSeg(tpat_segment(0, 1, 1.1));
-	set6.addSeg(tpat_segment(1, -1, 1.1));
-	set6.addSeg(tpat_segment(2, -1, -1.1));
+	TPAT_Nodeset set6(&sys);
+	set6.addNode(TPAT_Node(state1, 0));
+	set6.addNode(TPAT_Node(state2, 1.1));
+	// set6.addNode(TPAT_Node(state3, 2.2));
+	// set6.addNode(TPAT_Node(state4, -1.1));
+	set6.addNode(TPAT_Node(state5, -2.2));
+	set6.addSeg(TPAT_Segment(0, 1, 1.1));
+	set6.addSeg(TPAT_Segment(1, -1, 1.1));
+	set6.addSeg(TPAT_Segment(2, -1, -1.1));
 
 	double segLinkData[] = {2, 2, 2, NAN, NAN, NAN};
-	tpat_constraint segLinkCon(tpat_constraint::SEG_CONT_PV, 1, segLinkData, 6);
+	TPAT_Constraint segLinkCon(TPAT_Constraint_Tp::SEG_CONT_PV, 1, segLinkData, 6);
 	set6.addConstraint(segLinkCon);
 	// set6.print();
 
-	std::vector<tpat_arc_piece> set6_ans;
-	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	set6_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	std::vector<TPAT_Arc_Piece> set6_ans;
+	set6_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	set6_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set6_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	set6_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set6_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	set6_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
-	std::vector<tpat_arc_piece> set6_pieces = set6.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set6_pieces = set6.getChronoOrder();
 	set6.printInChrono();
 	std::cout << "  Linked Seg Set: " << (pieceVecsAreEqual(set6_pieces, set6_ans) ? PASS : FAIL) << std::endl;
 
 	// Mixed Time Set, Linked Segments, reversed constraint IDs
-	tpat_nodeset set7(&sys);
-	set7.addNode(tpat_node(state1, 0));
-	set7.addNode(tpat_node(state2, 1.1));
-	set7.addNode(tpat_node(state5, -2.2));
-	set7.addSeg(tpat_segment(0, 1, 1.1));
-	set7.addSeg(tpat_segment(1, -1, 1.1));
-	set7.addSeg(tpat_segment(2, -1, -1.1));
+	TPAT_Nodeset set7(&sys);
+	set7.addNode(TPAT_Node(state1, 0));
+	set7.addNode(TPAT_Node(state2, 1.1));
+	set7.addNode(TPAT_Node(state5, -2.2));
+	set7.addSeg(TPAT_Segment(0, 1, 1.1));
+	set7.addSeg(TPAT_Segment(1, -1, 1.1));
+	set7.addSeg(TPAT_Segment(2, -1, -1.1));
 
 	double segLinkData2[] = {1, 1, 1, NAN, NAN, NAN};
-	tpat_constraint segLinkCon2(tpat_constraint::SEG_CONT_PV, 2, segLinkData2, 6);
+	TPAT_Constraint segLinkCon2(TPAT_Constraint_Tp::SEG_CONT_PV, 2, segLinkData2, 6);
 	set7.addConstraint(segLinkCon2);
 
-	std::vector<tpat_arc_piece> set7_ans;
-	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	set7_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	std::vector<TPAT_Arc_Piece> set7_ans;
+	set7_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	set7_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	set7_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	set7_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	set7_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	set7_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
-	std::vector<tpat_arc_piece> set7_pieces = set7.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> set7_pieces = set7.getChronoOrder();
 	set7.printInChrono();
 	std::cout << "  Linked Seg Set #2: " << (pieceVecsAreEqual(set7_pieces, set7_ans) ? PASS : FAIL) << std::endl;
 }//====================================================
@@ -597,12 +597,12 @@ void testPutInChrono2(){
 	std::cout << "Testing putInChronoOrder() function:" << std::endl;
 
 	// Forward time set
-	tpat_nodeset set1(&sys);
-	set1.addNode(tpat_node(state1, 0));
-	set1.addNode(tpat_node(state2, 1.1));
-	set1.addNode(tpat_node(state3, 2.2));
-	set1.addSeg(tpat_segment(0, 1, 1.1));
-	set1.addSeg(tpat_segment(1, 2, 1.1));
+	TPAT_Nodeset set1(&sys);
+	set1.addNode(TPAT_Node(state1, 0));
+	set1.addNode(TPAT_Node(state2, 1.1));
+	set1.addNode(TPAT_Node(state3, 2.2));
+	set1.addSeg(TPAT_Segment(0, 1, 1.1));
+	set1.addSeg(TPAT_Segment(1, 2, 1.1));
 
 	set1.putInChronoOrder();
 	bool nodeOrder = set1.getNodeByIx(0).getID() == 0 && 
@@ -614,12 +614,12 @@ void testPutInChrono2(){
 	std::cout << "  Forward Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
 
 	// Reverse time set
-	tpat_nodeset set2(&sys);
-	set2.addNode(tpat_node(state1, 0));
-	set2.addNode(tpat_node(state2, -1.1));
-	set2.addNode(tpat_node(state3, -2.2));
-	set2.addSeg(tpat_segment(0, 1, -1.1));
-	set2.addSeg(tpat_segment(1, 2, -1.1));
+	TPAT_Nodeset set2(&sys);
+	set2.addNode(TPAT_Node(state1, 0));
+	set2.addNode(TPAT_Node(state2, -1.1));
+	set2.addNode(TPAT_Node(state3, -2.2));
+	set2.addSeg(TPAT_Segment(0, 1, -1.1));
+	set2.addSeg(TPAT_Segment(1, 2, -1.1));
 
 	set2.putInChronoOrder();
 	nodeOrder = set2.getNodeByIx(0).getID() == 2 && 
@@ -631,12 +631,12 @@ void testPutInChrono2(){
 	std::cout << "  Reverse Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
 
 	// Shuffled forward time
-	tpat_nodeset set3(&sys);
-	set3.addNode(tpat_node(state2, 1.1));
-	set3.addNode(tpat_node(state1, 0));
-	set3.addNode(tpat_node(state3, 2.2));
-	set3.addSeg(tpat_segment(1, 0, 1.1));
-	set3.addSeg(tpat_segment(0, 2, 1.1));
+	TPAT_Nodeset set3(&sys);
+	set3.addNode(TPAT_Node(state2, 1.1));
+	set3.addNode(TPAT_Node(state1, 0));
+	set3.addNode(TPAT_Node(state3, 2.2));
+	set3.addSeg(TPAT_Segment(1, 0, 1.1));
+	set3.addSeg(TPAT_Segment(0, 2, 1.1));
 	
 	set3.putInChronoOrder();
 	nodeOrder = set3.getNodeByIx(0).getID() == 1 && 
@@ -648,12 +648,12 @@ void testPutInChrono2(){
 	std::cout << "  Shuffled forward Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
 
 	// Shuffled reverse time
-	tpat_nodeset set4(&sys);
-	set4.addNode(tpat_node(state2, -1.1));
-	set4.addNode(tpat_node(state1, 0));
-	set4.addNode(tpat_node(state3, -2.2));
-	set4.addSeg(tpat_segment(1, 0, -1.1));
-	set4.addSeg(tpat_segment(0, 2, -1.1));
+	TPAT_Nodeset set4(&sys);
+	set4.addNode(TPAT_Node(state2, -1.1));
+	set4.addNode(TPAT_Node(state1, 0));
+	set4.addNode(TPAT_Node(state3, -2.2));
+	set4.addSeg(TPAT_Segment(1, 0, -1.1));
+	set4.addSeg(TPAT_Segment(0, 2, -1.1));
 	
 	set4.putInChronoOrder();
 	nodeOrder = set4.getNodeByIx(0).getID() == 2 && 
@@ -665,16 +665,16 @@ void testPutInChrono2(){
 	std::cout << "  Shuffled reverse Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
 
 	// Mixed time set
-	tpat_nodeset set5(&sys);
-	set5.addNode(tpat_node(state1, 2.2));
-	set5.addNode(tpat_node(state2, 0));
-	set5.addNode(tpat_node(state3, 1.1));
-	set5.addNode(tpat_node(state4, -2.2));
-	set5.addNode(tpat_node(state5, -1.1));
-	set5.addSeg(tpat_segment(4, 3, -1.1));
-	set5.addSeg(tpat_segment(1, 2, 1.1));
-	set5.addSeg(tpat_segment(1, 4, -1.1));
-	set5.addSeg(tpat_segment(2, 0, 1.1));
+	TPAT_Nodeset set5(&sys);
+	set5.addNode(TPAT_Node(state1, 2.2));
+	set5.addNode(TPAT_Node(state2, 0));
+	set5.addNode(TPAT_Node(state3, 1.1));
+	set5.addNode(TPAT_Node(state4, -2.2));
+	set5.addNode(TPAT_Node(state5, -1.1));
+	set5.addSeg(TPAT_Segment(4, 3, -1.1));
+	set5.addSeg(TPAT_Segment(1, 2, 1.1));
+	set5.addSeg(TPAT_Segment(1, 4, -1.1));
+	set5.addSeg(TPAT_Segment(2, 0, 1.1));
 	
 	set5.putInChronoOrder();
 	nodeOrder = set5.getNodeByIx(0).getID() == 3 && 
@@ -694,41 +694,41 @@ void testPutInChrono2(){
  *  @brief Try appending sets; all these cases should work.
  */
 void tryAppendSet(){
-	tpat_nodeset forwardSet(&sys);
-	forwardSet.addNode(tpat_node(state1, 0));
-	forwardSet.addNode(tpat_node(state2, 1.1));
-	forwardSet.addNode(tpat_node(state3, 2.2));
-	forwardSet.addSeg(tpat_segment(0, 1, 1.1));
-	forwardSet.addSeg(tpat_segment(1, 2, 1.1));
+	TPAT_Nodeset forwardSet(&sys);
+	forwardSet.addNode(TPAT_Node(state1, 0));
+	forwardSet.addNode(TPAT_Node(state2, 1.1));
+	forwardSet.addNode(TPAT_Node(state3, 2.2));
+	forwardSet.addSeg(TPAT_Segment(0, 1, 1.1));
+	forwardSet.addSeg(TPAT_Segment(1, 2, 1.1));
 
-	tpat_nodeset revSet(&sys);
-	revSet.addNode(tpat_node(state1, 0));
-	revSet.addNode(tpat_node(state2, -1.1));
-	revSet.addNode(tpat_node(state3, -2.2));
-	revSet.addSeg(tpat_segment(0, 1, -1.1));
-	revSet.addSeg(tpat_segment(1, 2, -1.1));
+	TPAT_Nodeset revSet(&sys);
+	revSet.addNode(TPAT_Node(state1, 0));
+	revSet.addNode(TPAT_Node(state2, -1.1));
+	revSet.addNode(TPAT_Node(state3, -2.2));
+	revSet.addSeg(TPAT_Segment(0, 1, -1.1));
+	revSet.addSeg(TPAT_Segment(1, 2, -1.1));
 
 	//****************************************
-	tpat_nodeset forSet1 = forwardSet;
-	tpat_nodeset forSet2 = forwardSet;
+	TPAT_Nodeset forSet1 = forwardSet;
+	TPAT_Nodeset forSet2 = forwardSet;
 
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 1.3);
 	// forSet1.print();
-	std::vector<tpat_arc_piece> chrono = forSet1.getChronoOrder();
+	std::vector<TPAT_Arc_Piece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
 
-	std::vector<tpat_arc_piece> chrono_ans;
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	std::vector<TPAT_Arc_Piece> chrono_ans;
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 5));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
 	std::cout << "Append (+) time set to beginning of (+) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
@@ -742,17 +742,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 5));
 
 	std::cout << "Append (+) time set to end of (+) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
@@ -766,15 +766,15 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, segID));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, segID));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
 	std::cout << "Append (+) time set to beginning of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
@@ -788,39 +788,39 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, segID));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, segID));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
 
 	std::cout << "Append (+) time set to end of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
 
 	//****************************************
-	tpat_nodeset revSet1 = revSet;
-	tpat_nodeset revSet2 = revSet;
+	TPAT_Nodeset revSet1 = revSet;
+	TPAT_Nodeset revSet2 = revSet;
 
 	segID = revSet1.appendSetAtNode(&revSet2, 2, 0, -1.3);
 	chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, segID));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 5));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, segID));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
 
 	std::cout << "Append (-) time set to beginning of (-) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
@@ -834,17 +834,17 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, segID));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, segID));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 5));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
 
 	std::cout << "Append (-) time set to end of (-) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
@@ -858,15 +858,15 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, segID));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, segID));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
 
 	std::cout << "Append (-) time set to beginning of (-) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
@@ -880,15 +880,15 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, segID));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, segID));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
 
 	std::cout << "Append (-) time set to end of (-) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
@@ -903,17 +903,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 5));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF > 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
@@ -928,17 +928,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 5));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 5));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF < 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
@@ -953,15 +953,15 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 4));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 2));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 3));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 0));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::SEG, 1));
-	chrono_ans.push_back(tpat_arc_piece(tpat_arc_piece::NODE, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 2));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 3));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 0));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, 1));
+	chrono_ans.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(1).getTOF() ? PASS : FAIL) << std::endl;
@@ -971,28 +971,28 @@ void tryAppendSet(){
  *  @brief Try appending sets; all these cases should throw errors
  */
 void tryAppendSet_errs(){
-	tpat_nodeset forwardSet(&sys);
-	forwardSet.addNode(tpat_node(state1, 0));
-	forwardSet.addNode(tpat_node(state2, 1.1));
-	forwardSet.addNode(tpat_node(state3, 2.2));
-	forwardSet.addSeg(tpat_segment(0, 1, 1.1));
-	forwardSet.addSeg(tpat_segment(1, 2, 1.1));
+	TPAT_Nodeset forwardSet(&sys);
+	forwardSet.addNode(TPAT_Node(state1, 0));
+	forwardSet.addNode(TPAT_Node(state2, 1.1));
+	forwardSet.addNode(TPAT_Node(state3, 2.2));
+	forwardSet.addSeg(TPAT_Segment(0, 1, 1.1));
+	forwardSet.addSeg(TPAT_Segment(1, 2, 1.1));
 
-	tpat_nodeset revSet(&sys);
-	revSet.addNode(tpat_node(state1, 0));
-	revSet.addNode(tpat_node(state2, -1.1));
-	revSet.addNode(tpat_node(state3, -2.2));
-	revSet.addSeg(tpat_segment(0, 1, -1.1));
-	revSet.addSeg(tpat_segment(1, 2, -1.1));
+	TPAT_Nodeset revSet(&sys);
+	revSet.addNode(TPAT_Node(state1, 0));
+	revSet.addNode(TPAT_Node(state2, -1.1));
+	revSet.addNode(TPAT_Node(state3, -2.2));
+	revSet.addSeg(TPAT_Segment(0, 1, -1.1));
+	revSet.addSeg(TPAT_Segment(1, 2, -1.1));
 
 	std::cout << "Append two (+) time sets at node 0: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = forwardSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = forwardSet;
 
 		set1.appendSetAtNode(&set2, 0, 0, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1001,12 +1001,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Append two (+) time sets at end node: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = forwardSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = forwardSet;
 
 		set1.appendSetAtNode(&set2, 2, 2, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1015,12 +1015,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Append two (+) time sets in the middle: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = forwardSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = forwardSet;
 
 		set1.appendSetAtNode(&set2, 2, 1, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1029,12 +1029,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Create time collision with (+) and (+) time sets: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = forwardSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = forwardSet;
 
 		set1.appendSetAtNode(&set2, 2, 0, -1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1043,12 +1043,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Create time collision with (+) and (+) time sets, again: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = forwardSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = forwardSet;
 
 		set1.appendSetAtNode(&set2, 0, 2, -1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1057,12 +1057,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Create time collision with (-) and (-) time sets: ";
 	try{
-		tpat_nodeset set1 = revSet;
-		tpat_nodeset set2 = revSet;
+		TPAT_Nodeset set1 = revSet;
+		TPAT_Nodeset set2 = revSet;
 
 		set1.appendSetAtNode(&set2, 2, 0, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1071,12 +1071,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Create time collision with (-) and (-) time sets, again: ";
 	try{
-		tpat_nodeset set1 = revSet;
-		tpat_nodeset set2 = revSet;
+		TPAT_Nodeset set1 = revSet;
+		TPAT_Nodeset set2 = revSet;
 
 		set1.appendSetAtNode(&set2, 0, 2, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1085,12 +1085,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Create time collision with (+) and (-) time sets: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = revSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = revSet;
 
 		set1.appendSetAtNode(&set2, 2, 0, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;
@@ -1099,12 +1099,12 @@ void tryAppendSet_errs(){
 
 	std::cout << "Create time collision with (+) and (-) time sets again: ";
 	try{
-		tpat_nodeset set1 = forwardSet;
-		tpat_nodeset set2 = revSet;
+		TPAT_Nodeset set1 = forwardSet;
+		TPAT_Nodeset set2 = revSet;
 
 		set1.appendSetAtNode(&set2, 0, 2, 1.1);
 		std::cout << FAIL << std::endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		std::cout << PASS << std::endl;
 	}catch(std::exception &e){
 		std::cout << FAIL << std::endl;

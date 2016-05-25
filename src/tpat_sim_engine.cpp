@@ -1,5 +1,5 @@
 /**
- *  @file tpat_simulation_engine.cpp
+ *  @file tpat_sim_engine.cpp
  *  @brief Performs numerical integration on a set of initial conditions in 
  *  any dynamic model and system
  */
@@ -24,12 +24,12 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include "tpat_simulation_engine.hpp"
+#include "tpat_sim_engine.hpp"
 
 #include "tpat_ascii_output.hpp"
-#include "tpat_nodeset_bcr4bp.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bp.hpp"
+#include "tpat_node.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
+#include "tpat_traj_bc4bp.hpp"
 #include "tpat_body_data.hpp"
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
@@ -56,23 +56,23 @@
 /**
  *  @brief Construct a simulation engine for a specific dynamical system
  */
-tpat_simulation_engine::tpat_simulation_engine(){
-    printVerb(verbose == ALL_MSG, "Created Simulation Engine\n");
+TPAT_Sim_Engine::TPAT_Sim_Engine(){
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "Created Simulation Engine\n");
 }//===========================================
 
 /**
  *  @brief Copy constructor
  *  @param s a simulation engine 
  */
-tpat_simulation_engine::tpat_simulation_engine(const tpat_simulation_engine& s){
+TPAT_Sim_Engine::TPAT_Sim_Engine(const TPAT_Sim_Engine& s){
     copyMe(s);
 }//=====================================
 
 /**
  *  @brief Default destructor
  */
-tpat_simulation_engine::~tpat_simulation_engine(){
-    printVerb(verbose == ALL_MSG, "Destroying simulation engine...\n");
+TPAT_Sim_Engine::~TPAT_Sim_Engine(){
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "Destroying simulation engine...\n");
 }//===========================================
 
 //-----------------------------------------------------
@@ -83,7 +83,7 @@ tpat_simulation_engine::~tpat_simulation_engine(){
  *  @brief Assignment operator; make this engine equal another by copying its data
  *  @param s another simulation engine
  */
-tpat_simulation_engine& tpat_simulation_engine::operator =(const tpat_simulation_engine& s){
+TPAT_Sim_Engine& TPAT_Sim_Engine::operator =(const TPAT_Sim_Engine& s){
     copyMe(s);
     return *this;
 }//=====================================
@@ -95,40 +95,40 @@ tpat_simulation_engine& tpat_simulation_engine::operator =(const tpat_simulation
 /**
  *	@return whether or not the simulation will run time in reverse
  */
-bool tpat_simulation_engine::usesRevTime() const {return revTime;}
+bool TPAT_Sim_Engine::usesRevTime() const {return revTime;}
 
 /**
  *	@return whether or not the engine will be verbose in its outputs
  */
-tpat_verbosity_tp tpat_simulation_engine::getVerbosity() const {return verbose;}
+TPAT_Verbosity_Tp TPAT_Sim_Engine::getVerbosity() const {return verbose;}
 
 /**
  *  @return whether or not the engine uses variable step size
  */
-bool tpat_simulation_engine::usesVarStepSize() const { return varStepSize; }
+bool TPAT_Sim_Engine::usesVarStepSize() const { return varStepSize; }
 
 /**
  *	@return the absolute tolerance for the engine, non-dimensional units
  */
-double tpat_simulation_engine::getAbsTol() const {return absTol;}
+double TPAT_Sim_Engine::getAbsTol() const {return absTol;}
 
 /**
  *	@return the relative tolerance for the engine, non-dimensional units
  */
-double tpat_simulation_engine::getRelTol() const {return relTol;}
+double TPAT_Sim_Engine::getRelTol() const {return relTol;}
 
 /**
  *  @return the number of steps the integrator will be forced to take.
  *  The integrator may take intermediate steps between those enforced
  *  by the algorithm, but only <tt>numSteps</tt> data points will be output.
  */
-int tpat_simulation_engine::getNumSteps() const { return numSteps; }
+int TPAT_Sim_Engine::getNumSteps() const { return numSteps; }
 
 /**
  *  @brief Retrieve a vector of all events being watched for the current simulation
  *  @return a vector of events
  */
-std::vector<tpat_event> tpat_simulation_engine::getEvents() const { return events; }
+std::vector<TPAT_Event> TPAT_Sim_Engine::getEvents() const { return events; }
 
 /**
  *  @brief Retrieve a vector of all events that occured during the 
@@ -137,17 +137,16 @@ std::vector<tpat_event> tpat_simulation_engine::getEvents() const { return event
  *  the indices of the events stored in this simulation engine
  *  @see getEvents()
  */
-std::vector<eventRecord> tpat_simulation_engine::getEventRecords() const { return eventOccurs; }
+std::vector<TPAT_Sim_EventRecord> TPAT_Sim_Engine::getEventRecords() const { return eventOccurs; }
 
 /**
  *  @brief Retrieve a list of all events that fired at the last step
  *  of the simulation, potentially ending the run.
  *  @param traj pointer to the trajectory that was integrated
  *  @return a vector of events
- *  @throws tpat_exception if the engine has not been run
  */
-std::vector<tpat_event> tpat_simulation_engine::getEndEvents(tpat_traj *traj) const{
-    std::vector<tpat_event> endEvents;
+std::vector<TPAT_Event> TPAT_Sim_Engine::getEndEvents(TPAT_Traj *traj) const{
+    std::vector<TPAT_Event> endEvents;
     if(traj != NULL && traj != 0){
         for(size_t i = 0; i < eventOccurs.size(); i++){
             if(eventOccurs[i].stepIx == (traj->getNumNodes() - 1)){
@@ -162,7 +161,7 @@ std::vector<tpat_event> tpat_simulation_engine::getEndEvents(tpat_traj *traj) co
  *  @brief Add an event for this integration
  *  @param evt an event
  */
-void tpat_simulation_engine::addEvent(tpat_event evt){
+void TPAT_Sim_Engine::addEvent(TPAT_Event evt){
     events.push_back(evt);
 }//======================================
 
@@ -170,35 +169,35 @@ void tpat_simulation_engine::addEvent(tpat_event evt){
  *  @brief Determine whether or not crash events are created for each simulation
  *  @return whether or not crash events are created for each simulation
  */
-bool tpat_simulation_engine::makesCrashEvents() const { return makeCrashEvents; }
+bool TPAT_Sim_Engine::makesCrashEvents() const { return makeCrashEvents; }
 
 /**
  *	@brief Specify whether or not the engine should run in reverse time
  *	@param b whether or not the engine should run in reverse time
  */
-void tpat_simulation_engine::setRevTime(bool b){ revTime = b; }
+void TPAT_Sim_Engine::setRevTime(bool b){ revTime = b; }
 
 /**
  *	@brief Specify the verbosity of the engine
  *	@param v whether or not the engine should output verbose statements
  */
-void tpat_simulation_engine::setVerbose(tpat_verbosity_tp v){ verbose = v; }
+void TPAT_Sim_Engine::setVerbose(TPAT_Verbosity_Tp v){ verbose = v; }
 
 /**
  *  @brief Specify whether or not the engine should use variable step size.
  *  @param b whether or not the engine should use variable step size
  */
-void tpat_simulation_engine::setVarStepSize(bool b){ varStepSize = b; }
+void TPAT_Sim_Engine::setVarStepSize(bool b){ varStepSize = b; }
 
 /**
  *	@brief Specify the absolute integration tolerance, non-dimensional units.
  *	The default value is 1e-12
  *	@param t the tolerance
  */
-void tpat_simulation_engine::setAbsTol(double t){
+void TPAT_Sim_Engine::setAbsTol(double t){
     absTol = t;
     if(absTol > 1)
-        printWarn("tpat_simulation_engine::setAbsTol: tolerance is greater than 1... just FYI\n");
+        printWarn("TPAT_Sim_Engine::setAbsTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
@@ -206,10 +205,10 @@ void tpat_simulation_engine::setAbsTol(double t){
  *	The default value is 1e-14
  *	@param t the tolerance
  */
-void tpat_simulation_engine::setRelTol(double t){
+void TPAT_Sim_Engine::setRelTol(double t){
     relTol = t;
     if(relTol > 1)
-        printWarn("tpat_simulation_engine::setAbsTol: tolerance is greater than 1... just FYI\n");
+        printWarn("TPAT_Sim_Engine::setAbsTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
@@ -218,7 +217,7 @@ void tpat_simulation_engine::setRelTol(double t){
  * 
  *  @param b whether or not to create crash-detection events for each primary
  */
-void tpat_simulation_engine::setMakeCrashEvents(bool b){ makeCrashEvents = b; }
+void TPAT_Sim_Engine::setMakeCrashEvents(bool b){ makeCrashEvents = b; }
 
 /**
  *  @brief Specify the number of steps the integrator must take during the 
@@ -228,7 +227,7 @@ void tpat_simulation_engine::setMakeCrashEvents(bool b){ makeCrashEvents = b; }
  *  trajectory object, although the GSL driver may take steps in between
  *  those specified to maintain numerical accuracy.
  */
-void tpat_simulation_engine::setNumSteps(int n){ numSteps = n; }
+void TPAT_Sim_Engine::setNumSteps(int n){ numSteps = n; }
 
 //-----------------------------------------------------
 // 		Simulation Functions
@@ -244,7 +243,7 @@ void tpat_simulation_engine::setNumSteps(int n){ numSteps = n; }
  *  time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void tpat_simulation_engine::runSim(const double *ic, double tof, tpat_traj *traj){
+void TPAT_Sim_Engine::runSim(const double *ic, double tof, TPAT_Traj *traj){
 	runSim(ic, 0, tof, traj);
 }//=======================================================
 
@@ -258,7 +257,7 @@ void tpat_simulation_engine::runSim(const double *ic, double tof, tpat_traj *tra
  *  time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void tpat_simulation_engine::runSim(std::vector<double> ic, double tof, tpat_traj *traj){
+void TPAT_Sim_Engine::runSim(std::vector<double> ic, double tof, TPAT_Traj *traj){
     runSim(ic, 0, tof, traj);
 }//=======================================================
 
@@ -272,14 +271,14 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double tof, tpat_tra
  *  Only the absolute value of the TOF is considered; to integrate backwards in
  *  time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
- *  @throws tpat_exception if <tt>ic</tt> has fewer than 6 elements
+ *  @throws TPAT_Exception if <tt>ic</tt> has fewer than 6 elements
  */
-void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double tof, tpat_traj *traj){
+void TPAT_Sim_Engine::runSim(std::vector<double> ic, double t0, double tof, TPAT_Traj *traj){
     if(ic.size() >= 6){
         std::vector<double> tempIC = ic;
         runSim(&(tempIC[0]), t0, tof, traj);
     }else{
-        throw tpat_exception("IC must have at least six elements");
+        throw TPAT_Exception("TPAT_Sim_Engine::runSim: IC must have at least six elements");
     }
 }//=======================================================
 
@@ -293,8 +292,8 @@ void tpat_simulation_engine::runSim(std::vector<double> ic, double t0, double to
  *  time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void tpat_simulation_engine::runSim(const double *ic, double t0, double tof, tpat_traj *traj){
-    printVerbColor(verbose == ALL_MSG, GREEN, "Running simulation...\n");
+void TPAT_Sim_Engine::runSim(const double *ic, double t0, double tof, TPAT_Traj *traj){
+    printVerbColor(verbose == TPAT_Verbosity_Tp::ALL_MSG, GREEN, "Running simulation...\n");
     if(!isClean){
         cleanEngine();
     }
@@ -305,8 +304,8 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof, tpa
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = revTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    printVerb(verbose == ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    printVerb(verbose == ALL_MSG, "  (Reverse Time is %s)\n", revTime ? "ON" : "OFF");
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  (Reverse Time is %s)\n", revTime ? "ON" : "OFF");
 
     if(varStepSize){
         t_span.reserve(2);
@@ -347,17 +346,17 @@ void tpat_simulation_engine::runSim(const double *ic, double t0, double tof, tpa
  *  @param t_dim the dimension of t
  *  @param traj pointer to a trajectory object to store the output trajectory
  *  
- *  @throws tpat_diverge if the integrator fails and cannot proceed
+ *  @throws TPAT_Diverge if the integrator fails and cannot proceed
  */
-void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_dim, tpat_traj *traj){
+void TPAT_Sim_Engine::integrate(const double *ic, const double *t, int t_dim, TPAT_Traj *traj){
     // Save tolerance for trajectory
     traj->setTol(absTol > relTol ? absTol : relTol);
-    const tpat_model *model = traj->getSysData()->getModel();
+    const TPAT_Model *model = traj->getSysData()->getModel();
 
     // Get the dimension of the state vector for integration
     int core = model->getCoreStateSize();
     int ic_dim = core + (!simpleIntegration)*(model->getSTMStateSize() + model->getExtraStateSize());
-    printVerb(verbose == ALL_MSG, "  IC has %d initial states\n", ic_dim);
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
@@ -376,7 +375,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
 
     // Choose EOM function based on system type and simplicity
-    printVerb(verbose == ALL_MSG, "  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  using %s integration\n", simpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 
         simpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
@@ -390,7 +389,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     gsl_odeiv2_driver *d = NULL;
 
     if(varStepSize){
-        printVerb(verbose == ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
+        printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
         // Allocate space for the stepping object; use the rkck algorithm (doesn't require driver)
         s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
         // Define a control that will keep the error in the state y within the specified tolerances
@@ -398,7 +397,7 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
-        printVerb(verbose == ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
+        printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         // Allocate space for a driver; the msadams algorithm requires access to the driver
         double signed_dt = revTime ? -1*dtGuess : dtGuess;
         d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
@@ -411,9 +410,9 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     model->sim_saveIntegratedData(y, t[0], traj);
 
     // Update all event functions with IC
-    printVerb(verbose == ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
     for(int ev = 0; ev < ((int)events.size()); ev++){
-        printVerb(verbose == ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
+        printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
         events.at(ev).updateDist(y, t[0]);
     }
 
@@ -434,8 +433,8 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
             }
 
             if(status != GSL_SUCCESS){
-                printErr("tpat_simulation_engine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
-                throw tpat_diverge("Integration did not succeed");
+                printErr("TPAT_Sim_Engine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                throw TPAT_Diverge("TPAT_Sim_Engine::integrate: Integration did not succeed");
             }
 
             killSim = locateEvents(y, t0, traj);
@@ -463,8 +462,8 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
                 }
 
                 if(status != GSL_SUCCESS){
-                    printErr("tpat_simulation_engine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
-                    throw tpat_diverge("Integration did not succeed");
+                    printErr("TPAT_Sim_Engine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                    throw TPAT_Diverge("TPAT_Sim_Engine::integrate: Integration did not succeed");
                 }
 
                 killSim = locateEvents(y, t0, traj);
@@ -488,11 +487,11 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
-    printVerbColor(verbose == ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
+    printVerbColor(verbose == TPAT_Verbosity_Tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
 
     // Summarize event occurrences
     for(size_t i = 0; i < eventOccurs.size(); i++){
-        printVerb(verbose == ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
+        printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
             events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
 }//===============================================END of cr3bp_integrate
@@ -525,19 +524,19 @@ void tpat_simulation_engine::integrate(const double *ic, const double *t, int t_
  *  @param traj pointer to a trajectory object to store the output trajectory
  *  @return whether or not the simulation should end (an event triggers killSim)
  */
-bool tpat_simulation_engine::locateEvents(const double *y, double t, tpat_traj *traj){
+bool TPAT_Sim_Engine::locateEvents(const double *y, double t, TPAT_Traj *traj){
     int numPts = traj->getNumNodes();
-    const tpat_model *model = traj->getSysData()->getModel();
+    const TPAT_Model *model = traj->getSysData()->getModel();
     
     // Look through all events
     for(int ev = 0; ev < ((int)events.size()); ev++){
         // Don't trigger if only two points have been integrated
         if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
-            printVerb(verbose == ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
+            printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
             events.at(ev).incrementCount();  // Update the counter for the event
 
-            if(verbose == ALL_MSG){ events.at(ev).printStatus(); }
+            if(verbose == TPAT_Verbosity_Tp::ALL_MSG){ events.at(ev).printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
@@ -549,7 +548,7 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t, tpat_traj *
             // numerical problems when the previous state is REALLY close to the event
             std::vector<double> generalIC = traj->getStateByIx(-2);
 
-            if(verbose == ALL_MSG){
+            if(verbose == TPAT_Verbosity_Tp::ALL_MSG){
                 printColor(BLUE, "Step index = %d\n", numPts-1);
                 printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
                     traj->getTimeByIx(-1), traj->getTimeByIx(-2));
@@ -565,7 +564,7 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t, tpat_traj *
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getNumNodes();
-                eventRecord rec(ev, timeSize - 1);
+                TPAT_Sim_EventRecord rec(ev, timeSize - 1);
                 eventOccurs.push_back(rec);
 
                 // Update event state
@@ -574,12 +573,12 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t, tpat_traj *
                 events.at(ev).updateDist(&(state[0]), lastT);
                 
                 if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
-                    printVerbColor(verbose == ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
+                    printVerbColor(verbose == TPAT_Verbosity_Tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
                     // the point from mult. shooting as the last
                     return true;    // Tell the simulation to stop
                 }else{
-                    printVerbColor(verbose == ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
+                    printVerbColor(verbose == TPAT_Verbosity_Tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
                     events.at(ev).updateDist(y, t); // Remember the most recent point
                     return false;
                 }
@@ -600,8 +599,8 @@ bool tpat_simulation_engine::locateEvents(const double *y, double t, tpat_traj *
 /**
  *  @brief Clean out the trajectory storage variable so a new simulation can be run and store its data
  */
-void tpat_simulation_engine::cleanEngine(){
-    printVerb(verbose == ALL_MSG, "Cleaning the engine...\n");
+void TPAT_Sim_Engine::cleanEngine(){
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "Cleaning the engine...\n");
     eomParams = 0;  // set pointer to 0 (null pointer)
     eventOccurs.clear();
 
@@ -616,12 +615,12 @@ void tpat_simulation_engine::cleanEngine(){
  *  Create default crash events for the system
  *  @param sysData pointer to the system data object for the simulation
  */
-void tpat_simulation_engine::createCrashEvents(const tpat_sys_data *sysData){
+void TPAT_Sim_Engine::createCrashEvents(const TPAT_Sys_Data *sysData){
     if(!madeCrashEvents){
         for(int p = 0; p < sysData->getNumPrimaries(); p++){
             // Put primary index # into an array, create event
             double Pix = (double)p;
-            tpat_event crashEvt(sysData, tpat_event::CRASH, 0, true, &Pix);
+            TPAT_Event crashEvt(sysData, TPAT_Event_Tp::CRASH, 0, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }
@@ -635,14 +634,14 @@ void tpat_simulation_engine::createCrashEvents(const tpat_sys_data *sysData){
  *  Completely resets the simulation engine, reverting all variables (including ones the user
  *  has modified with set() functions) to their default values.
  */
-void tpat_simulation_engine::reset(){
+void TPAT_Sim_Engine::reset(){
     if(!isClean)
         cleanEngine();
 
     events.clear();
     eventOccurs.clear();
     revTime = false;
-    verbose = NO_MSG;
+    verbose = TPAT_Verbosity_Tp::NO_MSG;
     varStepSize = true;
     absTol = 1e-12;
     relTol = 1e-14;
@@ -655,8 +654,8 @@ void tpat_simulation_engine::reset(){
 /**
  *  Clear all events from the simulation, including any created by default.
  */
-void tpat_simulation_engine::clearEvents(){
-    printVerb(verbose == ALL_MSG, "Clearing all events...\n");
+void TPAT_Sim_Engine::clearEvents(){
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "Clearing all events...\n");
     events.clear();
     madeCrashEvents = false;
 }//====================================================
@@ -664,9 +663,9 @@ void tpat_simulation_engine::clearEvents(){
 /**
  *  Copy data from an input engine to this one
  *  @param s an input simulation engine
- *  @throw tpat_exception if <tt>s</tt> has an unknown system data type
+ *  @throw TPAT_Exception if <tt>s</tt> has an unknown system data type
  */
-void tpat_simulation_engine::copyMe(const tpat_simulation_engine &s){
+void TPAT_Sim_Engine::copyMe(const TPAT_Sim_Engine &s){
     eomParams = 0;  // void*, will get set again by the runSim() method
     revTime = s.revTime;
     verbose = s.verbose;

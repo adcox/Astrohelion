@@ -1,6 +1,6 @@
 /**
  *  @file tpat_traj_cr3bp.cpp
- *	@brief Derivative of tpat_traj, specific to CR3BP
+ *	@brief Derivative of TPAT_Traj, specific to CR3BP
  *
  *	@author Andrew Cox
  *	@version September 2, 2015
@@ -32,7 +32,7 @@
 #include "tpat_exceptions.hpp"
 #include "tpat_node.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_simulation_engine.hpp"
+#include "tpat_sim_engine.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_utilities.hpp"
 
@@ -44,7 +44,7 @@
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_sys_data_cr3bp *sys) : tpat_traj(sys){
+TPAT_Traj_CR3BP::TPAT_Traj_CR3BP(const TPAT_Sys_Data_CR3BP *sys) : TPAT_Traj(sys){
 	initExtraParam();
 }//====================================================
 
@@ -52,7 +52,7 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_sys_data_cr3bp *sys) : tpat_traj(sys
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_traj_cr3bp &t) : tpat_traj(t){
+TPAT_Traj_CR3BP::TPAT_Traj_CR3BP(const TPAT_Traj_CR3BP &t) : TPAT_Traj(t){
 	initExtraParam();
 }//====================================================
 
@@ -60,7 +60,7 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_traj_cr3bp &t) : tpat_traj(t){
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_base_arcset &a) : tpat_traj(a){
+TPAT_Traj_CR3BP::TPAT_Traj_CR3BP(const TPAT_Base_Arcset &a) : TPAT_Traj(a){
 	initExtraParam();
 }//====================================================
 
@@ -74,9 +74,9 @@ tpat_traj_cr3bp::tpat_traj_cr3bp(const tpat_base_arcset &a) : tpat_traj(a){
  *  CR3BP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created trajectory
  */
-baseArcsetPtr tpat_traj_cr3bp::create( const tpat_sys_data *sys) const{
-	const tpat_sys_data_cr3bp *crSys = static_cast<const tpat_sys_data_cr3bp*>(sys);
-	return baseArcsetPtr(new tpat_traj_cr3bp(crSys));
+baseArcsetPtr TPAT_Traj_CR3BP::create( const TPAT_Sys_Data *sys) const{
+	const TPAT_Sys_Data_CR3BP *crSys = static_cast<const TPAT_Sys_Data_CR3BP*>(sys);
+	return baseArcsetPtr(new TPAT_Traj_CR3BP(crSys));
 }//====================================================
 
 /**
@@ -88,8 +88,8 @@ baseArcsetPtr tpat_traj_cr3bp::create( const tpat_sys_data *sys) const{
  *  
  *  @return a pointer to the newly cloned trajectory
  */
-baseArcsetPtr tpat_traj_cr3bp::clone() const{
-	return baseArcsetPtr(new tpat_traj_cr3bp(*this));
+baseArcsetPtr TPAT_Traj_CR3BP::clone() const{
+	return baseArcsetPtr(new TPAT_Traj_CR3BP(*this));
 }//====================================================
 
 //-----------------------------------------------------
@@ -109,9 +109,9 @@ baseArcsetPtr tpat_traj_cr3bp::clone() const{
  *	@param rhs the right-hand-side of the addition operation
  *	@return a reference to the concatenated arcset object
  */
-tpat_traj& tpat_traj_cr3bp::operator +=(const tpat_traj &rhs){
+TPAT_Traj& TPAT_Traj_CR3BP::operator +=(const TPAT_Traj &rhs){
 	// Create a copy of rhs (it is const)
-	tpat_traj temp(rhs);
+	TPAT_Traj temp(rhs);
 
 	// Shift the time in temp by the final time in this trajectory
 	double tf = getTimeByIx(-1);
@@ -120,8 +120,8 @@ tpat_traj& tpat_traj_cr3bp::operator +=(const tpat_traj &rhs){
 		temp.setTimeByIx(s, t);
 	}
 
-	// throw tpat_exception("tpat_traj_cr3bp::operator +=: Not currently implemented!");
-	tpat_traj::operator +=(temp);
+	// throw TPAT_Exception("TPAT_Traj_CR3BP::operator +=: Not currently implemented!");
+	TPAT_Traj::operator +=(temp);
 
 	return *this;
 }//====================================================
@@ -134,14 +134,14 @@ tpat_traj& tpat_traj_cr3bp::operator +=(const tpat_traj &rhs){
  *	@brief Retrieve the value of Jacobi's Constant at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@return Jacobi at the specified step
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-double tpat_traj_cr3bp::getJacobiByIx(int ix) const{
+double TPAT_Traj_CR3BP::getJacobiByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix > ((int)nodes.size()))
-		throw tpat_exception("tpat_traj_cr3bp::getJacobiByIx: invalid node index");
+		throw TPAT_Exception("TPAT_Traj_CR3BP::getJacobiByIx: invalid node index");
 
 	return nodes[ix].getExtraParam(0);
 }//====================================================
@@ -150,14 +150,14 @@ double tpat_traj_cr3bp::getJacobiByIx(int ix) const{
  *	@brief Set Jacobi at the specified step
  *	@param ix step index; if < 0, counts backwards from end of trajectory
  *	@param val value of Jacobi
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-void tpat_traj_cr3bp::setJacobiByIx(int ix, double val){
+void TPAT_Traj_CR3BP::setJacobiByIx(int ix, double val){
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix > ((int)nodes.size()))
-		throw tpat_exception("tpat_traj_cr3bp::setJacobiByIx: invalid node index");
+		throw TPAT_Exception("TPAT_Traj_CR3BP::setJacobiByIx: invalid node index");
 
 	nodes[ix].setExtraParam(0, val);
 }//====================================================
@@ -169,7 +169,7 @@ void tpat_traj_cr3bp::setJacobiByIx(int ix, double val){
 /**
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
-void tpat_traj_cr3bp::initExtraParam(){
+void TPAT_Traj_CR3BP::initExtraParam(){
 	// Add a variable for Jacobi Constant
 	numExtraParam = 1;
 	extraParamRowSize.push_back(1);
@@ -179,7 +179,7 @@ void tpat_traj_cr3bp::initExtraParam(){
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void tpat_traj_cr3bp::saveToMat(const char* filename) const{
+void TPAT_Traj_CR3BP::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -210,15 +210,15 @@ void tpat_traj_cr3bp::saveToMat(const char* filename) const{
  *  @brief Populate data in this trajectory from a matlab file
  * 
  *  @param filepath the path to the matlab data file
- *  @throws tpat_exception if the data file cannot be loaded
+ *  @throws TPAT_Exception if the data file cannot be loaded
  */
-void tpat_traj_cr3bp::readFromMat(const char *filepath){
-	tpat_traj::readFromMat(filepath);
+void TPAT_Traj_CR3BP::readFromMat(const char *filepath){
+	TPAT_Traj::readFromMat(filepath);
 
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
-		throw tpat_exception("tpat_traj: Could not load data from file");
+		throw TPAT_Exception("TPAT_Traj: Could not load data from file");
 	}
 
 	readExtraParamFromMat(matfp, 0, "Jacobi");

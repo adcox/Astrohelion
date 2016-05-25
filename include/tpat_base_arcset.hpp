@@ -33,19 +33,19 @@
 #include <vector>
 
 // Forward Declarations
-struct tpat_arc_piece;
-class tpat_base_arcset;
+struct TPAT_Arc_Piece;
+class TPAT_Base_Arcset;
 
 /**
- * @brief Smart pointer to a tpat_base_arcset object
+ * @brief Smart pointer to a TPAT_Base_Arcset object
  */
-typedef std::shared_ptr<tpat_base_arcset> baseArcsetPtr;
+typedef std::shared_ptr<TPAT_Base_Arcset> baseArcsetPtr;
 
 /**
  *	@brief Abstract class that provides the framework for trajectories and nodesets
  *	
  *	The arcset object specifies default and mandatory behaviors for all derivative
- *	classes (i.e. tpat_traj and tpat_nodeset). All variables and data for an arc or 
+ *	classes (i.e. TPAT_Traj and TPAT_Nodeset). All variables and data for an arc or 
  *	one of its derivative classes are declared and stored here; in other words, no 
  *	derivative classes declare class-specific data objects. This architecture has been
  *	chosen to facilitate easy casting between model-specific derivative classes with
@@ -82,43 +82,43 @@ typedef std::shared_ptr<tpat_base_arcset> baseArcsetPtr;
  *	@version April 28, 2016
  *	@copyright GNU GPL v3.0	
  */
-class tpat_base_arcset : public tpat{
+class TPAT_Base_Arcset : public TPAT{
 
 public:
 	// *structors
-	tpat_base_arcset(const tpat_sys_data*);
-	tpat_base_arcset(const tpat_base_arcset&);
-	virtual baseArcsetPtr create( const tpat_sys_data* ) const = 0;		//!< Virtual constructor for creation
+	TPAT_Base_Arcset(const TPAT_Sys_Data*);
+	TPAT_Base_Arcset(const TPAT_Base_Arcset&);
+	virtual baseArcsetPtr create( const TPAT_Sys_Data* ) const = 0;		//!< Virtual constructor for creation
 	virtual baseArcsetPtr clone() const = 0;							//!< Virtual constructor for copying
 
-	virtual ~tpat_base_arcset();
+	virtual ~TPAT_Base_Arcset();
 
 	// Operators
-	tpat_base_arcset& operator =(const tpat_base_arcset&);
-	static void sum(const tpat_base_arcset*, const tpat_base_arcset*, tpat_base_arcset*);
+	TPAT_Base_Arcset& operator =(const TPAT_Base_Arcset&);
+	static void sum(const TPAT_Base_Arcset*, const TPAT_Base_Arcset*, TPAT_Base_Arcset*);
 
 	// Set and Get functions
-	void addConstraint(tpat_constraint);
-	int addNode(tpat_node);
-	int addSeg(tpat_segment);
-	int appendSetAtNode(const tpat_base_arcset*, int, int, double);
+	void addConstraint(TPAT_Constraint);
+	int addNode(TPAT_Node);
+	int addSeg(TPAT_Segment);
+	int appendSetAtNode(const TPAT_Base_Arcset*, int, int, double);
 	void clearArcConstraints();
 	void clearAllConstraints();
-	std::vector<int> concatArcset(const tpat_base_arcset*);
+	std::vector<int> concatArcset(const TPAT_Base_Arcset*);
 	void deleteNode(int);
 	void deleteSeg(int);
 	std::vector<double> getAccel(int) const;
 	std::vector<double> getAccelByIx(int) const;
-	std::vector<tpat_constraint> getArcConstraints() const;
-	std::vector<tpat_arc_piece> getChronoOrder() const;
+	std::vector<TPAT_Constraint> getArcConstraints() const;
+	std::vector<TPAT_Arc_Piece> getChronoOrder() const;
 	std::vector<double> getCoord(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getExtraParam(int, int) const;
 	int getNextNodeID() const;
 	int getNextSegID() const;
-	tpat_node getNode(int) const;
-	tpat_node getNodeByIx(int) const;
+	TPAT_Node getNode(int) const;
+	TPAT_Node getNodeByIx(int) const;
 	int getNodeIx(int) const;
 	int getNumCons() const;
 	int getNumNodes() const;
@@ -126,14 +126,14 @@ public:
 	double getTOF(int) const;
 	double getTOFByIx(int) const;
 	virtual double getTotalTOF() const;
-	tpat_segment getSeg(int) const;
-	tpat_segment getSegByIx(int) const;
+	TPAT_Segment getSeg(int) const;
+	TPAT_Segment getSegByIx(int) const;
 	int getSegIx(int) const;
 	std::vector<double> getState(int) const;
 	std::vector<double> getStateByIx(int) const;
 	MatrixXRd getSTM(int) const;
 	MatrixXRd getSTMByIx(int) const;
-	const tpat_sys_data* getSysData() const;
+	const TPAT_Sys_Data* getSysData() const;
 	double getTol() const;
 	void putInChronoOrder();
 	void setAccel(int, std::vector<double>);
@@ -169,13 +169,13 @@ public:
 
 protected:
 	/** A pointer to the system data object that the describes the system this arc exists in */
-	const tpat_sys_data *sysData;
+	const TPAT_Sys_Data *sysData;
 
 	/** Contains all nodes or integration steps along an arc data object */
-	std::vector<tpat_node> nodes {};
+	std::vector<TPAT_Node> nodes {};
 
 	/** Contains all segments that link the nodes of this object */
-	std::vector<tpat_segment> segs {};
+	std::vector<TPAT_Segment> segs {};
 
 	/** Each entry corresponds to one node ID. The value of the entry is 
 	 * the index of the node in the <tt>nodes</tt> array. If the value is
@@ -197,7 +197,7 @@ protected:
 	std::vector<int> segIDMap {};
 
 	/** A set of constraints that apply to the arc data object as a whole */
-	std::vector<tpat_constraint> cons {};
+	std::vector<TPAT_Constraint> cons {};
 
 	/** 
 	 *	Number of variables stored in the extraParam vector. This
@@ -216,7 +216,7 @@ protected:
 	int nextNodeID = 0;	//!< A counter that stores the next available node ID
 	int nextSegID = 0;	//!< A counter that stores the next available segment ID
 
-	void copyMe(const tpat_base_arcset&);
+	void copyMe(const TPAT_Base_Arcset&);
 
 	void initNodesSegsFromMat(mat_t *, const char*);
 	void readStateFromMat(mat_t*, const char*);
@@ -234,34 +234,34 @@ protected:
 	void saveSTMs(mat_t*) const;
 	void saveTOF(mat_t*, const char*) const;
 
-	std::vector<tpat_arc_piece> sortArcset(int, std::vector<tpat_arc_piece>) const;
-};//END OF tpat_base_arcset//--//--//--//--//--//--//--//--//--//--//--//--//
+	std::vector<TPAT_Arc_Piece> sortArcset(int, std::vector<TPAT_Arc_Piece>) const;
+};//END OF TPAT_Base_Arcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
 /**
  *  @brief A structure used to represent nodes and segments.
  *  @details This structure is used when putting the arcset
  *  object in chronological order
  */
-struct tpat_arc_piece{
+struct TPAT_Arc_Piece{
 
 	/**
 	 * @brief Enumerated type to describe the types of objects represented
 	 * by the piece
 	 * @details There are several types:
-	 * 	* NODE - represent a tpat_node object
-	 * 	* SEG - represent a tpat_segment object
+	 * 	* NODE - represent a TPAT_Node object
+	 * 	* SEG - represent a TPAT_Segment object
 	 */
-	enum piece_tp {NODE, SEG};
-	piece_tp type;	//!< The type of object represented by this piece
-	int ID;	//!< The ID of the object represented by this piece
+	enum class Piece_Tp {NODE, SEG};
+	Piece_Tp type;	//!< The type of object represented by this piece
+	int id;	//!< The ID of the object represented by this piece
 
 	/**
 	 *  @brief Constructor
 	 * 
 	 *  @param tp the type of object represented by this piece
-	 *  @param id the ID of the object represented by this piece
+	 *  @param i the ID of the object represented by this piece
 	 */
-	tpat_arc_piece(piece_tp tp, int id) : type(tp), ID(id){};
+	TPAT_Arc_Piece(Piece_Tp tp, int i) : type(tp), id(i){};
 
 	/**
 	 *  @brief Comparison operator
@@ -271,8 +271,8 @@ struct tpat_arc_piece{
 	 * 
 	 *  @return true if the type and ID of the two pieces match
 	 */
-	friend bool operator ==(const tpat_arc_piece &lhs, const tpat_arc_piece &rhs){
-		return lhs.type == rhs.type && lhs.ID == rhs.ID;
+	friend bool operator ==(const TPAT_Arc_Piece &lhs, const TPAT_Arc_Piece &rhs){
+		return lhs.type == rhs.type && lhs.id == rhs.id;
 	}//================================================
 
 	/**
@@ -283,8 +283,8 @@ struct tpat_arc_piece{
 	 * 
 	 *  @return true if the type and ID of the two pieces do NOT match
 	 */
-	friend bool operator !=(const tpat_arc_piece &lhs, const tpat_arc_piece &rhs){
+	friend bool operator !=(const TPAT_Arc_Piece &lhs, const TPAT_Arc_Piece &rhs){
 		return !(lhs == rhs);
 	}//================================================
-};//END OF TPAT_ARC_PIECE//--//--//--//--//--//--//--//--//--//--//--//--//
+};//END OF TPAT_Arc_Piece//--//--//--//--//--//--//--//--//--//--//--//--//
 #endif

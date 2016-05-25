@@ -33,20 +33,20 @@
  *	@version May 1, 2016
  *	@copyright GNU GPL v3.0
  */
-class tpat_linkable : public tpat{
+class TPAT_Linkable : public TPAT{
 public:
 	static const int INVALID_ID;	//!< Reserved ID value
 	static const int NUM_LINKS;		//!< Number of links stored by a linkable object
 
 	// *structors
-	tpat_linkable();
-	tpat_linkable(const tpat_linkable&);
-	virtual ~tpat_linkable();
+	TPAT_Linkable();
+	TPAT_Linkable(const TPAT_Linkable&);
+	virtual ~TPAT_Linkable();
 	
 	// Operators
-	tpat_linkable& operator =(const tpat_linkable&);
-	friend bool operator ==(const tpat_linkable&, const tpat_linkable&);
-	friend bool operator !=(const tpat_linkable&, const tpat_linkable&);
+	TPAT_Linkable& operator =(const TPAT_Linkable&);
+	friend bool operator ==(const TPAT_Linkable&, const TPAT_Linkable&);
+	friend bool operator !=(const TPAT_Linkable&, const TPAT_Linkable&);
 	
 	// Set and Get Functions
 	void addLink(int);
@@ -68,7 +68,7 @@ protected:
 	 */
 	int links[2] = {INVALID_ID, INVALID_ID};
 
-	void copyMe(const tpat_linkable&);
+	void copyMe(const TPAT_Linkable&);
 };
 
 #endif

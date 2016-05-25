@@ -37,17 +37,17 @@ static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 
 
 //-----------------------------------------------------
-//      CLASS tpat FUNCTIONS
+//      CLASS TPAT FUNCTIONS
 //-----------------------------------------------------
 
-tpat_initializer tpat::initializer;
-bool tpat::isInit;
+tpat_initializer TPAT::initializer;
+bool TPAT::isInit;
 
 /**
  *  @brief Default constructor.
  *  @details Runs an initialization sequence the first time the class is instantiated.
  */
-tpat::tpat(){
+TPAT::TPAT(){
 	if(!isInit){
 		initializer.runInit();
 		isInit = true;
@@ -57,7 +57,7 @@ tpat::tpat(){
 /**
  *  @brief Default destructor; doesn't do anything :)
  */
-tpat::~tpat(){}
+TPAT::~TPAT(){}
 
 
 //-----------------------------------------------------
@@ -78,7 +78,7 @@ void tpat_settings::load(const std::string &filename){
 		// Load XML file and put its contents in the property tree; if file isn't found, exception is thrown
 		read_xml(filename, pt);
 	}catch(std::exception &e){
-		std::cout << "Error: Could not load tpat.spice.data_filepath from settings file\n";
+		std::cout << "Error: Could not load the settings file\n";
 		throw e;
 	}
 
@@ -148,12 +148,12 @@ void tpat_initializer::runInit(){
 	// Construct path to directory that contains the settings file(s)
 	char settingsFilepath[128], defaultSettingsFilepath[256], userSettingsFilepath[256];
 	switch(TPAT_OS_TYPE){
-		case windows: 
+		case TPAT_OS_Type::windows: 
 			std::cout << "Error: Windows is not currently supported!\n";
 			throw std::exception();
 			break;
-		case apple:
-		case linux:
+		case TPAT_OS_Type::apple:
+		case TPAT_OS_Type::linux:
 		default:
 			sprintf(settingsFilepath, "%s%s", pw->pw_dir, "/.config/tpat/");
 			break;
@@ -164,6 +164,7 @@ void tpat_initializer::runInit(){
 	if(!fs::exists(p)){
 		// Create the directory
 		std::cout << "Settings directory does not exist; creating it now...\n";
+		std::cout << " mkdir " << settingsFilepath << std::endl;
 		fs::create_directory(settingsFilepath);
 	}
 

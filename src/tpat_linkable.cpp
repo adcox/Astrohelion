@@ -32,8 +32,8 @@
 
 #include <algorithm>
 
-const int tpat_linkable::INVALID_ID = -1;
-const int tpat_linkable::NUM_LINKS = 2;
+const int TPAT_Linkable::INVALID_ID = -1;
+const int TPAT_Linkable::NUM_LINKS = 2;
 
 //-----------------------------------------------------
 //      *structors
@@ -42,21 +42,21 @@ const int tpat_linkable::NUM_LINKS = 2;
 /**
  *  @brief Default constructor
  */
-tpat_linkable::tpat_linkable(){}
+TPAT_Linkable::TPAT_Linkable(){}
 
 /**
  *  @brief Copy constructor
  * 
  *  @param obj reference to a linkable object
  */
-tpat_linkable::tpat_linkable(const tpat_linkable &obj){
+TPAT_Linkable::TPAT_Linkable(const TPAT_Linkable &obj){
 	copyMe(obj);
 }//====================================================
 
 /**
  *  @brief Destructor
  */
-tpat_linkable::~tpat_linkable(){}
+TPAT_Linkable::~TPAT_Linkable(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -68,7 +68,7 @@ tpat_linkable::~tpat_linkable(){}
  *  @param obj reference to a linkable object
  *  @return reference to a linkable object, now equivalent to the input reference
  */
-tpat_linkable& tpat_linkable::operator =(const tpat_linkable &obj){
+TPAT_Linkable& TPAT_Linkable::operator =(const TPAT_Linkable &obj){
 	copyMe(obj);
 	return *this;
 }//====================================================
@@ -81,8 +81,8 @@ tpat_linkable& tpat_linkable::operator =(const tpat_linkable &obj){
  * 
  *  @return whether or not the two objects are identical
  */
-bool operator ==(const tpat_linkable &lhs, const tpat_linkable &rhs){
-	for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
+bool operator ==(const TPAT_Linkable &lhs, const TPAT_Linkable &rhs){
+	for(int i = 0; i < TPAT_Linkable::NUM_LINKS; i++){
 		if(lhs.links[i] != rhs.links[i])
 			return false;
 	}
@@ -98,7 +98,7 @@ bool operator ==(const tpat_linkable &lhs, const tpat_linkable &rhs){
  * 
  *  @return whether or not the two objects are nonidentical
  */
-bool operator !=(const tpat_linkable &lhs, const tpat_linkable &rhs){
+bool operator !=(const TPAT_Linkable &lhs, const TPAT_Linkable &rhs){
 	return !(lhs == rhs);
 }//====================================================
 
@@ -112,14 +112,14 @@ bool operator !=(const tpat_linkable &lhs, const tpat_linkable &rhs){
  *  an exception is thrown
  * 
  *  @param id the ID of the object that is linked to this object
- *  @throws tpat_exception if two links are already present
+ *  @throws TPAT_Exception if two links are already present
  */
-void tpat_linkable::addLink(int id){
+void TPAT_Linkable::addLink(int id){
 	int ix = getLinkIx(INVALID_ID);	// Try to find an empty slot
 	if(ix != INVALID_ID){
 		setLink(ix, id);	// This function will also check for duplicate ID in the link slots
 	}else{
-		throw tpat_exception("linkable::addLink: Two links already present, cannot add a new one");
+		throw TPAT_Exception("linkable::addLink: Two links already present, cannot add a new one");
 	}
 }//===========================================
 
@@ -127,7 +127,7 @@ void tpat_linkable::addLink(int id){
  *  @brief Remove all links from this object to other objects
  *  @details This function resets the array of links
  */
-void tpat_linkable::clearLinks(){
+void TPAT_Linkable::clearLinks(){
 	for(int i = 0; i < NUM_LINKS; i++)
 		links[i] = INVALID_ID;
 }//===========================================
@@ -136,16 +136,16 @@ void tpat_linkable::clearLinks(){
  *  @brief Retrieve the ID of this object
  *  @return the ID of this object
  */
-int tpat_linkable::getID() const { return ID; }
+int TPAT_Linkable::getID() const { return ID; }
 
 /**
  *  @brief Locate a particular ID within the link slots associated with this object
  * 
  *  @param id the ID to search for
  *  @return the index of the ID within the links[] storage array. A value of 
- *  tpat_linkable::INVALID_ID is returned if the ID is not located
+ *  TPAT_Linkable::INVALID_ID is returned if the ID is not located
  */
-int tpat_linkable::getLinkIx(int id) const{	
+int TPAT_Linkable::getLinkIx(int id) const{	
 	const int *it = std::find(links, links+NUM_LINKS, id);
 	
 	if(it == links+NUM_LINKS){
@@ -162,13 +162,13 @@ int tpat_linkable::getLinkIx(int id) const{
  *  @param ix The index of the link, must be in the integer set [0, linkable::NUM_LINKS)
  *  @return the ID stored at the specified index. If the index is out of 
  *  range, an exception is thrown
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-int tpat_linkable::getLink(int ix) const {
+int TPAT_Linkable::getLink(int ix) const {
 	if(ix >= 0 && ix < NUM_LINKS){
 		return links[ix];
 	}else{
-		throw tpat_exception("linkable::getLink: Index out of bounds");
+		throw TPAT_Exception("linkable::getLink: Index out of bounds");
 	}
 }//===========================================
 
@@ -180,7 +180,7 @@ int tpat_linkable::getLink(int ix) const {
  *  @return whether or not the object with the specified ID is linked
  *  to this object
  */
-bool tpat_linkable::isLinkedTo(int id) const {
+bool TPAT_Linkable::isLinkedTo(int id) const {
 	return std::find(links, links + NUM_LINKS, id) != links+NUM_LINKS;
 }//===========================================
 
@@ -191,7 +191,7 @@ bool tpat_linkable::isLinkedTo(int id) const {
  * 
  *  @param id the ID of the object to "unlink"
  */
-void tpat_linkable::removeLink(int id){
+void TPAT_Linkable::removeLink(int id){
 	int *it = std::find(links, links + NUM_LINKS, id);
 	if(it != links + NUM_LINKS)
 		links[it-links] = INVALID_ID;	
@@ -203,7 +203,7 @@ void tpat_linkable::removeLink(int id){
  * 
  *  @param id the desired ID
  */
-void tpat_linkable::setID(int id){ ID = id; } 
+void TPAT_Linkable::setID(int id){ ID = id; } 
 
 /**
  *  @brief Set the ID stored in the specified link
@@ -213,17 +213,17 @@ void tpat_linkable::setID(int id){ ID = id; }
  *  result in an exception
  *  @param id the ID to store; you cannot store the same ID twice; an exception
  *  will be thrown if you try
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
- *  @throws tpat_exception if a link already exists to <tt>id</tt>
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if a link already exists to <tt>id</tt>
  */
-void tpat_linkable::setLink(int ix, int id) {
+void TPAT_Linkable::setLink(int ix, int id) {
 	if(ix >= 0 && ix < NUM_LINKS){
 		links[ix] = id;
 		if(links[(ix+1) % NUM_LINKS] == id && id != INVALID_ID){
-			throw tpat_exception("linkable::setLink: Cannot link both slots to same ID");
+			throw TPAT_Exception("linkable::setLink: Cannot link both slots to same ID");
 		}
 	}else{
-		throw tpat_exception("linkable::setLink: Index out of bounds");
+		throw TPAT_Exception("linkable::setLink: Index out of bounds");
 	}
 }//===========================================
 
@@ -236,7 +236,7 @@ void tpat_linkable::setLink(int ix, int id) {
  * 
  *  @param L reference to a linkable object
  */
-void tpat_linkable::copyMe(const tpat_linkable &L){
+void TPAT_Linkable::copyMe(const TPAT_Linkable &L){
 	ID = L.ID;
 	std::copy(L.links, L.links + NUM_LINKS, links);
 }//=====================================================

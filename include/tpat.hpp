@@ -40,19 +40,19 @@
 /**
  * Type that represents the OS this code is running/compiled on
  */
-enum tpat_os_type {windows, apple, linux};
+enum class TPAT_OS_Type : int {windows=0, apple=1, linux=2};
 
 /**
  * Type that defines the class of operating system
  */
-static const tpat_os_type TPAT_OS_TYPE =
+static const TPAT_OS_Type TPAT_OS_TYPE =
 #ifdef _WIN32
  	// Includes 32-bit and 64-bit windows
-	windows;
+	TPAT_OS_Type::windows;
 #elif __APPLE__
-	apple;
+	TPAT_OS_Type::apple;
 #elif __linux__
-	linux;
+	TPAT_OS_Type::linux;
 #endif
 
 /**
@@ -92,13 +92,13 @@ struct tpat_initializer {
  *  objects are used to ensure that only one copy of the initializer
  *  and settings structures are constructed
  */
-class tpat{
+class TPAT{
 public:
 	static tpat_initializer initializer;				//!< Create one to initialize the system	
 	static bool isInit;									//!< Flag to prevent initializations happing lots of times
 
-	tpat();												//!< Default constructor
-	virtual ~tpat();									//!< Default destructor
+	TPAT();												//!< Default constructor
+	virtual ~TPAT();									//!< Default destructor
 };
 
 

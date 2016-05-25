@@ -2,9 +2,9 @@
 #include "tpat_constraint.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_multShoot_data.hpp"
-#include "tpat_nodeset_bcr4bp.hpp"
+#include "tpat_nodeset_bc4bp.hpp"
 #include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 #include "tpat_traj_cr3bp.hpp"
 #include "tpat_utilities.hpp"
@@ -18,43 +18,43 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 void correctEMRes(){
 	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit:\n");
-	tpat_sys_data_cr3bp sys("earth", "moon");
+	TPAT_Sys_Data_CR3BP sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = 31.00065761;
 
 	// Create a nodeset with
-	tpat_nodeset_cr3bp nodeset(IC, &sys, tof, 15);
-	tpat_traj_cr3bp traj = tpat_traj_cr3bp::fromNodeset(nodeset);
+	TPAT_Nodeset_CR3BP nodeset(IC, &sys, tof, 15);
+	TPAT_Traj_CR3BP traj = TPAT_Traj_CR3BP::fromNodeset(nodeset);
 
 	nodeset.saveToMat("resNodes.mat");
 	traj.saveToMat("traj.mat");
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 7, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 7, perpCrossData, 6);
 
 	// Also constraint final state to be perpendicular
-	tpat_constraint perpCrossEnd(tpat_constraint::STATE, 14, perpCrossData, 6);
+	TPAT_Constraint perpCrossEnd(TPAT_Constraint_Tp::STATE, 14, perpCrossData, 6);
 
 	double almostIC[] =  {IC[0], 0, 0, NAN, NAN, NAN};
-	tpat_constraint icCon(tpat_constraint::STATE, 0, almostIC, 6);
+	TPAT_Constraint icCon(TPAT_Constraint_Tp::STATE, 0, almostIC, 6);
 
 	nodeset.addConstraint(icCon);
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(perpCrossEnd);
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_cr3bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_CR3BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -66,22 +66,22 @@ void correctEMRes_EqualArcTime(){
 	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Equal Arc Time):\n");
 	double IC_halo[] = {0.9900, 0, -0.0203, 0, -1.0674, 0};
 	double tof_halo = 1.8632;
-	tpat_sys_data_cr3bp sys("earth", "moon");
+	TPAT_Sys_Data_CR3BP sys("earth", "moon");
 
 	// Create a nodeset
 	int halo_nodes = 6;
-	tpat_nodeset_cr3bp halo(IC_halo, &sys, tof_halo, halo_nodes);
+	TPAT_Nodeset_CR3BP halo(IC_halo, &sys, tof_halo, halo_nodes);
 
 	double periodic_conData[] = {0,0,0,0,NAN,0};
-	tpat_constraint periodicity(tpat_constraint::MATCH_CUST, halo_nodes-1, periodic_conData, 6);
+	TPAT_Constraint periodicity(TPAT_Constraint_Tp::MATCH_CUST, halo_nodes-1, periodic_conData, 6);
 
-	tpat_constraint fix_halo_x0(tpat_constraint::STATE, 0, IC_halo, 1);
+	TPAT_Constraint fix_halo_x0(TPAT_Constraint_Tp::STATE, 0, IC_halo, 1);
 
 	halo.addConstraint(fix_halo_x0);
 	halo.addConstraint(periodicity);
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_cr3bp correctedHalo(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_CR3BP correctedHalo(&sys);
 
 	try{
 		// corrector.setVerbose(true);
@@ -89,9 +89,9 @@ void correctEMRes_EqualArcTime(){
 		corrector.setEqualArcTime(true);
 		corrector.multShoot(&halo, &correctedHalo);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -101,24 +101,24 @@ void correctEMRes_EqualArcTime(){
 
 void correctEMRes_revTime(){
 	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time):\n");
-	tpat_sys_data_cr3bp sys("earth", "moon");
+	TPAT_Sys_Data_CR3BP sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = -31.00065761;
 
 	// Create a nodeset
-	tpat_nodeset_cr3bp nodeset(IC, &sys, tof, 15);
+	TPAT_Nodeset_CR3BP nodeset(IC, &sys, tof, 15);
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 7, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 7, perpCrossData, 6);
 
 	// Also constraint final state to be perpendicular
-	tpat_constraint perpCrossEnd(tpat_constraint::STATE, 14, perpCrossData, 6);
+	TPAT_Constraint perpCrossEnd(TPAT_Constraint_Tp::STATE, 14, perpCrossData, 6);
 
 	double almostIC[] =  {IC[0], 0, 0, NAN, NAN, NAN};
-	tpat_constraint icCon(tpat_constraint::STATE, 0, almostIC, 6);
+	TPAT_Constraint icCon(TPAT_Constraint_Tp::STATE, 0, almostIC, 6);
 
 	nodeset.addConstraint(icCon);
 	nodeset.addConstraint(perpCross);
@@ -128,16 +128,16 @@ void correctEMRes_revTime(){
 	// nodeset.print();
 	// nodeset.printInChrono();
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_cr3bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_CR3BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -145,16 +145,16 @@ void correctEMRes_revTime(){
 
 void correctEMRes_doubleSource(){
 	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time):\n");
-	tpat_sys_data_cr3bp sys("earth", "moon");
+	TPAT_Sys_Data_CR3BP sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = 31.00065761;
 
-	tpat_nodeset_cr3bp posTimeArc(IC, &sys, tof/2, 8);
-	tpat_nodeset_cr3bp revTimeArc(IC, &sys, -tof/2, 8);
+	TPAT_Nodeset_CR3BP posTimeArc(IC, &sys, tof/2, 8);
+	TPAT_Nodeset_CR3BP revTimeArc(IC, &sys, -tof/2, 8);
 
-	tpat_nodeset_cr3bp nodeset = posTimeArc;
+	TPAT_Nodeset_CR3BP nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	// nodeset.print();
@@ -162,13 +162,13 @@ void correctEMRes_doubleSource(){
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 7, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 7, perpCrossData, 6);
 
 	// Also constraint final state to be perpendicular
-	tpat_constraint perpCrossEnd(tpat_constraint::STATE, 14, perpCrossData, 6);
+	TPAT_Constraint perpCrossEnd(TPAT_Constraint_Tp::STATE, 14, perpCrossData, 6);
 
 	double almostIC[] =  {IC[0], 0, 0, NAN, NAN, NAN};
-	tpat_constraint icCon(tpat_constraint::STATE, 0, almostIC, 6);
+	TPAT_Constraint icCon(TPAT_Constraint_Tp::STATE, 0, almostIC, 6);
 
 	nodeset.addConstraint(icCon);
 	nodeset.addConstraint(perpCross);
@@ -178,16 +178,16 @@ void correctEMRes_doubleSource(){
 	// nodeset.print();
 	// nodeset.printInChrono();
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_cr3bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_CR3BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -195,16 +195,16 @@ void correctEMRes_doubleSource(){
 
 void correctEMRes_doubleSource_irregular(){
 	printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time, irrgularly spaced nodes):\n");
-	tpat_sys_data_cr3bp sys("earth", "moon");
+	TPAT_Sys_Data_CR3BP sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = 31.00065761;
 
-	tpat_nodeset_cr3bp posTimeArc(IC, &sys, tof/2, 8);
-	tpat_nodeset_cr3bp revTimeArc(IC, &sys, -tof/2, 8);
+	TPAT_Nodeset_CR3BP posTimeArc(IC, &sys, tof/2, 8);
+	TPAT_Nodeset_CR3BP revTimeArc(IC, &sys, -tof/2, 8);
 
-	tpat_nodeset_cr3bp nodeset = posTimeArc;
+	TPAT_Nodeset_CR3BP nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	// nodeset.print();
@@ -214,13 +214,13 @@ void correctEMRes_doubleSource_irregular(){
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 7, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 7, perpCrossData, 6);
 
 	// Also constraint final state to be perpendicular
-	tpat_constraint perpCrossEnd(tpat_constraint::STATE, 14, perpCrossData, 6);
+	TPAT_Constraint perpCrossEnd(TPAT_Constraint_Tp::STATE, 14, perpCrossData, 6);
 
 	double almostIC[] =  {IC[0], 0, 0, NAN, NAN, NAN};
-	tpat_constraint icCon(tpat_constraint::STATE, 0, almostIC, 6);
+	TPAT_Constraint icCon(TPAT_Constraint_Tp::STATE, 0, almostIC, 6);
 
 	nodeset.addConstraint(icCon);
 	nodeset.addConstraint(perpCross);
@@ -237,16 +237,16 @@ void correctEMRes_doubleSource_irregular(){
 	// nodeset.printNodeIDMap();
 	// nodeset.printSegIDMap();
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_cr3bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_CR3BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -254,33 +254,33 @@ void correctEMRes_doubleSource_irregular(){
 
 void correctSEMHalo(){
 	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo:\n");
-	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	TPAT_Sys_Data_BC4BP sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
-	tpat_nodeset_bcr4bp nodeset(haloIC, &sys, 0, tof, 7);
+	TPAT_Nodeset_BC4BP nodeset(haloIC, &sys, 0, tof, 7);
 	nodeset.saveToMat("bc4bp_halo_raw.mat");
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 0, perpCrossData, 6);
 
 	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
-	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
-	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneCon0(TPAT_Constraint_Tp::STATE, 3, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneConF(TPAT_Constraint_Tp::STATE, 6, xzPlaneData, 6);
 
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_BC4BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -290,34 +290,34 @@ void correctSEMHalo(){
 
 void correctSEMHalo_revTime(){
 	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Reverse Time):\n");
-	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	TPAT_Sys_Data_BC4BP sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = -310;
 
-	tpat_nodeset_bcr4bp nodeset(haloIC, &sys, 0, tof, 7);
+	TPAT_Nodeset_BC4BP nodeset(haloIC, &sys, 0, tof, 7);
 	nodeset.saveToMat("bc4bp_halo_raw.mat");
 
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 0, perpCrossData, 6);
 
 	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
-	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
-	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneCon0(TPAT_Constraint_Tp::STATE, 3, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneConF(TPAT_Constraint_Tp::STATE, 6, xzPlaneData, 6);
 
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_BC4BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -326,14 +326,14 @@ void correctSEMHalo_revTime(){
 
 void correctSEMHalo_doubleSource(){
 	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Double Source):\n");
-	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	TPAT_Sys_Data_BC4BP sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
-	tpat_nodeset_bcr4bp posTimeArc(haloIC, &sys, 0, tof/2, 4);
-	tpat_nodeset_bcr4bp revTimeArc(haloIC, &sys, 0, -tof/2, 4);
+	TPAT_Nodeset_BC4BP posTimeArc(haloIC, &sys, 0, tof/2, 4);
+	TPAT_Nodeset_BC4BP revTimeArc(haloIC, &sys, 0, -tof/2, 4);
 
-	tpat_nodeset_bcr4bp nodeset = posTimeArc;
+	TPAT_Nodeset_BC4BP nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	// nodeset.print();
@@ -341,26 +341,26 @@ void correctSEMHalo_doubleSource(){
 
 	// nodeset.saveToMat("bc4bp_halo_raw.mat");
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 0, perpCrossData, 6);
 
 	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
-	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
-	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneCon0(TPAT_Constraint_Tp::STATE, 3, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneConF(TPAT_Constraint_Tp::STATE, 6, xzPlaneData, 6);
 
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_BC4BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}
@@ -370,14 +370,14 @@ void correctSEMHalo_doubleSource(){
 
 void correctSEMHalo_doubleSource_irregular(){
 	printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Double Source, Irregular Nodes):\n");
-	tpat_sys_data_bcr4bpr sys("Sun", "earth", "moon");
+	TPAT_Sys_Data_BC4BP sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
-	tpat_nodeset_bcr4bp posTimeArc(haloIC, &sys, 0, tof/2, 4);
-	tpat_nodeset_bcr4bp revTimeArc(haloIC, &sys, 0, -tof/2, 4);
+	TPAT_Nodeset_BC4BP posTimeArc(haloIC, &sys, 0, tof/2, 4);
+	TPAT_Nodeset_BC4BP revTimeArc(haloIC, &sys, 0, -tof/2, 4);
 
-	tpat_nodeset_bcr4bp nodeset = posTimeArc;
+	TPAT_Nodeset_BC4BP nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	nodeset.deleteNode(1);
@@ -387,27 +387,27 @@ void correctSEMHalo_doubleSource_irregular(){
 
 	// nodeset.saveToMat("bc4bp_halo_raw.mat");
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
-	tpat_constraint perpCross(tpat_constraint::STATE, 0, perpCrossData, 6);
+	TPAT_Constraint perpCross(TPAT_Constraint_Tp::STATE, 0, perpCrossData, 6);
 
 	double xzPlaneData[] = {NAN,0,NAN,NAN,NAN,NAN};
-	tpat_constraint xzPlaneCon0(tpat_constraint::STATE, 3, xzPlaneData, 6);
-	tpat_constraint xzPlaneConF(tpat_constraint::STATE, 6, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneCon0(TPAT_Constraint_Tp::STATE, 3, xzPlaneData, 6);
+	TPAT_Constraint xzPlaneConF(TPAT_Constraint_Tp::STATE, 6, xzPlaneData, 6);
 
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	tpat_correction_engine corrector;
-	tpat_nodeset_bcr4bp correctedNodeset(&sys);
+	TPAT_Correction_Engine corrector;
+	TPAT_Nodeset_BC4BP correctedNodeset(&sys);
 	
 	try{
 		// corrector.setVerbose(true);
 		corrector.setTol(5e-12);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
-	}catch(tpat_diverge &e){
+	}catch(TPAT_Diverge &e){
 		cout << "Successful correction: " << FAIL << endl;
-	}catch(tpat_exception &e){
+	}catch(TPAT_Exception &e){
 		cout << "Successful correction: " << FAIL << endl;
 		printErr("%s\n", e.what());
 	}

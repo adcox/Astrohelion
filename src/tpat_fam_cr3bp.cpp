@@ -1,5 +1,5 @@
 /**
- *	@file tpat_family_cr3bp.cpp
+ *	@file tpat_fam_cr3bp.cpp
  *	@brief Data object for a CR3BP family
  */
 /*
@@ -22,7 +22,7 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include "tpat_family_cr3bp.hpp"
+#include "tpat_fam_cr3bp.hpp"
 
 #include "tpat_ascii_output.hpp"
 #include "tpat_calculations.hpp"
@@ -45,45 +45,45 @@
  *	@brief Create an empty family for the specified system
  *	@param data a CR3BP system data object
  */
-tpat_family_cr3bp::tpat_family_cr3bp(tpat_sys_data_cr3bp data){
+TPAT_Fam_CR3BP::TPAT_Fam_CR3BP(TPAT_Sys_Data_CR3BP data){
 	sysData = data;
 }//====================================================
 
 /**
  *	@brief load a family from a file
  *	@param filepath an aboslute or relative filepath to the data file
- *	@throws tpat_exception if the file cannot be opened
+ *	@throws TPAT_Exception if the file cannot be opened
  */
-tpat_family_cr3bp::tpat_family_cr3bp(const char* filepath){
+TPAT_Fam_CR3BP::TPAT_Fam_CR3BP(const char* filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
-		throw tpat_exception("tpat_family_cr3bp: Could not load family from file");
+		throw TPAT_Exception("TPAT_Fam_CR3BP: Could not load family from file");
 	}
 
 	loadMemberData(matfp);
 	loadEigVals(matfp);
 	name = readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
-	double type = readDoubleFromMat(matfp, SORTTYPE_VAR_NAME);
-	sortType = static_cast<tpat_sortFam_tp>((int)type);
+	double type = readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME);
+	sortType = static_cast<TPAT_SortFam_Tp>((int)type);
 	// sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
-	sysData = tpat_sys_data_cr3bp(filepath);
+	sysData = TPAT_Sys_Data_CR3BP(filepath);
 }//====================================================
 
 /**
  *	@brief Copy Constructor
  *	@brief fam a family reference
  */
-tpat_family_cr3bp::tpat_family_cr3bp(const tpat_family_cr3bp& fam){
+TPAT_Fam_CR3BP::TPAT_Fam_CR3BP(const TPAT_Fam_CR3BP& fam){
 	copyMe(fam);
 }//====================================================
 
 /**
  *	@brief Destructor
  */
-tpat_family_cr3bp::~tpat_family_cr3bp(){}
+TPAT_Fam_CR3BP::~TPAT_Fam_CR3BP(){}
 
 //-----------------------------------------------------
 // 		Operators
@@ -93,7 +93,7 @@ tpat_family_cr3bp::~tpat_family_cr3bp(){}
  *	@brief Assignment operator
  *	@param fam a family reference
  */
-tpat_family_cr3bp& tpat_family_cr3bp::operator= (const tpat_family_cr3bp& fam){
+TPAT_Fam_CR3BP& TPAT_Fam_CR3BP::operator= (const TPAT_Fam_CR3BP& fam){
 	copyMe(fam);
 	return *this;
 }//====================================================
@@ -108,7 +108,7 @@ tpat_family_cr3bp& tpat_family_cr3bp::operator= (const tpat_family_cr3bp& fam){
  *	@param mem a new family member; NOTE: <tt>mem</tt> should represent
  *	a trajectory that exists in the same system as the other family members.
  */
-void tpat_family_cr3bp::addMember(tpat_family_member_cr3bp mem){
+void TPAT_Fam_CR3BP::addMember(TPAT_FamMember_CR3BP mem){
 	members.push_back(mem);
 }//====================================================
 
@@ -117,7 +117,7 @@ void tpat_family_cr3bp::addMember(tpat_family_member_cr3bp mem){
  *	@param ix the index of the member. If the index is less than zero,
  *	it will count backwards from the end.
  */
-tpat_family_member_cr3bp tpat_family_cr3bp::getMember(int ix) const{
+TPAT_FamMember_CR3BP TPAT_Fam_CR3BP::getMember(int ix) const{
 	if(ix < 0)
 		ix += members.size();
 
@@ -129,14 +129,14 @@ tpat_family_member_cr3bp tpat_family_cr3bp::getMember(int ix) const{
  *	@param jc the desired value for Jacobi
  *	@return a vector of matching family members (some may be interpolated/corrected)
  */
-std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByJacobi(double jc) const{
+std::vector<TPAT_FamMember_CR3BP> TPAT_Fam_CR3BP::getMemberByJacobi(double jc) const{
 	// Get an array of all the jacobi values
 	std::vector<double> allJC;
 	for(int n = 0; n < ((int)members.size()); n++){
 		allJC.push_back(members[n].getJacobi());
 	}
 
-	tpat_constraint jacobiCon(tpat_constraint::JC, 0, &jc, 1);
+	TPAT_Constraint jacobiCon(TPAT_Constraint_Tp::JC, 0, &jc, 1);
 
 	return getMatchingMember(jc, &allJC, jacobiCon);
 }//==============================================
@@ -146,13 +146,13 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByJacobi(doubl
  *	@param tof the desired value for time-of-flight
  *	@return a vector of matching family members (some may be interpolated/corrected)
  */
-std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByTOF(double tof) const{
+std::vector<TPAT_FamMember_CR3BP> TPAT_Fam_CR3BP::getMemberByTOF(double tof) const{
 	std::vector<double> allTOF;
 	for(size_t n = 0; n < members.size(); n++){
 		allTOF.push_back(members[n].getTOF());
 	}
 
-	tpat_constraint tofCon(tpat_constraint::TOF, 0, &tof, 1);
+	TPAT_Constraint tofCon(TPAT_Constraint_Tp::TOF, 0, &tof, 1);
 
 	return getMatchingMember(tof, &allTOF, tofCon);
 }//==============================================
@@ -162,11 +162,11 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByTOF(double t
  *	@param value the desired value
  *	@param ix the index of the state variable [0, 5]
  *	@return a vector of matching family members (some may be interpolated/corrected)
- *	@throws tpat_exception if <tt>ix</tt> is out of range
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of range
  */
-std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByStateVar(double value, int ix) const{
+std::vector<TPAT_FamMember_CR3BP> TPAT_Fam_CR3BP::getMemberByStateVar(double value, int ix) const{
 	if(ix < 0 || ix > 5){
-		throw tpat_exception("tpat_family_cr3bp::getMemberByStateVar: Invalid state index; out of range");
+		throw TPAT_Exception("TPAT_Fam_CR3BP::getMemberByStateVar: Invalid state index; out of range");
 	}
 
 	std::vector<double> allVals;
@@ -176,7 +176,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByStateVar(dou
 
 	double conData[] = {NAN,NAN,NAN,NAN,NAN,NAN};
 	conData[ix] = value;
-	tpat_constraint stateCon(tpat_constraint::STATE, 0, conData, 6);
+	TPAT_Constraint stateCon(TPAT_Constraint_Tp::STATE, 0, conData, 6);
 
 	return getMatchingMember(value, &allVals, stateCon);
 }//==============================================
@@ -185,35 +185,35 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMemberByStateVar(dou
  *	@brief Retrieve the name of this family
  *	@return a descriptive name
  */
-std::string tpat_family_cr3bp::getName() const { return name; }
+std::string TPAT_Fam_CR3BP::getName() const { return name; }
 
 /**
  *	@brief Retrieve number of members in this family
  *	@return number of members in this family
  */
-int tpat_family_cr3bp::getNumMembers() const { return members.size(); }
+int TPAT_Fam_CR3BP::getNumMembers() const { return members.size(); }
 
 /**
  *	@brief Determine which variable best naturally describes the flow of the family
  *	@return the sorting variable
  */
-tpat_family_cr3bp::tpat_sortFam_tp tpat_family_cr3bp::getSortType() const { return sortType; }
+TPAT_SortFam_Tp TPAT_Fam_CR3BP::getSortType() const { return sortType; }
 
 /**
  *	@brief Retrieve a string describing the sort type in human-readable format
  *	@return a string describing the sort type in human-readable format
  */
-const char* tpat_family_cr3bp::getSortTypeStr() const{
+const char* TPAT_Fam_CR3BP::getSortTypeStr() const{
 	switch(sortType){
-		case SORT_X: return "SORT_X"; break;
-		case SORT_Y: return "SORT_Y"; break;
-		case SORT_Z: return "SORT_Z"; break;
-		case SORT_VX: return "SORT_VX"; break;
-		case SORT_VY: return "SORT_VY"; break;
-		case SORT_VZ: return "SORT_VZ"; break;
-		case SORT_JC: return "SORT_JC"; break;
-		case SORT_TOF: return "SORT_TOF"; break;
-		case SORT_NONE: return "NO SORTING"; break;
+		case TPAT_SortFam_Tp::SORT_X: return "SORT_X"; break;
+		case TPAT_SortFam_Tp::SORT_Y: return "SORT_Y"; break;
+		case TPAT_SortFam_Tp::SORT_Z: return "SORT_Z"; break;
+		case TPAT_SortFam_Tp::SORT_VX: return "SORT_VX"; break;
+		case TPAT_SortFam_Tp::SORT_VY: return "SORT_VY"; break;
+		case TPAT_SortFam_Tp::SORT_VZ: return "SORT_VZ"; break;
+		case TPAT_SortFam_Tp::SORT_JC: return "SORT_JC"; break;
+		case TPAT_SortFam_Tp::SORT_TOF: return "SORT_TOF"; break;
+		case TPAT_SortFam_Tp::SORT_NONE: return "NO SORTING"; break;
 		default: return "Unrecognized Type!";
 	}
 }//===========================================
@@ -222,26 +222,26 @@ const char* tpat_family_cr3bp::getSortTypeStr() const{
  *	@brief Retrieve the system data for this family
  *	@return the system data describing the system all family members exist in
  */
-tpat_sys_data_cr3bp tpat_family_cr3bp::getSysData() const { return sysData; }
+TPAT_Sys_Data_CR3BP TPAT_Fam_CR3BP::getSysData() const { return sysData; }
 
 /**
  *	@brief Retrieve a pointer to the system data object for this family
  *	@return a pointer to the system data object for this family
  */
-tpat_sys_data_cr3bp* tpat_family_cr3bp::getSysDataPtr() { return &sysData; }
+TPAT_Sys_Data_CR3BP* TPAT_Fam_CR3BP::getSysDataPtr() { return &sysData; }
 
 /**
  *	@brief Set the name of this family
  *	@param n a descriptive name; must be less than 128 characters
  *	if you want to save to a matlab file
  */
-void tpat_family_cr3bp::setName(std::string n){ name = n; }
+void TPAT_Fam_CR3BP::setName(std::string n){ name = n; }
 
 /**
  *	@brief Set the sort type for this family
  *	@param type the sort type
  */
-void tpat_family_cr3bp::setSortType(tpat_family_cr3bp::tpat_sortFam_tp type){ sortType = type; }
+void TPAT_Fam_CR3BP::setSortType(TPAT_SortFam_Tp type){ sortType = type; }
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
@@ -250,7 +250,7 @@ void tpat_family_cr3bp::setSortType(tpat_family_cr3bp::tpat_sortFam_tp type){ so
  *	@brief Copy the family from another family
  *	@param fam a different family
  */
-void tpat_family_cr3bp::copyMe(const tpat_family_cr3bp& fam){
+void TPAT_Fam_CR3BP::copyMe(const TPAT_Fam_CR3BP& fam){
 	members = fam.members;
 	sysData = fam.sysData;
 	name = fam.name;
@@ -268,7 +268,7 @@ void tpat_family_cr3bp::copyMe(const tpat_family_cr3bp& fam){
  *	@param data a pointer to a data set to search in
  *	@return a vector of integers representing the indices of matches
  */
-std::vector<int> tpat_family_cr3bp::findMatches(double value, std::vector<double> *data) const{
+std::vector<int> TPAT_Fam_CR3BP::findMatches(double value, std::vector<double> *data) const{
 	double numBins = data->size() > 500 ? 100 : (data->size()/5.0);
 	int binSize = floor((data->size())/numBins);
 
@@ -321,11 +321,11 @@ std::vector<int> tpat_family_cr3bp::findMatches(double value, std::vector<double
  *
  *	@return a vector of matches. If no matches are returned, the vector will be empty.
  */
-std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(double value, std::vector<double> *dataSet,
-	tpat_constraint matchCon) const{
+std::vector<TPAT_FamMember_CR3BP> TPAT_Fam_CR3BP::getMatchingMember(double value, std::vector<double> *dataSet,
+	TPAT_Constraint matchCon) const{
 	// Locate possible candidates
 	std::vector<int> matches = findMatches(value, dataSet);
-	std::vector<tpat_family_member_cr3bp> matchMembers;
+	std::vector<TPAT_FamMember_CR3BP> matchMembers;
 	if(matches.size() == 0){
 		printErr("Could not locate any matches. The family either has too few members to facilitate an accurate search or the desired trajectory does not exist.\n");
 		return matchMembers;	// empty set
@@ -333,7 +333,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 		printColor(GREEN, "Located %zu matches; applying corrections\n", matches.size());
 	}
 
-	tpat_sys_data_cr3bp tempSys = sysData;
+	TPAT_Sys_Data_CR3BP tempSys = sysData;
 	
 	for(int n = 0; n < ((int)matches.size()); n++){
 		int idx = matches[n];
@@ -348,25 +348,25 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
 			double tof = members[idx].getTOF();
 			int numNodes = tof > 2 ? floor(tof) : 2;
 
-			tpat_nodeset_cr3bp memberSet(members[idx].getIC(), &tempSys, tof, numNodes);
+			TPAT_Nodeset_CR3BP memberSet(members[idx].getIC(), &tempSys, tof, numNodes);
 			double end = numNodes-1;
 			double conData[] = {end,end,end,end,end,end};
-			tpat_constraint periodicCon(tpat_constraint::MATCH_CUST, 0, conData, 6);
+			TPAT_Constraint periodicCon(TPAT_Constraint_Tp::MATCH_CUST, 0, conData, 6);
 
 			memberSet.addConstraint(periodicCon);
 			memberSet.addConstraint(matchCon);
 
 			// Correct the nodeset while constraining the orbit to have the desired characterstic
-			tpat_correction_engine corrector;
+			TPAT_Correction_Engine corrector;
 			corrector.setTol(1e-11);
 			try{
-				tpat_nodeset_cr3bp newNodes(&tempSys);
+				TPAT_Nodeset_CR3BP newNodes(&tempSys);
 				corrector.multShoot(&memberSet, &newNodes);
 				
-				tpat_traj_cr3bp newTraj = tpat_traj_cr3bp::fromNodeset(newNodes);
-				tpat_family_member_cr3bp newMember(newTraj);
+				TPAT_Traj_CR3BP newTraj = TPAT_Traj_CR3BP::fromNodeset(newNodes);
+				TPAT_FamMember_CR3BP newMember(newTraj);
 				matchMembers.push_back(newMember);
-			}catch(tpat_diverge &e){}
+			}catch(TPAT_Diverge &e){}
 		}
 	}
 
@@ -378,7 +378,7 @@ std::vector<tpat_family_member_cr3bp> tpat_family_cr3bp::getMatchingMember(doubl
  *	@param ix the index of the coordinate within the IC vector
  *	@param array a pointer to the array we want to populate
  */
-void tpat_family_cr3bp::getCoord(int ix, std::vector<double> *array) const{
+void TPAT_Fam_CR3BP::getCoord(int ix, std::vector<double> *array) const{
 	for(size_t i = 0; i < members.size(); i++){
 		std::vector<double> ic = members[i].getIC();
 		array->push_back(ic[ix]);
@@ -392,12 +392,12 @@ void tpat_family_cr3bp::getCoord(int ix, std::vector<double> *array) const{
  *	Eigenvalues MUST be sorted, or this will yield completely bogus
  *	results
  */
-std::vector<int> tpat_family_cr3bp::findBifurcations(){
+std::vector<int> TPAT_Fam_CR3BP::findBifurcations(){
 	// TODO: Incorporate much more advanced ways to compute this
 	double okErr = 1e-3;
 	cdouble one(1,0);
 
-	tpat_eigValSet_tp setTypes[3];
+	TPAT_EigValSet_Tp setTypes[3];
 
 	// Determine what "type" of eigenvalue pair we have
 	for(int set = 0; set < 3; set++){
@@ -418,12 +418,12 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 
 		if(meanImag > okErr){
 			// significant imaginary parts
-			setTypes[set] = EIGSET_COMP_CONJ;
+			setTypes[set] = TPAT_EigValSet_Tp::EIGSET_COMP_CONJ;
 		}else{
 			if(meanDistFromOne < okErr){
-				setTypes[set] = EIGSET_ONES;
+				setTypes[set] = TPAT_EigValSet_Tp::EIGSET_ONES;
 			}else{
-				setTypes[set] = EIGSET_REAL_RECIP;
+				setTypes[set] = TPAT_EigValSet_Tp::EIGSET_REAL_RECIP;
 			}
 		}
 	}
@@ -436,7 +436,7 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 			std::vector<cdouble> prevEigs = members[m-1].getEigVals();
 
 			switch(setTypes[set]){
-				case EIGSET_REAL_RECIP:
+				case TPAT_EigValSet_Tp::EIGSET_REAL_RECIP:
 				{
 					// Compute distance of each eigenvalues from +/- 1
 					double d1 = 1 - std::abs(std::real(eigs[set*2]));
@@ -456,7 +456,7 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 					}
 					break;
 				}
-				case EIGSET_COMP_CONJ:
+				case TPAT_EigValSet_Tp::EIGSET_COMP_CONJ:
 				{
 					double meanPrevImag = (std::abs(std::imag(prevEigs[set*2])) + std::abs(std::imag(prevEigs[set*2+1])))/2;
 					double meanImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
@@ -479,16 +479,16 @@ std::vector<int> tpat_family_cr3bp::findBifurcations(){
 /**
  *	@brief Attempt to load data from the specified matlab file
  *	@param matFile a pointer to the opened matlab file
- *	@throws tpat_exception if the variable cannot be loaded
+ *	@throws TPAT_Exception if the variable cannot be loaded
  */	
-void tpat_family_cr3bp::loadMemberData(mat_t *matFile){
+void TPAT_Fam_CR3BP::loadMemberData(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, DATA_VAR_NAME);
 	if(matvar == NULL){
-		throw tpat_exception("Could not read member data into family");
+		throw TPAT_Exception("Could not read member data into family");
 	}else{
 		int numMembers = matvar->dims[0];
 		if(matvar->dims[1] != DATA_WIDTH){
-			throw tpat_exception("Incompatible data file: Data widths are different.");
+			throw TPAT_Exception("Incompatible data file: Data widths are different.");
 		}
 
 		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
@@ -503,7 +503,7 @@ void tpat_family_cr3bp::loadMemberData(mat_t *matFile){
 					state[3] = data[3*numMembers + i];
 					state[4] = data[4*numMembers + i];
 					state[5] = data[5*numMembers + i];
-					tpat_family_member_cr3bp mem(state,
+					TPAT_FamMember_CR3BP mem(state,
 						data[6*numMembers + i], data[7*numMembers + i],
 						data[8*numMembers + i], data[9*numMembers + i],
 						data[10*numMembers + i]);
@@ -512,7 +512,7 @@ void tpat_family_cr3bp::loadMemberData(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_family_cr3bp::loadMemberData: Incompatible data file: unsupported data type/class");
+			throw TPAT_Exception("TPAT_Fam_CR3BP::loadMemberData: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(matvar);
@@ -523,20 +523,20 @@ void tpat_family_cr3bp::loadMemberData(mat_t *matFile){
  *
  *	NOTE: the vector of family members MUST be populated before loading the eigenvalues
  *	@param matFile a pointer to the data file in question
- *	@throws tpat_exception if the variable cannot be loaded
+ *	@throws TPAT_Exception if the variable cannot be loaded
  */
-void tpat_family_cr3bp::loadEigVals(mat_t *matFile){
+void TPAT_Fam_CR3BP::loadEigVals(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
 	if(matvar == NULL){
-		throw tpat_exception("Could not read eigenvalues into family");
+		throw TPAT_Exception("Could not read eigenvalues into family");
 	}else{
 		int numMembers = matvar->dims[0];
 		if(matvar->dims[1] != 6){
-			throw tpat_exception("Incompatible data file: Data widths are different.");
+			throw TPAT_Exception("Incompatible data file: Data widths are different.");
 		}
 
 		if((int)(members.size()) != numMembers){
-			throw tpat_exception("tpat_family_cr3bp::loadEigVals: # eigenvalues is not same as number of members");
+			throw TPAT_Exception("TPAT_Fam_CR3BP::loadEigVals: # eigenvalues is not same as number of members");
 		}
 
 		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
@@ -560,7 +560,7 @@ void tpat_family_cr3bp::loadEigVals(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_family_cr3bp::loadEigVals: Incompatible data file: unsupported data type/class");
+			throw TPAT_Exception("TPAT_Fam_CR3BP::loadEigVals: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(matvar);
@@ -571,7 +571,7 @@ void tpat_family_cr3bp::loadEigVals(mat_t *matFile){
  *
  *	This is necessary before bifurcations can be accurately located.
  */
-void tpat_family_cr3bp::sortEigs(){
+void TPAT_Fam_CR3BP::sortEigs(){
 	std::vector<cdouble> allEigs;
 	// Create a vector with all the eigenvalues
 	for(size_t m = 0; m < members.size(); m++){
@@ -601,48 +601,48 @@ void tpat_family_cr3bp::sortEigs(){
  *	you can retrieve family members. The process will run without sorting, but the results
  *	will likely be wonky.
  *	
- *	@throws tpat_exception if the sorting type is not recognized
+ *	@throws TPAT_Exception if the sorting type is not recognized
  */
-void tpat_family_cr3bp::sortMembers(){
+void TPAT_Fam_CR3BP::sortMembers(){
 	// Don't do any sorting if the sort type is NONE
-	if(sortType == SORT_NONE)
+	if(sortType == TPAT_SortFam_Tp::SORT_NONE)
 		return;
 
 	// Create an array containing the independent variable from each family member
 	std::vector<double> dataToSort;
 	switch(sortType){
-		case SORT_X:
+		case TPAT_SortFam_Tp::SORT_X:
 			getCoord(0, &dataToSort); break;
-		case SORT_Y:
+		case TPAT_SortFam_Tp::SORT_Y:
 			getCoord(1, &dataToSort); break;
-		case SORT_Z:
+		case TPAT_SortFam_Tp::SORT_Z:
 			getCoord(2, &dataToSort); break;
-		case SORT_VX:
+		case TPAT_SortFam_Tp::SORT_VX:
 			getCoord(3, &dataToSort); break;
-		case SORT_VY:
+		case TPAT_SortFam_Tp::SORT_VY:
 			getCoord(4, &dataToSort); break;
-		case SORT_VZ:
+		case TPAT_SortFam_Tp::SORT_VZ:
 			getCoord(5, &dataToSort); break;
-		case SORT_JC:
+		case TPAT_SortFam_Tp::SORT_JC:
 			for(int i = 0; i < ((int)members.size()); i++){
 				dataToSort.push_back(members[i].getJacobi());
 			}
 			break;
-		case SORT_TOF:
+		case TPAT_SortFam_Tp::SORT_TOF:
 			for(int i = 0; i < ((int)members.size()); i++){
 				dataToSort.push_back(members[i].getTOF());
 			}
 			break;
 		default:
-			throw tpat_exception("Unrecognized sorting type");
+			throw TPAT_Exception("Unrecognized sorting type");
 			break;
 	}
 
 	// Sort the data, retrieve the indices of the now-sorted elements
-	std::vector<int> indices = tpat_util::getSortedInd(dataToSort);
+	std::vector<int> indices = TPAT_Util::getSortedInd(dataToSort);
 
 	// Use those indices to sort the family members
-	std::vector<tpat_family_member_cr3bp> sortedMembers;
+	std::vector<TPAT_FamMember_CR3BP> sortedMembers;
 	for(int n = 0; n < ((int)indices.size()); n++){
 		sortedMembers.push_back(members[indices[n]]);
 	}
@@ -655,7 +655,7 @@ void tpat_family_cr3bp::sortMembers(){
  *	@brief Save the family to a mat-file
  *	@param filename a path the the mat-file in question
  */
-void tpat_family_cr3bp::saveToMat(const char *filename){
+void TPAT_Fam_CR3BP::saveToMat(const char *filename){
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 
 	 *	used containing the software, version, and date in it. If a header
@@ -667,7 +667,7 @@ void tpat_family_cr3bp::saveToMat(const char *filename){
 	 */
 	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		printErr("tpat_family_cr3bp::saveToMat: Error creating MAT file\n");
+		printErr("TPAT_Fam_CR3BP::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things
 		saveMembers(matfp);
@@ -683,7 +683,7 @@ void tpat_family_cr3bp::saveToMat(const char *filename){
  *	@brief Save ICs, TOFs, and JCs for each member in a matrix
  *	@param matFile a pointer to the destination matlab file
  */
-void tpat_family_cr3bp::saveMembers(mat_t *matFile){
+void TPAT_Fam_CR3BP::saveMembers(mat_t *matFile){
 	if(members.size() > 0){
 		// Create a vector with member data stored in column-major order
 		std::vector<double> allData(members.size()*DATA_WIDTH);
@@ -713,9 +713,9 @@ void tpat_family_cr3bp::saveMembers(mat_t *matFile){
 /**
  *	@brief Save eigenvalue data to a mat file
  *	@param matFile a pointer to the mat file in question
- *	@throws tpat_exception if a family member does not have six eigenvalues
+ *	@throws TPAT_Exception if a family member does not have six eigenvalues
  */
-void tpat_family_cr3bp::saveEigVals(mat_t *matFile){
+void TPAT_Fam_CR3BP::saveEigVals(mat_t *matFile){
 	if(members.size() > 0){
 		// Separate all eigenvalues into real and complex parts
 		std::vector<double> realParts(members.size()*6);
@@ -723,7 +723,7 @@ void tpat_family_cr3bp::saveEigVals(mat_t *matFile){
 		for(size_t i = 0; i < members.size(); i++){
 			std::vector<cdouble> vals = members[i].getEigVals();
 				if(vals.size() != 6)
-					throw tpat_exception("tpat_family_cr3bp::saveEigVals: family member does not have 6 eigenvalues!");
+					throw TPAT_Exception("TPAT_Fam_CR3BP::saveEigVals: family member does not have 6 eigenvalues!");
 			for(int j = 0; j < 6; j++){
 				realParts[j*members.size() + i] = std::real(vals[j]);
 				imagParts[j*members.size() + i] = std::imag(vals[j]);
@@ -743,12 +743,12 @@ void tpat_family_cr3bp::saveEigVals(mat_t *matFile){
  *	@brief Save other useful information to a matlab file
  *	@param matFile the destination matlab file
  */
-void tpat_family_cr3bp::saveMiscData(mat_t *matFile){
+void TPAT_Fam_CR3BP::saveMiscData(mat_t *matFile){
 	// sortType
 	int type = static_cast<int>(sortType);
 	size_t dims[2] = {1,1};
-	matvar_t *typeVar = Mat_VarCreate(SORTTYPE_VAR_NAME, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, typeVar, SORTTYPE_VAR_NAME, MAT_COMPRESSION_NONE);
+	matvar_t *typeVar = Mat_VarCreate(SORT_TYPE_VAR_NAME, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, typeVar, SORT_TYPE_VAR_NAME, MAT_COMPRESSION_NONE);
 
 	// name
 	char name_str[128];

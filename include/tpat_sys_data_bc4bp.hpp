@@ -23,28 +23,28 @@
 #include "tpat_sys_data.hpp"
 
 #include "tpat_constants.hpp" 
-#include "tpat_model_bcr4bpr.hpp"
+#include "tpat_model_bc4bp.hpp"
 
 #include "matio.h"
 
 /**
- *	@brief This derivative class of the tpat_sys_data super-class
+ *	@brief This derivative class of the TPAT_Sys_Data super-class
  *	contains information specific to the BCR4BPR
  *
  *	@author Andrew Cox
  *	@version May 18, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_sys_data_bcr4bpr : public tpat_sys_data{
+class TPAT_Sys_Data_BC4BP : public TPAT_Sys_Data{
 	public:
-		tpat_sys_data_bcr4bpr();
-		tpat_sys_data_bcr4bpr(std::string, std::string, std::string);
-		tpat_sys_data_bcr4bpr(const tpat_sys_data_bcr4bpr&);
-		tpat_sys_data_bcr4bpr(const char*);
+		TPAT_Sys_Data_BC4BP();
+		TPAT_Sys_Data_BC4BP(std::string, std::string, std::string);
+		TPAT_Sys_Data_BC4BP(const TPAT_Sys_Data_BC4BP&);
+		TPAT_Sys_Data_BC4BP(const char*);
 		
-		tpat_sys_data_bcr4bpr& operator=(const tpat_sys_data_bcr4bpr&);
+		TPAT_Sys_Data_BC4BP& operator=(const TPAT_Sys_Data_BC4BP&);
 		
-		const tpat_model* getModel() const;
+		const TPAT_Model* getModel() const;
 
 		double getMu() const;
 		double getNu() const;
@@ -69,7 +69,7 @@ class tpat_sys_data_bcr4bpr : public tpat_sys_data{
 
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_bcr4bpr model = tpat_model_bcr4bpr();
+		TPAT_Model_BC4BP model = TPAT_Model_BC4BP();
 		
 		void initFromPrimNames(std::string, std::string, std::string);
 		void readFromMat(mat_t*);

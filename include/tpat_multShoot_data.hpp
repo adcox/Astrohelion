@@ -27,79 +27,60 @@
 #include "tpat_sys_data.hpp"
 #include "tpat_traj.hpp"
 
+#include <map>
 #include <vector>
 
 // Forward Declarations
 
-struct ms_varMap_obj{
-public:
+enum class MSVarType : int {EPOCH = 0,
+							SLACK = 1,
+							STATE = 2,
+							TOF = 3,
+							TOF_TOTAL = 4};
 
-	enum ms_varMap_tp {EPOCH, SLACK, STATE, TOF, TOF_TOTAL};
-	enum ms_varMap_parent {ARC, CON, NODE, SEG};
+enum class MSVarParent : int {	ARC = 0,
+								CON = 1,
+								NODE = 2,
+								SEG = 3};
+struct MSVarMap_Key{
+	public:
 
-	ms_varMap_tp type = STATE;			//!< Type of variable
-	ms_varMap_parent parent = NODE;		//!< Object type that owns the represented variable
-	int row0 = -1;		//!< Index of the first row of the free variable vector this variable occupies
-	int nRows = -1;		//!< Number of rows of the free variable vector this variable occupies
-	int id = -1;		//!< ID of the parent object
+		MSVarType type = MSVarType::STATE;	//!< Type of variable
+		int id = -1;				//!< ID of the parent object
 
-	ms_varMap_obj(ms_varMap_tp t) : type(t){
-		init();
-	}//================================================
-	
-	ms_varMap_obj(ms_varMap_tp t, int row0, int id) : type(t){
-		this->row0 = row0;
-		this->id = id;
-		init();
-	}//================================================
+		MSVarMap_Key();
+		MSVarMap_Key(MSVarType, int);
+		MSVarMap_Key(const MSVarMap_Key&);
+		
+		MSVarMap_Key& operator =(const MSVarMap_Key&);
+		bool friend operator <(const MSVarMap_Key&, const MSVarMap_Key&);
+		static const char* type2str(MSVarType);
 
-	ms_varMap_obj(const ms_varMap_obj &obj){
-		copyMe(obj);
-	}//================================================
+	private:
+		void copyMe(const MSVarMap_Key&);
+};
 
-	ms_varMap_obj& operator =(const ms_varMap_obj &obj){
-		copyMe(obj);
-		return *this;
-	}//================================================
+struct MSVarMap_Obj{
+	public:
 
-	bool matches(ms_varMap_tp t, int id) const{
-		return type == t && this->id == id;
-	}//================================================
+		MSVarMap_Key key;					//!< Identifies this object by variable type and parent ID
+		MSVarParent parent = MSVarParent::NODE;		//!< Object type that owns the represented variable
+		int row0 = -1;		//!< Index of the first row of the free variable vector this variable occupies
+		int nRows = -1;		//!< Number of rows of the free variable vector this variable occupies
 
-	static const char* type2str(ms_varMap_tp tp){
-		switch(tp){
-			case EPOCH: return "EPOCH"; break;
-			case SLACK: return "SLACK"; break;
-			case STATE: return "STATE"; break;
-			case TOF: return "TOF"; break;
-			case TOF_TOTAL: return "TOF_TOTAL"; break;
-		}
-		return "Unrecognized Type";
-	}//===============================================
-	
-private:
-	void init(){
-		nRows = 1;
-		switch(type){
-			case STATE:
-				parent = NODE;
-				nRows = 6;
-				break;
-			case EPOCH: parent = NODE; break;
-			case TOF: parent = SEG; break;
-			case TOF_TOTAL: parent = ARC; break;
-			case SLACK: parent = CON; break;
-			default: throw tpat_exception("ms_varMap_obj constructor: Unrecognized type");
-		}
-	}//================================================
+		MSVarMap_Obj();
+		MSVarMap_Obj(MSVarType);
+		MSVarMap_Obj(MSVarType, int, int);
+		MSVarMap_Obj(MSVarMap_Key, int);
+		MSVarMap_Obj(const MSVarMap_Obj&);
 
-	void copyMe(const ms_varMap_obj &obj){
-		type = obj.type;
-		parent = obj.parent;
-		row0 = obj.row0;
-		nRows = obj.nRows;
-		id = obj.id;
-	}//================================================
+		MSVarMap_Obj& operator =(const MSVarMap_Obj&);
+
+		bool matches(MSVarType, int) const;
+		
+	private:
+		void copyMe(const MSVarMap_Obj&);
+		void init();
 };
 
 /**		
@@ -114,32 +95,32 @@ private:
  *	@version May 16, 2016
  *	@copyright GNU GPL v3.0
  */
-class tpat_multShoot_data{
+class TPAT_MultShoot_Data{
 	public:
 
 		// *structors
-		tpat_multShoot_data(const tpat_nodeset*);
-		tpat_multShoot_data(const tpat_multShoot_data&);
+		TPAT_MultShoot_Data(const TPAT_Nodeset*);
+		TPAT_MultShoot_Data(const TPAT_MultShoot_Data&);
 
 		// Operators
-		tpat_multShoot_data& operator =(const tpat_multShoot_data&);
+		TPAT_MultShoot_Data& operator =(const TPAT_MultShoot_Data&);
 
 		// Set and Get
-		ms_varMap_obj getVarMap_obj(ms_varMap_obj::ms_varMap_tp, int) const;
+		MSVarMap_Obj getVarMap_obj(MSVarType, int) const;
 
 		// Utilities
 
 		// Variables
-		const tpat_sys_data *sysData;				//!< A pointer to the system data object used for this corrections process
-		const tpat_nodeset *nodeset;				//!< A pointer to the nodeset input for this corrections process
+		const TPAT_Sys_Data *sysData;				//!< A pointer to the system data object used for this corrections process
+		const TPAT_Nodeset *nodeset;				//!< A pointer to the nodeset input for this corrections process
 		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X {};					//!< Free-Variable Vector
 		std::vector<double> FX {};					//!< Constraint Function Vector
 		std::vector<double> DF {};					//!< Jacobian Matrix
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
-		std::vector<tpat_traj> propSegs {};			//!< A collection of all propagated segments
-		std::vector<tpat_constraint> allCons {};	//!< A list of all constraints
-		std::vector<ms_varMap_obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector
+		std::vector<TPAT_Traj> propSegs {};			//!< A collection of all propagated segments
+		std::vector<TPAT_Constraint> allCons {};	//!< A list of all constraints
+		std::map<MSVarMap_Key, MSVarMap_Obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
 		
@@ -163,7 +144,7 @@ class tpat_multShoot_data{
 		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
 	
 	protected:
-		void copyMe(const tpat_multShoot_data&);
+		void copyMe(const TPAT_MultShoot_Data&);
 };
 
 #endif

@@ -1,5 +1,5 @@
 /**
- *	@file tpat_linear_motion_engine.cpp
+ *	@file tpat_linmotion_engine.cpp
  *	@brief Uses linear EOMS near libration points to generate trajectories
  */
 /*
@@ -22,7 +22,7 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat_linear_motion_engine.hpp"
+#include "tpat_linMotion_engine.hpp"
 
 #include "tpat_calculations.hpp"
 #include "tpat_constants.hpp"
@@ -43,7 +43,7 @@
 /**
  *	@brief Default, do-nothing constructor
  */
-tpat_linear_motion_engine::tpat_linear_motion_engine(){}
+TPAT_LinMotion_Engine::TPAT_LinMotion_Engine(){}
 
 //-----------------------------------------------------
 //      Set and Get Functions
@@ -55,7 +55,7 @@ tpat_linear_motion_engine::tpat_linear_motion_engine(){}
  *	This ratio is only applied to mixed-period motion simulations
  *	@return the ratio between short- and long-period motion near L4 and L5
  */
-double tpat_linear_motion_engine::getMPORatio() const { return nu; }
+double TPAT_LinMotion_Engine::getMPORatio() const { return nu; }
 
 /**
  *	@brief Retrieve the number of revolutions to simulate for
@@ -66,13 +66,13 @@ double tpat_linear_motion_engine::getMPORatio() const { return nu; }
  *
  *	@return the number of rotatins to simulate for
  */
-int tpat_linear_motion_engine::getNumRevs() const { return rots; }
+int TPAT_LinMotion_Engine::getNumRevs() const { return rots; }
 
 /**
  *	@brief Retrieve the step size (in non-dimensional units) for the time vector
  *	@return he step size (in non-dimensional units) for the time vector
  */
-double tpat_linear_motion_engine::getTimeStep() const { return t_step; }
+double TPAT_LinMotion_Engine::getTimeStep() const { return t_step; }
 
 /**
  *	@brief Retrieve the acceptable numerical tolerance for computations
@@ -81,7 +81,7 @@ double tpat_linear_motion_engine::getTimeStep() const { return t_step; }
  *	where or not numbers are "equal" to zero (or any other value)
  *	@return the acceptable numerical tolerance for computations
  */
-double tpat_linear_motion_engine::getTol() const { return tol; }
+double TPAT_LinMotion_Engine::getTol() const { return tol; }
 
 /**
  *	@brief Set the ratio for short- and long-period L4 and L5 motion
@@ -89,7 +89,7 @@ double tpat_linear_motion_engine::getTol() const { return tol; }
  *	This ratio is only applied to mixed-period simulations
  *	@param ratio the ratio
  */
-void tpat_linear_motion_engine::setMPORatio(double ratio) {
+void TPAT_LinMotion_Engine::setMPORatio(double ratio) {
 	nu = ratio;
 }
 
@@ -100,35 +100,35 @@ void tpat_linear_motion_engine::setMPORatio(double ratio) {
  *	out-of-plane period
  *	@param numRevs number of revolutions
  */
-void tpat_linear_motion_engine::setNumRevs(int numRevs) { rots = numRevs; }
+void TPAT_LinMotion_Engine::setNumRevs(int numRevs) { rots = numRevs; }
 
 /**
  *	@brief Set the step size for the time vector
  *	@param dt non-dimensional time step
  */
-void tpat_linear_motion_engine::setTimeStep(double dt) { t_step = dt; }
+void TPAT_LinMotion_Engine::setTimeStep(double dt) { t_step = dt; }
 
 /**
  *	@brief set the tolerance to use
  *	@param t tolerance, non-dimensional units
  */
-void tpat_linear_motion_engine::setTol(double t){ tol = t; }
+void TPAT_LinMotion_Engine::setTol(double t){ tol = t; }
 
 /**
  *	@brief get a human-readable string for a motion type
  *	@param type the motion type
  *	@return a human-redable string
  */
-const char* tpat_linear_motion_engine::getTypeStr(tpat_linMotion_tp type) const{
+const char* TPAT_LinMotion_Engine::getTypeStr(TPAT_LinMotion_Tp type) const{
 	switch(type){
-		case NONE: return "NONE";
-		case HYP: return "HYPERBOLIC";
-		case ELLIP: return "ELLIPTIC";
-		case SPO: return "SHORT-period_xy-ORBIT";
-		case LPO: return "LONG-period_xy-ORBIT";
-		case MPO: return "MIXED-period_xy-ORBIT";
-		case CONVERGE: return "CONVERGENT";
-		case DIVERGE: return "DIVERGENT";
+		case TPAT_LinMotion_Tp::NONE: return "NONE";
+		case TPAT_LinMotion_Tp::HYP: return "HYPERBOLIC";
+		case TPAT_LinMotion_Tp::ELLIP: return "ELLIPTIC";
+		case TPAT_LinMotion_Tp::SPO: return "SHORT-period_xy-ORBIT";
+		case TPAT_LinMotion_Tp::LPO: return "LONG-period_xy-ORBIT";
+		case TPAT_LinMotion_Tp::MPO: return "MIXED-period_xy-ORBIT";
+		case TPAT_LinMotion_Tp::CONVERGE: return "CONVERGENT";
+		case TPAT_LinMotion_Tp::DIVERGE: return "DIVERGENT";
 		default: return "Unrecognized type...";
 	}
 }//========================================
@@ -149,9 +149,9 @@ const char* tpat_linear_motion_engine::getTypeStr(tpat_linMotion_tp type) const{
  *		to the chosen Lagrange point
  *	@param sys the CR3BP system data object
  */
-tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], tpat_sys_data_cr3bp *sys){
+TPAT_Traj_CR3BP TPAT_LinMotion_Engine::getCR3BPLinear(int L, double r0[3], TPAT_Sys_Data_CR3BP *sys){
 
-	return getCR3BPLinear(L, r0, 0, 0, NONE, sys);
+	return getCR3BPLinear(L, r0, 0, 0, TPAT_LinMotion_Tp::NONE, sys);
 }//=======================================================
 
 /**
@@ -164,22 +164,22 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], t
  *	@param Az out-of-plane amplitude, non-dimensional units
  *	@param psi starting phase angle for out-of-plane motion
  *	@param sysData a pointer to a system data object
- *	@throws tpat_exception if <tt>L</tt> is not 1, 2, or 3
+ *	@throws TPAT_Exception if <tt>L</tt> is not 1, 2, or 3
  */
-tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi,
-	tpat_sys_data_cr3bp *sysData){
+TPAT_Traj_CR3BP TPAT_LinMotion_Engine::getCR3BPLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi,
+	TPAT_Sys_Data_CR3BP *sysData){
 
 	double mu = sysData->getMu();
 
 	// Locate Lagrange point
 	double LPtPos[3] = {0};
-	tpat_model_cr3bp::getEquilibPt(sysData, L, tol, LPtPos);
+	TPAT_Model_CR3BP::getEquilibPt(sysData, L, tol, LPtPos);
 
 	// Get partial derivatives of pseudo potential
 	double ddots[6] = {0};
-	tpat_model_cr3bp::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
+	TPAT_Model_CR3BP::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
 
-	tpat_traj_cr3bp linTraj(sysData);
+	TPAT_Traj_CR3BP linTraj(sysData);
 
 	double xi;
 	double eta;
@@ -219,21 +219,21 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
 
 			double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-			ID = linTraj.addNode(tpat_node(state, 0));
+			ID = linTraj.addNode(TPAT_Node(state, 0));
 			if(t > 0)
-				linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+				linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 			prev_ID = ID;
 		}
 	}else{
-		throw tpat_exception("tpat_linear_motion_engine::getCR3BPLiss: Cannot compute Lissajous motion for anything other than the collinear points");
+		throw TPAT_Exception("TPAT_LinMotion_Engine::getCR3BPLiss: Cannot compute Lissajous motion for anything other than the collinear points");
 	}
 
 	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
 	// not enforced, but is still useful information
 	for(int i = 0; i < linTraj.getNumNodes(); i++){
 		std::vector<double> state = linTraj.getStateByIx(i);
-		linTraj.setJacobiByIx(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
+		linTraj.setJacobiByIx(i, TPAT_Model_CR3BP::getJacobi(&(state[0]), mu));
 	}
 	
 	return linTraj;
@@ -255,7 +255,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLiss(int L, double Axy, bool 
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
-tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], tpat_linMotion_tp type, tpat_sys_data_cr3bp *sysData){
+TPAT_Traj_CR3BP TPAT_LinMotion_Engine::getCR3BPLinear(int L, double r0[3], TPAT_LinMotion_Tp type, TPAT_Sys_Data_CR3BP *sysData){
 
 	return getCR3BPLinear(L, r0, 0, 0, type, sysData);
 }//====================================================
@@ -274,26 +274,26 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], t
  *	@return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
- *	@throws tpat_exception if the <tt>type</tt> does not correspond with the specified Lagrange
+ *	@throws TPAT_Exception if the <tt>type</tt> does not correspond with the specified Lagrange
  *	point <tt>L</tt>
  */
-tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
-	tpat_linMotion_tp type, tpat_sys_data_cr3bp *sysData){
+TPAT_Traj_CR3BP TPAT_LinMotion_Engine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
+	TPAT_LinMotion_Tp type, TPAT_Sys_Data_CR3BP *sysData){
 
 	double mu = sysData->getMu();
 
 	// Locate Lagrange point
 	double LPtPos[3] = {0};
-	tpat_model_cr3bp::getEquilibPt(sysData, L, tol, LPtPos);
+	TPAT_Model_CR3BP::getEquilibPt(sysData, L, tol, LPtPos);
 
 	// Get partial derivatives of pseudo potential
 	double ddots[6] = {0};
-	tpat_model_cr3bp::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
+	TPAT_Model_CR3BP::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
 
 	double xi0 = r0[0];		// Initial x-variation
 	double eta0 = r0[1];	// Initial y-variation
 
-	tpat_traj_cr3bp linTraj(sysData);
+	TPAT_Traj_CR3BP linTraj(sysData);
 
 	double xi;
 	double eta;
@@ -319,8 +319,8 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 		double s;
 		switch(type){
-			case NONE:	// for default behavior
-			case ELLIP:
+			case TPAT_LinMotion_Tp::NONE:	// for default behavior
+			case TPAT_LinMotion_Tp::ELLIP:
 			{
 				s = std::imag(eigenval[2]);
 				double beta3 = (s*s + ddots[0])/(2*s);
@@ -336,15 +336,15 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					ID = linTraj.addNode(tpat_node(state, 0));
+					ID = linTraj.addNode(TPAT_Node(state, 0));
 					if(t > 0)
-						linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+						linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 					prev_ID = ID;
 				}
 				break;
 			}
-			case HYP:
+			case TPAT_LinMotion_Tp::HYP:
 			{
 				s = std::real(eigenval[0]);
 				double alpha = (s*s - ddots[0])/(2*s);
@@ -362,16 +362,16 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					ID = linTraj.addNode(tpat_node(state, 0));
+					ID = linTraj.addNode(TPAT_Node(state, 0));
 					if(t > 0)
-						linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+						linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 					prev_ID = ID;
 				}
 	            break;
 			}
 			default:
-				throw tpat_exception("Invalid type for collinear points");
+				throw TPAT_Exception("Invalid type for collinear points");
 		}
 	}else{ // L = 4 or 5
 		// Compute eigenvalues analytically
@@ -400,11 +400,11 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 			double s3d = std::imag(s3);
 			
 			if(s1d < 0 || s3d < 0){
-				printErr("tpat_linear_motion_engine :: Eigenvalue order appears to be shifting... please hardcode abs()\n");
+				printErr("TPAT_LinMotion_Engine :: Eigenvalue order appears to be shifting... please hardcode abs()\n");
 			}
 
 			switch(type){
-				case LPO:
+				case TPAT_LinMotion_Tp::LPO:
 					period_xy = 2*PI/s1d;
 
 					for(double t = 0; t < rots*period_xy; t+= t_step){
@@ -418,15 +418,15 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(tpat_node(state, 0));
+						ID = linTraj.addNode(TPAT_Node(state, 0));
 						if(t > 0)
-							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+							linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 						prev_ID = ID;
 					}
                 	break;
-                case NONE: // for default behavior
-				case SPO:
+                case TPAT_LinMotion_Tp::NONE: // for default behavior
+				case TPAT_LinMotion_Tp::SPO:
 					period_xy = 2*PI/s3d;
 
 					for(double t = 0; t < rots*period_xy; t+= t_step){
@@ -440,14 +440,14 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(tpat_node(state, 0));
+						ID = linTraj.addNode(TPAT_Node(state, 0));
 						if(t > 0)
-							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+							linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 						prev_ID = ID;
 					}
                 	break;
-				case MPO:
+				case TPAT_LinMotion_Tp::MPO:
 				{
 					period_xy = s1d < s3d ? 2*PI/s1d : 2*PI/s3d;
 					double R1 = xi0/(1 + nu);
@@ -467,16 +467,16 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(tpat_node(state, 0));
+						ID = linTraj.addNode(TPAT_Node(state, 0));
 						if(t > 0)
-							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+							linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 						prev_ID = ID;
 					}
                 	break;
                 }
 				default:
-					throw tpat_exception("Invalid type for triangular points, Case I");
+					throw TPAT_Exception("Invalid type for triangular points, Case I");
 			}
 		}else if(std::abs(g) < tol){
 			// Case II, g is 0 (approx.)
@@ -495,9 +495,9 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 				double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-				ID = linTraj.addNode(tpat_node(state, 0));
+				ID = linTraj.addNode(TPAT_Node(state, 0));
 				if(t > 0)
-					linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+					linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 				prev_ID = ID;
 			}
@@ -506,8 +506,8 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 			double p = std::real(s1);
 			double q = std::imag(s1);
 			switch(type){
-				case NONE: // for default behavior
-				case CONVERGE:
+				case TPAT_LinMotion_Tp::NONE: // for default behavior
+				case TPAT_LinMotion_Tp::CONVERGE:
 					period_xy = 2*PI/q;
 
 					for(double t = 0; t < rots*period_xy; t += t_step){
@@ -524,18 +524,18 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(tpat_node(state, 0));
+						ID = linTraj.addNode(TPAT_Node(state, 0));
 						if(t > 0)
-							linTraj.addSeg(tpat_segment(prev_ID, ID, t_step));
+							linTraj.addSeg(TPAT_Segment(prev_ID, ID, t_step));
 
 						prev_ID = ID;
 					}
 					break;	
-				case DIVERGE:
-					throw tpat_exception("Triangular points, Case III: Diverge not yet implemented");
+				case TPAT_LinMotion_Tp::DIVERGE:
+					throw TPAT_Exception("Triangular points, Case III: Diverge not yet implemented");
 					break;
 				default:
-					throw tpat_exception("Invalid type for triangular points, Case III");
+					throw TPAT_Exception("Invalid type for triangular points, Case III");
 			}
 		}
 	}
@@ -544,7 +544,7 @@ tpat_traj_cr3bp tpat_linear_motion_engine::getCR3BPLinear(int L, double r0[3], d
 	// not enforced, but is still useful information
 	for(int i = 0; i < linTraj.getNumNodes(); i++){
 		std::vector<double> state = linTraj.getStateByIx(i);
-		linTraj.setJacobiByIx(i, tpat_model_cr3bp::getJacobi(&(state[0]), mu));
+		linTraj.setJacobiByIx(i, TPAT_Model_CR3BP::getJacobi(&(state[0]), mu));
 	}
 
 	return linTraj;

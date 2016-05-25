@@ -37,28 +37,28 @@
  *	@version 
  *	@copyright GNU GPL v3.0
  */
-class tpat_node : public tpat_linkable{
+class TPAT_Node : public TPAT_Linkable{
 
 public:
 	// *structors
-	tpat_node();
-	tpat_node(const double[6], double);
-	tpat_node(std::vector<double>, double);
-	tpat_node(const double[6], const double[3], double);
-	tpat_node(std::vector<double>, std::vector<double>, double);
-	tpat_node(const tpat_node&);
-	// ~tpat_node();
+	TPAT_Node();
+	TPAT_Node(const double[6], double);
+	TPAT_Node(std::vector<double>, double);
+	TPAT_Node(const double[6], const double[3], double);
+	TPAT_Node(std::vector<double>, std::vector<double>, double);
+	TPAT_Node(const TPAT_Node&);
+	// ~TPAT_Node();
 
 	// Operators
-	tpat_node& operator =(const tpat_node&);
-	friend bool operator ==(const tpat_node&, const tpat_node&);
-	friend bool operator !=(const tpat_node&, const tpat_node&);
+	TPAT_Node& operator =(const TPAT_Node&);
+	friend bool operator ==(const TPAT_Node&, const TPAT_Node&);
+	friend bool operator !=(const TPAT_Node&, const TPAT_Node&);
 
 	// Set and Get functions
-	void addConstraint(tpat_constraint);
+	void addConstraint(TPAT_Constraint);
 	void clearConstraints();
 	std::vector<double> getAccel() const;
-	std::vector<tpat_constraint> getConstraints() const;
+	std::vector<TPAT_Constraint> getConstraints() const;
 	double getEpoch() const;
 	double getExtraParam(int) const;
 	std::vector<double> getExtraParams() const;
@@ -67,7 +67,7 @@ public:
 	void removeConstraint(int);
 	void setAccel(const double*);
 	void setAccel(std::vector<double>);
-	void setConstraints(std::vector<tpat_constraint>);
+	void setConstraints(std::vector<TPAT_Constraint>);
 	void setConstraintID(int);
 	void setEpoch(double);
 	void setExtraParam(int, double);
@@ -76,7 +76,7 @@ public:
 	void setState(std::vector<double>);
 
 protected:
-	virtual void copyMe(const tpat_node&);
+	virtual void copyMe(const TPAT_Node&);
 
 	double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
 	double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
@@ -86,7 +86,7 @@ protected:
 	std::vector<double> extraParam {};
 
 	/** Stores constraints on this node (especially usefull in nodesets) */
-	std::vector<tpat_constraint> cons {};
+	std::vector<TPAT_Constraint> cons {};
 };
 
 #endif

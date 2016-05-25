@@ -29,33 +29,33 @@
 #include <vector>
 
 // Forward declarations
-class tpat_traj_bcr4bp;
-class tpat_traj_cr3bp;
-class tpat_traj_cr3bp_ltvp;
-class tpat_sys_data;
+class TPAT_Traj_BC4BP;
+class TPAT_Traj_CR3BP;
+class TPAT_Traj_CR3BP_LTVP;
+class TPAT_Sys_Data;
 
 /**
  *	@brief A small structure to store event occurrence records
  */
-struct eventRecord{
+struct TPAT_Sim_EventRecord{
 public:
 	/**
 	 *	@brief Construct an event record
 	 *	@param e the event index within the simulation engine event vector
 	 *	@param s the step index; which step did this event occur at?
 	 */
-	eventRecord(int e, int s) : eventIx(e), stepIx(s) {}
+	TPAT_Sim_EventRecord(int e, int s) : eventIx(e), stepIx(s) {}
 	int eventIx;	//!< The index of the event (index from simulation engine vector of events)
 	int stepIx;		//!< The index of the integration step the event occured at
 };
 
 /**
  *	@brief Performs numerical integration on any system type and produces an
- *	tpat_traj object
+ *	TPAT_Traj object
  *
  *	The simulation engine is the workhorse object for the TPAT. It
  *	holds functions to integrate equations of motion and is called by the 
- *	<tt>tpat_correction_engine</tt> to compute arcs between nodes.
+ *	<tt>TPAT_Correction_Engine</tt> to compute arcs between nodes.
  *
  *	Creating a simulation engine is simple; it can either be instantiated with no
  *	arguments, or by specifying a system data object. Further settings can be applied
@@ -115,29 +115,29 @@ public:
  *	@version June 1, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_simulation_engine : public tpat{
+class TPAT_Sim_Engine : public TPAT{
 	public:
 		// Constructors
-		tpat_simulation_engine();
-		tpat_simulation_engine(const tpat_simulation_engine&);	//copy constructor
+		TPAT_Sim_Engine();
+		TPAT_Sim_Engine(const TPAT_Sim_Engine&);	//copy constructor
 		
 		//Destructor
-		~tpat_simulation_engine();
+		~TPAT_Sim_Engine();
 
 		//Operators
-		tpat_simulation_engine& operator =(const tpat_simulation_engine&);
+		TPAT_Sim_Engine& operator =(const TPAT_Sim_Engine&);
 
 		// Set and get functions
-		void addEvent(tpat_event);
+		void addEvent(TPAT_Event);
 		double getAbsTol() const;
-		std::vector<tpat_event> getEndEvents(tpat_traj*) const;
-		std::vector<tpat_event> getEvents() const;
-		std::vector<eventRecord> getEventRecords() const;
+		std::vector<TPAT_Event> getEndEvents(TPAT_Traj*) const;
+		std::vector<TPAT_Event> getEvents() const;
+		std::vector<TPAT_Sim_EventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
 		bool makesCrashEvents() const;
 		bool usesRevTime() const;
-		tpat_verbosity_tp getVerbosity() const;
+		TPAT_Verbosity_Tp getVerbosity() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
@@ -145,14 +145,14 @@ class tpat_simulation_engine : public tpat{
 		void setNumSteps(int);
 		void setRelTol(double);
 		void setRevTime(bool);
-		void setVerbose(tpat_verbosity_tp);
+		void setVerbose(TPAT_Verbosity_Tp);
 		void setVarStepSize(bool);
 
 		// Simulation Methods
-		void runSim(const double*, double, tpat_traj*);
-		void runSim(std::vector<double>, double, tpat_traj*);
-		void runSim(const double*, double, double, tpat_traj*);
-		void runSim(std::vector<double>, double, double, tpat_traj*);
+		void runSim(const double*, double, TPAT_Traj*);
+		void runSim(std::vector<double>, double, TPAT_Traj*);
+		void runSim(const double*, double, double, TPAT_Traj*);
+		void runSim(std::vector<double>, double, double, TPAT_Traj*);
 		
 		// Utility Functions
 		void clearEvents();
@@ -161,12 +161,12 @@ class tpat_simulation_engine : public tpat{
 
 	private:
 		/** Vector of events to consider during integration */
-		std::vector<tpat_event> events {};
+		std::vector<TPAT_Event> events {};
 
 		/**
 		 *	Contains data recroding which events happened and at which step in the integration
 		 */
-		std::vector<eventRecord> eventOccurs {};
+		std::vector<TPAT_Sim_EventRecord> eventOccurs {};
 		
 		/** a void pointer to some data object that contains data for the EOM function */
 		void *eomParams = 0;
@@ -175,7 +175,7 @@ class tpat_simulation_engine : public tpat{
 		bool revTime = false;
 
 		/** Describes the verbosity of this engine */
-		tpat_verbosity_tp verbose = NO_MSG;
+		TPAT_Verbosity_Tp verbose = TPAT_Verbosity_Tp::NO_MSG;
 
 		/** Whether or not to use variable step size when integrating */
 		bool varStepSize = true;
@@ -207,10 +207,10 @@ class tpat_simulation_engine : public tpat{
 		double numSteps = 1000;
 
 		void cleanEngine();
-		void copyMe(const tpat_simulation_engine&);
-		void createCrashEvents(const tpat_sys_data*);
-		void integrate(const double*, const double*, int, tpat_traj*);
-		bool locateEvents(const double*, double, tpat_traj*);
+		void copyMe(const TPAT_Sim_Engine&);
+		void createCrashEvents(const TPAT_Sys_Data*);
+		void integrate(const double*, const double*, int, TPAT_Traj*);
+		bool locateEvents(const double*, double, TPAT_Traj*);
 };
 
 #endif

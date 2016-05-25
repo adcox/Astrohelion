@@ -23,7 +23,7 @@
 
 #include "tpat.hpp"
  
-#include "tpat_family_member_cr3bp.hpp"
+#include "tpat_famMember_cr3bp.hpp"
 #include "tpat_sys_data_cr3bp.hpp"
 
 #include "matio.h"
@@ -33,62 +33,63 @@
 #include <vector>
 
 // Forward declarations
-class tpat_constraint;
+class TPAT_Constraint;
 
+
+/**
+ *	@brief How to sort members of this family
+ *	
+ *	Families typically evolve naturally through one variable, and
+ *	it makes sense to analyze trends using this parameter as the 
+ *	independent variable.
+ *
+ *	The integer value of each type is set up to map to the index
+ *	of the independent variable in the continuation process
+ */
+enum class TPAT_SortFam_Tp : int{
+	SORT_X 		= 0,	//!< Sort by the x-coordinate in the IC
+	SORT_Y 		= 1,	//!< Sort by the y-coordinate in the IC
+	SORT_Z 		= 2,	//!< Sort by the z-coordinate in the IC
+	SORT_VX 	= 3,	//!< Sort by the x velocity component in the IC
+	SORT_VY  	= 4,	//!< Sort by the y velocity component in the IC
+	SORT_VZ 	= 5,	//!< Sort by the z velocity component in the IC
+	SORT_JC 	= 7,	//!< Sort by Jacobi Constant
+	SORT_TOF 	= 6,	//!< Sort by Time-Of-Flight
+	SORT_NONE 	= 999	//!< Do not adjust sorting; sortMembers() will do nothing
+};
+		
 /**
  *	@brief A data structure to represent a family of orbits
  *
  *	Currently, this structure assumes family members are periodic.
  */
-class tpat_family_cr3bp : public tpat{
+class TPAT_Fam_CR3BP : public TPAT{
 	public:
-		/**
-		 *	@brief How to sort members of this family
-		 *	
-		 *	Families typically evolve naturally through one variable, and
-		 *	it makes sense to analyze trends using this parameter as the 
-		 *	independent variable.
-		 *
-		 *	The integer value of each type is set up to map to the index
-		 *	of the independent variable in the continuation process
-		 */
-		enum tpat_sortFam_tp{
-			SORT_X 		= 0,	//!< Sort by the x-coordinate in the IC
-			SORT_Y 		= 1,	//!< Sort by the y-coordinate in the IC
-			SORT_Z 		= 2,	//!< Sort by the z-coordinate in the IC
-			SORT_VX 	= 3,	//!< Sort by the x velocity component in the IC
-			SORT_VY  	= 4,	//!< Sort by the y velocity component in the IC
-			SORT_VZ 	= 5,	//!< Sort by the z velocity component in the IC
-			SORT_JC 	= 7,	//!< Sort by Jacobi Constant
-			SORT_TOF 	= 6,	//!< Sort by Time-Of-Flight
-			SORT_NONE 	= 999	//!< Do not adjust sorting; sortMembers() will do nothing
-		};
-
 		// *structors
-		tpat_family_cr3bp(tpat_sys_data_cr3bp);
-		tpat_family_cr3bp(const char*);
-		tpat_family_cr3bp(const tpat_family_cr3bp&);
-		~tpat_family_cr3bp();
+		TPAT_Fam_CR3BP(TPAT_Sys_Data_CR3BP);
+		TPAT_Fam_CR3BP(const char*);
+		TPAT_Fam_CR3BP(const TPAT_Fam_CR3BP&);
+		~TPAT_Fam_CR3BP();
 
 		// Operators
-		tpat_family_cr3bp& operator= (const tpat_family_cr3bp&);
+		TPAT_Fam_CR3BP& operator= (const TPAT_Fam_CR3BP&);
 
 		// Set and Get Methods
-		void addMember(tpat_family_member_cr3bp);
+		void addMember(TPAT_FamMember_CR3BP);
 		
-		tpat_family_member_cr3bp getMember(int) const;
-		std::vector<tpat_family_member_cr3bp> getMemberByStateVar(double, int) const;
-		std::vector<tpat_family_member_cr3bp> getMemberByTOF(double) const;
-		std::vector<tpat_family_member_cr3bp> getMemberByJacobi(double) const;
+		TPAT_FamMember_CR3BP getMember(int) const;
+		std::vector<TPAT_FamMember_CR3BP> getMemberByStateVar(double, int) const;
+		std::vector<TPAT_FamMember_CR3BP> getMemberByTOF(double) const;
+		std::vector<TPAT_FamMember_CR3BP> getMemberByJacobi(double) const;
 		std::string getName() const;
 		int getNumMembers() const;
-		tpat_sortFam_tp getSortType() const;
+		TPAT_SortFam_Tp getSortType() const;
 		const char* getSortTypeStr() const;
-		tpat_sys_data_cr3bp getSysData() const;
-		tpat_sys_data_cr3bp* getSysDataPtr();
+		TPAT_Sys_Data_CR3BP getSysData() const;
+		TPAT_Sys_Data_CR3BP* getSysDataPtr();
 
 		void setName(std::string);
-		void setSortType(tpat_sortFam_tp);
+		void setSortType(TPAT_SortFam_Tp);
 
 		// Utility and Operational Functions
 		std::vector<int> findBifurcations();
@@ -99,21 +100,21 @@ class tpat_family_cr3bp : public tpat{
 
 	protected:
 		std::string name = "NULL";								//!< Descriptive name of the family
-		std::vector<tpat_family_member_cr3bp> members {};		//!< Contains all family members
-		tpat_sys_data_cr3bp sysData = tpat_sys_data_cr3bp();	//!< Describes the system this family exists in
-		tpat_sortFam_tp sortType = SORT_NONE;					//!< Describes the most natural variable to sort family members by
+		std::vector<TPAT_FamMember_CR3BP> members {};		//!< Contains all family members
+		TPAT_Sys_Data_CR3BP sysData = TPAT_Sys_Data_CR3BP();	//!< Describes the system this family exists in
+		TPAT_SortFam_Tp sortType = TPAT_SortFam_Tp::SORT_NONE;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 
 		const char* DATA_VAR_NAME = "MemberData";		//!< Variable name for family member data
-		const char* SORTTYPE_VAR_NAME = "SortType";		//!< Variable name for the sort type
+		const char* SORT_TYPE_VAR_NAME = "SortType";		//!< Variable name for the sort type
 		const char* NAME_VAR_NAME = "Name";				//!< Variable name for the name of the family
 		const char* EIG_VAR_NAME = "Eigenvalues";		//!< Variable name for the eigenvalues
 		const size_t DATA_WIDTH = 11;					//!< Number of elements in one row of member data
 
-		void copyMe(const tpat_family_cr3bp&);
+		void copyMe(const TPAT_Fam_CR3BP&);
 		std::vector<int> findMatches(double, std::vector<double>*) const;
-		std::vector<tpat_family_member_cr3bp> getMatchingMember(double, std::vector<double>*, tpat_constraint) const;
+		std::vector<TPAT_FamMember_CR3BP> getMatchingMember(double, std::vector<double>*, TPAT_Constraint) const;
 		void getCoord(int, std::vector<double>*) const;
 
 		void loadMemberData(mat_t*);

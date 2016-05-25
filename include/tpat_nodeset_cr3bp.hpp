@@ -24,11 +24,11 @@
 #include "tpat_nodeset.hpp"
 
 // Forward Declarations
-class tpat_sys_data_cr3bp;
-class tpat_traj_cr3bp;
+class TPAT_Sys_Data_CR3BP;
+class TPAT_Traj_CR3BP;
 
 /**
- *	@brief This derivative of the tpat_nodeset contains additional information for 
+ *	@brief This derivative of the TPAT_Nodeset contains additional information for 
  *	the BCR4BPR
  *
  *	Nodes are 6-dimensional, with three position states and three velocity states. Times-
@@ -38,21 +38,21 @@ class tpat_traj_cr3bp;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset_cr3bp : public tpat_nodeset{
+class TPAT_Nodeset_CR3BP : public TPAT_Nodeset{
 
 public:
 	// *structors
-	tpat_nodeset_cr3bp(const tpat_sys_data_cr3bp*);
-	tpat_nodeset_cr3bp(const double[6], const tpat_sys_data_cr3bp*, double, int);
-	tpat_nodeset_cr3bp(std::vector<double>, const tpat_sys_data_cr3bp*, double, int);
-	tpat_nodeset_cr3bp(const double[6], const tpat_sys_data_cr3bp*, double, int, tpat_nodeDistro_tp);
-	tpat_nodeset_cr3bp(std::vector<double>, const tpat_sys_data_cr3bp*, double, int, tpat_nodeDistro_tp);
-	tpat_nodeset_cr3bp(tpat_traj_cr3bp, int);
-	tpat_nodeset_cr3bp(tpat_traj_cr3bp, int, tpat_nodeDistro_tp);
-	tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&, int, int);
-	tpat_nodeset_cr3bp(const tpat_nodeset_cr3bp&);
-	tpat_nodeset_cr3bp(const tpat_base_arcset&);
-	baseArcsetPtr create(const tpat_sys_data*) const;
+	TPAT_Nodeset_CR3BP(const TPAT_Sys_Data_CR3BP*);
+	TPAT_Nodeset_CR3BP(const double[6], const TPAT_Sys_Data_CR3BP*, double, int);
+	TPAT_Nodeset_CR3BP(std::vector<double>, const TPAT_Sys_Data_CR3BP*, double, int);
+	TPAT_Nodeset_CR3BP(const double[6], const TPAT_Sys_Data_CR3BP*, double, int, tpat_nodeDistro_tp);
+	TPAT_Nodeset_CR3BP(std::vector<double>, const TPAT_Sys_Data_CR3BP*, double, int, tpat_nodeDistro_tp);
+	TPAT_Nodeset_CR3BP(TPAT_Traj_CR3BP, int);
+	TPAT_Nodeset_CR3BP(TPAT_Traj_CR3BP, int, tpat_nodeDistro_tp);
+	TPAT_Nodeset_CR3BP(const TPAT_Nodeset_CR3BP&, int, int);
+	TPAT_Nodeset_CR3BP(const TPAT_Nodeset_CR3BP&);
+	TPAT_Nodeset_CR3BP(const TPAT_Base_Arcset&);
+	baseArcsetPtr create(const TPAT_Sys_Data*) const;
 	baseArcsetPtr clone() const;
 
 	// Operators

@@ -23,48 +23,48 @@
 #include "tpat_model.hpp"
 
 // Forward declarations
-class tpat_sys_data_cr3bp;
+class TPAT_Sys_Data_CR3BP;
 
 /**
- *	@brief Derivative of tpat_model, specific to the CR3BP
+ *	@brief Derivative of TPAT_Model, specific to the CR3BP
  *
  *	The base class's methods provide a good framework for this system,
  *	so only minimal adjustments are needed. This model adds support for 
  *	Jacobi-Constant targeting.
  */
-class tpat_model_cr3bp : public tpat_model{
+class TPAT_Model_CR3BP : public TPAT_Model{
 public:
-	tpat_model_cr3bp();
-	tpat_model_cr3bp(const tpat_model_cr3bp&);
-	~tpat_model_cr3bp() {}
+	TPAT_Model_CR3BP();
+	TPAT_Model_CR3BP(const TPAT_Model_CR3BP&);
+	~TPAT_Model_CR3BP() {}
 
-	tpat_model_cr3bp& operator=(const tpat_model_cr3bp&);
+	TPAT_Model_CR3BP& operator=(const TPAT_Model_CR3BP&);
 
 	// Core Functions
-	tpat_model::eom_fcn getFullEOM_fcn() const;
-	tpat_model::eom_fcn getSimpleEOM_fcn() const;
-	std::vector<double> getPrimPos(double, const tpat_sys_data*) const;
-	std::vector<double> getPrimVel(double, const tpat_sys_data*) const;
+	TPAT_Model::eom_fcn getFullEOM_fcn() const;
+	TPAT_Model::eom_fcn getSimpleEOM_fcn() const;
+	std::vector<double> getPrimPos(double, const TPAT_Sys_Data*) const;
+	std::vector<double> getPrimVel(double, const TPAT_Sys_Data*) const;
 	
 	// Static Calculation Functions
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static void getEquilibPt(const tpat_sys_data_cr3bp*, int, double, double[3]);
+	static void getEquilibPt(const TPAT_Sys_Data_CR3BP*, int, double, double[3]);
 	static double getJacobi(const double[], double);
 	static void getUDDots(double, double, double, double, double* ddots);
 
 	// Simulation Engine Functions
-	void sim_saveIntegratedData(const double*, double, tpat_traj*) const;
-	bool sim_locateEvent(tpat_event, tpat_traj*, const double*, double, double, tpat_verbosity_tp) const;
+	void sim_saveIntegratedData(const double*, double, TPAT_Traj*) const;
+	bool sim_locateEvent(TPAT_Event, TPAT_Traj*, const double*, double, double, TPAT_Verbosity_Tp) const;
 
 	// Multiple Shooting Functions
-	void multShoot_applyConstraint(tpat_multShoot_data*, tpat_constraint, int) const;
-	void multShoot_createOutput(const tpat_multShoot_data*, const tpat_nodeset*, bool, tpat_nodeset*) const;
-	void multShoot_initIterData(tpat_multShoot_data *it) const;
+	void multShoot_applyConstraint(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	void multShoot_createOutput(const TPAT_MultShoot_Data*, const TPAT_Nodeset*, bool, TPAT_Nodeset*) const;
+	void multShoot_initIterData(TPAT_MultShoot_Data *it) const;
 	
 protected:
-	void multShoot_targetJC(tpat_multShoot_data*, tpat_constraint, int) const;
-	void multShoot_targetPseudoArc(tpat_multShoot_data*, tpat_constraint, int) const;
+	void multShoot_targetJC(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
+	void multShoot_targetPseudoArc(TPAT_MultShoot_Data*, TPAT_Constraint, int) const;
 };
 
 #endif

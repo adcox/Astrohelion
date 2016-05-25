@@ -1,6 +1,6 @@
 /**
- *  @file tpat_model_bcr4bpr.cpp
- *  @brief Derivative of tpat_model, specific to BCR4BPR
+ *  @file tpat_model_bc4bp.cpp
+ *  @brief Derivative of TPAT_Model, specific to BCR4BPR
  */
  
 /*
@@ -23,15 +23,15 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat_model_bcr4bpr.hpp"
+#include "tpat_model_bc4bp.hpp"
 
 #include "tpat_calculations.hpp"
 #include "tpat_correction_engine.hpp"
 #include "tpat_eigen_defs.hpp"
 #include "tpat_multShoot_data.hpp"
-#include "tpat_nodeset_bcr4bp.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
-#include "tpat_traj_bcr4bp.hpp"
+#include "tpat_nodeset_bc4bp.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
+#include "tpat_traj_bc4bp.hpp"
 #include "tpat_event.hpp"
 #include "tpat_node.hpp"
 #include "tpat_utilities.hpp"
@@ -40,28 +40,28 @@
 /**
  *  @brief Construct a BCR4BP Dynamic Model
  */
-tpat_model_bcr4bpr::tpat_model_bcr4bpr() : tpat_model(MODEL_CR3BP) {
+TPAT_Model_BC4BP::TPAT_Model_BC4BP() : TPAT_Model(MODEL_CR3BP) {
     coreStates = 6;
     stmStates = 36;
     extraStates = 6;
-    allowedCons.push_back(tpat_constraint::SP);
-    allowedCons.push_back(tpat_constraint::SP_RANGE);
-    allowedCons.push_back(tpat_constraint::SP_DIST);
-    allowedCons.push_back(tpat_constraint::SP_MAX_DIST);
+    allowedCons.push_back(TPAT_Constraint_Tp::SP);
+    allowedCons.push_back(TPAT_Constraint_Tp::SP_RANGE);
+    allowedCons.push_back(TPAT_Constraint_Tp::SP_DIST);
+    allowedCons.push_back(TPAT_Constraint_Tp::SP_MAX_DIST);
 }//==============================================
 
 /**
  *  @brief Copy constructor
  *  @param m a model reference
  */
-tpat_model_bcr4bpr::tpat_model_bcr4bpr(const tpat_model_bcr4bpr &m) : tpat_model(m) {}
+TPAT_Model_BC4BP::TPAT_Model_BC4BP(const TPAT_Model_BC4BP &m) : TPAT_Model(m) {}
 
 /**
  *  @brief Assignment operator
  *  @param m a model reference
  */
-tpat_model_bcr4bpr& tpat_model_bcr4bpr::operator =(const tpat_model_bcr4bpr &m){
-	tpat_model::operator =(m);
+TPAT_Model_BC4BP& TPAT_Model_BC4BP::operator =(const TPAT_Model_BC4BP &m){
+	TPAT_Model::operator =(m);
 	return *this;
 }//==============================================
 
@@ -69,7 +69,7 @@ tpat_model_bcr4bpr& tpat_model_bcr4bpr::operator =(const tpat_model_bcr4bpr &m){
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
-tpat_model::eom_fcn tpat_model_bcr4bpr::getSimpleEOM_fcn() const{
+TPAT_Model::eom_fcn TPAT_Model_BC4BP::getSimpleEOM_fcn() const{
 	return &simpleEOMs;
 }//==============================================
 
@@ -77,7 +77,7 @@ tpat_model::eom_fcn tpat_model_bcr4bpr::getSimpleEOM_fcn() const{
  *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
-tpat_model::eom_fcn tpat_model_bcr4bpr::getFullEOM_fcn() const{
+TPAT_Model::eom_fcn TPAT_Model_BC4BP::getFullEOM_fcn() const{
 	return &fullEOMs;
 }//==============================================
 
@@ -89,9 +89,9 @@ tpat_model::eom_fcn tpat_model_bcr4bpr::getFullEOM_fcn() const{
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> tpat_model_bcr4bpr::getPrimPos(double t, const tpat_sys_data *sysData) const{
+std::vector<double> TPAT_Model_BC4BP::getPrimPos(double t, const TPAT_Sys_Data *sysData) const{
     double primPos[9];
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP *>(sysData);
     getPrimaryPos(t, bcSys, primPos);
 
     return std::vector<double>(primPos, primPos+9);
@@ -105,9 +105,9 @@ std::vector<double> tpat_model_bcr4bpr::getPrimPos(double t, const tpat_sys_data
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
-std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, const tpat_sys_data *sysData) const{
+std::vector<double> TPAT_Model_BC4BP::getPrimVel(double t, const TPAT_Sys_Data *sysData) const{
     double primVel[9];
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(sysData);
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP *>(sysData);
     getPrimaryVel(t, bcSys, primVel);
 
     return std::vector<double>(primVel, primVel+9);
@@ -124,10 +124,10 @@ std::vector<double> tpat_model_bcr4bpr::getPrimVel(double t, const tpat_sys_data
  *  @param t the time at the current integration state
  *  @param traj a pointer to the trajectory we should store the data in
  */
-void tpat_model_bcr4bpr::sim_saveIntegratedData(const double* y, double t, tpat_traj* traj) const{
+void TPAT_Model_BC4BP::sim_saveIntegratedData(const double* y, double t, TPAT_Traj* traj) const{
 
 	// Cast the system data to the appropriate derivative type
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr*>(traj->getSysData());
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP*>(traj->getSysData());
 
     // Compute acceleration (elements 3-5)
     double dsdt[6] = {0};
@@ -135,14 +135,14 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(const double* y, double t, tpat_
     simpleEOMs(t, y, dsdt, &paramStruct);
     
     // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
-    int id = traj->addNode(tpat_node(y, dsdt+3, t));
+    int id = traj->addNode(TPAT_Node(y, dsdt+3, t));
 
     if(id > 0){
         double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(tpat_segment(id-1, id, tof, y+6));
+        traj->addSeg(TPAT_Segment(id-1, id, tof, y+6));
     }
     
-    tpat_traj_bcr4bp *bcTraj = static_cast<tpat_traj_bcr4bp*>(traj);
+    TPAT_Traj_BC4BP *bcTraj = static_cast<TPAT_Traj_BC4BP*>(traj);
     bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
 }//=====================================================
 
@@ -163,8 +163,8 @@ void tpat_model_bcr4bpr::sim_saveIntegratedData(const double* y, double t, tpat_
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
-    const double *ic, double t0, double tof, tpat_verbosity_tp verbose) const{
+bool TPAT_Model_BC4BP::sim_locateEvent(TPAT_Event event, TPAT_Traj *traj,
+    const double *ic, double t0, double tof, TPAT_Verbosity_Tp verbose) const{
 
     // **** Make sure you fix the epoch of the first node as well as the states
     double IC[7] = {0};
@@ -172,26 +172,26 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
     IC[6] = t0;
 
     // Recast system data pointer
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr*>(traj->getSysData());
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP*>(traj->getSysData());
 
     // Create a nodeset for this particular type of system
-    printVerb(verbose == ALL_MSG, "  Creating nodeset for event location\n");
-    tpat_nodeset_bcr4bp eventNodeset(IC, bcSys, t0,
-        tof, 2, tpat_nodeset::DISTRO_TIME);
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  Creating nodeset for event location\n");
+    TPAT_Nodeset_BC4BP eventNodeset(IC, bcSys, t0,
+        tof, 2, TPAT_Nodeset::DISTRO_TIME);
 
     // Constraint to keep first node unchanged
-    tpat_constraint fixFirstCon(tpat_constraint::STATE, 0, IC, 7);
+    TPAT_Constraint fixFirstCon(TPAT_Constraint_Tp::STATE, 0, IC, 7);
 
     // Constraint to enforce event
-    tpat_constraint eventCon(event.getConType(), 1, event.getConData());
+    TPAT_Constraint eventCon(event.getConType(), 1, event.getConData());
 
     eventNodeset.addConstraint(fixFirstCon);
     eventNodeset.addConstraint(eventCon);
 
-    if(verbose == ALL_MSG){ eventNodeset.print(); }
+    if(verbose == TPAT_Verbosity_Tp::ALL_MSG){ eventNodeset.print(); }
 
-    printVerb(verbose == ALL_MSG, "  Applying corrections process to locate event\n");
-    tpat_correction_engine corrector;
+    printVerb(verbose == TPAT_Verbosity_Tp::ALL_MSG, "  Applying corrections process to locate event\n");
+    TPAT_Correction_Engine corrector;
     corrector.setVarTime(true);
     corrector.setTol(traj->getTol());
     corrector.setVerbose(verbose);
@@ -199,13 +199,13 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
     
     // Because we set findEvent to true, this output nodeset should contain
     // the full (42 or 48 element) final state
-    tpat_nodeset_bcr4bp correctedNodes(bcSys);
+    TPAT_Nodeset_BC4BP correctedNodes(bcSys);
     try{
         corrector.multShoot(&eventNodeset, &correctedNodes);
-    }catch(tpat_diverge &e){
+    }catch(TPAT_Diverge &e){
         printErr("Unable to locate event; corrector diverged\n");
         return false;
-    }catch(tpat_linalg_err &e){
+    }catch(TPAT_LinAlg_Err &e){
         printErr("LinAlg Err while locating event; bug in corrector!\n");
         return false;
     }
@@ -236,29 +236,30 @@ bool tpat_model_bcr4bpr::sim_locateEvent(tpat_event event, tpat_traj *traj,
  *
  *  @param it a pointer to the corrector's iteration data structure
  *  @param set a pointer to the nodeset being corrected
- *  @throws tpat_exception if equal arc times is turned ON; this has not been implemented for this system
+ *  @throws TPAT_Exception if equal arc times is turned ON; this has not been implemented for this system
  */
-void tpat_model_bcr4bpr::multShoot_initDesignVec(tpat_multShoot_data *it, const tpat_nodeset *set) const{
+void TPAT_Model_BC4BP::multShoot_initDesignVec(TPAT_MultShoot_Data *it, const TPAT_Nodeset *set) const{
     // Call base class to do most of the work
-    tpat_model::multShoot_initDesignVec(it, set);
+    TPAT_Model::multShoot_initDesignVec(it, set);
 
     // Append the Epoch for each node
     if(it->varTime){
         // epochs come after ALL the TOFs have been added
-        const tpat_nodeset_bcr4bp *bcSet = static_cast<const tpat_nodeset_bcr4bp *>(set);
+        const TPAT_Nodeset_BC4BP *bcSet = static_cast<const TPAT_Nodeset_BC4BP *>(set);
         for(int n = 0; n < bcSet->getNumNodes(); n++){
-            it->freeVarMap.push_back(ms_varMap_obj(ms_varMap_obj::EPOCH, it->X.size(), set->getNodeByIx(n).getID()));
+            MSVarMap_Key key(MSVarType::EPOCH, set->getNodeByIx(n).getID());
+            it->freeVarMap[key] = MSVarMap_Obj(key, it->X.size());
             it->X.push_back(bcSet->getEpochByIx(n));
         }
     }
 }//====================================================
 
 /**
- *  @brief Perform model-specific initializations on the tpat_multShoot_data object
+ *  @brief Perform model-specific initializations on the TPAT_MultShoot_Data object
  *  @param it pointer to the object to be initialized
  */
-void tpat_model_bcr4bpr::multShoot_initIterData(tpat_multShoot_data *it) const{
-    tpat_traj_bcr4bp traj(static_cast<const tpat_sys_data_bcr4bpr *>(it->sysData));
+void TPAT_Model_BC4BP::multShoot_initIterData(TPAT_MultShoot_Data *it) const{
+    TPAT_Traj_BC4BP traj(static_cast<const TPAT_Sys_Data_BC4BP *>(it->sysData));
     it->propSegs.assign(it->nodeset->getNumSegs(), traj);
 }//====================================================
 
@@ -267,20 +268,20 @@ void tpat_model_bcr4bpr::multShoot_initIterData(tpat_multShoot_data *it) const{
  *  same magnitude.
  *  @details This can improve the corrections process, although it is not guaranteed to,
  *  and CAN impede the corrections process as well. This function calls the default behavior in
- *  tpat_model::multShoot_scaleDesignVec and then applies additional scaling on epoch variables.
+ *  TPAT_Model::multShoot_scaleDesignVec and then applies additional scaling on epoch variables.
  * 
  *  @param it iteraiton data object for the current corrections process
  *  @param set the nodeset that corrections are being applied to
  */
-void tpat_model_bcr4bpr::multShoot_scaleDesignVec(tpat_multShoot_data *it, const tpat_nodeset *set) const{
-    tpat_model::multShoot_scaleDesignVec(it, set);   // Perform default behavior
-    const tpat_nodeset_bcr4bp *bcSet = static_cast<const tpat_nodeset_bcr4bp *>(set);
+void TPAT_Model_BC4BP::multShoot_scaleDesignVec(TPAT_MultShoot_Data *it, const TPAT_Nodeset *set) const{
+    TPAT_Model::multShoot_scaleDesignVec(it, set);   // Perform default behavior
+    const TPAT_Nodeset_BC4BP *bcSet = static_cast<const TPAT_Nodeset_BC4BP *>(set);
 
     // Compute the largest magnitude
     Eigen::VectorXd allEpochs(it->numNodes);
     for(int n = 0; n < it->numNodes; n++){
         if(it->varTime){
-            ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getNodeByIx(n).getID());
+            MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getNodeByIx(n).getID());
             allEpochs(n) = it->X[epochVar.row0];
         }else{
             allEpochs(n) = bcSet->getEpochByIx(n);
@@ -296,7 +297,7 @@ void tpat_model_bcr4bpr::multShoot_scaleDesignVec(tpat_multShoot_data *it, const
     // Scale all Epochs
     if(it->varTime){
         for(int n = 0; n < it->numNodes; n++){
-            ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getNodeByIx(n).getID());
+            MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getNodeByIx(n).getID());
             it->X[epochVar.row0] *= it->freeVarScale[3];
         }
     }
@@ -311,14 +312,14 @@ void tpat_model_bcr4bpr::multShoot_scaleDesignVec(tpat_multShoot_data *it, const
  *  @param it a pointer to the corrector's iteration data structure
  *  @param set a pointer to the nodeset being corrected
  */ 
-void tpat_model_bcr4bpr::multShoot_createContCons(tpat_multShoot_data *it, const tpat_nodeset *set) const{
-    tpat_model::multShoot_createContCons(it, set);
+void TPAT_Model_BC4BP::multShoot_createContCons(TPAT_MultShoot_Data *it, const TPAT_Nodeset *set) const{
+    TPAT_Model::multShoot_createContCons(it, set);
 
     if(it->varTime){
         std::vector<double> zero {0};
         for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-            if(it->nodeset->getSegByIx(s).getTerminus() != tpat_linkable::INVALID_ID){
-                tpat_constraint timeCont(tpat_constraint::CONT_EX, it->nodeset->getSegByIx(s).getID(), zero);   // 0 value is for Epoch Time
+            if(it->nodeset->getSegByIx(s).getTerminus() != TPAT_Linkable::INVALID_ID){
+                TPAT_Constraint timeCont(TPAT_Constraint_Tp::CONT_EX, it->nodeset->getSegByIx(s).getID(), zero);   // 0 value is for Epoch Time
                 it->allCons.push_back(timeCont);
             }
         }
@@ -336,16 +337,16 @@ void tpat_model_bcr4bpr::multShoot_createContCons(tpat_multShoot_data *it, const
  *  @param t0 a pointer to a double representing the initial time (epoch)
  *  @param tof a pointer to a double the time-of-flight on the segment.
  */
-void tpat_model_bcr4bpr::multShoot_getSimICs(const tpat_multShoot_data *it, const tpat_nodeset *set, int s,
+void TPAT_Model_BC4BP::multShoot_getSimICs(const TPAT_MultShoot_Data *it, const TPAT_Nodeset *set, int s,
     double *ic, double *t0, double *tof) const{
 
-    tpat_model::multShoot_getSimICs(it, set, s, ic, t0, tof);   // Perform default behavior
+    TPAT_Model::multShoot_getSimICs(it, set, s, ic, t0, tof);   // Perform default behavior
 
     // Compute and reverse-scale epoch
-    const tpat_nodeset_bcr4bp *bcSet = static_cast<const tpat_nodeset_bcr4bp *>(set);
+    const TPAT_Nodeset_BC4BP *bcSet = static_cast<const TPAT_Nodeset_BC4BP *>(set);
 
     if(it->varTime){
-        ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSeg(s).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSeg(s).getOrigin());
         *t0 = it->X[epochVar.row0];
         // *t0 = it->equalArcTime ? it->X[6*it->numNodes+1+n] : it->X[7*it->numNodes-1+n];
         *t0 /= it->freeVarScale[3];
@@ -367,27 +368,27 @@ void tpat_model_bcr4bpr::multShoot_getSimICs(const tpat_multShoot_data *it, cons
  *  Note: This function should be called after the state variable vector has 
  *  been initialized by the multiple shooting algorithm
  * 
- *  @param it the tpat_multShoot_data object associated with the multiple shooting process
+ *  @param it the TPAT_MultShoot_Data object associated with the multiple shooting process
  *  @param con the inequality constraint for which the slack variable is being computed
  * 
  *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
  */
-double tpat_model_bcr4bpr::multShoot_getSlackVarVal(const tpat_multShoot_data *it, tpat_constraint con) const{
+double TPAT_Model_BC4BP::multShoot_getSlackVarVal(const TPAT_MultShoot_Data *it, TPAT_Constraint con) const{
     switch(con.getType()){
-        case tpat_constraint::SP_RANGE:
+        case TPAT_Constraint_Tp::SP_RANGE:
             return multShoot_targetSPMag_compSlackVar(it, con);
-        case tpat_constraint::SP_MAX_DIST:
+        case TPAT_Constraint_Tp::SP_MAX_DIST:
             return multShoot_targetSP_maxDist_compSlackVar(it, con);
         default:
-            return tpat_model::multShoot_getSlackVarVal(it, con);
+            return TPAT_Model::multShoot_getSlackVarVal(it, con);
     }
 }//===========================================================
 
 /**
  *  @brief Compute constraint function and partial derivative values for a constraint
  *  
- *  This function calls its relative in the tpat_model base class and appends additional
+ *  This function calls its relative in the TPAT_Model base class and appends additional
  *  instructions specific to the BCR4BPR
  *
  *  @param it a pointer to the corrector's iteration data structure
@@ -395,26 +396,26 @@ double tpat_model_bcr4bpr::multShoot_getSlackVarVal(const tpat_multShoot_data *i
  *  @param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void tpat_model_bcr4bpr::multShoot_applyConstraint(tpat_multShoot_data *it, tpat_constraint con, int c) const{
+void TPAT_Model_BC4BP::multShoot_applyConstraint(TPAT_MultShoot_Data *it, TPAT_Constraint con, int c) const{
 
     // Let the base class do its thing first
-    tpat_model::multShoot_applyConstraint(it, con, c);
+    TPAT_Model::multShoot_applyConstraint(it, con, c);
 
     // Handle constraints specific to the CR3BP
     int row0 = it->conRows[c];
 
     switch(con.getType()){
-        case tpat_constraint::APSE:
+        case TPAT_Constraint_Tp::APSE:
             multShoot_targetApse(it, con, row0);
             break;
-        case tpat_constraint::SP:
+        case TPAT_Constraint_Tp::SP:
             multShoot_targetSP(it, con, row0);
             break;
-        case tpat_constraint::SP_RANGE:
+        case TPAT_Constraint_Tp::SP_RANGE:
             multShoot_targetSP_mag(it, con, c);
             break;
-        case tpat_constraint::SP_DIST:
-        case tpat_constraint::SP_MAX_DIST:
+        case TPAT_Constraint_Tp::SP_DIST:
+        case TPAT_Constraint_Tp::SP_MAX_DIST:
             multShoot_targetSP_dist(it, con, c);
             break;
         default: break;
@@ -436,9 +437,9 @@ void tpat_model_bcr4bpr::multShoot_applyConstraint(tpat_multShoot_data *it, tpat
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
  */
-void tpat_model_bcr4bpr::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+void TPAT_Model_BC4BP::multShoot_targetCont_PosVel(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
     // Call base function first to do most of the work
-    tpat_model::multShoot_targetCont_PosVel(it, con, row0);
+    TPAT_Model::multShoot_targetCont_PosVel(it, con, row0);
 
     // Add epoch dependencies for this model
     if(it->varTime){
@@ -446,7 +447,7 @@ void tpat_model_bcr4bpr::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tp
         std::vector<double> conData = con.getData();
         std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParam(-1, 0);
 
-        ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
 
         // Loop through conData
         int count = 0;
@@ -470,15 +471,15 @@ void tpat_model_bcr4bpr::multShoot_targetCont_PosVel(tpat_multShoot_data* it, tp
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
  */
-void tpat_model_bcr4bpr::multShoot_targetCont_Ex(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+void TPAT_Model_BC4BP::multShoot_targetCont_Ex(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
     /* Add time-continuity constraints if applicable; we need to match
     the epoch time of node n to the sum of node n-1's epoch and TOF */
     if(it->varTime){
         int segIx = it->nodeset->getSegIx(con.getID());
-        ms_varMap_obj T0_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
-        ms_varMap_obj Tf_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
-        ms_varMap_obj tof_var = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
-            it->equalArcTime ? tpat_linkable::INVALID_ID : con.getID());
+        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
+        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
+        MSVarMap_Obj tof_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+            it->equalArcTime ? TPAT_Linkable::INVALID_ID : con.getID());
         
         double T0 = it->X[T0_var.row0]/it->freeVarScale[3];
         double tof = it->equalArcTime ? it->X[tof_var.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var.row0];
@@ -494,7 +495,7 @@ void tpat_model_bcr4bpr::multShoot_targetCont_Ex(tpat_multShoot_data *it, tpat_c
 }//=========================================================
 
 /**
- *  @brief Computes continuity constraints for constraints with the <tt>SEG_CONT_EX</tt> type.
+ *  @brief Computes continuity constraints for constraints with the <tt>TPAT_Constraint_Tp::SEG_CONT_EX</tt> type.
  *
  *  This function overrides the base model function
  *
@@ -502,17 +503,17 @@ void tpat_model_bcr4bpr::multShoot_targetCont_Ex(tpat_multShoot_data *it, tpat_c
  *  @param con the constraint being applied
  *  @param row0 the first row this constraint applies to
  */
-void tpat_model_bcr4bpr::multShoot_targetCont_Ex_Seg(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+void TPAT_Model_BC4BP::multShoot_targetCont_Ex_Seg(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
     if(it->varTime){
         int segIx1 = it->nodeset->getSegIx(con.getID());
         int segIx2 = it->nodeset->getSegIx(con.getData()[0]);
 
-        ms_varMap_obj T0_var1 = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx1).getOrigin());
-        ms_varMap_obj T0_var2 = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(segIx2).getOrigin());
-        ms_varMap_obj tof_var1 = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
-            it->equalArcTime ? tpat_linkable::INVALID_ID : con.getID());
-        ms_varMap_obj tof_var2 = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
-            it->equalArcTime ? tpat_linkable::INVALID_ID : con.getData()[0]);
+        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx1).getOrigin());
+        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx2).getOrigin());
+        MSVarMap_Obj tof_var1 = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+            it->equalArcTime ? TPAT_Linkable::INVALID_ID : con.getID());
+        MSVarMap_Obj tof_var2 = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+            it->equalArcTime ? TPAT_Linkable::INVALID_ID : con.getData()[0]);
 
         double T01 = it->X[T0_var1.row0]/it->freeVarScale[3];
         double T02 = it->X[T0_var2.row0]/it->freeVarScale[3];
@@ -530,7 +531,7 @@ void tpat_model_bcr4bpr::multShoot_targetCont_Ex_Seg(tpat_multShoot_data *it, tp
 }//=========================================================
 
 /**
- *  @brief Compute partials and constraint functions for nodes constrained with <tt>STATE</tt>.
+ *  @brief Compute partials and constraint functions for nodes constrained with <tt>TPAT_Constraint_Tp::STATE</tt>.
  *
  *  This method replaces the base class function and allows the user to constrain epoch as well
  *  as the configuration space states
@@ -539,9 +540,9 @@ void tpat_model_bcr4bpr::multShoot_targetCont_Ex_Seg(tpat_multShoot_data *it, tp
  *  @param con the constraint being applied
  *  @param row0 the index of the row this constraint begins at
  */
-void tpat_model_bcr4bpr::multShoot_targetState(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+void TPAT_Model_BC4BP::multShoot_targetState(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
 
     // Allow user to constrain 7 states
     int count = 0;  // Count # rows since some may be skipped (NAN)
@@ -554,20 +555,20 @@ void tpat_model_bcr4bpr::multShoot_targetState(tpat_multShoot_data* it, tpat_con
                 count++;
             }else if(s == 6){
                 // Allow constraining epoch
-                ms_varMap_obj epoch_var = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+                MSVarMap_Obj epoch_var = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
                 it->FX[row0+count] = it->X[epoch_var.row0] - conData[s]*it->freeVarScale[3];
                 it->DF[it->totalFree*(row0 + count) + epoch_var.row0] = 1;
                 count++;
             }else{
-                printErr("tpat_model_bcr4bpr::multShoot_targetState: constraint has more than six elements...\n");
+                printErr("TPAT_Model_BC4BP::multShoot_targetState: constraint has more than six elements...\n");
             }
         }
     }
 }//=================================================
 
 /**
- *  @brief Compute partials and constraint functions for nodes constrained with <tt>DIST</tt>, 
- *  <tt>MIN_DIST</tt>, or <tt>MAX_DIST</tt>
+ *  @brief Compute partials and constraint functions for nodes constrained with <tt>TPAT_Constraint_Tp::DIST</tt>, 
+ *  <tt>TPAT_Constraint_Tp::MIN_DIST</tt>, or <tt>TPAT_Constraint_Tp::MAX_DIST</tt>
  *
  *  This method overrides the base class function to add functionality for epoch-time dependencies
  *
@@ -575,17 +576,17 @@ void tpat_model_bcr4bpr::multShoot_targetState(tpat_multShoot_data* it, tpat_con
  *  @param con a copy of the constraint object
  *  @param c the index of this constraint in the constraint vector object
  */
-void tpat_model_bcr4bpr::multShoot_targetDist(tpat_multShoot_data* it, tpat_constraint con, int c) const{
+void TPAT_Model_BC4BP::multShoot_targetDist(TPAT_MultShoot_Data* it, TPAT_Constraint con, int c) const{
 
     std::vector<double> conData = con.getData();
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
     int Pix = (int)(conData[0]);    // index of primary
     int row0 = it->conRows[c];
     double sr = it->freeVarScale[0];    // Position scalar
     double sT = it->freeVarScale[3];    // Epoch scalar
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double t0 = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
     // Get the primary position
@@ -619,18 +620,18 @@ void tpat_model_bcr4bpr::multShoot_targetDist(tpat_multShoot_data* it, tpat_cons
     }
 
     // Extra stuff for inequality constraints
-    if(con.getType() == tpat_constraint::MIN_DIST || 
-        con.getType() == tpat_constraint::MAX_DIST ){
+    if(con.getType() == TPAT_Constraint_Tp::MIN_DIST || 
+        con.getType() == TPAT_Constraint_Tp::MAX_DIST ){
         // figure out which of the slack variables correspond to this constraint
         std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
             it->slackAssignCon.end(), c);
 
         // which column of the DF matrix the slack variable is in
         int slackCol = it->totalFree - it->numSlack + (slackIx - it->slackAssignCon.begin());
-        int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
+        int sign = con.getType() == TPAT_Constraint_Tp::MAX_DIST ? 1 : -1;
 
         // printf("Dist from P%d is %f (%s %f)\n", Pix, h,
-        //     con.getType() == tpat_constraint::MIN_DIST ? "Min" : "Max", conData[1]);
+        //     con.getType() == TPAT_Constraint_Tp::MIN_DIST ? "Min" : "Max", conData[1]);
         // printf("  Slack Var^2 = %e\n", it->X[slackCol]*it->X[slackCol]);
         // Subtract squared slack variable from constraint
         it->FX[row0] += sign*it->X[slackCol]*it->X[slackCol];
@@ -654,15 +655,15 @@ void tpat_model_bcr4bpr::multShoot_targetDist(tpat_multShoot_data* it, tpat_cons
  *  @return the value of the slack variable that minimizes the constraint function
  *  without setting the slack variable equal to zero
  */
-double tpat_model_bcr4bpr::multShoot_targetDist_compSlackVar(const tpat_multShoot_data* it, tpat_constraint con) const{
+double TPAT_Model_BC4BP::multShoot_targetDist_compSlackVar(const TPAT_MultShoot_Data* it, TPAT_Constraint con) const{
     std::vector<double> conData = con.getData();
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
     int Pix = (int)(conData[0]);    // index of primary
     double sr = it->freeVarScale[0];    // Position scalar
     double sT = it->freeVarScale[3];    // Epoch scalar
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double t0 = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
     // Get the primary position
@@ -674,7 +675,7 @@ double tpat_model_bcr4bpr::multShoot_targetDist_compSlackVar(const tpat_multShoo
     double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2]*sr;
 
     double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
-    int sign = con.getType() == tpat_constraint::MAX_DIST ? 1 : -1;
+    int sign = con.getType() == TPAT_Constraint_Tp::MAX_DIST ? 1 : -1;
     double diff = conData[1]*sr - h;
 
     /*  If diff and sign have the same sign (+/-), then the constraint
@@ -688,7 +689,7 @@ double tpat_model_bcr4bpr::multShoot_targetDist_compSlackVar(const tpat_multShoo
 }//==========================================================
 
 /**
- *  @brief Compute partials and constraints for all nodes constrained with <tt>DELTA_V</tt> or
+ *  @brief Compute partials and constraints for all nodes constrained with <tt>TPAT_Constraint_Tp::DELTA_V</tt> or
  *  <tt>MIN_DELTA_V</tt>
  *
  *  Because the delta-V constraint applies to the entire trajectory, the constraint function values
@@ -701,9 +702,9 @@ double tpat_model_bcr4bpr::multShoot_targetDist_compSlackVar(const tpat_multShoo
  *  @param con the constraint being applied
  *  @param c the index of the first row for this constraint
  */
-void tpat_model_bcr4bpr::multShoot_targetDeltaV(tpat_multShoot_data* it, tpat_constraint con, int c) const{
+void TPAT_Model_BC4BP::multShoot_targetDeltaV(TPAT_MultShoot_Data* it, TPAT_Constraint con, int c) const{
     // Call base function to take care of most of the constraint computations and partials
-    tpat_model::multShoot_targetDeltaV(it, con, c);
+    TPAT_Model::multShoot_targetDeltaV(it, con, c);
 
     if(it->varTime){
         // Add partials w.r.t. epoch time
@@ -734,17 +735,17 @@ void tpat_model_bcr4bpr::multShoot_targetDeltaV(tpat_multShoot_data* it, tpat_co
                 dqdT.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[3];
 
                 double dFdT_n = dFdq_n2*dqdT;
-                ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, it->nodeset->getSegByIx(s).getOrigin());
+                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(s).getOrigin());
                 it->DF[it->totalFree*row0 + epochVar.row0] = -dFdT_n/dvMax;
             }
         }
     }
 }//==============================================
 
-void tpat_model_bcr4bpr::multShoot_targetApse(tpat_multShoot_data *it, tpat_constraint con, int row0) const{
+void TPAT_Model_BC4BP::multShoot_targetApse(TPAT_MultShoot_Data *it, TPAT_Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     int Pix = (int)(conData[0]);    // index of primary
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
 
     double sr = it->freeVarScale[0];
@@ -752,10 +753,10 @@ void tpat_model_bcr4bpr::multShoot_targetApse(tpat_multShoot_data *it, tpat_cons
     double sT = it->freeVarScale[3];
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double t0 = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
-    const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr *>(it->sysData);
+    const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP *>(it->sysData);
     double primPos[9], primVel[9], primAccel[9];
 
     getPrimaryPos(t0, bcSys, primPos);
@@ -791,20 +792,20 @@ void tpat_model_bcr4bpr::multShoot_targetApse(tpat_multShoot_data *it, tpat_cons
  *  Each row/function corresponds to one position state. The FX and DF matrices are updated
  *  in place by editing their values stored in <tt>it</tt>
  *
- *  @param it the tpat_multShoot_data object holding the current data for the corrections process
+ *  @param it the TPAT_MultShoot_Data object holding the current data for the corrections process
  *  @param con the constraint being applied
  *  @param row0 the index of the first row for this constraint
  */
-void tpat_model_bcr4bpr::multShoot_targetSP(tpat_multShoot_data* it, tpat_constraint con, int row0) const{
+void TPAT_Model_BC4BP::multShoot_targetSP(TPAT_MultShoot_Data* it, TPAT_Constraint con, int row0) const{
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
 
     // Get the node epoch either from the design vector or from the original set of nodes
     double sT = it->freeVarScale[3];
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double t0 = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
-    const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
+    const TPAT_Sys_Data_BC4BP *bcSysData = static_cast<const TPAT_Sys_Data_BC4BP *> (it->sysData);
 
     std::vector<double> primPosData = getPrimPos(t0, it->sysData);
     double sr = it->freeVarScale[0];
@@ -936,11 +937,11 @@ void tpat_model_bcr4bpr::multShoot_targetSP(tpat_multShoot_data* it, tpat_constr
  *  vector components. The FX and DF matrices are update in place by editing their values 
  *  stored in <tt>it</tt>
  * 
- *  @param it the tpat_multShoot_data object holding the current data for the corrections process
+ *  @param it the TPAT_MultShoot_Data object holding the current data for the corrections process
  *  @param con the constraint being applied
  *  @param c the index of the constraint within the constraint vector
  */
-void tpat_model_bcr4bpr::multShoot_targetSP_mag(tpat_multShoot_data* it, tpat_constraint con, int c) const{
+void TPAT_Model_BC4BP::multShoot_targetSP_mag(TPAT_MultShoot_Data* it, TPAT_Constraint con, int c) const{
 
     // int row0 = it->conRows[c];
     // int n = con.getID();
@@ -948,7 +949,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(tpat_multShoot_data* it, tpat_co
     // int epochCol = it->equalArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
     // double t0 = it->varTime ? it->X[epochCol]/it->freeVarScale[3] : it->nodeset->getNodeByIx(n).getEpoch();
 
-    // const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
+    // const TPAT_Sys_Data_BC4BP *bcSysData = static_cast<const TPAT_Sys_Data_BC4BP *> (it->sysData);
     // double sr = it->freeVarScale[0];
 
     // std::vector<double> primPosData = getPrimPos(t0, it->sysData);
@@ -1079,15 +1080,15 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(tpat_multShoot_data* it, tpat_co
     // // printf("Node %d %s Con: Slack Var = %.4e\n", n, con.getTypeStr(), it->X[slackCol]);
 
     int row0 = it->conRows[c];
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
     double sT = it->freeVarScale[3];
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double epoch = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
-    const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
+    const TPAT_Sys_Data_BC4BP *bcSysData = static_cast<const TPAT_Sys_Data_BC4BP *> (it->sysData);
 
     std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
 
@@ -1221,21 +1222,21 @@ void tpat_model_bcr4bpr::multShoot_targetSP_mag(tpat_multShoot_data* it, tpat_co
  *  constraint function evaluates to zero; that value is computed here. If the constraint is not
  *  satisfied, a small value is returned.
  * 
- *  @param it the tpat_multShoot_data object holding the current data for the corrections process
+ *  @param it the TPAT_MultShoot_Data object holding the current data for the corrections process
  *  @param con the constraint being applied
  * 
  *  @return the initial value for the slack variable associated with an SP_RANGE constraint
  */
-double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(const tpat_multShoot_data *it, tpat_constraint con) const{
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
+double TPAT_Model_BC4BP::multShoot_targetSPMag_compSlackVar(const TPAT_MultShoot_Data *it, TPAT_Constraint con) const{
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double sT = it->freeVarScale[3];
     double epoch = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
-    const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
+    const TPAT_Sys_Data_BC4BP *bcSysData = static_cast<const TPAT_Sys_Data_BC4BP *> (it->sysData);
 
     std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
 
@@ -1281,15 +1282,15 @@ double tpat_model_bcr4bpr::multShoot_targetSPMag_compSlackVar(const tpat_multSho
  *  constraint function evaluates to zero; that value is computed here. If the constraint is not
  *  satisfied, a small value is returned.
  * 
- *  @param it the tpat_multShoot_data object holding the current data for the corrections process
+ *  @param it the TPAT_MultShoot_Data object holding the current data for the corrections process
  *  @param con the constraint being applied
  * 
  *  @return the initial value for the slack variable associated with an SP_DIST constraint
  */
-double tpat_model_bcr4bpr::multShoot_targetSP_maxDist_compSlackVar(const tpat_multShoot_data *it, tpat_constraint con) const{
+double TPAT_Model_BC4BP::multShoot_targetSP_maxDist_compSlackVar(const TPAT_MultShoot_Data *it, TPAT_Constraint con) const{
     double sT = it->freeVarScale[3];
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double T = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
     std::vector<double> coeff = con.getData();
@@ -1320,18 +1321,18 @@ double tpat_model_bcr4bpr::multShoot_targetSP_maxDist_compSlackVar(const tpat_mu
  *  2nd-order polynomials to approximate the saddle point's location as a function of epoch 
  *  and then targets a node to be at or within a set radius of the saddle point.
  * 
- *  @param it the tpat_multShoot_data object holding the current data for the corrections process
+ *  @param it the TPAT_MultShoot_Data object holding the current data for the corrections process
  *  @param con the constraint being applied
  *  @param c the index of the constraint within the storage vector
  */
-void tpat_model_bcr4bpr::multShoot_targetSP_dist(tpat_multShoot_data *it, tpat_constraint con, int c) const{
+void TPAT_Model_BC4BP::multShoot_targetSP_dist(TPAT_MultShoot_Data *it, TPAT_Constraint con, int c) const{
     int row0 = it->conRows[c];
     double sT = it->freeVarScale[3];
-    ms_varMap_obj stateVar = it->getVarMap_obj(ms_varMap_obj::STATE, con.getID());
-    ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
     double T = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
-    // const tpat_sys_data_bcr4bpr *bcSysData = static_cast<const tpat_sys_data_bcr4bpr *> (it->sysData);
+    // const TPAT_Sys_Data_BC4BP *bcSysData = static_cast<const TPAT_Sys_Data_BC4BP *> (it->sysData);
     std::vector<double> coeff = con.getData();
     double sr = it->freeVarScale[0];
 
@@ -1373,7 +1374,7 @@ void tpat_model_bcr4bpr::multShoot_targetSP_dist(tpat_multShoot_data *it, tpat_c
         DF[it->totalFree*row0 + epochVar.row0] *= sr/it->freeVarScale[3]; // scale derivative
     }
 
-    if(con.getType() == tpat_constraint::SP_MAX_DIST){
+    if(con.getType() == TPAT_Constraint_Tp::SP_MAX_DIST){
         // figure out which of the slack variables correspond to this constraint
         std::vector<int>::iterator slackIx = std::find(it->slackAssignCon.begin(), 
             it->slackAssignCon.end(), c);
@@ -1414,13 +1415,13 @@ void tpat_model_bcr4bpr::multShoot_targetSP_dist(tpat_multShoot_data *it, tpat_c
  *  
  *  @return a pointer to a nodeset containing the corrected nodes
  */
-void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, const tpat_nodeset *nodes_in, bool findEvent, tpat_nodeset *nodes_out) const{
+void TPAT_Model_BC4BP::multShoot_createOutput(const TPAT_MultShoot_Data *it, const TPAT_Nodeset *nodes_in, bool findEvent, TPAT_Nodeset *nodes_out) const{
 
-    tpat_nodeset_bcr4bp *nodeset_out = static_cast<tpat_nodeset_bcr4bp *>(nodes_out);
+    TPAT_Nodeset_BC4BP *nodeset_out = static_cast<TPAT_Nodeset_BC4BP *>(nodes_out);
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        ms_varMap_obj state_var = it->getVarMap_obj(ms_varMap_obj::STATE, it->nodeset->getNodeByIx(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
         double state[6];
         std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
 
@@ -1429,12 +1430,12 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
             state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
         }
 
-        tpat_node node(state, 0);
+        TPAT_Node node(state, 0);
         node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
 
         double sT = it->freeVarScale[3];
-        ms_varMap_obj epochVar = it->getVarMap_obj(ms_varMap_obj::EPOCH, state_var.id);
-        double T = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(state_var.id);
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, state_var.key.id);
+        double T = it->varTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(state_var.key.id);
         node.setEpoch(T);
 
         if(n+1 == it->numNodes){
@@ -1445,7 +1446,7 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
                 information*/
             if(findEvent){
                 // Append the 36 STM elements to the node vector
-                tpat_traj lastSeg = it->propSegs.back();
+                TPAT_Traj lastSeg = it->propSegs.back();
                 MatrixXRd lastSTM = lastSeg.getSTMByIx(-1);
                 
                 // Create a vector of extra parameters from existing extraParam vector
@@ -1466,11 +1467,11 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
     double tof;
     int newOrigID, newTermID;
     for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-        tpat_segment seg = it->nodeset->getSegByIx(s);
+        TPAT_Segment seg = it->nodeset->getSegByIx(s);
 
         if(it->varTime){
-            ms_varMap_obj tofVar = it->getVarMap_obj(it->equalArcTime ? ms_varMap_obj::TOF_TOTAL : ms_varMap_obj::TOF,
-                it->equalArcTime ? tpat_linkable::INVALID_ID : seg.getID());
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+                it->equalArcTime ? TPAT_Linkable::INVALID_ID : seg.getID());
             // Get data
             tof = it->equalArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
             // Reverse scaling
@@ -1481,15 +1482,15 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
 
         newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
         int termID = seg.getTerminus();
-        newTermID = termID == tpat_linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        newTermID = termID == TPAT_Linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
         
-        tpat_segment newSeg(newOrigID, newTermID, tof);
+        TPAT_Segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
         nodeset_out->addSeg(newSeg);
     }
 
-    std::vector<tpat_constraint> arcCons = nodes_in->getArcConstraints();
+    std::vector<TPAT_Constraint> arcCons = nodes_in->getArcConstraints();
     for(size_t i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);
     }
@@ -1507,11 +1508,11 @@ void tpat_model_bcr4bpr::multShoot_createOutput(const tpat_multShoot_data *it, c
  *   @param sdot the 48-d state derivative vector
  *   @param params points to an eomParamStruct object
  */
-int tpat_model_bcr4bpr::fullEOMs(double t, const double s[], double sdot[], void *params){
+int TPAT_Model_BC4BP::fullEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
-    // tpat_sys_data_bcr4bpr *sysData = static_cast<tpat_sys_data_bcr4bpr *>(params);
+    // TPAT_Sys_Data_BC4BP *sysData = static_cast<TPAT_Sys_Data_BC4BP *>(params);
     eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
+    const TPAT_Sys_Data_BC4BP *sysData = static_cast<const TPAT_Sys_Data_BC4BP *>(paramStruct->sysData);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
@@ -1631,10 +1632,10 @@ int tpat_model_bcr4bpr::fullEOMs(double t, const double s[], double sdot[], void
  *   @param sdot the 6-d state derivative vector
  *   @param params points to an eomParamStruct object
  */
-int tpat_model_bcr4bpr::simpleEOMs(double t, const double s[], double sdot[], void *params){
+int TPAT_Model_BC4BP::simpleEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
     eomParamStruct *paramStruct = static_cast<eomParamStruct *>(params);
-    const tpat_sys_data_bcr4bpr *sysData = static_cast<const tpat_sys_data_bcr4bpr *>(paramStruct->sysData);
+    const TPAT_Sys_Data_BC4BP *sysData = static_cast<const TPAT_Sys_Data_BC4BP *>(paramStruct->sysData);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
@@ -1675,7 +1676,7 @@ int tpat_model_bcr4bpr::simpleEOMs(double t, const double s[], double sdot[], vo
  *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
  *  row-major order. The first three elements are the position of P1, etc.
  */
-void tpat_model_bcr4bpr::getPrimaryPos(double t, const tpat_sys_data_bcr4bpr *sysData, double *primPos){
+void TPAT_Model_BC4BP::getPrimaryPos(double t, const TPAT_Sys_Data_BC4BP *sysData, double *primPos){
     double k = sysData->getK();
     double mu = sysData->getMu();
     double nu = sysData->getNu();
@@ -1715,7 +1716,7 @@ void tpat_model_bcr4bpr::getPrimaryPos(double t, const tpat_sys_data_bcr4bpr *sy
  *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
  *  row-major order. The first three elements hold the velocity of P1, etc.
  */
-void tpat_model_bcr4bpr::getPrimaryVel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primVel){
+void TPAT_Model_BC4BP::getPrimaryVel(double t, const TPAT_Sys_Data_BC4BP *sysData, double *primVel){
 
     double k = sysData->getK();
     double mu = sysData->getMu();
@@ -1759,7 +1760,7 @@ void tpat_model_bcr4bpr::getPrimaryVel(double t, const tpat_sys_data_bcr4bpr *sy
  *  @param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
  *  row-major order. The first three elements hold the acceleration of P1, etc.
  */
-void tpat_model_bcr4bpr::getPrimaryAccel(double t, const tpat_sys_data_bcr4bpr *sysData, double *primAccel){
+void TPAT_Model_BC4BP::getPrimaryAccel(double t, const TPAT_Sys_Data_BC4BP *sysData, double *primAccel){
     double k = sysData->getK();
     double mu = sysData->getMu();
     double nu = sysData->getNu();
@@ -1801,9 +1802,9 @@ void tpat_model_bcr4bpr::getPrimaryAccel(double t, const tpat_sys_data_bcr4bpr *
  *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
  *  in this data object
  */
-void tpat_model_bcr4bpr::orientAtEpoch(double et, tpat_sys_data_bcr4bpr *sysData){
+void TPAT_Model_BC4BP::orientAtEpoch(double et, TPAT_Sys_Data_BC4BP *sysData){
     // Both theta and phi are approximately equal to zero at REF_EPOCH
-    double time_nonDim = (et - tpat_sys_data_bcr4bpr::REF_EPOCH)/sysData->getCharT();
+    double time_nonDim = (et - TPAT_Sys_Data_BC4BP::REF_EPOCH)/sysData->getCharT();
     
     // Compute theta and phi
     double theta = sysData->getK()*time_nonDim;

@@ -25,12 +25,12 @@
 #include "matio.h"
 
 // Forward Declarations
-class tpat_event;
-class tpat_node;
-class tpat_traj;
+class TPAT_Event;
+class TPAT_Node;
+class TPAT_Traj;
 
 /**
- *	@brief Similar to tpat_traj, but only holds state data at specific "nodes"
+ *	@brief Similar to TPAT_Traj, but only holds state data at specific "nodes"
  * 
  *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
  *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
@@ -39,13 +39,13 @@ class tpat_traj;
  *	In addition to nodes, a nodeset stores information about the constraints that should
  *	be applied when the nodeset is passed through a corrections algorithm
  *
- *	@see tpat_node
+ *	@see TPAT_Node
  *
  *	@author Andrew Cox
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_nodeset : public tpat_base_arcset{
+class TPAT_Nodeset : public TPAT_Base_Arcset{
 
 public:
 	/**
@@ -59,26 +59,26 @@ public:
 			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 	// *structors
-	tpat_nodeset(const tpat_sys_data*);
-	tpat_nodeset(const tpat_nodeset&);
-	tpat_nodeset(const tpat_base_arcset&);
-	tpat_nodeset(const tpat_nodeset&, int, int);
-	tpat_nodeset(const char*);
-	virtual ~tpat_nodeset();
-	virtual baseArcsetPtr create(const tpat_sys_data*) const;
+	TPAT_Nodeset(const TPAT_Sys_Data*);
+	TPAT_Nodeset(const TPAT_Nodeset&);
+	TPAT_Nodeset(const TPAT_Base_Arcset&);
+	TPAT_Nodeset(const TPAT_Nodeset&, int, int);
+	TPAT_Nodeset(const char*);
+	virtual ~TPAT_Nodeset();
+	virtual baseArcsetPtr create(const TPAT_Sys_Data*) const;
 	virtual baseArcsetPtr clone() const;
 	
 	// Operators
-	friend tpat_nodeset operator +(const tpat_nodeset&, const tpat_nodeset&);
-	virtual tpat_nodeset& operator +=(const tpat_nodeset&);
+	friend TPAT_Nodeset operator +(const TPAT_Nodeset&, const TPAT_Nodeset&);
+	virtual TPAT_Nodeset& operator +=(const TPAT_Nodeset&);
 
 	// Set and Get Functions
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
-	int createNodesAtEvent(int, tpat_event);
-	int createNodesAtEvents(int, std::vector<tpat_event>);
-	virtual int createNodesAtEvents(int, std::vector<tpat_event>, double);
+	int createNodesAtEvent(int, TPAT_Event);
+	int createNodesAtEvents(int, std::vector<TPAT_Event>);
+	virtual int createNodesAtEvents(int, std::vector<TPAT_Event>, double);
 
 	// Utility Functions
 	virtual void readFromMat(const char*);
@@ -92,7 +92,7 @@ protected:
 	void initFromICs(const double[6], double, double, int, tpat_nodeDistro_tp);
 	void initFromICs_time(const double[6], double, double, int);
 	void initFromICs_arclength(const double[6], double, double, int);
-	void initFromTraj(tpat_traj, int, tpat_nodeDistro_tp);
+	void initFromTraj(TPAT_Traj, int, tpat_nodeDistro_tp);
 
 };
 

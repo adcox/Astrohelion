@@ -34,12 +34,12 @@
 #include <vector>
 
 // Forward declarations
-class tpat_constraint;
-class tpat_multShoot_data;
-class tpat_nodeset_bcr4bp;
-class tpat_nodeset_cr3bp;
-class tpat_simulation_engine;
-class tpat_sys_data_bcr4bpr;
+class TPAT_Constraint;
+class TPAT_MultShoot_Data;
+class TPAT_Nodeset_BC4BP;
+class TPAT_Nodeset_CR3BP;
+class TPAT_Sim_Engine;
+class TPAT_Sys_Data_BC4BP;
 
 
 
@@ -63,21 +63,21 @@ class tpat_sys_data_bcr4bpr;
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_correction_engine : public tpat{
+class TPAT_Correction_Engine : public TPAT{
 	public:
 		// *structors
 		/** Default, do-nothing constructor */
-		tpat_correction_engine(){}
-		tpat_correction_engine(const tpat_correction_engine&);
-		~tpat_correction_engine();
+		TPAT_Correction_Engine(){}
+		TPAT_Correction_Engine(const TPAT_Correction_Engine&);
+		~TPAT_Correction_Engine();
 
 		// Operators
-		tpat_correction_engine& operator =(const tpat_correction_engine &e);
+		TPAT_Correction_Engine& operator =(const TPAT_Correction_Engine &e);
 
 		// Set and get functions
 		int getMaxIts() const;
 		double getTol() const;
-		tpat_verbosity_tp isVerbose() const;
+		TPAT_Verbosity_Tp isVerbose() const;
 		bool isFindingEvent() const;
 		bool usesEqualArcTime() const;
 		bool usesScaledVars() const;
@@ -91,15 +91,15 @@ class tpat_correction_engine : public tpat{
 		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
-		void setVerbose(tpat_verbosity_tp);
+		void setVerbose(TPAT_Verbosity_Tp);
 		
 		// Utility/Action functions
-		tpat_multShoot_data multShoot(const tpat_nodeset*, tpat_nodeset*);
-		tpat_multShoot_data multShoot(tpat_multShoot_data, tpat_nodeset*);
+		TPAT_MultShoot_Data multShoot(const TPAT_Nodeset*, TPAT_Nodeset*);
+		TPAT_MultShoot_Data multShoot(TPAT_MultShoot_Data, TPAT_Nodeset*);
 
 	private:
 		/** Describes how many messages to spit out */
-		tpat_verbosity_tp verbose = SOME_MSG;
+		TPAT_Verbosity_Tp verbose = TPAT_Verbosity_Tp::SOME_MSG;
 
 		/** Whether or not to use variable time in the corrections process */
 		bool varTime = true;
@@ -132,9 +132,9 @@ class tpat_correction_engine : public tpat{
 		bool isClean = true;
 
 		void cleanEngine();
-		void copyEngine(const tpat_correction_engine&);
-		void reportConMags(const tpat_multShoot_data*);
-		Eigen::VectorXd solveUpdateEq(tpat_multShoot_data*);
+		void copyEngine(const TPAT_Correction_Engine&);
+		void reportConMags(const TPAT_MultShoot_Data*);
+		Eigen::VectorXd solveUpdateEq(TPAT_MultShoot_Data*);
 };
 
 #endif

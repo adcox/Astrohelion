@@ -28,17 +28,17 @@
 /**
  *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
-class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
+class TPAT_Sys_Data_CR3BP_LTVP : public TPAT_Sys_Data_CR3BP{
 
 	public:
-		tpat_sys_data_cr3bp_ltvp();
-		tpat_sys_data_cr3bp_ltvp(std::string, std::string, double, double, double);
-		tpat_sys_data_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp&);
-		tpat_sys_data_cr3bp_ltvp(const char*);
+		TPAT_Sys_Data_CR3BP_LTVP();
+		TPAT_Sys_Data_CR3BP_LTVP(std::string, std::string, double, double, double);
+		TPAT_Sys_Data_CR3BP_LTVP(const TPAT_Sys_Data_CR3BP_LTVP&);
+		TPAT_Sys_Data_CR3BP_LTVP(const char*);
 		
-		tpat_sys_data_cr3bp_ltvp& operator=(const tpat_sys_data_cr3bp_ltvp&);
+		TPAT_Sys_Data_CR3BP_LTVP& operator=(const TPAT_Sys_Data_CR3BP_LTVP&);
 		
-		const tpat_model* getModel() const;
+		const TPAT_Model* getModel() const;
 		
 		double getIsp() const;
 		double getThrust() const;
@@ -55,7 +55,7 @@ class tpat_sys_data_cr3bp_ltvp : public tpat_sys_data_cr3bp{
 		void saveToMat(mat_t*) const;
 	private:
 		/** The dynamic model that governs motion for this system*/
-		tpat_model_cr3bp_ltvp model = tpat_model_cr3bp_ltvp();
+		TPAT_Model_CR3BP_LTVP model = TPAT_Model_CR3BP_LTVP();
 		void readFromMat(mat_t*);
 };
 

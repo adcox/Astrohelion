@@ -45,20 +45,20 @@
  *	@param sys a pointer to a system data object that describes
  *	the system this trajectory is integrated in
  */
-tpat_base_arcset::tpat_base_arcset(const tpat_sys_data *sys) : sysData(sys){}
+TPAT_Base_Arcset::TPAT_Base_Arcset(const TPAT_Sys_Data *sys) : sysData(sys){}
 
 /**
  *	@brief Copy constructor
  *	@param d an arcset reference
  */
-tpat_base_arcset::tpat_base_arcset(const tpat_base_arcset &d) : sysData(d.sysData){
+TPAT_Base_Arcset::TPAT_Base_Arcset(const TPAT_Base_Arcset &d) : sysData(d.sysData){
 	copyMe(d);
 }//====================================================
 
 /**
  *	@brief Destructor
  */
-tpat_base_arcset::~tpat_base_arcset(){}
+TPAT_Base_Arcset::~TPAT_Base_Arcset(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -69,7 +69,7 @@ tpat_base_arcset::~tpat_base_arcset(){}
  *	@param d an arcset reference
  *	@return a reference to this arcset object
  */
-tpat_base_arcset& tpat_base_arcset::operator =(const tpat_base_arcset &d){
+TPAT_Base_Arcset& TPAT_Base_Arcset::operator =(const TPAT_Base_Arcset &d){
 	copyMe(d);
 	sysData = d.sysData;
 	return *this;
@@ -90,7 +90,7 @@ tpat_base_arcset& tpat_base_arcset::operator =(const tpat_base_arcset &d){
  *  @param result a pointer to the an arcset object that will store the result of
  *  the summing operation.
  */
-void tpat_base_arcset::sum(const tpat_base_arcset *lhs, const tpat_base_arcset *rhs, tpat_base_arcset *result){
+void TPAT_Base_Arcset::sum(const TPAT_Base_Arcset *lhs, const TPAT_Base_Arcset *rhs, TPAT_Base_Arcset *result){
 	baseArcsetPtr lhs_cpy = lhs->clone();
 	baseArcsetPtr rhs_cpy = rhs->clone();
 
@@ -114,30 +114,30 @@ void tpat_base_arcset::sum(const tpat_base_arcset *lhs, const tpat_base_arcset *
  *  is applied to a node, segment, or the arc as a whole.
  * 
  *  @param con the constraint
- *  @see tpat_constraint::tpat_conApp_tp
- *  @throws tpat_exception if node or segment ID is out of bounds, or if the
+ *  @see TPAT_ConApp_Tp
+ *  @throws TPAT_Exception if node or segment ID is out of bounds, or if the
  *  constraint application type is unknown
  */
-void tpat_base_arcset::addConstraint(tpat_constraint con){
+void TPAT_Base_Arcset::addConstraint(TPAT_Constraint con){
 	int id = con.getID();
 	switch(con.getAppType()){
-		case tpat_constraint::APP_TO_NODE:
+		case TPAT_ConApp_Tp::APP_TO_NODE:
 			if(id < 0 || id >= (int)(nodeIDMap.size()))
-				throw tpat_exception("tpat_base_arcset::addConstraint: Node ID out of bounds");
+				throw TPAT_Exception("TPAT_Base_Arcset::addConstraint: Node ID out of bounds");
 
 			nodes[nodeIDMap[id]].addConstraint(con);
 			break;
-		case tpat_constraint::APP_TO_SEG:
+		case TPAT_ConApp_Tp::APP_TO_SEG:
 			if(id < 0 || id >= (int)(segIDMap.size()))
-				throw tpat_exception("tpat_base_arcset::addConstraint: Segment ID out of bounds");
+				throw TPAT_Exception("TPAT_Base_Arcset::addConstraint: Segment ID out of bounds");
 
 			segs[segIDMap[id]].addConstraint(con);
 			break;
-		case tpat_constraint::APP_TO_ARC:
+		case TPAT_ConApp_Tp::APP_TO_ARC:
 			cons.push_back(con);
 			break;
 		default:
-			throw tpat_exception("tpat_base_arcset::addConstraint: Constraint application type is unknown");
+			throw TPAT_Exception("TPAT_Base_Arcset::addConstraint: Constraint application type is unknown");
 	}
 }//=====================================================
 
@@ -148,7 +148,7 @@ void tpat_base_arcset::addConstraint(tpat_constraint con){
  *  @param n the node to add
  *  @return the ID assigned to the node
  */
-int tpat_base_arcset::addNode(tpat_node n){
+int TPAT_Base_Arcset::addNode(TPAT_Node n){
 	n.clearLinks();			// Cannot have any links coming in
 	n.setID(nextNodeID);
 	nodes.push_back(n);
@@ -168,61 +168,61 @@ int tpat_base_arcset::addNode(tpat_node n){
  * 
  *  @param s The segment to add
  *  @return the ID of the segment
- *  @throws tpat_exception if adding the segment will result in a time direction
- *  collision or a parallel structure. tpat_exception is also thrown if the segment
+ *  @throws TPAT_Exception if adding the segment will result in a time direction
+ *  collision or a parallel structure. TPAT_Exception is also thrown if the segment
  *  is linked to a non-existant node other than the placeholder 
- *  tpat_linkable::INVALID_ID
+ *  TPAT_Linkable::INVALID_ID
  */
-int tpat_base_arcset::addSeg(tpat_segment s){
+int TPAT_Base_Arcset::addSeg(TPAT_Segment s){
 	s.setID(nextSegID);
 	
-	if(s.getOrigin() == tpat_linkable::INVALID_ID)
-		throw tpat_exception("tpat_base_arcset::addSeg: Segment must have a valid origin node\n");
+	if(s.getOrigin() == TPAT_Linkable::INVALID_ID)
+		throw TPAT_Exception("TPAT_Base_Arcset::addSeg: Segment must have a valid origin node\n");
 	
 	bool foundValidLink = false;
-	for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
+	for(int i = 0; i < TPAT_Linkable::NUM_LINKS; i++){
 		// Get the ID of one of the nodes this segment is linked to
 		int linkedNodeID = s.getLink(i);
-		if(linkedNodeID != tpat_linkable::INVALID_ID){
+		if(linkedNodeID != TPAT_Linkable::INVALID_ID){
 
 			if(linkedNodeID < 0 || linkedNodeID >= (int)(nodeIDMap.size()))
-				throw tpat_exception("tpat_base_arcset::addSeg: Segment has link to an invalid node ID");
+				throw TPAT_Exception("TPAT_Base_Arcset::addSeg: Segment has link to an invalid node ID");
 
 			// Get the index of that node within the storage array
 			int linkedNodeIx = nodeIDMap[linkedNodeID];
-			if(linkedNodeIx != tpat_linkable::INVALID_ID){
+			if(linkedNodeIx != TPAT_Linkable::INVALID_ID){
 
 				// See if the node is linked to any other segments
-				tpat_node *theNode = &(nodes[linkedNodeIx]);
+				TPAT_Node *theNode = &(nodes[linkedNodeIx]);
 				int secondaryLinks = 0;
-				for(int j = 0; j < tpat_linkable::NUM_LINKS; j++){
+				for(int j = 0; j < TPAT_Linkable::NUM_LINKS; j++){
 					// Check to make sure the link is to a real segment
-					if(theNode->getLink(j) != tpat_linkable::INVALID_ID){
+					if(theNode->getLink(j) != TPAT_Linkable::INVALID_ID){
 						int nearSegIx = segIDMap[theNode->getLink(j)];
 						// Make sure the segment is real
-						if(nearSegIx != tpat_linkable::INVALID_ID){
+						if(nearSegIx != TPAT_Linkable::INVALID_ID){
 							secondaryLinks++;
 
 							// If the node is linked to another segment, get that segment and compare it to this one
-							const tpat_segment *nearSeg = &(segs[nearSegIx]);
+							const TPAT_Segment *nearSeg = &(segs[nearSegIx]);
 							bool sameLinkType = nearSeg->getLink(i) == linkedNodeID;
 							bool sameTimeDir = nearSeg->getTOF()*s.getTOF() > 0;
 
-							if(sameLinkType && i == tpat_segment::TERM_IX){
+							if(sameLinkType && i == TPAT_Segment::TERM_IX){
 								print();
 								printErr("Adding segment (ID %d) O: %d, T: %d\n", s.getID(), s.getOrigin(), s.getTerminus());
 								printErr("Conflict at node (ID %d): seg (ID %d) also terminates here!\n", linkedNodeID, nearSeg->getID());
-								throw tpat_exception("tpat_base_arcset::addSeg: would create node with two terminating segments");
+								throw TPAT_Exception("TPAT_Base_Arcset::addSeg: would create node with two terminating segments");
 							}else if(sameLinkType && sameTimeDir){
 								// either a time collision (both terminate) or parallel structure (both originate)
 								printf("Nearby segment w/ ID %d originates at node %d and terminates at node %d\n", nearSeg->getID(), nearSeg->getOrigin(), nearSeg->getTerminus());
 								printf("The new seg (ID %d) originates at node %d and terminates at node %d\n", s.getID(), s.getOrigin(), s.getTerminus());
 								print();
 								printInChrono();
-								throw tpat_exception("tpat_base_arcset::addSeg: either time collision or parallel structure");
+								throw TPAT_Exception("TPAT_Base_Arcset::addSeg: either time collision or parallel structure");
 							}else if(!sameLinkType && !sameTimeDir){
 								// parallel structure
-								throw tpat_exception("tpat_base_arcset::addSeg: parallel structure");
+								throw TPAT_Exception("TPAT_Base_Arcset::addSeg: parallel structure");
 							}else{
 								foundValidLink = true;
 							}
@@ -240,7 +240,7 @@ int tpat_base_arcset::addSeg(tpat_segment s){
 				}
 			}else{
 				// Linked node has valid ID but isn't part of this arcset
-				throw tpat_exception("tpat_base_arcset::addSeg: Linked node is not part of this arcset object");
+				throw TPAT_Exception("TPAT_Base_Arcset::addSeg: Linked node is not part of this arcset object");
 			}
 		}
 	}
@@ -250,7 +250,7 @@ int tpat_base_arcset::addSeg(tpat_segment s){
 		segIDMap.push_back(segs.size()-1);
 		return nextSegID++;	
 	}else{
-		return tpat_linkable::INVALID_ID;
+		return TPAT_Linkable::INVALID_ID;
 	}
 }//===========================================
 
@@ -265,39 +265,39 @@ int tpat_base_arcset::addSeg(tpat_segment s){
  *  will be retained, the other deleted, and segments rerouted accordingly.
  *  
  *  @return the ID of a new segment that links the old and new arcset objects
- *	@throws tpat_exception if the two arcset objects have different system data objects
- *  @throws tpat_exception if either ID is out of bounds
- *  @throws tpat_exception if one or both of the identifies nodes does not have
+ *	@throws TPAT_Exception if the two arcset objects have different system data objects
+ *  @throws TPAT_Exception if either ID is out of bounds
+ *  @throws TPAT_Exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
-int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo_ID, int linkFrom_ID, double tof){
+int TPAT_Base_Arcset::appendSetAtNode(const TPAT_Base_Arcset *arcset, int linkTo_ID, int linkFrom_ID, double tof){
 	if(arcset->sysData != sysData)
-		throw tpat_exception("tpat_base_arcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
+		throw TPAT_Exception("TPAT_Base_Arcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
 	if(linkTo_ID < 0 || linkTo_ID >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::appendSetAtNode: linkTo_ID is out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::appendSetAtNode: linkTo_ID is out of bounds");
 
 	// Create a copy so we don't affect the original
 	baseArcsetPtr set = arcset->clone();
 
-	tpat_node linkTo_node = nodes[nodeIDMap[linkTo_ID]];
-	tpat_node linkFrom_node = set->getNode(linkFrom_ID);		// Will do its own index checks
+	TPAT_Node linkTo_node = nodes[nodeIDMap[linkTo_ID]];
+	TPAT_Node linkFrom_node = set->getNode(linkFrom_ID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
-	if(!linkTo_node.isLinkedTo(tpat_linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(tpat_linkable::INVALID_ID))
-		throw tpat_exception("tpat_base_arcset::appendSetAtNode: specified nodes are not both open to a new link");
+	if(!linkTo_node.isLinkedTo(TPAT_Linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(TPAT_Linkable::INVALID_ID))
+		throw TPAT_Exception("TPAT_Base_Arcset::appendSetAtNode: specified nodes are not both open to a new link");
 
 	// Determine if linkTo_node is the origin or terminus of a segment
 	// printf("linkToNode has links [%d, %d]\n", linkTo_node.getLink(0), linkTo_node.getLink(1));
-	// printf("Choosing segment (ID %d)\n", linkTo_node.getLink(0) == tpat_linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
-	tpat_segment linkTo_seg = getSeg(linkTo_node.getLink(0) == tpat_linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
+	// printf("Choosing segment (ID %d)\n", linkTo_node.getLink(0) == TPAT_Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
+	TPAT_Segment linkTo_seg = getSeg(linkTo_node.getLink(0) == TPAT_Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
 	bool linkTo_isOrigin = linkTo_seg.getOrigin() == linkTo_node.getID();
-	tpat_segment linkFrom_seg = set->getSeg(linkFrom_node.getLink(0) == tpat_linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
+	TPAT_Segment linkFrom_seg = set->getSeg(linkFrom_node.getLink(0) == TPAT_Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
 	bool linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
 
 	if(!linkTo_isOrigin && !linkFrom_isOrigin)
-		throw tpat_exception("tpat_base_arcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
+		throw TPAT_Exception("TPAT_Base_Arcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
 
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
@@ -315,9 +315,9 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 		// Update objects and variables that depend on linkFrom_ID
 		linkFrom_ID = new_linkFrom_ID;
 		linkFrom_node = set->getNode(linkFrom_ID);
-		int new_linkFrom_segIx = linkFrom_node.getLink(0) == tpat_linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0);
+		int new_linkFrom_segIx = linkFrom_node.getLink(0) == TPAT_Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0);
 		
-		if(new_linkFrom_segIx != tpat_linkable::INVALID_ID){
+		if(new_linkFrom_segIx != TPAT_Linkable::INVALID_ID){
 			linkFrom_seg = set->getSeg(new_linkFrom_segIx);
 			linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
 		}else{
@@ -333,7 +333,7 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	std::vector<int> map_oldID_to_newID = concatArcset(set.get());
 
 	// Add a new segment to link the nodes from [set] to [this object]
-	int origin = tpat_linkable::INVALID_ID, terminus = tpat_linkable::INVALID_ID;
+	int origin = TPAT_Linkable::INVALID_ID, terminus = TPAT_Linkable::INVALID_ID;
 	if(!linkTo_isOrigin){
 		origin = linkTo_ID;
 		terminus = map_oldID_to_newID[linkFrom_ID];
@@ -353,7 +353,7 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
 	}
 
 	// print();
-	return addSeg(tpat_segment(origin, terminus, tof));
+	return addSeg(TPAT_Segment(origin, terminus, tof));
 }//====================================================
 
 /**
@@ -361,14 +361,14 @@ int tpat_base_arcset::appendSetAtNode(const tpat_base_arcset *arcset, int linkTo
  *  @details Note that this does not affect any constraints placed on
  *  individual nodes or segments
  */
-void tpat_base_arcset::clearArcConstraints(){ cons.clear(); }
+void TPAT_Base_Arcset::clearArcConstraints(){ cons.clear(); }
 
 
 /**
  *  @brief Remove constraints from this arcset object as well as
  *  all its node and segment children
  */
-void tpat_base_arcset::clearAllConstraints(){
+void TPAT_Base_Arcset::clearAllConstraints(){
 	for(size_t n = 0; n < nodes.size(); n++){ nodes[n].clearConstraints(); }
 	for(size_t s = 0; s < segs.size(); s++){ segs[s].clearConstraints(); }
 	cons.clear();
@@ -384,22 +384,22 @@ void tpat_base_arcset::clearAllConstraints(){
  *  @return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
- *  equivalent to <tt>tpat_linkable::INVALID_ID</tt> is stored in the associated 
+ *  equivalent to <tt>TPAT_Linkable::INVALID_ID</tt> is stored in the associated 
  *  vector element.
  *  
- *  @throws tpat_exception if the input arcset does not have the same system data object as this one
+ *  @throws TPAT_Exception if the input arcset does not have the same system data object as this one
  */
-std::vector<int> tpat_base_arcset::concatArcset(const tpat_base_arcset *set){
+std::vector<int> TPAT_Base_Arcset::concatArcset(const TPAT_Base_Arcset *set){
 	if(set->sysData != sysData)
-		throw tpat_exception("tpat_base_arcset::concatArcset: Cannot concatenate two arcsets with different system data objects");
+		throw TPAT_Exception("TPAT_Base_Arcset::concatArcset: Cannot concatenate two arcsets with different system data objects");
 
 	// A mapping vector: index is the old node ID, value is the new node ID
 	// All new IDs are initialized to the default INVALID_ID value
-	std::vector<int> map_oldID_to_newID(set->getNextNodeID(), tpat_linkable::INVALID_ID);
+	std::vector<int> map_oldID_to_newID(set->getNextNodeID(), TPAT_Linkable::INVALID_ID);
 
 	// Add all nodes from set to this object and keep track of new IDs
 	for(int n = 0; n < set->getNumNodes(); n++){
-		tpat_node node = set->getNodeByIx(n);
+		TPAT_Node node = set->getNodeByIx(n);
 
 		// Remove all links to segments; these will be added back when the segments are added to this new arcset object
 		node.clearLinks();
@@ -409,20 +409,20 @@ std::vector<int> tpat_base_arcset::concatArcset(const tpat_base_arcset *set){
 	// Add all segments from set to this object and update the link IDs
 	// The act of adding the segment will update the links in the newly added nodes
 	for(int s = 0; s < set->getNumSegs(); s++){
-		tpat_segment seg = set->getSegByIx(s);
+		TPAT_Segment seg = set->getSegByIx(s);
 		
 		// Remap the origin and terminus to the new IDs
-		if(seg.getOrigin() != tpat_linkable::INVALID_ID)
+		if(seg.getOrigin() != TPAT_Linkable::INVALID_ID)
 			seg.setOrigin(map_oldID_to_newID[seg.getOrigin()]);
 
-		if(seg.getTerminus() != tpat_linkable::INVALID_ID)
+		if(seg.getTerminus() != TPAT_Linkable::INVALID_ID)
 			seg.setTerminus(map_oldID_to_newID[seg.getTerminus()]);
 
 		addSeg(seg);
 	}
 
 	// Copy all constraints
-	std::vector<tpat_constraint> arcCons = set->getArcConstraints();
+	std::vector<TPAT_Constraint> arcCons = set->getArcConstraints();
 	cons.insert(cons.end(), arcCons.begin(), arcCons.end());
 
 	// Update tolerance to the larger of the two tolerances
@@ -445,31 +445,31 @@ std::vector<int> tpat_base_arcset::concatArcset(const tpat_base_arcset *set){
  *  @param id the ID of the node to delete; if the ID is out of range, an exception is
  *  thrown. If the ID is in range but doesn't represent an actual node, no action
  *  is taken.
- *  @throws tpat_exception when:
+ *  @throws TPAT_Exception when:
  *  * The ID is out of bounds
  *  * The ID is in bounds but the associated node has been deleted (no longer exists)
  *  * Deleting the node will result in multiple segment interfaces; these must be 
  *  created more explicitely by the user and will not be created automatically by
  *  this function.
  */
-void tpat_base_arcset::deleteNode(int id){
+void TPAT_Base_Arcset::deleteNode(int id){
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::deleteNode: id out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::deleteNode: id out of bounds");
 
 	int nodeIx = nodeIDMap[id];
 
-	if(nodeIx != tpat_linkable::INVALID_ID){
+	if(nodeIx != TPAT_Linkable::INVALID_ID){
 		
 		// printf("Attempting to delete node (ID %d)\n", id);
 		// Get the node we're deleting
-		const tpat_node *theNode = &(nodes[nodeIx]);
+		const TPAT_Node *theNode = &(nodes[nodeIx]);
 
 		// Get the indices of any segments this node is linked to
 		std::vector<int> linkedSegIxs;
-		for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
-			if(theNode->getLink(i) != tpat_linkable::INVALID_ID){
+		for(int i = 0; i < TPAT_Linkable::NUM_LINKS; i++){
+			if(theNode->getLink(i) != TPAT_Linkable::INVALID_ID){
 				int segIx = segIDMap[theNode->getLink(i)];
-				if(segIx != tpat_linkable::INVALID_ID){
+				if(segIx != TPAT_Linkable::INVALID_ID){
 					linkedSegIxs.push_back(segIx);
 					// printf("  linked to segment (ID %d) at index %d\n", theNode->getLink(i), segIx);
 				}
@@ -485,19 +485,19 @@ void tpat_base_arcset::deleteNode(int id){
 			if(segs[linkedSegIxs[0]].getTerminus() == id || segs[linkedSegIxs[1]].getTerminus() == id){
 				// Get the segment that terminates at this node, and the segment that originates at this node
 				int termSegIx = segs[linkedSegIxs[0]].getTerminus() == id ? 0 : 1;
-				const tpat_segment *termSeg = &(segs[linkedSegIxs[termSegIx]]);
-				const tpat_segment *origSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
+				const TPAT_Segment *termSeg = &(segs[linkedSegIxs[termSegIx]]);
+				const TPAT_Segment *origSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
 
 				// printf("  > Segment (ID %d) terminates at node (ID %d)\n", termSeg->getID(), id);
 				// printf("  > Segment (ID %d) originates at node (ID %d)\n", origSeg->getID(), id);
 
 				// Just to check
 				if(termSeg->getTOF()*origSeg->getTOF() < 0){
-					throw tpat_exception("tpat_base_arcset::deleteNode: I made an incorrect assumption about origin/terminus TOF direction!");
+					throw TPAT_Exception("TPAT_Base_Arcset::deleteNode: I made an incorrect assumption about origin/terminus TOF direction!");
 				}
 
 				// Create a new segment
-				tpat_segment combo(termSeg->getOrigin(), origSeg->getTerminus(), termSeg->getTOF() + origSeg->getTOF());
+				TPAT_Segment combo(termSeg->getOrigin(), origSeg->getTerminus(), termSeg->getTOF() + origSeg->getTOF());
 
 				// Get the IDs of the segments; deleting id1 will change what origSeg points to, which will affect the getID() return value
 				int id1 = termSeg->getID(), id2 = origSeg->getID();
@@ -509,16 +509,16 @@ void tpat_base_arcset::deleteNode(int id){
 			}else{
 				// Both must originate at node and have opposite time directions
 				if(segs[linkedSegIxs[0]].getOrigin() != id || segs[linkedSegIxs[1]].getOrigin() != id){
-					throw tpat_exception("tpat_base_arcset::deleteNode: double origin - made incorrect assumption about origin-ness");
+					throw TPAT_Exception("TPAT_Base_Arcset::deleteNode: double origin - made incorrect assumption about origin-ness");
 				}
 
 				if(segs[linkedSegIxs[0]].getTOF()*segs[linkedSegIxs[1]].getTOF() > 0){
-					throw tpat_exception("tpat_base_arcset::deleteNode: double origin - made incorrect assumption about TOF");
+					throw TPAT_Exception("TPAT_Base_Arcset::deleteNode: double origin - made incorrect assumption about TOF");
 				}
 
 				int revSegIx = segs[linkedSegIxs[0]].getTOF() < 0 ? 0 : 1;
-				const tpat_segment *revSeg = &(segs[linkedSegIxs[revSegIx]]);
-				const tpat_segment *forwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
+				const TPAT_Segment *revSeg = &(segs[linkedSegIxs[revSegIx]]);
+				const TPAT_Segment *forwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
 
 				/*	It is possible that, in this case, the segment that originates from this node and proceeds
 				 * 	in reverse time does not terminate at a node, but links to a forward-propagated segment instead.
@@ -526,13 +526,13 @@ void tpat_base_arcset::deleteNode(int id){
 				 * 	if the segments both link to nodes, then the default behavior is to construct a new forward-time
 				 * 	segment to replace the reverse and forward time segments that originated from this node.
 				 */
-				tpat_segment combo;
-				if(revSeg->getTerminus() != tpat_linkable::INVALID_ID){
-					combo = tpat_segment(revSeg->getTerminus(), forwardSeg->getTerminus(), std::abs(revSeg->getTOF()) + forwardSeg->getTOF());
+				TPAT_Segment combo;
+				if(revSeg->getTerminus() != TPAT_Linkable::INVALID_ID){
+					combo = TPAT_Segment(revSeg->getTerminus(), forwardSeg->getTerminus(), std::abs(revSeg->getTOF()) + forwardSeg->getTOF());
 				}else{
-					if(forwardSeg->getTerminus() == tpat_linkable::INVALID_ID)
-						throw tpat_exception("tpat_base_arcset::deleteNode: Cannot delete node as both segments terminate at other segments");
-					combo = tpat_segment(forwardSeg->getTerminus(), revSeg->getTerminus(), revSeg->getTOF() - forwardSeg->getTOF());
+					if(forwardSeg->getTerminus() == TPAT_Linkable::INVALID_ID)
+						throw TPAT_Exception("TPAT_Base_Arcset::deleteNode: Cannot delete node as both segments terminate at other segments");
+					combo = TPAT_Segment(forwardSeg->getTerminus(), revSeg->getTerminus(), revSeg->getTOF() - forwardSeg->getTOF());
 				}
 
 				// Get the IDs of the segments; deleting id1 will change what forwardSeg points to, which will affect the getID() return value
@@ -550,11 +550,11 @@ void tpat_base_arcset::deleteNode(int id){
 
 
 		nodes.erase(nodes.begin() + nodeIx);					// Remove node from vector
-		nodeIDMap[id] = tpat_linkable::INVALID_ID;				// This ID will never be used again, set to INVALID_ID
+		nodeIDMap[id] = TPAT_Linkable::INVALID_ID;				// This ID will never be used again, set to INVALID_ID
 
 		// Update vector that maps ID values to storage indices
 		for(size_t n = 0; n < nodeIDMap.size(); n++){
-			if(nodeIDMap[n] != tpat_linkable::INVALID_ID){
+			if(nodeIDMap[n] != TPAT_Linkable::INVALID_ID){
 				// Decrement all indices after the node we just removed
 				if(nodeIDMap[n] > nodeIx)
 					nodeIDMap[n]--;
@@ -574,23 +574,23 @@ void tpat_base_arcset::deleteNode(int id){
  *  @param id The ID of the segment to delete. If the ID is out of range, an exception
  *  is thrown. If the ID is in range but doesn't represent an existing segment,
  *  no deletion is made
- * 	@throws tpat_exception if <tt>id</tt> is out of bounds
+ * 	@throws TPAT_Exception if <tt>id</tt> is out of bounds
  */
-void tpat_base_arcset::deleteSeg(int id){
+void TPAT_Base_Arcset::deleteSeg(int id){
 	if(id < 0 || id >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::deleteSeg: Invalid ID (out of bounds)");
+		throw TPAT_Exception("TPAT_Base_Arcset::deleteSeg: Invalid ID (out of bounds)");
 
 	int segIx = segIDMap[id];
 
-	if(segIx != tpat_linkable::INVALID_ID){
+	if(segIx != TPAT_Linkable::INVALID_ID){
 		// printf("Deleting segment (ID %d)\n", id);
 
-		const tpat_segment *seg = &(segs[segIx]);
+		const TPAT_Segment *seg = &(segs[segIx]);
 		// printf("  Retrieved segment (ID %d)\n", seg->getID());
-		for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
-			if(seg->getLink(i) != tpat_linkable::INVALID_ID){
+		for(int i = 0; i < TPAT_Linkable::NUM_LINKS; i++){
+			if(seg->getLink(i) != TPAT_Linkable::INVALID_ID){
 				int nodeIx = nodeIDMap[seg->getLink(i)];
-				if(nodeIx != tpat_linkable::INVALID_ID){
+				if(nodeIx != TPAT_Linkable::INVALID_ID){
 					// printf("  * Trying to remove a link to segment (ID %d) from node (ID %d)\n", seg->getID(), nodes[nodeIx].getID());
 					nodes[nodeIx].removeLink(id);
 				}else{
@@ -601,9 +601,9 @@ void tpat_base_arcset::deleteSeg(int id){
 
 		segs.erase(segs.begin() + segIx);	// CANNOT USE *seg pointer AFTER THIS LINE
 
-		segIDMap[id] = tpat_linkable::INVALID_ID;
+		segIDMap[id] = TPAT_Linkable::INVALID_ID;
 		for(size_t s = 0; s < segIDMap.size(); s++){
-			if(segIDMap[s] != tpat_linkable::INVALID_ID){
+			if(segIDMap[s] != TPAT_Linkable::INVALID_ID){
 				if(segIDMap[s] > segIx)
 					segIDMap[s]--;
 			}
@@ -619,18 +619,18 @@ void tpat_base_arcset::deleteSeg(int id){
  * 
  *  @param id the ID of a node
  *  @return the acceleration vector
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
- *  @throws tpat_exception if the node with the specified ID is not located in the nodeIDMap
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if the node with the specified ID is not located in the nodeIDMap
  */
-std::vector<double> tpat_base_arcset::getAccel(int id) const{
+std::vector<double> TPAT_Base_Arcset::getAccel(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getAccel: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::getAccel: Node ID out of range");
 
 	int ix = nodeIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix].getAccel();
 	}else{
-		throw tpat_exception("tpat_base_arcset::getAccel: Could not locate the node with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getAccel: Could not locate the node with the specified ID");
 	}
 }//====================================================
 
@@ -639,14 +639,14 @@ std::vector<double> tpat_base_arcset::getAccel(int id) const{
  *	@param ix the step index. If it is negative, the index will count backwards
  *	from the end of the arc (e.g. ix = -1 will return the last acceleration)
  *	@return the acceleration associated with the specified index
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> tpat_base_arcset::getAccelByIx(int ix) const{
+std::vector<double> TPAT_Base_Arcset::getAccelByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::getAccelByIx: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getAccelByIx: node index out of bounds");
 
 	return nodes[ix].getAccel();
 }//====================================================
@@ -656,20 +656,20 @@ std::vector<double> tpat_base_arcset::getAccelByIx(int ix) const{
  *  @details This vector does not include constraints placed on individual nodes or segments.
  *  @return a vector containing all the constraints applied to this arcset object.
  */
-std::vector<tpat_constraint> tpat_base_arcset::getArcConstraints() const { return cons; }
+std::vector<TPAT_Constraint> TPAT_Base_Arcset::getArcConstraints() const { return cons; }
 
 /**
  *  @brief Determine what order to place the nodes and segments of this object
  *  into to achieve a chronological progression in forward time.
  * 
- *  @return a vector of tpat_arc_piece objects that represent the chronological 
+ *  @return a vector of TPAT_Arc_Piece objects that represent the chronological 
  *  order of the nodes and segments
  */
-std::vector<tpat_arc_piece> tpat_base_arcset::getChronoOrder() const{
+std::vector<TPAT_Arc_Piece> TPAT_Base_Arcset::getChronoOrder() const{
 	// printf("* Beginning getChronoOrder()\n");
-	std::vector<tpat_arc_piece> pieces;
+	std::vector<TPAT_Arc_Piece> pieces;
 	if(nodes.size() == 0){
-		printErr("tpat_base_arcset::getChronoOrder: No nodes... exiting\n");
+		printErr("TPAT_Base_Arcset::getChronoOrder: No nodes... exiting\n");
 		return pieces;
 	}
 
@@ -681,45 +681,45 @@ std::vector<tpat_arc_piece> tpat_base_arcset::getChronoOrder() const{
  *  @details [long description]
  * 
  *  @param ID the ID of a node in the arcset
- *  @return a vector of tpat_arc_piece objects that represent the chronological 
+ *  @return a vector of TPAT_Arc_Piece objects that represent the chronological 
  *  order of the nodes and segments that make up the section of the arcset that
  *  contains the specified node
  *  
- *  @throws tpat_exception if the ID is out of bounds
+ *  @throws TPAT_Exception if the ID is out of bounds
  */
-std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpat_arc_piece> prevPieces) const{
+std::vector<TPAT_Arc_Piece> TPAT_Base_Arcset::sortArcset(int ID, std::vector<TPAT_Arc_Piece> prevPieces) const{
 	if(ID < 0 || ID >= nextNodeID)
-		throw tpat_exception("tpat_base_arcset::sortArcset: ID out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::sortArcset: ID out of bounds");
 
-	std::vector<tpat_arc_piece> pieces;
+	std::vector<TPAT_Arc_Piece> pieces;
 
-	tpat_node node0 = nodes[nodeIDMap[ID]];
+	TPAT_Node node0 = nodes[nodeIDMap[ID]];
 	// printf("Beginning with node ID %d\n", node0.getID());
 
-	pieces.push_back(tpat_arc_piece(tpat_arc_piece::NODE, node0.getID()));
+	pieces.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, node0.getID()));
 	for(int dir = 1; dir > -2; dir -= 2){
 		// printf("  Direction is %s\n", dir > 0 ? "[FORWARD]" : "[BACKWARD]");
 
 		bool go = true;
-		tpat_node node = node0;
+		TPAT_Node node = node0;
 		
 		while(go){
 			// Get segments connected to node
 			bool foundNextSeg = false;
-			for(int i = 0; i < tpat_linkable::NUM_LINKS; i++){
-				if(node.getLink(i) != tpat_linkable::INVALID_ID){
+			for(int i = 0; i < TPAT_Linkable::NUM_LINKS; i++){
+				if(node.getLink(i) != TPAT_Linkable::INVALID_ID){
 
-					tpat_segment seg = getSeg(node.getLink(i));
+					TPAT_Segment seg = getSeg(node.getLink(i));
 					// printf("   (checking out segment ID %d): ", seg.getID());
 
 					if(dir > 0 && ((seg.getTerminus() == node.getID() && seg.getTOF() < 0) || (seg.getOrigin() == node.getID() && seg.getTOF() > 0))){
 						// This segment moves forward in time from node
-						pieces.push_back(tpat_arc_piece(tpat_arc_piece::SEG, seg.getID()));
+						pieces.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, seg.getID()));
 						foundNextSeg = true;
 						// printf("USE THIS\n");
 					}else if(dir < 0 && ((seg.getTerminus() == node.getID() && seg.getTOF() > 0) || (seg.getOrigin() == node.getID() && seg.getTOF() < 0))){
 						// This segment moves in reverse time from node
-						pieces.insert(pieces.begin(), tpat_arc_piece(tpat_arc_piece::SEG, seg.getID()));
+						pieces.insert(pieces.begin(), TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::SEG, seg.getID()));
 						foundNextSeg = true;
 						// printf("USE THIS\n");
 					}else{
@@ -729,29 +729,29 @@ std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpa
 
 					if(foundNextSeg){
 						// Get next node
-						int nextNodeID = tpat_linkable::INVALID_ID;
+						int nextNodeID = TPAT_Linkable::INVALID_ID;
 						if(seg.getTerminus() == node.getID())
 							nextNodeID = seg.getOrigin();
 						else
 							nextNodeID = seg.getTerminus();
 
-						if(nextNodeID != tpat_linkable::INVALID_ID){
+						if(nextNodeID != TPAT_Linkable::INVALID_ID){
 							// printf("  Next node has ID %d\n", nextNodeID);
 							node = getNode(nextNodeID);
 
 							if(dir > 0)
-								pieces.push_back(tpat_arc_piece(tpat_arc_piece::NODE, node.getID()));
+								pieces.push_back(TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, node.getID()));
 							else
-								pieces.insert(pieces.begin(), tpat_arc_piece(tpat_arc_piece::NODE, node.getID()));
+								pieces.insert(pieces.begin(), TPAT_Arc_Piece(TPAT_Arc_Piece::Piece_Tp::NODE, node.getID()));
 						}else{
 							// The segment terminates/originates without a node; Look for a link to
 							// another segment OR end this section
 
-							int linkedSegID = tpat_linkable::INVALID_ID;
+							int linkedSegID = TPAT_Linkable::INVALID_ID;
 							for(size_t c = 0; c < cons.size(); c++){
-								if(cons[c].getType() == tpat_constraint::SEG_CONT_PV){
+								if(cons[c].getType() == TPAT_Constraint_Tp::SEG_CONT_PV){
 									// Check to see if this constraint is linked to this node at all
-									int ID0 = cons[c].getID(), ID1 = tpat_linkable::INVALID_ID;
+									int ID0 = cons[c].getID(), ID1 = TPAT_Linkable::INVALID_ID;
 									std::vector<double> data = cons[c].getData();
 									for(size_t d = 0; d < data.size(); d++){
 										if(!std::isnan(data[d])){
@@ -770,14 +770,14 @@ std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpa
 								}
 							}
 
-							if(linkedSegID != tpat_linkable::INVALID_ID){
+							if(linkedSegID != TPAT_Linkable::INVALID_ID){
 								// printf(">Found seg-2-seg link with segment %d\n", linkedSegID);
 								
 								// Check to see if the identified segment has already been counted
 								bool alreadyUsed = false;
 								for(size_t p = 0; p < prevPieces.size(); p++){
-									if(prevPieces[p].type == tpat_arc_piece::SEG && 
-										prevPieces[p].ID == linkedSegID){
+									if(prevPieces[p].type == TPAT_Arc_Piece::Piece_Tp::SEG && 
+										prevPieces[p].id == linkedSegID){
 										
 										alreadyUsed = true;
 										break;
@@ -787,7 +787,7 @@ std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpa
 								// Also check the current segment
 								if(!alreadyUsed){
 									for(size_t p = 0; p < pieces.size(); p++){
-										if(pieces[p].type == tpat_arc_piece::SEG && pieces[p].ID == linkedSegID){
+										if(pieces[p].type == TPAT_Arc_Piece::Piece_Tp::SEG && pieces[p].id == linkedSegID){
 											alreadyUsed = true;
 											break;
 										}
@@ -796,13 +796,13 @@ std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpa
 
 								if(!alreadyUsed){
 									// Located a segment that links to this one, go recursive!
-									tpat_segment linkedSeg = segs[segIDMap[linkedSegID]];
+									TPAT_Segment linkedSeg = segs[segIDMap[linkedSegID]];
 									int linkedNodeID = linkedSeg.getOrigin();
-									if(linkedNodeID != tpat_linkable::INVALID_ID){
+									if(linkedNodeID != TPAT_Linkable::INVALID_ID){
 										// Concatenate the pieces I've arranged so far and the previously arranged ones; order is unimportant here
-										std::vector<tpat_arc_piece> allPieces = pieces;
+										std::vector<TPAT_Arc_Piece> allPieces = pieces;
 										allPieces.insert(allPieces.begin(), prevPieces.begin(), prevPieces.end());
-										std::vector<tpat_arc_piece> section = sortArcset(linkedNodeID, allPieces);
+										std::vector<TPAT_Arc_Piece> section = sortArcset(linkedNodeID, allPieces);
 
 										// Append newly arranged section of pieces to the total vector (order IS important here)
 										pieces.insert(dir > 0 ? pieces.end() : pieces.begin(), section.begin(), section.end());
@@ -830,11 +830,11 @@ std::vector<tpat_arc_piece> tpat_base_arcset::sortArcset(int ID, std::vector<tpa
  *	@param ix the index of the coordinate: 0 = x, 1 = y, etc.
  *	@return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> tpat_base_arcset::getCoord(int ix) const{
+std::vector<double> TPAT_Base_Arcset::getCoord(int ix) const{
 	if(ix >= 6)
-		throw tpat_exception("tpat_base_arcset::getCoord: Index Out of Range");
+		throw TPAT_Exception("TPAT_Base_Arcset::getCoord: Index Out of Range");
 
 	std::vector<double> coord;
 	for(size_t n = 0; n < nodes.size(); n++){
@@ -850,18 +850,18 @@ std::vector<double> tpat_base_arcset::getCoord(int ix) const{
  * 
  *  @param id the ID of a node
  *  @return the epoch
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
- *  @throws tpat_exception if the node with the specified ID is not located in the nodeIDMap
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if the node with the specified ID is not located in the nodeIDMap
  */
-double tpat_base_arcset::getEpoch(int id) const{
+double TPAT_Base_Arcset::getEpoch(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getEpoch: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::getEpoch: Node ID out of range");
 
 	int ix = nodeIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix].getEpoch();
 	}else{
-		throw tpat_exception("tpat_base_arcset::getEpoch: Could not locate the node with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getEpoch: Could not locate the node with the specified ID");
 	}
 }//====================================================
 
@@ -874,14 +874,14 @@ double tpat_base_arcset::getEpoch(int id) const{
  *	cound backwards from the end of the array.
  *	
  *  @return The epoch associated with the specified node
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-double tpat_base_arcset::getEpochByIx(int ix) const{
+double TPAT_Base_Arcset::getEpochByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::getEpochByIx: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getEpochByIx: node index out of bounds");
 
 	return nodes[ix].getEpoch();
 }//=====================================================
@@ -895,17 +895,17 @@ double tpat_base_arcset::getEpochByIx(int ix) const{
  *	
  *	@param ix the index of the extra parameter
  *	@return a vector containing the extra parameter at the specified step and index
- *	@throws tpat_exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
+ *	@throws TPAT_Exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
  */
-std::vector<double> tpat_base_arcset::getExtraParam(int n, int ix) const{
+std::vector<double> TPAT_Base_Arcset::getExtraParam(int n, int ix) const{
 	if(n < 0)
 		n += nodes.size();
 
 	if(n < 0 || n >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::getExtraParam: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getExtraParam: node index out of bounds");
 
 	if(ix < 0 || ix >= (int)(extraParamRowSize.size()))
-		throw tpat_exception("tpat_base_arcset::getExtraParam: parameter index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getExtraParam: parameter index out of bounds");
 
 	int startIx = 0;
 	for(int i = 0; i < ix; i++)
@@ -921,33 +921,33 @@ std::vector<double> tpat_base_arcset::getExtraParam(int n, int ix) const{
  *  node added to this arcset object
  *  @return the next node ID
  */
-int tpat_base_arcset::getNextNodeID() const { return nextNodeID; }
+int TPAT_Base_Arcset::getNextNodeID() const { return nextNodeID; }
 
 /**
  *  @brief Retrieve the value of the ID that will be assigned to the next 
  *  segment added to this arcset object
  *  @return the next segment ID
  */
-int tpat_base_arcset::getNextSegID() const { return nextSegID; }
+int TPAT_Base_Arcset::getNextSegID() const { return nextSegID; }
 
 /**
  *	@brief Retrieve the number of nodes
  *	@return the number of nodes
  */
-int tpat_base_arcset::getNumNodes() const { return (int)(nodes.size()); }
+int TPAT_Base_Arcset::getNumNodes() const { return (int)(nodes.size()); }
 
 /**
  *	@brief Retrieve the number of segments
  *	@return the number of segments
  */
-int tpat_base_arcset::getNumSegs() const { return (int)(segs.size()); }
+int TPAT_Base_Arcset::getNumSegs() const { return (int)(segs.size()); }
 
 /**
  *  @brief Retrieve the total number of constraints contained by all nodes, segments,
  *  and the arcset object itself
  *  @return the total number of constraints applied to this object and its children
  */
-int tpat_base_arcset::getNumCons() const {
+int TPAT_Base_Arcset::getNumCons() const {
 	int conCount = (int)cons.size();
 	for(size_t n = 0; n < nodes.size(); n++){ conCount += nodes[n].getNumCons(); }
 	for(size_t s = 0; s < segs.size(); s++){ conCount += segs[s].getNumCons(); }
@@ -961,17 +961,17 @@ int tpat_base_arcset::getNumCons() const {
  *  @param id the ID of the desired node.
  *	
  *  @return the node located with the specified ID
- *  @throws tpat_exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
  */
-tpat_node tpat_base_arcset::getNode(int id) const{
+TPAT_Node TPAT_Base_Arcset::getNode(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getNode: Invalid ID (out of bounds)");
+		throw TPAT_Exception("TPAT_Base_Arcset::getNode: Invalid ID (out of bounds)");
 
 	int ix = nodeIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
-		throw tpat_exception("tpat_base_arcset::getNode: Could not locate a node with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getNode: Could not locate a node with the specified ID");
 	}
 }//====================================================
 
@@ -981,14 +981,14 @@ tpat_node tpat_base_arcset::getNode(int id) const{
  *  @param ix The index of the node; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
  *  @return a segment at the specified index
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-tpat_node tpat_base_arcset::getNodeByIx(int ix) const{
+TPAT_Node TPAT_Base_Arcset::getNodeByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::getNodeByIx: Index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getNodeByIx: Index out of bounds");
 
 	return nodes[ix];
 }//=====================================================
@@ -998,11 +998,11 @@ tpat_node tpat_base_arcset::getNodeByIx(int ix) const{
  * 
  *  @param id node ID
  *  @return the index of the node with the specified ID within the storage vector
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
  */
-int tpat_base_arcset::getNodeIx(int id) const{
+int TPAT_Base_Arcset::getNodeIx(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getNodeIx: Inavlid ID; out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getNodeIx: Inavlid ID; out of bounds");
 
 	return nodeIDMap[id];
 }//====================================================
@@ -1013,17 +1013,17 @@ int tpat_base_arcset::getNodeIx(int id) const{
  *  @param id the ID of the desired node
  *	
  *  @return the node located with the specified ID
- *  @throws tpat_exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
  */
-tpat_segment tpat_base_arcset::getSeg(int id) const{
+TPAT_Segment TPAT_Base_Arcset::getSeg(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getSeg: Invalid ID (out of bounds)");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSeg: Invalid ID (out of bounds)");
 
 	int ix = segIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
-		throw tpat_exception("tpat_base_arcset::getSeg: Could not locate a segment with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSeg: Could not locate a segment with the specified ID");
 	}
 }//====================================================
 
@@ -1033,14 +1033,14 @@ tpat_segment tpat_base_arcset::getSeg(int id) const{
  *  @param ix The index of the segment; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
  *  @return a segment at the specified index
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-tpat_segment tpat_base_arcset::getSegByIx(int ix) const{
+TPAT_Segment TPAT_Base_Arcset::getSegByIx(int ix) const{
 	if(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= (int)(segs.size()))
-		throw tpat_exception("tpat_base_arcset::getSegByIx: Index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSegByIx: Index out of bounds");
 
 	return segs[ix];
 }//=====================================================
@@ -1050,11 +1050,11 @@ tpat_segment tpat_base_arcset::getSegByIx(int ix) const{
  * 
  *  @param id node ID
  *  @return the index of the node with the specified ID within the storage vector
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
  */
-int tpat_base_arcset::getSegIx(int id) const{
+int TPAT_Base_Arcset::getSegIx(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getSegIx: Inavlid ID; out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSegIx: Inavlid ID; out of bounds");
 
 	return segIDMap[id];
 }//====================================================
@@ -1065,18 +1065,18 @@ int tpat_base_arcset::getSegIx(int id) const{
  * 
  *  @param id the ID of a node
  *  @return the state vector
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
- *  @throws tpat_exception if the node with the specified ID is not located in the nodeIDMap
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if the node with the specified ID is not located in the nodeIDMap
  */
-std::vector<double> tpat_base_arcset::getState(int id) const{
+std::vector<double> TPAT_Base_Arcset::getState(int id) const{
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getState: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::getState: Node ID out of range");
 
 	int ix = nodeIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix].getState();
 	}else{
-		throw tpat_exception("tpat_base_arcset::getState: Could not locate the node with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getState: Could not locate the node with the specified ID");
 	}
 }//====================================================
 
@@ -1088,14 +1088,14 @@ std::vector<double> tpat_base_arcset::getState(int id) const{
  *	cound backwards from the end of the array.
  *	
  *	@return the state associated with the specified index
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> tpat_base_arcset::getStateByIx(int ix) const{
+std::vector<double> TPAT_Base_Arcset::getStateByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::getStateByIx: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getStateByIx: node index out of bounds");
 
 	return nodes[ix].getState();
 }//====================================================
@@ -1106,18 +1106,18 @@ std::vector<double> tpat_base_arcset::getStateByIx(int ix) const{
  * 
  *  @param id the ID of a segment
  *  @return the STM
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
- *  @throws tpat_exception if the segment with the specified ID is not located in the segIDMap
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if the segment with the specified ID is not located in the segIDMap
  */
-MatrixXRd tpat_base_arcset::getSTM(int id) const{
+MatrixXRd TPAT_Base_Arcset::getSTM(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getSTM: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSTM: Node ID out of range");
 
 	int ix = segIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
 		return segs[ix].getSTM();
 	}else{
-		throw tpat_exception("tpat_base_arcset::getSTM: Could not locate the segment with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSTM: Could not locate the segment with the specified ID");
 	}
 }//====================================================
 
@@ -1127,14 +1127,14 @@ MatrixXRd tpat_base_arcset::getSTM(int id) const{
  *	from the end of the <tt>segs</tt> storage array
  *	
  *	@return the STM associated with the specified index
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-MatrixXRd tpat_base_arcset::getSTMByIx(int ix) const{
+MatrixXRd TPAT_Base_Arcset::getSTMByIx(int ix) const{
 	if(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= (int)(segs.size()))
-		throw tpat_exception("tpat_base_arcset::getSTMByIx: segment index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::getSTMByIx: segment index out of bounds");
 
 	return segs[ix].getSTM();
 }//====================================================
@@ -1143,7 +1143,7 @@ MatrixXRd tpat_base_arcset::getSTMByIx(int ix) const{
  *	@brief Retrieve the a pointer to the system data object associated with this arc
  *	@return a pointer to the system data object associated with this arc
  */
-const tpat_sys_data* tpat_base_arcset::getSysData() const { return sysData; }
+const TPAT_Sys_Data* TPAT_Base_Arcset::getSysData() const { return sysData; }
 
 /**
  *  @brief Retrieve the time-of-flight associated with a segment
@@ -1151,18 +1151,18 @@ const tpat_sys_data* tpat_base_arcset::getSysData() const { return sysData; }
  * 
  *  @param id the ID of a segment
  *  @return the time-of-flight
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
- *  @throws tpat_exception if the segment with the specified ID is not located in the segIDMap
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if the segment with the specified ID is not located in the segIDMap
  */
-double tpat_base_arcset::getTOF(int id) const{
+double TPAT_Base_Arcset::getTOF(int id) const{
 	if(id < 0 || id >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::getTOF: Segment ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::getTOF: Segment ID out of range");
 
 	int ix = segIDMap[id];
-	if(ix != tpat_linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+	if(ix != TPAT_Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
 		return segs[ix].getTOF();
 	}else{
-		throw tpat_exception("tpat_base_arcset::getTOF: Could not locate the segment with the specified ID");
+		throw TPAT_Exception("TPAT_Base_Arcset::getTOF: Could not locate the segment with the specified ID");
 	}
 }//====================================================
 /**
@@ -1170,14 +1170,14 @@ double tpat_base_arcset::getTOF(int id) const{
  *	@param ix node index (NOT the ID); if less than 0, the index counts
  *	backwards from the end of the nodeset
  *	@return non-dimensional time-of-flight along the specified segment
- *	@throws tpat_exception if <tt>ix</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-double tpat_base_arcset::getTOFByIx(int ix) const {
+double TPAT_Base_Arcset::getTOFByIx(int ix) const {
 	if(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= ((int)segs.size()))
-		throw tpat_exception("tpat_nodeset::getTOFByIx: invalid segment index");
+		throw TPAT_Exception("TPAT_Nodeset::getTOFByIx: invalid segment index");
 
 	return segs[ix].getTOF();
 }//====================================================
@@ -1186,16 +1186,16 @@ double tpat_base_arcset::getTOFByIx(int ix) const {
  *	@brief Retrieve the tolerance with which data in this object was computed
  *	@return the tolerance with which data in this object was computed
  */
-double tpat_base_arcset::getTol() const { return tol; }
+double TPAT_Base_Arcset::getTol() const { return tol; }
 
 /**
  *  @brief Determine the total time-of-flight along this arc.
  *  @details This function sums the TOF along each segment; derived
  *  classes may override this function to use different methods.
  *  @return the total time-of-flight along this arc, units consistent
- *  with the tpat_sys_data object
+ *  with the TPAT_Sys_Data object
  */
-double tpat_base_arcset::getTotalTOF() const{
+double TPAT_Base_Arcset::getTotalTOF() const{
 	double total = 0;
 	for(size_t s = 0; s < segs.size(); s++){
 		total += segs[s].getTOF();
@@ -1212,33 +1212,33 @@ double tpat_base_arcset::getTotalTOF() const{
  *  only their index within the storage array. After calling this function,
  *  accessing the -1 node or segment will return the latest (in time) object.
  *  
- *  @throws tpat_exception if the getChronoOrder() sorting algorithm returns a 
- *  set of tpat_arc_piece objects that has a different size than the combined 
+ *  @throws TPAT_Exception if the getChronoOrder() sorting algorithm returns a 
+ *  set of TPAT_Arc_Piece objects that has a different size than the combined 
  *  node and segment vectors, the function is aborted as it is likely a node or 
  *  segment was skipped and we don't want to lose information.
  */
-void tpat_base_arcset::putInChronoOrder(){
+void TPAT_Base_Arcset::putInChronoOrder(){
 	// First, determine the chronological order
 	// print();
-	std::vector<tpat_arc_piece> pieces = getChronoOrder();
+	std::vector<TPAT_Arc_Piece> pieces = getChronoOrder();
 
 	if(pieces.size() != nodes.size() + segs.size()){
 		printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
-		throw tpat_exception("tpat_base_arcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
+		throw TPAT_Exception("TPAT_Base_Arcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
 	}
 
-	std::vector<tpat_node> newNodes;
-	std::vector<tpat_segment> newSegs;
-	std::vector<int> newNodeIDMap(nodeIDMap.size(), tpat_linkable::INVALID_ID);
-	std::vector<int> newSegIDMap(segIDMap.size(), tpat_linkable::INVALID_ID);
+	std::vector<TPAT_Node> newNodes;
+	std::vector<TPAT_Segment> newSegs;
+	std::vector<int> newNodeIDMap(nodeIDMap.size(), TPAT_Linkable::INVALID_ID);
+	std::vector<int> newSegIDMap(segIDMap.size(), TPAT_Linkable::INVALID_ID);
 
 	for(size_t i = 0; i < pieces.size(); i++){
-		if(pieces[i].type == tpat_arc_piece::NODE){
-			tpat_node node = getNode(pieces[i].ID);
+		if(pieces[i].type == TPAT_Arc_Piece::Piece_Tp::NODE){
+			TPAT_Node node = getNode(pieces[i].id);
 			newNodeIDMap[node.getID()] = newNodes.size();
 			newNodes.push_back(node);
-		}else if(pieces[i].type == tpat_arc_piece::SEG){
-			tpat_segment seg = getSeg(pieces[i].ID);
+		}else if(pieces[i].type == TPAT_Arc_Piece::Piece_Tp::SEG){
+			TPAT_Segment seg = getSeg(pieces[i].id);
 			newSegIDMap[seg.getID()] = newSegs.size();
 			newSegs.push_back(seg);
 		}
@@ -1256,11 +1256,11 @@ void tpat_base_arcset::putInChronoOrder(){
  * 
  *  @param id the ID of a node
  *  @param accel the acceleration vector
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
  */
-void tpat_base_arcset::setAccel(int id, std::vector<double> accel){
+void TPAT_Base_Arcset::setAccel(int id, std::vector<double> accel){
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::setAccel: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::setAccel: Node ID out of range");
 
 	nodes[nodeIDMap[id]].setAccel(accel);
 }//====================================================
@@ -1275,14 +1275,14 @@ void tpat_base_arcset::setAccel(int id, std::vector<double> accel){
  *	
  *  @param accelVec 3-element (at least) vector of non-dimensional acceleration 
  *  values (ax, ay, az, ...); only the first three are used
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-void tpat_base_arcset::setAccelByIx(int ix, std::vector<double> accelVec){
+void TPAT_Base_Arcset::setAccelByIx(int ix, std::vector<double> accelVec){
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::setAccelByIx: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::setAccelByIx: node index out of bounds");
 
 	nodes[ix].setAccel(accelVec);
 }//=================================================
@@ -1293,11 +1293,11 @@ void tpat_base_arcset::setAccelByIx(int ix, std::vector<double> accelVec){
  * 
  *  @param id the ID of a node
  *  @param state the state vector
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
  */
-void tpat_base_arcset::setState(int id, std::vector<double> state){
+void TPAT_Base_Arcset::setState(int id, std::vector<double> state){
 	if(id < 0 || id >= (int)(nodeIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::setState: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::setState: Node ID out of range");
 
 	nodes[nodeIDMap[id]].setState(state);
 }//====================================================
@@ -1312,14 +1312,14 @@ void tpat_base_arcset::setState(int id, std::vector<double> state){
  *	
  *  @param stateVec 6-element (at least) vector of non-dimensional state 
  *  values (x, y, z, vx, vy, vz, ...); only the first six are used
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-void tpat_base_arcset::setStateByIx(int ix, std::vector<double> stateVec){
+void TPAT_Base_Arcset::setStateByIx(int ix, std::vector<double> stateVec){
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= (int)(nodes.size()))
-		throw tpat_exception("tpat_base_arcset::setStateByIx: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::setStateByIx: node index out of bounds");
 
 	nodes[ix].setState(stateVec);
 }//=================================================
@@ -1330,11 +1330,11 @@ void tpat_base_arcset::setStateByIx(int ix, std::vector<double> stateVec){
  * 
  *  @param id the ID of a segment
  *  @param stm the STM
- *  @throws tpat_exception if <tt>id</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>id</tt> is out of bounds
  */
-void tpat_base_arcset::setSTM(int id, MatrixXRd stm){
+void TPAT_Base_Arcset::setSTM(int id, MatrixXRd stm){
 	if(id < 0 || id >= (int)(segIDMap.size()))
-		throw tpat_exception("tpat_base_arcset::setSTM: Node ID out of range");
+		throw TPAT_Exception("TPAT_Base_Arcset::setSTM: Node ID out of range");
 
 	segs[segIDMap[id]].setSTM(stm);
 }//====================================================
@@ -1346,14 +1346,14 @@ void tpat_base_arcset::setSTM(int id, MatrixXRd stm){
  *  it will count backwards from the end of the array.
  *  
  *  @param stm a 6x6 matrix containing the STM
- *  @throws tpat_exception if <tt>ix</tt> is out of bounds
+ *  @throws TPAT_Exception if <tt>ix</tt> is out of bounds
  */
-void tpat_base_arcset::setSTMByIx(int ix, MatrixXRd stm){
+void TPAT_Base_Arcset::setSTMByIx(int ix, MatrixXRd stm){
 	if(ix < 0)
 		ix += segs.size();
 
 	if(ix < 0 || ix >= (int)(segs.size()))
-		throw tpat_exception("tpat_base_arcset::setSTMByIx: node index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::setSTMByIx: node index out of bounds");
 
 	segs[ix].setSTM(stm);
 }//=================================================
@@ -1362,7 +1362,7 @@ void tpat_base_arcset::setSTMByIx(int ix, MatrixXRd stm){
  *	@brief Set the computational tolerance for this data object
  *	@param d the tolerance
  */
-void tpat_base_arcset::setTol(double d){ tol = d; }
+void TPAT_Base_Arcset::setTol(double d){ tol = d; }
 
 //-----------------------------------------------------
 //      Utility Functions
@@ -1372,7 +1372,7 @@ void tpat_base_arcset::setTol(double d){ tol = d; }
  *	@brief Copy all data from the input arc data to this one
  *	@param d an arc data object reference
  */
-void tpat_base_arcset::copyMe(const tpat_base_arcset &d){
+void TPAT_Base_Arcset::copyMe(const TPAT_Base_Arcset &d){
 	nodes = d.nodes;
 	nodeIDMap = d.nodeIDMap;
 	segs = d.segs;
@@ -1398,20 +1398,20 @@ void tpat_base_arcset::copyMe(const tpat_base_arcset &d){
  *  @param varName the name of a variable that has as many rows as there are
  *  steps along the data object. Valid variables typically include the time vector,
  *  state matrix, or acceleration matrix
- *  @throws tpat_exception if the state vector variable cannot be read from the data file
+ *  @throws TPAT_Exception if the state vector variable cannot be read from the data file
  */
-void tpat_base_arcset::initNodesSegsFromMat(mat_t *matFile, const char* varName){
+void TPAT_Base_Arcset::initNodesSegsFromMat(mat_t *matFile, const char* varName){
 	matvar_t *stateMat = Mat_VarRead(matFile, varName);
 	if(stateMat == NULL){
-		throw tpat_exception("tpat_base_arcset::initNodeSegsFromMat: Could not read state data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::initNodeSegsFromMat: Could not read state data vector");
 	}else{
 		int numSteps = stateMat->dims[0];
 		nodes.clear();
 		segs.clear();
 		nodeIDMap.clear();
 		segIDMap.clear();
-		tpat_node blank_node;
-		tpat_segment blank_seg;
+		TPAT_Node blank_node;
+		TPAT_Segment blank_seg;
 		
 		// Create a set of nodes and segments all linked together in linear time
 		for(int i = 0; i < numSteps; i++){
@@ -1419,7 +1419,7 @@ void tpat_base_arcset::initNodesSegsFromMat(mat_t *matFile, const char* varName)
 			nodeIDMap.push_back(i);
 			
 			if(i > 0){
-				segs.push_back(tpat_segment(i-1, i, NAN));
+				segs.push_back(TPAT_Segment(i-1, i, NAN));
 				segIDMap.push_back(i-1);
 			}
 		}
@@ -1432,19 +1432,19 @@ void tpat_base_arcset::initNodesSegsFromMat(mat_t *matFile, const char* varName)
 /**
  *  @brief Print a ASCII graphic of the arcset in chronological order
  */
-void tpat_base_arcset::printInChrono() const{
-	std::vector<tpat_arc_piece> pieces = getChronoOrder();
+void TPAT_Base_Arcset::printInChrono() const{
+	std::vector<TPAT_Arc_Piece> pieces = getChronoOrder();
 
 	for(size_t i = 0; i < pieces.size(); i++){
-		tpat_arc_piece p = pieces[i];
+		TPAT_Arc_Piece p = pieces[i];
 
-		if(p.type == tpat_arc_piece::NODE){
-			printf("[%02d]", p.ID);
-		}else if(p.type == tpat_arc_piece::SEG){
-			if(getSeg(p.ID).getTOF() > 0)
-				printf("--(%02d)->", p.ID);
+		if(p.type == TPAT_Arc_Piece::Piece_Tp::NODE){
+			printf("[%02d]", p.id);
+		}else if(p.type == TPAT_Arc_Piece::Piece_Tp::SEG){
+			if(getSeg(p.id).getTOF() > 0)
+				printf("--(%02d)->", p.id);
 			else
-				printf(">-(%02d)--", p.ID);
+				printf(">-(%02d)--", p.id);
 		}
 	}
 	printf("\n");
@@ -1453,7 +1453,7 @@ void tpat_base_arcset::printInChrono() const{
 /**
  *  @brief Print nodeIDMap to standard output
  */
-void tpat_base_arcset::printNodeIDMap() const{
+void TPAT_Base_Arcset::printNodeIDMap() const{
 	for(size_t i = 0; i < nodeIDMap.size(); i++){
 		if(i % 20 == 0)
 			printf("----------------\n%4s -> %4s\n----------------\n", "ID", "Ix");
@@ -1465,7 +1465,7 @@ void tpat_base_arcset::printNodeIDMap() const{
 /**
  *  @brief Print segIDMap to standard output
  */
-void tpat_base_arcset::printSegIDMap() const{
+void TPAT_Base_Arcset::printSegIDMap() const{
 	for(size_t i = 0; i < segIDMap.size(); i++){
 		if(i % 20 == 0)
 			printf("----------------\n%4s -> %4s\n----------------\n", "ID", "Ix");
@@ -1481,25 +1481,25 @@ void tpat_base_arcset::printSegIDMap() const{
  * 
  *  @param matFile pointer to an open matlab data file
  *  @param varName the name of the state variable (e.g., "State" or "Nodes")
- *  @throws tpat_exception if there are any issues importing the data
+ *  @throws TPAT_Exception if there are any issues importing the data
  */
-void tpat_base_arcset::readStateFromMat(mat_t *matFile, const char* varName){
+void TPAT_Base_Arcset::readStateFromMat(mat_t *matFile, const char* varName){
 	matvar_t *stateMat = Mat_VarRead(matFile, varName);
 	if(stateMat == NULL){
-		throw tpat_exception("tpat_base_arcset::readStateFromMat: Could not read state data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::readStateFromMat: Could not read state data vector");
 	}else{
 		int numSteps = stateMat->dims[0];
 		
 		if(nodes.size() == 0){
-			throw tpat_exception("tpat_base_arcset::readStateFromMat: Step vector has not been initialized!");
+			throw TPAT_Exception("TPAT_Base_Arcset::readStateFromMat: Step vector has not been initialized!");
 		}
 
 		if(numSteps != (int)nodes.size()){
-			throw tpat_exception("tpat_base_arcset::readStateFromMat: State vector has a different size than the initialized step vector");
+			throw TPAT_Exception("TPAT_Base_Arcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
 		if(stateMat->dims[1] != 6){
-			throw tpat_exception("tpat_base_arcset::readStateFromMat: Incompatible data file: State width is not 6.");
+			throw TPAT_Exception("TPAT_Base_Arcset::readStateFromMat: Incompatible data file: State width is not 6.");
 		}
 
 		if(stateMat->class_type == MAT_C_DOUBLE && stateMat->data_type == MAT_T_DOUBLE){
@@ -1519,7 +1519,7 @@ void tpat_base_arcset::readStateFromMat(mat_t *matFile, const char* varName){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_base_arcset::readStateFromMat: Incompatible data file: unsupported data type/class");
+			throw TPAT_Exception("TPAT_Base_Arcset::readStateFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(stateMat);
@@ -1529,25 +1529,25 @@ void tpat_base_arcset::readStateFromMat(mat_t *matFile, const char* varName){
  *  @brief Read acceleration values from a matlab file
  * 
  *  @param matFile pointer to an open Matlab file
- *  @throws tpat_exception if there are any issues importing the data
+ *  @throws TPAT_Exception if there are any issues importing the data
  */
-void tpat_base_arcset::readAccelFromMat(mat_t *matFile){
+void TPAT_Base_Arcset::readAccelFromMat(mat_t *matFile){
 	matvar_t *accelMat = Mat_VarRead(matFile, "Accel");
 	if(accelMat == NULL){
-		throw tpat_exception("tpat_base_arcset::readAccelFromMat: Could not read data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::readAccelFromMat: Could not read data vector");
 	}else{
 		int numSteps = accelMat->dims[0];
 		
 		if(nodes.size() == 0){
-			throw tpat_exception("tpat_base_arcset::readAccelFromMat: Node vector has not been initialized!");
+			throw TPAT_Exception("TPAT_Base_Arcset::readAccelFromMat: Node vector has not been initialized!");
 		}
 
 		if(numSteps != (int)nodes.size()){
-			throw tpat_exception("tpat_base_arcset::readAccelFromMat: Accel vector has a different size than the initialized node vector");
+			throw TPAT_Exception("TPAT_Base_Arcset::readAccelFromMat: Accel vector has a different size than the initialized node vector");
 		}
 
 		if(accelMat->dims[1] != 3){
-			throw tpat_exception("tpat_base_arcset::readAccelFromMat: Incompatible data file: Accel width is not 3.");
+			throw TPAT_Exception("TPAT_Base_Arcset::readAccelFromMat: Incompatible data file: Accel width is not 3.");
 		}
 
 		if(accelMat->class_type == MAT_C_DOUBLE && accelMat->data_type == MAT_T_DOUBLE){
@@ -1564,7 +1564,7 @@ void tpat_base_arcset::readAccelFromMat(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_base_arcset::readAccelFromMat: Incompatible data file: unsupported data type/class");
+			throw TPAT_Exception("TPAT_Base_Arcset::readAccelFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(accelMat);
@@ -1575,23 +1575,23 @@ void tpat_base_arcset::readAccelFromMat(mat_t *matFile){
  * 
  *  @param matFile pointer to an open Matlab file
  *  @param varName The name of the variable within the Matlab file
- *  @throws tpat_exception if there are any issues importing the data
+ *  @throws TPAT_Exception if there are any issues importing the data
  */
-void tpat_base_arcset::readEpochFromMat(mat_t *matFile, const char* varName){
+void TPAT_Base_Arcset::readEpochFromMat(mat_t *matFile, const char* varName){
 	matvar_t *epochMat = Mat_VarRead(matFile, varName);
 	if(epochMat == NULL){
-		throw tpat_exception("tpat_base_arcset::readEpochFromMat: Could not read data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::readEpochFromMat: Could not read data vector");
 	}else{
 		int numSteps = epochMat->dims[0];
 
 		if(nodes.size() == 0)
-			throw tpat_exception("tpat_base_arcset::readEpochFromMat: Node vector has not been initialized");
+			throw TPAT_Exception("TPAT_Base_Arcset::readEpochFromMat: Node vector has not been initialized");
 
 		if(numSteps != (int)nodes.size())
-			throw tpat_exception("tpat_base_arcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
+			throw TPAT_Exception("TPAT_Base_Arcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
 
 		if(epochMat->dims[1] != 1)
-			throw tpat_exception("tpat_base_arcset::readEpochFromMat: Incompatible data file: Epoch vector has more than one column");
+			throw TPAT_Exception("TPAT_Base_Arcset::readEpochFromMat: Incompatible data file: Epoch vector has more than one column");
 
 		if(epochMat->class_type == MAT_C_DOUBLE && epochMat->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(epochMat->data);
@@ -1602,7 +1602,7 @@ void tpat_base_arcset::readEpochFromMat(mat_t *matFile, const char* varName){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_base_arcset::readEpochFromMat: Incompatible data file: unsupported data type or class");
+			throw TPAT_Exception("TPAT_Base_Arcset::readEpochFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
 }//================================================
@@ -1611,25 +1611,25 @@ void tpat_base_arcset::readEpochFromMat(mat_t *matFile, const char* varName){
  *  @brief Read State Transition Matrices from a matlab file
  * 
  *  @param matFile pointer to an open Matlab file
- *  @throws tpat_exception if there are any issues importing the data
+ *  @throws TPAT_Exception if there are any issues importing the data
  */
-void tpat_base_arcset::readSTMFromMat(mat_t *matFile){
+void TPAT_Base_Arcset::readSTMFromMat(mat_t *matFile){
 	matvar_t *allSTM = Mat_VarRead(matFile, "STM");
 	if(allSTM == NULL){
-		throw tpat_exception("tpat_base_arcset::readSTMFromMat: Could not read data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::readSTMFromMat: Could not read data vector");
 	}else{
 		int numSteps = allSTM->dims[2];
 
 		if(segs.size() == 0){
-			throw tpat_exception("tpat_base_arcset::readSTMFromMat: Step vector has not been initialized!");
+			throw TPAT_Exception("TPAT_Base_Arcset::readSTMFromMat: Step vector has not been initialized!");
 		}
 
 		if(numSteps != (int)segs.size()){
-			throw tpat_exception("tpat_base_arcset::readSTMFromMat: STM vector has a different size than the initialized step vector");
+			throw TPAT_Exception("TPAT_Base_Arcset::readSTMFromMat: STM vector has a different size than the initialized step vector");
 		}
 
 		if(allSTM->dims[0] != 6 || allSTM->dims[1] != 6){
-			throw tpat_exception("tpat_base_arcset::readSTMFromMat: Incompatible data file: STM is not 6x6.");
+			throw TPAT_Exception("TPAT_Base_Arcset::readSTMFromMat: Incompatible data file: STM is not 6x6.");
 		}
 
 		if(allSTM->class_type == MAT_C_DOUBLE && allSTM->data_type == MAT_T_DOUBLE){
@@ -1647,7 +1647,7 @@ void tpat_base_arcset::readSTMFromMat(mat_t *matFile){
 				}
 			}
 		}else{
-			throw tpat_exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
+			throw TPAT_Exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(allSTM);
@@ -1658,23 +1658,23 @@ void tpat_base_arcset::readSTMFromMat(mat_t *matFile){
  * 
  *  @param matFile pointer to an open Matlab file
  *  @param varName The name of the variable within the Matlab file
- *  @throws tpat_exception if there are any issues importing the data
+ *  @throws TPAT_Exception if there are any issues importing the data
  */
-void tpat_base_arcset::readTOFFromMat(mat_t *matFile, const char* varName){
+void TPAT_Base_Arcset::readTOFFromMat(mat_t *matFile, const char* varName){
 	matvar_t *tofMat = Mat_VarRead(matFile, varName);
 	if(tofMat == NULL){
-		throw tpat_exception("tpat_base_arcset::readTOFFromMat: Could not read data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::readTOFFromMat: Could not read data vector");
 	}else{
 		int numSteps = tofMat->dims[0];
 
 		if(segs.size() == 0)
-			throw tpat_exception("tpat_base_arcset::readTOFFromMat: Node vector has not been initialized");
+			throw TPAT_Exception("TPAT_Base_Arcset::readTOFFromMat: Node vector has not been initialized");
 
 		if(numSteps != (int)segs.size())
-			throw tpat_exception("tpat_base_arcset::readTOFFromMat: Epoch vector has different size than the initialized segment evctor");
+			throw TPAT_Exception("TPAT_Base_Arcset::readTOFFromMat: Epoch vector has different size than the initialized segment evctor");
 
 		if(tofMat->dims[1] != 1)
-			throw tpat_exception("tpat_base_arcset::readTOFFromMat: Incompatible data file: Epoch vector has more than one column");
+			throw TPAT_Exception("TPAT_Base_Arcset::readTOFFromMat: Incompatible data file: Epoch vector has more than one column");
 
 		if(tofMat->class_type == MAT_C_DOUBLE && tofMat->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(tofMat->data);
@@ -1685,7 +1685,7 @@ void tpat_base_arcset::readTOFFromMat(mat_t *matFile, const char* varName){
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_base_arcset::readTOFFromMat: Incompatible data file: unsupported data type or class");
+			throw TPAT_Exception("TPAT_Base_Arcset::readTOFFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
 }//================================================
@@ -1696,11 +1696,11 @@ void tpat_base_arcset::readTOFFromMat(mat_t *matFile, const char* varName){
  *  @param matFile pointer to an open Matlab file
  *  @param varIx the index of the extra parameter variable within the <tt>extraParamRowSize</tt> array
  *  @param varName the name of the storage variable within the Matlab file
- *  @throws tpat_exception if there are any issues importing the data
+ *  @throws TPAT_Exception if there are any issues importing the data
  */
-void tpat_base_arcset::readExtraParamFromMat(mat_t *matFile, int varIx, const char *varName){
+void TPAT_Base_Arcset::readExtraParamFromMat(mat_t *matFile, int varIx, const char *varName){
 	if(varIx >= numExtraParam || varIx < 0)
-		throw tpat_exception("tpat_base_arcset::readExtraParamFromMat: Could not read extra parameter; index out of bounds");
+		throw TPAT_Exception("TPAT_Base_Arcset::readExtraParamFromMat: Could not read extra parameter; index out of bounds");
 
 	// Get starting index of this extra param within a arc step's extra parameter vector
 	int ix0 = 0;
@@ -1708,18 +1708,18 @@ void tpat_base_arcset::readExtraParamFromMat(mat_t *matFile, int varIx, const ch
 
 	matvar_t *matvar = Mat_VarRead(matFile, varName);
 	if(matvar == NULL){
-		throw tpat_exception("tpat_base_arcset::readExtraParamFromMat: Could not read data vector");
+		throw TPAT_Exception("TPAT_Base_Arcset::readExtraParamFromMat: Could not read data vector");
 	}else{
 		int numSteps = matvar->dims[0];
 		
 		if(nodes.size() == 0){
-			throw tpat_exception("tpat_base_arcset::readExtraParamFromMat: Step vector has not been initialized!");
+			throw TPAT_Exception("TPAT_Base_Arcset::readExtraParamFromMat: Step vector has not been initialized!");
 		}
 
 		if(matvar->dims[1] != ((size_t)extraParamRowSize[varIx])){
 			char message[64];
-			sprintf(message, "tpat_base_arcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", varName, extraParamRowSize[varIx]);
-			throw tpat_exception(message);
+			sprintf(message, "TPAT_Base_Arcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", varName, extraParamRowSize[varIx]);
+			throw TPAT_Exception(message);
 		}
 
 		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
@@ -1732,7 +1732,7 @@ void tpat_base_arcset::readExtraParamFromMat(mat_t *matFile, int varIx, const ch
 				}
 			}
 		}else{
-			throw tpat_exception("tpat_base_arcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
+			throw TPAT_Exception("TPAT_Base_Arcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(matvar);
@@ -1742,7 +1742,7 @@ void tpat_base_arcset::readExtraParamFromMat(mat_t *matFile, int varIx, const ch
  *	@brief Save the acceleration vector to file
  *	@param matFile a pointer to the destination mat-file
  */
-void tpat_base_arcset::saveAccel(mat_t *matFile) const{
+void TPAT_Base_Arcset::saveAccel(mat_t *matFile) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> accel_colMaj(3*nodes.size());
@@ -1763,7 +1763,7 @@ void tpat_base_arcset::saveAccel(mat_t *matFile) const{
  *	@brief Save all node epochs to file
  *	@param matFile a pointer to the destination mat-file
  */
-void tpat_base_arcset::saveEpoch(mat_t *matFile) const{
+void TPAT_Base_Arcset::saveEpoch(mat_t *matFile) const{
 	saveEpoch(matFile, "Epoch");
 }//=====================================================
 
@@ -1772,7 +1772,7 @@ void tpat_base_arcset::saveEpoch(mat_t *matFile) const{
  *	@param matFile a pointer to the destination mat-file
  *	@param varName the name of the variable
  */
-void tpat_base_arcset::saveEpoch(mat_t *matFile, const char* varName) const{
+void TPAT_Base_Arcset::saveEpoch(mat_t *matFile, const char* varName) const{
 	std::vector<double> allEpochs(nodes.size());
 
 	for(size_t n = 0; n < nodes.size(); n++){
@@ -1789,11 +1789,11 @@ void tpat_base_arcset::saveEpoch(mat_t *matFile, const char* varName) const{
  *	@param matFile a pointer to the destination mat-file
  *	@param varIx the index of the parameter
  *	@param name the name of the variable being saved
- *	@throws tpat_exception if <tt>varIx</tt> is out of bounds
+ *	@throws TPAT_Exception if <tt>varIx</tt> is out of bounds
  */
-void tpat_base_arcset::saveExtraParam(mat_t *matFile, int varIx, const char *name) const{
+void TPAT_Base_Arcset::saveExtraParam(mat_t *matFile, int varIx, const char *name) const{
 	if(varIx > numExtraParam || varIx < 0)
-		throw tpat_exception("Could not save extra parameter; index out of bounds");
+		throw TPAT_Exception("Could not save extra parameter; index out of bounds");
 
 	// Get starting index of this extra param within a arc step's extra parameter vector
 	int ix0 = 0;
@@ -1821,7 +1821,7 @@ void tpat_base_arcset::saveExtraParam(mat_t *matFile, int varIx, const char *nam
  *	@brief Save the state vector [pos, vel] to a file with variable name "State"
  *	@param matFile a pointer to the destination matlab file 
  */
-void tpat_base_arcset::saveState(mat_t *matFile) const{
+void TPAT_Base_Arcset::saveState(mat_t *matFile) const{
 	saveState(matFile, "State");
 }//==================================================
 
@@ -1830,7 +1830,7 @@ void tpat_base_arcset::saveState(mat_t *matFile) const{
  *	@param matFile a pointer to the destination matlab file 
  *	@param varName the name of the variable (e.g. "State" or "Nodes")
  */
-void tpat_base_arcset::saveState(mat_t *matFile, const char* varName) const{
+void TPAT_Base_Arcset::saveState(mat_t *matFile, const char* varName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> posVel(6*nodes.size());
@@ -1870,7 +1870,7 @@ void tpat_base_arcset::saveState(mat_t *matFile, const char* varName) const{
  *	compatibility with existing MATLAB scripts
  *	@param matFile a pointer to the destination matlab file 
  */
-void tpat_base_arcset::saveSTMs(mat_t *matFile) const{
+void TPAT_Base_Arcset::saveSTMs(mat_t *matFile) const{
 	// Create one large vector to put all the STM elements in
 	std::vector<double> allSTMEl(segs.size()*36);
 
@@ -1894,7 +1894,7 @@ void tpat_base_arcset::saveSTMs(mat_t *matFile) const{
  *	@param matFile a pointer to the destination mat-file
  *	@param varName the name of the variable
  */
-void tpat_base_arcset::saveTOF(mat_t *matFile, const char* varName) const{
+void TPAT_Base_Arcset::saveTOF(mat_t *matFile, const char* varName) const{
 	std::vector<double> allTOFs(segs.size());
 
 	for(size_t n = 0; n < segs.size(); n++){

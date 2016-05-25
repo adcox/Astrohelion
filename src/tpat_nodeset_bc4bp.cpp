@@ -1,6 +1,6 @@
 /**
- *  @file tpat_nodeset_bcr4bp.cpp
- *	@brief Derivative of tpat_nodeset, specific to BCR4BPR
+ *  @file tpat_nodeset_bc4bp.cpp
+ *	@brief Derivative of TPAT_Nodeset, specific to BCR4BPR
  *
  *	@author Andrew Cox
  *	@version September 2, 2015
@@ -27,12 +27,12 @@
  *  along with TPAT.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tpat_nodeset_bcr4bp.hpp"
+#include "tpat_nodeset_bc4bp.hpp"
 
 #include "tpat_event.hpp"
 #include "tpat_node.hpp"
-#include "tpat_simulation_engine.hpp"
-#include "tpat_sys_data_bcr4bpr.hpp"
+#include "tpat_sim_engine.hpp"
+#include "tpat_sys_data_bc4bp.hpp"
 #include "tpat_utilities.hpp"
 
 //-----------------------------------------------------
@@ -42,7 +42,7 @@
  *	@brief Construct a nodeset with no data other than the system
  *	@param data system data object describing the system the nodes exist in
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_sys_data_bcr4bpr *data) : tpat_nodeset(data){
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(const TPAT_Sys_Data_BC4BP *data) : TPAT_Nodeset(data){
 	initExtraParam();
 }//====================================================
 
@@ -58,11 +58,11 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_sys_data_bcr4bpr *data) : tp
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data_bcr4bpr *data, 
-	double t0, double tof, int numNodes) : tpat_nodeset(data){
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(const double IC[6], const TPAT_Sys_Data_BC4BP *data, 
+	double t0, double tof, int numNodes) : TPAT_Nodeset(data){
 
 	initExtraParam();
-	initFromICs(IC, t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromICs(IC, t0, tof, numNodes, TPAT_Nodeset::DISTRO_TIME);
 }//====================================================
 
 /**
@@ -77,11 +77,11 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_data_bcr4bpr *data, 
-	double t0, double tof, int numNodes) : tpat_nodeset(data){
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(std::vector<double> IC, const TPAT_Sys_Data_BC4BP *data, 
+	double t0, double tof, int numNodes) : TPAT_Nodeset(data){
 
 	initExtraParam();
-	initFromICs(&(IC[0]), t0, tof, numNodes, tpat_nodeset::DISTRO_TIME);
+	initFromICs(&(IC[0]), t0, tof, numNodes, TPAT_Nodeset::DISTRO_TIME);
 }//====================================================
 
 /**
@@ -95,8 +95,8 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data_bcr4bpr *data, 
-	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(const double IC[6], const TPAT_Sys_Data_BC4BP *data, 
+	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : TPAT_Nodeset(data){
 
 	initExtraParam();
 	initFromICs(IC, t0, tof, numNodes, type);
@@ -113,8 +113,8 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const double IC[6], const tpat_sys_data
  *	@param numNodes number of nodes to create, including IC
  *	@param type node distribution type
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_data_bcr4bpr *data, 
-	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : tpat_nodeset(data){
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(std::vector<double> IC, const TPAT_Sys_Data_BC4BP *data, 
+	double t0, double tof, int numNodes, tpat_nodeDistro_tp type) : TPAT_Nodeset(data){
 
 	initExtraParam();
 	initFromICs(&(IC[0]), t0, tof, numNodes, type);
@@ -127,13 +127,13 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(std::vector<double> IC, const tpat_sys_
  *	handle copying the generic fields like state and tofs
  *	@param n a nodeset reference
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_nodeset_bcr4bp& n) : tpat_nodeset(n) {}
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(const TPAT_Nodeset_BC4BP& n) : TPAT_Nodeset(n) {}
 
 /**
  *	@brief Create a BCR4BPR nodeset from its base class
  *	@param a an arc data reference
  */
-tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_base_arcset &a) : tpat_nodeset(a) {}
+TPAT_Nodeset_BC4BP::TPAT_Nodeset_BC4BP(const TPAT_Base_Arcset &a) : TPAT_Nodeset(a) {}
 
 /**
  *  @brief Create a new nodeset object on the stack
@@ -145,9 +145,9 @@ tpat_nodeset_bcr4bp::tpat_nodeset_bcr4bp(const tpat_base_arcset &a) : tpat_nodes
  *  BCR4BPR system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
-baseArcsetPtr tpat_nodeset_bcr4bp::create( const tpat_sys_data *sys) const{
-	const tpat_sys_data_bcr4bpr *bcSys = static_cast<const tpat_sys_data_bcr4bpr*>(sys);
-	return baseArcsetPtr(new tpat_nodeset_bcr4bp(bcSys));
+baseArcsetPtr TPAT_Nodeset_BC4BP::create( const TPAT_Sys_Data *sys) const{
+	const TPAT_Sys_Data_BC4BP *bcSys = static_cast<const TPAT_Sys_Data_BC4BP*>(sys);
+	return baseArcsetPtr(new TPAT_Nodeset_BC4BP(bcSys));
 }//====================================================
 
 /**
@@ -159,8 +159,8 @@ baseArcsetPtr tpat_nodeset_bcr4bp::create( const tpat_sys_data *sys) const{
  * 
  *  @return a pointer to the newly cloned nodeset
  */
-baseArcsetPtr tpat_nodeset_bcr4bp::clone() const{
-	return baseArcsetPtr(new tpat_nodeset_bcr4bp(*this));
+baseArcsetPtr TPAT_Nodeset_BC4BP::clone() const{
+	return baseArcsetPtr(new TPAT_Nodeset_BC4BP(*this));
 }//====================================================
 
 //-----------------------------------------------------
@@ -178,7 +178,7 @@ baseArcsetPtr tpat_nodeset_bcr4bp::clone() const{
 /**
  *	@brief Initialize the extra param vector to hold info specific to this nodeset
  */
-void tpat_nodeset_bcr4bp::initExtraParam(){
+void TPAT_Nodeset_BC4BP::initExtraParam(){
 	// Nothing to do here!
 }//====================================================
 

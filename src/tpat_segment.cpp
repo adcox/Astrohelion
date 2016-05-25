@@ -38,7 +38,7 @@
 /**
  *  @brief Default constructor
  */
-tpat_segment::tpat_segment(){}
+TPAT_Segment::TPAT_Segment(){}
 
 /**
  *  @brief Construct a new segment
@@ -48,7 +48,7 @@ tpat_segment::tpat_segment(){}
  *  enter a value of NAN)
  *  @param tof time-of-flight along the segment
  */
-tpat_segment::tpat_segment(int originID, int terminusID, double tof){
+TPAT_Segment::TPAT_Segment(int originID, int terminusID, double tof){
 	addLink(originID);
 	addLink(terminusID);
 	this->tof = tof;
@@ -64,7 +64,7 @@ tpat_segment::tpat_segment(int originID, int terminusID, double tof){
  *  @param stm_data a 36-element row-major order array containing a 6x6 state transition matrix
  *  associated with this segment
  */
-tpat_segment::tpat_segment(int originID, int terminusID, double tof, const double stm_data[36]){
+TPAT_Segment::TPAT_Segment(int originID, int terminusID, double tof, const double stm_data[36]){
 	addLink(originID);
 	addLink(terminusID);
 	this->tof = tof;
@@ -75,14 +75,14 @@ tpat_segment::tpat_segment(int originID, int terminusID, double tof, const doubl
  *  @brief Copy constructor
  *  @param s segment reference
  */
-tpat_segment::tpat_segment(const tpat_segment &s) : tpat_linkable(s){
+TPAT_Segment::TPAT_Segment(const TPAT_Segment &s) : TPAT_Linkable(s){
 	copyMe(s);
 }//====================================================
 
 /**
  *  @brief Destructor
  */
-// tpat_segment::~tpat_segment(){}
+// TPAT_Segment::~TPAT_Segment(){}
 
 //-----------------------------------------------------
 //      Operators
@@ -93,8 +93,8 @@ tpat_segment::tpat_segment(const tpat_segment &s) : tpat_linkable(s){
  *	@param s an arc segment object
  *	@return set this object equal to s and return *this
  */
-tpat_segment& tpat_segment::operator =(const tpat_segment &s){
-	tpat_linkable::operator =(s);
+TPAT_Segment& TPAT_Segment::operator =(const TPAT_Segment &s){
+	TPAT_Linkable::operator =(s);
 	copyMe(s);
 	return *this;
 }//====================================================
@@ -108,13 +108,13 @@ tpat_segment& tpat_segment::operator =(const tpat_segment &s){
  *
  *	@return whether or not two segments are identical
  */
-bool operator ==(const tpat_segment &lhs, const tpat_segment &rhs){
+bool operator ==(const TPAT_Segment &lhs, const TPAT_Segment &rhs){
 	
 	if(lhs.tof != rhs.tof)
 		return false;
 
-	const tpat_linkable link_lhs(lhs);
-	const tpat_linkable link_rhs(rhs);
+	const TPAT_Linkable link_lhs(lhs);
+	const TPAT_Linkable link_rhs(rhs);
 	return link_lhs == link_rhs;
 }//====================================================
 
@@ -123,7 +123,7 @@ bool operator ==(const tpat_segment &lhs, const tpat_segment &rhs){
  *	@return whether two segments are different
  *	@see operator==
  */
-bool operator != (const tpat_segment &lhs, const tpat_segment &rhs){
+bool operator != (const TPAT_Segment &lhs, const TPAT_Segment &rhs){
 	return !(lhs == rhs);
 }//====================================================
 
@@ -135,20 +135,20 @@ bool operator != (const tpat_segment &lhs, const tpat_segment &rhs){
  *	@brief Add a constraint to the current set for this segment
  *	@param c a new constraint
  */
-void tpat_segment::addConstraint(tpat_constraint c){
+void TPAT_Segment::addConstraint(TPAT_Constraint c){
 	cons.push_back(c);
 }//====================================================
 
 /**
  *	@brief Clear all constraints associated with this segment
  */
-void tpat_segment::clearConstraints(){ cons.clear(); }
+void TPAT_Segment::clearConstraints(){ cons.clear(); }
 
 /**
  *	@brief Get all constraints for this segment
  *	@return a vector containing all constraints applied to this segment
  */
-std::vector<tpat_constraint> tpat_segment::getConstraints() const{
+std::vector<TPAT_Constraint> TPAT_Segment::getConstraints() const{
 	return cons;
 }//====================================================
 
@@ -156,31 +156,31 @@ std::vector<tpat_constraint> tpat_segment::getConstraints() const{
  *  @brief Retrieve the number of constraints stored by this object
  *  @return the number of constraints stored by this object
  */
-int tpat_segment::getNumCons() const { return (int)(cons.size()); }
+int TPAT_Segment::getNumCons() const { return (int)(cons.size()); }
 
 /**
  *  @brief Retrieve the ID of the origin node (chronologically)
  *  @return the ID of the origin node (chronologically)
  */
-int tpat_segment::getOrigin() const { return links[ORIG_IX]; }
+int TPAT_Segment::getOrigin() const { return links[ORIG_IX]; }
 
 /**
  *  @brief Retrieve the ID of the terminal node (chronologically)
  *  @return the ID of the terminal node (chronologically)
  */
-int tpat_segment::getTerminus() const { return links[TERM_IX]; }
+int TPAT_Segment::getTerminus() const { return links[TERM_IX]; }
 
 /**
  *  @brief Retrieve the time-of-flight along this segment
  *  @return time-of-flight along this segment, units consistent with the parent system
  */
-double tpat_segment::getTOF() const { return tof; }
+double TPAT_Segment::getTOF() const { return tof; }
 
 /**
  *  @brief Retrieve the STM associated with this segment
  *  @return the STM associated with this segment
  */
-MatrixXRd tpat_segment::getSTM() const{
+MatrixXRd TPAT_Segment::getSTM() const{
 	double stmData[36];
 	std::copy(stm, stm+36, stmData);
 	MatrixXRd temp = Eigen::Map<MatrixXRd>(stmData, 6, 6);
@@ -191,7 +191,7 @@ MatrixXRd tpat_segment::getSTM() const{
  *  @brief Retrieve the STM elements in row-major order
  *  @return the STM elements in row-major order
  */
-std::vector<double> tpat_segment::getSTMElements() const{
+std::vector<double> TPAT_Segment::getSTMElements() const{
 	std::vector<double> stmVec;
 	stmVec.insert(stmVec.begin(), stm, stm+36);
 	return stmVec;
@@ -205,7 +205,7 @@ std::vector<double> tpat_segment::getSTMElements() const{
  *	whether or not the x-velocity is continuous, the second describes
  *	the y-velocity continuity, etc.
  */
-std::vector<bool> tpat_segment::getVelCon() const {
+std::vector<bool> TPAT_Segment::getVelCon() const {
 	std::vector<bool> temp;
 	temp.insert(temp.end(), flags.begin(), flags.begin()+3);
 	return temp;
@@ -216,7 +216,7 @@ std::vector<bool> tpat_segment::getVelCon() const {
  *	@param ix the index of the constraint. If the ix < 0, it will
  *	count backwards from the end of the set
  */
-void tpat_segment::removeConstraint(int ix){
+void TPAT_Segment::removeConstraint(int ix){
 	if(ix < 0)
 		ix += cons.size();
 	
@@ -227,7 +227,7 @@ void tpat_segment::removeConstraint(int ix){
  *	@brief Set the list of constraints for this arc segment
  *	@param constraints a vector of constraints
  */
-void tpat_segment::setConstraints(std::vector<tpat_constraint> constraints){
+void TPAT_Segment::setConstraints(std::vector<TPAT_Constraint> constraints){
 	cons = constraints;
 }//====================================================
 
@@ -235,16 +235,16 @@ void tpat_segment::setConstraints(std::vector<tpat_constraint> constraints){
  *  @brief Set the ID of the node at the origin (chronologically) of this segment
  *  @param o the ID of the node at the origin (chronologically) of this segment
  */
-void tpat_segment::setOrigin(int o){ links[ORIG_IX] = o; }
+void TPAT_Segment::setOrigin(int o){ links[ORIG_IX] = o; }
 
 /**
  *	@brief Set the STM for this step
  *	@param m a 6x6 state transition matrix (non-dim)
- *	@throw tpat_exception if <tt>m</tt> is not 6x6
+ *	@throw TPAT_Exception if <tt>m</tt> is not 6x6
  */
-void tpat_segment::setSTM(MatrixXRd m){
+void TPAT_Segment::setSTM(MatrixXRd m){
 	if(m.rows() != 6 || m.cols() != 6)
-		throw tpat_exception("tpat_segment::setSTM: STM must be 6x6");
+		throw TPAT_Exception("TPAT_Segment::setSTM: STM must be 6x6");
 	
 	std::copy(m.data(), m.data()+36, stm);
 }//====================================================
@@ -255,7 +255,7 @@ void tpat_segment::setSTM(MatrixXRd m){
  *	row-major order. Note that the array must have at least 36
  *	elements, or un-initialized memory may be accessed
  */
-void tpat_segment::setSTM(const double *elements){
+void TPAT_Segment::setSTM(const double *elements){
 	std::copy(elements, elements+36, stm);
 }//====================================================
 
@@ -263,11 +263,11 @@ void tpat_segment::setSTM(const double *elements){
  *	@brief Set the STM for this step
  *	@param elements a 36-element vector of STM elements
  *	(non-dimensional) in row-major order
- *	@throw tpat_exception if <tt>elements</tt> does not have 36 elements
+ *	@throw TPAT_Exception if <tt>elements</tt> does not have 36 elements
  */
-void tpat_segment::setSTM(std::vector<double> elements){
+void TPAT_Segment::setSTM(std::vector<double> elements){
 	if(elements.size() != 36)
-		throw tpat_exception("tpat_segment::setSTM: input vector must have 36 elements");
+		throw TPAT_Exception("TPAT_Segment::setSTM: input vector must have 36 elements");
 	std::copy(elements.begin(), elements.begin()+36, stm);
 }//====================================================
 
@@ -275,18 +275,18 @@ void tpat_segment::setSTM(std::vector<double> elements){
  *  @brief Set the ID of the node at the terminus (chronologically) of this segment
  *  @param t the ID of the node at the terminus (chronologically) of this segment
  */
-void tpat_segment::setTerminus(int t){ links[TERM_IX] = t; }
+void TPAT_Segment::setTerminus(int t){ links[TERM_IX] = t; }
 
 /**
  *  @brief Set the TOF along this segment
  *  @param t the TOF along this segment, units consistent with the parent system
  */
-void tpat_segment::setTOF(double t){ tof = t; }
+void TPAT_Segment::setTOF(double t){ tof = t; }
 
 /**
  *	@brief Set all velocity states to be continuous
  */
-void tpat_segment::setVel_AllCon(){
+void TPAT_Segment::setVel_AllCon(){
 	flags[0] = true;
 	flags[1] = true;
 	flags[2] = true;
@@ -295,7 +295,7 @@ void tpat_segment::setVel_AllCon(){
 /**
  *	@brief Set all velocity states to be discontinuous
  */
-void tpat_segment::setVel_AllDiscon(){
+void TPAT_Segment::setVel_AllDiscon(){
 	flags[0] = false;
 	flags[1] = false;
 	flags[2] = false;
@@ -307,7 +307,7 @@ void tpat_segment::setVel_AllDiscon(){
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
  */
-void tpat_segment::setVelCon(const bool data[3]){
+void TPAT_Segment::setVelCon(const bool data[3]){
 	flags[0] = data[0];
 	flags[1] = data[1];
 	flags[2] = data[2];
@@ -318,11 +318,11 @@ void tpat_segment::setVelCon(const bool data[3]){
  *	@param data a three-element boolean vector. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
- *	@throw tpat_exception if <tt>data</tt> has fewer than three elements
+ *	@throw TPAT_Exception if <tt>data</tt> has fewer than three elements
  */
-void tpat_segment::setVelCon(std::vector<bool> data){
+void TPAT_Segment::setVelCon(std::vector<bool> data){
 	if(data.size() < 3)
-		throw tpat_exception("tpat_segment::setVelCon: Need at least three velocity continuity booleans");
+		throw TPAT_Exception("TPAT_Segment::setVelCon: Need at least three velocity continuity booleans");
 
 	std::copy(data.begin(), data.begin()+3, flags.begin());
 }//====================================================
@@ -336,7 +336,7 @@ void tpat_segment::setVelCon(std::vector<bool> data){
  *	@param zCon whether or not the z-velocity component should 
  *	be continuous with the node before this one
  */
-void tpat_segment::setVelCon(bool xCon, bool yCon, bool zCon){
+void TPAT_Segment::setVelCon(bool xCon, bool yCon, bool zCon){
 	flags[0] = xCon;
 	flags[1] = yCon;
 	flags[2] = zCon;
@@ -349,10 +349,10 @@ void tpat_segment::setVelCon(bool xCon, bool yCon, bool zCon){
  *	@brief Copy a segment into this one
  *	@param s a segment reference
  */
-void tpat_segment::copyMe(const tpat_segment &s){
+void TPAT_Segment::copyMe(const TPAT_Segment &s){
 	std::copy(s.stm, s.stm+36, stm);
 	cons = s.cons;
 	tof = s.tof;
 	flags = s.flags;
-	tpat_linkable::copyMe(s);
+	TPAT_Linkable::copyMe(s);
 }//====================================================

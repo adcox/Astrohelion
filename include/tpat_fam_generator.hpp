@@ -30,34 +30,34 @@
 #include <vector>
 
 // forward declarations
-class tpat_family_cr3bp;
-class tpat_nodeset_cr3bp;
-class tpat_sys_data_cr3bp;
-class tpat_traj_cr3bp;
+class TPAT_Fam_CR3BP;
+class TPAT_Nodeset_CR3BP;
+class TPAT_Sys_Data_CR3BP;
+class TPAT_Traj_CR3BP;
 
+/**
+ *	@brief Type of continuation to use when generating a family
+ */
+enum class TPAT_Continuation_Tp{
+	NAT_PARAM,	//!< Use natural parameter continuation
+	PSEUDO_ARC	//!> Use pseudo arclength continuation
+};
+		
 /**
  *	@brief An object to generate families of orbits
  */
-class tpat_family_generator : public tpat{
+class TPAT_Fam_Generator : public TPAT{
 	public:
-		/**
-		 *	@brief Type of continuation to use when generating a family
-		 */
-		enum tpat_continuation_tp{
-			NAT_PARAM,	//!< Use natural parameter continuation
-			PSEUDO_ARC	//!> Use pseudo arclength continuation
-		};
-
 		// *structors
-		tpat_family_generator();
-		tpat_family_generator(const tpat_family_generator&);
-		~tpat_family_generator();
+		TPAT_Fam_Generator();
+		TPAT_Fam_Generator(const TPAT_Fam_Generator&);
+		~TPAT_Fam_Generator();
 
 		// operators
-		tpat_family_generator& operator =(const tpat_family_generator&);
+		TPAT_Fam_Generator& operator =(const TPAT_Fam_Generator&);
 
 		// Set and Get
-		void setContType(tpat_continuation_tp);
+		void setContType(TPAT_Continuation_Tp);
 		void setMaxStepSize(double);
 		void setMinStepSize(double);
 		void setNumNodes(int);
@@ -69,19 +69,19 @@ class tpat_family_generator : public tpat{
 		void setTol(double);
 		
 		// Operations & Utility
-		tpat_family_cr3bp cr3bp_generateAxial(const char*, double);
-		tpat_family_cr3bp cr3bp_generateButterfly(tpat_sys_data_cr3bp*, int);
-		tpat_family_cr3bp cr3bp_generateDRO(tpat_sys_data_cr3bp*);
-		tpat_family_cr3bp cr3bp_generateHalo(const char*, double);
-		tpat_family_cr3bp cr3bp_generateLPO(tpat_sys_data_cr3bp*);
-		tpat_family_cr3bp cr3bp_generateLyap(tpat_sys_data_cr3bp, int, double);
-		tpat_family_cr3bp cr3bp_generateRes(tpat_sys_data_cr3bp*, int, int);
-		tpat_family_cr3bp cr3bp_generateVertical(const char*, double);
+		TPAT_Fam_CR3BP cr3bp_generateAxial(const char*, double);
+		TPAT_Fam_CR3BP cr3bp_generateButterfly(TPAT_Sys_Data_CR3BP*, int);
+		TPAT_Fam_CR3BP cr3bp_generateDRO(TPAT_Sys_Data_CR3BP*);
+		TPAT_Fam_CR3BP cr3bp_generateHalo(const char*, double);
+		TPAT_Fam_CR3BP cr3bp_generateLPO(TPAT_Sys_Data_CR3BP*);
+		TPAT_Fam_CR3BP cr3bp_generateLyap(TPAT_Sys_Data_CR3BP, int, double);
+		TPAT_Fam_CR3BP cr3bp_generateRes(TPAT_Sys_Data_CR3BP*, int, int);
+		TPAT_Fam_CR3BP cr3bp_generateVertical(const char*, double);
 		
 		void reset();
 
 	private:
-		tpat_continuation_tp contType = NAT_PARAM;	//!< Type of continuation to use
+		TPAT_Continuation_Tp contType = TPAT_Continuation_Tp::NAT_PARAM;	//!< Type of continuation to use
 		double tol = 1e-12;				//!< Tolerance for corrections
 
 		// Settings for Natural Parameter Continuation
@@ -96,10 +96,10 @@ class tpat_family_generator : public tpat{
 		int numNodes = 3;				//!< Number of nodes to use when correcting HALF a periodic orbit
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 
-		void copyMe(const tpat_family_generator&);
-		void cr3bp_natParamCont(tpat_family_cr3bp*, tpat_traj_cr3bp, std::vector<tpat_mirror_tp>, std::vector<int>, std::vector<int>, int);
-		void cr3bp_pseudoArcCont(tpat_family_cr3bp*, tpat_nodeset_cr3bp, tpat_mirror_tp, std::vector<int>);
-		tpat_nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, tpat_multShoot_data, std::vector<tpat_constraint>);
+		void copyMe(const TPAT_Fam_Generator&);
+		void cr3bp_natParamCont(TPAT_Fam_CR3BP*, TPAT_Traj_CR3BP, std::vector<TPAT_Mirror_Tp>, std::vector<int>, std::vector<int>, int);
+		void cr3bp_pseudoArcCont(TPAT_Fam_CR3BP*, TPAT_Nodeset_CR3BP, TPAT_Mirror_Tp, std::vector<int>);
+		TPAT_Nodeset_CR3BP cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, TPAT_MultShoot_Data, std::vector<TPAT_Constraint>);
 };
 
 #endif

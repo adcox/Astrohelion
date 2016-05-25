@@ -25,13 +25,13 @@
 #include "matio.h"
 
 // Forward Declarations
-class tpat_nodeset;
-class tpat_traj;
+class TPAT_Nodeset;
+class TPAT_Traj;
 
 /**
- * @brief Smart pointer to a tpat_traj object
+ * @brief Smart pointer to a TPAT_Traj object
  */
-typedef std::shared_ptr<tpat_traj> trajPtr;
+typedef std::shared_ptr<TPAT_Traj> trajPtr;
 
 /**
  *	@brief Contains information about a series of continuous states along a trajectory.
@@ -52,23 +52,23 @@ typedef std::shared_ptr<tpat_traj> trajPtr;
  *	@version August 29, 2015
  *	@copyright GNU GPL v3.0
  *	
- *	@see tpat_base_arcset
+ *	@see TPAT_Base_Arcset
  */
-class tpat_traj : public tpat_base_arcset{
+class TPAT_Traj : public TPAT_Base_Arcset{
 
 public:
 	// *structors
-	tpat_traj(const tpat_sys_data*);
-	tpat_traj(const tpat_traj&);
-	tpat_traj(const tpat_base_arcset&);
-	virtual ~tpat_traj();
-	virtual baseArcsetPtr create(const tpat_sys_data*) const;
+	TPAT_Traj(const TPAT_Sys_Data*);
+	TPAT_Traj(const TPAT_Traj&);
+	TPAT_Traj(const TPAT_Base_Arcset&);
+	virtual ~TPAT_Traj();
+	virtual baseArcsetPtr create(const TPAT_Sys_Data*) const;
 	virtual baseArcsetPtr clone() const;
-	static tpat_traj fromNodeset(tpat_nodeset);
+	static TPAT_Traj fromNodeset(TPAT_Nodeset);
 
 	// Operators
-	friend tpat_traj operator +(const tpat_traj&, const tpat_traj&);
-	virtual tpat_traj& operator +=(const tpat_traj&);
+	friend TPAT_Traj operator +(const TPAT_Traj&, const TPAT_Traj&);
+	virtual TPAT_Traj& operator +=(const TPAT_Traj&);
 
 	// Set and Get Functions
 	double getTimeByIx(int) const;
@@ -76,7 +76,7 @@ public:
 	void shiftAllTimes(double);
 	
 	// Utility Functions
-	tpat_nodeset discretize(int) const;
+	TPAT_Nodeset discretize(int) const;
 	void initExtraParam();
 	void print() const;
 	virtual void readFromMat(const char*);

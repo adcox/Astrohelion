@@ -24,29 +24,29 @@
 #include "tpat_traj.hpp"
 
 // Forward Declarations
-class tpat_nodeset_cr3bp;
-class tpat_sys_data_cr3bp;
+class TPAT_Nodeset_CR3BP;
+class TPAT_Sys_Data_CR3BP;
 
 /**
- *	@brief A derivative class of the tpat_traj object, contains 
+ *	@brief A derivative class of the TPAT_Traj object, contains 
  *	trajectory information specific to the CR3BP
  *
  *	@author Andrew Cox
  *	@version August 30, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_traj_cr3bp : public tpat_traj{
+class TPAT_Traj_CR3BP : public TPAT_Traj{
 
 public:
 	// *structors
-	tpat_traj_cr3bp(const tpat_sys_data_cr3bp*);
-	tpat_traj_cr3bp(const tpat_traj_cr3bp&);
-	tpat_traj_cr3bp(const tpat_base_arcset&);
-	baseArcsetPtr create(const tpat_sys_data*) const;
+	TPAT_Traj_CR3BP(const TPAT_Sys_Data_CR3BP*);
+	TPAT_Traj_CR3BP(const TPAT_Traj_CR3BP&);
+	TPAT_Traj_CR3BP(const TPAT_Base_Arcset&);
+	baseArcsetPtr create(const TPAT_Sys_Data*) const;
 	baseArcsetPtr clone() const;
 
 	// Operators
-	tpat_traj& operator +=(const tpat_traj&);
+	TPAT_Traj& operator +=(const TPAT_Traj&);
 	
 	// Set and Get Functions
 	double getJacobiByIx(int) const;

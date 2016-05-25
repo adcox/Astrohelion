@@ -28,6 +28,66 @@
 
 #include <vector>
 
+
+/**
+ *	@brief The type of event
+ *
+ *	This tells the simulation and correction engines how to interpret the
+ *	data stored in this object.
+ *
+ *	For the _PLANE crossing events, pass a single double into the <tt>params</tt>
+ *	field to specify the location of the plane. For example, choosing an event
+ *	with type YZ_PLANE and passing a <tt>param</tt> of 0.5 will create an event
+ *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane. By 
+ * 	default, 0 is used, so the planes include the axes.
+ */
+enum class TPAT_Event_Tp {
+	NONE,		//!< No type has been specified; cannot be used in integration
+	YZ_PLANE,	/*!< Event occurs when trajectory crosses an YZ-plane. By default, 
+				 *	this plane occurs at x = 0, but a custom x-coordinate may be 
+				 *	specified by placing the value of that coordinate in the 
+				 *	<tt>param</tt> array.
+				 */
+	XZ_PLANE,	/*!< Event occurs when trajectory crosses an XZ-plane. By default, 
+				 *	this plane occurs at y = 0, but a custom y-coordinate may be 
+				 *	specified by placing the value of that coordinate in the 
+				 *	<tt>param</tt> array.
+				 */
+	XY_PLANE,	/*!< Event occurs when trajectory crosses an XY-plane. By default, 
+				 *	this plane occurs at z = 0, but a custom z-coordinate may be 
+				 *	specified by placing the value of that coordinate in the 
+				 *	<tt>param</tt> array.
+				 */
+	CRASH,		/*!< Event occurs when trajectory falls below minimum acceptable
+ 				 * 	altitude or the surface of one of the system primaries.
+ 				 *	The <tt>param</tt> array should have the first element specifying the 
+				 *	primary index (0 for P1, 1 for P2, etc.) The minimum acceptable radius
+				 *	will be the radius of the primary plus the minimum acceptable fly-by distance
+				 *	specified in the TPAT_Body_Data class.
+ 				 */
+ 	JC, 		/*!< Event occurs when the Jacobi value reaches the specified value
+ 				 * 	of Jacobi Constant. Place this JC value in the first element of
+ 				 * 	the <tt>params</tt> vector present in the 
+ 				 * 	TPAT_Event(TPAT_Sys_Data*, TPAT_Event_Tp, int, bool, double*) constructor.
+ 				 * 	This event can only be supported by dynamic models that have associated
+ 				 * 	system data objects that can be cast to cr3bp system data objects.
+ 				 */
+ 	APSE,		/*!< Event occurs when an apse is reached. The <tt>param</tt> array should have
+ 				 * 	the first element specifiying the primary index (0 for P1, 1 for P2, etc.).
+ 				 * 	The <tt>direction</tt> of the event identifies what type of apse, i.e.
+ 				 *	0 will catch all apsides, -1 will catch only apopases, and +1 will catch 
+ 				 *	only periapses
+ 				 */
+ 	DIST 		/*!< Event occurs when a distance from a primary is reached. The <tt>param</tt>
+ 				 * 	array should have two elements: element 0 specifies the primary index, and
+ 				 * 	element 1 specifies the distance from the center of the primary in
+ 				 *	non-dimensional units. The <tt>direction</tt> of the event identifies the
+ 				 *	direction of travel relative to the primary; +1 is away from the primary,
+ 				 *	-1 is towards the primary, and 0 triggers for either.
+ 				 */
+};
+
+		
 /**
  *	@brief A data object containing information about an event that may
  *	occur during simulation
@@ -46,88 +106,30 @@
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_event : public tpat{
+class TPAT_Event : public TPAT{
 	public:
-		/**
-		 *	@brief The type of event
-		 *
-		 *	This tells the simulation and correction engines how to interpret the
-		 *	data stored in this object.
-		 *
-		 *	For the _PLANE crossing events, pass a single double into the <tt>params</tt>
-		 *	field to specify the location of the plane. For example, choosing an event
-		 *	with type YZ_PLANE and passing a <tt>param</tt> of 0.5 will create an event
-		 *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane. By 
-		 * 	default, 0 is used, so the planes include the axes.
-		 */
-		enum tpat_event_tp {
-			NONE,		//!< No type has been specified; cannot be used in integration
-			YZ_PLANE,	/*!< Event occurs when trajectory crosses an YZ-plane. By default, 
-						 *	this plane occurs at x = 0, but a custom x-coordinate may be 
-						 *	specified by placing the value of that coordinate in the 
-						 *	<tt>param</tt> array.
-						 */
-			XZ_PLANE,	/*!< Event occurs when trajectory crosses an XZ-plane. By default, 
-						 *	this plane occurs at y = 0, but a custom y-coordinate may be 
-						 *	specified by placing the value of that coordinate in the 
-						 *	<tt>param</tt> array.
-						 */
-			XY_PLANE,	/*!< Event occurs when trajectory crosses an XY-plane. By default, 
-						 *	this plane occurs at z = 0, but a custom z-coordinate may be 
-						 *	specified by placing the value of that coordinate in the 
-						 *	<tt>param</tt> array.
-						 */
-			CRASH,		/*!< Event occurs when trajectory falls below minimum acceptable
-		 				 * 	altitude or the surface of one of the system primaries.
-		 				 *	The <tt>param</tt> array should have the first element specifying the 
-						 *	primary index (0 for P1, 1 for P2, etc.) The minimum acceptable radius
-						 *	will be the radius of the primary plus the minimum acceptable fly-by distance
-						 *	specified in the tpat_body_data class.
-		 				 */
-		 	JC, 		/*!< Event occurs when the Jacobi value reaches the specified value
-		 				 * 	of Jacobi Constant. Place this JC value in the first element of
-		 				 * 	the <tt>params</tt> vector present in the 
-		 				 * 	tpat_event(tpat_sys_data*, tpat_event_tp, int, bool, double*) constructor.
-		 				 * 	This event can only be supported by dynamic models that have associated
-		 				 * 	system data objects that can be cast to cr3bp system data objects.
-		 				 */
-		 	APSE,		/*!< Event occurs when an apse is reached. The <tt>param</tt> array should have
-		 				 * 	the first element specifiying the primary index (0 for P1, 1 for P2, etc.).
-		 				 * 	The <tt>direction</tt> of the event identifies what type of apse, i.e.
-		 				 *	0 will catch all apsides, -1 will catch only apopases, and +1 will catch 
-		 				 *	only periapses
-		 				 */
-		 	DIST 		/*!< Event occurs when a distance from a primary is reached. The <tt>param</tt>
-		 				 * 	array should have two elements: element 0 specifies the primary index, and
-		 				 * 	element 1 specifies the distance from the center of the primary in
-		 				 *	non-dimensional units. The <tt>direction</tt> of the event identifies the
-		 				 *	direction of travel relative to the primary; +1 is away from the primary,
-		 				 *	-1 is towards the primary, and 0 triggers for either.
-		 				 */
-		};
-
 		// *structors
-		tpat_event(const tpat_sys_data*);
-		tpat_event(const tpat_sys_data*, tpat_event_tp, int, bool);
-		tpat_event(const tpat_sys_data*, tpat_event_tp, int, bool, double*);
-		tpat_event(const tpat_event&);
-		void createEvent(tpat_event_tp, int, bool);
-		void createEvent(tpat_event_tp, int, bool, double*);
-		~tpat_event();
+		TPAT_Event(const TPAT_Sys_Data*);
+		TPAT_Event(const TPAT_Sys_Data*, TPAT_Event_Tp, int, bool);
+		TPAT_Event(const TPAT_Sys_Data*, TPAT_Event_Tp, int, bool, double*);
+		TPAT_Event(const TPAT_Event&);
+		void createEvent(TPAT_Event_Tp, int, bool);
+		void createEvent(TPAT_Event_Tp, int, bool, double*);
+		~TPAT_Event();
 		
 		// Operators
-		tpat_event& operator =(const tpat_event&);
-		friend bool operator ==(const tpat_event&, const tpat_event&);
-		friend bool operator !=(const tpat_event&, const tpat_event&);
+		TPAT_Event& operator =(const TPAT_Event&);
+		friend bool operator ==(const TPAT_Event&, const TPAT_Event&);
+		friend bool operator !=(const TPAT_Event&, const TPAT_Event&);
 		
 		// Get and Set Functions
 		std::vector<double> getConData() const;
-		tpat_constraint::tpat_constraint_tp getConType() const;
+		TPAT_Constraint_Tp getConType() const;
 		int getDir() const;
 		double getTime() const;
 		int getStopCount() const;
 		int getTriggerCount() const;
-		tpat_event_tp getType() const;
+		TPAT_Event_Tp getType() const;
 		const char* getTypeStr() const;
 		
 		std::vector<double>* getState();
@@ -138,7 +140,7 @@ class tpat_event : public tpat{
 		void setDir(int);
 		void setStopCount(int);
 		void setStopOnEvent(bool);
-		void setSysData(tpat_sys_data*);
+		void setSysData(TPAT_Sys_Data*);
 
 		// Computations, etc.
 		bool crossedEvent(const double[6], double) const;
@@ -147,7 +149,7 @@ class tpat_event : public tpat{
 		void printStatus() const;
 	private:
 
-		tpat_event_tp type = NONE; //!< The type of event this is
+		TPAT_Event_Tp type = TPAT_Event_Tp::NONE; //!< The type of event this is
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */
 		int triggerDir = 0;
@@ -171,15 +173,15 @@ class tpat_event : public tpat{
 		std::vector<double> state {};
 
 		/** Type of constraint used by the shooting algorithm to locate this event */
-		tpat_constraint::tpat_constraint_tp conType = tpat_constraint::NONE;
+		TPAT_Constraint_Tp conType = TPAT_Constraint_Tp::NONE;
 
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData {};
 
-		const tpat_sys_data* sysData; 	//!< Copy of the system data pointer
+		const TPAT_Sys_Data* sysData; 	//!< Copy of the system data pointer
 
-		void copyEvent(const tpat_event&);
-		void initEvent(tpat_event_tp, int, bool, double*);
+		void copyEvent(const TPAT_Event&);
+		void initEvent(TPAT_Event_Tp, int, bool, double*);
 		double getDist(const double[6], double) const;
 		int getDir(const double[6], double) const;
 };

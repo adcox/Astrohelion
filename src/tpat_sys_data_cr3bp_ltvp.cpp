@@ -1,6 +1,6 @@
 /**
  *	@file tpat_sys_data_cr3bp_ltvp.cpp
- *	@brief Derivative of tpat_sys_data, specific to CR3BP-LTVP
+ *	@brief Derivative of TPAT_Sys_Data, specific to CR3BP-LTVP
  */
 /*
  *	Trajectory Propagation and Analysis Toolkit 
@@ -29,8 +29,8 @@
 /**
  *	@brief Default constructor
  */
-tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp() : tpat_sys_data_cr3bp(){
-	type = tpat_sys_data::CR3BP_LTVP_SYS;
+TPAT_Sys_Data_CR3BP_LTVP::TPAT_Sys_Data_CR3BP_LTVP() : TPAT_Sys_Data_CR3BP(){
+	type = TPAT_System_Tp::CR3BP_LTVP_SYS;
 	otherParams.assign(4,0);
 }//========================================
 
@@ -42,9 +42,9 @@ tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp() : tpat_sys_data_cr3bp(){
  *	@param I Specific Impulse (Isp), seconds
  *	@param M0 initial mass (at t = 0), kilograms
  */
-tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(std::string P1, std::string P2, double T, double I, double M0){
+TPAT_Sys_Data_CR3BP_LTVP::TPAT_Sys_Data_CR3BP_LTVP(std::string P1, std::string P2, double T, double I, double M0){
 	numPrimaries = 2;
-	type = tpat_sys_data::CR3BP_LTVP_SYS;
+	type = TPAT_System_Tp::CR3BP_LTVP_SYS;
 	otherParams.assign(4,0);
 	
 	initFromPrimNames(P1, P2);	// use function from cr3bp_sys_data to initialize most everything
@@ -58,11 +58,11 @@ tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(std::string P1, std::string P
  * 
  *  @param filepath path to the data file
  */
-tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(const char *filepath){
+TPAT_Sys_Data_CR3BP_LTVP::TPAT_Sys_Data_CR3BP_LTVP(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
-		throw tpat_exception("tpat_sys_data_cr3bp_ltvp: Could not load data from file");
+		throw TPAT_Exception("TPAT_Sys_Data_CR3BP_LTVP: Could not load data from file");
 	}
 	readFromMat(matfp);
 	Mat_Close(matfp);
@@ -72,15 +72,15 @@ tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(const char *filepath){
  *	@brief Copy constructor
  *	@param d
  */
-tpat_sys_data_cr3bp_ltvp::tpat_sys_data_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp &d) : tpat_sys_data_cr3bp(d){}
+TPAT_Sys_Data_CR3BP_LTVP::TPAT_Sys_Data_CR3BP_LTVP(const TPAT_Sys_Data_CR3BP_LTVP &d) : TPAT_Sys_Data_CR3BP(d){}
 
 /**
  *	@brief Copy operator; makes a clean copy of a data object into this one
  *	@param d a CR3BP system data object
  *	@return this system data object
  */
-tpat_sys_data_cr3bp_ltvp& tpat_sys_data_cr3bp_ltvp::operator= (const tpat_sys_data_cr3bp_ltvp &d){
-	tpat_sys_data_cr3bp::operator= (d);
+TPAT_Sys_Data_CR3BP_LTVP& TPAT_Sys_Data_CR3BP_LTVP::operator= (const TPAT_Sys_Data_CR3BP_LTVP &d){
+	TPAT_Sys_Data_CR3BP::operator= (d);
 	return *this;
 }//===================================================
 
@@ -88,82 +88,82 @@ tpat_sys_data_cr3bp_ltvp& tpat_sys_data_cr3bp_ltvp::operator= (const tpat_sys_da
  *	@brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
-const tpat_model* tpat_sys_data_cr3bp_ltvp::getModel() const { return &model; }
+const TPAT_Model* TPAT_Sys_Data_CR3BP_LTVP::getModel() const { return &model; }
 
 /**
  *	@brief Get the non-dimensional thrust for P3 in this system
  *	@return the thrust (non-dimensional)
  */
-double tpat_sys_data_cr3bp_ltvp::getThrust() const { return otherParams[1]; }
+double TPAT_Sys_Data_CR3BP_LTVP::getThrust() const { return otherParams[1]; }
 
 /**
  *	@brief Get the non-dimensional specific impulse for P3 in this system
  *	@return the specific impulse (non-dimensional)
  */
-double tpat_sys_data_cr3bp_ltvp::getIsp() const { return otherParams[2]; }
+double TPAT_Sys_Data_CR3BP_LTVP::getIsp() const { return otherParams[2]; }
 
 /**
  *	@brief Get the non-dimensional initial mass for P3
  *	@return the non-dimensional initial mass for P3
  */
-double tpat_sys_data_cr3bp_ltvp::getM0() const { return otherParams[3]; }
+double TPAT_Sys_Data_CR3BP_LTVP::getM0() const { return otherParams[3]; }
 
 /**
  *	@brief Set the thrust for P3 for this system
  *	@param d the thrust, non-dimensional units
  */
-void tpat_sys_data_cr3bp_ltvp::setThrust(double d){ otherParams[1] = d; }
+void TPAT_Sys_Data_CR3BP_LTVP::setThrust(double d){ otherParams[1] = d; }
 
 /**
  *	@brief Set the specific impulse for P3 for this system
  *	@param d the specific impulse, non-dimensional units
  */
-void tpat_sys_data_cr3bp_ltvp::setIsp(double d){ otherParams[2] = d; }
+void TPAT_Sys_Data_CR3BP_LTVP::setIsp(double d){ otherParams[2] = d; }
 
 /**
  *	@brief Set the initial mass for P3 (non-dim)
  *	@param d the initial mass, non-dimensional units
  */
-void tpat_sys_data_cr3bp_ltvp::setM0(double d){ otherParams[3] = d; }
+void TPAT_Sys_Data_CR3BP_LTVP::setM0(double d){ otherParams[3] = d; }
 
 /**
  *	@brief Set the thrust for P3 for this system using a dimensional quantity
  *	@param d the thrust, in Newtons
  */
-void tpat_sys_data_cr3bp_ltvp::setThrustDim(double d){ otherParams[1] = (d/1000)*charT*charT/charM/charL; }
+void TPAT_Sys_Data_CR3BP_LTVP::setThrustDim(double d){ otherParams[1] = (d/1000)*charT*charT/charM/charL; }
 
 /**
  *	@brief Set the specific impulse for P3 for this system using a dimensional quantity
  *	@param d the specific impulse, in seconds
  */
-void tpat_sys_data_cr3bp_ltvp::setIspDim(double d){ otherParams[2] = d/charT; }
+void TPAT_Sys_Data_CR3BP_LTVP::setIspDim(double d){ otherParams[2] = d/charT; }
 
 /**
  *	@brief Set the initial mass for P3 using a dimensional quantity
  *	@param d the initial mass, in kilograms
  */
-void tpat_sys_data_cr3bp_ltvp::setM0Dim(double d){ otherParams[3] = d/charM; }
+void TPAT_Sys_Data_CR3BP_LTVP::setM0Dim(double d){ otherParams[3] = d/charM; }
 
 /**
  *  @brief Save the system data to a matlab file
  * 
  *  @param filepath path to the data file
  */
-void tpat_sys_data_cr3bp_ltvp::saveToMat(const char *filepath) const{
-	tpat_sys_data::saveToMat(filepath);
+void TPAT_Sys_Data_CR3BP_LTVP::saveToMat(const char *filepath) const{
+	TPAT_Sys_Data::saveToMat(filepath);
 }//==================================================
 
 /**
  *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
  *	@param matFile a pointer to the .mat file
- *	@throws tpat_exception if the number of primaries is incorrect
+ *	@throws TPAT_Exception if the number of primaries is incorrect
  */
-void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile) const{
+void TPAT_Sys_Data_CR3BP_LTVP::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
 
 	if(primaries.size() < 2){
 		printErr("Primaries size is %zu\n", primaries.size());
-		throw tpat_exception("tpat_sys_data_cr3bp::saveToMat: There are no primaries?");
+		throw TPAT_Exception("TPAT_Sys_Data_CR3BP::saveToMat: There are no primaries?");
 	}
 
 	// Initialize character array (larger than needed), copy in the name of the primary, then create a var.
@@ -202,11 +202,11 @@ void tpat_sys_data_cr3bp_ltvp::saveToMat(mat_t *matFile) const{
  *	names from a Mat file
  *	@param matFile a pointer to the Mat file in question
  */
-void tpat_sys_data_cr3bp_ltvp::readFromMat(mat_t *matFile){
+void TPAT_Sys_Data_CR3BP_LTVP::readFromMat(mat_t *matFile){
 	std::string P1 = readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);
 	std::string P2 = readStringFromMat(matFile, "P2", MAT_T_UINT8, MAT_C_CHAR);
 
-	type = tpat_sys_data::CR3BP_LTVP_SYS;
+	type = TPAT_System_Tp::CR3BP_LTVP_SYS;
 	otherParams.assign(4,0);
 	initFromPrimNames(P1, P2);
 	otherParams[2] = readDoubleFromMat(matFile, "Isp");

@@ -38,28 +38,28 @@
  *	@version May 1, 2016
  *	@copyright GNU GPL v3.0
  */
-class tpat_segment : public tpat_linkable{
+class TPAT_Segment : public TPAT_Linkable{
 
 public:
 	static const int ORIG_IX = 0;	//!< Index of the origin node in the links array
 	static const int TERM_IX = 1;	//!< Index if the terminus node in the links array
 	
 	// *structors
-	tpat_segment();
-	tpat_segment(int, int, double);
-	tpat_segment(int, int, double, const double[36]);
-	tpat_segment(const tpat_segment&);
-	// ~tpat_segment();
+	TPAT_Segment();
+	TPAT_Segment(int, int, double);
+	TPAT_Segment(int, int, double, const double[36]);
+	TPAT_Segment(const TPAT_Segment&);
+	// ~TPAT_Segment();
 
 	// Operators
-	tpat_segment& operator =(const tpat_segment&);
-	friend bool operator ==(const tpat_segment&, const tpat_segment&);
-	friend bool operator !=(const tpat_segment&, const tpat_segment&);
+	TPAT_Segment& operator =(const TPAT_Segment&);
+	friend bool operator ==(const TPAT_Segment&, const TPAT_Segment&);
+	friend bool operator !=(const TPAT_Segment&, const TPAT_Segment&);
 
 	// Set and Get Functions
-	void addConstraint(tpat_constraint);
+	void addConstraint(TPAT_Constraint);
 	void clearConstraints();
-	std::vector<tpat_constraint> getConstraints() const;
+	std::vector<TPAT_Constraint> getConstraints() const;
 	int getNumCons() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
@@ -68,7 +68,7 @@ public:
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
 	void removeConstraint(int);
-	void setConstraints(std::vector<tpat_constraint>);
+	void setConstraints(std::vector<TPAT_Constraint>);
 	void setOrigin(int);
 	void setTerminus(int);
 	void setTOF(double);
@@ -82,7 +82,7 @@ public:
 	void setVelCon(bool, bool, bool);
 
 protected:
-	virtual void copyMe(const tpat_segment&);
+	virtual void copyMe(const TPAT_Segment&);
 
 	/** Stores flags, which are currently used to indicate continuity */
 	std::vector<bool> flags {true, true, true};
@@ -96,7 +96,7 @@ protected:
 						0, 0, 0, 0, 0, 1 };			//!< 6x6 STM, stored in row-major order
 
 	/** Stores constraints on this segment */
-	std::vector<tpat_constraint> cons {};
+	std::vector<TPAT_Constraint> cons {};
 };
 
 #endif

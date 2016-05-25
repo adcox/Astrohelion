@@ -24,10 +24,10 @@
 #include "tpat_traj.hpp"
 
 // Forward Declarations
-class tpat_sys_data_cr3bp_ltvp;
+class TPAT_Sys_Data_CR3BP_LTVP;
 
 /**
- *	@brief A derivative class of the tpat_traj object, which
+ *	@brief A derivative class of the TPAT_Traj object, which
  *	contains trajectory information specific to the Low Thrust, 
  *	Velocity-Pointing CR3BP
  *
@@ -35,14 +35,14 @@ class tpat_sys_data_cr3bp_ltvp;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class tpat_traj_cr3bp_ltvp : public tpat_traj{
+class TPAT_Traj_CR3BP_LTVP : public TPAT_Traj{
 
 public:
 	// *structors
-	tpat_traj_cr3bp_ltvp(const tpat_sys_data_cr3bp_ltvp*);
-	tpat_traj_cr3bp_ltvp(const tpat_traj_cr3bp_ltvp&);
-	tpat_traj_cr3bp_ltvp(const tpat_base_arcset&);
-	baseArcsetPtr create(const tpat_sys_data*) const;
+	TPAT_Traj_CR3BP_LTVP(const TPAT_Sys_Data_CR3BP_LTVP*);
+	TPAT_Traj_CR3BP_LTVP(const TPAT_Traj_CR3BP_LTVP&);
+	TPAT_Traj_CR3BP_LTVP(const TPAT_Base_Arcset&);
+	baseArcsetPtr create(const TPAT_Sys_Data*) const;
 	baseArcsetPtr clone() const;
 
 	// Set and Get Functions

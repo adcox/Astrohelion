@@ -30,11 +30,11 @@
  *
  *	By catching this base class, I catch all custom exceptions
  */
-class tpat_exception : public std::exception{
+class TPAT_Exception : public std::exception{
 	public:
-		tpat_exception();
-		tpat_exception(const char*);
-		tpat_exception(const tpat_exception&);
+		TPAT_Exception();
+		TPAT_Exception(const char*);
+		TPAT_Exception(const TPAT_Exception&);
 		virtual const char* what() const throw();
 
 	protected:
@@ -48,10 +48,10 @@ class tpat_exception : public std::exception{
  * 	Size mismatch means two matrices cannot be added, subtracted, or multiplied 
  *  because they do not have the appropriate dimensions
  */
-class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
+class TPAT_SizeMismatch : public TPAT_Exception, std::runtime_error{
 	public:
-		tpat_sizeMismatch();
-		tpat_sizeMismatch(const char*);
+		TPAT_SizeMismatch();
+		TPAT_SizeMismatch(const char*);
 		const char* what() const throw();
 };
 
@@ -62,10 +62,10 @@ class tpat_sizeMismatch : public tpat_exception, std::runtime_error{
  *	This exception should be thrown when the solution fails to converge (or diverges)
  *	and provides a way for the calling function to gracefully handle the divergence
  */
-class tpat_diverge : public tpat_exception, std::runtime_error{
+class TPAT_Diverge : public TPAT_Exception, std::runtime_error{
 	public:
-		tpat_diverge();
-		tpat_diverge(const char*);
+		TPAT_Diverge();
+		TPAT_Diverge(const char*);
 		const char* what() const throw();
 };
 
@@ -75,10 +75,10 @@ class tpat_diverge : public tpat_exception, std::runtime_error{
  *	This exception should be thrown for cases like trying to factor singular
  *	matrices, taking the deteriminant of a non-square matrix, etc.
  */
-class tpat_linalg_err : public tpat_exception, std::runtime_error{
+class TPAT_LinAlg_Err : public TPAT_Exception, std::runtime_error{
 	public:
-		tpat_linalg_err();
-		tpat_linalg_err(const char*);
+		TPAT_LinAlg_Err();
+		TPAT_LinAlg_Err(const char*);
 		const char* what() const throw();
 };
 

@@ -31,7 +31,7 @@ LIB := ../lib
 
 # Compiler specification and flags
 # CXX := clang++ -std=c++11
-CXX := g++-5 -std=c++11 -fopenmp
+CXX := g++-6 -std=c++11 -fopenmp
 # CXX := g++-5 -std=c++11
 CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
 # CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
@@ -62,7 +62,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := tpat_ascii_output.hpp tpat_constants.hpp tpat_utilities.hpp
+IMPORTANT_HEADERS := AsciiOutput.hpp Constants.hpp Utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
@@ -111,7 +111,7 @@ lowThrustTest: $(OBJECTS)
 manifolds: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
 
-matioTest: $(OBJ)/tpat_utilities.o
+matioTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
 
 manyArcTest: $(OBJECTS)
@@ -122,6 +122,9 @@ multShootCons: $(OBJECTS)
 
 nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
+
+qhManifoldTest: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_qhManifold.cpp -o $(BIN)/$@
 
 simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
@@ -180,6 +183,7 @@ list:
 	@- echo "  manyArcTest - Test the capability of the simulation engine to generate many arcs in sequence"
 	@- echo "  multShootCons - Test constraints in multiple shooting algorithms"
 	@- echo "  nodesetTest - Test the nodeset object and functions"
+	@- echo "  qhmanifoldTest - Run a script that propagates quasi-halo manifolds to test the full functionality of a real application"
 	@- echo "  simEngineTest - Test the simulation engine"
 	@- echo "  sortEigTest - Test the eigenvalue sorting algorithm"
 	@- echo "  sysSwitchTest - Test functions that convert trajectories between systems and models"

@@ -2,19 +2,20 @@
  *	Test the System Data structure
  */
 
-#include "tpat_sys_data_bc4bp.hpp"
-#include "tpat_ascii_output.hpp"
+#include "SysData_bc4bp.hpp"
+#include "AsciiOutput.hpp"
 #include <iostream>
 #include <cstdio>
 
 using namespace std;
+namespace ah = astrohelion;
 
-static const char* PASS = BOLDGREEN "PASS" RESET;
-static const char* FAIL = BOLDRED "FAIL" RESET;
+static const char* PASS = ah::BOLDGREEN "PASS" ah::RESET;
+static const char* FAIL = ah::BOLDRED "FAIL" ah::RESET;
 
 int main(void){
 
-	TPAT_Sys_Data_BC4BP semData("sun", "earth", "moon");
+	ah::SysData_bc4bp semData("sun", "earth", "moon");
 
 	cout << "Data for system:" << endl;
 	cout << "  Type: " << semData.getTypeStr() << endl;
@@ -31,7 +32,7 @@ int main(void){
 
 	printf("Testing Save/Load functionality...\n");
 	semData.saveToMat("semData.mat");
-	TPAT_Sys_Data_BC4BP loadedData("semData.mat");
+	ah::SysData_bc4bp loadedData("semData.mat");
 
 	cout << "Same CharL: " << (semData.getCharL() == loadedData.getCharL() ? PASS : FAIL) << endl;
 	cout << "Same CharT: " << (semData.getCharT() == loadedData.getCharT() ? PASS : FAIL) << endl;

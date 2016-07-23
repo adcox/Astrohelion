@@ -5,12 +5,12 @@
 #include <iostream>
 #include <math.h>
 
-#include "tpat_body_data.hpp"
+#include "BodyData.hpp"
 
 using namespace std;
 
 int main(){
-	TPAT_Body_Data B("earth");
+	astrohelion::BodyData B("earth");
 
 	cout << "Body: " << B.getName() << "\n";
 	cout << "  Mass: " << B.getMass() << " kg\n";

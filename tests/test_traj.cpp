@@ -1,10 +1,10 @@
 
-#include "tpat_ascii_output.hpp"
-#include "tpat_sim_engine.hpp"
-#include "tpat_sys_data_bc4bp.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_traj_bc4bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
+#include "AsciiOutput.hpp"
+#include "SimEngine.hpp"
+#include "SysData_bc4bp.hpp"
+#include "SysData_cr3bp.hpp"
+#include "Traj_bc4bp.hpp"
+#include "Traj_cr3bp.hpp"
 
 #include <iostream>
 
@@ -12,17 +12,18 @@ static const char* PASS = BOLDGREEN "PASS" RESET;
 static const char* FAIL = BOLDRED "FAIL" RESET;
 
 using namespace std;
+using namespace astrohelion;
 
 void testCR3BPTraj(){
-	TPAT_Sys_Data_CR3BP emData("earth", "moon");
-	TPAT_Sim_Engine sim;
+	SysData_cr3bp emData("earth", "moon");
+	SimEngine sim;
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
-	TPAT_Traj_CR3BP crTraj(&emData);
+	Traj_cr3bp crTraj(&emData);
 	sim.runSim(ic, T, &crTraj);
 	crTraj.saveToMat("data/crTraj.mat");
 
-	TPAT_Traj_CR3BP crTemp(&emData);
+	Traj_cr3bp crTemp(&emData);
 	crTemp.readFromMat("data/crTraj.mat");
 
 	printf("Testing Save/Read functions on CR3BP Trajectory\n");
@@ -34,15 +35,15 @@ void testCR3BPTraj(){
 }
 
 void testBC4BPTraj(){
-	TPAT_Sys_Data_BC4BP semData("sun", "earth", "moon");
-	TPAT_Sim_Engine sim;
+	SysData_bc4bp semData("sun", "earth", "moon");
+	SimEngine sim;
 	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
 	double T = 313;	// SE L1 Period
-	TPAT_Traj_BC4BP bcTraj(&semData);
+	Traj_bc4bp bcTraj(&semData);
 	sim.runSim(ic, T, &bcTraj);
 	bcTraj.saveToMat("data/bcTraj.mat");
 
-	TPAT_Traj_BC4BP bcTemp(&semData);
+	Traj_bc4bp bcTemp(&semData);
 	bcTemp.readFromMat("data/bcTraj.mat");
 
 	printf("Testing Save/Read functions on CR3BP Trajectory\n");

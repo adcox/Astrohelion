@@ -2,15 +2,16 @@
  * Test the eigenvalue sorting algorithm on a family file
  */
 
-#include "tpat_fam_cr3bp.hpp"
+#include "Fam_cr3bp.hpp"
 
 #include <iostream>
 
+using namespace astrohelion;
 
 int main(){
 
-	// TPAT_Fam_CR3BP fam("../share/families_natParam_checked/EM_L1_NAxial.mat");
-	TPAT_Fam_CR3BP fam("../share/families/EM_L1_Lyap.mat");
+	// Fam_cr3bp fam("../share/families_natParam_checked/EM_L1_NAxial.mat");
+	Fam_cr3bp fam("../share/families/EM_L1_Lyap.mat");
 
 	// fam.sortMembers();
  	fam.sortEigs();

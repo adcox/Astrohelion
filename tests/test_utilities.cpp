@@ -2,8 +2,8 @@
  *	Test the Utilities functions
  */
 
-#include "tpat_ascii_output.hpp"
-#include "tpat_utilities.hpp"
+#include "AsciiOutput.hpp"
+#include "Utilities.hpp"
 
 #include <iostream>
 #include <vector>
@@ -15,40 +15,40 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
 
 bool testSumInt(){
 	int data[] = {1,2,3,4,5};
-	bool check1 = TPAT_Util::sum(data, 5) == 15;
+	bool check1 = astrohelion::sum(data, 5) == 15;
 
 	std::vector<int> vecData {1,2,3,4,5};
-	bool check2 = TPAT_Util::sum(vecData) == 15;
+	bool check2 = astrohelion::sum(vecData) == 15;
 
 	return check1 && check2;
 }//====================================================
 
 bool testSumDouble(){
 	double data[] = {1.0, 1.1, 1.2, 1.3, 1.4};
-	bool check1 = TPAT_Util::sum(data, 5) == 6;
+	bool check1 = astrohelion::sum(data, 5) == 6;
 
 	std::vector<double> vecData {1.0, 1.1, 1.2, 1.3, 1.4};
-	bool check2 = TPAT_Util::sum(vecData) == 6;
+	bool check2 = astrohelion::sum(vecData) == 6;
 
 	return check1 && check2;
 }//====================================================
 
 bool testMeanInt(){
 	int data[] = {2,4,5,1};
-	bool check1 = TPAT_Util::mean(data,4) == 3;
+	bool check1 = astrohelion::mean(data,4) == 3;
 
 	std::vector<int> vecData {2,4,5,1};
-	bool check2 = TPAT_Util::mean(vecData) == 3;
+	bool check2 = astrohelion::mean(vecData) == 3;
 
 	return check1 && check2;
 }//====================================================
 
 bool testMeanDouble(){
 	double data[] = {1.1, 2.2, 3.3, 4.4, 5.5};
-	bool check1 = TPAT_Util::mean(data, 5) == 3.3;
+	bool check1 = astrohelion::mean(data, 5) == 3.3;
 
 	std::vector<double> vecData {1.1, 2.2, 3.3, 4.4, 5.5};
-	bool check2 = TPAT_Util::mean(vecData) == 3.3;
+	bool check2 = astrohelion::mean(vecData) == 3.3;
 
 	return check1 && check2;
 }//====================================================
@@ -60,7 +60,7 @@ bool test_concatVec(){
 	concatAns[2] = 2;
 	concatAns[3] = 2;
 
-	return TPAT_Util::concatVecs(v1, v2) == concatAns;
+	return astrohelion::concatVecs(v1, v2) == concatAns;
 }//====================================================
 
 bool test_concatVecInt(){
@@ -70,17 +70,17 @@ bool test_concatVecInt(){
 	concatAns[2] = 2;
 	concatAns[3] = 2;
 
-	return TPAT_Util::concatVecs(v1, v2) == concatAns;
+	return astrohelion::concatVecs(v1, v2) == concatAns;
 }//====================================================
 
 bool test_permute(){
 	int numSpots = 3;
 	vector<int> values {1,2};
-	vector<int> perms = TPAT_Util::generatePerms<int>(values, numSpots);
+	vector<int> perms = astrohelion::generatePerms<int>(values, numSpots);
 	vector<int> sol {1,1,1, 1,1,2, 1,2,1, 1,2,2, 2,1,1, 2,1,2, 2,2,1, 2,2,2};
 
 	vector<int> values2 = {1,2,3};
-	vector<int> perms2 = TPAT_Util::generatePerms<int>(values2);
+	vector<int> perms2 = astrohelion::generatePerms<int>(values2);
 	vector<int> sol2 = {1,2,3, 1,3,2, 2,1,3, 2,3,1, 3,1,2, 3,2,1};
 
 	// printf("permutations:\n%03d: ", 0);
@@ -97,17 +97,17 @@ bool test_permute(){
 }//=================================================
 
 bool test_getSpiceID(){
-	bool test1 = getSpiceIDFromName("SUN") == 10;
-	bool test2 = getSpiceIDFromName("SOLAR_SYSTEM_BARYCENTER") == 0;
-	bool test3 = getSpiceIDFromName("PIONEER 12") == -12;
+	bool test1 = astrohelion::getSpiceIDFromName("SUN") == 10;
+	bool test2 = astrohelion::getSpiceIDFromName("SOLAR_SYSTEM_BARYCENTER") == 0;
+	bool test3 = astrohelion::getSpiceIDFromName("PIONEER 12") == -12;
 
 	return test1 && test2 && test3;
 }//=================================================
 
 bool test_getSpiceName(){
-	std::string n1 = getNameFromSpiceID(199);
-	std::string n2 = getNameFromSpiceID(511);
-	std::string n3 = getNameFromSpiceID(-53);
+	std::string n1 = astrohelion::getNameFromSpiceID(199);
+	std::string n2 = astrohelion::getNameFromSpiceID(511);
+	std::string n3 = astrohelion::getNameFromSpiceID(-53);
 
 	bool test1 = std::strcmp(n1.c_str(), "MERCURY") == 0;
 	bool test2 = std::strcmp(n2.c_str(), "CARME") == 0;

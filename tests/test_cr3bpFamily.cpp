@@ -1,19 +1,21 @@
 /**
  *	Test out CR3BP Families of Orbits
  */
-#include "tpat_ascii_output.hpp"
-#include "tpat_fam_cr3bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
+#include "AsciiOutput.hpp"
+#include "Fam_cr3bp.hpp"
+#include "Traj_cr3bp.hpp"
 
 #include <iostream>
+
+using namespace astrohelion;
 
 static const char* PASS = BOLDGREEN "PASS" RESET;
 static const char* FAIL = BOLDRED "FAIL" RESET;
 
 int main(void){
 	// Load the family
-	TPAT_Fam_CR3BP fam("../share/families_natParam_checked/EM_L1_Lyap.mat");
-	// TPAT_Fam_CR3BP fam("../share/families/EM_L2_NButterfly.mat");
+	Fam_cr3bp fam("../share/families_natParam_checked/EM_L1_Lyap.mat");
+	// Fam_cr3bp fam("../share/families/EM_L2_NButterfly.mat");
 	fam.sortEigs();
 	std::vector<int> bifs = fam.findBifurcations();
 	if(bifs.size() > 0){
@@ -26,7 +28,7 @@ int main(void){
 
 	printf("Checing Match State: X\n");
 	double matchX = 0.9;
-	std::vector<TPAT_FamMember_CR3BP> matches = fam.getMemberByStateVar(matchX, 0);
+	std::vector<FamMember_cr3bp> matches = fam.getMemberByStateVar(matchX, 0);
 	printf("  Found %zu Potential members\n", matches.size());
 	for(size_t i = 0; i < matches.size(); i++){
 		printf("   %03zu: x = %f ", i, matches[i].getIC()[0]);

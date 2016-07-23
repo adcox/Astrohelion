@@ -2,16 +2,17 @@
  *	Test the System Data structure
  */
 
-#include "tpat_sys_data_cr3bp.hpp"
+#include "SysData_cr3bp.hpp"
 
 #include <iostream>
 #include <cstdio>
 
 using namespace std;
+using namespace astrohelion;
 
 int main(void){
 
-	TPAT_Sys_Data_CR3BP emData("earth", "moon");
+	SysData_cr3bp emData("earth", "moon");
 
 	cout << "Data for Sun-Earth System:" << endl;
 	cout << "  Type: " << emData.getTypeStr() << endl;
@@ -22,7 +23,7 @@ int main(void){
 	cout << "  charM: " << emData.getCharM() << " kg" << endl;
 	printf("  mu: %.5e\n", emData.getMu());
 
-	TPAT_Sys_Data_CR3BP seData("sun", "earth");
+	SysData_cr3bp seData("sun", "earth");
 	cout << "Data for Sun-Earth System:" << endl;
 	cout << "  Type: " << seData.getTypeStr() << endl;
 	cout << "  P1: " << seData.getPrimary(0) << endl;

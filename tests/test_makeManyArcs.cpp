@@ -4,11 +4,13 @@
  *	to be used over and over again
  */
 
-#include "tpat_node.hpp"
-#include "tpat_nodeset_cr3bp.hpp"
-#include "tpat_sim_engine.hpp"
-#include "tpat_sys_data_cr3bp.hpp"
-#include "tpat_traj_cr3bp.hpp"
+#include "Node.hpp"
+#include "Nodeset_cr3bp.hpp"
+#include "SimEngine.hpp"
+#include "SysData_cr3bp.hpp"
+#include "Traj_cr3bp.hpp"
+
+using namespace astrohelion;
 
 int main(){
 
@@ -17,16 +19,16 @@ int main(){
 	double tof = 0.137;	// enough time to complete ~1 rev
 
 	// Generate a set of nodes around the arc
-	TPAT_Sys_Data_CR3BP sys("earth", "moon");
-	TPAT_Nodeset_CR3BP scienceOrbitNodes(IC, &sys, tof, 10);
+	SysData_cr3bp sys("earth", "moon");
+	Nodeset_cr3bp scienceOrbitNodes(IC, &sys, tof, 10);
 
-	TPAT_Sim_Engine sim;
-	std::vector<TPAT_Traj_CR3BP> allArcs;
+	SimEngine sim;
+	std::vector<Traj_cr3bp> allArcs;
 	for(int n = 0; n < scienceOrbitNodes.getNumNodes(); n++){
 		printf("Simulating Arc #%03d\n", n);
 		std::vector<double> nodeIC = scienceOrbitNodes.getNodeByIx(n).getState();
 		double tof = 4;
-		TPAT_Traj_CR3BP traj(&sys);
+		Traj_cr3bp traj(&sys);
 		sim.runSim(nodeIC, tof, &traj);
 		allArcs.push_back(traj);
 	}

@@ -9,7 +9,11 @@ This software has been tested on (and <i>should</i> work on) the following syste
 </ul>
 
 <h2>Software Dependencies</h2>
-<p>Our software is dependent on a few libraries:</p>
+<p>
+	This software is dependent on several libraries. My goal is to package these libraries with Astrohelion, but
+	that task is not yet complete. Stay tuned. In the mean time, here is a list of dependencies with some (hopefully helpful)
+	installation tips:
+</p>
 <ul>
 	<li>
 		<a href="http://www.gnu.org/software/gsl/">GNU Science Library</a> (GSL): This library should be installed on your system and available to the compiler. The Makefile assumes all GSL headers and libraries are already in the search path. To compile with the GSL libraries, use the <tt>-lgsl</tt> and <tt>-lgslcblas</tt> compiler flags
@@ -24,7 +28,7 @@ This software has been tested on (and <i>should</i> work on) the following syste
 		</ul>
 	</li>
 	<li>
-		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install, download the current realease and uncompress it. Copy all the files from the <tt>boost/</tt> directory (should be *.hpp files) to <tt>/usr/local/include/boost/</tt>. Additionally, compile and install the boost binaries by following the directions on <a href="https://solarianprogrammer.com/2016/03/06/compiling-boost-gcc-5-clang-mac-os-x/">this website</a>. The Boost libraries <em>must</em> be compiled using the same compiler as the TPAT code; Most recently (2016-05-11), I am using the gcc 5.3.0 compiler g++-5 . This is unable to create the dynamic libraries (*.dylib) but creates the static libraries just fine. I've uninstalled previous versions of Boost that were compiled with clang to avoid clashes. Otherwise, use the default install location (don't specifiy a --prefix argument) so the binaries should live in <tt>/usr/local/lib/</tt>, just like the libraries for GSL and MatIO. Other useful build instructions are listed <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">here</a>. 
+		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install, download the current realease and uncompress it. Copy all the files from the <tt>boost/</tt> directory (should be *.hpp files) to <tt>/usr/local/include/boost/</tt>. Additionally, compile and install the boost binaries by following the directions on <a href="https://solarianprogrammer.com/2016/03/06/compiling-boost-gcc-5-clang-mac-os-x/">this website</a>. The Boost libraries <em>must</em> be compiled using the same compiler as the Astrohelion code; Most recently (2016-05-11), I am using the gcc 5.3.0 compiler g++-5 . This is unable to create the dynamic libraries (*.dylib) but creates the static libraries just fine. I've uninstalled previous versions of Boost that were compiled with clang to avoid clashes. Otherwise, use the default install location (don't specifiy a --prefix argument) so the binaries should live in <tt>/usr/local/lib/</tt>, just like the libraries for GSL and MatIO. Other useful build instructions are listed <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">here</a>. 
 	</li>
 	<li>
 		<a href="http://naif.jpl.nasa.gov/naif/toolkit_C.html">NAIF SPICE</a>: This library 

@@ -113,7 +113,9 @@ double Traj_cr3bp_ltvp::getJacobiByIx(int ix) const{
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_cr3bp_ltvp::getJacobiByIx: invalid index");
 
-	return nodes[ix].getExtraParam(0);
+	auto it = nodes.begin();
+	std::advance(it, ix);
+	return (*it).second.getExtraParam(0);
 }//====================================================
 
 /**
@@ -129,7 +131,9 @@ double Traj_cr3bp_ltvp::getMassByIx(int ix) const{
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_cr3bp_ltvp::getMassByIx: invalid index");
 
-	return nodes[ix].getExtraParam(1);
+	auto it = nodes.begin();
+	std::advance(it, ix);
+	return (*it).second.getExtraParam(1);
 }//====================================================
 
 /**
@@ -145,7 +149,9 @@ void Traj_cr3bp_ltvp::setJacobiByIx(int ix, double val){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_cr3bp_ltvp::setJacobiByIx: invalid index");
 
-	nodes[ix].setExtraParam(0, val);
+	auto it = nodes.begin();
+	std::advance(it, ix);
+	(*it).second.setExtraParam(0, val);
 }//====================================================
 
 /**
@@ -161,7 +167,9 @@ void Traj_cr3bp_ltvp::setMassByIx(int ix, double val){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_cr3bp_ltvp::setMassByIx: invalid index");
 
-	nodes[ix].setExtraParam(1, val);
+	auto it = nodes.begin();
+	std::advance(it, ix);
+	(*it).second.setExtraParam(1, val);
 }//====================================================
 
 //-----------------------------------------------------

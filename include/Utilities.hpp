@@ -38,6 +38,7 @@
  
 #include <algorithm>
 #include <complex>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -298,8 +299,42 @@ namespace astrohelion{
 			return 0;
 		else
 			return num < 0 ? -1 : 1;
-	}//===========================================
+	}//================================================
 
+	/**
+	 *  @brief Retrieve a pointer to a map object
+	 *  @details [long description]
+	 * 
+	 *  @param theMap The map to search in
+	 *  @param key Key associated with the object we're looking for
+	 * 
+	 *  @return A pointer to the object, if it is found, else <tt>nullptr</tt>
+	 */
+	template< typename Key, typename Value >
+	const Value * mapValueLookup( const std::map<Key, Value>& theMap, Key key ){
+	   typename std::map<Key, Value>::const_iterator iter = theMap.find(key);
+	   if( iter != theMap.end() ){
+	      return &iter->second;
+	   }
+	   else
+	     return nullptr;
+	}//================================================
+
+	/**
+	 *  @brief Retrieve a pointer to a map object
+	 *  @details [long description]
+	 * 
+	 *  @param theMap The map to search in
+	 *  @param key Key associated with the object we're looking for
+	 * 
+	 *  @return A pointer to the object, if it is found, else <tt>nullptr</tt>
+	 */
+	template< typename Key, typename Value >
+	Value * mapValueLookup( std::map<Key, Value>& theMap, Key key ){
+	   return const_cast<Value*>( mapValueLookup
+	       ( const_cast<const std::map<Key, Value> &>(theMap),
+	       key ) );
+	}//================================================
 
 	void checkAndReThrowSpiceErr(const char*);
 	std::string complexToStr(std::complex<double>);

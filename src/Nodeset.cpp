@@ -227,13 +227,13 @@ int Nodeset::createNodesAtEvents(int priorNodeIx, std::vector<Event> evts){
  *  @throws Exception if <tt>segID</tt> is out of bounds
  */
 int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
-	if(segID < 0 || segID >= (int)(segIDMap.size()))
+	if(segs.count(segID) == 0)
 		throw Exception("Nodeset::createNodesAtEvents: Segment ID is out of bounds");
 
 	// Get a copy of the segment we are replacing
-	Segment seg = segs[segIDMap[segID]];
-	Node origin = nodes[nodeIDMap[seg.getOrigin()]];
-	Node terminus = nodes[nodeIDMap[seg.getTerminus()]];
+	Segment seg = segs[segID];
+	Node origin = nodes[seg.getOrigin()];
+	Node terminus = nodes[seg.getTerminus()];
 
 	// Create a simulation engine and add the events to it
 	SimEngine engine;
@@ -283,7 +283,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 
 	if(evtCount > 0){
 		// Add a final segment connecting the last node to the original terminus
-		tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
+		tof = terminus.getEpoch() - nodes[prevNodeID].getEpoch();
 		addSeg(Segment(prevNodeID, terminus.getID(), tof));
 	}
 
@@ -295,12 +295,12 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
  *	@param id a vector of segment IDs that can have velocity discontinuities
  */
 void Nodeset::allowDV_at(std::vector<int> id) {
-	for(size_t i = 0; i < segs.size(); i++){
+	for(auto &seg : segs){
 		// Check to see if the node should have continuous velocity
-		if(std::find(id.begin(), id.end(), segs[i].getID()) == id.end()){
-			segs[i].setVel_AllCon();
+		if(std::find(id.begin(), id.end(), seg.first) == id.end()){
+			seg.second.setVel_AllCon();
 		}else{
-			segs[i].setVel_AllDiscon();
+			seg.second.setVel_AllDiscon();
 		}
 	}
 }//====================================================
@@ -309,8 +309,8 @@ void Nodeset::allowDV_at(std::vector<int> id) {
  *  @brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
  */
 void Nodeset::allowDV_all(){
-	for(size_t i = 0; i < segs.size(); i++){
-		segs[i].setVel_AllDiscon();
+	for(auto &seg : segs){
+		seg.second.setVel_AllDiscon();
 	}
 }//====================================================
 
@@ -318,8 +318,8 @@ void Nodeset::allowDV_all(){
  *  @brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
  */
 void Nodeset::allowDV_none(){
-	for(size_t i = 0; i < segs.size(); i++){
-		segs[i].setVel_AllCon();
+	for(auto &seg : segs){
+		seg.second.setVel_AllCon();
 	}
 }//====================================================
 
@@ -334,38 +334,35 @@ void Nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", sysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
-	for(size_t n = 0; n < nodeIDMap.size(); n++){
-		printf("  %02lu (ix %02d):", n, nodeIDMap[n]);
-		if(nodeIDMap[n] != Linkable::INVALID_ID){
-			std::vector<double> state = nodes[nodeIDMap[n]].getState();
-			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
-				nodes[nodeIDMap[n]].getEpoch(), state[0], state[1], state[2], state[3],
-				state[4], state[5]);
-		}else{
-			printf(" [N/A]\n");
-		}
+	size_t count = 0;
+	for(const auto &node : nodes){
+		printf("  %02lu (ix %02d):", count, node.first);
+		std::vector<double> state = node.second.getState();
+		printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
+			node.second.getEpoch(), state[0], state[1], state[2], state[3],
+			state[4], state[5]);
+		count++;
 	}
 
 	printf("List of Segments:\n");
-	for (size_t s = 0; s < segIDMap.size(); s++){
-		printf("  %02lu (ix %02d):", s, segIDMap[s]);
-		if(segIDMap[s] != Linkable::INVALID_ID && segIDMap[s] < (int)(segs.size())){
-			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[segIDMap[s]].getOrigin(),
-				segs[segIDMap[s]].getTerminus(), segs[segIDMap[s]].getTOF());
-		}else{
-			printf(" [N/A]\n");
-		}
+	count = 0;
+	for(const auto &seg : segs){
+		printf("  %02lu (ix %02d):", count, seg.first);
+		printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", seg.second.getOrigin(),
+				seg.second.getTerminus(), seg.second.getTOF());
+		count++;
 	}
 
 	printf(" Constraints:\n");
-	for(size_t n = 0; n < nodes.size(); n++){
-		std::vector<Constraint> nodeCons = nodes[n].getConstraints();
+	for(const auto &node : nodes){
+		std::vector<Constraint> nodeCons = node.second.getConstraints();
 		for(size_t c = 0; c < nodeCons.size(); c++){
 			nodeCons[c].print();
 		}
 	}
-	for(size_t s = 0; s < segs.size(); s++){
-		std::vector<Constraint> segCons = segs[s].getConstraints();
+	
+	for(const auto &seg : segs){
+		std::vector<Constraint> segCons = seg.second.getConstraints();
 		for(size_t c = 0; c < segCons.size(); c++){
 			segCons[c].print();
 		}
@@ -377,14 +374,16 @@ void Nodeset::print() const{
 	printf(" Velocity Discontinuities allowed on segments: ");
 	char velEl[] = {'x', 'y', 'z'};
 	bool anyDiscon = false;
-	for(size_t s = 0; s < segs.size(); s++){
-		std::vector<bool> velCon = segs[s].getVelCon();
+	count = 0;
+	for(const auto &seg : segs){
+		std::vector<bool> velCon = seg.second.getVelCon();
 		for(size_t i = 0; i < velCon.size(); i++){
 			if(!velCon[i]){
-				printf("%zuv_%c, ", s, velEl[i]);
+				printf("%zuv_%c, ", count, velEl[i]);
 				anyDiscon = true;
 			}
 		}
+		count++;
 	}
 	if(!anyDiscon)
 		printf("None\n");
@@ -400,11 +399,11 @@ void Nodeset::print() const{
  *	have changed.
  */
 void Nodeset::reverseOrder() {
-	for(size_t s = 0; s < segs.size(); s++){
-		int o = segs[s].getOrigin();
-		segs[s].setOrigin(segs[s].getTerminus());
-		segs[s].setTerminus(o);
-		segs[s].setTOF(segs[s].getTOF()*-1);
+	for(auto &seg : segs){
+		int o = seg.second.getOrigin();
+		seg.second.setOrigin(seg.second.getTerminus());
+		seg.second.setTerminus(o);
+		seg.second.setTOF(seg.second.getTOF()*-1);
 	}
 }//====================================================
 
@@ -475,10 +474,6 @@ void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNode
 	if(numNodes < 2){
 		throw Exception("Nodeset::initFromICs: Nodeset must have at least two nodes!");
 	}
-
-	// Prepare to add nodes
-	nodes.reserve(numNodes);
-	segs.reserve(numNodes-1);
 
 	switch(distroType){
 		default:

@@ -36,6 +36,7 @@
 #include "SysData.hpp"
 
 #include "matio.h"
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -156,8 +157,8 @@ public:
 
 	// Utility Functions
 	void printInChrono() const;
-	void printNodeIDMap() const;
-	void printSegIDMap() const;
+	// void printNodeIDMap() const;
+	// void printSegIDMap() const;
 	
 	/**
 	 *  @brief Loads the object from a Matlab binary file
@@ -180,11 +181,13 @@ protected:
 	/** A pointer to the system data object that the describes the system this arc exists in */
 	const SysData *sysData;
 
-	/** Contains all nodes or integration steps along an arc data object */
-	std::vector<Node> nodes {};
+	/** Contains all nodes or integration steps along an arc data object; the map key is the Node ID */
+	std::map<int, Node> nodes {};
+	// std::vector<Node> nodes {};
 
-	/** Contains all segments that link the nodes of this object */
-	std::vector<Segment> segs {};
+	/** Contains all segments that link the nodes of this object; the map key is the Segment ID */
+	std::map<int, Segment> segs {};
+	// std::vector<Segment> segs {};
 
 	/** Each entry corresponds to one node ID. The value of the entry is 
 	 * the index of the node in the <tt>nodes</tt> array. If the value is
@@ -193,7 +196,7 @@ protected:
 	 * The current implementation requires that nextNodeID begin at 0  
 	 * and increment by one through all integers.
 	 */
-	std::vector<int> nodeIDMap {};
+	// std::vector<int> nodeIDMap {};
 
 	/**
 	 * Each entry corresponds to one segment ID. The value of the entry is
@@ -203,7 +206,7 @@ protected:
 	 * The current implementation requires that nextSegID begin at 0 and increment
 	 * by one through all integers.
 	 */
-	std::vector<int> segIDMap {};
+	// std::vector<int> segIDMap {};
 
 	/** A set of constraints that apply to the arc data object as a whole */
 	std::vector<Constraint> cons {};

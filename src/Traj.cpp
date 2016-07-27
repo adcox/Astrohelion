@@ -190,7 +190,9 @@ double Traj::getTimeByIx(int ix) const {
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj::getTimeByIx: invalid index");
 
-	return nodes[ix].getEpoch();
+	auto it = nodes.begin();
+	std::advance(it, ix);
+	return (*it).second.getEpoch();
 }//====================================================
 
 /**
@@ -208,7 +210,9 @@ void Traj::setTimeByIx(int ix, double t){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj::setTimeByIx: invalid index");
 
-	nodes[ix].setEpoch(t);
+	auto it = nodes.begin();
+	std::advance(it, ix);
+	(*it).second.setEpoch(t);
 }//====================================================
 
 /**
@@ -219,8 +223,8 @@ void Traj::setTimeByIx(int ix, double t){
  *  all time values for points on this trajectory
  */
 void Traj::shiftAllTimes(double amount){
-	for(size_t i = 0; i < nodes.size(); i++){
-		nodes[i].setEpoch(nodes[i].getEpoch() + amount);
+	for(auto &node : nodes){
+		node.second.setEpoch(node.second.getEpoch() + amount);
 	}
 }//====================================================
 
@@ -259,7 +263,9 @@ Nodeset Traj::discretize(int numNodes) const{
 		int prevIx = std::floor((n-1)*stepSize);
 
 		// Create a node from this step
-		nodeset.addNode(nodes[ix]);
+		auto it = nodes.begin();
+		std::advance(it, ix);
+		nodeset.addNode((*it).second);
 
 		if(n > 0){
 			double tof = getEpochByIx(ix) - getEpochByIx(prevIx);
@@ -302,6 +308,7 @@ void Traj::saveToMat(const char* filename) const{
 
 /**
  *	@brief Print a useful message describing this trajectory to the standard output
+ *	@todo make this message useful
  */
 void Traj::print() const {
 	printf("This is a trajectory\n\tTODO - MAKE THIS MESSAGE USEFUL\n");

@@ -36,6 +36,7 @@
 #include "SysData.hpp"
 
 #include "matio.h"
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -193,7 +194,17 @@ protected:
 	 * The current implementation requires that nextNodeID begin at 0  
 	 * and increment by one through all integers.
 	 */
-	std::vector<int> nodeIDMap {};
+	 // std::vector<int> nodeIDMap {};
+
+	/**
+	 * The key is the ID of the node, the value is the index in 
+	 * node storage vector.
+	 * 
+	 * The current implementation requires that nextNodeID begin at 0  
+	 * and increment by one through all integers.
+	 */
+	std::map<int, int> nodeIDMap {};
+	
 
 	/**
 	 * Each entry corresponds to one segment ID. The value of the entry is
@@ -203,7 +214,16 @@ protected:
 	 * The current implementation requires that nextSegID begin at 0 and increment
 	 * by one through all integers.
 	 */
-	std::vector<int> segIDMap {};
+	// std::vector<int> segIDMap {};
+
+	/**
+	 * The key is the ID of the segment, the value is the index in 
+	 * segment storage vector.
+	 * 
+	 * The current implementation requires that nextSegID begin at 0  
+	 * and increment by one through all integers.
+	 */
+	std::map<int, int> segIDMap {};
 
 	/** A set of constraints that apply to the arc data object as a whole */
 	std::vector<Constraint> cons {};

@@ -125,13 +125,13 @@ void BaseArcset::addConstraint(Constraint con){
 	int id = con.getID();
 	switch(con.getAppType()){
 		case ConstraintApp_tp::APP_TO_NODE:
-			if(id < 0 || id >= (int)(nodeIDMap.size()))
+			if(nodeIDMap.count(id) == 0)
 				throw Exception("BaseArcset::addConstraint: Node ID out of bounds");
 
 			nodes[nodeIDMap[id]].addConstraint(con);
 			break;
 		case ConstraintApp_tp::APP_TO_SEG:
-			if(id < 0 || id >= (int)(segIDMap.size()))
+			if(segIDMap.count(id) == 0)
 				throw Exception("BaseArcset::addConstraint: Segment ID out of bounds");
 
 			segs[segIDMap[id]].addConstraint(con);
@@ -155,7 +155,7 @@ int BaseArcset::addNode(Node n){
 	n.clearLinks();			// Cannot have any links coming in
 	n.setID(nextNodeID);
 	nodes.push_back(n);
-	nodeIDMap.push_back(nodes.size()-1);
+	nodeIDMap[nextNodeID] = nodes.size()-1;
 
 	return nextNodeID++;
 }//=====================================================
@@ -188,7 +188,7 @@ int BaseArcset::addSeg(Segment s){
 		int linkedNodeID = s.getLink(i);
 		if(linkedNodeID != Linkable::INVALID_ID){
 
-			if(linkedNodeID < 0 || linkedNodeID >= (int)(nodeIDMap.size()))
+			if(nodeIDMap.count(linkedNodeID) == 0)
 				throw Exception("BaseArcset::addSeg: Segment has link to an invalid node ID");
 
 			// Get the index of that node within the storage array
@@ -254,7 +254,7 @@ int BaseArcset::addSeg(Segment s){
 
 	if(foundValidLink){
 		segs.push_back(s);
-		segIDMap.push_back(segs.size()-1);
+		segIDMap[s.getID()] = segs.size()-1;
 		return nextSegID++;	
 	}else{
 		return Linkable::INVALID_ID;
@@ -282,7 +282,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int lin
 		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
-	if(linkTo_ID < 0 || linkTo_ID >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(linkTo_ID) == 0)
 		throw Exception("BaseArcset::appendSetAtNode: linkTo_ID is out of bounds");
 
 	// Create a copy so we don't affect the original
@@ -460,7 +460,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *set){
  *  this function.
  */
 void BaseArcset::deleteNode(int id){
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if( nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::deleteNode: id out of bounds");
 
 	int nodeIx = nodeIDMap[id];
@@ -557,14 +557,13 @@ void BaseArcset::deleteNode(int id){
 
 
 		nodes.erase(nodes.begin() + nodeIx);					// Remove node from vector
-		nodeIDMap[id] = Linkable::INVALID_ID;				// This ID will never be used again, set to INVALID_ID
+		nodeIDMap.erase(id);
 
 		// Update vector that maps ID values to storage indices
-		for(size_t n = 0; n < nodeIDMap.size(); n++){
-			if(nodeIDMap[n] != Linkable::INVALID_ID){
+		for(auto &index : nodeIDMap){
+			if(index.second != Linkable::INVALID_ID && index.second > nodeIx){
 				// Decrement all indices after the node we just removed
-				if(nodeIDMap[n] > nodeIx)
-					nodeIDMap[n]--;
+				index.second--;
 			}
 		}
 	}else{
@@ -584,7 +583,7 @@ void BaseArcset::deleteNode(int id){
  * 	@throws Exception if <tt>id</tt> is out of bounds
  */
 void BaseArcset::deleteSeg(int id){
-	if(id < 0 || id >= (int)(segIDMap.size()))
+	if(segIDMap.count(id) == 0)
 		throw Exception("BaseArcset::deleteSeg: Invalid ID (out of bounds)");
 
 	int segIx = segIDMap[id];
@@ -607,12 +606,11 @@ void BaseArcset::deleteSeg(int id){
 		}
 
 		segs.erase(segs.begin() + segIx);	// CANNOT USE *seg pointer AFTER THIS LINE
+		segIDMap.erase(id);
 
-		segIDMap[id] = Linkable::INVALID_ID;
-		for(size_t s = 0; s < segIDMap.size(); s++){
-			if(segIDMap[s] != Linkable::INVALID_ID){
-				if(segIDMap[s] > segIx)
-					segIDMap[s]--;
+		for(auto &index : segIDMap){
+			if(index.second != Linkable::INVALID_ID && index.second > segIx){
+				index.second--;
 			}
 		}
 	}else{
@@ -630,10 +628,10 @@ void BaseArcset::deleteSeg(int id){
  *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getAccel(int id) const{
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getAccel: Node ID out of range");
 
-	int ix = nodeIDMap[id];
+	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix].getAccel();
 	}else{
@@ -695,12 +693,12 @@ std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
  *  @throws Exception if the ID is out of bounds
  */
 std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevPieces) const{
-	if(ID < 0 || ID >= nextNodeID)
+	if(nodeIDMap.count(ID) == 0)
 		throw Exception("BaseArcset::sortArcset: ID out of bounds");
 
 	std::vector<ArcPiece> pieces;
 
-	Node node0 = nodes[nodeIDMap[ID]];
+	Node node0 = nodes[nodeIDMap.at(ID)];
 	// printf("Beginning with node ID %d\n", node0.getID());
 
 	pieces.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, node0.getID()));
@@ -803,7 +801,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 
 								if(!alreadyUsed){
 									// Located a segment that links to this one, go recursive!
-									Segment linkedSeg = segs[segIDMap[linkedSegID]];
+									Segment linkedSeg = segs[segIDMap.at(linkedSegID)];
 									int linkedNodeID = linkedSeg.getOrigin();
 									if(linkedNodeID != Linkable::INVALID_ID){
 										// Concatenate the pieces I've arranged so far and the previously arranged ones; order is unimportant here
@@ -861,10 +859,10 @@ std::vector<double> BaseArcset::getCoord(int ix) const{
  *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 double BaseArcset::getEpoch(int id) const{
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getEpoch: Node ID out of range");
 
-	int ix = nodeIDMap[id];
+	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix].getEpoch();
 	}else{
@@ -971,10 +969,10 @@ int BaseArcset::getNumCons() const {
  *  @throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
  */
 Node BaseArcset::getNode(int id) const{
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getNode: Invalid ID (out of bounds)");
 
-	int ix = nodeIDMap[id];
+	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
@@ -1008,10 +1006,10 @@ Node BaseArcset::getNodeByIx(int ix) const{
  *  @throws Exception if <tt>id</tt> is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getNodeIx: Inavlid ID; out of bounds");
 
-	return nodeIDMap[id];
+	return nodeIDMap.at(id);
 }//====================================================
 
 /**
@@ -1023,10 +1021,10 @@ int BaseArcset::getNodeIx(int id) const{
  *  @throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
  */
 Segment BaseArcset::getSeg(int id) const{
-	if(id < 0 || id >= (int)(segIDMap.size()))
+	if(segIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getSeg: Invalid ID (out of bounds)");
 
-	int ix = segIDMap[id];
+	int ix = segIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
@@ -1060,10 +1058,10 @@ Segment BaseArcset::getSegByIx(int ix) const{
  *  @throws Exception if <tt>id</tt> is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
-	if(id < 0 || id >= (int)(segIDMap.size()))
+	if(segIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getSegIx: Inavlid ID; out of bounds");
 
-	return segIDMap[id];
+	return segIDMap.at(id);
 }//====================================================
 
 /**
@@ -1076,10 +1074,10 @@ int BaseArcset::getSegIx(int id) const{
  *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getState(int id) const{
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getState: Node ID out of range");
 
-	int ix = nodeIDMap[id];
+	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
 		return nodes[ix].getState();
 	}else{
@@ -1117,10 +1115,10 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
  *  @throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 MatrixXRd BaseArcset::getSTM(int id) const{
-	if(id < 0 || id >= (int)(segIDMap.size()))
+	if(segIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getSTM: Node ID out of range");
 
-	int ix = segIDMap[id];
+	int ix = segIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
 		return segs[ix].getSTM();
 	}else{
@@ -1162,10 +1160,10 @@ const SysData* BaseArcset::getSysData() const { return sysData; }
  *  @throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 double BaseArcset::getTOF(int id) const{
-	if(id < 0 || id >= (int)(segIDMap.size()))
+	if(segIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getTOF: Segment ID out of range");
 
-	int ix = segIDMap[id];
+	int ix = segIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
 		return segs[ix].getTOF();
 	}else{
@@ -1236,8 +1234,8 @@ void BaseArcset::putInChronoOrder(){
 
 	std::vector<Node> newNodes;
 	std::vector<Segment> newSegs;
-	std::vector<int> newNodeIDMap(nodeIDMap.size(), Linkable::INVALID_ID);
-	std::vector<int> newSegIDMap(segIDMap.size(), Linkable::INVALID_ID);
+	std::map<int, int> newNodeIDMap;
+	std::map<int, int> newSegIDMap;
 
 	for(size_t i = 0; i < pieces.size(); i++){
 		if(pieces[i].type == ArcPiece::Piece_Tp::NODE){
@@ -1266,7 +1264,7 @@ void BaseArcset::putInChronoOrder(){
  *  @throws Exception if <tt>id</tt> is out of bounds
  */
 void BaseArcset::setAccel(int id, std::vector<double> accel){
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::setAccel: Node ID out of range");
 
 	nodes[nodeIDMap[id]].setAccel(accel);
@@ -1303,7 +1301,7 @@ void BaseArcset::setAccelByIx(int ix, std::vector<double> accelVec){
  *  @throws Exception if <tt>id</tt> is out of bounds
  */
 void BaseArcset::setState(int id, std::vector<double> state){
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::setState: Node ID out of range");
 
 	nodes[nodeIDMap[id]].setState(state);
@@ -1340,7 +1338,7 @@ void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
  *  @throws Exception if <tt>id</tt> is out of bounds
  */
 void BaseArcset::setSTM(int id, MatrixXRd stm){
-	if(id < 0 || id >= (int)(segIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::setSTM: Node ID out of range");
 
 	segs[segIDMap[id]].setSTM(stm);
@@ -1380,7 +1378,7 @@ void BaseArcset::setTol(double d){ tol = d; }
  *  @param epoch the epoch of the node with the specified ID.
  */
 void BaseArcset::updateEpochs(int nodeID, double epoch){
-	if(nodeID < 0 || nodeID >= (int)(nodes.size()))
+	if(nodeIDMap.count(nodeID) == 0)
 		throw Exception("BaseArcset::updateEpochs: Invalide node ID");
 
 	std::vector<ArcPiece> pieces = getChronoOrder();
@@ -1464,11 +1462,11 @@ void BaseArcset::initNodesSegsFromMat(mat_t *matFile, const char* varName){
 		// Create a set of nodes and segments all linked together in linear time
 		for(int i = 0; i < numSteps; i++){
 			nodes.push_back(blank_node);
-			nodeIDMap.push_back(i);
+			nodeIDMap[i] = i;
 			
 			if(i > 0){
 				segs.push_back(Segment(i-1, i, NAN));
-				segIDMap.push_back(i-1);
+				segIDMap[i-1] = i-1;
 			}
 		}
 		// nodes.assign(numSteps, blank_node);	// Initialize array with a bunch of default objects
@@ -1502,11 +1500,14 @@ void BaseArcset::printInChrono() const{
  *  @brief Print nodeIDMap to standard output
  */
 void BaseArcset::printNodeIDMap() const{
-	for(size_t i = 0; i < nodeIDMap.size(); i++){
-		if(i % 20 == 0)
+	int count = 0;
+	for(const auto &index : nodeIDMap){
+		if(count % 20 == 0)
 			printf("----------------\n%4s -> %4s\n----------------\n", "ID", "Ix");
 
-		printf("%4zu -> %4d\n", i, nodeIDMap[i]);
+		printf("%4d -> %4d\n", index.first, index.second);
+
+		count++;
 	}
 }//====================================================
 
@@ -1514,11 +1515,14 @@ void BaseArcset::printNodeIDMap() const{
  *  @brief Print segIDMap to standard output
  */
 void BaseArcset::printSegIDMap() const{
-	for(size_t i = 0; i < segIDMap.size(); i++){
-		if(i % 20 == 0)
+	int count = 0;
+	for(const auto &index : segIDMap){
+		if(count % 20 == 0)
 			printf("----------------\n%4s -> %4s\n----------------\n", "ID", "Ix");
 
-		printf("%4zu -> %4d\n", i, segIDMap[i]);
+		printf("%4d -> %4d\n", index.first, index.second);
+
+		count++;
 	}
 }//====================================================
 

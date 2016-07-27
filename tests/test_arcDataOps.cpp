@@ -206,8 +206,6 @@ bool tryDeleteLastNode(){
  *  "heals" itself properly
  */
 void tryDeleteMiddleNode(){
-	int invID = Linkable::INVALID_ID;
-
 	Nodeset set(&sys);
 	set.addNode(Node(state1, 0));
 	set.addNode(Node(state2, 1.1));
@@ -233,12 +231,26 @@ void tryDeleteMiddleNode(){
 	}
 
 	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
-		set.getNodeIx(1) == invID && set.getNodeIx(2) == 1 &&
+		set.getNodeIx(2) == 1 &&
 		set.getNodeIx(3) == 2 && set.getNodeIx(4) == 3 ? PASS : FAIL) << std::endl;
+	
+	std::cout << "  Checking deleted node... ";
+	try{
+		set.getNodeIx(1);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
 
-	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
-		set.getSegIx(1) == invID && set.getSegIx(2) == 0 &&
-		set.getSegIx(3) == 1 ? PASS : FAIL) << std::endl;
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(2) == 0 && set.getSegIx(3) == 1 ? PASS : FAIL) << std::endl;
+	std::cout << "  Checking deleted segments... ";
+	try{
+		set.getSegIx(0);
+		set.getSegIx(1);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
 
 	std::cout << "  Delete another middle node: ";
 	try{
@@ -254,12 +266,29 @@ void tryDeleteMiddleNode(){
 		printf("  %s\n", e.what());
 	}
 	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
-		set.getNodeIx(1) == invID && set.getNodeIx(2) == invID &&
 		set.getNodeIx(3) == 1 && set.getNodeIx(4) == 2 ? PASS : FAIL) << std::endl;
 
-	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
-		set.getSegIx(1) == invID && set.getSegIx(2) == invID &&
-		set.getSegIx(3) == 0 && set.getSegIx(4) == invID && set.getSegIx(5) == 1 ? PASS : FAIL) << std::endl;
+	std::cout << "  Checking deleted node... ";
+	try{
+		set.getNodeIx(1);
+		set.getNodeIx(2);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(3) == 0 && set.getSegIx(5) == 1 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Checking deleted segments ... ";
+	try{
+		set.getSegIx(0);
+		set.getSegIx(1);
+		set.getSegIx(2);
+		set.getSegIx(4);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
 }//==================================================
 
 /**
@@ -267,7 +296,6 @@ void tryDeleteMiddleNode(){
  *  progresses linearly in reverse time
  */
 void tryDeleteMiddleNode_revTime(){
-	int invID = Linkable::INVALID_ID;
 	Nodeset set(&sys);
 	set.addNode(Node(state1, 0));
 	set.addNode(Node(state2, -1.1));
@@ -294,12 +322,28 @@ void tryDeleteMiddleNode_revTime(){
 	}
 
 	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
-		set.getNodeIx(1) == invID && set.getNodeIx(2) == 1 &&
+		set.getNodeIx(2) == 1 &&
 		set.getNodeIx(3) == 2 && set.getNodeIx(4) == 3 ? PASS : FAIL) << std::endl;
 
-	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
-		set.getSegIx(1) == invID && set.getSegIx(2) == 0 &&
+	std::cout << "  Checking deleted node... ";
+	try{
+		set.getNodeIx(1);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(2) == 0 &&
 		set.getSegIx(3) == 1 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Checking deleted segments... ";
+	try{
+		set.getSegIx(0);
+		set.getSegIx(1);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
 
 	std::cout << "  Delete another middle node: ";
 	try{
@@ -317,12 +361,30 @@ void tryDeleteMiddleNode_revTime(){
 	}
 
 	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == 0 && 
-		set.getNodeIx(1) == invID && set.getNodeIx(2) == invID &&
 		set.getNodeIx(3) == 1 && set.getNodeIx(4) == 2 ? PASS : FAIL) << std::endl;
 
-	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID &&
-		set.getSegIx(1) == invID && set.getSegIx(2) == invID &&
-		set.getSegIx(3) == 0 && set.getSegIx(4) == invID && set.getSegIx(5) == 1 ? PASS : FAIL) << std::endl;
+	std::cout << "  Checking deleted node... ";
+	try{
+		set.getNodeIx(1);
+		set.getNodeIx(2);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
+
+	std::cout << "  Correct, updated segIDMap: " << (
+		set.getSegIx(3) == 0 && set.getSegIx(5) == 1 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Checking deleted segments... ";
+	try{
+		set.getSegIx(0);
+		set.getSegIx(1);
+		set.getSegIx(2);
+		set.getSegIx(4);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
 }//====================================================
 
 /**
@@ -330,7 +392,6 @@ void tryDeleteMiddleNode_revTime(){
  *  @details Make sure the arcset is healed properly.
  */
 void tryDeleteMiddleNode_doubleSource1(){
-	int invID = Linkable::INVALID_ID;
 	Nodeset set(&sys);
 	set.addNode(Node(state1, 0));
 	set.addNode(Node(state2, -1.1));
@@ -356,12 +417,29 @@ void tryDeleteMiddleNode_doubleSource1(){
 		printf("  %s\n", e.what());
 	}
 
-	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(0) == invID && 
-		set.getNodeIx(1) == 0 && set.getNodeIx(2) == 1 &&
+	std::cout << "  Correct, updated nodeIDMap: " << (set.getNodeIx(1) == 0 &&
+		set.getNodeIx(2) == 1 &&
 		set.getNodeIx(3) == 2 && set.getNodeIx(4) == 3 ? PASS : FAIL) << std::endl;
 
-	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(0) == invID && set.getSegIx(1) == 0 &&
-		set.getSegIx(2) == invID && set.getSegIx(3) == 1 && set.getSegIx(4) == 2 ? PASS : FAIL) << std::endl;
+	std::cout << "  Checking deleted node... ";
+	try{
+		set.getNodeIx(0);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
+
+	std::cout << "  Correct, updated segIDMap: " << (set.getSegIx(1) == 0 &&
+		set.getSegIx(3) == 1 && set.getSegIx(4) == 2 ? PASS : FAIL) << std::endl;
+
+	std::cout << "  Checking deleted segments... ";
+	try{
+		set.getSegIx(0);
+		set.getSegIx(2);
+		std::cout << FAIL << std::endl;
+	}catch(Exception &e){
+		std::cout << PASS << std::endl;
+	}
 }//==================================================
 
 /**

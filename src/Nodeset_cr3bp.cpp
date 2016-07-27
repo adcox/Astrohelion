@@ -223,10 +223,10 @@ baseArcsetPtr Nodeset_cr3bp::clone() const{
  *  @throw Exception if <tt>id</tt> is out of bounds
  */
 double Nodeset_cr3bp::getJacobi(int id) const{
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("Nodeset_cr3bp::getJacobi: Node ID out of range");
 
-	return nodes[nodeIDMap[id]].getExtraParam(0);
+	return nodes[nodeIDMap.at(id)].getExtraParam(0);
 }//====================================================
 
 /**
@@ -254,10 +254,10 @@ double Nodeset_cr3bp::getJacobiByIx(int ix) const{
  *  @throw Exception if <tt>id</tt> is out of bounds
  */
 void Nodeset_cr3bp::setJacobi(int id, double jacobi){
-	if(id < 0 || id >= (int)(nodeIDMap.size()))
+	if(nodeIDMap.count(id) == 0)
 		throw Exception("Nodeset_cr3bp::setJacobi: Node ID out of range");
 
-	nodes[nodeIDMap[id]].setExtraParam(0, jacobi);
+	nodes[nodeIDMap.at(id)].setExtraParam(0, jacobi);
 }//====================================================
 
 /**

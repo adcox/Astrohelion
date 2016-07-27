@@ -227,7 +227,7 @@ int Nodeset::createNodesAtEvents(int priorNodeIx, std::vector<Event> evts){
  *  @throws Exception if <tt>segID</tt> is out of bounds
  */
 int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
-	if(segID < 0 || segID >= (int)(segIDMap.size()))
+	if(segIDMap.count(segID) == 0)
 		throw Exception("Nodeset::createNodesAtEvents: Segment ID is out of bounds");
 
 	// Get a copy of the segment we are replacing
@@ -334,12 +334,12 @@ void Nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", sysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
-	for(size_t n = 0; n < nodeIDMap.size(); n++){
-		printf("  %02lu (ix %02d):", n, nodeIDMap[n]);
-		if(nodeIDMap[n] != Linkable::INVALID_ID){
-			std::vector<double> state = nodes[nodeIDMap[n]].getState();
+	for(const auto &index : nodeIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID){
+			std::vector<double> state = nodes[index.second].getState();
 			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
-				nodes[nodeIDMap[n]].getEpoch(), state[0], state[1], state[2], state[3],
+				nodes[index.second].getEpoch(), state[0], state[1], state[2], state[3],
 				state[4], state[5]);
 		}else{
 			printf(" [N/A]\n");
@@ -347,11 +347,11 @@ void Nodeset::print() const{
 	}
 
 	printf("List of Segments:\n");
-	for (size_t s = 0; s < segIDMap.size(); s++){
-		printf("  %02lu (ix %02d):", s, segIDMap[s]);
-		if(segIDMap[s] != Linkable::INVALID_ID && segIDMap[s] < (int)(segs.size())){
-			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[segIDMap[s]].getOrigin(),
-				segs[segIDMap[s]].getTerminus(), segs[segIDMap[s]].getTOF());
+	for(const auto &index : segIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID && index.second < (int)(segs.size())){
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
+				segs[index.second].getTerminus(), segs[index.second].getTOF());
 		}else{
 			printf(" [N/A]\n");
 		}

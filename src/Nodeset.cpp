@@ -227,7 +227,7 @@ int Nodeset::createNodesAtEvents(int priorNodeIx, std::vector<Event> evts){
  *  @throws Exception if <tt>segID</tt> is out of bounds
  */
 int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
-	if(segs.count(segID) == 0)
+	if(segIDMap.count(segID) == 0)
 		throw Exception("Nodeset::createNodesAtEvents: Segment ID is out of bounds");
 
 	// Get a copy of the segment we are replacing
@@ -334,23 +334,27 @@ void Nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", sysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
-	size_t count = 0;
-	for(const auto &node : nodes){
-		printf("  %02lu (ix %02d):", count, node.first);
-		std::vector<double> state = node.second.getState();
-		printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
-			node.second.getEpoch(), state[0], state[1], state[2], state[3],
-			state[4], state[5]);
-		count++;
+	for(const auto &index : nodeIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID){
+			std::vector<double> state = nodes[index.second].getState();
+			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
+				nodes[index.second].getEpoch(), state[0], state[1], state[2], state[3],
+				state[4], state[5]);
+		}else{
+			printf(" [N/A]\n");
+		}
 	}
 
 	printf("List of Segments:\n");
-	count = 0;
-	for(const auto &seg : segs){
-		printf("  %02lu (ix %02d):", count, seg.first);
-		printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", seg.second.getOrigin(),
-				seg.second.getTerminus(), seg.second.getTOF());
-		count++;
+	for(const auto &index : segIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID && index.second < (int)(segs.size())){
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
+				segs[index.second].getTerminus(), segs[index.second].getTOF());
+		}else{
+			printf(" [N/A]\n");
+		}
 	}
 
 	printf(" Constraints:\n");

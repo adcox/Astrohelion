@@ -62,8 +62,8 @@ public:
 	Nodeset_cr3bp(const Nodeset_cr3bp&, int, int);
 	Nodeset_cr3bp(const Nodeset_cr3bp&);
 	Nodeset_cr3bp(const BaseArcset&);
-	baseArcsetPtr create(const SysData*) const;
-	baseArcsetPtr clone() const;
+	baseArcsetPtr create(const SysData*) const override;
+	baseArcsetPtr clone() const override;
 
 	// Operators
 
@@ -75,7 +75,7 @@ public:
 
 protected:
 	// Utility
-	void initExtraParam();
+	void initExtraParam() override;
 };
 
 }

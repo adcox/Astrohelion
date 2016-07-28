@@ -71,11 +71,11 @@ void CorrectionEngine::copyEngine(const CorrectionEngine &e){
 	equalArcTime = e.equalArcTime;//
 	maxIts = e.maxIts;//
 	tol = e.tol;//
-	findEvent = e.findEvent;//
-	ignoreCrash = e.ignoreCrash;//
-	ignoreDiverge = e.ignoreDiverge;
-	scaleVars = e.scaleVars;
-	isClean = e.isClean;
+	bFindEvent = e.bFindEvent;//
+	bIgnoreCrash = e.bIgnoreCrash;//
+	bIgnoreDiverge = e.bIgnoreDiverge;
+	bScaleVars = e.bScaleVars;
+	bIsClean = e.bIsClean;
 }//====================================================
 
 //-----------------------------------------------------
@@ -117,7 +117,7 @@ bool CorrectionEngine::usesEqualArcTime() const { return equalArcTime; }
  *  @brief Retrieve whether or not the multiple shooting algorithm uses variable scaling
  *  @return whether or not the multiple shooting algorithm uses variable scaling
  */
-bool CorrectionEngine::usesScaledVars() const { return scaleVars; }
+bool CorrectionEngine::usesScaledVars() const { return bScaleVars; }
 
 /**
  *  @brief Retrieve the verbosity setting
@@ -129,7 +129,7 @@ Verbosity_tp CorrectionEngine::isVerbose() const { return verbose; }
  *  @brief Retrieve whether or not we are located an event crossing
  *	@return whether or not the algorithm will optimize the process to find an event
  */
-bool CorrectionEngine::isFindingEvent() const { return findEvent; }
+bool CorrectionEngine::isFindingEvent() const { return bFindEvent; }
 
 /**
  *  @brief Retrieve the maximum number of iterations to attempt
@@ -176,7 +176,7 @@ void CorrectionEngine::setEqualArcTime(bool b){
  * 
  * @param b whether or not to ignore crashes (default is false)
  */
-void CorrectionEngine::setIgnoreCrash(bool b){ ignoreCrash = b; }
+void CorrectionEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
 
 /**
  *  @brief Tell the corrector to ignore divergence and return the partially
@@ -185,7 +185,7 @@ void CorrectionEngine::setIgnoreCrash(bool b){ ignoreCrash = b; }
  * 
  *  @param b Whether or not to ignore divergance
  */
-void CorrectionEngine::setIgnoreDiverge(bool b){ ignoreDiverge = b;}
+void CorrectionEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
 
 /**
  *	@brief Set verbosity
@@ -204,7 +204,7 @@ void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
  * 
  *  @param b whether or not the multiple shooting algorithm should use variable scaling
  */
-void CorrectionEngine::setScaleVars(bool b){ scaleVars = b; }
+void CorrectionEngine::setScaleVars(bool b){ bScaleVars = b; }
 
 /**
  *	@brief Set the error tolerance
@@ -221,7 +221,7 @@ void CorrectionEngine::setTol(double d){
  *	@brief Set the findEven flag
  *	@param b whether or not the algorithm will be looking for an event
  */
-void CorrectionEngine::setFindEvent(bool b){ findEvent = b; }
+void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
 
 //-----------------------------------------------------
 //      Utility Functions
@@ -239,7 +239,7 @@ void CorrectionEngine::setFindEvent(bool b){ findEvent = b; }
  *	Adams-Bashforth Adams-Moulton method.
  *	
  *	@param set pointer to the nodeset that needs to be corrected
- *	@param nodesOut pointer to the nodeset object that will contain the results of
+ *	@param pNodesOut pointer to the nodeset object that will contain the results of
  *	the shooting process
  *	@return the iteration data object for this corrections process
  *	@throws DivergeException if the corrections process does not converge
@@ -250,14 +250,14 @@ void CorrectionEngine::setFindEvent(bool b){ findEvent = b; }
  *	* if the input nodeset contains more than one delta-v constraint
  *	* if the input nodeset contains more than one TOF constraint
  */
-MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut){
-	if(nodesOut != NULL && *(set->getSysData()) != *(nodesOut->getSysData()))
+MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut){
+	if(pNodesOut != NULL && *(set->getSysData()) != *(pNodesOut->getSysData()))
 		throw Exception("CorrectionEngine::multShoot: Input and Output nodesets must use the same system data object");
 
-	if(!isClean)
+	if(!bIsClean)
 		cleanEngine();
 
-	isClean = false;
+	bIsClean = false;
 
 	// Create structure to store iteration data for easy sharing
 	MultShootData it(set);
@@ -269,18 +269,18 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
 	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the nodeset
-	const DynamicsModel *model = set->getSysData()->getDynamicsModel();
-	model->multShoot_initDesignVec(&it, set);
+	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
+	pModel->multShoot_initDesignVec(&it, set);
 
 	// Set up scaling
 	it.freeVarScale.assign(4, 1);	// Assign all variable scalings to be one -> NOTE: ADD MORE ENTRIES IF YOU NEED MORE!!
-	if(scaleVars)
-		model->multShoot_scaleDesignVec(&it, set);
+	if(bScaleVars)
+		pModel->multShoot_scaleDesignVec(&it, set);
 
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
 	it.allCons.clear();
-	model->multShoot_createContCons(&it, set);
+	pModel->multShoot_createContCons(&it, set);
 
 	// Add all node constraints
 	for(int n = 0; n < set->getNumNodes(); n++){
@@ -311,7 +311,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
 		int addToRows = 0;
 		Constraint con = it.allCons[c];
 
-		if(!model->supportsCon(con.getType()))
+		if(!pModel->supportsCon(con.getType()))
 			throw Exception("CorrectionEngine::multShoot: The dynamic model does not support one of the constraints!");
 
 		switch(con.getType()){
@@ -331,12 +331,12 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
 				break;
 			case Constraint_tp::SP_RANGE:
 				addToRows = 1;
-				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
+				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);
 				it.numSlack++;
 				break;
 			case Constraint_tp::SP_MAX_DIST:
-				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
+				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);
 				it.numSlack++;
 			case Constraint_tp::SP_DIST:
@@ -344,7 +344,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
 				break;
 			case Constraint_tp::MAX_DIST:
 			case Constraint_tp::MIN_DIST:
-				it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
+				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);	// remember where this slack variable is hiding
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for Constraint_tp::DIST as well
@@ -362,7 +362,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
 						 * of which constraint it is assigned to; value of slack
 						 * variable will be recomputed later
 						 */
-						it.X.push_back(model->multShoot_getSlackVarVal(&it, con));
+						it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
 						it.numSlack++;
 						it.slackAssignCon.push_back(c);
 					}
@@ -414,7 +414,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
 	}
 	
 	// Run the multiple shooting process
-	return multShoot(it, nodesOut);
+	return multShoot(it, pNodesOut);
 }//==========================================================
 
 /**
@@ -423,13 +423,13 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *nodesOut)
  *  @param it A completely formed MultShootData object that describes a 
  *  multiple shooting problem. These are created from Nodeset and its
  *  derivative types by the other implementation of multShoot()
- *  @param nodesOut pointer to a nodeset object that will contain the results 
+ *  @param pNodesOut pointer to a nodeset object that will contain the results 
  *  of the shooting process
  *  @return A corrected MultShootData object
  *  @see multShoot(Nodeset*)
  *  @throws DivergeException if the multiple shooting process does not converge
  */
-MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *nodesOut){
+MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 	it.count = 0;
 
 	// create a simulation engine
@@ -447,7 +447,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *nodesOut){
 	simEngine.setVarStepSize(false);
 	simEngine.setNumSteps(2);
 
-	if(findEvent || ignoreCrash){
+	if(bFindEvent || bIgnoreCrash){
 		simEngine.clearEvents();	// don't use crash events when searching for an event
 	}
 
@@ -527,17 +527,17 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *nodesOut){
 		std::string errType = "||F||";
 
 		it.count++;
-		astrohelion::printVerbColor((findEvent && verbose == Verbosity_tp::ALL_MSG) || (!findEvent && verbose > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
+		astrohelion::printVerbColor((bFindEvent && verbose == Verbosity_tp::ALL_MSG) || (!bFindEvent && verbose > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
 			it.count, err, errType.c_str());
 	}// end of corrections loop
 
-	if(err > tol && !ignoreDiverge){
+	if(err > tol && !bIgnoreDiverge){
 		throw DivergeException();
 	}
 
-	if(nodesOut != NULL){
+	if(pNodesOut){
 		try{
-			it.sysData->getDynamicsModel()->multShoot_createOutput(&it, it.nodeset, findEvent, nodesOut);
+			it.sysData->getDynamicsModel()->multShoot_createOutput(&it, it.nodeset, bFindEvent, pNodesOut);
 		}catch(Exception &e){
 			astrohelion::printErr("CorrectionEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
 			throw e;
@@ -582,18 +582,18 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *nodesOut){
  *	@throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
-Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* it){
+Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
-	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it->X[0]), it->totalFree, 1);
-	MatrixXRd J = Eigen::Map<MatrixXRd>(&(it->DF[0]), it->totalCons, it->totalFree);
-	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it->FX[0]), it->totalCons, 1);
+	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(pIt->X[0]), pIt->totalFree, 1);
+	MatrixXRd J = Eigen::Map<MatrixXRd>(&(pIt->DF[0]), pIt->totalCons, pIt->totalFree);
+	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(pIt->FX[0]), pIt->totalCons, 1);
 
 	// change sign for matrix multiplication
 	FX *= -1;
 
 	// Create a vector to put the solution in
-	Eigen::VectorXd X_diff(it->totalFree, 1);
-	if(it->totalCons == it->totalFree){	// J is square, use regular inverse
+	Eigen::VectorXd X_diff(pIt->totalFree, 1);
+	if(pIt->totalCons == pIt->totalFree){	// J is square, use regular inverse
 
 		/* Use LU decomposition to invert the Gramm matrix and find a vector
 		w. Multiplying J^T by w yields the minimum-norm solution x, where x 
@@ -611,7 +611,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* it){
 
 		X_diff = lu.solve(FX);
 	}else{
-		if(it->totalCons < it->totalFree){	// Under-constrained
+		if(pIt->totalCons < pIt->totalFree){	// Under-constrained
 			// Compute Gramm matrix
 			MatrixXRd JT = J.transpose();
 			MatrixXRd G = J*JT;
@@ -653,18 +653,18 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* it){
  *  @brief Print out the magnitude of each constraint.
  *  @details This can be useful when debugging to highlight which constraints are unsatisfied
  * 
- *  @param it pointer to an MultShootData object associated with a corrections process
+ *  @param pIt pointer to an MultShootData object associated with a corrections process
  */
-void CorrectionEngine::reportConMags(const MultShootData *it){
+void CorrectionEngine::reportConMags(const MultShootData *pIt){
 	int conCount = 0;
-	for(long r = 0; r < (int)(it->FX.size()); r++){
-        if(r == 0 && it->totalCons > 0){
-            printf("Node %d %s Constraint:\n", it->allCons[conCount].getID(), it->allCons[conCount].getTypeStr());
-        }else if(conCount < (int)(it->allCons.size()) && r >= it->conRows[conCount+1]){
+	for(long r = 0; r < (int)(pIt->FX.size()); r++){
+        if(r == 0 && pIt->totalCons > 0){
+            printf("Node %d %s Constraint:\n", pIt->allCons[conCount].getID(), pIt->allCons[conCount].getTypeStr());
+        }else if(conCount < (int)(pIt->allCons.size()) && r >= pIt->conRows[conCount+1]){
             conCount++;
-            printf("Node %d %s Constraint:\n", it->allCons[conCount].getID(), it->allCons[conCount].getTypeStr());
+            printf("Node %d %s Constraint:\n", pIt->allCons[conCount].getID(), pIt->allCons[conCount].getTypeStr());
         }
-        printf("  ||row %03zu||: %.6e\n", r, std::abs(it->FX[r]));
+        printf("  ||row %03zu||: %.6e\n", r, std::abs(pIt->FX[r]));
     }
 }//===============================================================
 
@@ -673,7 +673,7 @@ void CorrectionEngine::reportConMags(const MultShootData *it){
  */
 void CorrectionEngine::cleanEngine(){
 	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
-	isClean = true;
+	bIsClean = true;
 }//====================================================
 
 

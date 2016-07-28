@@ -52,7 +52,7 @@ public:
 	Traj_cr3bp_ltvp(const SysData_cr3bp_ltvp*);
 	Traj_cr3bp_ltvp(const Traj_cr3bp_ltvp&);
 	Traj_cr3bp_ltvp(const BaseArcset&);
-	baseArcsetPtr create(const SysData*) const;
+	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const;
 
 	// Set and Get Functions
@@ -62,7 +62,7 @@ public:
 	void setJacobiByIx(int, double);
 	void setMassByIx(int, double);
 	
-	void saveToMat(const char*) const;
+	void saveToMat(const char*) const override;
 private:
 	void initExtraParam();
 };

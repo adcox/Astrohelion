@@ -48,13 +48,13 @@ namespace astrohelion{
  *	@param sys a pointer to a system data object that describes
  *	the system this trajectory is integrated in
  */
-BaseArcset::BaseArcset(const SysData *sys) : sysData(sys){}
+BaseArcset::BaseArcset(const SysData *sys) : pSysData(sys){}
 
 /**
  *	@brief Copy constructor
  *	@param d an arcset reference
  */
-BaseArcset::BaseArcset(const BaseArcset &d) : sysData(d.sysData){
+BaseArcset::BaseArcset(const BaseArcset &d) : pSysData(d.pSysData){
 	copyMe(d);
 }//====================================================
 
@@ -74,7 +74,7 @@ BaseArcset::~BaseArcset(){}
  */
 BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 	copyMe(d);
-	sysData = d.sysData;
+	pSysData = d.pSysData;
 	return *this;
 }//====================================================
 
@@ -278,7 +278,7 @@ int BaseArcset::addSeg(Segment s){
  *  a free link slot
  */
 int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int linkFrom_ID, double tof){
-	if(arcset->sysData != sysData)
+	if(arcset->pSysData != pSysData)
 		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
@@ -397,7 +397,7 @@ void BaseArcset::clearAllConstraints(){
  *  @throws Exception if the input arcset does not have the same system data object as this one
  */
 std::vector<int> BaseArcset::concatArcset(const BaseArcset *set){
-	if(set->sysData != sysData)
+	if(set->pSysData != pSysData)
 		throw Exception("BaseArcset::concatArcset: Cannot concatenate two arcsets with different system data objects");
 
 	// A mapping vector: index is the old node ID, value is the new node ID
@@ -1148,7 +1148,7 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
  *	@brief Retrieve the a pointer to the system data object associated with this arc
  *	@return a pointer to the system data object associated with this arc
  */
-const SysData* BaseArcset::getSysData() const { return sysData; }
+const SysData* BaseArcset::getSysData() const { return pSysData; }
 
 /**
  *  @brief Retrieve the time-of-flight associated with a segment
@@ -1440,18 +1440,18 @@ void BaseArcset::copyMe(const BaseArcset &d){
  *  until another function is called to populate the data fields with values from 
  *  the *.mat file
  * 
- *  @param matFile pointer to an open matlab data file
- *  @param varName the name of a variable that has as many rows as there are
+ *  @param pMatFile pointer to an open matlab data file
+ *  @param pVarName the name of a variable that has as many rows as there are
  *  steps along the data object. Valid variables typically include the time vector,
  *  state matrix, or acceleration matrix
  *  @throws Exception if the state vector variable cannot be read from the data file
  */
-void BaseArcset::initNodesSegsFromMat(mat_t *matFile, const char* varName){
-	matvar_t *stateMat = Mat_VarRead(matFile, varName);
-	if(stateMat == NULL){
+void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
+	if(pStateMat == NULL){
 		throw Exception("BaseArcset::initNodeSegsFromMat: Could not read state data vector");
 	}else{
-		int numSteps = stateMat->dims[0];
+		int numSteps = pStateMat->dims[0];
 		nodes.clear();
 		segs.clear();
 		nodeIDMap.clear();
@@ -1472,7 +1472,7 @@ void BaseArcset::initNodesSegsFromMat(mat_t *matFile, const char* varName){
 		// nodes.assign(numSteps, blank_node);	// Initialize array with a bunch of default objects
 		// segs.assign(numSteps-1, blank_seg);
 	}
-	Mat_VarFree(stateMat);
+	Mat_VarFree(pStateMat);
 }//======================================================
 
 /**
@@ -1531,16 +1531,16 @@ void BaseArcset::printSegIDMap() const{
  *  @details This function must be called after initNodeSegsFromMat() as it
  *  populates the step vector objects with state data
  * 
- *  @param matFile pointer to an open matlab data file
- *  @param varName the name of the state variable (e.g., "State" or "Nodes")
+ *  @param pMatFile pointer to an open matlab data file
+ *  @param pVarName the name of the state variable (e.g., "State" or "Nodes")
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readStateFromMat(mat_t *matFile, const char* varName){
-	matvar_t *stateMat = Mat_VarRead(matFile, varName);
-	if(stateMat == NULL){
+void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
+	if(pStateMat == NULL){
 		throw Exception("BaseArcset::readStateFromMat: Could not read state data vector");
 	}else{
-		int numSteps = stateMat->dims[0];
+		int numSteps = pStateMat->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readStateFromMat: Step vector has not been initialized!");
@@ -1550,12 +1550,12 @@ void BaseArcset::readStateFromMat(mat_t *matFile, const char* varName){
 			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
-		if(stateMat->dims[1] != 6){
+		if(pStateMat->dims[1] != 6){
 			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not 6.");
 		}
 
-		if(stateMat->class_type == MAT_C_DOUBLE && stateMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(stateMat->data);
+		if(pStateMat->class_type == MAT_C_DOUBLE && pStateMat->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pStateMat->data);
 
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
@@ -1574,17 +1574,17 @@ void BaseArcset::readStateFromMat(mat_t *matFile, const char* varName){
 			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
-	Mat_VarFree(stateMat);
+	Mat_VarFree(pStateMat);
 }//===============================================
 
 /**
  *  @brief Read acceleration values from a matlab file
  * 
- *  @param matFile pointer to an open Matlab file
+ *  @param pMatFile pointer to an open Matlab file
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readAccelFromMat(mat_t *matFile){
-	matvar_t *accelMat = Mat_VarRead(matFile, "Accel");
+void BaseArcset::readAccelFromMat(mat_t *pMatFile){
+	matvar_t *accelMat = Mat_VarRead(pMatFile, "Accel");
 	if(accelMat == NULL){
 		throw Exception("BaseArcset::readAccelFromMat: Could not read data vector");
 	}else{
@@ -1625,12 +1625,12 @@ void BaseArcset::readAccelFromMat(mat_t *matFile){
 /**
  *  @brief Read epoch times from a matlab file in a variable with the specified name
  * 
- *  @param matFile pointer to an open Matlab file
- *  @param varName The name of the variable within the Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param pVarName The name of the variable within the Matlab file
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readEpochFromMat(mat_t *matFile, const char* varName){
-	matvar_t *epochMat = Mat_VarRead(matFile, varName);
+void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *epochMat = Mat_VarRead(pMatFile, pVarName);
 	if(epochMat == NULL){
 		throw Exception("BaseArcset::readEpochFromMat: Could not read data vector");
 	}else{
@@ -1662,11 +1662,11 @@ void BaseArcset::readEpochFromMat(mat_t *matFile, const char* varName){
 /**
  *  @brief Read State Transition Matrices from a matlab file
  * 
- *  @param matFile pointer to an open Matlab file
+ *  @param pMatFile pointer to an open Matlab file
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readSTMFromMat(mat_t *matFile){
-	matvar_t *allSTM = Mat_VarRead(matFile, "STM");
+void BaseArcset::readSTMFromMat(mat_t *pMatFile){
+	matvar_t *allSTM = Mat_VarRead(pMatFile, "STM");
 	if(allSTM == NULL){
 		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
 	}else{
@@ -1708,12 +1708,12 @@ void BaseArcset::readSTMFromMat(mat_t *matFile){
 /**
  *  @brief Read times-of-flight from a matlab file in a variable with the specified name
  * 
- *  @param matFile pointer to an open Matlab file
- *  @param varName The name of the variable within the Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param pVarName The name of the variable within the Matlab file
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readTOFFromMat(mat_t *matFile, const char* varName){
-	matvar_t *tofMat = Mat_VarRead(matFile, varName);
+void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *tofMat = Mat_VarRead(pMatFile, pVarName);
 	if(tofMat == NULL){
 		throw Exception("BaseArcset::readTOFFromMat: Could not read data vector");
 	}else{
@@ -1745,12 +1745,12 @@ void BaseArcset::readTOFFromMat(mat_t *matFile, const char* varName){
 /**
  *  @brief Read values of the specified extra paramter from a matlab file
  * 
- *  @param matFile pointer to an open Matlab file
+ *  @param pMatFile pointer to an open Matlab file
  *  @param varIx the index of the extra parameter variable within the <tt>extraParamRowSize</tt> array
- *  @param varName the name of the storage variable within the Matlab file
+ *  @param pVarName the name of the storage variable within the Matlab file
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readExtraParamFromMat(mat_t *matFile, int varIx, const char *varName){
+void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *pVarName){
 	if(varIx >= numExtraParam || varIx < 0)
 		throw Exception("BaseArcset::readExtraParamFromMat: Could not read extra parameter; index out of bounds");
 
@@ -1758,7 +1758,7 @@ void BaseArcset::readExtraParamFromMat(mat_t *matFile, int varIx, const char *va
 	int ix0 = 0;
 	for(int i = 0; i < varIx; i++){ ix0 += extraParamRowSize[i]; }
 
-	matvar_t *matvar = Mat_VarRead(matFile, varName);
+	matvar_t *matvar = Mat_VarRead(pMatFile, pVarName);
 	if(matvar == NULL){
 		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
 	}else{
@@ -1770,7 +1770,7 @@ void BaseArcset::readExtraParamFromMat(mat_t *matFile, int varIx, const char *va
 
 		if(matvar->dims[1] != ((size_t)extraParamRowSize[varIx])){
 			char message[64];
-			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", varName, extraParamRowSize[varIx]);
+			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", pVarName, extraParamRowSize[varIx]);
 			throw Exception(message);
 		}
 
@@ -1792,9 +1792,9 @@ void BaseArcset::readExtraParamFromMat(mat_t *matFile, int varIx, const char *va
 
 /**
  *	@brief Save the acceleration vector to file
- *	@param matFile a pointer to the destination mat-file
+ *	@param pMatFile a pointer to the destination mat-file
  */
-void BaseArcset::saveAccel(mat_t *matFile) const{
+void BaseArcset::saveAccel(mat_t *pMatFile) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> accel_colMaj(3*nodes.size());
@@ -1808,23 +1808,23 @@ void BaseArcset::saveAccel(mat_t *matFile) const{
 	
 	size_t dims[2] = {nodes.size(), 3};
 	matvar_t *matvar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel_colMaj[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, matvar, "Accel", MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, matvar, "Accel", MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
  *	@brief Save all node epochs to file
- *	@param matFile a pointer to the destination mat-file
+ *	@param pMatFile a pointer to the destination mat-file
  */
-void BaseArcset::saveEpoch(mat_t *matFile) const{
-	saveEpoch(matFile, "Epoch");
+void BaseArcset::saveEpoch(mat_t *pMatFile) const{
+	saveEpoch(pMatFile, "Epoch");
 }//=====================================================
 
 /**
  *	@brief Save all node epochs to file with a specified variable name
- *	@param matFile a pointer to the destination mat-file
- *	@param varName the name of the variable
+ *	@param pMatFile a pointer to the destination mat-file
+ *	@param pVarName the name of the variable
  */
-void BaseArcset::saveEpoch(mat_t *matFile, const char* varName) const{
+void BaseArcset::saveEpoch(mat_t *pMatFile, const char* pVarName) const{
 	std::vector<double> allEpochs(nodes.size());
 
 	for(size_t n = 0; n < nodes.size(); n++){
@@ -1832,18 +1832,18 @@ void BaseArcset::saveEpoch(mat_t *matFile, const char* varName) const{
 	}
 	
 	size_t dims[2] = {allEpochs.size(), 1};
-	matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, matvar, varName, MAT_COMPRESSION_NONE);
+	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
  *	@brief Save one of the extra parameters to file
- *	@param matFile a pointer to the destination mat-file
+ *	@param pMatFile a pointer to the destination mat-file
  *	@param varIx the index of the parameter
  *	@param name the name of the variable being saved
  *	@throws Exception if <tt>varIx</tt> is out of bounds
  */
-void BaseArcset::saveExtraParam(mat_t *matFile, int varIx, const char *name) const{
+void BaseArcset::saveExtraParam(mat_t *pMatFile, int varIx, const char *name) const{
 	if(varIx > numExtraParam || varIx < 0)
 		throw Exception("Could not save extra parameter; index out of bounds");
 
@@ -1866,23 +1866,23 @@ void BaseArcset::saveExtraParam(mat_t *matFile, int varIx, const char *name) con
 
 	size_t dims[2] = {nodes.size(), static_cast<size_t>(extraParamRowSize[varIx])};
 	matvar_t *matvar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, matvar, name, MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, matvar, name, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
  *	@brief Save the state vector [pos, vel] to a file with variable name "State"
- *	@param matFile a pointer to the destination matlab file 
+ *	@param pMatFile a pointer to the destination matlab file 
  */
-void BaseArcset::saveState(mat_t *matFile) const{
-	saveState(matFile, "State");
+void BaseArcset::saveState(mat_t *pMatFile) const{
+	saveState(pMatFile, "State");
 }//==================================================
 
 /**
  *	@brief Save the state vector [pos, vel] to a file
- *	@param matFile a pointer to the destination matlab file 
- *	@param varName the name of the variable (e.g. "State" or "Nodes")
+ *	@param pMatFile a pointer to the destination matlab file 
+ *	@param pVarName the name of the variable (e.g. "State" or "Nodes")
  */
-void BaseArcset::saveState(mat_t *matFile, const char* varName) const{
+void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> posVel(6*nodes.size());
@@ -1896,7 +1896,7 @@ void BaseArcset::saveState(mat_t *matFile, const char* varName) const{
 
 	// Next, create a matlab variable for the state and save it to the file
 	/*	Create a matlab variable. Arguments are:
-	 *	const char *name 	- varName, the name of the variable
+	 *	const char *name 	- pVarName, the name of the variable
 	 *	enum matio_classes 	- MAT_C_DOUBLE, Matlab double-precision variable class
 	 *	enum matio_types 	- MAT_T_DOUBLE, Matlab IEEE 754 double precision data type
 	 * 	int rank 			- 2 - the variable rank. Must be 2 or more; not really sure what this does
@@ -1913,16 +1913,16 @@ void BaseArcset::saveState(mat_t *matFile, const char* varName) const{
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
 	size_t dims[2] = {nodes.size(), 6};
-	matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, matvar, varName, MAT_COMPRESSION_NONE);
+	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
  *	@brief Save the STMs to a file; STMs are stored in a 6x6xn array for 
  *	compatibility with existing MATLAB scripts
- *	@param matFile a pointer to the destination matlab file 
+ *	@param pMatFile a pointer to the destination matlab file 
  */
-void BaseArcset::saveSTMs(mat_t *matFile) const{
+void BaseArcset::saveSTMs(mat_t *pMatFile) const{
 	// Create one large vector to put all the STM elements in
 	std::vector<double> allSTMEl(segs.size()*36);
 
@@ -1938,15 +1938,15 @@ void BaseArcset::saveSTMs(mat_t *matFile) const{
 
 	size_t dims[3] = {6, 6, segs.size()};
 	matvar_t *matvar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, matvar, "STM", MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, matvar, "STM", MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
  *	@brief Save all segment times-of-flight to file with a specified variable name
- *	@param matFile a pointer to the destination mat-file
- *	@param varName the name of the variable
+ *	@param pMatFile a pointer to the destination mat-file
+ *	@param pVarName the name of the variable
  */
-void BaseArcset::saveTOF(mat_t *matFile, const char* varName) const{
+void BaseArcset::saveTOF(mat_t *pMatFile, const char* pVarName) const{
 	std::vector<double> allTOFs(segs.size());
 
 	for(size_t n = 0; n < segs.size(); n++){
@@ -1954,8 +1954,8 @@ void BaseArcset::saveTOF(mat_t *matFile, const char* varName) const{
 	}
 	
 	size_t dims[2] = {allTOFs.size(), 1};
-	matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, matvar, varName, MAT_COMPRESSION_NONE);
+	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 

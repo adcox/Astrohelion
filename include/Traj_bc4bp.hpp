@@ -53,8 +53,8 @@ public:
 	Traj_bc4bp(const Traj_bc4bp&);
 	Traj_bc4bp(const BaseArcset&);
 	Traj_bc4bp(const char*);
-	baseArcsetPtr create(const SysData*) const;
-	baseArcsetPtr clone() const;
+	baseArcsetPtr create(const SysData*) const override;
+	baseArcsetPtr clone() const override;
 	//static Traj_bc4bp fromNodeset(Nodeset_bc4bp);
 
 	// Set and Get Functions
@@ -66,8 +66,8 @@ public:
 	void set_dqdTByIx(int, const double*);
 	void set_dqdTByIx(int, std::vector<double>);
 
-	void readFromMat(const char*);
-	void saveToMat(const char*) const;
+	void readFromMat(const char*) override;
+	void saveToMat(const char*) const override;
 private:
 
 	void initExtraParam();

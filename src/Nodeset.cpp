@@ -143,7 +143,7 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
  Nodeset operator +(const Nodeset &lhs, const Nodeset &rhs){
 	const Nodeset lhs_cpy(lhs);
 	const Nodeset rhs_cpy(rhs);
-	Nodeset result(lhs.sysData);
+	Nodeset result(lhs.pSysData);
 
 	BaseArcset::sum(&lhs, &rhs, &result);
 
@@ -248,7 +248,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	 * 	to ensure that no new nodes are created with TOF less than minTimeDiff
 	 */
 	double segTOF = seg.getTOF() < 0 ? seg.getTOF() + std::abs(minTimeDiff) : seg.getTOF() - std::abs(minTimeDiff);
-	Traj traj(sysData);
+	Traj traj(pSysData);
 	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
 
 	double T0 = traj.getEpochByIx(0);
@@ -331,7 +331,7 @@ void Nodeset::allowDV_none(){
  *	@brief Display a textual representation of this object in the standard output
  */
 void Nodeset::print() const{
-	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", sysData->getTypeStr().c_str(),
+	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", pSysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
 	for(const auto &index : nodeIDMap){
@@ -431,7 +431,7 @@ void Nodeset::saveToMat(const char* filename) const{
 		saveState(matfp, "Nodes");
 		saveEpoch(matfp, "Epochs");
 		saveTOF(matfp, "TOFs");
-		sysData->saveToMat(matfp);
+		pSysData->saveToMat(matfp);
 		// TODO: Add these functions:
 		// saveCons(matfp);
 		// saveVelCon(matfp);
@@ -515,7 +515,7 @@ void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int nu
 	std::vector<double> ic(IC, IC+6);
 
 	for(int n = 0; n < numNodes-1; n++){
-		Traj traj(sysData);
+		Traj traj(pSysData);
 		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);
 
 		id = addNode(Node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
@@ -540,7 +540,7 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
 	engine.setRevTime(tof < 0);
 
 	// Run the simulation and get the trajectory
-	Traj traj(sysData);
+	Traj traj(pSysData);
 	engine.runSim(IC, t0, tof, &traj);
 
 	// Compute the total arc length using a linear approximation

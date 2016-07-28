@@ -202,7 +202,7 @@ void Traj_cr3bp::saveToMat(const char* filename) const{
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
 		saveExtraParam(matfp, 0, "Jacobi");
-		sysData->saveToMat(matfp);
+		pSysData->saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);

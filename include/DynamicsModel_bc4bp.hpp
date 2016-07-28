@@ -68,24 +68,24 @@ public:
 	static void orientAtEpoch(double, SysData_bc4bp*);
 	
 	// Multiple Shooting functions
-	void multShoot_initDesignVec(MultShootData*, const Nodeset*) const;
-	void multShoot_initIterData(MultShootData *it) const;
-	void multShoot_scaleDesignVec(MultShootData*, const Nodeset*) const;
-	void multShoot_createContCons(MultShootData*, const Nodeset*) const;
-	void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const;
-	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const;
-	void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
+	void multShoot_initDesignVec(MultShootData*, const Nodeset*) const override;
+	void multShoot_initIterData(MultShootData *it) const override;
+	void multShoot_scaleDesignVec(MultShootData*, const Nodeset*) const override;
+	void multShoot_createContCons(MultShootData*, const Nodeset*) const override;
+	void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const override;
+	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const override;
+	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
 	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
 
 protected:
-	void multShoot_targetCont_PosVel(MultShootData*, Constraint, int) const;
-	void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const;
-	void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const;
-	void multShoot_targetState(MultShootData*, Constraint, int) const;
-	void multShoot_targetDeltaV(MultShootData*, Constraint, int) const;
-	void multShoot_targetDist(MultShootData*, Constraint, int) const;
-	double multShoot_targetDist_compSlackVar(const MultShootData*, Constraint) const;
-	void multShoot_targetApse(MultShootData*, Constraint, int) const;
+	void multShoot_targetCont_PosVel(MultShootData*, Constraint, int) const override;
+	void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const override;
+	void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const override;
+	void multShoot_targetState(MultShootData*, Constraint, int) const override;
+	void multShoot_targetDeltaV(MultShootData*, Constraint, int) const override;
+	void multShoot_targetDist(MultShootData*, Constraint, int) const override;
+	double multShoot_targetDist_compSlackVar(const MultShootData*, Constraint) const override;
+	void multShoot_targetApse(MultShootData*, Constraint, int) const override;
 	void multShoot_targetSP(MultShootData*, Constraint, int) const;
 	void multShoot_targetSP_mag(MultShootData*, Constraint, int) const;
 	void multShoot_targetSP_dist(MultShootData*, Constraint, int) const;

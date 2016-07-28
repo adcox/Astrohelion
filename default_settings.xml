@@ -1,5 +1,5 @@
 <tpat>
 	<spice>
-		<data_filepath>"~/SPICE/data/"</data_filepath>
+		<data_filepath>"/Users/andrew/Documents/Purdue/Astrodynamics_Research/Code/C++/share/data_SPICE"</data_filepath>
 	</spice>
 </tpat>

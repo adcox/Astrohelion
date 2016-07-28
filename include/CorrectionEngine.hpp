@@ -126,19 +126,19 @@ class CorrectionEngine : public Core{
 		double tol = 1e-12;
 
 		/** Flag to turn on when this algorithm is being used to locate an event */
-		bool findEvent = false;
+		bool bFindEvent = false;
 
 		/** Flag to turn off crash detection in the simulation engine */
-		bool ignoreCrash = false;
+		bool bIgnoreCrash = false;
 
 		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
-		bool ignoreDiverge = false;
+		bool bIgnoreDiverge = false;
 
 		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
-		bool scaleVars = false;
+		bool bScaleVars = false;
 
 		/** Whether or not the engine is ready to be cleaned and/or deconstructed */
-		bool isClean = true;
+		bool bIsClean = true;
 
 		void cleanEngine();
 		void copyEngine(const CorrectionEngine&);

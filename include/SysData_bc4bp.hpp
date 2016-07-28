@@ -70,8 +70,8 @@ class SysData_bc4bp : public SysData{
 		void setPhi0(double p);
 		void setGamma(double g);
 
-		void saveToMat(const char*) const;
-		void saveToMat(mat_t*) const;
+		void saveToMat(const char*) const override;
+		void saveToMat(mat_t*) const override;
 
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */
 		static double REF_EPOCH;	// 2005/06/21 18:21:35

@@ -64,8 +64,8 @@ public:
 	// Nodeset_bc4bp(const Nodeset_bc4bp&, int, int);
 	Nodeset_bc4bp(const Nodeset_bc4bp&);
 	Nodeset_bc4bp(const BaseArcset&);
-	baseArcsetPtr create(const SysData*) const;
-	baseArcsetPtr clone() const;
+	baseArcsetPtr create(const SysData*) const override;
+	baseArcsetPtr clone() const override;
 
 	// Operators
 
@@ -74,7 +74,7 @@ public:
 	// Utility Functions
 	
 private:
-	void initExtraParam();
+	void initExtraParam() override;
 };
 
 }

@@ -179,7 +179,7 @@ public:
 
 protected:
 	/** A pointer to the system data object that the describes the system this arc exists in */
-	const SysData *sysData;
+	const SysData *pSysData;
 
 	/** Contains all nodes or integration steps along an arc data object */
 	std::vector<Node> nodes {};

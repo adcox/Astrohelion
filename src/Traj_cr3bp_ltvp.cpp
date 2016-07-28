@@ -203,7 +203,7 @@ void Traj_cr3bp_ltvp::saveToMat(const char* filename) const{
 		saveSTMs(matfp);
 		saveExtraParam(matfp, 0, "Jacobi");
 		saveExtraParam(matfp, 1, "Mass");
-		sysData->saveToMat(matfp);
+		pSysData->saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);

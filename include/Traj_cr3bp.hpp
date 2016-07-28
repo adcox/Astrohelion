@@ -52,19 +52,19 @@ public:
 	Traj_cr3bp(const SysData_cr3bp*);
 	Traj_cr3bp(const Traj_cr3bp&);
 	Traj_cr3bp(const BaseArcset&);
-	baseArcsetPtr create(const SysData*) const;
-	baseArcsetPtr clone() const;
+	baseArcsetPtr create(const SysData*) const override;
+	baseArcsetPtr clone() const override;
 
 	// Operators
-	Traj& operator +=(const Traj&);
+	Traj& operator +=(const Traj&) override;
 	
 	// Set and Get Functions
 	double getJacobiByIx(int) const;
 	void setJacobiByIx(int, double);
 
 	// Utility
-	void readFromMat(const char*);
-	void saveToMat(const char*) const;
+	void readFromMat(const char*) override;
+	void saveToMat(const char*) const override;
 private:
 
 	void initExtraParam();

@@ -153,7 +153,7 @@ baseArcsetPtr Traj::clone() const{
 Traj operator +(const Traj &lhs, const Traj &rhs){
 	const Traj lhs_cpy(lhs);
 	const Traj rhs_cpy(rhs);
-	Traj result(lhs.sysData);
+	Traj result(lhs.pSysData);
 
 	BaseArcset::sum(&lhs, &rhs, &result);
 
@@ -251,7 +251,7 @@ Nodeset Traj::discretize(int numNodes) const{
 
 	double stepSize = (double)(nodes.size()-1)/((double)numNodes - 1.0);
 
-	Nodeset nodeset(sysData);
+	Nodeset nodeset(pSysData);
 	int n = 0;
 	while(n < numNodes){
 		// Round the step number
@@ -294,7 +294,7 @@ void Traj::saveToMat(const char* filename) const{
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
-		sysData->saveToMat(matfp);
+		pSysData->saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);

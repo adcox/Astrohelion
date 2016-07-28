@@ -54,10 +54,10 @@ class SysData_cr3bp : public SysData{
 		
 		SysData_cr3bp& operator=(const SysData_cr3bp&);
 		
-		const DynamicsModel* getDynamicsModel() const;
+		const DynamicsModel* getDynamicsModel() const ;
 		double getMu() const;
 
-		void saveToMat(const char*) const;
+		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
 		
 	protected:

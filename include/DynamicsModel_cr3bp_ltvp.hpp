@@ -59,7 +59,7 @@ public:
 
 	// Multiple Shooting Functions
 	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
-	void multShoot_initIterData(MultShootData *it) const;
+	void multShoot_initIterData(MultShootData *it) const override;
 };
 
 }

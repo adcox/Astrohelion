@@ -104,7 +104,7 @@ baseArcsetPtr Traj_bc4bp::clone() const{
  *	@return the angle between the P1/P2 line and the inertial x-axis, radians
  */
 double Traj_bc4bp::getTheta0(){
-	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(sysData);
+	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
 	return bcSys->getTheta0();
 }//====================================================
 
@@ -113,7 +113,7 @@ double Traj_bc4bp::getTheta0(){
  *	and the inertial x-axis, radians
  */
 double Traj_bc4bp::getPhi0(){
-	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(sysData);
+	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
 	return bcSys->getPhi0();
 }//====================================================
 
@@ -122,7 +122,7 @@ double Traj_bc4bp::getPhi0(){
  *	plane, radians
  */
 double Traj_bc4bp::getGamma(){
-	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(sysData);
+	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
 	return bcSys->getGamma();
 }//====================================================
 
@@ -212,7 +212,7 @@ void Traj_bc4bp::saveToMat(const char* filename) const{
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
 		saveExtraParam(matfp, 0, "dqdT");
-		sysData->saveToMat(matfp);
+		pSysData->saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);

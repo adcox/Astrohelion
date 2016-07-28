@@ -67,9 +67,9 @@ public:
 	bool sim_locateEvent(Event, Traj*, const double*, double, double, Verbosity_tp) const;
 
 	// Multiple Shooting Functions
-	void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
+	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
 	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
-	void multShoot_initIterData(MultShootData *it) const;
+	void multShoot_initIterData(MultShootData *it) const override;
 	
 protected:
 	void multShoot_targetJC(MultShootData*, Constraint, int) const;

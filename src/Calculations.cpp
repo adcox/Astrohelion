@@ -70,7 +70,7 @@ namespace astrohelion{
 /**
  *  @brief convert a date to epoch time
  *  
- *  @param date a string representing the date. The string can be formatted in one
+ *  @param pDate a string representing the date. The string can be formatted in one
  *  of two ways. First, a Gregorian-style date: 'YYYY/MM/DD HH:II:SS' (UTC, 24-hour clock);
  *  The time 'HH:II:SS' can be ommited, and the function will assume the time is 0:0:00
  *  Second, a Julian date (UTC) can be input with the format 'jd #' where '#' represents
@@ -80,7 +80,7 @@ namespace astrohelion{
  *  @throws Exception if the SPICE kernels cannot be loaded: the kernel names and
  *  filepaths are located in the settings XML file
  */
-double dateToEpochTime(const char *date){
+double dateToEpochTime(const char *pDate){
     std::string spice_path = Core::initializer.settings.spice_data_filepath;
     std::string time_kernel = Core::initializer.settings.spice_time_kernel;
 
@@ -99,7 +99,7 @@ double dateToEpochTime(const char *date){
 
     // Convert the date to epoch time
     double et = 0;
-    str2et_c(date, &et);
+    str2et_c(pDate, &et);
 
     // Unload the kernel
     unload_c(timeKernel);
@@ -278,11 +278,11 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
  *
  *  @param eigVals vector of eigenvalues in row-major order. We assume that 6 eigenvalues are 
  *  included in each row.
- *  @param sortedIxs a pointer to an integer vector that will store the indices of the original
+ *  @param pSortedIxs a pointer to an integer vector that will store the indices of the original
  *  eigenvalues in their new order (after sorting)
  *  @return the sorted eigenvalues, again in row-major order in a vector
  */
-std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sortedIxs){
+std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSortedIxs){
     if(eigVals.size() == 0){
         astrohelion::printErr("tpat_calculations::sortEig: Cannot sort eigenvalues: there are no family members\n");
         return eigVals;
@@ -329,8 +329,8 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         if(m == 1){
             if(saveSmallestErrVal < MAX_ONES_ERR){
                 // Update the indices of the ones in case they got moved in the first sorting
-                onesIx[0] = sortedIxs->at(onesIx[0]);
-                onesIx[1] = sortedIxs->at(onesIx[1]);
+                onesIx[0] = pSortedIxs->at(onesIx[0]);
+                onesIx[1] = pSortedIxs->at(onesIx[1]);
                 printf("Updated unit eigenvalue positions to %d and %d\n", onesIx[0], onesIx[1]);
             }
             std::copy(sortedEigs.begin(), sortedEigs.begin()+6, predict);
@@ -464,7 +464,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
         // printf("Chose Perm %04d: [%d %d %d %d %d %d]\n", ix, ixPerms[6*ix+0], ixPerms[6*ix+1], ixPerms[6*ix+2],
         //     ixPerms[6*ix+3], ixPerms[6*ix+4], ixPerms[6*ix+5]);
 
-        sortedIxs->insert(sortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
+        pSortedIxs->insert(pSortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
 
         // astrohelion::printColor(GREEN, "  Sorted Set %03d: [%s %s %s %s %s %s]\n", m, complexToStr(sortedEigs[m*6+0]).c_str(),
         //     complexToStr(sortedEigs[m*6+1]).c_str(), complexToStr(sortedEigs[m*6+2]).c_str(), complexToStr(sortedEigs[m*6+3]).c_str(),
@@ -480,7 +480,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
  *  @details [long description]
  * 
  *  @param type The type of manifolds to generate
- *  @param perOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
+ *  @param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
  *  so this function also performs well for nearly periodic segments of quasi-periodic
  *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
  *  @param numMans The number of manifolds to generate
@@ -489,9 +489,9 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *sor
  *  @throws Exception if the eigenvalues cannot be computed, or if only one
  *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
  */
-std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *perOrbit, int numMans, double tof){
+std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrbit, int numMans, double tof){
     // Get eigenvalues of monodromy matrix
-    MatrixXRd mono = perOrbit->getSTMByIx(-1);
+    MatrixXRd mono = pPerOrbit->getSTMByIx(-1);
 
     Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)
@@ -543,12 +543,12 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *perOrbi
      *  in time and/or arclength
      */
     // Get a bunch of points to use as starting guesses for the manifolds
-    if(numMans > perOrbit->getNumNodes()){
+    if(numMans > pPerOrbit->getNumNodes()){
         astrohelion::printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer\n");
-        numMans = perOrbit->getNumNodes();
+        numMans = pPerOrbit->getNumNodes();
     }
 
-    double stepSize = ((double)perOrbit->getNumNodes())/((double)numMans);
+    double stepSize = ((double)pPerOrbit->getNumNodes())/((double)numMans);
     std::vector<int> pointIx(numMans, 0);
     for(int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
@@ -561,10 +561,10 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *perOrbi
     // NOW, copute the manifolds!
     SimEngine sim;
     double stepDist = 200;
-    double charL = perOrbit->getSysData()->getCharL();
+    double charL = pPerOrbit->getSysData()->getCharL();
     for(int n = 0; n < numMans; n++){
         // Transform the eigenvectors to this updated time
-        MatrixXRd newVecs = perOrbit->getSTMByIx(pointIx[n])*vecs;
+        MatrixXRd newVecs = pPerOrbit->getSTMByIx(pointIx[n])*vecs;
 
         // Pick the direction from one of the transformed eigenvectors
         Eigen::VectorXd direction(6);
@@ -595,12 +595,12 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *perOrbi
             direction *= -1;
 
         // Step away from the point on the arc in the direction of the eigenvector
-        std::vector<double> state = perOrbit->getStateByIx(pointIx[n]);
+        std::vector<double> state = pPerOrbit->getStateByIx(pointIx[n]);
         Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
         q0 += stepDist/charL * direction;
 
         // Simulate for some time to generate a manifold arc
-        Traj_cr3bp traj(static_cast<const SysData_cr3bp *>(perOrbit->getSysData()));
+        Traj_cr3bp traj(static_cast<const SysData_cr3bp *>(pPerOrbit->getSysData()));
         sim.runSim(q0.data(), tof, &traj);
         allManifolds.push_back(traj);
     }
@@ -648,15 +648,15 @@ double getStabilityIndex(std::vector<cdouble> eigs){
 /**
  *  @brief Compute the total delta-V along a corrected nodeset
  * 
- *  @param it pointer to an MultShootData object associated with a corrections process
+ *  @param pIt pointer to an MultShootData object associated with a corrections process
  *  @return the total delta-V, units consistent with the nodeset's stored velocity states
  */
-double getTotalDV(const MultShootData *it){
+double getTotalDV(const MultShootData *pIt){
     double total = 0;
-    for(size_t n = 0; n < it->deltaVs.size()/3; n++){
-        total += sqrt(it->deltaVs[3*n + 0]*it->deltaVs[3*n + 0] +
-            it->deltaVs[3*n + 1]*it->deltaVs[3*n + 1] + 
-            it->deltaVs[3*n + 2]*it->deltaVs[3*n + 2]);
+    for(size_t n = 0; n < pIt->deltaVs.size()/3; n++){
+        total += sqrt(pIt->deltaVs[3*n + 0]*pIt->deltaVs[3*n + 0] +
+            pIt->deltaVs[3*n + 1]*pIt->deltaVs[3*n + 1] + 
+            pIt->deltaVs[3*n + 2]*pIt->deltaVs[3*n + 2]);
     }
     return total;
 }//=====================================================
@@ -666,11 +666,11 @@ double getTotalDV(const MultShootData *it){
  *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  @param nodeset A nodeset with some constraints
+ *  @param pNodeset A nodeset with some constraints
  */
-void finiteDiff_checkMultShoot(const Nodeset *nodeset){
+void finiteDiff_checkMultShoot(const Nodeset *pNodeset){
     CorrectionEngine engine;  // Create engine with default settings
-    finiteDiff_checkMultShoot(nodeset, engine);
+    finiteDiff_checkMultShoot(pNodeset, engine);
 }//====================================================
 
 /**
@@ -678,12 +678,12 @@ void finiteDiff_checkMultShoot(const Nodeset *nodeset){
  *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  @param nodeset A nodeset with some constraints
+ *  @param pNodeset A nodeset with some constraints
  *  @param engine correction engine object configured with the appropriate settings (i.e.,
  *  equal arc time, scaling variables, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
  */
-void finiteDiff_checkMultShoot(const Nodeset *nodeset, CorrectionEngine engine){
+void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine){
     printf("Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
     CorrectionEngine corrector(engine);
@@ -692,7 +692,7 @@ void finiteDiff_checkMultShoot(const Nodeset *nodeset, CorrectionEngine engine){
     corrector.setIgnoreDiverge(true);
 
     // Run multiple shooter to get X, FX, and DF
-    MultShootData it = corrector.multShoot(nodeset, NULL);
+    MultShootData it = corrector.multShoot(pNodeset, NULL);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
@@ -826,12 +826,12 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *  The initial and final states are constrained based on the mirror type, but
  *  all other states are allowed to vary during the corrections process. If you
  *  wish to constrain a specific states, see 
- *  cr3bp_getPeriodic(sys, IC, period, numNodes, mirrorType, fixedStates)
+ *  cr3bp_getPeriodic(pSys, IC, period, numNodes, mirrorType, fixedStates)
  *  This function also uses only two nodes; to specify more, see the function above.
  *
  *  This function also assumes the order of the periodic orbit is 1
  *
- *  @param sys the dynamical system
+ *  @param pSys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
  *  @param mirrorType how this periodic orbit mirrors in the CR3BP
@@ -842,11 +842,11 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
+Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, Mirror_tp mirrorType, double tol){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
-    return cr3bp_getPeriodic(sys, IC, period, 2, 1, mirrorType, fixedStates, tol);
+    return cr3bp_getPeriodic(pSys, IC, period, 2, 1, mirrorType, fixedStates, tol);
 }//========================================
 
 /**
@@ -854,7 +854,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  @details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
  *  
- *  @param sys the dynamical system
+ *  @param pSys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
  *  @param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
@@ -872,13 +872,13 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
+Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, int numNodes, int order, Mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol){
 
-    // MultShootData itData;
-    // return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
-    return cr3bp_getPeriodic(sys, IC, period, numNodes, order, mirrorType, fixedStates, tol, NULL);
+
+    // return cr3bp_getPeriodic(pSys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
+    return cr3bp_getPeriodic(pSys, IC, period, numNodes, order, mirrorType, fixedStates, tol, NULL);
 }//====================================================================
 
 /**
@@ -886,7 +886,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  @details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
  *  
- *  @param sys the dynamical system
+ *  @param pSys the dynamical system
  *  @param IC non-dimensional initial state vector
  *  @param period non-dimensional period for the orbit
  *  @param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
@@ -898,7 +898,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  we would like to fix. Not all states are possible for each mirror condition.
  *  See the enum definition for specific details.
  *  @param tol tolerance to use in the corrections process
- *  @param itData a pointer to an iteration data object that contains data from the
+ *  @param pItData a pointer to an iteration data object that contains data from the
  *  multiple shooting run that corrects the periodic orbit; this is useful when
  *  attempting to determine how well (or poorly) the multiple shooting algorithm
  *  performed (e.g., for a variable step-size process)
@@ -911,9 +911,9 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  @throws DivergeException if the multiple shooting algorithm cannot converge on a 
  *  mirrored solution.
  */
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
+Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, int numNodes, int order, Mirror_tp mirrorType, std::vector<int> fixedStates,
-    double tol, MultShootData* itData){
+    double tol, MultShootData* pItData){
 
     SimEngine sim;    // Engine to perform simulation
     sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
@@ -921,7 +921,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
     sim.clearEvents();                  // Ignore any crashes into the primaries
     std::vector<int> zeroStates;        // Which states must be zero to ensure a perpendicular crossing
 
-    Event mirrorEvt(sys);
+    Event mirrorEvt(pSys);
     // Determine which states must be zero for mirroring
     switch(mirrorType){
         case Mirror_tp::MIRROR_XZ:
@@ -990,7 +990,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
     Constraint finalStateCon(Constraint_tp::STATE, numNodes-1, mirrorCon1, 6);
 
     // Run the sim until the event is triggered
-    Traj_cr3bp halfOrbArc(sys);
+    Traj_cr3bp halfOrbArc(pSys);
     sim.runSim(IC, period, &halfOrbArc);
     
     // Check to make sure the simulation ended with the event (not running out of time)
@@ -1019,8 +1019,8 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
     corrector.setEqualArcTime(true);
 
     try{
-        Nodeset_cr3bp correctedHalfPer(sys);
-        *itData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
+        Nodeset_cr3bp correctedHalfPer(pSys);
+        *pItData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
 
         // Make the nodeset into a trajectory
         Traj_cr3bp halfPerTraj = Traj_cr3bp::fromNodeset(correctedHalfPer);
@@ -1084,7 +1084,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  value in the time vector reflects correct initial time.
  *
  *  @param EMTraj a CR3BP Earth-Moon trajectory
- *  @param SESys a Sun-Earth CR3BP system data object
+ *  @param pSESys a Sun-Earth CR3BP system data object
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1092,10 +1092,10 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *sys, std::vector<double> IC,
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *SESys, double thetaE0, double thetaM0, double gamma){
+Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0, double gamma){
     printf("cr3bp_EM2SE\n");
     // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp seNodes = cr3bp_EM2SE(static_cast<Nodeset_cr3bp>(EMTraj), SESys, thetaE0, thetaM0, gamma);
+    Nodeset_cr3bp seNodes = cr3bp_EM2SE(static_cast<Nodeset_cr3bp>(EMTraj), pSESys, thetaE0, thetaM0, gamma);
     return static_cast<Traj_cr3bp>(seNodes);
 }//=========================================================
 
@@ -1108,7 +1108,7 @@ Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *SESys, double the
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
  *  @param EMNodes a CR3BP Earth-Moon nodeset
- *  @param SESys a Sun-Earth CR3BP system data object
+ *  @param pSESys a Sun-Earth CR3BP system data object
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1116,18 +1116,18 @@ Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *SESys, double the
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *SESys, double thetaE0, double thetaM0,
+Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0,
     double gamma){
 
     // astrohelion::printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d Segments\n", EMNodes.getNumNodes(),
     //     EMNodes.getNumSegs());
 
-    Nodeset_cr3bp SENodes(SESys);
+    Nodeset_cr3bp SENodes(pSESys);
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
-    double charTS = SESys->getCharT();                       // characteristic time in SE system
-    double charLS = SESys->getCharL();                       // characteristic length in SE system
+    double charTS = pSESys->getCharT();                       // characteristic time in SE system
+    double charLS = pSESys->getCharL();                       // characteristic length in SE system
 
     std::vector<int> map_oldID_to_newID(EMNodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> state_SE;
@@ -1136,7 +1136,7 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *SESys, dou
     for(int n = 0; n < EMNodes.getNumNodes(); n++){
         epoch = EMNodes.getEpochByIx(n);
         state_SE = cr3bp_EM2SE_state(EMNodes.getStateByIx(n), epoch, thetaE0, thetaM0,
-            gamma, charLE, charTE, charLS, charTS, SESys->getMu());
+            gamma, charLE, charTE, charLS, charTS, pSESys->getMu());
         
         map_oldID_to_newID[EMNodes.getNodeByIx(n).getID()] = SENodes.addNode(Node(state_SE, epoch*charTE/charTS));
     }
@@ -1169,7 +1169,7 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *SESys, dou
  *  the epoch for the entire trajectory may be accomplished via the updateEpochs() function.
  *
  *  @param SETraj a CR3BP Sun-Earth trajectory
- *  @param EMSys an Earth-Moon CR3BP system data object
+ *  @param pEMSys an Earth-Moon CR3BP system data object
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1177,9 +1177,9 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *SESys, dou
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *EMSys, double thetaE0, double thetaM0, double gamma){
+Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0, double gamma){
     // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp emNodes = cr3bp_SE2EM(static_cast<Nodeset_cr3bp>(SETraj), EMSys, thetaE0, thetaM0, gamma);
+    Nodeset_cr3bp emNodes = cr3bp_SE2EM(static_cast<Nodeset_cr3bp>(SETraj), pEMSys, thetaE0, thetaM0, gamma);
     return static_cast<Traj_cr3bp>(emNodes);
 }//=========================================================
 
@@ -1192,7 +1192,7 @@ Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *EMSys, double the
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
  *  @param SENodes a CR3BP Sun-Earth nodeset
- *  @param EMSys an Earth-Moon CR3BP system data object
+ *  @param pEMSys an Earth-Moon CR3BP system data object
  *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
  *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
@@ -1200,20 +1200,20 @@ Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *EMSys, double the
  *  @param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *EMSys, double thetaE0, double thetaM0,
+Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0,
     double gamma){
 
     // astrohelion::printColor(BLUE, "Converting SE to EM\nSE Sys:\n  %d Nodes\n  %d Segments\n", SENodes.getNumNodes(),
     //     SENodes.getNumSegs());
 
-    Nodeset_cr3bp EMNodes(EMSys);
+    Nodeset_cr3bp EMNodes(pEMSys);
 
-    double charTE = EMSys->getCharT();                   // characteristic time in EM system
-    double charLE = EMSys->getCharL();                   // characteristic length in EM system
+    double charTE = pEMSys->getCharT();                   // characteristic time in EM system
+    double charLE = pEMSys->getCharL();                   // characteristic length in EM system
     double charTS = SENodes.getSysData()->getCharT();    // characteristic time in SE system
     double charLS = SENodes.getSysData()->getCharL();    // characteristic length in SE system
 
-    const SysData_cr3bp *SESys = static_cast<const SysData_cr3bp*>(SENodes.getSysData());
+    const SysData_cr3bp *pSESys = static_cast<const SysData_cr3bp*>(SENodes.getSysData());
 
     std::vector<int> map_oldID_to_newID(SENodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> state_EM;
@@ -1223,7 +1223,7 @@ Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *EMSys, dou
         epoch = SENodes.getEpochByIx(n);
         // Transform a single node
         state_EM = cr3bp_SE2EM_state(SENodes.getStateByIx(n), epoch, thetaE0, thetaM0,
-            gamma, charLE, charTE, charLS, charTS, SESys->getMu());
+            gamma, charLE, charTE, charLS, charTS, pSESys->getMu());
         
         map_oldID_to_newID[SENodes.getNodeByIx(n).getID()] = EMNodes.addNode(Node(state_EM, epoch*charTS/charTE));
     }
@@ -1417,22 +1417,22 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
         throw Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
     }
 
-    const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(nodes.getSysData());
+    const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(nodes.getSysData());
 
-    Nodeset_cr3bp inertNodes(sys);
+    Nodeset_cr3bp inertNodes(pSys);
     std::vector<int> map_oldID_to_newID(nodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> stateInert;
     
     for(int i = 0; i < nodes.getNumNodes(); i++){
-        stateInert = cr3bp_rot2inert_state(nodes.getStateByIx(i), sys, nodes.getEpochByIx(i), centerIx);
+        stateInert = cr3bp_rot2inert_state(nodes.getStateByIx(i), pSys, nodes.getEpochByIx(i), centerIx);
         
         // Save the new ID    
-        map_oldID_to_newID[nodes.getNodeByIx(i).getID()] = inertNodes.addNode(Node(stateInert, nodes.getEpochByIx(i)*sys->getCharT()));
+        map_oldID_to_newID[nodes.getNodeByIx(i).getID()] = inertNodes.addNode(Node(stateInert, nodes.getEpochByIx(i)*pSys->getCharT()));
     }
 
     for(int s = 0; s < nodes.getNumSegs(); s++){
         Segment seg = nodes.getSegByIx(s);
-        seg.setTOF(seg.getTOF()*sys->getCharT());
+        seg.setTOF(seg.getTOF()*pSys->getCharT());
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1451,7 +1451,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param state_rot a 6-element non-dimensional state in rotating coordinates
- *  @param sys a pointer to the CR3BP system the state exists in
+ *  @param pSys a pointer to the CR3BP system the state exists in
  *  @param t the non-dimensional time associated with the input state
  *  @param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
@@ -1461,7 +1461,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
  *  @return A state centered around the specified index in inertial, dimensional coordinates
  *  @throw Exception if <tt>centerIx</tt> is out of bounds
  */
-std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const SysData_cr3bp *sys, 
+std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const SysData_cr3bp *pSys, 
     double t, int centerIx){
 
     if(centerIx < 0 || centerIx > 1){
@@ -1471,7 +1471,7 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
     Matrix3Rd I = Matrix3Rd::Identity(3,3);
 
     // Shift from Barycenter-centered coordinates to primary-centered coordinates
-    Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-sys->getMu()) : I.row(0)*(1 - sys->getMu());
+    Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-pSys->getMu()) : I.row(0)*(1 - pSys->getMu());
     
     // Angular velocity of rotating frame relative to inertial, non-dim units
     Eigen::RowVector3d omegaECI = I.row(2);
@@ -1483,10 +1483,10 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
     Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
 
     // Shift, rotate, scale coordinates into inertial, dimensional
-    Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*sys->getCharL();
+    Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*pSys->getCharL();
 
     // Transform velocity into inertial, dimensional
-    Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*sys->getCharL()/sys->getCharT();
+    Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*pSys->getCharL()/pSys->getCharT();
 
     // Concatenate data into a state vector
     std::vector<double> stateInert;
@@ -1504,18 +1504,18 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
  *  @brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
  *
  *  @param crTraj a CR3BP Sun-Earth trajectory
- *  @param bcSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
+ *  @param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
  *  scaling and orientation at time t = 0
  *  @param nodeID ID of a node in the set for which the epoch is known
  *  @param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
  *  @return a BCR4BPR Trajectory object
- *  @throw Exception if <tt>crTraj</tt> is not a Sun-Earth trajectory or if <tt>bcSys</tt> is
+ *  @throw Exception if <tt>crTraj</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
  *  not the Sun-Earth-Moon system.
  */
-Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *bcSys, int nodeID, double t0){
+Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *pBCSys, int nodeID, double t0){
     // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_bc4bp bcNodeset = bcr4bpr_SE2SEM(static_cast<Nodeset_cr3bp>(crTraj), bcSys, nodeID, t0);
+    Nodeset_bc4bp bcNodeset = bcr4bpr_SE2SEM(static_cast<Nodeset_cr3bp>(crTraj), pBCSys, nodeID, t0);
     return static_cast<Traj_bc4bp>(bcNodeset);
 }//==================================================
 
@@ -1523,31 +1523,31 @@ Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *bcSys, int nod
  *  @brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset.
  *  
  *  @param crNodes a CR3BP Sun-Earth nodeset
- *  @param bcSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
+ *  @param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
  *  scaling and orientation at time t = 0
  *  @param nodeID ID of a node in the set for which the epoch is known
  *  @param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
  *  @return a BCR4BPR nodeset
- *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>bcSys</tt> is
+ *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
  *  not the Sun-Earth-Moon system.
  */
-Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *bcSys, int nodeID, double t0){
+Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys, int nodeID, double t0){
     if(crNodes.getSysData()->getPrimID(0) != 10 || crNodes.getSysData()->getPrimID(1) != 399){
         throw Exception("CR3BP trajectory is not in the Sun-Earth System");
     }
 
-    if(bcSys->getPrimID(0) != 10 || bcSys->getPrimID(1) != 399 || bcSys->getPrimID(2) != 301){
+    if(pBCSys->getPrimID(0) != 10 || pBCSys->getPrimID(1) != 399 || pBCSys->getPrimID(2) != 301){
         throw Exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
     // Create a BCR4BPR Nodeset
-    Nodeset_bc4bp bcNodes(bcSys);
+    Nodeset_bc4bp bcNodes(pBCSys);
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();
-    double charL3 = bcSys->getCharL();
-    double charT3 = bcSys->getCharT();
+    double charL3 = pBCSys->getCharL();
+    double charT3 = pBCSys->getCharT();
 
     crNodes.updateEpochs(nodeID, t0*charT3/charT2);
 
@@ -1561,7 +1561,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *bcSys, 
         crNodeState = crNodes.getStateByIx(n);
         for(int r = 0; r < ((int)crNodeState.size()); r++){
             if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
-                bcNodeState.push_back(crNodeState[r]*charL2/charL3 - (1.0/bcSys->getK() - bcSys->getMu()));
+                bcNodeState.push_back(crNodeState[r]*charL2/charL3 - (1.0/pBCSys->getK() - pBCSys->getMu()));
             else if(r < 3)   // Convert position
                 bcNodeState.push_back(crNodeState[r]*charL2/charL3);
             else  // Convert velocity
@@ -1594,15 +1594,15 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *bcSys, 
  *  @brief Transform a BCR4BPR Sun-Earth-Moon nodeset into a CR3BP Sun-Earth nodeset
  *
  *  @param bcNodes a BCR4BPR Sun-Earth-Moon nodeset
- *  @param crSys a CR3BP Sun-Earth system data object; contains information about system
+ *  @param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
  *  @return a CR3BP nodeset object
- *  @throw Exception if <tt>crSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
+ *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
  *  not in the Sun-Earth-Moon system.
  */
-Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *crSys){
-    if(crSys->getPrimID(0) != 10 || crSys->getPrimID(1) != 399){
+Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
+    if(pCRSys->getPrimID(0) != 10 || pCRSys->getPrimID(1) != 399){
         throw Exception("CR3BP system is not the Sun-Earth System");
     }
 
@@ -1611,13 +1611,13 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *crSys){
         throw Exception("BCR4BPR trajectory is not in Sun-Earth-Moon");
     }
 
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(bcNodes.getSysData());
+    const SysData_bc4bp *pBCSys = static_cast<const SysData_bc4bp *>(bcNodes.getSysData());
 
     // Create a BCR4BPR Trajectory
-    Nodeset_cr3bp crNodes(crSys);
+    Nodeset_cr3bp crNodes(pCRSys);
 
-    double charL2 = crSys->getCharL();
-    double charT2 = crSys->getCharT();
+    double charL2 = pCRSys->getCharL();
+    double charT2 = pCRSys->getCharT();
     double charL3 = bcNodes.getSysData()->getCharL();
     double charT3 = bcNodes.getSysData()->getCharT();
 
@@ -1629,7 +1629,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *crSys){
 
         for(int r = 0; r < ((int)bcState.size()); r++){
             if(r == 0)  // Shift origin to P2-P3 barycenter
-                crNodeState.push_back((bcState[r] + 1.0/bcSys->getK() - bcSys->getMu())*charL3/charL2);
+                crNodeState.push_back((bcState[r] + 1.0/pBCSys->getK() - pBCSys->getMu())*charL3/charL2);
             else if(r < 3)   // Convert position
                 crNodeState.push_back(bcState[r]*charL3/charL2);
             else if(r < 6)  // Convert velocity
@@ -1637,7 +1637,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *crSys){
         }
 
         Node node(crNodeState, bcNodes.getEpochByIx(n)*charT3/charT2);
-        node.setExtraParam(0, DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), crSys->getMu()));
+        node.setExtraParam(0, DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), pCRSys->getMu()));
         
         // Save the new ID
         map_oldID_to_newID[bcNodes.getNodeByIx(n).getID()] = crNodes.addNode(node);
@@ -1664,16 +1664,16 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *crSys){
  *  @brief Transform a BCR4BPR Sun-Earth-Moon trajectory into a CR3BP Sun-Earth nodeset
  *
  *  @param bcTraj a BCR4BPR Sun-Earth-Moon trajectory
- *  @param crSys a CR3BP Sun-Earth system data object; contains information about system
+ *  @param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
  *  @return a CR3BP Trajectory object
- *  @throw Exception if <tt>crSys</tt> is not a Sun-Earth system or if <tt>bcTraj</tt> is
+ *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcTraj</tt> is
  *  not in the Sun-Earth-Moon system.
  */
-Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *crSys){
+Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *pCRSys){
     // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp seNodeset = bcr4bpr_SEM2SE(static_cast<Nodeset_bc4bp>(bcTraj), crSys);
+    Nodeset_cr3bp seNodeset = bcr4bpr_SEM2SE(static_cast<Nodeset_bc4bp>(bcTraj), pCRSys);
     return static_cast<Traj_cr3bp>(seNodeset);
 }//==================================================
 
@@ -1683,27 +1683,27 @@ Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *crSys){
  *  @details This function uses a Newton-Raphson procedure to locate the zeros of the local
  *  acceleration field.
  *  @throws DivergeException if the Newton-Raphson procedure cannot converge
- *  @param bcSys system data object describing the bicircular system
+ *  @param pBCSys system data object describing the bicircular system
  *  @param t0 the epoch at which the saddle point's location is computed
  * 
  *  @return the location of the saddle pointin BCR4BP rotating coordinates
  *  @throw DivergeException if the multiple shooting algorithm cannot converge on the
  *  saddle point location
  */
-Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *bcSys, double t0){
+Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *pBCSys, double t0){
 
     // Compute approximate SP location using 3-body dynamics
-    SysData_cr3bp subSys(bcSys->getPrimary(0), bcSys->getPrimary(1));
+    SysData_cr3bp subSys(pBCSys->getPrimary(0), pBCSys->getPrimary(1));
     double a = 2*subSys.getMu() - 1;
     double b = 4*subSys.getMu()*subSys.getMu() - 4*subSys.getMu() + 2;
     double c = 2*pow(subSys.getMu(), 3) - 3*subSys.getMu()*subSys.getMu() + 3*subSys.getMu() - 1;
     
     // x-coordinate in bcr4bpr
-    Eigen::Vector3d spPos((-b + sqrt(b*b - 4*a*c))/(2*a*bcSys->getK()) - (1/bcSys->getK() - bcSys->getMu()), 0, 0);
+    Eigen::Vector3d spPos((-b + sqrt(b*b - 4*a*c))/(2*a*pBCSys->getK()) - (1/pBCSys->getK() - pBCSys->getMu()), 0, 0);
     
     // Get primary positions
     double primPos[9];
-    DynamicsModel_bc4bp::getPrimaryPos(t0, bcSys, primPos);
+    DynamicsModel_bc4bp::getPrimaryPos(t0, pBCSys, primPos);
     
     double err = 1;
     double okErr = 1e-10;
@@ -1717,9 +1717,9 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *bcSys, double t0){
         double ds = s.norm();
         double de = e.norm();
         double dm = m.norm();
-        double k = bcSys->getK();
-        double mu = bcSys->getMu();
-        double nu = bcSys->getNu();
+        double k = pBCSys->getK();
+        double mu = pBCSys->getMu();
+        double nu = pBCSys->getNu();
 
         // Compute acceleration due to three primaries
         Eigen::Vector3d accel = -(1/k - mu)*s/pow(ds,3) - (mu - nu)*e/pow(de,3) - nu*m/pow(dm,3);
@@ -1766,7 +1766,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *bcSys, double t0){
  *  @details This function employs least squares to compute the coefficients. The
  *  number of points used and time span searched are hard coded in the function.
  * 
- *  @param bcSys data about the bicircular system
+ *  @param pBCSys data about the bicircular system
  *  @param T0 the "center" epoch; points are generated within +/- timeSpan of this
  *  epoch
  * 
@@ -1779,9 +1779,9 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *bcSys, double t0){
  *  
  *      [x, y, z] = [T*T, T, 1]*[Coefficient Matrix]
  */
-MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp *bcSys, double T0){
+MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp *pBCSys, double T0){
     const int STATE_SIZE = 3;   // predicting three position states
-    double tSpan = 24*3600/bcSys->getCharT();   // Amount of time to span before and after T0
+    double tSpan = 24*3600/pBCSys->getCharT();   // Amount of time to span before and after T0
     int numPts = 100;
     double dT = 2*tSpan/((double)(numPts-1));
 
@@ -1789,7 +1789,7 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp *bcSys, double T0){
     MatrixXRd depVarMat(numPts, STATE_SIZE);
     for(int row = 0; row < 100; row++){
         double T = -tSpan + row*dT;     // Let T0 = 0 to center data and hopefully avoid numerical issues
-        Eigen::Vector3d spPos = bcr4bpr_getSPLoc(bcSys, T + T0);
+        Eigen::Vector3d spPos = bcr4bpr_getSPLoc(pBCSys, T + T0);
         indVarMat(row, 0) = T*T;
         indVarMat(row, 1) = T;
         indVarMat(row, 2) = 1;

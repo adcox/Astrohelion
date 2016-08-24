@@ -148,8 +148,8 @@ class MultShootData{
 		int totalCons = 0;			//!< Total # constraints -> # rows of DF
 		int totalFree = 0;			//!< Total # free var. -> # cols of DF
 
-		bool varTime = true;		//!< Whether or not the corrector is using variable time
-		bool equalArcTime = false;	//!< Whether or not each arc must have an equal duration
+		bool bVarTime = true;		//!< Whether or not the corrector is using variable time
+		bool bEqualArcTime = false;	//!< Whether or not each arc must have an equal duration
 	
 	protected:
 		void copyMe(const MultShootData&);

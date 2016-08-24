@@ -111,11 +111,11 @@ class CorrectionEngine : public Core{
 		Verbosity_tp verbose = Verbosity_tp::SOME_MSG;
 
 		/** Whether or not to use variable time in the corrections process */
-		bool varTime = true;
+		bool bVarTime = true;
 
 		/** Whether or not to force all arcs to have the same length (in time);
 		 	only applies if variable time is enabled */
-		bool equalArcTime = false;
+		bool bEqualArcTime = false;
 
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;

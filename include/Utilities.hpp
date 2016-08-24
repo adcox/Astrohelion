@@ -77,15 +77,15 @@ namespace astrohelion{
 		if(ixs.size() < values.size()){
 			ixs.push_back(-1);
 			for(size_t i = 0; i < values.size(); i++){
-				bool alreadyUsed = false;
+				bool bAlreadyUsed = false;
 				for(size_t j = 0; j < ixs.size(); j++){
 					if(ixs[j] == (int)i){
-						alreadyUsed = true;
+						bAlreadyUsed = true;
 						break;
 					}
 				}
 
-				if(!alreadyUsed){
+				if(!bAlreadyUsed){
 					ixs.back() = i;
 					permute(values, ixs, perms);
 				}

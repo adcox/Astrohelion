@@ -84,6 +84,18 @@ On my Macbook, I've created a file at <code>~/.valgrindrc</code> which specifies
 	<li><b>Do</b> check that an index is valid before accessing via square brackets</li>
 </ul>
 
+<h2>Code Style Choices</h2>
+<h3>Naming conventions</h3>
+<ul>
+	<li>Classes begin with a capital letter and follow camel-case</li>
+	<li>Dynamical system acronyms are all lowercase, i.e., cr3bp, not CR3BP</li>
+	<li>Enumerated types that specify a <code>type</code> end with _tp</li>
+	<li>In general, variables begin with lower case letters</li>
+	<li>Boolean variables begin with b, i.e., <code>bIsCounting</code></li>
+	<li>Pointer variables begin with p, i.e., <code>pTrajectory</code></li>
+	<li>Static const variables are all uppercase, i.e., PI</li>
+</ul>
+
 <h3>"Right Way" to include</h3>
 Say I'm writing class A and want to know whether or not to include or forward-declare class B:
 <ul>

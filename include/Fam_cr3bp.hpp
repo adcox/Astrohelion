@@ -55,7 +55,7 @@ class Constraint;
  *	The integer value of each type is set up to map to the index
  *	of the independent variable in the continuation process
  */
-enum class FamSort_Tp : int{
+enum class FamSort_tp : int{
 	SORT_X 		= 0,	//!< Sort by the x-coordinate in the IC
 	SORT_Y 		= 1,	//!< Sort by the y-coordinate in the IC
 	SORT_Z 		= 2,	//!< Sort by the z-coordinate in the IC
@@ -92,13 +92,13 @@ class Fam_cr3bp : public Core{
 		std::vector<FamMember_cr3bp> getMemberByJacobi(double) const;
 		std::string getName() const;
 		int getNumMembers() const;
-		FamSort_Tp getSortType() const;
+		FamSort_tp getSortType() const;
 		const char* getSortTypeStr() const;
 		SysData_cr3bp getSysData() const;
 		SysData_cr3bp* getSysDataPtr();
 
 		void setName(std::string);
-		void setSortType(FamSort_Tp);
+		void setSortType(FamSort_tp);
 
 		// Utility and Operational Functions
 		std::vector<int> findBifurcations();
@@ -111,7 +111,7 @@ class Fam_cr3bp : public Core{
 		std::string name = "NULL";								//!< Descriptive name of the family
 		std::vector<FamMember_cr3bp> members {};		//!< Contains all family members
 		SysData_cr3bp sysData = SysData_cr3bp();	//!< Describes the system this family exists in
-		FamSort_Tp sortType = FamSort_Tp::SORT_NONE;					//!< Describes the most natural variable to sort family members by
+		FamSort_tp sortType = FamSort_tp::SORT_NONE;					//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 

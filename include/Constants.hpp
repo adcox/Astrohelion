@@ -54,6 +54,4 @@ const double G_GRAV_0 = 9.8065/1000;
 /** Pi */
 const double PI = 3.14159265358979323846264338327950;
 
-#pragma once
-
 }// END of Astrohelion namespace

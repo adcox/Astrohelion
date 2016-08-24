@@ -170,7 +170,7 @@ class Event : public Core{
 		int stopCount = 1;
 
 		/** Whether or not to stop integration when this event occurs */
-		bool stop = true;
+		bool bStop = true;
 
 		double dist = 100000;		//!< Distance to the event; must be able to change sign
 		double lastDist = 100000; 	//!< distance to event at previous iteration

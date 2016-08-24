@@ -51,16 +51,16 @@ static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 //-----------------------------------------------------
 
 Core_Initializer Core::initializer;
-bool Core::isInit;
+bool Core::bIsInit;
 
 /**
  *  @brief Default constructor.
  *  @details Runs an initialization sequence the first time the class is instantiated.
  */
 Core::Core(){
-	if(!isInit){
+	if(!bIsInit){
 		initializer.runInit();
-		isInit = true;
+		bIsInit = true;
 	}
 }//======================================================
 

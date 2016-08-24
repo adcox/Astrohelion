@@ -58,14 +58,14 @@ class Nodeset : public BaseArcset{
 
 public:
 	/**
-		 *	@brief Node distribution type
-		 *
-		 *	Specified how nodes are distributed along an integrated trajectory
-		 */
-		enum tpat_nodeDistro_tp {
-			DISTRO_NONE, 		//!< There is no organizational method; nodes may be input by user.
-			DISTRO_TIME,		//!< Nodes spread evenly in time
-			DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
+	 *	@brief Node distribution type
+	 *
+	 *	Specified how nodes are distributed along an integrated trajectory
+	 */
+	enum tpat_nodeDistro_tp {
+		DISTRO_NONE, 		//!< There is no organizational method; nodes may be input by user.
+		DISTRO_TIME,		//!< Nodes spread evenly in time
+		DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
 
 	// *structors
 	Nodeset(const SysData*);

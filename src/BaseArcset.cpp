@@ -469,16 +469,16 @@ void BaseArcset::deleteNode(int id){
 		
 		// printf("Attempting to delete node (ID %d)\n", id);
 		// Get the node we're deleting
-		const Node *theNode = &(nodes[nodeIx]);
+		const Node *pTheNode = &(nodes[nodeIx]);
 
 		// Get the indices of any segments this node is linked to
 		std::vector<int> linkedSegIxs;
 		for(int i = 0; i < Linkable::NUM_LINKS; i++){
-			if(theNode->getLink(i) != Linkable::INVALID_ID){
-				int segIx = segIDMap[theNode->getLink(i)];
+			if(pTheNode->getLink(i) != Linkable::INVALID_ID){
+				int segIx = segIDMap[pTheNode->getLink(i)];
 				if(segIx != Linkable::INVALID_ID){
 					linkedSegIxs.push_back(segIx);
-					// printf("  linked to segment (ID %d) at index %d\n", theNode->getLink(i), segIx);
+					// printf("  linked to segment (ID %d) at index %d\n", pTheNode->getLink(i), segIx);
 				}
 			}
 		}
@@ -492,26 +492,26 @@ void BaseArcset::deleteNode(int id){
 			if(segs[linkedSegIxs[0]].getTerminus() == id || segs[linkedSegIxs[1]].getTerminus() == id){
 				// Get the segment that terminates at this node, and the segment that originates at this node
 				int termSegIx = segs[linkedSegIxs[0]].getTerminus() == id ? 0 : 1;
-				const Segment *termSeg = &(segs[linkedSegIxs[termSegIx]]);
-				const Segment *origSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
+				const Segment *pTermSeg = &(segs[linkedSegIxs[termSegIx]]);
+				const Segment *pOrigSeg = &(segs[linkedSegIxs[(termSegIx + 1) % 2]]);
 
-				// printf("  > Segment (ID %d) terminates at node (ID %d)\n", termSeg->getID(), id);
-				// printf("  > Segment (ID %d) originates at node (ID %d)\n", origSeg->getID(), id);
+				// printf("  > Segment (ID %d) terminates at node (ID %d)\n", pTermSeg->getID(), id);
+				// printf("  > Segment (ID %d) originates at node (ID %d)\n", pOrigSeg->getID(), id);
 
 				// Just to check
-				if(termSeg->getTOF()*origSeg->getTOF() < 0){
+				if(pTermSeg->getTOF()*pOrigSeg->getTOF() < 0){
 					throw Exception("BaseArcset::deleteNode: I made an incorrect assumption about origin/terminus TOF direction!");
 				}
 
 				// Create a new segment
-				Segment combo(termSeg->getOrigin(), origSeg->getTerminus(), termSeg->getTOF() + origSeg->getTOF());
+				Segment combo(pTermSeg->getOrigin(), pOrigSeg->getTerminus(), pTermSeg->getTOF() + pOrigSeg->getTOF());
 
-				// Get the IDs of the segments; deleting id1 will change what origSeg points to, which will affect the getID() return value
-				int id1 = termSeg->getID(), id2 = origSeg->getID();
+				// Get the IDs of the segments; deleting id1 will change what pOrigSeg points to, which will affect the getID() return value
+				int id1 = pTermSeg->getID(), id2 = pOrigSeg->getID();
 
 				// Replace the two segments with the new combined one
-				deleteSeg(id1);	// CANNOT USE *termSeg pointer AFTER THIS LINE
-				deleteSeg(id2);	// CANNOT USE *origSeg pointer AFTER THIS LINE
+				deleteSeg(id1);	// CANNOT USE pTermSeg pointer AFTER THIS LINE
+				deleteSeg(id2);	// CANNOT USE pOrigSeg pointer AFTER THIS LINE
 				addSeg(combo);
 			}else{
 				// Both must originate at node and have opposite time directions
@@ -524,8 +524,8 @@ void BaseArcset::deleteNode(int id){
 				}
 
 				int revSegIx = segs[linkedSegIxs[0]].getTOF() < 0 ? 0 : 1;
-				const Segment *revSeg = &(segs[linkedSegIxs[revSegIx]]);
-				const Segment *forwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
+				const Segment *pRevSeg = &(segs[linkedSegIxs[revSegIx]]);
+				const Segment *pForwardSeg = &(segs[linkedSegIxs[(revSegIx+1) % 2]]);
 
 				/*	It is possible that, in this case, the segment that originates from this node and proceeds
 				 * 	in reverse time does not terminate at a node, but links to a forward-propagated segment instead.
@@ -534,20 +534,20 @@ void BaseArcset::deleteNode(int id){
 				 * 	segment to replace the reverse and forward time segments that originated from this node.
 				 */
 				Segment combo;
-				if(revSeg->getTerminus() != Linkable::INVALID_ID){
-					combo = Segment(revSeg->getTerminus(), forwardSeg->getTerminus(), std::abs(revSeg->getTOF()) + forwardSeg->getTOF());
+				if(pRevSeg->getTerminus() != Linkable::INVALID_ID){
+					combo = Segment(pRevSeg->getTerminus(), pForwardSeg->getTerminus(), std::abs(pRevSeg->getTOF()) + pForwardSeg->getTOF());
 				}else{
-					if(forwardSeg->getTerminus() == Linkable::INVALID_ID)
+					if(pForwardSeg->getTerminus() == Linkable::INVALID_ID)
 						throw Exception("BaseArcset::deleteNode: Cannot delete node as both segments terminate at other segments");
-					combo = Segment(forwardSeg->getTerminus(), revSeg->getTerminus(), revSeg->getTOF() - forwardSeg->getTOF());
+					combo = Segment(pForwardSeg->getTerminus(), pRevSeg->getTerminus(), pRevSeg->getTOF() - pForwardSeg->getTOF());
 				}
 
-				// Get the IDs of the segments; deleting id1 will change what forwardSeg points to, which will affect the getID() return value
-				int id1 = revSeg->getID(), id2 = forwardSeg->getID();
+				// Get the IDs of the segments; deleting id1 will change what pForwardSeg points to, which will affect the getID() return value
+				int id1 = pRevSeg->getID(), id2 = pForwardSeg->getID();
 
 				// Replace the two segments with the new one
-				deleteSeg(id1);	// CANNOT USE *revSeg pointer AFTER THIS LINE
-				deleteSeg(id2);	// CANNOT USE *forwardSeg pointer AFTER THIS LINE
+				deleteSeg(id1);	// CANNOT USE pRevSeg pointer AFTER THIS LINE
+				deleteSeg(id2);	// CANNOT USE pForwardSeg pointer AFTER THIS LINE
 				addSeg(combo);
 			}
 		}else if(linkedSegIxs.size() == 1){
@@ -591,21 +591,21 @@ void BaseArcset::deleteSeg(int id){
 	if(segIx != Linkable::INVALID_ID){
 		// printf("Deleting segment (ID %d)\n", id);
 
-		const Segment *seg = &(segs[segIx]);
-		// printf("  Retrieved segment (ID %d)\n", seg->getID());
+		const Segment *pSeg = &(segs[segIx]);
+		// printf("  Retrieved segment (ID %d)\n", pSeg->getID());
 		for(int i = 0; i < Linkable::NUM_LINKS; i++){
-			if(seg->getLink(i) != Linkable::INVALID_ID){
-				int nodeIx = nodeIDMap[seg->getLink(i)];
+			if(pSeg->getLink(i) != Linkable::INVALID_ID){
+				int nodeIx = nodeIDMap[pSeg->getLink(i)];
 				if(nodeIx != Linkable::INVALID_ID){
-					// printf("  * Trying to remove a link to segment (ID %d) from node (ID %d)\n", seg->getID(), nodes[nodeIx].getID());
+					// printf("  * Trying to remove a link to segment (ID %d) from node (ID %d)\n", pSeg->getID(), nodes[nodeIx].getID());
 					nodes[nodeIx].removeLink(id);
 				}else{
-					// printf("Unable to remove link to segment (ID %d) from node (ID %d)\n", seg->getLink(i), id);
+					// printf("Unable to remove link to segment (ID %d) from node (ID %d)\n", pSeg->getLink(i), id);
 				}
 			}
 		}
 
-		segs.erase(segs.begin() + segIx);	// CANNOT USE *seg pointer AFTER THIS LINE
+		segs.erase(segs.begin() + segIx);	// CANNOT USE pSeg pointer AFTER THIS LINE
 		segIDMap.erase(id);
 
 		for(auto &index : segIDMap){
@@ -1400,7 +1400,7 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 	double ellapsed;
 	for(int stepDir = 1; stepDir > -2; stepDir -= 2){
 		ellapsed = 0;
-		for(int i = ixInPieces+stepDir; i < (int)(pieces.size()) && i >= 0; i += stepDir){
+		for(int i = ixInPieces + stepDir; i < (int)(pieces.size()) && i >= 0; i += stepDir){
 			if(pieces[i].type == ArcPiece::Piece_Tp::SEG){
 				ellapsed += segs[segIDMap[pieces[i].id]].getTOF();
 			}else if(pieces[i].type == ArcPiece::Piece_Tp::NODE){
@@ -1584,11 +1584,11 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
  *  @throws Exception if there are any issues importing the data
  */
 void BaseArcset::readAccelFromMat(mat_t *pMatFile){
-	matvar_t *accelMat = Mat_VarRead(pMatFile, "Accel");
-	if(accelMat == NULL){
+	matvar_t *pAccelMat = Mat_VarRead(pMatFile, "Accel");
+	if(pAccelMat == NULL){
 		throw Exception("BaseArcset::readAccelFromMat: Could not read data vector");
 	}else{
-		int numSteps = accelMat->dims[0];
+		int numSteps = pAccelMat->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readAccelFromMat: Node vector has not been initialized!");
@@ -1598,12 +1598,12 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readAccelFromMat: Accel vector has a different size than the initialized node vector");
 		}
 
-		if(accelMat->dims[1] != 3){
+		if(pAccelMat->dims[1] != 3){
 			throw Exception("BaseArcset::readAccelFromMat: Incompatible data file: Accel width is not 3.");
 		}
 
-		if(accelMat->class_type == MAT_C_DOUBLE && accelMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(accelMat->data);
+		if(pAccelMat->class_type == MAT_C_DOUBLE && pAccelMat->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pAccelMat->data);
 
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
@@ -1619,7 +1619,7 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readAccelFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
-	Mat_VarFree(accelMat);
+	Mat_VarFree(pAccelMat);
 }//===============================================
 
 /**
@@ -1630,11 +1630,11 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
  *  @throws Exception if there are any issues importing the data
  */
 void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *epochMat = Mat_VarRead(pMatFile, pVarName);
-	if(epochMat == NULL){
+	matvar_t *pEpochMat = Mat_VarRead(pMatFile, pVarName);
+	if(pEpochMat == NULL){
 		throw Exception("BaseArcset::readEpochFromMat: Could not read data vector");
 	}else{
-		int numSteps = epochMat->dims[0];
+		int numSteps = pEpochMat->dims[0];
 
 		if(nodes.size() == 0)
 			throw Exception("BaseArcset::readEpochFromMat: Node vector has not been initialized");
@@ -1642,11 +1642,11 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 		if(numSteps != (int)nodes.size())
 			throw Exception("BaseArcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
 
-		if(epochMat->dims[1] != 1)
+		if(pEpochMat->dims[1] != 1)
 			throw Exception("BaseArcset::readEpochFromMat: Incompatible data file: Epoch vector has more than one column");
 
-		if(epochMat->class_type == MAT_C_DOUBLE && epochMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(epochMat->data);
+		if(pEpochMat->class_type == MAT_C_DOUBLE && pEpochMat->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pEpochMat->data);
 
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
@@ -1657,6 +1657,7 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 			throw Exception("BaseArcset::readEpochFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
+	Mat_VarFree(pEpochMat);
 }//================================================
 
 /**
@@ -1666,11 +1667,11 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
  *  @throws Exception if there are any issues importing the data
  */
 void BaseArcset::readSTMFromMat(mat_t *pMatFile){
-	matvar_t *allSTM = Mat_VarRead(pMatFile, "STM");
-	if(allSTM == NULL){
+	matvar_t *pAllSTM = Mat_VarRead(pMatFile, "STM");
+	if(pAllSTM == NULL){
 		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
 	}else{
-		int numSteps = allSTM->dims[2];
+		int numSteps = pAllSTM->dims[2];
 
 		if(segs.size() == 0){
 			throw Exception("BaseArcset::readSTMFromMat: Step vector has not been initialized!");
@@ -1680,12 +1681,12 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readSTMFromMat: STM vector has a different size than the initialized step vector");
 		}
 
-		if(allSTM->dims[0] != 6 || allSTM->dims[1] != 6){
+		if(pAllSTM->dims[0] != 6 || pAllSTM->dims[1] != 6){
 			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM is not 6x6.");
 		}
 
-		if(allSTM->class_type == MAT_C_DOUBLE && allSTM->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(allSTM->data);
+		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pAllSTM->data);
 
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
@@ -1702,7 +1703,7 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 			throw Exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
-	Mat_VarFree(allSTM);
+	Mat_VarFree(pAllSTM);
 }//===============================================
 
 /**
@@ -1713,11 +1714,11 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
  *  @throws Exception if there are any issues importing the data
  */
 void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *tofMat = Mat_VarRead(pMatFile, pVarName);
-	if(tofMat == NULL){
+	matvar_t *pTofMat = Mat_VarRead(pMatFile, pVarName);
+	if(pTofMat == NULL){
 		throw Exception("BaseArcset::readTOFFromMat: Could not read data vector");
 	}else{
-		int numSteps = tofMat->dims[0];
+		int numSteps = pTofMat->dims[0];
 
 		if(segs.size() == 0)
 			throw Exception("BaseArcset::readTOFFromMat: Node vector has not been initialized");
@@ -1725,11 +1726,11 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 		if(numSteps != (int)segs.size())
 			throw Exception("BaseArcset::readTOFFromMat: Epoch vector has different size than the initialized segment evctor");
 
-		if(tofMat->dims[1] != 1)
+		if(pTofMat->dims[1] != 1)
 			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: Epoch vector has more than one column");
 
-		if(tofMat->class_type == MAT_C_DOUBLE && tofMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(tofMat->data);
+		if(pTofMat->class_type == MAT_C_DOUBLE && pTofMat->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pTofMat->data);
 
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
@@ -1740,6 +1741,7 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
+	Mat_VarFree(pTofMat);
 }//================================================
 
 /**
@@ -1758,24 +1760,24 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *p
 	int ix0 = 0;
 	for(int i = 0; i < varIx; i++){ ix0 += extraParamRowSize[i]; }
 
-	matvar_t *matvar = Mat_VarRead(pMatFile, pVarName);
-	if(matvar == NULL){
+	matvar_t *pMatVar = Mat_VarRead(pMatFile, pVarName);
+	if(pMatVar == NULL){
 		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
 	}else{
-		int numSteps = matvar->dims[0];
+		int numSteps = pMatVar->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
 		}
 
-		if(matvar->dims[1] != ((size_t)extraParamRowSize[varIx])){
+		if(pMatVar->dims[1] != ((size_t)extraParamRowSize[varIx])){
 			char message[64];
 			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", pVarName, extraParamRowSize[varIx]);
 			throw Exception(message);
 		}
 
-		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(matvar->data);
+		if(pMatVar->class_type == MAT_C_DOUBLE && pMatVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pMatVar->data);
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
 					for(int c = 0; c < extraParamRowSize[varIx]; c++){
@@ -1787,7 +1789,7 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *p
 			throw Exception("BaseArcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
-	Mat_VarFree(matvar);
+	Mat_VarFree(pMatVar);
 }//===============================================
 
 /**
@@ -1807,8 +1809,8 @@ void BaseArcset::saveAccel(mat_t *pMatFile) const{
 	}
 	
 	size_t dims[2] = {nodes.size(), 3};
-	matvar_t *matvar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel_colMaj[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, matvar, "Accel", MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel_colMaj[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, "Accel", MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
@@ -1865,8 +1867,8 @@ void BaseArcset::saveExtraParam(mat_t *pMatFile, int varIx, const char *name) co
 	}
 
 	size_t dims[2] = {nodes.size(), static_cast<size_t>(extraParamRowSize[varIx])};
-	matvar_t *matvar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, matvar, name, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -1913,8 +1915,8 @@ void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
 	size_t dims[2] = {nodes.size(), 6};
-	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -1937,8 +1939,8 @@ void BaseArcset::saveSTMs(mat_t *pMatFile) const{
 	}
 
 	size_t dims[3] = {6, 6, segs.size()};
-	matvar_t *matvar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, matvar, "STM", MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, "STM", MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -1954,8 +1956,8 @@ void BaseArcset::saveTOF(mat_t *pMatFile, const char* pVarName) const{
 	}
 	
 	size_t dims[2] = {allTOFs.size(), 1};
-	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 

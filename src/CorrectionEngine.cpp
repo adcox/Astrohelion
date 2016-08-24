@@ -67,8 +67,8 @@ CorrectionEngine::~CorrectionEngine(){}
  */
 void CorrectionEngine::copyEngine(const CorrectionEngine &e){
 	verbose = e.verbose;//
-	varTime = e.varTime;//
-	equalArcTime = e.equalArcTime;//
+	bVarTime = e.bVarTime;//
+	bEqualArcTime = e.bEqualArcTime;//
 	maxIts = e.maxIts;//
 	tol = e.tol;//
 	bFindEvent = e.bFindEvent;//
@@ -102,7 +102,7 @@ CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
  *	@return whether or not the corrector uses variable time (as opposed
  * 	to fixed time)
  */
-bool CorrectionEngine::usesVarTime() const { return varTime; }
+bool CorrectionEngine::usesVarTime() const { return bVarTime; }
 
 /**
  *	@brief Retrieve whether or not we force all segments to have the same length
@@ -111,7 +111,7 @@ bool CorrectionEngine::usesVarTime() const { return varTime; }
  *	This setting only applies if variable time is turned on.
  *	@return whether or not each arc will be forced to have the same length in time
  */
-bool CorrectionEngine::usesEqualArcTime() const { return equalArcTime; }
+bool CorrectionEngine::usesEqualArcTime() const { return bEqualArcTime; }
 
 /**
  *  @brief Retrieve whether or not the multiple shooting algorithm uses variable scaling
@@ -145,14 +145,14 @@ int CorrectionEngine::getMaxIts() const { return maxIts; }
 double CorrectionEngine::getTol() const { return tol; }
 
 /**
- *	@brief Set varTime
+ *	@brief Set bVarTime
  *	@param b whether or not the corrector should use variable time
  */
 void CorrectionEngine::setVarTime(bool b){
-	varTime = b;
-	// Turn off equal-time arcs too if varTime is false
-	if(!varTime)
-		equalArcTime = false;
+	bVarTime = b;
+	// Turn off equal-time arcs too if bVarTime is false
+	if(!bVarTime)
+		bEqualArcTime = false;
 }//==================================================
 
 /**
@@ -160,11 +160,11 @@ void CorrectionEngine::setVarTime(bool b){
  *	@param b whether or not each arc will be forced to have the same duration
  */
 void CorrectionEngine::setEqualArcTime(bool b){
-	if(!varTime && b){
-		astrohelion::printErr("CorrectionEngine::setequalArcTime: Cannot use equal-time arcs if variable time is disabled; please turn varTime ON first\n");
-		equalArcTime = false;
+	if(!bVarTime && b){
+		astrohelion::printErr("CorrectionEngine::setequalArcTime: Cannot use equal-time arcs if variable time is disabled; please turn bVarTime ON first\n");
+		bEqualArcTime = false;
 	}else{
-		equalArcTime = b;
+		bEqualArcTime = b;
 	}
 }//==================================================
 
@@ -261,8 +261,8 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 
 	// Create structure to store iteration data for easy sharing
 	MultShootData it(set);
-	it.varTime = varTime;	// Save in structure to pass easily to other functions
-	it.equalArcTime = equalArcTime;
+	it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
+	it.bEqualArcTime = bEqualArcTime;
 	
 	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
 	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
@@ -374,7 +374,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 				addToRows = 1;
 				break;
 			case Constraint_tp::TOF:
-				if(!varTime)
+				if(!bVarTime)
 					astrohelion::printWarn("CorrectionEngine::multShoot: Attempting to constraint TOF without variable time... won't work!");
 				
 				if(!foundTOFCon)

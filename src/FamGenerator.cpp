@@ -425,7 +425,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateLyap(SysData_cr3bp sysData, int LPt, doubl
 	Traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
 		LinMotion_tp::ELLIP, fam.getSysDataPtr());
 
-	fam.setSortType(FamSort_Tp::SORT_X);
+	fam.setSortType(FamSort_tp::SORT_X);
 
 	if(contType == Continuation_tp::NAT_PARAM){
 	
@@ -497,7 +497,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateButterfly(SysData_cr3bp *sysData, int LPt)
 
 	if(contType == Continuation_tp::NAT_PARAM){
 		// Butterfly-specific settings
-		fam.setSortType(FamSort_Tp::SORT_X);
+		fam.setSortType(FamSort_tp::SORT_X);
 		// std::vector<int> indVars {0,2};
 		std::vector<int> indVars {0, 2};
 		// std::vector<int> depVars {4,6};
@@ -548,7 +548,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateDRO(SysData_cr3bp *sysData){
 	Fam_cr3bp fam(*sysData);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		fam.setSortType(FamSort_Tp::SORT_X);
+		fam.setSortType(FamSort_tp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
@@ -600,7 +600,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateLPO(SysData_cr3bp *sysData){
 	Fam_cr3bp fam(*sysData);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		fam.setSortType(FamSort_Tp::SORT_X);
+		fam.setSortType(FamSort_tp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
@@ -707,11 +707,11 @@ Fam_cr3bp FamGenerator::cr3bp_generateRes(SysData_cr3bp *sysData, int p, int q){
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
 	Fam_cr3bp fam(*sysData);
-	fam.setSortType(FamSort_Tp::SORT_X);
+	fam.setSortType(FamSort_tp::SORT_X);
 
 	if(contType == Continuation_tp::NAT_PARAM){
 		// Butterfly-specific settings
-		fam.setSortType(FamSort_Tp::SORT_X);
+		fam.setSortType(FamSort_tp::SORT_X);
 		// std::vector<int> indVars {0,2};
 		std::vector<int> indVars {0, 4};
 		// std::vector<int> depVars {4,6};

@@ -182,27 +182,27 @@ class SimEngine : public Core{
 		void *eomParams = 0;
 
 		/** Whether or not to run the simulation in reverse time */
-		bool revTime = false;
+		bool bRevTime = false;
 
 		/** Describes the verbosity of this engine */
 		Verbosity_tp verbose = Verbosity_tp::NO_MSG;
 
 		/** Whether or not to use variable step size when integrating */
-		bool varStepSize = true;
+		bool bVarStepSize = true;
 
 		/** Whether or not to use "simple" integration; simple means no STM or other quantites are integrated
 		 with the EOMs */
-		bool simpleIntegration = false;
+		bool bSimpleIntegration = false;
 
 		/** "Clean" means there is no data in the trajectory object. Once a simulation has been
 		 run, the engine is no longer clean and will need to be cleaned before running another sim */
-		bool isClean = true;
+		bool bIsClean = true;
 
 		/** Whether or not crash events should be created for the simulation */
-		bool makeCrashEvents = true;
+		bool bMakeCrashEvents = true;
 
 		/** Whether or not the default crash events have been created */
-		bool madeCrashEvents = false;
+		bool bMadeCrashEvents = false;
 
 		/** Absolute tolerance for integrated data, units are same as integrated data */
 		double absTol = 1e-12;

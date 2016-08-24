@@ -420,11 +420,11 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
     for(int s = 0; s < it->nodeset->getNumSegs(); s++){
         Segment seg = it->nodeset->getSegByIx(s);
 
-        if(it->varTime){
-            MSVarMap_Obj tofVar = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-                it->equalArcTime ? Linkable::INVALID_ID : seg.getID());
+        if(it->bVarTime){
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+                it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
-            tof = it->equalArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
+            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
             // Reverse scaling
             tof /= it->freeVarScale[2];     // TOF scaling
         }else{

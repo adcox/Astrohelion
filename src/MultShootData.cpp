@@ -223,7 +223,7 @@ void MultShootData::copyMe(const MultShootData &it){
 	count = it.count;
 	deltaVs = it.deltaVs;
 	DF = it.DF;
-	equalArcTime = it.equalArcTime;
+	bEqualArcTime = it.bEqualArcTime;
 	freeVarMap = it.freeVarMap;
 	freeVarScale = it.freeVarScale;
 	FX = it.FX;
@@ -233,7 +233,7 @@ void MultShootData::copyMe(const MultShootData &it){
 	slackAssignCon = it.slackAssignCon;
 	totalCons = it.totalCons;
 	totalFree = it.totalFree;
-	varTime = it.varTime;
+	bVarTime = it.bVarTime;
 	X = it.X;
 	X0 = it.X0;				
 }//============================================

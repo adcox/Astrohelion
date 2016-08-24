@@ -95,7 +95,7 @@ struct Core_Initializer {
 class Core{
 public:
 	static Core_Initializer initializer;				//!< Create one to initialize the system	
-	static bool isInit;									//!< Flag to prevent initializations happing lots of times
+	static bool bIsInit;								//!< Flag to prevent initializations happing lots of times
 
 	Core();												//!< Default constructor
 	virtual ~Core();									//!< Default destructor

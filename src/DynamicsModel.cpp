@@ -174,8 +174,8 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 		it->freeVarMap[key] = MSVarMap_Obj(key, rowNum);
 	}
 
-	if(it->varTime){		
-		if(it->equalArcTime){
+	if(it->bVarTime){		
+		if(it->bEqualArcTime){
 			// Make sure all times-of-flight have the same sign
 			for(int s = 1; s < set->getNumSegs(); s++){
 				if(set->getSegByIx(s).getTOF() * set->getSegByIx(s-1).getTOF() < 0)
@@ -222,10 +222,10 @@ void DynamicsModel::multShoot_scaleDesignVec(MultShootData *it, const Nodeset *s
 	}
 
 	for(int s = 0; s < set->getNumSegs(); s++){
-		if(it->varTime){
-			MSVarMap_Obj tofVar = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-				it->equalArcTime ? Linkable::INVALID_ID : set->getSegByIx(s).getID());
-			allTOF[s] = it->equalArcTime ? it->X[tofVar.row0]/(set->getNumSegs()) : it->X[tofVar.row0];
+		if(it->bVarTime){
+			MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+				it->bEqualArcTime ? Linkable::INVALID_ID : set->getSegByIx(s).getID());
+			allTOF[s] = it->bEqualArcTime ? it->X[tofVar.row0]/(set->getNumSegs()) : it->X[tofVar.row0];
 		}else
 			allTOF[s] = set->getTOFByIx(s);
 	}
@@ -254,8 +254,8 @@ void DynamicsModel::multShoot_scaleDesignVec(MultShootData *it, const Nodeset *s
 	}
 
 	// Scale all times-of-flight
-	if(it->varTime){
-		if(it->equalArcTime){
+	if(it->bVarTime){
+		if(it->bEqualArcTime){
 			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVarType::TOF_TOTAL, Linkable::INVALID_ID);
 			it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
 		}else{
@@ -328,11 +328,11 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *
 		ic[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 	}
 
-	if(it->varTime){
+	if(it->bVarTime){
 		// Retrieve  representative object and get data from free var vec
-		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-			it->equalArcTime ? -1 : s);
-		*tof = it->equalArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
+		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+			it->bEqualArcTime ? -1 : s);
+		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
 		// Reverse scaling
 		*tof /= it->freeVarScale[2]; 	// Time scaling
 	}
@@ -484,16 +484,16 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
 
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
-			if(it->varTime){
+			if(it->bVarTime){
 				std::vector<double> lastAccel = it->propSegs[segIx].getAccelByIx(-1);
 
 				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 
-				MSVarMap_Obj tofVar = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-					it->equalArcTime ? Linkable::INVALID_ID : segID);
+				MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+					it->bEqualArcTime ? Linkable::INVALID_ID : segID);
 				// If equal arc time is enabled, all time derivatives are in one column
-				// int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
+				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
 				
 				// Column of state derivatives: [vel; accel]
 				if(s < 3)
@@ -549,17 +549,17 @@ void DynamicsModel::multShoot_targetCont_PosVel_Seg(MultShootData *it, Constrain
 	std::vector<double> lastAccel1, lastAccel2;
 	MSVarMap_Obj tof1_var(MSVarType::TOF), tof2_var(MSVarType::TOF);
 	double timeCoeff = 1;
-	if(it->varTime){
+	if(it->bVarTime){
 		lastAccel1 = it->propSegs[segIx1].getAccelByIx(-1);
 		lastAccel2 = it->propSegs[segIx2].getAccelByIx(-1);
 
-		tof1_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-			it->equalArcTime ? Linkable::INVALID_ID : segID1);
-		tof2_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-			it->equalArcTime ? Linkable::INVALID_ID : segID2);
+		tof1_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+			it->bEqualArcTime ? Linkable::INVALID_ID : segID1);
+		tof2_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+			it->bEqualArcTime ? Linkable::INVALID_ID : segID2);
 
 		// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-		timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+		timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 	}
 
 	// Loop through conData
@@ -579,7 +579,7 @@ void DynamicsModel::multShoot_targetCont_PosVel_Seg(MultShootData *it, Constrain
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
-			if(it->varTime){
+			if(it->bVarTime){
 				// Column of state derivatives: [vel; accel]
 				if(s < 3){
 					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*state1[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
@@ -894,7 +894,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 			}
 
 			// Compute partial w.r.t. segment time-of-flight
-			if(it->varTime){
+			if(it->bVarTime){
 				// Derivative of the final state of segment s
 				std::vector<double> state_dot_data;
 				std::vector<double> lastState = it->propSegs[s].getStateByIx(-1);
@@ -907,10 +907,10 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 				state_dot.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[2];
 				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[2];
 
-				double timeCoeff = it->equalArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-				MSVarMap_Obj tof_var = it->getVarMap_obj(it->equalArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-					it->equalArcTime ? Linkable::INVALID_ID : it->nodeset->getSegByIx(s).getID());
-				// int timeCol = it->equalArcTime ? 6*it->numNodes : 6*it->numNodes+s;
+				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodeset->getSegByIx(s).getID());
+				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+s;
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 				it->DF[it->totalFree*row0 + tof_var.row0] = timeCoeff*dFdt_n(0)/dvMax;
@@ -981,10 +981,10 @@ double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData *i
  *	@throws Exception if variable time is set to OFF
  */
 void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int row0) const{
-	if(! it->varTime)
+	if(! it->bVarTime)
 		throw Exception("DynamicsModel::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
-	if(it->equalArcTime){
+	if(it->bEqualArcTime){
 		MSVarMap_Obj tof_var = it->getVarMap_obj(MSVarType::TOF_TOTAL, Linkable::INVALID_ID);
 		it->FX[row0] = it->X[tof_var.row0];
 		it->DF[it->totalFree*row0 + tof_var.row0] = 1;

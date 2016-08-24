@@ -72,7 +72,7 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 	loadEigVals(matfp);
 	name = astrohelion::readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	double type = astrohelion::readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME);
-	sortType = static_cast<FamSort_Tp>((int)type);
+	sortType = static_cast<FamSort_tp>((int)type);
 	// sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
@@ -204,7 +204,7 @@ int Fam_cr3bp::getNumMembers() const { return members.size(); }
  *	@brief Determine which variable best naturally describes the flow of the family
  *	@return the sorting variable
  */
-FamSort_Tp Fam_cr3bp::getSortType() const { return sortType; }
+FamSort_tp Fam_cr3bp::getSortType() const { return sortType; }
 
 /**
  *	@brief Retrieve a string describing the sort type in human-readable format
@@ -212,15 +212,15 @@ FamSort_Tp Fam_cr3bp::getSortType() const { return sortType; }
  */
 const char* Fam_cr3bp::getSortTypeStr() const{
 	switch(sortType){
-		case FamSort_Tp::SORT_X: return "SORT_X"; break;
-		case FamSort_Tp::SORT_Y: return "SORT_Y"; break;
-		case FamSort_Tp::SORT_Z: return "SORT_Z"; break;
-		case FamSort_Tp::SORT_VX: return "SORT_VX"; break;
-		case FamSort_Tp::SORT_VY: return "SORT_VY"; break;
-		case FamSort_Tp::SORT_VZ: return "SORT_VZ"; break;
-		case FamSort_Tp::SORT_JC: return "SORT_JC"; break;
-		case FamSort_Tp::SORT_TOF: return "SORT_TOF"; break;
-		case FamSort_Tp::SORT_NONE: return "NO SORTING"; break;
+		case FamSort_tp::SORT_X: return "SORT_X"; break;
+		case FamSort_tp::SORT_Y: return "SORT_Y"; break;
+		case FamSort_tp::SORT_Z: return "SORT_Z"; break;
+		case FamSort_tp::SORT_VX: return "SORT_VX"; break;
+		case FamSort_tp::SORT_VY: return "SORT_VY"; break;
+		case FamSort_tp::SORT_VZ: return "SORT_VZ"; break;
+		case FamSort_tp::SORT_JC: return "SORT_JC"; break;
+		case FamSort_tp::SORT_TOF: return "SORT_TOF"; break;
+		case FamSort_tp::SORT_NONE: return "NO SORTING"; break;
 		default: return "Unrecognized Type!";
 	}
 }//===========================================
@@ -248,7 +248,7 @@ void Fam_cr3bp::setName(std::string n){ name = n; }
  *	@brief Set the sort type for this family
  *	@param type the sort type
  */
-void Fam_cr3bp::setSortType(FamSort_Tp type){ sortType = type; }
+void Fam_cr3bp::setSortType(FamSort_tp type){ sortType = type; }
 //-----------------------------------------------------
 // 		Utility Functions
 //-----------------------------------------------------
@@ -612,30 +612,30 @@ void Fam_cr3bp::sortEigs(){
  */
 void Fam_cr3bp::sortMembers(){
 	// Don't do any sorting if the sort type is NONE
-	if(sortType == FamSort_Tp::SORT_NONE)
+	if(sortType == FamSort_tp::SORT_NONE)
 		return;
 
 	// Create an array containing the independent variable from each family member
 	std::vector<double> dataToSort;
 	switch(sortType){
-		case FamSort_Tp::SORT_X:
+		case FamSort_tp::SORT_X:
 			getCoord(0, &dataToSort); break;
-		case FamSort_Tp::SORT_Y:
+		case FamSort_tp::SORT_Y:
 			getCoord(1, &dataToSort); break;
-		case FamSort_Tp::SORT_Z:
+		case FamSort_tp::SORT_Z:
 			getCoord(2, &dataToSort); break;
-		case FamSort_Tp::SORT_VX:
+		case FamSort_tp::SORT_VX:
 			getCoord(3, &dataToSort); break;
-		case FamSort_Tp::SORT_VY:
+		case FamSort_tp::SORT_VY:
 			getCoord(4, &dataToSort); break;
-		case FamSort_Tp::SORT_VZ:
+		case FamSort_tp::SORT_VZ:
 			getCoord(5, &dataToSort); break;
-		case FamSort_Tp::SORT_JC:
+		case FamSort_tp::SORT_JC:
 			for(int i = 0; i < ((int)members.size()); i++){
 				dataToSort.push_back(members[i].getJacobi());
 			}
 			break;
-		case FamSort_Tp::SORT_TOF:
+		case FamSort_tp::SORT_TOF:
 			for(int i = 0; i < ((int)members.size()); i++){
 				dataToSort.push_back(members[i].getTOF());
 			}

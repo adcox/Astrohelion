@@ -155,7 +155,7 @@ Event::Event(const SysData *data, Event_Tp t, int dir , bool willStop, double* p
 void Event::initEvent(Event_Tp t, int dir, bool willStop, double* params){
 	type = t;
 	triggerDir = dir;
-	stop = willStop;
+	bStop = willStop;
 
 	if(! sysData->getDynamicsModel()->supportsEvent(type)){
 		throw Exception("Event_Tp::initEvent: The current dynamic model does not support this event type");
@@ -226,7 +226,7 @@ Event::Event(const Event &ev) : sysData(ev.sysData){
 void Event::copyEvent(const Event &ev){
 	type = ev.type;
 	triggerDir = ev.triggerDir;
-	stop = ev.stop;
+	bStop = ev.bStop;
 	dist = ev.dist;
 	theTime = ev.theTime;
 	state = ev.state;
@@ -262,7 +262,7 @@ Event& Event::operator =(const Event &ev){
  */
 bool operator ==(const Event &lhs, const Event &rhs){
 	return lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
-		lhs.stop == rhs.stop && lhs.sysData == rhs.sysData;
+		lhs.bStop == rhs.bStop && lhs.sysData == rhs.sysData;
 }//====================================================
 
 /**
@@ -320,7 +320,7 @@ std::vector<double>* Event::getState() { return &state; }
 /**
  *	@return whether or not this event will stop the integration
  */
-bool Event::stopOnEvent() const { return stop; }
+bool Event::stopOnEvent() const { return bStop; }
 
 /**
  *	@return the type of constraint this event will use to target the exact event occurence
@@ -376,7 +376,7 @@ void Event::setStopCount(int c){ stopCount = c; }
  * 
  *  @param s Whether or not the simulation should stop when this event is triggered
  */
-void Event::setStopOnEvent(bool s){ stop = s; }
+void Event::setStopOnEvent(bool s){ bStop = s; }
 
 //-----------------------------------------------------
 //      Computations, etc.
@@ -512,7 +512,7 @@ int Event::getDir(const double y[6], double t) const{
  */
 void Event::printStatus() const{
 	printf("Event: Type = %s, Trigger Dir = %d, KillSim = %s\n", getTypeStr(), triggerDir, 
-		stop ? "YES" : "NO");
+		bStop ? "YES" : "NO");
 	printf("  Dist: %e Last Dist: %e\n", dist, lastDist);
 }//====================================================
 

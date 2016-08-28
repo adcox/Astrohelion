@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -71,7 +71,7 @@ class SysData_bc4bp : public SysData{
 		void setGamma(double g);
 
 		void saveToMat(const char*) const override;
-		void saveToMat(mat_t*) const override;
+		void saveToMat(mat_t*) const;
 
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */
 		static double REF_EPOCH;	// 2005/06/21 18:21:35

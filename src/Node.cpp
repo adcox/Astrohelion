@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -251,23 +251,43 @@ double Node::getEpoch() const{ return epoch; }
  *	input index
  *	@throw Exception if <tt>ix</tt> is out of bounds
  */
-double Node::getExtraParam(int ix) const {
-	if(ix < 0)
-		ix += extraParam.size();
+// double Node::getExtraParam(int ix) const {
+// 	if(ix < 0)
+// 		ix += extraParam.size();
 
-	if(ix < 0 || ix >= (int)(extraParam.size())){
-		astrohelion::printErr("Node::getExtraParam: Attempting to access index %d\n", ix);
-		throw Exception("Node::getExtraParam: Cannot access extra param; index too high");
+// 	if(ix < 0 || ix >= (int)(extraParam.size())){
+// 		astrohelion::printErr("Node::getExtraParam: Attempting to access index %d\n", ix);
+// 		throw Exception("Node::getExtraParam: Cannot access extra param; index too high");
+// 	}
+// 	return extraParam[ix];
+// }//====================================================
+
+double Node::getExtraParam(std::string key) const {
+	if(extraParam.count(key) > 0){
+		return extraParam.at(key);
+	}else{
+		throw Exception("Node::getExtraParam: Cannot access extra param; invalid key");
 	}
-	return extraParam[ix];
 }//====================================================
 
 /**
  *	@brief Get a vector containing all extra parameters for this node
  *	@return a vector containing all extra parameters for this node
  */
-std::vector<double> Node::getExtraParams() const {
+std::map<std::string, double> Node::getExtraParams() const {
 	return extraParam;
+}//====================================================
+
+std::vector<double> Node::getExtraParamVec(std::string key) const{
+	if(extraParamVecs.count(key) > 0){
+		return extraParamVecs.at(key);
+	}else{
+		throw Exception("Node::getExtraParamVec: Cannot access extra param vector; invalid key");
+	}
+}//====================================================
+
+std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
+	return extraParamVecs;
 }//====================================================
 
 /**
@@ -331,26 +351,38 @@ void Node::setConstraintID(int n){
  *	@param ix the index of the extra parameter
  *	@param val the value of the extra paramter
  */
-void Node::setExtraParam(int ix, double val){
-	// Make the vector bigger if need be
-	if((int)(extraParam.size()) <= ix){
-		std::vector<double> temp = extraParam;
-		extraParam.clear();
-		extraParam.assign(ix+1, NAN);
-		for(size_t n = 0; n < temp.size(); n++)
-			extraParam[n] = temp[n];
-	}
+// void Node::setExtraParam(int ix, double val){
+// 	// Make the vector bigger if need be
+// 	if((int)(extraParam.size()) <= ix){
+// 		std::vector<double> temp = extraParam;
+// 		extraParam.clear();
+// 		extraParam.assign(ix+1, NAN);
+// 		for(size_t n = 0; n < temp.size(); n++)
+// 			extraParam[n] = temp[n];
+// 	}
 
-	// Put the desired value in the desired spot
-	extraParam[ix] = val;
+// 	// Put the desired value in the desired spot
+// 	extraParam[ix] = val;
+// }//====================================================
+
+void Node::setExtraParam(std::string key, double val){
+	extraParam[key] = val;
 }//====================================================
 
 /**
  *	@brief Replace the extra parameter vector for this node
  *	@param p a new extra paremeter vector
  */
-void Node::setExtraParams(std::vector<double> p){
+void Node::setExtraParams(std::map<std::string, double> p){
 	extraParam = p;
+}//====================================================
+
+void Node::setExtraParamVec(std::string key, std::vector<double> vec){
+	extraParamVecs[key] = vec;
+}//====================================================
+
+void Node::setExtraParamVec(std::map<std::string, std::vector<double> > p){
+	extraParamVecs = p;
 }//====================================================
 
 /**
@@ -388,6 +420,7 @@ void Node::copyMe(const Node &n){
 	std::copy(n.accel, n.accel+3, accel);
 	epoch = n.epoch;
 	extraParam = n.extraParam;
+	extraParamVecs = n.extraParamVecs;
 	cons = n.cons;
 	Linkable::copyMe(n);
 }//====================================================

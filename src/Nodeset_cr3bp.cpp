@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -226,7 +226,7 @@ double Nodeset_cr3bp::getJacobi(int id) const{
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("Nodeset_cr3bp::getJacobi: Node ID out of range");
 
-	return nodes[nodeIDMap.at(id)].getExtraParam(0);
+	return nodes[nodeIDMap.at(id)].getExtraParam("J");
 }//====================================================
 
 /**
@@ -242,7 +242,7 @@ double Nodeset_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Nodeset_cr3bp::getJacobi: invalid index");
 
-	return nodes[ix].getExtraParam(0);
+	return nodes[ix].getExtraParam("J");
 }//====================================================
 
 /**
@@ -257,7 +257,7 @@ void Nodeset_cr3bp::setJacobi(int id, double jacobi){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("Nodeset_cr3bp::setJacobi: Node ID out of range");
 
-	nodes[nodeIDMap.at(id)].setExtraParam(0, jacobi);
+	nodes[nodeIDMap.at(id)].setExtraParam("J", jacobi);
 }//====================================================
 
 /**
@@ -273,7 +273,7 @@ void Nodeset_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Nodeset_cr3bp::setJacobi: invalid index");
 
-	nodes[ix].setExtraParam(0, val);
+	nodes[ix].setExtraParam("J", val);
 }//====================================================
 
 //-----------------------------------------------------
@@ -285,8 +285,6 @@ void Nodeset_cr3bp::setJacobiByIx(int ix, double val){
  */
 void Nodeset_cr3bp::initExtraParam(){
 	// Add another variable for Jacobi Constant
-	numExtraParam = 1;
-	extraParamRowSize.push_back(1);
 }//====================================================
 
 

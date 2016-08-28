@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -70,8 +70,9 @@ struct EOM_ParamStruct{
 /**
  *	@brief Describes the type of dynamic model; used for easy identification
  */
-enum class DynamicsDynamicsModel_tp{
+enum class DynamicsModel_tp{
 	MODEL_NULL,			//!< Undefined type
+	MODEL_2BP,			//!< Relative 2-Body Problem
 	MODEL_CR3BP,		//!< Circular Restricted, 3-Body Problem
 	MODEL_CR3BP_LTVP,	//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
 	MODEL_BCR4BPR		//!< Bi-Circular Restricted, 4-Body Problem in a rotating reference frame
@@ -115,14 +116,28 @@ class DynamicsModel : public Core{
 public:
 	/**
 	 *	@brief A function pointer to an EOM function
-	 *
-	 *	All EOM functions must take this form to work with GSL's 
+	 *	@details All EOM functions must take this form to work with GSL's 
 	 *	integrators.
+	 *	
+	 *	@param t time associated with the current integration step; this value is passed
+	 *	in by the integrator
+	 *	@param q full state vector; the dimension of this vector is set by SimEngine
+	 *	and is equal to <code>coreStates + stmStates + extraStates</code>; this vector is passed
+	 *	in by the integrator
+	 *	@param qdot full state derivative vector, same dimension as <code>q</code>. This vector
+	 *	must be initialized by the function (i.e., set all values to zero or another value), or
+	 *	invalid memory access will occur within GSL's integration methods
+	 *	@param params a pointer to a set of extra parameters required for integration. All
+	 *	of the EOM functions in this software take a pointer to a SysData object
+	 *	consistent with the DynamicsModel as this parameter. The parameter set can be modified 
+	 *	between integration steps (i.e., change model parameters), but the ode functions must be reset
+	 *	via <code>gsl_odeiv2_driver_reset</code>, <code>gsl_odeiv2_evolve_reset</code>, or
+	 *	<code>gsl_odeiv2_step_reset</code> before continuing with an updated parameter set
 	 */
-	typedef int (*eom_fcn)(double, const double[], double[], void*);
+	typedef int (*eom_fcn)(double t, const double q[], double qdot[], void *params);
 
 	// *structors
-	DynamicsModel(DynamicsDynamicsModel_tp);
+	DynamicsModel(DynamicsModel_tp);
 	DynamicsModel(const DynamicsModel&);
 	virtual ~DynamicsModel();
 
@@ -238,7 +253,7 @@ public:
 	bool supportsEvent(Event_Tp) const;
 	
 protected:
-	DynamicsDynamicsModel_tp modelType = DynamicsDynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
+	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
 	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
 	int stmStates = 36;		//!< The number of states used to store the STM; will always be 36
 	int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.

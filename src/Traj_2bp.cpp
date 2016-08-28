@@ -1,9 +1,9 @@
 /**
- *  @file Traj_cr3bp_ltvp.cpp
- *	@brief 
+ *  @file Traj_2bp.cpp
+ *	@brief Derivative of Traj, specific to 2BP
  *
  *	@author Andrew Cox
- *	@version May 25, 2016
+ *	@version August 25, 2016
  *	@copyright GNU GPL v3.0
  */
  
@@ -27,24 +27,24 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Traj_cr3bp_ltvp.hpp"
+#include "Traj_2bp.hpp"
 
-
-#include "SysData_cr3bp_ltvp.hpp"
 #include "Exceptions.hpp"
+#include "Node.hpp"
+#include "SysData_2bp.hpp"
 #include "Utilities.hpp"
- 
+
 
 namespace astrohelion{
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
-
+ 
 /**
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-Traj_cr3bp_ltvp::Traj_cr3bp_ltvp(const SysData_cr3bp_ltvp* sys) : Traj(sys){
+Traj_2bp::Traj_2bp(const SysData_2bp *sys) : Traj(sys){
 	initExtraParam();
 }//====================================================
 
@@ -52,7 +52,7 @@ Traj_cr3bp_ltvp::Traj_cr3bp_ltvp(const SysData_cr3bp_ltvp* sys) : Traj(sys){
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-Traj_cr3bp_ltvp::Traj_cr3bp_ltvp(const Traj_cr3bp_ltvp &t) : Traj(t){
+Traj_2bp::Traj_2bp(const Traj_2bp &t) : Traj(t){
 	initExtraParam();
 }//====================================================
 
@@ -60,7 +60,7 @@ Traj_cr3bp_ltvp::Traj_cr3bp_ltvp(const Traj_cr3bp_ltvp &t) : Traj(t){
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-Traj_cr3bp_ltvp::Traj_cr3bp_ltvp(const BaseArcset &a) : Traj(a){
+Traj_2bp::Traj_2bp(const BaseArcset &a) : Traj(a){
 	initExtraParam();
 }//====================================================
 
@@ -71,12 +71,12 @@ Traj_cr3bp_ltvp::Traj_cr3bp_ltvp(const BaseArcset &a) : Traj(a){
  *  memory leaks
  * 
  *  @param sys pointer to a system data object; should be a 
- *  CR3BP LTVP system as the pointer will be cast to that derived class
+ *  CR3BP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created trajectory
  */
-baseArcsetPtr Traj_cr3bp_ltvp::create( const SysData *sys) const{
-	const SysData_cr3bp_ltvp *crSys = static_cast<const SysData_cr3bp_ltvp*>(sys);
-	return baseArcsetPtr(new Traj_cr3bp_ltvp(crSys));
+baseArcsetPtr Traj_2bp::create( const SysData *sys) const{
+	const SysData_2bp *crSys = static_cast<const SysData_2bp*>(sys);
+	return baseArcsetPtr(new Traj_2bp(crSys));
 }//====================================================
 
 /**
@@ -85,84 +85,50 @@ baseArcsetPtr Traj_cr3bp_ltvp::create( const SysData *sys) const{
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
- * 
+ *  
  *  @return a pointer to the newly cloned trajectory
  */
-baseArcsetPtr Traj_cr3bp_ltvp::clone() const{
-	return baseArcsetPtr(new Traj_cr3bp_ltvp(*this));
+baseArcsetPtr Traj_2bp::clone() const{
+	return baseArcsetPtr(new Traj_2bp(*this));
 }//====================================================
 
 //-----------------------------------------------------
 //      Operators
 //-----------------------------------------------------
 
+/**
+ *	@brief Concatenate two trajectory objects
+ *
+ * 	When adding A + B, if the final state of A and initial state
+ *	of B are the same, this algorithm will skip the initial state
+ *	of B in the concatenation to avoid duplicating a state. This
+ *	method also overrides the base class behavior and forces time to be
+ *	continuous along the concatentated trajectory regardless of whether
+ *	the final state of A and in itial state of B are the same
+ *
+ *	@param rhs the right-hand-side of the addition operation
+ *	@return a reference to the concatenated arcset object
+ */
+Traj& Traj_2bp::operator +=(const Traj &rhs){
+	// Create a copy of rhs (it is const)
+	Traj temp(rhs);
+
+	// Shift the time in temp by the final time in this trajectory
+	double tf = getTimeByIx(-1);
+	for(int s = 0; s < temp.getNumNodes(); s++){
+		double t = tf + temp.getTimeByIx(s);
+		temp.setTimeByIx(s, t);
+	}
+
+	// throw Exception("Traj_2bp::operator +=: Not currently implemented!");
+	Traj::operator +=(temp);
+
+	return *this;
+}//====================================================
+
 //-----------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------
-
-/**
- *	@brief Retrieve the value of Jacobi's Constant at the specified step
- *	@param ix step index; if < 0, counts backwards from end of trajectory
- *	@return Jacobi at the specified step
- *	@throws Exception if <tt>ix</tt> is out of bounds
- */
-double Traj_cr3bp_ltvp::getJacobiByIx(int ix) const{
-	if(ix < 0)
-		ix += nodes.size();
-
-	if(ix < 0 || ix > ((int)nodes.size()))
-		throw Exception("Traj_cr3bp_ltvp::getJacobiByIx: invalid index");
-
-	return nodes[ix].getExtraParam("J");
-}//====================================================
-
-/**
- *	@brief Retrieve the mass at the specified step
- *	@param ix step index; if < 0, counts backwards from end of trajectory
- *	@return mass at the specified step (non-dim)
- *	@throws Exception if <tt>ix</tt> is out of bounds
- */
-double Traj_cr3bp_ltvp::getMassByIx(int ix) const{
-	if(ix < 0)
-		ix += nodes.size();
-
-	if(ix < 0 || ix > ((int)nodes.size()))
-		throw Exception("Traj_cr3bp_ltvp::getMassByIx: invalid index");
-
-	return nodes[ix].getExtraParam("m");
-}//====================================================
-
-/**
- *	@brief Set Jacobi at the specified step
- *	@param ix step index; if < 0, counts backwards from end of trajectory
- *	@param val value of Jacobi
- *	@throws Exception if <tt>ix</tt> is out of bounds
- */
-void Traj_cr3bp_ltvp::setJacobiByIx(int ix, double val){
-	if(ix < 0)
-		ix += nodes.size();
-
-	if(ix < 0 || ix > ((int)nodes.size()))
-		throw Exception("Traj_cr3bp_ltvp::setJacobiByIx: invalid index");
-
-	nodes[ix].setExtraParam("J", val);
-}//====================================================
-
-/**
- *	@brief Set mass at the specified step
- *	@param ix step index; if < 0, counts backwards from end of trajectory
- *	@param val mass value (non-dim)
- *	@throws Exception if <tt>ix</tt> is out of bounds
- */
-void Traj_cr3bp_ltvp::setMassByIx(int ix, double val){
-	if(ix < 0)
-		ix += nodes.size();
-
-	if(ix < 0 || ix > ((int)nodes.size()))
-		throw Exception("Traj_cr3bp_ltvp::setMassByIx: invalid index");
-
-	nodes[ix].setExtraParam("m", val);
-}//====================================================
 
 //-----------------------------------------------------
 //      Utility Functions
@@ -171,15 +137,15 @@ void Traj_cr3bp_ltvp::setMassByIx(int ix, double val){
 /**
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
-void Traj_cr3bp_ltvp::initExtraParam(){
-	// Add another variable for Jacobi Constant, and one for mass
+void Traj_2bp::initExtraParam(){
+	// Nothing to do here, for now
 }//====================================================
 
 /**
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
-void Traj_cr3bp_ltvp::saveToMat(const char* filename) const{
+void Traj_2bp::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
 
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -196,16 +162,33 @@ void Traj_cr3bp_ltvp::saveToMat(const char* filename) const{
 		astrohelion::printErr("Error creating MAT file\n");
 	}else{
 		saveState(matfp);
+		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
-		saveExtraParam(matfp, "J", "Jacobi");
-		saveExtraParam(matfp, "m", "Mass");
 		pSysData->saveToMat(matfp);
 	}
 
 	Mat_Close(matfp);
 }//========================================
 
+/**
+ *  @brief Populate data in this trajectory from a matlab file
+ * 
+ *  @param filepath the path to the matlab data file
+ *  @throws Exception if the data file cannot be loaded
+ */
+void Traj_2bp::readFromMat(const char *filepath){
+	Traj::readFromMat(filepath);
+
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw Exception("Traj: Could not load data from file");
+	}
+
+	Mat_Close(matfp);
+}//====================================================
 
 
-}
+
+}// END of Astrohelion namespace

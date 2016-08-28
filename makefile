@@ -18,12 +18,12 @@
 # My headers
 INC := include
 # System headers; these are included to not throw warnings
-INC_SYS  := include_extern
+INC_EXTERN := include_extern
 # Source files
 SRC := src
 # Destination directory for compiled objects; use one for optimized, second for debug versions
-# OBJ := obj
-OBJ := obj_debug
+OBJ := obj
+# OBJ := obj_debug
 # Directory for compiled binaries
 BIN := bin
 # Location of library dependencies
@@ -32,15 +32,16 @@ LIB := lib
 # Compiler specification and flags
 # CXX := clang++ -std=c++11
 CXX := g++-6 -std=c++11 -fopenmp
-CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic 
-# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
+CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
-SYS_INC_DIR := /usr/local/include/tpat
+SYS_INC_DIR := /usr/local/include/astrohelion
+SYS_INC_EXTERN_DIR := /usr/local/include/astrohelion_extern
 
 # Options that are platform dependent
 UNAME_S := $(shell uname -s)
@@ -62,7 +63,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := tpat.hpp tpat_ascii_output.hpp tpat_constants.hpp tpat_exceptions.hpp tpat_utilities.hpp
+IMPORTANT_HEADERS := Core.hpp AsciiOutput.hpp Constants.hpp Exceptions.hpp Utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 
@@ -78,12 +79,12 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 all:
 ifeq ($(UNAME_S), Linux)
 	@echo Making Linux libraries
-	@make libtpat.a
-#	@make libtpat.so
+	@make libastrohelion.a
+#	@make libastrohelion.so
 else ifeq ($(UNAME_S), Darwin)
 	@echo Making OS X libraries
-	@make libtpat.a
-	@make libtpat.dylib
+	@make libastrohelion.a
+	@make libastrohelion.dylib
 endif
 
 check:
@@ -104,25 +105,26 @@ else ifeq ($(UNAME_S), Darwin)
 	@echo Installing OS X libraries and headers
 	@if [ ! -d $(SYS_INC_DIR) ]; then mkdir $(SYS_INC_DIR); fi
 	cp -r $(INC)/* $(SYS_INC_DIR)
-	cp $(LIB)/libtpat.a /usr/local/lib/
-	cp $(LIB)/libtpat.dylib /usr/local/lib/
+	cp -r $(INC_EXTERN) $(SYS_INC_EXTERN_DIR)
+	cp $(LIB)/libastrohelion.a /usr/local/lib/
+	cp $(LIB)/libastrohelion.dylib /usr/local/lib/
 endif
 
-libtpat.a: $(OBJECTS)
+libastrohelion.a: $(OBJECTS)
 	ar rcs $(LIB)/$@ $^
 
-libtpat.so: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+libastrohelion.so: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
-libtpat.dylib: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+libastrohelion.dylib: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) -c $< -o $@
+	$(COMP) -I $(INC) -isystem $(INC_EXTERN) -c $< -o $@
 
 ############################################################
 ## UTILITY
@@ -134,7 +136,7 @@ cleandist: clean
 
 nuke:
 	@- $(RM) $(OBJ)/*.o
-	@- $(RM) $(LIB)/libtpat.*
+	@- $(RM) $(LIB)/libastrohelion.*
 
 printVars:
 	$(info $(SRC_FILES))

@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -124,7 +124,8 @@ public:
 	std::vector<double> getCoord(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
-	std::vector<double> getExtraParam(int, int) const;
+	double getExtraParam(int, std::string) const;
+	std::vector<double> getExtraParamVec(int, std::string) const;
 	int getNextNodeID() const;
 	int getNextSegID() const;
 	Node getNode(int) const;
@@ -186,16 +187,7 @@ protected:
 
 	/** Contains all segments that link the nodes of this object */
 	std::vector<Segment> segs {};
-
-	/** Each entry corresponds to one node ID. The value of the entry is 
-	 * the index of the node in the <tt>nodes</tt> array. If the value is
-	 * equal to linkable::INVALID_ID, then the node no longer exists.
-	 * 
-	 * The current implementation requires that nextNodeID begin at 0  
-	 * and increment by one through all integers.
-	 */
-	 // std::vector<int> nodeIDMap {};
-
+	
 	/**
 	 * The key is the ID of the node, the value is the index in 
 	 * node storage vector.
@@ -204,17 +196,6 @@ protected:
 	 * and increment by one through all integers.
 	 */
 	std::map<int, int> nodeIDMap {};
-	
-
-	/**
-	 * Each entry corresponds to one segment ID. The value of the entry is
-	 * the index of the segment in the <tt>segs</tt> array. If the value is equal
-	 * to linkable::INVALID_ID, then the segment no longer exists.
-	 * 
-	 * The current implementation requires that nextSegID begin at 0 and increment
-	 * by one through all integers.
-	 */
-	// std::vector<int> segIDMap {};
 
 	/**
 	 * The key is the ID of the segment, the value is the index in 
@@ -228,19 +209,6 @@ protected:
 	/** A set of constraints that apply to the arc data object as a whole */
 	std::vector<Constraint> cons {};
 
-	/** 
-	 *	Number of variables stored in the extraParam vector. This
-	 *	parameter should be set by the constructor of all derived
-	 *	classes
-	 */
-	int numExtraParam = 0;
-
-	/** 
-	 *	Number of elements in each extra parameter. This parameter
-	 *	should be set by the constructor of all derived classes
-	 */
-	std::vector<int> extraParamRowSize {};
-
 	double tol = 0;		//!< Tolerance used to compute this data
 	int nextNodeID = 0;	//!< A counter that stores the next available node ID
 	int nextSegID = 0;	//!< A counter that stores the next available segment ID
@@ -251,13 +219,15 @@ protected:
 	void readStateFromMat(mat_t*, const char*);
 	void readAccelFromMat(mat_t*);
 	void readEpochFromMat(mat_t*, const char*);
-	void readExtraParamFromMat(mat_t*, int, const char*);
+	void readExtraParamFromMat(mat_t*, std::string, const char*);
+	void readExtraParamVecFromMat(mat_t*, std::string, size_t, const char*);
 	void readSTMFromMat(mat_t*);
 	void readTOFFromMat(mat_t*, const char*);
 	void saveAccel(mat_t*) const;
 	void saveEpoch(mat_t*) const;
 	void saveEpoch(mat_t*, const char*) const;
-	void saveExtraParam(mat_t*, int, const char*) const;
+	void saveExtraParam(mat_t*, std::string, const char*) const;
+	void saveExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
 	void saveState(mat_t*) const;
 	void saveState(mat_t*, const char*) const;
 	void saveSTMs(mat_t*) const;

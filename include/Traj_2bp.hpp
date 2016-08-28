@@ -1,9 +1,9 @@
 /**
- *  @file EigenDefs.hpp
- *	@brief Definitions for matrices, vectors, and other objects from the Eigen library.
+ *  @file Traj_2bp.hpp
+ *	@brief 
  *	
  *	@author Andrew Cox
- *	@version May 25, 2016
+ *	@version August 25, 2016
  *	@copyright GNU GPL v3.0
  */
 /*
@@ -25,18 +25,46 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
-#include "Eigen/Core"
+#include "Traj.hpp"
+
 
 namespace astrohelion{
+
+// Forward Declarations
+class SysData_2bp;
+
 /**
- * A dynamically sized matrix of doubles, with data stored in row-major order
+ *	@brief A derivative class of the Traj object, contains 
+ *	trajectory information specific to the CR3BP
+ *
+ *	@author Andrew Cox
+ *	@version August 30, 2015
+ *	@copyright GNU GPL v3.0
  */
-typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXRd;
+class Traj_2bp : public Traj{
 
-typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXRcd;
+public:
+	// *structors
+	Traj_2bp(const SysData_2bp*);
+	Traj_2bp(const Traj_2bp&);
+	Traj_2bp(const BaseArcset&);
+	baseArcsetPtr create(const SysData*) const override;
+	baseArcsetPtr clone() const override;
 
-typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> Matrix3Rd;
+	// Operators
+	Traj& operator +=(const Traj&) override;
+	
+	// Set and Get Functions
+
+	// Utility
+	void readFromMat(const char*) override;
+	void saveToMat(const char*) const override;
+private:
+
+	void initExtraParam();
+};
 
 }// END of Astrohelion namespace

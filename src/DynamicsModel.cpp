@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -48,7 +48,7 @@ namespace astrohelion{
  *	@brief Default constructor
  *	@param type the model type
  */
-DynamicsModel::DynamicsModel(DynamicsDynamicsModel_tp type){
+DynamicsModel::DynamicsModel(DynamicsModel_tp type){
 	modelType = type;
 }//===========================================
 

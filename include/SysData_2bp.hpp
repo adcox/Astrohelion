@@ -1,9 +1,9 @@
 /**
- *  @file SysData_cr3bp_ltvp.hpp
+ *  @file SysData_2bp.hpp
  *	@brief 
  *	
  *	@author Andrew Cox
- *	@version May 25, 2016
+ *	@version August 25, 2016
  *	@copyright GNU GPL v3.0
  */
 /*
@@ -25,47 +25,48 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
-#include "SysData_cr3bp.hpp"
+#include "SysData.hpp"
 
-#include "DynamicsModel_cr3bp_ltvp.hpp"
+#include "DynamicsModel_2bp.hpp"
+
+#include "matio.h"
+#include <string>
 
 namespace astrohelion{
 
 /**
- *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
+ *	@brief A derivative class of the SysData object which
+ *	contains information specific to the CR3BP
+ *
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
-class SysData_cr3bp_ltvp : public SysData_cr3bp{
-
+class SysData_2bp : public SysData{
 	public:
-		SysData_cr3bp_ltvp();
-		SysData_cr3bp_ltvp(std::string, std::string, double, double, double);
-		SysData_cr3bp_ltvp(const SysData_cr3bp_ltvp&);
-		SysData_cr3bp_ltvp(const char*);
+		SysData_2bp();
+		SysData_2bp(std::string);
+		SysData_2bp(const SysData_2bp&);
+		void initFromFile(const char*);
+		virtual ~SysData_2bp();
 		
-		SysData_cr3bp_ltvp& operator=(const SysData_cr3bp_ltvp&);
+		SysData_2bp& operator=(const SysData_2bp&);
 		
 		const DynamicsModel* getDynamicsModel() const;
-		
-		double getIsp() const;
-		double getThrust() const;
-		double getM0() const;
-
-		void setIsp(double);
-		void setIspDim(double);
-		void setM0(double);
-		void setM0Dim(double);
-		void setThrust(double);
-		void setThrustDim(double);
+		double getMu() const;
 
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
+		
+	protected:
+		void initFromPrimNames(std::string);
+		void readFromMat(mat_t*) override;
+		
 	private:
 		/** The dynamic model that governs motion for this system*/
-		DynamicsModel_cr3bp_ltvp model = DynamicsModel_cr3bp_ltvp();
-		void readFromMat(mat_t*);
+		DynamicsModel_2bp model = DynamicsModel_2bp();
 };
 
 

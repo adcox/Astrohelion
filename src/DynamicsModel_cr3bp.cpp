@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -46,7 +46,7 @@ namespace astrohelion{
 /**
  *  @brief Construct a CR3BP Dynamic DynamicsModel
  */
-DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel(DynamicsDynamicsModel_tp::MODEL_CR3BP) {
+DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     // Allow a few more constraints than the default
     allowedCons.push_back(Constraint_tp::JC);
     allowedCons.push_back(Constraint_tp::PSEUDOARC);
@@ -88,17 +88,17 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp::getFullEOM_fcn() const{
  *  @brief Compute the positions of all primaries
  *
  *  @param t the epoch at which the computations occur (unused for this system)
- *  @param sysData object describing the specific system
+ *  @param pSysData object describing the specific system
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> DynamicsModel_cr3bp::getPrimPos(double t, const SysData *sysData) const{
+std::vector<double> DynamicsModel_cr3bp::getPrimPos(double t, const SysData *pSysData) const{
     (void)t;
     double primPos[6] = {0};
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(sysData);
+    const SysData_cr3bp *pCrSys = static_cast<const SysData_cr3bp *>(pSysData);
     
-    primPos[0] = -1*crSys->getMu();
-    primPos[3] = 1 - crSys->getMu();
+    primPos[0] = -1*pCrSys->getMu();
+    primPos[3] = 1 - pCrSys->getMu();
 
     return std::vector<double>(primPos, primPos+6);
 }//==============================================
@@ -210,14 +210,14 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     }
 
     std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
-    std::vector<double> extra = correctedNodes.getNodeByIx(-1).getExtraParams();
-    extra.insert(extra.begin(), state.begin(), state.end());
+    std::vector<double> stm = correctedNodes.getNodeByIx(-1).getExtraParamVec("stm");
+    state.insert(state.end(), stm.begin(), stm.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
     double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    sim_saveIntegratedData(&(extra[0]), eventTime, traj);
+    sim_saveIntegratedData(&(state[0]), eventTime, traj);
 
     return true;
 }//======================================================
@@ -393,7 +393,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
-            node.setExtraParam(0, getJacobi(state, crSys->getMu()));
+            node.setExtraParam("J", getJacobi(state, crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
@@ -404,9 +404,9 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
                 // Append the 36 STM elements to the node vector
                 Traj lastSeg = it->propSegs.back();
                 MatrixXRd stm = lastSeg.getSTMByIx(-1);
-                std::vector<double> extraParam(stm.data(), stm.data()+36);
+                std::vector<double> stm_vec(stm.data(), stm.data()+36);
                 
-                node.setExtraParams(extraParam);
+                node.setExtraParamVec("stm", stm_vec);
             }
         }
 

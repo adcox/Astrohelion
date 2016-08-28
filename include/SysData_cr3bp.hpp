@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -54,7 +54,7 @@ class SysData_cr3bp : public SysData{
 		
 		SysData_cr3bp& operator=(const SysData_cr3bp&);
 		
-		const DynamicsModel* getDynamicsModel() const ;
+		const DynamicsModel* getDynamicsModel() const;
 		double getMu() const;
 
 		void saveToMat(const char*) const override;

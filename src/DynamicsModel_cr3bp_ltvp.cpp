@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -44,7 +44,7 @@ namespace astrohelion{
 /**
  *  @brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
  */
-DynamicsModel_cr3bp_ltvp::DynamicsModel_cr3bp_ltvp() : DynamicsModel(DynamicsDynamicsModel_tp::MODEL_CR3BP_LTVP) {
+DynamicsModel_cr3bp_ltvp::DynamicsModel_cr3bp_ltvp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP_LTVP) {
     coreStates = 6;
     stmStates = 36;
     extraStates = 0;

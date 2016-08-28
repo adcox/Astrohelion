@@ -16,7 +16,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -170,6 +170,8 @@ std::string SysData::getTypeStr() const{
 	switch (type){
 		case SysData_tp::UNDEF_SYS:
 			return "Undefined System Type";
+		case SysData_tp::R2BP_SYS:
+			return "2BP";
 		case SysData_tp::CR3BP_SYS:
 			return "CR3BP";
 		case SysData_tp::CR3BP_LTVP_SYS:
@@ -198,7 +200,7 @@ void SysData::saveToMat(const char *filepath) const{
 	 */
 	mat_t *matfp = Mat_CreateVer(filepath, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
-		astrohelion::printErr("Fam_cr3bp::saveToMat: Error creating MAT file\n");
+		astrohelion::printErr("SysData::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things
 		saveToMat(matfp);

@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -34,7 +34,6 @@
 namespace astrohelion{
 
 // Forward Declarations
-class Nodeset_cr3bp;
 class SysData_cr3bp;
 
 /**

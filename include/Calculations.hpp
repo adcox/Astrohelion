@@ -9,7 +9,7 @@
  
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of the Astrohelion.
  *
@@ -41,6 +41,7 @@ class MultShootData;
 class Nodeset;
 class Nodeset_bc4bp;
 class Nodeset_cr3bp;
+class SysData_2bp;
 class SysData_bc4bp;
 class SysData_cr3bp;
 class Traj;
@@ -95,6 +96,9 @@ void finiteDiff_checkMultShoot(const Nodeset*);
 void finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
+
+// 2BP Utility Functions
+void r2bp_getKepler(const SysData_2bp*, const double[]);
 
 // CR3BP Utility Functions
 double cr3bp_getVel_withC(const double s[], double, double, int);

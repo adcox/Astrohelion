@@ -96,6 +96,9 @@ calcTest: $(OBJECTS)
 correctorTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_corrector.cpp -o $(BIN)/$@
 
+conicTest: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_2bp.cpp -o $(BIN)/$@
+
 familyOps: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
 

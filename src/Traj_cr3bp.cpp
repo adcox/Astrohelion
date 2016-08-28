@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -31,8 +31,6 @@
 
 #include "Exceptions.hpp"
 #include "Node.hpp"
-#include "Nodeset_cr3bp.hpp"
-#include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Utilities.hpp"
 
@@ -145,7 +143,7 @@ double Traj_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_cr3bp::getJacobiByIx: invalid node index");
 
-	return nodes[ix].getExtraParam(0);
+	return nodes[ix].getExtraParam("J");
 }//====================================================
 
 /**
@@ -161,7 +159,7 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_cr3bp::setJacobiByIx: invalid node index");
 
-	nodes[ix].setExtraParam(0, val);
+	nodes[ix].setExtraParam("J", val);
 }//====================================================
 
 //-----------------------------------------------------
@@ -173,8 +171,6 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
  */
 void Traj_cr3bp::initExtraParam(){
 	// Add a variable for Jacobi Constant
-	numExtraParam = 1;
-	extraParamRowSize.push_back(1);
 }//====================================================
 
 /**
@@ -201,7 +197,7 @@ void Traj_cr3bp::saveToMat(const char* filename) const{
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
-		saveExtraParam(matfp, 0, "Jacobi");
+		saveExtraParam(matfp, "J", "Jacobi");
 		pSysData->saveToMat(matfp);
 	}
 
@@ -223,7 +219,7 @@ void Traj_cr3bp::readFromMat(const char *filepath){
 		throw Exception("Traj: Could not load data from file");
 	}
 
-	readExtraParamFromMat(matfp, 0, "Jacobi");
+	readExtraParamFromMat(matfp, "J", "Jacobi");
 
 	Mat_Close(matfp);
 }//====================================================

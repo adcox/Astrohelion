@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -140,7 +140,7 @@ std::vector<double> Traj_bc4bp::get_dqdTByIx(int ix){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_bc4bp::getdqdT: invalid index");
 
-	return getExtraParam(ix, 0);
+	return getExtraParamVec(ix, "dqdT");
 }//====================================================
 
 /**
@@ -157,8 +157,8 @@ void Traj_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
 	if(ix < 0 || ix > ((int)nodes.size()))
 		throw Exception("Traj_bc4bp::setdqdT: invalid index");
 
-	for(int i = 0; i < 6; i++)
-		nodes[ix].setExtraParam(0+i, dqdT[i]);
+	std::vector<double> dqdT_vec(dqdT, dqdT+6);
+	nodes[ix].setExtraParamVec("dqdT", dqdT_vec);
 }//====================================================
 
 /**
@@ -182,9 +182,6 @@ void Traj_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
  *	@brief Initialize the extra param vector for info specific to this trajectory
  */
 void Traj_bc4bp::initExtraParam(){
-	// Add a variable for dqdT
-	numExtraParam = 1;
-	extraParamRowSize.push_back(6);
 }//====================================================
 
 /**
@@ -211,7 +208,7 @@ void Traj_bc4bp::saveToMat(const char* filename) const{
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
-		saveExtraParam(matfp, 0, "dqdT");
+		saveExtraParamVec(matfp, "dqdT", 6, "dqdT");
 		pSysData->saveToMat(matfp);
 	}
 
@@ -233,7 +230,7 @@ void Traj_bc4bp::readFromMat(const char *filepath){
 		throw Exception("Traj_bc4bp: Could not load data from file");
 	}
 
-	readExtraParamFromMat(matfp, 0, "dqdT");
+	readExtraParamVecFromMat(matfp, "dqdT", 6, "dqdT");
 	
 	Mat_Close(matfp);
 }//====================================================

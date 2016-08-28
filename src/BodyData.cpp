@@ -9,7 +9,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -54,7 +54,7 @@ BodyData::BodyData(){
 	name = "Unknown";
 	ID = 999999;
 	parent = "Unknown";
-}//------------------------
+}//====================================================
 
 /**
  *	@brief Construct a body by specifying its name; the other parameters are loaded from memory

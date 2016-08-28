@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -46,7 +46,7 @@ namespace astrohelion{
 /**
  *  @brief Construct a BCR4BP Dynamic DynamicsModel
  */
-DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsDynamicsModel_tp::MODEL_CR3BP) {
+DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     coreStates = 6;
     stmStates = 36;
     extraStates = 6;
@@ -217,14 +217,17 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
     }
 
     std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
-    std::vector<double> extra = correctedNodes.getNodeByIx(-1).getExtraParams();
-    extra.insert(extra.begin(), state.begin(), state.end());
+    std::vector<double> stm = correctedNodes.getNodeByIx(-1).getExtraParamVec("stm");
+    std::vector<double> dqdT = correctedNodes.getNodeByIx(-1).getExtraParamVec("dqdT");
+    
+    state.insert(state.end(), stm.begin(), stm.end());
+    state.insert(state.end(), dqdT.begin(), dqdT.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
     double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    sim_saveIntegratedData(&(extra[0]), eventTime, traj);
+    sim_saveIntegratedData(&(state[0]), eventTime, traj);
     
     return true;
 }//====================================================
@@ -451,7 +454,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_PosVel(MultShootData* it, Constra
     if(it->bVarTime){
         int segIx = it->nodeset->getSegIx(con.getID());
         std::vector<double> conData = con.getData();
-        std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParam(-1, 0);
+        std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVec(-1, "dqdT");
 
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
 
@@ -735,7 +738,7 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
                 Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
                 // Compute partial w.r.t. epoch time n
-                std::vector<double> last_dqdT = it->propSegs.at(s).getExtraParam(-1, 0);
+                std::vector<double> last_dqdT = it->propSegs.at(s).getExtraParamVec(-1, "dqdT");
                 Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
                 dqdT.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[3];
                 dqdT.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[3];
@@ -1454,15 +1457,12 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
                 // Append the 36 STM elements to the node vector
                 Traj lastSeg = it->propSegs.back();
                 MatrixXRd lastSTM = lastSeg.getSTMByIx(-1);
-                
-                // Create a vector of extra parameters from existing extraParam vector
-                std::vector<double> extraParams = nodeset_out->getNodeByIx(-1).getExtraParams();
-                // append the STM elements at the end
-                extraParams.insert(extraParams.end(), lastSTM.data(), lastSTM.data()+36);
-                // append the last dqdT vector
-                std::vector<double> dqdT = lastSeg.getExtraParam(-1,0);
-                extraParams.insert(extraParams.end(), dqdT.begin(), dqdT.end());
-                node.setExtraParams(extraParams);
+                std::vector<double> stm_vec(lastSTM.data(), lastSTM.data()+36);
+                node.setExtraParamVec("stm", stm_vec);
+
+                // Also append the last dqdT vector
+                std::vector<double> dqdT = lastSeg.getExtraParamVec(-1,"dqdT");
+                node.setExtraParamVec("dqdT", dqdT);
             }
         }
 

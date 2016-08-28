@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -50,6 +50,7 @@ class DynamicsModel;
  */
 enum class SysData_tp {
 	UNDEF_SYS,		//!< System type is undefined
+	R2BP_SYS,		//!< Relative Motion 2-Body Problem
 	CR3BP_SYS,		//!< Circular Restricted 3-Body Problem
 	CR3BP_LTVP_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
 	BCR4BPR_SYS 	//!< Bi-Circular Restricted 4-Body Problem, rotating frame

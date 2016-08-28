@@ -1,9 +1,9 @@
 /**
- *  @file DynamicsModel_cr3bp.hpp
+ *  @file DynamicsModel_2bp.hpp
  *	@brief 
  *	
  *	@author Andrew Cox
- *	@version May 25, 2016
+ *	@version August 24, 2016
  *	@copyright GNU GPL v3.0
  */
 /*
@@ -32,22 +32,21 @@
 namespace astrohelion{
 
 // Forward declarations
-class SysData_cr3bp;
+class SysData_2bp;
 
 /**
- *	@brief Derivative of DynamicsModel, specific to the CR3BP
+ *	@brief Derivative of DynamicsModel, specific to the 2BP
  *
  *	The base class's methods provide a good framework for this system,
- *	so only minimal adjustments are needed. This model adds support for 
- *	Jacobi-Constant targeting.
+ *	so only minimal adjustments are needed.
  */
-class DynamicsModel_cr3bp : public DynamicsModel{
+class DynamicsModel_2bp : public DynamicsModel{
 public:
-	DynamicsModel_cr3bp();
-	DynamicsModel_cr3bp(const DynamicsModel_cr3bp&);
-	~DynamicsModel_cr3bp() {}
+	DynamicsModel_2bp();
+	DynamicsModel_2bp(const DynamicsModel_2bp&);
+	~DynamicsModel_2bp() {}
 
-	DynamicsModel_cr3bp& operator=(const DynamicsModel_cr3bp&);
+	DynamicsModel_2bp& operator=(const DynamicsModel_2bp&);
 
 	// Core Functions
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
@@ -55,25 +54,17 @@ public:
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
 	
+	void multShoot_initIterData(MultShootData *it) const;
+	void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const;
+	bool sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const;
+	void sim_saveIntegratedData(const double *y, double t, Traj* traj) const;
+
 	// Static Calculation Functions
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static void getEquilibPt(const SysData_cr3bp*, int, double, double[3]);
-	static double getJacobi(const double[], double);
-	static void getUDDots(double, double, double, double, double* ddots);
 
-	// Simulation Engine Functions
-	void sim_saveIntegratedData(const double*, double, Traj*) const;
-	bool sim_locateEvent(Event, Traj*, const double*, double, double, Verbosity_tp) const;
-
-	// Multiple Shooting Functions
-	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
-	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
-	void multShoot_initIterData(MultShootData *it) const override;
-	
 protected:
-	void multShoot_targetJC(MultShootData*, Constraint, int) const;
-	void multShoot_targetPseudoArc(MultShootData*, Constraint, int) const;
+
 };
 
 }// END of Astrohelion namespace

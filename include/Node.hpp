@@ -8,7 +8,7 @@
  */
 /*
  *	Astrohelion 
- *	Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -34,8 +34,11 @@
 
 #include <cmath>
 #include <vector>
+#include <map>
+ 
 // Forward Declarations
-
+// (none)
+ 
 namespace astrohelion{
 /**
  *	@brief A brief description
@@ -67,18 +70,23 @@ public:
 	std::vector<double> getAccel() const;
 	std::vector<Constraint> getConstraints() const;
 	double getEpoch() const;
-	double getExtraParam(int) const;
-	std::vector<double> getExtraParams() const;
+	double getExtraParam(std::string) const;
+	std::vector<double> getExtraParamVec(std::string) const;
+	std::map<std::string, double> getExtraParams() const;
+	std::map<std::string, std::vector<double> > getExtraParamVec() const;
 	int getNumCons() const;
 	std::vector<double> getState() const;
+
 	void removeConstraint(int);
 	void setAccel(const double*);
 	void setAccel(std::vector<double>);
 	void setConstraints(std::vector<Constraint>);
 	void setConstraintID(int);
 	void setEpoch(double);
-	void setExtraParam(int, double);
-	void setExtraParams(std::vector<double>);
+	void setExtraParam(std::string, double);
+	void setExtraParamVec(std::string, std::vector<double>);
+	void setExtraParams(std::map<std::string, double>);
+	void setExtraParamVec(std::map<std::string, std::vector<double> >);
 	void setState(const double*);
 	void setState(std::vector<double>);
 
@@ -89,8 +97,12 @@ protected:
 	double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
-	/** Stores extra parameters like mass, costates, etc. */
-	std::vector<double> extraParam {};
+	/** Stores extra parameters (scalars) like mass, costates, etc. */
+	// std::vector<double> extraParam {};
+	std::map<std::string, double> extraParam {};
+
+	/** Stores extra parameter vectors, like dqdt, etc. */
+	std::map<std::string, std::vector<double> > extraParamVecs {};
 
 	/** Stores constraints on this node (especially usefull in nodesets) */
 	std::vector<Constraint> cons {};

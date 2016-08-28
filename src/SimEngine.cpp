@@ -10,7 +10,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -206,14 +206,14 @@ void SimEngine::setAbsTol(double t){
 }//====================================================
 
 /**
- *	@brief Specify the absolute integration tolerance, non-dimensional units
+ *	@brief Specify the relative integration tolerance, non-dimensional units
  *	The default value is 1e-14
  *	@param t the tolerance
  */
 void SimEngine::setRelTol(double t){
     relTol = t;
     if(relTol > 1)
-        astrohelion::printWarn("SimEngine::setAbsTol: tolerance is greater than 1... just FYI\n");
+        astrohelion::printWarn("SimEngine::setRelTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
@@ -384,8 +384,13 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     int (*eomFcn)(double, const double[], double[], void*) = 
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
-    // Create a system to integrate; we don't include a Jacobian (NULL)
-    gsl_odeiv2_system sys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
+    /* Create a system to integrate; we don't include a Jacobin (NULL)
+     *  The parameter set eomParams can be modified 
+     *  between integration steps (i.e., change model parameters), but the ode functions must be reset
+     *  via <code>gsl_odeiv2_driver_reset</code>, <code>gsl_odeiv2_evolve_reset</code>, or
+     *  <code>gsl_odeiv2_step_reset</code> before continuing with an updated parameter set
+     */
+    gsl_odeiv2_system odeSys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
     
     // Define ODE objects, define them conditionaly based on bVarStepSize
     gsl_odeiv2_step *s = NULL;
@@ -405,7 +410,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
         astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         // Allocate space for a driver; the msadams algorithm requires access to the driver
         double signed_dt = bRevTime ? -1*dtGuess : dtGuess;
-        d = gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
+        d = gsl_odeiv2_driver_alloc_y_new(&odeSys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
         // Allocate space for the stepping object
         s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
         gsl_odeiv2_step_set_driver(s, d);
@@ -425,14 +430,14 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     bool killSim = false;   // flag to stop simulation
 
     if(t_dim == 2){
-        double t0 = t[0], tf = t[1];            // start and finish times for integration
+        double t0 = t[0], tf = t[1];                // start and finish times for integration
         double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
         int sgn = tf > t0 ? 1 : -1;
 
         while (sgn*t0 < sgn*tf && !killSim){
             // apply integrator for one step; new state and time are stored in y and t0
             if(bVarStepSize){
-                status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
+                status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t0, tf, &dt, y);
             }else{
                 status = gsl_odeiv2_driver_apply(d, &t0, tf, y);
             }
@@ -461,7 +466,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
             while(sgn*t0 < sgn*tf && !killSim){
                 // printf("Integrating at t = %6.4f\n", t0);
                 if(bVarStepSize){
-                    status = gsl_odeiv2_evolve_apply(e, c, s, &sys, &t0, tf, &dt, y);
+                    status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t0, tf, &dt, y);
                 }else{
                     status = gsl_odeiv2_driver_apply(d, &t0, tf, y);
                 }

@@ -13,7 +13,7 @@
  */
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of the Astrohelion.
  *
@@ -42,6 +42,7 @@
 #include "Nodeset_bc4bp.hpp"
 #include "Nodeset_cr3bp.hpp"
 #include "SimEngine.hpp"
+#include "SysData_2bp.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
 #include "SysData_cr3bp_ltvp.hpp"
@@ -784,6 +785,41 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
         for(long c = 0; c < colMax.size(); c++){
             astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
         }
+    }
+}//====================================================
+
+//-----------------------------------------------------
+//      2BP Utility Functions
+//-----------------------------------------------------
+
+void r2bp_getKepler(const SysData_2bp *sys, const double q[]){
+    double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);     // radius, km
+    double v = sqrt(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]);     // speed, km/s
+
+    double energy = 0.5*v*v - sys->getMu()/r;               // two-body energy, km^2/s^2
+    double a = -sys->getMu()/(2*energy);                    // semi-majora axis, km
+
+    double h_vec[] = {  q[1]*q[5] - q[2]*q[4],              // specific angular momentum vector h = r x v, km^2/s
+                        q[2]*q[3] - q[0]*q[5],
+                        q[0]*q[4] - q[1]*q[3] };
+
+    double h = sqrt(h_vec[0]*h_vec[0] + h_vec[1]*h_vec[1] + h_vec[2]*h_vec[2]);     // specific angular momentum km^2/s
+    double e = sqrt(1 + 2*energy*h*h/(sys->getMu() * sys->getMu()));                // eccentricity, nondimensional
+    double p = a*(1 - e*e);                                 // semi-latus rectum, km
+    double fpa = acos(h/(r*v));                             // flight path angle, rad
+    double ta = acos((p-r)/(r*e));;                         // true anomaly, rad, NOTE: two options from arccos, symmetric about ta = 0
+
+    double h_unit[] = {h_vec[0]/h, h_vec[1]/h, h_vec[2]/h};                 // unit vector, nondimensional
+    double r_unit[] = {q[0]/r, q[1]/r, q[2]/r};                             // unit vector, nondimensional
+    double theta_unit[] = { h_unit[1]*r_unit[2] - h_unit[2]*r_unit[1],      // unit vector, theta = h x r, nondimensional
+                            h_unit[2]*r_unit[0] - h_unit[0]*r_unit[2],
+                            h_unit[0]*r_unit[1] - h_unit[1]*r_unit[0]};
+
+    double r_dot = q[3]*r_unit[0] + q[4]*r_unit[1] + q[5]*r_unit[2];        // range rate, km/s
+
+    // if s/c is descending, true anomaly is between pi and 2*pi
+    if(r_dot < 0){
+        ta = 2*PI - ta;
     }
 }//====================================================
 

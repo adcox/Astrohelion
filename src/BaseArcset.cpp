@@ -9,7 +9,7 @@
  
 /*
  *  Astrohelion 
- *  Copyright 2015, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of the Astrohelion.
  *
@@ -902,23 +902,43 @@ double BaseArcset::getEpochByIx(int ix) const{
  *	@return a vector containing the extra parameter at the specified step and index
  *	@throws Exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
  */
-std::vector<double> BaseArcset::getExtraParam(int n, int ix) const{
+// std::vector<double> BaseArcset::getExtraParam(int n, int ix) const{
+// 	if(n < 0)
+// 		n += nodes.size();
+
+// 	if(n < 0 || n >= (int)(nodes.size()))
+// 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
+
+// 	if(ix < 0 || ix >= (int)(extraParamRowSize.size()))
+// 		throw Exception("BaseArcset::getExtraParam: parameter index out of bounds");
+
+// 	int startIx = 0;
+// 	for(int i = 0; i < ix; i++)
+// 		startIx += extraParamRowSize[i];
+
+// 	int size = extraParamRowSize[ix];
+// 	std::vector<double> extraParam = nodes[n].getExtraParams();
+// 	return std::vector<double>(extraParam.begin()+startIx, extraParam.begin()+startIx + size);
+// }//====================================================
+
+double BaseArcset::getExtraParam(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 
 	if(n < 0 || n >= (int)(nodes.size()))
 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
 
-	if(ix < 0 || ix >= (int)(extraParamRowSize.size()))
-		throw Exception("BaseArcset::getExtraParam: parameter index out of bounds");
+	return nodes[n].getExtraParam(key);
+}//====================================================
 
-	int startIx = 0;
-	for(int i = 0; i < ix; i++)
-		startIx += extraParamRowSize[i];
+std::vector<double> BaseArcset::getExtraParamVec(int n, std::string key) const{
+	if(n < 0)
+		n += nodes.size();
 
-	int size = extraParamRowSize[ix];
-	std::vector<double> extraParam = nodes[n].getExtraParams();
-	return std::vector<double>(extraParam.begin()+startIx, extraParam.begin()+startIx + size);
+	if(n < 0 || n >= (int)(nodes.size()))
+		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
+
+	return nodes[n].getExtraParamVec(key);
 }//====================================================
 
 /**
@@ -1424,8 +1444,6 @@ void BaseArcset::copyMe(const BaseArcset &d){
 	segs = d.segs;
 	segIDMap = d.segIDMap;
 	cons = d.cons;
-	numExtraParam = d.numExtraParam;
-	extraParamRowSize = d.extraParamRowSize;
 	tol = d.tol;
 	nextNodeID = d.nextNodeID;
 	nextSegID = d.nextSegID;
@@ -1748,17 +1766,11 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
  *  @brief Read values of the specified extra paramter from a matlab file
  * 
  *  @param pMatFile pointer to an open Matlab file
- *  @param varIx the index of the extra parameter variable within the <tt>extraParamRowSize</tt> array
+ *  @param varKey the key (i.e., name) of the extra parameter scalar variable
  *  @param pVarName the name of the storage variable within the Matlab file
  *  @throws Exception if there are any issues importing the data
  */
-void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *pVarName){
-	if(varIx >= numExtraParam || varIx < 0)
-		throw Exception("BaseArcset::readExtraParamFromMat: Could not read extra parameter; index out of bounds");
-
-	// Get starting index of this extra param within a arc step's extra parameter vector
-	int ix0 = 0;
-	for(int i = 0; i < varIx; i++){ ix0 += extraParamRowSize[i]; }
+void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, std::string varKey, const char *pVarName){
 
 	matvar_t *pMatVar = Mat_VarRead(pMatFile, pVarName);
 	if(pMatVar == NULL){
@@ -1770,9 +1782,9 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *p
 			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
 		}
 
-		if(pMatVar->dims[1] != ((size_t)extraParamRowSize[varIx])){
+		if(pMatVar->dims[1] != 1){
 			char message[64];
-			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", pVarName, extraParamRowSize[varIx]);
+			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", pVarName, 1);
 			throw Exception(message);
 		}
 
@@ -1780,9 +1792,7 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *p
 			double *data = static_cast<double *>(pMatVar->data);
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
-					for(int c = 0; c < extraParamRowSize[varIx]; c++){
-						nodes[i].setExtraParam(ix0+c, data[c*numSteps + i]);
-					}
+					nodes[i].setExtraParam(varKey, data[i]);
 				}
 			}
 		}else{
@@ -1790,7 +1800,52 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, int varIx, const char *p
 		}
 	}
 	Mat_VarFree(pMatVar);
-}//===============================================
+}//====================================================
+
+/**
+ *  @brief Read values of the specified extra paramter from a matlab file
+ * 
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param varKey the key (i.e., name) of the extra parameter vector
+ *  @param len the length of the extra parameter vector
+ *  @param pVarName the name of the storage variable within the Matlab file
+ *  @throws Exception if there are any issues importing the data
+ */
+void BaseArcset::readExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, size_t len, const char *pVarName){
+	
+	matvar_t *pMatVar = Mat_VarRead(pMatFile, pVarName);
+	if(pMatVar == NULL){
+		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
+	}else{
+		int numSteps = pMatVar->dims[0];
+		
+		if(nodes.size() == 0){
+			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
+		}
+
+		if(pMatVar->dims[1] != len){
+			char message[64];
+			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %zu", pVarName, len);
+			throw Exception(message);
+		}
+
+		if(pMatVar->class_type == MAT_C_DOUBLE && pMatVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pMatVar->data);
+			if(data != NULL){
+				for(int i = 0; i < numSteps; i++){
+					std::vector<double> vec(len,0);
+					for(size_t c = 0; c < len; c++){
+						vec[c] = data[c*numSteps + i];
+					}
+					nodes[i].setExtraParamVec(varKey, vec);
+				}
+			}
+		}else{
+			throw Exception("BaseArcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(pMatVar);
+}//====================================================
 
 /**
  *	@brief Save the acceleration vector to file
@@ -1841,32 +1896,59 @@ void BaseArcset::saveEpoch(mat_t *pMatFile, const char* pVarName) const{
 /**
  *	@brief Save one of the extra parameters to file
  *	@param pMatFile a pointer to the destination mat-file
- *	@param varIx the index of the parameter
+ *	@param varKey the key (i.e., the name) of the scalar parameter
  *	@param name the name of the variable being saved
  *	@throws Exception if <tt>varIx</tt> is out of bounds
  */
-void BaseArcset::saveExtraParam(mat_t *pMatFile, int varIx, const char *name) const{
-	if(varIx > numExtraParam || varIx < 0)
-		throw Exception("Could not save extra parameter; index out of bounds");
-
-	// Get starting index of this extra param within a arc step's extra parameter vector
-	int ix0 = 0;
-	for(int i = 0; i < varIx; i++){ ix0 += extraParamRowSize[i]; }
+void BaseArcset::saveExtraParam(mat_t *pMatFile, std::string varKey, const char *name) const{
 
 	// Get the specified coordinate
-	std::vector<double> param(extraParamRowSize[varIx]*nodes.size());
+	std::vector<double> param(nodes.size());
 	for(size_t r = 0; r < nodes.size(); r++){
-		std::vector<double> ep  = nodes[r].getExtraParams();
-		for(int c = 0; c < extraParamRowSize[varIx];c++){
-			// Save NAN (rather than un-allocated memeory) if the index is out of bounds
-			if(ix0 + c < (int)(ep.size()))
-				param[c*nodes.size() + r] = ep[ix0+c];
-			else
-				param[c*nodes.size() + r] = NAN;
+		try{
+			param[r] = nodes[r].getExtraParam(varKey);
+		}catch(Exception &e){
+			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+			param[r] = NAN;
 		}
 	}
 
-	size_t dims[2] = {nodes.size(), static_cast<size_t>(extraParamRowSize[varIx])};
+	size_t dims[2] = {nodes.size(), 1};
+	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
+}//======================================================
+
+/**
+ *	@brief Save one of the extra parameters to file
+ *	@param pMatFile a pointer to the destination mat-file
+ *	@param varKey the key (i.e., the name) of the scalar parameter
+ *	@param name the name of the variable being saved
+ *	@throws Exception if <tt>varIx</tt> is out of bounds
+ */
+void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t len, const char *name) const{
+
+	// Get the specified coordinate
+	std::vector<double> param(nodes.size()*len);
+	for(size_t r = 0; r < nodes.size(); r++){
+		// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+		std::vector<double> vec(len, NAN);
+
+		try{
+			vec = nodes[r].getExtraParamVec(varKey);
+			for(size_t c = 0; c < vec.size(); c++){
+				if(c >= len)
+					break;
+
+				param[c*nodes.size() + r] = vec[c];
+			}
+		}catch(Exception &e){
+			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+			for(size_t c = 0; c < len; c++)
+				param[c*nodes.size() + r] = vec[c];
+		}
+	}
+
+	size_t dims[2] = {nodes.size(), len};
 	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
 }//======================================================

@@ -76,7 +76,7 @@ BodyData::BodyData(std::string n){
         radius = 6378.137;
         orbitRad = 1.496188026821e8;
         mass = gravParam/G;
-        minFlyByAlt = 2000;
+        // minFlyByAlt = 2000;
         return;
 	}
 

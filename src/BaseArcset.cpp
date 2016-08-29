@@ -1005,10 +1005,48 @@ Node BaseArcset::getNode(int id) const{
  * 
  *  @param ix The index of the node; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a segment at the specified index
+ *  @return a node at the specified index
  *  @throws Exception if <tt>ix</tt> is out of bounds
  */
 Node BaseArcset::getNodeByIx(int ix) const{
+	if(ix < 0)
+		ix += nodes.size();
+
+	if(ix < 0 || ix >= (int)(nodes.size()))
+		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
+
+	return nodes[ix];
+}//=====================================================
+
+/**
+ *  @brief Retrieve a reference to a specific node
+ * 
+ *  @param id the ID of the desired node.
+ *	
+ *  @return the node located with the specified ID
+ *  @throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ */
+Node& BaseArcset::getNodeRef(int id){
+	if(nodeIDMap.count(id) == 0)
+		throw Exception("BaseArcset::getNodeRef: Invalid ID (out of bounds)");
+
+	int ix = nodeIDMap.at(id);
+	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+		return nodes[ix];
+	}else{
+		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
+	}
+}//====================================================
+
+/**
+ *  @brief Retrieve a reference to a node based on its index in the storage array
+ * 
+ *  @param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  count backwards from the end of the storage array.
+ *  @return a reference to a node at the specified index
+ *  @throws Exception if <tt>ix</tt> is out of bounds
+ */
+Node& BaseArcset::getNodeRefByIx(int ix){
 	if(ix < 0)
 		ix += nodes.size();
 

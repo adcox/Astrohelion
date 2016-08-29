@@ -130,6 +130,8 @@ public:
 	int getNextSegID() const;
 	Node getNode(int) const;
 	Node getNodeByIx(int) const;
+	Node& getNodeRef(int);
+	Node& getNodeRefByIx(int);
 	int getNodeIx(int) const;
 	int getNumCons() const;
 	int getNumNodes() const;

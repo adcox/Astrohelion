@@ -36,8 +36,10 @@
 namespace astrohelion{
 
 // Forward declarations
+class BaseArcset;
 class CorrectionEngine;
 class MultShootData;
+class Node;
 class Nodeset;
 class Nodeset_bc4bp;
 class Nodeset_cr3bp;
@@ -98,7 +100,8 @@ MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 
 // 2BP Utility Functions
-void r2bp_getKepler(const SysData_2bp*, const double[]);
+void r2bp_computeAllKepler(BaseArcset*);
+void r2bp_computeKepler(const SysData_2bp*, Node*);
 
 // CR3BP Utility Functions
 double cr3bp_getVel_withC(const double s[], double, double, int);

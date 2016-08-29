@@ -125,7 +125,8 @@ int SysData::getNumPrimaries() const { return primaries.size(); }
 /**
  *	@brief Retrieve the name of one of the system primaries
  *	@param n the "index" of the primary, starts at 0
- *	@return the name of the n'th primary
+ *	@return the name of the n'th primary. If the index valueis invalid, an error
+ *	is printed to the standard output and a value of "NULL" is returned.
  */
 std::string SysData::getPrimary(int n) const{ 
 	try{

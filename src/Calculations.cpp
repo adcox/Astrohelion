@@ -34,6 +34,7 @@
 #include "Calculations.hpp"
 
 #include "AsciiOutput.hpp"
+#include "BaseArcset.hpp"
 #include "Constants.hpp"
 #include "CorrectionEngine.hpp"
 #include "Exceptions.hpp"
@@ -792,7 +793,22 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
 //      2BP Utility Functions
 //-----------------------------------------------------
 
-void r2bp_getKepler(const SysData_2bp *sys, const double q[]){
+void r2bp_computeAllKepler(BaseArcset *set){
+    if(set->getSysData()->getType() == SysData_tp::R2BP_SYS){
+        const SysData_2bp *sys = static_cast<const SysData_2bp*>(set->getSysData());
+        
+        for(int n = 0; n < set->getNumNodes(); n++){
+            Node& node = set->getNodeRefByIx(n);
+            r2bp_computeKepler(sys, &node);
+        }
+    }else{
+        printErr("r2bp_computeAllKepler: Arcset object is not associated with the 2BP");
+    }
+}//====================================================
+
+void r2bp_computeKepler(const SysData_2bp *sys, Node *node){
+    std::vector<double> q = node->getState();
+
     double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);     // radius, km
     double v = sqrt(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]);     // speed, km/s
 
@@ -821,6 +837,16 @@ void r2bp_getKepler(const SysData_2bp *sys, const double q[]){
     if(r_dot < 0){
         ta = 2*PI - ta;
     }
+
+    node->setExtraParam("range", r);
+    node->setExtraParam("speed", v);
+    node->setExtraParam("energy", energy);
+    node->setExtraParam("sma", a);
+    node->setExtraParam("angMom", h);
+    node->setExtraParam("ecc", e);
+    node->setExtraParam("fpa", fpa);
+    node->setExtraParam("ta", ta);
+    node->setExtraParam("rangerate", r_dot);
 }//====================================================
 
 //-----------------------------------------------------

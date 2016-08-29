@@ -77,6 +77,8 @@ public:
 	int getNumCons() const;
 	std::vector<double> getState() const;
 
+	void print() const;
+
 	void removeConstraint(int);
 	void setAccel(const double*);
 	void setAccel(std::vector<double>);

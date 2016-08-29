@@ -165,6 +165,12 @@ void Traj_2bp::saveToMat(const char* filename) const{
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
 		saveSTMs(matfp);
+
+		saveExtraParam(matfp, "sma", "sma");
+		saveExtraParam(matfp, "ecc", "ecc");
+		saveExtraParam(matfp, "angMom", "angMom");
+		saveExtraParam(matfp, "energy", "energy");
+		
 		pSysData->saveToMat(matfp);
 	}
 

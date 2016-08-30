@@ -298,14 +298,6 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Traj *traj
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
-    astrohelion::printVerbColor(verbose == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
-    if(!bIsClean){
-        cleanEngine();
-    }
-
-    if(bMakeCrashEvents)
-        createCrashEvents(traj->getSysData());
-
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
@@ -325,14 +317,33 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
         }
     }
 
+    runSim(ic, t_span, traj);
+}//====================================================
+
+/**
+ *  @brief Run a simulation in the specified system starting with a set of initial conditions,
+ *  at a specified initial time, and integrating for a specified time-of-flight
+ *  @param ic a 6-element array of non-dimensional initial states
+ *  @param t_span a vector of times to include in the solution.
+ *  @param traj pointer to a trajectory object to store the output trajectory
+ */
+void SimEngine::runSim(const double *ic, std::vector<double> t_span, Traj *traj){
+    astrohelion::printVerbColor(verbose == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
+    if(!bIsClean){
+        cleanEngine();
+    }
+
+    if(bMakeCrashEvents)
+        createCrashEvents(traj->getSysData());
+
     EOM_ParamStruct paramStruct(traj->getSysData());
     eomParams = &paramStruct;
 
     // Run the simulation
-    integrate(ic, &(t_span.front()), bVarStepSize ? 2 : numSteps, traj);
+    integrate(ic, &(t_span.front()), t_span.size(), traj);
 
     bIsClean = false;
-}//============================================
+}//====================================================
 
 //-----------------------------------------------------
 // 		Numerical Integration
@@ -401,7 +412,8 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     if(bVarStepSize){
         astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
         // Allocate space for the stepping object; use the rkck algorithm (doesn't require driver)
-        s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
+        // s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
+        s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rk8pd, ic_dim);
         // Define a control that will keep the error in the state y within the specified tolerances
         c = gsl_odeiv2_control_y_new (absTol, relTol);
         // Allocate space for the integrated solution to evolve in
@@ -630,7 +642,7 @@ void SimEngine::createCrashEvents(const SysData *sysData){
         for(int p = 0; p < sysData->getNumPrimaries(); p++){
             // Put primary index # into an array, create event
             double Pix = (double)p;
-            Event crashEvt(sysData, Event_Tp::CRASH, 0, true, &Pix);
+            Event crashEvt(sysData, Event_tp::CRASH, 0, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }

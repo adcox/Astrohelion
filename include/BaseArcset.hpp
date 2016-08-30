@@ -124,6 +124,7 @@ public:
 	std::vector<double> getCoord(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
+	std::vector<double> getEpochs() const;
 	double getExtraParam(int, std::string) const;
 	std::vector<double> getExtraParamVec(int, std::string) const;
 	int getNextNodeID() const;

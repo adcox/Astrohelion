@@ -49,7 +49,7 @@ namespace astrohelion{
  *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane. By 
  * 	default, 0 is used, so the planes include the axes.
  */
-enum class Event_Tp {
+enum class Event_tp {
 	NONE,		//!< No type has been specified; cannot be used in integration
 	YZ_PLANE,	/*!< Event occurs when trajectory crosses an YZ-plane. By default, 
 				 *	this plane occurs at x = 0, but a custom x-coordinate may be 
@@ -76,7 +76,7 @@ enum class Event_Tp {
  	JC, 		/*!< Event occurs when the Jacobi value reaches the specified value
  				 * 	of Jacobi Constant. Place this JC value in the first element of
  				 * 	the <tt>params</tt> vector present in the 
- 				 * 	Event(SysData*, Event_Tp, int, bool, double*) constructor.
+ 				 * 	Event(SysData*, Event_tp, int, bool, double*) constructor.
  				 * 	This event can only be supported by dynamic models that have associated
  				 * 	system data objects that can be cast to cr3bp system data objects.
  				 */
@@ -118,11 +118,11 @@ class Event : public Core{
 	public:
 		// *structors
 		Event(const SysData*);
-		Event(const SysData*, Event_Tp, int, bool);
-		Event(const SysData*, Event_Tp, int, bool, double*);
+		Event(const SysData*, Event_tp, int, bool);
+		Event(const SysData*, Event_tp, int, bool, double*);
 		Event(const Event&);
-		void createEvent(Event_Tp, int, bool);
-		void createEvent(Event_Tp, int, bool, double*);
+		void createEvent(Event_tp, int, bool);
+		void createEvent(Event_tp, int, bool, double*);
 		~Event();
 		
 		// Operators
@@ -137,7 +137,7 @@ class Event : public Core{
 		double getTime() const;
 		int getStopCount() const;
 		int getTriggerCount() const;
-		Event_Tp getType() const;
+		Event_tp getType() const;
 		const char* getTypeStr() const;
 		
 		std::vector<double>* getState();
@@ -157,7 +157,7 @@ class Event : public Core{
 		void printStatus() const;
 	private:
 
-		Event_Tp type = Event_Tp::NONE; //!< The type of event this is
+		Event_tp type = Event_tp::NONE; //!< The type of event this is
 
 		/** Direction of desired event crossing: +1 for positive, -1 for negative, 0 for both */
 		int triggerDir = 0;
@@ -189,7 +189,7 @@ class Event : public Core{
 		const SysData* sysData; 	//!< Copy of the system data pointer
 
 		void copyEvent(const Event&);
-		void initEvent(Event_Tp, int, bool, double*);
+		void initEvent(Event_tp, int, bool, double*);
 		double getDist(const double[6], double) const;
 		int getDir(const double[6], double) const;
 };

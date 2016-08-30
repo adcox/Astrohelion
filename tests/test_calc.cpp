@@ -6,8 +6,12 @@
 
 #include "AsciiOutput.hpp"
 #include "Calculations.hpp"
+#include "Node.hpp"
+#include "SimEngine.hpp"
+#include "SysData_2bp.hpp"
 #include "SysData_cr3bp.hpp"
 #include "SysData_bc4bp.hpp"
+#include "Traj_2bp.hpp"
 #include "EigenDefs.hpp"
 #include "Exceptions.hpp"
 #include "Utilities.hpp"
@@ -164,6 +168,25 @@ void checkOrientAtEpoch(){
 
 }//==========================================
 
+void checkInterpPointAtTime(){
+	SysData_2bp sys("earth");
+	double mu = sys.getMu();
+	double r0 = 6378 + 500;
+	double v0 = sqrt(mu/r0);
+	double ic[] = {r0, 0, 0, 0, v0, 0};
+	double period = 2*PI*sqrt(r0*r0*r0/mu);
+
+	Traj_2bp traj(&sys);
+	SimEngine sim;
+	sim.runSim(ic, period, &traj);
+
+	Node node = interpPointAtTime(&traj, period/2.0);
+	cout << "InterpPointAtTime: " << (std::abs(node.getEpoch() - period/2.0) < 1e-10 ? PASS : FAIL) << endl;
+
+	printf("Target = %.2f sec\nDifference = %.4e\n", period/2.0, node.getEpoch() - period/2.0);
+	node.print();
+}
+
 int main(void){
 
 	checkLPts();
@@ -172,6 +195,7 @@ int main(void){
 	checkFamilyContLS();
 	checkSPPos();
 	checkOrientAtEpoch();
+	checkInterpPointAtTime();
 
 	return 0;
 }//=========================================

@@ -113,7 +113,7 @@ bool DynamicsModel::supportsCon(Constraint_tp type) const{
  *	@brief Determine whether the specified event type is supported in this model
  *	@return whether or not the specified event type is supported in this model
  */
-bool DynamicsModel::supportsEvent(Event_Tp type) const{
+bool DynamicsModel::supportsEvent(Event_tp type) const{
 	return std::find(allowedEvents.begin(), allowedEvents.end(), type) != allowedEvents.end();
 }//===================================================
 

@@ -50,7 +50,7 @@ DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel(DynamicsModel_tp::MOD
     // Allow a few more constraints than the default
     allowedCons.push_back(Constraint_tp::JC);
     allowedCons.push_back(Constraint_tp::PSEUDOARC);
-    allowedEvents.push_back(Event_Tp::JC);
+    allowedEvents.push_back(Event_tp::JC);
 }//==============================================
 
 /**

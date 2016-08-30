@@ -65,7 +65,7 @@ void test_cr3bp_events(){
 	SimEngine engine;
 	Traj_cr3bp traj(&sys);
 	engine.setVerbose(Verbosity_tp::ALL_MSG);
-	engine.addEvent(Event(&sys, Event_Tp::XZ_PLANE, 0, true));
+	engine.addEvent(Event(&sys, Event_tp::XZ_PLANE, 0, true));
 	engine.setRevTime(true);
 	engine.runSim(ic, 2.7, &traj);
 
@@ -81,7 +81,7 @@ void test_bcr4bpr_events(){
 	SimEngine engine;
 	Traj_bc4bp traj(&sys);
 	engine.setVerbose(Verbosity_tp::ALL_MSG);
-	engine.addEvent(Event(&sys, Event_Tp::XY_PLANE, 0, true));
+	engine.addEvent(Event(&sys, Event_tp::XY_PLANE, 0, true));
 	engine.runSim(ic, t0, 2*PI, &traj);
 	traj.saveToMat("data/BC_HaloManifold.mat");
 }//====================================================

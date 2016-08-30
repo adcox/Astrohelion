@@ -67,23 +67,23 @@ Event::Event(const SysData *data) : sysData(data) {}
  *	@throws Exception if this constructor is called for an event type that requires data
  *	@throws Exception if the event type is not recognized
  */
-void Event::createEvent(Event_Tp t, int dir, bool willStop){
+void Event::createEvent(Event_tp t, int dir, bool willStop){
 	switch(t){
-		case Event_Tp::YZ_PLANE:
-		case Event_Tp::XZ_PLANE:
-		case Event_Tp::XY_PLANE:
-		case Event_Tp::CRASH:
+		case Event_tp::YZ_PLANE:
+		case Event_tp::XZ_PLANE:
+		case Event_tp::XY_PLANE:
+		case Event_tp::CRASH:
 		{
 			double params[] = {0};
 			initEvent(t, dir, willStop, params);
 			break;
 		}
-		case Event_Tp::JC:
-		case Event_Tp::APSE:
-		case Event_Tp::DIST:
-			throw Exception("Event_Tp::Event: Cannot create this type of event without parameter data...");
+		case Event_tp::JC:
+		case Event_tp::APSE:
+		case Event_tp::DIST:
+			throw Exception("Event_tp::Event: Cannot create this type of event without parameter data...");
 		default: 
-			throw Exception("Event_Tp::Event: Creating event with no type");
+			throw Exception("Event_tp::Event: Creating event with no type");
 	}
 }//===================================================
 
@@ -101,9 +101,9 @@ void Event::createEvent(Event_Tp t, int dir, bool willStop){
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect (otherwise it will read uninitialized memory).
  *
- *	@see Event_Tp::Event_Tp
+ *	@see Event_tp::Event_tp
  */
-void Event::createEvent(Event_Tp t, int dir, bool willStop, double *params){
+void Event::createEvent(Event_tp t, int dir, bool willStop, double *params){
 	initEvent(t, dir, willStop, params);
 }//====================================================
 
@@ -120,7 +120,7 @@ void Event::createEvent(Event_Tp t, int dir, bool willStop, double *params){
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
-Event::Event(const SysData *data, Event_Tp t, int dir, bool willStop) : sysData(data){
+Event::Event(const SysData *data, Event_tp t, int dir, bool willStop) : sysData(data){
 	createEvent(t, dir, willStop);
 }//================================================
 
@@ -140,56 +140,56 @@ Event::Event(const SysData *data, Event_Tp t, int dir, bool willStop) : sysData(
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect (otherwise it will read uninitialized memory).
  *
- *	@see Event_Tp::Event_Tp
+ *	@see Event_tp::Event_tp
  *	@throws Exception if the dynamic model does not support this event type
  *	@throws Exception if the event type is not recognized
  *	@throws Exception if data values refer to invalid indices
  */
-Event::Event(const SysData *data, Event_Tp t, int dir , bool willStop, double* params) : sysData(data){
+Event::Event(const SysData *data, Event_tp t, int dir , bool willStop, double* params) : sysData(data){
 	initEvent(t, dir, willStop, params);
 }//==========================================
 
 /**
  *	@see Event(data, t, dir, willStop, params)
  */
-void Event::initEvent(Event_Tp t, int dir, bool willStop, double* params){
+void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 	type = t;
 	triggerDir = dir;
 	bStop = willStop;
 
 	if(! sysData->getDynamicsModel()->supportsEvent(type)){
-		throw Exception("Event_Tp::initEvent: The current dynamic model does not support this event type");
+		throw Exception("Event_tp::initEvent: The current dynamic model does not support this event type");
 	}
 
 	// Create constraint data based on the type
 	switch(type){
-		case Event_Tp::YZ_PLANE:
-		case Event_Tp::XZ_PLANE:
-		case Event_Tp::XY_PLANE:
+		case Event_tp::YZ_PLANE:
+		case Event_tp::XZ_PLANE:
+		case Event_tp::XY_PLANE:
 			conType = Constraint_tp::STATE;
 			break;
-		case Event_Tp::CRASH:
+		case Event_tp::CRASH:
 			conType = Constraint_tp::MAX_DIST;
 			break;
-		case Event_Tp::JC:
+		case Event_tp::JC:
 			conType = Constraint_tp::JC;
 			break;
-		case Event_Tp::APSE:
+		case Event_tp::APSE:
 			conType = Constraint_tp::APSE;
 			break;
-		case Event_Tp::DIST:
+		case Event_tp::DIST:
 			conType = Constraint_tp::DIST;
 			break;
 		default: 
-			throw Exception("Event_Tp::initEvent: Creating event with no type");
+			throw Exception("Event_tp::initEvent: Creating event with no type");
 	}
 
 	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
 	switch(type){
-		case Event_Tp::YZ_PLANE: data[0] = params[0]; break;	// x = specified value
-		case Event_Tp::XZ_PLANE: data[1] = params[0];	break;	// y = specified value
-		case Event_Tp::XY_PLANE: data[2] = params[0]; break;	// z = specified value
-		case Event_Tp::CRASH:
+		case Event_tp::YZ_PLANE: data[0] = params[0]; break;	// x = specified value
+		case Event_tp::XZ_PLANE: data[1] = params[0];	break;	// y = specified value
+		case Event_tp::XY_PLANE: data[2] = params[0]; break;	// z = specified value
+		case Event_tp::CRASH:
 		{
 			data[0] = params[0];	// Index of primary
 			if(data[0] < sysData->getNumPrimaries()){
@@ -201,9 +201,9 @@ void Event::initEvent(Event_Tp t, int dir, bool willStop, double* params){
 			}
 			break;
 		}
-		case Event_Tp::JC: data[0] = params[0]; break;	// JC = specified value
-		case Event_Tp::APSE: data[0] = params[0]; break; 	// primary index = specified value
-		case Event_Tp::DIST:
+		case Event_tp::JC: data[0] = params[0]; break;	// JC = specified value
+		case Event_tp::APSE: data[0] = params[0]; break; 	// primary index = specified value
+		case Event_tp::DIST:
 			data[0] = params[0];
 			data[1] = params[1];
 			break;
@@ -288,21 +288,21 @@ int Event::getDir() const { return triggerDir; }
 /**
  *	@return the event type
  */
-Event_Tp Event::getType() const { return type; }
+Event_tp Event::getType() const { return type; }
 
 /**
  *	@return a human-readable string representing the event type
  */
 const char* Event::getTypeStr() const{
 	switch(type){
-		case Event_Tp::NONE: return "NONE"; break;
-		case Event_Tp::YZ_PLANE: return "yz-plane"; break;
-		case Event_Tp::XZ_PLANE: return "xz-plane"; break;
-		case Event_Tp::XY_PLANE: return "xy-plane"; break;
-		case Event_Tp::CRASH: return "crash"; break;
-		case Event_Tp::JC: return "jacobi constant"; break;
-		case Event_Tp::APSE: return "apse"; break;
-		case Event_Tp::DIST: return "distance"; break;
+		case Event_tp::NONE: return "NONE"; break;
+		case Event_tp::YZ_PLANE: return "yz-plane"; break;
+		case Event_tp::XZ_PLANE: return "xz-plane"; break;
+		case Event_tp::XY_PLANE: return "xy-plane"; break;
+		case Event_tp::CRASH: return "crash"; break;
+		case Event_tp::JC: return "jacobi constant"; break;
+		case Event_tp::APSE: return "apse"; break;
+		case Event_tp::DIST: return "distance"; break;
 		default: return "UNDEFINED!"; break;
 	}
 }//========================================
@@ -433,10 +433,10 @@ void Event::updateDist(const double y[6], double t){
 double Event::getDist(const double y[6], double t) const{
 	double d = 0;
 	switch(type){
-		case Event_Tp::YZ_PLANE: d = conData[0] - y[0]; break;
-		case Event_Tp::XZ_PLANE: d = conData[1] - y[1]; break;
-		case Event_Tp::XY_PLANE: d = conData[2] - y[2]; break;
-		case Event_Tp::CRASH:
+		case Event_tp::YZ_PLANE: d = conData[0] - y[0]; break;
+		case Event_tp::XZ_PLANE: d = conData[1] - y[1]; break;
+		case Event_tp::XY_PLANE: d = conData[2] - y[2]; break;
+		case Event_tp::CRASH:
 		{
 			std::vector<double> primPos = sysData->getDynamicsModel()->getPrimPos(t, sysData);
 
@@ -447,19 +447,19 @@ double Event::getDist(const double y[6], double t) const{
 			d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			break;
 		}
-		case Event_Tp::JC:
+		case Event_tp::JC:
 		{
 			const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(sysData);
 			d = conData[0] - DynamicsModel_cr3bp::getJacobi(y, crSys->getMu());
 			break;
 		}
-		case Event_Tp::APSE:
+		case Event_tp::APSE:
 		{
 			int Pix = (int)(conData[0]);
 			d = sysData->getDynamicsModel()->getRDot(Pix, t, y, sysData);
 			break;
 		}
-		case Event_Tp::DIST:
+		case Event_tp::DIST:
 		{
 			std::vector<double> primPos = sysData->getDynamicsModel()->getPrimPos(t, sysData);
 			int Pix = (int)(conData[0]);
@@ -491,13 +491,13 @@ int Event::getDir(const double y[6], double t) const{
 
 	// Compute distance from old point (in state) to new point (in y)
 	switch(type){
-		case Event_Tp::YZ_PLANE: d = y[0] - state[0]; break;
-		case Event_Tp::XZ_PLANE: d = y[1] - state[1]; break;
-		case Event_Tp::XY_PLANE: d = y[2] - state[2]; break;
-		case Event_Tp::CRASH:
-		case Event_Tp::JC:
-		case Event_Tp::APSE:
-		case Event_Tp::DIST:
+		case Event_tp::YZ_PLANE: d = y[0] - state[0]; break;
+		case Event_tp::XZ_PLANE: d = y[1] - state[1]; break;
+		case Event_tp::XY_PLANE: d = y[2] - state[2]; break;
+		case Event_tp::CRASH:
+		case Event_tp::JC:
+		case Event_tp::APSE:
+		case Event_tp::DIST:
 			d = dist - lastDist;
 			break;
 		default: 

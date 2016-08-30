@@ -163,7 +163,8 @@ class SimEngine : public Core{
 		void runSim(std::vector<double>, double, Traj*);
 		void runSim(const double*, double, double, Traj*);
 		void runSim(std::vector<double>, double, double, Traj*);
-		
+		void runSim(const double *ic, std::vector<double>, Traj*);
+
 		// Utility Functions
 		void clearEvents();
 		void reset();

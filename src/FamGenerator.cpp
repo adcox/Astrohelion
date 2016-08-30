@@ -292,7 +292,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 	// The axial family has ICs at the x-axis; I want the vertical family to have ICs at the top of their figure 8's,
 	// so the first step is to integrate to that point
 	SimEngine sim;
-	sim.addEvent(Event(vertFam.getSysDataPtr(), Event_Tp::XZ_PLANE, 0, true));	// Stop integrated at XZ plane, going opposite direction as initial state
+	sim.addEvent(Event(vertFam.getSysDataPtr(), Event_tp::XZ_PLANE, 0, true));	// Stop integrated at XZ plane, going opposite direction as initial state
 	Traj_cr3bp quarterArc(vertFam.getSysDataPtr());
 	sim.runSim(IC, period/3, &quarterArc);	// 1/3 period should be long enough to fly 1/4 of the trajectory
 

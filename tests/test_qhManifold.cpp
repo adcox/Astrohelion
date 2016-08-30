@@ -46,11 +46,11 @@ int main(void){
 
 	// Create two events used to propagate manifolds to XZ plane
 	double earthX = 1 - seSys.getMu();
-	Event cross_EarthPlane(&seSys, Event_Tp::YZ_PLANE, 1, true, &earthX);
-	Event cross_Y0(&seSys, Event_Tp::XZ_PLANE, 1, true);
+	Event cross_EarthPlane(&seSys, Event_tp::YZ_PLANE, 1, true, &earthX);
+	Event cross_Y0(&seSys, Event_tp::XZ_PLANE, 1, true);
 
 	double bcMaxDist_data[] = {1, 2};
-	Event bcMaxDist(&bcSys, Event_Tp::DIST, 0, true, bcMaxDist_data);
+	Event bcMaxDist(&bcSys, Event_tp::DIST, 0, true, bcMaxDist_data);
 	bcEngine.addEvent(bcMaxDist);
 
 	for(size_t n = 0; n < manICs.size(); n++){

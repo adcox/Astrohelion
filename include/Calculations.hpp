@@ -98,6 +98,7 @@ void finiteDiff_checkMultShoot(const Nodeset*);
 void finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
+Node interpPointAtTime(const Traj*, double);
 
 // 2BP Utility Functions
 void r2bp_computeAllKepler(BaseArcset*);

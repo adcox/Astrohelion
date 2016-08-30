@@ -832,18 +832,23 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 
 /**
  *	@brief Get a vector of one coordinate for all nodes
- *	@param ix the index of the coordinate: 0 = x, 1 = y, etc.
+ *	@param ix the index of the coordinate; The state is accessed
+ *	by indices [0-5] : {x, y, z, vx, vy, vz} and acceleration is
+ *	accessed by indices [6-8] : {ax, ay, az}
  *	@return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
  *	@throws Exception if <tt>ix</tt> is out of bounds
  */
 std::vector<double> BaseArcset::getCoord(int ix) const{
-	if(ix >= 6)
+	if(ix < 0 || ix >= 9)
 		throw Exception("BaseArcset::getCoord: Index Out of Range");
 
 	std::vector<double> coord;
 	for(size_t n = 0; n < nodes.size(); n++){
-		coord.push_back(nodes[n].getState()[ix]);
+		if(ix < 6)
+			coord.push_back(nodes[n].getState()[ix]);
+		else
+			coord.push_back(nodes[n].getAccel()[ix-6]);
 	}
 
 	return coord;
@@ -890,6 +895,22 @@ double BaseArcset::getEpochByIx(int ix) const{
 
 	return nodes[ix].getEpoch();
 }//=====================================================
+
+/**
+ *  @brief Retrieve a vector of all epoch values for the nodes
+ *  @details Epochs are returned in the order corresponding
+ *  to the nodes vector; to ensure chronological order, it is best
+ *  to sort the arcset first.
+ *  @return A vector with the epochs for all the nodes
+ */
+std::vector<double> BaseArcset::getEpochs() const{
+	std::vector<double> time;
+	for(size_t n = 0; n < nodes.size(); n++){
+		time.push_back(nodes[n].getEpoch());
+	}
+
+	return time;
+}//====================================================
 
 /**
  *	@brief Retrieve a set of extra parameters for the specified node

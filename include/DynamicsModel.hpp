@@ -250,7 +250,7 @@ public:
 	int getSTMStateSize() const;
 	int getExtraStateSize() const;
 	bool supportsCon(Constraint_tp) const;
-	bool supportsEvent(Event_Tp) const;
+	bool supportsEvent(Event_tp) const;
 	
 protected:
 	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
@@ -268,8 +268,8 @@ protected:
 		Constraint_tp::SEG_CONT_PV, Constraint_tp::SEG_CONT_EX};
 
 	/** A vector containing all the types of events this model supports */
-	std::vector<Event_Tp> allowedEvents {Event_Tp::NONE, Event_Tp::XY_PLANE, Event_Tp::XZ_PLANE,
-		Event_Tp::YZ_PLANE, Event_Tp::CRASH, Event_Tp::APSE, Event_Tp::DIST};
+	std::vector<Event_tp> allowedEvents {Event_tp::NONE, Event_tp::XY_PLANE, Event_tp::XZ_PLANE,
+		Event_tp::YZ_PLANE, Event_tp::CRASH, Event_tp::APSE, Event_tp::DIST};
 
 	void copyMe(const DynamicsModel&);
 	virtual void multShoot_targetApse(MultShootData*, Constraint, int) const;

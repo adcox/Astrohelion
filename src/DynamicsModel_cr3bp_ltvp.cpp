@@ -49,7 +49,7 @@ DynamicsModel_cr3bp_ltvp::DynamicsModel_cr3bp_ltvp() : DynamicsModel(DynamicsMod
     stmStates = 36;
     extraStates = 0;
     allowedCons.push_back(Constraint_tp::JC);
-    allowedEvents.push_back(Event_Tp::JC);
+    allowedEvents.push_back(Event_tp::JC);
 }//==============================================
 
 /**

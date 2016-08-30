@@ -789,6 +789,33 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
     }
 }//====================================================
 
+Node interpPointAtTime(const Traj *traj, double t){
+    // Find the time that is closest to t and before it (assuming allTimes progresses smoothly forwards in time)
+    std::vector<double> allTimes = traj->getEpochs();
+    size_t i = 0;
+    while(i < allTimes.size() && allTimes[i] < t)
+        i += 1;
+    
+    if(i > 0)
+        i -= 1; // Rewind to the point before for forward integration
+    
+    // printf("Beginning at node %zu:\n", i);
+    Node node = traj->getNodeByIx(i);
+    // node.print();
+
+    Traj *temp = new Traj(traj->getSysData());
+    SimEngine sim;
+    // sim.setVerbose(Verbosity_tp::ALL_MSG);
+    sim.setNumSteps(2);
+    sim.setVarStepSize(false);
+    sim.setRevTime(t - node.getEpoch() < 0);
+    sim.runSim(node.getState(), node.getEpoch(), t - node.getEpoch(), temp);
+
+    Node node2 = temp->getNodeByIx(-1);
+    delete(temp);
+    return node2;
+}//====================================================
+
 //-----------------------------------------------------
 //      2BP Utility Functions
 //-----------------------------------------------------
@@ -990,31 +1017,31 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
             zeroStates.push_back(1);    // y
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(5);    // z-dot
-            mirrorEvt.createEvent(Event_Tp::XZ_PLANE, 0, true);     // Tell the sim to quit once it reaches the XZ plane
+            mirrorEvt.createEvent(Event_tp::XZ_PLANE, 0, true);     // Tell the sim to quit once it reaches the XZ plane
             break;
         case Mirror_tp::MIRROR_YZ:
             zeroStates.push_back(0);    // x
             zeroStates.push_back(4);    // y-dot
             zeroStates.push_back(5);    // z-dot
-            mirrorEvt.createEvent(Event_Tp::YZ_PLANE, 0, true);
+            mirrorEvt.createEvent(Event_tp::YZ_PLANE, 0, true);
             break;
         case Mirror_tp::MIRROR_XY:
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
             zeroStates.push_back(4);    // y-dot
-            mirrorEvt.createEvent(Event_Tp::YZ_PLANE, 0, true);
+            mirrorEvt.createEvent(Event_tp::YZ_PLANE, 0, true);
             break;
         case Mirror_tp::MIRROR_X_AX_H:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            mirrorEvt.createEvent(Event_Tp::XZ_PLANE, 0, true);
+            mirrorEvt.createEvent(Event_tp::XZ_PLANE, 0, true);
             break;
         case Mirror_tp::MIRROR_X_AX_V:
             zeroStates.push_back(1);    // y
             zeroStates.push_back(2);    // z
             zeroStates.push_back(3);    // x-dot
-            mirrorEvt.createEvent(Event_Tp::XY_PLANE, 0, true);
+            mirrorEvt.createEvent(Event_tp::XY_PLANE, 0, true);
             break;
         default:
             throw Exception("Mirror type either not defined or not implemented");

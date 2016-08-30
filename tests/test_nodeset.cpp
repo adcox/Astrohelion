@@ -124,8 +124,8 @@ void test_nodeManip(){
 	cout << "  Correct TOFs: " << (set2.getTOFByIx(0) == emDRO_T ? PASS : FAIL) << endl;	
 
 	double xMoonData = 1 - sys.getMu();
-	Event xMoonEvt(&sys, Event_Tp::YZ_PLANE, 0, true, &xMoonData);
-	Event xzPlaneEvt(&sys, Event_Tp::XZ_PLANE, 0, true);
+	Event xMoonEvt(&sys, Event_tp::YZ_PLANE, 0, true, &xMoonData);
+	Event xzPlaneEvt(&sys, Event_tp::XZ_PLANE, 0, true);
 	std::vector<Event> events {xMoonEvt, xzPlaneEvt};
 
 	set2.createNodesAtEvents(0, events);
@@ -151,7 +151,7 @@ void test_nodeManip(){
 	cout << "  Correct Epochs: " << (set3.getEpochByIx(0) == qho_T0 && set3.getEpochByIx(1) == qho_T0 + qho_Period ? PASS : FAIL) << endl;
 	set3.print();
 
-	Event sem_xzPlaneEvt(&bcSys, Event_Tp::XZ_PLANE, 0, false);
+	Event sem_xzPlaneEvt(&bcSys, Event_tp::XZ_PLANE, 0, false);
 	set3.createNodesAtEvent(0, sem_xzPlaneEvt);
 	set3.putInChronoOrder();
 	// set3.printInChrono();

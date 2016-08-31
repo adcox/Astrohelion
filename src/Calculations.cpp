@@ -789,6 +789,16 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
     }
 }//====================================================
 
+/**
+ *  @brief Use numerical integration to find a node on a trajectory at
+ *  the specified time
+ *  @details 
+ * 
+ *  @param traj A trajectory 
+ *  @param t The time at which the node is located
+ * 
+ *  @return A node on the specified trajectory at time <tt>t</tt>
+ */
 Node interpPointAtTime(const Traj *traj, double t){
     // Find the time that is closest to t and before it (assuming allTimes progresses smoothly forwards in time)
     std::vector<double> allTimes = traj->getEpochs();
@@ -820,34 +830,47 @@ Node interpPointAtTime(const Traj *traj, double t){
 //      2BP Utility Functions
 //-----------------------------------------------------
 
-void r2bp_computeAllKepler(BaseArcset *set){
-    if(set->getSysData()->getType() == SysData_tp::R2BP_SYS){
-        const SysData_2bp *sys = static_cast<const SysData_2bp*>(set->getSysData());
+/**
+ *  @brief Compute the Keplarian elements at all steps/nodes
+ *  of a 2-body trajectory or nodeset
+ * 
+ *  @param pSet Pointer to a nodeset or trajectory
+ */
+void r2bp_computeAllKepler(BaseArcset *pSet){
+    if(pSet->getSysData()->getType() == SysData_tp::R2BP_SYS){
+        const SysData_2bp *pSys = static_cast<const SysData_2bp*>(pSet->getSysData());
         
-        for(int n = 0; n < set->getNumNodes(); n++){
-            Node& node = set->getNodeRefByIx(n);
-            r2bp_computeKepler(sys, &node);
+        for(int n = 0; n < pSet->getNumNodes(); n++){
+            Node& node = pSet->getNodeRefByIx(n);
+            r2bp_computeKepler(pSys, &node);
         }
     }else{
         printErr("r2bp_computeAllKepler: Arcset object is not associated with the 2BP");
     }
 }//====================================================
 
-void r2bp_computeKepler(const SysData_2bp *sys, Node *node){
+/**
+ *  @brief Compute the Keplarian orbital elements at a 
+ *  specific node
+ * 
+ *  @param pSys Pointer to the dynamical system the node exists in
+ *  @param pNode Pointer to the node
+ */
+void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
     std::vector<double> q = node->getState();
 
     double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);     // radius, km
     double v = sqrt(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]);     // speed, km/s
 
-    double energy = 0.5*v*v - sys->getMu()/r;               // two-body energy, km^2/s^2
-    double a = -sys->getMu()/(2*energy);                    // semi-majora axis, km
+    double energy = 0.5*v*v - pSys->getMu()/r;               // two-body energy, km^2/s^2
+    double a = -pSys->getMu()/(2*energy);                    // semi-majora axis, km
 
     double h_vec[] = {  q[1]*q[5] - q[2]*q[4],              // specific angular momentum vector h = r x v, km^2/s
                         q[2]*q[3] - q[0]*q[5],
                         q[0]*q[4] - q[1]*q[3] };
 
     double h = sqrt(h_vec[0]*h_vec[0] + h_vec[1]*h_vec[1] + h_vec[2]*h_vec[2]);     // specific angular momentum km^2/s
-    double e = sqrt(1 + 2*energy*h*h/(sys->getMu() * sys->getMu()));                // eccentricity, nondimensional
+    double e = sqrt(1 + 2*energy*h*h/(pSys->getMu() * pSys->getMu()));                // eccentricity, nondimensional
     double p = a*(1 - e*e);                                 // semi-latus rectum, km
     double fpa = acos(h/(r*v));                             // flight path angle, rad
     double ta = acos((p-r)/(r*e));;                         // true anomaly, rad, NOTE: two options from arccos, symmetric about ta = 0
@@ -865,15 +888,15 @@ void r2bp_computeKepler(const SysData_2bp *sys, Node *node){
         ta = 2*PI - ta;
     }
 
-    node->setExtraParam("range", r);
-    node->setExtraParam("speed", v);
-    node->setExtraParam("energy", energy);
-    node->setExtraParam("sma", a);
-    node->setExtraParam("angMom", h);
-    node->setExtraParam("ecc", e);
-    node->setExtraParam("fpa", fpa);
-    node->setExtraParam("ta", ta);
-    node->setExtraParam("rangerate", r_dot);
+    pNode->setExtraParam("range", r);
+    pNode->setExtraParam("speed", v);
+    pNode->setExtraParam("energy", energy);
+    pNode->setExtraParam("sma", a);
+    pNode->setExtraParam("angMom", h);
+    pNode->setExtraParam("ecc", e);
+    pNode->setExtraParam("fpa", fpa);
+    pNode->setExtraParam("ta", ta);
+    pNode->setExtraParam("rangerate", r_dot);
 }//====================================================
 
 //-----------------------------------------------------

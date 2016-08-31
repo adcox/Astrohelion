@@ -38,7 +38,7 @@ class SysData_2bp;
 
 /**
  *	@brief A derivative class of the Traj object, contains 
- *	trajectory information specific to the CR3BP
+ *	trajectory information specific to the 2BP
  *
  *	@author Andrew Cox
  *	@version August 30, 2015

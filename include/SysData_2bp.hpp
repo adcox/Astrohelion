@@ -38,10 +38,10 @@ namespace astrohelion{
 
 /**
  *	@brief A derivative class of the SysData object which
- *	contains information specific to the CR3BP
+ *	contains information specific to the 2BP
  *
  *	@author Andrew Cox
- *	@version May 15, 2015
+ *	@version August 31, 2015
  *	@copyright GNU GPL v3.0
  */
 class SysData_2bp : public SysData{

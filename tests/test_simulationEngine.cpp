@@ -5,7 +5,7 @@
 #include "AsciiOutput.hpp"
 #include "SysData_bc4bp.hpp"
 #include "Traj_bc4bp.hpp"
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Traj_cr3bp.hpp"
 #include "SimEngine.hpp"
@@ -23,7 +23,7 @@ void test_cr3bp_sim(){
 
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
-	simEngine.setVerbose(Verbosity_tp::NO_MSG);
+	simEngine.setVerbosity(Verbosity_tp::NO_MSG);
 	simEngine.setAbsTol(1e-14);
 	simEngine.setRelTol(1e-16);
 	simEngine.runSim(ic, 2.77, &traj);
@@ -51,7 +51,7 @@ void test_bcr4bpr_sim(){
 	
 	bcEngine.setVarStepSize(false);
 	bcEngine.setNumSteps(500);
-	bcEngine.setVerbose(Verbosity_tp::ALL_MSG);
+	bcEngine.setVerbosity(Verbosity_tp::ALL_MSG);
 	bcEngine.runSim(haloCross177_IC, t0, 2*PI, &bcTraj);
 
 	cout << "Trajectory contains " << bcTraj.getNumNodes() << " points" << endl;
@@ -64,7 +64,7 @@ void test_cr3bp_events(){
 
 	SimEngine engine;
 	Traj_cr3bp traj(&sys);
-	engine.setVerbose(Verbosity_tp::ALL_MSG);
+	engine.setVerbosity(Verbosity_tp::ALL_MSG);
 	engine.addEvent(Event(&sys, Event_tp::XZ_PLANE, 0, true));
 	engine.setRevTime(true);
 	engine.runSim(ic, 2.7, &traj);
@@ -80,7 +80,7 @@ void test_bcr4bpr_events(){
 
 	SimEngine engine;
 	Traj_bc4bp traj(&sys);
-	engine.setVerbose(Verbosity_tp::ALL_MSG);
+	engine.setVerbosity(Verbosity_tp::ALL_MSG);
 	engine.addEvent(Event(&sys, Event_tp::XY_PLANE, 0, true));
 	engine.runSim(ic, t0, 2*PI, &traj);
 	traj.saveToMat("data/BC_HaloManifold.mat");

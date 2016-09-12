@@ -29,7 +29,8 @@
 #pragma once
 
 #include "Core.hpp"
- 
+#include "Engine.hpp"
+
 namespace astrohelion{
 
 // Forward delcarations
@@ -55,7 +56,7 @@ enum class LinMotion_tp {
 /**
  *	@brief An engine that will generate a trajectory from the linearized CR3BP EOMs
  */
-class LinMotionEngine : public Core{
+class LinMotionEngine : public Core, public Engine{
 	public:
 		// *structors
 		LinMotionEngine();
@@ -79,6 +80,7 @@ class LinMotionEngine : public Core{
 		Traj_cr3bp getCR3BPLinear(int, double[3], LinMotion_tp, SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLinear(int, double[3], double, double, LinMotion_tp, SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, SysData_cr3bp*);
+	
 	private:
 		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;
@@ -91,7 +93,9 @@ class LinMotionEngine : public Core{
 
 		/** Ratio between SPO and LPO behavior when constructing an MPO */
 		double nu = 1;
-};
 
+		void cleanEngine();
+		void reset();
+};
 
 }// END of Astrohelion namespace

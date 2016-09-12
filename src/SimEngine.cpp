@@ -36,7 +36,7 @@
 #include "Traj_bc4bp.hpp"
 #include "BodyData.hpp"
 #include "Calculations.hpp"
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "CorrectionEngine.hpp"
 #include "Nodeset_cr3bp.hpp"
 #include "SysData_cr3bp.hpp"
@@ -62,7 +62,7 @@ namespace astrohelion{
  *  @brief Construct a simulation engine for a specific dynamical system
  */
 SimEngine::SimEngine(){
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
 }//===========================================
 
 /**
@@ -77,7 +77,7 @@ SimEngine::SimEngine(const SimEngine& s){
  *  @brief Default destructor
  */
 SimEngine::~SimEngine(){
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
 }//===========================================
 
 //-----------------------------------------------------
@@ -101,11 +101,6 @@ SimEngine& SimEngine::operator =(const SimEngine& s){
  *	@return whether or not the simulation will run time in reverse
  */
 bool SimEngine::usesRevTime() const {return bRevTime;}
-
-/**
- *	@return whether or not the engine will be verbose in its outputs
- */
-Verbosity_tp SimEngine::getVerbosity() const {return verbose;}
 
 /**
  *  @return whether or not the engine uses variable step size
@@ -183,12 +178,6 @@ bool SimEngine::makesCrashEvents() const { return bMakeCrashEvents; }
 void SimEngine::setRevTime(bool b){ bRevTime = b; }
 
 /**
- *	@brief Specify the verbosity of the engine
- *	@param v whether or not the engine should output verbose statements
- */
-void SimEngine::setVerbose(Verbosity_tp v){ verbose = v; }
-
-/**
  *  @brief Specify whether or not the engine should use variable step size.
  *  @param b whether or not the engine should use variable step size
  */
@@ -233,6 +222,27 @@ void SimEngine::setMakeCrashEvents(bool b){ bMakeCrashEvents = b; }
  *  those specified to maintain numerical accuracy.
  */
 void SimEngine::setNumSteps(int n){ numSteps = n; }
+
+void SimEngine::setVarStepInteg(Integ_tp integ){ 
+    switch(integ){
+        case Integ_tp::RKCK:
+        case Integ_tp::RK8PD:
+            varStep_integ = integ;
+            break;
+        default:
+            printErr("SimEngine::SetVarStepInteg: Integrator type is not suited for variable step propagation; ignoring change\n");
+    }
+}//====================================================
+
+void SimEngine::setFixStepInteg(Integ_tp integ){
+    switch(integ){
+        case Integ_tp::MSADAMS:
+            fixStep_integ = integ;
+            break;
+        default:
+            printErr("SimEngine::SetFixStepInteg: Integrator type is not suited for fixed step propagation; ignoring change\n");
+    }
+}//====================================================
 
 //-----------------------------------------------------
 // 		Simulation Functions
@@ -301,8 +311,8 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
 
     if(bVarStepSize){
         t_span.reserve(2);
@@ -328,7 +338,7 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, std::vector<double> t_span, Traj *traj){
-    astrohelion::printVerbColor(verbose == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
+    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
     }
@@ -372,7 +382,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     // Get the dimension of the state vector for integration
     int core = model->getCoreStateSize();
     int ic_dim = core + (!bSimpleIntegration)*(model->getSTMStateSize() + model->getExtraStateSize());
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  IC has %d initial states\n", ic_dim);
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
@@ -391,7 +401,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
 
     // Choose EOM function based on system type and simplicity
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
@@ -410,31 +420,49 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     gsl_odeiv2_driver *d = NULL;
 
     if(bVarStepSize){
-        astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
-        // Allocate space for the stepping object; use the rkck algorithm (doesn't require driver)
-        // s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
-        s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rk8pd, ic_dim);
+        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
+        
+        // Allocate space for the stepping object
+        switch(varStep_integ){
+            case Integ_tp::RK8PD:
+                s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rk8pd, ic_dim);
+                break;
+            case Integ_tp::RKCK:
+                s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
+                break;
+            default:
+                throw Exception("SimEngine::integrate: Integrator type is not suited for variable step propagation; aborting integration process");
+        }
+        
         // Define a control that will keep the error in the state y within the specified tolerances
         c = gsl_odeiv2_control_y_new (absTol, relTol);
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
-        astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
-        // Allocate space for a driver; the msadams algorithm requires access to the driver
+        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
+        
         double signed_dt = bRevTime ? -1*dtGuess : dtGuess;
-        d = gsl_odeiv2_driver_alloc_y_new(&odeSys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
-        // Allocate space for the stepping object
-        s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
-        gsl_odeiv2_step_set_driver(s, d);
+
+        switch(fixStep_integ){
+            case Integ_tp::MSADAMS:
+                // Allocate space for a driver; the msadams algorithm requires access to the driver
+                d = gsl_odeiv2_driver_alloc_y_new(&odeSys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
+                // Allocate space for the stepping object
+                s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
+                gsl_odeiv2_step_set_driver(s, d);
+                break;
+            default:
+                throw Exception("SimEngine::integrate: Integrator type is not suited for fixed step propagation; aborting integration process");
+        }
     }
 
     // Save the initial state, time, and STM
     model->sim_saveIntegratedData(y, t[0], traj);
 
     // Update all event functions with IC
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
     for(int ev = 0; ev < ((int)events.size()); ev++){
-        astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
+        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
         events.at(ev).updateDist(y, t[0]);
     }
 
@@ -509,11 +537,11 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     gsl_odeiv2_step_free(s);
     
     // Check lengths of vectors and set the numPoints value in traj
-    astrohelion::printVerbColor(verbose == Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
+    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
 
     // Summarize event occurrences
     for(size_t i = 0; i < eventOccurs.size(); i++){
-        astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
+        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
             events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
 }//===============================================END of cr3bp_integrate
@@ -555,10 +583,10 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
         // Don't trigger if only two points have been integrated
         if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
-            astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
+            astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
             events.at(ev).incrementCount();  // Update the counter for the event
 
-            if(verbose == Verbosity_tp::ALL_MSG){ events.at(ev).printStatus(); }
+            if(verbosity == Verbosity_tp::ALL_MSG){ events.at(ev).printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
@@ -570,7 +598,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
             // numerical problems when the previous state is REALLY close to the event
             std::vector<double> generalIC = traj->getStateByIx(-2);
 
-            if(verbose == Verbosity_tp::ALL_MSG){
+            if(verbosity == Verbosity_tp::ALL_MSG){
                 astrohelion::printColor(BLUE, "Step index = %d\n", numPts-1);
                 astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
                     traj->getTimeByIx(-1), traj->getTimeByIx(-2));
@@ -582,7 +610,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbose)){
+            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbosity)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getNumNodes();
@@ -595,12 +623,12 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                 events.at(ev).updateDist(&(state[0]), lastT);
                 
                 if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
-                    astrohelion::printVerbColor(verbose == Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
+                    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
                     // the point from mult. shooting as the last
                     return true;    // Tell the simulation to stop
                 }else{
-                    astrohelion::printVerbColor(verbose == Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
+                    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
                     events.at(ev).updateDist(y, t); // Remember the most recent point
                     return false;
                 }
@@ -620,9 +648,10 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
 
 /**
  *  @brief Clean out the trajectory storage variable so a new simulation can be run and store its data
+ *  @details This function does not reset any parameters the user has set
  */
 void SimEngine::cleanEngine(){
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
     eomParams = 0;  // set pointer to 0 (null pointer)
     eventOccurs.clear();
 
@@ -661,9 +690,8 @@ void SimEngine::reset(){
         cleanEngine();
 
     events.clear();
-    eventOccurs.clear();
     bRevTime = false;
-    verbose = Verbosity_tp::NO_MSG;
+    verbosity = Verbosity_tp::NO_MSG;
     bVarStepSize = true;
     absTol = 1e-12;
     relTol = 1e-14;
@@ -677,7 +705,7 @@ void SimEngine::reset(){
  *  Clear all events from the simulation, including any created by default.
  */
 void SimEngine::clearEvents(){
-    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Clearing all events...\n");
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Clearing all events...\n");
     events.clear();
     bMadeCrashEvents = false;
 }//====================================================
@@ -688,9 +716,10 @@ void SimEngine::clearEvents(){
  *  @throw Exception if <tt>s</tt> has an unknown system data type
  */
 void SimEngine::copyMe(const SimEngine &s){
+    Engine::copyBaseEngine(s);
     eomParams = 0;  // void*, will get set again by the runSim() method
     bRevTime = s.bRevTime;
-    verbose = s.verbose;
+    verbosity = s.verbosity;
     bVarStepSize = s.bVarStepSize;
     bSimpleIntegration = s.bSimpleIntegration;
     bIsClean = s.bIsClean;

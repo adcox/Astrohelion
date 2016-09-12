@@ -53,7 +53,7 @@ namespace astrohelion{
  *	@param e input correction engine
  */
 CorrectionEngine::CorrectionEngine(const CorrectionEngine &e){
-	copyEngine(e);
+	copyMe(e);
 }//=======================================================
 
 /**
@@ -65,8 +65,9 @@ CorrectionEngine::~CorrectionEngine(){}
  *	@brief Copy all engine variables
  *	@param e an engine reference
  */
-void CorrectionEngine::copyEngine(const CorrectionEngine &e){
-	verbose = e.verbose;//
+void CorrectionEngine::copyMe(const CorrectionEngine &e){
+	Engine::copyBaseEngine(e);
+	verbosity = e.verbosity;//
 	bVarTime = e.bVarTime;//
 	bEqualArcTime = e.bEqualArcTime;//
 	maxIts = e.maxIts;//
@@ -89,7 +90,7 @@ void CorrectionEngine::copyEngine(const CorrectionEngine &e){
  *	@return this correction engine
  */
 CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
-	copyEngine(e);
+	copyMe(e);
 	return *this;
 }//====================================
 
@@ -118,12 +119,6 @@ bool CorrectionEngine::usesEqualArcTime() const { return bEqualArcTime; }
  *  @return whether or not the multiple shooting algorithm uses variable scaling
  */
 bool CorrectionEngine::usesScaledVars() const { return bScaleVars; }
-
-/**
- *  @brief Retrieve the verbosity setting
- *	@return whether or not the corrector will be verbose
- */
-Verbosity_tp CorrectionEngine::isVerbose() const { return verbose; }
 
 /**
  *  @brief Retrieve whether or not we are located an event crossing
@@ -186,12 +181,6 @@ void CorrectionEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
  *  @param b Whether or not to ignore divergance
  */
 void CorrectionEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
-
-/**
- *	@brief Set verbosity
- *	@param b whether or not the corrector should be verbose in its outputs
- */
-void CorrectionEngine::setVerbose(Verbosity_tp b){ verbose = b; }
 
 /**
  *	@brief Set maximum iterations
@@ -264,9 +253,9 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 	it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
 	it.bEqualArcTime = bEqualArcTime;
 	
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the nodeset
 	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
@@ -403,11 +392,11 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 	// Save the initial free variable vector
 	it.X0 = it.X;
 
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
 
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
-	if(verbose == Verbosity_tp::ALL_MSG){
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
+	if(verbosity == Verbosity_tp::ALL_MSG){
 		for(size_t n = 0; n < it.allCons.size(); n++){
 			it.allCons[n].print();
 		}
@@ -434,7 +423,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 
 	// create a simulation engine
 	SimEngine simEngine;
-	simEngine.setVerbose(verbose);
+	simEngine.setVerbosity(verbosity);
 	
 	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
 	double simTol = tol/1000 < 1e-15 ? 1e-15 : tol/1000;
@@ -513,7 +502,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
 		double err_cons = FX.norm();
 
-		if(verbose == Verbosity_tp::ALL_MSG)
+		if(verbosity == Verbosity_tp::ALL_MSG)
 			reportConMags(&it);
 
 		// Compute error: difference between subsequent free variable vectors
@@ -527,7 +516,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		std::string errType = "||F||";
 
 		it.count++;
-		astrohelion::printVerbColor((bFindEvent && verbose == Verbosity_tp::ALL_MSG) || (!bFindEvent && verbose > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
+		astrohelion::printVerbColor((bFindEvent && verbosity == Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
 			it.count, err, errType.c_str());
 	}// end of corrections loop
 
@@ -672,8 +661,22 @@ void CorrectionEngine::reportConMags(const MultShootData *pIt){
  *	@brief clean up data so that engine can be used again (or deconstructed safely)
  */
 void CorrectionEngine::cleanEngine(){
-	astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
+	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
 	bIsClean = true;
+}//====================================================
+
+void CorrectionEngine::reset(){
+	if(!bIsClean)
+		cleanEngine();
+
+	bVarTime = true;
+	bEqualArcTime = false;
+	maxIts = 20;
+	tol = 1e-12;
+	bFindEvent = false;
+	bIgnoreCrash = false;
+	bIgnoreDiverge = false;
+	bScaleVars = false;
 }//====================================================
 
 

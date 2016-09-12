@@ -1,5 +1,5 @@
 /**
- *	@file Constants.hpp
+ *	@file Common.hpp
  *	@brief Contains values for physical constants like pi, G, etc. and custom data wrappers
  *
  *	@author Andrew Cox
@@ -38,7 +38,8 @@ namespace astrohelion{
 enum class Verbosity_tp{
 	NO_MSG 		= 0,	//!< Absolutely no messages
 	SOME_MSG	= 1,	//!< Some useful messages are printed to standard output
-	ALL_MSG		= 2		//!< All useful and not-so-useful messages are printed to standard output; helpful for debugging
+	ALL_MSG		= 2,	//!< All useful and not-so-useful messages are printed to standard output
+	DEBUG 		= 3		//!< Even more messages; helpful for debugging
 };
 
 // Custom types

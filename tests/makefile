@@ -62,7 +62,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := AsciiOutput.hpp Constants.hpp Utilities.hpp
+IMPORTANT_HEADERS := AsciiOutput.hpp Common.hpp Utilities.hpp Engine.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 ############################################################
@@ -104,6 +104,9 @@ familyOps: $(OBJECTS)
 
 eigenTest:
 	$(COMP) -I $(INC) -isystem $(INC_SYS) test_eigen.cpp -o $(BIN)/$@
+
+lambertTest: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_lambert.cpp -o $(BIN)/$@
 
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
@@ -179,6 +182,7 @@ list:
 	@- echo "  correctorTest - test multiple shooting corrector"
 	@- echo "  familyOps - test the ability to locate orbits within a family"
 	@- echo "  eigenTest - Test the Eigen library"
+	@- echo "  lambertTest - Test the Lambert Arc Engine"
 	@- echo "  linMotionTest - Test the linear motion generator"
 	@- echo "  lowThrustTest - Test the low-thrust CR3BP EOM propagation"
 	@- echo "  manifolds - Test manifold generation"

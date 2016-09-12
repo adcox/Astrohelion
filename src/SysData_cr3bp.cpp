@@ -29,7 +29,7 @@
 #include "SysData_cr3bp.hpp"
  
 #include "BodyData.hpp"
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "Exceptions.hpp"
 #include "Utilities.hpp"
 

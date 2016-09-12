@@ -182,6 +182,7 @@ void FamGenerator::setMaxStepSize(double s){ maxStepSize = s;}
  *	@param f the source family generator
  */
 void FamGenerator::copyMe(const FamGenerator &f){
+	Engine::copyBaseEngine(f);
 	numOrbits = f.numOrbits;
 	numSimple = f.numSimple;
 	step_simple = f.step_simple;
@@ -1396,6 +1397,9 @@ Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeV
  *	@brief Reset all parameters to their default values
  */
 void FamGenerator::reset(){
+	if(!bIsClean)
+		cleanEngine();
+
 	numOrbits = 500;
 	numSimple = 3;
 	step_simple = 0.0005;
@@ -1407,6 +1411,9 @@ void FamGenerator::reset(){
 	tol = 1e-12;
 }//====================================================
 
-
+void FamGenerator::cleanEngine(){
+	// Nothing stored, so nothing to do
+	bIsClean = true;
+}
 
 }// END of Astrohelion namespace

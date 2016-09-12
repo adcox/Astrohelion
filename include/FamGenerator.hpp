@@ -28,7 +28,8 @@
 #pragma once
 
 #include "Core.hpp"
- 
+#include "Engine.hpp"
+
 #include "Calculations.hpp"
 #include "CorrectionEngine.hpp"
 #include "EigenDefs.hpp"
@@ -55,7 +56,7 @@ enum class Continuation_tp{
 /**
  *	@brief An object to generate families of orbits
  */
-class FamGenerator : public Core{
+class FamGenerator : public Core, public Engine{
 	public:
 		// *structors
 		FamGenerator();
@@ -106,6 +107,7 @@ class FamGenerator : public Core{
 		double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 
 		void copyMe(const FamGenerator&);
+		void cleanEngine();
 		void cr3bp_natParamCont(Fam_cr3bp*, Traj_cr3bp, std::vector<Mirror_tp>, std::vector<int>, std::vector<int>, int);
 		void cr3bp_pseudoArcCont(Fam_cr3bp*, Nodeset_cr3bp, Mirror_tp, std::vector<int>);
 		Nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, MultShootData, std::vector<Constraint>);

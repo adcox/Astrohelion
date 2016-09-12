@@ -28,7 +28,8 @@
 #pragma once
 
 #include "Core.hpp"
- 
+#include "Engine.hpp"
+
 #include "DynamicsModel.hpp"
 #include "Event.hpp"
 #include "Traj.hpp"
@@ -57,6 +58,12 @@ public:
 	SimEventRecord(int e, int s) : eventIx(e), stepIx(s) {}
 	int eventIx;	//!< The index of the event (index from simulation engine vector of events)
 	int stepIx;		//!< The index of the integration step the event occured at
+};
+
+enum class Integ_tp{
+	RKCK,			//!< Explicit embedded Runge-Kutta Cash-Karp (4,5); variable step propagations
+	RK8PD,			//!< Explicit embedded Runge-Kutta Dormance-Prince (8,9); variable step propagations
+	MSADAMS			//!< Variable coefficient linear multistep Adams method in Nordisieck form; uses explicit Adams-Bashforth (predictor) and implicit Adams-Moulton (corrector); fixed step propagations
 };
 
 /**
@@ -125,7 +132,7 @@ public:
  *	@version June 1, 2015
  *	@copyright GNU GPL v3.0
  */
-class SimEngine : public Core{
+class SimEngine : public Core, public Engine{
 	public:
 		// Constructors
 		SimEngine();
@@ -147,16 +154,17 @@ class SimEngine : public Core{
 		double getRelTol() const;
 		bool makesCrashEvents() const;
 		bool usesRevTime() const;
-		Verbosity_tp getVerbosity() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
+		void setFixStepInteg(Integ_tp);
 		void setMakeCrashEvents(bool);
 		void setNumSteps(int);
 		void setRelTol(double);
 		void setRevTime(bool);
-		void setVerbose(Verbosity_tp);
+		void setVarStepInteg(Integ_tp);
 		void setVarStepSize(bool);
+
 
 		// Simulation Methods
 		void runSim(const double*, double, Traj*);
@@ -185,19 +193,12 @@ class SimEngine : public Core{
 		/** Whether or not to run the simulation in reverse time */
 		bool bRevTime = false;
 
-		/** Describes the verbosity of this engine */
-		Verbosity_tp verbose = Verbosity_tp::NO_MSG;
-
 		/** Whether or not to use variable step size when integrating */
 		bool bVarStepSize = true;
 
 		/** Whether or not to use "simple" integration; simple means no STM or other quantites are integrated
 		 with the EOMs */
 		bool bSimpleIntegration = false;
-
-		/** "Clean" means there is no data in the trajectory object. Once a simulation has been
-		 run, the engine is no longer clean and will need to be cleaned before running another sim */
-		bool bIsClean = true;
 
 		/** Whether or not crash events should be created for the simulation */
 		bool bMakeCrashEvents = true;
@@ -216,6 +217,12 @@ class SimEngine : public Core{
 
 		/** Number of steps to take (only applies when varStepSize = false) */
 		double numSteps = 1000;
+
+		/** Integrator to use for variable step-size propagations; Default is RK8PD */
+		Integ_tp varStep_integ = Integ_tp::RK8PD;
+		
+		/** Integrator to use for fixed step-size propagations; Default is MSADAMS */
+		Integ_tp fixStep_integ = Integ_tp::MSADAMS;
 
 		void cleanEngine();
 		void copyMe(const SimEngine&);

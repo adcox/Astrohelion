@@ -193,7 +193,7 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     CorrectionEngine corrector;
     corrector.setVarTime(true);
     corrector.setTol(traj->getTol());
-    corrector.setVerbose(verbose);
+    corrector.setVerbosity(verbose);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
 
     // Because we set findEvent to true, this output nodeset should contain

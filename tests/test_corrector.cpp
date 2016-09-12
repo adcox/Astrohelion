@@ -51,7 +51,7 @@ void correctEMRes(){
 	Nodeset_cr3bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -86,7 +86,7 @@ void correctEMRes_EqualArcTime(){
 	Nodeset_cr3bp correctedHalo(&sys);
 
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.setVarTime(true);
 		corrector.setEqualArcTime(true);
 		corrector.multShoot(&halo, &correctedHalo);
@@ -134,7 +134,7 @@ void correctEMRes_revTime(){
 	Nodeset_cr3bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -184,7 +184,7 @@ void correctEMRes_doubleSource(){
 	Nodeset_cr3bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -243,7 +243,7 @@ void correctEMRes_doubleSource_irregular(){
 	Nodeset_cr3bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -277,7 +277,7 @@ void correctSEMHalo(){
 	Nodeset_bc4bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -314,7 +314,7 @@ void correctSEMHalo_revTime(){
 	Nodeset_bc4bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -357,7 +357,7 @@ void correctSEMHalo_doubleSource(){
 	Nodeset_bc4bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;
 	}catch(DivergeException &e){
@@ -403,7 +403,7 @@ void correctSEMHalo_doubleSource_irregular(){
 	Nodeset_bc4bp correctedNodeset(&sys);
 	
 	try{
-		// corrector.setVerbose(true);
+		// corrector.setVerbosity(true);
 		corrector.setTol(5e-12);
 		corrector.multShoot(&nodeset, &correctedNodeset);
 		cout << "Successful correction: " << PASS << endl;

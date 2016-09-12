@@ -28,8 +28,9 @@
 #pragma once
 
 #include "Core.hpp"
- 
-#include "Constants.hpp"
+#include "Engine.hpp"
+
+#include "Common.hpp"
 #include "Constraint.hpp"
 #include "EigenDefs.hpp"
 #include "Node.hpp"
@@ -72,7 +73,7 @@ class SysData_bc4bp;
  *	@version August 3, 2015
  *	@copyright GNU GPL v3.0
  */
-class CorrectionEngine : public Core{
+class CorrectionEngine : public Core, public Engine{
 	public:
 		// *structors
 		/** Default, do-nothing constructor */
@@ -86,7 +87,6 @@ class CorrectionEngine : public Core{
 		// Set and get functions
 		int getMaxIts() const;
 		double getTol() const;
-		Verbosity_tp isVerbose() const;
 		bool isFindingEvent() const;
 		bool usesEqualArcTime() const;
 		bool usesScaledVars() const;
@@ -100,15 +100,13 @@ class CorrectionEngine : public Core{
 		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
-		void setVerbose(Verbosity_tp);
 		
 		// Utility/Action functions
 		MultShootData multShoot(const Nodeset*, Nodeset*);
 		MultShootData multShoot(MultShootData, Nodeset*);
 
+		void reset();
 	private:
-		/** Describes how many messages to spit out */
-		Verbosity_tp verbose = Verbosity_tp::SOME_MSG;
 
 		/** Whether or not to use variable time in the corrections process */
 		bool bVarTime = true;
@@ -137,11 +135,8 @@ class CorrectionEngine : public Core{
 		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
 		bool bScaleVars = false;
 
-		/** Whether or not the engine is ready to be cleaned and/or deconstructed */
-		bool bIsClean = true;
-
 		void cleanEngine();
-		void copyEngine(const CorrectionEngine&);
+		void copyMe(const CorrectionEngine&);
 		void reportConMags(const MultShootData*);
 		Eigen::VectorXd solveUpdateEq(MultShootData*);
 };

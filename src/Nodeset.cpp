@@ -505,7 +505,7 @@ void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNode
  */
 void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
 	SimEngine engine;
-	engine.setVerbose(Verbosity_tp::SOME_MSG);
+	engine.setVerbosity(Verbosity_tp::SOME_MSG);
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
@@ -535,7 +535,7 @@ void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int nu
  */
 void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
 	SimEngine engine;
-	engine.setVerbose(Verbosity_tp::SOME_MSG);
+	engine.setVerbosity(Verbosity_tp::SOME_MSG);
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 

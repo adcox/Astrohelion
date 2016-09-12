@@ -92,7 +92,7 @@ void testCR3BP_EM_Cons(bool equalArcTime){
 	halfLyapNodeset.addConstraint(stateCon);
 	finiteDiff_checkMultShoot(&halfLyapNodeset, corrector);
 	try{
-		// corrector.setVerbose(Verbosity_tp::ALL_MSG);
+		// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 		Nodeset_cr3bp correctedSet(&sys);
 		corrector.multShoot(&halfLyapNodeset, &correctedSet);
 		finalState = correctedSet.getState(stateCon.getID());

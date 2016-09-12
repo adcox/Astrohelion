@@ -29,7 +29,7 @@
 #include "LinMotionEngine.hpp"
 
 #include "Calculations.hpp"
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Traj_cr3bp.hpp"
 #include "Exceptions.hpp"
@@ -555,5 +555,20 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 	return linTraj;
 }//====================================================
 
+
+void LinMotionEngine::cleanEngine(){
+	bIsClean = true;
+	// Nothing to do here
+}//====================================================
+
+void LinMotionEngine::reset(){
+	if(!bIsClean)
+		cleanEngine();
+
+	t_step = 0.001;
+	rots = 1;
+	tol = 1e-14;
+	nu = 1;
+}//====================================================
 
 }// END of Astrohelion namespace

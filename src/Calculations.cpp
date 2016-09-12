@@ -35,7 +35,7 @@
 
 #include "AsciiOutput.hpp"
 #include "BaseArcset.hpp"
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "CorrectionEngine.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
@@ -48,6 +48,7 @@
 #include "SysData_cr3bp.hpp"
 #include "SysData_cr3bp_ltvp.hpp"
 #include "Traj.hpp"
+#include "Traj_2bp.hpp"
 #include "Traj_bc4bp.hpp"
 #include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
@@ -114,6 +115,55 @@ double dateToEpochTime(const char *pDate){
     }
 
     return et;
+}//==========================================
+
+/**
+ *  @brief Convert a gregorian date to Julian Date
+ * 
+ *  @param yr Year
+ *  @param mo Month (Jan = 1, ..., Dec = 12)
+ *  @param d Day of mongth
+ *  @param h Hour (24-hr clock)
+ *  @param m minute
+ *  @param s second
+ *  @return Julian Date (days)
+ */
+double gregorianToJulian(double yr, double mo, double d, double h, double m, double s){
+    return 367.0*yr - floor(7.0*(yr + floor((mo + 9.0)/12.0))/4.0) +
+        floor(275.0*mo/9.0) + d + 1721013.5 + ((5.0/60.0 + m)/60.0 + h + s/3600.0)/24.0;
+}//==========================================
+
+/**
+ *  @brief Determine the Greenwich Sidereal Time (i.e., angle) at the specified date
+ *  @details Input date must be in UT1 time (always within +/- 0.9 seconds of UTC thanks
+ *  to leapseconds)
+ *  
+ *  @param yr Year
+ *  @param mo Month (Jan = 1, ..., Dec = 12)
+ *  @param d Day of mongth
+ *  @param h Hour (24-hr clock)
+ *  @param m minute
+ *  @param s second
+ *  @return The Greenwich Sidereal Time (GST) in radians at the specified date
+ */
+double dateToGST(double yr, double mo, double d, double h, double m, double s){
+
+    // Julian date at midnight
+    double JD_midnight = gregorianToJulian(yr, mo, d, 0, 0, 0);
+
+    double time_ut1 = (JD_midnight - 2451545.0)/36525.0; // number of Julian Centuries ellapsed since J2000
+
+    // GST angle at midnight, degrees
+    double GST_T0 = 100.4606184 + 36000.77005361*time_ut1 + 0.00038793*time_ut1*time_ut1 - (2.6e-8)*pow(time_ut1,3);
+    
+    // Add rotation past midnight using Earth's average rotation rate
+    GST_T0 += 0.250684477337*(h*60.0 + m + s/60.0);
+
+    // Scale back to a reasonable angle value
+    GST_T0 -= std::floor(GST_T0/360.0)*360.0;
+    
+    // GST angle at midnight + earth rotation (deg/min) times minutes past midnight
+    return GST_T0*PI/180.0;
 }//==========================================
 
 /**
@@ -690,7 +740,7 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
     // Create multiple shooter that will only do 1 iteration
     CorrectionEngine corrector(engine);
     corrector.setMaxIts(1);
-    corrector.setVerbose(Verbosity_tp::NO_MSG);
+    corrector.setVerbosity(Verbosity_tp::NO_MSG);
     corrector.setIgnoreDiverge(true);
 
     // Run multiple shooter to get X, FX, and DF
@@ -815,7 +865,7 @@ Node interpPointAtTime(const Traj *traj, double t){
 
     Traj *temp = new Traj(traj->getSysData());
     SimEngine sim;
-    // sim.setVerbose(Verbosity_tp::ALL_MSG);
+    // sim.setVerbosity(Verbosity_tp::ALL_MSG);
     sim.setNumSteps(2);
     sim.setVarStepSize(false);
     sim.setRevTime(t - node.getEpoch() < 0);
@@ -824,6 +874,113 @@ Node interpPointAtTime(const Traj *traj, double t){
     Node node2 = temp->getNodeByIx(-1);
     delete(temp);
     return node2;
+}//====================================================
+
+//-----------------------------------------------------
+//      Orbit Determination Utility Functions
+//-----------------------------------------------------
+
+
+/**
+ *  @brief Determine a set of spherical coordinates the describe 
+ *  the position vector specified by x, y, and z
+ *  @details [long description]
+ * 
+ *  @param x x-coordinate
+ *  @param y y-coordinate
+ *  @param z z-coordinate
+ *  
+ *  @return a vector containing {lat, long, R} in radians
+ *  and the distance units of x, y, and z. Latitude takes a 
+ *  value between -pi/2 and pi/2 while longitude takes a value
+ *  between -pi and pi
+ */
+std::vector<double> getSpherical(double x, double y, double z){
+    double R = sqrt(x*x + y*y + z*z);   // Distance from center of body to point
+    double unit[] = {x/R, y/R, z/R};      // Unit vector pointing from center to point
+
+    double lon = atan2(unit[1], unit[0]);           // longitude
+    double lat = atan2(unit[2], sqrt(unit[0]*unit[0] + unit[1]*unit[1]));    // latitude
+
+    std::vector<double> values {lat, lon, R};
+    return values;
+}//====================================================
+
+/**
+ *  @brief Convert inertial coordinates to local tangent coordinates
+ * 
+ *  @param inertPos Object position in inertial, cartesian (x,y,z) coordinates
+ *  @param lat Latitude angle, radians, measured from the inertial xy plane;
+ *  above the plane (z > 0) is a positive latitude.
+ *  @param lon Longitude angle, radians, measured from reference meridian in a positive,
+ *  right-handed rotation about inertial z
+ *  @param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
+ *  right-handed rotation about inertial z. For example, Earth ground stations' longitudes
+ *  are relative to the Greenwich Meridian
+ *  @return The position of the object in local tangent, cartesian coordinates (East, North, Up)
+ *  as viewed from the specified latitude and longitude
+ */
+std::vector<double> inert2LocalTangent(std::vector<double> inertPos, double lat, double lon, double theta_mer){
+    double nu = lon + theta_mer;    // Rotation about z by longitude + greenwich longitude
+    Matrix3Rd dcm;
+    dcm << -sin(nu),    -cos(nu)*sin(lat),  cos(nu)*cos(lat),
+            cos(nu),    -sin(nu)*sin(lat),  sin(nu)*cos(lat),
+            0,              cos(lat),               sin(lat);
+
+    Eigen::RowVector3d r_xyz(inertPos[0], inertPos[1], inertPos[2]);    // Position vector in inertial (x, y, z)
+    Eigen::RowVector3d r_enz = r_xyz*dcm;                               // Position vector in local tangent (e_E, e_N, e_Z)
+
+    std::vector<double> local {r_enz(0), r_enz(1), r_enz(2)};
+    return local;
+}//====================================================
+
+/**
+ *  @brief Convert local tangent coordinates to inertial coordinates
+ * 
+ *  @param localPos Object position in local tangent, cartesian (East, North, Up) coordinates
+ *  @param lat Latitude angle, radians, measured from the inertial xy plane;
+ *  above the plane (z > 0) is a positive latitude.
+ *  @param lon Longitude angle, radians, measured from reference meridian in a positive,
+ *  right-handed rotation about inertial z
+ *  @param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
+ *  right-handed rotation about inertial z. For example, Earth ground stations' longitudes
+ *  are relative to the Greenwich Meridian
+ *  @return The position of the object in inertial, cartesian coordinates (x, y, z)
+ *  as viewed from the specified latitude and longitude
+ */
+std::vector<double> localTangent2Inert(std::vector<double> localPos, double lat, double lon, double theta_mer){
+    double nu = lon + theta_mer;    // Rotation about z by longitude + greenwich longitude
+    Matrix3Rd dcm;
+    dcm << -sin(nu),    -cos(nu)*sin(lat),  cos(nu)*cos(lat),
+            cos(nu),    -sin(nu)*sin(lat),  sin(nu)*cos(lat),
+            0,              cos(lat),               sin(lat);
+
+    Eigen::Vector3d r_enz(localPos[0], localPos[1], localPos[2]);      // Position vector in local tangent (east, north, up)
+    Eigen::Vector3d r_xyz = dcm*r_enz;                                 // Position vector in inertial (x, y, z)
+
+    std::vector<double> inert {r_xyz(0), r_xyz(1), r_xyz(2)};
+    return inert;
+}//====================================================
+
+/**
+ *  @brief Get the local tangent coordinates of an object given its 
+ *  azimuth, elevation, and range
+ *  @details [long description]
+ * 
+ *  @param s range distance
+ *  @param az azimuth, measured from North toward East, radians
+ *  @param el elevation, measured from local horizontal, radians
+ *  @return [r_E, r_N, r_Z] the position of the object in local
+ *  tangent coordinates (East, North, Up), units that match the input range
+ */
+std::vector<double> azEl2LocalTangent(double s, double az, double el){
+    std::vector<double> cartCoord {
+        s*cos(el)*sin(az),      // East component
+        s*cos(el)*cos(az),      // North component
+        s*sin(el)               // Up component
+    };
+
+    return cartCoord;
 }//====================================================
 
 //-----------------------------------------------------
@@ -857,7 +1014,7 @@ void r2bp_computeAllKepler(BaseArcset *pSet){
  *  @param pNode Pointer to the node
  */
 void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
-    std::vector<double> q = node->getState();
+    std::vector<double> q = pNode->getState();
 
     double r = sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2]);     // radius, km
     double v = sqrt(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]);     // speed, km/s
@@ -888,6 +1045,16 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
         ta = 2*PI - ta;
     }
 
+    double inc = acos(boundValue(h_unit[2], -1.0, 1.0));   // inclination, rad, choose positive
+    
+    // Right ascension of the ascending node, rad
+    double raan = resolveAngle(asin(boundValue(h_unit[0]/sin(inc), -1.0, 1.0)),
+        acos(boundValue(-h_unit[1]/sin(inc), -1.0, 1.0)));
+
+    // Angular distance from the ascending node, rad
+    double theta = resolveAngle(asin(boundValue(r_unit[2]/sin(inc), -1.0, 1.0)),
+        acos(boundValue(theta_unit[2]/sin(inc), -1.0, 1.0)));
+
     pNode->setExtraParam("range", r);
     pNode->setExtraParam("speed", v);
     pNode->setExtraParam("energy", energy);
@@ -897,6 +1064,58 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
     pNode->setExtraParam("fpa", fpa);
     pNode->setExtraParam("ta", ta);
     pNode->setExtraParam("rangerate", r_dot);
+    pNode->setExtraParam("inc", inc);
+    pNode->setExtraParam("raan", raan);
+    pNode->setExtraParam("theta", theta);
+}//====================================================
+
+std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, double e, double argPeri, double i, double RAAN, double TA){
+    if(a < 0)
+        throw Exception("r2bp_stateFromKepler: a < 0 -> Code is not equiped to handle hyperbolic orbits");
+    if(e >= 1)
+        throw Exception("r2bp_stateFromKepler: e >=1 -> Code is not equipped to handle parabolic or hyperbolic orbits");
+
+    double r = a*(1 - e*e)/(1 + e*cos(TA));             // radius, km
+    double v = sqrt(pSys->getMu()*(2.0/r - 1.0/a));     // speed, km/s
+    double h = sqrt(pSys->getMu()*a*(1 - e*e));         // specific angular momentum, km^2/s
+    double fpa = acos(boundValue(h/(r*v), -1.0, 1.0));  // flight path angle, rad
+
+    // double fpa = 0;
+    // if(e != 0)  // When eccentricity is zero, can get nan from arccos
+    //     fpa = acos(h/(r*v));                         
+
+    // if true anomaly is between 180 and 360 degrees, make flight path angle negative
+    if(std::fmod(TA, 2.0*PI) > PI)
+        fpa *= -1;
+
+    // Put velocity in terms of r-theta-h coordinates
+    double v_r = v*sin(fpa);
+    double v_theta = v*cos(fpa);
+
+    double theta = TA+argPeri;
+
+    // DCM that converts r-theta-h coordinates to x-y-z coordinates
+    // The first row is (x dot r, x dot theta), second row is (y dot r, y dot theta),
+    // third row is (z dot r, z dot theta)
+    double dcm[][2] =   {{cos(RAAN)*cos(theta) - sin(RAAN)*cos(i)*sin(theta), -cos(RAAN)*sin(theta) - sin(RAAN)*cos(i)*cos(theta)},
+                         {sin(RAAN)*cos(theta) + cos(RAAN)*cos(i)*sin(theta), -sin(RAAN)*sin(theta) + cos(RAAN)*cos(i)*cos(theta)},
+                         {sin(i)*sin(theta), sin(i)*cos(theta)}
+                        };
+    std::vector<double> state(6,0);
+    state[0] = r*dcm[0][0];
+    state[1] = r*dcm[1][0];
+    state[2] = r*dcm[2][0];
+    state[3] = v_r*dcm[0][0] + v_theta*dcm[0][1];
+    state[4] = v_r*dcm[1][0] + v_theta*dcm[1][1];
+    state[5] = v_r*dcm[2][0] + v_theta*dcm[2][1];
+
+    printf("r = %.4f km\n", r);
+    printf("v = %.4f km/s\n", v);
+    printf("h = %.4f km^2/s\n", h);
+    printf("fpa = %.4f deg\n", fpa*180/PI);
+    printf("theta = %.4f deg\n", theta*180/PI);
+
+    return state;
 }//====================================================
 
 //-----------------------------------------------------
@@ -1069,7 +1288,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         default:
             throw Exception("Mirror type either not defined or not implemented");
     }
-    // sim.setVerbose(true);
+    // sim.setVerbosity(true);
     mirrorEvt.setStopCount(order);
     sim.addEvent(mirrorEvt);
 

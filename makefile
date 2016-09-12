@@ -22,8 +22,8 @@ INC_EXTERN := include_extern
 # Source files
 SRC := src
 # Destination directory for compiled objects; use one for optimized, second for debug versions
-OBJ := obj
-# OBJ := obj_debug
+# OBJ := obj
+OBJ := obj_debug
 # Directory for compiled binaries
 BIN := bin
 # Location of library dependencies
@@ -32,8 +32,8 @@ LIB := lib
 # Compiler specification and flags
 # CXX := clang++ -std=c++11
 CXX := g++-6 -std=c++11 -fopenmp
-# CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
-CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -63,7 +63,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := Core.hpp AsciiOutput.hpp Constants.hpp Exceptions.hpp Utilities.hpp
+IMPORTANT_HEADERS := Core.hpp AsciiOutput.hpp Common.hpp Exceptions.hpp Utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 

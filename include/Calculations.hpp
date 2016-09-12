@@ -28,7 +28,7 @@
  */
 #pragma once
 
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "EigenDefs.hpp"
  
 #include <vector>
@@ -47,6 +47,7 @@ class SysData_2bp;
 class SysData_bc4bp;
 class SysData_cr3bp;
 class Traj;
+class Traj_2bp;
 class Traj_bc4bp;
 class Traj_cr3bp;
 
@@ -89,6 +90,8 @@ enum class EigValSet_tp{
 
 // General Utility Functions
 double dateToEpochTime(const char*);
+double dateToGST(double, double, double, double, double, double);
+double gregorianToJulian(double, double, double, double, double, double);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
 std::vector<Traj_cr3bp> getManifolds(Manifold_tp, const Traj_cr3bp*, int, double);
 MatrixXRd getMirrorMat(Mirror_tp);
@@ -100,9 +103,16 @@ MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 Node interpPointAtTime(const Traj*, double);
 
+// Orbit Determination
+std::vector<double> getSpherical(double, double, double);
+std::vector<double> inert2LocalTangent(std::vector<double>, double, double, double);
+std::vector<double> localTangent2Inert(std::vector<double>, double, double, double);
+std::vector<double> azEl2LocalTangent(double, double, double);
+
 // 2BP Utility Functions
 void r2bp_computeAllKepler(BaseArcset*);
 void r2bp_computeKepler(const SysData_2bp*, Node*);
+std::vector<double> r2bp_stateFromKepler(const SysData_2bp*, double, double, double, double, double, double);
 
 // CR3BP Utility Functions
 double cr3bp_getVel_withC(const double s[], double, double, int);

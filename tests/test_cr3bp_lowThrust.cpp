@@ -22,7 +22,7 @@ int main(void){
 	// SimEngine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, mass/lowThrustSys.getCharM()};
 	Traj_cr3bp_ltvp lowThrustTraj(&lowThrustSys);
-	sim.setVerbose(Verbosity_tp::ALL_MSG);
+	sim.setVerbosity(Verbosity_tp::ALL_MSG);
 	sim.runSim(ic_lt, 5*tof, &lowThrustTraj);
 	
 	lowThrustTraj.saveToMat("data/circleOrb_lowThrust.mat");

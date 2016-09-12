@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "Constants.hpp"
+#include "Common.hpp"
 #include "EigenDefs.hpp"
 
 #include <cspice/SpiceZdf.h>	// typedefs for SPICE objects, like SpiceDouble 
@@ -301,6 +301,7 @@ namespace astrohelion{
 	}//===========================================
 
 
+	double boundValue(double, double, double);
 	void checkAndReThrowSpiceErr(const char*);
 	std::string complexToStr(std::complex<double>);
 	std::string getNameFromSpiceID(int);
@@ -319,6 +320,7 @@ namespace astrohelion{
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 	void toCSV(MatrixXRd, const char*);
-
+	double resolveAngle(double, double);
+	
 	void waitForUser();
 }

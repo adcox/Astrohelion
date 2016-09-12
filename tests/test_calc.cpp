@@ -166,7 +166,7 @@ void checkOrientAtEpoch(){
 		}
 	}
 
-}//==========================================
+}//====================================================
 
 void checkInterpPointAtTime(){
 	SysData_2bp sys("earth");
@@ -185,7 +185,7 @@ void checkInterpPointAtTime(){
 
 	printf("Target = %.2f sec\nDifference = %.4e\n", period/2.0, node.getEpoch() - period/2.0);
 	node.print();
-}
+}//====================================================
 
 int main(void){
 
@@ -198,7 +198,7 @@ int main(void){
 	checkInterpPointAtTime();
 
 	return 0;
-}//=========================================
+}//====================================================
 
 
 

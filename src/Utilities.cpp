@@ -458,6 +458,63 @@ void toCSV(MatrixXRd m, const char* filename){
     outFile.close();
 }//=============================================
 
+/**
+ *  @brief Resolve double angle ambiquity from inverse trig
+ *  functions
+ *  @details [long description]
+ * 
+ *  @param asinVal The result of arcsin(value)
+ *  @param acosVal The result of arccos(value)
+ * 
+ *  @return The common value between the double angles returned by arcsin(value)
+ *  and arccos(value)
+ */
+double resolveAngle(double asinVal, double acosVal){
+    if(std::isnan(asinVal) || std::isnan(acosVal))
+        throw Exception("resolveAngle: one of the inputs is NAN; cannot resolve angle");
 
+    double asinVals[] = {asinVal, PI - asinVal};
+    double acosVals[] = {acosVal, -acosVal};
+
+    for(int i = 0; i < 2; i++){
+        for(int j = 0; j < 2; j++){
+            if(std::abs(sin(acosVals[i]) - sin(asinVals[j])) < 1e-8)
+                return acosVals[i];
+            // if(std::abs(acosVals[i] - asinVals[j]) < 1e-8)
+            //     return acosVals[i];
+        }
+    }
+
+    // Could not find a value
+    printErr("No Common Angle:\n  arcsin vals = %.4f, %.4f\n", asinVals[0], asinVals[1]);
+    printErr("  arccos vals = %.4f, %.4f\n", acosVals[0], acosVals[1]);
+    throw Exception("resolveAngle: Could not resolve angle");
+}//=============================================
+
+/**
+ *  @brief Determine the value of a number within some bounds
+ *  @details This is particularly useful for arguments for 
+ *  inverse trig functions: small numerical errors may result 
+ *  in arccos(1 + eps) or arsin(-1 - eps) where eps is some small
+ *  value. The resulting inverse trig function will be invalide
+ *  and return NAN. In this case, use boundValue(value, -1, 1)
+ *  to ensure that the argument inside the trig function is between
+ *  -1 and 1.
+ * 
+ *  @param val the value to bound
+ *  @param min minimum allowable value
+ *  @param max maximum allowable value
+ *  @return The value if it is within the bounds, or the min/max
+ *  bound if val is outside the bounds.
+ */
+double boundValue(double val, double min, double max){
+    if(val < min)
+        return min;
+
+    if(val > max)
+        return max;
+
+    return val;
+}//=============================================
 
 } // End of astrohelion namespace

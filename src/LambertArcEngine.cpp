@@ -91,7 +91,6 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
 	if(r1.size() < 3 || r2.size() < 3)
         throw Exception("r2bp_getLambertArc: r1 or r2 has fewer than three elements");
 
-    double a = NAN, e = NAN;
     Traj_2bp traj(pSys);
     std::vector<double> state1(3,0), state2(3,0);   // three zero velocity components
 
@@ -166,9 +165,12 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
 
     if(verbosity >= Verbosity_tp::ALL_MSG){
 	    printf("Space triangle:\n  r1 = %.4f km\n  r2 = %.4f km\n  c = %.4f km\n  s = %.4f km\n", r1_mag, r2_mag, c, s);
+	    printf("  Transfer Angle = %.2f deg\n", transAngle*180/PI);
 	    printf("\nParabolic Transfer:\n  tof_par = %.2f s\n", tof_par);
 	}
 
+	double a = NAN, e = NAN, p = NAN, tof_guess = 0, alpha = 0, beta = 0;
+	unsigned int subType = 0;
     if(tof > tof_par){  // Elliptical transfer
         double a_min = 0.5*s;
         double alpha0 = 2*asin(sqrt(s/(2*a_min)));
@@ -178,7 +180,7 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
             sqrt(pow(a_min,3)/pSys->getMu())*(alpha0 - sin(alpha0) - beta0 + sin(beta0)) :  // Type 1
             sqrt(pow(a_min,3)/pSys->getMu())*(alpha0 - sin(alpha0) + beta0 - sin(beta0));   // Type 2
 
-        unsigned int subType = tof < tof_min ? 1 : 2;    // 1 = A, 2 = B
+        subType = tof < tof_min ? 1 : 2;    // 1 = A, 2 = B
         double a_guess = tof < tof_min ? a_min : a_min*pow(tof/tof_min, 0.25);
 
         if(verbosity >= Verbosity_tp::ALL_MSG){
@@ -187,7 +189,7 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
         }
         // Iterate to find semi-major axis for the transfer arc
         unsigned int count = 0;
-        double tof_guess = 0, last_tof_guess = 0, last_a_guess = 0, alpha = 0, beta = 0;
+        double last_tof_guess = 0, last_a_guess = 0;
         while(std::abs(tof - tof_guess) > tof_maxErr && count < maxIts){
             last_a_guess = a_guess;
             last_tof_guess = tof_guess;
@@ -251,109 +253,165 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
         double p_option2 = (4*a*(s - r1_mag)*(s - r2_mag)/(c*c)) * sin(0.5*(alpha - beta))*sin(0.5*(alpha - beta));
 
         // 1A and 2B take the max value, 1B and 2A take the min value
-        double p = type == subType? std::max(p_option1, p_option2) : std::min(p_option1, p_option2);
+        p = type == subType? std::max(p_option1, p_option2) : std::min(p_option1, p_option2);
 
-        // Compute other orbit parameters
-        e = sqrt(1.0 - p/a);
-        double ta1 = acos( (p - r1_mag)/(r1_mag*e) );
-        double ta2 = acos( (p - r2_mag)/(r2_mag*e) );
+        printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+        	"\nMinimum Energy Transfer:\n  a_min = %.4f km\n  alpha0 = %.4f deg\n  beta0 = %.4f deg\n  tof_min = %.2f s\n",
+        	a_min, alpha0*180/PI, beta0*180/PI, tof_min);
+    }else{  // tof < tof_par: Hyperbolic transfer
+    	subType = 3;	// hyperbola, "H"
+    	a_step = -1*std::abs(a_step);	// Make sure step is negative for hyperbolic
 
-        /*  Four Possible transfer options
-         *  1) ta_a > ta_d > 0
-         *  2) ta_d > 0 > ta_a
-         *  3) ta_a > 0 > ta_d
-         *  4) 0 > ta_d > ta_a
-         */
-         double possibleTx[] = {ta2 - ta1,
-                                2*PI - ta2 - ta1,
-                                ta2 + ta1,
-                                2*PI - ta2 + ta1};
-        bool foundMatch = false;
-        for(unsigned int i = 0; i < 4; i++){
-            if(std::abs(possibleTx[i] - transAngle) < ta_maxErr){
-                switch(i){
-                    case 1: ta2 = 2*PI - ta2; break;
-                    case 2: ta1 = 2*PI - ta1; break;
-                    case 3: 
-                        ta2 = 2*PI - ta2;
-                        ta1 = 2*PI - ta1;
-                        break;
-                }
-                foundMatch = true;
-                break;
-            }
+    	// Iterate to find semi-major axis for the transfer arc
+        unsigned int count = 0;
+        double last_tof_guess = 0, a_guess = 0, last_a_guess = 0;
+        while(std::abs(tof - tof_guess) > tof_maxErr && count < maxIts){
+        	a_guess += a_step;
+
+        	// Compute principal values of alpha and beta
+        	double alpha = 2.0*asinh(sqrt(s/(-2.0*a_guess)));
+        	double beta = 2.0*asinh(sqrt((s-c)/(-2.0*a_guess)));
+
+        	if(type == 2)
+        		beta *= -1;
+
+        	tof_guess = sqrt(-pow(a,3)/pSys->getMu())*(beta - alpha + sinh(alpha) - sinh(beta));
+
+        	if(count > 0 && sign(tof - last_tof_guess) != sign(tof - tof_guess))
+        		a_step *= -0.1;
+
+        	last_tof_guess = tof_guess;
+        	count++;
         }
 
-        if(!foundMatch)
-            throw Exception("r2bp_getLambertArc: Could not find a set of true anomalies to match the transfer angle");
+        if(std::abs(tof - tof_guess) > tof_maxErr)
+        	throw DivergeException("LambertArcEngine::getLambertArc: No match for TOF on hyperbolic transfer");
+        
+        a = a_guess;
+        double p_option1 = (-4*a*(s - r1_mag)*(s - r2_mag)/(c*c)) * (sinh((alpha + beta)/2.0)*sinh((alpha + beta)/2.0));
+        double p_option2 = (-4*a*(s - r1_mag)*(s - r2_mag)/(c*c)) * (sinh((alpha + beta)/2.0)*sinh((alpha - beta)/2.0));
 
-        double v1_mag = sqrt(2*pSys->getMu()*(1.0/r1_mag - 1.0/(2*a)));
-        double v2_mag = sqrt(2*pSys->getMu()*(1.0/r2_mag - 1.0/(2*a)));
-        double fpa1 = acos(sqrt(pSys->getMu() * p)/(r1_mag*v1_mag));
-        double fpa2 = acos(sqrt(pSys->getMu() * p)/(r2_mag*v2_mag));
-
-        if(ta1 > PI)
-            fpa1 *= -1;
-
-        if(ta2 > PI)
-            fpa2 *= -1;
-
-        if(verbosity >= Verbosity_tp::ALL_MSG){
-	        printf("\nMinimum Energy Transfer:\n  a_min = %.4f km\n  alpha0 = %.4f deg\n  beta0 = %.4f deg\n  tof_min = %.2f s\n", a_min, alpha0*180/PI, beta0*180/PI, tof_min);
-	        printf("\nActual Transfer: Type %d%c\n", type, subType == 1 ? 'A' : 'B');
-	        printf("  inc = %.2f deg\n  raan = %.2f deg\n", inc*180/PI, raan*180/PI);
-	        printf("  a = %.4f km\n  tof = %.2f sec\n  alpha = %.4f deg\n  beta = %.4f deg\n", a_guess, tof_guess, alpha*180/PI, beta*180/PI);
-	        printf("  p options: %.4f OR %.4f km\n", p_option1, p_option2);
-	        printf("  Choose p = %.4f km\n", p);
-	        printf("  e = %.4f\n  ta1 = %.4f deg\n  v1 = %.4f km/s\n  fpa1 = %.4f deg\n", e, ta1*180/PI, v1_mag, fpa1*180/PI);
-	        printf("  ta2 = %.4f deg\n  v2 = %.4f km/s\n  fpa2 = %.4f deg\n", ta2*180/PI, v2_mag, fpa2*180/PI);
-	        printf("  argPeri = %.2f deg\n", (theta1 - ta1)*180/PI);
-		}
-
-        node1.setExtraParam("sma", a);
-        node1.setExtraParam("ecc", e);
-        node1.setExtraParam("fpa", fpa1);
-        node1.setExtraParam("ta", ta1);
-        node1.setExtraParam("range", r1_mag);
-        node1.setExtraParam("speed", v1_mag);
-
-        node2.setExtraParam("sma", a);
-        node2.setExtraParam("ecc", e);
-        node2.setExtraParam("fpa", fpa2);
-        node2.setExtraParam("ta", ta2);
-        node2.setExtraParam("range", r2_mag);
-        node2.setExtraParam("speed", v2_mag);
-
-        // Compute the velocity vector for each node
-        double v1[] = {v1_mag*sin(fpa1), v1_mag*cos(fpa1), 0};	// in r-theta-h coordinates
-        double v2[] = {v2_mag*sin(fpa2), v2_mag*cos(fpa2), 0};
-
-        // DCM that converts r-theta-h coordinates to x-y-z coordinates
-    	// The first row is (x dot r, x dot theta), second row is (y dot r, y dot theta),
-    	// third row is (z dot r, z dot theta)
-        double dcm1[][2] =	{{cos(raan)*cos(theta1) - sin(raan)*cos(inc)*sin(theta1), -cos(raan)*sin(theta1) - sin(raan)*cos(inc)*cos(theta1)},
-                         	 {sin(raan)*cos(theta1) + cos(raan)*cos(inc)*sin(theta1), -sin(raan)*sin(theta1) + cos(raan)*cos(inc)*cos(theta1)},
-                         	 {sin(inc)*sin(theta1), sin(inc)*cos(theta1)}
-                        	};
-
-        double dcm2[][2] =	{{cos(raan)*cos(theta2) - sin(raan)*cos(inc)*sin(theta2), -cos(raan)*sin(theta2) - sin(raan)*cos(inc)*cos(theta2)},
-                         	 {sin(raan)*cos(theta2) + cos(raan)*cos(inc)*sin(theta2), -sin(raan)*sin(theta2) + cos(raan)*cos(inc)*cos(theta2)},
-                         	 {sin(inc)*sin(theta2), sin(inc)*cos(theta2)}
-                        	};
-
-        state1[3] = v1[0]*dcm1[0][0] + v1[1]*dcm1[0][1];
-    	state1[4] = v1[0]*dcm1[1][0] + v1[1]*dcm1[1][1];
-    	state1[5] = v1[0]*dcm1[2][0] + v1[1]*dcm1[2][1];
-
-    	state2[3] = v2[0]*dcm2[0][0] + v2[1]*dcm2[0][1];
-    	state2[4] = v2[0]*dcm2[1][0] + v2[1]*dcm2[1][1];
-    	state2[5] = v2[0]*dcm2[2][0] + v2[1]*dcm2[2][1];
-
-    	node1.setState(state1);
-    	node2.setState(state2);
-    }else{  // tof > tof_par: Hyperbolic transfer
-        throw Exception("r2bp_getLambertArc: Lambert arc is hyperbolic; not yet implemented");
+        p = type == 1 ? std::max(p_option1, p_option2) : std::min(p_option1, p_option2);
     }
+
+    // Compute other orbit parameters
+    e = sqrt(1.0 - p/a);
+    double ta1 = acos( (p - r1_mag)/(r1_mag*e) );
+    double ta2 = acos( (p - r2_mag)/(r2_mag*e) );
+
+    /*  Four Possible transfer options
+     *  1) ta_a > ta_d > 0
+     *  2) ta_d > 0 > ta_a
+     *  3) ta_a > 0 > ta_d
+     *  4) 0 > ta_d > ta_a
+     */
+     double possibleTx[] = {ta2 - ta1,
+                            2*PI - ta2 - ta1,
+                            ta2 + ta1,
+                            2*PI - ta2 + ta1};
+    bool foundMatch = false;
+    for(unsigned int i = 0; i < 4; i++){
+        if(std::abs(possibleTx[i] - transAngle) < ta_maxErr){
+            switch(i){
+                case 1: ta2 = 2*PI - ta2; break;
+                case 2: ta1 = 2*PI - ta1; break;
+                case 3: 
+                    ta2 = 2*PI - ta2;
+                    ta1 = 2*PI - ta1;
+                    break;
+            }
+            foundMatch = true;
+            break;
+        }
+    }
+
+    if(!foundMatch)
+        throw Exception("r2bp_getLambertArc: Could not find a set of true anomalies to match the transfer angle");
+
+    double v1_mag = sqrt(2*pSys->getMu()*(1.0/r1_mag - 1.0/(2*a)));
+    double v2_mag = sqrt(2*pSys->getMu()*(1.0/r2_mag - 1.0/(2*a)));
+    double fpa1 = acos(sqrt(pSys->getMu() * p)/(r1_mag*v1_mag));
+    double fpa2 = acos(sqrt(pSys->getMu() * p)/(r2_mag*v2_mag));
+
+    if(ta1 > PI)
+        fpa1 *= -1;
+
+    if(ta2 > PI)
+        fpa2 *= -1;
+
+    char subTypeChars[] {'A', 'B', 'H'};
+    if(verbosity >= Verbosity_tp::ALL_MSG){
+        printf("\nActual Transfer: Type %d%c\n", type, subTypeChars[subType]);
+        printf("  inc = %.2f deg\n  raan = %.2f deg\n", inc*180/PI, raan*180/PI);
+        printf("  a = %.4f km\n  tof = %.2f sec\n  alpha = %.4f deg\n  beta = %.4f deg\n", a, tof_guess, alpha*180/PI, beta*180/PI);
+        printf("  p = %.4f km\n", p);
+        printf("  e = %.4f\n  ta1 = %.4f deg\n  v1 = %.4f km/s\n  fpa1 = %.4f deg\n", e, ta1*180/PI, v1_mag, fpa1*180/PI);
+        printf("  ta2 = %.4f deg\n  v2 = %.4f km/s\n  fpa2 = %.4f deg\n", ta2*180/PI, v2_mag, fpa2*180/PI);
+        printf("  argPeri = %.2f deg\n", (theta1 - ta1)*180/PI);
+	}
+
+    node1.setExtraParam("sma", a);
+    node1.setExtraParam("ecc", e);
+    node1.setExtraParam("fpa", fpa1);
+    node1.setExtraParam("ta", ta1);
+    node1.setExtraParam("range", r1_mag);
+    node1.setExtraParam("speed", v1_mag);
+    node1.setExtraParam("argPeri", (theta1 - ta1));
+
+    node2.setExtraParam("sma", a);
+    node2.setExtraParam("ecc", e);
+    node2.setExtraParam("fpa", fpa2);
+    node2.setExtraParam("ta", ta2);
+    node2.setExtraParam("range", r2_mag);
+    node2.setExtraParam("speed", v2_mag);
+
+    if(tof > tof_par){
+    	// Compute Eccentric and Mean Anomaly
+    	double E1 = acos((1.0 - r1_mag/a)/e);
+
+    	// Correct for quadrant ambiguity
+    	if(sign(ta1) < 0)
+    		E1 = 2*PI - E1;
+
+    	double E2 = E1 + (alpha - beta);
+
+    	double M1 = E1 - e*sin(E1);
+    	double M2 = E2 - e*sin(E2);
+
+    	node1.setExtraParam("E", E1);
+    	node1.setExtraParam("M", M1);
+
+    	node2.setExtraParam("E", E2);
+    	node2.setExtraParam("M", M2);
+    }
+    
+    // Compute the velocity vector for each node
+    double v1[] = {v1_mag*sin(fpa1), v1_mag*cos(fpa1), 0};	// in r-theta-h coordinates
+    double v2[] = {v2_mag*sin(fpa2), v2_mag*cos(fpa2), 0};
+
+    // DCM that converts r-theta-h coordinates to x-y-z coordinates
+	// The first row is (x dot r, x dot theta), second row is (y dot r, y dot theta),
+	// third row is (z dot r, z dot theta)
+    double dcm1[][2] =	{{cos(raan)*cos(theta1) - sin(raan)*cos(inc)*sin(theta1), -cos(raan)*sin(theta1) - sin(raan)*cos(inc)*cos(theta1)},
+                     	 {sin(raan)*cos(theta1) + cos(raan)*cos(inc)*sin(theta1), -sin(raan)*sin(theta1) + cos(raan)*cos(inc)*cos(theta1)},
+                     	 {sin(inc)*sin(theta1), sin(inc)*cos(theta1)}
+                    	};
+
+    double dcm2[][2] =	{{cos(raan)*cos(theta2) - sin(raan)*cos(inc)*sin(theta2), -cos(raan)*sin(theta2) - sin(raan)*cos(inc)*cos(theta2)},
+                     	 {sin(raan)*cos(theta2) + cos(raan)*cos(inc)*sin(theta2), -sin(raan)*sin(theta2) + cos(raan)*cos(inc)*cos(theta2)},
+                     	 {sin(inc)*sin(theta2), sin(inc)*cos(theta2)}
+                    	};
+
+    state1[3] = v1[0]*dcm1[0][0] + v1[1]*dcm1[0][1];
+	state1[4] = v1[0]*dcm1[1][0] + v1[1]*dcm1[1][1];
+	state1[5] = v1[0]*dcm1[2][0] + v1[1]*dcm1[2][1];
+
+	state2[3] = v2[0]*dcm2[0][0] + v2[1]*dcm2[0][1];
+	state2[4] = v2[0]*dcm2[1][0] + v2[1]*dcm2[1][1];
+	state2[5] = v2[0]*dcm2[2][0] + v2[1]*dcm2[2][1];
+
+	node1.setState(state1);
+	node2.setState(state2);
 
     int id1 = traj.addNode(node1);
     int id2 = traj.addNode(node2);

@@ -154,9 +154,9 @@ double Constraint::getFirstDataValue() const{
  *  value is located, NAN is returned.
  */
 double Constraint::getFirstDataValue(int *ix) const{
-	for(size_t i = 0; i < data.size(); i++){
+	for(unsigned int i = 0; i < data.size(); i++){
 		if(!std::isnan(data[i])){
-			*ix = (int)i;
+			*ix = static_cast<int>(i);
 			return data[i];
 		}
 	}
@@ -172,7 +172,7 @@ double Constraint::getFirstDataValue(int *ix) const{
  */
 int Constraint::countConstrainedStates() const{
 	int count = 0;
-	for(int n = 0; n < ((int)data.size()); n++){
+	for(unsigned int n = 0; n < data.size(); n++){
 		count += !std::isnan(data.at(n));
 	}
 	return count;
@@ -282,7 +282,7 @@ const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
 void Constraint::print() const {
 	printf("Constraint:\n  Type: %s\n  Applies to: %s (ID %d)\n  Data: ",
 		getConTypeStr(type), getAppTypeStr(appType), id);
-	for(int n = 0; n < ((int)data.size()); n++){
+	for(unsigned int n = 0; n < data.size(); n++){
 		printf("%12.5f ", data[n]);
 	}
 	printf("\n");

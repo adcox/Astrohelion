@@ -184,13 +184,13 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 
 			// Append the total TOF for the arc
 			MSVarMap_Key key(MSVarType::TOF_TOTAL, Linkable::INVALID_ID);
-			it->freeVarMap[key] = MSVarMap_Obj(key, (int)(it->X.size()));
+			it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
 			it->X.insert(it->X.end(), set->getTotalTOF());
 		}else{
 			// Append the TOF for each segment
 			for(int s = 0; s < set->getNumSegs(); s++){
 				MSVarMap_Key key(MSVarType::TOF, set->getSegByIx(s).getID());
-				it->freeVarMap[key] = MSVarMap_Obj(key, (int)(it->X.size()));
+				it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
 				it->X.insert(it->X.end(), set->getSegByIx(s).getTOF());
 			}
 		}
@@ -239,8 +239,8 @@ void DynamicsModel::multShoot_scaleDesignVec(MultShootData *it, const Nodeset *s
 	it->freeVarScale[1] = maxVel == 0 ? 1 : 1/maxVel;		// Velocity scalar
 	it->freeVarScale[2] = maxTime == 0 ? 1 : 1/maxTime;		// TOF scalar
 
-	printf("Variable Scalings:\n  Pos = %.6f\n  Vel = %.6f\n  TOF = %.5f\n", 
-		it->freeVarScale[0], it->freeVarScale[1], it->freeVarScale[2]);
+	// printf("Variable Scalings:\n  Pos = %.6f\n  Vel = %.6f\n  TOF = %.5f\n", 
+	// 	it->freeVarScale[0], it->freeVarScale[1], it->freeVarScale[2]);
 
 	// Loop through all nodes and scale position and velocity
 	for(int n = 0; n < it->numNodes; n++){
@@ -314,6 +314,7 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it, const Nodeset *s
  *	@param ic a pointer to a 6-element initial state array
  *	@param t0 a pointer to a double representing the initial time (epoch)
  *	@param tof a pointer to a double the time-of-flight on the segment.
+ *	@todo No need to input Nodeset as well as the MultShootData pointer
  */
 void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *set, int s,
 	double *ic, double *t0, double *tof) const{
@@ -335,6 +336,8 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *
 		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
 		// Reverse scaling
 		*tof /= it->freeVarScale[2]; 	// Time scaling
+	}else{
+		*tof = it->nodeset->getTOF(s) / it->freeVarScale[2];
 	}
 	*t0 = 0;
 
@@ -466,14 +469,14 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
 	// int termIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getTerminus());
 
 	// Loop through conData
-	for(size_t s = 0; s < conData.size(); s++){
+	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 			it->FX[row0+s] = lastState[s]*scale - it->X[statef_var.row0+s];
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
-			for(size_t x = 0; x < 6; x++){
+			for(unsigned int x = 0; x < 6; x++){
 				// put STM elements into DF matrix
 				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 				it->DF[it->totalFree*(row0+s) + state0_var.row0 + x] = stm(s,x)*scale/scale2;
@@ -525,7 +528,7 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
 void DynamicsModel::multShoot_targetCont_PosVel_Seg(MultShootData *it, Constraint con, int row0) const{
 	int segID1 = con.getID();
 	int ix = 0;
-	int segID2 = (int)(con.getFirstDataValue(&ix));
+	int segID2 = static_cast<int>(con.getFirstDataValue(&ix));
 	if(ix < 0)
 		throw Exception("DynamicsModel::multShoot_targetCont_PosVel_Seg: No segment ID was located in the cosntraint data vector");
 
@@ -564,14 +567,14 @@ void DynamicsModel::multShoot_targetCont_PosVel_Seg(MultShootData *it, Constrain
 
 	// Loop through conData
 	int count = 0;
-	for(size_t s = 0; s < conData.size(); s++){
+	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
 			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 			it->FX[row0+count] = (state1[s]- state2[s])*scale;
 
 			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
-			for(size_t x = 0; x < 6; x++){
+			for(unsigned int x = 0; x < 6; x++){
 				// putu STM elements into DF matrix
 				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
 				it->DF[it->totalFree*(row0+count) + state01_var.row0+x] = stm1(s,x)*scale/scale2;
@@ -645,7 +648,7 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int
 
 	// Allow user to constrain 6 states	
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
-	for(int s = 0; s < ((int)con.getData().size()); s++){
+	for(unsigned int s = 0; s < con.getData().size(); s++){
 		if(!std::isnan(conData[s])){
 			if(s < 6){
 				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
@@ -707,7 +710,7 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, 
  */
 void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con, int row0) const{
 	int ix = 0;
-	int ID2 = (int)(con.getFirstDataValue(&ix));
+	int ID2 = static_cast<int>(con.getFirstDataValue(&ix));
 	if(ix < 0)
 		throw Exception("DynamicsModel::multShoot_targetMatchCust: No segment ID was located in the cosntraint data vector");
 
@@ -750,7 +753,7 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
-	int Pix = (int)(conData[0]);	// index of primary
+	int Pix = static_cast<int>(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
@@ -806,7 +809,7 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it,
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
-	int Pix = (int)(conData[0]);	// index of primary	
+	int Pix = static_cast<int>(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
 	// Get the primary position
@@ -874,7 +877,6 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 			Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
 			// Get info about the final state/accel of the integrated segment
-
 			MatrixXRd stm = it->propSegs[s].getSTMByIx(-1);
 
 			// Partial w.r.t. integrated path (newSeg) from origin node
@@ -1015,7 +1017,7 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int 
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
-	int Pix = (int)(conData[0]);	// index of primary
+	int Pix = static_cast<int>(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	
 	double sr = it->freeVarScale[0];

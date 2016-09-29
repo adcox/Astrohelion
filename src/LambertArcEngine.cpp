@@ -264,7 +264,7 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
 
     	// Iterate to find semi-major axis for the transfer arc
         unsigned int count = 0;
-        double last_tof_guess = 0, a_guess = 0, last_a_guess = 0;
+        double last_tof_guess = 0, a_guess = 0;
         while(std::abs(tof - tof_guess) > tof_maxErr && count < maxIts){
         	a_guess += a_step;
 

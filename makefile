@@ -22,8 +22,8 @@ INC_EXTERN := include_extern
 # Source files
 SRC := src
 # Destination directory for compiled objects; use one for optimized, second for debug versions
-# OBJ := obj
-OBJ := obj_debug
+OBJ := obj
+# OBJ := obj_debug
 # Directory for compiled binaries
 BIN := bin
 # Location of library dependencies
@@ -32,8 +32,8 @@ LIB := lib
 # Compiler specification and flags
 # CXX := clang++ -std=c++11
 CXX := g++-6 -std=c++11 -fopenmp
-CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
-# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+# CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -109,6 +109,9 @@ else ifeq ($(UNAME_S), Darwin)
 	cp $(LIB)/libastrohelion.a /usr/local/lib/
 	cp $(LIB)/libastrohelion.dylib /usr/local/lib/
 endif
+
+docs:
+	doxygen dox_config
 
 libastrohelion.a: $(OBJECTS)
 	ar rcs $(LIB)/$@ $^

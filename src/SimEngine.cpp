@@ -98,6 +98,13 @@ SimEngine& SimEngine::operator =(const SimEngine& s){
 //-----------------------------------------------------
 
 /**
+ *  @return whether or not the simulation will leverage simple integration, i.e.,
+ *  integration without propagating the STM or other extra parameters - just the
+ *  states.
+ */
+bool SimEngine::usesSimpleInt() const { return bSimpleIntegration; }
+
+/**
  *	@return whether or not the simulation will run time in reverse
  */
 bool SimEngine::usesRevTime() const {return bRevTime;}
@@ -148,7 +155,7 @@ std::vector<SimEventRecord> SimEngine::getEventRecords() const { return eventOcc
 std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
     std::vector<Event> endEvents;
     if(traj != NULL && traj != 0){
-        for(size_t i = 0; i < eventOccurs.size(); i++){
+        for(unsigned int i = 0; i < eventOccurs.size(); i++){
             if(eventOccurs[i].stepIx == (traj->getNumNodes() - 1)){
                 endEvents.push_back(events[eventOccurs[i].eventIx]);
             }
@@ -223,6 +230,16 @@ void SimEngine::setMakeCrashEvents(bool b){ bMakeCrashEvents = b; }
  */
 void SimEngine::setNumSteps(int n){ numSteps = n; }
 
+/**
+ *  @brief Tell the engine whether or not to use simple integration (i.e., no STM propagation)
+ *  @param b whether or not to use simple integration
+ */
+void SimEngine::setSimpleInt(bool b){ bSimpleIntegration = b; }
+
+/**
+ *  @brief Set the variable step integration step function
+ *  @param integ The type of integrator to use for variable step propagations
+ */
 void SimEngine::setVarStepInteg(Integ_tp integ){ 
     switch(integ){
         case Integ_tp::RKCK:
@@ -234,6 +251,10 @@ void SimEngine::setVarStepInteg(Integ_tp integ){
     }
 }//====================================================
 
+/**
+ *  @brief Set the fixed step integration step function
+ *  @param integ The type of integrator to use for fixed step propagations
+ */
 void SimEngine::setFixStepInteg(Integ_tp integ){
     switch(integ){
         case Integ_tp::MSADAMS:
@@ -460,8 +481,8 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     model->sim_saveIntegratedData(y, t[0], traj);
 
     // Update all event functions with IC
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", ((int)events.size()));
-    for(int ev = 0; ev < ((int)events.size()); ev++){
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
+    for(unsigned int ev = 0; ev < events.size(); ev++){
         astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
         events.at(ev).updateDist(y, t[0]);
     }
@@ -540,7 +561,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
 
     // Summarize event occurrences
-    for(size_t i = 0; i < eventOccurs.size(); i++){
+    for(unsigned int i = 0; i < eventOccurs.size(); i++){
         astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
             events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
@@ -579,7 +600,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
     const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
     
     // Look through all events
-    for(int ev = 0; ev < ((int)events.size()); ev++){
+    for(unsigned int ev = 0; ev < events.size(); ev++){
         // Don't trigger if only two points have been integrated
         if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
@@ -655,7 +676,7 @@ void SimEngine::cleanEngine(){
     eomParams = 0;  // set pointer to 0 (null pointer)
     eventOccurs.clear();
 
-    for(size_t e = 0; e < events.size(); e++){
+    for(unsigned int e = 0; e < events.size(); e++){
         events[e].reset();
     }
 
@@ -670,7 +691,7 @@ void SimEngine::createCrashEvents(const SysData *sysData){
     if(!bMadeCrashEvents){
         for(int p = 0; p < sysData->getNumPrimaries(); p++){
             // Put primary index # into an array, create event
-            double Pix = (double)p;
+            double Pix = static_cast<double>(p);
             Event crashEvt(sysData, Event_tp::CRASH, 0, true, &Pix);
             // Add event to list by default
             addEvent(crashEvt);

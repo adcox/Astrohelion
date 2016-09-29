@@ -153,6 +153,7 @@ class SimEngine : public Core, public Engine{
 		int getNumSteps() const;
 		double getRelTol() const;
 		bool makesCrashEvents() const;
+		bool usesSimpleInt() const;
 		bool usesRevTime() const;
 		bool usesVarStepSize() const;
 		
@@ -160,6 +161,7 @@ class SimEngine : public Core, public Engine{
 		void setFixStepInteg(Integ_tp);
 		void setMakeCrashEvents(bool);
 		void setNumSteps(int);
+		void setSimpleInt(bool);
 		void setRelTol(double);
 		void setRevTime(bool);
 		void setVarStepInteg(Integ_tp);

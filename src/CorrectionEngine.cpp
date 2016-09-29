@@ -296,7 +296,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 	int conRow = 0;
 	bool foundDVCon = false;
 	bool foundTOFCon = false;
-	for(size_t c = 0; c < it.allCons.size(); c++){
+	for(unsigned int c = 0; c < it.allCons.size(); c++){
 		int addToRows = 0;
 		Constraint con = it.allCons[c];
 
@@ -397,7 +397,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 
 	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
 	if(verbosity == Verbosity_tp::ALL_MSG){
-		for(size_t n = 0; n < it.allCons.size(); n++){
+		for(unsigned int n = 0; n < it.allCons.size(); n++){
 			it.allCons[n].print();
 		}
 	}
@@ -463,7 +463,13 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 				ic, &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
+			// if(verbosity >= Verbosity_tp::DEBUG){
+			// 	printf("Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
+			// }
 			simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
+			// if(verbosity >= Verbosity_tp::DEBUG){
+			// 	it.propSegs[s].print();
+			// }
 		}
 
 		// waitForUser();
@@ -488,7 +494,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
-		for(size_t c = 0; c < it.allCons.size(); c++)
+		for(unsigned int c = 0; c < it.allCons.size(); c++)
 			it.sysData->getDynamicsModel()->multShoot_applyConstraint(&it, it.allCons[c], c);
 
 		// Solve for newX and copy into working vector X
@@ -645,15 +651,15 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
  *  @param pIt pointer to an MultShootData object associated with a corrections process
  */
 void CorrectionEngine::reportConMags(const MultShootData *pIt){
-	int conCount = 0;
-	for(long r = 0; r < (int)(pIt->FX.size()); r++){
+	unsigned int conCount = 0;
+	for(unsigned int r = 0; r < (pIt->FX.size()); r++){
         if(r == 0 && pIt->totalCons > 0){
             printf("Node %d %s Constraint:\n", pIt->allCons[conCount].getID(), pIt->allCons[conCount].getTypeStr());
-        }else if(conCount < (int)(pIt->allCons.size()) && r >= pIt->conRows[conCount+1]){
+        }else if(conCount < pIt->allCons.size() && r >= static_cast<unsigned int>(pIt->conRows[conCount+1])){
             conCount++;
             printf("Node %d %s Constraint:\n", pIt->allCons[conCount].getID(), pIt->allCons[conCount].getTypeStr());
         }
-        printf("  ||row %03zu||: %.6e\n", r, std::abs(pIt->FX[r]));
+        printf("  ||row %03u||: %.6e\n", r, std::abs(pIt->FX[r]));
     }
 }//===============================================================
 

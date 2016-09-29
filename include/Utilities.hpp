@@ -51,10 +51,10 @@ namespace astrohelion{
 	 *	row-major order
 	 */
 	template <typename T>
-	void permute(std::vector<T> values, int numSpots, std::vector<int> ixs, std::vector<T> *perms){
-		if((int)(ixs.size()) < numSpots){	// Not done with recursion; continue deeper!
+	void permute(std::vector<T> values, unsigned int numSpots, std::vector<unsigned int> ixs, std::vector<T> *perms){
+		if(ixs.size() < numSpots){	// Not done with recursion; continue deeper!
 			ixs.push_back(-1);
-			for(size_t i = 0; i < values.size(); i++){
+			for(unsigned int i = 0; i < values.size(); i++){
 				ixs.back() = i;
 				permute(values, numSpots, ixs, perms);
 			}
@@ -73,13 +73,13 @@ namespace astrohelion{
 	 *	@param perms a pointer to a storage vector for the permutations; stored in row-major order
 	 */
 	template <typename T>
-	void permute(std::vector<T> values, std::vector<int> ixs, std::vector<T> *perms){
+	void permute(std::vector<T> values, std::vector<unsigned int> ixs, std::vector<T> *perms){
 		if(ixs.size() < values.size()){
 			ixs.push_back(-1);
-			for(size_t i = 0; i < values.size(); i++){
+			for(unsigned int i = 0; i < values.size(); i++){
 				bool bAlreadyUsed = false;
-				for(size_t j = 0; j < ixs.size(); j++){
-					if(ixs[j] == (int)i){
+				for(unsigned int j = 0; j < ixs.size(); j++){
+					if(ixs[j] == i){
 						bAlreadyUsed = true;
 						break;
 					}
@@ -91,7 +91,7 @@ namespace astrohelion{
 				}
 			}
 		}else{
-			for(size_t i = 0; i < ixs.size(); i++){
+			for(unsigned int i = 0; i < ixs.size(); i++){
 				perms->push_back(values[ixs[i]]);
 			}
 			return;
@@ -124,7 +124,7 @@ namespace astrohelion{
 		if(v1.size() != v2.size())
 			return false;
 
-		for(size_t i = 0; i < v1.size(); i++){
+		for(unsigned int i = 0; i < v1.size(); i++){
 			if(!aboutEquals(v1[i], v2[i], tol))
 				return false;
 		}
@@ -160,8 +160,8 @@ namespace astrohelion{
 
 	  	// initialize original index locations
 	  	std::vector<int> idx(v.size());
-	  	for (int i = 0; i < ((int)idx.size()); i++){
-			idx[i] = i;
+	  	for (unsigned int i = 0; i < idx.size(); i++){
+			idx[i] = static_cast<int>(i);
 	  	}
 
 	  	// sort indexes based on comparing values in v
@@ -182,8 +182,8 @@ namespace astrohelion{
 	 *	is a separate permutation
 	 */
 	template <typename T>
-	std::vector<T> generatePerms(std::vector<T> values, int n){
-		std::vector<int> ixs;
+	std::vector<T> generatePerms(std::vector<T> values, unsigned int n){
+		std::vector<unsigned int> ixs;
 		std::vector<T> perms;
 		permute(values, n, ixs, &perms);
 		return perms;
@@ -197,7 +197,7 @@ namespace astrohelion{
 	 */	
 	template <typename T>
 	std::vector<T> generatePerms(std::vector<T> values){
-		std::vector<int> ixs;
+		std::vector<unsigned int> ixs;
 		std::vector<T> perms;
 		permute(values, ixs, &perms);
 		return perms;
@@ -211,7 +211,7 @@ namespace astrohelion{
 	template<typename T>
 	std::vector<T> imag(std::vector<std::complex<T> > compVec){
 		std::vector<T> imagParts;
-		for(size_t i = 0; i < compVec.size(); i++)
+		for(unsigned int i = 0; i < compVec.size(); i++)
 			imagParts.push_back(std::imag(compVec[i]));
 
 		return imagParts;
@@ -281,7 +281,7 @@ namespace astrohelion{
 	template<typename T>
 	std::vector<T> real(std::vector<std::complex<T> > compVec){
 		std::vector<T> realParts;
-		for(size_t i = 0; i < compVec.size(); i++)
+		for(unsigned int i = 0; i < compVec.size(); i++)
 			realParts.push_back(std::real(compVec[i]));
 
 		return realParts;

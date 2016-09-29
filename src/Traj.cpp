@@ -187,7 +187,7 @@ double Traj::getTimeByIx(int ix) const {
 	if(ix < 0)
 		ix += nodes.size();
 	
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj::getTimeByIx: invalid index");
 
 	return nodes[ix].getEpoch();
@@ -205,7 +205,7 @@ void Traj::setTimeByIx(int ix, double t){
 	if(ix < 0)
 		ix += nodes.size();
 	
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj::setTimeByIx: invalid index");
 
 	nodes[ix].setEpoch(t);
@@ -219,7 +219,7 @@ void Traj::setTimeByIx(int ix, double t){
  *  all time values for points on this trajectory
  */
 void Traj::shiftAllTimes(double amount){
-	for(size_t i = 0; i < nodes.size(); i++){
+	for(unsigned int i = 0; i < nodes.size(); i++){
 		nodes[i].setEpoch(nodes[i].getEpoch() + amount);
 	}
 }//====================================================
@@ -244,12 +244,12 @@ Nodeset Traj::discretize(int numNodes) const{
 	if(numNodes < 2)
 		throw Exception("Traj::discretize: Cannot split a trajectory into fewer than 2 nodes");
 
-	if(numNodes > (int)(nodes.size())){
+	if(numNodes > static_cast<int>(nodes.size())){
 		astrohelion::printWarn("Traj::discretize: User requested more nodes than there are states; returning one node per step, will not meet requested number of nodes\n");
 		numNodes = nodes.size();
 	}
 
-	double stepSize = (double)(nodes.size()-1)/((double)numNodes - 1.0);
+	double stepSize = static_cast<double>(nodes.size()-1)/static_cast<double>(numNodes - 1.0);
 
 	Nodeset nodeset(pSysData);
 	int n = 0;
@@ -304,7 +304,11 @@ void Traj::saveToMat(const char* filename) const{
  *	@brief Print a useful message describing this trajectory to the standard output
  */
 void Traj::print() const {
-	printf("This is a trajectory\n\tTODO - MAKE THIS MESSAGE USEFUL\n");
+	printf("%s Trajectory\n", pSysData->getTypeStr().c_str());
+	for(int i = 0; i < pSysData->getNumPrimaries(); i++)
+		printf("  Primary %d: %s\n", i, pSysData->getPrimary(i).c_str());
+
+	printf("  %d Nodes\n  %d Segments\n", getNumNodes(), getNumSegs());
 }//====================================================
 
 /**

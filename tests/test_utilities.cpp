@@ -85,7 +85,7 @@ bool test_permute(){
 
 	// printf("permutations:\n%03d: ", 0);
 	// int row = 0;
-	// for(size_t i = 0; i < perms2.size(); i++){
+	// for(unsigned int i = 0; i < perms2.size(); i++){
 	// 	if((i+1) % numSpots == 0){
 	// 		row++;
 	// 		printf("%3d\n%03d: ", perms2[i], row);

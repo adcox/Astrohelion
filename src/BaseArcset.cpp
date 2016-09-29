@@ -376,8 +376,8 @@ void BaseArcset::clearArcConstraints(){ cons.clear(); }
  *  all its node and segment children
  */
 void BaseArcset::clearAllConstraints(){
-	for(size_t n = 0; n < nodes.size(); n++){ nodes[n].clearConstraints(); }
-	for(size_t s = 0; s < segs.size(); s++){ segs[s].clearConstraints(); }
+	for(unsigned int n = 0; n < nodes.size(); n++){ nodes[n].clearConstraints(); }
+	for(unsigned int s = 0; s < segs.size(); s++){ segs[s].clearConstraints(); }
 	cons.clear();
 }//====================================================
 
@@ -632,7 +632,7 @@ std::vector<double> BaseArcset::getAccel(int id) const{
 		throw Exception("BaseArcset::getAccel: Node ID out of range");
 
 	int ix = nodeIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix].getAccel();
 	}else{
 		throw Exception("BaseArcset::getAccel: Could not locate the node with the specified ID");
@@ -650,7 +650,7 @@ std::vector<double> BaseArcset::getAccelByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getAccelByIx: node index out of bounds");
 
 	return nodes[ix].getAccel();
@@ -753,14 +753,14 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 							// another segment OR end this section
 
 							int linkedSegID = Linkable::INVALID_ID;
-							for(size_t c = 0; c < cons.size(); c++){
+							for(unsigned int c = 0; c < cons.size(); c++){
 								if(cons[c].getType() == Constraint_tp::SEG_CONT_PV){
 									// Check to see if this constraint is linked to this node at all
 									int ID0 = cons[c].getID(), ID1 = Linkable::INVALID_ID;
 									std::vector<double> data = cons[c].getData();
-									for(size_t d = 0; d < data.size(); d++){
+									for(unsigned int d = 0; d < data.size(); d++){
 										if(!std::isnan(data[d])){
-											ID1 = (int)(data[d]);
+											ID1 = static_cast<int>(data[d]);
 											break;
 										}
 									}
@@ -780,7 +780,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 								
 								// Check to see if the identified segment has already been counted
 								bool alreadyUsed = false;
-								for(size_t p = 0; p < prevPieces.size(); p++){
+								for(unsigned int p = 0; p < prevPieces.size(); p++){
 									if(prevPieces[p].type == ArcPiece::Piece_Tp::SEG && 
 										prevPieces[p].id == linkedSegID){
 										
@@ -791,7 +791,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 
 								// Also check the current segment
 								if(!alreadyUsed){
-									for(size_t p = 0; p < pieces.size(); p++){
+									for(unsigned int p = 0; p < pieces.size(); p++){
 										if(pieces[p].type == ArcPiece::Piece_Tp::SEG && pieces[p].id == linkedSegID){
 											alreadyUsed = true;
 											break;
@@ -844,7 +844,7 @@ std::vector<double> BaseArcset::getCoord(int ix) const{
 		throw Exception("BaseArcset::getCoord: Index Out of Range");
 
 	std::vector<double> coord;
-	for(size_t n = 0; n < nodes.size(); n++){
+	for(unsigned int n = 0; n < nodes.size(); n++){
 		if(ix < 6)
 			coord.push_back(nodes[n].getState()[ix]);
 		else
@@ -868,7 +868,7 @@ double BaseArcset::getEpoch(int id) const{
 		throw Exception("BaseArcset::getEpoch: Node ID out of range");
 
 	int ix = nodeIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix].getEpoch();
 	}else{
 		throw Exception("BaseArcset::getEpoch: Could not locate the node with the specified ID");
@@ -890,7 +890,7 @@ double BaseArcset::getEpochByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getEpochByIx: node index out of bounds");
 
 	return nodes[ix].getEpoch();
@@ -905,7 +905,7 @@ double BaseArcset::getEpochByIx(int ix) const{
  */
 std::vector<double> BaseArcset::getEpochs() const{
 	std::vector<double> time;
-	for(size_t n = 0; n < nodes.size(); n++){
+	for(unsigned int n = 0; n < nodes.size(); n++){
 		time.push_back(nodes[n].getEpoch());
 	}
 
@@ -927,10 +927,10 @@ std::vector<double> BaseArcset::getEpochs() const{
 // 	if(n < 0)
 // 		n += nodes.size();
 
-// 	if(n < 0 || n >= (int)(nodes.size()))
+// 	if(n < 0 || n >= static_cast<int>(nodes.size()))
 // 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
 
-// 	if(ix < 0 || ix >= (int)(extraParamRowSize.size()))
+// 	if(ix < 0 || ix >= static_cast<int>(extraParamRowSize.size()))
 // 		throw Exception("BaseArcset::getExtraParam: parameter index out of bounds");
 
 // 	int startIx = 0;
@@ -946,7 +946,7 @@ double BaseArcset::getExtraParam(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 
-	if(n < 0 || n >= (int)(nodes.size()))
+	if(n < 0 || n >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
 
 	return nodes[n].getExtraParam(key);
@@ -956,7 +956,7 @@ std::vector<double> BaseArcset::getExtraParamVec(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 
-	if(n < 0 || n >= (int)(nodes.size()))
+	if(n < 0 || n >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
 
 	return nodes[n].getExtraParamVec(key);
@@ -980,13 +980,13 @@ int BaseArcset::getNextSegID() const { return nextSegID; }
  *	@brief Retrieve the number of nodes
  *	@return the number of nodes
  */
-int BaseArcset::getNumNodes() const { return (int)(nodes.size()); }
+int BaseArcset::getNumNodes() const { return static_cast<int>(nodes.size()); }
 
 /**
  *	@brief Retrieve the number of segments
  *	@return the number of segments
  */
-int BaseArcset::getNumSegs() const { return (int)(segs.size()); }
+int BaseArcset::getNumSegs() const { return static_cast<int>(segs.size()); }
 
 /**
  *  @brief Retrieve the total number of constraints contained by all nodes, segments,
@@ -994,9 +994,9 @@ int BaseArcset::getNumSegs() const { return (int)(segs.size()); }
  *  @return the total number of constraints applied to this object and its children
  */
 int BaseArcset::getNumCons() const {
-	int conCount = (int)cons.size();
-	for(size_t n = 0; n < nodes.size(); n++){ conCount += nodes[n].getNumCons(); }
-	for(size_t s = 0; s < segs.size(); s++){ conCount += segs[s].getNumCons(); }
+	int conCount = static_cast<int>(cons.size());
+	for(unsigned int n = 0; n < nodes.size(); n++){ conCount += nodes[n].getNumCons(); }
+	for(unsigned int s = 0; s < segs.size(); s++){ conCount += segs[s].getNumCons(); }
 
 	return conCount;
 }//===================================================
@@ -1014,7 +1014,7 @@ Node BaseArcset::getNode(int id) const{
 		throw Exception("BaseArcset::getNode: Invalid ID (out of bounds)");
 
 	int ix = nodeIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
 		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
@@ -1033,7 +1033,7 @@ Node BaseArcset::getNodeByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
 
 	return nodes[ix];
@@ -1052,7 +1052,7 @@ Node& BaseArcset::getNodeRef(int id){
 		throw Exception("BaseArcset::getNodeRef: Invalid ID (out of bounds)");
 
 	int ix = nodeIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix];
 	}else{
 		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
@@ -1071,7 +1071,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
 
 	return nodes[ix];
@@ -1104,7 +1104,7 @@ Segment BaseArcset::getSeg(int id) const{
 		throw Exception("BaseArcset::getSeg: Invalid ID (out of bounds)");
 
 	int ix = segIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix];
 	}else{
 		throw Exception("BaseArcset::getSeg: Could not locate a segment with the specified ID");
@@ -1123,7 +1123,7 @@ Segment BaseArcset::getSegByIx(int ix) const{
 	if(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= (int)(segs.size()))
+	if(ix < 0 || ix >= static_cast<int>(segs.size()))
 		throw Exception("BaseArcset::getSegByIx: Index out of bounds");
 
 	return segs[ix];
@@ -1157,7 +1157,7 @@ std::vector<double> BaseArcset::getState(int id) const{
 		throw Exception("BaseArcset::getState: Node ID out of range");
 
 	int ix = nodeIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(nodes.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
 		return nodes[ix].getState();
 	}else{
 		throw Exception("BaseArcset::getState: Could not locate the node with the specified ID");
@@ -1178,7 +1178,7 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getStateByIx: node index out of bounds");
 
 	return nodes[ix].getState();
@@ -1198,7 +1198,7 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 		throw Exception("BaseArcset::getSTM: Node ID out of range");
 
 	int ix = segIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix].getSTM();
 	}else{
 		throw Exception("BaseArcset::getSTM: Could not locate the segment with the specified ID");
@@ -1217,8 +1217,11 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 	if(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= (int)(segs.size()))
+	if(ix < 0 || ix >= static_cast<int>(segs.size())){
+		printErr("Attempted to reach STM with ix = %d (max = %zu)\n", ix, segs.size());
+		print();
 		throw Exception("BaseArcset::getSTMByIx: segment index out of bounds");
+	}
 
 	return segs[ix].getSTM();
 }//====================================================
@@ -1243,7 +1246,7 @@ double BaseArcset::getTOF(int id) const{
 		throw Exception("BaseArcset::getTOF: Segment ID out of range");
 
 	int ix = segIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < (int)(segs.size()) && ix >= 0){
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
 		return segs[ix].getTOF();
 	}else{
 		throw Exception("BaseArcset::getTOF: Could not locate the segment with the specified ID");
@@ -1260,7 +1263,7 @@ double BaseArcset::getTOFByIx(int ix) const {
 	if(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= ((int)segs.size()))
+	if(ix < 0 || ix >= static_cast<int>(segs.size()))
 		throw Exception("Nodeset::getTOFByIx: invalid segment index");
 
 	return segs[ix].getTOF();
@@ -1281,7 +1284,7 @@ double BaseArcset::getTol() const { return tol; }
  */
 double BaseArcset::getTotalTOF() const{
 	double total = 0;
-	for(size_t s = 0; s < segs.size(); s++){
+	for(unsigned int s = 0; s < segs.size(); s++){
 		total += segs[s].getTOF();
 		// total += std::abs(segs[s].getTOF());
 	}
@@ -1316,7 +1319,7 @@ void BaseArcset::putInChronoOrder(){
 	std::map<int, int> newNodeIDMap;
 	std::map<int, int> newSegIDMap;
 
-	for(size_t i = 0; i < pieces.size(); i++){
+	for(unsigned int i = 0; i < pieces.size(); i++){
 		if(pieces[i].type == ArcPiece::Piece_Tp::NODE){
 			Node node = getNode(pieces[i].id);
 			newNodeIDMap[node.getID()] = newNodes.size();
@@ -1365,7 +1368,7 @@ void BaseArcset::setAccelByIx(int ix, std::vector<double> accelVec){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::setAccelByIx: node index out of bounds");
 
 	nodes[ix].setAccel(accelVec);
@@ -1402,7 +1405,7 @@ void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= (int)(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::setStateByIx: node index out of bounds");
 
 	nodes[ix].setState(stateVec);
@@ -1436,7 +1439,7 @@ void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){
 	if(ix < 0)
 		ix += segs.size();
 
-	if(ix < 0 || ix >= (int)(segs.size()))
+	if(ix < 0 || ix >= static_cast<int>(segs.size()))
 		throw Exception("BaseArcset::setSTMByIx: node index out of bounds");
 
 	segs[ix].setSTM(stm);
@@ -1479,7 +1482,7 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 	double ellapsed;
 	for(int stepDir = 1; stepDir > -2; stepDir -= 2){
 		ellapsed = 0;
-		for(int i = ixInPieces + stepDir; i < (int)(pieces.size()) && i >= 0; i += stepDir){
+		for(int i = ixInPieces + stepDir; i < static_cast<int>(pieces.size()) && i >= 0; i += stepDir){
 			if(pieces[i].type == ArcPiece::Piece_Tp::SEG){
 				ellapsed += segs[segIDMap[pieces[i].id]].getTOF();
 			}else if(pieces[i].type == ArcPiece::Piece_Tp::NODE){
@@ -1558,7 +1561,7 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 void BaseArcset::printInChrono() const{
 	std::vector<ArcPiece> pieces = getChronoOrder();
 
-	for(size_t i = 0; i < pieces.size(); i++){
+	for(unsigned int i = 0; i < pieces.size(); i++){
 		ArcPiece p = pieces[i];
 
 		if(p.type == ArcPiece::Piece_Tp::NODE){
@@ -1623,7 +1626,7 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 			throw Exception("BaseArcset::readStateFromMat: Step vector has not been initialized!");
 		}
 
-		if(numSteps != (int)nodes.size()){
+		if(numSteps != static_cast<int>(nodes.size())){
 			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
@@ -1671,7 +1674,7 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readAccelFromMat: Node vector has not been initialized!");
 		}
 
-		if(numSteps != (int)nodes.size()){
+		if(numSteps != static_cast<int>(nodes.size())){
 			throw Exception("BaseArcset::readAccelFromMat: Accel vector has a different size than the initialized node vector");
 		}
 
@@ -1716,7 +1719,7 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 		if(nodes.size() == 0)
 			throw Exception("BaseArcset::readEpochFromMat: Node vector has not been initialized");
 
-		if(numSteps != (int)nodes.size())
+		if(numSteps != static_cast<int>(nodes.size()))
 			throw Exception("BaseArcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
 
 		if(pEpochMat->dims[1] != 1)
@@ -1754,7 +1757,7 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readSTMFromMat: Step vector has not been initialized!");
 		}
 
-		if(numSteps != (int)segs.size()){
+		if(numSteps != static_cast<int>(segs.size())){
 			throw Exception("BaseArcset::readSTMFromMat: STM vector has a different size than the initialized step vector");
 		}
 
@@ -1800,7 +1803,7 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 		if(segs.size() == 0)
 			throw Exception("BaseArcset::readTOFFromMat: Node vector has not been initialized");
 
-		if(numSteps != (int)segs.size())
+		if(numSteps != static_cast<int>(segs.size()))
 			throw Exception("BaseArcset::readTOFFromMat: Epoch vector has different size than the initialized segment evctor");
 
 		if(pTofMat->dims[1] != 1)
@@ -1893,7 +1896,7 @@ void BaseArcset::readExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, s
 			if(data != NULL){
 				for(int i = 0; i < numSteps; i++){
 					std::vector<double> vec(len,0);
-					for(size_t c = 0; c < len; c++){
+					for(unsigned int c = 0; c < len; c++){
 						vec[c] = data[c*numSteps + i];
 					}
 					nodes[i].setExtraParamVec(varKey, vec);
@@ -1915,7 +1918,7 @@ void BaseArcset::saveAccel(mat_t *pMatFile) const{
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> accel_colMaj(3*nodes.size());
 
-	for(size_t r = 0; r < nodes.size(); r++){
+	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> accel = nodes[r].getAccel();
 		for(int c = 0; c < 3; c++){
 			accel_colMaj[c*nodes.size() + r] = accel[c];
@@ -1943,7 +1946,7 @@ void BaseArcset::saveEpoch(mat_t *pMatFile) const{
 void BaseArcset::saveEpoch(mat_t *pMatFile, const char* pVarName) const{
 	std::vector<double> allEpochs(nodes.size());
 
-	for(size_t n = 0; n < nodes.size(); n++){
+	for(unsigned int n = 0; n < nodes.size(); n++){
 		allEpochs[n] = nodes[n].getEpoch();
 	}
 	
@@ -1963,7 +1966,7 @@ void BaseArcset::saveExtraParam(mat_t *pMatFile, std::string varKey, const char 
 
 	// Get the specified coordinate
 	std::vector<double> param(nodes.size());
-	for(size_t r = 0; r < nodes.size(); r++){
+	for(unsigned int r = 0; r < nodes.size(); r++){
 		try{
 			param[r] = nodes[r].getExtraParam(varKey);
 		}catch(Exception &e){
@@ -1988,13 +1991,13 @@ void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t l
 
 	// Get the specified coordinate
 	std::vector<double> param(nodes.size()*len);
-	for(size_t r = 0; r < nodes.size(); r++){
+	for(unsigned int r = 0; r < nodes.size(); r++){
 		// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
 		std::vector<double> vec(len, NAN);
 
 		try{
 			vec = nodes[r].getExtraParamVec(varKey);
-			for(size_t c = 0; c < vec.size(); c++){
+			for(unsigned int c = 0; c < vec.size(); c++){
 				if(c >= len)
 					break;
 
@@ -2002,7 +2005,7 @@ void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t l
 			}
 		}catch(Exception &e){
 			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-			for(size_t c = 0; c < len; c++)
+			for(unsigned int c = 0; c < len; c++)
 				param[c*nodes.size() + r] = vec[c];
 		}
 	}
@@ -2030,7 +2033,7 @@ void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	std::vector<double> posVel(6*nodes.size());
 
-	for(size_t r = 0; r < nodes.size(); r++){
+	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> state = nodes[r].getState();
 		for(int c = 0; c < 6; c++){
 			posVel[c*nodes.size() + r] = state[c];
@@ -2092,7 +2095,7 @@ void BaseArcset::saveSTMs(mat_t *pMatFile) const{
 void BaseArcset::saveTOF(mat_t *pMatFile, const char* pVarName) const{
 	std::vector<double> allTOFs(segs.size());
 
-	for(size_t n = 0; n < segs.size(); n++){
+	for(unsigned int n = 0; n < segs.size(); n++){
 		allTOFs[n] = segs[n].getTOF();
 	}
 	

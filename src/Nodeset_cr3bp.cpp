@@ -239,7 +239,7 @@ double Nodeset_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Nodeset_cr3bp::getJacobi: invalid index");
 
 	return nodes[ix].getExtraParam("J");
@@ -270,7 +270,7 @@ void Nodeset_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Nodeset_cr3bp::setJacobi: invalid index");
 
 	nodes[ix].setExtraParam("J", val);

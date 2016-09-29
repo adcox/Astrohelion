@@ -220,13 +220,13 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
     std::vector<double> A_data;
     std::vector<double> B_data;
 
-    for(size_t n = 0; n < varHistory.size()/STATE_SIZE; n++){
+    for(unsigned int n = 0; n < varHistory.size()/STATE_SIZE; n++){
         double d = varHistory[n*STATE_SIZE + indVarIx];
         A_data.push_back(d*d);  // ind. var^2
         A_data.push_back(d);    // ind. var^1
         A_data.push_back(1);    // ind. var^0
 
-        for(size_t p = 0; p < depVars.size(); p++){
+        for(unsigned int p = 0; p < depVars.size(); p++){
             // vector of dependent variables
             B_data.push_back(varHistory[n*STATE_SIZE + depVars[p]]);
         }
@@ -258,7 +258,7 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
     }else{
         // User 1st-order polynomial fit
         std::vector<double> A_lin_data;
-        for(size_t n = 0; n < varHistory.size()/STATE_SIZE; n++){
+        for(unsigned int n = 0; n < varHistory.size()/STATE_SIZE; n++){
             A_lin_data.push_back(varHistory[n*STATE_SIZE + indVarIx]);
             A_lin_data.push_back(1);
         }
@@ -277,7 +277,7 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
     // Insert NAN for states that have not been predicted
     std::vector<double> predicted;
     predicted.assign(STATE_SIZE, NAN);
-    for(size_t i = 0; i < depVars.size(); i++)
+    for(unsigned int i = 0; i < depVars.size(); i++)
         predicted[depVars[i]] = P(i);
 
     return predicted;
@@ -372,12 +372,12 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSo
     }
 
     // Generate all permutations of the indices 0 through 5
-    std::vector<int> vals {0,1,2,3,4,5};
-    std::vector<int> ixPerms = astrohelion::generatePerms<int>(vals);
+    std::vector<unsigned int> vals {0,1,2,3,4,5};
+    std::vector<unsigned int> ixPerms = astrohelion::generatePerms<unsigned int>(vals);
     cdouble predict[6];
     std::copy(e1.begin(), e1.end(), predict);
 
-    for(size_t m = 0; m < eigVals.size()/6; m++){
+    for(unsigned int m = 0; m < eigVals.size()/6; m++){
         if(m == 1){
             if(saveSmallestErrVal < MAX_ONES_ERR){
                 // Update the indices of the ones in case they got moved in the first sorting
@@ -402,7 +402,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSo
         std::vector<double> cost;
         cost.assign(ixPerms.size()/6, 0);
         cdouble one(1,0);
-        for(size_t p = 0; p < ixPerms.size()/6; p++){
+        for(unsigned int p = 0; p < ixPerms.size()/6; p++){
 
             // rearrange the splitOrig vector using the current permutation
             cdouble swappedOrig[6];
@@ -421,10 +421,10 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSo
             if(!disqual){
                 if(m == 0){
                     // Determine the new indices of the eigenvalues identified as ones
-                    std::vector<int>::iterator a = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), onesIx[0]);
-                    std::vector<int>::iterator b = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), onesIx[1]);
-                    int ix0 = a - (ixPerms.begin()+6*p);
-                    int ix1 = b - (ixPerms.begin()+6*p);
+                    std::vector<unsigned int>::iterator a = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), static_cast<unsigned int>(onesIx[0]));
+                    std::vector<unsigned int>::iterator b = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), static_cast<unsigned int>(onesIx[1]));
+                    int ix0 = static_cast<int>(a - (ixPerms.begin()+6*p));
+                    int ix1 = static_cast<int>(b - (ixPerms.begin()+6*p));
 
                     // If the two unit eigenvalues are not next to each other, toss this option
                     if(std::abs(ix0 - ix1) > 1){
@@ -562,7 +562,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
     // delete the rest
     std::vector<cdouble> nonCenterVals;
     std::vector<cdouble> nonCenterVecs;
-    for(size_t c = 0; c < sortedEig.size(); c++){
+    for(unsigned int c = 0; c < sortedEig.size(); c++){
         double realErr = std::real(sortedEig[c]) - 1.0;
         double imagErr = std::imag(sortedEig[c]);
 
@@ -600,7 +600,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
         numMans = pPerOrbit->getNumNodes();
     }
 
-    double stepSize = ((double)pPerOrbit->getNumNodes())/((double)numMans);
+    double stepSize = (static_cast<double>(pPerOrbit->getNumSegs()))/(static_cast<double>(numMans));
     std::vector<int> pointIx(numMans, 0);
     for(int i = 0; i < numMans; i++){
         pointIx[i] = floor(i*stepSize+0.5);
@@ -620,7 +620,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
 
         // Pick the direction from one of the transformed eigenvectors
         Eigen::VectorXd direction(6);
-        for(size_t v = 0; v < 2; v++){
+        for(unsigned int v = 0; v < 2; v++){
             Eigen::VectorXd eigVec = newVecs.col(v);
             double mag = sqrt(eigVec(0)*eigVec(0) + 
                 eigVec(1)*eigVec(1) + eigVec(2)*eigVec(2));
@@ -705,7 +705,7 @@ double getStabilityIndex(std::vector<cdouble> eigs){
  */
 double getTotalDV(const MultShootData *pIt){
     double total = 0;
-    for(size_t n = 0; n < pIt->deltaVs.size()/3; n++){
+    for(unsigned int n = 0; n < pIt->deltaVs.size()/3; n++){
         total += sqrt(pIt->deltaVs[3*n + 0]*pIt->deltaVs[3*n + 0] +
             pIt->deltaVs[3*n + 1]*pIt->deltaVs[3*n + 1] + 
             pIt->deltaVs[3*n + 2]*pIt->deltaVs[3*n + 2]);
@@ -827,7 +827,7 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
         for(long r = 0; r < rowMax.size(); r++){
             if(r == 0 && it.totalCons > 0){
                 printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
-            }else if(conCount < (int)(it.allCons.size()) && r >= it.conRows[conCount+1]){
+            }else if(conCount < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
                 conCount++;
                 printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }
@@ -1297,15 +1297,15 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double mirrorCon1[] = {NAN,NAN,NAN,NAN,NAN,NAN};
 
     // Set the zero states to zero in both constraints
-    for(size_t i = 0; i < zeroStates.size(); i++){
+    for(unsigned int i = 0; i < zeroStates.size(); i++){
         mirrorCon0[zeroStates[i]] = 0;
         mirrorCon1[zeroStates[i]] = 0;
     }
 
     // Fix states at the initial point
-    for(size_t i = 0; i < fixedStates.size(); i++){
+    for(unsigned int i = 0; i < fixedStates.size(); i++){
         bool okToFix = true;
-        for(size_t n = 0; n < zeroStates.size(); n++){
+        for(unsigned int n = 0; n < zeroStates.size(); n++){
             if(fixedStates[i] == zeroStates[n]){
                 astrohelion::printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring\n", fixedStates[i]);
                 okToFix = false;
@@ -1890,7 +1890,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
     for(int n = 0; n < crNodes.getNumNodes(); n++){
         bcNodeState.clear();
         crNodeState = crNodes.getStateByIx(n);
-        for(int r = 0; r < ((int)crNodeState.size()); r++){
+        for(int r = 0; r < static_cast<int>(crNodeState.size()); r++){
             if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
                 bcNodeState.push_back(crNodeState[r]*charL2/charL3 - (1.0/pBCSys->getK() - pBCSys->getMu()));
             else if(r < 3)   // Convert position
@@ -1958,7 +1958,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
         bcState = bcNodes.getStateByIx(n);
         crNodeState.clear();
 
-        for(int r = 0; r < ((int)bcState.size()); r++){
+        for(int r = 0; r < static_cast<int>(bcState.size()); r++){
             if(r == 0)  // Shift origin to P2-P3 barycenter
                 crNodeState.push_back((bcState[r] + 1.0/pBCSys->getK() - pBCSys->getMu())*charL3/charL2);
             else if(r < 3)   // Convert position
@@ -1968,7 +1968,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
         }
 
         Node node(crNodeState, bcNodes.getEpochByIx(n)*charT3/charT2);
-        node.setExtraParam(0, DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), pCRSys->getMu()));
+        node.setExtraParam("J", DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), pCRSys->getMu()));
         
         // Save the new ID
         map_oldID_to_newID[bcNodes.getNodeByIx(n).getID()] = crNodes.addNode(node);
@@ -2114,7 +2114,7 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp *pBCSys, double T0){
     const int STATE_SIZE = 3;   // predicting three position states
     double tSpan = 24*3600/pBCSys->getCharT();   // Amount of time to span before and after T0
     int numPts = 100;
-    double dT = 2*tSpan/((double)(numPts-1));
+    double dT = 2*tSpan/(static_cast<double>(numPts-1));
 
     MatrixXRd indVarMat(numPts, 3); // i.e. Vandermonde matrix
     MatrixXRd depVarMat(numPts, STATE_SIZE);

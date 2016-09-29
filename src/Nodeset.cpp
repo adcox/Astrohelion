@@ -239,7 +239,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	SimEngine engine;
 	engine.setRevTime(seg.getTOF() < 0);
 	engine.setMakeCrashEvents(false);
-	for(size_t i = 0; i < evts.size(); i++){
+	for(unsigned int i = 0; i < evts.size(); i++){
 		evts[i].setStopOnEvent(false);		// Ignore stopping conditions that other processes may have imposed
 		engine.addEvent(evts[i]);
 	}
@@ -256,8 +256,8 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	std::vector<SimEventRecord> evtRecs = engine.getEventRecords();
 	int evtCount = 0, prevNodeID = origin.getID();
 	double tof = 0;
-	for(size_t e = 0; e < evtRecs.size(); e++){
-		for(size_t i = 0; i < evts.size(); i++){
+	for(unsigned int e = 0; e < evtRecs.size(); e++){
+		for(unsigned int i = 0; i < evts.size(); i++){
 
 			// If the event occurred, find the corresponding trajectory state and add that to the nodeset
 			if(events[evtRecs[e].eventIx] == evts[i]){
@@ -295,7 +295,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
  *	@param id a vector of segment IDs that can have velocity discontinuities
  */
 void Nodeset::allowDV_at(std::vector<int> id) {
-	for(size_t i = 0; i < segs.size(); i++){
+	for(unsigned int i = 0; i < segs.size(); i++){
 		// Check to see if the node should have continuous velocity
 		if(std::find(id.begin(), id.end(), segs[i].getID()) == id.end()){
 			segs[i].setVel_AllCon();
@@ -309,7 +309,7 @@ void Nodeset::allowDV_at(std::vector<int> id) {
  *  @brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
  */
 void Nodeset::allowDV_all(){
-	for(size_t i = 0; i < segs.size(); i++){
+	for(unsigned int i = 0; i < segs.size(); i++){
 		segs[i].setVel_AllDiscon();
 	}
 }//====================================================
@@ -318,7 +318,7 @@ void Nodeset::allowDV_all(){
  *  @brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
  */
 void Nodeset::allowDV_none(){
-	for(size_t i = 0; i < segs.size(); i++){
+	for(unsigned int i = 0; i < segs.size(); i++){
 		segs[i].setVel_AllCon();
 	}
 }//====================================================
@@ -349,7 +349,7 @@ void Nodeset::print() const{
 	printf("List of Segments:\n");
 	for(const auto &index : segIDMap){
 		printf("  %02d (ix %02d):", index.first, index.second);
-		if(index.second != Linkable::INVALID_ID && index.second < (int)(segs.size())){
+		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
 				segs[index.second].getTerminus(), segs[index.second].getTOF());
 		}else{
@@ -358,30 +358,30 @@ void Nodeset::print() const{
 	}
 
 	printf(" Constraints:\n");
-	for(size_t n = 0; n < nodes.size(); n++){
+	for(unsigned int n = 0; n < nodes.size(); n++){
 		std::vector<Constraint> nodeCons = nodes[n].getConstraints();
-		for(size_t c = 0; c < nodeCons.size(); c++){
+		for(unsigned int c = 0; c < nodeCons.size(); c++){
 			nodeCons[c].print();
 		}
 	}
-	for(size_t s = 0; s < segs.size(); s++){
+	for(unsigned int s = 0; s < segs.size(); s++){
 		std::vector<Constraint> segCons = segs[s].getConstraints();
-		for(size_t c = 0; c < segCons.size(); c++){
+		for(unsigned int c = 0; c < segCons.size(); c++){
 			segCons[c].print();
 		}
 	}
-	for(size_t c = 0; c < cons.size(); c++){
+	for(unsigned int c = 0; c < cons.size(); c++){
 		cons[c].print();
 	}
 
 	printf(" Velocity Discontinuities allowed on segments: ");
 	char velEl[] = {'x', 'y', 'z'};
 	bool anyDiscon = false;
-	for(size_t s = 0; s < segs.size(); s++){
+	for(unsigned int s = 0; s < segs.size(); s++){
 		std::vector<bool> velCon = segs[s].getVelCon();
-		for(size_t i = 0; i < velCon.size(); i++){
+		for(unsigned int i = 0; i < velCon.size(); i++){
 			if(!velCon[i]){
-				printf("%zuv_%c, ", s, velEl[i]);
+				printf("%uv_%c, ", s, velEl[i]);
 				anyDiscon = true;
 			}
 		}
@@ -400,7 +400,7 @@ void Nodeset::print() const{
  *	have changed.
  */
 void Nodeset::reverseOrder() {
-	for(size_t s = 0; s < segs.size(); s++){
+	for(unsigned int s = 0; s < segs.size(); s++){
 		int o = segs[s].getOrigin();
 		segs[s].setOrigin(segs[s].getTerminus());
 		segs[s].setTerminus(o);
@@ -570,7 +570,7 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
 	// Loop through again to create trajectory
 	sumArclen = 0;
 	double sumTOF = 0;
-	for(size_t s = 0; s < allArcLen.size(); s++){
+	for(unsigned int s = 0; s < allArcLen.size(); s++){
 		
 		// Keep adding arclength between steps until the desired length is reached
 		if(sumArclen < desiredArclen){

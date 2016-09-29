@@ -158,7 +158,7 @@ std::vector<Constraint> Segment::getConstraints() const{
  *  @brief Retrieve the number of constraints stored by this object
  *  @return the number of constraints stored by this object
  */
-int Segment::getNumCons() const { return (int)(cons.size()); }
+int Segment::getNumCons() const { return static_cast<int>(cons.size()); }
 
 /**
  *  @brief Retrieve the ID of the origin node (chronologically)

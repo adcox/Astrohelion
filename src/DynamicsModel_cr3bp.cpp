@@ -442,7 +442,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
     }
 
     std::vector<Constraint> arcCons = nodes_in->getArcConstraints();
-    for(size_t i = 0; i < arcCons.size(); i++){
+    for(unsigned int i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);
     }
 }//====================================================

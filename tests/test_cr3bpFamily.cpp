@@ -20,7 +20,7 @@ int main(void){
 	std::vector<int> bifs = fam.findBifurcations();
 	if(bifs.size() > 0){
 		printf("Found bifurcations at:\n");
-		for(size_t i = 0; i < bifs.size(); i++){
+		for(unsigned int i = 0; i < bifs.size(); i++){
 			printf("  Ix = %04d\n", bifs[i]);
 		}
 	}
@@ -30,7 +30,7 @@ int main(void){
 	double matchX = 0.9;
 	std::vector<FamMember_cr3bp> matches = fam.getMemberByStateVar(matchX, 0);
 	printf("  Found %zu Potential members\n", matches.size());
-	for(size_t i = 0; i < matches.size(); i++){
+	for(unsigned int i = 0; i < matches.size(); i++){
 		printf("   %03zu: x = %f ", i, matches[i].getIC()[0]);
 		std::cout << (std::abs(matches[i].getIC()[0] - matchX) < 1e-9 ? PASS : FAIL) << std::endl;
 	}
@@ -40,7 +40,7 @@ int main(void){
 	matches.clear();
 	matches = fam.getMemberByJacobi(matchJC);
 	printf("  Found %zu Potential members\n", matches.size());
-	for(size_t i = 0; i < matches.size(); i++){
+	for(unsigned int i = 0; i < matches.size(); i++){
 		printf("   %03zu: JC = %f ", i, matches[i].getJacobi());
 		std::cout << (std::abs(matches[i].getJacobi() - matchJC) < 1e-9 ? PASS : FAIL) << std::endl;
 	}
@@ -50,7 +50,7 @@ int main(void){
 	matches.clear();
 	matches = fam.getMemberByTOF(matchTOF);
 	printf("  Found %zu Potential members\n", matches.size());
-	for(size_t i = 0; i < matches.size(); i++){
+	for(unsigned int i = 0; i < matches.size(); i++){
 		printf("   %03zu: TOF = %f ", i, matches[i].getTOF());
 		std::cout << (std::abs(matches[i].getTOF() - matchTOF) < 1e-9 ? PASS : FAIL) << std::endl;
 	}

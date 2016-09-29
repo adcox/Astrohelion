@@ -33,8 +33,8 @@ LIB := ../lib
 # CXX := clang++ -std=c++11
 CXX := g++-6 -std=c++11 -fopenmp
 # CXX := g++-5 -std=c++11
-CFLAGS += -ggdb -W -Wall -Wextra -Weffc++ -pedantic
-# CFLAGS += -O3 -W -Wall -Wextra -Weffc++ -pedantic
+CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+# CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -130,7 +130,7 @@ nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
 
 qhManifoldTest: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_qhManifold.cpp -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_qhManifolds.cpp -o $(BIN)/$@
 
 simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@

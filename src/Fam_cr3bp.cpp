@@ -71,8 +71,8 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 	loadMemberData(matfp);
 	loadEigVals(matfp);
 	name = astrohelion::readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
-	double type = astrohelion::readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME);
-	sortType = static_cast<FamSort_tp>((int)type);
+	int type = static_cast<int>(astrohelion::readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME));
+	sortType = static_cast<FamSort_tp>(type);
 	// sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
@@ -139,7 +139,7 @@ FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
 	// Get an array of all the jacobi values
 	std::vector<double> allJC;
-	for(int n = 0; n < ((int)members.size()); n++){
+	for(unsigned int n = 0; n < members.size(); n++){
 		allJC.push_back(members[n].getJacobi());
 	}
 
@@ -155,7 +155,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
 	std::vector<double> allTOF;
-	for(size_t n = 0; n < members.size(); n++){
+	for(unsigned int n = 0; n < members.size(); n++){
 		allTOF.push_back(members[n].getTOF());
 	}
 
@@ -177,7 +177,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix
 	}
 
 	std::vector<double> allVals;
-	for(size_t n = 0; n < members.size(); n++){
+	for(unsigned int n = 0; n < members.size(); n++){
 		allVals.push_back(members[n].getIC()[ix]);
 	}
 
@@ -283,7 +283,7 @@ std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data)
 	double minDiff = 0;
 	double diff = 0;
 	int minDiffIx = 0;
-	for(size_t n = 0; n < data->size(); n++){
+	for(unsigned int n = 0; n < data->size(); n++){
 		diff = std::abs(data->at(n) - value);
 
 		// Search for acceptable minema in bins
@@ -342,7 +342,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 
 	SysData_cr3bp tempSys = sysData;
 	
-	for(int n = 0; n < ((int)matches.size()); n++){
+	for(unsigned int n = 0; n < matches.size(); n++){
 		int idx = matches[n];
 
 		// Check to see if they are "close enough"
@@ -386,7 +386,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
  *	@param array a pointer to the array we want to populate
  */
 void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
-	for(size_t i = 0; i < members.size(); i++){
+	for(unsigned int i = 0; i < members.size(); i++){
 		std::vector<double> ic = members[i].getIC();
 		array->push_back(ic[ix]);
 	}
@@ -412,7 +412,7 @@ std::vector<int> Fam_cr3bp::findBifurcations(){
 		// double sumReal = 0;
 		double sumDistFromOne = 0;
 
-		for(size_t m = 0; m < members.size(); m++){
+		for(unsigned int m = 0; m < members.size(); m++){
 			std::vector<cdouble> eigs = members[m].getEigVals();
 			sumImag += (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
 			sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
@@ -437,7 +437,7 @@ std::vector<int> Fam_cr3bp::findBifurcations(){
 
 	// Find bifurcations
 	std::vector<int> bifs;
-	for(size_t m = 1; m < members.size(); m++){
+	for(unsigned int m = 1; m < members.size(); m++){
 		for(int set = 0; set < 3; set++){
 			std::vector<cdouble> eigs = members[m].getEigVals();
 			std::vector<cdouble> prevEigs = members[m-1].getEigVals();
@@ -542,7 +542,7 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 			throw Exception("Incompatible data file: Data widths are different.");
 		}
 
-		if((int)(members.size()) != numMembers){
+		if(static_cast<int>(members.size()) != numMembers){
 			throw Exception("Fam_cr3bp::loadEigVals: # eigenvalues is not same as number of members");
 		}
 
@@ -581,7 +581,7 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 void Fam_cr3bp::sortEigs(){
 	std::vector<cdouble> allEigs;
 	// Create a vector with all the eigenvalues
-	for(size_t m = 0; m < members.size(); m++){
+	for(unsigned int m = 0; m < members.size(); m++){
 		std::vector<cdouble> vals = members[m].getEigVals();
 		allEigs.insert(allEigs.end(), vals.begin(), vals.end());
 	}
@@ -591,7 +591,7 @@ void Fam_cr3bp::sortEigs(){
 	std::vector<cdouble> sortedEigs = sortEig(allEigs, &sortedIxs);
 
 	// Update all eigenvalues in the family members
-	for(size_t m = 0; m < members.size(); m++){
+	for(unsigned int m = 0; m < members.size(); m++){
 		std::vector<cdouble> sortedVals(sortedEigs.begin() + m*6, sortedEigs.begin() + (m+1)*6);
 		members[m].setEigVals(sortedVals);
 	}
@@ -631,12 +631,12 @@ void Fam_cr3bp::sortMembers(){
 		case FamSort_tp::SORT_VZ:
 			getCoord(5, &dataToSort); break;
 		case FamSort_tp::SORT_JC:
-			for(int i = 0; i < ((int)members.size()); i++){
+			for(unsigned int i = 0; i < members.size(); i++){
 				dataToSort.push_back(members[i].getJacobi());
 			}
 			break;
 		case FamSort_tp::SORT_TOF:
-			for(int i = 0; i < ((int)members.size()); i++){
+			for(unsigned int i = 0; i < members.size(); i++){
 				dataToSort.push_back(members[i].getTOF());
 			}
 			break;
@@ -650,7 +650,7 @@ void Fam_cr3bp::sortMembers(){
 
 	// Use those indices to sort the family members
 	std::vector<FamMember_cr3bp> sortedMembers;
-	for(int n = 0; n < ((int)indices.size()); n++){
+	for(unsigned int n = 0; n < indices.size(); n++){
 		sortedMembers.push_back(members[indices[n]]);
 	}
 
@@ -694,8 +694,8 @@ void Fam_cr3bp::saveMembers(mat_t *matFile){
 	if(members.size() > 0){
 		// Create a vector with member data stored in column-major order
 		std::vector<double> allData(members.size()*DATA_WIDTH);
-		for(size_t i = 0; i < members.size(); i++){
-			for(size_t j = 0; j < DATA_WIDTH; j++){
+		for(unsigned int i = 0; i < members.size(); i++){
+			for(unsigned int j = 0; j < DATA_WIDTH; j++){
 				if(j < 6)
 					allData[j*members.size() + i] = members[i].getIC()[j];
 				else if(j == 6)
@@ -727,7 +727,7 @@ void Fam_cr3bp::saveEigVals(mat_t *matFile){
 		// Separate all eigenvalues into real and complex parts
 		std::vector<double> realParts(members.size()*6);
 		std::vector<double> imagParts(members.size()*6);
-		for(size_t i = 0; i < members.size(); i++){
+		for(unsigned int i = 0; i < members.size(); i++){
 			std::vector<cdouble> vals = members[i].getEigVals();
 				if(vals.size() != 6)
 					throw Exception("Fam_cr3bp::saveEigVals: family member does not have 6 eigenvalues!");

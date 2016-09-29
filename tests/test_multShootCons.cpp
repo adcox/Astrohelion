@@ -32,7 +32,7 @@ static const char* FAIL = BOLDRED "FAIL" RESET;
  */
 bool stateDiffBelowTol(std::vector<double> data, double *correct, double tol){
 	double sum = 0;
-	for(size_t i = 0; i < data.size(); i++){
+	for(unsigned int i = 0; i < data.size(); i++){
 		if(!std::isnan(correct[i]))
 			sum += pow(data[i] - correct[i], 2);
 	}

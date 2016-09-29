@@ -62,7 +62,7 @@ public:
 	// Static Calculation Functions
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-
+	static void getUDDots(double, double, double, double, double*);
 protected:
 
 };

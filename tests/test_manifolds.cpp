@@ -24,7 +24,7 @@ int main(){
 	aHalo.saveToMat("data/halo_JC312.mat");
 
 	std::vector<Traj_cr3bp> manifolds = getManifolds(Manifold_tp::MAN_S_P, &aHalo, 20, 2*PI);
-	for(size_t i = 0; i < manifolds.size(); i++){
+	for(unsigned int i = 0; i < manifolds.size(); i++){
 		char filename[128];
 		sprintf(filename, "data/man%03zu.mat", i);
 		manifolds[i].saveToMat(filename);

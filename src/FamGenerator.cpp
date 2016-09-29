@@ -283,7 +283,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 		astrohelion::printWarn("Axial family has more than 2 bifurcations... may be incorrect and yield unexpected results\n");
 	}
 
-	for(size_t i = 0; i < bifs.size(); i++){
+	for(unsigned int i = 0; i < bifs.size(); i++){
 		printf("Axial Bifurcation at orbit %d\n", bifs[i]);
 	}
 
@@ -804,7 +804,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);
 			printf("Fix States: ");
-			for(size_t i = 0; i < fixStates.size(); i++){ printf("%d, ", fixStates[i]); }
+			for(unsigned int i = 0; i < fixStates.size(); i++){ printf("%d, ", fixStates[i]); }
 			printf("\n");
 			printf("Slope = %.3f\n", indVarSlope);
 
@@ -812,7 +812,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, itData);
 
 			diverged = false;
-			printf("Orbit %03d converged!\n", ((int)members.size()));
+			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
 		}catch(DivergeException &e){
 			diverged = true;
 		}catch(LinAlgException &e){
@@ -925,9 +925,9 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 
 			// Use least-squares fitting to predict the value for the independent and dependent variables
 			std::vector<double> prevStates;
-			int first = ((int)members.size()) - curveFitMem < 0 ? 0 : ((int)members.size()) - curveFitMem;
+			int first = static_cast<int>(members.size()) - curveFitMem < 0 ? 0 : static_cast<int>(members.size()) - curveFitMem;
 
-			for(size_t n = first; n < members.size(); n++){
+			for(unsigned int n = first; n < members.size(); n++){
 				std::vector<double> ic = members[n].getStateByIx(0);
 				prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
 				prevStates.push_back(members[n].getTimeByIx(-1));
@@ -968,7 +968,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			}
 
 			// Update IC with predicted variables
-			for(size_t n = 0; n < allDepVars.size(); n++){
+			for(unsigned int n = 0; n < allDepVars.size(); n++){
 				int ix = allDepVars[n];
 				if(ix < 6)
 					IC[ix] = predictedIC[ix];
@@ -1180,9 +1180,9 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 			}
 
 			bool sameDir = true;
-			for(size_t i = 0; i < initDir.size(); i++){
+			for(unsigned int i = 0; i < initDir.size(); i++){
 				// Find a non-zero element
-				if(initDir[i] != 0 && i < (size_t)(N.rows())){
+				if(initDir[i] != 0 && i < static_cast<unsigned int>(N.rows())){
 					// If signs are different, assume direction is different
 					if(N(i,0)*initDir[i] < 0){
 						sameDir = false;
@@ -1283,7 +1283,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		if(killLoop)
 			break;
 
-		printf("Orbit %03d converged!\n", ((int)members.size()));
+		printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
 
 		
 		if(familyItData.totalFree < 6)
@@ -1370,7 +1370,7 @@ Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeV
 	}
 
 	// Add same constraints
-	for(size_t c = 0; c < cons.size(); c++){
+	for(unsigned int c = 0; c < cons.size(); c++){
 		newMember.addConstraint(cons[c]);
 	}
 

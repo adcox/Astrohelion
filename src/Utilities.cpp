@@ -198,8 +198,8 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
         size_t dims[2] = {rows, cols};
 
         std::vector<double> data_trans(data.size());
-        for(size_t r = 0; r < rows; r++){
-            for(size_t c = 0; c < cols; c++){
+        for(unsigned int r = 0; r < rows; r++){
+            for(unsigned int c = 0; c < cols; c++){
                 data_trans[c*rows + r] = data[r*cols + c];
             }
         }

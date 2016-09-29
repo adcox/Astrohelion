@@ -137,7 +137,7 @@ std::vector<double> Traj_bc4bp::get_dqdTByIx(int ix){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_bc4bp::getdqdT: invalid index");
 
 	return getExtraParamVec(ix, "dqdT");
@@ -154,7 +154,7 @@ void Traj_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_bc4bp::setdqdT: invalid index");
 
 	std::vector<double> dqdT_vec(dqdT, dqdT+6);

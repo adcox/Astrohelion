@@ -156,7 +156,7 @@ bool operator ==(const Node &lhs, const Node &rhs){
 	// if(lhs.extraParam.size() != rhs.extraParam.size())
 	// 	return false;
 
-	// for(size_t i = 0; i < lhs.extraParam.size(); i++){
+	// for(unsigned int i = 0; i < lhs.extraParam.size(); i++){
 	// 	if(lhs.extraParam[i] != rhs.extraParam[i])
 	// 		return false;
 	// }
@@ -165,7 +165,7 @@ bool operator ==(const Node &lhs, const Node &rhs){
 	// if(lhs.flags.size() != rhs.flags.size())
 	// 	return false;
 
-	// for(size_t i = 0; i < lhs.flags.size(); i++){
+	// for(unsigned int i = 0; i < lhs.flags.size(); i++){
 	// 	if(lhs.flags[i] != rhs.flags[i])
 	// 		return false;
 	// }
@@ -207,7 +207,7 @@ void Node::clearConstraints(){ cons.clear(); }
  *	@throw Exception if <tt>ix</tt> is out of bounds
  */
 void Node::removeConstraint(int ix){
-	if(ix < 0 || ix >= (int)(cons.size()))
+	if(ix < 0 || ix >= static_cast<int>(cons.size()))
 		throw Exception("Node:removeConstraint: index out of bounds");
 	cons.erase(cons.begin() + ix);
 }//====================================================
@@ -294,7 +294,7 @@ std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
  *  @brief Retrieve the number of constraints stored by this object
  *  @return the number of constraints stored by this object
  */
-int Node::getNumCons() const { return (int)(cons.size()); }
+int Node::getNumCons() const { return static_cast<int>(cons.size()); }
 
 /**
  *	@brief Get the 6-element non-dimensional position and velocity state vector
@@ -336,35 +336,17 @@ void Node::setEpoch(double e){ epoch = e; }
  *  @param n The node number for the constraints; typically the index of this node
  */
 void Node::setConstraintID(int n){
-	for(size_t i = 0; i < cons.size(); i++){
+	for(unsigned int i = 0; i < cons.size(); i++){
 		cons[i].setID(n);
 	}
 }//====================================================
 
 /**
- *	@brief Set a specific extra parameter to a specific value
- *	
- *	If the extra parameter vector isn't large enough to store the
- * 	new value, it will be enlarged with all emtpy spaces filled
- *	with NAN values.
- *
- *	@param ix the index of the extra parameter
- *	@param val the value of the extra paramter
+ *  @brief Set an extra parameter value
+ * 
+ *  @param key A descriptive key identifying the extra parameter
+ *  @param val value of the extra parameter
  */
-// void Node::setExtraParam(int ix, double val){
-// 	// Make the vector bigger if need be
-// 	if((int)(extraParam.size()) <= ix){
-// 		std::vector<double> temp = extraParam;
-// 		extraParam.clear();
-// 		extraParam.assign(ix+1, NAN);
-// 		for(size_t n = 0; n < temp.size(); n++)
-// 			extraParam[n] = temp[n];
-// 	}
-
-// 	// Put the desired value in the desired spot
-// 	extraParam[ix] = val;
-// }//====================================================
-
 void Node::setExtraParam(std::string key, double val){
 	extraParam[key] = val;
 }//====================================================
@@ -439,7 +421,7 @@ void Node::print() const{
 	printf("\tExtra Parameter Vectors:\n");
 	for(auto const& vec : extraParamVecs){
 		printf("\t\t%s = [", vec.first.c_str());
-		for(size_t i = 0; i < vec.second.size(); i++){
+		for(unsigned int i = 0; i < vec.second.size(); i++){
 			printf("%.4f", vec.second[i]);
 			if(i < vec.second.size() - 1)
 				printf(",");

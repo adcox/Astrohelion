@@ -46,7 +46,7 @@
 namespace astrohelion{
 
 DynamicsModel_2bp::DynamicsModel_2bp() : DynamicsModel(DynamicsModel_tp::MODEL_2BP) {
-	// stmStates = 0;
+
 }//====================================================
 
 /**
@@ -54,7 +54,7 @@ DynamicsModel_2bp::DynamicsModel_2bp() : DynamicsModel(DynamicsModel_tp::MODEL_2
  *  @param m a model reference
  */
 DynamicsModel_2bp::DynamicsModel_2bp(const DynamicsModel_2bp &m) : DynamicsModel(m) {
-	// stmStates = 0;
+
 }//====================================================
 
 /**
@@ -134,7 +134,12 @@ void DynamicsModel_2bp::sim_saveIntegratedData(const double *y, double t, Traj* 
 }//====================================================
 
 bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const{
-	
+	(void) event;
+    (void) traj;
+    (void) ic;
+    (void) t0;
+    (void) tof;
+    (void) verbose;
 	// const SysData_2bp *sys = static_cast<const SysData_2bp*>(traj->getSysData());
 
  //    // Create a nodeset for this particular type of system
@@ -207,8 +212,8 @@ void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const No
 /**
  *  @brief Integrate the equations of motion for the 2BP
  *  @param t time at integration step (unused)
- *  @param s the 6-d state vector
- *  @param sdot the 6-d state derivative vector
+ *  @param s the 42-d state vector
+ *  @param sdot the 42-d state derivative vector
  *  @param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void *params){
@@ -228,10 +233,23 @@ int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void 
     sdot[4] = mult*s[1];
     sdot[5] = mult*s[2];
 
-    //STM Derivatives are 0 for now...
-    for(int i = 6; i < 42; i++){
-    	sdot[i] = 0;
-    }
+    /*
+     * Next step, compute STM derivatives
+     */
+    double ddots[6];    // {dxdx, dydy, dzdz, dxdy, dxdz, dydz}
+    getUDDots(pSys->getMu(), s[0], s[1], s[2], ddots);
+
+    /*
+     *  PhiDot = A * Phi
+     *  s[6] through s[42] represent the STM, Phi, in row-major order 
+     *  sdot [6] through [42] is thus the derivative of the STM
+     */
+    std::copy(s+24, s+42, sdot+6); // First three rows of PhiDot are the last three rows of Phi
+    for(int i = 0; i < 6; i++){
+        sdot[24+i] = ddots[0]*s[6+i] + ddots[3]*s[12+i] + ddots[4]*s[18+i];
+        sdot[30+i] = ddots[3]*s[6+i] + ddots[1]*s[12+i] + ddots[5]*s[18+i];
+        sdot[36+i] = ddots[4]*s[6+i] + ddots[5]*s[12+i] + ddots[2]*s[18+i];
+    }   // Last three rows are a combo of A and Phi
 
     return GSL_SUCCESS;
 }//====================================================
@@ -263,7 +281,27 @@ int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], voi
     return GSL_SUCCESS;
 }//====================================================
 
+/**
+ *  @brief Compute the second derivatives of the potential function
+ *
+ *  @param mu the mass parameter of the system, km^3/s^2
+ *  @param x coordinate, km
+ *  @param y coordinate, km
+ *  @param z coordinate, km
+ *  @param ddots a pointer to a 6-element double array where the function will store 
+ *  values for {Uxx, Uyy, Uzz, Uxy, Uxz, Uyz}. Note that Uyx = Uxy, etc.
+ */
+void DynamicsModel_2bp::getUDDots(double mu, double x, double y, double z, double* ddots){
+    // compute distance to primaries
+    double r = sqrt(x*x + y*y + z*z);
 
+    ddots[0] = 3*mu*x*x/pow(r,5) - mu/pow(r,3);	// Uxx
+    ddots[1] = 3*mu*y*y/pow(r,5) - mu/pow(r,3);	// Uyy
+    ddots[2] = 3*mu*z*z/pow(r,5) - mu/pow(r,3);	// Uzz
+    ddots[3] = 3*mu*x*y/pow(r,5);	// Uxy
+    ddots[4] = 3*mu*x*z/pow(r,5);	// Uxz
+    ddots[5] = 3*mu*y*z/pow(r,5);	// Uyz
+}//========================================================
 
 
 

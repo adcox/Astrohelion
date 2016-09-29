@@ -140,7 +140,7 @@ double Traj_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_cr3bp::getJacobiByIx: invalid node index");
 
 	return nodes[ix].getExtraParam("J");
@@ -156,7 +156,7 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix > ((int)nodes.size()))
+	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_cr3bp::setJacobiByIx: invalid node index");
 
 	nodes[ix].setExtraParam("J", val);

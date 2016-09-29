@@ -44,7 +44,8 @@ MSVarMap_Key::MSVarMap_Key(){}
 MSVarMap_Key::MSVarMap_Key(MSVarType type, int id){
 	this->type = type;
 	this->id = id;
-}
+}//================================================
+
 MSVarMap_Key::MSVarMap_Key(const MSVarMap_Key &k){ copyMe(k); }
 
 MSVarMap_Key& MSVarMap_Key::operator =(const MSVarMap_Key &k){
@@ -70,7 +71,7 @@ const char* MSVarMap_Key::type2str(MSVarType tp){
 	switch(tp){
 		case MSVarType::EPOCH: return "EPOCH"; break;
 		case MSVarType::SLACK: return "SLACK"; break;
-		case MSVarType::STATE: return "Constraint_tp::STATE"; break;
+		case MSVarType::STATE: return "STATE"; break;
 		case MSVarType::TOF: return "TOF"; break;
 		case MSVarType::TOF_TOTAL: return "TOF_TOTAL"; break;
 	}
@@ -194,18 +195,16 @@ MultShootData& MultShootData::operator =(const MultShootData &it){
  *  @todo This function could be greatly sped up by leveraging a hash table
  */
 MSVarMap_Obj MultShootData::getVarMap_obj(MSVarType type, int refID) const{
+	if(freeVarMap.count(MSVarMap_Key(type, refID)) == 0){
+		printErr("Attempted to access MSVarType %s, refID %d\n", MSVarMap_Key::type2str(type), refID);
+		// printf("freeVarMap = {\n");
+		// for(auto& obj : freeVarMap){
+		// 	printf("  %s obj, ID = %d\n", MSVarMap_Key::type2str(obj.first.type), obj.first.id);
+		// }
+		// printf("}\n");
+		throw Exception("MultShootData::getVarMap_obj: Variable map object does not exist\n");
+	}
 	return freeVarMap.at(MSVarMap_Key(type, refID));
-	// for(size_t i = 0; i < freeVarMap.size(); i++){
-	// 	if(freeVarMap[i].matches(type, refID))
-	// 		return freeVarMap[i];
-	// }
-	// astrohelion::printErr("Trying to locate %s object with id %d\n", MSVarMap_Obj::type2str(type), refID);
-	// printf("freeVarMap = {\n");
-	// for(size_t i = 0; i < freeVarMap.size(); i++){
-	// 	printf("  %02zu: %s obj, ID = %d\n", i, MSVarMap_Obj::type2str(freeVarMap[i].key.type), freeVarMap[i].key.id);
-	// }
-	// printf("}\n");
-	// throw Exception("MultShootData::getVarMap_obj: Could not locate object");
 }//====================================================
 
 //-----------------------------------------------------

@@ -194,7 +194,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 			data[0] = params[0];	// Index of primary
 			if(data[0] < sysData->getNumPrimaries()){
 				// Get body data, compute crash distance
-			    BodyData primData(sysData->getPrimary((int)(data[0])));
+			    BodyData primData(sysData->getPrimary(static_cast<int>(data[0])));
 			    data[1] = (primData.getRadius() + primData.getMinFlyBy())/sysData->getCharL();
 			}else{
 				throw Exception("Cannot access primary for crash event");
@@ -440,7 +440,7 @@ double Event::getDist(const double y[6], double t) const{
 		{
 			std::vector<double> primPos = sysData->getDynamicsModel()->getPrimPos(t, sysData);
 
-			int Pix = (int)(conData[0]);
+			int Pix = static_cast<int>(conData[0]);
 			double dx = y[0] - primPos[Pix*3 + 0];
 			double dy = y[1] - primPos[Pix*3 + 1];
 			double dz = y[2] - primPos[Pix*3 + 2];
@@ -455,14 +455,14 @@ double Event::getDist(const double y[6], double t) const{
 		}
 		case Event_tp::APSE:
 		{
-			int Pix = (int)(conData[0]);
+			int Pix = static_cast<int>(conData[0]);
 			d = sysData->getDynamicsModel()->getRDot(Pix, t, y, sysData);
 			break;
 		}
 		case Event_tp::DIST:
 		{
 			std::vector<double> primPos = sysData->getDynamicsModel()->getPrimPos(t, sysData);
-			int Pix = (int)(conData[0]);
+			int Pix = static_cast<int>(conData[0]);
 			double dx = y[0] - primPos[Pix*3 + 0];
 			double dy = y[1] - primPos[Pix*3 + 1];
 			double dz = y[2] - primPos[Pix*3 + 2];
@@ -504,7 +504,7 @@ int Event::getDir(const double y[6], double t) const{
 			throw Exception("Event type not implemented");
 	}
 
-	return (int)(d*dt/std::abs(d*dt));
+	return static_cast<int>(d*dt/std::abs(d*dt));
 }//====================================================
 
 /**

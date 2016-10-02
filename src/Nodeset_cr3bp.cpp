@@ -56,7 +56,7 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *data) : Nodeset(data){
  *	@param type node distribution type
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const double IC[6], const SysData_cr3bp *data, double tof,
-	int numNodes, tpat_nodeDistro_tp type) : Nodeset(data){
+	int numNodes, NodeDistro_tp type) : Nodeset(data){
 
 	initExtraParam();
 	initFromICs(IC, 0, tof, numNodes, type);
@@ -73,7 +73,7 @@ Nodeset_cr3bp::Nodeset_cr3bp(const double IC[6], const SysData_cr3bp *data, doub
  *	@param type node distribution type
  */
 Nodeset_cr3bp::Nodeset_cr3bp(std::vector<double> IC, const SysData_cr3bp *data, double tof,
-	int numNodes, tpat_nodeDistro_tp type) : Nodeset(data){
+	int numNodes, NodeDistro_tp type) : Nodeset(data){
 
 	initExtraParam();
 	initFromICs(&(IC[0]), 0, tof, numNodes, type);
@@ -144,7 +144,7 @@ Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes) : Nodeset(traj.getSy
  *	@param type the node distribution type
  */
 Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes,
-	tpat_nodeDistro_tp type) : Nodeset(traj.getSysData()){
+	NodeDistro_tp type) : Nodeset(traj.getSysData()){
 	
 	initExtraParam();
 	initFromTraj(traj, numNodes, type);

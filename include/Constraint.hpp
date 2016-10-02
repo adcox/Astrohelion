@@ -218,15 +218,24 @@ enum class ConstraintApp_tp{
  */
 class Constraint : public Core{
 	public:
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		Constraint();
 		Constraint(Constraint_tp);
 		Constraint(Constraint_tp, int, std::vector<double>);
 		Constraint(Constraint_tp, int, const double*, int);
 		Constraint(const Constraint&);
 		~Constraint();
-		
+		//@}
+
 		Constraint& operator =(const Constraint&);
 
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		int countConstrainedStates() const;
 		
 		ConstraintApp_tp getAppType() const;
@@ -238,15 +247,19 @@ class Constraint : public Core{
 		double getFirstDataValue(int*) const;
 		Constraint_tp getType() const;
 		const char* getTypeStr() const;
-		
-		void print() const;
 
 		void setType(Constraint_tp);
 		void setID(int);
 		void setData(std::vector<double>);
 		void setData(const double*, int);
-		
-		
+		//@}
+
+		/**
+		 *  @name Utility Functions
+		 *  @{
+		 */
+		void print() const;
+		//@}
 	private:
 		void copyMe(const Constraint&);
 		void setAppType();

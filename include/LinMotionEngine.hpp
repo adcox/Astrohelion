@@ -38,6 +38,7 @@ class Traj_cr3bp;
 class SysData_cr3bp;
 
 /**
+ *	@ingroup engine
  *	@brief type of linear motion
  *
  *	This type tells the engine what kind of linearization to produce
@@ -63,7 +64,10 @@ class LinMotionEngine : public Core, public Engine{
 
 		// Operators
 
-		// Set and Get
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		double getMPORatio() const;
 		int getNumRevs() const;
 		double getTimeStep() const;
@@ -74,13 +78,18 @@ class LinMotionEngine : public Core, public Engine{
 		void setTimeStep(double);
 		void setTol(double);
 		const char* getTypeStr(LinMotion_tp) const;
+		//@}
 
-		// Misc
+		/**
+		 *  @name Orbit Generation
+		 *  @{
+		 */
 		Traj_cr3bp getCR3BPLinear(int, double[3], SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLinear(int, double[3], LinMotion_tp, SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLinear(int, double[3], double, double, LinMotion_tp, SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, SysData_cr3bp*);
-	
+		//@}
+		
 	private:
 		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;

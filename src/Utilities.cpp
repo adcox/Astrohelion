@@ -40,6 +40,13 @@
 #include <string>
 
 namespace astrohelion{
+
+/**
+ * @addtogroup util
+ * @{
+ */
+
+
 /**
  *  @brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j
  *  @param num a complex number
@@ -517,4 +524,5 @@ double boundValue(double val, double min, double max){
     return val;
 }//=============================================
 
+/** @} */ // END of util group
 } // End of astrohelion namespace

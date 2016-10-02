@@ -470,7 +470,7 @@ void Nodeset::readFromMat(const char *filepath){
  *	@param distroType node distribution type
  *	@throws Exception if <tt>numNodes</tt> is less than two
  */
-void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, tpat_nodeDistro_tp distroType){
+void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, NodeDistro_tp distroType){
 
 	if(numNodes < 2){
 		throw Exception("Nodeset::initFromICs: Nodeset must have at least two nodes!");
@@ -609,7 +609,7 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
  *	@param numNodes the number of nodes to create, including IC
  *	@param type the node distribution type
  */
-void Nodeset::initFromTraj(Traj traj, int numNodes, tpat_nodeDistro_tp type){
+void Nodeset::initFromTraj(Traj traj, int numNodes, NodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	double ic[] = {0,0,0,0,0,0};
 	std::vector<double> trajIC = traj.getStateByIx(0);

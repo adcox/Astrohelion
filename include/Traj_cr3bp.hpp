@@ -37,6 +37,7 @@ namespace astrohelion{
 class SysData_cr3bp;
 
 /**
+ *	@ingroup traj cr3bp
  *	@brief A derivative class of the Traj object, contains 
  *	trajectory information specific to the CR3BP
  *
@@ -47,20 +48,29 @@ class SysData_cr3bp;
 class Traj_cr3bp : public Traj{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Traj_cr3bp(const SysData_cr3bp*);
 	Traj_cr3bp(const Traj_cr3bp&);
 	Traj_cr3bp(const BaseArcset&);
+	Traj_cr3bp(const char*, const SysData_cr3bp*);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
+	//@}
 
 	// Operators
 	Traj& operator +=(const Traj&) override;
 	
-	// Set and Get Functions
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	double getJacobiByIx(int) const;
 	void setJacobiByIx(int, double);
-
+	//@}
+	
 	// Utility
 	void readFromMat(const char*) override;
 	void saveToMat(const char*) const override;

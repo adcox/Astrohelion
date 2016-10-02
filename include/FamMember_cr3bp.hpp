@@ -42,6 +42,7 @@ class Traj_cr3bp;
 class SysData_cr3bp;
 
 /**
+ *	@ingroup traj cr3bp
  *	@brief A data object to store information about a family member
  *	
  *	The purpose of this object is to store just enough information to re-create the
@@ -50,14 +51,23 @@ class SysData_cr3bp;
  */
 class FamMember_cr3bp : public Core{
 	public:
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		FamMember_cr3bp(){}
 		FamMember_cr3bp(double*, double, double, double, double, double);
 		FamMember_cr3bp(const Traj_cr3bp);
 		FamMember_cr3bp(const FamMember_cr3bp&);
 		~FamMember_cr3bp();
+		//@}
 
 		FamMember_cr3bp& operator= (const FamMember_cr3bp&);
 
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		std::vector<cdouble> getEigVals() const;
 		std::vector<double> getIC() const;
 		double getTOF() const;
@@ -73,6 +83,8 @@ class FamMember_cr3bp : public Core{
 		void setXAmplitude(double);
 		void setYAmplitude(double);
 		void setZAmplitude(double);
+		//@}
+
 		Traj_cr3bp toTraj(const SysData_cr3bp*);
 
 	protected:

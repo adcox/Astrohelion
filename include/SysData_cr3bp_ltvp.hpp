@@ -35,18 +35,28 @@
 namespace astrohelion{
 
 /**
+ *	@ingroup model
  *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
 class SysData_cr3bp_ltvp : public SysData_cr3bp{
 
 	public:
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		SysData_cr3bp_ltvp();
 		SysData_cr3bp_ltvp(std::string, std::string, double, double, double);
 		SysData_cr3bp_ltvp(const SysData_cr3bp_ltvp&);
 		SysData_cr3bp_ltvp(const char*);
-		
+		//@}
+
 		SysData_cr3bp_ltvp& operator=(const SysData_cr3bp_ltvp&);
 		
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		const DynamicsModel* getDynamicsModel() const;
 		
 		double getIsp() const;
@@ -59,7 +69,8 @@ class SysData_cr3bp_ltvp : public SysData_cr3bp{
 		void setM0Dim(double);
 		void setThrust(double);
 		void setThrustDim(double);
-
+		//@}
+		
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
 	private:

@@ -68,22 +68,30 @@ enum class FamSort_tp : int{
 };
 		
 /**
+ *	@ingroup traj cr3bp
  *	@brief A data structure to represent a family of orbits
  *
  *	Currently, this structure assumes family members are periodic.
  */
 class Fam_cr3bp : public Core{
 	public:
-		// *structors
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		Fam_cr3bp(SysData_cr3bp);
 		Fam_cr3bp(const char*);
 		Fam_cr3bp(const Fam_cr3bp&);
 		~Fam_cr3bp();
+		//@}
 
 		// Operators
 		Fam_cr3bp& operator= (const Fam_cr3bp&);
 
-		// Set and Get Methods
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		void addMember(FamMember_cr3bp);
 		
 		FamMember_cr3bp getMember(int) const;
@@ -99,13 +107,12 @@ class Fam_cr3bp : public Core{
 
 		void setName(std::string);
 		void setSortType(FamSort_tp);
+		//@}
 
-		// Utility and Operational Functions
 		std::vector<int> findBifurcations();
 		void saveToMat(const char*);
 		void sortEigs();
 		void sortMembers();
-
 
 	protected:
 		std::string name = "NULL";								//!< Descriptive name of the family

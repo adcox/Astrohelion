@@ -40,6 +40,7 @@ class Event;
 class SysData_bc4bp;
 
 /**
+ *	@ingroup traj bc4bp
  *	@brief his derivative of the Nodeset object contains additional information
  *	for the BCR4BP
  *
@@ -53,20 +54,24 @@ class SysData_bc4bp;
 class Nodeset_bc4bp : public Nodeset{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Nodeset_bc4bp(const SysData_bc4bp*);
 	Nodeset_bc4bp(const double[6], const SysData_bc4bp*, double, double, int);
 	Nodeset_bc4bp(std::vector<double>, const SysData_bc4bp*, double, double, int);
 	Nodeset_bc4bp(const double[6], const SysData_bc4bp*, double, double, int,
-		tpat_nodeDistro_tp);
+		NodeDistro_tp);
 	Nodeset_bc4bp(std::vector<double>, const SysData_bc4bp*, double, double, int,
-		tpat_nodeDistro_tp);
+		NodeDistro_tp);
 	// Nodeset_bc4bp(const Nodeset_bc4bp&, int, int);
 	Nodeset_bc4bp(const Nodeset_bc4bp&);
 	Nodeset_bc4bp(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
-
+	//@}
+	
 	// Operators
 
 	// Set and Get Functions

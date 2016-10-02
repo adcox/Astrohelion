@@ -32,11 +32,45 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @defgroup engine Engines
+ * Contains all engine objects and methods
+ */ 
+
+/** @defgroup traj Trajectory Representations
+ * Contains objects that represent trajectories in one way or another
+ */
+
+/** @defgroup model Model
+ * Contains objects that represent models of physical objects and systems
+ */
+
+/** @defgroup util Utility
+ * Contains all utility objects and methods
+ */
+
+/** @defgroup 2bp 2BP
+ * Contains objects and methods that handle 2BP trajectories
+ */ 
+
+/** @defgroup cr3bp CR3BP
+ * Contains objects and methods that handle CR3BP trajectories
+ */ 
+
+/** @defgroup bc4bp BC4BP
+ * Contains objects and methods that handle BC4BP trajectories
+ */
+
 #pragma once
 
 #include <string>
 
+/**
+ * @brief A namespace to contain all objects that are part of
+ * the Astrohelion library; prevent clashes with other libraries
+ */
 namespace astrohelion{
+
 /**
  * Type that represents the OS this code is running/compiled on
  */

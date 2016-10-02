@@ -95,19 +95,30 @@ typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
 class BaseArcset : public Core{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	BaseArcset(const SysData*);
 	BaseArcset(const BaseArcset&);
 	virtual baseArcsetPtr create( const SysData* ) const = 0;		//!< Virtual constructor for creation
 	virtual baseArcsetPtr clone() const = 0;							//!< Virtual constructor for copying
 
 	virtual ~BaseArcset();
+	//@}
 
-	// Operators
+	/**
+	 *  @name Operators
+	 *  @{
+	 */
 	BaseArcset& operator =(const BaseArcset&);
 	static void sum(const BaseArcset*, const BaseArcset*, BaseArcset*);
-
-	// Set and Get functions
+	//@}
+	
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	void addConstraint(Constraint);
 	int addNode(Node);
 	int addSeg(Segment);
@@ -158,12 +169,25 @@ public:
 	void setSTM(int, MatrixXRd);
 	void setTol(double);
 	void updateEpochs(int, double);
+	//@}
 
-	// Utility Functions
+	/**
+	 *  @name Utility Functions
+	 *  @{
+	 */
 	void printInChrono() const;
 	void printNodeIDMap() const;
 	void printSegIDMap() const;
+	/**
+	 *	@brief Displays a useful messages about the object
+	 */
+	virtual void print() const = 0;
+	//@}
 	
+	/**
+	 *  @name *File I/O
+	 *  @{
+	 */
 	/**
 	 *  @brief Loads the object from a Matlab binary file
 	 *  @param filepath the filepath to the Matlab file
@@ -176,11 +200,7 @@ public:
 	 */
 	virtual void saveToMat(const char *filepath) const = 0;
 
-	/**
-	 *	@brief Displays a useful messages about the object
-	 */
-	virtual void print() const = 0;
-
+	//@}
 protected:
 	/** A pointer to the system data object that the describes the system this arc exists in */
 	const SysData *pSysData;
@@ -218,6 +238,10 @@ protected:
 
 	void copyMe(const BaseArcset&);
 
+	/**
+	 *  @name File I/O
+	 *  @{
+	 */
 	void initNodesSegsFromMat(mat_t *, const char*);
 	void readStateFromMat(mat_t*, const char*);
 	void readAccelFromMat(mat_t*);
@@ -231,10 +255,10 @@ protected:
 	void saveEpoch(mat_t*, const char*) const;
 	void saveExtraParam(mat_t*, std::string, const char*) const;
 	void saveExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
-	void saveState(mat_t*) const;
-	void saveState(mat_t*, const char*) const;
+	void saveState(mat_t*, const char* pVarName = "State") const;
 	void saveSTMs(mat_t*) const;
 	void saveTOF(mat_t*, const char*) const;
+	//@}
 
 	std::vector<ArcPiece> sortArcset(int, std::vector<ArcPiece>) const;
 };//END OF BaseArcset//--//--//--//--//--//--//--//--//--//--//--//--//
@@ -249,12 +273,13 @@ struct ArcPiece{
 	/**
 	 * @brief Enumerated type to describe the types of objects represented
 	 * by the piece
-	 * @details There are several types:
-	 * 	* NODE - represent a Node object
-	 * 	* SEG - represent a Segment object
 	 */
-	enum class Piece_Tp {NODE, SEG};
-	Piece_Tp type;	//!< The type of object represented by this piece
+	enum class Piece_tp {
+		NODE,	//!< Represent a Node object
+		SEG 	//!< Represent a Segment object
+	};
+
+	Piece_tp type;	//!< The type of object represented by this piece
 	int id;	//!< The ID of the object represented by this piece
 
 	/**
@@ -263,7 +288,7 @@ struct ArcPiece{
 	 *  @param tp the type of object represented by this piece
 	 *  @param i the ID of the object represented by this piece
 	 */
-	ArcPiece(Piece_Tp tp, int i) : type(tp), id(i) {}
+	ArcPiece(Piece_tp tp, int i) : type(tp), id(i) {}
 
 	/**
 	 *  @brief Comparison operator

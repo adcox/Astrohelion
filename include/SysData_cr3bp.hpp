@@ -37,6 +37,7 @@
 namespace astrohelion{
 
 /**
+ *	@ingroup model cr3bp
  *	@brief A derivative class of the SysData object which
  *	contains information specific to the CR3BP
  *
@@ -46,17 +47,27 @@ namespace astrohelion{
  */
 class SysData_cr3bp : public SysData{
 	public:
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		SysData_cr3bp();
 		SysData_cr3bp(std::string, std::string);
 		SysData_cr3bp(const SysData_cr3bp&);
 		SysData_cr3bp(const char*);
 		virtual ~SysData_cr3bp();
-		
+		//@}
+
 		SysData_cr3bp& operator=(const SysData_cr3bp&);
 		
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		const DynamicsModel* getDynamicsModel() const;
 		double getMu() const;
-
+		//@}
+		
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
 		

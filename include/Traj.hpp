@@ -43,6 +43,7 @@ class Traj;
 typedef std::shared_ptr<Traj> trajPtr;
 
 /**
+ *	@ingroup traj
  *	@brief Contains information about a series of continuous states along a trajectory.
  *	
  *	The trajecotory object holds information about a trajectory in one package
@@ -66,7 +67,10 @@ typedef std::shared_ptr<Traj> trajPtr;
 class Traj : public BaseArcset{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Traj(const SysData*);
 	Traj(const Traj&);
 	Traj(const BaseArcset&);
@@ -74,15 +78,20 @@ public:
 	virtual baseArcsetPtr create(const SysData*) const;
 	virtual baseArcsetPtr clone() const;
 	static Traj fromNodeset(Nodeset);
+	//@}
 
 	// Operators
 	friend Traj operator +(const Traj&, const Traj&);
 	virtual Traj& operator +=(const Traj&);
 
-	// Set and Get Functions
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	double getTimeByIx(int) const;
 	void setTimeByIx(int, double);
 	void shiftAllTimes(double);
+	//@}
 	
 	// Utility Functions
 	Nodeset discretize(int) const;

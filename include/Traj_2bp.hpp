@@ -37,6 +37,7 @@ namespace astrohelion{
 class SysData_2bp;
 
 /**
+ *	@ingroup traj 2bp
  *	@brief A derivative class of the Traj object, contains 
  *	trajectory information specific to the 2BP
  *
@@ -47,13 +48,17 @@ class SysData_2bp;
 class Traj_2bp : public Traj{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Traj_2bp(const SysData_2bp*);
 	Traj_2bp(const Traj_2bp&);
 	Traj_2bp(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
-
+	//@}
+	
 	// Operators
 	Traj& operator +=(const Traj&) override;
 	

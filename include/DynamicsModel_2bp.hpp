@@ -35,6 +35,7 @@ namespace astrohelion{
 class SysData_2bp;
 
 /**
+ *	@ingroup model 2bp
  *	@brief Derivative of DynamicsModel, specific to the 2BP
  *
  *	The base class's methods provide a good framework for this system,
@@ -42,27 +43,46 @@ class SysData_2bp;
  */
 class DynamicsModel_2bp : public DynamicsModel{
 public:
+
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	DynamicsModel_2bp();
 	DynamicsModel_2bp(const DynamicsModel_2bp&);
 	~DynamicsModel_2bp() {}
+	//@}
 
 	DynamicsModel_2bp& operator=(const DynamicsModel_2bp&);
 
-	// Core Functions
+	/**
+	 *  @name Core Functions
+	 *  @{
+	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
-	
+	//@}
+
+	/**
+	 *  @name Multiple Shooting Support Functions
+	 *  @{
+	 */
 	void multShoot_initIterData(MultShootData *it) const;
 	void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const;
 	bool sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const;
 	void sim_saveIntegratedData(const double *y, double t, Traj* traj) const;
+	//@}
 
-	// Static Calculation Functions
+	/**
+	 *  @name Static Calculations
+	 *  @{
+	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
 	static void getUDDots(double, double, double, double, double*);
+	//@}
 protected:
 
 };

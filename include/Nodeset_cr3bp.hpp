@@ -38,6 +38,7 @@ class SysData_cr3bp;
 class Traj_cr3bp;
 
 /**
+ *	@ingroup traj cr3bp
  *	@brief This derivative of the Nodeset contains additional information for 
  *	the BCR4BPR
  *
@@ -51,28 +52,35 @@ class Traj_cr3bp;
 class Nodeset_cr3bp : public Nodeset{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Nodeset_cr3bp(const SysData_cr3bp*);
 	Nodeset_cr3bp(const double[6], const SysData_cr3bp*, double, int);
 	Nodeset_cr3bp(std::vector<double>, const SysData_cr3bp*, double, int);
-	Nodeset_cr3bp(const double[6], const SysData_cr3bp*, double, int, tpat_nodeDistro_tp);
-	Nodeset_cr3bp(std::vector<double>, const SysData_cr3bp*, double, int, tpat_nodeDistro_tp);
+	Nodeset_cr3bp(const double[6], const SysData_cr3bp*, double, int, NodeDistro_tp);
+	Nodeset_cr3bp(std::vector<double>, const SysData_cr3bp*, double, int, NodeDistro_tp);
 	Nodeset_cr3bp(Traj_cr3bp, int);
-	Nodeset_cr3bp(Traj_cr3bp, int, tpat_nodeDistro_tp);
+	Nodeset_cr3bp(Traj_cr3bp, int, NodeDistro_tp);
 	Nodeset_cr3bp(const Nodeset_cr3bp&, int, int);
 	Nodeset_cr3bp(const Nodeset_cr3bp&);
 	Nodeset_cr3bp(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
+	//@}
 
 	// Operators
 
-	// Set and Get 
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	double getJacobi(int) const;
 	double getJacobiByIx(int) const;
 	void setJacobi(int, double);
 	void setJacobiByIx(int, double);
-
+	//@}
 protected:
 	// Utility
 	void initExtraParam() override;

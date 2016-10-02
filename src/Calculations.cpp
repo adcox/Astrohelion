@@ -66,9 +66,15 @@
 
 
 namespace astrohelion{
+
 //-----------------------------------------------------
 //      General Utility Functions
 //-----------------------------------------------------
+/**
+ * @addtogroup util
+ * @{
+ */
+
 
 /**
  *  @brief convert a date to epoch time
@@ -988,6 +994,7 @@ std::vector<double> azEl2LocalTangent(double s, double az, double el){
 //-----------------------------------------------------
 
 /**
+ *  @ingroup 2bp
  *  @brief Compute the Keplarian elements at all steps/nodes
  *  of a 2-body trajectory or nodeset
  * 
@@ -1007,6 +1014,7 @@ void r2bp_computeAllKepler(BaseArcset *pSet){
 }//====================================================
 
 /**
+ *  @ingroup 2bp
  *  @brief Compute the Keplarian orbital elements at a 
  *  specific node
  * 
@@ -1069,6 +1077,20 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
     pNode->setExtraParam("theta", theta);
 }//====================================================
 
+/**
+ *  @ingroup 2bp
+ *  @brief [brief description]
+ *  @details [long description]
+ * 
+ *  @param pSys [description]
+ *  @param a [description]
+ *  @param e [description]
+ *  @param argPeri [description]
+ *  @param i [description]
+ *  @param RAAN [description]
+ *  @param TA [description]
+ *  @return [description]
+ */
 std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, double e, double argPeri, double i, double RAAN, double TA){
     if(a < 0)
         throw Exception("r2bp_stateFromKepler: a < 0 -> Code is not equiped to handle hyperbolic orbits");
@@ -1123,6 +1145,7 @@ std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, doub
 //-----------------------------------------------------
 
 /**
+ *  @ingroup cr3bp
  *  @brief Compute the magnitude of a velocity component given Jacobi Constant
  * 
  *  @param s state vector (non-dimensional); MUST contain at least the 6 position and velocity states.
@@ -1152,6 +1175,7 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
 }//=================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Compute a periodic orbit in the CR3BP system
  *
  *  The initial and final states are constrained based on the mirror type, but
@@ -1181,6 +1205,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 }//========================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Compute a periodic orbit in the CR3BP system
  *  @details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
@@ -1213,6 +1238,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 }//====================================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Compute a periodic orbit in the CR3BP system
  *  @details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
@@ -1406,6 +1432,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 }//================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transition a trajectory from the EM system to the SE system
  *  
  *  The relative orientation between the two systems is described by the three angles
@@ -1431,6 +1458,7 @@ Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *pSESys, double th
 }//=========================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transition a nodeset from the EM system to the SE system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
@@ -1492,6 +1520,7 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, do
 }//=========================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transition a trajectory from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
@@ -1515,6 +1544,7 @@ Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *pEMSys, double th
 }//=========================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transition a nodeset from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
@@ -1578,6 +1608,7 @@ Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, do
 }//=========================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transform a single state from EM coordinates to SE coordinates
  *
  *  @param state_EM a 6- or 9-element state vector
@@ -1648,6 +1679,7 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
 }//====================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transform a single state from SE coordinates to EM coordinates
  *
  *  @param state_SE a 6- or 9-element state vector
@@ -1715,6 +1747,7 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
 }//====================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param traj CR3BP trajectory
@@ -1732,6 +1765,7 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, int centerIx){
 }//==================================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param nodes CR3BP nodeset
@@ -1779,6 +1813,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
 }//==================================================================
 
 /**
+ *  @ingroup cr3bp
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param state_rot a 6-element non-dimensional state in rotating coordinates
@@ -1851,6 +1886,7 @@ Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *pBCSys, int no
 }//==================================================
 
 /**
+ *  @ingroup bc4bp
  *  @brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset.
  *  
  *  @param crNodes a CR3BP Sun-Earth nodeset
@@ -1922,6 +1958,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
 }//==================================================
 
 /**
+ *  @ingroup bc4bp
  *  @brief Transform a BCR4BPR Sun-Earth-Moon nodeset into a CR3BP Sun-Earth nodeset
  *
  *  @param bcNodes a BCR4BPR Sun-Earth-Moon nodeset
@@ -1992,6 +2029,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
 }//==================================================
 
 /**
+ *  @ingroup bc4bp
  *  @brief Transform a BCR4BPR Sun-Earth-Moon trajectory into a CR3BP Sun-Earth nodeset
  *
  *  @param bcTraj a BCR4BPR Sun-Earth-Moon trajectory
@@ -2009,6 +2047,7 @@ Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *pCRSys){
 }//==================================================
 
 /**
+ *  @ingroup bc4bp
  *  @brief Compute the location of the saddle point for a specific bicircular system
  *  and epoch
  *  @details This function uses a Newton-Raphson procedure to locate the zeros of the local
@@ -2092,6 +2131,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *pBCSys, double t0){
 }//=====================================================
 
 /**
+ *  @ingroup bc4bp
  *  @brief Compute coefficients for 2nd-order polynomials in Epoch time that
  *  describe the x, y, and z coordinates of the saddle point.
  *  @details This function employs least squares to compute the coefficients. The
@@ -2144,6 +2184,8 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp *pBCSys, double T0){
     
     return C;
 }//=================================================
+
+/** @} */   // END of util group
 
 }// END of Astrohelion namespace
 

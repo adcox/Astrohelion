@@ -54,7 +54,10 @@ namespace astrohelion{
 		friend bool operator ==(const Linkable&, const Linkable&);
 		friend bool operator !=(const Linkable&, const Linkable&);
 		
-		// Set and Get Functions
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		void addLink(int);
 		void clearLinks();
 		int getID() const;
@@ -64,6 +67,7 @@ namespace astrohelion{
 		void removeLink(int);
 		void setID(int); 
 		void setLink(int, int);
+		//@}
 		
 	protected:
 		int ID = INVALID_ID;	//!< The ID associated with this object

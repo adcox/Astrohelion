@@ -33,6 +33,7 @@
 
 namespace astrohelion{
 /**
+ *	@ingroup model
  *	@brief The body data object provides a way to store and retrieve information about different
  *	celestial bodies. 
  *
@@ -45,12 +46,19 @@ namespace astrohelion{
 class BodyData : public Core{
 	public:
 
-		// Constructors
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		BodyData();	// Copy constructor is defined by compiler, should be fine
 		BodyData(std::string);
 		BodyData(double m, double R, double r, double mu, std::string name, std::string parent);
+		/** @} */
 
-		// Set and Get Functions
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		double getRadius();
 		double getMass();
 		double getGravParam();
@@ -66,6 +74,7 @@ class BodyData : public Core{
 		void setGravParam(double);
 		void setName(std::string);
 		void setParent(std::string);
+		/** @} */
 		
 	private:
 		/** Mean radius of the body, km */

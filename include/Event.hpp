@@ -50,13 +50,13 @@ namespace astrohelion{
  * 	default, 0 is used, so the planes include the axes.
  */
 enum class Event_tp {
-	NONE,		//!< No type has been specified; cannot be used in integration
-	YZ_PLANE,	/*!< Event occurs when trajectory crosses an YZ-plane. By default, 
+	NONE,		/*!< No type has been specified; cannot be used in integration */
+	YZ_PLANE,	/*!< occurs when trajectory crosses an YZ-plane. By default, 
 				 *	this plane occurs at x = 0, but a custom x-coordinate may be 
 				 *	specified by placing the value of that coordinate in the 
 				 *	<tt>param</tt> array.
 				 */
-	XZ_PLANE,	/*!< Event occurs when trajectory crosses an XZ-plane. By default, 
+	XZ_PLANE,	/*!< occurs when trajectory crosses an XZ-plane. By default, 
 				 *	this plane occurs at y = 0, but a custom y-coordinate may be 
 				 *	specified by placing the value of that coordinate in the 
 				 *	<tt>param</tt> array.
@@ -66,27 +66,27 @@ enum class Event_tp {
 				 *	specified by placing the value of that coordinate in the 
 				 *	<tt>param</tt> array.
 				 */
-	CRASH,		/*!< Event occurs when trajectory falls below minimum acceptable
+	CRASH,		/*!< occurs when trajectory falls below minimum acceptable
  				 * 	altitude or the surface of one of the system primaries.
  				 *	The <tt>param</tt> array should have the first element specifying the 
 				 *	primary index (0 for P1, 1 for P2, etc.) The minimum acceptable radius
 				 *	will be the radius of the primary plus the minimum acceptable fly-by distance
 				 *	specified in the BodyData class.
  				 */
- 	JC, 		/*!< Event occurs when the Jacobi value reaches the specified value
+ 	JC, 		/*!< occurs when the Jacobi value reaches the specified value
  				 * 	of Jacobi Constant. Place this JC value in the first element of
  				 * 	the <tt>params</tt> vector present in the 
  				 * 	Event(SysData*, Event_tp, int, bool, double*) constructor.
  				 * 	This event can only be supported by dynamic models that have associated
  				 * 	system data objects that can be cast to cr3bp system data objects.
  				 */
- 	APSE,		/*!< Event occurs when an apse is reached. The <tt>param</tt> array should have
+ 	APSE,		/*!< occurs when an apse is reached. The <tt>param</tt> array should have
  				 * 	the first element specifiying the primary index (0 for P1, 1 for P2, etc.).
  				 * 	The <tt>direction</tt> of the event identifies what type of apse, i.e.
  				 *	0 will catch all apsides, -1 will catch only apopases, and +1 will catch 
  				 *	only periapses
  				 */
- 	DIST 		/*!< Event occurs when a distance from a primary is reached. The <tt>param</tt>
+ 	DIST, 		/*!< occurs when a distance from a primary is reached. The <tt>param</tt>
  				 * 	array should have two elements: element 0 specifies the primary index, and
  				 * 	element 1 specifies the distance from the center of the primary in
  				 *	non-dimensional units. The <tt>direction</tt> of the event identifies the
@@ -116,7 +116,10 @@ enum class Event_tp {
  */
 class Event : public Core{
 	public:
-		// *structors
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		Event(const SysData*);
 		Event(const SysData*, Event_tp, int, bool);
 		Event(const SysData*, Event_tp, int, bool, double*);
@@ -124,13 +127,17 @@ class Event : public Core{
 		void createEvent(Event_tp, int, bool);
 		void createEvent(Event_tp, int, bool, double*);
 		~Event();
-		
+		//@}
+
 		// Operators
 		Event& operator =(const Event&);
 		friend bool operator ==(const Event&, const Event&);
 		friend bool operator !=(const Event&, const Event&);
 		
-		// Get and Set Functions
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		std::vector<double> getConData() const;
 		Constraint_tp getConType() const;
 		int getDir() const;
@@ -149,8 +156,8 @@ class Event : public Core{
 		void setStopCount(int);
 		void setStopOnEvent(bool);
 		void setSysData(SysData*);
+		//@}
 
-		// Computations, etc.
 		bool crossedEvent(const double[6], double) const;
 		void updateDist(const double[6], double);
 
@@ -186,7 +193,7 @@ class Event : public Core{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData {};
 
-		const SysData* sysData; 	//!< Copy of the system data pointer
+		const SysData* pSysData; 	//!< Copy of the system data pointer
 
 		void copyEvent(const Event&);
 		void initEvent(Event_tp, int, bool, double*);

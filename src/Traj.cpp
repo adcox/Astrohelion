@@ -293,6 +293,7 @@ void Traj::saveToMat(const char* filename) const{
 		saveState(matfp);
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
+		saveTOF(matfp, "TOFs");
 		saveSTMs(matfp);
 		pSysData->saveToMat(matfp);
 	}
@@ -336,6 +337,7 @@ void Traj::readFromMat(const char *filepath){
 	readAccelFromMat(matfp);
 	readSTMFromMat(matfp);
 	readEpochFromMat(matfp, "Time");
+	readTOFFromMat(matfp, "TOFs");
 
 	Mat_Close(matfp);
 }//====================================================

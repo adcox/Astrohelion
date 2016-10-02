@@ -43,6 +43,12 @@
 
 namespace astrohelion{
 	/**
+	 * @addtogroup util
+	 * @{
+	 */
+
+
+	/**
 	 *	@brief Worker function to compute permutations via recursion
 	 *	@param values a vector of all possible values for each element
 	 *	@param numSpots the number of elements, or "spots"
@@ -300,17 +306,31 @@ namespace astrohelion{
 			return num < 0 ? -1 : 1;
 	}//===========================================
 
+	/** @} */ // END of util group
+
+
 
 	double boundValue(double, double, double);
 	void checkAndReThrowSpiceErr(const char*);
 	std::string complexToStr(std::complex<double>);
 	std::string getNameFromSpiceID(int);
 	SpiceInt getSpiceIDFromName(const char*);
+
+	/**
+	 *  @name Standard Output
+	 *  @{
+	 */
 	void printErr(const char*, ...);
 	void printWarn(const char*, ...);
 	void printVerb(bool, const char*, ...);
 	void printColor(const char*, const char*, ...);
 	void printVerbColor(bool, const char*, const char*, ...);
+	//@}
+
+	/**
+	 *  @name File I/O
+	 *  @{
+	 */
 	//int readIntFromMat(mat_t*, const char*, matio_types, matio_classes);
 	double readDoubleFromMat(mat_t*, const char*);
 	MatrixXRd readMatrixFromMat(const char*, const char*);
@@ -320,6 +340,8 @@ namespace astrohelion{
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 	void toCSV(MatrixXRd, const char*);
+	//@}
+	
 	double resolveAngle(double, double);
 	
 	void waitForUser();

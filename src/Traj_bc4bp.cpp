@@ -42,9 +42,9 @@ namespace astrohelion{
 
 /**
  *	@brief Create a trajectory for a specific system
- *	@param sys a pointer to a system data object
+ *	@param pSys a pointer to a system data object
  */
-Traj_bc4bp::Traj_bc4bp(const SysData_bc4bp *sys) : Traj(sys){
+Traj_bc4bp::Traj_bc4bp(const SysData_bc4bp *pSys) : Traj(pSys){
 	initExtraParam();
 }//====================================================
 
@@ -65,17 +65,30 @@ Traj_bc4bp::Traj_bc4bp(const BaseArcset &a) : Traj(a){
 }//====================================================
 
 /**
+ *  @brief Load the trajectory from a saved data file
+ * 
+ *  @param filepath Absolute or relative path to the data file
+ *  @param pSys pointer to the system data object. Load the system object
+ *  from the same file using the filepath constructor of the SysData_bc4bp
+ *  object
+ */
+Traj_bc4bp::Traj_bc4bp(const char* filepath, const SysData_bc4bp *pSys) : Traj(pSys){
+	initExtraParam();
+	readFromMat(filepath);
+}//====================================================
+
+/**
  *  @brief Create a new trajectory object on the stack
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param sys pointer to a system data object; should be a 
+ *  @param pSys pointer to a system data object; should be a 
  *  BCR4BPR system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created trajectory
  */
-baseArcsetPtr Traj_bc4bp::create( const SysData *sys) const{
-	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(sys);
+baseArcsetPtr Traj_bc4bp::create( const SysData *pSys) const{
+	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(pSys);
 	return baseArcsetPtr(new Traj_bc4bp(bcSys));
 }//====================================================
 
@@ -207,6 +220,7 @@ void Traj_bc4bp::saveToMat(const char* filename) const{
 		saveState(matfp);
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
+		saveTOF(matfp, "TOFs");
 		saveSTMs(matfp);
 		saveExtraParamVec(matfp, "dqdT", 6, "dqdT");
 		pSysData->saveToMat(matfp);

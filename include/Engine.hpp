@@ -1,3 +1,8 @@
+/**
+ *  @file Engine.hpp
+ *  @brief Contains the base behavior for engine objects
+ */
+
 /*
  *	Astrohelion 
  *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
@@ -26,6 +31,7 @@ namespace astrohelion{
 // Forward Declarations
 
 /**
+ *	@ingroup engine
  *	@brief Contains the base behavior for engine objects
  *
  *	@author Andrew Cox

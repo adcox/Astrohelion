@@ -51,7 +51,7 @@ namespace astrohelion{
  * 
  *  @param data a system data object that describes the system this event will occur in
  */
-Event::Event(const SysData *data) : sysData(data) {}
+Event::Event(const SysData *data) : pSysData(data) {}
 
 /**
  *	@brief Create an event
@@ -120,7 +120,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop, double *params){
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
-Event::Event(const SysData *data, Event_tp t, int dir, bool willStop) : sysData(data){
+Event::Event(const SysData *data, Event_tp t, int dir, bool willStop) : pSysData(data){
 	createEvent(t, dir, willStop);
 }//================================================
 
@@ -145,7 +145,7 @@ Event::Event(const SysData *data, Event_tp t, int dir, bool willStop) : sysData(
  *	@throws Exception if the event type is not recognized
  *	@throws Exception if data values refer to invalid indices
  */
-Event::Event(const SysData *data, Event_tp t, int dir , bool willStop, double* params) : sysData(data){
+Event::Event(const SysData *data, Event_tp t, int dir , bool willStop, double* params) : pSysData(data){
 	initEvent(t, dir, willStop, params);
 }//==========================================
 
@@ -157,7 +157,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 	triggerDir = dir;
 	bStop = willStop;
 
-	if(! sysData->getDynamicsModel()->supportsEvent(type)){
+	if(! pSysData->getDynamicsModel()->supportsEvent(type)){
 		throw Exception("Event_tp::initEvent: The current dynamic model does not support this event type");
 	}
 
@@ -192,10 +192,10 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 		case Event_tp::CRASH:
 		{
 			data[0] = params[0];	// Index of primary
-			if(data[0] < sysData->getNumPrimaries()){
+			if(data[0] < pSysData->getNumPrimaries()){
 				// Get body data, compute crash distance
-			    BodyData primData(sysData->getPrimary(static_cast<int>(data[0])));
-			    data[1] = (primData.getRadius() + primData.getMinFlyBy())/sysData->getCharL();
+			    BodyData primData(pSysData->getPrimary(static_cast<int>(data[0])));
+			    data[1] = (primData.getRadius() + primData.getMinFlyBy())/pSysData->getCharL();
 			}else{
 				throw Exception("Cannot access primary for crash event");
 			}
@@ -215,7 +215,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 /**
  *	@brief copy constructor
  */
-Event::Event(const Event &ev) : sysData(ev.sysData){
+Event::Event(const Event &ev) : pSysData(ev.pSysData){
 	copyEvent(ev);
 }//==========================================
 
@@ -226,15 +226,16 @@ Event::Event(const Event &ev) : sysData(ev.sysData){
 void Event::copyEvent(const Event &ev){
 	type = ev.type;
 	triggerDir = ev.triggerDir;
+	triggerCount = ev.triggerCount;
+	stopCount = ev.stopCount;
 	bStop = ev.bStop;
 	dist = ev.dist;
+	lastDist = ev.lastDist;
 	theTime = ev.theTime;
 	state = ev.state;
 	conType = ev.conType;
 	conData = ev.conData;
-	sysData = ev.sysData;	// COPY ADDRESS (ptr) of SYS DATA
-	triggerCount = ev.triggerCount;
-	stopCount = ev.stopCount;
+	pSysData = ev.pSysData;	// COPY ADDRESS (ptr) of SYS DATA
 }//=============================================
 
 /**
@@ -262,7 +263,7 @@ Event& Event::operator =(const Event &ev){
  */
 bool operator ==(const Event &lhs, const Event &rhs){
 	return lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
-		lhs.bStop == rhs.bStop && lhs.sysData == rhs.sysData;
+		lhs.bStop == rhs.bStop && lhs.pSysData == rhs.pSysData;
 }//====================================================
 
 /**
@@ -361,7 +362,7 @@ void Event::setDir(int d){ triggerDir = d; }
  *	@brief Set the system data object for this event
  *	@param data a system data object
  */
-void Event::setSysData(SysData* data){ sysData = data; }
+void Event::setSysData(SysData* data){ pSysData = data; }
 
 /**
  *	@brief Set the number of triggers this event can endure before the simulation
@@ -415,6 +416,7 @@ bool Event::crossedEvent(const double y[6], double t) const{
  */
 void Event::updateDist(const double y[6], double t){	
 	// update the dist variable using information from y
+	lastDist = dist;
 	dist = getDist(y, t);
 
 	// Save the state from y for later comparison
@@ -438,7 +440,7 @@ double Event::getDist(const double y[6], double t) const{
 		case Event_tp::XY_PLANE: d = conData[2] - y[2]; break;
 		case Event_tp::CRASH:
 		{
-			std::vector<double> primPos = sysData->getDynamicsModel()->getPrimPos(t, sysData);
+			std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
 
 			int Pix = static_cast<int>(conData[0]);
 			double dx = y[0] - primPos[Pix*3 + 0];
@@ -449,19 +451,19 @@ double Event::getDist(const double y[6], double t) const{
 		}
 		case Event_tp::JC:
 		{
-			const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(sysData);
+			const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(pSysData);
 			d = conData[0] - DynamicsModel_cr3bp::getJacobi(y, crSys->getMu());
 			break;
 		}
 		case Event_tp::APSE:
 		{
 			int Pix = static_cast<int>(conData[0]);
-			d = sysData->getDynamicsModel()->getRDot(Pix, t, y, sysData);
+			d = pSysData->getDynamicsModel()->getRDot(Pix, t, y, pSysData);
 			break;
 		}
 		case Event_tp::DIST:
 		{
-			std::vector<double> primPos = sysData->getDynamicsModel()->getPrimPos(t, sysData);
+			std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
 			int Pix = static_cast<int>(conData[0]);
 			double dx = y[0] - primPos[Pix*3 + 0];
 			double dy = y[1] - primPos[Pix*3 + 1];
@@ -502,6 +504,11 @@ int Event::getDir(const double y[6], double t) const{
 			break;
 		default: 
 			throw Exception("Event type not implemented");
+	}
+
+	if(type == Event_tp::APSE){
+		printf("Last dist = %.4f, Dist = %.4f, direction = %d\n",
+			lastDist, dist, static_cast<int>(d*dt/std::abs(d*dt)));
 	}
 
 	return static_cast<int>(d*dt/std::abs(d*dt));

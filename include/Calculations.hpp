@@ -88,7 +88,10 @@ enum class EigValSet_tp{
 	EIGSET_REAL_RECIP	//!< Real, reciprocal pair
 };
 
-// General Utility Functions
+/**
+ *  @name General Utility Functions
+ *  @{
+ */
 double dateToEpochTime(const char*);
 double dateToGST(double, double, double, double, double, double);
 double gregorianToJulian(double, double, double, double, double, double);
@@ -102,19 +105,31 @@ void finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
 Node interpPointAtTime(const Traj*, double);
+/** @} */
 
-// Orbit Determination
+/**
+ *  @name Orbit Determination
+ *  @{
+ */
 std::vector<double> getSpherical(double, double, double);
 std::vector<double> inert2LocalTangent(std::vector<double>, double, double, double);
 std::vector<double> localTangent2Inert(std::vector<double>, double, double, double);
 std::vector<double> azEl2LocalTangent(double, double, double);
+/** @} */
 
-// 2BP Utility Functions
+/**
+ *  @name 2BP Utility Functions
+ *  @{
+ */
 void r2bp_computeAllKepler(BaseArcset*);
 void r2bp_computeKepler(const SysData_2bp*, Node*);
 std::vector<double> r2bp_stateFromKepler(const SysData_2bp*, double, double, double, double, double, double);
+/** @} */
 
-// CR3BP Utility Functions
+/**
+ *  @name CR3BP Utility Functions
+ *  @{
+ */
 double cr3bp_getVel_withC(const double s[], double, double, int);
 Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp, const SysData_cr3bp*, double, double, double);
 Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp, const SysData_cr3bp*, double, double, double);
@@ -130,13 +145,17 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double, MultShootData*);
+/** @} */
 
-// BCR4BPR Utility Functions
+/**
+ *  @name BC4BP Utility Functions
+ *  @{
+ */
 Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp, const SysData_bc4bp*, int, double);
 Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp, const SysData_bc4bp*, int, double);
 Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp, const SysData_cr3bp*);
 Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp, const SysData_cr3bp*);
 MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp*, double);
 Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp*, double);
-
+/** @} */
 }// END of Astrohelion namespace

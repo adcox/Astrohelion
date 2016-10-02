@@ -57,6 +57,7 @@ enum class SysData_tp {
 };
 
 /**
+ *	@ingroup model
  *	@brief Contains information about a system, like mass ratio, primary names, etc.
  *
  *	This object is a super-class for system data objects, "system" being
@@ -82,6 +83,10 @@ class SysData : public Core{
 		friend bool operator ==(const SysData&, const SysData&);
 		friend bool operator !=(const SysData&, const SysData&);
 
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		double getCharL() const;
 		double getCharM() const;
 		double getCharT() const;
@@ -97,7 +102,8 @@ class SysData : public Core{
 		int getPrimID(int n) const;
 		SysData_tp getType() const;
 		std::string getTypeStr() const;
-
+		//@}
+		
 		virtual void saveToMat(const char*) const;
 
 		/**

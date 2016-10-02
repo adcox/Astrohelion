@@ -41,16 +41,20 @@
  
 namespace astrohelion{
 /**
- *	@brief A brief description
+ *	@ingroup traj
+ *	@brief A single point or state on an arc
  *
  *	@author Andrew Cox
- *	@version 
+ *	@version September 30, 2016
  *	@copyright GNU GPL v3.0
  */
 class Node : public Linkable{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Node();
 	Node(const double[6], double);
 	Node(std::vector<double>, double);
@@ -58,13 +62,17 @@ public:
 	Node(std::vector<double>, std::vector<double>, double);
 	Node(const Node&);
 	// ~Node();
+	//@}
 
 	// Operators
 	Node& operator =(const Node&);
 	friend bool operator ==(const Node&, const Node&);
 	friend bool operator !=(const Node&, const Node&);
 
-	// Set and Get functions
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	void addConstraint(Constraint);
 	void clearConstraints();
 	std::vector<double> getAccel() const;
@@ -76,8 +84,6 @@ public:
 	std::map<std::string, std::vector<double> > getExtraParamVec() const;
 	int getNumCons() const;
 	std::vector<double> getState() const;
-
-	void print() const;
 
 	void removeConstraint(int);
 	void setAccel(const double*);
@@ -91,7 +97,9 @@ public:
 	void setExtraParamVec(std::map<std::string, std::vector<double> >);
 	void setState(const double*);
 	void setState(std::vector<double>);
+	//@}
 
+	void print() const;
 protected:
 	virtual void copyMe(const Node&);
 

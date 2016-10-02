@@ -701,7 +701,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 	Node node0 = nodes[nodeIDMap.at(ID)];
 	// printf("Beginning with node ID %d\n", node0.getID());
 
-	pieces.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, node0.getID()));
+	pieces.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, node0.getID()));
 	for(int dir = 1; dir > -2; dir -= 2){
 		// printf("  Direction is %s\n", dir > 0 ? "[FORWARD]" : "[BACKWARD]");
 
@@ -719,12 +719,12 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 
 					if(dir > 0 && ((seg.getTerminus() == node.getID() && seg.getTOF() < 0) || (seg.getOrigin() == node.getID() && seg.getTOF() > 0))){
 						// This segment moves forward in time from node
-						pieces.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, seg.getID()));
+						pieces.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, seg.getID()));
 						foundNextSeg = true;
 						// printf("USE THIS\n");
 					}else if(dir < 0 && ((seg.getTerminus() == node.getID() && seg.getTOF() > 0) || (seg.getOrigin() == node.getID() && seg.getTOF() < 0))){
 						// This segment moves in reverse time from node
-						pieces.insert(pieces.begin(), ArcPiece(ArcPiece::Piece_Tp::SEG, seg.getID()));
+						pieces.insert(pieces.begin(), ArcPiece(ArcPiece::Piece_tp::SEG, seg.getID()));
 						foundNextSeg = true;
 						// printf("USE THIS\n");
 					}else{
@@ -745,9 +745,9 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 							node = getNode(nextNodeID);
 
 							if(dir > 0)
-								pieces.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, node.getID()));
+								pieces.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, node.getID()));
 							else
-								pieces.insert(pieces.begin(), ArcPiece(ArcPiece::Piece_Tp::NODE, node.getID()));
+								pieces.insert(pieces.begin(), ArcPiece(ArcPiece::Piece_tp::NODE, node.getID()));
 						}else{
 							// The segment terminates/originates without a node; Look for a link to
 							// another segment OR end this section
@@ -781,7 +781,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 								// Check to see if the identified segment has already been counted
 								bool alreadyUsed = false;
 								for(unsigned int p = 0; p < prevPieces.size(); p++){
-									if(prevPieces[p].type == ArcPiece::Piece_Tp::SEG && 
+									if(prevPieces[p].type == ArcPiece::Piece_tp::SEG && 
 										prevPieces[p].id == linkedSegID){
 										
 										alreadyUsed = true;
@@ -792,7 +792,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 								// Also check the current segment
 								if(!alreadyUsed){
 									for(unsigned int p = 0; p < pieces.size(); p++){
-										if(pieces[p].type == ArcPiece::Piece_Tp::SEG && pieces[p].id == linkedSegID){
+										if(pieces[p].type == ArcPiece::Piece_tp::SEG && pieces[p].id == linkedSegID){
 											alreadyUsed = true;
 											break;
 										}
@@ -1285,8 +1285,8 @@ double BaseArcset::getTol() const { return tol; }
 double BaseArcset::getTotalTOF() const{
 	double total = 0;
 	for(unsigned int s = 0; s < segs.size(); s++){
-		total += segs[s].getTOF();
 		// total += std::abs(segs[s].getTOF());
+		total += segs[s].getTOF();
 	}
 	return total;
 }//=================================================
@@ -1320,11 +1320,11 @@ void BaseArcset::putInChronoOrder(){
 	std::map<int, int> newSegIDMap;
 
 	for(unsigned int i = 0; i < pieces.size(); i++){
-		if(pieces[i].type == ArcPiece::Piece_Tp::NODE){
+		if(pieces[i].type == ArcPiece::Piece_tp::NODE){
 			Node node = getNode(pieces[i].id);
 			newNodeIDMap[node.getID()] = newNodes.size();
 			newNodes.push_back(node);
-		}else if(pieces[i].type == ArcPiece::Piece_Tp::SEG){
+		}else if(pieces[i].type == ArcPiece::Piece_tp::SEG){
 			Segment seg = getSeg(pieces[i].id);
 			newSegIDMap[seg.getID()] = newSegs.size();
 			newSegs.push_back(seg);
@@ -1468,7 +1468,7 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 	// Update epoch of the specified node
 	nodes[nodeIDMap[nodeID]].setEpoch(epoch);
 
-	std::vector<ArcPiece>::iterator pieceIt = std::find(pieces.begin(), pieces.end(), ArcPiece(ArcPiece::Piece_Tp::NODE, nodeID));
+	std::vector<ArcPiece>::iterator pieceIt = std::find(pieces.begin(), pieces.end(), ArcPiece(ArcPiece::Piece_tp::NODE, nodeID));
 
 	if(pieceIt == pieces.end()){
 		astrohelion::printErr("BaseArcset::updateEpochs: Could not find the node with the specified ID... INVESTIGATE THIS, ANDREW!\n");
@@ -1483,9 +1483,9 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 	for(int stepDir = 1; stepDir > -2; stepDir -= 2){
 		ellapsed = 0;
 		for(int i = ixInPieces + stepDir; i < static_cast<int>(pieces.size()) && i >= 0; i += stepDir){
-			if(pieces[i].type == ArcPiece::Piece_Tp::SEG){
+			if(pieces[i].type == ArcPiece::Piece_tp::SEG){
 				ellapsed += segs[segIDMap[pieces[i].id]].getTOF();
-			}else if(pieces[i].type == ArcPiece::Piece_Tp::NODE){
+			}else if(pieces[i].type == ArcPiece::Piece_tp::NODE){
 				nodes[nodeIDMap[pieces[i].id]].setEpoch(epoch+ellapsed);
 			}
 		}
@@ -1529,7 +1529,7 @@ void BaseArcset::copyMe(const BaseArcset &d){
 void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
 	if(pStateMat == NULL){
-		throw Exception("BaseArcset::initNodeSegsFromMat: Could not read state data vector");
+		throw Exception("BaseArcset::initNodesSegsFromMat: Could not read state data vector");
 	}else{
 		int numSteps = pStateMat->dims[0];
 		nodes.clear();
@@ -1564,9 +1564,9 @@ void BaseArcset::printInChrono() const{
 	for(unsigned int i = 0; i < pieces.size(); i++){
 		ArcPiece p = pieces[i];
 
-		if(p.type == ArcPiece::Piece_Tp::NODE){
+		if(p.type == ArcPiece::Piece_tp::NODE){
 			printf("[%02d]", p.id);
-		}else if(p.type == ArcPiece::Piece_Tp::SEG){
+		}else if(p.type == ArcPiece::Piece_tp::SEG){
 			if(getSeg(p.id).getTOF() > 0)
 				printf("--(%02d)->", p.id);
 			else
@@ -2014,14 +2014,6 @@ void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t l
 	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
 }//======================================================
-
-/**
- *	@brief Save the state vector [pos, vel] to a file with variable name "State"
- *	@param pMatFile a pointer to the destination matlab file 
- */
-void BaseArcset::saveState(mat_t *pMatFile) const{
-	saveState(pMatFile, "State");
-}//==================================================
 
 /**
  *	@brief Save the state vector [pos, vel] to a file

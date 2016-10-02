@@ -38,6 +38,7 @@ class SysData_bc4bp;
 class Nodeset_bc4bp;
 
 /**
+ *	@ingroup traj bc4bp
  *	@brief A derivative class of the Traj object that
  *	contains trajectory information specific to the CR3BP
  *
@@ -48,16 +49,23 @@ class Nodeset_bc4bp;
 class Traj_bc4bp : public Traj{
 
 public:
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Traj_bc4bp(const SysData_bc4bp*);
 	Traj_bc4bp(const Traj_bc4bp&);
 	Traj_bc4bp(const BaseArcset&);
-	Traj_bc4bp(const char*);
+	Traj_bc4bp(const char*, const SysData_bc4bp*);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
 	//static Traj_bc4bp fromNodeset(Nodeset_bc4bp);
+	//@}
 
-	// Set and Get Functions
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	double getTheta0();
 	double getPhi0();
 	double getGamma();
@@ -65,7 +73,8 @@ public:
 
 	void set_dqdTByIx(int, const double*);
 	void set_dqdTByIx(int, std::vector<double>);
-
+	//@}
+	
 	void readFromMat(const char*) override;
 	void saveToMat(const char*) const override;
 private:

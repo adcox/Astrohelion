@@ -35,6 +35,7 @@ namespace astrohelion{
 class SysData_cr3bp;
 
 /**
+ *	@ingroup model cr3bp
  *	@brief Derivative of DynamicsModel, specific to the CR3BP
  *
  *	The base class's methods provide a good framework for this system,
@@ -43,37 +44,63 @@ class SysData_cr3bp;
  */
 class DynamicsModel_cr3bp : public DynamicsModel{
 public:
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	DynamicsModel_cr3bp();
 	DynamicsModel_cr3bp(const DynamicsModel_cr3bp&);
 	~DynamicsModel_cr3bp() {}
+	//@}
 
 	DynamicsModel_cr3bp& operator=(const DynamicsModel_cr3bp&);
 
-	// Core Functions
+	/**
+	 *  @name Core Functions
+	 *  @{
+	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
-	
-	// Static Calculation Functions
+	//@}
+
+	/**
+	 *  @name Static Calculations
+	 *  @{
+	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
 	static void getEquilibPt(const SysData_cr3bp*, int, double, double[3]);
 	static double getJacobi(const double[], double);
 	static void getUDDots(double, double, double, double, double* ddots);
+	//@}
 
-	// Simulation Engine Functions
+	/**
+	 *  @name Simulation Support Functions
+	 *  @{
+	 */
 	void sim_saveIntegratedData(const double*, double, Traj*) const;
 	bool sim_locateEvent(Event, Traj*, const double*, double, double, Verbosity_tp) const;
+	//@}
 
-	// Multiple Shooting Functions
+	/**
+	 *  @name Multiple Shooting Support Functions
+	 *  @{
+	 */
 	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
 	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
-	
+	//@}
 protected:
+
+	/**
+	 *  @name Multiple Shooting Support Functions
+	 *  @{
+	 */
 	void multShoot_targetJC(MultShootData*, Constraint, int) const;
 	void multShoot_targetPseudoArc(MultShootData*, Constraint, int) const;
+	//@}
 };
 
 }// END of Astrohelion namespace

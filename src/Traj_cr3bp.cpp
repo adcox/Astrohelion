@@ -65,6 +65,19 @@ Traj_cr3bp::Traj_cr3bp(const BaseArcset &a) : Traj(a){
 }//====================================================
 
 /**
+ *  @brief Load the trajectory from a saved data file
+ * 
+ *  @param filepath Absolute or relative path to the data file
+ *  @param pSys pointer to the system data object. Load the system object
+ *  from the same file using the filepath constructor of the SysData_cr3bp
+ *  object
+ */
+Traj_cr3bp::Traj_cr3bp(const char* filepath, const SysData_cr3bp *pSys) : Traj(pSys){
+	initExtraParam();
+	readFromMat(filepath);
+}//====================================================
+
+/**
  *  @brief Create a new trajectory object on the stack
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
@@ -196,6 +209,7 @@ void Traj_cr3bp::saveToMat(const char* filename) const{
 		saveState(matfp);
 		saveAccel(matfp);
 		saveEpoch(matfp, "Time");
+		saveTOF(matfp, "TOFs");
 		saveSTMs(matfp);
 		saveExtraParam(matfp, "J", "Jacobi");
 		pSysData->saveToMat(matfp);

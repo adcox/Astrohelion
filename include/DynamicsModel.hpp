@@ -48,6 +48,7 @@ class SysData;
 class MultShootData;
 
 /**
+ *  @ingroup model
  *  @brief Container for EOM parameters
  *  @details At the current time, this object stores only the system data object pointer.
  *  Since the GSL functions demand a null pointer and the system data pointers owned by
@@ -136,13 +137,22 @@ public:
 	 */
 	typedef int (*eom_fcn)(double t, const double q[], double qdot[], void *params);
 
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	DynamicsModel(DynamicsModel_tp);
 	DynamicsModel(const DynamicsModel&);
 	virtual ~DynamicsModel();
+	//@}
 
 	// Operators
 	DynamicsModel& operator =(const DynamicsModel&);
+
+	/**
+	 *  @name Core Functions
+	 *  @{
+	 */
 
 	/**
 	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
@@ -184,6 +194,13 @@ public:
 
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 
+	//@}
+
+	/**
+	 *  @name Multiple Shooting Support Functions
+	 *  @{
+	 */
+
 	/**
 	 *  @brief Do any model-specific initializations for the MultShootData object
 	 *  @param it a pointer to the MultShootData object for the multiple shooting process
@@ -215,6 +232,12 @@ public:
 	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
 	virtual void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const = 0;
+	//@}
+
+	/**
+	 *  @name Simulation Support Functions
+	 *  @{
+	 */
 
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing
@@ -244,14 +267,19 @@ public:
 	 *	@param traj a pointer to the trajectory we should store the data in
 	 */
 	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj) const = 0;
+	//@}
 
-	// Set and Get Functions
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	int getCoreStateSize() const;
 	int getSTMStateSize() const;
 	int getExtraStateSize() const;
 	bool supportsCon(Constraint_tp) const;
 	bool supportsEvent(Event_tp) const;
-	
+	//@}
+
 protected:
 	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
 	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
@@ -272,6 +300,11 @@ protected:
 		Event_tp::YZ_PLANE, Event_tp::CRASH, Event_tp::APSE, Event_tp::DIST};
 
 	void copyMe(const DynamicsModel&);
+
+	/**
+	 *  @name Multiple Shooting Support Functions
+	 *  @{
+	 */
 	virtual void multShoot_targetApse(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetDeltaV(MultShootData*, Constraint, int) const;
 	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData*, Constraint) const;
@@ -285,6 +318,7 @@ protected:
 	virtual void multShoot_targetCont_PosVel_Seg(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetState(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetTOF(MultShootData*, Constraint, int) const;
+	//@}
 };
 
 

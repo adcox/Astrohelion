@@ -54,19 +54,27 @@ enum class Continuation_tp{
 };
 		
 /**
+ *	@ingroup engine
  *	@brief An object to generate families of orbits
  */
 class FamGenerator : public Core, public Engine{
 	public:
-		// *structors
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		FamGenerator();
 		FamGenerator(const FamGenerator&);
 		~FamGenerator();
+		//@}
 
 		// operators
 		FamGenerator& operator =(const FamGenerator&);
 
-		// Set and Get
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		void setContType(Continuation_tp);
 		void setMaxStepSize(double);
 		void setMinStepSize(double);
@@ -77,8 +85,12 @@ class FamGenerator : public Core, public Engine{
 		void setStep_fitted_1(double);
 		void setStep_fitted_2(double);
 		void setTol(double);
-		
-		// Operations & Utility
+		//@}
+
+		/**
+		 *  @name Family Generation
+		 *  @{
+		 */
 		Fam_cr3bp cr3bp_generateAxial(const char*, double);
 		Fam_cr3bp cr3bp_generateButterfly(SysData_cr3bp*, int);
 		Fam_cr3bp cr3bp_generateDRO(SysData_cr3bp*);
@@ -87,6 +99,7 @@ class FamGenerator : public Core, public Engine{
 		Fam_cr3bp cr3bp_generateLyap(SysData_cr3bp, int, double);
 		Fam_cr3bp cr3bp_generateRes(SysData_cr3bp*, int, int);
 		Fam_cr3bp cr3bp_generateVertical(const char*, double);
+		//@}
 		
 		void reset();
 

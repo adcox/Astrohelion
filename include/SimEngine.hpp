@@ -67,6 +67,7 @@ enum class Integ_tp{
 };
 
 /**
+ *	@ingroup engine
  *	@brief Performs numerical integration on any system type and produces an
  *	Traj object
  *
@@ -144,7 +145,10 @@ class SimEngine : public Core, public Engine{
 		//Operators
 		SimEngine& operator =(const SimEngine&);
 
-		// Set and get functions
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		void addEvent(Event);
 		double getAbsTol() const;
 		std::vector<Event> getEndEvents(Traj*) const;
@@ -166,15 +170,19 @@ class SimEngine : public Core, public Engine{
 		void setRevTime(bool);
 		void setVarStepInteg(Integ_tp);
 		void setVarStepSize(bool);
+		//@}
 
-
-		// Simulation Methods
+		/**
+		 *  @name Simulation Methods
+		 *  @{
+		 */
 		void runSim(const double*, double, Traj*);
 		void runSim(std::vector<double>, double, Traj*);
 		void runSim(const double*, double, double, Traj*);
 		void runSim(std::vector<double>, double, double, Traj*);
 		void runSim(const double *ic, std::vector<double>, Traj*);
-
+		//@}
+		
 		// Utility Functions
 		void clearEvents();
 		void reset();

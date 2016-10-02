@@ -39,6 +39,7 @@ class Node;
 class Traj;
 
 /**
+ *	@ingroup traj
  *	@brief Similar to Traj, but only holds state data at specific "nodes"
  * 
  *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
@@ -62,12 +63,16 @@ public:
 	 *
 	 *	Specified how nodes are distributed along an integrated trajectory
 	 */
-	enum tpat_nodeDistro_tp {
+	enum NodeDistro_tp {
 		DISTRO_NONE, 		//!< There is no organizational method; nodes may be input by user.
 		DISTRO_TIME,		//!< Nodes spread evenly in time
-		DISTRO_ARCLENGTH};	//!< Nodes spread evenly along trajectory by arclength (approx.)
+		DISTRO_ARCLENGTH	//!< Nodes spread evenly along trajectory by arclength (approx.)
+	};
 
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Nodeset(const SysData*);
 	Nodeset(const Nodeset&);
 	Nodeset(const BaseArcset&);
@@ -76,19 +81,24 @@ public:
 	virtual ~Nodeset();
 	virtual baseArcsetPtr create(const SysData*) const;
 	virtual baseArcsetPtr clone() const;
-	
+	//@}
+
 	// Operators
 	friend Nodeset operator +(const Nodeset&, const Nodeset&);
 	virtual Nodeset& operator +=(const Nodeset&);
 
-	// Set and Get Functions
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
 	int createNodesAtEvent(int, Event);
 	int createNodesAtEvents(int, std::vector<Event>);
 	virtual int createNodesAtEvents(int, std::vector<Event>, double);
-
+	//@}
+	
 	// Utility Functions
 	virtual void readFromMat(const char*);
 	virtual void print() const;
@@ -98,10 +108,10 @@ public:
 
 protected:
 
-	void initFromICs(const double[6], double, double, int, tpat_nodeDistro_tp);
+	void initFromICs(const double[6], double, double, int, NodeDistro_tp);
 	void initFromICs_time(const double[6], double, double, int);
 	void initFromICs_arclength(const double[6], double, double, int);
-	void initFromTraj(Traj, int, tpat_nodeDistro_tp);
+	void initFromTraj(Traj, int, NodeDistro_tp);
 
 };
 

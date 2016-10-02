@@ -41,7 +41,8 @@ namespace astrohelion{
 // Forward Declarations
 
 /**
- *	@brief A brief description
+ *	@ingroup traj
+ *	@brief Links nodes together to describe the flow of a trajectory
  *
  *	@author Andrew Cox
  *	@version May 1, 2016
@@ -53,19 +54,26 @@ public:
 	static const int ORIG_IX = 0;	//!< Index of the origin node in the links array
 	static const int TERM_IX = 1;	//!< Index if the terminus node in the links array
 	
-	// *structors
+	/**
+	 *  @name *structors
+	 *  @{
+	 */
 	Segment();
 	Segment(int, int, double);
 	Segment(int, int, double, const double[36]);
 	Segment(const Segment&);
 	// ~Segment();
+	//@}
 
 	// Operators
 	Segment& operator =(const Segment&);
 	friend bool operator ==(const Segment&, const Segment&);
 	friend bool operator !=(const Segment&, const Segment&);
 
-	// Set and Get Functions
+	/**
+	 *  @name Set and Get Functions
+	 *  @{
+	 */
 	void addConstraint(Constraint);
 	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;
@@ -89,7 +97,7 @@ public:
 	void setVelCon(const bool[3]);
 	void setVelCon(std::vector<bool>);
 	void setVelCon(bool, bool, bool);
-
+	//@}
 protected:
 	virtual void copyMe(const Segment&);
 

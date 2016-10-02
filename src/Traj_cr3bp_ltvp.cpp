@@ -197,6 +197,7 @@ void Traj_cr3bp_ltvp::saveToMat(const char* filename) const{
 	}else{
 		saveState(matfp);
 		saveEpoch(matfp, "Time");
+		saveTOF(matfp, "TOFs");
 		saveSTMs(matfp);
 		saveExtraParam(matfp, "J", "Jacobi");
 		saveExtraParam(matfp, "m", "Mass");

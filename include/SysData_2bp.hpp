@@ -37,6 +37,7 @@
 namespace astrohelion{
 
 /**
+ *	@ingroup model 2bp
  *	@brief A derivative class of the SysData object which
  *	contains information specific to the 2BP
  *
@@ -46,11 +47,16 @@ namespace astrohelion{
  */
 class SysData_2bp : public SysData{
 	public:
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		SysData_2bp();
 		SysData_2bp(std::string);
 		SysData_2bp(const SysData_2bp&);
 		void initFromFile(const char*);
 		virtual ~SysData_2bp();
+		//@}
 		
 		SysData_2bp& operator=(const SysData_2bp&);
 		

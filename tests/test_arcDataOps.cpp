@@ -521,11 +521,11 @@ void testPutInChrono(){
 	set1.addSeg(Segment(1, 2, 1.1));
 
 	std::vector<ArcPiece> set1_ans;
-	set1_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	set1_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set1_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	set1_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set1_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	set1_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	set1_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set1_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	set1_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set1_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::vector<ArcPiece> set1_pieces = set1.getChronoOrder();
 	set1.printInChrono();
@@ -541,11 +541,11 @@ void testPutInChrono(){
 	set2.addSeg(Segment(1, 2, -1.1));
 
 	std::vector<ArcPiece> set2_ans;
-	set2_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	set2_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set2_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	set2_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set2_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
+	set2_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	set2_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set2_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	set2_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set2_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	std::vector<ArcPiece> set2_pieces = set2.getChronoOrder();
 	set2.printInChrono();
@@ -561,11 +561,11 @@ void testPutInChrono(){
 	set3.addSeg(Segment(0, 2, 1.1));
 	
 	std::vector<ArcPiece> set3_ans;
-	set3_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	set3_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set3_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	set3_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set3_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	set3_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	set3_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set3_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	set3_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set3_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::vector<ArcPiece> set3_pieces = set3.getChronoOrder();
 	set3.printInChrono();
@@ -581,11 +581,11 @@ void testPutInChrono(){
 	set4.addSeg(Segment(0, 2, -1.1));
 	
 	std::vector<ArcPiece> set4_ans;
-	set4_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	set4_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set4_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	set4_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set4_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
+	set4_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	set4_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set4_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	set4_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set4_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
 
 	std::vector<ArcPiece> set4_pieces = set4.getChronoOrder();
 	set4.printInChrono();
@@ -605,15 +605,15 @@ void testPutInChrono(){
 	set5.addSeg(Segment(2, 0, 1.1));
 	
 	std::vector<ArcPiece> set5_ans;
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	set5_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	set5_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	std::vector<ArcPiece> set5_pieces = set5.getChronoOrder();
 	set5.printInChrono();
@@ -636,12 +636,12 @@ void testPutInChrono(){
 	// set6.print();
 
 	std::vector<ArcPiece> set6_ans;
-	set6_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	set6_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set6_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	set6_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set6_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	set6_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	set6_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	set6_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set6_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	set6_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set6_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	set6_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::vector<ArcPiece> set6_pieces = set6.getChronoOrder();
 	set6.printInChrono();
@@ -661,12 +661,12 @@ void testPutInChrono(){
 	set7.addConstraint(segLinkCon2);
 
 	std::vector<ArcPiece> set7_ans;
-	set7_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	set7_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	set7_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	set7_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	set7_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	set7_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	set7_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	set7_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	set7_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	set7_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	set7_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	set7_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::vector<ArcPiece> set7_pieces = set7.getChronoOrder();
 	set7.printInChrono();
@@ -798,17 +798,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	std::vector<ArcPiece> chrono_ans;
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 5));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::cout << "Append (+) time set to beginning of (+) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
@@ -822,17 +822,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
 
 	std::cout << "Append (+) time set to end of (+) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
@@ -846,15 +846,15 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::cout << "Append (+) time set to beginning of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
@@ -868,15 +868,15 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
 
 	std::cout << "Append (+) time set to end of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.1 ? PASS : FAIL) << std::endl;
@@ -890,17 +890,17 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 5));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	std::cout << "Append (-) time set to beginning of (-) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
@@ -914,17 +914,17 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 5));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 
 	std::cout << "Append (-) time set to end of (-) time set: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
@@ -938,15 +938,15 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	std::cout << "Append (-) time set to beginning of (-) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
@@ -960,15 +960,15 @@ void tryAppendSet(){
 	// revSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 
 	std::cout << "Append (-) time set to end of (-) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (revSet1.getSeg(segID).getTOF() == -1.1 ? PASS : FAIL) << std::endl;
@@ -983,17 +983,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 5));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF > 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == 1.3 ? PASS : FAIL) << std::endl;
@@ -1008,17 +1008,17 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 5));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF < 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == -1.3 ? PASS : FAIL) << std::endl;
@@ -1033,15 +1033,15 @@ void tryAppendSet(){
 	// forSet1.printInChrono();
 
 	chrono_ans.clear();
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 4));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 0));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_Tp::NODE, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	std::cout << "Append (-) time set to beginning of (+) time set, TOF = 0: " << (pieceVecsAreEqual(chrono, chrono_ans) ? PASS : FAIL) << std::endl;
 	std::cout << "  >> New segment has correct TOF: " << (forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(1).getTOF() ? PASS : FAIL) << std::endl;

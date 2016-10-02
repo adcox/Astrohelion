@@ -35,6 +35,10 @@ namespace astrohelion{
  *		printf( RED "Here is some red text!" RESET);
  */
 
+/**
+ * @addtogroup util
+ * @{
+ */
 
 #define RESET   "\033[0m"					/**< Reset ASCII text to default values */
 #define BLACK   "\033[30m"					/**< Make ASCII text black */
@@ -54,4 +58,5 @@ namespace astrohelion{
 #define BOLDCYAN    "\033[1m\033[36m"		/**< Make ASCII text bold and cyan */
 #define BOLDWHITE   "\033[1m\033[37m"		/**< Make ASCII text bold and white */
 
+/** @} */ // END of util group
 }// END of Astrohelion namespace

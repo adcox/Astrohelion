@@ -54,6 +54,7 @@ class SysData_bc4bp;
 
 
 /**
+ *	@ingroup engine
  *	@brief An engine object to perform corrections, such as multiple shooting.
  *
  *	### Multiple Shooting Algorithm
@@ -75,16 +76,23 @@ class SysData_bc4bp;
  */
 class CorrectionEngine : public Core, public Engine{
 	public:
-		// *structors
+		/**
+		 *  @name *structors
+		 *  @{
+		 */
 		/** Default, do-nothing constructor */
 		CorrectionEngine(){}
 		CorrectionEngine(const CorrectionEngine&);
 		~CorrectionEngine();
+		//@}
 
 		// Operators
 		CorrectionEngine& operator =(const CorrectionEngine &e);
 
-		// Set and get functions
+		/**
+		 *  @name Set and Get Functions
+		 *  @{
+		 */
 		int getMaxIts() const;
 		double getTol() const;
 		bool isFindingEvent() const;
@@ -100,12 +108,23 @@ class CorrectionEngine : public Core, public Engine{
 		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
-		
-		// Utility/Action functions
+		//@}
+
+		/**
+		 *  @name Correction Algorithms
+		 *  @{
+		 */
 		MultShootData multShoot(const Nodeset*, Nodeset*);
 		MultShootData multShoot(MultShootData, Nodeset*);
+		//@}
 
+		/**
+		 *  @name Utility Functions
+		 *  @{
+		 */
 		void reset();
+		//@}
+		
 	private:
 
 		/** Whether or not to use variable time in the corrections process */

@@ -506,11 +506,6 @@ int Event::getDir(const double y[6], double t) const{
 			throw Exception("Event type not implemented");
 	}
 
-	if(type == Event_tp::APSE){
-		printf("Last dist = %.4f, Dist = %.4f, direction = %d\n",
-			lastDist, dist, static_cast<int>(d*dt/std::abs(d*dt)));
-	}
-
 	return static_cast<int>(d*dt/std::abs(d*dt));
 }//====================================================
 

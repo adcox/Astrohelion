@@ -178,6 +178,15 @@ Traj& Traj::operator +=(const Traj &rhs){
 //-----------------------------------------------------
 
 /**
+ *  @brief Compute the total TOF for this trajectory
+ *  @return the total TOF for this trajectory, units consistent
+ *  with time units of the SysData object for this trajectory
+ */
+double Traj::getTotalTOF() const{
+	return getEpochByIx(-1) - getEpochByIx(0);
+}//====================================================
+
+/**
  *	@brief Retrieve the time along the trajectory at a specific step
  *	@param ix node index; if < 0, it will count backwards from end of trajectory
  *	@return the non-dimensional time along the trajectory at the specified step

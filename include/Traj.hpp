@@ -88,11 +88,12 @@ public:
 	 *  @name Set and Get Functions
 	 *  @{
 	 */
+	virtual double getTotalTOF() const override;
 	double getTimeByIx(int) const;
 	void setTimeByIx(int, double);
 	void shiftAllTimes(double);
 	//@}
-	
+
 	// Utility Functions
 	Nodeset discretize(int) const;
 	void initExtraParam();

@@ -332,16 +332,6 @@ void Node::setAccel(std::vector<double> a){
 void Node::setEpoch(double e){ epoch = e; }
 
 /**
- *  @brief Set the node number for all constraints stored in this node
- *  @param n The node number for the constraints; typically the index of this node
- */
-void Node::setConstraintID(int n){
-	for(unsigned int i = 0; i < cons.size(); i++){
-		cons[i].setID(n);
-	}
-}//====================================================
-
-/**
  *  @brief Set an extra parameter value
  * 
  *  @param key A descriptive key identifying the extra parameter
@@ -365,6 +355,19 @@ void Node::setExtraParamVec(std::string key, std::vector<double> vec){
 
 void Node::setExtraParamVec(std::map<std::string, std::vector<double> > p){
 	extraParamVecs = p;
+}//====================================================
+
+/**
+ *  @brief Set the ID and also update the ID of any 
+ *  associated constraints
+ * 
+ *  @param id ID that uniquely identifies the node
+ */
+void Node::setID(int id){
+	Linkable::setID(id);
+	for(unsigned int i = 0; i < cons.size(); i++){
+		cons[i].setID(id);
+	}
 }//====================================================
 
 /**

@@ -234,6 +234,19 @@ void Segment::setConstraints(std::vector<Constraint> constraints){
 }//====================================================
 
 /**
+ *  @brief Set the ID and also update the ID of any 
+ *  associated constraints
+ * 
+ *  @param id ID that uniquely identifies the node
+ */
+void Segment::setID(int id){
+	Linkable::setID(id);
+	for(unsigned int i = 0; i < cons.size(); i++){
+		cons[i].setID(id);
+	}
+}//====================================================
+
+/**
  *  @brief Set the ID of the node at the origin (chronologically) of this segment
  *  @param o the ID of the node at the origin (chronologically) of this segment
  */

@@ -84,8 +84,10 @@ public:
 	int getTerminus() const;
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
+	
 	void removeConstraint(int);
 	void setConstraints(std::vector<Constraint>);
+	void setID(int) override;
 	void setOrigin(int);
 	void setTerminus(int);
 	void setTOF(double);

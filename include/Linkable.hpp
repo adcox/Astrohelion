@@ -58,15 +58,15 @@ namespace astrohelion{
 		 *  @name Set and Get Functions
 		 *  @{
 		 */
-		void addLink(int);
+		virtual void addLink(int);
 		void clearLinks();
 		int getID() const;
 		int getLink(int) const;
 		int getLinkIx(int) const;
 		bool isLinkedTo(int) const;
-		void removeLink(int);
-		void setID(int); 
-		void setLink(int, int);
+		virtual void removeLink(int);
+		virtual void setID(int); 
+		virtual void setLink(int, int);
 		//@}
 		
 	protected:

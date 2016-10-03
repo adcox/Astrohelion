@@ -270,7 +270,7 @@ int BaseArcset::addSeg(Segment s){
 /**
  *  @brief Append an arcset object (i.e., a set of nodes and segments) to this one
  * 
- *  @param arcset a pointer to the arcset derivative object to append
+ *  @param pArcsetIn a pointer to the arcset derivative object to append
  *  @param linkTo_ID the ID of the node in *this* arcset object to link to
  *  @param linkFrom_ID the ID of the node in <tt>set</tt> to link from
  *  @param tof time-of-flight between linkFrom_ID to linkTo_ID; if set to zero, 
@@ -283,8 +283,8 @@ int BaseArcset::addSeg(Segment s){
  *  @throws Exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
-int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int linkFrom_ID, double tof){
-	if(arcset->pSysData != pSysData)
+int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int linkFrom_ID, double tof){
+	if(pArcsetIn->pSysData != pSysData)
 		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
@@ -292,10 +292,10 @@ int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int lin
 		throw Exception("BaseArcset::appendSetAtNode: linkTo_ID is out of bounds");
 
 	// Create a copy so we don't affect the original
-	baseArcsetPtr set = arcset->clone();
+	baseArcsetPtr pSetCpy = pArcsetIn->clone();
 
 	Node linkTo_node = nodes[nodeIDMap[linkTo_ID]];
-	Node linkFrom_node = set->getNode(linkFrom_ID);		// Will do its own index checks
+	Node linkFrom_node = pSetCpy->getNode(linkFrom_ID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
 	if(!linkTo_node.isLinkedTo(Linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(Linkable::INVALID_ID))
@@ -306,7 +306,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int lin
 	// printf("Choosing segment (ID %d)\n", linkTo_node.getLink(0) == Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
 	Segment linkTo_seg = getSeg(linkTo_node.getLink(0) == Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
 	bool linkTo_isOrigin = linkTo_seg.getOrigin() == linkTo_node.getID();
-	Segment linkFrom_seg = set->getSeg(linkFrom_node.getLink(0) == Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
+	Segment linkFrom_seg = pSetCpy->getSeg(linkFrom_node.getLink(0) == Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
 	bool linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
 
 	if(!linkTo_isOrigin && !linkFrom_isOrigin)
@@ -322,16 +322,16 @@ int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int lin
 		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
 
 		// Delete the end node and the segment that connects to it
-		set->deleteSeg(linkFrom_seg.getID());
-		set->deleteNode(linkFrom_ID);
+		pSetCpy->deleteSeg(linkFrom_seg.getID());
+		pSetCpy->deleteNode(linkFrom_ID);
 		
 		// Update objects and variables that depend on linkFrom_ID
 		linkFrom_ID = new_linkFrom_ID;
-		linkFrom_node = set->getNode(linkFrom_ID);
+		linkFrom_node = pSetCpy->getNode(linkFrom_ID);
 		int new_linkFrom_segIx = linkFrom_node.getLink(0) == Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0);
 		
 		if(new_linkFrom_segIx != Linkable::INVALID_ID){
-			linkFrom_seg = set->getSeg(new_linkFrom_segIx);
+			linkFrom_seg = pSetCpy->getSeg(new_linkFrom_segIx);
 			linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
 		}else{
 			// No segments left, just a node
@@ -342,10 +342,10 @@ int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int lin
 	}
 
 	// A mapping vector: index is the old node ID, value is the new node ID
-	// All new IDs are initialized to the default INVALID_ID value
-	std::vector<int> map_oldID_to_newID = concatArcset(set.get());
+	// All new IDs are initialized to the default pSetCpy value
+	std::vector<int> map_oldID_to_newID = concatArcset(pSetCpy.get());
 
-	// Add a new segment to link the nodes from [set] to [this object]
+	// Add a new segment to link the nodes from [pSetCpy] to [this object]
 	int origin = Linkable::INVALID_ID, terminus = Linkable::INVALID_ID;
 	if(!linkTo_isOrigin){
 		origin = linkTo_ID;
@@ -394,7 +394,7 @@ void BaseArcset::clearAllConstraints(){
  *  without creating or deleting any nodes or segments; i.e., the arcset object will
  *  include two independent "flows" without a segment to connect them
  * 
- *  @param set pointer to an arcset object
+ *  @param pSet pointer to an arcset object
  *  @return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
@@ -403,17 +403,17 @@ void BaseArcset::clearAllConstraints(){
  *  
  *  @throws Exception if the input arcset does not have the same system data object as this one
  */
-std::vector<int> BaseArcset::concatArcset(const BaseArcset *set){
-	if(set->pSysData != pSysData)
+std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
+	if(pSet->pSysData != pSysData)
 		throw Exception("BaseArcset::concatArcset: Cannot concatenate two arcsets with different system data objects");
 
 	// A mapping vector: index is the old node ID, value is the new node ID
 	// All new IDs are initialized to the default INVALID_ID value
-	std::vector<int> map_oldID_to_newID(set->getNextNodeID(), Linkable::INVALID_ID);
+	std::vector<int> map_oldID_to_newID(pSet->getNextNodeID(), Linkable::INVALID_ID);
 
 	// Add all nodes from set to this object and keep track of new IDs
-	for(int n = 0; n < set->getNumNodes(); n++){
-		Node node = set->getNodeByIx(n);
+	for(int n = 0; n < pSet->getNumNodes(); n++){
+		Node node = pSet->getNodeByIx(n);
 
 		// Remove all links to segments; these will be added back when the segments are added to this new arcset object
 		node.clearLinks();
@@ -422,8 +422,8 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *set){
 
 	// Add all segments from set to this object and update the link IDs
 	// The act of adding the segment will update the links in the newly added nodes
-	for(int s = 0; s < set->getNumSegs(); s++){
-		Segment seg = set->getSegByIx(s);
+	for(int s = 0; s < pSet->getNumSegs(); s++){
+		Segment seg = pSet->getSegByIx(s);
 		
 		// Remap the origin and terminus to the new IDs
 		if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -435,12 +435,12 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *set){
 		addSeg(seg);
 	}
 
-	// Copy all constraints
-	std::vector<Constraint> arcCons = set->getArcConstraints();
+	// Copy all constraints associated with the arc as a whole (node and segment constraints are contained in Node and Segment objects)
+	std::vector<Constraint> arcCons = pSet->getArcConstraints();
 	cons.insert(cons.end(), arcCons.begin(), arcCons.end());
 
 	// Update tolerance to the larger of the two tolerances
-	tol = set->getTol() > tol ? set->getTol() : tol;
+	tol = pSet->getTol() > tol ? pSet->getTol() : tol;
 
 	bInChronoOrder = false;
 	return map_oldID_to_newID;

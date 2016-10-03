@@ -89,12 +89,12 @@ public:
 	void setAccel(const double*);
 	void setAccel(std::vector<double>);
 	void setConstraints(std::vector<Constraint>);
-	void setConstraintID(int);
 	void setEpoch(double);
 	void setExtraParam(std::string, double);
 	void setExtraParamVec(std::string, std::vector<double>);
 	void setExtraParams(std::map<std::string, double>);
 	void setExtraParamVec(std::map<std::string, std::vector<double> >);
+	void setID(int) override;
 	void setState(const double*);
 	void setState(std::vector<double>);
 	//@}

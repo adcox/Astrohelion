@@ -143,8 +143,8 @@ bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *i
 	// const SysData_2bp *sys = static_cast<const SysData_2bp*>(traj->getSysData());
 
  //    // Create a nodeset for this particular type of system
- //    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
- //    Nodeset_2bp eventNodeset(ic, sys, tof, 2, Nodeset::DISTRO_TIME);
+ //    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
+ //    Nodeset_2bp eventNodeset(ic, sys, tof, 2, Nodeset::TIME);
 
  //    // Constraint to keep first node unchanged
  //    Constraint fixFirstCon(Constraint_tp::STATE, 0, ic, 6);
@@ -157,7 +157,7 @@ bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *i
 
  //    if(verbose == Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
 
- //    astrohelion::printVerb(verbose == Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
+ //    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
  //    CorrectionEngine corrector;
  //    corrector.setVarTime(true);
  //    corrector.setTol(traj->getTol());

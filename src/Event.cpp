@@ -48,10 +48,8 @@ namespace astrohelion{
  *  @brief Basic constructor
  *  @details Use one of the two createEvent() functions to initialize the rest
  *  of the event object
- * 
- *  @param data a system data object that describes the system this event will occur in
  */
-Event::Event(const SysData *data) : pSysData(data) {}
+Event::Event(){}
 
 /**
  *	@brief Create an event
@@ -74,7 +72,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 		case Event_tp::XY_PLANE:
 		case Event_tp::CRASH:
 		{
-			double params[] = {0};
+			std::vector<double> params {0};
 			initEvent(t, dir, willStop, params);
 			break;
 		}
@@ -97,13 +95,13 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
  *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
- *	@param params an array of doubles that give the constructor extra information. No
+ *	@param params a vector of doubles that give the constructor extra information. No
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect (otherwise it will read uninitialized memory).
  *
  *	@see Event_tp::Event_tp
  */
-void Event::createEvent(Event_tp t, int dir, bool willStop, double *params){
+void Event::createEvent(Event_tp t, int dir, bool willStop, std::vector<double> params){
 	initEvent(t, dir, willStop, params);
 }//====================================================
 
@@ -114,13 +112,12 @@ void Event::createEvent(Event_tp t, int dir, bool willStop, double *params){
  *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
  *	primary and miss distance, use the customizable constructor.
  *
- *	@param data a system data object that describes the system this event will occur in
  *	@param t the event type
  *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
  */
-Event::Event(const SysData *data, Event_tp t, int dir, bool willStop) : pSysData(data){
+Event::Event(Event_tp t, int dir, bool willStop){
 	createEvent(t, dir, willStop);
 }//================================================
 
@@ -131,37 +128,34 @@ Event::Event(const SysData *data, Event_tp t, int dir, bool willStop) : pSysData
  *	Rather than using the default parameters, this constructor allows you to
  *	create more specialized events.
  *
- *	@param data a system data object that describes the system this event will occur in
  *	@param t the event type
  *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	@param willStop whether or not this event should stop the integration
- *	@param params an array of doubles that give the constructor extra information. No
+ *	@param params a vector of doubles that give the constructor extra information. No
  *	specific size is required, but params must have at least as many elements as the 
- *	event type will expect (otherwise it will read uninitialized memory).
+ *	event type will expect.
  *
  *	@see Event_tp::Event_tp
  *	@throws Exception if the dynamic model does not support this event type
  *	@throws Exception if the event type is not recognized
  *	@throws Exception if data values refer to invalid indices
  */
-Event::Event(const SysData *data, Event_tp t, int dir , bool willStop, double* params) : pSysData(data){
+Event::Event(Event_tp t, int dir , bool willStop, std::vector<double> params){
 	initEvent(t, dir, willStop, params);
 }//==========================================
 
 /**
  *	@see Event(data, t, dir, willStop, params)
  */
-void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
+void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> params){
+	// Save the parameters
 	type = t;
 	triggerDir = dir;
 	bStop = willStop;
+	paramsIn = params;	// Just temporary; initialize() function will reorder and add relevant constants
 
-	if(! pSysData->getDynamicsModel()->supportsEvent(type)){
-		throw Exception("Event_tp::initEvent: The current dynamic model does not support this event type");
-	}
-
-	// Create constraint data based on the type
+	// Determine the type of constraint that will be needed to detect this event
 	switch(type){
 		case Event_tp::YZ_PLANE:
 		case Event_tp::XZ_PLANE:
@@ -181,17 +175,28 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 			conType = Constraint_tp::DIST;
 			break;
 		default: 
-			throw Exception("Event_tp::initEvent: Creating event with no type");
+			throw Exception("Event::initEvent: Creating event with no type");
+	}
+}//====================================================
+
+void Event::initialize(const SysData* pSys){
+	pSysData = const_cast<SysData*>(pSys);
+
+	if(!pSysData)
+		throw Exception("Event::initialize: System data pointer has not been set!");
+
+	if(! pSys->getDynamicsModel()->supportsEvent(type)){
+		throw Exception("Event::initialize: The current dynamic model does not support this event type");
 	}
 
 	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
 	switch(type){
-		case Event_tp::YZ_PLANE: data[0] = params[0]; break;	// x = specified value
-		case Event_tp::XZ_PLANE: data[1] = params[0];	break;	// y = specified value
-		case Event_tp::XY_PLANE: data[2] = params[0]; break;	// z = specified value
+		case Event_tp::YZ_PLANE: data[0] = paramsIn[0]; break;	// x = specified value
+		case Event_tp::XZ_PLANE: data[1] = paramsIn[0];	break;	// y = specified value
+		case Event_tp::XY_PLANE: data[2] = paramsIn[0]; break;	// z = specified value
 		case Event_tp::CRASH:
 		{
-			data[0] = params[0];	// Index of primary
+			data[0] = paramsIn[0];	// Index of primary
 			if(data[0] < pSysData->getNumPrimaries()){
 				// Get body data, compute crash distance
 			    BodyData primData(pSysData->getPrimary(static_cast<int>(data[0])));
@@ -201,23 +206,24 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, double* params){
 			}
 			break;
 		}
-		case Event_tp::JC: data[0] = params[0]; break;	// JC = specified value
-		case Event_tp::APSE: data[0] = params[0]; break; 	// primary index = specified value
+		case Event_tp::JC: data[0] = paramsIn[0]; break;	// JC = specified value
+		case Event_tp::APSE: data[0] = paramsIn[0]; break; 	// primary index = specified value
 		case Event_tp::DIST:
-			data[0] = params[0];
-			data[1] = params[1];
+			data[0] = paramsIn[0];
+			data[1] = paramsIn[1];
 			break;
 		default: break;	// Do nothing
 	}
+
 	conData.insert(conData.begin(), data, data+6);
-}//==========================================
+}//====================================================
 
 /**
  *	@brief copy constructor
  */
-Event::Event(const Event &ev) : pSysData(ev.pSysData){
+Event::Event(const Event &ev){
 	copyEvent(ev);
-}//==========================================
+}//====================================================
 
 /**
  *	@brief copy the event
@@ -235,6 +241,7 @@ void Event::copyEvent(const Event &ev){
 	state = ev.state;
 	conType = ev.conType;
 	conData = ev.conData;
+	paramsIn = ev.paramsIn;
 	pSysData = ev.pSysData;	// COPY ADDRESS (ptr) of SYS DATA
 }//=============================================
 
@@ -262,8 +269,18 @@ Event& Event::operator =(const Event &ev){
  *	@return true if the two events are identical
  */
 bool operator ==(const Event &lhs, const Event &rhs){
-	return lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
-		lhs.bStop == rhs.bStop && lhs.pSysData == rhs.pSysData;
+	bool same = lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
+		lhs.bStop == rhs.bStop;
+
+	if(lhs.paramsIn.size() == rhs.paramsIn.size()){
+		for(unsigned int i = 0; i < lhs.paramsIn.size(); i++){
+			same = same && lhs.paramsIn[i] == rhs.paramsIn[i];
+		}	
+	}else{
+		same = false;
+	}
+
+	return same;
 }//====================================================
 
 /**
@@ -334,6 +351,14 @@ Constraint_tp Event::getConType() const { return conType; }
 std::vector<double> Event::getConData() const { return conData; }
 
 /**
+ *  @brief Return the system data pointer
+ *  @details This pointer can only be set by runnining the initialize() function
+ *  on the event or by copying another event
+ *  @return the system data pointer
+ */
+const SysData* Event::getSysData() { return pSysData; }
+
+/**
  *	@brief Retrieve the current trigger count, or the number of times
  *	this event has been triggered during the current simulation
  *	@return the trigger count
@@ -357,12 +382,6 @@ void Event::incrementCount(){ triggerCount++; }
  *	@param d the direction: +1 for positive, -1 for negative, 0 for both/either
  */
 void Event::setDir(int d){ triggerDir = d; }
-
-/**
- *	@brief Set the system data object for this event
- *	@param data a system data object
- */
-void Event::setSysData(SysData* data){ pSysData = data; }
 
 /**
  *	@brief Set the number of triggers this event can endure before the simulation
@@ -431,8 +450,12 @@ void Event::updateDist(const double y[6], double t){
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return the distance
  *	@throws Exception if the event type associated with this event is not implemented
+ *	@throws Exception if the system data pointer has not been initialized via the initialize() function
  */
 double Event::getDist(const double y[6], double t) const{
+	if(!pSysData)
+		throw Exception("Event::getDist: SysData pointer has not been initialized; please call initialize() function");
+
 	double d = 0;
 	switch(type){
 		case Event_tp::YZ_PLANE: d = conData[0] - y[0]; break;
@@ -472,7 +495,7 @@ double Event::getDist(const double y[6], double t) const{
 			break;
 		}
 		default:
-			throw Exception("Event type not implemented");
+			throw Exception("Event::getDist: Event type not implemented");
 	}
 
 	return d;

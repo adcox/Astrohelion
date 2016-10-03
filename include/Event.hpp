@@ -120,12 +120,13 @@ class Event : public Core{
 		 *  @name *structors
 		 *  @{
 		 */
-		Event(const SysData*);
-		Event(const SysData*, Event_tp, int, bool);
-		Event(const SysData*, Event_tp, int, bool, double*);
+		Event();
+		Event(Event_tp, int, bool);
+		Event(Event_tp, int, bool, std::vector<double>);
 		Event(const Event&);
 		void createEvent(Event_tp, int, bool);
-		void createEvent(Event_tp, int, bool, double*);
+		void createEvent(Event_tp, int, bool, std::vector<double>);
+		void initialize(const SysData*);
 		~Event();
 		//@}
 
@@ -146,8 +147,9 @@ class Event : public Core{
 		int getTriggerCount() const;
 		Event_tp getType() const;
 		const char* getTypeStr() const;
-		
 		std::vector<double>* getState();
+		const SysData* getSysData();
+
 		void incrementCount();
 		void reset();
 		bool stopOnEvent() const;
@@ -155,7 +157,6 @@ class Event : public Core{
 		void setDir(int);
 		void setStopCount(int);
 		void setStopOnEvent(bool);
-		void setSysData(SysData*);
 		//@}
 
 		bool crossedEvent(const double[6], double) const;
@@ -193,10 +194,12 @@ class Event : public Core{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData {};
 
-		const SysData* pSysData; 	//!< Copy of the system data pointer
+		std::vector<double> paramsIn {};
+		
+		SysData* pSysData = nullptr; 	//!< Copy of the system data pointer
 
 		void copyEvent(const Event&);
-		void initEvent(Event_tp, int, bool, double*);
+		void initEvent(Event_tp, int, bool, std::vector<double>);
 		double getDist(const double[6], double) const;
 		int getDir(const double[6], double) const;
 };

@@ -20,7 +20,7 @@ int main(){
 
 	// Generate a set of nodes around the arc
 	SysData_cr3bp sys("earth", "moon");
-	Nodeset_cr3bp scienceOrbitNodes(IC, &sys, tof, 10);
+	Nodeset_cr3bp scienceOrbitNodes(&sys, IC, tof, 10);
 
 	SimEngine sim;
 	std::vector<Traj_cr3bp> allArcs;

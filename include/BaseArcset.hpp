@@ -160,7 +160,9 @@ public:
 	MatrixXRd getSTMByIx(int) const;
 	const SysData* getSysData() const;
 	double getTol() const;
-	void putInChronoOrder();
+	bool isInChronoOrder() const;
+	
+	void putInChronoOrder(bool force = false);
 	void setAccel(int, std::vector<double>);
 	void setAccelByIx(int, std::vector<double>);
 	void setState(int, std::vector<double>);
@@ -183,7 +185,7 @@ public:
 	 */
 	virtual void print() const = 0;
 	//@}
-	
+
 	/**
 	 *  @name *File I/O
 	 *  @{
@@ -235,6 +237,8 @@ protected:
 	double tol = 0;		//!< Tolerance used to compute this data
 	int nextNodeID = 0;	//!< A counter that stores the next available node ID
 	int nextSegID = 0;	//!< A counter that stores the next available segment ID
+
+	bool bInChronoOrder = false;	//!< Whether or not the arcset is in chronological order
 
 	void copyMe(const BaseArcset&);
 

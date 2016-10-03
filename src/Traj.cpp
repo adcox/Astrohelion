@@ -87,7 +87,8 @@ Traj Traj::fromNodeset(Nodeset set){
 	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
 	Traj totalTraj(set.getSysData());
 
-	set.putInChronoOrder();
+	if(!set.isInChronoOrder())
+		set.putInChronoOrder();
 
 	for(int s = 0; s < set.getNumSegs(); s++){
 		double tof = set.getSegByIx(s).getTOF();
@@ -180,10 +181,42 @@ Traj& Traj::operator +=(const Traj &rhs){
 /**
  *  @brief Compute the total TOF for this trajectory
  *  @return the total TOF for this trajectory, units consistent
- *  with time units of the SysData object for this trajectory
+ *  with time units of the SysData object for this trajectory.
+ *  If the function is unable to determine the initial or final epoch,
+ *  a value of NAN is returned.
  */
 double Traj::getTotalTOF() const{
-	return getEpochByIx(-1) - getEpochByIx(0);
+	// Sort the trajectory into chronological order if it isn't already
+	// (unlikely to be out of order, but possible)
+	if(!bInChronoOrder){
+		std::vector<ArcPiece> pieces = getChronoOrder();
+		
+		// Find the first and final nodes, get their epochs
+		double T0 = NAN, Tf = NAN;
+		for(unsigned int i = 0; i < pieces.size(); i++){
+			if(pieces[i].type == ArcPiece::Piece_tp::NODE){
+				T0 = getEpoch(pieces[i].id);
+				// printf("T0 = %.4f at node id %d\n", T0, pieces[i].id);
+				break;
+			}
+		}
+		for(int i = static_cast<int>(pieces.size()) - 1; i >= 0; i--){
+			if(pieces[i].type == ArcPiece::Piece_tp::NODE){
+				Tf = getEpoch(pieces[i].id);
+				// printf("Tf = %.4f at node id %d\n", Tf, pieces[i].id);
+				break;
+			}
+		}
+
+		// Return the difference so long as an initial and final 
+		// epoch have been identified
+		if(!std::isnan(T0) && !std::isnan(Tf))
+			return Tf - T0;
+		else
+			return NAN;
+	}else{
+		return getEpochByIx(-1) - getEpochByIx(0);
+	}
 }//====================================================
 
 /**
@@ -319,6 +352,7 @@ void Traj::print() const {
 		printf("  Primary %d: %s\n", i, pSysData->getPrimary(i).c_str());
 
 	printf("  %d Nodes\n  %d Segments\n", getNumNodes(), getNumSegs());
+	printf("  TOF = %.4f\n", getTotalTOF());
 }//====================================================
 
 /**

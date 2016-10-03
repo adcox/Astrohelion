@@ -409,9 +409,9 @@ void Node::copyMe(const Node &n){
 
 void Node::print() const{
 	printf("Node | id = %d\n", ID);
-	printf("\tEpoch = %.f sec = %.4f hr = %.4f day\n", epoch, epoch/3600.0, epoch/3600.0/24.0);
-	printf("\tState = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f] km, km/s\n", state[0], state[1], state[2], state[3], state[4], state[5]);
-	printf("\tAccel = [%.4f, %.4f, %.4f] km/s^2\n", accel[0], accel[1], accel[2]);
+	printf("\tEpoch = %.4f\n", epoch);
+	printf("\tState = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f]\n", state[0], state[1], state[2], state[3], state[4], state[5]);
+	printf("\tAccel = [%.4f, %.4f, %.4f]\n", accel[0], accel[1], accel[2]);
 
 	printf("\tExtra Parameters:\n");
 	for(auto const& param : extraParam){

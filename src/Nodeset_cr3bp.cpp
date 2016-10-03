@@ -39,9 +39,9 @@ namespace astrohelion{
 //-----------------------------------------------------
 /**
  *	@brief Create a nodeset with specified system data
- *	@param data system data object
+ *	@param pData system data object
  */
-Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *data) : Nodeset(data){
+Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData) : Nodeset(pData){
 	initExtraParam();
 }//======================================================================
 
@@ -49,14 +49,14 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *data) : Nodeset(data){
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
+ *	@param pData a pointer to a system data object that describes the model to integrate in
  *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type
+ *	@param type node distribution type (default is NodeDistro_tp::TIME)
  */
-Nodeset_cr3bp::Nodeset_cr3bp(const double IC[6], const SysData_cr3bp *data, double tof,
-	int numNodes, NodeDistro_tp type) : Nodeset(data){
+Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, const double IC[6], double tof,
+	int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
 	initFromICs(IC, 0, tof, numNodes, type);
@@ -66,54 +66,18 @@ Nodeset_cr3bp::Nodeset_cr3bp(const double IC[6], const SysData_cr3bp *data, doub
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
+ *	@param pData a pointer to a system data object that describes the model to integrate in
  *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type
+ *	@param type node distribution type (default is NodeDistro_tp::TIME)
  */
-Nodeset_cr3bp::Nodeset_cr3bp(std::vector<double> IC, const SysData_cr3bp *data, double tof,
-	int numNodes, NodeDistro_tp type) : Nodeset(data){
+Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, std::vector<double> IC, double tof,
+	int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
 	initFromICs(&(IC[0]), 0, tof, numNodes, type);
 }//=====================================================================
-
-/**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
- *	integrated trajectory into pieces (nodes).
- *
- *	The type is automatically specified as splitting the trajectory equally in TIME
- *
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- */
-Nodeset_cr3bp::Nodeset_cr3bp(const double IC[6], const SysData_cr3bp *data, double tof, 
-	int numNodes) : Nodeset(data){
-
-	initExtraParam();
-	initFromICs(IC, 0, tof, numNodes, Nodeset::DISTRO_TIME);
-}//======================================================================
-
-/**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
- *	integrated trajectory into pieces (nodes).
- *
- *	The type is automatically specified as splitting the trajectory equally in TIME
- *
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- */
-Nodeset_cr3bp::Nodeset_cr3bp(std::vector<double> IC, const SysData_cr3bp *data, double tof, 
-	int numNodes) : Nodeset(data){
-
-	initExtraParam();
-	initFromICs(&(IC[0]), 0, tof, numNodes, Nodeset::DISTRO_TIME);
-}//======================================================================
 
 /**
  *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
@@ -129,7 +93,7 @@ Nodeset_cr3bp::Nodeset_cr3bp(std::vector<double> IC, const SysData_cr3bp *data, 
 Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes) : Nodeset(traj.getSysData()){
 
 	initExtraParam();
-	initFromTraj(traj, numNodes, Nodeset::DISTRO_TIME);
+	initFromTraj(traj, numNodes, Nodeset::TIME);
 }//===========================================
 
 /**
@@ -184,12 +148,12 @@ Nodeset_cr3bp::Nodeset_cr3bp(const BaseArcset &a) : Nodeset(a) {
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param sys pointer to a system data object; should be a 
+ *  @param pSys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
-baseArcsetPtr Nodeset_cr3bp::create( const SysData *sys) const{
-	const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(sys);
+baseArcsetPtr Nodeset_cr3bp::create( const SysData *pSys) const{
+	const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(pSys);
 	return baseArcsetPtr(new Nodeset_cr3bp(crSys));
 }//====================================================
 

@@ -59,12 +59,9 @@ public:
 	 *  @{
 	 */
 	Nodeset_bc4bp(const SysData_bc4bp*);
-	Nodeset_bc4bp(const double[6], const SysData_bc4bp*, double, double, int);
-	Nodeset_bc4bp(std::vector<double>, const SysData_bc4bp*, double, double, int);
-	Nodeset_bc4bp(const double[6], const SysData_bc4bp*, double, double, int,
-		NodeDistro_tp);
-	Nodeset_bc4bp(std::vector<double>, const SysData_bc4bp*, double, double, int,
-		NodeDistro_tp);
+	Nodeset_bc4bp(const SysData_bc4bp*, const double[6], double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
+	Nodeset_bc4bp(const SysData_bc4bp*, std::vector<double>, double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
+	
 	// Nodeset_bc4bp(const Nodeset_bc4bp&, int, int);
 	Nodeset_bc4bp(const Nodeset_bc4bp&);
 	Nodeset_bc4bp(const BaseArcset&);

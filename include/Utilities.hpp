@@ -65,7 +65,7 @@ namespace astrohelion{
 				permute(values, numSpots, ixs, perms);
 			}
 		}else{ // We've reached the bottom, compute the permuation and return
-			for(int i = 0; i < numSpots; i++){
+			for(unsigned int i = 0; i < numSpots; i++){
 				perms->push_back(values[ixs[i]]);
 			}
 			return;

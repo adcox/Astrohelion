@@ -355,7 +355,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 			double tof = members[idx].getTOF();
 			int numNodes = tof > 2 ? floor(tof) : 2;
 
-			Nodeset_cr3bp memberSet(members[idx].getIC(), &tempSys, tof, numNodes);
+			Nodeset_cr3bp memberSet(&tempSys, members[idx].getIC(), tof, numNodes);
 			double end = numNodes-1;
 			double conData[] = {end,end,end,end,end,end};
 			Constraint periodicCon(Constraint_tp::MATCH_CUST, 0, conData, 6);

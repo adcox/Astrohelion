@@ -172,7 +172,7 @@ Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	Nodeset_cr3bp crSet(ic, emData, 2.77, 5, Nodeset::DISTRO_TIME);
+	Nodeset_cr3bp crSet(ic, emData, 2.77, 5, Nodeset::TIME);
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
@@ -192,7 +192,7 @@ Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
 void test_createBCR4BPRNodeset(SysData_bc4bp *semData){
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new Nodeset_bc4bp(ic2, semData, 0, 40, 5, Nodeset::DISTRO_TIME);
+	bcSet = new Nodeset_bc4bp(ic2, semData, 0, 40, 5, Nodeset::TIME);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};

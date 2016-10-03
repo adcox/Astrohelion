@@ -98,6 +98,8 @@ public:
 	void setVelCon(std::vector<bool>);
 	void setVelCon(bool, bool, bool);
 	//@}
+
+	void print() const;
 protected:
 	virtual void copyMe(const Segment&);
 

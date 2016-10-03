@@ -64,9 +64,9 @@ public:
 	 *	Specified how nodes are distributed along an integrated trajectory
 	 */
 	enum NodeDistro_tp {
-		DISTRO_NONE, 		//!< There is no organizational method; nodes may be input by user.
-		DISTRO_TIME,		//!< Nodes spread evenly in time
-		DISTRO_ARCLENGTH	//!< Nodes spread evenly along trajectory by arclength (approx.)
+		NONE, 		//!< There is no organizational method; nodes may be input by user.
+		TIME,		//!< Nodes spread evenly in time
+		ARCLENGTH	//!< Nodes spread evenly along trajectory by arclength (approx.)
 	};
 
 	/**
@@ -94,9 +94,8 @@ public:
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
-	int createNodesAtEvent(int, Event);
-	int createNodesAtEvents(int, std::vector<Event>);
-	virtual int createNodesAtEvents(int, std::vector<Event>, double);
+	int createNodesAtEvent(int, Event, double minTimeDiff = 1e-2);
+	virtual int createNodesAtEvents(int, std::vector<Event>, double minTimeDiff = 1e-2);
 	//@}
 	
 	// Utility Functions

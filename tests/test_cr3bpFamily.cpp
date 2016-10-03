@@ -31,7 +31,7 @@ int main(void){
 	std::vector<FamMember_cr3bp> matches = fam.getMemberByStateVar(matchX, 0);
 	printf("  Found %zu Potential members\n", matches.size());
 	for(unsigned int i = 0; i < matches.size(); i++){
-		printf("   %03zu: x = %f ", i, matches[i].getIC()[0]);
+		printf("   %03u: x = %f ", i, matches[i].getIC()[0]);
 		std::cout << (std::abs(matches[i].getIC()[0] - matchX) < 1e-9 ? PASS : FAIL) << std::endl;
 	}
 
@@ -41,7 +41,7 @@ int main(void){
 	matches = fam.getMemberByJacobi(matchJC);
 	printf("  Found %zu Potential members\n", matches.size());
 	for(unsigned int i = 0; i < matches.size(); i++){
-		printf("   %03zu: JC = %f ", i, matches[i].getJacobi());
+		printf("   %03u: JC = %f ", i, matches[i].getJacobi());
 		std::cout << (std::abs(matches[i].getJacobi() - matchJC) < 1e-9 ? PASS : FAIL) << std::endl;
 	}
 
@@ -51,7 +51,7 @@ int main(void){
 	matches = fam.getMemberByTOF(matchTOF);
 	printf("  Found %zu Potential members\n", matches.size());
 	for(unsigned int i = 0; i < matches.size(); i++){
-		printf("   %03zu: TOF = %f ", i, matches[i].getTOF());
+		printf("   %03u: TOF = %f ", i, matches[i].getTOF());
 		std::cout << (std::abs(matches[i].getTOF() - matchTOF) < 1e-9 ? PASS : FAIL) << std::endl;
 	}
 }

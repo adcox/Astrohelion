@@ -97,8 +97,12 @@ void BaseArcset::sum(const BaseArcset *lhs, const BaseArcset *rhs, BaseArcset *r
 	baseArcsetPtr lhs_cpy = lhs->clone();
 	baseArcsetPtr rhs_cpy = rhs->clone();
 
-	lhs_cpy->putInChronoOrder();
-	rhs_cpy->putInChronoOrder();
+	if(!lhs_cpy->isInChronoOrder())
+		lhs_cpy->putInChronoOrder();
+
+	if(!rhs_cpy->isInChronoOrder())
+		rhs_cpy->putInChronoOrder();
+
 	int lhs_lastNodeID = lhs_cpy->getNodeByIx(-1).getID();
 	int rhs_firstNodeID = rhs_cpy->getNodeByIx(0).getID();
 
@@ -157,6 +161,7 @@ int BaseArcset::addNode(Node n){
 	nodes.push_back(n);
 	nodeIDMap[nextNodeID] = nodes.size()-1;
 
+	bInChronoOrder = false;
 	return nextNodeID++;
 }//=====================================================
 
@@ -255,6 +260,7 @@ int BaseArcset::addSeg(Segment s){
 	if(foundValidLink){
 		segs.push_back(s);
 		segIDMap[s.getID()] = segs.size()-1;
+		bInChronoOrder = false;
 		return nextSegID++;	
 	}else{
 		return Linkable::INVALID_ID;
@@ -360,6 +366,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *arcset, int linkTo_ID, int lin
 	}
 
 	// print();
+	bInChronoOrder = false;
 	return addSeg(Segment(origin, terminus, tof));
 }//====================================================
 
@@ -435,6 +442,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *set){
 	// Update tolerance to the larger of the two tolerances
 	tol = set->getTol() > tol ? set->getTol() : tol;
 
+	bInChronoOrder = false;
 	return map_oldID_to_newID;
 }//====================================================
 
@@ -566,6 +574,7 @@ void BaseArcset::deleteNode(int id){
 				index.second--;
 			}
 		}
+		bInChronoOrder = false;
 	}else{
 		printf("Cannot Delete: Node with ID %02d was not located\n", id);
 	}
@@ -616,6 +625,8 @@ void BaseArcset::deleteSeg(int id){
 	}else{
 		// printf("Cannot Delete: Segment with ID %02d was not located\n", id);
 	}
+
+	bInChronoOrder = false;
 }//===========================================
 
 /**
@@ -693,13 +704,15 @@ std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
  *  @throws Exception if the ID is out of bounds
  */
 std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevPieces) const{
-	if(nodeIDMap.count(ID) == 0)
+	if(nodeIDMap.count(ID) == 0){
+		printErr("Attempted to access ID = %d\n", ID);
 		throw Exception("BaseArcset::sortArcset: ID out of bounds");
+	}
 
 	std::vector<ArcPiece> pieces;
 
 	Node node0 = nodes[nodeIDMap.at(ID)];
-	// printf("Beginning with node ID %d\n", node0.getID());
+	printf("Beginning with node ID %d\n", node0.getID());
 
 	pieces.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, node0.getID()));
 	for(int dir = 1; dir > -2; dir -= 2){
@@ -1053,6 +1066,7 @@ Node& BaseArcset::getNodeRef(int id){
 
 	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
+		bInChronoOrder = false;
 		return nodes[ix];
 	}else{
 		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
@@ -1074,6 +1088,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
 
+	bInChronoOrder = false;
 	return nodes[ix];
 }//=====================================================
 
@@ -1292,6 +1307,16 @@ double BaseArcset::getTotalTOF() const{
 }//=================================================
 
 /**
+ *  @brief Determine if the arcset is arranged in chronological order
+ *  @details This is sufficient to prove that the arcset has
+ *  been sorted, but not necessary; i.e., even if the flag is
+ *  false, the arcset may indeed be in chronological order, but
+ *  the oposite can not be true.
+ *  @return a flag indicating if the arcset has been sorted into chronological order
+ */
+bool BaseArcset::isInChronoOrder() const{ return bInChronoOrder; }
+
+/**
  *  @brief Rearrange the nodes and segments so that they are listed
  *  in chronological order in their storage arrays.
  *  
@@ -1299,12 +1324,18 @@ double BaseArcset::getTotalTOF() const{
  *  only their index within the storage array. After calling this function,
  *  accessing the -1 node or segment will return the latest (in time) object.
  *  
+ *  @param force if true, the arcset will be sorted regardless of the value
+ *  of the isInChronoOrder() flag.
+ *  
  *  @throws Exception if the getChronoOrder() sorting algorithm returns a 
  *  set of ArcPiece objects that has a different size than the combined 
  *  node and segment vectors, the function is aborted as it is likely a node or 
  *  segment was skipped and we don't want to lose information.
  */
-void BaseArcset::putInChronoOrder(){
+void BaseArcset::putInChronoOrder(bool force){
+	if(bInChronoOrder && !force)
+		return;	// already sorted
+
 	// First, determine the chronological order
 	// print();
 	std::vector<ArcPiece> pieces = getChronoOrder();
@@ -1326,6 +1357,7 @@ void BaseArcset::putInChronoOrder(){
 			newNodes.push_back(node);
 		}else if(pieces[i].type == ArcPiece::Piece_tp::SEG){
 			Segment seg = getSeg(pieces[i].id);
+			seg.setTOF(std::abs(seg.getTOF()));	// Time should always progress forwards!
 			newSegIDMap[seg.getID()] = newSegs.size();
 			newSegs.push_back(seg);
 		}
@@ -1335,6 +1367,8 @@ void BaseArcset::putInChronoOrder(){
 	segs = newSegs;
 	nodeIDMap = newNodeIDMap;
 	segIDMap = newSegIDMap;
+
+	bInChronoOrder = true;
 }//=============================================
 
 /**
@@ -1509,6 +1543,7 @@ void BaseArcset::copyMe(const BaseArcset &d){
 	tol = d.tol;
 	nextNodeID = d.nextNodeID;
 	nextSegID = d.nextSegID;
+	bInChronoOrder = d.bInChronoOrder;
 }//====================================================
 
 /**
@@ -1536,21 +1571,27 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 		segs.clear();
 		nodeIDMap.clear();
 		segIDMap.clear();
-		Node blank_node;
-		Segment blank_seg;
 		
 		// Create a set of nodes and segments all linked together in linear time
 		for(int i = 0; i < numSteps; i++){
-			nodes.push_back(blank_node);
+			Node node;
+			node.setID(i);
+
+			if(i > 0)
+				node.addLink(i-1);
+			if(i < numSteps-1)
+				node.addLink(i);
+
+			nodes.push_back(node);
 			nodeIDMap[i] = i;
 			
 			if(i > 0){
-				segs.push_back(Segment(i-1, i, NAN));
+				Segment seg(i-1, i, NAN);
+				seg.setID(i-1);
+				segs.push_back(seg);
 				segIDMap[i-1] = i-1;
 			}
 		}
-		// nodes.assign(numSteps, blank_node);	// Initialize array with a bunch of default objects
-		// segs.assign(numSteps-1, blank_seg);
 	}
 	Mat_VarFree(pStateMat);
 }//======================================================

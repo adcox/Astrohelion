@@ -1278,7 +1278,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     sim.clearEvents();                  // Ignore any crashes into the primaries
     std::vector<int> zeroStates;        // Which states must be zero to ensure a perpendicular crossing
 
-    Event mirrorEvt(pSys);
+    Event mirrorEvt;
     // Determine which states must be zero for mirroring
     switch(mirrorType){
         case Mirror_tp::MIRROR_XZ:
@@ -1364,7 +1364,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         astrohelion::printWarn("tpat_calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
 
     // Create a nodeset from arc
-    Nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, Nodeset::DISTRO_TIME);
+    Nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, Nodeset::TIME);
     halfOrbNodes.addConstraint(initStateCon);
     halfOrbNodes.addConstraint(finalStateCon);
 

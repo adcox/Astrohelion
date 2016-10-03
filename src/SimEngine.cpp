@@ -400,6 +400,11 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     traj->setTol(absTol > relTol ? absTol : relTol);
     const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
 
+    // Initialize all events with the correct system data pointer
+    for(unsigned int i = 0; i < events.size(); i++){
+        events[i].initialize(traj->getSysData());
+    }
+
     // Get the dimension of the state vector for integration
     int core = model->getCoreStateSize();
     int ic_dim = core + (!bSimpleIntegration)*(model->getSTMStateSize() + model->getExtraStateSize());
@@ -691,8 +696,8 @@ void SimEngine::createCrashEvents(const SysData *sysData){
     if(!bMadeCrashEvents){
         for(int p = 0; p < sysData->getNumPrimaries(); p++){
             // Put primary index # into an array, create event
-            double Pix = static_cast<double>(p);
-            Event crashEvt(sysData, Event_tp::CRASH, 0, true, &Pix);
+            std::vector<double> Pix {static_cast<double>(p)};
+            Event crashEvt(Event_tp::CRASH, 0, true, Pix);
             // Add event to list by default
             addEvent(crashEvt);
         }

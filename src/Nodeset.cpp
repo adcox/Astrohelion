@@ -180,34 +180,14 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
  *  @param evt the event that identifies the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If the event does not occur,
  *  no nodes are inserted
+ *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  times-of-flight greater than or equal to this amount (default is 1e-2)
  * 
  *  @return the number of nodes created and inserted into the nodeset.
  */
-int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt){
+int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
 	std::vector<Event> events(1, evt);
-	return createNodesAtEvents(priorNodeIx, events);
-}//====================================================
-
-/**
- *  @brief Insert a node after the specified node at any locations where the
- *  specified events occur
- *  @details This function <i>does</i> adjust the prior node to ensure that 
- *  times of flights and other parameters will lead to a nearly continuous 
- *  integrated path. The minimum acceptable time between events is assumed to 
- *  be 1e-2 nondimensional units.
- * 
- *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
- *  inserted after this node.
- *  @param evts a vector of events that identify the node locations. If multiple occurences
- *  are located, multiple nodes will be inserted. If nond of the events occur,
- *  no nodes are inserted
- 
- *  @return the number of nodes created and inserted into the nodeset.
- *  @see createNodesAtEvent
- *  @see createNodesAtEvents(int, std::vector<Event>, double)
- */
-int Nodeset::createNodesAtEvents(int priorNodeIx, std::vector<Event> evts){
-	return createNodesAtEvents(priorNodeIx, evts, 1e-2);
+	return createNodesAtEvents(priorNodeIx, events, minTimeDiff);
 }//====================================================
 
 /**
@@ -221,7 +201,7 @@ int Nodeset::createNodesAtEvents(int priorNodeIx, std::vector<Event> evts){
  *  are located, multiple nodes will be inserted. If nond of the events occur,
  *  no nodes are inserted
  *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
- *  times-of-flight greater than or equal to this amount
+ *  times-of-flight greater than or equal to this amount (default is 1e-2)
  *  
  *  @return the number of nodes created and inserted into the nodeset.
  *  @throws Exception if <tt>segID</tt> is out of bounds
@@ -482,13 +462,13 @@ void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNode
 
 	switch(distroType){
 		default:
-		case Nodeset::DISTRO_NONE:
-			astrohelion::printWarn("Nodeset type is NONE or not specified, using DISTRO_TIME\n");
-		case Nodeset::DISTRO_TIME:
+		case Nodeset::NONE:
+			astrohelion::printWarn("Nodeset type is NONE or not specified, using TIME\n");
+		case Nodeset::TIME:
 			// Initialize using time
 			initFromICs_time(IC, t0, tof, numNodes);
 			break;
-		case Nodeset::DISTRO_ARCLENGTH:
+		case Nodeset::ARCLENGTH:
 			// Initialize using arclength
 			initFromICs_arclength(IC, t0, tof, numNodes);
 			break;

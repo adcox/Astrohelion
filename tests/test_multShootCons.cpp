@@ -37,17 +37,17 @@ bool stateDiffBelowTol(std::vector<double> data, double *correct, double tol){
 			sum += pow(data[i] - correct[i], 2);
 	}
 	return sqrt(sum) < tol;
-}
+}//====================================================
 
 bool stateDiffBelowTol(std::vector<double> data, std::vector<double> correct, double tol){
 	return stateDiffBelowTol(data, &(correct[0]), tol);
-}
+}//====================================================
 
 void testCR3BP_SE_Cons(bool equalArcTime){
 	SysData_cr3bp sys("sun", "earth");
 	double ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
 	double T = 3.293141367224790;
-	Nodeset_cr3bp halfLyapNodeset(ic, &sys, T/1.25, 8);	// Create a nodeset
+	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T/1.25, 8);	// Create a nodeset
 	std::vector<double> initState, finalState;
 	Nodeset_cr3bp correctedSet(&sys);
 
@@ -76,7 +76,7 @@ void testCR3BP_EM_Cons(bool equalArcTime){
 	SysData_cr3bp sys("earth", "moon");
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(ic, &sys, T, 6);	// Create a nodeset
+	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
 
 	std::vector<double> initState, finalState;
 	Nodeset_cr3bp correctedSet(&sys);
@@ -294,8 +294,8 @@ void testCR3BP_EM_Cons(bool equalArcTime){
 	// Constraint_tp::SEG_CONT_PV
 	astrohelion::printColor(BOLDBLACK, "Constraint_tp::SEG_CONT_PV Constraint\n");
 
-	Nodeset_cr3bp forwardArc(ic, &sys, T/2, 4);
-	Nodeset_cr3bp reverseArc(ic, &sys, -T/2.1, 4);
+	Nodeset_cr3bp forwardArc(&sys, ic, T/2, 4);
+	Nodeset_cr3bp reverseArc(&sys, ic, -T/2.1, 4);
 	Nodeset_cr3bp doubleSrcLyap = forwardArc;
 	doubleSrcLyap.appendSetAtNode(&reverseArc, 0, 0, 0);
 	// doubleSrcLyap.print();
@@ -336,7 +336,7 @@ void testBCR4BPCons(bool equalArcTime){
 	SysData_bc4bp sys("sun", "earth", "moon");
 	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
 	double T = 313;	// SE L1 Period
-	Nodeset_bc4bp halfLyapNodeset(ic, &sys, 0, T, 6);	// Create a nodeset
+	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	std::vector<double> initState, finalState;
 	Nodeset_bc4bp correctedSet(&sys);
 
@@ -536,7 +536,7 @@ void testBCR4BPCons(bool equalArcTime){
 	double t0 = 10207.19;
 	// double t0 = 0;
 	double tof = 51.32;
-	Nodeset_bc4bp nodes0(IC, &sys, t0, tof, 5);
+	Nodeset_bc4bp nodes0(&sys, IC, t0, tof, 5);
 	corrector.setTol(1e-11);
 	// nodes0.saveToMat("SP_TestCase.mat");
 
@@ -667,9 +667,9 @@ void testBCR4BPCons(bool equalArcTime){
 	// Constraint_tp::SEG_CONT_PV
 	astrohelion::printColor(BOLDBLACK, "Constraint_tp::SEG_CONT_PV Constraint\n");
 
-	Nodeset_bc4bp forwardArc(ic, &sys, 0, T/2, 4);
+	Nodeset_bc4bp forwardArc(&sys, ic, 0, T/2, 4);
 	forwardArc.deleteNode(3);
-	Nodeset_bc4bp reverseArc(ic, &sys, T, -T/2, 4);
+	Nodeset_bc4bp reverseArc(&sys, ic, T, -T/2, 4);
 	reverseArc.deleteNode(3);
 	Nodeset_bc4bp doubleSrcLyap = forwardArc;
 	doubleSrcLyap.concatArcset(&reverseArc);

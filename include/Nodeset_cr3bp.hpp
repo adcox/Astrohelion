@@ -57,10 +57,8 @@ public:
 	 *  @{
 	 */
 	Nodeset_cr3bp(const SysData_cr3bp*);
-	Nodeset_cr3bp(const double[6], const SysData_cr3bp*, double, int);
-	Nodeset_cr3bp(std::vector<double>, const SysData_cr3bp*, double, int);
-	Nodeset_cr3bp(const double[6], const SysData_cr3bp*, double, int, NodeDistro_tp);
-	Nodeset_cr3bp(std::vector<double>, const SysData_cr3bp*, double, int, NodeDistro_tp);
+	Nodeset_cr3bp(const SysData_cr3bp*, const double[6], double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
+	Nodeset_cr3bp(const SysData_cr3bp*, std::vector<double>, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
 	Nodeset_cr3bp(Traj_cr3bp, int);
 	Nodeset_cr3bp(Traj_cr3bp, int, NodeDistro_tp);
 	Nodeset_cr3bp(const Nodeset_cr3bp&, int, int);

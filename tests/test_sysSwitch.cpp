@@ -29,7 +29,7 @@ int main(void){
 	engine.runSim(haloIC, 2.77, &emHalo);
 	emHalo.saveToMat("data/EM_Halo.mat");
 
-	Nodeset_cr3bp emNodes(haloIC, &emSys, 2.77, 10, Nodeset::DISTRO_TIME);
+	Nodeset_cr3bp emNodes(haloIC, &emSys, 2.77, 10, Nodeset::TIME);
 	emNodes.saveToMat("data/EM_Nodes.mat");
 
 	Traj_cr3bp emHalo_inSE = cr3bp_EM2SE(emHalo, &seSys, 0.1, 0.2, 0.05);
@@ -48,7 +48,7 @@ int main(void){
 	engine.runSim(haloIC, 2.77, &seTraj);
 	seTraj.saveToMat("data/SE_Traj.mat");
 
-	Nodeset_cr3bp seNodes(haloIC, &seSys, 2.77, 10, Nodeset::DISTRO_ARCLENGTH);
+	Nodeset_cr3bp seNodes(haloIC, &seSys, 2.77, 10, Nodeset::ARCLENGTH);
 	seNodes.saveToMat("data/SE_Nodes.mat");
 
 	Traj_cr3bp seTraj_inEM = cr3bp_SE2EM(seTraj, &emSys, 0.1, 0.2, 0.05);

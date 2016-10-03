@@ -41,9 +41,9 @@ namespace astrohelion{
 //-----------------------------------------------------
 /**
  *	@brief Construct a nodeset with no data other than the system
- *	@param data system data object describing the system the nodes exist in
+ *	@param pData system data object describing the system the nodes exist in
  */
-Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *data) : Nodeset(data){
+Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData) : Nodeset(pData){
 	initExtraParam();
 }//====================================================
 
@@ -51,53 +51,15 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *data) : Nodeset(data){
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
- *	The type is automatically set to splitting the trajectory equally in TIME
- *
+ *	@param pData a pointer to a system data object that describes the model to integrate in
  *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
  *	@param t0 time that corresponds to IC
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
+ *	@param type node distribution type (default is NodeDistro_tp::TIME)
  */
-Nodeset_bc4bp::Nodeset_bc4bp(const double IC[6], const SysData_bc4bp *data, 
-	double t0, double tof, int numNodes) : Nodeset(data){
-
-	initExtraParam();
-	initFromICs(IC, t0, tof, numNodes, Nodeset::DISTRO_TIME);
-}//====================================================
-
-/**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
- *	integrated trajectory into pieces (nodes).
- *
- *	The type is automatically set to splitting the trajectory equally in TIME
- *
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
- *	@param t0 time that corresponds to IC
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- */
-Nodeset_bc4bp::Nodeset_bc4bp(std::vector<double> IC, const SysData_bc4bp *data, 
-	double t0, double tof, int numNodes) : Nodeset(data){
-
-	initExtraParam();
-	initFromICs(&(IC[0]), t0, tof, numNodes, Nodeset::DISTRO_TIME);
-}//====================================================
-
-/**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
- *	integrated trajectory into pieces (nodes).
- *
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
- *	@param t0 time that corresponds to IC
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type
- */
-Nodeset_bc4bp::Nodeset_bc4bp(const double IC[6], const SysData_bc4bp *data, 
-	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(data){
+Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, const double IC[6], 
+	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
 	initFromICs(IC, t0, tof, numNodes, type);
@@ -107,15 +69,15 @@ Nodeset_bc4bp::Nodeset_bc4bp(const double IC[6], const SysData_bc4bp *data,
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
+ *	@param pData a pointer to a system data object that describes the model to integrate in
  *	@param IC a set of initial conditions, non-dimensional units
- *	@param data a pointer to a system data object that describes the model to integrate in
  *	@param t0 time that corresponds to IC
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type
+ *	@param type node distribution type (default is NodeDistro_tp::TIME)
  */
-Nodeset_bc4bp::Nodeset_bc4bp(std::vector<double> IC, const SysData_bc4bp *data, 
-	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(data){
+Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, std::vector<double> IC, 
+	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
 	initFromICs(&(IC[0]), t0, tof, numNodes, type);
@@ -142,12 +104,12 @@ Nodeset_bc4bp::Nodeset_bc4bp(const BaseArcset &a) : Nodeset(a) {}
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param sys pointer to a system data object; should be a 
+ *  @param pSys pointer to a system data object; should be a 
  *  BCR4BPR system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
-baseArcsetPtr Nodeset_bc4bp::create( const SysData *sys) const{
-	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(sys);
+baseArcsetPtr Nodeset_bc4bp::create( const SysData *pSys) const{
+	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(pSys);
 	return baseArcsetPtr(new Nodeset_bc4bp(bcSys));
 }//====================================================
 

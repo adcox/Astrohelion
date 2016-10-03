@@ -359,5 +359,12 @@ void Segment::copyMe(const Segment &s){
 	Linkable::copyMe(s);
 }//====================================================
 
+void Segment::print() const{
+	printf("Segment | id = %d\n", ID);
+	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());
+	printf("\tTOF = %.4f\n", tof);
+}//====================================================
+
+
 
 }// END of Astrohelion namespace

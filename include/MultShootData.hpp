@@ -150,7 +150,6 @@ class MultShootData{
 
 		bool bVarTime = true;		//!< Whether or not the corrector is using variable time
 		bool bEqualArcTime = false;	//!< Whether or not each arc must have an equal duration
-	
 	protected:
 		void copyMe(const MultShootData&);
 };

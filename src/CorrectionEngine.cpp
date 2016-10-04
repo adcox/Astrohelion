@@ -196,6 +196,18 @@ void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
 void CorrectionEngine::setScaleVars(bool b){ bScaleVars = b; }
 
 /**
+ *  @brief Set the step size scalar and the limiting tolerance
+ *  @details [long description]
+ * 
+ *  @param scale [description]
+ *  @param limit [description]
+ */
+void CorrectionEngine::setStepScale(double scale, double limit){
+	stepScale = scale;
+	stepScaleLimitTol = limit;
+}//====================================================
+
+/**
  *	@brief Set the error tolerance
  *	@param d errors below this value will be considered negligible
  */
@@ -641,7 +653,8 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 		}
 	}
 
-	return oldX + X_diff;	// newX = oldX + X_diff
+	double scale = FX.norm() < stepScaleLimitTol ? 1.0 : stepScale;
+	return oldX + scale*X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
 
 /**

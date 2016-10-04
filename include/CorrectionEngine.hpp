@@ -106,6 +106,7 @@ class CorrectionEngine : public Core, public Engine{
 		void setFindEvent(bool);
 		void setMaxIts(int);
 		void setScaleVars(bool);
+		void setStepScale(double, double limit = 1e-8);
 		void setTol(double);
 		void setVarTime(bool);
 		//@}
@@ -136,6 +137,12 @@ class CorrectionEngine : public Core, public Engine{
 
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;
+
+		/** Scale step size by this value */
+		double stepScale = 1;
+
+		/** Do not scale steps size if error is below this tolerance */
+		double stepScaleLimitTol = 1e-8;
 
 		/** Maximum acceptable error value, non-dimensional units.
 			This tolerance also influences the simulation tolerance.

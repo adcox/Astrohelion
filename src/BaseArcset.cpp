@@ -712,7 +712,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 	std::vector<ArcPiece> pieces;
 
 	Node node0 = nodes[nodeIDMap.at(ID)];
-	printf("Beginning with node ID %d\n", node0.getID());
+	// printf("Beginning with node ID %d\n", node0.getID());
 
 	pieces.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, node0.getID()));
 	for(int dir = 1; dir > -2; dir -= 2){
@@ -1353,11 +1353,29 @@ void BaseArcset::putInChronoOrder(bool force){
 	for(unsigned int i = 0; i < pieces.size(); i++){
 		if(pieces[i].type == ArcPiece::Piece_tp::NODE){
 			Node node = getNode(pieces[i].id);
+
+			// Update the links to include the segment before and after this node
+			node.clearLinks();
+			if(i > 0 && pieces[i-1].type == ArcPiece::Piece_tp::SEG)
+				node.addLink(pieces[i-1].id);
+
+			if(i+1 < pieces.size() && pieces[i+1].type == ArcPiece::Piece_tp::SEG)
+				node.addLink(pieces[i+1].id);
+
 			newNodeIDMap[node.getID()] = newNodes.size();
 			newNodes.push_back(node);
 		}else if(pieces[i].type == ArcPiece::Piece_tp::SEG){
 			Segment seg = getSeg(pieces[i].id);
 			seg.setTOF(std::abs(seg.getTOF()));	// Time should always progress forwards!
+			
+			// Update the links to include the node before and after this segment
+			seg.clearLinks();
+			if(i > 0 && pieces[i-1].type == ArcPiece::Piece_tp::NODE)
+				seg.setOrigin(pieces[i-1].id);
+
+			if(i+1 < pieces.size() && pieces[i+1].type == ArcPiece::Piece_tp::NODE)
+				seg.setTerminus(pieces[i+1].id);
+
 			newSegIDMap[seg.getID()] = newSegs.size();
 			newSegs.push_back(seg);
 		}

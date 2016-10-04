@@ -24,12 +24,13 @@ double state3[] = {3, 0, 3, 0, 0, 0};
 double state4[] = {4, 0, 0, 4, 0, 0};
 double state5[] = {5, 0, 0, 0, 5, 0};
 
+int ivID = Linkable::INVALID_ID;
+
 /**
  *  @brief Create a basic Linkable object (in this case, a node) and test the functions
  *  to ensure everything works properly
  */
 void testCreateLinkable(){
-	int ivID = Linkable::INVALID_ID;
 
 	Node n(state1, 10);
 
@@ -87,8 +88,6 @@ void testCreateLinkable(){
  *  @brief Create an arcset out of a set of nodes and segments; test basic_arcset functionality
  */
 void testCreateArcset(){
-	int ivID = Linkable::INVALID_ID;
-
 	Nodeset set(&sys);
 
 	Node n1(state1, 10);
@@ -135,8 +134,6 @@ void testCreateArcset(){
  *  @brief Try to delete a segment from a simiple 2-node set
  */
 void tryDeleteSeg(){
-	int ivID = Linkable::INVALID_ID;
-
 	Nodeset set(&sys);
 	Node n1(state1, 10);
 	Node n2(state2, 25);
@@ -453,14 +450,14 @@ void tryDeleteMiddleNode_doubleSource2(){
 	set.addNode(Node(state3, -2.2));
 	set.addSeg(Segment(0, 1, -1.1));
 	set.addSeg(Segment(1, 2, -1.1));
-	int sID_last = set.addSeg(Segment(0, Linkable::INVALID_ID, 1.1));
+	int sID_last = set.addSeg(Segment(0, ivID, 1.1));
 
 	std::cout << "Delete middle node (DOULBE DIRECTION 2): ";
 	try{
 		set.deleteNode(0);
 		// set.print();
 		Segment seg = set.getSeg(sID_last+1);
-		if(seg.getOrigin() == 1 && seg.getTerminus() == Linkable::INVALID_ID && std::abs(seg.getTOF() - 2.2) < 1e-4)
+		if(seg.getOrigin() == 1 && seg.getTerminus() == ivID && std::abs(seg.getTOF() - 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
 			std::cout << FAIL << std::endl;
@@ -488,7 +485,7 @@ void tryDeleteMiddleNode_doubleSource3(){
 		set.deleteNode(0);
 		// set.print();
 		Segment seg = set.getSeg(sID_last+1);
-		if(seg.getOrigin() == 1 && seg.getTerminus() == Linkable::INVALID_ID && std::abs(seg.getTOF() + 2.2) < 1e-4)
+		if(seg.getOrigin() == 1 && seg.getTerminus() == ivID && std::abs(seg.getTOF() + 2.2) < 1e-4)
 			std::cout << PASS << std::endl;
 		else
 			std::cout << FAIL << std::endl;
@@ -685,13 +682,32 @@ void testPutInChrono2(){
 	set1.addSeg(Segment(1, 2, 1.1));
 
 	set1.putInChronoOrder();
-	bool nodeOrder = set1.getNodeByIx(0).getID() == 0 && 
-					set1.getNodeByIx(1).getID() == 1 && 
-					set1.getNodeByIx(2).getID() == 2;
-	bool segOrder = set1.getSegByIx(0).getID() == 0 &&
-					set1.getSegByIx(1).getID() == 1;
+	bool nodeOrder = 	set1.getNodeByIx(0).getID() == 0 && 
+						set1.getNodeByIx(1).getID() == 1 && 
+						set1.getNodeByIx(2).getID() == 2;
+	bool segOrder = 	set1.getSegByIx(0).getID() == 0 &&
+						set1.getSegByIx(1).getID() == 1;
 
-	std::cout << "  Forward Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
+	bool nodeLinks = 	set1.getNode(0).isLinkedTo(0) &&
+						set1.getNode(0).isLinkedTo(ivID) &&
+						set1.getNode(1).isLinkedTo(0) &&
+						set1.getNode(1).isLinkedTo(1) &&
+						set1.getNode(2).isLinkedTo(1) &&
+						set1.getNode(2).isLinkedTo(ivID);
+	bool segDir = 		set1.getSeg(0).getTOF() > 0 &&
+						set1.getSeg(1).getTOF() > 0;
+	bool segOrigin = 	set1.getSeg(0).getOrigin() == 0 &&
+						set1.getSeg(1).getOrigin() == 1;
+	bool segTerminus = 	set1.getSeg(0).getTerminus() == 1 &&
+						set1.getSeg(1).getTerminus() == 2;
+
+	std::cout << "  Forward Time Set: " << std::endl;
+	std::cout << "    * Node Order: " << (nodeOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Node Links: " << (nodeLinks ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Order: " << (segOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Dir: " << (segDir ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Origin: " << (segOrigin ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Terminus: " << (segTerminus ? PASS : FAIL) << std::endl;
 
 	// Reverse time set
 	Nodeset set2(&sys);
@@ -705,10 +721,29 @@ void testPutInChrono2(){
 	nodeOrder = set2.getNodeByIx(0).getID() == 2 && 
 				set2.getNodeByIx(1).getID() == 1 && 
 				set2.getNodeByIx(2).getID() == 0;
-	segOrder = set2.getSegByIx(0).getID() == 1 &&
+	segOrder = 	set2.getSegByIx(0).getID() == 1 &&
 				set2.getSegByIx(1).getID() == 0;
 
-	std::cout << "  Reverse Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
+	nodeLinks = 	set2.getNode(0).isLinkedTo(0) &&
+					set2.getNode(0).isLinkedTo(ivID) &&
+					set2.getNode(1).isLinkedTo(0) &&
+					set2.getNode(1).isLinkedTo(1) &&
+					set2.getNode(2).isLinkedTo(1) &&
+					set2.getNode(2).isLinkedTo(ivID);
+	segDir = 		set2.getSeg(0).getTOF() > 0 &&
+					set2.getSeg(1).getTOF() > 0;
+	segOrigin = 	set2.getSeg(0).getOrigin() == 1 &&
+					set2.getSeg(1).getOrigin() == 2;
+	segTerminus = 	set2.getSeg(0).getTerminus() == 0 &&
+					set2.getSeg(1).getTerminus() == 1;
+
+	std::cout << "  Reverse Time Set: " << std::endl;
+	std::cout << "    * Node Order: " << (nodeOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Node Links: " << (nodeLinks ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Order: " << (segOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Dir: " << (segDir ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Origin: " << (segOrigin ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Terminus: " << (segTerminus ? PASS : FAIL) << std::endl;
 
 	// Shuffled forward time
 	Nodeset set3(&sys);
@@ -725,7 +760,26 @@ void testPutInChrono2(){
 	segOrder = set3.getSegByIx(0).getID() == 0 &&
 				set3.getSegByIx(1).getID() == 1;
 
-	std::cout << "  Shuffled forward Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
+	nodeLinks = 	set3.getNode(0).isLinkedTo(0) &&
+					set3.getNode(0).isLinkedTo(1) &&
+					set3.getNode(1).isLinkedTo(0) &&
+					set3.getNode(1).isLinkedTo(ivID) &&
+					set3.getNode(2).isLinkedTo(1) &&
+					set3.getNode(2).isLinkedTo(ivID);
+	segDir = 		set3.getSeg(0).getTOF() > 0 &&
+					set3.getSeg(1).getTOF() > 0;
+	segOrigin = 	set3.getSeg(0).getOrigin() == 1 &&
+					set3.getSeg(1).getOrigin() == 0;
+	segTerminus = 	set3.getSeg(0).getTerminus() == 0 &&
+					set3.getSeg(1).getTerminus() == 2;
+
+	std::cout << "  Shuffled Forward Time Set: " << std::endl;
+	std::cout << "    * Node Order: " << (nodeOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Node Links: " << (nodeLinks ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Order: " << (segOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Dir: " << (segDir ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Origin: " << (segOrigin ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Terminus: " << (segTerminus ? PASS : FAIL) << std::endl;
 
 	// Shuffled reverse time
 	Nodeset set4(&sys);
@@ -742,7 +796,26 @@ void testPutInChrono2(){
 	segOrder = set4.getSegByIx(0).getID() == 1 &&
 				set4.getSegByIx(1).getID() == 0;
 
-	std::cout << "  Shuffled reverse Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
+	nodeLinks = 	set4.getNode(0).isLinkedTo(0) &&
+					set4.getNode(0).isLinkedTo(1) &&
+					set4.getNode(1).isLinkedTo(0) &&
+					set4.getNode(1).isLinkedTo(ivID) &&
+					set4.getNode(2).isLinkedTo(1) &&
+					set4.getNode(2).isLinkedTo(ivID);
+	segDir = 		set4.getSeg(0).getTOF() > 0 &&
+					set4.getSeg(1).getTOF() > 0;
+	segOrigin = 	set4.getSeg(0).getOrigin() == 0 &&
+					set4.getSeg(1).getOrigin() == 2;
+	segTerminus = 	set4.getSeg(0).getTerminus() == 1 &&
+					set4.getSeg(1).getTerminus() == 0;
+
+	std::cout << "  Shuffled Reverse Time Set: " << std::endl;
+	std::cout << "    * Node Order: " << (nodeOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Node Links: " << (nodeLinks ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Order: " << (segOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Dir: " << (segDir ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Origin: " << (segOrigin ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Terminus: " << (segTerminus ? PASS : FAIL) << std::endl;
 
 	// Mixed time set
 	Nodeset set5(&sys);
@@ -762,12 +835,45 @@ void testPutInChrono2(){
 				set5.getNodeByIx(2).getID() == 1 &&
 				set5.getNodeByIx(3).getID() == 2 && 
 				set5.getNodeByIx(4).getID() == 0;
+
 	segOrder = set5.getSegByIx(0).getID() == 0 &&
 				set5.getSegByIx(1).getID() == 2 && 
 				set5.getSegByIx(2).getID() == 1 && 
 				set5.getSegByIx(3).getID() == 3;
 
-	std::cout << "  Shuffled Mixed Time Set: " << (nodeOrder && segOrder ? PASS : FAIL) << std::endl;
+	nodeLinks = 	set5.getNode(0).isLinkedTo(3) &&
+					set5.getNode(0).isLinkedTo(ivID) &&
+					set5.getNode(1).isLinkedTo(1) &&
+					set5.getNode(1).isLinkedTo(2) &&
+					set5.getNode(2).isLinkedTo(1) &&
+					set5.getNode(2).isLinkedTo(3) &&
+					set5.getNode(3).isLinkedTo(0) &&
+					set5.getNode(3).isLinkedTo(ivID) &&
+					set5.getNode(4).isLinkedTo(0) &&
+					set5.getNode(4).isLinkedTo(2);
+
+	segDir = 		set5.getSeg(0).getTOF() > 0 &&
+					set5.getSeg(1).getTOF() > 0 &&
+					set5.getSeg(2).getTOF() > 0 &&
+					set5.getSeg(3).getTOF() > 0;
+
+	segOrigin = 	set5.getSeg(0).getOrigin() == 3 &&
+					set5.getSeg(1).getOrigin() == 1 &&
+					set5.getSeg(2).getOrigin() == 4 &&
+					set5.getSeg(3).getOrigin() == 2;
+
+	segTerminus = 	set5.getSeg(0).getTerminus() == 4 &&
+					set5.getSeg(1).getTerminus() == 2 &&
+					set5.getSeg(2).getTerminus() == 1 &&
+					set5.getSeg(3).getTerminus() == 0;
+
+	std::cout << "  Shuffled Mixed Time Set: " << std::endl;
+	std::cout << "    * Node Order: " << (nodeOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Node Links: " << (nodeLinks ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Order: " << (segOrder ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Dir: " << (segDir ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Origin: " << (segOrigin ? PASS : FAIL) << std::endl;
+	std::cout << "    * Seg Terminus: " << (segTerminus ? PASS : FAIL) << std::endl;
 }//====================================================
 
 /**

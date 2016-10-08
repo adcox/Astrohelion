@@ -1,7 +1,8 @@
+#sudo: required
 
 language: cpp
 compiler:
   - gcc
 
-install:
-  - sh installDependencies.sh
+#install:
+#  - sh installDependencies.sh

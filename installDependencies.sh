@@ -1,7 +1,5 @@
 #!/bin/sh
 
-sudo: required
-
 # Install Dependencies
 mkdir deps
 cd deps

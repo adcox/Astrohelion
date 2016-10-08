@@ -94,6 +94,9 @@ else ifeq ($(UNAME_S), Darwin)
 	@make libastrohelion.dylib
 endif
 
+test:
+	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) travisTest.cpp -o $@
+
 check:
 	make -C tests/
 	bin/calcTest

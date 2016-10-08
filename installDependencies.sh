@@ -15,8 +15,8 @@ cd ..
 wget http://naif.jpl.nasa.gov/pub/naif/toolkit//C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
 tar -xvzf cspice.tar.Z
 cd cspice
-sudo cp -R include/* /usr/local/include/cspice/
-sudo mv lib/cspice.a /usr/local/lib/libcspice.a
-sudo mv lib/csupport.a /usr/local/lib/libcsupport.a
-sudo cp exe/* /usr/local/bin/cspice/
+cp -R include/* /usr/local/include/cspice/
+mv lib/cspice.a /usr/local/lib/libcspice.a
+mv lib/csupport.a /usr/local/lib/libcsupport.a
+cp exe/* /usr/local/bin/cspice/
 cd..

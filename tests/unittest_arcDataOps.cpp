@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(func_removeLink){
 
 	n.removeLink(3);
 	BOOST_CHECK(n.getLink(0) == ivID);
-	BOOST_CHECK(n.getLink(1) == 8);
+	BOOST_CHECK(n.getLink(1) == 7);
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()

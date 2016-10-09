@@ -12,7 +12,7 @@ wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.
 tar -xvzf boost_1_62_0.tar.gz >> $LOG
 cd boost_1_62_0
 echo "Installing BOOST"
-./boostrap.sh >> $LOG
+./bootstrap.sh >> $LOG
 sudo ./b2 install >> $LOG
 cd ..
 
@@ -21,6 +21,8 @@ wget http://naif.jpl.nasa.gov/pub/naif/toolkit//C/PC_Linux_GCC_64bit/packages/cs
 tar -xvzf cspice.tar.Z >> $LOG
 cd cspice
 echo "Installing CSPICE"
+sudo mkdir /usr/local/include/cspice
+sudo mkdir /usr/local/bin/cspice
 sudo cp -R include/* /usr/local/include/cspice/
 sudo mv lib/cspice.a /usr/local/lib/libcspice.a
 sudo mv lib/csupport.a /usr/local/lib/libcsupport.a

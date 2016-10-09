@@ -55,12 +55,15 @@ MKDIR_P = mkdir -p
 
 .PHONY: directories
 
-all: directories unit
+all: directories unit run
 
 directories: $(OBJ)
 
 unit: arcDataOps
 
+run:
+	./arcDataOps
+	
 ############################################################
 ## UNIT TESTS
 ############################################################

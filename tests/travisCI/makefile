@@ -69,7 +69,7 @@ run:
 ############################################################
 
 arcDataOps: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ $(LDFLAGS) ../unittest_arcDataOps.cpp -o $@	
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_arcDataOps.cpp $(LDFLAGS) -o $@	
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory

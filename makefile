@@ -15,6 +15,8 @@
 # Macros for compiling
 ############################################################
 
+UNAME_S := $(shell uname -s)
+
 # My headers
 INC := include
 # System headers; these are included to not throw warnings
@@ -30,10 +32,15 @@ BIN := bin
 LIB := lib
 
 # Compiler specification and flags
-# CXX := clang++ -std=c++11
-CXX := g++-6 -std=c++11 -fopenmp
-# CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
-CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+ifeq ($(UNAME_S), Darwin)
+	CXX := g++-6
+else
+	CXX := g++
+endif
+
+CXX += -std=c++11 -fopenmp
+CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+# CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -44,7 +51,7 @@ SYS_INC_DIR := /usr/local/include/astrohelion
 SYS_INC_EXTERN_DIR := /usr/local/include/astrohelion_extern
 
 # Options that are platform dependent
-UNAME_S := $(shell uname -s)
+
 ifeq ($(UNAME_S), Linux)
 	LDFLAGS += -L /usr/local/lib
 else ifeq ($(UNAME_S), Darwin)
@@ -86,6 +93,9 @@ else ifeq ($(UNAME_S), Darwin)
 	@make libastrohelion.a
 	@make libastrohelion.dylib
 endif
+
+test:
+	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) travisTest.cpp -o $@
 
 check:
 	make -C tests/

@@ -83,30 +83,30 @@ int main(){
 		printf("Signed Integers:\n");
 
 		double val = astrohelion::readDoubleFromMat(matReadFile, "Int8Test");
-		cout << "Int 8 Test: " << (int8Test == (int)val ? PASS : FAIL) << endl;
+		cout << "Int 8 Test: " << (int8Test == static_cast<int>(val) ? PASS : FAIL) << endl;
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "Int16Test");
-		cout << "Int 16 Test: " << (int16Test == (int)val ? PASS : FAIL) << endl;
+		cout << "Int 16 Test: " << (int16Test == static_cast<int>(val) ? PASS : FAIL) << endl;
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "Int32Test");
-		cout << "Int 32 Test: " << (int32Test == (int)val ? PASS : FAIL) << endl;
+		cout << "Int 32 Test: " << (int32Test == static_cast<int>(val) ? PASS : FAIL) << endl;
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "Int64Test");
-		cout << "Int 64 Test: " << (int64Test == (int)val ? PASS : FAIL) << endl;
+		cout << "Int 64 Test: " << (int64Test == static_cast<int>(val) ? PASS : FAIL) << endl;
 
 		printf("\nUnsigned Integers:\n");
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "UInt8Test");
-		cout << "UInt 8 Test: " << (uint8Test == (unsigned int)val ? PASS : FAIL) << endl;
+		cout << "UInt 8 Test: " << (uint8Test == static_cast<unsigned int>(val) ? PASS : FAIL) << endl;
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "UInt16Test");
-		cout << "UInt 16 Test: " << (uint16Test == (unsigned int)val ? PASS : FAIL) << endl;
+		cout << "UInt 16 Test: " << (uint16Test == static_cast<unsigned int>(val) ? PASS : FAIL) << endl;
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "UInt32Test");
-		cout << "UInt 32 Test: " << (uint32Test == (unsigned int)val ? PASS : FAIL) << endl;
+		cout << "UInt 32 Test: " << (uint32Test == static_cast<unsigned int>(val) ? PASS : FAIL) << endl;
 
 		val = astrohelion::readDoubleFromMat(matReadFile, "UInt64Test");
-		cout << "UInt 64 Test: " << (uint64Test == (unsigned int)val ? PASS : FAIL) << endl;
+		cout << "UInt 64 Test: " << (uint64Test == static_cast<unsigned int>(val) ? PASS : FAIL) << endl;
 
 		printf("\nHigher Precision Numbers:\n");
 

@@ -15,7 +15,7 @@ install:
 script:
   - sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-5 /usr/bin/gcc
   - gcc --version
-  - make -C tests/travisCI
+  - make all
 
 addons:
   apt:

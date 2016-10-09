@@ -11,14 +11,14 @@ OBJ := ../../obj_debug
 
 # Compiler specification and flags
 ifeq ($(UNAME_S), Darwin)
-	CXX := g++
+	CXX := g++-5
 else
 	
 	ifeq ($(UNAME_S), Linux)
 		LDFLAGS += -L/usr/local/lib
 	endif
 
-	CXX := g++
+	CXX := g++-5
 endif
 
 CXX += -std=c++11 -fopenmp

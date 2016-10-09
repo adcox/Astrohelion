@@ -75,15 +75,20 @@ IMPORTANT_HEADERS := Core.hpp AsciiOutput.hpp Common.hpp Exceptions.hpp Utilitie
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 
 ############################################################
-## Macros to make dependency lists shorter (don't have to put)
-## OBJ in front of all the files, use a macro to do the substitution
+## Other Macros
 ############################################################
 
+MKDIR_P = mkdir -p
 
 ############################################################
-.PHONY: printVars
+.PHONY: directories
 
-all:
+directories: $(OBJ)
+
+$(OBJ):
+	$(MKDIR_P) $(OBJ)
+
+all: directories
 ifeq ($(UNAME_S), Linux)
 	@echo Making Linux libraries
 	@make libastrohelion.a
@@ -93,9 +98,6 @@ else ifeq ($(UNAME_S), Darwin)
 	@make libastrohelion.a
 	@make libastrohelion.dylib
 endif
-
-test:
-	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) travisTest.cpp -o $@
 
 check:
 	make -C tests/
@@ -121,7 +123,7 @@ else ifeq ($(UNAME_S), Darwin)
 endif
 
 docs:
-	doxygen dox_config
+	doxygen doxy/dox_config
 
 libastrohelion.a: $(OBJECTS)
 	ar rcs $(LIB)/$@ $^

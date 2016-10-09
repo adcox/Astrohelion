@@ -1,0 +1,11 @@
+language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+
+script:
+  - make -C tests/travisCI

@@ -9,6 +9,7 @@ compiler:
   - g++-5
 
 install:
+  - pushd tests/travisCI
   - sudo ./installDependencies.sh
 
 script:

@@ -13,7 +13,7 @@ tar -xvzf boost_1_62_0.tar.gz >> $LOG
 cd boost_1_62_0
 echo "Installing BOOST"
 ./bootstrap.sh >> $LOG
-sudo ./b2 install >> $LOG
+sudo ./b2 install #>> $LOG
 cd ..
 
 # CSpice

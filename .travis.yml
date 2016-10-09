@@ -8,6 +8,9 @@ os:
 compiler:
   - g++-5
 
+install:
+  - sh installDependencies.sh
+
 script:
   - sudo unlink /usr/bin/gcc && sudo ln -s /usr/bin/gcc-5 /usr/bin/gcc
   - gcc --version

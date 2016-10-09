@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/adcox/Astrohelion.svg?branch=master)](https://travis-ci.org/adcox/Astrohelion)
+
 ## Welcome!
 
 Astrohelion (Astro - heel - eon) is a set of C++ tools that facilitiate multi-body trajectory design. Specifically,

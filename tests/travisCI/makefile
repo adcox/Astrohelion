@@ -11,7 +11,7 @@ OBJ := ../../obj_debug
 
 # Compiler specification and flags
 ifeq ($(UNAME_S), Darwin)
-	CXX := g++-5
+	CXX := g++-6
 else
 	
 	ifeq ($(UNAME_S), Linux)
@@ -23,12 +23,12 @@ endif
 
 CXX += -std=c++11 -fopenmp
 # CXX := g++-5 -std=c++11
-CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+CFLAGS += -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 # CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
+LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 # Get JUST the filenames, no filepaths, of the source files
@@ -49,21 +49,31 @@ HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 
 MKDIR_P = mkdir -p
 
+############################################################
+## MACRO builds
+############################################################
+
 .PHONY: directories
 
-all: directories test
+all: directories unit
 
 directories: $(OBJ)
 
-$(OBJ):
-	${MKDIR_P} $(OBJ)
+unit: arcDataOps
 
-test: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ $(LDFLAGS) test.cpp -o $@
+############################################################
+## UNIT TESTS
+############################################################
+
+arcDataOps: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ $(LDFLAGS) ../unittest_arcDataOps.cpp -o $@	
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
+
+$(OBJ):
+	$(MKDIR_P) $(OBJ)
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
 	$(COMP) -I $(INC) -isystem $(INC_EXT) -c $< -o $@

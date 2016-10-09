@@ -28,14 +28,24 @@ This software has been tested on (and <i>should</i> work on) the following syste
 		</ul>
 	</li>
 	<li>
-		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install, download the current realease and uncompress it. Copy all the files from the <tt>boost/</tt> directory (should be *.hpp files) to <tt>/usr/local/include/boost/</tt>. Additionally, compile and install the boost binaries by following the directions on <a href="https://solarianprogrammer.com/2016/03/06/compiling-boost-gcc-5-clang-mac-os-x/">this website</a>. The Boost libraries <em>must</em> be compiled using the same compiler as the Astrohelion code; Most recently (2016-05-11), I am using the gcc 5.3.0 compiler g++-5 . This is unable to create the dynamic libraries (*.dylib) but creates the static libraries just fine. I've uninstalled previous versions of Boost that were compiled with clang to avoid clashes. Otherwise, use the default install location (don't specifiy a --prefix argument) so the binaries should live in <tt>/usr/local/lib/</tt>, just like the libraries for GSL and MatIO. Other useful build instructions are listed <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">here</a>. Note that you'll have to add <tt>/usr/local/lib/</tt> to the search path, as in <tt>LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/</tt>
+		<a href="http://www.boost.org/">Boost</a>: A library with many useful functions, including file operations and XML file operations. To install:
+		<ol>
+			<li>Download the latest version of Boost</li>
+			<li>Navigate into the main directory and run
+				<pre>sudo ./bootstrap.sh</pre>
+				to initialize the system</li>
+			<li>Next, we need to compile a few libraries and install all the headers. On MacOS, I'm using g++-6 to compile the software. I'm avoiding clang++ because it doesn't support openMP. To tell the Boost builder to use the compiler I want, I specify an additional flag, <code>toolset=gcc-6</code>. Astrohelion only needs a few Boost libraries, and they are specified with an additional flag. The full install command is
+				<pre>sudo ./b2 toolset=gcc-6 install --with-fileystem --with-system --with-test</pre>
+			</li>
+		</ol>
+		Following these steps installs boost in the default location (<tt>/usr/local/</tt> for me). If you want to specifiy a different install directory, you'll have to add the <code>--prefix</code> tag and update the makefiles to locate the headers and libraries. Other useful build instructions are listed <a href="http://www.boost.org/doc/libs/1_60_0/more/getting_started/unix-variants.html#prepare-to-use-a-boost-library-binary">here</a>. On Linux, you'll need to specify a custom LD path, <code>LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/</code>.
 	</li>
 	<li>
 		<a href="http://naif.jpl.nasa.gov/naif/toolkit_C.html">NAIF SPICE</a>: This library 
 		provides access to accurate ephemerides. To install, I downloaded the 64-bit tar.Z file 
 		for OS X and ran the installation script. Spice doesn't install itself like other 
 		libraries do, so I took the necessary steps to install it the usual way:
-		<ul>
+		<ol>
 			<li> 
 				Copy the header files from <code>include/</code> to <code>/usr/local/include/cspice</code> </li>
 			<li> 
@@ -44,7 +54,7 @@ This software has been tested on (and <i>should</i> work on) the following syste
 			<li>
 				Copy the executable binaries from the <code>exe/</code> directory into <code>/usr/local/bin/cspice/</code> and add a line to the <code>.bash_profile</code> configuration file: <code>PATH=$PATH:/usr/local/bin/cspice/</code> so that I can access these binary files from the command line.
 			</li>
-		</ul>
+		</ol>
 		To use SPICE functions, include the <code>SpiceUsr.h</code> header file, which is a sort of include-wrapper that includes all the relevant headers for SPICE routines. An API for the C toolkit can be found <a href="http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/index.html">here</a>
 	</li>
 </ul>

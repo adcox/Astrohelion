@@ -53,7 +53,7 @@ CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast 
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
+LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
 # Get JUST the filenames, no filepaths, of the source files
@@ -81,7 +81,7 @@ MKDIR_P = mkdir -p
 ############################################################
 .PHONY: directories
 
-all: directories arcDataTest bcSysTest calcTest correctorTest familyOps eigenTest linMotionTest matioTest multShootCons nodesetTest simEngineTest sysSwitchTest trajTest utilityTest
+all: directories
 
 directories: $(OBJ)
 
@@ -92,73 +92,76 @@ $(OBJ):
 ## TESTS - All executable %.out files go in the BIN directory
 ############################################################
 
-arcDataTest: directories $(OBJECTS)
+arcDataTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_arcDataOps.cpp -o $(BIN)/$@
-	
-bcSysTest: directories $(OBJECTS)
+
+arcDataTest2: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ btest_arcDataOps.cpp $(LDFLAGS) -o $(BIN)/$@
+
+bcSysTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_bcr4bprSysData.cpp -o $(BIN)/$@
 
-boostTest: directories 
+boostTest: 
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_boost.cpp -o $(BIN)/$@
 
-calcTest: directories $(OBJECTS)
+calcTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_calc.cpp -o $(BIN)/$@
 
-correctorTest: directories $(OBJECTS)
+correctorTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_corrector.cpp -o $(BIN)/$@
 
-conicTest: directories $(OBJECTS)
+conicTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_2bp.cpp -o $(BIN)/$@
 
-familyOps: directories $(OBJECTS)
+familyOps: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_cr3bpFamily.cpp -o $(BIN)/$@
 
-eigenTest: directories 
+eigenTest: 
 	$(COMP) -I $(INC) -isystem $(INC_SYS) test_eigen.cpp -o $(BIN)/$@
 
-lambertTest: directories $(OBJECTS)
+lambertTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_lambert.cpp -o $(BIN)/$@
 
-linMotionTest: directories $(OBJECTS)
+linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_linMotion.cpp -o $(BIN)/$@
 
-lowThrustTest: directories $(OBJECTS)
+lowThrustTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_cr3bp_lowThrust.cpp -o $(BIN)/$@
 
-manifolds: directories $(OBJECTS)
+manifolds: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_manifolds.cpp -o $(BIN)/$@
 
-matioTest: directories $(OBJECTS)
+matioTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) -lmatio test_matio.cpp -o $(BIN)/$@
 
-manyArcTest: directories $(OBJECTS)
+manyArcTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_makeManyArcs.cpp -o $(BIN)/$@
 
-multShootCons: directories $(OBJECTS)
+multShootCons: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_multShootCons.cpp -o $(BIN)/$@
 
-nodesetTest: directories $(OBJECTS)
+nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_nodeset.cpp -o $(BIN)/$@
 
-qhManifoldTest: directories $(OBJECTS)
+qhManifoldTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_qhManifolds.cpp -o $(BIN)/$@
 
-simEngineTest: directories $(OBJECTS)
+simEngineTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_simulationEngine.cpp -o $(BIN)/$@
 
-sortEigTest: directories $(OBJECTS)
+sortEigTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_sortEigs.cpp -o $(BIN)/$@
 
-sysSwitchTest: directories $(OBJECTS)
+sysSwitchTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_sysSwitch.cpp -o $(BIN)/$@	
 
-trajTest: directories $(OBJECTS)
+trajTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_traj.cpp -o $(BIN)/$@
 
-utilityTest: directories $(OBJECTS)
+utilityTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) test_utilities.cpp -o $(BIN)/$@
 
-temp: directories $(OBJECTS)
+temp: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ $(LDFLAGS) temp_prop.cpp -o $(BIN)/$@	
 
 ############################################################

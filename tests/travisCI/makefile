@@ -11,7 +11,7 @@ OBJ := ../../obj_debug
 
 # Compiler specification and flags
 ifeq ($(UNAME_S), Darwin)
-	CXX := g++-6
+	CXX := g++
 else
 	
 	ifeq ($(UNAME_S), Linux)

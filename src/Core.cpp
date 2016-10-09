@@ -175,7 +175,7 @@ void Core_Initializer::runInit(){
 		// Create the directory
 		std::cout << "Settings directory does not exist; creating it now...\n";
 		std::cout << " mkdir " << settingsFilepath << std::endl;
-		fs::create_directory(settingsFilepath);
+		fs::create_directories(settingsFilepath);
 	}
 
 	// Construct full paths to the settings files

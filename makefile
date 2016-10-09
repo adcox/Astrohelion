@@ -115,8 +115,9 @@ ifeq ($(UNAME_S), Linux)
 	# Do stuff to install linux libraries
 else ifeq ($(UNAME_S), Darwin)
 	@echo Installing OS X libraries and headers
-	@if [ ! -d $(SYS_INC_DIR) ]; then mkdir $(SYS_INC_DIR); fi
+	@if [ ! -d $(SYS_INC_DIR) ]; then mkdir -p $(SYS_INC_DIR); fi
 	cp -r $(INC)/* $(SYS_INC_DIR)
+	@if [ ! -d $(SYS_INC_EXTERN_DIR) ]; then mkdir -p $(SYS_INC_EXTERN_DIR); fi
 	cp -r $(INC_EXTERN) $(SYS_INC_EXTERN_DIR)
 	cp $(LIB)/libastrohelion.a /usr/local/lib/
 	cp $(LIB)/libastrohelion.dylib /usr/local/lib/

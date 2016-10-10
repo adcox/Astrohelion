@@ -102,7 +102,10 @@ run:
 # 6) Output
 
 arcDataTest: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^  test_arcDataOps.cpp $(LDFLAGS) -o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^  unittest_arcDataOps.cpp $(LDFLAGS) -o $(BIN)/$@
+
+# arcDataTest: $(OBJECTS)
+# 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^  test_arcDataOps.cpp $(LDFLAGS) -o $(BIN)/$@
 
 bcSysTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_bcr4bprSysData.cpp $(LDFLAGS) -o $(BIN)/$@

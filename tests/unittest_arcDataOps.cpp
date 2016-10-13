@@ -248,4 +248,33 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
 
 // Next: tryDeleteMiddleNode_revTime()
 
+BOOST_AUTO_TEST_CASE(deleteMiddleNode_revTime){
+	Nodeset set(&sys);
+	set.addNode(Node(state1, 0));
+	set.addNode(Node(state2, -1.1));
+	set.addNode(Node(state3, -2.2));
+	set.addNode(Node(state4, -3.3));
+	set.addNode(Node(state5, -4.4));
+	set.addSeg(Segment(0, 1, -1.1));
+	set.addSeg(Segment(1, 2, -1.1));
+	set.addSeg(Segment(2, 3, -1.1));
+	int sID_last = set.addSeg(Segment(3, 4, -1.1));
+
+	// Delete the middle node
+	set.deleteNode(1);
+	Segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
+	BOOST_CHECK(seg.getOrigin() == 0);
+	BOOST_CHECK(seg.getTerminus() == 2);
+	BOOST_CHECK(std::abs(seg.getTOF() + 2.2) < 1e-4);
+
+	// Check updated nodeIDMap
+	BOOST_CHECK(set.getNodeIx(0) == 0);
+	BOOST_CHECK(set.getNodeIx(2) == 1);
+	BOOST_CHECK(set.getNodeIx(3) == 2);
+	BOOST_CHECK(set.getNodeIx(4) == 3);
+
+	// Check deleted node
+	BOOST_CHECK_THROW(set.getNodeIx(1), Exception);
+}//====================================================
+
 BOOST_AUTO_TEST_SUITE_END()

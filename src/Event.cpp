@@ -215,6 +215,7 @@ void Event::initialize(const SysData* pSys){
 		default: break;	// Do nothing
 	}
 
+	conData.clear();
 	conData.insert(conData.begin(), data, data+6);
 }//====================================================
 

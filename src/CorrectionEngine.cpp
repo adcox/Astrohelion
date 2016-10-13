@@ -31,6 +31,7 @@
 
 #include "AsciiOutput.hpp"
 #include "Calculations.hpp"
+#include "EigenDefs.hpp"
 #include "Exceptions.hpp" 
 #include "MultShootData.hpp"
 #include "Node.hpp"
@@ -42,6 +43,9 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <vector>
+
+using Eigen::MatrixXd;
+using Eigen::JacobiSVD;
 
 namespace astrohelion{
 //-----------------------------------------------------
@@ -602,7 +606,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 	Eigen::VectorXd X_diff(pIt->totalFree, 1);
 	if(pIt->totalCons == pIt->totalFree){	// J is square, use regular inverse
 
-		/* Use LU decomposition to invert the Gramm matrix and find a vector
+		/* Use LU decomposition to invert the Jacobian matrix and find a vector
 		w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 		lies in the column-space of J^T, or in the orthogonal complement of
 		the nullspace of J.
@@ -648,6 +652,24 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 			
 			// Compute optimal x from w
 			X_diff = JT*w;
+
+
+
+			// Alternative Method: SVD
+			// NOTE: This takes approximately five times as much computation time
+			// JacobiSVD<MatrixXd> svd(JT, Eigen::ComputeFullV | Eigen::ComputeFullU);
+			// svd.setThreshold(tol/100.f);
+
+			// MatrixXd singVals = svd.singularValues();
+			// double svdTol = (1e-12)*singVals(0);	// First singular value is the biggest one
+
+			// MatrixXd Z = MatrixXd::Zero(JT.rows(), JT.cols());
+			// for(unsigned int r = 0; r < singVals.rows(); r++){
+			// 	Z(r,r) = std::abs(singVals(r)) > svdTol ? 1.0/singVals(r) : 0;
+			// }
+
+			// X_diff = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
+
 		}else{	// Over-constrained
 			throw LinAlgException("System is over constrained... No solution implemented");
 		}

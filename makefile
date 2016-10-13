@@ -39,8 +39,8 @@ else
 endif
 
 CXX += -std=c++11 -fopenmp
-CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
-# CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+# CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
+CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
@@ -83,12 +83,11 @@ MKDIR_P = mkdir -p
 ############################################################
 .PHONY: directories
 
+all: directories libs
+
 directories: $(OBJ)
-
-$(OBJ):
-	$(MKDIR_P) $(OBJ)
-
-all: directories
+	
+libs:
 ifeq ($(UNAME_S), Linux)
 	@echo Making Linux libraries
 	@make libastrohelion.a
@@ -138,6 +137,9 @@ libastrohelion.dylib: $(OBJECTS)
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
+
+$(OBJ):
+	$(MKDIR_P) $(OBJ)
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
 	$(COMP) -I $(INC) -isystem $(INC_EXTERN) -c $< -o $@

@@ -3,17 +3,19 @@
  */
 #include <iostream>
 #include <Eigen/Dense>
+#include <vector>
 
 using Eigen::MatrixXd;
 using Eigen::JacobiSVD;
 using Eigen::Vector3d;
 
 MatrixXd getNullspace(MatrixXd A){
-	JacobiSVD<MatrixXd> svd(A, Eigen::ComputeFullV);
+	JacobiSVD<MatrixXd> svd(A, Eigen::ComputeFullV | Eigen::ComputeFullU);
 	svd.setThreshold(1e-14);
 
 	MatrixXd V = svd.matrixV();
 	int rank = svd.rank();
+	MatrixXd singVals = svd.singularValues();
 
 	printf("rank = %d\n", rank);
 	if(rank == V.cols())

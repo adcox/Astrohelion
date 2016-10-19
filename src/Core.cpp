@@ -96,6 +96,7 @@ void Core_Settings::load(const std::string &filename){
 		// Read the setting values from the PTree; if they aren't found, an exception is thrown
 		spice_data_filepath = pt.get<std::string>("Astrohelion.spice.data_filepath");
 		spice_time_kernel = pt.get<std::string>("Astrohelion.spice.time_kernel");
+		spice_spk_kernel = pt.get<std::string>("Astrohelion.spice.spk_kernel");
 	}catch(std::exception &e){
 		std::cout << "Error: Could not load setting values from settings file\n";
 		throw e;
@@ -114,7 +115,7 @@ void Core_Settings::save(const std::string &filename){
 	// Put spice data filepath in property tre
 	pt.put("Astrohelion.spice.data_filepath", spice_data_filepath);
 	pt.put("Astrohelion.spice.time_kernel", spice_time_kernel);
-	
+	pt.put("Astrohelion.spice.spk_kernel", spice_spk_kernel);
 	try{
 		// Write property tree to XML file
 		write_xml(filename, pt);
@@ -208,6 +209,20 @@ void Core_Initializer::runInit(){
     erract_c("set", 0, SPICE_ERR_ACTION);
     errprt_c("set", 0, SPICE_ERR_MSG_TYPE);
 
+    // Load default SPICE kernels
+    try{
+	    std::string spice_path = settings.spice_data_filepath;
+	    std::string time_kernel = settings.spice_time_kernel;
+	    std::string spk_kernel = settings.spice_spk_kernel;
+
+	    char timeKernel[512], deKernel[512];
+	    sprintf(timeKernel, "%s%s", spice_path.c_str(), time_kernel.c_str());
+	    sprintf(deKernel, "%s%s", spice_path.c_str(), spk_kernel.c_str());
+
+	    furnsh_c(timeKernel);
+	    furnsh_c(deKernel);
+	}catch(std::exception &e){}
+
     // Turn GSL's error handler off; we will catch and handle the errors
     gsl_set_error_handler_off();
 
@@ -226,6 +241,28 @@ void Core_Initializer::runInit(){
  */
 Core_Initializer::~Core_Initializer(){
 	std::cout << "Destructing Core_Initializer; Closing out the Core System" << std::endl;
+
+	SpiceInt count, handle;
+	SpiceChar file[128], filetype[32], source[128];
+	SpiceBoolean found;
+
+	ktotal_c("all", &count);	// Get number of loaded kernels
+	std::cout << "There are " << count << " SPICE kernels loaded; unloading them..." << std::endl;
+	for(SpiceInt i = 0; i < count; i++){
+		kdata_c(i, "all", 128, 32, 128, file, filetype, source, &handle, &found);
+		if(found){
+			std::cout << "  (" << i << ") unloading " << file << std::endl;
+			unload_c(file);
+
+			if(failed_c()){
+		        char errMsg[26];
+		        getmsg_c("short", 25, errMsg);
+		        std::cout << "Spice Error: " << errMsg << std::endl;
+		        reset_c();  // reset error status
+		        // throw Exception("Could not unload SPICE time kernel");
+		    }
+		}
+	}
 }
 
 }// END of Astrohelion namespace

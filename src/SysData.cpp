@@ -138,7 +138,7 @@ std::string SysData::getPrimary(int n) const{
 }//=============================
 
 /**
- *	@brief Retrieve a unique numerical ID for one of the system primaries
+ *	@brief Retrieve a unique numerical ID (SPICE/NAIF ID) for one of the system primaries
  *	@param n the index of the primary, starts at 0
  *	@return a unique numerical ID for this primary; useful for comparing systems
  */

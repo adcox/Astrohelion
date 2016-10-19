@@ -139,9 +139,9 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, doubl
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
-Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp, int);
-Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp, int);
-std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3bp*, double, int);
+Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp, double, int);
+Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp, double, int);
+std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3bp*, double, double, int);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double, MultShootData*);

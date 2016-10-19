@@ -40,21 +40,38 @@
 namespace astrohelion{
 // Forward Declarations
 
-enum class MSVarType : int {EPOCH = 0,
-							SLACK = 1,
-							STATE = 2,
-							TOF = 3,
-							TOF_TOTAL = 4};
+/**
+ *  @brief The type of free variable being represented in the free-variable vector
+ */
+enum class MSVarType : int {EPOCH = 0,		//!< Epoch variable
+							SLACK = 1,		//!< Slack variable used in an inequality constraint
+							STATE = 2,		//!< State variable
+							TOF = 3,		//!< Time-of-flight
+							TOF_TOTAL = 4};	//!< Total time-of-flight for a trajectory
 
-enum class MSVarParent : int {	ARC = 0,
-								CON = 1,
-								NODE = 2,
-								SEG = 3};
+/**
+ *  @brief The parent object of the variable
+ *  @details "Parent" means that the variable is part of a larger object. For example,
+ *  a node is the parent of the six state variables and the epoch associated with the node.
+ *  Similarly, a segment is the parent of the time-of-flight variable along the segment.
+ *  Constraints may own slack variables, and the entire arc may own quantities like total
+ *  delta-V or total time-of-flight.
+ */
+enum class MSVarParent : int {	ARC = 0,	//!< The entire arc is the parent
+								CON = 1,	//!< A constraint is the parent (for slack variables)
+								NODE = 2,	//!< A node is the parent
+								SEG = 3};	//!< A segment is the parent
+
+/**
+ *  @brief Represent a free variable in the free variable map
+ *  @details A more complex object is required here to store
+ *  information such as the variable type and ID.
+ */
 struct MSVarMap_Key{
 	public:
 
 		MSVarType type = MSVarType::STATE;	//!< Type of variable
-		int id = -1;				//!< ID of the parent object
+		int id = -1;						//!< ID of the parent object
 
 		MSVarMap_Key();
 		MSVarMap_Key(MSVarType, int);
@@ -62,12 +79,16 @@ struct MSVarMap_Key{
 		
 		MSVarMap_Key& operator =(const MSVarMap_Key&);
 		bool friend operator <(const MSVarMap_Key&, const MSVarMap_Key&);
+		
 		static const char* type2str(MSVarType);
 
 	private:
 		void copyMe(const MSVarMap_Key&);
 };
 
+/**
+ *  @brief Represent a free variable in the free variable vector
+ */
 struct MSVarMap_Obj{
 	public:
 
@@ -86,6 +107,7 @@ struct MSVarMap_Obj{
 
 		bool matches(MSVarType, int) const;
 		
+		static const char* parent2str(MSVarParent);
 	private:
 		void copyMe(const MSVarMap_Obj&);
 		void init();
@@ -126,8 +148,8 @@ class MultShootData{
 		std::vector<double> FX {};					//!< Constraint Function Vector
 		std::vector<double> DF {};					//!< Jacobian Matrix
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
-		std::vector<Traj> propSegs {};			//!< A collection of all propagated segments
-		std::vector<Constraint> allCons {};	//!< A list of all constraints
+		std::vector<Traj> propSegs {};				//!< A collection of all propagated segments
+		std::vector<Constraint> allCons {};			//!< A list of all constraints
 		std::map<MSVarMap_Key, MSVarMap_Obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint

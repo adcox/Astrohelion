@@ -3,6 +3,7 @@
 #include "Constraint.hpp"
 #include "CorrectionEngine.hpp"
 #include "Exceptions.hpp"
+#include "Fam_cr3bp.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_bc4bp.hpp"
 #include "Nodeset_cr3bp.hpp"
@@ -329,6 +330,60 @@ void testCR3BP_EM_Cons(bool equalArcTime){
 			std::cout << "Constraint_tp::SEG_CONT_PV Constraint (equalArcTime): " << FAIL << std::endl;
 	}catch(Exception &e){
 		std::cout << "Constraint_tp::SEG_CONT_PV Constraint (equalArcTime): " << PASS << std::endl;
+	}
+}//====================================================
+
+void testCR3BP_EM_SourceNode_Cons(bool equalArcTime){
+	(void) equalArcTime;
+
+	printColor(BOLDBLACK, "Testing CR3BP with Source Node\n");
+
+	SysData_cr3bp sys("earth", "moon");
+	Fam_cr3bp butterfly("../share/families_natParam_checked/EM_L2_NButterfly.mat");
+	butterfly.sortEigs();
+
+	std::vector<FamMember_cr3bp> matches = butterfly.getMemberByJacobi(3.08);
+	printf("  Found %zu Potential members\n", matches.size());
+	for(unsigned int i = 0; i < matches.size(); i++){
+		printf("   %03u: JC = %f\n", i, matches[i].getJacobi());
+	}
+
+	if(matches.size() == 0){
+		std::cout << FAIL << std::endl;
+		return;
+	}
+
+	Nodeset_cr3bp halfPlus(&sys, matches[0].getIC(), matches[0].getTOF(), 4);
+	Nodeset_cr3bp halfMinus(&sys, matches[0].getIC(), -matches[0].getTOF(), 4);
+	halfPlus.appendSetAtNode(&halfMinus, 0, 0, 0);
+
+	// // For debugging:
+	// halfPlus.print();
+	// halfPlus.printInChrono();
+
+	// halfPlus.putInChronoOrder();
+	// halfPlus.saveToMat("data/temp_butterflySourceNode.mat");
+
+	CorrectionEngine corrector;
+	corrector.setEqualArcTime(equalArcTime);
+
+	// Constraint_tp::STATE
+	printColor(BOLDBLACK, "Constraint_tp::STATE Constraint\n");
+	double stateConData[] = {1.1, 0, NAN, 0, NAN, 0};
+	Constraint stateCon(Constraint_tp::STATE, 3, stateConData, 6);
+	halfPlus.addConstraint(stateCon);
+
+	finiteDiff_checkMultShoot(&halfPlus, corrector);
+	try{
+		Nodeset_cr3bp correctedSet(&sys);
+		corrector.multShoot(&halfPlus, &correctedSet);
+		std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+		std::cout << "Constraint_tp::STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
+
+		correctedSet.putInChronoOrder();
+		correctedSet.saveToMat("temp_butterflySourceNode_Corrected.mat");
+	}catch(DivergeException &e){
+		std::cout << "Constraint_tp::STATE Constraint: " << FAIL << std::endl;
 	}
 }//====================================================
 
@@ -737,17 +792,93 @@ void testBCR4BPCons(bool equalArcTime){
 	}
 }//====================================================
 
+void testBC4BP_EM_SourceNode_Cons(bool equalArcTime){
+	(void) equalArcTime;
+
+	printColor(BOLDBLACK, "Testing BC4BP with Source Node\n");
+
+	SysData_cr3bp emSys("earth", "moon");
+	Fam_cr3bp butterfly("../share/families_natParam_checked/EM_L2_NButterfly.mat");
+	butterfly.sortEigs();
+
+	std::vector<FamMember_cr3bp> matches = butterfly.getMemberByJacobi(3.08);
+	printf("  Found %zu Potential members\n", matches.size());
+	for(unsigned int i = 0; i < matches.size(); i++){
+		printf("   %03u: JC = %f\n", i, matches[i].getJacobi());
+	}
+
+	if(matches.size() == 0){
+		std::cout << FAIL << std::endl;
+		return;
+	}
+
+	Nodeset_cr3bp halfPlus(&emSys, matches[0].getIC(), matches[0].getTOF(), 4);
+	Nodeset_cr3bp halfMinus(&emSys, matches[0].getIC(), -matches[0].getTOF(), 4);
+	halfPlus.appendSetAtNode(&halfMinus, 0, 0, 0);
+
+	// // For debugging:
+	// halfPlus.print();
+	// halfPlus.printInChrono();
+
+	// halfPlus.putInChronoOrder();
+	// halfPlus.saveToMat("data/temp_butterflySourceNode.mat");
+
+	// Transform to SE coordinates
+	SysData_cr3bp seSys("sun", "earth");
+	SysData_bc4bp semSys("sun", "earth", "moon");
+	double epoch = dateToEpochTime("2016/10/16 22:48:02");
+	DynamicsModel_bc4bp::orientAtEpoch(epoch, &semSys);
+
+	Nodeset_cr3bp seNodes = cr3bp_EM2SE(halfPlus, &seSys, semSys.getTheta0(), semSys.getPhi0(), semSys.getGamma());
+	Nodeset_bc4bp semNodes = bcr4bpr_SE2SEM(seNodes, &semSys, 0, 0);
+
+	// Nodeset_cr3bp seNodes2 = bcr4bpr_SEM2SE(semNodes, &seSys);
+	// Nodeset_cr3bp emNodes2 = cr3bp_SE2EM(seNodes2, &emSys, semSys.getTheta0(), semSys.getPhi0(), semSys.getGamma());
+
+	// // For debugging:
+	semNodes.print();
+	// semNodes.printInChrono();
+
+	// semNodes.putInChronoOrder();
+	// semNodes.saveToMat("data/temp_butterfly_SEM.mat");
+
+	CorrectionEngine corrector;
+	corrector.setEqualArcTime(equalArcTime);
+
+	// Constraint_tp::STATE
+	printColor(BOLDBLACK, "Constraint_tp::STATE Constraint\n");
+	double stateConData[] = {0.205, 0.178, 0.068, NAN, 0.025, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 3, stateConData, 6);
+	semNodes.addConstraint(stateCon);
+
+	finiteDiff_checkMultShoot(&semNodes, corrector);
+	try{
+		Nodeset_bc4bp correctedSet(&semSys);
+		corrector.multShoot(&semNodes, &correctedSet);
+		std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+		std::cout << "Constraint_tp::STATE Constraint: " << (stateDiffBelowTol(finalState, stateConData, 1e-12) ? PASS : FAIL) << std::endl;
+
+		correctedSet.putInChronoOrder();
+		correctedSet.saveToMat("temp_butterflySourceNode_SEM_Corrected.mat");
+	}catch(DivergeException &e){
+		std::cout << "Constraint_tp::STATE Constraint: " << FAIL << std::endl;
+	}
+}//====================================================
+
 /**
  *  @brief Test all constraint types available to ensure they converge correctly
  */
 int main(void){
 	// First, run with equalArcTime = false
-	testCR3BP_SE_Cons(false);
-	testCR3BP_EM_Cons(false);
-	testBCR4BPCons(false);
+	// testCR3BP_SE_Cons(false);
+	// testCR3BP_EM_Cons(false);
+	testCR3BP_EM_SourceNode_Cons(false);	// Cannot have equalArcTime = true (both + and - time)
+	// testBCR4BPCons(false);
+	testBC4BP_EM_SourceNode_Cons(false);	// Cannot have equalArcTime = true (both + and - time)
 
-	testCR3BP_SE_Cons(true);
-	testCR3BP_EM_Cons(true);
-	testBCR4BPCons(true);
+	// Then run with equalArcTime = true
+	// testCR3BP_SE_Cons(true);
+	// testCR3BP_EM_Cons(true);
+	// testBCR4BPCons(true);
 	return EXIT_SUCCESS;
 }

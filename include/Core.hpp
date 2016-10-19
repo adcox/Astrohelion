@@ -103,6 +103,10 @@ struct Core_Settings{
 
 	/** Time kernel to use */
 	std::string spice_time_kernel = "naif0010.tls.pc";
+
+	/** SPK Kernel to use */
+	std::string spice_spk_kernel = "de430.bsp";
+	
 }; // END OF Core_Settings
 
 /**

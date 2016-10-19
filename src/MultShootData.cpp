@@ -139,6 +139,16 @@ void MSVarMap_Obj::copyMe(const MSVarMap_Obj &obj){
 	nRows = obj.nRows;
 }//================================================
 
+const char* MSVarMap_Obj::parent2str(MSVarParent p){
+	switch(p){
+		case MSVarParent::ARC: return "ENTIRE ARC";
+		case MSVarParent::CON: return "CONSTRAINT";
+		case MSVarParent::NODE: return "NODE";
+		case MSVarParent::SEG: return "SEG";
+		default: return "Unrecognized Type";
+	}
+}//================================================
+
 //-----------------------------------------------------------------------------
 //  ** MultShootData Functions
 //-----------------------------------------------------------------------------

@@ -538,7 +538,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		std::string errType = "||F||";
 
 		it.count++;
-		astrohelion::printVerbColor((bFindEvent && verbosity == Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.4e (%s)\n",
+		astrohelion::printVerbColor((bFindEvent && verbosity == Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.8e (%s)\n",
 			it.count, err, errType.c_str());
 	}// end of corrections loop
 

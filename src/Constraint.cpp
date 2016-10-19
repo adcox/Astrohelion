@@ -269,9 +269,9 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
  */
 const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
 	switch(t){
-		case ConstraintApp_tp::APP_TO_NODE: return "Nodes"; break;
+		case ConstraintApp_tp::APP_TO_NODE: return "Node"; break;
 		case ConstraintApp_tp::APP_TO_ARC: return "Whole Arcset"; break;
-		case ConstraintApp_tp::APP_TO_SEG: return "Segments"; break;
+		case ConstraintApp_tp::APP_TO_SEG: return "Segment"; break;
 		default: return "Undefined!"; break;
 	}
 }//====================================================

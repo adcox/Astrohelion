@@ -24,7 +24,7 @@ int main(void){
 			printf("  Ix = %04d\n", bifs[i]);
 		}
 	}
-	fam.saveToMat("data/LoadedButterflyFam.mat");	// Check to see if data was re-loaded correctly
+	// fam.saveToMat("data/LoadedButterflyFam.mat");	// Check to see if data was re-loaded correctly
 
 	printf("Checing Match State: X\n");
 	double matchX = 0.9;

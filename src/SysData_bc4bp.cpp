@@ -39,8 +39,14 @@
 
 namespace astrohelion{
 
-// Static variable initialization
-double SysData_bc4bp::REF_EPOCH = 172650160;	// 2005/06/21 18:21:35
+/**
+ *  Initialize static variable: Alignment epoch of the Sun-Earth-Moon System
+ *  
+ *  Sun lies in the YZ (near the ienrtial y-axis) plane at 2005 JUN 21 08:31:35
+ *  Sun-Earth-Moon alignment (near the inertial y-axis) occurs at 2005 JUN 22 04:11:35
+ *  Average of these two times is 2005 JUN 21 18:21:36
+ */
+double SysData_bc4bp::REF_EPOCH = 172650161;	// 2005/06/21 18:21:35
 
 /**
  *	@brief Default constructor

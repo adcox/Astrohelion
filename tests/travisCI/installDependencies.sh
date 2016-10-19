@@ -56,3 +56,11 @@ LD_RUN_PATH=$LD_RUN_PATH:/usr/local/lib
 
 # Update the dynamic linker
 sudo ldconfig
+
+# Download and install SPICE data
+wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp
+wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
+mkdir -p ~/.config/astrohelion
+mv de430.bsp ~/.config/astrohelion/
+mv naif0012.tls ~/.config/astrohelion/
+cp ../travis_settings.xml ~/.config/astrohelion/user_settings.xml

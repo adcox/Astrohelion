@@ -110,8 +110,11 @@ arcDataTest: $(OBJECTS)
 bcSysTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_bcr4bprSysData.cpp $(LDFLAGS) -o $(BIN)/$@
 
+bcSysDefTest: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ unittest_bc4bp_def.cpp $(LDFLAGS) -o $(BIN)/$@
+
 boostTest: 
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_boost.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_boost.cpp $(LDFLAGS) -o $(BIN)/$@
 
 calcTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_calc.cpp $(LDFLAGS) -o $(BIN)/$@
@@ -123,22 +126,22 @@ conicTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_2bp.cpp $(LDFLAGS) -o $(BIN)/$@
 
 familyOps: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_cr3bpFamily.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_cr3bpFamily.cpp $(LDFLAGS) -o $(BIN)/$@
 
 eigenTest: 
 	$(COMP) -I $(INC) -isystem $(INC_SYS) test_eigen.cpp $(LDFLAGS) -o $(BIN)/$@
 
 lambertTest: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_lambert.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_lambert.cpp $(LDFLAGS) -o $(BIN)/$@
 
 linMotionTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_linMotion.cpp $(LDFLAGS) -o $(BIN)/$@
 
 lowThrustTest: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_cr3bp_lowThrust.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_cr3bp_lowThrust.cpp $(LDFLAGS) -o $(BIN)/$@
 
 manifolds: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_manifolds.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_manifolds.cpp $(LDFLAGS) -o $(BIN)/$@
 
 matioTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_matio.cpp -lmatio -o $(BIN)/$@
@@ -147,7 +150,7 @@ manyArcTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_makeManyArcs.cpp $(LDFLAGS) -o $(BIN)/$@
 
 multShootCons: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_multShootCons.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_multShootCons.cpp $(LDFLAGS) -o $(BIN)/$@
 
 nodesetTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_nodeset.cpp $(LDFLAGS) -o $(BIN)/$@
@@ -156,7 +159,7 @@ qhManifoldTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_qhManifolds.cpp $(LDFLAGS) -o $(BIN)/$@
 
 simEngineTest: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_simulationEngine.cpp $(LDFLAGS)-o $(BIN)/$@
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_simulationEngine.cpp $(LDFLAGS) -o $(BIN)/$@
 
 sortEigTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_sortEigs.cpp $(LDFLAGS) -o $(BIN)/$@

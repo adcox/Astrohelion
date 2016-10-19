@@ -35,6 +35,7 @@
 
 #include "AsciiOutput.hpp"
 #include "BaseArcset.hpp"
+#include "BodyData.hpp"
 #include "Common.hpp"
 #include "CorrectionEngine.hpp"
 #include "Exceptions.hpp"
@@ -53,7 +54,7 @@
 #include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
 
-#include "cspice/SpiceUsr.h"
+#include <cspice/SpiceUsr.h>
 #include <Eigen/Dense>
 #include <Eigen/LU>
 #include <Eigen/SVD>
@@ -90,35 +91,9 @@ namespace astrohelion{
  *  filepaths are located in the settings XML file
  */
 double dateToEpochTime(const char *pDate){
-    std::string spice_path = Core::initializer.settings.spice_data_filepath;
-    std::string time_kernel = Core::initializer.settings.spice_time_kernel;
-
-    char timeKernel[512];
-    sprintf(timeKernel, "%s%s", spice_path.c_str(), time_kernel.c_str());
-
-    furnsh_c(timeKernel);
-
-    if(failed_c()){
-        char errMsg[26];
-        getmsg_c("short", 25, errMsg);
-        astrohelion::printErr("Spice Error: %s\n", errMsg);
-        reset_c();  // reset error status
-        throw Exception("Could not load SPICE time kernel");
-    }
-
     // Convert the date to epoch time
     double et = 0;
     str2et_c(pDate, &et);
-
-    // Unload the kernel
-    unload_c(timeKernel);
-    if(failed_c()){
-        char errMsg[26];
-        getmsg_c("short", 25, errMsg);
-        astrohelion::printErr("Spice Error: %s\n", errMsg);
-        reset_c();  // reset error status
-        throw Exception("Could not unload SPICE time kernel");
-    }
 
     return et;
 }//==========================================
@@ -820,6 +795,16 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
     Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
     Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
 
+    // Make a map that links the row number (column in the Jacobian matrix)
+    // of the free variable to the MSVarMap_Key that represents the MSVarMap_Obj 
+    // that contains information about the free variable
+    std::map<int, MSVarMap_Key> freeVarMap_rowNumToKey;
+    for(auto& obj : it.freeVarMap){
+        for(int r = 0; r < obj.second.nRows; r++){
+            freeVarMap_rowNumToKey[obj.second.row0 + r] = obj.first;
+        }
+    }
+
     double rowMaxMax = rowMax.maxCoeff();
     double colMaxMax = colMax.maxCoeff();
     int errScalar = 10000;
@@ -832,15 +817,31 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
         int conCount = 0;
         for(long r = 0; r < rowMax.size(); r++){
             if(r == 0 && it.totalCons > 0){
-                printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+                printf("Applies to %s %d: %s Constraint:\n", 
+                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                    it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }else if(conCount < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
                 conCount++;
-                printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+                printf("Applies to %s %d: %s Constraint:\n", 
+                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                    it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }
-            astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN, "  row %03zu: %.6e\n", r, rowMax[r]);
+            astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
+                "  row %03zu: %.6e\n", r, rowMax[r]);
         }
         for(long c = 0; c < colMax.size(); c++){
-            astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN, "Free Var %03zu: %.6e\n", c, colMax[c]);
+            std::string parent = "unknown";
+            std::string type = "unknown";
+            MSVarMap_Key key;
+            try{
+                key = freeVarMap_rowNumToKey.at(c);
+                MSVarMap_Obj obj = it.freeVarMap.at(key);
+                parent = MSVarMap_Obj::parent2str(obj.parent);
+                type = MSVarMap_Key::type2str(key.type);
+            }catch(std::out_of_range &e){}
+
+            astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
+                "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
         }
     }
 }//====================================================
@@ -1758,9 +1759,9 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  * 
  *  @return A trajectory centered around the specified index in inertial, dimensional coordinates
  */
-Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, int centerIx){
+Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
     // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp inertNodes = cr3bp_rot2inert(static_cast<Nodeset_cr3bp>(traj), centerIx);
+    Nodeset_cr3bp inertNodes = cr3bp_rot2inert(static_cast<Nodeset_cr3bp>(traj), epoch0, centerIx);
     return static_cast<Traj_cr3bp>(inertNodes);
 }//==================================================================
 
@@ -1769,14 +1770,16 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, int centerIx){
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param nodes CR3BP nodeset
+ *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (epoch time or ephemeris time)
  *  @param centerIx The index of the primary that will be the center of the inertial
- *  frame. For example, if an Earth-Moon CR3BP nodeset is input, selecting 
- *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
- *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
+ *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
+ *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
+ *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
+ *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
  *  @return A nodeset centered around the specified index in inertial, dimensional coordinates
  */
-Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
+Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
 
     if(centerIx < 0 || centerIx > 1){
         throw Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
@@ -1786,13 +1789,13 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
 
     Nodeset_cr3bp inertNodes(pSys);
     std::vector<int> map_oldID_to_newID(nodes.getNextNodeID(), Linkable::INVALID_ID);
-    std::vector<double> stateInert;
-    
+
     for(int i = 0; i < nodes.getNumNodes(); i++){
-        stateInert = cr3bp_rot2inert_state(nodes.getStateByIx(i), pSys, nodes.getEpochByIx(i), centerIx);
+        std::vector<double> stateInert = cr3bp_rot2inert_state(nodes.getStateByIx(i), pSys, nodes.getEpochByIx(i), epoch0, centerIx);
         
-        // Save the new ID    
-        map_oldID_to_newID[nodes.getNodeByIx(i).getID()] = inertNodes.addNode(Node(stateInert, nodes.getEpochByIx(i)*pSys->getCharT()));
+        // Save the new ID and add the node, making sure to update Epoch as well!
+        map_oldID_to_newID[nodes.getNodeByIx(i).getID()] = inertNodes.addNode(Node(stateInert,
+            nodes.getEpochByIx(i)*pSys->getCharT() + epoch0));
     }
 
     for(int s = 0; s < nodes.getNumSegs(); s++){
@@ -1819,45 +1822,121 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, int centerIx){
  *  @param state_rot a 6-element non-dimensional state in rotating coordinates
  *  @param pSys a pointer to the CR3BP system the state exists in
  *  @param t the non-dimensional time associated with the input state
+ *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (epoch time or ephemeris time)
  *  @param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
- *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
- *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
+ *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
+ *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
+ *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
- *  @return A state centered around the specified index in inertial, dimensional coordinates
+ *  @return A state centered around the specified point in inertial, ecliptic J2000, dimensional coordinates
  *  @throw Exception if <tt>centerIx</tt> is out of bounds
  */
 std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const SysData_cr3bp *pSys, 
-    double t, int centerIx){
+    double t, double epoch0, int centerIx){
 
-    if(centerIx < 0 || centerIx > 1){
+    if(centerIx < 0 || centerIx > 2){
         throw Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
     }
 
-    Matrix3Rd I = Matrix3Rd::Identity(3,3);
+    ConstSpiceChar *abcorr = "NONE";
+    ConstSpiceChar *ref = "ECLIPJ2000";
+    ConstSpiceChar *obs = getNameFromSpiceID(pSys->getPrimID(0)).c_str();
+    ConstSpiceChar *targ = getNameFromSpiceID(pSys->getPrimID(1)).c_str();
+    SpiceDouble lt, p2State[6];
 
-    // Shift from Barycenter-centered coordinates to primary-centered coordinates
-    Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-pSys->getMu()) : I.row(0)*(1 - pSys->getMu());
+    std::vector<double> stateRot, stateInert;
+    double r_p2[3], v_p2[3], angMom_p2[3], mag_angMom_p2, inst_charL, inst_charT;
+    double unit_x[3], unit_y[3], unit_z[3];
+
+    BodyData P1(pSys->getPrimary(0));
+    BodyData P2(pSys->getPrimary(1));
+    double sysGM = P1.getGravParam() + P2.getGravParam();
+
+    stateRot = state_rot;
+
+    // Locate P2 relative to P1 at the specified time
+    spkezr_c(targ, epoch0 + t*pSys->getCharT(), ref, abcorr, obs, p2State, &lt);
+    std::copy(p2State, p2State+3, r_p2);
+    std::copy(p2State+3, p2State+6, v_p2);
+
+    // Define angular momentum vector of P2 about P1 (cross product: r x v )
+    angMom_p2[0] = r_p2[1]*v_p2[2] - r_p2[2]*v_p2[1];
+    angMom_p2[1] = r_p2[2]*v_p2[0] - r_p2[0]*v_p2[2];
+    angMom_p2[3] = r_p2[0]*v_p2[1] - r_p2[1]*v_p2[0];
+    mag_angMom_p2 = sqrt(angMom_p2[0]*angMom_p2[0] + angMom_p2[1]*angMom_p2[1] + angMom_p2[2]*angMom_p2[2]);
+
+    // Define instantaneous characteristic length and time
+    inst_charL = sqrt(r_p2[0]*r_p2[0] + r_p2[1]*r_p2[1] + r_p2[2]*r_p2[2]);
+    inst_charT = sqrt(pow(inst_charL,3)/sysGM);
+
+    // Define instantaneous rotating frame in inertial coordinates
+    for(unsigned int j = 0; j < 3; j++){
+        unit_x[j] = r_p2[j]/inst_charL;
+        unit_z[j] = angMom_p2[j]/mag_angMom_p2;
+    }
     
-    // Angular velocity of rotating frame relative to inertial, non-dim units
-    Eigen::RowVector3d omegaECI = I.row(2);
+    // y-unit vector is cross(z, x)
+    unit_y[0] = unit_z[1]*unit_x[2] - unit_z[2]*unit_x[1];
+    unit_y[1] = unit_z[2]*unit_x[0] - unit_z[0]*unit_x[2];
+    unit_y[2] = unit_z[0]*unit_x[1] - unit_z[1]*unit_x[0];
 
-    double rotToInert[] = {cos(t), sin(t), 0, -sin(t), cos(t), 0, 0, 0, 1};
-    Matrix3Rd DCM_R2I = Eigen::Map<Matrix3Rd>(rotToInert);
+    // Convert rotating state to dimensional coordinates
+    for(unsigned int j = 0; j < 6; j++){
+        // Shift coordinates to center at P1 or P2
+        if(j == 0 && centerIx > 0)
+            stateRot[j] -= centerIx == 1 ? -pSys->getMu() : 1 - pSys->getMu();
 
-    Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0]));
-    Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
+        // Dimensionalize in length
+        stateRot[j] *= inst_charL;
 
-    // Shift, rotate, scale coordinates into inertial, dimensional
-    Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*pSys->getCharL();
+        // Dimensionalize velocities in time
+        if(j > 2)
+            stateRot[j] /= inst_charT;
+    }
 
-    // Transform velocity into inertial, dimensional
-    Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*pSys->getCharL()/pSys->getCharT();
+    // Transform rotating state into inertial state: project position onto
+    // inertial unit vectors; for velocity, make sure to include cross product
+    // of angular velocity and position (BKE)
+    stateInert.clear();
+    stateInert.push_back( unit_x[0]*stateRot[0] + unit_y[0]*stateRot[1] + unit_z[0]*stateRot[2]);   // Inertial X
+    stateInert.push_back( unit_x[1]*stateRot[0] + unit_y[1]*stateRot[1] + unit_z[1]*stateRot[2]);   // Inertial Y
+    stateInert.push_back( unit_x[2]*stateRot[0] + unit_y[2]*stateRot[1] + unit_z[2]*stateRot[2]);   // Inertial Z
+    stateInert.push_back( unit_x[0]*stateRot[3] + unit_y[0]*stateRot[4] + unit_z[0]*stateRot[5] + pow(inst_charL, -2)*(angMom_p2[1]*stateInert[2] - angMom_p2[2]*stateInert[1]));   // Inertial VX
+    stateInert.push_back( unit_x[1]*stateRot[3] + unit_y[1]*stateRot[4] + unit_z[1]*stateRot[5] - pow(inst_charL, -2)*(angMom_p2[0]*stateInert[2] - angMom_p2[2]*stateInert[0]));   // Inertial VY
+    stateInert.push_back( unit_x[2]*stateRot[3] + unit_y[2]*stateRot[4] + unit_z[2]*stateRot[5] + pow(inst_charL, -2)*(angMom_p2[0]*stateInert[1] - angMom_p2[1]*stateInert[0]));   // Inertial VZ
 
-    // Concatenate data into a state vector
-    std::vector<double> stateInert;
-    stateInert.insert(stateInert.begin(), posInert.data(), posInert.data()+3);
-    stateInert.insert(stateInert.end(), velInert.data(), velInert.data()+3);
+    // Nondimensionalize using instantaneous characteristic quantities
+    // for(unsigned int j = 0; j < 6; j++){
+    //     stateInert[j] /= inst_charL;
+    //     if(j > 2)
+    //         stateInert[j] *= inst_charT;
+    // }
+
+    // Matrix3Rd I = Matrix3Rd::Identity(3,3);
+
+    // // Shift from Barycenter-centered coordinates to primary-centered coordinates
+    // Eigen::RowVector3d posShift = centerIx == 0 ? I.row(0)*(0-pSys->getMu()) : I.row(0)*(1 - pSys->getMu());
+    
+    // // Angular velocity of rotating frame relative to inertial, non-dim units
+    // Eigen::RowVector3d omegaECI = I.row(2);
+
+    // double rotToInert[] = {cos(t), sin(t), 0, -sin(t), cos(t), 0, 0, 0, 1};
+    // Matrix3Rd DCM_R2I = Eigen::Map<Matrix3Rd>(rotToInert);
+
+    // Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0]));
+    // Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
+
+    // // Shift, rotate, scale coordinates into inertial, dimensional
+    // Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*pSys->getCharL();
+
+    // // Transform velocity into inertial, dimensional
+    // Eigen::RowVector3d velInert = (velRot + omegaECI.cross(posRot - posShift))*DCM_R2I*pSys->getCharL()/pSys->getCharT();
+
+    // // Concatenate data into a state vector
+    // std::vector<double> stateInert;
+    // stateInert.insert(stateInert.begin(), posInert.data(), posInert.data()+3);
+    // stateInert.insert(stateInert.end(), velInert.data(), velInert.data()+3);
 
     return stateInert;
 }//==================================================================

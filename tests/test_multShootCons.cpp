@@ -826,7 +826,7 @@ void testBC4BP_EM_SourceNode_Cons(bool equalArcTime){
 	// Transform to SE coordinates
 	SysData_cr3bp seSys("sun", "earth");
 	SysData_bc4bp semSys("sun", "earth", "moon");
-	double epoch = dateToEpochTime("2016/10/16 22:48:02");
+	double epoch = dateToEphemerisTime("2016/10/16 22:48:02");
 	DynamicsModel_bc4bp::orientAtEpoch(epoch, &semSys);
 
 	Nodeset_cr3bp seNodes = cr3bp_EM2SE(halfPlus, &seSys, semSys.getTheta0(), semSys.getPhi0(), semSys.getGamma());

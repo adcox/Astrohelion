@@ -1117,11 +1117,19 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
+	corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	MultShootData familyItData(&familyMember);
+	Nodeset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+
+	// Initialize this nodeset outside the loop because the familyItData will end up with a pointer
+	// to this nodeset after the multiple shooting processs; if the declaration is in the loop,
+	// the nodeset is destroyed each iteration and the pointer ceases to be useful.
 	Nodeset_cr3bp perNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
+	Nodeset_cr3bp newMember(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+
 	try{
-		familyItData = corrector.multShoot(&familyMember, &perNodes);
+		familyItData = corrector.multShoot(&familyMember, &tempNodes);
 	}catch(DivergeException &e){
 		astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: Could not converge initial guess!\n");
 	}catch(LinAlgException &e){
@@ -1235,7 +1243,10 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));
 
-		Nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
+		// Nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
+		newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
+		// Reset perNodes
+		perNodes = Nodeset_cr3bp(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
@@ -1267,7 +1278,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 						astrohelion::printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 						// Re-Create the initial guess using the new step size
-						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData, constraints);
+						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
 					}else{
 						astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
 						killLoop = true;
@@ -1312,6 +1323,8 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
+		// perNodes.saveToMat("temp_perNodes_pac.mat");
+		// newMember.saveToMat("temp_newMember.mat");
 		Traj_cr3bp perOrbit = Traj_cr3bp::fromNodeset(perNodes);
 
 		members.push_back(perOrbit);
@@ -1346,44 +1359,43 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
  *	(nearest) converged family member
  *	@param N a 1D nullspace vector that lies tangent to the family
  *	@param stepSize scales the size of the step by scaling the nullspace vector
- *	@param familyItData an MultShootData object containing corrections information about the
+ *	@param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
- *	@param cons a vector of constraints to place on the nodeset
  */
 Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
-	Eigen::VectorXd N, double stepSize, MultShootData familyItData, std::vector<Constraint> cons){
+	Eigen::VectorXd N, double stepSize, MultShootData pFamilyItData){
 
 	/**
 	 *	Step forwards away from previously converged solution
 	 */
+
 	Eigen::VectorXd newFreeVarVec = convergedFreeVarVec + stepSize*N;
 	double *X = newFreeVarVec.data();
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
-	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(familyItData.sysData);
+	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData.sysData);
 	Nodeset_cr3bp newMember(sys);
 
-	for(int n = 0; n < familyItData.numNodes; n++){
-		newMember.addNode(Node(X+6*n, 0));
-		if(n > 0)
-			newMember.addSeg(Segment(n-1, n, X[6*familyItData.numNodes]/(familyItData.numNodes - 1)));
-	}
+	sys->getDynamicsModel()->multShoot_createOutput(&pFamilyItData, pFamilyItData.nodeset, false, &newMember);
 
-	// Add same constraints
-	for(unsigned int c = 0; c < cons.size(); c++){
-		newMember.addConstraint(cons[c]);
+	// Get rid of any pre-existing pseudo arclength constraints from previous corrections
+	std::vector<Constraint> arcCons = newMember.getArcConstraints();
+	newMember.clearArcConstraints();
+	for(Constraint &con : arcCons){
+		if(con.getType() != Constraint_tp::PSEUDOARC)
+			newMember.addConstraint(con);
 	}
 
 	/* 
 	 *	Form the Pseudo-Arclength Continuation constraint
 	 */
-	std::vector<double> pacCon_data = familyItData.X;
+	std::vector<double> pacCon_data = pFamilyItData.X;
 	// Append the null vector (i.e. step direction)
 	pacCon_data.insert(pacCon_data.end(), N.data(), N.data()+N.rows());
 	// Append the step size
 	pacCon_data.insert(pacCon_data.end(), stepSize);
 	// Create the actual constraint
-	Constraint pacCon(Constraint_tp::PSEUDOARC, familyItData.numNodes-1, pacCon_data);
+	Constraint pacCon(Constraint_tp::PSEUDOARC, pFamilyItData.numNodes-1, pacCon_data);
 	newMember.addConstraint(pacCon);
 
 	// Outputs for debugging and sanity checks

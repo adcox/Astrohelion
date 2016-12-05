@@ -92,7 +92,7 @@ enum class EigValSet_tp{
  *  @name General Utility Functions
  *  @{
  */
-double dateToEpochTime(const char*);
+double dateToEphemerisTime(const char*);
 double dateToGST(double, double, double, double, double, double);
 double gregorianToJulian(double, double, double, double, double, double);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);

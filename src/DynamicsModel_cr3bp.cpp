@@ -389,7 +389,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         }
 
         Node node(state, 0);
-        node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
+        node.setConstraints(it->nodeset->getNodeByIx(n).getConstraints());
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
@@ -441,7 +441,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         nodeset_out->addSeg(newSeg);
     }
 
-    std::vector<Constraint> arcCons = nodes_in->getArcConstraints();
+    std::vector<Constraint> arcCons = it->nodeset->getArcConstraints();
     for(unsigned int i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);
     }

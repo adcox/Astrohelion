@@ -41,6 +41,7 @@ namespace astrohelion{
 
 /**
  *  Initialize static variable: Alignment epoch of the Sun-Earth-Moon System
+ *  in ephemeris time (seconds past Jan 1, 2000 00:00:00.00 UTC)
  *  
  *  Sun lies in the YZ (near the ienrtial y-axis) plane at 2005 JUN 21 08:31:35
  *  Sun-Earth-Moon alignment (near the inertial y-axis) occurs at 2005 JUN 22 04:11:35
@@ -103,6 +104,11 @@ void SysData_bc4bp::initFromPrimNames(std::string P1, std::string P2, std::strin
 	BodyData p1Data(P1);
 	BodyData p2Data(P2);
 	BodyData p3Data(P3);
+	
+	// Information for the P2-P3 system barycenter
+	char p23SysName[128];
+	sprintf(p23SysName, "%s_barycenter", P2.c_str());
+	BodyData p23Data(p23SysName);
 
 	primaries.clear();
 	primaries.push_back(p1Data.getName());
@@ -119,13 +125,15 @@ void SysData_bc4bp::initFromPrimNames(std::string P1, std::string P2, std::strin
 		double k = 1.0/100.0;	// Scaling factor to make non-dimensional numbers nicer
 		// double k = 1.0;
 		
-		charL = k * p2Data.getOrbitRad();
-		charM = k * (p1Data.getMass() + p2Data.getMass() + p3Data.getMass());
-		double charLRatio = p3Data.getOrbitRad()/charL;
-		charT = sqrt(pow(charL, 3)/(G*charM));
+		double totalGM = p1Data.getGravParam() + p2Data.getGravParam() + p3Data.getGravParam();
 
-		double mu = (p2Data.getMass() + p3Data.getMass())/charM;
-		double nu = p3Data.getMass()/charM;
+		charL = k * p23Data.getOrbitRad();
+		charM = k * totalGM/G;
+		double charLRatio = p3Data.getOrbitRad()/charL;
+		charT = sqrt(pow(charL, 3)/(k*totalGM));
+
+		double mu = p23Data.getGravParam()/(k*totalGM);
+		double nu = p3Data.getGravParam()/(k*totalGM);
 		double theta = 0;
 		double phi = 0;
 		double gamma = 5.14*PI/180;

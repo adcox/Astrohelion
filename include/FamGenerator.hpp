@@ -123,7 +123,7 @@ class FamGenerator : public Core, public Engine{
 		void cleanEngine();
 		void cr3bp_natParamCont(Fam_cr3bp*, Traj_cr3bp, std::vector<Mirror_tp>, std::vector<int>, std::vector<int>, int);
 		void cr3bp_pseudoArcCont(Fam_cr3bp*, Nodeset_cr3bp, Mirror_tp, std::vector<int>);
-		Nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, MultShootData, std::vector<Constraint>);
+		Nodeset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, MultShootData);
 };
 
 }

@@ -396,10 +396,12 @@ std::string getNameFromSpiceID(int ID){
 
     bodc2n_c(code, lenout, name, &found);
 
-    if(!found)
+    if(!found){
         return "BODY NOT FOUND";
-    else
+    }
+    else{
         return std::string(name);
+    }
 }//============================================
 
 /**

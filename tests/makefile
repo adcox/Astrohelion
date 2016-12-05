@@ -125,6 +125,9 @@ correctorTest: $(OBJECTS)
 conicTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_2bp.cpp $(LDFLAGS) -o $(BIN)/$@
 
+famGen: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_famGeneration.cpp $(LDFLAGS) -o $(BIN)/$@
+
 familyOps: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_cr3bpFamily.cpp $(LDFLAGS) -o $(BIN)/$@
 
@@ -174,8 +177,10 @@ utilityTest: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_utilities.cpp $(LDFLAGS) -o $(BIN)/$@
 
 temp: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ temp_prop.cpp $(LDFLAGS) -o $(BIN)/$@	
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ temp_testECIConversion.cpp $(LDFLAGS) -o $(BIN)/$@	
 
+qh19: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ test_qh19.cpp $(LDFLAGS) -o $(BIN)/$@	
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################

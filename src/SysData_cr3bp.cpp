@@ -99,11 +99,13 @@ void SysData_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 
 	// Check to make sure P1 is P2's parent
 	if(p2Data.getParent().compare(p1Data.getName()) == 0){
-		charL = p2Data.getOrbitRad();
-		charM = p1Data.getMass() + p2Data.getMass();
-		charT = sqrt(pow(charL, 3)/(G*charM));
+		double totalGM = p1Data.getGravParam() + p2Data.getGravParam();
 
-		otherParams.at(0) = p2Data.getMass()/charM;	// Non-dimensional mass ratio mu
+		charL = p2Data.getOrbitRad();
+		charM = totalGM/G;
+		charT = sqrt(pow(charL, 3)/totalGM);
+
+		otherParams.at(0) = p2Data.getGravParam()/totalGM;	// Non-dimensional mass ratio mu
 	}else{
 		throw Exception("P1 must be the parent of P2");
 	}

@@ -40,6 +40,7 @@
 #include "Node.hpp"
 #include "Utilities.hpp"
 
+#include <cspice/SpiceUsr.h>
 #include <gsl/gsl_errno.h>
 
 namespace astrohelion{
@@ -1869,9 +1870,47 @@ void DynamicsModel_bc4bp::orientAtEpoch(double et, SysData_bc4bp *sysData){
     double theta = sysData->getK()*time_nonDim;
     double phi = sqrt(sysData->getMu()/pow(sysData->getCharLRatio(), 3))*time_nonDim;
 
-    // Adjust theta and phi to be between 0 and 2*PI
+    // Leverage SPICE data to compute the true angles between my approximation and ephemeris
+    double totalTheta = 0, totalPhi = 0, lt = 0;
+    double moonState[6] = {0}, sunState[6] = {0};
+    // Loop through one year of data, centered at the desired epoch
+    for(unsigned int i = 0; i < 365; i++){
+        double t = et + 3600*24*(i - 182); 
+        double t_nondim = (t - SysData_bc4bp::REF_EPOCH)/sysData->getCharT();
+
+        // Get ephemeris states for Sun and Moon relative to EMB in inertial, Ecliptic J2000 coordinates
+        spkezr_c("MOON", t, "ECLIPJ2000", "NONE", "EMB", moonState, &lt);
+        spkezr_c("SUN", t, "ECLIPJ2000", "NONE", "EMB", sunState, &lt);
+
+        // Compute the angle between the Sun-EMB line and the inertial x-axis (shift by 90 because my alignment is with the y-axis)
+        double spice_theta = atan2(-sunState[1], -sunState[0]) + PI/2; 
+        // Compute the angle between the EMB-Moon line, projected into ecliptic plane, and the inertial x-axis (shift by 90 deg as above)
+        double spice_phi = atan2(moonState[1], moonState[0]) + PI/2;
+
+        // Compute approximate angles for the specified time
+        double approx_theta = sysData->getK()*t_nondim;
+        double approx_phi = sqrt(sysData->getMu()/pow(sysData->getCharLRatio(), 3))*t_nondim;
+
+        // Sum the sin of the diference between the two. Using sin(angle) avoids numerical issues like 361 - 2 deg instead of 1 - 2
+        totalTheta += sin(spice_theta - approx_theta);
+        totalPhi += sin(spice_phi - approx_phi);
+
+        // printf("Day %03d: dTheta = %.4f deg  dPhi = %.4f deg\n", i - 182,
+        //     (spice_theta - approx_theta)*180/PI, (spice_phi - approx_phi)*180/PI);
+    }
+
+    // Adjust approximate theta and phi to be between 0 and 2*PI
     theta -= floor(theta/(2*PI))*2*PI;
     phi -= floor(phi/(2*PI))*2*PI;
+
+    printf("Theta from SPICE = %.4f deg\n", (theta + asin(totalTheta/365))*180/PI);
+    printf("Theta from BC4BP = %.4f deg\n", theta*180/PI);
+    printf("Phi from SPICE = %.4f deg\n", (phi + asin(totalPhi/365))*180/PI);
+    printf("Phi from BC4BP = %.4f deg\n", phi*180/PI);
+
+    // Shift approximated angles by the average amount from the year-long survey conducted above
+    theta += asin(totalTheta/365);
+    phi += asin(totalPhi/365);
 
     sysData->setTheta0(theta);
     sysData->setPhi0(phi);

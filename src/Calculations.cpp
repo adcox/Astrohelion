@@ -61,6 +61,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <cstring>
 #include <string>
 #include <typeinfo>
@@ -78,7 +79,7 @@ namespace astrohelion{
 
 
 /**
- *  @brief convert a date to epoch time
+ *  @brief convert a date to ephemeris time
  *  
  *  @param pDate a string representing the date. The string can be formatted in one
  *  of two ways. First, a Gregorian-style date: 'YYYY/MM/DD HH:II:SS' (UTC, 24-hour clock);
@@ -86,12 +87,12 @@ namespace astrohelion{
  *  Second, a Julian date (UTC) can be input with the format 'jd #' where '#' represents
  *  the Julian date.
  *
- *  @return the J2000 epoch time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
+ *  @return the J2000 ephemeris time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
  *  @throws Exception if the SPICE kernels cannot be loaded: the kernel names and
  *  filepaths are located in the settings XML file
  */
-double dateToEpochTime(const char *pDate){
-    // Convert the date to epoch time
+double dateToEphemerisTime(const char *pDate){
+    // Convert the date to ephemeris time
     double et = 0;
     str2et_c(pDate, &et);
 
@@ -1235,7 +1236,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 
 
     // return cr3bp_getPeriodic(pSys, IC, period, numNodes, order, mirrorType, fixedStates, tol, &itData);
-    return cr3bp_getPeriodic(pSys, IC, period, numNodes, order, mirrorType, fixedStates, tol, NULL);
+    return cr3bp_getPeriodic(pSys, IC, period, numNodes, order, mirrorType, fixedStates, tol, nullptr);
 }//====================================================================
 
 /**
@@ -1378,6 +1379,16 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 
     try{
         Nodeset_cr3bp correctedHalfPer(pSys);
+
+        // If the user passed in a null pointer, create a temporory data object
+        // on the stack to avoid seg faults, then delete it before exiting to 
+        // avoid memory leaks
+        bool createdTempMSData = false;
+        if(!pItData){
+            createdTempMSData = true;
+            pItData = new MultShootData(&halfOrbNodes);
+        }
+
         *pItData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
 
         // Make the nodeset into a trajectory
@@ -1388,6 +1399,8 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         
         // Use Mirror theorem to create the second half of the orbit
         MatrixXRd mirrorMat = getMirrorMat(mirrorType);
+        int prevID = halfPerTraj.getNodeByIx(halfPerTraj_len-1).getID();
+        halfPerTraj.saveToMat("temp_halfPerTraj.mat");
         for(int i = halfPerTraj_len-2; i >= 0; i--){
             // Use mirroring to populate second half of the orbit
             std::vector<double> state = halfPerTraj.getStateByIx(i);
@@ -1399,19 +1412,21 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
             node.setEpoch(2*halfTOF - halfPerTraj.getTimeByIx(i));
 
             int id = halfPerTraj.addNode(node);
-            Segment seg(id-1, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(id-1));
+            // Segment seg(id-1, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(id-1));
+            Segment seg(prevID, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(prevID));
+            prevID = id;
             halfPerTraj.addSeg(seg);
         }
 
         // Compute the monodromy matrix from the half-period STM
-        double M_data[] = {   0, 0, 0, -1, 0, 0,
+        double M_data[] = { 0, 0, 0, -1, 0, 0,
                             0, 0, 0, 0, -1, 0,
                             0, 0, 0, 0, 0, -1,
                             1, 0, 0, 0, -2, 0,
                             0, 1, 0, 2, 0, 0,
                             0, 0, 1, 0, 0, 0};
         // Inverse of M
-        double MI_data[] = {  0, -2, 0, 1, 0, 0,
+        double MI_data[] = {0, -2, 0, 1, 0, 0,
                             2, 0, 0, 0, 1, 0,
                             0, 0, 0, 0, 0, 1,
                             -1, 0, 0, 0, 0, 0,
@@ -1426,6 +1441,10 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         // Set final STM of mirrored trajectory to the one computed here
         halfPerTraj.setSTMByIx(-1, monoMat);
         
+        if(createdTempMSData){
+            delete pItData;
+            pItData = nullptr;
+        }
         return halfPerTraj;     // Now contains entire trajectory
     }catch(DivergeException &e){
         throw DivergeException("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
@@ -1752,10 +1771,12 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param traj CR3BP trajectory
+ *  *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  @param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
- *  <tt>centerIx = 0</tt> will produce Earth-centered inertial coordinates and selecting
- *  <tt>centerIx = 1</tt> will produce Moon-centered inertial coordinates.
+ *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
+ *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
+ *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
  *  @return A trajectory centered around the specified index in inertial, dimensional coordinates
  */
@@ -1770,7 +1791,7 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
  *  @param nodes CR3BP nodeset
- *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (epoch time or ephemeris time)
+ *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  @param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
  *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
@@ -1781,7 +1802,7 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
  */
 Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
 
-    if(centerIx < 0 || centerIx > 1){
+    if(centerIx < 0 || centerIx > 2){
         throw Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
     }
 
@@ -1819,10 +1840,10 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
  *  @ingroup cr3bp
  *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  @param state_rot a 6-element non-dimensional state in rotating coordinates
+ *  @param stateRot a 6-element non-dimensional state in rotating coordinates
  *  @param pSys a pointer to the CR3BP system the state exists in
  *  @param t the non-dimensional time associated with the input state
- *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (epoch time or ephemeris time)
+ *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  @param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
  *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
@@ -1832,7 +1853,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
  *  @return A state centered around the specified point in inertial, ecliptic J2000, dimensional coordinates
  *  @throw Exception if <tt>centerIx</tt> is out of bounds
  */
-std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const SysData_cr3bp *pSys, 
+std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const SysData_cr3bp *pSys, 
     double t, double epoch0, int centerIx){
 
     if(centerIx < 0 || centerIx > 2){
@@ -1841,11 +1862,14 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
 
     ConstSpiceChar *abcorr = "NONE";
     ConstSpiceChar *ref = "ECLIPJ2000";
-    ConstSpiceChar *obs = getNameFromSpiceID(pSys->getPrimID(0)).c_str();
-    ConstSpiceChar *targ = getNameFromSpiceID(pSys->getPrimID(1)).c_str();
+
+    std::string str_obs = getNameFromSpiceID(pSys->getPrimID(0));
+    std::string str_targ = getNameFromSpiceID(pSys->getPrimID(1));
+    ConstSpiceChar *obs = str_obs.c_str();
+    ConstSpiceChar *targ = str_targ.c_str();
     SpiceDouble lt, p2State[6];
 
-    std::vector<double> stateRot, stateInert;
+    std::vector<double> stateInert;
     double r_p2[3], v_p2[3], angMom_p2[3], mag_angMom_p2, inst_charL, inst_charT;
     double unit_x[3], unit_y[3], unit_z[3];
 
@@ -1853,18 +1877,20 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
     BodyData P2(pSys->getPrimary(1));
     double sysGM = P1.getGravParam() + P2.getGravParam();
 
-    stateRot = state_rot;
-
     // Locate P2 relative to P1 at the specified time
     spkezr_c(targ, epoch0 + t*pSys->getCharT(), ref, abcorr, obs, p2State, &lt);
     std::copy(p2State, p2State+3, r_p2);
     std::copy(p2State+3, p2State+6, v_p2);
 
+    // printf("p2 w.r.t. p1 = [%f, %f, %f]\n", p2State[0], p2State[1], p2State[2]);
+
     // Define angular momentum vector of P2 about P1 (cross product: r x v )
     angMom_p2[0] = r_p2[1]*v_p2[2] - r_p2[2]*v_p2[1];
     angMom_p2[1] = r_p2[2]*v_p2[0] - r_p2[0]*v_p2[2];
-    angMom_p2[3] = r_p2[0]*v_p2[1] - r_p2[1]*v_p2[0];
+    angMom_p2[2] = r_p2[0]*v_p2[1] - r_p2[1]*v_p2[0];
     mag_angMom_p2 = sqrt(angMom_p2[0]*angMom_p2[0] + angMom_p2[1]*angMom_p2[1] + angMom_p2[2]*angMom_p2[2]);
+
+    // printf("angMom_p2 = [%f, %f, %f]\n", angMom_p2[0], angMom_p2[1], angMom_p2[2]);
 
     // Define instantaneous characteristic length and time
     inst_charL = sqrt(r_p2[0]*r_p2[0] + r_p2[1]*r_p2[1] + r_p2[2]*r_p2[2]);
@@ -1880,6 +1906,8 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
     unit_y[0] = unit_z[1]*unit_x[2] - unit_z[2]*unit_x[1];
     unit_y[1] = unit_z[2]*unit_x[0] - unit_z[0]*unit_x[2];
     unit_y[2] = unit_z[0]*unit_x[1] - unit_z[1]*unit_x[0];
+
+    // printf("unit_y = [%f, %f, %f]\n", unit_y[0], unit_y[1], unit_y[2]);
 
     // Convert rotating state to dimensional coordinates
     for(unsigned int j = 0; j < 6; j++){
@@ -1924,8 +1952,8 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> state_rot, const S
     // double rotToInert[] = {cos(t), sin(t), 0, -sin(t), cos(t), 0, 0, 0, 1};
     // Matrix3Rd DCM_R2I = Eigen::Map<Matrix3Rd>(rotToInert);
 
-    // Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0]));
-    // Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(state_rot[0])+3);
+    // Eigen::RowVector3d posRot = Eigen::Map<Eigen::Vector3d>(&(stateRot[0]));
+    // Eigen::RowVector3d velRot = Eigen::Map<Eigen::Vector3d>(&(stateRot[0])+3);
 
     // // Shift, rotate, scale coordinates into inertial, dimensional
     // Eigen::RowVector3d posInert = (posRot - posShift)*DCM_R2I*pSys->getCharL();
@@ -2083,7 +2111,9 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
                 crNodeState.push_back(bcState[r]*(charL3/charL2)*(charT2/charT3));
         }
 
+        // Use time relative to Epoch0 defined in pBCSys
         Node node(crNodeState, bcNodes.getEpochByIx(n)*charT3/charT2);
+        // Node node(crNodeState, (bcNodes.getEpochByIx(n)*charT3 + pBCSys->getEpoch0() - SysData_bc4bp::REF_EPOCH)/charT2);
         node.setExtraParam("J", DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), pCRSys->getMu()));
         
         // Save the new ID

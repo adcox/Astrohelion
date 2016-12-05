@@ -1046,8 +1046,10 @@ Node BaseArcset::getNodeByIx(int ix) const{
 	if(ix < 0)
 		ix += nodes.size();
 
-	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
+	if(ix < 0 || ix >= static_cast<int>(nodes.size())){
+		printErr("Attempted to access index %d\n", ix);
 		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
+	}
 
 	return nodes[ix];
 }//=====================================================

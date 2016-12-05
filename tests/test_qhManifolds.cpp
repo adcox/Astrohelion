@@ -20,7 +20,7 @@ int main(void){
 	SysData_cr3bp seSys("sun", "earth");
 	SysData_cr3bp emSys("earth", "moon");
 	SysData_bc4bp bcSys("Sun", "Earth", "Moon");
-	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
+	double leaveHaloEpoch = dateToEphemerisTime("2016/04/18");
 
 	// Define synodic month, seconds
 	double P_syn = 2*PI*bcSys.getCharT()/(sqrt(bcSys.getMu()/pow(bcSys.getCharLRatio(), 3)) - bcSys.getK());

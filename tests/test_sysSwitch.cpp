@@ -29,7 +29,7 @@ int main(void){
 	engine.runSim(haloIC, 2.77, &emHalo);
 	emHalo.saveToMat("data/EM_Halo.mat");
 
-	Nodeset_cr3bp emNodes(haloIC, &emSys, 2.77, 10, Nodeset::TIME);
+	Nodeset_cr3bp emNodes(&emSys, haloIC, 2.77, 10, Nodeset::TIME);
 	emNodes.saveToMat("data/EM_Nodes.mat");
 
 	Traj_cr3bp emHalo_inSE = cr3bp_EM2SE(emHalo, &seSys, 0.1, 0.2, 0.05);
@@ -38,9 +38,11 @@ int main(void){
 	Nodeset_cr3bp emNodes_inSE = cr3bp_EM2SE(emNodes, &seSys, 0.1, 0.2, 0.05);
 	emNodes_inSE.saveToMat("data/EM_Nodes_inSE.mat");
 
+	Nodeset_cr3bp eciNodes = cr3bp_rot2inert(emNodes, 0, 0);
+	eciNodes.saveToMat("data/EM_Nodes_inECI.mat");
 
 	double haloIC_SE[] = {1.00211887846215, 0.000211363695548905, 0.000101518083014945, -0.00327841590034548, 0.0327449242150319, 0.000347950888417211};
-	double halo_final_SE[] = {0.998125006225457, 0.000978215985711854, 0.000310194273165479, -0.0151681647612735, -0.0292266231714366, 0.000365438430426524}
+	double halo_final_SE[] = {0.998125006225457, 0.000978215985711854, 0.000310194273165479, -0.0151681647612735, -0.0292266231714366, 0.000365438430426524};
 	
 	// Try converting Sun-Earth to Earth-Moon
 	engine.reset();
@@ -48,7 +50,7 @@ int main(void){
 	engine.runSim(haloIC, 2.77, &seTraj);
 	seTraj.saveToMat("data/SE_Traj.mat");
 
-	Nodeset_cr3bp seNodes(haloIC, &seSys, 2.77, 10, Nodeset::ARCLENGTH);
+	Nodeset_cr3bp seNodes(&seSys, haloIC, 2.77, 10, Nodeset::ARCLENGTH);
 	seNodes.saveToMat("data/SE_Nodes.mat");
 
 	Traj_cr3bp seTraj_inEM = cr3bp_SE2EM(seTraj, &emSys, 0.1, 0.2, 0.05);

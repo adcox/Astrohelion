@@ -10,8 +10,8 @@
 using namespace std;
 namespace ah = astrohelion;
 
-static const char* PASS = ah::BOLDGREEN "PASS" ah::RESET;
-static const char* FAIL = ah::BOLDRED "FAIL" ah::RESET;
+static const char* PASS = BOLDGREEN "PASS" RESET;
+static const char* FAIL = BOLDRED "FAIL" RESET;
 
 int main(void){
 

@@ -72,19 +72,30 @@ BodyData::BodyData(std::string n){
 		name = "Earth";
 		ID = 399;
         parent = "Sun";
-        gravParam = 3.9860043543609598e5;
+        gravParam = 3.9860043543609593e5;
         radius = 6378.137;
-        orbitRad = 1.496188026821e8;
+        orbitRad = 1.4959784234299874e8;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
         mass = gravParam/G;
         // minFlyByAlt = 2000;
         return;
+	}
+
+	if(n.compare("earth_barycenter") == 0){
+		name = "Earth Barycenter";
+		ID = 3;
+		parent = "Sun";
+		gravParam = 4.0350323550225981e5;
+		radius = 0;
+		orbitRad = 1.4959784418519253e8;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
+		mass = gravParam/G;
+		return;
 	}
 
 	if(n.compare("sun") == 0){
 		name = "Sun";
 		ID = 10;
 		parent = "N/A";
-		gravParam = 1.3271244004193938e11;
+		gravParam = 1.3271244004193930e11;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
 		radius = 695990;
 		orbitRad = 0;
 		mass = gravParam/G;
@@ -97,7 +108,7 @@ BodyData::BodyData(std::string n){
 		parent = "Earth";
 		gravParam = 4.9028000661637961e3;
 		radius = 1737.40;
-		orbitRad = 3.850003793780e5;
+		orbitRad = 3.8474793244470679e5;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
 		mass = gravParam/G;
 		return;
     }
@@ -108,7 +119,7 @@ BodyData::BodyData(std::string n){
 		parent = "Sun";
 		gravParam = 2.2031780000000021e4;
 		radius = 2439.7;
-		orbitRad = 5.913352656662e7;
+		orbitRad = 5.7909137745690152e7;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
 		mass = gravParam/G;
 		return;
     }
@@ -116,9 +127,9 @@ BodyData::BodyData(std::string n){
 		name = "Venus";
 		ID = 299;
 		parent = "Sun";
-		gravParam = 3.2485859200000006e5;
+		gravParam = 3.248585920000000e5;
 		radius = 6051.8;
-		orbitRad = 1.082112582876e8;
+		orbitRad = 1.0820890093249036e8;
 		mass = gravParam/G;
 		return;
     }

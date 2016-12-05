@@ -75,15 +75,15 @@ void checkUDDots(){
 	}
 }//=========================================
 
-void checkDate2EpochTime(){
+void checkDate2EphemerisTime(){
 	double ET_ans = 172650160;
-	double ET_comp = dateToEpochTime("2005/06/21 18:21:35.816");
+	double ET_comp = dateToEphemerisTime("2005/06/21 18:21:35.816");
 
-	cout << "Gregorian Date to Epoch Time Test: " << (floor(ET_ans) == floor(ET_comp) ? PASS : FAIL) << endl;
+	cout << "Gregorian Date to Ephemeris Time Test: " << (floor(ET_ans) == floor(ET_comp) ? PASS : FAIL) << endl;
 
-	double ET_comp2 = dateToEpochTime("jd 2453543.264998");
+	double ET_comp2 = dateToEphemerisTime("jd 2453543.264998");
 
-	cout << "Julian Date to Epoch Time Test: " << (floor(ET_comp) == floor(ET_comp2) ? PASS : FAIL) << endl;
+	cout << "Julian Date to Ephemeris Time Test: " << (floor(ET_comp) == floor(ET_comp2) ? PASS : FAIL) << endl;
 }//=========================================
 
 void checkFamilyContLS(){
@@ -129,7 +129,7 @@ void checkSPPos(){
 }//==========================================
 
 void checkOrientAtEpoch(){
-	double leaveHaloEpoch = dateToEpochTime("2016/04/18");
+	double leaveHaloEpoch = dateToEphemerisTime("2016/04/18");
 
 	SysData_bc4bp sys("Sun", "Earth", "moon");
 	double T0 = (leaveHaloEpoch - SysData_bc4bp::REF_EPOCH)/sys.getCharT();
@@ -191,12 +191,11 @@ int main(void){
 
 	checkLPts();
 	checkUDDots();
-	checkDate2EpochTime();
+	checkDate2EphemerisTime();
 	checkFamilyContLS();
 	checkSPPos();
 	checkOrientAtEpoch();
 	checkInterpPointAtTime();
-
 	return 0;
 }//====================================================
 

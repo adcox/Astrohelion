@@ -172,8 +172,9 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
  *  specified event occurs
  *  @details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
- *  integrated path. The minimum acceptable time between events is assumed to 
- *  be 1e-2 nondimensional units.
+ *  integrated path. A numerical simulation is used to propagate the nonlinear
+ *  solution between segments, so the events are defined in the dynamical system
+ *  associated with the nodeset.
  * 
  *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
  *  inserted after this node.
@@ -192,7 +193,13 @@ int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
 
 /**
  *  @brief Insert nodes on the specified segment at locations where the
- *  specified events occur
+ *  specified events occur.
+ *  
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path. A numerical simulation is used to propagate the nonlinear
+ *  solution between segments, so the events are defined in the dynamical system
+ *  associated with the nodeset.
  *  
  *  @param segID the ID of the segment to add nodes to; this segment will be deleted and
  *  replaced by a series of smaller segments (and nodes) if one or more of the input

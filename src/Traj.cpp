@@ -100,6 +100,8 @@ Traj Traj::fromNodeset(Nodeset set){
 		if(s == 0){
 			totalTraj = temp;
 		}else{
+			// Shift the time on the newly propagated segment so it starts where the previous segment left off
+			temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
 			// Use += so that each piece is put into chronological order, even though this significantly increases run time
 			totalTraj += temp;
 			// totalTraj.appendSetAtNode(&temp, totalTraj.getNodeByIx(-1).getID(), 0, 0);

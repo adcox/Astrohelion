@@ -111,10 +111,10 @@ double SysData_cr3bp_ltvp::getThrust() const { return otherParams[1]; }
 double SysData_cr3bp_ltvp::getIsp() const { return otherParams[2]; }
 
 /**
- *	@brief Get the non-dimensional initial mass for P3
- *	@return the non-dimensional initial mass for P3
+ *	@brief Get the non-dimensional mass for P3
+ *	@return the non-dimensional mass for P3
  */
-double SysData_cr3bp_ltvp::getM0() const { return otherParams[3]; }
+double SysData_cr3bp_ltvp::getMass() const { return otherParams[3]; }
 
 /**
  *	@brief Set the thrust for P3 for this system
@@ -129,10 +129,10 @@ void SysData_cr3bp_ltvp::setThrust(double d){ otherParams[1] = d; }
 void SysData_cr3bp_ltvp::setIsp(double d){ otherParams[2] = d; }
 
 /**
- *	@brief Set the initial mass for P3 (non-dim)
- *	@param d the initial mass, non-dimensional units
+ *	@brief Set the mass for P3 (non-dim)
+ *	@param d the mass, non-dimensional units
  */
-void SysData_cr3bp_ltvp::setM0(double d){ otherParams[3] = d; }
+void SysData_cr3bp_ltvp::setMass(double d){ otherParams[3] = d; }
 
 /**
  *	@brief Set the thrust for P3 for this system using a dimensional quantity
@@ -147,10 +147,10 @@ void SysData_cr3bp_ltvp::setThrustDim(double d){ otherParams[1] = (d/1000)*charT
 void SysData_cr3bp_ltvp::setIspDim(double d){ otherParams[2] = d/charT; }
 
 /**
- *	@brief Set the initial mass for P3 using a dimensional quantity
- *	@param d the initial mass, in kilograms
+ *	@brief Set the mass for P3 using a dimensional quantity
+ *	@param d the mass, in kilograms
  */
-void SysData_cr3bp_ltvp::setM0Dim(double d){ otherParams[3] = d/charM; }
+void SysData_cr3bp_ltvp::setMassDim(double d){ otherParams[3] = d/charM; }
 
 /**
  *  @brief Save the system data to a matlab file

@@ -336,6 +336,7 @@ namespace astrohelion{
 	MatrixXRd readMatrixFromMat(const char*, const char*);
 	std::string readStringFromMat(mat_t*, const char* , matio_types, matio_classes);
 	void saveDoubleToFile(mat_t*, const char*, double);
+	void saveStringToFile(mat_t*, const char*, std::string, const int);
 	void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);

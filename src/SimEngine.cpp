@@ -30,6 +30,13 @@
  
 #include "SimEngine.hpp"
 
+#include <cmath>
+#include <ctime>
+#include <cstdlib>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_odeiv2.h>
+#include <vector>
+
 #include "AsciiOutput.hpp"
 #include "Node.hpp"
 #include "SysData_bc4bp.hpp"
@@ -46,12 +53,6 @@
 #include "Exceptions.hpp"
 #include "DynamicsModel.hpp"
 #include "Utilities.hpp"
-
-#include <cmath>
-#include <cstdlib>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_odeiv2.h>
-#include <vector>
 
 namespace astrohelion{
 //-----------------------------------------------------
@@ -221,6 +222,15 @@ void SimEngine::setRelTol(double t){
 void SimEngine::setMakeCrashEvents(bool b){ bMakeCrashEvents = b; }
 
 /**
+ *  \brief Set the maximum computation time limit (seconds).
+ *  \details The numerical integration is stopped once the specified number
+ *  of seconds have ellapsed since the beginning of the integration. 
+ * 
+ *  \param t maximum allowable seconds for the numerical integration.
+ */
+void SimEngine::setMaxCompTime(int t){ maxCompTime = t; }
+
+/**
  *  @brief Specify the number of steps the integrator must take during the 
  *  the integration. 
  *
@@ -308,6 +318,10 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Traj *traj){
  *  time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  *  @throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
+ *  This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
+ *  data generated up to the integrator failure is saved in the Traj object passed to
+ *  the SimEngine regardless of the thrown exception(s).
  */
 void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Traj *traj){
     if(ic.size() >= 6){
@@ -396,6 +410,8 @@ void SimEngine::runSim(const double *ic, std::vector<double> t_span, Traj *traj)
  *  @throws DivergeException if the integrator fails and cannot proceed
  */
 void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *traj){
+    startTimestamp = time(nullptr);
+
     // Save tolerance for trajectory
     traj->setTol(absTol > relTol ? absTol : relTol);
     const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
@@ -513,7 +529,11 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
 
+            // Stop the simulation if a simulation-ending event occurs
             killSim = locateEvents(y, t0, traj);
+
+            // Stop the simulation if the maximum computation time has passed
+            killSim = killSim || maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime;
 
             if(killSim)
                 break;
@@ -543,6 +563,9 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
                 }
 
                 killSim = locateEvents(y, t0, traj);
+
+                // Stop the simulation if the maximum computation time has passed
+                killSim = killSim || maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime;
             }
 
             if(killSim)
@@ -725,6 +748,7 @@ void SimEngine::reset(){
     numSteps = 1000;
     bMadeCrashEvents = false;
     bMakeCrashEvents = true;
+    maxCompTime = -1;
 }//====================================================
 
 /**
@@ -757,6 +781,8 @@ void SimEngine::copyMe(const SimEngine &s){
     eventOccurs = s.eventOccurs;
     bMakeCrashEvents = s.bMakeCrashEvents;
     bMadeCrashEvents = s.bMadeCrashEvents;
+    maxCompTime = s.maxCompTime;
+    startTimestamp = s.startTimestamp;
 }//====================================================
 
 }// END of Astrohelion namespace

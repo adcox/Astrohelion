@@ -58,7 +58,7 @@ const char* Exception::what() const throw(){
 	printf(RESET);
 	free(strs);
 	return msg.c_str();
-}
+}//====================================================
 
 //-----------------------------------------------------------------------------
 //  ** SizeMismatch Functions **

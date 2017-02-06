@@ -61,12 +61,12 @@ class SysData_cr3bp_ltvp : public SysData_cr3bp{
 		
 		double getIsp() const;
 		double getThrust() const;
-		double getM0() const;
+		double getMass() const;
 
 		void setIsp(double);
 		void setIspDim(double);
-		void setM0(double);
-		void setM0Dim(double);
+		void setMass(double);
+		void setMassDim(double);
 		void setThrust(double);
 		void setThrustDim(double);
 		//@}

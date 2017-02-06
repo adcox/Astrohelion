@@ -153,7 +153,8 @@ void DynamicsModel_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t,
 
     // Compute and save mass of s/c; assumes t began at 0
     double g0_nonDim = G_GRAV_0*ltSys->getCharT()*ltSys->getCharT()/ltSys->getCharL();
-    cr3bpTraj->setMassByIx(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
+    // cr3bpTraj->setMassByIx(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
+    throw Exception("Need to update mass in CR3BP LTVP saveIntegratedData!");
 }//=====================================================
 
 /**
@@ -249,14 +250,14 @@ int DynamicsModel_cr3bp_ltvp::fullEOMs(double t, const double s[], double sdot[]
 
     double x = s[0];    double y = s[1];    double z = s[2];
     double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
-    
+    double m = s[6];    // Mass
+
     double g0_nonDim = (G_GRAV_0/charL)*charT*charT;
-    double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );
     double r = sqrt( (x-1+mu)*(x-1+mu) + y*y + z*z );
-    double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);
+    double v = sqrt( (xdot - y)*(xdot - y) + (ydot + x)*(ydot + x) + zdot*zdot);    // Velocity in an inertial frame
 
     sdot[0] = s[3];
     sdot[1] = s[4];
@@ -347,7 +348,9 @@ int DynamicsModel_cr3bp_ltvp::simpleEOMs(double t, const double s[], double sdot
     double xdot = s[3]; double ydot = s[4]; double zdot = s[5];
     
     double g0_nonDim = G_GRAV_0/charL*charT*charT;
-    double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
+    // double m = sysData->getM0() - T/(Isp*g0_nonDim)*t;    // assumes t began at 0
+    double m = 0;
+    throw Exception("Need to update mass in CR3BP LTVP EOMs!");
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (x+mu)*(x+mu) + y*y + z*z );

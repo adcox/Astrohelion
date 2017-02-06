@@ -70,7 +70,7 @@ OBJECTS := $(patsubst %.cpp,$(OBJ)/%.o, $(SRC_FILES))
 
 # Header files that don't have associated objects; we need the compiler to
 # know that objects are dependent on these and to update if changes are made to them
-IMPORTANT_HEADERS := Core.hpp AsciiOutput.hpp Common.hpp Exceptions.hpp Utilities.hpp
+IMPORTANT_HEADERS := Core.hpp AsciiOutput.hpp Common.hpp Utilities.hpp
 
 HEADER_DEPS := $(addprefix $(INC)/,$(IMPORTANT_HEADERS))
 

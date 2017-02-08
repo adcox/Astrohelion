@@ -214,6 +214,7 @@ list:
 	@- echo "  bcSysTest - test BC4BP system data, saving, loading, etc."
 	@- echo "  calcTest - test calculation functions"
 	@- echo "  correctorTest - test multiple shooting corrector"
+	@- echo "  famgen - test the family generation engine"
 	@- echo "  familyOps - test the ability to locate orbits within a family"
 	@- echo "  eigenTest - Test the Eigen library"
 	@- echo "  lambertTest - Test the Lambert Arc Engine"

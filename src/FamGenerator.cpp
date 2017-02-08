@@ -623,20 +623,29 @@ Fam_cr3bp FamGenerator::cr3bp_generateLPO(SysData_cr3bp *sysData){
 
 Fam_cr3bp FamGenerator::cr3bp_generateDPO(SysData_cr3bp *sysData){
 	BodyData P2Data = BodyData(sysData->getPrimary(1));
-	// double orbR = P2Data.getRadius() + 
-	// 	(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
-	double orbR = 50*P2Data.getRadius();
-	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
-	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
+	double L1_pos[3];
+	DynamicsModel_cr3bp::getEquilibPt(sysData, 1, 1e-12, L1_pos);
 
-	double IC[] {1 - sysData->getMu() - orbR/sysData->getCharL(), 0, 0,
-				 0, -orbV*sysData->getCharT()/sysData->getCharL(), 0};		// IC for a DRO from the conic
+	// Approximate initial state: 41.53% of the way between P2 and L1
+	double orbR_nondim = 0.415362*(1 - sysData->getMu() - L1_pos[0]);
+	// Approximate: velocity in circular orbit at orbR
+	double v_circ = sqrt(P2Data.getGravParam()/(sysData->getCharL()*orbR_nondim));
+	SysData_cr3bp sysSE("sun", "earth");
+
+	// Approximate: initial velocity is about -1.17*v_circ in SE and -1.18*v_circ in EM, so
+	// craft crude interpolation between the two
+	double IC[] = {1 - sysData->getMu() - orbR_nondim, 0, 0,
+				   0, -(1.17 + (2.5e-6)*(sysData->getMu()/sysSE.getMu()))*v_circ*sysData->getCharT()/sysData->getCharL(), 0};
+
 	std::vector<double> icVec (IC, IC+6);
 
-	printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/sysData->getCharT());
+	// getPeriodic() function will use the mirror condition to stop integration at the mirror plane, so
+	// I use a large TOF to make sure it gets there.
+	printf("Correcting initial DPO from approximation...\n");
+	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, PI, Mirror_tp::MIRROR_XZ, tol);
 
-	printf("Correcting initial DPO from conic...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), Mirror_tp::MIRROR_XZ, tol);
+	// perOrbit.saveToMat("initial_dpo.mat");
+	// waitForUser();
 
 	printf("Creating family...\n");
 	Fam_cr3bp fam(*sysData);
@@ -648,13 +657,16 @@ Fam_cr3bp FamGenerator::cr3bp_generateDPO(SysData_cr3bp *sysData){
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		// Set the simple step size to be positive
-		if(step_simple < 0)
+		if(step_simple > 0)
 			step_simple *= -1;
 
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp:: PSEUDO_ARC){
-		printErr("Pseudo-Arclength Continuation has not been implemented for this family!\n");
+		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		std::vector<int> initDir {0, 0, 0, 0, -1, 0};
+		printf("Using pseudo-arclength continuation...\n");
+		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
 
 	return fam;
@@ -1392,6 +1404,18 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		// Compute eigenvalues
 		MatrixXRd mono = perOrbit.getSTMByIx(-1);
 
+		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
+		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
+		for(int r = 0; r < 6; r++){
+			for(int c = 0; c < 6; c++){
+				printf("%10.2f", mono(r,c));
+			}
+			printf("\n");
+		}
+		waitForUser();
+		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
+		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
+		
 		double monoErr = std::abs(1.0 - mono.determinant());
 		if(monoErr > 1e-5)
 			astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);

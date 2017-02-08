@@ -7,6 +7,7 @@
  *	@copyright GNU GPL v3.0
  */
 
+
 #include <exception> 
 #include <iostream>
 
@@ -50,17 +51,17 @@ static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 //      CLASS Core FUNCTIONS
 //-----------------------------------------------------
 
-Core_Initializer Core::initializer;
-bool Core::bIsInit;
+// Core_Initializer Core::initializer;
+// bool Core::bIsInit = false;
 
 /**
  *  @brief Default constructor.
  *  @details Runs an initialization sequence the first time the class is instantiated.
  */
 Core::Core(){
-	if(!bIsInit){
-		initializer.runInit();
-		bIsInit = true;
+	if(!bIsInit()){
+		initializer().runInit();
+		bIsInit() = true;
 	}
 }//======================================================
 
@@ -263,6 +264,6 @@ Core_Initializer::~Core_Initializer(){
 		    }
 		}
 	}
-}
+}//================================================
 
 }// END of Astrohelion namespace

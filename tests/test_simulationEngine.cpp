@@ -2,7 +2,11 @@
  *	Test the simulation engine
  */
 
+#include <iostream>
+#include <ctime>
+
 #include "AsciiOutput.hpp"
+#include "Exceptions.hpp"
 #include "SysData_bc4bp.hpp"
 #include "Traj_bc4bp.hpp"
 #include "Common.hpp"
@@ -11,10 +15,11 @@
 #include "SimEngine.hpp"
 #include "Utilities.hpp"
 
-#include <iostream>
-
 using namespace std;
 using namespace astrohelion;
+
+static const char* PASS = BOLDGREEN "PASS" RESET;
+static const char* FAIL = BOLDRED "FAIL" RESET;
 
 void test_cr3bp_sim(){
 	SysData_cr3bp sys("earth", "moon");
@@ -84,18 +89,59 @@ void test_bcr4bpr_events(){
 	traj.saveToMat("data/BC_HaloManifold.mat");
 }//====================================================
 
+void test_cr3bp_integratorCrash(){
+	SysData_cr3bp sys("sun", "earth");
+	double mu = sys.getMu();
+
+	double newIC[] = {1.0065, 0, 0, 3.19189119579733e-16, 0.0158375372644023, 0};
+
+	SimEngine sim;
+	Traj_cr3bp traj(&sys);
+	sim.setVerbosity(Verbosity_tp::ALL_MSG);
+	try{
+		sim.runSim(newIC, 6*PI*400, &traj);
+	}catch(Exception &e){
+		printf("Error: %s\n", e.what());
+	}
+
+	printColor(BOLDMAGENTA, "There should be data here:\n");
+	traj.print();
+}//====================================================
+
+void test_cr3bp_compTimeLimit(){
+	SysData_cr3bp sys("earth", "moon");
+	double mu = sys.getMu();
+	double ic[] = {1-mu,0,0,0,0,0};
+
+	SimEngine sim;
+	Traj_cr3bp traj(&sys);
+	sim.setMaxCompTime(3);
+
+	int t0 = time(nullptr);
+	sim.runSim(ic, 6*PI*400, &traj);
+	int tf = time(nullptr);
+	printf("time = %d\n", tf - t0);
+	std::cout << "Computational Time Limit: " << (tf - t0 > 2 && tf - t0 < 5 ? PASS : FAIL) << std::endl;
+}//====================================================
+
 int main(void){
-	astrohelion::printColor(RED, "*************************\n* Test CR3BP Sim        *\n*************************\n");
+	astrohelion::printColor(BOLDCYAN, "*************************\n* Test CR3BP Sim        *\n*************************\n");
 	test_cr3bp_sim();
 	
-	astrohelion::printColor(RED, "*************************\n* Test BCR4BPR Sim      *\n*************************\n");
+	astrohelion::printColor(BOLDCYAN, "*************************\n* Test BCR4BPR Sim      *\n*************************\n");
 	test_bcr4bpr_sim();
 
-	astrohelion::printColor(RED, "*************************\n* Test CR3BP Events     *\n*************************\n");
+	astrohelion::printColor(BOLDCYAN, "*************************\n* Test CR3BP Events     *\n*************************\n");
 	test_cr3bp_events();
 	
-	astrohelion::printColor(RED, "*************************\n* Test BCR4BPR Events   *\n*************************\n");
+	astrohelion::printColor(BOLDCYAN, "*************************\n* Test BCR4BPR Events   *\n*************************\n");
 	test_bcr4bpr_events();
+
+	astrohelion::printColor(BOLDCYAN, "*************************\n* Test Integrator Crash   *\n*************************\n");
+	test_cr3bp_integratorCrash();
+
+	astrohelion::printColor(BOLDCYAN, "*************************\n* Test Computational Time Limit   *\n*************************\n");
+	test_cr3bp_compTimeLimit();
 
 	return 0;
 }//====================================================

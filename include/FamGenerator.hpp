@@ -93,6 +93,7 @@ class FamGenerator : public Core, public Engine{
 		 */
 		Fam_cr3bp cr3bp_generateAxial(const char*, double);
 		Fam_cr3bp cr3bp_generateButterfly(SysData_cr3bp*, int);
+		Fam_cr3bp cr3bp_generateDPO(SysData_cr3bp*);
 		Fam_cr3bp cr3bp_generateDRO(SysData_cr3bp*);
 		Fam_cr3bp cr3bp_generateHalo(const char*, double);
 		Fam_cr3bp cr3bp_generateLPO(SysData_cr3bp*);

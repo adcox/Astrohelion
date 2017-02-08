@@ -102,6 +102,12 @@ Traj Traj::fromNodeset(Nodeset set){
 		}else{
 			// Shift the time on the newly propagated segment so it starts where the previous segment left off
 			temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
+			// Shift the STM on the newly propagated segment so it represents a continuous evolution of the
+			// previous sets of STMs. If there is a velocity discontinuity, we should probably restart the STM
+			// if(Node is continuous){
+			// 	temp.shiftAllSTM(totaTraj.getSTMByIx(-1));
+			// }
+
 			// Use += so that each piece is put into chronological order, even though this significantly increases run time
 			totalTraj += temp;
 			// totalTraj.appendSetAtNode(&temp, totalTraj.getNodeByIx(-1).getID(), 0, 0);

@@ -44,7 +44,7 @@ class Exception : public std::exception{
 		Exception(const char*);
 		Exception(const Exception&);
 		virtual ~Exception();
-		virtual const char* what() const throw();
+		const char* what() const throw() override;
 
 	protected:
 		std::string msg;	//!< Custom error message
@@ -61,7 +61,7 @@ class SizeMismatchException : public Exception, std::runtime_error{
 	public:
 		SizeMismatchException();
 		SizeMismatchException(const char*);
-		// const char* what() const throw();
+		using Exception::what;
 };
 
 /**
@@ -75,7 +75,8 @@ class DivergeException : public Exception, std::runtime_error{
 	public:
 		DivergeException();
 		DivergeException(const char*);
-		// const char* what() const throw();
+
+		using Exception::what;
 };
 
 /** 
@@ -88,7 +89,8 @@ class LinAlgException : public Exception, std::runtime_error{
 	public:
 		LinAlgException();
 		LinAlgException(const char*);
-		// const char* what() const throw();
+
+		using Exception::what;
 };
 
 }// END of Astrohelion namespace

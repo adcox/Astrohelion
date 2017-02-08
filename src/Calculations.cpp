@@ -1376,6 +1376,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     corrector.setIgnoreCrash(true); // Corrector also ignores crash events
     corrector.setVarTime(true);
     corrector.setEqualArcTime(true);
+    // corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
     try{
         Nodeset_cr3bp correctedHalfPer(pSys);

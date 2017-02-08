@@ -218,6 +218,14 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
     }
 }//=========================================================
 
+void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const int strlen){
+    char text_chars[strlen];
+    strcpy(text_chars, text.c_str());
+    size_t dims[] {1, text.length()};
+    matvar_t *matvar = Mat_VarCreate(varName, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(text_chars[0]), MAT_F_DONT_COPY_DATA);
+    astrohelion::saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
+}//=========================================================
+
 /**
  *  @brief Read a matrix of doubles from a .mat file
  * 

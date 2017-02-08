@@ -201,7 +201,7 @@ std::vector<double> Segment::getSTMElements() const{
 
 /**
  *	@brief Retrieve a vector describing which of the velocity states
- *	should be made continuous with the node before this one in a nodeset.
+ *	should be made continuous with the segment before this one in a nodeset.
  *
  *	@return a 3-element boolean vector. The first element describes
  *	whether or not the x-velocity is continuous, the second describes
@@ -318,6 +318,7 @@ void Segment::setVel_AllDiscon(){
 
 /**
  *	@brief Set the continuity for all three velocity states
+ *	between this segment and the previous segment
  *	@param data a three-element boolean array. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
@@ -330,6 +331,7 @@ void Segment::setVelCon(const bool data[3]){
 
 /**
  *	@brief Set the continuity for all three velocity states
+ *	between this segment and the previous segment
  *	@param data a three-element boolean vector. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
@@ -344,12 +346,13 @@ void Segment::setVelCon(std::vector<bool> data){
 
 /**
  *	@brief Set the continuity for all three velocity states
+ *	between this segment and the previous segment
  *	@param xCon whether or not the x-velocity component should 
- *	be continuous with the node before this one
+ *	be continuous with the segment before this one
  *	@param yCon whether or not the y-velocity component should 
- *	be continuous with the node before this one
+ *	be continuous with the segment before this one
  *	@param zCon whether or not the z-velocity component should 
- *	be continuous with the node before this one
+ *	be continuous with the segment before this one
  */
 void Segment::setVelCon(bool xCon, bool yCon, bool zCon){
 	flags[0] = xCon;

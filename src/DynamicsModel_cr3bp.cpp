@@ -438,6 +438,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         Segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
+        newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
         nodeset_out->addSeg(newSeg);
     }
 

@@ -181,7 +181,9 @@ class SimEngine : public Core, public Engine{
 		void runSim(std::vector<double>, double, Traj*);
 		void runSim(const double*, double, double, Traj*);
 		void runSim(std::vector<double>, double, double, Traj*);
-		void runSim(const double *ic, std::vector<double>, Traj*);
+		void runSim(const double*, MatrixXRd, double, double, Traj*);
+		void runSim(std::vector<double>, MatrixXRd, double, double, Traj*);
+		void runSim(const double *ic, MatrixXRd, std::vector<double>, Traj*);
 		//@}
 		
 		// Utility Functions
@@ -244,7 +246,7 @@ class SimEngine : public Core, public Engine{
 		void cleanEngine();
 		void copyMe(const SimEngine&);
 		void createCrashEvents(const SysData*);
-		void integrate(const double*, const double*, int, Traj*);
+		void integrate(const double*, MatrixXRd, const double*, int, Traj*);
 		bool locateEvents(const double*, double, Traj*);
 };
 

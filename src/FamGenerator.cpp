@@ -208,24 +208,21 @@ void FamGenerator::copyMe(const FamGenerator &f){
  *	@return a family of orbits
  *	@throws Exception if <tt>LPt</tt> is invalid
  */
-Fam_cr3bp FamGenerator::cr3bp_generateLyap(SysData_cr3bp sysData, int LPt, double x0){
+void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 	if(LPt < 1 || LPt > 3)
 		throw Exception("FamGenerator::cr3bp_generateLyap: Invalid LPt number");
 
-	// Initialize variables and containers for data
-	Fam_cr3bp fam(sysData);
-
 	// Get initial guess from linearization
 	double LPt_data[] = {0,0,0};
-	DynamicsModel_cr3bp::getEquilibPt(fam.getSysDataPtr(), LPt, 1e-14, LPt_data);
+	DynamicsModel_cr3bp::getEquilibPt(pFam->getSysDataPtr(), LPt, 1e-14, LPt_data);
 
 	// Begin solving - get linear approximation at ICs
 	double r0[] = {x0, 0, 0};
 	LinMotionEngine linEngine;
 	Traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
-		LinMotion_tp::ELLIP, fam.getSysDataPtr());
+		LinMotion_tp::ELLIP, pFam->getSysDataPtr());
 
-	fam.setSortType(FamSort_tp::SORT_X);
+	pFam->setSortType(FamSort_tp::SORT_X);
 
 	if(contType == Continuation_tp::NAT_PARAM){
 	
@@ -234,13 +231,9 @@ Fam_cr3bp FamGenerator::cr3bp_generateLyap(SysData_cr3bp sysData, int LPt, doubl
 		indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
 		std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
-		cr3bp_natParamCont(&fam, linTraj, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(pFam, linTraj, mirrorTypes, indVars, depVars, 1);
 
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-
-		// Make a copy of sysData so we can pass in a pointer
-		SysData_cr3bp sys(sysData);
-
 		// Get the initial state and tof from the linearization
 		std::vector<double> IC = linTraj.getStateByIx(0);
 		double tof = linTraj.getTimeByIx(-1);
@@ -249,7 +242,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateLyap(SysData_cr3bp sysData, int LPt, doubl
 		// for a CONVERGED family member to start PAC
 		std::vector<int> fixStates {0};
 		int order = 1;
-		Traj_cr3bp perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, Mirror_tp::MIRROR_XZ, fixStates, tol);
+		Traj_cr3bp perOrbit = cr3bp_getPeriodic(pFam->getSysDataPtr(), IC, tof, numNodes, order, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 		// Turn trajectory object into nodeset; double number of nodes
 		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
@@ -257,10 +250,8 @@ Fam_cr3bp FamGenerator::cr3bp_generateLyap(SysData_cr3bp sysData, int LPt, doubl
 		// Apply Pseudo Arclength Continuation: Ignore y (ix = 0) for periodicity, force y to equal 0 at node 0
 		int sign = IC[0] - LPt_data[0] < 0 ? -1 : 1;	// force the first step to be away from Lagrange point
 		std::vector<int> initDir {sign, 0, 0, 0, 0, 0};
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-
-	return fam;
 }//====================================================
 
 /**
@@ -277,10 +268,14 @@ Fam_cr3bp FamGenerator::cr3bp_generateLyap(SysData_cr3bp sysData, int LPt, doubl
  *	@param lyapFamFile the location of a Lyapunov family file. 
  *	@param initStepSize the size of the initial step away from the bifurcating
  *	Lyapunov orbit (non-dimensional units)
+ *	@param pHaloFam pointer to the halo orbit family object
  */
-Fam_cr3bp FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize){
+void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize, Fam_cr3bp *pHaloFam){
 	Fam_cr3bp lyapFam(lyapFamFile);
 	
+	if(lyapFam.getSysData() != pHaloFam->getSysData())
+		throw Exception("FamGenerator::cr3bp_generateHalo: Halo family must have same system data as lyapunov it bifurcates from");
+
 	Fam_cr3bp haloFam(lyapFam.getSysData());	
 
 	// Try to find bifurcations
@@ -290,7 +285,6 @@ Fam_cr3bp FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initS
 
 	if(bifs.size() == 0){
 		astrohelion::printErr("Could not locate any bifurcations in the Lyapunov family; extiting...\n");
-		return haloFam;
 	}
 
 	if(bifs.size() != 3)
@@ -302,7 +296,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initS
 	std::vector<int> fixStates {2};	// force z to be out of plane
 	IC[2] += initStepSize;
 
-	Traj_cr3bp firstHalo = cr3bp_getPeriodic(haloFam.getSysDataPtr(), IC, period,
+	Traj_cr3bp firstHalo = cr3bp_getPeriodic(pHaloFam->getSysDataPtr(), IC, period,
 		numNodes, 1, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -314,7 +308,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initS
 		if(step_simple > 0 && initStepSize < 0)
 			step_simple *= -1;
 
-		cr3bp_natParamCont(&haloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(pHaloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 
 		// Turn trajectory object into nodeset; double number of nodes
@@ -322,9 +316,8 @@ Fam_cr3bp FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initS
 
 		int sign = initStepSize < 0 ? -1 : 1;
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
-		cr3bp_pseudoArcCont(&haloFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pHaloFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-	return haloFam;
 }//=======================================================
 
 /**
@@ -340,12 +333,14 @@ Fam_cr3bp FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initS
  *
  *	@param lyapFamFile the filepath to a lyapunov family file
  *	@param initStepSize the initial step-off in the z-dot direction
- *	@return an axial family
+ *	@param pAxialFam pointer to the axial orbit family object
  */
-Fam_cr3bp FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize){
+void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize, Fam_cr3bp *pAxialFam){
 	Fam_cr3bp lyapFam(lyapFamFile);
 
-	Fam_cr3bp axialFam(lyapFam.getSysData());
+	if(lyapFam.getSysData() != pAxialFam->getSysData()){
+		throw Exception("FamGenerator::cr3bp_generateAxial: Axial family must have same system data as the lyapunov it bifurcates from");
+	}
 
 	// Try to find bifurcations
 	lyapFam.sortMembers();
@@ -354,7 +349,6 @@ Fam_cr3bp FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double init
 
 	if(bifs.size() == 0){
 		astrohelion::printErr("Could not locate any bifurcations in the Lyapunov family; extiting...\n");
-		return axialFam;
 	}
 
 	if(bifs.size() != 3)
@@ -366,7 +360,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double init
 	std::vector<int> fixStates {5};	// force z-dot to be non-zero
 	IC[5] += initStepSize;
 
-	Traj_cr3bp firstAxial = cr3bp_getPeriodic(axialFam.getSysDataPtr(), IC, period,
+	Traj_cr3bp firstAxial = cr3bp_getPeriodic(pAxialFam->getSysDataPtr(), IC, period,
 		numNodes, 1, Mirror_tp::MIRROR_X_AX_H, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -378,16 +372,15 @@ Fam_cr3bp FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double init
 		if(step_simple > 0 && initStepSize < 0)
 			step_simple *= -1;
 
-		cr3bp_natParamCont(&axialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(pAxialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
 		Nodeset_cr3bp initGuess(firstAxial, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 		std::vector<int> initDir {0, 0, 0, 0, 0, sign};
-		cr3bp_pseudoArcCont(&axialFam, initGuess, Mirror_tp::MIRROR_X_AX_H, initDir);
+		cr3bp_pseudoArcCont(pAxialFam, initGuess, Mirror_tp::MIRROR_X_AX_H, initDir);
 	}
-	return axialFam;
 }//====================================================
 
 /**
@@ -396,13 +389,15 @@ Fam_cr3bp FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double init
  *  @param axialFamFile a pointer to a file containing the axial family at the same 
  *  collinear point as the desired vertical family
  *  @param initStepSize initial step size from the bifurcating axial orbit
- * 
+ *  @param pVertFam pointer to the vertical orbit family object
  *  @return a family of vertical orbits
  */
-Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize){
+void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize, Fam_cr3bp *pVertFam){
 	Fam_cr3bp axialFam(axialFamFile);
 
-	Fam_cr3bp vertFam(axialFam.getSysData());
+	if(axialFam.getSysData() != pVertFam->getSysData()){
+		throw Exception("FamGenerator::cr3bp_generateVertical: Vertical family must have the same system data object as the axial family it bifurcates from");
+	}
 
 	// Try to find bifurcations
 	axialFam.sortMembers();
@@ -411,7 +406,6 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 
 	if(bifs.size() == 0){
 		astrohelion::printErr("Could not locate any bifurcations in the Axial family; exiting...\n");
-		return vertFam;
 	}
 
 	if(bifs.size() > 2){
@@ -429,7 +423,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 	// so the first step is to integrate to that point
 	SimEngine sim;
 	sim.addEvent(Event(Event_tp::XZ_PLANE, 0, true));	// Stop integrated at XZ plane, going opposite direction as initial state
-	Traj_cr3bp quarterArc(vertFam.getSysDataPtr());
+	Traj_cr3bp quarterArc(pVertFam->getSysDataPtr());
 	sim.runSim(IC, period/3, &quarterArc);	// 1/3 period should be long enough to fly 1/4 of the trajectory
 
 	IC = quarterArc.getStateByIx(-1);
@@ -438,7 +432,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 	std::vector<int> fixStates {2}; // force z-dot to be non-zero
 	IC[2] += initStepSize;
 
-	Traj_cr3bp firstVertical = cr3bp_getPeriodic(vertFam.getSysDataPtr(), IC, period,
+	Traj_cr3bp firstVertical = cr3bp_getPeriodic(pVertFam->getSysDataPtr(), IC, period,
 		numNodes, 2, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -450,7 +444,7 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 		if(step_simple > 0 && initStepSize < 0)
 			step_simple *= -1;
 
-		cr3bp_natParamCont(&vertFam, firstVertical, mirrorTypes, indVars, depVars, 2);
+		cr3bp_natParamCont(pVertFam, firstVertical, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
 		Nodeset_cr3bp initGuess(firstVertical, 2*numNodes-1);
@@ -458,26 +452,25 @@ Fam_cr3bp FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double 
 		int sign = initStepSize < 0 ? -1 : 1;
 
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
-		cr3bp_pseudoArcCont(&vertFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pVertFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-
-	return vertFam;
 }//====================================================
+
 /**
  *	@brief Generate a Butterfly family in the CR3BP
  *	
- *	@param sysData represents the system the Lyapunov exists in
  *	@param LPt The Lagrange point number [1-5]
+ *	@param pFam pointer to a family object
  *
- *	@return a family of orbits
  *	@throws Exception if <tt>LPt</tt> is not equal to two (others not implemented)
  */
-Fam_cr3bp FamGenerator::cr3bp_generateButterfly(SysData_cr3bp *sysData, int LPt){
+void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 	if(LPt != 2)
 		throw Exception("FamGenerator::cr3bp_butterfly: LPts != 2 are not implemented");
 
+	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 	double LPt_data[] = {0,0,0};
-	DynamicsModel_cr3bp::getEquilibPt(sysData, LPt, 1e-14, LPt_data);
+	DynamicsModel_cr3bp::getEquilibPt(pSys, LPt, 1e-14, LPt_data);
 
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
@@ -489,15 +482,12 @@ Fam_cr3bp FamGenerator::cr3bp_generateButterfly(SysData_cr3bp *sysData, int LPt)
 	printf("Correcting Butterfly...\n");
 	// Correct to a periodic orbit
 	std::vector<int> fixed {4};
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, tof, 8, 2, Mirror_tp::MIRROR_XZ, fixed, tol);
+	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, tof, 8, 2, Mirror_tp::MIRROR_XZ, fixed, tol);
 
 	printf("Creating Family...\n");
-	// Initialize variables and containers for data
-	Fam_cr3bp fam(*sysData);
-
 	if(contType == Continuation_tp::NAT_PARAM){
 		// Butterfly-specific settings
-		fam.setSortType(FamSort_tp::SORT_X);
+		pFam->setSortType(FamSort_tp::SORT_X);
 		// std::vector<int> indVars {0,2};
 		std::vector<int> indVars {0, 2};
 		// std::vector<int> depVars {4,6};
@@ -505,16 +495,15 @@ Fam_cr3bp FamGenerator::cr3bp_generateButterfly(SysData_cr3bp *sysData, int LPt)
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
-		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 2);
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
 		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-	return fam;
 }//====================================================
 
 /**
@@ -523,32 +512,31 @@ Fam_cr3bp FamGenerator::cr3bp_generateButterfly(SysData_cr3bp *sysData, int LPt)
  *  radius that corresponds to the minimum flyby altitude, or, if that value is 
  *  less than 1 km, an altitude of 100 km.
  * 
- *  @param sysData System data object describing the CR3BP
- *  @return A family of DROs
+ *  @param pFam pointer to a family object
  */
-Fam_cr3bp FamGenerator::cr3bp_generateDRO(SysData_cr3bp *sysData){
-	BodyData P2Data = BodyData(sysData->getPrimary(1));
+void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
+	SysData_cr3bp *pSys = pFam->getSysDataPtr();
+	BodyData P2Data = BodyData(pSys->getPrimary(1));
 	double orbR = P2Data.getRadius() + 
 		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
 	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
 
-	double IC[] {1 - sysData->getMu() - orbR/sysData->getCharL(), 0, 0,
-				 0, orbV*sysData->getCharT()/sysData->getCharL(), 0};		// IC for a DRO from the conic
+	double IC[] {1 - pSys->getMu() - orbR/pSys->getCharL(), 0, 0,
+				 0, orbV*pSys->getCharT()/pSys->getCharL(), 0};		// IC for a DRO from the conic
 	std::vector<double> icVec (IC, IC+6);
 
-	// printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/sysData->getCharT());
+	// printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/pSys->getCharT());
 
 	// waitForUser();
 	// Correct to be periodic
 	printf("Correcting initial DRO from conic...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), Mirror_tp::MIRROR_XZ, tol);
+	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, orbT/pSys->getCharT(), Mirror_tp::MIRROR_XZ, tol);
 
 	printf("Creating Family...\n");
-	Fam_cr3bp fam(*sysData);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		fam.setSortType(FamSort_tp::SORT_X);
+		pFam->setSortType(FamSort_tp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
@@ -558,15 +546,13 @@ Fam_cr3bp FamGenerator::cr3bp_generateDRO(SysData_cr3bp *sysData){
 			step_simple *= -1;
 
 		printf("Using natural parameter continuation...\n");
-		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-
-	return fam;
 }//====================================================
 
 /**
@@ -575,32 +561,31 @@ Fam_cr3bp FamGenerator::cr3bp_generateDRO(SysData_cr3bp *sysData){
  *  radius that corresponds to the minimum flyby altitude, or, if that value is 
  *  less than 1 km, an altitude of 100 km.
  * 
- *  @param sysData System data object describing the CR3BP
- *  @return A family of DROs
+ *  @param pFam pointer to a family data object
  */
-Fam_cr3bp FamGenerator::cr3bp_generateLPO(SysData_cr3bp *sysData){
-	BodyData P2Data = BodyData(sysData->getPrimary(1));
+void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
+	SysData_cr3bp *pSys = pFam->getSysDataPtr();
+	BodyData P2Data = BodyData(pSys->getPrimary(1));
 	double orbR = P2Data.getRadius() + 
 		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
 	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
 
-	double IC[] {1 - sysData->getMu() - orbR/sysData->getCharL(), 0, 0,
-				 0, -orbV*sysData->getCharT()/sysData->getCharL(), 0};		// IC for a DRO from the conic
+	double IC[] {1 - pSys->getMu() - orbR/pSys->getCharL(), 0, 0,
+				 0, -orbV*pSys->getCharT()/pSys->getCharL(), 0};		// IC for a DRO from the conic
 	std::vector<double> icVec (IC, IC+6);
 
-	// printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/sysData->getCharT());
+	// printf("Conic Arc State = [%.6f, 0, 0, 0, %.6f, 0], Period = %.6f\n", IC[0], IC[4], orbT/pSys->getCharT());
 
 	// waitForUser();
 	// Correct to be periodic
 	printf("Correcting initial LPO from conic...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, orbT/sysData->getCharT(), Mirror_tp::MIRROR_XZ, tol);
+	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, orbT/pSys->getCharT(), Mirror_tp::MIRROR_XZ, tol);
 
 	printf("Creating Family...\n");
-	Fam_cr3bp fam(*sysData);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		fam.setSortType(FamSort_tp::SORT_X);
+		pFam->setSortType(FamSort_tp::SORT_X);
 		std::vector<int> indVars {0, 4};			// Vary x and vy
 		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
@@ -610,79 +595,84 @@ Fam_cr3bp FamGenerator::cr3bp_generateLPO(SysData_cr3bp *sysData){
 			step_simple *= -1;
 
 		printf("Using natural parameter continuation...\n");
-		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-
-	return fam;
 }//====================================================
 
-Fam_cr3bp FamGenerator::cr3bp_generateDPO(SysData_cr3bp *sysData){
-	BodyData P2Data = BodyData(sysData->getPrimary(1));
+/**
+ *  \brief Generate a family of Distance Prograde Orbits (DPOs)
+ * 
+ *  \param pFam pointer to a family object
+ */
+void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
+	SysData_cr3bp *pSys = pFam->getSysDataPtr();
+
+	BodyData P2Data = BodyData(pSys->getPrimary(1));
 	double L1_pos[3];
-	DynamicsModel_cr3bp::getEquilibPt(sysData, 1, 1e-12, L1_pos);
+	DynamicsModel_cr3bp::getEquilibPt(pSys, 1, 1e-12, L1_pos);
 
 	// Approximate initial state: 41.53% of the way between P2 and L1
-	double orbR_nondim = 0.415362*(1 - sysData->getMu() - L1_pos[0]);
+	double orbR_nondim = 0.415362*(1 - pSys->getMu() - L1_pos[0]);
 	// Approximate: velocity in circular orbit at orbR
-	double v_circ = sqrt(P2Data.getGravParam()/(sysData->getCharL()*orbR_nondim));
+	double v_circ = sqrt(P2Data.getGravParam()/(pSys->getCharL()*orbR_nondim));
 	SysData_cr3bp sysSE("sun", "earth");
 
 	// Approximate: initial velocity is about -1.17*v_circ in SE and -1.18*v_circ in EM, so
 	// craft crude interpolation between the two
-	double IC[] = {1 - sysData->getMu() - orbR_nondim, 0, 0,
-				   0, -(1.17 + (2.5e-6)*(sysData->getMu()/sysSE.getMu()))*v_circ*sysData->getCharT()/sysData->getCharL(), 0};
+	double IC[] = {1 - pSys->getMu() - orbR_nondim, 0, 0,
+				   0, -(1.17 + (2.5e-6)*(pSys->getMu()/sysSE.getMu()))*v_circ*pSys->getCharT()/pSys->getCharL(), 0};
 
 	std::vector<double> icVec (IC, IC+6);
 
 	// getPeriodic() function will use the mirror condition to stop integration at the mirror plane, so
 	// I use a large TOF to make sure it gets there.
 	printf("Correcting initial DPO from approximation...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, icVec, PI, Mirror_tp::MIRROR_XZ, tol);
+	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, PI, Mirror_tp::MIRROR_XZ, tol);
 
 	// perOrbit.saveToMat("initial_dpo.mat");
 	// waitForUser();
 
 	printf("Creating family...\n");
-	Fam_cr3bp fam(*sysData);
-
 	if(contType == Continuation_tp::NAT_PARAM){
-		fam.setSortType(FamSort_tp::SORT_VY);
+		pFam->setSortType(FamSort_tp::SORT_VY);
 		std::vector<int> indVars {4, 0};		// Vary vy and x
 		std::vector<int> depVars {0, 4, 6};		// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
-		// Set the simple step size to be positive
-		if(step_simple > 0)
-			step_simple *= -1;
-
 		printf("Using natural parameter continuation...\n");
-		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, 1);
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
+
+		// run the other direction too
+		step_simple *= -1;
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
+
 	}else if(contType == Continuation_tp:: PSEUDO_ARC){
 		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
-		std::vector<int> initDir {0, 0, 0, 0, -1, 0};
+		std::vector<int> initDir {0, 0, 0, 0, 1, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
-	}
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 
-	return fam;
+		// run the other direction too
+		initDir[5] *= -1;
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+	}
 }//====================================================
 
 /**
  *  @brief Compute a family of p:q resonant orbits
  * 
- *  @param sysData Earth-Moon CR3BP system data object (other systems not implemented)
  *  @param p Resonance ratio numerator; the orbit completes p revolutions in an inertial frame
  *  in the same amount of time as the CR3BP system completes q revolutions in an inertial frame.
  *  @param q Resonance ratio denominator
- *  @return A family of resonant orbits
+ *  @param pFam pointer to a family object
  *  @throws Exception of the resonance ratio p:q is not implemented or recognized
  */
-Fam_cr3bp FamGenerator::cr3bp_generateRes(SysData_cr3bp *sysData, int p, int q){
+void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 	double x = 0, vy = 0, T = 0;
 	int order = 0;
 	switch(p){
@@ -749,20 +739,20 @@ Fam_cr3bp FamGenerator::cr3bp_generateRes(SysData_cr3bp *sysData, int p, int q){
 	if(p == 4 && q == 3)
 		numNodes *= 2;
 	
+	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 	printf("Correcting %d:%d Resonant Orbit...\n", p, q);
 	// Correct to a periodic orbit
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(sysData, ic, T, numNodes, order, Mirror_tp::MIRROR_XZ, fixed, tol);
+	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, ic, T, numNodes, order, Mirror_tp::MIRROR_XZ, fixed, tol);
 	// perOrbit.saveToMat("resOrbit_initSoln.mat");
 	// waitForUser();
 
 	printf("Creating Family...\n");
 	// Initialize variables and containers for data
-	Fam_cr3bp fam(*sysData);
-	fam.setSortType(FamSort_tp::SORT_X);
+	pFam->setSortType(FamSort_tp::SORT_X);
 
 	if(contType == Continuation_tp::NAT_PARAM){
 		// Butterfly-specific settings
-		fam.setSortType(FamSort_tp::SORT_X);
+		pFam->setSortType(FamSort_tp::SORT_X);
 		// std::vector<int> indVars {0,2};
 		std::vector<int> indVars {0, 4};
 		// std::vector<int> depVars {4,6};
@@ -770,29 +760,27 @@ Fam_cr3bp FamGenerator::cr3bp_generateRes(SysData_cr3bp *sysData, int p, int q){
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
-		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, order);
 		
 		// Run the other direction too
 		step_simple *= -1;
-		cr3bp_natParamCont(&fam, perOrbit, mirrorTypes, indVars, depVars, order);
+		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, order);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
 		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 
 		// Run the other direction too
 		initDir[0] *= -1;
-		cr3bp_pseudoArcCont(&fam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
-
-	return fam;
-}
+}//====================================================
 
 /**
- *	@brief Continue a family of orbits in the CR3BP
+ *	@brief Continue a family of orbits in the CR3BP via natural parameter continuation
  *	
  * 	@param fam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
@@ -1394,27 +1382,16 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
+		Traj_cr3bp perOrbit = Traj_cr3bp::fromNodeset(perNodes);
 		// perNodes.saveToMat("temp_perNodes_pac.mat");
 		// newMember.saveToMat("temp_newMember.mat");
-		Traj_cr3bp perOrbit = Traj_cr3bp::fromNodeset(perNodes);
+		// perOrbit.saveToMat("temp_perOrbit_pac.mat");
 
 		members.push_back(perOrbit);
 		orbitCount++;
 
 		// Compute eigenvalues
 		MatrixXRd mono = perOrbit.getSTMByIx(-1);
-
-		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
-		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
-		for(int r = 0; r < 6; r++){
-			for(int c = 0; c < 6; c++){
-				printf("%10.2f", mono(r,c));
-			}
-			printf("\n");
-		}
-		waitForUser();
-		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
-		//!*!*!*!*!*! DEBUGGING !*!*!*!*!*!*!*
 		
 		double monoErr = std::abs(1.0 - mono.determinant());
 		if(monoErr > 1e-5)

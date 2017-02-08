@@ -258,7 +258,9 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 
 				if(tof > minTimeDiff){
 					int newID = addNode(Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
-					addSeg(Segment(prevNodeID, newID, tof));
+					Segment newSeg = Segment(prevNodeID, newID, tof);
+					newSeg.setSTM(traj.getSTMByIx(stepIx));
+					addSeg(newSeg);
 
 					prevNodeID = newID;
 					T0 += tof;
@@ -271,7 +273,13 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	if(evtCount > 0){
 		// Add a final segment connecting the last node to the original terminus
 		tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
-		addSeg(Segment(prevNodeID, terminus.getID(), tof));
+		Traj temp(pSysData);
+		engine.clearEvents();
+		engine.runSim(nodes[nodeIDMap[prevNodeID]].getState(), nodes[nodeIDMap[prevNodeID]].getEpoch(), tof, &temp);
+
+		Segment newSeg = Segment(prevNodeID, terminus.getID(), tof);
+		newSeg.setSTM(temp.getSTMByIx(-1));
+		addSeg(newSeg);
 	}
 
 	return evtCount;
@@ -418,6 +426,7 @@ void Nodeset::saveToMat(const char* filename) const{
 		saveState(matfp, "Nodes");
 		saveEpoch(matfp, "Epochs");
 		saveTOF(matfp, "TOFs");
+		saveSTMs(matfp);
 		pSysData->saveToMat(matfp);
 		// TODO: Add these functions:
 		// saveCons(matfp);
@@ -444,7 +453,8 @@ void Nodeset::readFromMat(const char *filepath){
 	readStateFromMat(matfp, "Nodes");
 	readEpochFromMat(matfp, "Epochs");
 	readTOFFromMat(matfp, "TOFs");
-
+	readSTMFromMat(matfp);
+	
 	Mat_Close(matfp);
 }//====================================================
 
@@ -506,7 +516,9 @@ void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int nu
 		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);
 
 		id = addNode(Node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
-		addSeg(Segment(id-1, id, segTOF));
+		Segment newSeg = Segment(id-1, id, segTOF);
+		newSeg.setSTM(traj.getSTMByIx(-1));
+		addSeg(newSeg);
 
 		ic = traj.getStateByIx(-1);
 	}
@@ -568,6 +580,8 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
 			int id = addNode(Node(traj.getStateByIx(s), traj.getEpochByIx(s)));
 			
 			// Add a segment to link the previous node and this new one
+			// I'm not setting the STM here; it will be initialized to 
+			// Identity on every arc segment
 			addSeg(Segment(prevID, id, sumTOF));
 
 			// Reset counters and index variables

@@ -283,10 +283,12 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
  *	@brief Run a simulation given a set of initial conditions and run time. 
  *
  *  It is assumed that t0 = 0
- *	@param ic a 6-element array containting the non-dimensional initial state
+ *	@param ic an array containting the non-dimensional initial state; number
+ *    of elements must match the number of <code>coreStates</code> specified 
+ *    in the system dynamics model
  *	@param tof the total integration time, or time-of-flight (non-dim units)
- *  Only the absolute value of the TOF is considered; to integrate backwards in
- *  time, use the setRevTime() function.
+ *    Only the absolute value of the TOF is considered; to integrate backwards in
+ *    time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, double tof, Traj *traj){
@@ -297,10 +299,10 @@ void SimEngine::runSim(const double *ic, double tof, Traj *traj){
  *  @brief Run a simulation given a set of initial conditions and run time
  *
  *  It is assumed that t0 = 0
- *  @param ic a vector containing the IC (six non-dim states)
+ *  @param ic a vector containing the IC (nondimensional states)
  *  @param tof the total integration time, or time-of-flight (non-dim units)
- *  Only the absolute value of the TOF is considered; to integrate backwards in
- *  time, use the setRevTime() function.
+ *    Only the absolute value of the TOF is considered; to integrate backwards in
+ *    time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(std::vector<double> ic, double tof, Traj *traj){
@@ -311,35 +313,65 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Traj *traj){
  *  @brief Run a simulation given a set of initial conditions and run time
  *
  *  It is assumed that t0 = 0
- *  @param ic a vector containing the IC (six non-dim states)
+ *  @param ic a vector containing the IC (nondimensional states)
  *  @param t0 the epoch time associated with the IC (non-dim units)
  *  @param tof the total integration time, or time-of-flight (non-dim units).
- *  Only the absolute value of the TOF is considered; to integrate backwards in
- *  time, use the setRevTime() function.
+ *    Only the absolute value of the TOF is considered; to integrate backwards in
+ *    time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  *  @throws Exception if <tt>ic</tt> has fewer than 6 elements
  *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
- *  This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *  data generated up to the integrator failure is saved in the Traj object passed to
- *  the SimEngine regardless of the thrown exception(s).
+ *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
+ *    data generated up to the integrator failure is saved in the Traj object passed to
+ *    the SimEngine regardless of the thrown exception(s).
  */
 void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Traj *traj){
-    if(ic.size() >= 6){
+    if(ic.size() >= static_cast<size_t>(traj->getSysData()->getDynamicsModel()->getCoreStateSize())){
         std::vector<double> tempIC = ic;
         runSim(&(tempIC[0]), t0, tof, traj);
     }else{
-        throw Exception("SimEngine::runSim: IC must have at least six elements");
+        printErr("IC size = %zu\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
+    }
+}//=======================================================
+
+/**
+ *  @brief Run a simulation given a set of initial conditions and run time
+ *
+ *  It is assumed that t0 = 0
+ *  @param ic a vector containing the IC (nondimensional states)
+ *  @param stm0 initial STM
+ *  @param t0 the epoch time associated with the IC (non-dim units)
+ *  @param tof the total integration time, or time-of-flight (non-dim units).
+ *    Only the absolute value of the TOF is considered; to integrate backwards in
+ *    time, use the setRevTime() function.
+ *  @param traj pointer to a trajectory object to store the output trajectory
+ *  @throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
+ *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
+ *    data generated up to the integrator failure is saved in the Traj object passed to
+ *    the SimEngine regardless of the thrown exception(s).
+ */
+void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double tof, Traj *traj){
+    if(ic.size() >= static_cast<size_t>(traj->getSysData()->getDynamicsModel()->getCoreStateSize())){
+        std::vector<double> tempIC = ic;
+        runSim(&(tempIC[0]), stm0, t0, tof, traj);
+    }else{
+        printErr("IC size = %zu\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
     }
 }//=======================================================
 
 /**
  *	@brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
- *	@param ic a 6-element array of non-dimensional initial states
+ *	@param ic an array of non-dimensional initial states; number
+ *    of elements must match the number of <code>coreStates</code> specified 
+ *    in the system dynamics model
  *	@param t0 the time at the start of the integration, non-dimensional units
  *	@param tof time-of-flight, non-dimensional time units
- *  Only the absolute value of the TOF is considered; to integrate backwards in
- *  time, use the setRevTime() function.
+ *    Only the absolute value of the TOF is considered; to integrate backwards in
+ *    time, use the setRevTime() function.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
@@ -362,17 +394,45 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
         }
     }
 
-    runSim(ic, t_span, traj);
+    int core = traj->getSysData()->getDynamicsModel()->getCoreStateSize();
+    MatrixXRd stm0 = MatrixXRd::Identity(core, core);
+    runSim(ic, stm0, t_span, traj);
+}//====================================================
+
+void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, Traj *traj){
+    std::vector<double> t_span;
+    // Compute the final time based on whether or not we're using reverse time integration
+    double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+
+    if(bVarStepSize){
+        t_span.reserve(2);
+        t_span.push_back(t0);
+        t_span.push_back(tf);
+    }else{
+        t_span.reserve(numSteps);
+        double dt = (tf - t0)/(numSteps - 1);
+
+        for(int n = 0; n < numSteps; n++){
+            t_span.push_back(t0 + dt*n);
+        }
+    }
+
+    runSim(ic, stm0, t_span, traj);
 }//====================================================
 
 /**
  *  @brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
- *  @param ic a 6-element array of non-dimensional initial states
+ *  @param ic an array of non-dimensional initial states; number
+ *    of elements must match the number of <code>coreStates</code> specified 
+ *    in the system dynamics model
+ *  @param stm0 initial STM
  *  @param t_span a vector of times to include in the solution.
  *  @param traj pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, std::vector<double> t_span, Traj *traj){
+void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Traj *traj){
     astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
@@ -385,7 +445,7 @@ void SimEngine::runSim(const double *ic, std::vector<double> t_span, Traj *traj)
     eomParams = &paramStruct;
 
     // Run the simulation
-    integrate(ic, &(t_span.front()), t_span.size(), traj);
+    integrate(ic, stm0, &(t_span.front()), t_span.size(), traj);
 
     bIsClean = false;
 }//====================================================
@@ -402,14 +462,17 @@ void SimEngine::runSim(const double *ic, std::vector<double> t_span, Traj *traj)
  *  whether or not to use simple integration, and whether or not to use variable step sizes. Dad
  *  is saved to object-wide storage vectors via the <tt>sim_saveIntegratedData()</tt> function.
  *
- *  @param ic a 6-element initial state for the trajectory
+ *  @param ic an array containing the initial state for the trajectory; number
+ *    of elements must match the number of <code>coreStates</code> specified 
+ *    in the system dynamics model
+ *  @param stm0 initial STM
  *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
  *  @param t_dim the dimension of t
  *  @param traj pointer to a trajectory object to store the output trajectory
  *  
  *  @throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *traj){
+void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int t_dim, Traj *traj){
     startTimestamp = time(nullptr);
 
     // Save tolerance for trajectory
@@ -430,14 +493,18 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
     std::vector<double> fullIC(ic_dim, 0);
     std::copy(ic, ic + core, &(fullIC.front()));
 
+    if(stm0.rows() != core || stm0.cols() != core){
+        throw Exception("SimEngine::integrate: Initial STM size does not match the core state size specified by the Dynamic Model");
+    }
+
     // ASSUMPTION: STM follows immediately after core states; any extras come after the STM
     if(!bSimpleIntegration){
-        fullIC.at(core + 0) = 1;       // STM initial condition: 6x6 identity matrix
-        fullIC.at(core + 7) = 1;
-        fullIC.at(core + 14) = 1;
-        fullIC.at(core + 21) = 1;
-        fullIC.at(core + 28) = 1;
-        fullIC.at(core + 35) = 1;      // Elements 42-48 for BCR4BPR ICs are all zero
+        // Add STM to initial conditions
+        for(unsigned int r = 0; r < static_cast<unsigned int>(core); r++){
+            for(unsigned int c = 0; c < static_cast<unsigned int>(core); c++){
+                fullIC.at(core + r*core + c) = stm0(r,c);
+            }
+        }
     }
 
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
@@ -533,7 +600,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
             killSim = locateEvents(y, t0, traj);
 
             // Stop the simulation if the maximum computation time has passed
-            killSim = killSim || maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime;
+            killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
 
             if(killSim)
                 break;
@@ -565,7 +632,7 @@ void SimEngine::integrate(const double *ic, const double *t, int t_dim, Traj *tr
                 killSim = locateEvents(y, t0, traj);
 
                 // Stop the simulation if the maximum computation time has passed
-                killSim = killSim || maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime;
+                killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
             }
 
             if(killSim)

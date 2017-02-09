@@ -91,15 +91,15 @@ class FamGenerator : public Core, public Engine{
 		 *  @name Family Generation
 		 *  @{
 		 */
-		Fam_cr3bp cr3bp_generateAxial(const char*, double);
-		Fam_cr3bp cr3bp_generateButterfly(SysData_cr3bp*, int);
-		Fam_cr3bp cr3bp_generateDPO(SysData_cr3bp*);
-		Fam_cr3bp cr3bp_generateDRO(SysData_cr3bp*);
-		Fam_cr3bp cr3bp_generateHalo(const char*, double);
-		Fam_cr3bp cr3bp_generateLPO(SysData_cr3bp*);
-		Fam_cr3bp cr3bp_generateLyap(SysData_cr3bp, int, double);
-		Fam_cr3bp cr3bp_generateRes(SysData_cr3bp*, int, int);
-		Fam_cr3bp cr3bp_generateVertical(const char*, double);
+		void cr3bp_generateAxial(const char*, double, Fam_cr3bp*);
+		void cr3bp_generateButterfly(int, Fam_cr3bp*);
+		void cr3bp_generateDPO(Fam_cr3bp*);
+		void cr3bp_generateDRO(Fam_cr3bp*);
+		void cr3bp_generateHalo(const char*, double, Fam_cr3bp*);
+		void cr3bp_generateLPO(Fam_cr3bp*);
+		void cr3bp_generateLyap(int, double, Fam_cr3bp*);
+		void cr3bp_generateRes(int, int, Fam_cr3bp*);
+		void cr3bp_generateVertical(const char*, double, Fam_cr3bp*);
 		//@}
 		
 		void reset();

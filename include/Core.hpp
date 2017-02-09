@@ -132,11 +132,21 @@ struct Core_Initializer {
  */
 class Core{
 public:
-	static Core_Initializer initializer;				//!< Create one to initialize the system	
-	static bool bIsInit;								//!< Flag to prevent initializations happing lots of times
+	// static Core_Initializer initializer;				//!< Create one to initialize the system	
+	// static bool bIsInit;								//!< Flag to prevent initializations happing lots of times
 
 	Core();												//!< Default constructor
 	virtual ~Core();									//!< Default destructor
+
+	Core_Initializer& initializer(){
+		static Core_Initializer initializer;
+		return initializer;
+	}
+
+	bool& bIsInit(){
+		static bool b_isInit;
+		return b_isInit;
+	}
 };
 
 

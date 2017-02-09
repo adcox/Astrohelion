@@ -90,24 +90,57 @@ Traj Traj::fromNodeset(Nodeset set){
 	if(!set.isInChronoOrder())
 		set.putInChronoOrder();
 
+	int coreSize = set.getSysData()->getDynamicsModel()->getCoreStateSize();
+	MatrixXRd prevSTM;
+
 	for(int s = 0; s < set.getNumSegs(); s++){
 		double tof = set.getSegByIx(s).getTOF();
 		simEngine.setRevTime(tof < 0);
 		Node origin = set.getNode(set.getSegByIx(s).getOrigin());
 		Traj temp(set.getSysData());
-		simEngine.runSim(origin.getState(), origin.getEpoch(), tof, &temp);
+
+		bool cont = true;
+		std::vector<bool> velCon = set.getSegByIx(s).getVelCon();
+		for(unsigned int i = 0; i < velCon.size(); i++){
+			if(!velCon[i]){
+				cont = false;
+				break;
+			}
+		}
+
+
+		// Initialize the STM to identity if this is the first segment or if there is a discontinuity
+		// Otherwise, maintain continuity by beginning with the previous STM
+		MatrixXRd stm0 = (s == 0 || !cont) ? MatrixXRd::Identity(coreSize, coreSize) : prevSTM;
+		// printf("(Cont = %c) STM0 = \n", cont ? 'Y' : 'N');
+		// for(int r = 0; r < 6; r++){
+		// 	for(int c = 0; c < 6; c++){
+		// 		printf("%10.2f", stm0(r,c));
+		// 	}
+		// 	printf("\n");
+		// }
+		simEngine.runSim(origin.getState(), stm0, origin.getEpoch(), tof, &temp);
 
 		if(s == 0){
 			totalTraj = temp;
 		}else{
 			// Shift the time on the newly propagated segment so it starts where the previous segment left off
 			temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
+
 			// Use += so that each piece is put into chronological order, even though this significantly increases run time
 			totalTraj += temp;
 			// totalTraj.appendSetAtNode(&temp, totalTraj.getNodeByIx(-1).getID(), 0, 0);
 		}
+
+		// temp.saveToMat("fromNodeset_tempTraj.mat");
+		// totalTraj.saveToMat("fromNodeset_totalTraj.mat");
+		// waitForUser();
+
+		prevSTM = set.getSegByIx(s).getSTM();
 	}
 
+	// Summation of trajectories jumbles up the order a bit, so fix it before returning
+	totalTraj.putInChronoOrder();
 	return totalTraj;
 }//====================================================
 

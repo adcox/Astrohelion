@@ -30,6 +30,7 @@
 #include "BaseArcset.hpp"
 
 #include "AsciiOutput.hpp"
+#include "DynamicsModel.hpp"
 #include "EigenDefs.hpp"
 #include "SysData.hpp"
 #include "Exceptions.hpp"
@@ -312,11 +313,18 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	if(!linkTo_isOrigin && !linkFrom_isOrigin)
 		throw Exception("BaseArcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
 
+	// Store STM between two data sets; if tof != 0, we don't know the path between
+	// the two, so linkSTM is initialized to the identity matrix. If tof = 0,
+	// then the path is known (and will be deleted) so we store the STM in linkSTM
+	int coreSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	MatrixXRd linkSTM = MatrixXRd::Identity(coreSize, coreSize);
+
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
 	// TOF and linkFrom_ID
 	if(tof == 0){
 		tof = linkFrom_seg.getTOF();						// Update tof
+		linkSTM = linkFrom_seg.getSTM();					// Save STM
 
 		// Get the next node down the line
 		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
@@ -367,7 +375,9 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 
 	// print();
 	bInChronoOrder = false;
-	return addSeg(Segment(origin, terminus, tof));
+	Segment linkSeg = Segment(origin, terminus, tof);
+	linkSeg.setSTM(linkSTM);
+	return addSeg(linkSeg);
 }//====================================================
 
 /**

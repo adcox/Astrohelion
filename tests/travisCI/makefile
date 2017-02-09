@@ -59,17 +59,25 @@ all: directories unit run
 
 directories: $(OBJ)
 
-unit: arcDataOps
+unit: arcDataOps bcSysDef simEngine
 
 run:
 	./arcDataOps
+	./bcSysDef
+	./simEngine
 	
 ############################################################
 ## UNIT TESTS
 ############################################################
 
 arcDataOps: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_arcDataOps.cpp $(LDFLAGS) -o $@	
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_arcDataOps.cpp $(LDFLAGS) -o $@
+
+bcSysDef: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_bc4bp_def.cpp $(LDFLAGS) -o $@
+
+simEngine: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_simEngine.cpp $(LDFLAGS) -o $@
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory

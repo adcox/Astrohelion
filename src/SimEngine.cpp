@@ -27,15 +27,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
-#include "SimEngine.hpp"
 
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
 #include <gsl/gsl_errno.h>
-#include <gsl/gsl_odeiv2.h>
 #include <vector>
+
+#include "SimEngine.hpp"
 
 #include "AsciiOutput.hpp"
 #include "Node.hpp"
@@ -170,6 +169,15 @@ std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
  *  @param evt an event
  */
 void SimEngine::addEvent(Event evt){
+    // Make sure this event hasn't been added before
+    for(unsigned int e = 0; e < events.size(); e++){
+        if(events[e] == evt){
+            printErr("SimEngine::addEvent: Event has already been added to the engine; ignoring this new event\n");
+            return;
+        }
+    }
+
+    // New event? Great, save it to the list
     events.push_back(evt);
 }//======================================
 
@@ -445,9 +453,8 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
     eomParams = &paramStruct;
 
     // Run the simulation
+    bIsClean = false;   // Technically, nothing has changed yet, but this flag should be false even if any part of integrate throws an exception
     integrate(ic, stm0, &(t_span.front()), t_span.size(), traj);
-
-    bIsClean = false;
 }//====================================================
 
 //-----------------------------------------------------
@@ -540,6 +547,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
                 break;
             default:
+                free_odeiv2(s, c, e, d);
                 throw Exception("SimEngine::integrate: Integrator type is not suited for variable step propagation; aborting integration process");
         }
         
@@ -561,6 +569,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 gsl_odeiv2_step_set_driver(s, d);
                 break;
             default:
+                free_odeiv2(s, c, e, d);
                 throw Exception("SimEngine::integrate: Integrator type is not suited for fixed step propagation; aborting integration process");
         }
     }
@@ -593,6 +602,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
             if(status != GSL_SUCCESS){
                 astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                free_odeiv2(s, c, e, d);
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
 
@@ -626,6 +636,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 if(status != GSL_SUCCESS){
                     astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                    free_odeiv2(s, c, e, d);
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }
 
@@ -644,6 +655,26 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     }
 
     // Clean Up - some have been allocated, some have not
+    // if(bVarStepSize){
+    //     gsl_odeiv2_evolve_free(e);
+    //     gsl_odeiv2_control_free(c);
+    // }else{
+    //     gsl_odeiv2_driver_free(d);
+    // }
+    // gsl_odeiv2_step_free(s);
+    free_odeiv2(s, c, e, d);
+
+    // Check lengths of vectors and set the numPoints value in traj
+    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
+
+    // Summarize event occurrences
+    for(unsigned int i = 0; i < eventOccurs.size(); i++){
+        astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
+            events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
+    }
+}//====================================================END of cr3bp_integrate
+
+void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv2_evolve *e, gsl_odeiv2_driver *d){
     if(bVarStepSize){
         gsl_odeiv2_evolve_free(e);
         gsl_odeiv2_control_free(c);
@@ -651,16 +682,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         gsl_odeiv2_driver_free(d);
     }
     gsl_odeiv2_step_free(s);
-    
-    // Check lengths of vectors and set the numPoints value in traj
-    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
-
-    // Summarize event occurrences
-    for(unsigned int i = 0; i < eventOccurs.size(); i++){
-        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
-            events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
-    }
-}//===============================================END of cr3bp_integrate
+}//====================================================
 
 /**
  *  @brief Locate event occurences as exactly as possible and determine if the simulation 
@@ -699,7 +721,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
         // Don't trigger if only two points have been integrated
         if(events.at(ev).crossedEvent(y, t) && numPts > 1){
 
-            astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
+            astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
             events.at(ev).incrementCount();  // Update the counter for the event
 
             if(verbosity == Verbosity_tp::ALL_MSG){ events.at(ev).printStatus(); }
@@ -739,12 +761,12 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                 events.at(ev).updateDist(&(state[0]), lastT);
                 
                 if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
-                    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
+                    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
                     // the point from mult. shooting as the last
                     return true;    // Tell the simulation to stop
                 }else{
-                    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
+                    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
                     events.at(ev).updateDist(y, t); // Remember the most recent point
                     return false;
                 }
@@ -767,7 +789,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
  *  @details This function does not reset any parameters the user has set
  */
 void SimEngine::cleanEngine(){
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
     eomParams = 0;  // set pointer to 0 (null pointer)
     eventOccurs.clear();
 

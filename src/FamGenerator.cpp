@@ -825,6 +825,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 	// Get info from the initial guess trajectory
 	std::vector<double> IC = initialGuess.getStateByIx(0);
 	double tof = initialGuess.getTimeByIx(-1);
+	double tof0 = tof;
 
 	// Initialize counters and storage containers
 	int orbitCount = 0;
@@ -870,7 +871,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			double dTOF = std::abs(perOrbit.getTimeByIx(-1)) - std::abs(members[members.size()-1].getTimeByIx(-1));
 			double percChange = std::abs(dTOF/perOrbit.getTimeByIx(-1));
 			if(percChange > 0.25){
-				printf("percChange = %.4f\n", percChange);
+				printWarn("percChange = %.4f\n", percChange);
 				astrohelion::printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTimeByIx(-1));
 				diverged = true;
 			}
@@ -885,7 +886,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			if(orbitCount <= numSimple){
 				if(step_simple > minStepSize){
 					step_simple = step_simple/2 > minStepSize ? step_simple/2 : minStepSize;
-					printf("  Decreased step size to %0.4e (min = %.4e)\n", step_simple, minStepSize);
+					printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", step_simple, minStepSize);
 				}else{
 					astrohelion::printErr("Minimum step size reached, could not converge... exiting\n");
 					break;
@@ -895,7 +896,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 
 				if(dq > minStepSize){
 					dq = dq/2 > minStepSize ? dq/2 : minStepSize;
-					printf("  Decreased step size to %0.4e (min = %.4e)\n", dq, minStepSize);
+					printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", dq, minStepSize);
 
 					if(std::abs(indVarSlope) > slopeThresh)
 						step_fitted_1 = dq;
@@ -918,7 +919,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 
 				if(dq < maxStepSize){
 					dq = 2*dq < maxStepSize ? 2*dq : maxStepSize;
-					printf("  Increased step size to %0.4e (max = %.4e)\n", dq, maxStepSize);
+					printColor(MAGENTA, "  Increased step size to %0.4e (max = %.4e)\n", dq, maxStepSize);
 					if(std::abs(indVarSlope) > slopeThresh)
 						step_fitted_1 = dq;
 					else
@@ -958,6 +959,11 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 
 		// Create next initial guess
 		tof = perOrbit.getTimeByIx(-1);
+
+		if(tof*tof0 < 0){
+			printErr("Time-of-Flight changed sign: ending continuation process\n");
+			break;
+		}
 
 		if(orbitCount < numSimple){
 			// Use simple continuation; copy the converged IC, step forward in the independent variable
@@ -1083,6 +1089,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 
 	SysData_cr3bp sys = fam->getSysData();
 	Nodeset_cr3bp familyMember(initialGuess);	// Copy the input initial guess
+	double tof0 = initialGuess.getTotalTOF();
 
 	printf("Correcting Initial Guess...\n");
 	
@@ -1386,6 +1393,11 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		// perNodes.saveToMat("temp_perNodes_pac.mat");
 		// newMember.saveToMat("temp_newMember.mat");
 		// perOrbit.saveToMat("temp_perOrbit_pac.mat");
+
+		if(perOrbit.getTotalTOF()*tof0 < 0){
+			printErr("Time-of-Flight changed sign; ending continuation\n");
+			break;
+		}
 
 		members.push_back(perOrbit);
 		orbitCount++;

@@ -18,10 +18,12 @@ int main(int argc, char *argv[]){
 	// Create system data and generator family generator
 	// SysData_cr3bp sysData("sun", "earth");
 	SysData_cr3bp sysData("earth", "moon");
+	Fam_cr3bp DPO(sysData);
+
 	FamGenerator gen;
 	gen.setContType(Continuation_tp::PSEUDO_ARC);
 
-	Fam_cr3bp DPO = gen.cr3bp_generateDPO(&sysData);
+	gen.cr3bp_generateDPO(&DPO);
 	DPO.sortEigs();
 	DPO.setName("Earth-Moon Distant Prograde Orbit");
 	DPO.saveToMat("../share/families/EM_DPO.mat");

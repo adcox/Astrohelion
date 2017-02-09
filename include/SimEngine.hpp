@@ -27,14 +27,15 @@
  */
 #pragma once
 
+#include <gsl/gsl_odeiv2.h>
+#include <vector>
+
 #include "Core.hpp"
 #include "Engine.hpp"
 
 #include "DynamicsModel.hpp"
 #include "Event.hpp"
 #include "Traj.hpp"
- 
-#include <vector>
 
 
 namespace astrohelion{
@@ -44,6 +45,11 @@ class Traj_bc4bp;
 class Traj_cr3bp;
 class Traj_cr3bp_ltvp;
 class SysData;
+
+// struct gsl_odeiv2_step;
+// struct gsl_odeiv2_control;
+// struct gsl_odeiv2_evolve;
+// struct gsl_odeiv2_driver;
 
 /**
  *	@brief A small structure to store event occurrence records
@@ -181,7 +187,9 @@ class SimEngine : public Core, public Engine{
 		void runSim(std::vector<double>, double, Traj*);
 		void runSim(const double*, double, double, Traj*);
 		void runSim(std::vector<double>, double, double, Traj*);
-		void runSim(const double *ic, std::vector<double>, Traj*);
+		void runSim(const double*, MatrixXRd, double, double, Traj*);
+		void runSim(std::vector<double>, MatrixXRd, double, double, Traj*);
+		void runSim(const double *ic, MatrixXRd, std::vector<double>, Traj*);
 		//@}
 		
 		// Utility Functions
@@ -244,7 +252,8 @@ class SimEngine : public Core, public Engine{
 		void cleanEngine();
 		void copyMe(const SimEngine&);
 		void createCrashEvents(const SysData*);
-		void integrate(const double*, const double*, int, Traj*);
+		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
+		void integrate(const double*, MatrixXRd, const double*, int, Traj*);
 		bool locateEvents(const double*, double, Traj*);
 };
 

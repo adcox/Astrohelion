@@ -121,6 +121,8 @@ Traj Traj::fromNodeset(Nodeset set){
 		// }
 		simEngine.runSim(origin.getState(), stm0, origin.getEpoch(), tof, &temp);
 
+		prevSTM = temp.getSTMByIx(-1);
+
 		if(s == 0){
 			totalTraj = temp;
 		}else{
@@ -128,7 +130,7 @@ Traj Traj::fromNodeset(Nodeset set){
 			temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
 
 			// Use += so that each piece is put into chronological order, even though this significantly increases run time
-			totalTraj += temp;
+			totalTraj += temp;			
 			// totalTraj.appendSetAtNode(&temp, totalTraj.getNodeByIx(-1).getID(), 0, 0);
 		}
 
@@ -136,7 +138,6 @@ Traj Traj::fromNodeset(Nodeset set){
 		// totalTraj.saveToMat("fromNodeset_totalTraj.mat");
 		// waitForUser();
 
-		prevSTM = set.getSegByIx(s).getSTM();
 	}
 
 	// Summation of trajectories jumbles up the order a bit, so fix it before returning

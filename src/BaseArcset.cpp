@@ -1596,14 +1596,14 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 	if(pStateMat == NULL){
 		throw Exception("BaseArcset::initNodesSegsFromMat: Could not read state data vector");
 	}else{
-		int numSteps = pStateMat->dims[0];
+		unsigned int numSteps = pStateMat->dims[0];
 		nodes.clear();
 		segs.clear();
 		nodeIDMap.clear();
 		segIDMap.clear();
 		
 		// Create a set of nodes and segments all linked together in linear time
-		for(int i = 0; i < numSteps; i++){
+		for(unsigned int i = 0; i < numSteps; i++){
 			Node node;
 			node.setID(i);
 
@@ -1691,13 +1691,13 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 	if(pStateMat == NULL){
 		throw Exception("BaseArcset::readStateFromMat: Could not read state data vector");
 	}else{
-		int numSteps = pStateMat->dims[0];
+		unsigned int numSteps = pStateMat->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readStateFromMat: Step vector has not been initialized!");
 		}
 
-		if(numSteps != static_cast<int>(nodes.size())){
+		if(numSteps != nodes.size()){
 			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
@@ -1709,7 +1709,7 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 			double *data = static_cast<double *>(pStateMat->data);
 
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(unsigned int i = 0; i < numSteps; i++){
 					double state[] = {0,0,0,0,0,0};
 					state[0] = data[0*numSteps + i];
 					state[1] = data[1*numSteps + i];
@@ -1739,13 +1739,13 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 	if(pAccelMat == NULL){
 		throw Exception("BaseArcset::readAccelFromMat: Could not read data vector");
 	}else{
-		int numSteps = pAccelMat->dims[0];
+		unsigned int numSteps = pAccelMat->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readAccelFromMat: Node vector has not been initialized!");
 		}
 
-		if(numSteps != static_cast<int>(nodes.size())){
+		if(numSteps != nodes.size()){
 			throw Exception("BaseArcset::readAccelFromMat: Accel vector has a different size than the initialized node vector");
 		}
 
@@ -1757,7 +1757,7 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 			double *data = static_cast<double *>(pAccelMat->data);
 
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(unsigned int i = 0; i < numSteps; i++){
 					double accel[] = {0,0,0};
 					accel[0] = data[0*numSteps + i];
 					accel[1] = data[1*numSteps + i];
@@ -1785,12 +1785,12 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 	if(pEpochMat == NULL){
 		throw Exception("BaseArcset::readEpochFromMat: Could not read data vector");
 	}else{
-		int numSteps = pEpochMat->dims[0];
+		unsigned int numSteps = pEpochMat->dims[0];
 
 		if(nodes.size() == 0)
 			throw Exception("BaseArcset::readEpochFromMat: Node vector has not been initialized");
 
-		if(numSteps != static_cast<int>(nodes.size()))
+		if(numSteps != nodes.size())
 			throw Exception("BaseArcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
 
 		if(pEpochMat->dims[1] != 1)
@@ -1800,7 +1800,7 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 			double *data = static_cast<double *>(pEpochMat->data);
 
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(unsigned int i = 0; i < numSteps; i++){
 					nodes[i].setEpoch(data[i]);
 				}
 			}
@@ -1822,14 +1822,15 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 	if(pAllSTM == NULL){
 		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
 	}else{
-		int numSteps = pAllSTM->dims[2];
+		unsigned int numSteps = pAllSTM->dims[2];
 
 		if(segs.size() == 0){
 			throw Exception("BaseArcset::readSTMFromMat: Step vector has not been initialized!");
 		}
 
-		if(numSteps != static_cast<int>(segs.size())){
-			throw Exception("BaseArcset::readSTMFromMat: STM vector has a different size than the initialized step vector");
+		if(numSteps < segs.size() ){
+			printErr("STM size = %d\nInitialized step vector size = %d\n", numSteps, static_cast<int>(segs.size()));
+			throw Exception("BaseArcset::readSTMFromMat: STM vector has fewer elements than the initialized segment vector");
 		}
 
 		if(pAllSTM->dims[0] != 6 || pAllSTM->dims[1] != 6){
@@ -1839,10 +1840,12 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pAllSTM->data);
 
+			unsigned int i = numSteps == segs.size() ? 0 : 1;
+
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(i = 0; i < numSteps; i++){
 					double stmEl[36];
-					for(int j = 0; j < 36; j++){
+					for(unsigned int j = 0; j < 36; j++){
 						stmEl[j] = data[36*i + j];
 					}
 
@@ -1869,12 +1872,12 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 	if(pTofMat == NULL){
 		throw Exception("BaseArcset::readTOFFromMat: Could not read data vector");
 	}else{
-		int numSteps = pTofMat->dims[0];
+		unsigned int numSteps = pTofMat->dims[0];
 
 		if(segs.size() == 0)
 			throw Exception("BaseArcset::readTOFFromMat: Node vector has not been initialized");
 
-		if(numSteps != static_cast<int>(segs.size()))
+		if(numSteps != segs.size())
 			throw Exception("BaseArcset::readTOFFromMat: Epoch vector has different size than the initialized segment evctor");
 
 		if(pTofMat->dims[1] != 1)
@@ -1884,7 +1887,7 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 			double *data = static_cast<double *>(pTofMat->data);
 
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(unsigned int i = 0; i < numSteps; i++){
 					segs[i].setTOF(data[i]);
 				}
 			}
@@ -1909,7 +1912,7 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, std::string varKey, cons
 	if(pMatVar == NULL){
 		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
 	}else{
-		int numSteps = pMatVar->dims[0];
+		unsigned int numSteps = pMatVar->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
@@ -1924,7 +1927,7 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, std::string varKey, cons
 		if(pMatVar->class_type == MAT_C_DOUBLE && pMatVar->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pMatVar->data);
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(unsigned int i = 0; i < numSteps; i++){
 					nodes[i].setExtraParam(varKey, data[i]);
 				}
 			}
@@ -1950,7 +1953,7 @@ void BaseArcset::readExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, s
 	if(pMatVar == NULL){
 		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
 	}else{
-		int numSteps = pMatVar->dims[0];
+		unsigned int numSteps = pMatVar->dims[0];
 		
 		if(nodes.size() == 0){
 			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
@@ -1965,7 +1968,7 @@ void BaseArcset::readExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, s
 		if(pMatVar->class_type == MAT_C_DOUBLE && pMatVar->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pMatVar->data);
 			if(data != NULL){
-				for(int i = 0; i < numSteps; i++){
+				for(unsigned int i = 0; i < numSteps; i++){
 					std::vector<double> vec(len,0);
 					for(unsigned int c = 0; c < len; c++){
 						vec[c] = data[c*numSteps + i];
@@ -1991,7 +1994,7 @@ void BaseArcset::saveAccel(mat_t *pMatFile) const{
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> accel = nodes[r].getAccel();
-		for(int c = 0; c < 3; c++){
+		for(unsigned int c = 0; c < 3; c++){
 			accel_colMaj[c*nodes.size() + r] = accel[c];
 		}
 	}
@@ -2098,7 +2101,7 @@ void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> state = nodes[r].getState();
-		for(int c = 0; c < 6; c++){
+		for(unsigned int c = 0; c < 6; c++){
 			posVel[c*nodes.size() + r] = state[c];
 		}
 	}
@@ -2135,7 +2138,7 @@ void BaseArcset::saveSTMs(mat_t *pMatFile) const{
 	// Create one large vector to put all the STM elements in
 	std::vector<double> allSTMEl(segs.size()*36);
 
-	for (size_t n = 0; n < segs.size(); n++){
+	for (unsigned int n = 0; n < segs.size(); n++){
 		// get the transpose of the STM matrix; we need to store it in column-major order
 		// and it's currently in row-major order
 		MatrixXRd P = segs[n].getSTM().transpose();

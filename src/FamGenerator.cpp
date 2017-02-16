@@ -617,7 +617,8 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	DynamicsModel_cr3bp::getEquilibPt(pSys, 1, 1e-12, L1_pos);
 
 	// Approximate initial state: 41.53% of the way between P2 and L1
-	double orbR_nondim = 0.415362*(1 - pSys->getMu() - L1_pos[0]);
+	// double orbR_nondim = 0.415362*(1 - pSys->getMu() - L1_pos[0]);
+	double orbR_nondim = 0.43*(1 - pSys->getMu() - L1_pos[0]);
 	// Approximate: velocity in circular orbit at orbR
 	double v_circ = sqrt(P2Data.getGravParam()/(pSys->getCharL()*orbR_nondim));
 	SysData_cr3bp sysSE("sun", "earth");
@@ -625,7 +626,7 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	// Approximate: initial velocity is about -1.17*v_circ in SE and -1.18*v_circ in EM, so
 	// craft crude interpolation between the two
 	double IC[] = {1 - pSys->getMu() - orbR_nondim, 0, 0,
-				   0, -(1.17 + (2.5e-6)*(pSys->getMu()/sysSE.getMu()))*v_circ*pSys->getCharT()/pSys->getCharL(), 0};
+				   0, -(1.7 + (2.5e-6)*(pSys->getMu()/sysSE.getMu()))*v_circ*pSys->getCharT()/pSys->getCharL(), 0};
 
 	std::vector<double> icVec (IC, IC+6);
 
@@ -634,8 +635,8 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	printf("Correcting initial DPO from approximation...\n");
 	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, PI, Mirror_tp::MIRROR_XZ, tol);
 
-	// perOrbit.saveToMat("initial_dpo.mat");
-	// waitForUser();
+	perOrbit.saveToMat("initial_dpo.mat");
+	waitForUser();
 
 	printf("Creating family...\n");
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -777,6 +778,26 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 		initDir[0] *= -1;
 		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
 	}
+}//====================================================
+
+void FamGenerator::cr3bp_pacFromTraj(Traj_cr3bp traj, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
+	Nodeset_cr3bp nodes(traj, numNodes);
+	cr3bp_pseudoArcCont(pFam, nodes, mirrorType, initDir);
+}//====================================================
+
+/**
+ *  \brief Compute a family of periodic orbits using pseudo arclength continuation
+ *  from a nodeset
+ *  \details [long description]
+ * 
+ *  \param nodes An initial guess for a periodic orbit
+ *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
+ *  \param initDir 6-element vector that indicates the initial step direction along the family. For example, to
+ *  step along -xdot, use {0,0,0,-1,0,0} as initDir.
+ *  \param pFam pointer to a family data object in which family member data will be stored
+ */
+void FamGenerator::cr3bp_pacFromNodeset(Nodeset_cr3bp nodes, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
+	cr3bp_pseudoArcCont(pFam, nodes, mirrorType, initDir);
 }//====================================================
 
 /**

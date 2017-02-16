@@ -84,7 +84,7 @@ Traj::~Traj(){}
  */
 Traj Traj::fromNodeset(Nodeset set){
 	SimEngine simEngine;
-	simEngine.clearEvents();	// don't trigger crashes; assume this has been taken care of already
+	simEngine.setMakeCrashEvents(false);	// don't trigger crashes; assume this has been taken care of already
 	Traj totalTraj(set.getSysData());
 
 	if(!set.isInChronoOrder())

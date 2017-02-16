@@ -87,7 +87,7 @@ enum class Integ_tp{
  *	integrate a trajectory for a specific amount of time. The integration will most likely
  *	run for the specified interval, but crash-detecting event functions are included by default
  *	and will end the integration if triggered. To run a simulation without these events,
- *	call the <tt>clearEvents()</tt> function before running the simulation. Alternatively, 
+ *	use the <tt>setMakesCrashEvents()</tt> to tell the engine to skip creating these events. Alternatively, 
  *	more event functions can be added to the simulation to end (or simply flag) the simulation
  *	at different event occurrences.
  *

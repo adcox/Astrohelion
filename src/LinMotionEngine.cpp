@@ -224,7 +224,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
 
 			double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-			ID = linTraj.addNode(Node(state, 0));
+			ID = linTraj.addNode(Node(state, t));
 			if(t > 0)
 				linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -341,7 +341,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					ID = linTraj.addNode(Node(state, 0));
+					ID = linTraj.addNode(Node(state, t));
 					if(t > 0)
 						linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -367,7 +367,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					ID = linTraj.addNode(Node(state, 0));
+					ID = linTraj.addNode(Node(state, t));
 					if(t > 0)
 						linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -423,7 +423,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -445,7 +445,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -472,7 +472,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -500,7 +500,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 				double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-				ID = linTraj.addNode(Node(state, 0));
+				ID = linTraj.addNode(Node(state, t));
 				if(t > 0)
 					linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -529,7 +529,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 

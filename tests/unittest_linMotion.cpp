@@ -26,6 +26,15 @@ double tol = 1e-12;
 
 BOOST_AUTO_TEST_SUITE(Linear_Motion)
 
+BOOST_AUTO_TEST_CASE(Linear_Nonzero_Time){
+	double r[] = {0.1,0.1,0};
+
+	SysData_cr3bp sys("earth", "moon");
+	Traj_cr3bp traj = engine.getCR3BPLinear(1, r, LinMotion_tp::ELLIP, &sys);
+
+	BOOST_CHECK(traj.getTimeByIx(-1) > 0);
+}//====================================================
+
 /*
  * For these tests to work, t_step should be set to 0.001, and the body data must match what I have in MATLAB
  */

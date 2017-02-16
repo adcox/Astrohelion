@@ -1356,6 +1356,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     std::vector<Event> endEvts = sim.getEndEvents(&halfOrbArc);
     if(std::find(endEvts.begin(), endEvts.end(), mirrorEvt) == endEvts.end()){
         astrohelion::printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
+        halfOrbArc.saveToMat("halfOrbArc_failedMirror.mat");
     }
     // halfOrbArc.saveToMat("HalfOrbArc.mat");
 

@@ -59,11 +59,12 @@ all: directories unit run
 
 directories: $(OBJ)
 
-unit: arcDataOps bcSysDef simEngine
+unit: arcDataOps bcSysDef linMotion simEngine
 
 run:
 	./arcDataOps
 	./bcSysDef
+	./linMotion
 	./simEngine
 	
 ############################################################
@@ -75,6 +76,9 @@ arcDataOps: $(OBJECTS)
 
 bcSysDef: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_bc4bp_def.cpp $(LDFLAGS) -o $@
+
+linMotion: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_SYS) $^ ../unittest_linMotion.cpp $(LDFLAGS) -o $@
 
 simEngine: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_simEngine.cpp $(LDFLAGS) -o $@

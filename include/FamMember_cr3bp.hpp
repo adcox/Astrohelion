@@ -30,6 +30,7 @@
 #include "Core.hpp"
  
 #include "Common.hpp"
+#include "EigenDefs.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -69,16 +70,20 @@ class FamMember_cr3bp : public Core{
 		 *  @{
 		 */
 		std::vector<cdouble> getEigVals() const;
+		MatrixXRcd getEigVecs() const;
 		std::vector<double> getIC() const;
 		double getTOF() const;
+		MatrixXRd getSTM() const;
 		double getJacobi() const; 
 		double getXAmplitude() const;
 		double getYAmplitude() const;
 		double getZAmplitude() const;
 
 		void setEigVals(std::vector<cdouble>);
+		void setEigVecs(MatrixXRcd);
 		void setIC(std::vector<double>);
 		void setJacobi(double);
+		void setSTM(MatrixXRd);
 		void setTOF(double);
 		void setXAmplitude(double);
 		void setYAmplitude(double);
@@ -89,6 +94,8 @@ class FamMember_cr3bp : public Core{
 
 	protected:
 		/** Vector of 6 eigenvalues; initialized to NAN by default */
+		MatrixXRd stm = MatrixXRd::Identity(6,6);
+		MatrixXRcd eigVecs = MatrixXRcd::Zero(6,6);
 		std::vector<cdouble> eigVals {{NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}};
 		std::vector<double> IC {0,0,0,0,0,0};		//!< Initial state for this trajectory, non-dim units
 		double TOF = NAN;							//!< Time of flight for traj., non-dim units

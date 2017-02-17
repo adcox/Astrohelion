@@ -23,6 +23,7 @@ int main(int argc, char *argv[]){
 	Fam_cr3bp DPO(sysData);
 
 	FamGenerator gen;
+	gen.setNumOrbits(4);
 	gen.setContType(Continuation_tp::PSEUDO_ARC);
 	gen.setNumNodes(11);
 	gen.setTol(1e-11);

@@ -70,6 +70,8 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 
 	loadMemberData(matfp);
 	loadEigVals(matfp);
+	loadEigVecs(matfp);
+	loadSTMs(matfp);
 	name = astrohelion::readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	int type = static_cast<int>(astrohelion::readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME));
 	sortType = static_cast<FamSort_tp>(type);
@@ -537,12 +539,12 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 	if(matvar == NULL){
 		throw Exception("Could not read eigenvalues into family");
 	}else{
-		int numMembers = matvar->dims[0];
+		unsigned int numMembers = matvar->dims[0];
 		if(matvar->dims[1] != 6){
 			throw Exception("Incompatible data file: Data widths are different.");
 		}
 
-		if(static_cast<int>(members.size()) != numMembers){
+		if(members.size() != numMembers){
 			throw Exception("Fam_cr3bp::loadEigVals: # eigenvalues is not same as number of members");
 		}
 
@@ -556,7 +558,7 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 				double *imagParts = static_cast<double *>(splitVals->Im);
 
 				// Read data from column-major order matrix, store in row-major order vector
-				for(int i = 0; i < numMembers; i++){
+				for(unsigned int i = 0; i < numMembers; i++){
 					std::vector<cdouble> vals;
 					for(int j = 0; j < 6; j++){
 						cdouble temp(realParts[j*numMembers + i], imagParts[j*numMembers + i]);
@@ -573,27 +575,129 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 	Mat_VarFree(matvar);
 }//=============================================
 
+void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
+	matvar_t *pMatvar = Mat_VarRead(pMatFile, EIGVEC_VAR_NAME);
+	if(pMatvar == NULL){
+		throw Exception("Fam_cr3bp::loadEigVecs: Could not read data vector");
+	}else{
+		unsigned int numSteps = pMatvar->dims[2];
+
+		if(members.size() == 0){
+			throw Exception("Fam_cr3bp::loadEigVecs: Member vector has not been initialized!");
+		}
+
+		if(numSteps != members.size() ){
+			throw Exception("Fam_cr3bp::loadEigVecs: Eigenvector vector does not have the same number of elements as the member vector");
+		}
+
+		if(pMatvar->dims[0] != 6 || pMatvar->dims[1] != 6){
+			throw Exception("Fam_cr3bp::loadEigVecs: Incompatible data file: Eigenvector matrix is not 6x6.");
+		}
+
+		if(pMatvar->class_type == MAT_C_DOUBLE && pMatvar->data_type == MAT_T_DOUBLE){
+			// First cast the data to a special variable matio uses to store complex values
+			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(pMatvar->data);
+
+			if(splitVals != NULL){
+				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
+				double *realParts = static_cast<double *>(splitVals->Re);
+				double *imagParts = static_cast<double *>(splitVals->Im);
+
+				for(unsigned int i = 0; i < numSteps; i++){
+					cdouble vecData[36];
+					for(unsigned int j = 0; j < 36; j++){
+						vecData[j] = cdouble(realParts[i*numSteps + j], imagParts[i*numSteps + j]);
+					}
+					MatrixXRcd vecMat = Eigen::Map<MatrixXRcd>(vecData, 6, 6);
+					members[i].setEigVecs(vecMat.transpose());
+				}
+			}
+		}else{
+			throw Exception("Fam_cr3bp::loadEigVecs: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(pMatvar);
+}//=============================================
+
+void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
+	matvar_t *pAllSTM = Mat_VarRead(pMatFile, "STM");
+	if(pAllSTM == NULL){
+		throw Exception("Fam_cr3bp::loadSTMs: Could not read data vector");
+	}else{
+		unsigned int numSteps = pAllSTM->dims[2];
+
+		if(members.size() == 0){
+			throw Exception("Fam_cr3bp::loadSTMs: Member vector has not been initialized!");
+		}
+
+		if(numSteps != members.size() ){
+			throw Exception("Fam_cr3bp::loadSTMs: STM vector does not have the same number of elements as the member vector");
+		}
+
+		if(pAllSTM->dims[0] != 6 || pAllSTM->dims[1] != 6){
+			throw Exception("Fam_cr3bp::loadSTMs: Incompatible data file: STM is not 6x6.");
+		}
+
+		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pAllSTM->data);
+
+			if(data != NULL){
+				for(unsigned int i = 0; i < numSteps; i++){
+					double stmEl[36];
+					for(unsigned int j = 0; j < 36; j++){
+						stmEl[j] = data[36*i + j];
+					}
+
+					MatrixXRd P = Eigen::Map<MatrixXRd>(stmEl, 6, 6);
+					members[i].setSTM(P.transpose());
+				}
+			}
+		}else{
+			throw Exception("Fam_cr3bp::loadSTMs: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(pAllSTM);
+}//=============================================
+
 /**
  *	@brief Sort all members' eigenvalues so they are in the same order.
  *
  *	This is necessary before bifurcations can be accurately located.
  */
 void Fam_cr3bp::sortEigs(){
-	std::vector<cdouble> allEigs;
+	std::vector<cdouble> allVals;
+	std::vector<MatrixXRcd> allVecs;
 	// Create a vector with all the eigenvalues
 	for(unsigned int m = 0; m < members.size(); m++){
 		std::vector<cdouble> vals = members[m].getEigVals();
-		allEigs.insert(allEigs.end(), vals.begin(), vals.end());
+		allVals.insert(allVals.end(), vals.begin(), vals.end());
+		allVecs.insert(allVecs.end(), members[m].getEigVecs());
 	}
 
 	// Sort eigenvalues
-	std::vector<int> sortedIxs;
-	std::vector<cdouble> sortedEigs = sortEig(allEigs, &sortedIxs);
+	std::vector<unsigned int> sortedIxs;
+	sortEig(allVals, allVecs, &sortedIxs);
+	// std::vector<cdouble> sortedEigs = sortEig(allVals, &sortedIxs);
 
 	// Update all eigenvalues in the family members
+	std::vector<cdouble> sortedVals;
+	MatrixXRcd sortedVecs = MatrixXRcd::Zero(6,6);
 	for(unsigned int m = 0; m < members.size(); m++){
-		std::vector<cdouble> sortedVals(sortedEigs.begin() + m*6, sortedEigs.begin() + (m+1)*6);
+		// Construct new eigenvalue and eigenvector objects with the new index order
+		for(unsigned int c = 0; c < 6; c++){
+			unsigned int ix = sortedIxs[m*6+c];
+			sortedVals.push_back(allVals[m*6+ix]);
+
+			sortedVecs.col(c) = allVecs[m].col(ix);
+		}
+		
+		// Update member with sorted vectors and values
 		members[m].setEigVals(sortedVals);
+		members[m].setEigVecs(sortedVecs);
+
+		// Reset storage variables
+		sortedVals.clear();
+		sortedVecs = MatrixXRcd::Zero(6,6);
 	}
 }//=================================================
 
@@ -680,6 +784,8 @@ void Fam_cr3bp::saveToMat(const char *filename){
 		saveMembers(matfp);
 		saveMiscData(matfp);
 		saveEigVals(matfp);
+		saveEigVecs(matfp);
+		saveSTMs(matfp);
 		sysData.saveToMat(matfp);
 	}
 
@@ -688,9 +794,9 @@ void Fam_cr3bp::saveToMat(const char *filename){
 
 /**
  *	@brief Save ICs, TOFs, and JCs for each member in a matrix
- *	@param matFile a pointer to the destination matlab file
+ *	@param pMatFile a pointer to the destination matlab file
  */
-void Fam_cr3bp::saveMembers(mat_t *matFile){
+void Fam_cr3bp::saveMembers(mat_t *pMatFile){
 	if(members.size() > 0){
 		// Create a vector with member data stored in column-major order
 		std::vector<double> allData(members.size()*DATA_WIDTH);
@@ -713,16 +819,16 @@ void Fam_cr3bp::saveMembers(mat_t *matFile){
 
 		size_t dims[2] = {members.size(), static_cast<size_t>(DATA_WIDTH)};
 		matvar_t *matvar = Mat_VarCreate(DATA_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allData[0]), MAT_F_DONT_COPY_DATA);
-		astrohelion::saveVar(matFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
+		astrohelion::saveVar(pMatFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
 /**
  *	@brief Save eigenvalue data to a mat file
- *	@param matFile a pointer to the mat file in question
+ *	@param pMatFile a pointer to the mat file in question
  *	@throws Exception if a family member does not have six eigenvalues
  */
-void Fam_cr3bp::saveEigVals(mat_t *matFile){
+void Fam_cr3bp::saveEigVals(mat_t *pMatFile){
 	if(members.size() > 0){
 		// Separate all eigenvalues into real and complex parts
 		std::vector<double> realParts(members.size()*6);
@@ -731,7 +837,7 @@ void Fam_cr3bp::saveEigVals(mat_t *matFile){
 			std::vector<cdouble> vals = members[i].getEigVals();
 				if(vals.size() != 6)
 					throw Exception("Fam_cr3bp::saveEigVals: family member does not have 6 eigenvalues!");
-			for(int j = 0; j < 6; j++){
+			for(unsigned int j = 0; j < 6; j++){
 				realParts[j*members.size() + i] = std::real(vals[j]);
 				imagParts[j*members.size() + i] = std::imag(vals[j]);
 			}
@@ -742,27 +848,76 @@ void Fam_cr3bp::saveEigVals(mat_t *matFile){
 
 		size_t dims[2] = {members.size(), 6};
 		matvar_t *matvar = Mat_VarCreate(EIG_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
-		astrohelion::saveVar(matFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
+		astrohelion::saveVar(pMatFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
+	}
+}//====================================================
+
+void Fam_cr3bp::saveEigVecs(mat_t *pMatFile){
+	if(members.size() > 0){
+		
+		std::vector<double> allVec_real(members.size()*36);
+		std::vector<double> allVec_imag(members.size()*36);
+
+		for(unsigned int i = 0; i < members.size(); i++){
+			// get the transpose of the STM matrix; we need to store it in column-major order
+			// and it's currently in row-major order
+			MatrixXRcd P = members[i].getEigVecs().transpose();
+			
+			// Retrieve the data from the matrix
+			cdouble *matData = P.data();
+			
+			// Store that data in our huge vector
+			for(unsigned int j = 0; j < 36; j++){
+				allVec_real[i*members.size() + j] = std::real(matData[j]);
+				allVec_imag[i*members.size() + j] = std::imag(matData[j]);
+			}
+		}
+		mat_complex_split_t splitVals = {&(allVec_real[0]), &(allVec_imag[0])};
+
+		size_t dims[3] = {6, 6, members.size()};
+		matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
+		astrohelion::saveVar(pMatFile, pMatVar, EIGVEC_VAR_NAME, MAT_COMPRESSION_NONE);
+	}
+}//====================================================
+
+
+void Fam_cr3bp::saveSTMs(mat_t *pMatFile){
+	if(members.size() > 0){
+		std::vector<double> allSTMEl(members.size()*36);
+
+		for(unsigned int i = 0; i < members.size(); i++){
+			// get the transpose of the STM matrix; we need to store it in column-major order
+			// and it's currently in row-major order
+			MatrixXRd P = members[i].getSTM().transpose();
+			// Retrieve the data from the matrix
+			double *matData = P.data();
+			// Store that data in our huge vector
+			std::copy(matData, matData+36, &(allSTMEl[0]) + i*36);
+		}
+
+		size_t dims[3] = {6, 6, members.size()};
+		matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
+		astrohelion::saveVar(pMatFile, pMatVar, "STM", MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
 /**
  *	@brief Save other useful information to a matlab file
- *	@param matFile the destination matlab file
+ *	@param pMatFile the destination matlab file
  */
-void Fam_cr3bp::saveMiscData(mat_t *matFile){
+void Fam_cr3bp::saveMiscData(mat_t *pMatFile){
 	// sortType
 	int type = static_cast<int>(sortType);
 	size_t dims[2] = {1,1};
 	matvar_t *typeVar = Mat_VarCreate(SORT_TYPE_VAR_NAME, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, typeVar, SORT_TYPE_VAR_NAME, MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, typeVar, SORT_TYPE_VAR_NAME, MAT_COMPRESSION_NONE);
 
 	// name
 	char name_str[128];
 	std::strcpy(name_str, name.c_str());
 	dims[1] = name.length();
 	matvar_t *nameVar = Mat_VarCreate(NAME_VAR_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);
 }//====================================================
 
 

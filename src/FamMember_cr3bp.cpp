@@ -25,7 +25,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+
+#include <Eigen/Eigenvalues>
+
 #include "FamMember_cr3bp.hpp"
 
 #include "Common.hpp"
@@ -69,6 +72,7 @@ FamMember_cr3bp::FamMember_cr3bp(const Traj_cr3bp traj){
 	IC = traj.getStateByIx(0);
 	TOF = traj.getTotalTOF();
 	JC = traj.getJacobiByIx(0);
+	stm = traj.getSTMByIx(-1);
 
 	std::vector<double> x = traj.getCoord(0);
 	std::vector<double> y = traj.getCoord(1);
@@ -85,6 +89,15 @@ FamMember_cr3bp::FamMember_cr3bp(const Traj_cr3bp traj){
 	yAmplitude = std::max(yMax, -1*yMin);
 	zAmplitude = std::max(zMax, -1*zMin);
 
+	// Compute Eigenvalues and Eigenvectors from the STM	
+	Eigen::EigenSolver<MatrixXRd> eigensolver(stm);
+    if(eigensolver.info() != Eigen::Success)
+        throw Exception("FamMember_cr3bp::FamMember_cr3bp: Could not compute eigenvalues of STM");
+
+    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+    // std::vector<cdouble> vals(vals.data(), vals.data()+6);
+    eigVals = std::vector<cdouble>(vals.data(), vals.data()+6);
+    eigVecs = eigensolver.eigenvectors();
 	// printf("\nxAmp = %.4f\nyAmp = %.4f\nzAmp = %.4f\n", xAmplitude, yAmplitude, zAmplitude);
 }//===================================================
 
@@ -124,6 +137,8 @@ FamMember_cr3bp& FamMember_cr3bp::operator= (const FamMember_cr3bp& mem){
  */
 std::vector<cdouble> FamMember_cr3bp::getEigVals() const { return eigVals; }
 
+MatrixXRcd FamMember_cr3bp::getEigVecs() const { return eigVecs; }
+
 /**
  *	@brief Retrieve the initial state for this trajectory (non-dim)
  */
@@ -133,6 +148,11 @@ std::vector<double> FamMember_cr3bp::getIC() const { return IC; }
  *	@brief Retrieve the Time-Of-Flight along this trajectory (non-dim)
  */
 double FamMember_cr3bp::getTOF() const { return TOF; }
+
+/**
+ *  \brief Retrieve the STM for this family member
+ */
+MatrixXRd FamMember_cr3bp::getSTM() const { return stm; }
 
 /**
  *	@brief Retrieve the Jacobi Constant for this trajectory
@@ -167,6 +187,10 @@ void FamMember_cr3bp::setEigVals(std::vector<cdouble> vals) {
 	eigVals = vals;
 }//====================================================
 
+void FamMember_cr3bp::setEigVecs(MatrixXRcd vecs){
+	eigVecs = vecs;
+}//====================================================
+
 /**
  *	@brief Set the initial state
  *	@param ic The initial state (non-dim)
@@ -183,6 +207,12 @@ void FamMember_cr3bp::setIC( std::vector<double> ic ){
  *	@param tof The time-of-flight (non-dim)
  */
 void FamMember_cr3bp::setTOF( double tof ){ TOF = tof; }
+
+/**
+ *  \brief Set the STM
+ *  \param STM the STM
+ */
+void FamMember_cr3bp::setSTM( MatrixXRd STM){ stm = STM; }
 
 /**
  *	@brief Set the Jacobi Constant
@@ -236,6 +266,7 @@ void FamMember_cr3bp::copyMe(const FamMember_cr3bp& mem){
 	xAmplitude = mem.xAmplitude;
 	yAmplitude = mem.yAmplitude;
 	zAmplitude = mem.zAmplitude;
+	stm = mem.stm;
 }//===================================================
 
 

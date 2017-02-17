@@ -955,17 +955,17 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			if(monoErr > 1e-5)
 				astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 			
-			Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
-		    if(eigensolver.info() != Eigen::Success){
-		    	if(pItData){
-					delete(pItData);
-					pItData = nullptr;
-				}
-		        throw Exception("FamGenerator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
-		    }
+			// Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+		 //    if(eigensolver.info() != Eigen::Success){
+		 //    	if(pItData){
+			// 		delete(pItData);
+			// 		pItData = nullptr;
+			// 	}
+		 //        throw Exception("FamGenerator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
+		 //    }
 
-		    Eigen::VectorXcd vals = eigensolver.eigenvalues();
-		    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
+		    // Eigen::VectorXcd vals = eigensolver.eigenvalues();
+		    // std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 			// For debugging:
 			// printf("Eigenvalues:\n");
@@ -974,7 +974,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 
 			// Add orbit to family
 			FamMember_cr3bp child(perOrbit);
-			child.setEigVals(eigVals);
+			// child.setEigVals(eigVals);
 			fam->addMember(child);
 		}
 
@@ -1430,16 +1430,16 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		if(monoErr > 1e-5)
 			astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 		
-		Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
-	    if(eigensolver.info() != Eigen::Success)
-	        throw Exception("FamGenerator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
+		// Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+	 //    if(eigensolver.info() != Eigen::Success)
+	 //        throw Exception("FamGenerator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
 
-	    Eigen::VectorXcd vals = eigensolver.eigenvalues();
-	    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
+	 //    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+	 //    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 		// Add orbit to family
 		FamMember_cr3bp child(perOrbit);
-		child.setEigVals(eigVals);
+		// child.setEigVals(eigVals);
 		fam->addMember(child);
 	}// end of while loop
 }//==================================================

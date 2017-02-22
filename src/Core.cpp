@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
@@ -144,6 +145,9 @@ Core_Initializer::Core_Initializer() : settings(){
 void Core_Initializer::runInit(){
 	std::cout << "Initializing Core System" << std::endl;
 
+	// ************************************************************************
+   	// 			Folder, Directory, and File Initialization
+    // ************************************************************************
 	// Get user home folder
 	uid_t uid = getuid();
 	struct passwd *pw = getpwuid(uid);
@@ -156,9 +160,11 @@ void Core_Initializer::runInit(){
 	// Define names of settings files
 	const char *defaultSettingsFile = "default_settings.xml";
 	const char *userSettingsFile = "user_settings.xml";
+	const char *bodyDataFile = "body_data.xml";
 
 	// Construct path to directory that contains the settings file(s)
 	char settingsFilepath[128], defaultSettingsFilepath[256], userSettingsFilepath[256];
+	char bodyDataFilepath[256];
 	switch(OS_TYPE){
 		case OS_tp::windows: 
 			std::cout << "Error: Windows is not currently supported!\n";
@@ -183,6 +189,11 @@ void Core_Initializer::runInit(){
 	// Construct full paths to the settings files
 	sprintf(defaultSettingsFilepath, "%s%s", settingsFilepath, defaultSettingsFile);
 	sprintf(userSettingsFilepath, "%s%s", settingsFilepath, userSettingsFile);
+	sprintf(bodyDataFilepath, "%s%s", settingsFilepath, bodyDataFile);
+
+	// Save settings filepath to a variable for later
+	settings.settings_filepath = std::string(settingsFilepath);
+	settings.body_data_filepath = std::string(bodyDataFilepath);
 
 	// Load user settings from file
 	try{
@@ -206,11 +217,13 @@ void Core_Initializer::runInit(){
 		settings.save(userSettingsFilepath);
 	}
 
-	// Tell SPICE how to handle errors
+    // ************************************************************************
+   	// 			SPICE Initialization
+    // ************************************************************************
+    // Tell SPICE how to handle errors
     erract_c("set", 0, SPICE_ERR_ACTION);
     errprt_c("set", 0, SPICE_ERR_MSG_TYPE);
 
-    // Load default SPICE kernels
     try{
 	    std::string spice_path = settings.spice_data_filepath;
 	    std::string time_kernel = settings.spice_time_kernel;
@@ -224,6 +237,9 @@ void Core_Initializer::runInit(){
 	    furnsh_c(deKernel);
 	}catch(std::exception &e){}
 
+	// ************************************************************************
+   	// 			GSL Initialization
+    // ************************************************************************
     // Turn GSL's error handler off; we will catch and handle the errors
     gsl_set_error_handler_off();
 
@@ -231,10 +247,75 @@ void Core_Initializer::runInit(){
     unsigned int nthreads = std::thread::hardware_concurrency();
     std::cout << "Max # Concurrent Threads: " << nthreads << std::endl;
 
+    // ************************************************************************
+   	// 			OpenMP Initialization
+    // ************************************************************************
     // Tell OMP to use, at most, the maximum number of concurrent threads available
     #ifdef _OPENMP
     	omp_set_num_threads(nthreads);
     #endif
+
+    // ************************************************************************
+   	// 			Body Data Initialization
+    // ************************************************************************
+    // Create empty property tree object
+	using boost::property_tree::ptree;
+	ptree dataTree;
+
+	try{
+		// Load XML file and put its contents in the property tree; if file isn't found, exception is thrown
+		read_xml(bodyDataFilepath, dataTree);
+	}catch(std::exception &e){
+		std::cout << "Could not read the body data file" << std::endl;
+		throw e;
+	}
+
+	BOOST_FOREACH(ptree::value_type &v, dataTree.get_child("body_data")){
+		ptree bodyTree = v.second;	// A tree for each <body> object
+		Body_Data bd;
+
+		try{
+			bd.name = bodyTree.get<std::string>("name");
+		}catch(std::exception &e){
+			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+		}
+
+		try{
+			bd.id = bodyTree.get<int>("id");
+		}catch(std::exception &e){
+			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+		}
+
+		try{
+			bd.parent = bodyTree.get<std::string>("parent");
+		}catch(std::exception &e){
+			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+		}
+
+		try{
+			bd.gravParam = bodyTree.get<double>("gm");
+		}catch(std::exception &e){
+			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+		}
+
+		try{
+			bd.bodyRad = bodyTree.get<double>("radius");
+		}catch(std::exception &e){
+			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+		}
+
+		try{
+			bd.orbitRad = bodyTree.get<double>("circ_r");
+		}catch(std::exception &e){
+			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+		}
+
+		if(bd.id != 0 && allBodyData.find(bd.id) == allBodyData.end()){
+			allBodyData[bd.id] = bd;
+		}else{
+			std::cout << "Invalid ID = " << bd.id << " and/or body already loaded" << std::endl;
+		}
+	}
 }//================================================
 
 /**

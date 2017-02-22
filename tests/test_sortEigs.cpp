@@ -14,8 +14,8 @@ int main(){
 	// Fam_cr3bp fam("../share/families/EM_L1_Lyap.mat");
 	Fam_cr3bp fam("../../Astrohelion_scripts/share/families/SE_DPO_PAC.mat");
 
-	fam.setSortType(FamSort_tp::SORT_TOF);
-	fam.sortMembers();
+	// fam.setSortType(FamSort_tp::SORT_TOF);
+	// fam.sortMembers();
  	fam.sortEigs();
 
  	fam.saveToMat("../../Astrohelion_scripts/share/EigSorted_TestFam.mat");

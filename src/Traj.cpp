@@ -127,7 +127,7 @@ Traj Traj::fromNodeset(Nodeset set){
 			totalTraj = temp;
 		}else{
 			// Shift the time on the newly propagated segment so it starts where the previous segment left off
-			temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
+			// temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
 
 			// Use += so that each piece is put into chronological order, even though this significantly increases run time
 			totalTraj += temp;			

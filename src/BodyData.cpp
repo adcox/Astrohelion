@@ -27,15 +27,16 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <iostream>
+
 #include "BodyData.hpp"
 
 #include "Common.hpp"
 #include "Exceptions.hpp"
 #include "Utilities.hpp"
-
-#include <algorithm>
-#include <cmath>
-#include <exception>
 
 namespace astrohelion{
 /*
@@ -46,7 +47,7 @@ namespace astrohelion{
  * @brief Default constructor; sets all fields to 0
  */
 BodyData::BodyData(){
-	radius = 0;
+	bodyRad = 0;
 	mass = 0;
 	gravParam = 0;
 	orbitRad = 0;
@@ -57,211 +58,38 @@ BodyData::BodyData(){
 }//====================================================
 
 /**
- *	@brief Construct a body by specifying its name; the other parameters are loaded from memory
- *	@param n the name of the body; NOTE: USE ALL LOWERCASE
- *	@throws Exception if the body cannot be located
+ *  \brief Construct a BodyData object from preloaded data.
+ *  \details Data about a body is loaded from a map that pulls data
+ *  from the body_data.xml file.
+ * 
+ *  \param n name of the body or dynamical object (e.g., a system barycenter).
+ *  \throws Exception if the body with the specified name does not have a SPICE
+ *  ID or if the body has not been loaded
  */
 BodyData::BodyData(std::string n){
-	name = n;
-	minFlyByAlt = 0;
+	// Get the ID associated with the name; throws an exception if it can't find one
+	ID = getSpiceIDFromName(n.c_str());
 
-	transform(n.begin(), n.end(), n.begin(), ::tolower);
-	
-	// Begin the behomoth of if statements...
-	if(n.compare("earth") == 0){
-		name = "Earth";
-		ID = 399;
-        parent = "Sun";
-        gravParam = 3.9860043543609593e5;
-        radius = 6378.137;
-        orbitRad = 1.4959784234299874e8;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
-        mass = gravParam/G;
-        // minFlyByAlt = 2000;
-        return;
+	// Get a reference to the loaded body data list and make sure the body we're looking for is there
+	std::map<int, Body_Data> &allBodyData = this->initializer().allBodyData;
+	if(allBodyData.find(ID) == allBodyData.end()){
+		throw Exception("BodyData::BodyData: Body has not been loaded\n");
 	}
 
-	if(n.compare("earth_barycenter") == 0){
-		name = "Earth Barycenter";
-		ID = 3;
-		parent = "Sun";
-		gravParam = 4.0350323550225981e5;
-		radius = 0;
-		orbitRad = 1.4959784418519253e8;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
-		mass = gravParam/G;
-		return;
-	}
-
-	if(n.compare("sun") == 0){
-		name = "Sun";
-		ID = 10;
-		parent = "N/A";
-		gravParam = 1.3271244004193930e11;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
-		radius = 695990;
-		orbitRad = 0;
-		mass = gravParam/G;
-		return;
-    }
-    
-    if(n.compare("moon") == 0){
-		name = "Moon";
-		ID = 301;
-		parent = "Earth";
-		gravParam = 4.9028000661637961e3;
-		radius = 1737.40;
-		orbitRad = 3.8474793244470679e5;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
-		mass = gravParam/G;
-		return;
-    }
-
-    if(n.compare("mercury") == 0){
-		name = "Mercury";
-		ID = 199;
-		parent = "Sun";
-		gravParam = 2.2031780000000021e4;
-		radius = 2439.7;
-		orbitRad = 5.7909137745690152e7;	// Average SMA from frequency analysis of SPICE data between 1700 and 2200
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("venus") == 0){
-		name = "Venus";
-		ID = 299;
-		parent = "Sun";
-		gravParam = 3.248585920000000e5;
-		radius = 6051.8;
-		orbitRad = 1.0820890093249036e8;
-		mass = gravParam/G;
-		return;
-    }
-    
-    if(n.compare("mars") == 0){
-		name = "Mars";
-		ID = 499;
-		parent = "Sun";
-		gravParam = 4.282837362069909e4;
-		radius = 3396.19;
-		orbitRad = 2.289352472157e8;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("jupiter") == 0){
-		name = "Jupiter";
-		parent = "Sun";
-		gravParam = 1.266865349218008e8;
-		radius = 71492.00;
-		orbitRad = 7.793390706261e9;
-		mass = 1.898E27;
-		return;
-    }
-    if(n.compare("saturn") == 0){
-		name = "Saturn";
-		ID = 699;
-		parent = "Sun";
-		gravParam = 3.793120749865224e7;
-		radius = 60268.00;
-		orbitRad = 1.429737744187e9;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("uranus") == 0){
-		name = "Uranus";
-		ID = 799;
-		parent = "Sun";
-		gravParam = 5.793951322279009e6;
-		radius = 25559;
-		orbitRad = 2.873246924686e9;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("neptune") == 0){
-		name = "Neptune";
-		ID = 899;
-		parent = "Sun";
-		gravParam = 6.835099502439672e6;
-		radius = 25559;
-		orbitRad = 4.499806241072e9;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("pluto") == 0){
-		name = "Pluto";
-		ID = 999;
-		parent = "Sun";
-		gravParam = 8.696138177608748e2;
-		radius = 1195.00;
-		orbitRad = 6.183241717355e9;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("ganymede") == 0){
-		name = "Ganymede";
-		ID = 503;
-		parent = "Sun";
-		gravParam = 9.887834453334144e3;
-		radius = 2634.1;
-		orbitRad = 1070400;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("triton") == 0){
-		name = "Triton";
-		ID = 801;
-		parent = "Neptune";
-		gravParam = 1.427598140725034e3;
-		radius = 1353.4;
-		orbitRad = 354759;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("titan") == 0){
-		name = "Titan";
-		ID = 606;
-		parent = "Saturn";
-		gravParam = 8.978138845307376e3;
-		radius = 2576;
-		orbitRad = 1221870;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("charon") == 0){
-		name = "Charon";
-		ID = 901;
-		parent = "Pluto";
-		radius = 603.5;
-		orbitRad = 17536;
-		gravParam = 1.058799888601881e2;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("europa") == 0){
-		name = "Europa";
-		ID = 502;
-		parent = "Jupiter";
-		radius = 1560;
-		orbitRad = 671101.9638;
-		gravParam = 3.202738774922892e3;
-		mass = gravParam/G;
-		return;
-    }
-    if(n.compare("binary") == 0){
-		name = "Binary";
-		parent = "Binary";
-		gravParam = 1;
-		radius = 1;
-		orbitRad = 40;
-		mass = 1;
-		return;
-    }
-
-    // Function should have returned by this point if the body was found
-    throw Exception("Could not locate body");
-}// END of constructor using body name -------------------------------------
+	// Load parameters from the list
+	bodyRad = allBodyData[ID].bodyRad;
+	gravParam = allBodyData[ID].gravParam;
+	orbitRad = allBodyData[ID].orbitRad;
+	name = allBodyData[ID].name;
+	parent = allBodyData[ID].parent;
+	mass = gravParam/G;
+}//====================================================
 
 /**
  *  @brief Constructor
  *	@param m mass, kg
- *	@param R mean orbital radius, km
- *	@param r mean radius, km
+ *	@param R mean orbital bodyRad, km
+ *	@param r mean bodyRad, km
  *	@param mu gravitational parameter, km^3/s^2
  * 	@param n name of the body
  *	@param p name of the body"s parent
@@ -269,7 +97,7 @@ BodyData::BodyData(std::string n){
 BodyData::BodyData(double m, double R, double r, double mu, std::string n, std::string p){
 	mass = m;
 	orbitRad = R;
-	radius = r;
+	bodyRad = r;
 	gravParam = mu;
 	name = n;
 	parent = p;
@@ -280,10 +108,10 @@ BodyData::BodyData(double m, double R, double r, double mu, std::string n, std::
  */
 
 /**
- *	@brief Retrieve the mean radius of the body, km
- *	@return the mean radius of the body, km
+ *	@brief Retrieve the mean bodyRad of the body, km
+ *	@return the mean bodyRad of the body, km
  */
-double BodyData::getRadius(){return radius;}
+double BodyData::getBodyRad(){return bodyRad;}
 
 /**
  *	@brief Retrieve the mass of the body, kg
@@ -299,7 +127,7 @@ double BodyData::getGravParam(){return gravParam;}
 
 /**
  *	@brief Retrieve
- *	@return the mean orbital radius of this body, km
+ *	@return the mean orbital bodyRad of this body, km
  */
 double BodyData::getOrbitRad(){return orbitRad;}
 
@@ -328,10 +156,10 @@ int BodyData::getID(){ return ID; }
 std::string BodyData::getParent(){return parent;}
 
 /**
- *	@brief Set the mean radius of the body
- *	@param r the radius of the body, km
+ *	@brief Set the mean bodyRad of the body
+ *	@param r the bodyRad of the body, km
  */
-void BodyData::setRadius(double r){radius = r;}
+void BodyData::setBodyRad(double r){bodyRad = r;}
 
 /**
  *	@brief Set the mass of the body
@@ -340,8 +168,8 @@ void BodyData::setRadius(double r){radius = r;}
 void BodyData::setMass(double m){mass = m;}
 
 /**
- *	@brief Set the mean orbital radius of the body
- *	@param R the orbital radius of the body, km
+ *	@brief Set the mean orbital bodyRad of the body
+ *	@param R the orbital bodyRad of the body, km
  */
 void BodyData::setOrbitRad(double R){orbitRad = R;}
 
@@ -358,10 +186,20 @@ void BodyData::setGravParam(double mu){gravParam = mu;}
 void BodyData::setName(std::string s){name = s;}
 
 /**
- *	@brief Set the mean radius of the body
+ *	@brief Set the mean bodyRad of the body
  *	@param s the name of this body"s parent. For example, Earth"s parent body is the Sun,
  *	and the Moon"s parent body is Earth
  */
 void BodyData::setParent(std::string s){parent = s;}
+
+void BodyData::print(){
+	printf("Body data for %s:\n", name.c_str());
+	printf("  SPICE ID = %d\n", ID);
+	printf("  Parent = %s\n", parent.c_str());
+	printf("  GM = %.6e\n", gravParam);
+	printf("  Circ. Orbit Rad = %.6e km\n", orbitRad);
+	printf("  Body Rad = %.6e km\n", bodyRad);
+	printf("  Mass = %.6e kg\n", mass);
+}//====================================================
 
 }// END of Astrohelion namespace

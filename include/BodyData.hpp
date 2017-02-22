@@ -59,7 +59,7 @@ class BodyData : public Core{
 		 *  @name Set and Get Functions
 		 *  @{
 		 */
-		double getRadius();
+		double getBodyRad();
 		double getMass();
 		double getGravParam();
 		double getOrbitRad();
@@ -68,7 +68,7 @@ class BodyData : public Core{
 		int getID();
 		std::string getParent();
 
-		void setRadius(double);
+		void setBodyRad(double);
 		void setMass(double);
 		void setOrbitRad(double);
 		void setGravParam(double);
@@ -76,9 +76,10 @@ class BodyData : public Core{
 		void setParent(std::string);
 		/** @} */
 		
+		void print();
 	private:
 		/** Mean radius of the body, km */
-		double radius = 0;
+		double bodyRad = 0;
 
 		/** Mass of the body, kg */
 		double mass = 0;

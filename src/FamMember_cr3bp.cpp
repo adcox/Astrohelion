@@ -28,6 +28,7 @@
 
 
 #include <Eigen/Eigenvalues>
+#include <iostream>
 
 #include "FamMember_cr3bp.hpp"
 
@@ -98,6 +99,10 @@ FamMember_cr3bp::FamMember_cr3bp(const Traj_cr3bp traj){
     // std::vector<cdouble> vals(vals.data(), vals.data()+6);
     eigVals = std::vector<cdouble>(vals.data(), vals.data()+6);
     eigVecs = eigensolver.eigenvectors();
+
+    // Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
+    // std::cout << eigVecs.format(OctaveFmt) << std::endl;
+
 	// printf("\nxAmp = %.4f\nyAmp = %.4f\nzAmp = %.4f\n", xAmplitude, yAmplitude, zAmplitude);
 }//===================================================
 
@@ -187,9 +192,7 @@ void FamMember_cr3bp::setEigVals(std::vector<cdouble> vals) {
 	eigVals = vals;
 }//====================================================
 
-void FamMember_cr3bp::setEigVecs(MatrixXRcd vecs){
-	eigVecs = vecs;
-}//====================================================
+void FamMember_cr3bp::setEigVecs(MatrixXRcd vecs){ eigVecs = vecs; }
 
 /**
  *	@brief Set the initial state
@@ -260,6 +263,7 @@ Traj_cr3bp FamMember_cr3bp::toTraj(const SysData_cr3bp *sys){
  */
 void FamMember_cr3bp::copyMe(const FamMember_cr3bp& mem){
 	eigVals = mem.eigVals;
+	eigVecs = mem.eigVecs;
 	IC = mem.IC;
 	JC = mem.JC;
 	TOF = mem.TOF;

@@ -64,6 +64,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 /**
  * @brief A namespace to contain all objects that are part of
@@ -89,6 +90,21 @@ static const OS_tp OS_TYPE =
 	OS_tp::linux;
 #endif
 
+struct Body_Data{
+	int id = 0;				//!< Unique ID (same as SPICE ID or HORIZONS ID) for this body
+	double gravParam = 0;	//!< Gravitational parameter associated with this body, kg^3/s^2
+	double bodyRad = 0;		//!< Mean radius of the body, km
+	double mass = 0;		//!< Mass of the body, kg
+	double orbitRad = 0;	//!< Mean orbital radius (distance from parent body), km
+
+	/** Minmum acceptable fly-by altitude for this body. Altitudes lower than this will
+	trigger a crash event in the numerical simulation */
+	double minFlyByAlt = 0;
+
+	std::string name = "NULL";		//!< Name of this body
+	std::string parent = "NULL";	//!< Name of the parent body
+}; // END OF BODY_DATA
+
 /**
  *  @brief A structure that contains default settings and functions to load
  *  settings from an XML file
@@ -106,6 +122,9 @@ struct Core_Settings{
 
 	/** SPK Kernel to use */
 	std::string spice_spk_kernel = "de430.bsp";
+
+	std::string settings_filepath = "",
+				body_data_filepath = "";
 	
 }; // END OF Core_Settings
 
@@ -120,7 +139,8 @@ struct Core_Initializer {
 
 	void runInit();
 
-	Core_Settings settings;	//!< A collection of settings that various Core algorithms use
+	Core_Settings settings;					//!< A collection of settings that various Core algorithms use
+	std::map<int, Body_Data> allBodyData {};	//!< Map of Body_Data objects; key is the SPICE ID
 };
 
 /**

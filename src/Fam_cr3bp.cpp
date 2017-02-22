@@ -606,7 +606,7 @@ void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
 				for(unsigned int i = 0; i < numSteps; i++){
 					cdouble vecData[36];
 					for(unsigned int j = 0; j < 36; j++){
-						vecData[j] = cdouble(realParts[i*numSteps + j], imagParts[i*numSteps + j]);
+						vecData[j] = cdouble(realParts[j*numSteps + i], imagParts[j*numSteps + i]);
 					}
 					MatrixXRcd vecMat = Eigen::Map<MatrixXRcd>(vecData, 6, 6);
 					members[i].setEigVecs(vecMat.transpose());
@@ -675,8 +675,7 @@ void Fam_cr3bp::sortEigs(){
 	}
 
 	// Sort eigenvalues
-	std::vector<unsigned int> sortedIxs;
-	sortEig(allVals, allVecs, &sortedIxs);
+	std::vector<unsigned int> sortedIxs = sortEig(allVals, allVecs);
 	// std::vector<cdouble> sortedEigs = sortEig(allVals, &sortedIxs);
 
 	// Update all eigenvalues in the family members
@@ -868,14 +867,14 @@ void Fam_cr3bp::saveEigVecs(mat_t *pMatFile){
 			
 			// Store that data in our huge vector
 			for(unsigned int j = 0; j < 36; j++){
-				allVec_real[i*members.size() + j] = std::real(matData[j]);
-				allVec_imag[i*members.size() + j] = std::imag(matData[j]);
+				allVec_real[i*36 + j] = std::real(matData[j]);
+				allVec_imag[i*36 + j] = std::imag(matData[j]);
 			}
 		}
 		mat_complex_split_t splitVals = {&(allVec_real[0]), &(allVec_imag[0])};
 
 		size_t dims[3] = {6, 6, members.size()};
-		matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
+		matvar_t *pMatVar = Mat_VarCreate(EIGVEC_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
 		astrohelion::saveVar(pMatFile, pMatVar, EIGVEC_VAR_NAME, MAT_COMPRESSION_NONE);
 	}
 }//====================================================

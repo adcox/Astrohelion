@@ -517,8 +517,8 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 	BodyData P2Data = BodyData(pSys->getPrimary(1));
-	double orbR = P2Data.getRadius() + 
-		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
+	double orbR = P2Data.getBodyRad() + 
+		(P2Data.getMinFlyBy() > P2Data.getBodyRad() ? P2Data.getMinFlyBy() : P2Data.getBodyRad());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
 	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
 
@@ -566,8 +566,8 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 	BodyData P2Data = BodyData(pSys->getPrimary(1));
-	double orbR = P2Data.getRadius() + 
-		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
+	double orbR = P2Data.getBodyRad() + 
+		(P2Data.getMinFlyBy() > P2Data.getBodyRad() ? P2Data.getMinFlyBy() : P2Data.getBodyRad());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
 	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
 

@@ -299,33 +299,55 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
     }
 }//====================================================
 
-void sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs, std::vector<unsigned int> *pSortedIxs){
+/**
+ *  \brief Sort eigenvalues
+ *  \details This algorithm leverages three simple axioms to determine if the eigenvalues
+ *  are in a consistent order.
+ *  
+ *      1. Pairs of eigenvalues should occur in sequence ( [0,1] or [2,3], etc.) and have
+ *      a product equal to one
+ *      
+ *      2. Eigenvalues evolve continuously along the family, thus the changes between subsequent 
+ *      eigenvalues should be small
+ *      
+ *      3. Eigenvectors evolve continuously along the family, thus the dot product between subsequent
+ *      eigenvectors should be small
+ * 
+ *  Axiom #1 is not always applicable to trajectories but is always applicable to families of periodic
+ *  orbits in the CR3BP
+ *  
+ *  \param eigVals Vector of all eigenvalues along a family of trajectories. It is assumed that there
+ *  are six eigenvalues per trajectory.
+ *  
+ *  \param eigVecs Vector of 6x6 eigenvector matrices; the eigenvectors are columns of the matrix and their
+ *  order is consistent with the order of the six eigenvalues associated with the same trajectory
+ * 
+ *  \return Rearranged indices that describe the correct order of the eigenvalues/vectors
+ */
+std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs){
+    std::vector<unsigned int> sortedIxs(eigVals.size(), 0);
+
     if(eigVals.size() == 0){
         astrohelion::printErr("Calculations::sortEig: No eigenvalues - easy to sort! :P\n");
-        return;
+        return sortedIxs;
     }
 
     if(eigVals.size() % 6 != 0){
         astrohelion::printErr("Calculations::sortEig: Must have 6n eigenvalues!\n");
-        return;
+        return sortedIxs;
     }
 
     // Generate all permutations of the indices 0 through 5
     std::vector<unsigned int> vals {0,1,2,3,4,5};
     std::vector<unsigned int> ixPerms = astrohelion::generatePerms<unsigned int>(vals);
-    unsigned int N = std::floor(eigVals.size()/6);
-
-    std::vector<float> cost(N,1000);
-    cdouble one(1,0);
-    pSortedIxs->clear();
-    pSortedIxs->assign(eigVals.size(),0);
+    std::vector<float> cost(ixPerms.size()/6, 0);
 
     // Sort the first set of eigenvalues so that reciprocal pairs occur near one another
     unsigned int s = 0;
     for(unsigned int p = 0; p < ixPerms.size()/6; p++){
         for(unsigned int i = 0; i < 3; i++){
             // Penalize configures with pairs that are not reciprocal
-            cost[p] += std::abs(1 - std::abs(eigVals[s*6 + ixPerms[p*6 + 2*i]] * eigVals[s*6 + ixPerms[p*6 + 2*i + 1]]));
+            cost[p] += std::abs(1.0 - eigVals[s*6 + ixPerms[p*6 + 2*i]] * eigVals[s*6 + ixPerms[p*6 + 2*i + 1]]);
         }
     }
 
@@ -333,24 +355,35 @@ void sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs, std:
     std::vector<float>::iterator minCostIt = std::min_element(cost.begin(), cost.end());
     unsigned int minCostIx = minCostIt - cost.begin();
 
+    // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
+
     std::vector<cdouble> prevSortVal(6,0);
     MatrixXRcd prevSortVec = MatrixXRcd::Zero(6,6);
     for(unsigned int i = 0; i < 6; i++){
-        pSortedIxs->at(s*6 + i) = ixPerms[minCostIx*6 + i];
+        sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
         prevSortVal[i] = eigVals[s*6 + ixPerms[minCostIx*6 + i]];
         prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*6+i]);
     }
 
-    for(s = 2; s < N; s++){
+    // printf("[%f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi]\n",
+    //     std::real(eigVals[sortedIxs[s*6+0]]), std::imag(eigVals[sortedIxs[s*6+0]]),
+    //     std::real(eigVals[sortedIxs[s*6+1]]), std::imag(eigVals[sortedIxs[s*6+1]]),
+    //     std::real(eigVals[sortedIxs[s*6+2]]), std::imag(eigVals[sortedIxs[s*6+2]]),
+    //     std::real(eigVals[sortedIxs[s*6+3]]), std::imag(eigVals[sortedIxs[s*6+3]]),
+    //     std::real(eigVals[sortedIxs[s*6+4]]), std::imag(eigVals[sortedIxs[s*6+4]]),
+    //     std::real(eigVals[sortedIxs[s*6+5]]), std::imag(eigVals[sortedIxs[s*6+5]]));
+
+    for(s = 1; s < eigVals.size()/6; s++){
         MatrixXRd dp_err = MatrixXRd::Zero(6,6);
         for(unsigned int i = 0; i < 6; i++){
             for(unsigned int j = i; j < 6; j++){
-                dp_err(i,j) = std::abs(1 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j))));
-                dp_err(j,i) = dp_err(j,i);
+                dp_err(i,j) = std::abs(1.0 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j))));
+                dp_err(j,i) = dp_err(i,j);
             }
         }
 
-        cost = std::vector<float>(N,1000);
+        cost.clear();
+        cost.assign(ixPerms.size()/6, 0);
         for(unsigned int p = 0; p < ixPerms.size()/6; p++){
             for(unsigned int i = 0; i < 6; i++){
                 // Assign cost based on the dot product between this new arrangement
@@ -360,10 +393,10 @@ void sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs, std:
                 // Assign cost based on the distance from the previous sorted eigenvalues
                 cost[p] += std::abs(eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i]);
 
-                // Asign cost based on the reciprocal nature of the eigenvalues
+                // Assign cost based on the reciprocal nature of the eigenvalues
                 // This test could be removed to sort eigenvalues that don't occur in pairs
                 if(i%2 == 1)
-                    cost[p] += std::abs(1 - std::abs(eigVals[s*6 + ixPerms[p*6 + 2*(i-1)]] * eigVals[s*6 + ixPerms[p*6 + 2*i-1]]));
+                    cost[p] += std::abs(1.0 - eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]]);
             }
         }
 
@@ -371,225 +404,16 @@ void sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs, std:
         minCostIt = std::min_element(cost.begin(), cost.end());
         minCostIx = minCostIt - cost.begin();
 
+        // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
         for(unsigned int i = 0; i < 6; i++){
-            pSortedIxs->at(s*6 + i) = ixPerms[minCostIx*6 + i];
-            prevSortVal[i] = eigVals[s*6 + ixPerms[minCostIx*6 + i]];
-            prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*6+i]);
+            sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
+            prevSortVal[i] = eigVals[s*6 + sortedIxs[s*6 + i]];
+            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*6 + i]);
         }
     }
+
+    return sortedIxs;
 }//====================================================
-
-
-/**
- *  @brief Sort a list of eigenvalues
- *
- *  This algorithm is intended to sort eigenvalues from the monodromy matrices of a family of
- *  periodic orbits. Because of this, the code attempts to locate at least one pair of 
- *  eigenvalues that are equal to 1.0. Other eigenvalues come in either real, reciprocal pairs
- *  or in complex conjugate pairs. The first row is sorted such that the pairs of eigenvalues
- *  are located next to each other in the row. All subsequent rows are sorted so that the order
- *  of the eigenvalues remains the same
- *
- *
- *  @param eigVals vector of eigenvalues in row-major order. We assume that 6 eigenvalues are 
- *  included in each row.
- *  @param pSortedIxs a pointer to an integer vector that will store the indices of the original
- *  eigenvalues in their new order (after sorting)
- *  @return the sorted eigenvalues, again in row-major order in a vector
- */
-std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSortedIxs){
-    if(eigVals.size() == 0){
-        astrohelion::printErr("Calculations::sortEig: Cannot sort eigenvalues: there are no family members\n");
-        return eigVals;
-    }
-
-    if(eigVals.size() % 6 != 0){
-        astrohelion::printErr("Calculations::sortEig: Must have 6n eigenvalues\n");
-        return eigVals;
-    }
-
-    const double MAX_ONES_ERR = 5e-5;
-    std::vector<cdouble> sortedEigs;
-
-    // Figure out which eigenvalues are closest to one, save their indices
-    std::vector<double> onesErr;
-    std::vector<cdouble> e1(eigVals.begin(), eigVals.begin()+6);
-    for(int i = 0; i < 6; i++){
-        // onesErr.push_back( std::sqrt( (std::real(e1[i])-1)*(std::real(e1[i])-1) + std::imag(e1[i])*std::imag(e1[i]) ) );
-        onesErr.push_back(std::sqrt(std::real(e1[i])-1) + std::abs(std::imag(e1[i])));
-    }
-    
-    std::vector<double>::iterator smallestErr = std::min_element(onesErr.begin(), onesErr.end());
-
-    unsigned int smallIx = smallestErr - onesErr.begin();
-    double saveSmallestErrVal = *smallestErr;
-    // artifically inflate the error on the smallest so we can find the second smallest
-    onesErr[smallIx] += 1e20;
-    std::vector<double>::iterator secondSmallestErr = std::min_element(onesErr.begin(), onesErr.end());
-
-    unsigned int otherSmallIx = secondSmallestErr - onesErr.begin();
-
-    unsigned int onesIx[] = {smallIx, otherSmallIx};   // Indices of the eigenvalues that (nearly) exactly 1.0
-    if(saveSmallestErrVal > MAX_ONES_ERR || *secondSmallestErr > MAX_ONES_ERR){
-        astrohelion::printWarn("Calculations::sortEigs: Eigenvalues closest to one have errors of %.4e and %.4e > %.4e\n",
-            saveSmallestErrVal, *secondSmallestErr, MAX_ONES_ERR);
-    }
-
-    // Generate all permutations of the indices 0 through 5
-    std::vector<unsigned int> vals {0,1,2,3,4,5};
-    std::vector<unsigned int> ixPerms = astrohelion::generatePerms<unsigned int>(vals);
-    cdouble predict[6];
-    std::copy(e1.begin(), e1.end(), predict);
-
-    for(unsigned int m = 0; m < eigVals.size()/6; m++){
-        if(m == 1){
-            if(saveSmallestErrVal < MAX_ONES_ERR){
-                // Update the indices of the ones in case they got moved in the first sorting
-                onesIx[0] = pSortedIxs->at(onesIx[0]);
-                onesIx[1] = pSortedIxs->at(onesIx[1]);
-                printf("Updated unit eigenvalue positions to %d and %d\n", onesIx[0], onesIx[1]);
-            }
-            std::copy(sortedEigs.begin(), sortedEigs.begin()+6, predict);
-        }else if(m > 1){
-            // Use linear extrapolation of m-1 and m-2 to predict m
-            for(int i = 0; i < 6; i++){
-                cdouble deltaEig = sortedEigs[(m-1)*6 + i] - sortedEigs[(m-2)*6 + i];
-                predict[i] = sortedEigs[(m-1)*6 + i] + deltaEig;
-            }
-        }
-
-        // astrohelion::printColor(RED, "Unsorted Set %03d: [%s %s %s %s %s %s]\n", m, complexToStr(eigVals[m*6+0]).c_str(),
-        //     complexToStr(eigVals[m*6+1]).c_str(), complexToStr(eigVals[m*6+2]).c_str(), complexToStr(eigVals[m*6+3]).c_str(),
-        //     complexToStr(eigVals[m*6+4]).c_str(), complexToStr(eigVals[m*6+5]).c_str());
-        
-        std::vector<int> killers(ixPerms.size()/6, 0);  // Keep track of which cost killed each permutation possibility
-        std::vector<double> cost;
-        cost.assign(ixPerms.size()/6, 0);
-        cdouble one(1,0);
-        for(unsigned int p = 0; p < ixPerms.size()/6; p++){
-
-            // rearrange the splitOrig vector using the current permutation
-            cdouble swappedOrig[6];
-            for(int i = 0; i < 6; i++){
-                swappedOrig[i] = eigVals[m*6 + ixPerms[6*p + i]];
-            }
-
-            // Compute difference between this permutation and prediction
-            for(int i = 0; i < 6; i++){
-                cost[p] += std::abs(swappedOrig[i] - predict[i]);
-            }
-            
-            // Make sure ones end up next to each other the first time around
-            bool disqual = false;
-
-            if(!disqual){
-                if(m == 0){
-                    // Determine the new indices of the eigenvalues identified as ones
-                    std::vector<unsigned int>::iterator a = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), onesIx[0]);
-                    std::vector<unsigned int>::iterator b = std::find(ixPerms.begin()+6*p, ixPerms.begin()+6*(p+1), onesIx[1]);
-                    unsigned int ix0 = a - (ixPerms.begin()+6*p);
-                    unsigned int ix1 = b - (ixPerms.begin()+6*p);
-
-                    // If the two unit eigenvalues are not next to each other, toss this option
-                    if(std::abs(ix0 - ix1) > 1){
-                        cost[p] += 1e20;
-                        killers[p] = 1;
-                        disqual = true; // This permuation has been disqualified
-                    }else{
-                        // astrohelion::printColor(GREEN, "Permutation %03d has ones in indices %d and %d\n", p, ix0, ix1);
-                    }
-                }
-            }
-
-            if(!disqual){
-                // Add infinite cost if the ones eigenvalues change spots
-                if(saveSmallestErrVal < MAX_ONES_ERR){
-                    double distToOne[6];
-                    for(unsigned int i = 0; i < 6; i++){
-                        distToOne[i] = std::abs(swappedOrig[i]-one);
-                    }
-                    double *closestToOne = std::min_element(distToOne, distToOne+6);
-                    unsigned int closestIx = closestToOne - distToOne;
-
-                    if( (closestIx != onesIx[0] && closestIx != onesIx[1]) ){
-                        cost[p] += 1e20;
-                        killers[p] = 2;
-                        disqual = true;
-                    }                    
-                    // distToOne[closestIx] += 1e20;
-                    // double *secondClosest = std::min_element(distToOne, distToOne+6);
-                    // int secClosestIx = secondClosest - distToOne;
-
-                    // if( (closestIx != onesIx[0] && closestIx != onesIx[1]) ||
-                    //     (secClosestIx != onesIx[0] && secClosestIx != onesIx[1]) ){
-                    //     cost[p] += 1e20;
-                    //     killers[p] = 2;
-                    //     disqual = true;
-                    // }
-                }
-            }
-
-            if(!disqual){
-                // Add infinite cost if each consecutive pair are not inverses
-                // or complex conjugates
-                for(unsigned int i = 0; i < 6; i+=2){
-                    /* don't consider the eigenvalues that are closest to one
-                        because they may have small innaccuracies that trigger
-                        these costs, screwing up the algorithm */
-                    if(i != onesIx[0]){
-                        // Complex parts don't sum to zero (conjugates will, two
-                        // real eigenvalues will)
-                        if(std::abs(std::imag(swappedOrig[i]) + std::imag(swappedOrig[i+1]))){
-                            cost[p] += 1e20;
-                            killers[p] = 3;
-                            disqual = true;
-                            break;
-                        }
-
-                        // We have established that the ones are in the same place; Compute
-                        // the error in a 1.0 eigenvalue; this error is acceptable in the
-                        // reciprocal calculation (error tends to get bad at the larger orbits)
-                        double okErr = std::abs(swappedOrig[onesIx[0]] - one);
-
-                        // Both are real but are not reciprocals
-                        if(std::imag(swappedOrig[i]) == 0 && std::imag(swappedOrig[i+1]) == 0){
-                            double recipErr = std::abs(1.0 - std::real(swappedOrig[i])*std::real(swappedOrig[i+1]));
-                            if(recipErr > okErr){
-                                cost[p] += 1e20;
-                                killers[p] = 4;
-                                disqual = true;
-                                break;
-                            }
-                        }
-                    }
-                }// end of checking consecutive pairs
-            }
-        }// end of loop through permutations
-
-        // Find the minimum cost
-        std::vector<double>::iterator minCost = std::min_element(cost.begin(), cost.end());
-        int ix = minCost - cost.begin();
-        for(unsigned int i = 0; i < 6; i++){
-            sortedEigs.push_back(eigVals[m*6 + ixPerms[ix*6 + i]]);
-        }
-
-        if(*minCost > 1e10){
-            astrohelion::printErr("Minimum cost on set #%03d is %e - perm %03d, killed by cost %d - probably a bug!\n", m, ix, killers[ix], *minCost);
-        }
-
-        // printf("Chose Perm %04d: [%d %d %d %d %d %d]\n", ix, ixPerms[6*ix+0], ixPerms[6*ix+1], ixPerms[6*ix+2],
-        //     ixPerms[6*ix+3], ixPerms[6*ix+4], ixPerms[6*ix+5]);
-
-        pSortedIxs->insert(pSortedIxs->end(), ixPerms.begin() + ix*6, ixPerms.begin() + (ix+1)*6);
-
-        // astrohelion::printColor(GREEN, "  Sorted Set %03d: [%s %s %s %s %s %s]\n", m, complexToStr(sortedEigs[m*6+0]).c_str(),
-        //     complexToStr(sortedEigs[m*6+1]).c_str(), complexToStr(sortedEigs[m*6+2]).c_str(), complexToStr(sortedEigs[m*6+3]).c_str(),
-        //     complexToStr(sortedEigs[m*6+4]).c_str(), complexToStr(sortedEigs[m*6+5]).c_str());
-        // waitForUser();
-    }// end of loop through all members/eigenvalue sets
-
-    return sortedEigs;
-}//=====================================================
 
 /**
  *  @brief Compute manifolds of a CR3BP trajectory
@@ -619,8 +443,12 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
 
     // Sort eigenvalues to put them in a "propper" order, get indices
     // to sort the eigenvectors to match
-    std::vector<int> sortedIx;
-    std::vector<cdouble> sortedEig = sortEig(eigData, &sortedIx);
+    std::vector<MatrixXRcd> vecvec {eigVecs};
+    std::vector<unsigned int> sortedIx = sortEig(eigData, vecvec);
+    std::vector<cdouble> sortedEig;
+    for(unsigned int i = 0; i < 6; i++){
+        sortedEig.push_back(eigData[sortedIx[i]]);
+    }
 
     // Figure out which eigenvalues are the stable and unstable ones,
     // delete the rest
@@ -633,7 +461,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
         if(std::abs(realErr) > 1e-5 && std::abs(imagErr) < 1e-5){
             // Keep this eigenvalue/eigenvector pair
             nonCenterVals.push_back(sortedEig[c]);
-            int vecIx = sortedIx[c];
+            unsigned int vecIx = sortedIx[c];
             nonCenterVecs.insert(nonCenterVecs.end(),
                 eigVecs.data()+vecIx*6, eigVecs.data()+(vecIx+1)*6); 
         }

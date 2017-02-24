@@ -15,8 +15,10 @@
 using namespace astrohelion;
 
 /**
- *  @brief [brief description]
- *  @details [long description]
+ *  @brief Get the inertial moon position 
+ *  @details The Moon's location is obtained by computing the moon position in the Sun-Earth-Moon BC4BP,
+ *  then shifting and scaling to the Sun-Earth system, then converting to Earth-Moon system, and finally,
+ *  to the Earth-centered J2000 frame.
  * 
  *  @param pBCSys SEM BC4BP System Data
  *  @param pSESys SE CR3BP System Data
@@ -103,7 +105,7 @@ std::vector<double> getSpiceMoonPos(double et){
     return moonPos;
 }//====================================================
 
-BOOST_AUTO_TEST_SUITE(Linkable)
+BOOST_AUTO_TEST_SUITE(BC4BP_Primary_Positions)
 
 BOOST_AUTO_TEST_CASE(PrimaryPositions){
 	SysData_bc4bp bcSys("sun", "earth", "moon");
@@ -125,16 +127,19 @@ BOOST_AUTO_TEST_CASE(PrimaryPositions){
 	for(double t = 0; t < 35*365*24*3600; t += 4*3600){
 		std::vector<double> me = getInertMoonPos(&bcSys, &seSys, t/bcSys.getCharT());
 		std::vector<double> spice = getSpiceMoonPos(epoch + t);
-		moonPos_myConversion.insert(moonPos_myConversion.end(), me.begin(), me.begin()+3);
-		moonPos_spice.insert(moonPos_spice.end(), spice.begin(), spice.begin()+3);
-		time.push_back(t);
+
+		BOOST_CHECK(std::abs(me[0] - spice[0]) < 1000);
+		BOOST_CHECK(std::abs(me[1] - spice[1]) < 2000);
+		BOOST_CHECK(std::abs(me[2] - spice[2]) < 300);
+		
+		// moonPos_myConversion.insert(moonPos_myConversion.end(), me.begin(), me.begin()+3);
+		// moonPos_spice.insert(moonPos_spice.end(), spice.begin(), spice.begin()+3);
+		// time.push_back(t);
 	}
 
-	saveMatrixToFile("moonPos_me.mat", "moonPos_custom", moonPos_myConversion, moonPos_myConversion.size()/3, 3);
-	saveMatrixToFile("moonPos_spice.mat", "moonPos_spice", moonPos_spice, moonPos_spice.size()/3, 3);
-	saveMatrixToFile("moonPos_times.mat", "time", time, time.size(), 1);
-	
-    BOOST_CHECK(true);
+	// saveMatrixToFile("moonPos_me.mat", "moonPos_custom", moonPos_myConversion, moonPos_myConversion.size()/3, 3);
+	// saveMatrixToFile("moonPos_spice.mat", "moonPos_spice", moonPos_spice, moonPos_spice.size()/3, 3);
+	// saveMatrixToFile("moonPos_times.mat", "time", time, time.size(), 1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

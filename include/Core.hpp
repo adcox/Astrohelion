@@ -109,8 +109,8 @@ struct Body_Data{
  *  @brief A structure that contains default settings and functions to load
  *  settings from an XML file
  */
-struct Core_Settings{
-	
+class Core_Settings{
+public:
 	void load(const std::string&);
 	void save(const std::string&);
 
@@ -132,8 +132,8 @@ struct Core_Settings{
  *	@brief a structure that contains functions to initialize and unload 
  *	global library stuff
  */
-struct Core_Initializer {
-
+class Core_Initializer {
+public:
 	Core_Initializer();
 	~Core_Initializer();
 

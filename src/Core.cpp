@@ -277,37 +277,37 @@ void Core_Initializer::runInit(){
 		try{
 			bd.name = bodyTree.get<std::string>("name");
 		}catch(std::exception &e){
-			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+			std::cout << "Error reading body data: name:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.id = bodyTree.get<int>("id");
 		}catch(std::exception &e){
-			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+			std::cout << "Error reading " << bd.name << " body data: id:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.parent = bodyTree.get<std::string>("parent");
 		}catch(std::exception &e){
-			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+			std::cout << "Error reading " << bd.name << " body data: parent:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.gravParam = bodyTree.get<double>("gm");
 		}catch(std::exception &e){
-			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+			std::cout << "Error reading " << bd.name << " body data: gm:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.bodyRad = bodyTree.get<double>("radius");
 		}catch(std::exception &e){
-			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+			std::cout << "Error reading " << bd.name << " body data: radius:\n" << e.what() << std::endl;
 		}
 
 		try{
 			bd.orbitRad = bodyTree.get<double>("circ_r");
 		}catch(std::exception &e){
-			std::cout << "Error reading body data:\n" << e.what() << std::endl;
+			std::cout << "Error reading " << bd.name << " body data: circ_r:\n" << e.what() << std::endl;
 		}
 
 		if(bd.id != 0 && allBodyData.find(bd.id) == allBodyData.end()){

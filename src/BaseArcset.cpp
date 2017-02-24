@@ -3,13 +3,13 @@
  *	@brief Data object that stores information about an integrated arc
  *	
  *	@author Andrew Cox
- *	@version May 25, 2016
+ *	@version Feb 24, 2017
  *	@copyright GNU GPL v3.0
  */
  
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of the Astrohelion.
  *
@@ -1456,8 +1456,7 @@ void BaseArcset::setState(int id, std::vector<double> state){
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *  @param stateVec 6-element (at least) vector of non-dimensional state 
- *  values (x, y, z, vx, vy, vz, ...); only the first six are used
+ *  @param stateVec vector of non-dimensional state values
  *  @throws Exception if <tt>ix</tt> is out of bounds
  */
 void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
@@ -1477,10 +1476,15 @@ void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
  *  @param id the ID of a segment
  *  @param stm the STM
  *  @throws Exception if <tt>id</tt> is out of bounds
+ *  @throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTM(int id, MatrixXRd stm){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::setSTM: Node ID out of range");
+
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	if(stm.rows() != stateSize || stm.cols() != stateSize)
+		throw Exception("BaseArcset::setSTMByIx: STM size does not match the state size for this dynamical system");
 
 	segs[segIDMap[id]].setSTM(stm);
 }//====================================================
@@ -1491,8 +1495,9 @@ void BaseArcset::setSTM(int id, MatrixXRd stm){
  *  @param ix index of the segment with the <tt>segs</tt> storage array; if it is negative,
  *  it will count backwards from the end of the array.
  *  
- *  @param stm a 6x6 matrix containing the STM
+ *  @param stm a matrix containing the STM
  *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  @throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){
 	if(ix < 0)
@@ -1500,6 +1505,10 @@ void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
 		throw Exception("BaseArcset::setSTMByIx: node index out of bounds");
+
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	if(stm.rows() != stateSize || stm.cols() != stateSize)
+		throw Exception("BaseArcset::setSTMByIx: STM size does not match the state size for this dynamical system");
 
 	segs[ix].setSTM(stm);
 }//=================================================
@@ -1683,6 +1692,8 @@ void BaseArcset::printSegIDMap() const{
  */
 void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	
 	if(pStateMat == NULL){
 		throw Exception("BaseArcset::readStateFromMat: Could not read state data vector");
 	}else{
@@ -1696,8 +1707,8 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
-		if(pStateMat->dims[1] != 6){
-			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not 6.");
+		if(pStateMat->dims[1] != stateSize){
+			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not consistent with DynamicalModel definition.");
 		}
 
 		if(pStateMat->class_type == MAT_C_DOUBLE && pStateMat->data_type == MAT_T_DOUBLE){
@@ -1705,15 +1716,12 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 
 			if(data != NULL){
 				for(unsigned int i = 0; i < numSteps; i++){
-					double state[] = {0,0,0,0,0,0};
-					state[0] = data[0*numSteps + i];
-					state[1] = data[1*numSteps + i];
-					state[2] = data[2*numSteps + i];
-					state[3] = data[3*numSteps + i];
-					state[4] = data[4*numSteps + i];
-					state[5] = data[5*numSteps + i];
+					std::vector<double> state;
+					for(unsigned int s = 0; s < stateSize; s++){
+						state.push_back(data[s*numSteps + i]);
+					}
 
-					nodes[i].setState(state, 6);
+					nodes[i].setState(state);
 				}
 			}
 		}else{
@@ -1810,6 +1818,7 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
  */
 void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 	matvar_t *pAllSTM = Mat_VarRead(pMatFile, "STM");
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	if(pAllSTM == NULL){
 		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
 	}else{
@@ -1824,8 +1833,8 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readSTMFromMat: STM vector has fewer elements than the initialized segment vector");
 		}
 
-		if(pAllSTM->dims[0] != 6 || pAllSTM->dims[1] != 6){
-			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM is not 6x6.");
+		if(pAllSTM->dims[0] != stateSize || pAllSTM->dims[1] != stateSize){
+			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM size is not consistent with DynamicalModel definition.");
 		}
 
 		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
@@ -1835,17 +1844,17 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 
 			if(data != NULL){
 				for(i = 0; i < numSteps; i++){
-					double stmEl[36];
-					for(unsigned int j = 0; j < 36; j++){
-						stmEl[j] = data[36*i + j];
+					std::vector<double> stmEl(stateSize*stateSize, 0);
+					for(unsigned int j = 0; j < stateSize*stateSize; j++){
+						stmEl[j] = data[stateSize*stateSize*i + j];
 					}
 
-					MatrixXRd P = Eigen::Map<MatrixXRd>(stmEl, 6, 6);
+					MatrixXRd P = Eigen::Map<MatrixXRd>(&(stmEl[0]), stateSize, stateSize);
 					segs[i].setSTM(P.transpose());
 				}
 			}
 		}else{
-			throw Exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
+			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(pAllSTM);
@@ -2094,11 +2103,12 @@ void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t l
 void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> posVel(6*nodes.size());
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	std::vector<double> posVel(stateSize*nodes.size());
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> state = nodes[r].getState();
-		for(unsigned int c = 0; c < 6; c++){
+		for(unsigned int c = 0; c < stateSize; c++){
 			posVel[c*nodes.size() + r] = state[c];
 		}
 	}
@@ -2121,19 +2131,20 @@ void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	 *							MAT_F_GLOBAL: make the matlab variable global
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
-	size_t dims[2] = {nodes.size(), 6};
+	size_t dims[2] = {nodes.size(), stateSize};
 	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
- *	@brief Save the STMs to a file; STMs are stored in a 6x6xn array for 
+ *	@brief Save the STMs to a file; STMs are stored in an array for 
  *	compatibility with existing MATLAB scripts
  *	@param pMatFile a pointer to the destination matlab file 
  */
 void BaseArcset::saveSTMs(mat_t *pMatFile) const{
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	// Create one large vector to put all the STM elements in
-	std::vector<double> allSTMEl(segs.size()*36);
+	std::vector<double> allSTMEl(segs.size()*stateSize*stateSize);
 
 	for (unsigned int n = 0; n < segs.size(); n++){
 		// get the transpose of the STM matrix; we need to store it in column-major order
@@ -2142,10 +2153,10 @@ void BaseArcset::saveSTMs(mat_t *pMatFile) const{
 		// Retrieve the data from the matrix
 		double *matData = P.data();
 		// Store that data in our huge vector
-		std::copy(matData, matData+36, &(allSTMEl[0]) + n*36);
+		std::copy(matData, matData+stateSize*stateSize, &(allSTMEl[0]) + n*stateSize*stateSize);
 	}
 
-	size_t dims[3] = {6, 6, segs.size()};
+	size_t dims[3] = {stateSize, stateSize, segs.size()};
 	matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(pMatFile, pMatVar, "STM", MAT_COMPRESSION_NONE);
 }//======================================================

@@ -193,10 +193,10 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
     const double EPS = 1e-14;
 
     if(varHistory.size() < STATE_SIZE)
-        throw Exception("tpat_calculations::familyCont_LS: Not enough data to create A matrix\n");
+        throw Exception("Calculations::familyCont_LS: Not enough data to create A matrix\n");
 
     if(depVars.size() == 0)
-        throw Exception("tpat_calculations::familyCont_LS: Not enough data to create B matrix\n");
+        throw Exception("Calculations::familyCont_LS: Not enough data to create B matrix\n");
 
     // Form A and B matrices
     std::vector<double> A_data;
@@ -294,7 +294,7 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
             return Eigen::Map<MatrixXRd>(data, 6, 6);
         }
         default:
-            astrohelion::printErr("tpat_calculations::getMirrorMat: Mirror type is not implemented; returning identiy\n");
+            astrohelion::printErr("Calculations::getMirrorMat: Mirror type is not implemented; returning identiy\n");
             return Eigen::Matrix<double, 6, 6, Eigen::RowMajor>::Identity();
     }
 }//===================================================
@@ -318,12 +318,12 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
  */
 std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSortedIxs){
     if(eigVals.size() == 0){
-        astrohelion::printErr("tpat_calculations::sortEig: Cannot sort eigenvalues: there are no family members\n");
+        astrohelion::printErr("Calculations::sortEig: Cannot sort eigenvalues: there are no family members\n");
         return eigVals;
     }
 
     if(eigVals.size() % 6 != 0){
-        astrohelion::printErr("tpat_calculations::sortEig: Must have 6n eigenvalues\n");
+        astrohelion::printErr("Calculations::sortEig: Must have 6n eigenvalues\n");
         return eigVals;
     }
 
@@ -349,7 +349,7 @@ std::vector<cdouble> sortEig(std::vector<cdouble> eigVals, std::vector<int> *pSo
 
     int onesIx[] = {smallIx, otherSmallIx};   // Indices of the eigenvalues that (nearly) exactly 1.0
     if(saveSmallestErrVal > MAX_ONES_ERR || *secondSmallestErr > MAX_ONES_ERR){
-        astrohelion::printWarn("tpat_calculations::sortEigs: Eigenvalues closest to one have errors of %.4e and %.4e > %.4e\n",
+        astrohelion::printWarn("Calculations::sortEigs: Eigenvalues closest to one have errors of %.4e and %.4e > %.4e\n",
             saveSmallestErrVal, *secondSmallestErr, MAX_ONES_ERR);
     }
 
@@ -529,7 +529,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
 
     Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)
-        throw Exception("tpat_calculations::getManifolds: Could not compute eigenvalues of monodromy matrix");
+        throw Exception("Calculations::getManifolds: Could not compute eigenvalues of monodromy matrix");
 
     Eigen::VectorXcd vals = eigensolver.eigenvalues();
     MatrixXRcd eigVecs = eigensolver.eigenvectors();
@@ -560,16 +560,16 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
     std::vector<Traj_cr3bp> allManifolds;
 
     if(nonCenterVals.size() == 0){
-        astrohelion::printWarn("tpat_calculations::getManifolds: No stable/unstable eigenvalues were found\n");
+        astrohelion::printWarn("Calculations::getManifolds: No stable/unstable eigenvalues were found\n");
         return allManifolds;
     }
 
     if(nonCenterVals.size() == 1){
-        throw Exception("tpat_calculations::getManifolds: Only found one stable/unstable eigenvalue");
+        throw Exception("Calculations::getManifolds: Only found one stable/unstable eigenvalue");
     }
 
     if(nonCenterVals.size() > 2){
-        astrohelion::printWarn("tpat_calculations::getManifolds: Stable/Unstable subspace is larger than 2D. Only the first pair will be considered\n");
+        astrohelion::printWarn("Calculations::getManifolds: Stable/Unstable subspace is larger than 2D. Only the first pair will be considered\n");
     }
 
     /** TODO: If and when I can flexibily integrate generic trajectories and nodesets,
@@ -578,7 +578,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
      */
     // Get a bunch of points to use as starting guesses for the manifolds
     if(numMans > pPerOrbit->getNumNodes()){
-        astrohelion::printWarn("tpat_calculations::getManifolds: Requested too many manifolds... will return fewer\n");
+        astrohelion::printWarn("Calculations::getManifolds: Requested too many manifolds... will return fewer\n");
         numMans = pPerOrbit->getNumNodes();
     }
 
@@ -653,7 +653,7 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
  */
 double getStabilityIndex(std::vector<cdouble> eigs){
     if(eigs.size() != 6)
-        throw Exception("tpat_calculations::getStabilityIndex: Must input 6 eigenvalues!");
+        throw Exception("Calculations::getStabilityIndex: Must input 6 eigenvalues!");
 
     double okErr = 1e-3;
     cdouble one(1,0);
@@ -1355,7 +1355,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     // Check to make sure the simulation ended with the event (not running out of time)
     std::vector<Event> endEvts = sim.getEndEvents(&halfOrbArc);
     if(std::find(endEvts.begin(), endEvts.end(), mirrorEvt) == endEvts.end()){
-        astrohelion::printErr("tpat_calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
+        astrohelion::printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
     }
     // halfOrbArc.saveToMat("HalfOrbArc.mat");
 
@@ -1363,7 +1363,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);
 
     if(tofErr > 10)
-        astrohelion::printWarn("tpat_calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
+        astrohelion::printWarn("Calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
 
     // Create a nodeset from arc
     Nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, Nodeset::TIME);
@@ -1448,7 +1448,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         }
         return halfPerTraj;     // Now contains entire trajectory
     }catch(DivergeException &e){
-        throw DivergeException("tpat_calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
+        throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
     }
 }//================================================
 
@@ -1804,7 +1804,7 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
 Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
 
     if(centerIx < 0 || centerIx > 2){
-        throw Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+        throw Exception("Calculations::cr3bp_rot2inert: Invalid center index");
     }
 
     const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(nodes.getSysData());
@@ -1858,7 +1858,7 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
     double t, double epoch0, int centerIx){
 
     if(centerIx < 0 || centerIx > 2){
-        throw Exception("tpat_calculations::cr3bp_rot2inert: Invalid center index");
+        throw Exception("Calculations::cr3bp_rot2inert: Invalid center index");
     }
 
     ConstSpiceChar *abcorr = "NONE";
@@ -2237,7 +2237,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *pBCSys, double t0){
     if(err <= okErr)
         return spPos;
     else
-        throw DivergeException("tpat_calculations::bcr4bpr_getSPLoc: Could not converge on SP location");
+        throw DivergeException("Calculations::bcr4bpr_getSPLoc: Could not converge on SP location");
 }//=====================================================
 
 /**

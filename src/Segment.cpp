@@ -63,14 +63,15 @@ Segment::Segment(int originID, int terminusID, double tof){
  *  @param terminusID ID associated with the terminal node (if no terminal node exists, 
  *  enter a value of NAN)
  *  @param tof time-of-flight along the segment
- *  @param stm_data a 36-element row-major order array containing a 6x6 state transition matrix
+ *  @param stm_data a row-major order array containing a state transition matrix
  *  associated with this segment
+ *  @param len the number of elements in stm_data (should be a perfect square)
  */
-Segment::Segment(int originID, int terminusID, double tof, const double stm_data[36]){
+Segment::Segment(int originID, int terminusID, double tof, const double* stm_data, unsigned int len){
 	addLink(originID);
 	addLink(terminusID);
 	this->tof = tof;
-	std::copy(stm_data, stm_data+36, stm);
+	stm = Eigen::Map<const MatrixXRd>(stm_data, std::sqrt(len), std::sqrt(len));
 }//====================================================
 
 /**
@@ -182,22 +183,7 @@ double Segment::getTOF() const { return tof; }
  *  @brief Retrieve the STM associated with this segment
  *  @return the STM associated with this segment
  */
-MatrixXRd Segment::getSTM() const{
-	double stmData[36];
-	std::copy(stm, stm+36, stmData);
-	MatrixXRd temp = Eigen::Map<MatrixXRd>(stmData, 6, 6);
-	return temp;
-}//====================================================
-
-/**
- *  @brief Retrieve the STM elements in row-major order
- *  @return the STM elements in row-major order
- */
-std::vector<double> Segment::getSTMElements() const{
-	std::vector<double> stmVec;
-	stmVec.insert(stmVec.begin(), stm, stm+36);
-	return stmVec;
-}//====================================================
+MatrixXRd Segment::getSTM() const{ return stm; }
 
 /**
  *	@brief Retrieve a vector describing which of the velocity states
@@ -254,36 +240,28 @@ void Segment::setOrigin(int o){ links[ORIG_IX] = o; }
 
 /**
  *	@brief Set the STM for this step
- *	@param m a 6x6 state transition matrix (non-dim)
- *	@throw Exception if <tt>m</tt> is not 6x6
+ *	@param m a state transition matrix (non-dim)
  */
-void Segment::setSTM(MatrixXRd m){
-	if(m.rows() != 6 || m.cols() != 6)
-		throw Exception("Segment::setSTM: STM must be 6x6");
-	
-	std::copy(m.data(), m.data()+36, stm);
-}//====================================================
+void Segment::setSTM(MatrixXRd m){ stm = m; }
 
 /**
  *	@brief Set the STM for this step
  *	@param elements an array of stm elements in 
- *	row-major order. Note that the array must have at least 36
- *	elements, or un-initialized memory may be accessed
+ *	row-major order.
+ *	@param len number of numbers in elements
  */
-void Segment::setSTM(const double *elements){
-	std::copy(elements, elements+36, stm);
+void Segment::setSTM(const double *elements, unsigned int len){
+	stm = Eigen::Map<const MatrixXRd>(elements, std::sqrt(len), std::sqrt(len));
 }//====================================================
 
 /**
  *	@brief Set the STM for this step
  *	@param elements a 36-element vector of STM elements
  *	(non-dimensional) in row-major order
- *	@throw Exception if <tt>elements</tt> does not have 36 elements
  */
 void Segment::setSTM(std::vector<double> elements){
-	if(elements.size() != 36)
-		throw Exception("Segment::setSTM: input vector must have 36 elements");
-	std::copy(elements.begin(), elements.begin()+36, stm);
+	unsigned int len = static_cast<unsigned int>(std::floor(std::sqrt(static_cast<double>(elements.size()))));
+	stm = Eigen::Map<MatrixXRd>(&(elements[0]), len, len);
 }//====================================================
 
 /**
@@ -368,7 +346,7 @@ void Segment::setVelCon(bool xCon, bool yCon, bool zCon){
  *	@param s a segment reference
  */
 void Segment::copyMe(const Segment &s){
-	std::copy(s.stm, s.stm+36, stm);
+	stm = s.stm;
 	cons = s.cons;
 	tof = s.tof;
 	flags = s.flags;

@@ -138,12 +138,15 @@ void DynamicsModel_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t,
     EOM_ParamStruct paramStruct(ltSys);
     simpleEOMs(t, y, dsdt, &paramStruct);
     
-    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
-    int id = traj->addNode(Node(y, dsdt+3, t));
+    // node(state, numStates, epoch) - y(0:5) holds the state, y(6:41) holds the STM
+    Node node(y, coreStates, t);
+    std::vector<double> accel(dsdt+3, dsdt+6);
+    node.setExtraParamVec("accel", accel);
+    int id = traj->addNode(node);
 
     if(id > 0){
         double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+6));
+        traj->addSeg(Segment(id-1, id, tof, y+coreStates, stmStates));
     }
 
     Traj_cr3bp_ltvp *cr3bpTraj = static_cast<Traj_cr3bp_ltvp*>(traj);

@@ -124,12 +124,15 @@ void DynamicsModel_2bp::sim_saveIntegratedData(const double *y, double t, Traj* 
 	EOM_ParamStruct paramStruct(sys);
 	simpleEOMs(t, y, dsdt, &paramStruct);
 
-	// Save the state (pos, vel, accel)
-	int id = traj->addNode(Node(y, dsdt+3, t));
+	// Save the states
+    Node node(y, coreStates, t);
+    std::vector<double> accel(dsdt+3, dsdt+6);
+    node.setExtraParamVec("accel", accel);
+    int id = traj->addNode(node);
 
 	if(id > 0){
 		double tof = t - traj->getNode(id-1).getEpoch();
-		traj->addSeg(Segment(id-1, id, tof, y+6));
+		traj->addSeg(Segment(id-1, id, tof, y+coreStates, stmStates));
 	}
 }//====================================================
 

@@ -47,26 +47,26 @@ Node::Node(){}
 /**
  *  @brief Construct a node object
  * 
- *  @param state 6-element array of state variables
+ *  @param state array of state variables
+ *  @param len length of the array
  *  @param epoch epoch associated with this node
  */
-Node::Node(const double state[6], double epoch){
-	std::copy(state, state+6, this->state);
+Node::Node(const double state[6], unsigned int len, double epoch){
+	this->state.assign(state, state + len);
 	this->epoch = epoch;
 }//====================================================
 
 /**
  *  @brief Construct a node object
  * 
- *  @param state 6-element vector of state variables
+ *  @param state vector of state variables
  *  @param epoch epoch associated with this node
- *  @throw Exception if <tt>state</tt> does not have six elements
  */
 Node::Node(std::vector<double> state, double epoch){
 	if(state.size() != 6)
 		throw Exception("Node::constructor: state must have six elements");
 
-	std::copy(state.begin(), state.end(), this->state);
+	this->state = state;
 	this->epoch = epoch; 
 }//====================================================
 
@@ -77,11 +77,11 @@ Node::Node(std::vector<double> state, double epoch){
  *  @param accel 3-element array of acceleration values
  *  @param epoch epoch associated with this node
  */
-Node::Node(const double state[6], const double accel[3], double epoch){
-	std::copy(state, state+6, this->state);
-	std::copy(accel, accel+3, this->accel);
-	this->epoch = epoch;
-}//====================================================
+// Node::Node(const double state[6], const double accel[3], double epoch){
+// 	std::copy(state, state+6, this->state);
+// 	std::copy(accel, accel+3, this->accel);
+// 	this->epoch = epoch;
+// }//====================================================
 
 /**
  *  @brief Construct a node object
@@ -92,17 +92,17 @@ Node::Node(const double state[6], const double accel[3], double epoch){
  *  @throw Exception if <tt>state</tt> does not have six elements
  *  @throw Exception if <tt>accel</tt> does not have three elements
  */
-Node::Node(std::vector<double> state, std::vector<double> accel, double epoch){
-	if(state.size() != 6)
-		throw Exception("Node::constructor: state vector must have six elements");
+// Node::Node(std::vector<double> state, std::vector<double> accel, double epoch){
+// 	if(state.size() != 6)
+// 		throw Exception("Node::constructor: state vector must have six elements");
 
-	if(accel.size() != 3)
-		throw Exception("Node::constructor: accel vector must have three elements");
+// 	if(accel.size() != 3)
+// 		throw Exception("Node::constructor: accel vector must have three elements");
 
-	std::copy(state.begin(), state.end(), this->state);
-	std::copy(accel.begin(), accel.end(), this->accel);
-	this->epoch = epoch; 
-}//====================================================
+// 	std::copy(state.begin(), state.end(), this->state);
+// 	std::copy(accel.begin(), accel.end(), this->accel);
+// 	this->epoch = epoch; 
+// }//====================================================
 
 /**
  *  @brief Copy constructor
@@ -138,16 +138,15 @@ Node& Node::operator =(const Node &n){
  *
  *	Conditions for identicalness:
  *	* Exact same state vector
- *	* (Not Active) Exact same extra parameter vector (e.g. epoch, tof, time, mass)
- * 	* (Not Active) Exact same flag vector (e.g. velocity continuity)
- *	If these conditions are met, acceleration and the STM should also
- *	be identical.
  *
  *	@return whether or not two nodes are identical
  */
 bool operator ==(const Node &lhs, const Node &rhs){
-	// Check state (implies accel is the same)
-	for(int i = 0; i < 6; i++){
+	if(lhs.state.size() != rhs.state.size())
+		return false;
+
+	// Check state
+	for(unsigned int i = 0; i < lhs.state.size(); i++){
 		if(lhs.state[i] != rhs.state[i])
 			return false;
 	}
@@ -225,9 +224,9 @@ void Node::setConstraints(std::vector<Constraint> constraints){
  *	at this node
  *	@return a vector of accelerations (non-dimensional)
  */
-std::vector<double> Node::getAccel() const{
-	return std::vector<double>(accel, accel+3);
-}//====================================================
+// std::vector<double> Node::getAccel() const{
+// 	return std::vector<double>(accel, accel+3);
+// }//====================================================
 
 /**
  *	@brief Get all constraints for this node
@@ -301,7 +300,7 @@ int Node::getNumCons() const { return static_cast<int>(cons.size()); }
  *	@return the 6-element non-dimensional position and velocity state vector
  */
 std::vector<double> Node::getState() const {
-	return std::vector<double>(state, state+6);
+	return state;
 }//====================================================
 
 /**
@@ -310,20 +309,20 @@ std::vector<double> Node::getState() const {
  *	that if the input array has fewer than three elements, un-initialized
  *	memory will be accessed
  */
-void Node::setAccel(const double *a){
-	std::copy(a, a+3, accel);
-}//====================================================
+// void Node::setAccel(const double *a){
+// 	std::copy(a, a+3, accel);
+// }//====================================================
 
 /**
  *	@brief Set the acceleration vector for this node
  *	@param a a 3-element vector of non-dimensional accelerations
  *	@throw Exception if <tt>a</tt> does not have three elements
  */
-void Node::setAccel(std::vector<double> a){
-	if(a.size() != 3)
-		throw Exception("Node::setAccel: input acceleration must have three elements");
-	std::copy(a.begin(), a.begin()+3, accel);
-}//====================================================
+// void Node::setAccel(std::vector<double> a){
+// 	if(a.size() != 3)
+// 		throw Exception("Node::setAccel: input acceleration must have three elements");
+// 	std::copy(a.begin(), a.begin()+3, accel);
+// }//====================================================
 
 /**
  *  @brief Set the epoch associated with this node
@@ -372,25 +371,20 @@ void Node::setID(int id){
 
 /**
  *	@brief Set the position-velocity state vector
- *	@param s a 6-element array of non-dimensional position
- *	and velocity states. Note that if the input array has fewer
- *	than 6 states, un-initialized memory may be read.
+ *	@param s an array of non-dimensional position
+ *	and velocity states
+ *	@param len length of the array
  */
-void Node::setState(const double *s){
-	std::copy(s, s+6, state);
+void Node::setState(const double *s, unsigned int len){
+	state.assign(s, s+len);
 }//====================================================
 
 /**
  *	@brief Set the position-velocity state vector
- *	@param s a 6-element vector of non-dimensional position
+ *	@param s a vector of non-dimensional position
  *	and velocity states
- *	@throw Exception if <tt>s</tt> does not have six elements
  */
-void Node::setState(std::vector<double> s){
-	if(s.size() != 6)
-		throw Exception("Node::setState: input vector must have six elements");
-	std::copy(s.begin(), s.begin()+6, state);
-}//====================================================
+void Node::setState(std::vector<double> s){ state = s; }
 
 //-----------------------------------------------------
 //      Utility Functions
@@ -401,8 +395,7 @@ void Node::setState(std::vector<double> s){
  *	@param n a node reference
  */
 void Node::copyMe(const Node &n){
-	std::copy(n.state, n.state+6, state);
-	std::copy(n.accel, n.accel+3, accel);
+	state = n.state;
 	epoch = n.epoch;
 	extraParam = n.extraParam;
 	extraParamVecs = n.extraParamVecs;
@@ -414,7 +407,6 @@ void Node::print() const{
 	printf("Node | id = %d\n", ID);
 	printf("\tEpoch = %.4f\n", epoch);
 	printf("\tState = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f]\n", state[0], state[1], state[2], state[3], state[4], state[5]);
-	printf("\tAccel = [%.4f, %.4f, %.4f]\n", accel[0], accel[1], accel[2]);
 
 	printf("\tExtra Parameters:\n");
 	for(auto const& param : extraParam){

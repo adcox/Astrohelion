@@ -132,7 +132,7 @@ public:
 	std::vector<double> getAccelByIx(int) const;
 	std::vector<Constraint> getArcConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
-	std::vector<double> getCoord(int) const;
+	std::vector<double> getCoord(unsigned int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getEpochs() const;

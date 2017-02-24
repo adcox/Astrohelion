@@ -506,11 +506,10 @@ void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int nu
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
-	int id = addNode(Node(IC, t0));
-
 	double segTOF = tof/(numNodes-1);
 	std::vector<double> ic(IC, IC+6);
-
+	int id = addNode(Node(ic, t0));
+	
 	for(int n = 0; n < numNodes-1; n++){
 		Traj traj(pSysData);
 		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);

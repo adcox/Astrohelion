@@ -140,13 +140,16 @@ void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj
     double dsdt[6] = {0};
     EOM_ParamStruct paramStruct(bcSys);
     simpleEOMs(t, y, dsdt, &paramStruct);
-    
-    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
-    int id = traj->addNode(Node(y, dsdt+3, t));
+
+    // Save the states
+    Node node(y, coreStates, t);
+    std::vector<double> accel(dsdt+3, dsdt+6);
+    node.setExtraParamVec("accel", accel);
+    int id = traj->addNode(node);
 
     if(id > 0){
         double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+6));
+        traj->addSeg(Segment(id-1, id, tof, y+coreStates, stmStates));
     }
     
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);
@@ -1488,7 +1491,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
             state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
         }
 
-        Node node(state, 0);
+        Node node(state, 6, 0);
         node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
 
         double sT = it->freeVarScale[3];

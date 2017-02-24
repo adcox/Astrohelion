@@ -654,7 +654,7 @@ std::vector<double> BaseArcset::getAccel(int id) const{
 
 	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
-		return nodes[ix].getAccel();
+		return nodes[ix].getExtraParamVec("accel");
 	}else{
 		throw Exception("BaseArcset::getAccel: Could not locate the node with the specified ID");
 	}
@@ -674,7 +674,7 @@ std::vector<double> BaseArcset::getAccelByIx(int ix) const{
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getAccelByIx: node index out of bounds");
 
-	return nodes[ix].getAccel();
+	return nodes[ix].getExtraParamVec("accel");
 }//====================================================
 
 /**
@@ -855,23 +855,18 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 
 /**
  *	@brief Get a vector of one coordinate for all nodes
- *	@param ix the index of the coordinate; The state is accessed
- *	by indices [0-5] : {x, y, z, vx, vy, vz} and acceleration is
- *	accessed by indices [6-8] : {ax, ay, az}
+ *	@param ix the index of the state coordinate
  *	@return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
  *	@throws Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> BaseArcset::getCoord(int ix) const{
-	if(ix < 0 || ix >= 9)
-		throw Exception("BaseArcset::getCoord: Index Out of Range");
+std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
+	if(nodes.size() > 0 && ix >= nodes[0].getState().size())
+		throw Exception("BaseArcset::getCoord: Index out of range");
 
 	std::vector<double> coord;
 	for(unsigned int n = 0; n < nodes.size(); n++){
-		if(ix < 6)
-			coord.push_back(nodes[n].getState()[ix]);
-		else
-			coord.push_back(nodes[n].getAccel()[ix-6]);
+		coord.push_back(nodes[n].getState()[ix]);
 	}
 
 	return coord;
@@ -1413,7 +1408,7 @@ void BaseArcset::setAccel(int id, std::vector<double> accel){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::setAccel: Node ID out of range");
 
-	nodes[nodeIDMap[id]].setAccel(accel);
+	nodes[nodeIDMap[id]].setExtraParamVec("accel", accel);
 }//====================================================
 
 /**
@@ -1435,7 +1430,7 @@ void BaseArcset::setAccelByIx(int ix, std::vector<double> accelVec){
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::setAccelByIx: node index out of bounds");
 
-	nodes[ix].setAccel(accelVec);
+	nodes[ix].setExtraParamVec("accel", accelVec);
 }//=================================================
 
 /**
@@ -1718,7 +1713,7 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 					state[4] = data[4*numSteps + i];
 					state[5] = data[5*numSteps + i];
 
-					nodes[i].setState(state);
+					nodes[i].setState(state, 6);
 				}
 			}
 		}else{
@@ -1758,12 +1753,8 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 
 			if(data != NULL){
 				for(unsigned int i = 0; i < numSteps; i++){
-					double accel[] = {0,0,0};
-					accel[0] = data[0*numSteps + i];
-					accel[1] = data[1*numSteps + i];
-					accel[2] = data[2*numSteps + i];
-
-					nodes[i].setAccel(accel);
+					std::vector<double> accel = {data[0*numSteps + i], data[1*numSteps + i], data[2*numSteps + i]};
+					nodes[i].setExtraParamVec("accel", accel);
 				}
 			}
 		}else{
@@ -1993,8 +1984,14 @@ void BaseArcset::saveAccel(mat_t *pMatFile) const{
 	std::vector<double> accel_colMaj(3*nodes.size());
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
-		std::vector<double> accel = nodes[r].getAccel();
-		for(unsigned int c = 0; c < 3; c++){
+		std::vector<double> accel = {NAN, NAN, NAN};
+		try{
+			accel = nodes[r].getExtraParamVec("accel");
+		}catch(Exception &e){
+			printErr("Unalbe to get acceleration vector for node %u\n", r);
+		}
+
+		for(unsigned int c = 0; c < accel.size(); c++){
 			accel_colMaj[c*nodes.size() + r] = accel[c];
 		}
 	}

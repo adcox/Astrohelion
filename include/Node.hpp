@@ -56,10 +56,10 @@ public:
 	 *  @{
 	 */
 	Node();
-	Node(const double[6], double);
+	Node(const double[6], unsigned int, double);
 	Node(std::vector<double>, double);
-	Node(const double[6], const double[3], double);
-	Node(std::vector<double>, std::vector<double>, double);
+	// Node(const double[6], const double[3], double);
+	// Node(std::vector<double>, std::vector<double>, double);
 	Node(const Node&);
 	// ~Node();
 	//@}
@@ -75,7 +75,7 @@ public:
 	 */
 	void addConstraint(Constraint);
 	void clearConstraints();
-	std::vector<double> getAccel() const;
+	// std::vector<double> getAccel() const;
 	std::vector<Constraint> getConstraints() const;
 	double getEpoch() const;
 	double getExtraParam(std::string) const;
@@ -86,8 +86,8 @@ public:
 	std::vector<double> getState() const;
 
 	void removeConstraint(int);
-	void setAccel(const double*);
-	void setAccel(std::vector<double>);
+	// void setAccel(const double*);
+	// void setAccel(std::vector<double>);
 	void setConstraints(std::vector<Constraint>);
 	void setEpoch(double);
 	void setExtraParam(std::string, double);
@@ -95,7 +95,7 @@ public:
 	void setExtraParams(std::map<std::string, double>);
 	void setExtraParamVec(std::map<std::string, std::vector<double> >);
 	void setID(int) override;
-	void setState(const double*);
+	void setState(const double*, unsigned int);
 	void setState(std::vector<double>);
 	//@}
 
@@ -103,8 +103,10 @@ public:
 protected:
 	virtual void copyMe(const Node&);
 
-	double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
-	double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
+	// double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
+	// double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
+
+	std::vector<double> state = {};		//!< Stores states, e.g., position, velocity, mass, thrust
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
 	/** Stores extra parameters (scalars) like mass, costates, etc. */

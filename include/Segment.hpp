@@ -60,7 +60,7 @@ public:
 	 */
 	Segment();
 	Segment(int, int, double);
-	Segment(int, int, double, const double[36]);
+	Segment(int, int, double, const double*, unsigned int);
 	Segment(const Segment&);
 	// ~Segment();
 	//@}
@@ -80,7 +80,6 @@ public:
 	int getNumCons() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
-	std::vector<double> getSTMElements() const;
 	int getTerminus() const;
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
@@ -92,7 +91,7 @@ public:
 	void setTerminus(int);
 	void setTOF(double);
 	void setSTM(MatrixXRd);
-	void setSTM(const double*);
+	void setSTM(const double*, unsigned int);
 	void setSTM(std::vector<double>);
 	void setVel_AllCon();
 	void setVel_AllDiscon();
@@ -109,12 +108,7 @@ protected:
 	std::vector<bool> flags {true, true, true};
 
 	double tof = 0;			//!< Time-of-flight along this segment, units consistent with the system
-	double stm[36] = {	1, 0, 0, 0, 0, 0,
-						0, 1, 0, 0, 0, 0,
-						0, 0, 1, 0, 0, 0,
-						0, 0, 0, 1, 0, 0,
-						0, 0, 0, 0, 1, 0,
-						0, 0, 0, 0, 0, 1 };			//!< 6x6 STM, stored in row-major order
+	MatrixXRd stm = MatrixXRd::Identity(6,6);	// Initialize as 6x6 (most common use), but can be easily resized
 
 	/** Stores constraints on this segment */
 	std::vector<Constraint> cons {};

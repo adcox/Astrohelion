@@ -501,6 +501,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     std::copy(ic, ic + core, &(fullIC.front()));
 
     if(stm0.rows() != core || stm0.cols() != core){
+        printErr("STM rows = %d, cols = %d, core = %d\n", stm0.rows(), stm0.cols(), core);
         throw Exception("SimEngine::integrate: Initial STM size does not match the core state size specified by the Dynamic Model");
     }
 

@@ -1320,7 +1320,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
             Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
 
             Node node;
-            node.setState(newStateVec.data());
+            node.setState(newStateVec.data(), newStateVec.cols());
             node.setEpoch(2*halfTOF - halfPerTraj.getTimeByIx(i));
 
             int id = halfPerTraj.addNode(node);

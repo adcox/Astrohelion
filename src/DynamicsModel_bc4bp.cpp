@@ -32,6 +32,7 @@
 #include "Calculations.hpp"
 #include "CorrectionEngine.hpp"
 #include "EigenDefs.hpp"
+#include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_bc4bp.hpp"
 #include "SysData_bc4bp.hpp"
@@ -49,7 +50,6 @@ namespace astrohelion{
  */
 DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     coreStates = 6;
-    stmStates = 36;
     extraStates = 6;
     allowedCons.push_back(Constraint_tp::SP);
     allowedCons.push_back(Constraint_tp::SP_RANGE);
@@ -120,6 +120,18 @@ std::vector<double> DynamicsModel_bc4bp::getPrimVel(double t, const SysData *sys
     return std::vector<double>(primVel, primVel+9);
 }//==============================================
 
+std::vector<double> DynamicsModel_bc4bp::getAccel(const SysData *pSys, double t, std::vector<double> state) const{
+    if(state.size() != coreStates)
+        throw Exception("DynamicsModel_bc4bp::getAccel: State size does not match the core state size specified by the dynamical model");
+
+    // Compute the acceleration
+    std::vector<double> dsdt(coreStates,0);
+    EOM_ParamStruct paramStruct(pSys);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
+    
+    return std::vector<double>(dsdt.begin()+3, dsdt.end());
+}//==================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
@@ -149,7 +161,7 @@ void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj
 
     if(id > 0){
         double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+coreStates, stmStates));
+        traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
     }
     
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);

@@ -648,13 +648,19 @@ void BaseArcset::deleteSeg(int id){
  *  @throws Exception if <tt>id</tt> is out of bounds
  *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
-std::vector<double> BaseArcset::getAccel(int id) const{
+std::vector<double> BaseArcset::getAccel(int id){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getAccel: Node ID out of range");
 
 	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
-		return nodes[ix].getExtraParamVec("accel");
+		try{
+			return nodes[ix].getExtraParamVec("accel");
+		}catch(Exception &e){
+			std::vector<double> a = pSysData->getDynamicsModel()->getAccel(pSysData, nodes[ix].getEpoch(), nodes[ix].getState());
+			nodes[ix].setExtraParamVec("accel", a);
+			return a;
+		}
 	}else{
 		throw Exception("BaseArcset::getAccel: Could not locate the node with the specified ID");
 	}
@@ -667,14 +673,20 @@ std::vector<double> BaseArcset::getAccel(int id) const{
  *	@return the acceleration associated with the specified index
  *	@throws Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> BaseArcset::getAccelByIx(int ix) const{
+std::vector<double> BaseArcset::getAccelByIx(int ix){
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
 		throw Exception("BaseArcset::getAccelByIx: node index out of bounds");
 
-	return nodes[ix].getExtraParamVec("accel");
+	try{
+		return nodes[ix].getExtraParamVec("accel");
+	}catch(Exception &e){
+		std::vector<double> a = pSysData->getDynamicsModel()->getAccel(pSysData, nodes[ix].getEpoch(), nodes[ix].getState());
+		nodes[ix].setExtraParamVec("accel", a);
+		return a;
+	}
 }//====================================================
 
 /**
@@ -1692,7 +1704,7 @@ void BaseArcset::printSegIDMap() const{
  */
 void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
-	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	
 	if(pStateMat == NULL){
 		throw Exception("BaseArcset::readStateFromMat: Could not read state data vector");
@@ -1818,7 +1830,7 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
  */
 void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 	matvar_t *pAllSTM = Mat_VarRead(pMatFile, "STM");
-	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	if(pAllSTM == NULL){
 		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
 	}else{
@@ -2103,7 +2115,7 @@ void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t l
 void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	std::vector<double> posVel(stateSize*nodes.size());
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
@@ -2142,7 +2154,7 @@ void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
  *	@param pMatFile a pointer to the destination matlab file 
  */
 void BaseArcset::saveSTMs(mat_t *pMatFile) const{
-	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	// Create one large vector to put all the STM elements in
 	std::vector<double> allSTMEl(segs.size()*stateSize*stateSize);
 

@@ -32,6 +32,7 @@
 #include "Calculations.hpp"
 // #include "CorrectionEngine.hpp"
 #include "EigenDefs.hpp"
+#include "Exceptions.hpp"
 #include "Event.hpp"
 // #include "MultShootData.hpp"
 #include "Node.hpp"
@@ -112,6 +113,18 @@ std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysD
 	return std::vector<double>(3,0);
 }//====================================================
 
+std::vector<double> DynamicsModel_2bp::getAccel(const SysData *pSys, double t, std::vector<double> state) const{
+    if(state.size() != coreStates)
+        throw Exception("DynamicsModel_2bp::getAccel: State size does not match the core state size specified by the dynamical model");
+
+    // Compute the acceleration
+    std::vector<double> dsdt(coreStates,0);
+    EOM_ParamStruct paramStruct(pSys);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
+    
+    return std::vector<double>(dsdt.begin()+3, dsdt.end());
+}//==================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
@@ -132,7 +145,7 @@ void DynamicsModel_2bp::sim_saveIntegratedData(const double *y, double t, Traj* 
 
 	if(id > 0){
 		double tof = t - traj->getNode(id-1).getEpoch();
-		traj->addSeg(Segment(id-1, id, tof, y+coreStates, stmStates));
+		traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
 	}
 }//====================================================
 

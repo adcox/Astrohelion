@@ -63,6 +63,7 @@ public:
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
+	std::vector<double> getAccel(const SysData*, double, std::vector<double>) const;
 	//@}
 
 	/**

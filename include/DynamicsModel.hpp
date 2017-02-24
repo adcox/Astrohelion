@@ -194,6 +194,8 @@ public:
 
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 
+	virtual std::vector<double> getAccel(const SysData* pSys, double t, std::vector<double> state) const = 0;
+
 	//@}
 
 	/**
@@ -273,18 +275,16 @@ public:
 	 *  @name Set and Get Functions
 	 *  @{
 	 */
-	int getCoreStateSize() const;
-	int getSTMStateSize() const;
-	int getExtraStateSize() const;
+	unsigned int getCoreStateSize() const;
+	unsigned int getExtraStateSize() const;
 	bool supportsCon(Constraint_tp) const;
 	bool supportsEvent(Event_tp) const;
 	//@}
 
 protected:
 	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
-	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
-	int stmStates = 36;		//!< The number of states used to store the STM; will always be 36
-	int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
+	unsigned int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreStates
+	unsigned int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 
 	/** A vector containing the all the types of constraints this model supports */
 	std::vector<Constraint_tp> allowedCons {Constraint_tp::NONE, Constraint_tp::STATE,

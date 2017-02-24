@@ -493,7 +493,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
     // Get the dimension of the state vector for integration
     int core = model->getCoreStateSize();
-    int ic_dim = core + (!bSimpleIntegration)*(model->getSTMStateSize() + model->getExtraStateSize());
+    int ic_dim = core + (!bSimpleIntegration)*(core*core + model->getExtraStateSize());
     astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  IC has %d initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems

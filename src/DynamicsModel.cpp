@@ -79,7 +79,6 @@ DynamicsModel& DynamicsModel::operator =(const DynamicsModel &m){
 void DynamicsModel::copyMe(const DynamicsModel &m){
 	modelType = m.modelType;
 	coreStates = m.coreStates;
-	stmStates = m.stmStates;
 	extraStates = m.extraStates;
 }//============================================
 
@@ -87,19 +86,13 @@ void DynamicsModel::copyMe(const DynamicsModel &m){
  *	@brief Retrieve the number of core states
  *	@return the number of core states
  */
-int DynamicsModel::getCoreStateSize() const { return coreStates; }
-
-/**
- *	@brief Retrieve the number of STM elements stored in the state vector
- *	@return the number of STM elements stored in the state vector
- */
-int DynamicsModel::getSTMStateSize() const { return stmStates; }
+unsigned int DynamicsModel::getCoreStateSize() const { return coreStates; }
 
 /**
  *	@brief Retrieve the number of extra states stored after the core states and STM elements
  *	@return the number of extra states stored after the core states and STM elements
  */
-int DynamicsModel::getExtraStateSize() const { return extraStates; }
+unsigned int DynamicsModel::getExtraStateSize() const { return extraStates; }
 
 /**
  *	@brief Determine whether the specified constraint type is supported in this model
@@ -143,7 +136,6 @@ double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysD
 
     return num/sqrt(dx*dx + dy*dy + dz*dz);
 }//==================================================
-
 
 /**
  *	@brief Initialize the corrector's design vector with position and velocity states,

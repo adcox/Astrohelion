@@ -474,7 +474,7 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
-	// use this IC for the bifucating Halo from Dan Grebow's Thesis
+	// use this IC for the bifurcating Halo from Dan Grebow's Thesis
 	double ic[] = {1.0406, 0, 0.1735, 0, -0.0770, 0};
 	std::vector<double> icVec (ic, ic+6);
 	double tof = 2.8077;

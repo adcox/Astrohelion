@@ -32,6 +32,7 @@
 #include "Calculations.hpp"
 #include "CorrectionEngine.hpp"
 #include "Event.hpp"
+#include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_cr3bp.hpp"
 #include "SysData_cr3bp_ltvp.hpp"
@@ -46,7 +47,6 @@ namespace astrohelion{
  */
 DynamicsModel_cr3bp_ltvp::DynamicsModel_cr3bp_ltvp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP_LTVP) {
     coreStates = 6;
-    stmStates = 36;
     extraStates = 0;
     allowedCons.push_back(Constraint_tp::JC);
     allowedEvents.push_back(Event_tp::JC);
@@ -118,6 +118,18 @@ std::vector<double> DynamicsModel_cr3bp_ltvp::getPrimVel(double t, const SysData
     return std::vector<double>(primVel, primVel+6);
 }//==============================================
 
+std::vector<double> DynamicsModel_cr3bp_ltvp::getAccel(const SysData *pSys, double t, std::vector<double> state) const{
+    if(state.size() != coreStates)
+        throw Exception("DynamicsModel_cr3bp_ltvp::getAccel: State size does not match the core state size specified by the dynamical model");
+
+    // Compute the acceleration
+    std::vector<double> dsdt(coreStates,0);
+    EOM_ParamStruct paramStruct(pSys);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
+    
+    return std::vector<double>(dsdt.begin()+3, dsdt.end());
+}//==================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
@@ -146,7 +158,7 @@ void DynamicsModel_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t,
 
     if(id > 0){
         double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+coreStates, stmStates));
+        traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
     }
 
     Traj_cr3bp_ltvp *cr3bpTraj = static_cast<Traj_cr3bp_ltvp*>(traj);

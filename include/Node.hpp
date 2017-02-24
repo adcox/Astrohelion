@@ -75,7 +75,6 @@ public:
 	 */
 	void addConstraint(Constraint);
 	void clearConstraints();
-	// std::vector<double> getAccel() const;
 	std::vector<Constraint> getConstraints() const;
 	double getEpoch() const;
 	double getExtraParam(std::string) const;
@@ -86,8 +85,6 @@ public:
 	std::vector<double> getState() const;
 
 	void removeConstraint(int);
-	// void setAccel(const double*);
-	// void setAccel(std::vector<double>);
 	void setConstraints(std::vector<Constraint>);
 	void setEpoch(double);
 	void setExtraParam(std::string, double);

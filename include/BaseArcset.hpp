@@ -128,8 +128,8 @@ public:
 	std::vector<int> concatArcset(const BaseArcset*);
 	void deleteNode(int);
 	void deleteSeg(int);
-	std::vector<double> getAccel(int) const;
-	std::vector<double> getAccelByIx(int) const;
+	std::vector<double> getAccel(int);
+	std::vector<double> getAccelByIx(int);
 	std::vector<Constraint> getArcConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;

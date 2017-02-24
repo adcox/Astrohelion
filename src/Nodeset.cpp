@@ -460,14 +460,14 @@ void Nodeset::readFromMat(const char *filepath){
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions
- *	@param IC a set of initial conditions, non-dimensional units associated with the 
+ *	@param IC a set of initial conditions, non-dimensional units
  *	@param t0 time that corresponds to IC, non-dimensional
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC (must be at least 2)
  *	@param distroType node distribution type
  *	@throws Exception if <tt>numNodes</tt> is less than two
  */
-void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, NodeDistro_tp distroType){
+void Nodeset::initFromICs(std::vector<double> IC, double t0, double tof, int numNodes, NodeDistro_tp distroType){
 
 	if(numNodes < 2){
 		throw Exception("Nodeset::initFromICs: Nodeset must have at least two nodes!");
@@ -500,26 +500,25 @@ void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNode
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
+void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, int numNodes){
 	SimEngine engine;
 	engine.setVerbosity(Verbosity_tp::SOME_MSG);
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	double segTOF = tof/(numNodes-1);
-	std::vector<double> ic(IC, IC+6);
-	int id = addNode(Node(ic, t0));
+	int id = addNode(Node(IC, t0));
 	
 	for(int n = 0; n < numNodes-1; n++){
 		Traj traj(pSysData);
-		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);
+		engine.runSim(IC, t0 + n*segTOF, segTOF, &traj);
 
 		id = addNode(Node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
 		Segment newSeg = Segment(id-1, id, segTOF);
 		newSeg.setSTM(traj.getSTMByIx(-1));
 		addSeg(newSeg);
 
-		ic = traj.getStateByIx(-1);
+		IC = traj.getStateByIx(-1);
 	}
 }//==========================================================
 
@@ -531,7 +530,7 @@ void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int nu
  *	@param tof duration of the simulation, non-dimensional
  *	@param numNodes number of nodes to create, including IC
  */
-void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
+void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double tof, int numNodes){
 	SimEngine engine;
 	engine.setVerbosity(Verbosity_tp::SOME_MSG);
 	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
@@ -611,11 +610,7 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
  */
 void Nodeset::initFromTraj(Traj traj, int numNodes, NodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
-	double ic[] = {0,0,0,0,0,0};
-	std::vector<double> trajIC = traj.getStateByIx(0);
-	std::copy(trajIC.begin(), trajIC.begin()+6, ic);
-	
-	initFromICs(ic, traj.getEpochByIx(0), traj.getEpochByIx(-1) - traj.getEpochByIx(0), numNodes, type);
+	initFromICs(traj.getStateByIx(0), traj.getEpochByIx(0), traj.getEpochByIx(-1) - traj.getEpochByIx(0), numNodes, type);
 }//==============================================
 
 /**

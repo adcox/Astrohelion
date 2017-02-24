@@ -107,9 +107,9 @@ public:
 
 protected:
 
-	void initFromICs(const double[6], double, double, int, NodeDistro_tp);
-	void initFromICs_time(const double[6], double, double, int);
-	void initFromICs_arclength(const double[6], double, double, int);
+	void initFromICs(std::vector<double>, double, double, int, NodeDistro_tp);
+	void initFromICs_time(std::vector<double>, double, double, int);
+	void initFromICs_arclength(std::vector<double>, double, double, int);
 	void initFromTraj(Traj, int, NodeDistro_tp);
 
 };

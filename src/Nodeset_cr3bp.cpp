@@ -59,7 +59,8 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, const double IC[6], dou
 	int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
-	initFromICs(IC, 0, tof, numNodes, type);
+	std::vector<double> ic(IC, IC+6);
+	initFromICs(ic, 0, tof, numNodes, type);
 }//======================================================================
 
 /**
@@ -76,7 +77,7 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, std::vector<double> IC,
 	int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
-	initFromICs(&(IC[0]), 0, tof, numNodes, type);
+	initFromICs(IC, 0, tof, numNodes, type);
 }//=====================================================================
 
 /**

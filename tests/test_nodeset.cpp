@@ -60,21 +60,21 @@ void test_concat_CR3BP(){
 	double state3[] = {3,0,1,0,0,0};
 	double state4[] = {4,0,0,1,0,0};
 
-	set1.addNode(Node(state1, 0));
-	set1.addNode(Node(state2, 1.1));
+	set1.addNode(Node(state1, 6, 0));
+	set1.addNode(Node(state2, 6, 1.1));
 	set1.addSeg(Segment(0, 1, 1.1));
 
-	set2.addNode(Node(state3, 0));
-	set2.addNode(Node(state4, 2.2));
+	set2.addNode(Node(state3, 6, 0));
+	set2.addNode(Node(state4, 6, 2.2));
 	set2.addSeg(Segment(0, 1, 2.2));
 
-	set3.addNode(Node(state2, 3.3));
-	set3.addNode(Node(state3, 4.4));
-	set3.addNode(Node(state4, 5.5));
+	set3.addNode(Node(state2, 6, 3.3));
+	set3.addNode(Node(state3, 6, 4.4));
+	set3.addNode(Node(state4, 6, 5.5));
 	set3.addSeg(Segment(0, 1, 1.1));
 	set3.addSeg(Segment(1, 2, 1.1));
 
-	set4.addNode(Node(state4, 0));
+	set4.addNode(Node(state4, 6, 0));
 
 	Nodeset_cr3bp sum1 = set1 + set2;
 	bool checkSum1 = sum1.getStateByIx(0)[0] == 1 && sum1.getStateByIx(1)[0] == 2 && sum1.getStateByIx(2)[0] == 4;
@@ -111,21 +111,21 @@ void test_nodeManip(){
 	double node3[] = {3,0,0,0,0,0};
 	double node4[] = {4,0,0,0,0,0};
 
-	set.addNode(Node(node1, 0.1));
-	set.addNode(Node(node2, 0.2));
-	set.addNode(Node(node3, 0.3));
-	set.addNode(Node(node4, 0.4));
+	set.addNode(Node(node1, 6, 0.1));
+	set.addNode(Node(node2, 6, 0.2));
+	set.addNode(Node(node3, 6, 0.3));
+	set.addNode(Node(node4, 6, 0.4));
 
 	// Second test case: Generate orbit, use createNodesAtEvent and check the functionality, TOF computation, etc.
-	Nodeset_cr3bp set2(emDRO_ic, &sys, emDRO_T, 2);
+	Nodeset_cr3bp set2(&sys, emDRO_ic, emDRO_T, 2);
 	set2.saveToMat("emDRO_2Nodes.mat");
 	cout << "CR3BP Nodeset generated from ICs (saved to emDRO_2Nodes.mat):" << endl;
 	cout << "  Correct number of nodes: " << (set2.getNumNodes() == 2 ? PASS : FAIL) << endl;
 	cout << "  Correct TOFs: " << (set2.getTOFByIx(0) == emDRO_T ? PASS : FAIL) << endl;	
 
-	double xMoonData = 1 - sys.getMu();
-	Event xMoonEvt(&sys, Event_tp::YZ_PLANE, 0, true, &xMoonData);
-	Event xzPlaneEvt(&sys, Event_tp::XZ_PLANE, 0, true);
+	std::vector<double> xMoonData = {1 - sys.getMu()};
+	Event xMoonEvt(Event_tp::YZ_PLANE, 0, true, xMoonData);
+	Event xzPlaneEvt(Event_tp::XZ_PLANE, 0, true);
 	std::vector<Event> events {xMoonEvt, xzPlaneEvt};
 
 	set2.createNodesAtEvents(0, events);
@@ -134,9 +134,9 @@ void test_nodeManip(){
 	set2.saveToMat("emDRO_newNodes.mat");
 	cout << "CR3BP createNodesAtEvents (saved to emDRO_newNodes.mat):" << endl;
 	cout << "  Correct number of nodes: " << (set2.getNumNodes() == 5 ? PASS : FAIL) << endl;
-	cout << "  Correct node(1) state: " << (set2.getStateByIx(1)[0] == xMoonData ? PASS : FAIL) << endl;
+	cout << "  Correct node(1) state: " << (set2.getStateByIx(1)[0] == xMoonData[0] ? PASS : FAIL) << endl;
 	cout << "  Correct node(2) state: " << (set2.getStateByIx(2)[1] == 0 ? PASS : FAIL) << endl;
-	cout << "  Correct node(3) state: " << (set2.getStateByIx(3)[0] == xMoonData ? PASS : FAIL) << endl;
+	cout << "  Correct node(3) state: " << (set2.getStateByIx(3)[0] == xMoonData[0] ? PASS : FAIL) << endl;
 	cout << "  Correct total TOF: " << (set2.getTotalTOF() == emDRO_T ? PASS : FAIL) << endl;
 	set2.print();
 
@@ -144,14 +144,14 @@ void test_nodeManip(){
 	double qho_ic[] = {-0.86464955943628, -0.523239865136876, -0.0309591111054232, -0.00352683110021282, -0.00217207557203108, 0.00179392516522105};
 	double qho_T0 = 100;
 	double qho_Period = 360;
-	Nodeset_bc4bp set3(qho_ic, &bcSys, qho_T0, qho_Period, 2);
+	Nodeset_bc4bp set3(&bcSys, qho_ic, qho_T0, qho_Period, 2);
 	cout << "BC4BP Nodeset generated from ICs:" << endl;
 	cout << "  Correct number of nodes: " << (set3.getNumNodes() == 2 ? PASS : FAIL) << endl;
 	cout << "  Correct TOFs: " << (set3.getTOFByIx(0) == qho_Period ? PASS : FAIL) << endl;
 	cout << "  Correct Epochs: " << (set3.getEpochByIx(0) == qho_T0 && set3.getEpochByIx(1) == qho_T0 + qho_Period ? PASS : FAIL) << endl;
 	set3.print();
 
-	Event sem_xzPlaneEvt(&bcSys, Event_tp::XZ_PLANE, 0, false);
+	Event sem_xzPlaneEvt(Event_tp::XZ_PLANE, 0, false);
 	set3.createNodesAtEvent(0, sem_xzPlaneEvt);
 	set3.putInChronoOrder();
 	// set3.printInChrono();
@@ -172,7 +172,7 @@ Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	Nodeset_cr3bp crSet(ic, emData, 2.77, 5, Nodeset::TIME);
+	Nodeset_cr3bp crSet(emData, ic, 2.77, 5, Nodeset::TIME);
 	
 	int nodes[] = {3,4};
 	vector<int> velCon(nodes, nodes+2);
@@ -192,7 +192,7 @@ Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
 void test_createBCR4BPRNodeset(SysData_bc4bp *semData){
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new Nodeset_bc4bp(ic2, semData, 0, 40, 5, Nodeset::TIME);
+	bcSet = new Nodeset_bc4bp(semData, ic2, 0, 40, 5, Nodeset::TIME);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};

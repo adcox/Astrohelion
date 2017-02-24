@@ -62,7 +62,8 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, const double IC[6],
 	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
-	initFromICs(IC, t0, tof, numNodes, type);
+	std::vector<double> ic(IC, IC+6);
+	initFromICs(ic, t0, tof, numNodes, type);
 }//====================================================
 
 /**
@@ -80,7 +81,7 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, std::vector<double> IC,
 	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
 	initExtraParam();
-	initFromICs(&(IC[0]), t0, tof, numNodes, type);
+	initFromICs(IC, t0, tof, numNodes, type);
 }//====================================================
 
 /**

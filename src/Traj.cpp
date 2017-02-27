@@ -87,9 +87,12 @@ Traj Traj::fromNodeset(Nodeset set){
 	simEngine.setMakeCrashEvents(false);	// don't trigger crashes; assume this has been taken care of already
 	Traj totalTraj(set.getSysData());
 
+	// set.print();
+	
 	if(!set.isInChronoOrder())
 		set.putInChronoOrder();
 
+	// set.print();
 	int coreSize = set.getSysData()->getDynamicsModel()->getCoreStateSize();
 	MatrixXRd prevSTM;
 
@@ -112,13 +115,9 @@ Traj Traj::fromNodeset(Nodeset set){
 		// Initialize the STM to identity if this is the first segment or if there is a discontinuity
 		// Otherwise, maintain continuity by beginning with the previous STM
 		MatrixXRd stm0 = (s == 0 || !cont) ? MatrixXRd::Identity(coreSize, coreSize) : prevSTM;
-		// printf("(Cont = %c) STM0 = \n", cont ? 'Y' : 'N');
-		// for(int r = 0; r < 6; r++){
-		// 	for(int c = 0; c < 6; c++){
-		// 		printf("%10.2f", stm0(r,c));
-		// 	}
-		// 	printf("\n");
-		// }
+		
+		// Both the STM and Epoch are initialized before the simulation, so time and the STM
+		// should be continuous as arcs are concatenated.
 		simEngine.runSim(origin.getState(), stm0, origin.getEpoch(), tof, &temp);
 
 		prevSTM = temp.getSTMByIx(-1);
@@ -126,8 +125,6 @@ Traj Traj::fromNodeset(Nodeset set){
 		if(s == 0){
 			totalTraj = temp;
 		}else{
-			// Shift the time on the newly propagated segment so it starts where the previous segment left off
-			// temp.shiftAllTimes(totalTraj.getEpochByIx(-1));
 
 			// Use += so that each piece is put into chronological order, even though this significantly increases run time
 			totalTraj += temp;			

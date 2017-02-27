@@ -268,7 +268,7 @@ public:
 	 *	@param t the time at the current integration state
 	 *	@param traj a pointer to the trajectory we should store the data in
 	 */
-	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj) const = 0;
+	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj) const;
 	//@}
 
 	/**

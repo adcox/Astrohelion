@@ -199,7 +199,7 @@ void Event::initialize(const SysData* pSys){
 			data[0] = paramsIn[0];	// Index of primary
 			if(data[0] < pSysData->getNumPrimaries()){
 				// Get body data, compute crash distance
-			    BodyData primData(pSysData->getPrimary(static_cast<int>(data[0])));
+			    BodyData primData(pSysData->getPrimID(static_cast<int>(data[0])));
 			    data[1] = (primData.getBodyRad() + primData.getMinFlyBy())/pSysData->getCharL();
 			}else{
 				throw Exception("Cannot access primary for crash event");

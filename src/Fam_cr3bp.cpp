@@ -402,85 +402,111 @@ void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
  *	results
  */
 std::vector<int> Fam_cr3bp::findBifurcations(){
-	// TODO: Incorporate much more advanced ways to compute this
-	double okErr = 1e-3;
-	cdouble one(1,0);
-
-	EigValSet_tp setTypes[3];
-
-	// Determine what "type" of eigenvalue pair we have
-	for(int set = 0; set < 3; set++){
-		double sumImag = 0;
-		// double sumReal = 0;
-		double sumDistFromOne = 0;
-
-		for(unsigned int m = 0; m < members.size(); m++){
-			std::vector<cdouble> eigs = members[m].getEigVals();
-			sumImag += (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
-			sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
-		}
-
-		double count = members.size();
-		double meanImag = sumImag/count;
-		// double meanReal = sumReal/count;
-		double meanDistFromOne = sumDistFromOne/count;
-
-		if(meanImag > okErr){
-			// significant imaginary parts
-			setTypes[set] = EigValSet_tp::EIGSET_COMP_CONJ;
-		}else{
-			if(meanDistFromOne < okErr){
-				setTypes[set] = EigValSet_tp::EIGSET_ONES;
-			}else{
-				setTypes[set] = EigValSet_tp::EIGSET_REAL_RECIP;
-			}
-		}
-	}
-
-	// Find bifurcations
+	double okErr = 1e-6;
 	std::vector<int> bifs;
-	for(unsigned int m = 1; m < members.size(); m++){
-		for(int set = 0; set < 3; set++){
-			std::vector<cdouble> eigs = members[m].getEigVals();
-			std::vector<cdouble> prevEigs = members[m-1].getEigVals();
+	double prevStab[3] = {0};
+	for(unsigned int m = 0; m < members.size(); m++){
+		double stab[3] = {0};
+		std::vector<cdouble> eigs = members[m].getEigVals();
+		for(unsigned int i = 0; i < 3; i++){
+			stab[i] = 1.0 - std::abs(0.5*(eigs[2*i] + eigs[2*i+1]));
+		}
 
-			switch(setTypes[set]){
-				case EigValSet_tp::EIGSET_REAL_RECIP:
-				{
-					// Compute distance of each eigenvalues from +/- 1
-					double d1 = 1 - std::abs(std::real(eigs[set*2]));
-					double d2 = 1 - std::abs(std::real(eigs[set*2+1]));
-					double prev_d1 = 1 - std::abs(std::real(prevEigs[set*2]));
-					double prev_d2 = 1 - std::abs(std::real(prevEigs[set*2+1]));
-
-					// Check to make sure magnitude of differences is significant
-					if( std::abs(d1) > okErr && std::abs(d2) > okErr &&
-						std::abs(prev_d1) > okErr && std::abs(prev_d2) > okErr){
-						if(d1*prev_d1 < 0 && d2*prev_d2 < 0){
-							// Sign changed; bifurcation!
-							// printf("Located a bifurcation!\n");
-							// printf("  Member %03zu - %03zu\n", m-1, m);
-							bifs.push_back(m-1);
-						}
-					}
+		if(m == 0)
+			std::copy(stab, stab+3, prevStab);
+		else{
+			// Look for changes in sign (stability index crosses 1)
+			for(unsigned int i = 0; i < 3; i++){
+				if(stab[i]*prevStab[i] < 0 && std::abs(stab[i] - prevStab[i]) > okErr){
+					// Bifurcation!
+					bifs.push_back(m-1);
 					break;
 				}
-				case EigValSet_tp::EIGSET_COMP_CONJ:
-				{
-					double meanPrevImag = (std::abs(std::imag(prevEigs[set*2])) + std::abs(std::imag(prevEigs[set*2+1])))/2;
-					double meanImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
-
-					// Check to see if we moved from complex to real or vice versa
-					if( (meanPrevImag > okErr) != (meanImag > okErr) ){
-						// printf("Located a bifurcation!\n");
-						// printf("  Member %03zu - %03zu\n", m-1, m);
-						bifs.push_back(m-1);
-					}
-				}
-				default: break;
 			}
+
+			std::copy(stab, stab+3, prevStab);
 		}
 	}
+
+	// // TODO: Incorporate much more advanced ways to compute this
+	// double okErr = 1e-3;
+	// cdouble one(1,0);
+
+	// EigValSet_tp setTypes[3];
+
+	// // Determine what "type" of eigenvalue pair we have
+	// for(int set = 0; set < 3; set++){
+	// 	double sumImag = 0;
+	// 	// double sumReal = 0;
+	// 	double sumDistFromOne = 0;
+
+	// 	for(unsigned int m = 0; m < members.size(); m++){
+	// 		std::vector<cdouble> eigs = members[m].getEigVals();
+	// 		sumImag += (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
+	// 		sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
+	// 	}
+
+	// 	double count = members.size();
+	// 	double meanImag = sumImag/count;
+	// 	// double meanReal = sumReal/count;
+	// 	double meanDistFromOne = sumDistFromOne/count;
+
+	// 	if(meanImag > okErr){
+	// 		// significant imaginary parts
+	// 		setTypes[set] = EigValSet_tp::EIGSET_COMP_CONJ;
+	// 	}else{
+	// 		if(meanDistFromOne < okErr){
+	// 			setTypes[set] = EigValSet_tp::EIGSET_ONES;
+	// 		}else{
+	// 			setTypes[set] = EigValSet_tp::EIGSET_REAL_RECIP;
+	// 		}
+	// 	}
+	// }
+
+	// // Find bifurcations
+	// std::vector<int> bifs;
+	// for(unsigned int m = 1; m < members.size(); m++){
+	// 	for(int set = 0; set < 3; set++){
+	// 		std::vector<cdouble> eigs = members[m].getEigVals();
+	// 		std::vector<cdouble> prevEigs = members[m-1].getEigVals();
+
+	// 		switch(setTypes[set]){
+	// 			case EigValSet_tp::EIGSET_REAL_RECIP:
+	// 			{
+	// 				// Compute distance of each eigenvalues from +/- 1
+	// 				double d1 = 1 - std::abs(std::real(eigs[set*2]));
+	// 				double d2 = 1 - std::abs(std::real(eigs[set*2+1]));
+	// 				double prev_d1 = 1 - std::abs(std::real(prevEigs[set*2]));
+	// 				double prev_d2 = 1 - std::abs(std::real(prevEigs[set*2+1]));
+
+	// 				// Check to make sure magnitude of differences is significant
+	// 				if( std::abs(d1) > okErr && std::abs(d2) > okErr &&
+	// 					std::abs(prev_d1) > okErr && std::abs(prev_d2) > okErr){
+	// 					if(d1*prev_d1 < 0 && d2*prev_d2 < 0){
+	// 						// Sign changed; bifurcation!
+	// 						// printf("Located a bifurcation!\n");
+	// 						// printf("  Member %03zu - %03zu\n", m-1, m);
+	// 						bifs.push_back(m-1);
+	// 					}
+	// 				}
+	// 				break;
+	// 			}
+	// 			case EigValSet_tp::EIGSET_COMP_CONJ:
+	// 			{
+	// 				double meanPrevImag = (std::abs(std::imag(prevEigs[set*2])) + std::abs(std::imag(prevEigs[set*2+1])))/2;
+	// 				double meanImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
+
+	// 				// Check to see if we moved from complex to real or vice versa
+	// 				if( (meanPrevImag > okErr) != (meanImag > okErr) ){
+	// 					// printf("Located a bifurcation!\n");
+	// 					// printf("  Member %03zu - %03zu\n", m-1, m);
+	// 					bifs.push_back(m-1);
+	// 				}
+	// 			}
+	// 			default: break;
+	// 		}
+	// 	}
+	// }
 
 	return bifs;
 }//====================================================

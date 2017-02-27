@@ -72,8 +72,12 @@ public:
 	 */
 	void multShoot_initIterData(MultShootData *it) const;
 	void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const;
+	//@}
+	
+	/**
+	 * @name Simulation Support Functions
+	 */
 	bool sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const;
-	void sim_saveIntegratedData(const double *y, double t, Traj* traj) const;
 	//@}
 
 	/**

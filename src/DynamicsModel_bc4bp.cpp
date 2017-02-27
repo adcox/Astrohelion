@@ -145,24 +145,7 @@ std::vector<double> DynamicsModel_bc4bp::getAccel(const SysData *pSys, double t,
  */
 void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj* traj) const{
 
-	// Cast the system data to the appropriate derivative type
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(traj->getSysData());
-
-    // Compute acceleration (elements 3-5)
-    double dsdt[6] = {0};
-    EOM_ParamStruct paramStruct(bcSys);
-    simpleEOMs(t, y, dsdt, &paramStruct);
-
-    // Save the states
-    Node node(y, coreStates, t);
-    std::vector<double> accel(dsdt+3, dsdt+6);
-    node.setExtraParamVec("accel", accel);
-    int id = traj->addNode(node);
-
-    if(id > 0){
-        double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
-    }
+    DynamicsModel::sim_saveIntegratedData(y, t, traj);
     
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);
     bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)

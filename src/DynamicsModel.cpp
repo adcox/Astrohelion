@@ -137,6 +137,22 @@ double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysD
     return num/sqrt(dx*dx + dy*dy + dz*dz);
 }//==================================================
 
+//------------------------------------------------------------------------------------------------------
+//      Simulation Engine Functions
+//------------------------------------------------------------------------------------------------------
+
+void DynamicsModel::sim_saveIntegratedData(const double *y, double t, Traj* traj) const{
+    int id = traj->addNode(Node(y, coreStates, t));
+	if(id > 0){
+		double tof = t - traj->getNode(id-1).getEpoch();
+		traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
+	}
+}//====================================================
+
+//------------------------------------------------------------------------------------------------------
+//      Multiple Shooting Functions
+//------------------------------------------------------------------------------------------------------
+
 /**
  *	@brief Initialize the corrector's design vector with position and velocity states,
  *	and times-of-flight.

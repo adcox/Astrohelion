@@ -339,7 +339,7 @@ void testCR3BP_EM_SourceNode_Cons(bool equalArcTime){
 	printColor(BOLDBLACK, "Testing CR3BP with Source Node\n");
 
 	SysData_cr3bp sys("earth", "moon");
-	Fam_cr3bp butterfly("../share/families_natParam_checked/EM_L2_NButterfly.mat");
+	Fam_cr3bp butterfly("../share/families_checked/EM_L2_NButterfly.mat");
 	butterfly.sortEigs();
 
 	std::vector<FamMember_cr3bp> matches = butterfly.getMemberByJacobi(3.08);
@@ -798,7 +798,7 @@ void testBC4BP_EM_SourceNode_Cons(bool equalArcTime){
 	printColor(BOLDBLACK, "Testing BC4BP with Source Node\n");
 
 	SysData_cr3bp emSys("earth", "moon");
-	Fam_cr3bp butterfly("../share/families_natParam_checked/EM_L2_NButterfly.mat");
+	Fam_cr3bp butterfly("../share/families_checked/EM_L2_NButterfly.mat");
 	butterfly.sortEigs();
 
 	std::vector<FamMember_cr3bp> matches = butterfly.getMemberByJacobi(3.08);
@@ -870,15 +870,15 @@ void testBC4BP_EM_SourceNode_Cons(bool equalArcTime){
  */
 int main(void){
 	// First, run with equalArcTime = false
-	// testCR3BP_SE_Cons(false);
-	// testCR3BP_EM_Cons(false);
+	testCR3BP_SE_Cons(false);
+	testCR3BP_EM_Cons(false);
 	testCR3BP_EM_SourceNode_Cons(false);	// Cannot have equalArcTime = true (both + and - time)
-	// testBCR4BPCons(false);
+	testBCR4BPCons(false);
 	testBC4BP_EM_SourceNode_Cons(false);	// Cannot have equalArcTime = true (both + and - time)
 
 	// Then run with equalArcTime = true
-	// testCR3BP_SE_Cons(true);
-	// testCR3BP_EM_Cons(true);
-	// testBCR4BPCons(true);
+	testCR3BP_SE_Cons(true);
+	testCR3BP_EM_Cons(true);
+	testBCR4BPCons(true);
 	return EXIT_SUCCESS;
 }

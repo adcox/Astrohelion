@@ -71,40 +71,6 @@ Node::Node(std::vector<double> state, double epoch){
 }//====================================================
 
 /**
- *  @brief Construct a node object
- * 
- *  @param state 6-element array of state variables
- *  @param accel 3-element array of acceleration values
- *  @param epoch epoch associated with this node
- */
-// Node::Node(const double state[6], const double accel[3], double epoch){
-// 	std::copy(state, state+6, this->state);
-// 	std::copy(accel, accel+3, this->accel);
-// 	this->epoch = epoch;
-// }//====================================================
-
-/**
- *  @brief Construct a node object
- * 
- *  @param state 6-element vector of state variables
- *  @param accel 3-element vector of acceleration values
- *  @param epoch epoch associated with this node
- *  @throw Exception if <tt>state</tt> does not have six elements
- *  @throw Exception if <tt>accel</tt> does not have three elements
- */
-// Node::Node(std::vector<double> state, std::vector<double> accel, double epoch){
-// 	if(state.size() != 6)
-// 		throw Exception("Node::constructor: state vector must have six elements");
-
-// 	if(accel.size() != 3)
-// 		throw Exception("Node::constructor: accel vector must have three elements");
-
-// 	std::copy(state.begin(), state.end(), this->state);
-// 	std::copy(accel.begin(), accel.end(), this->accel);
-// 	this->epoch = epoch; 
-// }//====================================================
-
-/**
  *  @brief Copy constructor
  * 
  *  @param n node object reference
@@ -220,15 +186,6 @@ void Node::setConstraints(std::vector<Constraint> constraints){
 }//====================================================
 
 /**
- *	@brief Get a three-element vector containing the accelerations
- *	at this node
- *	@return a vector of accelerations (non-dimensional)
- */
-// std::vector<double> Node::getAccel() const{
-// 	return std::vector<double>(accel, accel+3);
-// }//====================================================
-
-/**
  *	@brief Get all constraints for this node
  *	@return a vector containing all constraints applied to this node
  */
@@ -241,25 +198,6 @@ std::vector<Constraint> Node::getConstraints() const{
  *  @return the epoch associated with this node, units consistent with the parent system
  */
 double Node::getEpoch() const{ return epoch; }
-
-/**
- *	@brief Access the value of the specified extra parameter
- *	@param ix the index of the parameter. If ix < 0, it will
- *	count backwards from the end of the array
- *	@return the value of the paramter associated with the 
- *	input index
- *	@throw Exception if <tt>ix</tt> is out of bounds
- */
-// double Node::getExtraParam(int ix) const {
-// 	if(ix < 0)
-// 		ix += extraParam.size();
-
-// 	if(ix < 0 || ix >= (int)(extraParam.size())){
-// 		astrohelion::printErr("Node::getExtraParam: Attempting to access index %d\n", ix);
-// 		throw Exception("Node::getExtraParam: Cannot access extra param; index too high");
-// 	}
-// 	return extraParam[ix];
-// }//====================================================
 
 double Node::getExtraParam(std::string key) const {
 	if(extraParam.count(key) > 0){
@@ -302,27 +240,6 @@ int Node::getNumCons() const { return static_cast<int>(cons.size()); }
 std::vector<double> Node::getState() const {
 	return state;
 }//====================================================
-
-/**
- *	@brief Set the acceleration vector for this node
- *	@param a a 3-element array of non-dimensional accelerations. Note
- *	that if the input array has fewer than three elements, un-initialized
- *	memory will be accessed
- */
-// void Node::setAccel(const double *a){
-// 	std::copy(a, a+3, accel);
-// }//====================================================
-
-/**
- *	@brief Set the acceleration vector for this node
- *	@param a a 3-element vector of non-dimensional accelerations
- *	@throw Exception if <tt>a</tt> does not have three elements
- */
-// void Node::setAccel(std::vector<double> a){
-// 	if(a.size() != 3)
-// 		throw Exception("Node::setAccel: input acceleration must have three elements");
-// 	std::copy(a.begin(), a.begin()+3, accel);
-// }//====================================================
 
 /**
  *  @brief Set the epoch associated with this node

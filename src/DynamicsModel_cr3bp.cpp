@@ -144,25 +144,10 @@ std::vector<double> DynamicsModel_cr3bp::getAccel(const SysData *pSys, double t,
  */
 void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj* traj) const{
 
+    DynamicsModel::sim_saveIntegratedData(y, t, traj);
+
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(traj->getSysData());
-
-    // Compute acceleration (elements 3-5)
-    double dsdt[6] = {0};
-    EOM_ParamStruct paramStruct(crSys);
-    simpleEOMs(t, y, dsdt, &paramStruct);
-    
-    // node(state, numStates, epoch) - y(0:5) holds the state, y(6:41) holds the STM
-    Node node(y, coreStates, t);
-    std::vector<double> accel(dsdt+3, dsdt+6);
-    node.setExtraParamVec("accel", accel);
-    int id = traj->addNode(node);
-
-    if(id > 0){
-        double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
-    }
-
     Traj_cr3bp *cr3bpTraj = static_cast<Traj_cr3bp*>(traj);    
     cr3bpTraj->setJacobiByIx(-1, getJacobi(y, crSys->getMu()));
 }//=====================================================
@@ -457,6 +442,34 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         nodeset_out->addSeg(newSeg);
     }
 
+    // Determine the chronological order of the nodeset
+    // nodeset_out->print();
+    // nodeset_out->printInChrono();
+    std::vector<ArcPiece> order = nodeset_out->getChronoOrder();
+    // Set the epoch of each node based on the time of flight from
+    // the first node
+    double epoch = NAN;
+    for(unsigned int i = 0; i < order.size(); i++){
+        if(order[i].type == ArcPiece::Piece_tp::NODE){
+            if(std::isnan(epoch)){
+                // Copy the epoch value of the first node
+                epoch = nodeset_out->getNode(order[i].id).getEpoch();
+            }else{
+                // Set the epoch value of all other nodes
+                nodeset_out->getNodeRef(order[i].id).setEpoch(epoch);       
+            }
+        }
+        if(order[i].type == ArcPiece::Piece_tp::SEG){
+            if(!std::isnan(epoch)){
+                // When stepping through in chronological order, every step is
+                // forward in time; negative TOFs are associated with segments that
+                // flow opposite the chronological order; ignore sign here.
+                epoch += std::abs(nodeset_out->getSeg(order[i].id).getTOF());
+            }
+        }
+    }
+
+    // nodeset_out->print();
     std::vector<Constraint> arcCons = it->nodeset->getArcConstraints();
     for(unsigned int i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);

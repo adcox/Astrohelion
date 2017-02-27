@@ -142,25 +142,11 @@ std::vector<double> DynamicsModel_cr3bp_ltvp::getAccel(const SysData *pSys, doub
  *  @param traj a pointer to the trajectory we should store the data in
  */
 void DynamicsModel_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t, Traj* traj) const{
+    
+    DynamicsModel::sim_saveIntegratedData(y, t, traj);
+
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const SysData_cr3bp_ltvp *ltSys = static_cast<const SysData_cr3bp_ltvp*>(traj->getSysData());
-
-    // Compute acceleration (elements 3-5)
-    double dsdt[6] = {0};
-    EOM_ParamStruct paramStruct(ltSys);
-    simpleEOMs(t, y, dsdt, &paramStruct);
-    
-    // node(state, numStates, epoch) - y(0:5) holds the state, y(6:41) holds the STM
-    Node node(y, coreStates, t);
-    std::vector<double> accel(dsdt+3, dsdt+6);
-    node.setExtraParamVec("accel", accel);
-    int id = traj->addNode(node);
-
-    if(id > 0){
-        double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
-    }
-
     Traj_cr3bp_ltvp *cr3bpTraj = static_cast<Traj_cr3bp_ltvp*>(traj);
 
     // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
@@ -168,6 +154,7 @@ void DynamicsModel_cr3bp_ltvp::sim_saveIntegratedData(const double* y, double t,
 
     // Compute and save mass of s/c; assumes t began at 0
     double g0_nonDim = G_GRAV_0*ltSys->getCharT()*ltSys->getCharT()/ltSys->getCharL();
+    
     // cr3bpTraj->setMassByIx(-1, ltSys->getM0() - ltSys->getThrust()/(ltSys->getIsp()*g0_nonDim) * t);
     throw Exception("Need to update mass in CR3BP LTVP saveIntegratedData!");
 }//=====================================================

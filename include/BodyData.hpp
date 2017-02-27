@@ -52,6 +52,7 @@ class BodyData : public Core{
 		 */
 		BodyData();	// Copy constructor is defined by compiler, should be fine
 		BodyData(std::string);
+		BodyData(int);
 		BodyData(double m, double R, double r, double mu, std::string name, std::string parent);
 		/** @} */
 
@@ -102,6 +103,8 @@ class BodyData : public Core{
 
 		/** Name of the parent body */
 		std::string parent = "NULL";
+
+		void initFromID(int);
 };
 
 }// END of Astrohelion namespace

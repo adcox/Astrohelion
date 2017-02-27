@@ -1302,6 +1302,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         }
 
         *pItData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
+        // correctedHalfPer.saveToMat("temp_correctedHalfPer.mat");
 
         // Make the nodeset into a trajectory
         Traj_cr3bp halfPerTraj = Traj_cr3bp::fromNodeset(correctedHalfPer);
@@ -1312,7 +1313,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         // Use Mirror theorem to create the second half of the orbit
         MatrixXRd mirrorMat = getMirrorMat(mirrorType);
         int prevID = halfPerTraj.getNodeByIx(halfPerTraj_len-1).getID();
-        halfPerTraj.saveToMat("temp_halfPerTraj.mat");
+        // halfPerTraj.saveToMat("temp_halfPerTraj.mat");
         for(int i = halfPerTraj_len-2; i >= 0; i--){
             // Use mirroring to populate second half of the orbit
             std::vector<double> state = halfPerTraj.getStateByIx(i);
@@ -1324,12 +1325,14 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
             node.setEpoch(2*halfTOF - halfPerTraj.getTimeByIx(i));
 
             int id = halfPerTraj.addNode(node);
-            // Segment seg(id-1, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(id-1));
-            Segment seg(prevID, id, halfPerTraj.getTimeByIx(id) - halfPerTraj.getTimeByIx(prevID));
+            // printf("Added node at epoch %.6f\n", node.getEpoch());
+            // fprintf("Adding segment with tof = %.6f\n", halfPerTraj.getEpoch(id) - halfPerTraj.getEpoch(prevID))
+            Segment seg(prevID, id, halfPerTraj.getEpoch(id) - halfPerTraj.getEpoch(prevID));
             prevID = id;
             halfPerTraj.addSeg(seg);
         }
 
+        // waitForUser();
         // Compute the monodromy matrix from the half-period STM
         double M_data[] = { 0, 0, 0, -1, 0, 0,
                             0, 0, 0, 0, -1, 0,
@@ -1785,8 +1788,8 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
     double r_p2[3], v_p2[3], angMom_p2[3], mag_angMom_p2, inst_charL, inst_charT;
     double unit_x[3], unit_y[3], unit_z[3];
 
-    BodyData P1(pSys->getPrimary(0));
-    BodyData P2(pSys->getPrimary(1));
+    BodyData P1(pSys->getPrimID(0));
+    BodyData P2(pSys->getPrimID(1));
     double sysGM = P1.getGravParam() + P2.getGravParam();
 
     // Locate P2 relative to P1 at the specified time

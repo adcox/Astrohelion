@@ -516,7 +516,7 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
  */
 void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
-	BodyData P2Data = BodyData(pSys->getPrimary(1));
+	BodyData P2Data = BodyData(pSys->getPrimID(1));
 	double orbR = P2Data.getBodyRad() + 
 		(P2Data.getMinFlyBy() > P2Data.getBodyRad() ? P2Data.getMinFlyBy() : P2Data.getBodyRad());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
@@ -565,7 +565,7 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
  */
 void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
-	BodyData P2Data = BodyData(pSys->getPrimary(1));
+	BodyData P2Data = BodyData(pSys->getPrimID(1));
 	double orbR = P2Data.getBodyRad() + 
 		(P2Data.getMinFlyBy() > P2Data.getBodyRad() ? P2Data.getMinFlyBy() : P2Data.getBodyRad());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
@@ -612,7 +612,7 @@ void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 
-	BodyData P2Data = BodyData(pSys->getPrimary(1));
+	BodyData P2Data = BodyData(pSys->getPrimID(1));
 	double L1_pos[3];
 	DynamicsModel_cr3bp::getEquilibPt(pSys, 1, 1e-12, L1_pos);
 

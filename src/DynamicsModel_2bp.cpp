@@ -129,26 +129,6 @@ std::vector<double> DynamicsModel_2bp::getAccel(const SysData *pSys, double t, s
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
-void DynamicsModel_2bp::sim_saveIntegratedData(const double *y, double t, Traj* traj) const{
-	const SysData_2bp *sys = static_cast<const SysData_2bp *>(traj->getSysData());
-
-	// Compute acceleration
-	double dsdt[6] = {0};
-	EOM_ParamStruct paramStruct(sys);
-	simpleEOMs(t, y, dsdt, &paramStruct);
-
-	// Save the states
-    Node node(y, coreStates, t);
-    std::vector<double> accel(dsdt+3, dsdt+6);
-    node.setExtraParamVec("accel", accel);
-    int id = traj->addNode(node);
-
-	if(id > 0){
-		double tof = t - traj->getNode(id-1).getEpoch();
-		traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates));
-	}
-}//====================================================
-
 bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const{
 	(void) event;
     (void) traj;

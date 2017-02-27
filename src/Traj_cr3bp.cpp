@@ -133,7 +133,6 @@ Traj& Traj_cr3bp::operator +=(const Traj &rhs){
 		temp.setTimeByIx(s, t);
 	}
 
-	// throw Exception("Traj_cr3bp::operator +=: Not currently implemented!");
 	Traj::operator +=(temp);
 
 	return *this;

@@ -60,7 +60,8 @@ BodyData::BodyData(){
 /**
  *  \brief Construct a BodyData object from preloaded data.
  *  \details Data about a body is loaded from a map that pulls data
- *  from the body_data.xml file.
+ *  from the body_data.xml file. This constructor calls SPICE (not thread safe)
+ *  to determine the ID associated with the body name
  * 
  *  \param n name of the body or dynamical object (e.g., a system barycenter).
  *  \throws Exception if the body with the specified name does not have a SPICE
@@ -70,19 +71,18 @@ BodyData::BodyData(std::string n){
 	// Get the ID associated with the name; throws an exception if it can't find one
 	ID = getSpiceIDFromName(n.c_str());
 
-	// Get a reference to the loaded body data list and make sure the body we're looking for is there
-	std::map<int, Body_Data> &allBodyData = this->initializer().allBodyData;
-	if(allBodyData.find(ID) == allBodyData.end()){
-		throw Exception("BodyData::BodyData: Body has not been loaded\n");
-	}
+	initFromID(ID);
+}//====================================================
 
-	// Load parameters from the list
-	bodyRad = allBodyData[ID].bodyRad;
-	gravParam = allBodyData[ID].gravParam;
-	orbitRad = allBodyData[ID].orbitRad;
-	name = allBodyData[ID].name;
-	parent = allBodyData[ID].parent;
-	mass = gravParam/G;
+/**
+ *  \brief Construct a BodyData object from preloaded data.
+ * 	\details This constructor is thread safe and does not call SPICE
+ * 	
+ *  \param ID SPICE ID of the body
+ *  \throws Exception if the body with the specified ID has not been loaded
+ */
+BodyData::BodyData(int ID){
+	initFromID(ID);
 }//====================================================
 
 /**
@@ -101,7 +101,30 @@ BodyData::BodyData(double m, double R, double r, double mu, std::string n, std::
 	gravParam = mu;
 	name = n;
 	parent = p;
-}//-------------------------
+}//====================================================
+
+/**
+ *  \brief Initialize a body data object from a spice ID
+ * 
+ *  \param ID SPICE ID associated with the body
+ *  \throws Exception if the body with the specified name does not have a SPICE
+ *  ID or if the body has not been loaded
+ */
+void BodyData::initFromID(int ID){
+	// Get a reference to the loaded body data list and make sure the body we're looking for is there
+	std::map<int, Body_Data> &allBodyData = this->initializer().allBodyData;
+	if(allBodyData.find(ID) == allBodyData.end()){
+		throw Exception("BodyData::BodyData: Body has not been loaded\n");
+	}
+
+	// Load parameters from the list
+	bodyRad = allBodyData[ID].bodyRad;
+	gravParam = allBodyData[ID].gravParam;
+	orbitRad = allBodyData[ID].orbitRad;
+	name = allBodyData[ID].name;
+	parent = allBodyData[ID].parent;
+	mass = gravParam/G;
+}//====================================================
 
 /*
  *********** SET AND GET FUNCTIONS *******************************

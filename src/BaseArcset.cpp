@@ -2007,9 +2007,10 @@ void BaseArcset::saveAccel(mat_t *pMatFile) const{
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> accel = {NAN, NAN, NAN};
 		try{
+			// accel = getAccelByIx(r);
 			accel = nodes[r].getExtraParamVec("accel");
 		}catch(Exception &e){
-			printErr("Unalbe to get acceleration vector for node %u\n", r);
+			// printErr("Unable to get acceleration vector for node %u\n", r);
 		}
 
 		for(unsigned int c = 0; c < accel.size(); c++){

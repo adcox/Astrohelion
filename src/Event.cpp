@@ -33,7 +33,7 @@
 #include "BodyData.hpp"
 #include "Calculations.hpp"
 #include "SysData_cr3bp.hpp"
-#include "SysData_cr3bp_ltvp.hpp"
+#include "SysData_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
 #include "Utilities.hpp"
  

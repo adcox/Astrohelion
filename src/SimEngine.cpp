@@ -47,8 +47,8 @@
 #include "Nodeset_cr3bp.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Traj_cr3bp.hpp"
-#include "SysData_cr3bp_ltvp.hpp"
-#include "Traj_cr3bp_ltvp.hpp"
+#include "SysData_cr3bp_lt.hpp"
+#include "Traj_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
 #include "DynamicsModel.hpp"
 #include "Utilities.hpp"
@@ -118,6 +118,11 @@ bool SimEngine::usesVarStepSize() const { return bVarStepSize; }
  *	@return the absolute tolerance for the engine, non-dimensional units
  */
 double SimEngine::getAbsTol() const {return absTol;}
+
+/**
+ *  \return ID of the control law implemented during this simulation
+ */
+unsigned int SimEngine::getCtrlLawID() const {return ctrlLawID; }
 
 /**
  *	@return the relative tolerance for the engine, non-dimensional units
@@ -220,6 +225,12 @@ void SimEngine::setRelTol(double t){
     if(relTol > 1)
         astrohelion::printWarn("SimEngine::setRelTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
+
+/**
+ *  \brief Specify the ID of the control law to be implemented during the simulation
+ *  \param id control law ID
+ */
+void SimEngine::setCtrlLawID(unsigned int id){ ctrlLawID = id; }
 
 /**
  *  @brief Tell the simulation engine whether or not to make crash events at the
@@ -449,7 +460,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
     if(bMakeCrashEvents)
         createCrashEvents(traj->getSysData());
 
-    EOM_ParamStruct paramStruct(traj->getSysData());
+    EOM_ParamStruct paramStruct(traj->getSysData(), ctrlLawID);
     eomParams = &paramStruct;
 
     // Run the simulation
@@ -839,6 +850,7 @@ void SimEngine::reset(){
     bMadeCrashEvents = false;
     bMakeCrashEvents = true;
     maxCompTime = -1;
+    ctrlLawID = 0;
 }//====================================================
 
 /**
@@ -873,6 +885,7 @@ void SimEngine::copyMe(const SimEngine &s){
     bMadeCrashEvents = s.bMadeCrashEvents;
     maxCompTime = s.maxCompTime;
     startTimestamp = s.startTimestamp;
+    ctrlLawID = s.ctrlLawID;
 }//====================================================
 
 }// END of Astrohelion namespace

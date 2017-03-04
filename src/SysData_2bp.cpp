@@ -107,6 +107,12 @@ void SysData_2bp::initFromPrimNames(std::string P1){
 const DynamicsModel* SysData_2bp::getDynamicsModel() const { return &model; }
 
 /**
+ *  \brief Retrieve the object that serves up control law data for this system type
+ *  \return the control law object
+ */
+const ControlLaw* SysData_2bp::getControlLaw() const { return &control; }
+
+/**
  *	@brief Copy constructor
  *	@param d
  */

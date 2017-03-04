@@ -29,6 +29,7 @@
 
 #include "SysData.hpp"
 
+#include "ControlLaw.hpp"
 #include "DynamicsModel_cr3bp.hpp"
 
 #include "matio.h"
@@ -64,6 +65,8 @@ class SysData_cr3bp : public SysData{
 		 *  @name Set and Get Functions
 		 *  @{
 		 */
+
+		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
 		double getMu() const;
 		//@}
@@ -78,6 +81,9 @@ class SysData_cr3bp : public SysData{
 	private:
 		/** The dynamic model that governs motion for this system*/
 		DynamicsModel_cr3bp model = DynamicsModel_cr3bp();
+
+		/** Control law object for this system */
+		ControlLaw control = ControlLaw();
 };
 
 

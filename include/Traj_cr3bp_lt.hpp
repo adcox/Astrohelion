@@ -1,5 +1,5 @@
 /**
- *  @file Traj_cr3bp_ltvp.hpp
+ *  @file Traj_cr3bp_lt.hpp
  *	@brief 
  *	
  *	@author Andrew Cox
@@ -34,7 +34,7 @@
 namespace astrohelion{
 
 // Forward Declarations
-class SysData_cr3bp_ltvp;
+class SysData_cr3bp_lt;
 
 /**
  *	@ingroup traj
@@ -46,16 +46,16 @@ class SysData_cr3bp_ltvp;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class Traj_cr3bp_ltvp : public Traj{
+class Traj_cr3bp_lt : public Traj{
 
 public:
 	/**
 	 *  @name *structors
 	 *  @{
 	 */
-	Traj_cr3bp_ltvp(const SysData_cr3bp_ltvp*);
-	Traj_cr3bp_ltvp(const Traj_cr3bp_ltvp&);
-	Traj_cr3bp_ltvp(const BaseArcset&);
+	Traj_cr3bp_lt(const SysData_cr3bp_lt*);
+	Traj_cr3bp_lt(const Traj_cr3bp_lt&);
+	Traj_cr3bp_lt(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const;
 	//@}

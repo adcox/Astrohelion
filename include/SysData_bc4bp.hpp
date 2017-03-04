@@ -30,6 +30,7 @@
 #include "SysData.hpp"
 
 #include "Common.hpp" 
+#include "ControlLaw.hpp"
 #include "DynamicsModel_bc4bp.hpp"
 
 #include "matio.h"
@@ -59,6 +60,7 @@ class SysData_bc4bp : public SysData{
 
 		SysData_bc4bp& operator=(const SysData_bc4bp&);
 		
+		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
 
 		/**
@@ -91,6 +93,9 @@ class SysData_bc4bp : public SysData{
 		/** The dynamic model that governs motion for this system*/
 		DynamicsModel_bc4bp model = DynamicsModel_bc4bp();
 		
+		/** Control law object for this system */
+		ControlLaw control = ControlLaw();
+
 		void initFromPrimNames(std::string, std::string, std::string);
 		void readFromMat(mat_t*);
 };

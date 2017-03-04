@@ -38,6 +38,7 @@ namespace astrohelion{
 
 // Forward declarations
 class DynamicsModel;
+class ControlLaw;
 
 /**
  *	@brief Specifies the type of dynamical system
@@ -52,7 +53,7 @@ enum class SysData_tp {
 	UNDEF_SYS,		//!< System type is undefined
 	R2BP_SYS,		//!< Relative Motion 2-Body Problem
 	CR3BP_SYS,		//!< Circular Restricted 3-Body Problem
-	CR3BP_LTVP_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
+	CR3BP_LT_SYS,	//!< Circular Restricted 3-Body Problem with Low Thrust, Velocity-Pointing;
 	BCR4BPR_SYS 	//!< Bi-Circular Restricted 4-Body Problem, rotating frame
 };
 
@@ -97,6 +98,12 @@ class SysData : public Core{
 		 */
 		virtual const DynamicsModel* getDynamicsModel() const = 0;
 		
+		/**
+		 *  \brief Retrieve the control law class with control laws for this system type
+		 *  \return object that serves up control laws for this system type
+		 */
+		virtual const ControlLaw* getControlLaw() const = 0;
+
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;
 		int getPrimID(int n) const;

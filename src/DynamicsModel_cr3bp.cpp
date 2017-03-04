@@ -30,6 +30,7 @@
 #include "DynamicsModel_cr3bp.hpp"
 
 #include "Calculations.hpp"
+#include "ControlLaw.hpp"
 #include "CorrectionEngine.hpp"
 #include "EigenDefs.hpp"
 #include "Event.hpp"
@@ -125,7 +126,7 @@ std::vector<double> DynamicsModel_cr3bp::getAccel(const SysData *pSys, double t,
 
     // Compute the acceleration
     std::vector<double> dsdt(coreStates,0);
-    EOM_ParamStruct paramStruct(pSys);
+    EOM_ParamStruct paramStruct(pSys, ControlLaw::NO_CTRL);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
     
     return std::vector<double>(dsdt.begin()+3, dsdt.end());

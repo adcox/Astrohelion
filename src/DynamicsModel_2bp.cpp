@@ -30,13 +30,11 @@
 #include "DynamicsModel_2bp.hpp"
 
 #include "Calculations.hpp"
-// #include "CorrectionEngine.hpp"
+#include "ControlLaw.hpp"
 #include "EigenDefs.hpp"
 #include "Exceptions.hpp"
 #include "Event.hpp"
-// #include "MultShootData.hpp"
 #include "Node.hpp"
-// #include "Nodeset_2bp.hpp"
 #include "Segment.hpp"
 #include "SysData_2bp.hpp"
 #include "Traj_2bp.hpp"
@@ -119,7 +117,7 @@ std::vector<double> DynamicsModel_2bp::getAccel(const SysData *pSys, double t, s
 
     // Compute the acceleration
     std::vector<double> dsdt(coreStates,0);
-    EOM_ParamStruct paramStruct(pSys);
+    EOM_ParamStruct paramStruct(pSys, ControlLaw::NO_CTRL);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
     
     return std::vector<double>(dsdt.begin()+3, dsdt.end());

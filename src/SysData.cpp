@@ -175,7 +175,7 @@ std::string SysData::getTypeStr() const{
 			return "2BP";
 		case SysData_tp::CR3BP_SYS:
 			return "CR3BP";
-		case SysData_tp::CR3BP_LTVP_SYS:
+		case SysData_tp::CR3BP_LT_SYS:
 			return "CR3BP, Low Thrust, Velocity-Pointing";
 		case SysData_tp::BCR4BPR_SYS:
 			return "BCR4BP, Rotating Coord.";

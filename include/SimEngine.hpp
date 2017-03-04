@@ -33,6 +33,7 @@
 #include "Core.hpp"
 #include "Engine.hpp"
 
+#include "ControlLaw.hpp"
 #include "DynamicsModel.hpp"
 #include "Event.hpp"
 #include "Traj.hpp"
@@ -41,9 +42,6 @@
 namespace astrohelion{
 
 // Forward declarations
-class Traj_bc4bp;
-class Traj_cr3bp;
-class Traj_cr3bp_ltvp;
 class SysData;
 
 // struct gsl_odeiv2_step;
@@ -157,6 +155,7 @@ class SimEngine : public Core, public Engine{
 		 */
 		void addEvent(Event);
 		double getAbsTol() const;
+		unsigned int getCtrlLawID() const;
 		std::vector<Event> getEndEvents(Traj*) const;
 		std::vector<Event> getEvents() const;
 		std::vector<SimEventRecord> getEventRecords() const;
@@ -168,6 +167,7 @@ class SimEngine : public Core, public Engine{
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
+		void setCtrlLawID(unsigned int);
 		void setFixStepInteg(Integ_tp);
 		void setMakeCrashEvents(bool);
 		void setMaxCompTime(int);
@@ -248,6 +248,9 @@ class SimEngine : public Core, public Engine{
 		
 		/** Integrator to use for fixed step-size propagations; Default is MSADAMS */
 		Integ_tp fixStep_integ = Integ_tp::MSADAMS;
+
+		/** Control law ID; Default is 0, or NO_CTRL*/
+		unsigned int ctrlLawID = ControlLaw::NO_CTRL;
 
 		void cleanEngine();
 		void copyMe(const SimEngine&);

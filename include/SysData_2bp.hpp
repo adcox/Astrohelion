@@ -29,6 +29,7 @@
 
 #include "SysData.hpp"
 
+#include "ControlLaw.hpp"
 #include "DynamicsModel_2bp.hpp"
 
 #include "matio.h"
@@ -60,7 +61,9 @@ class SysData_2bp : public SysData{
 		
 		SysData_2bp& operator=(const SysData_2bp&);
 		
+		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
+
 		double getMu() const;
 
 		void saveToMat(const char*) const override;
@@ -73,6 +76,9 @@ class SysData_2bp : public SysData{
 	private:
 		/** The dynamic model that governs motion for this system*/
 		DynamicsModel_2bp model = DynamicsModel_2bp();
+
+		/** Control law object for this system */
+		ControlLaw control = ControlLaw();
 };
 
 

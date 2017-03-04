@@ -1,9 +1,9 @@
 /**
- *  @file DynamicsModel_cr3bp_ltvp.hpp
- *	@brief 
+ *  @file DynamicsModel_cr3bp_lt.hpp
+ *	@brief Dynamical model for a combined low-thrust CR3BP environment
  *	
  *	@author Andrew Cox
- *	@version May 25, 2016
+ *	@version March 3, 2017
  *	@copyright GNU GPL v3.0
  */
 /*
@@ -32,24 +32,24 @@
 namespace astrohelion{
 /**
  *	@ingroup model
- *	@brief Derivative of DynamicsModel, specific to the CR3BP-LTVP
+ *	@brief Derivative of DynamicsModel, specific to the CR3BP-LT
  *
  *	Under construction. Simulation is fully supported in this model,
  *	but the corrections process will fall back to the base model 
  *	behavior, which may produce unexpected results.
  */
-class DynamicsModel_cr3bp_ltvp : public DynamicsModel{
+class DynamicsModel_cr3bp_lt : public DynamicsModel{
 public:
 	/**
 	 *  @name *structors
 	 *  @{
 	 */
-	DynamicsModel_cr3bp_ltvp();
-	DynamicsModel_cr3bp_ltvp(const DynamicsModel_cr3bp_ltvp&);
-	~DynamicsModel_cr3bp_ltvp() {}
+	DynamicsModel_cr3bp_lt();
+	DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt&);
+	~DynamicsModel_cr3bp_lt() {}
 	//@}
 
-	DynamicsModel_cr3bp_ltvp& operator=(const DynamicsModel_cr3bp_ltvp&);
+	DynamicsModel_cr3bp_lt& operator=(const DynamicsModel_cr3bp_lt&);
 
 	/**
 	 *  @name Core Functions

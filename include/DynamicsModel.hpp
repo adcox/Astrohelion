@@ -59,13 +59,17 @@ class MultShootData;
  *  @return a reference to this struct
  */
 struct EOM_ParamStruct{
+
 	/**
 	 *  @brief Construct an EOM Parameter structure
 	 * 
 	 *  @param sys a pointer to a system data object
+	 *  @param lawID an ID for the control law to use during the integration
 	 */
-	EOM_ParamStruct(const SysData *sys) : sysData(sys) {}
-	const SysData *sysData;	//!< Pointer to a system data object that will be passed into the EOMs
+	EOM_ParamStruct(const SysData *sys, unsigned int lawID) : sysData(sys), ctrlLawID(lawID) {}
+	
+	const SysData *sysData;			//!< Pointer to a system data object that will be passed into the EOMs
+	const unsigned int ctrlLawID;	//!< ID of the control law
 };
 
 /**
@@ -75,7 +79,7 @@ enum class DynamicsModel_tp{
 	MODEL_NULL,			//!< Undefined type
 	MODEL_2BP,			//!< Relative 2-Body Problem
 	MODEL_CR3BP,		//!< Circular Restricted, 3-Body Problem
-	MODEL_CR3BP_LTVP,	//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
+	MODEL_CR3BP_LT,		//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
 	MODEL_BCR4BPR		//!< Bi-Circular Restricted, 4-Body Problem in a rotating reference frame
 };
 

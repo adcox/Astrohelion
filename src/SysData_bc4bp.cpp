@@ -174,6 +174,12 @@ SysData_bc4bp& SysData_bc4bp::operator= (const SysData_bc4bp &d){
 const DynamicsModel* SysData_bc4bp::getDynamicsModel() const { return &model; }
 
 /**
+ *  \brief Retrieve the object that serves up control law data for this system type
+ *  \return the control law object
+ */
+const ControlLaw* SysData_bc4bp::getControlLaw() const { return &control; }
+
+/**
  *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */
 double SysData_bc4bp::getMu() const { return otherParams.at(0); }

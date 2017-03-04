@@ -48,7 +48,6 @@ public:
 	virtual void getLaw(double t, const double *s, const SysData *sysData, unsigned int lawID, double *law, unsigned int len) const;
 
 	const static unsigned int NO_CTRL = 0;
-protected:
 };
 
 }// End of astrohelion namespace

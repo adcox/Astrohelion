@@ -48,6 +48,12 @@ public:
 		PRO_VEL = 3,
 		ANTI_VEL = 4
 	};
+protected:
+
+	void getLaw_ConstC_2D_Right(double, const double*, const SysData*, double*, unsigned int) const;
+	void getLaw_ConstC_2D_Left(double, const double*, const SysData*, double*, unsigned int) const;
+	void getLaw_Pro_Vel(double, const double*, const SysData*, double*, unsigned int) const;
+	void getLaw_Anti_Vel(double, const double*, const SysData*, double*, unsigned int) const;
 };
 
 }// End of astrohelion namespace

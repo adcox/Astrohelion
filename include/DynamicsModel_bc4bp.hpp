@@ -94,7 +94,6 @@ public:
 	 */
 	void multShoot_initDesignVec(MultShootData*, const Nodeset*) const override;
 	void multShoot_initIterData(MultShootData *it) const override;
-	void multShoot_scaleDesignVec(MultShootData*, const Nodeset*) const override;
 	void multShoot_createContCons(MultShootData*, const Nodeset*) const override;
 	void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const override;
 	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const override;
@@ -108,7 +107,7 @@ protected:
 	 *  @name Multiple Shooting Support Functions
 	 *  @{
 	 */
-	void multShoot_targetCont_PosVel(MultShootData*, Constraint, int) const override;
+	void multShoot_targetCont_State(MultShootData*, Constraint, int) const override;
 	void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const override;
 	void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const override;
 	void multShoot_targetState(MultShootData*, Constraint, int) const override;

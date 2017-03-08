@@ -79,7 +79,6 @@ void CorrectionEngine::copyMe(const CorrectionEngine &e){
 	bFindEvent = e.bFindEvent;//
 	bIgnoreCrash = e.bIgnoreCrash;//
 	bIgnoreDiverge = e.bIgnoreDiverge;
-	bScaleVars = e.bScaleVars;
 	bIsClean = e.bIsClean;
 }//====================================================
 
@@ -117,12 +116,6 @@ bool CorrectionEngine::usesVarTime() const { return bVarTime; }
  *	@return whether or not each arc will be forced to have the same length in time
  */
 bool CorrectionEngine::usesEqualArcTime() const { return bEqualArcTime; }
-
-/**
- *  @brief Retrieve whether or not the multiple shooting algorithm uses variable scaling
- *  @return whether or not the multiple shooting algorithm uses variable scaling
- */
-bool CorrectionEngine::usesScaledVars() const { return bScaleVars; }
 
 /**
  *  @brief Retrieve whether or not we are located an event crossing
@@ -191,13 +184,6 @@ void CorrectionEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
  *	@param i the maximum number of iterations to attempt before giving up
  */
 void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
-
-/**
- *  @brief Set the scaleVar flag
- * 
- *  @param b whether or not the multiple shooting algorithm should use variable scaling
- */
-void CorrectionEngine::setScaleVars(bool b){ bScaleVars = b; }
 
 /**
  *  @brief Set the step size scalar and the limiting tolerance
@@ -276,11 +262,6 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 	// Get the model associated with the nodeset
 	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
 	pModel->multShoot_initDesignVec(&it, set);
-
-	// Set up scaling
-	it.freeVarScale.assign(4, 1);	// Assign all variable scalings to be one -> NOTE: ADD MORE ENTRIES IF YOU NEED MORE!!
-	if(bScaleVars)
-		pModel->multShoot_scaleDesignVec(&it, set);
 
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
@@ -717,7 +698,6 @@ void CorrectionEngine::reset(){
 	bFindEvent = false;
 	bIgnoreCrash = false;
 	bIgnoreDiverge = false;
-	bScaleVars = false;
 }//====================================================
 
 

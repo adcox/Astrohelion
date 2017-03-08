@@ -214,7 +214,6 @@ public:
 	virtual void multShoot_initIterData(MultShootData *it) const = 0;
 
 	virtual void multShoot_initDesignVec(MultShootData*, const Nodeset*) const;
-	virtual void multShoot_scaleDesignVec(MultShootData*, const Nodeset*) const;
 	virtual void multShoot_createContCons(MultShootData*, const Nodeset*) const;
 	virtual void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const;
 	virtual void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
@@ -320,8 +319,8 @@ protected:
 	virtual void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetMatchAll(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetMatchCust(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_PosVel(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_PosVel_Seg(MultShootData*, Constraint, int) const;
+	virtual void multShoot_targetCont_State(MultShootData*, Constraint, int) const;
+	virtual void multShoot_targetCont_State_Seg(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetState(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetTOF(MultShootData*, Constraint, int) const;
 	//@}

@@ -68,6 +68,7 @@ public:
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
+	static double getJacobi(const double[], double);
 	//@}
 	
 	/**

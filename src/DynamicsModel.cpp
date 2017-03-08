@@ -219,82 +219,13 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 }//============================================================
 
 /**
- *  @brief Scale the design variable vector so that all elements have approximately the 
- *  same magnitude.
- *  @details This can improve the corrections process, although it is not guaranteed to,
- *  and CAN impede the corrections process as well.
- * 
- *  @param it iteraiton data object for the current corrections process
- *  @param set the nodeset that corrections are being applied to
- */
-void DynamicsModel::multShoot_scaleDesignVec(MultShootData *it, const Nodeset *set) const{
-	// Group all like variables and then compute the largest magnitude of each
-	Eigen::VectorXd allPos(3*it->numNodes);
-	Eigen::VectorXd allVel(3*it->numNodes);
-	Eigen::VectorXd allTOF(set->getNumSegs());
-	for(int n = 0; n < it->numNodes; n++){
-		MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
-		allPos(3*n+0) = it->X[stateVar.row0+0];
-		allPos(3*n+1) = it->X[stateVar.row0+1];
-		allPos(3*n+2) = it->X[stateVar.row0+2];
-		allVel(3*n+0) = it->X[stateVar.row0+3];
-		allVel(3*n+1) = it->X[stateVar.row0+4];
-		allVel(3*n+2) = it->X[stateVar.row0+5];
-	}
-
-	for(int s = 0; s < set->getNumSegs(); s++){
-		if(it->bVarTime){
-			MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
-				it->bEqualArcTime ? Linkable::INVALID_ID : set->getSegByIx(s).getID());
-			allTOF[s] = it->bEqualArcTime ? it->X[tofVar.row0]/(set->getNumSegs()) : it->X[tofVar.row0];
-		}else
-			allTOF[s] = set->getTOFByIx(s);
-	}
-
-	double maxPos = allPos.cwiseAbs().maxCoeff();
-	double maxVel = allVel.cwiseAbs().maxCoeff();
-	double maxTime = allVel.cwiseAbs().maxCoeff();
-	
-	// Scale each variable type by its maximum so that all values are between -1 and +1
-	it->freeVarScale[0] = maxPos == 0 ? 1 : 1/maxPos;		// Position scalar
-	it->freeVarScale[1] = maxVel == 0 ? 1 : 1/maxVel;		// Velocity scalar
-	it->freeVarScale[2] = maxTime == 0 ? 1 : 1/maxTime;		// TOF scalar
-
-	// printf("Variable Scalings:\n  Pos = %.6f\n  Vel = %.6f\n  TOF = %.5f\n", 
-	// 	it->freeVarScale[0], it->freeVarScale[1], it->freeVarScale[2]);
-
-	// Loop through all nodes and scale position and velocity
-	for(int n = 0; n < it->numNodes; n++){
-		MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
-		it->X[stateVar.row0+0] *= it->freeVarScale[0];	// position
-		it->X[stateVar.row0+1] *= it->freeVarScale[0];
-		it->X[stateVar.row0+2] *= it->freeVarScale[0];
-		it->X[stateVar.row0+3] *= it->freeVarScale[1];	// velocity
-		it->X[stateVar.row0+4] *= it->freeVarScale[1];
-		it->X[stateVar.row0+5] *= it->freeVarScale[1];
-	}
-
-	// Scale all times-of-flight
-	if(it->bVarTime){
-		if(it->bEqualArcTime){
-			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVarType::TOF_TOTAL, Linkable::INVALID_ID);
-			it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
-		}else{
-			for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-				MSVarMap_Obj tofVar = it->getVarMap_obj(MSVarType::TOF, it->nodeset->getSegByIx(s).getID());
-				it->X[tofVar.row0] *= it->freeVarScale[2];	// TOF
-			}
-		}
-	}
-}//===================================================
-
-/**
  *	@brief Create continuity constraints for the correction algorithm; this function
  *	creates position and velocity constraints.
  *
  *	Derived models may replace this function or call it and then append more constraints
  *	for other variables that may be continuous, such as time (non-autonomous systems)
- *	or mass.
+ *	or mass. This function assumes the state elements at indices 3, 4, and 5 represent
+ *	velocity and their continuity is governed by the boolean flags stored in a segment.
  *
  *	@param it a pointer to the corrector's iteration data structure
  *	@param set a pointer to the nodeset being corrected
@@ -303,16 +234,19 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it, const Nodeset *s
 	// Create position and velocity constraints
 	for(int s = 0; s < set->getNumSegs(); s++){
 		// Force all positions to be continuous
-		double contStates[] = {1, 1, 1, 1, 1, 1};
-		if(set->getSegByIx(s).getTerminus() != Linkable::INVALID_ID){
+		// double contStates[] = {1, 1, 1, 1, 1, 1};
+		std::vector<double> contStates(coreStates, 1);
+		if(set->getSegByIx(s).getTerminus() != Linkable::INVALID_ID){	
 			// Get a vector specifying which velocity states are continuous
 			std::vector<bool> velCon = set->getSegByIx(s).getVelCon();
 			// If not continuous, put NAN into the constraint data; else unity
 			contStates[3] = velCon[0] ? 1 : NAN;
 			contStates[4] = velCon[1] ? 1 : NAN;
 			contStates[5] = velCon[2] ? 1 : NAN;
+			
 			// Create a constraint
-			Constraint con(Constraint_tp::CONT_PV, set->getSegByIx(s).getID(), contStates, 6);
+			Constraint con(Constraint_tp::CONT_PV, set->getSegByIx(s).getID(), contStates);
+
 			// Save constraint to constraint vector
 			it->allCons.push_back(con);
 		}
@@ -345,20 +279,13 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *
 	MSVarMap_Obj state = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(s).getOrigin());
 	std::copy(it->X.begin()+state.row0, it->X.begin()+state.row0 + state.nRows, ic);
 
-	// Reverse Scaling
-	for(int i = 0; i < 6; i++){
-		ic[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-	}
-
 	if(it->bVarTime){
 		// Retrieve  representative object and get data from free var vec
 		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
 			it->bEqualArcTime ? -1 : s);
 		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
-		// Reverse scaling
-		*tof /= it->freeVarScale[2]; 	// Time scaling
 	}else{
-		*tof = it->nodeset->getTOF(s) / it->freeVarScale[2];
+		*tof = it->nodeset->getTOF(s);
 	}
 	*t0 = 0;
 
@@ -420,10 +347,10 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con,
 	switch(con.getType()){
 		case Constraint_tp::CONT_PV:
 			// Apply position-velocity continuity constraints
-			multShoot_targetCont_PosVel(it, con, row0);
+			multShoot_targetCont_State(it, con, row0);
 			break;
 		case Constraint_tp::SEG_CONT_PV:
-			multShoot_targetCont_PosVel_Seg(it, con, row0);
+			multShoot_targetCont_State_Seg(it, con, row0);
 			break;
 		case Constraint_tp::SEG_CONT_EX:
 			multShoot_targetCont_Ex_Seg(it, con, row0);
@@ -461,10 +388,9 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con,
 }//=========================================================
 
 /**
- *	@brief Compute position and velocity constraint values and partial derivatives
+ *	@brief Compute state continuity constraint values and partial derivatives
  *
- *	This function computes and stores the default position continuity constraints as well
- *	as velocity constraints for all nodes marked continuous in velocity. The partial 
+ *	This function computes and stores the default state continuity constraints. The partial 
  *	derivatives of each node with respect to other nodes and integration time are all 
  *	computed and placed in the appropriate spots in the Jacobian matrix.
  *
@@ -474,7 +400,7 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con,
  *	@param con the constraint being applied
  *	@param row0 the first row this constraint applies to
  */
-void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con, int row0) const{
 	int segID = con.getID();	// get segment ID
 	std::vector<double> conData = con.getData();
 
@@ -486,21 +412,17 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
 	// Get index of origin node
 	MSVarMap_Obj state0_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID).getOrigin());
 	MSVarMap_Obj statef_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID).getTerminus());
-	// int origIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getOrigin());
-	// int termIx = it->nodeset->getNodeIx(it->nodeset->getSeg(segID).getTerminus());
 
 	// Loop through conData
 	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
-			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-			it->FX[row0+s] = lastState[s]*scale - it->X[statef_var.row0+s];
+			it->FX[row0+s] = lastState[s] - it->X[statef_var.row0+s];
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
-			for(unsigned int x = 0; x < 6; x++){
+			for(unsigned int x = 0; x < coreStates; x++){
 				// put STM elements into DF matrix
-				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-				it->DF[it->totalFree*(row0+s) + state0_var.row0 + x] = stm(s,x)*scale/scale2;
+				it->DF[it->totalFree*(row0+s) + state0_var.row0 + x] = stm(s,x);
 				// Negative identity matrix
 				if(s == x)
 					it->DF[it->totalFree*(row0+s) + statef_var.row0+x] = -1;
@@ -519,11 +441,11 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
 				// If equal arc time is enabled, all time derivatives are in one column
 				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
 				
-				// Column of state derivatives: [vel; accel]
+				// Column of state time derivatives: [vel; accel; other time derivatives]
 				if(s < 3)
-					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastState[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastState[s+3];
 				else{					
-					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastAccel[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastAccel[s-3];
 				}
 			}
 		}
@@ -531,7 +453,7 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
 }//====================================================
 
 /**
- *  @brief Compute segment position and velocity constraint values and partial derivatives.
+ *  @brief Compute segment state continuity constraint values and partial derivatives.
  *  
  *  This function computes and stores the position and velocity continuity constraints for
  *  segment-to-segment links. The partial derivatives of this constraint with respect to
@@ -546,12 +468,12 @@ void DynamicsModel::multShoot_targetCont_PosVel(MultShootData* it, Constraint co
  *	
  *	@throws Exception if the constraint data is not properly formatted
  */
-void DynamicsModel::multShoot_targetCont_PosVel_Seg(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint con, int row0) const{
 	int segID1 = con.getID();
 	int ix = 0;
 	int segID2 = static_cast<int>(con.getFirstDataValue(&ix));
 	if(ix < 0)
-		throw Exception("DynamicsModel::multShoot_targetCont_PosVel_Seg: No segment ID was located in the cosntraint data vector");
+		throw Exception("DynamicsModel::multShoot_targetCont_State_Seg: No segment ID was located in the cosntraint data vector");
 
 	std::vector<double> conData = con.getData();
 
@@ -591,26 +513,24 @@ void DynamicsModel::multShoot_targetCont_PosVel_Seg(MultShootData *it, Constrain
 	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
-			double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-			it->FX[row0+count] = (state1[s]- state2[s])*scale;
+			it->FX[row0+count] = (state1[s]- state2[s]);
 
 			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
-			for(unsigned int x = 0; x < 6; x++){
-				// putu STM elements into DF matrix
-				double scale2 = x < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-				it->DF[it->totalFree*(row0+count) + state01_var.row0+x] = stm1(s,x)*scale/scale2;
-				it->DF[it->totalFree*(row0+count) + state02_var.row0+x] = -stm2(s,x)*scale/scale2;
+			for(unsigned int x = 0; x < coreStates; x++){
+				// put STM elements into DF matrix
+				it->DF[it->totalFree*(row0+count) + state01_var.row0+x] = stm1(s,x);
+				it->DF[it->totalFree*(row0+count) + state02_var.row0+x] = -stm2(s,x);
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
 			if(it->bVarTime){
 				// Column of state derivatives: [vel; accel]
 				if(s < 3){
-					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*state1[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
-					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*state2[s+3]*it->freeVarScale[0]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*state1[s+3];
+					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*state2[s+3];
 				}else{
-					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*lastAccel1[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
-					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*lastAccel2[s-3]*it->freeVarScale[1]/it->freeVarScale[2];
+					it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*lastAccel1[s-3];
+					it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*lastAccel2[s-3];
 				}
 			}
 
@@ -671,15 +591,9 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(unsigned int s = 0; s < con.getData().size(); s++){
 		if(!std::isnan(conData[s])){
-			if(s < 6){
-				double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-				
-				it->FX[row0+count] = it->X[state_var.row0+s] - conData[s]*scale;
-				it->DF[it->totalFree*(row0 + count) + state_var.row0 + s] = 1;
-				count++;
-			}else{
-				astrohelion::printErr("DynamicsModel::multShoot_targetState: State constraint has more than 6 elements...\n");
-			}
+			it->FX[row0+count] = it->X[state_var.row0+s] - conData[s];
+			it->DF[it->totalFree*(row0 + count) + state_var.row0 + s] = 1;
+			count++;
 		}
 	}	
 }//=================================================
@@ -706,7 +620,7 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, 
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	// int otherNodeIx = it->nodeset->getNodeIx(con.getData()[0]);
 	
-	for(int row = 0; row < 6; row++){
+	for(int row = 0; row < coreStates; row++){
 		// Constrain the states of THIS node to be equal to the node 
 		// with index stored in conData[0]
 		it->FX[row0+row] = it->X[state1_var.row0+row] - it->X[state2_var.row0+row];
@@ -742,7 +656,7 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
 	// int otherNodeIx = it->nodeset->getNodeIx(conData[0]);
 	int count = 0;
 	
-	for(int s = 0; s < 6; s++){
+	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			it->FX[row0 + count] = it->X[state1_var.row0+s] - it->X[state2_var.row0+s];
 
@@ -782,14 +696,14 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0]*it->freeVarScale[0];
-	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1]*it->freeVarScale[0];
-	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2]*it->freeVarScale[0];
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
 	// Compute difference between desired distance and true distance
-	it->FX[row0] = h - conData[1]*it->freeVarScale[0];
+	it->FX[row0] = h - conData[1];
 
 	// Partials with respect to node position states
 	it->DF[it->totalFree*row0 + state_var.row0 + 0] = dx/h;
@@ -837,13 +751,13 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it,
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0]*it->freeVarScale[0];
-	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1]*it->freeVarScale[0];
-	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2]*it->freeVarScale[0];
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 	int sign = con.getType() == Constraint_tp::MAX_DIST ? 1 : -1;
-    double diff = conData[1]*it->freeVarScale[0] - h;
+    double diff = conData[1] - h;
 
     /*  If diff and sign have the same sign (+/-), then the constraint
      *  is satisfied, so compute the value of the slack variable that 
@@ -876,16 +790,16 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 	int row0 = it->conRows[c];
 
 	// Don't allow dividing by zero, but otherwise scale by value to keep order ~1
-	double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0]*it->freeVarScale[1];
+	double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0];
 
 	// Compute total deltaV magnitude
 	double totalDV = 0;
 	for(int s = 0; s < it->nodeset->getNumSegs(); s++){
 		// compute magnitude of DV between segment s and its terminal point
 		// This takes the form v_n,f - v_n+1,0
-		double dvx = it->deltaVs[s*3] * it->freeVarScale[1];
-		double dvy = it->deltaVs[s*3+1]*it->freeVarScale[1];
-		double dvz = it->deltaVs[s*3+2]*it->freeVarScale[1];
+		double dvx = it->deltaVs[s*3];
+		double dvy = it->deltaVs[s*3+1];
+		double dvz = it->deltaVs[s*3+2];
 		double dvMag = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
 
 		// If dvMag is zero, don't bother computing partials; they're all equal to zero but the
@@ -902,17 +816,14 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 
 			// Partial w.r.t. integrated path (newSeg) from origin node
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
-			
-			// Adjust scaling of STM after multiplication (easier here)
-			dFdq_nf.segment(0, 3) *= it->freeVarScale[1]/it->freeVarScale[0];
 
 			MSVarMap_Obj state0_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSegByIx(s).getOrigin());
 			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSegByIx(s).getTerminus());
 			// int origIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getOrigin());
 			// int termIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getTerminus());
 
-			for(int i = 0; i < 6; i++){
-				it->DF[it->totalFree*row0 + statef_var.row0 + i] += dFdq_n2(0, i)/dvMax*it->freeVarScale[1];	// Not sure why this scaling factor belongs here...
+			for(unsigned int i = 0; i < 6; i++){
+				it->DF[it->totalFree*row0 + statef_var.row0 + i] += dFdq_n2(0, i)/dvMax;
 				it->DF[it->totalFree*row0 + state0_var.row0 + i] += dFdq_nf(0, i)/dvMax;
 			}
 
@@ -925,10 +836,6 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 				state_dot_data.insert(state_dot_data.end(), lastState.begin()+3, lastState.begin()+6);
 				state_dot_data.insert(state_dot_data.end(), lastAccel.begin(), lastAccel.end());
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
-
-				// Scale derivatives
-				state_dot.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[2];
-				state_dot.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[2];
 
 				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
@@ -1021,7 +928,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
 	}
 	
 	// subtract the desired TOF from the constraint to finish its computation
-	it->FX[row0] -= con.getData()[0]*it->freeVarScale[2];
+	it->FX[row0] -= con.getData()[0];
 }//====================================================
 
 /**
@@ -1041,30 +948,27 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int 
 	int Pix = static_cast<int>(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	
-	double sr = it->freeVarScale[0];
-	double sv = it->freeVarScale[1];
-	
 	// Get the primary position
 	std::vector<double> primPos = getPrimPos(t, it->sysData);
 
 	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
-	double dx = it->X[state_var.row0+0]/sr - primPos[Pix*3+0];
-	double dy = it->X[state_var.row0+1]/sr - primPos[Pix*3+1];
-	double dz = it->X[state_var.row0+2]/sr - primPos[Pix*3+2];
-	double vx = it->X[state_var.row0+3]/sv;
-	double vy = it->X[state_var.row0+4]/sv;
-	double vz = it->X[state_var.row0+5]/sv;
+	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
+	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1];
+	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2];
+	double vx = it->X[state_var.row0+3];
+	double vy = it->X[state_var.row0+4];
+	double vz = it->X[state_var.row0+5];
 
 	// Constraint function: r_dot = 0 (using non-scaled coordinates)
 	it->FX[row0] = dx*vx + dy*vy + dz*vz;
 
 	// Partials of F w.r.t. node state
-	it->DF[it->totalFree*row0 + state_var.row0+0] = vx/sr;
-	it->DF[it->totalFree*row0 + state_var.row0+1] = vy/sr;
-	it->DF[it->totalFree*row0 + state_var.row0+2] = vz/sr;
-	it->DF[it->totalFree*row0 + state_var.row0+3] = dx/sv;
-	it->DF[it->totalFree*row0 + state_var.row0+4] = dy/sv;
-	it->DF[it->totalFree*row0 + state_var.row0+5] = dz/sv;
+	it->DF[it->totalFree*row0 + state_var.row0+0] = vx;
+	it->DF[it->totalFree*row0 + state_var.row0+1] = vy;
+	it->DF[it->totalFree*row0 + state_var.row0+2] = vz;
+	it->DF[it->totalFree*row0 + state_var.row0+3] = dx;
+	it->DF[it->totalFree*row0 + state_var.row0+4] = dy;
+	it->DF[it->totalFree*row0 + state_var.row0+5] = dz;
 }//====================================================
 
 

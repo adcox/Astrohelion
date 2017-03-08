@@ -281,16 +281,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
     double nodeState[6];
-    std::copy(&(it->X[state_var.row0]), &(it->X[state_var.row0])+6, nodeState);
-    
-    double sr = it->freeVarScale[0];
-    double sv = it->freeVarScale[1];    
-
-    // Reverse scaling to compute Jacobi at the node
-    for(int i = 0; i < 6; i++){
-        double scale = i < 3 ? sr : sv;
-        nodeState[i] /= scale;
-    }
+    std::copy(&(it->X[state_var.row0]), &(it->X[state_var.row0])+6, nodeState); 
 
     // printf("Node State = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f]\n", nodeState[0],
     //     nodeState[1], nodeState[2], nodeState[3], nodeState[4], nodeState[5]);
@@ -310,12 +301,12 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, 
     it->FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    it->DF[it->totalFree*row0 + state_var.row0 + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x)/sr;    //dFdx
-    it->DF[it->totalFree*row0 + state_var.row0 + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y)/sr;                      //dFdy
-    it->DF[it->totalFree*row0 + state_var.row0 + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3))/sr;                            //dFdz
-    it->DF[it->totalFree*row0 + state_var.row0 + 3] = -2*vx/sv;   //dFdx_dot
-    it->DF[it->totalFree*row0 + state_var.row0 + 4] = -2*vy/sv;   //dFdy_dot
-    it->DF[it->totalFree*row0 + state_var.row0 + 5] = -2*vz/sv;   //dFdz_dot
+    it->DF[it->totalFree*row0 + state_var.row0 + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x);    //dFdx
+    it->DF[it->totalFree*row0 + state_var.row0 + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y);                      //dFdy
+    it->DF[it->totalFree*row0 + state_var.row0 + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3));                            //dFdz
+    it->DF[it->totalFree*row0 + state_var.row0 + 3] = -2*vx;   //dFdx_dot
+    it->DF[it->totalFree*row0 + state_var.row0 + 4] = -2*vy;   //dFdy_dot
+    it->DF[it->totalFree*row0 + state_var.row0 + 5] = -2*vz;   //dFdz_dot
 }//=============================================
 
 /**
@@ -381,14 +372,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
-        // double state[6];
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
-        // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
-
-        // Reverse scaling
-        for(unsigned int i = 0; i < coreStates; i++){
-            state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-        }
 
         Node node(state, 0);
         node.setConstraints(it->nodeset->getNodeByIx(n).getConstraints());
@@ -427,8 +411,6 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
             tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
-            // Reverse scaling
-            tof /= it->freeVarScale[2];     // TOF scaling
         }else{
             tof = seg.getTOF();
         }

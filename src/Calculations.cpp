@@ -612,9 +612,9 @@ double getTotalDV(const MultShootData *pIt){
  * 
  *  @param pNodeset A nodeset with some constraints
  */
-void finiteDiff_checkMultShoot(const Nodeset *pNodeset){
+bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity){
     CorrectionEngine engine;  // Create engine with default settings
-    finiteDiff_checkMultShoot(pNodeset, engine);
+    return finiteDiff_checkMultShoot(pNodeset, engine, verbosity);
 }//====================================================
 
 /**
@@ -624,11 +624,11 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset){
  * 
  *  @param pNodeset A nodeset with some constraints
  *  @param engine correction engine object configured with the appropriate settings (i.e.,
- *  equal arc time, scaling variables, etc.). Note that the maxIts, verbosity, and ignoreDiverge
+ *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
  */
-void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine){
-    printf("Finite Diff: Checking DF matrix... ");
+bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine, Verbosity_tp verbosity){
+    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
     CorrectionEngine corrector(engine);
     corrector.setMaxIts(1);
@@ -684,8 +684,8 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
     MatrixXRd DFest_abs = DFest.cwiseAbs();
 
-    astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
-    astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
+    // astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
+    // astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
     diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
 
     // // Divide each element by the magnitude of the DF element to get a relative difference magnitude
@@ -721,39 +721,47 @@ void finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine)
     int errScalar = 10000;
 
     if(rowMaxMax < errScalar*pertSize && colMaxMax < errScalar*colMaxMax){
-        astrohelion::printColor(BOLDGREEN, "No significant errors!\n");
-    }else{
-        astrohelion::printColor(BOLDRED, "Significant errors!\n");
-        printf("Maximum relative difference between computed DF and estimated DF\n");
-        int conCount = 0;
-        for(long r = 0; r < rowMax.size(); r++){
-            if(r == 0 && it.totalCons > 0){
-                printf("Applies to %s %d: %s Constraint:\n", 
-                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
-                    it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
-            }else if(conCount < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
-                conCount++;
-                printf("Applies to %s %d: %s Constraint:\n", 
-                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
-                    it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
-            }
-            astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
-                "  row %03zu: %.6e\n", r, rowMax[r]);
-        }
-        for(long c = 0; c < colMax.size(); c++){
-            std::string parent = "unknown";
-            std::string type = "unknown";
-            MSVarMap_Key key;
-            try{
-                key = freeVarMap_rowNumToKey.at(c);
-                MSVarMap_Obj obj = it.freeVarMap.at(key);
-                parent = MSVarMap_Obj::parent2str(obj.parent);
-                type = MSVarMap_Key::type2str(key.type);
-            }catch(std::out_of_range &e){}
+        if(verbosity >= Verbosity_tp::SOME_MSG)
+            astrohelion::printColor(BOLDGREEN, "No significant errors!\n");
 
-            astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
-                "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
+        return true;
+    }else{
+        if(verbosity >= Verbosity_tp::SOME_MSG){
+            astrohelion::printColor(BOLDRED, "Significant errors!\n");
+            printf("Maximum relative difference between computed DF and estimated DF\n");
+
+            int conCount = 0;
+            for(long r = 0; r < rowMax.size(); r++){
+                if(r == 0 && it.totalCons > 0){
+                    printf("Applies to %s %d: %s Constraint:\n", 
+                        Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                        it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+                }else if(conCount < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
+                    conCount++;
+                    printf("Applies to %s %d: %s Constraint:\n", 
+                        Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                        it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+                }
+                astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
+                    "  row %03zu: %.6e\n", r, rowMax[r]);
+            }
+            for(long c = 0; c < colMax.size(); c++){
+                std::string parent = "unknown";
+                std::string type = "unknown";
+                MSVarMap_Key key;
+                try{
+                    key = freeVarMap_rowNumToKey.at(c);
+                    MSVarMap_Obj obj = it.freeVarMap.at(key);
+                    parent = MSVarMap_Obj::parent2str(obj.parent);
+                    type = MSVarMap_Key::type2str(key.type);
+                }catch(std::out_of_range &e){}
+
+                astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
+                    "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
+            }
         }
+
+        return false;
     }
 }//====================================================
 

@@ -100,8 +100,8 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp, const Traj_cr3bp*, int, double
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 double getTotalDV(const MultShootData*);
-void finiteDiff_checkMultShoot(const Nodeset*);
-void finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine);
+bool finiteDiff_checkMultShoot(const Nodeset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG);
+bool finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
 Node interpPointAtTime(const Traj*, double);

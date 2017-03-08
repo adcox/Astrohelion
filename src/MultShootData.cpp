@@ -234,7 +234,6 @@ void MultShootData::copyMe(const MultShootData &it){
 	DF = it.DF;
 	bEqualArcTime = it.bEqualArcTime;
 	freeVarMap = it.freeVarMap;
-	freeVarScale = it.freeVarScale;
 	FX = it.FX;
 	numNodes = it.numNodes;
 	numSlack = it.numSlack;

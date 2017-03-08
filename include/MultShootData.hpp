@@ -153,15 +153,6 @@ class MultShootData{
 		std::map<MSVarMap_Key, MSVarMap_Obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
-		
-		/**
-		 * A scalar coefficient for each free variable type to scale them to the appropriate magnitude.
-		 * These scalings should make numerical processes more successful but must be reversed before
-		 * the free variables are passed into various computation functions (e.g. simulations). Thus,
-		 * every constraint computation function (stored in the models) is responsible for reversing any
-		 * scaling necessary to accurately compute constraints and partial derivatives.
-		 */
-		std::vector<double> freeVarScale {};
 
 		int numNodes = 0;			//!< Number of nodes in the entire nodeset
 		int count = 0;				//!< Count of number of iterations through corrections process

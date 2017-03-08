@@ -93,6 +93,9 @@ enum class Event_tp {
  				 *	direction of travel relative to the primary; +1 is away from the primary,
  				 *	-1 is towards the primary, and 0 triggers for either.
  				 */
+	MASS		/*!< occurs when the s/c mass reaches a minimum or maximum amount. The <tt>param</tt>
+				 *	array should have one element: the nondimensional mass limit (between 0 and 1).
+				 */
 };
 
 		
@@ -109,9 +112,10 @@ enum class Event_tp {
  *		degree of accuracy.
  *	* Update the getDist() function
  * 	* Update the getDir() function
+ * 	* Add event to list of allowed constraints in relevant DynamicalModel derived classes
  *
  *	@author Andrew Cox
- *	@version August 3, 2015
+ *	@version Mar 7, 2017
  *	@copyright GNU GPL v3.0
  */
 class Event : public Core{
@@ -159,8 +163,8 @@ class Event : public Core{
 		void setStopOnEvent(bool);
 		//@}
 
-		bool crossedEvent(const double[6], double) const;
-		void updateDist(const double[6], double);
+		bool crossedEvent(const double*, double) const;
+		void updateDist(const double*, double);
 
 		void printStatus() const;
 	private:

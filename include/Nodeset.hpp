@@ -103,7 +103,6 @@ public:
 	virtual void print() const;
 	void reverseOrder();
 	virtual void saveToMat(const char*) const;
-	virtual void initExtraParam();
 
 protected:
 

@@ -34,6 +34,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "Core.hpp"
 
 namespace astrohelion{
@@ -41,11 +43,18 @@ namespace astrohelion{
 // Forward declarations
 class SysData;
 
+/**
+ *  \ingroup model
+ *  \brief Stores control law equations and derivatives for flexible applications throughout
+ *  the astrohelion framework
+ */
 class ControlLaw : public Core{
 public:
 	ControlLaw();
 
-	virtual void getLaw(double t, const double *s, const SysData *sysData, unsigned int lawID, double *law, unsigned int len) const;
+	virtual void getLaw(double t, const double *s, const SysData *pSys, unsigned int lawID, double *law, unsigned int len) const;
+	virtual void getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const;
+	virtual std::string lawIDToString(unsigned int) const;
 
 	const static unsigned int NO_CTRL = 0;
 };

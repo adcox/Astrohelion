@@ -35,12 +35,22 @@ namespace astrohelion{
 
 // Forward declarations
 class SysData;
+class SysData_cr3bp_lt;
 
+/**
+ *  \ingroup model cr3bp_lt
+ *  \brief Includes control laws specific to the CR3BP-LT problem
+ *  \details [long description]
+ *  \return [description]
+ */
 class ControlLaw_cr3bp_lt : public ControlLaw{
 public:
 	ControlLaw_cr3bp_lt();
 
 	void getLaw(double t, const double *s, const SysData *sysData, unsigned int lawID, double *law, unsigned int len) const;
+	void getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const;
+
+	std::string lawIDToString(unsigned int) const;
 
 	enum Law_tp : unsigned int{
 		CONST_C_2D_LEFT = 1,
@@ -50,10 +60,12 @@ public:
 	};
 protected:
 
-	void getLaw_ConstC_2D_Right(double, const double*, const SysData*, double*, unsigned int) const;
-	void getLaw_ConstC_2D_Left(double, const double*, const SysData*, double*, unsigned int) const;
-	void getLaw_Pro_Vel(double, const double*, const SysData*, double*, unsigned int) const;
-	void getLaw_Anti_Vel(double, const double*, const SysData*, double*, unsigned int) const;
+	void getLaw_ConstC_2D_Right(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getLaw_ConstC_2D_Left(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getLaw_Pro_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getLaw_Anti_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+
+	void getPartials_State_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 };
 
 }// End of astrohelion namespace

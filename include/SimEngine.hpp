@@ -155,21 +155,21 @@ class SimEngine : public Core, public Engine{
 		 */
 		void addEvent(Event);
 		double getAbsTol() const;
-		unsigned int getCtrlLawID() const;
+		unsigned int getCtrlLaw() const;
 		std::vector<Event> getEndEvents(Traj*) const;
 		std::vector<Event> getEvents() const;
 		std::vector<SimEventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
-		bool makesCrashEvents() const;
+		bool makesDefaultEvents() const;
 		bool usesSimpleInt() const;
 		bool usesRevTime() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
-		void setCtrlLawID(unsigned int);
+		void setCtrlLaw(unsigned int);
 		void setFixStepInteg(Integ_tp);
-		void setMakeCrashEvents(bool);
+		void setMakeDefaultEvents(bool);
 		void setMaxCompTime(int);
 		void setNumSteps(int);
 		void setSimpleInt(bool);
@@ -219,11 +219,11 @@ class SimEngine : public Core, public Engine{
 		 with the EOMs */
 		bool bSimpleIntegration = false;
 
-		/** Whether or not crash events should be created for the simulation */
-		bool bMakeCrashEvents = true;
+		/** Whether or not default events should be created for the simulation */
+		bool bMakeDefaultEvents = true;
 
-		/** Whether or not the default crash events have been created */
-		bool bMadeCrashEvents = false;
+		/** Whether or not the default events have been created */
+		bool bMadeDefaultEvents = false;
 
 		/** Absolute tolerance for integrated data, units are same as integrated data */
 		double absTol = 1e-12;
@@ -254,7 +254,7 @@ class SimEngine : public Core, public Engine{
 
 		void cleanEngine();
 		void copyMe(const SimEngine&);
-		void createCrashEvents(const SysData*);
+		void createDefaultEvents(const SysData*);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
 		void integrate(const double*, MatrixXRd, const double*, int, Traj*);
 		bool locateEvents(const double*, double, Traj*);

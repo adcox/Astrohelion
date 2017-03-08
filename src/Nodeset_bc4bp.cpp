@@ -43,9 +43,7 @@ namespace astrohelion{
  *	@brief Construct a nodeset with no data other than the system
  *	@param pData system data object describing the system the nodes exist in
  */
-Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData) : Nodeset(pData){
-	initExtraParam();
-}//====================================================
+Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData) : Nodeset(pData){}
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -61,7 +59,6 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData) : Nodeset(pData){
 Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, const double IC[6], 
 	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
-	initExtraParam();
 	std::vector<double> ic(IC, IC+6);
 	initFromICs(ic, t0, tof, numNodes, type);
 }//====================================================
@@ -80,7 +77,6 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, const double IC[6],
 Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, std::vector<double> IC, 
 	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
-	initExtraParam();
 	initFromICs(IC, t0, tof, numNodes, type);
 }//====================================================
 
@@ -138,12 +134,5 @@ baseArcsetPtr Nodeset_bc4bp::clone() const{
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
-
-/**
- *	@brief Initialize the extra param vector to hold info specific to this nodeset
- */
-void Nodeset_bc4bp::initExtraParam(){
-	// Nothing to do here!
-}//====================================================
 
 }// END of Astrohelion namespace

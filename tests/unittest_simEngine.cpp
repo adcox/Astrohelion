@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_ManyRevs){
 	Event planeCross(Event_tp::XZ_PLANE, 0, true);
 	unsigned int stopCount = 4;
 	planeCross.setStopCount(stopCount);
-	engine.setMakeCrashEvents(false);
+	engine.setMakeDefaultEvents(false);
 	engine.addEvent(planeCross);
 	engine.runSim(ic, 10*PI, &traj);
 
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
 	Event planeCross(Event_tp::XZ_PLANE, 0, true);
 	unsigned int stopCount = 4;
 	planeCross.setStopCount(stopCount);
-	engine.setMakeCrashEvents(false);
+	engine.setMakeDefaultEvents(false);
 	engine.addEvent(planeCross);
 
 	for(int it = 0; it < 5; it++){

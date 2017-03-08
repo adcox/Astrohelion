@@ -48,7 +48,7 @@ SysData_cr3bp_lt::SysData_cr3bp_lt() : SysData_cr3bp(){
  *	@param P2 the name of the smaller primary; P2 must orbit P1
  *	@param T Thrust value, Newtons
  *	@param I Specific Impulse (Isp), seconds
- *	@param M0 initial mass (at t = 0), kilograms
+ *	@param M0 reference mass, kilograms
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double T, double I, double M0){
 	numPrimaries = 2;
@@ -56,9 +56,9 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double T, dou
 	otherParams.assign(4,0);
 	
 	initFromPrimNames(P1, P2);	// use function from cr3bp_sys_data to initialize most everything
-	otherParams[1] = (T/1000)*charT*charT/charL/charM;	// thrust, non-dimensionalized
-	otherParams[2] = I/charT;	// Isp, non-dimensionalized
-	otherParams[3] = M0/charM;	// Initial mass, non-dimensionalized
+	otherParams[1] = (T/1000)*charT*charT/charL/M0;		// thrust, non-dimensionalized
+	otherParams[2] = I;									// Isp, dimensional
+	otherParams[3] = M0;								// Initial mass, dimensional
 }//===================================================
 
 /**
@@ -105,58 +105,40 @@ const DynamicsModel* SysData_cr3bp_lt::getDynamicsModel() const { return &model;
 const ControlLaw* SysData_cr3bp_lt::getControlLaw() const { return &control; }
 
 /**
- *	@brief Get the non-dimensional thrust for P3 in this system
- *	@return the thrust (non-dimensional)
+ *	@brief Get the nondimensional thrust for P3 in this system
+ *	@return the thrust, nondimensional (nondimensionalized in mass by spacecraft reference mass) 
  */
 double SysData_cr3bp_lt::getThrust() const { return otherParams[1]; }
 
 /**
- *	@brief Get the non-dimensional specific impulse for P3 in this system
- *	@return the specific impulse (non-dimensional)
+ *	@brief Get the specific impulse for P3 in this system
+ *	@return the specific impulse, seconds
  */
 double SysData_cr3bp_lt::getIsp() const { return otherParams[2]; }
 
 /**
- *	@brief Get the non-dimensional mass for P3
- *	@return the non-dimensional mass for P3
+ *	@brief Get the reference mass for P3
+ *	@return the reference mass of P3, kg
  */
 double SysData_cr3bp_lt::getMass() const { return otherParams[3]; }
 
 /**
  *	@brief Set the thrust for P3 for this system
- *	@param d the thrust, non-dimensional units
+ *	@param d the thrust, non-dimensional units (nondimensionalized in mass by spacecraft reference mass)
  */
 void SysData_cr3bp_lt::setThrust(double d){ otherParams[1] = d; }
 
 /**
  *	@brief Set the specific impulse for P3 for this system
- *	@param d the specific impulse, non-dimensional units
+ *	@param d the specific impulse, seconds
  */
 void SysData_cr3bp_lt::setIsp(double d){ otherParams[2] = d; }
 
 /**
- *	@brief Set the mass for P3 (non-dim)
- *	@param d the mass, non-dimensional units
+ *	@brief Set the reference mass for P3
+ *	@param d the mass, kg
  */
 void SysData_cr3bp_lt::setMass(double d){ otherParams[3] = d; }
-
-/**
- *	@brief Set the thrust for P3 for this system using a dimensional quantity
- *	@param d the thrust, in Newtons
- */
-void SysData_cr3bp_lt::setThrustDim(double d){ otherParams[1] = (d/1000)*charT*charT/charM/charL; }
-
-/**
- *	@brief Set the specific impulse for P3 for this system using a dimensional quantity
- *	@param d the specific impulse, in seconds
- */
-void SysData_cr3bp_lt::setIspDim(double d){ otherParams[2] = d/charT; }
-
-/**
- *	@brief Set the mass for P3 using a dimensional quantity
- *	@param d the mass, in kilograms
- */
-void SysData_cr3bp_lt::setMassDim(double d){ otherParams[3] = d/charM; }
 
 /**
  *  @brief Save the system data to a matlab file
@@ -198,14 +180,17 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
 	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 
-	double T = otherParams[1];
+	// Save thrust in nondimensional units
+	double T = otherParams[1];//*1000*charL*otherParams[3]/charT/charT;
 	matvar_t *thrust_var = Mat_VarCreate("Thrust", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &T, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, thrust_var, "Thrust", MAT_COMPRESSION_NONE);
 
+	// Save Isp in dimensional units
 	double I = otherParams[2];
 	matvar_t *imp_var = Mat_VarCreate("Isp", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &I, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, imp_var, "Isp", MAT_COMPRESSION_NONE);
 
+	// Save mass in dimensional units
 	double m = otherParams[3];
 	matvar_t *mass_var = Mat_VarCreate("Mass0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &m, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, mass_var, "Mass0", MAT_COMPRESSION_NONE);
@@ -223,6 +208,7 @@ void SysData_cr3bp_lt::readFromMat(mat_t *matFile){
 	type = SysData_tp::CR3BP_LT_SYS;
 	otherParams.assign(4,0);
 	initFromPrimNames(P1, P2);
+	otherParams[1] = astrohelion::readDoubleFromMat(matFile, "Thrust");
 	otherParams[2] = astrohelion::readDoubleFromMat(matFile, "Isp");
 	otherParams[3] = astrohelion::readDoubleFromMat(matFile, "Mass0");
 }//===================================================

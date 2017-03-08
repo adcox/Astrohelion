@@ -35,7 +35,7 @@
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "Nodeset_cr3bp_lt.hpp"
 #include "SysData_cr3bp_lt.hpp"
 #include "Traj_cr3bp_lt.hpp"
 #include "Utilities.hpp"
@@ -51,6 +51,7 @@ DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_t
     extraStates = 0;
     allowedCons.push_back(Constraint_tp::JC);
     allowedEvents.push_back(Event_tp::JC);
+    allowedEvents.push_back(Event_tp::MASS);
 }//==============================================
 
 /**
@@ -174,15 +175,62 @@ void DynamicsModel_cr3bp_lt::sim_saveIntegratedData(const double* y, double t, T
 bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
     const double *ic, double t0, double tof, Verbosity_tp verbose) const{
 
-    (void) event;
-    (void) traj;
-    (void) ic;
-    (void) t0;
-    (void) tof;
-    (void) verbose;
+    const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(traj->getSysData());
+
+    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
+    Nodeset_cr3bp_lt eventNodeset(pSys, ic, tof, 2, Nodeset::TIME);
+
+    Constraint fixFirstCon(Constraint_tp::STATE, 0, ic, 7);
+    Constraint eventCon(event.getConType(), 1, event.getConData());
+
+    eventNodeset.addConstraint(fixFirstCon);
+    eventNodeset.addConstraint(eventCon);
+
+    if(verbose == Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
+
+    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
+    CorrectionEngine corrector;
+    corrector.setVarTime(true);
+    corrector.setTol(traj->getTol());
+    corrector.setVerbosity(verbose);
+    corrector.setFindEvent(true);   // apply special settings to minimize computations
+
+    // Because we set findEvent to true, this output nodeset should contain
+    // the full (42 or 48 element) final state
+    Nodeset_cr3bp_lt correctedNodes(pSys);
+    try{
+        corrector.multShoot(&eventNodeset, &correctedNodes);
+    }catch(DivergeException &e){
+        astrohelion::printErr("Unable to locate event; corrector diverged\n");
+        return false;
+    }catch(LinAlgException &e){
+        astrohelion::printErr("LinAlg Err while locating event; bug in corrector!\n");
+        return false;
+    }
+
+    std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
+    std::vector<double> stm = correctedNodes.getNodeByIx(-1).getExtraParamVec("stm");
+    state.insert(state.end(), stm.begin(), stm.end());
+
+    // event time is the TOF of corrected path + time at the state we integrated from
+    double eventTime = correctedNodes.getTOFByIx(0) + t0;
+
+    // Use the data stored in nodes and save the state and time of the event occurence
+    sim_saveIntegratedData(&(state[0]), eventTime, traj);
 
     return true;
 }//=======================================================
+
+std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *pSys) const{
+    // Create crash events from base dynamics model
+    std::vector<Event> events = DynamicsModel::sim_makeDefaultEvents(pSys);
+
+    // Add event to keep mass greater than 0.01 (1% of spacecraft reference mass)
+    std::vector<double> minMass {0.01};
+    events.push_back(Event(Event_tp::MASS, -1, true, minMass));
+
+    return events;
+}//==================================================
 
 //------------------------------------------------------------------------------------------------------
 //      Multiple Shooting Functions
@@ -205,11 +253,109 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
  *  shooting process
  */
 void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodes_out) const{
-    (void) it;
-    (void) findEvent;
-    (void) nodes_in;
-    (void) nodes_out;
-}//====================================================
+    
+    const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(it->sysData);
+    Nodeset_cr3bp_lt *nodeset_out = static_cast<Nodeset_cr3bp_lt *>(nodes_out);
+
+    std::vector<int> newNodeIDs;
+    for(int n = 0; n < it->numNodes; n++){
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
+        // double state[6];
+        std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
+
+        // Reverse scaling
+        for(unsigned int i = 0; i < coreStates; i++){
+            state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
+        }
+
+        Node node(state, 0);
+        node.setConstraints(it->nodeset->getNodeByIx(n).getConstraints());
+
+        if(n+1 == it->numNodes){
+            // Set Jacobi Constant
+            // node.setExtraParam("J", getJacobi(&(state[0]), crSys->getMu()));
+
+            /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
+            state for the last node. We do this by appending the STM elements and dqdT elements to the
+            end of the node array. This output nodeset should have two "nodes": the first 6 elements
+            are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
+            information*/
+            if(findEvent){
+                // Append the 36 STM elements to the node vector
+                Traj lastSeg = it->propSegs.back();
+                MatrixXRd stm = lastSeg.getSTMByIx(-1);
+                std::vector<double> stm_vec(stm.data(), stm.data() + stm.rows()*stm.cols());
+                
+                node.setExtraParamVec("stm", stm_vec);
+            }
+        }
+
+        // Add the node to the output nodeset and save the new ID
+        newNodeIDs.push_back(nodeset_out->addNode(node));
+        // nodeset_out->setJacobi(newNodeIDs.back(), getJacobi(&(state[0]), crSys->getMu()));
+    }
+
+    double tof;
+    int newOrigID, newTermID;
+    for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+        Segment seg = it->nodeset->getSegByIx(s);
+
+        if(it->bVarTime){
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+                it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
+            // Get data
+            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
+            // Reverse scaling
+            tof /= it->freeVarScale[2];     // TOF scaling
+        }else{
+            tof = seg.getTOF();
+        }
+
+        newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
+        int termID = seg.getTerminus();
+        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        
+        Segment newSeg(newOrigID, newTermID, tof);
+        newSeg.setConstraints(seg.getConstraints());
+        newSeg.setVelCon(seg.getVelCon());
+        newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
+        nodeset_out->addSeg(newSeg);
+    }
+
+    // Determine the chronological order of the nodeset
+    // nodeset_out->print();
+    // nodeset_out->printInChrono();
+    std::vector<ArcPiece> order = nodeset_out->getChronoOrder();
+    // Set the epoch of each node based on the time of flight from
+    // the first node
+    double epoch = NAN;
+    for(unsigned int i = 0; i < order.size(); i++){
+        if(order[i].type == ArcPiece::Piece_tp::NODE){
+            if(std::isnan(epoch)){
+                // Copy the epoch value of the first node
+                epoch = nodeset_out->getNode(order[i].id).getEpoch();
+            }else{
+                // Set the epoch value of all other nodes
+                nodeset_out->getNodeRef(order[i].id).setEpoch(epoch);       
+            }
+        }
+        if(order[i].type == ArcPiece::Piece_tp::SEG){
+            if(!std::isnan(epoch)){
+                // When stepping through in chronological order, every step is
+                // forward in time; negative TOFs are associated with segments that
+                // flow opposite the chronological order; ignore sign here.
+                epoch += std::abs(nodeset_out->getSeg(order[i].id).getTOF());
+            }
+        }
+    }
+
+    // nodeset_out->print();
+    std::vector<Constraint> arcCons = it->nodeset->getArcConstraints();
+    for(unsigned int i = 0; i < arcCons.size(); i++){
+        nodeset_out->addConstraint(arcCons[i]);
+    }
+}//======================================================
 
 /**
  *  @brief Perform model-specific initializations on the MultShootData object
@@ -237,17 +383,15 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
     const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->sysData);
 
-    double mu = sysData->getMu();
-    double T = sysData->getThrust();
-    double Isp = sysData->getIsp();
-    double charT = sysData->getCharT();
-    double charL = sysData->getCharL();
-    double f_nondim = T*charT*charT/charL;
+    double mu = sysData->getMu();           // nondimensional mass ratio
+    double f = sysData->getThrust();        // nondimensional thrust magnitude
+    double Isp = sysData->getIsp();         // specific impulse (sec)
+    double charT = sysData->getCharT();     // characteristic time (sec)
+    double charL = sysData->getCharL();     // characteristic length (km)
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
-    double v = sqrt( s[3]*s[3] + s[4]*s[4] + s[5]*s[5] );   // Rotating Velocity
 
     double thrust_dir[3];
     const ControlLaw_cr3bp_lt* law = static_cast<const ControlLaw_cr3bp_lt *>(sysData->getControlLaw());
@@ -257,52 +401,55 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + f_nondim/(s[6]*v)*thrust_dir[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + f_nondim/(s[6]*v)*thrust_dir[1];
-    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + f_nondim/(s[6]*v)*thrust_dir[2];
-    sdot[6] = -T*charT/(Isp*G_GRAV_0);
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + f/(s[6])*thrust_dir[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + f/(s[6])*thrust_dir[1];
+    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + f/(s[6])*thrust_dir[2];
+    sdot[6] = -charL*f/(charT*Isp*G_GRAV_0);   // nondimensional mass flow rate
 
-    /*
-     * Next step, compute STM
-     */
-    
-    // Partials of x_ddot w.r.t. state variables
-    // double dxdx = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((x + mu),2)/pow(d,5) + 
-    //     3*mu*pow((x + mu - 1), 2)/pow(r,5) + (T/m)*(xdot - y)*(ydot + x)/pow(v,3);
-    // double dxdy = 3*(1-mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5) +
-    //     (T/m)*(v*v + (xdot - y)*(xdot - y))/pow(v,3);
-    // double dxdz = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5);
-    // double dxdxdot = -1*(T/m)*(v*v - (xdot - y)*(xdot - y))/pow(v,3);
-    // double dxdydot = (T/m)*(xdot - y)*(ydot + x)/pow(v,3);
-    // double dxdzdot = (T/m)*(xdot - y)*zdot/pow(v,3);
+    MatrixXRd A = MatrixXRd::Zero(7, 7);
 
-    // // Partials of y_ddot w.r.t. state variables
-    // double dydx = 3*(1 - mu)*(x + mu)*y/pow(d,5) + 3*mu*(x + mu - 1)*y/pow(r,5) - 
-    //     (T/m)*(v*v - (ydot + x)*(ydot + x))/pow(v,3);
-    // double dydy = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*y*y/pow(d,5) + 3*mu*y*y/pow(r,5) +
-    //     +(T/m)*(ydot + x)*(xdot - y)/pow(v,3);
-    // double dydz = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5);
-    // double dydxdot = -2 + (T/m)*(ydot + x)*(xdot - y)/pow(v,3);
-    // double dydydot = -1*(T/m)*(v*v - (ydot + x)*(ydot + x))/pow(v,3);
-    // double dydzdot = (T/m)*(ydot + x)*zdot/pow(v,3);
+    // Velocity relationships
+    A(0, 3) = 1;
+    A(1, 4) = 1;
+    A(2, 5) = 1;
 
-    // // Partials of z_ddot w.r.t. state variables
-    // double dzdx = 3*(1-mu)*(x + mu)*z/pow(d,5) + 3*mu*(x + mu - 1)*z/pow(r,5) + (T/m)*(ydot + x)*zdot/pow(v,3);
-    // double dzdy = 3*(1-mu)*y*z/pow(d,5) + 3*mu*y*z/pow(r,5) - (T/m)*(xdot - y)*zdot/pow(v,3);
-    // double dzdz = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*z*z/pow(d,5) + 3*mu*z*z/pow(r,5);
-    // double dzdxdot = (T/m)*zdot*(xdot - y)/pow(v,3);
-    // double dzdydot = (T/m)*zdot*(ydot + x)/pow(v,3);
-    // double dzdzdot = -1*(T/m)*(v*v - zdot*zdot)/pow(v,3);
+    // Uxx
+    A(3, 0) = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((s[0] + mu),2)/pow(d,5) + 
+        3*mu*pow((s[0] + mu - 1), 2)/pow(r,5);
+    // Uxy
+    A(3, 1) = 3*(1-mu)*(s[0] + mu)*s[1]/pow(d,5) + 3*mu*(s[0] + mu - 1)*s[1]/pow(r,5);
+    // Uxz
+    A(3, 2) = 3*(1-mu)*(s[0] + mu)*s[2]/pow(d,5) + 3*mu*(s[0] + mu - 1)*s[2]/pow(r,5);
 
-    // // Create A Matrix
-    // double a_data[] = { 0,    0,    0,    1,       0,       0,
-    //                     0,    0,    0,    0,       1,       0,
-    //                     0,    0,    0,    0,       0,       1,
-    //                     dxdx, dxdy, dxdz, dxdxdot, dxdydot, dxdzdot,
-    //                     dydx, dydy, dydz, dydxdot, dydydot, dydzdot,
-    //                     dzdx, dzdy, dzdz, dzdxdot, dzdydot, dzdzdot};
-    // MatrixXRd A = Eigen::Map<MatrixXRd>(a_data, 6, 6);
-    MatrixXRd A = MatrixXRd::Identity(7,7);
+    // Uyy
+    A(4, 1) = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*s[1]*s[1]/pow(d,5) + 3*mu*s[1]*s[1]/pow(r,5);
+
+    // Uyz
+    A(4, 2) = 3*(1-mu)*s[1]*s[2]/pow(d,5) + 3*mu*s[1]*s[2]/pow(r,5);
+
+    // Uzz
+    A(5, 2) = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*s[2]*s[2]/pow(d,5) + 3*mu*s[2]*s[2]/pow(r,5);
+
+    // Symmetry
+    A(4,0) = A(3,1);
+    A(5,0) = A(3,2);
+    A(5,1) = A(4,2);
+
+    A(3, 4) = 2;
+    A(4, 3) = -2;
+
+    // Get partials of control law and add them to the linear relationship matrix, A
+    double law_partials[3*7];
+    law->getPartials_State(t, s, sysData, paramStruct->ctrlLawID, law_partials, 21);
+
+    for(unsigned int r = 0; r < 3; r++){
+        for(unsigned int c = 0; c < 7; c++){
+            A(3+r, c) += law_partials[r*7 + c];
+        }
+    }
+
+    // toCSV(A, "LT_A.csv");
+    // waitForUser();
 
     // Copy the STM states into a sub-array
     double stmElements[49];
@@ -333,17 +480,15 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
     const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->sysData);
 
-    double mu = sysData->getMu();
-    double T = sysData->getThrust();
-    double Isp = sysData->getIsp();
-    double charT = sysData->getCharT();
-    double charL = sysData->getCharL();
-    double f_nondim = T*charT*charT/charL;
+    double mu = sysData->getMu();           // nondimensional mass ratio
+    double f = sysData->getThrust();        // nondimensional thrust magnitude
+    double Isp = sysData->getIsp();         // specific impulse (sec)
+    double charT = sysData->getCharT();     // characteristic time (sec)
+    double charL = sysData->getCharL();     // characteristic length (km)
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
-    double v = sqrt( s[3]*s[3] + s[4]*s[4] + s[5]*s[5] );   // Rotating Velocity
 
     double thrust_dir[3];
     const ControlLaw_cr3bp_lt* law = static_cast<const ControlLaw_cr3bp_lt *>(sysData->getControlLaw());
@@ -353,13 +498,29 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + f_nondim/(s[6]*v)*thrust_dir[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + f_nondim/(s[6]*v)*thrust_dir[1];
-    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + f_nondim/(s[6]*v)*thrust_dir[2];
-    sdot[6] = -T*charT/(Isp*G_GRAV_0);
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + f/(s[6])*thrust_dir[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + f/(s[6])*thrust_dir[1];
+    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + f/(s[6])*thrust_dir[2];
+    sdot[6] = -charL*f/(charT*Isp*G_GRAV_0);   // nondimensional mass flow rate (G_GRAV_0 is in km/s^2)
 
     return GSL_SUCCESS;
 }//=====================================================
+
+/**
+ *  @brief Compute the Jacobi Constant for the CR3BP
+ *
+ *  @param s the state vector; only the position and velocity states are required
+ *  @param mu the non-dimensional system mass ratio
+ *
+ *  @return the Jacobi Constant at this specific state and system
+ */
+double DynamicsModel_cr3bp_lt::getJacobi(const double s[], double mu){
+    double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
+    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
+    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
+    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
+    return 2*U - v_squared;
+}//================================================
 
 
 }// END of Astrohelion namespace

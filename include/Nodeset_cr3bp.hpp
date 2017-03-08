@@ -40,7 +40,7 @@ class Traj_cr3bp;
 /**
  *	@ingroup traj cr3bp
  *	@brief This derivative of the Nodeset contains additional information for 
- *	the BCR4BPR
+ *	the CR3BP
  *
  *	Nodes are 6-dimensional, with three position states and three velocity states. Times-
  *	of-flight between nodes are recorded in a separate vector.
@@ -59,8 +59,7 @@ public:
 	Nodeset_cr3bp(const SysData_cr3bp*);
 	Nodeset_cr3bp(const SysData_cr3bp*, const double[6], double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
 	Nodeset_cr3bp(const SysData_cr3bp*, std::vector<double>, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
-	Nodeset_cr3bp(Traj_cr3bp, int);
-	Nodeset_cr3bp(Traj_cr3bp, int, NodeDistro_tp);
+	Nodeset_cr3bp(Traj_cr3bp, int, NodeDistro_tp type = NodeDistro_tp::TIME);
 	Nodeset_cr3bp(const Nodeset_cr3bp&, int, int);
 	Nodeset_cr3bp(const Nodeset_cr3bp&);
 	Nodeset_cr3bp(const BaseArcset&);
@@ -79,9 +78,6 @@ public:
 	void setJacobi(int, double);
 	void setJacobiByIx(int, double);
 	//@}
-protected:
-	// Utility
-	void initExtraParam() override;
 };
 
 }

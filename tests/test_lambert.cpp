@@ -51,7 +51,7 @@ void checkLambertSolver_1A(){
 
 	Traj_2bp type1_traj_sim(&sys);
 	SimEngine sim;
-	sim.setMakeCrashEvents(false);
+	sim.setMakeDefaultEvents(false);
 	sim.runSim(node.getState(), node2.getEpoch() - node.getEpoch(), &type1_traj_sim);
 
 	std::vector<double> finalState = type1_traj_sim.getStateByIx(-1);
@@ -98,7 +98,7 @@ void checkLambertSolver_2A(){
 
 	Traj_2bp type2_traj_sim(&sys);
 	SimEngine sim;
-	sim.setMakeCrashEvents(false);
+	sim.setMakeDefaultEvents(false);
 	// sim.setVerbosity(Verbosity_tp::ALL_MSG);
 	sim.runSim(node.getState(), node2.getEpoch() - node.getEpoch(), &type2_traj_sim);
 

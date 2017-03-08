@@ -50,15 +50,19 @@
  */
 
 /** @defgroup 2bp 2BP
- * Contains objects and methods that handle 2BP trajectories
+ * Contains objects and methods that handle 2BP data
  */ 
 
 /** @defgroup cr3bp CR3BP
- * Contains objects and methods that handle CR3BP trajectories
+ * Contains objects and methods that handle CR3BP data
  */ 
 
 /** @defgroup bc4bp BC4BP
- * Contains objects and methods that handle BC4BP trajectories
+ * Contains objects and methods that handle BC4BP data
+ */
+
+/** @defgroup cr3bp_lt CR3BP-LT
+ * Contains objects and methods that handle low-thrust CR3BP data
  */
 
 #pragma once

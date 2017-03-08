@@ -37,13 +37,12 @@ namespace astrohelion{
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
+
 /**
  *	@brief Create a nodeset with specified system data
  *	@param pData system data object
  */
-Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData) : Nodeset(pData){
-	initExtraParam();
-}//======================================================================
+Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData) : Nodeset(pData){}
 
 /**
  *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
@@ -58,7 +57,6 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData) : Nodeset(pData){
 Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, const double IC[6], double tof,
 	int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
-	initExtraParam();
 	std::vector<double> ic(IC, IC+6);
 	initFromICs(ic, 0, tof, numNodes, type);
 }//======================================================================
@@ -76,26 +74,8 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, const double IC[6], dou
 Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, std::vector<double> IC, double tof,
 	int numNodes, NodeDistro_tp type) : Nodeset(pData){
 
-	initExtraParam();
 	initFromICs(IC, 0, tof, numNodes, type);
 }//=====================================================================
-
-/**
- *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
- *
- *	The node distribution type is automatically specified as splitting the trajectory equally in TIME
- *	This function relies on integration to generate nodes, so do not use this if
- *	the trajectory was created by a linearization or other method that uses something
- *	other than the non-linear dynamics to compute points along the trajectory.
- *
- *	@param traj the trajectory to split
- *	@param numNodes the number of nodes.
- */
-Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes) : Nodeset(traj.getSysData()){
-
-	initExtraParam();
-	initFromTraj(traj, numNodes, Nodeset::TIME);
-}//===========================================
 
 /**
  *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
@@ -111,7 +91,6 @@ Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes) : Nodeset(traj.getSy
 Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes,
 	NodeDistro_tp type) : Nodeset(traj.getSysData()){
 	
-	initExtraParam();
 	initFromTraj(traj, numNodes, type);
 }//===========================================
 
@@ -131,17 +110,13 @@ Nodeset_cr3bp::Nodeset_cr3bp(const Nodeset_cr3bp &orig, int first,
  *	handle copying the generic fields like state and tofs
  *	@param n a nodeset
  */
-Nodeset_cr3bp::Nodeset_cr3bp(const Nodeset_cr3bp& n) : Nodeset(n) {
-	initExtraParam();
-}//====================================================
+Nodeset_cr3bp::Nodeset_cr3bp(const Nodeset_cr3bp& n) : Nodeset(n) {}
 
 /**
  *	@brief Create a CR3BP nodeset from its base class
  *	@param a an arc data reference
  */
-Nodeset_cr3bp::Nodeset_cr3bp(const BaseArcset &a) : Nodeset(a) {
-	initExtraParam();
-}//====================================================
+Nodeset_cr3bp::Nodeset_cr3bp(const BaseArcset &a) : Nodeset(a) {}
 
 /**
  *  @brief Create a new nodeset object on the stack
@@ -244,14 +219,5 @@ void Nodeset_cr3bp::setJacobiByIx(int ix, double val){
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
-
-/**
- *	@brief Initialize the extra param vector for info specific to this nodeset
- */
-void Nodeset_cr3bp::initExtraParam(){
-	// Add another variable for Jacobi Constant
-}//====================================================
-
-
 
 }// END of Astrohelion namespace

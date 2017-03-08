@@ -31,7 +31,7 @@
 
 namespace astrohelion{
 /**
- *	@ingroup model
+ *	@ingroup model cr3bp_lt
  *	@brief Derivative of DynamicsModel, specific to the CR3BP-LT
  *
  *	Under construction. Simulation is fully supported in this model,
@@ -76,6 +76,7 @@ public:
 	 */
 	void sim_saveIntegratedData(const double*, double, Traj*) const;
 	bool sim_locateEvent(Event, Traj*, const double*, double, double, Verbosity_tp) const;
+	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const;
 	//@}
 
 	/**

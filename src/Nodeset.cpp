@@ -48,25 +48,19 @@ namespace astrohelion{
  *	@brief Construct a nodeset for the specified system
  *	@param sys a pointer to a system data object
  */
-Nodeset::Nodeset(const SysData *sys) : BaseArcset(sys){
-	initExtraParam();
-}//====================================================
+Nodeset::Nodeset(const SysData *sys) : BaseArcset(sys){}
 
 /**
  *	@brief Create a nodeset from another nodeset
  *	@param n a nodeset reference
  */
-Nodeset::Nodeset(const Nodeset &n) : BaseArcset (n){
-	initExtraParam();
-}//====================================================
+Nodeset::Nodeset(const Nodeset &n) : BaseArcset (n){}
 
 /**
  *	@brief Create a nodeset from its base object
  *	@param a an arc data object
  */
-Nodeset::Nodeset(const BaseArcset &a) : BaseArcset (a){
-	initExtraParam();
-}//====================================================
+Nodeset::Nodeset(const BaseArcset &a) : BaseArcset (a){}
 
 /**
  *	@brief Create a nodeset as a subset of another
@@ -225,7 +219,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	// Create a simulation engine and add the events to it
 	SimEngine engine;
 	engine.setRevTime(seg.getTOF() < 0);
-	engine.setMakeCrashEvents(false);
+	engine.setMakeDefaultEvents(false);
 	for(unsigned int i = 0; i < evts.size(); i++){
 		evts[i].setStopOnEvent(false);		// Ignore stopping conditions that other processes may have imposed
 		engine.addEvent(evts[i]);
@@ -503,7 +497,7 @@ void Nodeset::initFromICs(std::vector<double> IC, double t0, double tof, int num
 void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, int numNodes){
 	SimEngine engine;
 	engine.setVerbosity(Verbosity_tp::SOME_MSG);
-	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
+	engine.setMakeDefaultEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	double segTOF = tof/(numNodes-1);
@@ -533,7 +527,7 @@ void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, in
 void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double tof, int numNodes){
 	SimEngine engine;
 	engine.setVerbosity(Verbosity_tp::SOME_MSG);
-	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
+	engine.setMakeDefaultEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 
 	// Run the simulation and get the trajectory
@@ -611,13 +605,6 @@ void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double to
 void Nodeset::initFromTraj(Traj traj, int numNodes, NodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
 	initFromICs(traj.getStateByIx(0), traj.getEpochByIx(0), traj.getEpochByIx(-1) - traj.getEpochByIx(0), numNodes, type);
-}//==============================================
-
-/**
- *	@brief Initialize the extraParam vector to hold nodeset-specific data
- */
-void Nodeset::initExtraParam(){
-	// Nothing to do right now!
 }//==============================================
 
 }// END of Astrohelion namespace

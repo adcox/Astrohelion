@@ -71,6 +71,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 		case Event_tp::XZ_PLANE:
 		case Event_tp::XY_PLANE:
 		case Event_tp::CRASH:
+		case Event_tp::MASS:
 		{
 			std::vector<double> params {0};
 			initEvent(t, dir, willStop, params);
@@ -160,6 +161,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 		case Event_tp::YZ_PLANE:
 		case Event_tp::XZ_PLANE:
 		case Event_tp::XY_PLANE:
+		case Event_tp::MASS:
 			conType = Constraint_tp::STATE;
 			break;
 		case Event_tp::CRASH:
@@ -189,7 +191,8 @@ void Event::initialize(const SysData* pSys){
 		throw Exception("Event::initialize: The current dynamic model does not support this event type");
 	}
 
-	double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
+	// double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
+	std::vector<double> data(6, NAN);
 	switch(type){
 		case Event_tp::YZ_PLANE: data[0] = paramsIn[0]; break;	// x = specified value
 		case Event_tp::XZ_PLANE: data[1] = paramsIn[0];	break;	// y = specified value
@@ -212,11 +215,15 @@ void Event::initialize(const SysData* pSys){
 			data[0] = paramsIn[0];
 			data[1] = paramsIn[1];
 			break;
+		case Event_tp::MASS:
+			data.assign(7,NAN);
+			data[6] = paramsIn[0];	// mass = specified value
+			break;
 		default: break;	// Do nothing
 	}
 
 	conData.clear();
-	conData.insert(conData.begin(), data, data+6);
+	conData.insert(conData.begin(), data.begin(), data.end());
 }//====================================================
 
 /**
@@ -322,6 +329,7 @@ const char* Event::getTypeStr() const{
 		case Event_tp::JC: return "jacobi constant"; break;
 		case Event_tp::APSE: return "apse"; break;
 		case Event_tp::DIST: return "distance"; break;
+		case Event_tp::MASS: return "mass"; break;
 		default: return "UNDEFINED!"; break;
 	}
 }//========================================
@@ -447,13 +455,13 @@ void Event::updateDist(const double y[6], double t){
 
 /**
  *	@brief Compute the distance from the input state to the event
- *	@param y a 6-element state vector representing the current integration state
+ *	@param y a state vector representing the current integration state
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return the distance
  *	@throws Exception if the event type associated with this event is not implemented
  *	@throws Exception if the system data pointer has not been initialized via the initialize() function
  */
-double Event::getDist(const double y[6], double t) const{
+double Event::getDist(const double *y, double t) const{
 	if(!pSysData)
 		throw Exception("Event::getDist: SysData pointer has not been initialized; please call initialize() function");
 
@@ -495,6 +503,7 @@ double Event::getDist(const double y[6], double t) const{
 			d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			break;
 		}
+		case Event_tp::MASS: d = conData[6] - y[6]; break;
 		default:
 			throw Exception("Event::getDist: Event type not implemented");
 	}
@@ -506,16 +515,16 @@ double Event::getDist(const double y[6], double t) const{
  *	@brief Get the direction of propagation for the event by comparing an input state <tt>y</tt>
  *	to the state stored in the <tt>state</tt> variable (which was updated last iteration)
  *
- *	@param y a 6-element state vector
+ *	@param y a state vector
  *	@param t non-dimensional time associated with state <tt>y</tt>
  *	@return positive or negative one to correspond with the sign
  *	@throws Exception if the event type associated with this event is not implemented
  */
-int Event::getDir(const double y[6], double t) const{
+int Event::getDir(const double *y, double t) const{
 	double d = 0;
 	double dt = t - theTime;
 
-	// Compute distance from old point (in state) to new point (in y)
+	// Compute distance from old point (state) to new point (y)
 	switch(type){
 		case Event_tp::YZ_PLANE: d = y[0] - state[0]; break;
 		case Event_tp::XZ_PLANE: d = y[1] - state[1]; break;
@@ -526,6 +535,7 @@ int Event::getDir(const double y[6], double t) const{
 		case Event_tp::DIST:
 			d = dist - lastDist;
 			break;
+		case Event_tp::MASS: d = y[6] - state[6]; break;
 		default: 
 			throw Exception("Event type not implemented");
 	}

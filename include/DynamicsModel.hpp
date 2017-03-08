@@ -245,6 +245,8 @@ public:
 	 *  @{
 	 */
 
+	virtual std::vector<Event> sim_makeDefaultEvents(const SysData*) const;
+	
 	/**
 	 *  @brief Use a correction algorithm to accurately locate an event crossing
 	 *

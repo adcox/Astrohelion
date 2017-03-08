@@ -141,6 +141,19 @@ double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysD
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
+std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) const{
+	std::vector<Event> events;
+	// Create events that prevent the s/c from flying through planets
+	for(int p = 0; p < pSys->getNumPrimaries(); p++){
+        // Put primary index # into an array, create event
+        std::vector<double> Pix {static_cast<double>(p)};
+        // Event e(Event_tp::CRASH, 0, true, Pix);
+        events.push_back(Event(Event_tp::CRASH, 0, true, Pix));
+        // events.push_back(e);
+    }
+    return events;
+}//==================================================
+
 void DynamicsModel::sim_saveIntegratedData(const double *y, double t, Traj* traj) const{
     int id = traj->addNode(Node(y, coreStates, t));
 	if(id > 0){

@@ -31,7 +31,22 @@ namespace astrohelion{
 
 ControlLaw::ControlLaw(){}
 
-void ControlLaw::getLaw(double t, const double *s, const SysData *sysData, unsigned int lawID, double *law, unsigned int len) const{
+//------------------------------------------------------------------------------------------------------
+//      Switchboard Functions
+//------------------------------------------------------------------------------------------------------
+
+/**
+ *  \brief [brief description]
+ *  \details [long description]
+ * 
+ *  \param t [description]
+ *  \param s [description]
+ *  \param pSys [description]
+ *  \param int [description]
+ *  \param law [description]
+ *  \param int [description]
+ */
+void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, unsigned int lawID, double *law, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
 			// Handle default case with no control
@@ -44,7 +59,52 @@ void ControlLaw::getLaw(double t, const double *s, const SysData *sysData, unsig
 	}
 	(void) t;
 	(void) s;
-	(void) sysData;
+	(void) pSys;
+}//====================================================
+
+/**
+ *  \brief [brief description]
+ *  \details [long description]
+ * 
+ *  \param t [description]
+ *  \param s [description]
+ *  \param pSys [description]
+ *  \param int [description]
+ *  \param partials [description]
+ *  \param int [description]
+ */
+void ControlLaw::getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const{
+	switch(lawID){
+		case NO_CTRL:
+			// Handle default case with no control
+			for(unsigned int i = 0; i < len; i++){
+				partials[i] = 0;
+			}
+			break;
+		default:
+			throw Exception("ControlLaw::GetPartials_State: Unrecognized lawID");
+	}
+	(void) t;
+	(void) s;
+	(void) pSys;
+}//====================================================
+
+//------------------------------------------------------------------------------------------------------
+//      Utility Functions
+//------------------------------------------------------------------------------------------------------
+
+/**
+ *  \brief [brief description]
+ *  \details [long description]
+ * 
+ *  \param int [description]
+ *  \return [description]
+ */
+std::string ControlLaw::lawIDToString(unsigned int id) const{
+	switch(id){
+		case NO_CTRL: return "NONE";
+		default: return "UNDEFINED";
+	}
 }//====================================================
 
 }

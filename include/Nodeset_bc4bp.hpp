@@ -76,7 +76,6 @@ public:
 	// Utility Functions
 	
 private:
-	void initExtraParam() override;
 };
 
 }

@@ -453,7 +453,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 	simEngine.setNumSteps(2);
 
 	if(bFindEvent || bIgnoreCrash){
-		simEngine.setMakeCrashEvents(false);	// don't use crash events when searching for an event
+		simEngine.setMakeDefaultEvents(false);	// don't use crash events when searching for an event
 	}
 
 	// Define values for use in corrections loop

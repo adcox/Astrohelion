@@ -1187,7 +1187,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     SimEngine sim;    // Engine to perform simulation
     sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
     sim.setRelTol(sim.getAbsTol());
-    sim.setMakeCrashEvents(false);      // Ignore any crashes into the primaries
+    sim.setMakeDefaultEvents(false);      // Ignore any crashes into the primaries
     std::vector<int> zeroStates;        // Which states must be zero to ensure a perpendicular crossing
 
     Event mirrorEvt;

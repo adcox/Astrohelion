@@ -381,20 +381,21 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
-        double state[6];
-        std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
+        // double state[6];
+        std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
 
         // Reverse scaling
-        for(int i = 0; i < 6; i++){
+        for(unsigned int i = 0; i < coreStates; i++){
             state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
         }
 
-        Node node(state, 6, 0);
+        Node node(state, 0);
         node.setConstraints(it->nodeset->getNodeByIx(n).getConstraints());
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
-            node.setExtraParam("J", getJacobi(state, crSys->getMu()));
+            node.setExtraParam("J", getJacobi(&(state[0]), crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
@@ -405,7 +406,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
                 // Append the 36 STM elements to the node vector
                 Traj lastSeg = it->propSegs.back();
                 MatrixXRd stm = lastSeg.getSTMByIx(-1);
-                std::vector<double> stm_vec(stm.data(), stm.data()+36);
+                std::vector<double> stm_vec(stm.data(), stm.data() + stm.rows()*stm.cols());
                 
                 node.setExtraParamVec("stm", stm_vec);
             }
@@ -413,7 +414,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 
         // Add the node to the output nodeset and save the new ID
         newNodeIDs.push_back(nodeset_out->addNode(node));
-        nodeset_out->setJacobi(newNodeIDs.back(), getJacobi(state, crSys->getMu()));
+        nodeset_out->setJacobi(newNodeIDs.back(), getJacobi(&(state[0]), crSys->getMu()));
     }
 
     double tof;

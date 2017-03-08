@@ -122,7 +122,7 @@ double SimEngine::getAbsTol() const {return absTol;}
 /**
  *  \return ID of the control law implemented during this simulation
  */
-unsigned int SimEngine::getCtrlLawID() const {return ctrlLawID; }
+unsigned int SimEngine::getCtrlLaw() const {return ctrlLawID; }
 
 /**
  *	@return the relative tolerance for the engine, non-dimensional units
@@ -187,10 +187,10 @@ void SimEngine::addEvent(Event evt){
 }//======================================
 
 /**
- *  @brief Determine whether or not crash events are created for each simulation
- *  @return whether or not crash events are created for each simulation
+ *  @brief Determine whether or not default events are created for each simulation
+ *  @return whether or not default events are created for each simulation
  */
-bool SimEngine::makesCrashEvents() const { return bMakeCrashEvents; }
+bool SimEngine::makesDefaultEvents() const { return bMakeDefaultEvents; }
 
 /**
  *	@brief Specify whether or not the engine should run in reverse time
@@ -230,15 +230,15 @@ void SimEngine::setRelTol(double t){
  *  \brief Specify the ID of the control law to be implemented during the simulation
  *  \param id control law ID
  */
-void SimEngine::setCtrlLawID(unsigned int id){ ctrlLawID = id; }
+void SimEngine::setCtrlLaw(unsigned int id){ ctrlLawID = id; }
 
 /**
- *  @brief Tell the simulation engine whether or not to make crash events at the
+ *  @brief Tell the simulation engine whether or not to make default events at the
  *  beginning of the simulation
  * 
- *  @param b whether or not to create crash-detection events for each primary
+ *  @param b whether or not to create default events
  */
-void SimEngine::setMakeCrashEvents(bool b){ bMakeCrashEvents = b; }
+void SimEngine::setMakeDefaultEvents(bool b){ bMakeDefaultEvents = b; }
 
 /**
  *  \brief Set the maximum computation time limit (seconds).
@@ -457,8 +457,8 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
         cleanEngine();
     }
 
-    if(bMakeCrashEvents)
-        createCrashEvents(traj->getSysData());
+    if(bMakeDefaultEvents)
+        createDefaultEvents(traj->getSysData());
 
     EOM_ParamStruct paramStruct(traj->getSysData(), ctrlLawID);
     eomParams = &paramStruct;
@@ -529,9 +529,12 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
 
     // Choose EOM function based on system type and simplicity
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
+
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+        "  using control law: %s\n", traj->getSysData()->getControlLaw()->lawIDToString(ctrlLawID).c_str());
 
     /* Create a system to integrate; we don't include a Jacobin (NULL)
      *  The parameter set eomParams can be modified 
@@ -813,19 +816,17 @@ void SimEngine::cleanEngine(){
 }//====================================================
 
 /**
- *  Create default crash events for the system
+ *  Create default events for the system
  *  @param sysData pointer to the system data object for the simulation
  */
-void SimEngine::createCrashEvents(const SysData *sysData){
-    if(!bMadeCrashEvents){
-        for(int p = 0; p < sysData->getNumPrimaries(); p++){
-            // Put primary index # into an array, create event
-            std::vector<double> Pix {static_cast<double>(p)};
-            Event crashEvt(Event_tp::CRASH, 0, true, Pix);
-            // Add event to list by default
-            addEvent(crashEvt);
-        }
-        bMadeCrashEvents = true;
+void SimEngine::createDefaultEvents(const SysData *sysData){
+    if(!bMadeDefaultEvents){
+        
+        std::vector<Event> defEvents = sysData->getDynamicsModel()->sim_makeDefaultEvents(sysData);
+        for(unsigned int i = 0; i < defEvents.size(); i++)
+            addEvent(defEvents[i]);
+
+        bMadeDefaultEvents = true;
     }
 }//====================================================
 
@@ -847,8 +848,8 @@ void SimEngine::reset(){
     relTol = 1e-14;
     dtGuess = 1e-6;
     numSteps = 1000;
-    bMadeCrashEvents = false;
-    bMakeCrashEvents = true;
+    bMadeDefaultEvents = false;
+    bMakeDefaultEvents = true;
     maxCompTime = -1;
     ctrlLawID = 0;
 }//====================================================
@@ -859,7 +860,7 @@ void SimEngine::reset(){
 void SimEngine::clearEvents(){
     astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Clearing all events...\n");
     events.clear();
-    bMadeCrashEvents = false;
+    bMadeDefaultEvents = false;
 }//====================================================
 
 /**
@@ -881,8 +882,8 @@ void SimEngine::copyMe(const SimEngine &s){
     numSteps = s.numSteps;
     events = s.events;
     eventOccurs = s.eventOccurs;
-    bMakeCrashEvents = s.bMakeCrashEvents;
-    bMadeCrashEvents = s.bMadeCrashEvents;
+    bMakeDefaultEvents = s.bMakeDefaultEvents;
+    bMadeDefaultEvents = s.bMadeDefaultEvents;
     maxCompTime = s.maxCompTime;
     startTimestamp = s.startTimestamp;
     ctrlLawID = s.ctrlLawID;

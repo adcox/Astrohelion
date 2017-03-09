@@ -953,26 +953,7 @@ std::vector<double> BaseArcset::getEpochs() const{
  *	@return a vector containing the extra parameter at the specified step and index
  *	@throws Exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
  */
-// std::vector<double> BaseArcset::getExtraParam(int n, int ix) const{
-// 	if(n < 0)
-// 		n += nodes.size();
-
-// 	if(n < 0 || n >= static_cast<int>(nodes.size()))
-// 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
-
-// 	if(ix < 0 || ix >= static_cast<int>(extraParamRowSize.size()))
-// 		throw Exception("BaseArcset::getExtraParam: parameter index out of bounds");
-
-// 	int startIx = 0;
-// 	for(int i = 0; i < ix; i++)
-// 		startIx += extraParamRowSize[i];
-
-// 	int size = extraParamRowSize[ix];
-// 	std::vector<double> extraParam = nodes[n].getExtraParams();
-// 	return std::vector<double>(extraParam.begin()+startIx, extraParam.begin()+startIx + size);
-// }//====================================================
-
-double BaseArcset::getExtraParam(int n, std::string key) const{
+double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 
@@ -982,7 +963,7 @@ double BaseArcset::getExtraParam(int n, std::string key) const{
 	return nodes[n].getExtraParam(key);
 }//====================================================
 
-std::vector<double> BaseArcset::getExtraParamVec(int n, std::string key) const{
+std::vector<double> BaseArcset::getExtraParamVecByIx(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 

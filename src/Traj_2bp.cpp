@@ -44,25 +44,19 @@ namespace astrohelion{
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-Traj_2bp::Traj_2bp(const SysData_2bp *sys) : Traj(sys){
-	initExtraParam();
-}//====================================================
+Traj_2bp::Traj_2bp(const SysData_2bp *sys) : Traj(sys){}
 
 /**
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-Traj_2bp::Traj_2bp(const Traj_2bp &t) : Traj(t){
-	initExtraParam();
-}//====================================================
+Traj_2bp::Traj_2bp(const Traj_2bp &t) : Traj(t){}
 
 /**
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-Traj_2bp::Traj_2bp(const BaseArcset &a) : Traj(a){
-	initExtraParam();
-}//====================================================
+Traj_2bp::Traj_2bp(const BaseArcset &a) : Traj(a){}
 
 /**
  *  @brief Create a new trajectory object on the stack
@@ -135,13 +129,6 @@ Traj& Traj_2bp::operator +=(const Traj &rhs){
 //-----------------------------------------------------
 
 /**
- *	@brief Initialize the extra param vector for info specific to this trajectory
- */
-void Traj_2bp::initExtraParam(){
-	// Nothing to do here, for now
-}//====================================================
-
-/**
  *	@brief Save the trajectory to a file
  *	@param filename the name of the .mat file
  */
@@ -191,6 +178,11 @@ void Traj_2bp::readFromMat(const char *filepath){
 	if(NULL == matfp){
 		throw Exception("Traj: Could not load data from file");
 	}
+
+	readExtraParamFromMat(matfp, "sma", "sma");
+	readExtraParamFromMat(matfp, "ecc", "ecc");
+	readExtraParamFromMat(matfp, "angMom", "angMom");
+	readExtraParamFromMat(matfp, "energy", "energy");
 
 	Mat_Close(matfp);
 }//====================================================

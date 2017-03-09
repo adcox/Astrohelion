@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "Traj.hpp"
+#include "Traj_cr3bp.hpp"
 
 
 namespace astrohelion{
@@ -46,7 +46,7 @@ class SysData_cr3bp_lt;
  *	@version September 2, 2015
  *	@copyright GNU GPL v3.0
  */
-class Traj_cr3bp_lt : public Traj{
+class Traj_cr3bp_lt : public Traj_cr3bp{
 
 public:
 	/**
@@ -64,16 +64,10 @@ public:
 	 *  @name Set and Get Functions
 	 *  @{
 	 */
-	double getJacobiByIx(int) const;
-	double getMassByIx(int) const;
 
-	void setJacobiByIx(int, double);
-	void setMassByIx(int, double);
+		// Nothing Here!
+
 	//@}
-	
-	void saveToMat(const char*) const override;
-private:
-	void initExtraParam();
 };
 
 }// END of Astrohelion namespace

@@ -136,14 +136,14 @@ void Core_Settings::save(const std::string &filename){
  *  @brief Default constructor
  */
 Core_Initializer::Core_Initializer() : settings(){
-	std::cout << "Constructing Core_Initializer" << std::endl;
+	// std::cout << "Constructing Core_Initializer" << std::endl;
 }//================================================
 
 /**
  *	@brief Initialize the library
  */
 void Core_Initializer::runInit(){
-	std::cout << "Initializing Core System" << std::endl;
+	// std::cout << "Initializing Core System" << std::endl;
 
 	// ************************************************************************
    	// 			Folder, Directory, and File Initialization
@@ -198,7 +198,7 @@ void Core_Initializer::runInit(){
 	// Load user settings from file
 	try{
 		settings.load(userSettingsFilepath);
-		std::cout << "Loaded user settings\n";
+		// std::cout << "Loaded user settings\n";
 	}catch(std::exception &e){
 		// Wasn't able to load user settings, so try loading default settings
 		std::cout << "Unable to load user settings, attempting to load default_settings\n";
@@ -245,7 +245,7 @@ void Core_Initializer::runInit(){
 
     // Get number of concurrent threads available
     unsigned int nthreads = std::thread::hardware_concurrency();
-    std::cout << "Max # Concurrent Threads: " << nthreads << std::endl;
+    // std::cout << "Max # Concurrent Threads: " << nthreads << std::endl;
 
     // ************************************************************************
    	// 			OpenMP Initialization

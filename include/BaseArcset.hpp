@@ -136,8 +136,8 @@ public:
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getEpochs() const;
-	double getExtraParam(int, std::string) const;
-	std::vector<double> getExtraParamVec(int, std::string) const;
+	double getExtraParamByIx(int, std::string) const;
+	std::vector<double> getExtraParamVecByIx(int, std::string) const;
 	int getNextNodeID() const;
 	int getNextSegID() const;
 	Node getNode(int) const;

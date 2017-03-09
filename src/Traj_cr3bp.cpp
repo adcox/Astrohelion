@@ -44,25 +44,19 @@ namespace astrohelion{
  *	@brief Create a trajectory for a specific system
  *	@param sys a pointer to a system data object
  */
-Traj_cr3bp::Traj_cr3bp(const SysData_cr3bp *sys) : Traj(sys){
-	initExtraParam();
-}//====================================================
+Traj_cr3bp::Traj_cr3bp(const SysData_cr3bp *sys) : Traj(sys){}
 
 /**
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-Traj_cr3bp::Traj_cr3bp(const Traj_cr3bp &t) : Traj(t){
-	initExtraParam();
-}//====================================================
+Traj_cr3bp::Traj_cr3bp(const Traj_cr3bp &t) : Traj(t){}
 
 /**
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-Traj_cr3bp::Traj_cr3bp(const BaseArcset &a) : Traj(a){
-	initExtraParam();
-}//====================================================
+Traj_cr3bp::Traj_cr3bp(const BaseArcset &a) : Traj(a){}
 
 /**
  *  @brief Load the trajectory from a saved data file
@@ -73,7 +67,6 @@ Traj_cr3bp::Traj_cr3bp(const BaseArcset &a) : Traj(a){
  *  object
  */
 Traj_cr3bp::Traj_cr3bp(const char* filepath, const SysData_cr3bp *pSys) : Traj(pSys){
-	initExtraParam();
 	readFromMat(filepath);
 }//====================================================
 
@@ -177,13 +170,6 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
-
-/**
- *	@brief Initialize the extra param vector for info specific to this trajectory
- */
-void Traj_cr3bp::initExtraParam(){
-	// Add a variable for Jacobi Constant
-}//====================================================
 
 /**
  *	@brief Save the trajectory to a file

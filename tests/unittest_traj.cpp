@@ -6,8 +6,10 @@
 #include "SimEngine.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
+#include "SysData_cr3bp_lt.hpp"
 #include "Traj_bc4bp.hpp"
 #include "Traj_cr3bp.hpp"
+#include "Traj_cr3bp_lt.hpp"
 
 using namespace astrohelion;
 
@@ -55,4 +57,28 @@ BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 	BOOST_CHECK(bcTraj.getTimeByIx(-1) == bcTemp.getTimeByIx(-1));
 	BOOST_CHECK(bcTraj.getSTMByIx(-1) == bcTemp.getSTMByIx(-1));
 	BOOST_CHECK(bcTraj.get_dqdTByIx(-1) == bcTemp.get_dqdTByIx(-1));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
+	SysData_cr3bp_lt emData("earth", "moon", 12e-3, 1500, 14);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+	Traj_cr3bp_lt ltTraj(&emData);
+	sim.runSim(ic, T, &ltTraj);
+
+	// Query the acceleration so it is computed
+	std::vector<double> a = ltTraj.getAccelByIx(-1);
+	ltTraj.saveToMat("data/lowthrustTraj.mat");
+
+	Traj_cr3bp_lt ltTemp(&emData);
+	ltTemp.readFromMat("data/lowthrustTraj.mat");
+
+	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
+	BOOST_CHECK(ltTraj.getStateByIx(-1) == ltTemp.getStateByIx(-1));
+	BOOST_CHECK(ltTraj.getAccelByIx(-1) == ltTemp.getAccelByIx(-1));
+	BOOST_CHECK(ltTraj.getTimeByIx(-1) == ltTemp.getTimeByIx(-1));
+	BOOST_CHECK(ltTraj.getSTMByIx(-1) == ltTemp.getSTMByIx(-1));
+	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));	
 }//====================================================

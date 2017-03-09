@@ -210,8 +210,8 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
         return false;
     }
 
-    std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
-    std::vector<double> stm = correctedNodes.getNodeByIx(-1).getExtraParamVec("stm");
+    std::vector<double> state = correctedNodes.getStateByIx(-1);
+    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, "stm");
     state.insert(state.end(), stm.begin(), stm.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from

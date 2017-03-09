@@ -67,9 +67,6 @@ public:
 	// Utility
 	void readFromMat(const char*) override;
 	void saveToMat(const char*) const override;
-private:
-
-	void initExtraParam();
 };
 
 }// END of Astrohelion namespace

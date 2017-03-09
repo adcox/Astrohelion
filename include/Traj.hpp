@@ -96,7 +96,6 @@ public:
 
 	// Utility Functions
 	Nodeset discretize(int) const;
-	void initExtraParam();
 	void print() const;
 	virtual void readFromMat(const char*);
 	virtual void saveToMat(const char*) const;

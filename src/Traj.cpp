@@ -44,25 +44,19 @@ namespace astrohelion{
  *	@brief Create a trajectory for a specific system
  *	@param data a pointer to a system data object
  */
-Traj::Traj(const SysData *data) : BaseArcset(data) {
-	initExtraParam();
-}//====================================================
+Traj::Traj(const SysData *data) : BaseArcset(data) {}
 
 /**
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-Traj::Traj(const Traj &t) : BaseArcset(t) {
-	initExtraParam();
-}//====================================================
+Traj::Traj(const Traj &t) : BaseArcset(t) {}
 
 /**
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-Traj::Traj(const BaseArcset &a) : BaseArcset(a) {
-	initExtraParam();
-}//====================================================
+Traj::Traj(const BaseArcset &a) : BaseArcset(a) {}
 
 /**
  *  @brief Default destructor
@@ -386,13 +380,6 @@ void Traj::print() const {
 
 	printf("  %d Nodes\n  %d Segments\n", getNumNodes(), getNumSegs());
 	printf("  TOF = %.4f\n", getTotalTOF());
-}//====================================================
-
-/**
- *	@brief Initialize the extra param vector for trajectory-specific info
- */
-void Traj::initExtraParam(){
-	// Nothing to do here!
 }//====================================================
 
 /**

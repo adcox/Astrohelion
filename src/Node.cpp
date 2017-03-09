@@ -51,7 +51,7 @@ Node::Node(){}
  *  @param len length of the array
  *  @param epoch epoch associated with this node
  */
-Node::Node(const double state[6], unsigned int len, double epoch){
+Node::Node(const double *state, unsigned int len, double epoch){
 	this->state.assign(state, state + len);
 	this->epoch = epoch;
 }//====================================================
@@ -63,9 +63,6 @@ Node::Node(const double state[6], unsigned int len, double epoch){
  *  @param epoch epoch associated with this node
  */
 Node::Node(std::vector<double> state, double epoch){
-	if(state.size() != 6)
-		throw Exception("Node::constructor: state must have six elements");
-
 	this->state = state;
 	this->epoch = epoch; 
 }//====================================================
@@ -323,7 +320,9 @@ void Node::copyMe(const Node &n){
 void Node::print() const{
 	printf("Node | id = %d\n", ID);
 	printf("\tEpoch = %.4f\n", epoch);
-	printf("\tState = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f]\n", state[0], state[1], state[2], state[3], state[4], state[5]);
+	printf("\tState =[");
+	for(unsigned int s = 0; s < state.size(); s++){ printf("%.4f    ", state[s]); }
+	printf("]\n");
 
 	printf("\tExtra Parameters:\n");
 	for(auto const& param : extraParam){

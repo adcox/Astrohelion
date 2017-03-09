@@ -44,25 +44,19 @@ namespace astrohelion{
  *	@brief Create a trajectory for a specific system
  *	@param pSys a pointer to a system data object
  */
-Traj_bc4bp::Traj_bc4bp(const SysData_bc4bp *pSys) : Traj(pSys){
-	initExtraParam();
-}//====================================================
+Traj_bc4bp::Traj_bc4bp(const SysData_bc4bp *pSys) : Traj(pSys){}
 
 /**
  *	@brief Create a trajectory from another trajectory
  *	@param t a trajectory reference
  */
-Traj_bc4bp::Traj_bc4bp(const Traj_bc4bp &t) : Traj(t){
-	initExtraParam();
-}//====================================================
+Traj_bc4bp::Traj_bc4bp(const Traj_bc4bp &t) : Traj(t){}
 
 /**
  *	@brief Create a trajectory from its base class
  *	@param a an arc data reference
  */
-Traj_bc4bp::Traj_bc4bp(const BaseArcset &a) : Traj(a){
-	initExtraParam();
-}//====================================================
+Traj_bc4bp::Traj_bc4bp(const BaseArcset &a) : Traj(a){}
 
 /**
  *  @brief Load the trajectory from a saved data file
@@ -73,7 +67,6 @@ Traj_bc4bp::Traj_bc4bp(const BaseArcset &a) : Traj(a){
  *  object
  */
 Traj_bc4bp::Traj_bc4bp(const char* filepath, const SysData_bc4bp *pSys) : Traj(pSys){
-	initExtraParam();
 	readFromMat(filepath);
 }//====================================================
 
@@ -153,7 +146,7 @@ std::vector<double> Traj_bc4bp::get_dqdTByIx(int ix){
 	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_bc4bp::getdqdT: invalid index");
 
-	return getExtraParamVec(ix, "dqdT");
+	return getExtraParamVecByIx(ix, "dqdT");
 }//====================================================
 
 /**
@@ -190,12 +183,6 @@ void Traj_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
-
-/**
- *	@brief Initialize the extra param vector for info specific to this trajectory
- */
-void Traj_bc4bp::initExtraParam(){
-}//====================================================
 
 /**
  *	@brief Save the trajectory to a file

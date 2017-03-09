@@ -215,9 +215,9 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
         return false;
     }
 
-    std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
-    std::vector<double> stm = correctedNodes.getNodeByIx(-1).getExtraParamVec("stm");
-    std::vector<double> dqdT = correctedNodes.getNodeByIx(-1).getExtraParamVec("dqdT");
+    std::vector<double> state = correctedNodes.getStateByIx(-1);
+    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, "stm");
+    std::vector<double> dqdT = correctedNodes.getExtraParamVecByIx(-1, "dqdT");
     
     state.insert(state.end(), stm.begin(), stm.end());
     state.insert(state.end(), dqdT.begin(), dqdT.end());
@@ -411,7 +411,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constrai
     if(it->bVarTime){
         int segIx = it->nodeset->getSegIx(con.getID());
         std::vector<double> conData = con.getData();
-        std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVec(-1, "dqdT");
+        std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVecByIx(-1, "dqdT");
 
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
 
@@ -701,7 +701,7 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
                 Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
                 // Compute partial w.r.t. epoch time n
-                std::vector<double> last_dqdT = it->propSegs.at(s).getExtraParamVec(-1, "dqdT");
+                std::vector<double> last_dqdT = it->propSegs.at(s).getExtraParamVecByIx(-1, "dqdT");
                 Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
 
                 double dFdT_n = dFdq_n2*dqdT;
@@ -1441,7 +1441,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
                 node.setExtraParamVec("stm", stm_vec);
 
                 // Also append the last dqdT vector
-                std::vector<double> dqdT = lastSeg.getExtraParamVec(-1,"dqdT");
+                std::vector<double> dqdT = lastSeg.getExtraParamVecByIx(-1,"dqdT");
                 node.setExtraParamVec("dqdT", dqdT);
             }
         }

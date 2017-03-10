@@ -87,7 +87,7 @@ namespace astrohelion{
  *  Second, a Julian date (UTC) can be input with the format 'jd #' where '#' represents
  *  the Julian date.
  *
- *  @return the J2000 ephemeris time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
+ *  \return the J2000 ephemeris time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
  *  \throws Exception if the SPICE kernels cannot be loaded: the kernel names and
  *  filepaths are located in the settings XML file
  */
@@ -108,7 +108,7 @@ double dateToEphemerisTime(const char *pDate){
  *  \param h Hour (24-hr clock)
  *  \param m minute
  *  \param s second
- *  @return Julian Date (days)
+ *  \return Julian Date (days)
  */
 double gregorianToJulian(double yr, double mo, double d, double h, double m, double s){
     return 367.0*yr - floor(7.0*(yr + floor((mo + 9.0)/12.0))/4.0) +
@@ -117,7 +117,7 @@ double gregorianToJulian(double yr, double mo, double d, double h, double m, dou
 
 /**
  *  \brief Determine the Greenwich Sidereal Time (i.e., angle) at the specified date
- *  @details Input date must be in UT1 time (always within +/- 0.9 seconds of UTC thanks
+ *  \details Input date must be in UT1 time (always within +/- 0.9 seconds of UTC thanks
  *  to leapseconds)
  *  
  *  \param yr Year
@@ -126,7 +126,7 @@ double gregorianToJulian(double yr, double mo, double d, double h, double m, dou
  *  \param h Hour (24-hr clock)
  *  \param m minute
  *  \param s second
- *  @return The Greenwich Sidereal Time (GST) in radians at the specified date
+ *  \return The Greenwich Sidereal Time (GST) in radians at the specified date
  */
 double dateToGST(double yr, double mo, double d, double h, double m, double s){
 
@@ -175,7 +175,7 @@ double dateToGST(double yr, double mo, double d, double h, double m, double s){
  *  3. If it is larger than MemSize, only the first set of MemSize rows will
  *  be used.
  *
- *  @return an 8-element vector with predictions for the dependent variables.
+ *  \return an 8-element vector with predictions for the dependent variables.
  *  If a particular variable has not been predicted, its place will be kept with
  *  a NAN value.
  *
@@ -268,7 +268,7 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
 /**
  *  \brief construct a matrix to mirror a 6-d state over the specified plane or axis
  *  \param mirrorType describes how to mirror a 6-d state
- *  @return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
+ *  \return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
  */
 MatrixXRd getMirrorMat(Mirror_tp mirrorType){
     switch(mirrorType){
@@ -417,7 +417,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
 
 /**
  *  \brief Compute manifolds of a CR3BP trajectory
- *  @details [long description]
+ *  \details [long description]
  * 
  *  \param type The type of manifolds to generate
  *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
@@ -425,7 +425,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
  *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
  *  \param numMans The number of manifolds to generate
  *  \param tof Time-of-flight along each manifold arc after stepping off the specified orbit
- *  @return a vector of trajectory objects, one for each manifold arc.
+ *  \return a vector of trajectory objects, one for each manifold arc.
  *  \throws Exception if the eigenvalues cannot be computed, or if only one
  *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
  */
@@ -554,11 +554,11 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
 
 /**
  *  \brief Compute the stability index of a periodic orbit from a set of eigenvalues
- *  @details This algorithm assumes the orbit is periodic and that the eigenvalues 
+ *  \details This algorithm assumes the orbit is periodic and that the eigenvalues 
  *  have been sorted (so they come in pairs).
  * 
  *  \param eigs A 6-element vector of eigenvalues associated with a periodic orbit
- *  @return the stability index, or NAN if no real, reciprocal eigenvalue pair is found
+ *  \return the stability index, or NAN if no real, reciprocal eigenvalue pair is found
  *  \throws Exception if <tt>eigs</tt> does not have six elements
  */
 double getStabilityIndex(std::vector<cdouble> eigs){
@@ -593,7 +593,7 @@ double getStabilityIndex(std::vector<cdouble> eigs){
  *  \brief Compute the total delta-V along a corrected nodeset
  * 
  *  \param pIt pointer to an MultShootData object associated with a corrections process
- *  @return the total delta-V, units consistent with the nodeset's stored velocity states
+ *  \return the total delta-V, units consistent with the nodeset's stored velocity states
  */
 double getTotalDV(const MultShootData *pIt){
     double total = 0;
@@ -607,7 +607,7 @@ double getTotalDV(const MultShootData *pIt){
 
 /**
  *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
- *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
  *  \param pNodeset A nodeset with some constraints
@@ -619,7 +619,7 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity, 
 
 /**
  *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
- *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
  *  \param pNodeset A nodeset with some constraints
@@ -772,12 +772,12 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine,
 /**
  *  \brief Use numerical integration to find a node on a trajectory at
  *  the specified time
- *  @details 
+ *  \details 
  * 
  *  \param traj A trajectory 
  *  \param t The time at which the node is located
  * 
- *  @return A node on the specified trajectory at time <tt>t</tt>
+ *  \return A node on the specified trajectory at time <tt>t</tt>
  */
 Node interpPointAtTime(const Traj *traj, double t){
     // Find the time that is closest to t and before it (assuming allTimes progresses smoothly forwards in time)
@@ -814,13 +814,13 @@ Node interpPointAtTime(const Traj *traj, double t){
 /**
  *  \brief Determine a set of spherical coordinates the describe 
  *  the position vector specified by x, y, and z
- *  @details [long description]
+ *  \details [long description]
  * 
  *  \param x x-coordinate
  *  \param y y-coordinate
  *  \param z z-coordinate
  *  
- *  @return a vector containing {lat, long, R} in radians
+ *  \return a vector containing {lat, long, R} in radians
  *  and the distance units of x, y, and z. Latitude takes a 
  *  value between -pi/2 and pi/2 while longitude takes a value
  *  between -pi and pi
@@ -847,7 +847,7 @@ std::vector<double> getSpherical(double x, double y, double z){
  *  \param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
  *  right-handed rotation about inertial z. For example, Earth ground stations' longitudes
  *  are relative to the Greenwich Meridian
- *  @return The position of the object in local tangent, cartesian coordinates (East, North, Up)
+ *  \return The position of the object in local tangent, cartesian coordinates (East, North, Up)
  *  as viewed from the specified latitude and longitude
  */
 std::vector<double> inert2LocalTangent(std::vector<double> inertPos, double lat, double lon, double theta_mer){
@@ -875,7 +875,7 @@ std::vector<double> inert2LocalTangent(std::vector<double> inertPos, double lat,
  *  \param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
  *  right-handed rotation about inertial z. For example, Earth ground stations' longitudes
  *  are relative to the Greenwich Meridian
- *  @return The position of the object in inertial, cartesian coordinates (x, y, z)
+ *  \return The position of the object in inertial, cartesian coordinates (x, y, z)
  *  as viewed from the specified latitude and longitude
  */
 std::vector<double> localTangent2Inert(std::vector<double> localPos, double lat, double lon, double theta_mer){
@@ -895,12 +895,12 @@ std::vector<double> localTangent2Inert(std::vector<double> localPos, double lat,
 /**
  *  \brief Get the local tangent coordinates of an object given its 
  *  azimuth, elevation, and range
- *  @details [long description]
+ *  \details [long description]
  * 
  *  \param s range distance
  *  \param az azimuth, measured from North toward East, radians
  *  \param el elevation, measured from local horizontal, radians
- *  @return [r_E, r_N, r_Z] the position of the object in local
+ *  \return [r_E, r_N, r_Z] the position of the object in local
  *  tangent coordinates (East, North, Up), units that match the input range
  */
 std::vector<double> azEl2LocalTangent(double s, double az, double el){
@@ -1004,7 +1004,7 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
 /**
  *  \ingroup 2bp
  *  \brief [brief description]
- *  @details [long description]
+ *  \details [long description]
  * 
  *  \param pSys [description]
  *  \param a [description]
@@ -1013,7 +1013,7 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
  *  \param i [description]
  *  \param RAAN [description]
  *  \param TA [description]
- *  @return [description]
+ *  \return [description]
  */
 std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, double e, double argPeri, double i, double RAAN, double TA){
     if(a < 0)
@@ -1078,7 +1078,7 @@ std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, doub
  *  \param mu non-dimensional system mass ratio
  *  \param C Jacobi constant value
  *  \param velIxToFind index of the velocity component to compute (i.e. 3, 4, or 5)
- *  @return the magnitude of vx (3), vy (4), or vz (5).
+ *  \return the magnitude of vx (3), vy (4), or vz (5).
  *  \throws Exception if <tt>velIxToFind</tt> is out of bounds
  */
 double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind){
@@ -1116,7 +1116,7 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *  \param mirrorType how this periodic orbit mirrors in the CR3BP
  *  \param tol tolerance to use in the corrections process
  *  
- *  @return A periodic orbit. Note that this algorithm only enforces the mirror
+ *  \return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
@@ -1131,7 +1131,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 /**
  *  \ingroup cr3bp
  *  \brief Compute a periodic orbit in the CR3BP system
- *  @details This method ignores all crash events, so it is possible to compute a
+ *  \details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
  *  
  *  \param pSys the dynamical system
@@ -1147,7 +1147,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
  *  See the enum definition for specific details.
  *  \param tol tolerance to use in the corrections process
  *  
- *  @return A periodic orbit. Note that this algorithm only enforces the mirror
+ *  \return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
@@ -1164,7 +1164,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 /**
  *  \ingroup cr3bp
  *  \brief Compute a periodic orbit in the CR3BP system
- *  @details This method ignores all crash events, so it is possible to compute a
+ *  \details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
  *  
  *  \param pSys the dynamical system
@@ -1184,7 +1184,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
  *  attempting to determine how well (or poorly) the multiple shooting algorithm
  *  performed (e.g., for a variable step-size process)
  *  
- *  @return A periodic orbit. Note that this algorithm only enforces the mirror
+ *  \return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
@@ -1572,7 +1572,7 @@ Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, do
  *  \param charTS SE characteristic time
  *  \param mu_SE SE mass ratio
  *
- *  @return a 6-element state vector in EM coordinates
+ *  \return a 6-element state vector in EM coordinates
  */
 std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, double thetaE0, double thetaM0,
     double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
@@ -1643,7 +1643,7 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
  *  \param charTS SE characteristic time, sec
  *  \param mu_SE SE mass ratio, nondimensional
  *
- *  @return a 6-element state vector in SE coordinates
+ *  \return a 6-element state vector in SE coordinates
  */
 std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, double thetaE0, double thetaM0,
     double gamma, double charLE, double charTE, double charLS, double charTS, double mu_SE){
@@ -1705,7 +1705,7 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
  *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
- *  @return A trajectory centered around the specified index in inertial, dimensional coordinates
+ *  \return A trajectory centered around the specified index in inertial, dimensional coordinates
  */
 Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
     // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
@@ -1725,7 +1725,7 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
  *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
- *  @return A nodeset centered around the specified index in inertial, dimensional coordinates
+ *  \return A nodeset centered around the specified index in inertial, dimensional coordinates
  */
 Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
 
@@ -1777,7 +1777,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
  *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
- *  @return A state centered around the specified point in inertial, ecliptic J2000, dimensional coordinates
+ *  \return A state centered around the specified point in inertial, ecliptic J2000, dimensional coordinates
  *  @throw Exception if <tt>centerIx</tt> is out of bounds
  */
 std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const SysData_cr3bp *pSys, 
@@ -1909,7 +1909,7 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
  *  \param nodeID ID of a node in the set for which the epoch is known
  *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
- *  @return a BCR4BPR Trajectory object
+ *  \return a BCR4BPR Trajectory object
  *  @throw Exception if <tt>crTraj</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
  *  not the Sun-Earth-Moon system.
  */
@@ -1929,7 +1929,7 @@ Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *pBCSys, int no
  *  \param nodeID ID of a node in the set for which the epoch is known
  *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
- *  @return a BCR4BPR nodeset
+ *  \return a BCR4BPR nodeset
  *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
  *  not the Sun-Earth-Moon system.
  */
@@ -1999,7 +1999,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
  *  \param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
- *  @return a CR3BP nodeset object
+ *  \return a CR3BP nodeset object
  *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
  *  not in the Sun-Earth-Moon system.
  */
@@ -2072,7 +2072,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
  *  \param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
- *  @return a CR3BP Trajectory object
+ *  \return a CR3BP Trajectory object
  *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcTraj</tt> is
  *  not in the Sun-Earth-Moon system.
  */
@@ -2086,13 +2086,13 @@ Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *pCRSys){
  *  \ingroup bc4bp
  *  \brief Compute the location of the saddle point for a specific bicircular system
  *  and epoch
- *  @details This function uses a Newton-Raphson procedure to locate the zeros of the local
+ *  \details This function uses a Newton-Raphson procedure to locate the zeros of the local
  *  acceleration field.
  *  \throws DivergeException if the Newton-Raphson procedure cannot converge
  *  \param pBCSys system data object describing the bicircular system
  *  \param t0 the epoch at which the saddle point's location is computed
  * 
- *  @return the location of the saddle pointin BCR4BP rotating coordinates
+ *  \return the location of the saddle pointin BCR4BP rotating coordinates
  *  @throw DivergeException if the multiple shooting algorithm cannot converge on the
  *  saddle point location
  */
@@ -2170,14 +2170,14 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *pBCSys, double t0){
  *  \ingroup bc4bp
  *  \brief Compute coefficients for 2nd-order polynomials in Epoch time that
  *  describe the x, y, and z coordinates of the saddle point.
- *  @details This function employs least squares to compute the coefficients. The
+ *  \details This function employs least squares to compute the coefficients. The
  *  number of points used and time span searched are hard coded in the function.
  * 
  *  \param pBCSys data about the bicircular system
  *  \param T0 the "center" epoch; points are generated within +/- timeSpan of this
  *  epoch
  * 
- *  @return a 3x3 matrix of coefficients. The first column contains the coefficients
+ *  \return a 3x3 matrix of coefficients. The first column contains the coefficients
  *  for the x-position approximation, the second column contains the y-position 
  *  coefficients, etc. The first row holds the second-order coefficients, 
  *  the second row holds the first-order coefficients, and the final row holds the

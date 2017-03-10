@@ -46,7 +46,7 @@ namespace astrohelion{
 
 /**
  *  \brief Basic constructor
- *  @details Use one of the two createEvent() functions to initialize the rest
+ *  \details Use one of the two createEvent() functions to initialize the rest
  *  of the event object
  */
 Event::Event(){}
@@ -274,7 +274,7 @@ Event& Event::operator =(const Event &ev){
  *	\brief Comparison operator
  *	\param lhs
  *	\param rhs
- *	@return true if the two events are identical
+ *	\return true if the two events are identical
  */
 bool operator ==(const Event &lhs, const Event &rhs){
 	bool same = lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
@@ -295,7 +295,7 @@ bool operator ==(const Event &lhs, const Event &rhs){
  *	\brief Comparison operator
  *	\param lhs
  *	\param rhs
- *	@return true if the two events are not identical
+ *	\return true if the two events are not identical
  */
 bool operator !=(const Event &lhs, const Event &rhs){
 	return !(lhs == rhs);
@@ -306,18 +306,18 @@ bool operator !=(const Event &lhs, const Event &rhs){
 //-----------------------------------------------------
 
 /**
- *	@return the trigger direction for this event; -1 for negative, +1
+ *	\return the trigger direction for this event; -1 for negative, +1
  *	for positive, 0 for both/either
  */
 int Event::getDir() const { return triggerDir; }
 
 /**
- *	@return the event type
+ *	\return the event type
  */
 Event_tp Event::getType() const { return type; }
 
 /**
- *	@return a human-readable string representing the event type
+ *	\return a human-readable string representing the event type
  */
 const char* Event::getTypeStr() const{
 	switch(type){
@@ -335,49 +335,49 @@ const char* Event::getTypeStr() const{
 }//========================================
 
 /**
- *	@return the time associated with this event
+ *	\return the time associated with this event
  */
 double Event::getTime() const { return theTime; }
 
 /**
- *	@return a pointer to the state vector object; useful for in-place reading or writing
+ *	\return a pointer to the state vector object; useful for in-place reading or writing
  */
 std::vector<double>* Event::getState() { return &state; }
 
 /**
- *	@return whether or not this event will stop the integration
+ *	\return whether or not this event will stop the integration
  */
 bool Event::stopOnEvent() const { return bStop; }
 
 /**
- *	@return the type of constraint this event will use to target the exact event occurence
+ *	\return the type of constraint this event will use to target the exact event occurence
  */
 Constraint_tp Event::getConType() const { return conType; }
 
 /**
- *	@return the constraint data used to target this exact event
+ *	\return the constraint data used to target this exact event
  */
 std::vector<double> Event::getConData() const { return conData; }
 
 /**
  *  \brief Return the system data pointer
- *  @details This pointer can only be set by runnining the initialize() function
+ *  \details This pointer can only be set by runnining the initialize() function
  *  on the event or by copying another event
- *  @return the system data pointer
+ *  \return the system data pointer
  */
 const SysData* Event::getSysData() { return pSysData; }
 
 /**
  *	\brief Retrieve the current trigger count, or the number of times
  *	this event has been triggered during the current simulation
- *	@return the trigger count
+ *	\return the trigger count
  */
 int Event::getTriggerCount() const { return triggerCount; }
 
 /**
  *	\brief Retrieve the number of triggers this event can have before 
  *	the simulation will be stopped (if applicable)
- *	@return the stopping trigger count
+ *	\return the stopping trigger count
  */
 int Event::getStopCount() const { return stopCount; }
 
@@ -417,7 +417,7 @@ void Event::setStopOnEvent(bool s){ bStop = s; }
  *
  *	\param y the current integrated state (6 elements)
  *	\param t the current time
- *	@return whether or not the trajectory has passed through this event
+ *	\return whether or not the trajectory has passed through this event
  */
 bool Event::crossedEvent(const double y[6], double t) const{
 	double newDist = getDist(y, t);
@@ -457,7 +457,7 @@ void Event::updateDist(const double y[6], double t){
  *	\brief Compute the distance from the input state to the event
  *	\param y a state vector representing the current integration state
  *	\param t non-dimensional time associated with state <tt>y</tt>
- *	@return the distance
+ *	\return the distance
  *	\throws Exception if the event type associated with this event is not implemented
  *	\throws Exception if the system data pointer has not been initialized via the initialize() function
  */
@@ -517,7 +517,7 @@ double Event::getDist(const double *y, double t) const{
  *
  *	\param y a state vector
  *	\param t non-dimensional time associated with state <tt>y</tt>
- *	@return positive or negative one to correspond with the sign
+ *	\return positive or negative one to correspond with the sign
  *	\throws Exception if the event type associated with this event is not implemented
  */
 int Event::getDir(const double *y, double t) const{

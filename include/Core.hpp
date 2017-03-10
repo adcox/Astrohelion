@@ -149,7 +149,7 @@ public:
 
 /**
  *  \brief An object that serves as a parent to all Core objects.
- *  @details This object's sole purpose is to load settings from
+ *  \details This object's sole purpose is to load settings from
  *  an XML file when any of the Core objects are instantiated. Static
  *  objects are used to ensure that only one copy of the initializer
  *  and settings structures are constructed
@@ -159,11 +159,23 @@ public:
 	Core();												//!< Default constructor
 	virtual ~Core();									//!< Default destructor
 
+	/**
+	 *  \brief Initialize the core
+	 *  \details This function wraps a static Core_Initializer object to avoid multiple
+	 *  instances of the initializer in different translation units
+	 *  \return a reference to the initializer
+	 */
 	Core_Initializer& initializer(){
 		static Core_Initializer initializer;
 		return initializer;
 	}
 
+	/**
+	 *  \brief Check to see if the core is initialized
+	 *  \details This function wraps a static boolean object to avoid multiple 
+	 *  instances of the variable in different translation units
+	 *  \return whether or not the core is initialized
+	 */
 	bool& bIsInit(){
 		static bool b_isInit;
 		return b_isInit;

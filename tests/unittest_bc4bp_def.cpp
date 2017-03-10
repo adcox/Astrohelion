@@ -16,14 +16,14 @@ using namespace astrohelion;
 
 /**
  *  \brief Get the inertial moon position 
- *  @details The Moon's location is obtained by computing the moon position in the Sun-Earth-Moon BC4BP,
+ *  \details The Moon's location is obtained by computing the moon position in the Sun-Earth-Moon BC4BP,
  *  then shifting and scaling to the Sun-Earth system, then converting to Earth-Moon system, and finally,
  *  to the Earth-centered J2000 frame.
  * 
  *  \param pBCSys SEM BC4BP System Data
  *  \param pSESys SE CR3BP System Data
  *  \param t time in nondimensional SEM time units
- *  @return inertial, dimensional position of Moon in ecliptic J2000 frame relative to Sun, km
+ *  \return inertial, dimensional position of Moon in ecliptic J2000 frame relative to Sun, km
  */
 std::vector<double> getInertMoonPos(SysData_bc4bp *pBCSys, SysData_cr3bp *pSESys, double t){
 	double bcPrimPos[9];

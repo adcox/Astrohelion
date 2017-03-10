@@ -84,19 +84,19 @@ void DynamicsModel::copyMe(const DynamicsModel &m){
 
 /**
  *	\brief Retrieve the number of core states
- *	@return the number of core states
+ *	\return the number of core states
  */
 unsigned int DynamicsModel::getCoreStateSize() const { return coreStates; }
 
 /**
  *	\brief Retrieve the number of extra states stored after the core states and STM elements
- *	@return the number of extra states stored after the core states and STM elements
+ *	\return the number of extra states stored after the core states and STM elements
  */
 unsigned int DynamicsModel::getExtraStateSize() const { return extraStates; }
 
 /**
  *	\brief Determine whether the specified constraint type is supported in this model
- *	@return whether or not the specified constraint type is supported in this model
+ *	\return whether or not the specified constraint type is supported in this model
  */
 bool DynamicsModel::supportsCon(Constraint_tp type) const{
 	return std::find(allowedCons.begin(), allowedCons.end(), type) != allowedCons.end();
@@ -104,7 +104,7 @@ bool DynamicsModel::supportsCon(Constraint_tp type) const{
 
 /**
  *	\brief Determine whether the specified event type is supported in this model
- *	@return whether or not the specified event type is supported in this model
+ *	\return whether or not the specified event type is supported in this model
  */
 bool DynamicsModel::supportsEvent(Event_tp type) const{
 	return std::find(allowedEvents.begin(), allowedEvents.end(), type) != allowedEvents.end();
@@ -113,7 +113,7 @@ bool DynamicsModel::supportsEvent(Event_tp type) const{
 /**
  *  \brief Determine the time derivative of the magnitude of a vector from a primary to
  *  the body of interest, non-dimensional units
- *  @details This derivation assumes the primary of interest is fixed in the frame the
+ *  \details This derivation assumes the primary of interest is fixed in the frame the
  *  spacecraft coordinates are expressed in. If this is not the case (i.e., the primary
  *  moves in the working frame), this function will need to be overridden
  * 
@@ -121,7 +121,7 @@ bool DynamicsModel::supportsEvent(Event_tp type) const{
  *  \param t Non-dimensional epoch to compute r-dot at
  *  \param state six-element non-dimensional spacecraft state
  *  \param sys system data object
- *  @return Time derivative of the magnitude of a vector from a primary to the body
+ *  \return Time derivative of the magnitude of a vector from a primary to the body
  *  of interest, non-dimensional velocity units
  */
 double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysData *sys) const{
@@ -141,6 +141,13 @@ double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysD
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Create default events for a simulation run
+ *  \details These events are intended to prevent numerical issues, e.g., to avoid singularities.
+ * 
+ *  \param pSys pointer to system data object
+ *  \return A vector of events to use in the simulation
+ */
 std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) const{
 	std::vector<Event> events;
 	// Create events that prevent the s/c from flying through planets
@@ -154,6 +161,15 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
     return events;
 }//==================================================
 
+/**
+ *  \brief Save data from the simulation to a trajectory object
+ *  \details [long description]
+ * 
+ *  \param y pointer to state data array
+ *  \param t time
+ *  \param traj pointer to trajectory in which the data is stored
+ *  \param params Structure that contains parameters used in the integration
+ */
 void DynamicsModel::sim_saveIntegratedData(const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
     int id = traj->addNode(Node(y, coreStates, t));
 	if(id > 0){
@@ -296,7 +312,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *
 
 /**
  *  \brief Compute the value of a slack variable for an inequality constraint.
- *  @details Computing the value of the slack variable can avoid unneccessary 
+ *  \details Computing the value of the slack variable can avoid unneccessary 
  *  shooting iterations when the inequality constraint is already met. If the 
  *  inequality constraint is met, the value returned by this function will make
  *  the constraint function evaluate to zero.
@@ -307,7 +323,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *
  *  \param it the MultShootData object associated with the multiple shooting process
  *  \param con the inequality constraint for which the slack variable is being computed
  * 
- *  @return The value of the slack variable that minimizes the constraint function
+ *  \return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
  *  \throws Exception if the constraint type does not include a slack variable
  */
@@ -718,14 +734,14 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
 
 /**
  *  \brief Compute the value of the slack variable for inequality distance constraints
- *  @details This function computes a value for the slack variable in an
+ *  \details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
  *  design, using this value will prevent the multiple shooting algorithm from
  *  searching all over for the propper value.
  * 
  *  \param it the iteration data object for the multiple shooting process
  *  \param con the constraint the slack variable applies to
- *  @return the value of the slack variable
+ *  \return the value of the slack variable
  */
 double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it, Constraint con) const{
 	std::vector<double> conData = con.getData();
@@ -851,12 +867,12 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 
 /**
  *  \brief Compute the slack variable value for a delta-V constraint
- *  @details This function currently returns a hard-coded value of 1e-2
+ *  \details This function currently returns a hard-coded value of 1e-2
  * 
  *  \param it a pointer to the class containing all the data relevant to the corrections process
  *	\param con the constraint being applied
  * 
- *  @return Ideal value of the slack variable
+ *  \return Ideal value of the slack variable
  */
 double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData *it, Constraint con) const{
 	// double totalDV = 0;

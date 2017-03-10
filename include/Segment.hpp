@@ -113,7 +113,8 @@ protected:
 	unsigned int ctrlLawID = ControlLaw::NO_CTRL;	//!< Control law applied during this segment; by default, set to NO_CTRL
 
 	double tof = 0;			//!< Time-of-flight along this segment, units consistent with the system
-	MatrixXRd stm = MatrixXRd::Identity(6,6);	// Initialize as 6x6 (most common use), but can be easily resized
+	
+	MatrixXRd stm = MatrixXRd::Identity(6,6);	//!< State transition matrix; Initialize as 6x6 (most common use), but can be easily resized
 
 	/** Stores constraints on this segment */
 	std::vector<Constraint> cons {};

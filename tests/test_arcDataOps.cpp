@@ -153,7 +153,7 @@ void tryDeleteSeg(){
 /**
  *  \brief Try to delete the first node in a set; this should throw an exception
  * 
- *  @return wether or not the test was successful
+ *  \return wether or not the test was successful
  */
 bool tryDeleteFirstNode(){
 	Nodeset set(&sys);
@@ -177,7 +177,7 @@ bool tryDeleteFirstNode(){
 /**
  *  \brief Try to delete the last node in a set; this should throw an exception
  * 
- *  @return wether or not the test was successful
+ *  \return wether or not the test was successful
  */
 bool tryDeleteLastNode(){
 	Nodeset set(&sys);
@@ -199,7 +199,7 @@ bool tryDeleteLastNode(){
 
 /**
  *  \brief Attempt to delete a node from the middle of a linear-time arcset
- *  @details Make sure exceptions are thrown when they should be and that the arcset
+ *  \details Make sure exceptions are thrown when they should be and that the arcset
  *  "heals" itself properly
  */
 void tryDeleteMiddleNode(){
@@ -386,7 +386,7 @@ void tryDeleteMiddleNode_revTime(){
 
 /**
  *  \brief Try to delete a node that is the origin of two arcs.
- *  @details Make sure the arcset is healed properly.
+ *  \details Make sure the arcset is healed properly.
  */
 void tryDeleteMiddleNode_doubleSource1(){
 	Nodeset set(&sys);

@@ -91,7 +91,7 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp::getFullEOM_fcn() const{
  *
  *  \param t the epoch at which the computations occur (unused for this system)
  *  \param pSysData object describing the specific system
- *  @return an n x 3 vector (row-major order) containing the positions of
+ *  \return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_cr3bp::getPrimPos(double t, const SysData *pSysData) const{
@@ -110,7 +110,7 @@ std::vector<double> DynamicsModel_cr3bp::getPrimPos(double t, const SysData *pSy
  *
  *  \param t the epoch at which the computations occur (unused for this system)
  *  \param sysData object describing the specific system (unused for this system)
- *  @return an n x 3 vector (row-major order) containing the velocities of
+ *  \return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_cr3bp::getPrimVel(double t, const SysData *sysData) const{
@@ -120,6 +120,16 @@ std::vector<double> DynamicsModel_cr3bp::getPrimVel(double t, const SysData *sys
     return std::vector<double>(6, 0);
 }//==============================================
 
+/**
+ *  \brief Retrieve the state derivative
+ *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  the specified time and state
+ * 
+ *  \param t time parameter
+ *  \param state state vector
+ *  \param params structure containing parameters relevant to the integration
+ *  \return the time-derivative of the state vector
+ */
 std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     if(state.size() != coreStates)
         throw Exception("DynamicsModel_cr3bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
@@ -141,6 +151,7 @@ std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<dou
  *  by the EOM function, including STM elements.
  *  \param t the time at the current integration state
  *  \param traj a pointer to the trajectory we should store the data in
+ *  \param params structure containing parameters relevant to the integration
  */
 void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
 
@@ -166,7 +177,7 @@ void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj
  *  \param tof the time-of-flight for the arc to search over
  *  \param verbose whether or not we should be verbose with output messages
  *
- *  @return wether or not the event has been located. If it has, a new point
+ *  \return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
 bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
@@ -360,7 +371,7 @@ void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, Constrain
  *  \param findEvent whether or not this correction process is locating an event
  *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
- *  @return a pointer to a nodeset containing the corrected nodes
+ *  \return a pointer to a nodeset containing the corrected nodes
  */
 void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodes_out) const{
 
@@ -630,7 +641,7 @@ void DynamicsModel_cr3bp::getEquilibPt(const SysData_cr3bp *sysData, int L, doub
  *  \param s the state vector; only the position and velocity states are required
  *  \param mu the non-dimensional system mass ratio
  *
- *  @return the Jacobi Constant at this specific state and system
+ *  \return the Jacobi Constant at this specific state and system
  */
 double DynamicsModel_cr3bp::getJacobi(const double s[], double mu){
     double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];

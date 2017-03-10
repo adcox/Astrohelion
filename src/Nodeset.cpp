@@ -94,12 +94,12 @@ Nodeset::~Nodeset(){}
 
 /**
  *  \brief Create a new nodeset object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param sys pointer to a system data object
- *  @return a pointer to the newly created nodeset
+ *  \return a pointer to the newly created nodeset
  */
 baseArcsetPtr Nodeset::create( const SysData *sys) const{
 	return baseArcsetPtr(new Nodeset(sys));
@@ -108,11 +108,11 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
 /**
  *  \brief Create a new nodeset object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned nodeset
+ *  \return a pointer to the newly cloned nodeset
  */
  baseArcsetPtr Nodeset::clone() const{
 	return baseArcsetPtr(new Nodeset(*this));
@@ -124,7 +124,7 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
 
 /**
  *  \brief Combine two nodesets.
- *  @details This function concatenates two nodeset objects. It is assumed
+ *  \details This function concatenates two nodeset objects. It is assumed
  *  that the first state on <tt>rhs</tt> is identical to the final state on
  *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
  *  (chronologically) <tt>lhs</tt>
@@ -132,7 +132,7 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
  *  \param lhs reference to a nodeset object
  *  \param rhs reference to a nodeset object
  * 
- *  @return the concatenation of lhs + rhs.
+ *  \return the concatenation of lhs + rhs.
  */
  Nodeset operator +(const Nodeset &lhs, const Nodeset &rhs){
 	const Nodeset lhs_cpy(lhs);
@@ -148,7 +148,7 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
  *  \brief Concatenate this object with another nodeset
  * 
  *  \param rhs reference to a nodeset object
- *  @return the concatenation of this and <tt>rhs</tt>
+ *  \return the concatenation of this and <tt>rhs</tt>
  *  @see operator +()
  */
 Nodeset& Nodeset::operator +=(const Nodeset &rhs){
@@ -164,7 +164,7 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
 /**
  *  \brief Insert a node after the specified node at any locations where the
  *  specified event occurs
- *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  \details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path. A numerical simulation is used to propagate the nonlinear
  *  solution between segments, so the events are defined in the dynamical system
@@ -178,7 +178,7 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
  *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  * 
- *  @return the number of nodes created and inserted into the nodeset.
+ *  \return the number of nodes created and inserted into the nodeset.
  */
 int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
 	std::vector<Event> events(1, evt);
@@ -189,7 +189,7 @@ int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
  *  \brief Insert nodes on the specified segment at locations where the
  *  specified events occur.
  *  
- *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  \details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path. A numerical simulation is used to propagate the nonlinear
  *  solution between segments, so the events are defined in the dynamical system
@@ -204,7 +204,7 @@ int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
  *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  *  
- *  @return the number of nodes created and inserted into the nodeset.
+ *  \return the number of nodes created and inserted into the nodeset.
  *  \throws Exception if <tt>segID</tt> is out of bounds
  */
 int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
@@ -426,6 +426,13 @@ void Nodeset::saveToMat(const char* filename) const{
 	Mat_Close(matfp);
 }//====================================================
 
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \details This function is called from saveToMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Nodeset::saveCmds(mat_t *pMatFile) const{
 	saveState(pMatFile, VARNAME_NODE);
 	saveEpoch(pMatFile);
@@ -456,6 +463,13 @@ void Nodeset::readFromMat(const char *filepath){
 	Mat_Close(matfp);
 }//====================================================
 
+/**
+ *  \brief Execute commands to read data from a Matlab file
+ *  \details This function is called from readFromMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Nodeset::readCmds(mat_t *pMatFile){
 	initNodesSegsFromMat(pMatFile, VARNAME_NODE);	// This function MUST be called before other data reading functions
 	readStateFromMat(pMatFile, VARNAME_NODE);
@@ -472,6 +486,8 @@ void Nodeset::readCmds(mat_t *pMatFile){
  *	\param tof duration of the simulation, non-dimensional
  *	\param numNodes number of nodes to create, including IC (must be at least 2)
  *	\param distroType node distribution type
+ *	\param ctrlLawID ID of the control law to use while propagating arcs
+ *	
  *	\throws Exception if <tt>numNodes</tt> is less than two
  */
 void Nodeset::initFromICs(std::vector<double> IC, double t0, double tof, int numNodes, NodeDistro_tp distroType, unsigned int ctrlLawID){
@@ -506,6 +522,7 @@ void Nodeset::initFromICs(std::vector<double> IC, double t0, double tof, int num
  *	\param t0 time that corresponds to IC, non-dimensional
  *	\param tof duration of the simulation, non-dimensional
  *	\param numNodes number of nodes to create, including IC
+ *	\param ctrlLawID ID of the control law to use while propagating arcs
  */
 void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, int numNodes, unsigned int ctrlLawID){
 	SimEngine engine;
@@ -538,6 +555,7 @@ void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, in
  *	\param t0 time that corresponds to IC, non-dimensional
  *	\param tof duration of the simulation, non-dimensional
  *	\param numNodes number of nodes to create, including IC
+ *	\param ctrlLawID ID of the control law to use while propagating arcs
  */
 void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double tof, int numNodes, unsigned int ctrlLawID){
 	SimEngine engine;

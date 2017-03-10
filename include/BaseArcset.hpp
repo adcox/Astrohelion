@@ -52,11 +52,11 @@ class BaseArcset;
 typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
 
 static const char *VARNAME_CTRL_LAW = "CtrlLaw";		//!< Matlab file variable name for control law data
-static const char *VARNAME_EPOCH = "Epoch";			//!< Matlab file variable name for epoch data
-static const char *VARNAME_STATE = "State";			//!< Matlab file variable name for state data
+static const char *VARNAME_EPOCH = "Epoch";				//!< Matlab file variable name for epoch data
+static const char *VARNAME_STATE = "State";				//!< Matlab file variable name for state data
 static const char *VARNAME_STATE_DERIV = "qdot";		//!< Matlab file variable name for state derivative data
-static const char *VARNAME_STM = "STM";				//!< Matlab file variable name for state transition matrix data
-static const char *VARNAME_TOF = "TOF";				//!< Matlab file variable name for time-of-flight data
+static const char *VARNAME_STM = "STM";					//!< Matlab file variable name for state transition matrix data
+static const char *VARNAME_TOF = "TOF";					//!< Matlab file variable name for time-of-flight data
 
 static const char *PARAMKEY_STATE_DERIV = "qdot";		//!< ExtraParam map key for state derivative data
 
@@ -281,7 +281,7 @@ protected:
 
 /**
  *  \brief A structure used to represent nodes and segments.
- *  @details This structure is used when putting the arcset
+ *  \details This structure is used when putting the arcset
  *  object in chronological order
  */
 struct ArcPiece{
@@ -296,7 +296,7 @@ struct ArcPiece{
 	};
 
 	Piece_tp type;	//!< The type of object represented by this piece
-	int id;	//!< The ID of the object represented by this piece
+	int id;			//!< The ID of the object represented by this piece
 
 	/**
 	 *  \brief Constructor
@@ -312,7 +312,7 @@ struct ArcPiece{
 	 *  \param lhs piece reference
 	 *  \param rhs piece reference
 	 * 
-	 *  @return true if the type and ID of the two pieces match
+	 *  \return true if the type and ID of the two pieces match
 	 */
 	friend bool operator ==(const ArcPiece &lhs, const ArcPiece &rhs){
 		return lhs.type == rhs.type && lhs.id == rhs.id;
@@ -324,7 +324,7 @@ struct ArcPiece{
 	 *  \param lhs piece reference
 	 *  \param rhs piece reference
 	 * 
-	 *  @return true if the type and ID of the two pieces do NOT match
+	 *  \return true if the type and ID of the two pieces do NOT match
 	 */
 	friend bool operator !=(const ArcPiece &lhs, const ArcPiece &rhs){
 		return !(lhs == rhs);

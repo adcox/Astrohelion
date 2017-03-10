@@ -58,7 +58,7 @@ LinMotionEngine::LinMotionEngine(){}
  *	\brief Retrieve the ratio between short- and long-period motion near L4 and L5
  *
  *	This ratio is only applied to mixed-period motion simulations
- *	@return the ratio between short- and long-period motion near L4 and L5
+ *	\return the ratio between short- and long-period motion near L4 and L5
  */
 double LinMotionEngine::getMPORatio() const { return nu; }
 
@@ -69,13 +69,13 @@ double LinMotionEngine::getMPORatio() const { return nu; }
  *	motion will most likely have a different period and therefore perform a different
  *	number of revs during the same time period
  *
- *	@return the number of rotatins to simulate for
+ *	\return the number of rotatins to simulate for
  */
 int LinMotionEngine::getNumRevs() const { return rots; }
 
 /**
  *	\brief Retrieve the step size (in non-dimensional units) for the time vector
- *	@return he step size (in non-dimensional units) for the time vector
+ *	\return he step size (in non-dimensional units) for the time vector
  */
 double LinMotionEngine::getTimeStep() const { return t_step; }
 
@@ -84,7 +84,7 @@ double LinMotionEngine::getTimeStep() const { return t_step; }
  *
  *	This tolerance is used to target Lagrange point locations and to determine
  *	where or not numbers are "equal" to zero (or any other value)
- *	@return the acceptable numerical tolerance for computations
+ *	\return the acceptable numerical tolerance for computations
  */
 double LinMotionEngine::getTol() const { return tol; }
 
@@ -122,7 +122,7 @@ void LinMotionEngine::setTol(double t){ tol = t; }
 /**
  *	\brief get a human-readable string for a motion type
  *	\param type the motion type
- *	@return a human-redable string
+ *	\return a human-redable string
  */
 const char* LinMotionEngine::getTypeStr(LinMotion_tp type) const{
 	switch(type){
@@ -256,7 +256,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
  *	\param type the type of linearized motion desired
  *	\param sysData the CR3BP system data object
  *
- *	@return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
@@ -276,7 +276,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], LinMotion_tp typ
  *	\param type the type of linearized motion desired
  *	\param sysData the CR3BP system data object
  *
- *	@return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  *	\throws Exception if the <tt>type</tt> does not correspond with the specified Lagrange

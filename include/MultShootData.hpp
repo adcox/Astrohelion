@@ -51,7 +51,7 @@ enum class MSVarType : int {EPOCH = 0,		//!< Epoch variable
 
 /**
  *  \brief The parent object of the variable
- *  @details "Parent" means that the variable is part of a larger object. For example,
+ *  \details "Parent" means that the variable is part of a larger object. For example,
  *  a node is the parent of the six state variables and the epoch associated with the node.
  *  Similarly, a segment is the parent of the time-of-flight variable along the segment.
  *  Constraints may own slack variables, and the entire arc may own quantities like total
@@ -64,7 +64,7 @@ enum class MSVarParent : int {	ARC = 0,	//!< The entire arc is the parent
 
 /**
  *  \brief Represent a free variable in the free variable map
- *  @details A more complex object is required here to store
+ *  \details A more complex object is required here to store
  *  information such as the variable type and ID.
  */
 struct MSVarMap_Key{

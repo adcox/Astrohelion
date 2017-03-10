@@ -71,7 +71,7 @@ BaseArcset::~BaseArcset(){}
 /**
  *	\brief Set this object equal to another
  *	\param d an arcset reference
- *	@return a reference to this arcset object
+ *	\return a reference to this arcset object
  */
 BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 	copyMe(d);
@@ -81,7 +81,7 @@ BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 
 /**
  *  \brief Sum two arcset objects.
- *  @details This function returns <tt>result</tt> = <tt>lhs</tt> + <tt>rhs</tt>; 
+ *  \details This function returns <tt>result</tt> = <tt>lhs</tt> + <tt>rhs</tt>; 
  *  Both <tt>lhs</tt> and <tt>rhs</tt> are copied and sorted into chronological 
  *  order. The <tt>rhs</tt> is then appended to the end of <tt>lhs</tt> with no
  *  time-of-flight between the end of <tt>lhs</tt> and the beginning of <tt>rhs</tt>.
@@ -118,7 +118,7 @@ void BaseArcset::sum(const BaseArcset *lhs, const BaseArcset *rhs, BaseArcset *r
 
 /**
  *  \brief Add a constraint to the arcset object.
- *  @details The constraint application type determines whether the constraint
+ *  \details The constraint application type determines whether the constraint
  *  is applied to a node, segment, or the arc as a whole.
  * 
  *  \param con the constraint
@@ -151,10 +151,10 @@ void BaseArcset::addConstraint(Constraint con){
 
 /**
  *  \brief Add a node to this data object
- *  @details A unique key is assigned to the node when it is added
+ *  \details A unique key is assigned to the node when it is added
  * 
  *  \param n the node to add
- *  @return the ID assigned to the node
+ *  \return the ID assigned to the node
  */
 int BaseArcset::addNode(Node n){
 	n.clearLinks();			// Cannot have any links coming in
@@ -168,7 +168,7 @@ int BaseArcset::addNode(Node n){
 
 /**
  *  \brief Add a segment to the arcset object.
- *  @details Besides adding the segment object to the storage vector,
+ *  \details Besides adding the segment object to the storage vector,
  *  this function updates the nodes associated with the origin and terminus
  *  of the segment so they contain the proper links. Additionally, the
  *  function checks to make sure time flows in one direction only and that
@@ -176,7 +176,7 @@ int BaseArcset::addNode(Node n){
  *  one node in same time direction).
  * 
  *  \param s The segment to add
- *  @return the ID of the segment
+ *  \return the ID of the segment
  *  \throws Exception if adding the segment will result in a time direction
  *  collision or a parallel structure. Exception is also thrown if the segment
  *  is linked to a non-existant node other than the placeholder 
@@ -278,7 +278,7 @@ int BaseArcset::addSeg(Segment s){
  *  it is assumed that the two nodes are identical, and the original (the one in *this* object)
  *  will be retained, the other deleted, and segments rerouted accordingly.
  *  
- *  @return the ID of a new segment that links the old and new arcset objects
+ *  \return the ID of a new segment that links the old and new arcset objects
  *	\throws Exception if the two arcset objects have different system data objects
  *  \throws Exception if either ID is out of bounds
  *  \throws Exception if one or both of the identifies nodes does not have
@@ -385,7 +385,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 
 /**
  *  \brief Remove all constraints from this arcset object.
- *  @details Note that this does not affect any constraints placed on
+ *  \details Note that this does not affect any constraints placed on
  *  individual nodes or segments
  */
 void BaseArcset::clearArcConstraints(){ cons.clear(); }
@@ -403,12 +403,12 @@ void BaseArcset::clearAllConstraints(){
 
 /**
  *  \brief Concatenate two arcset objects
- *  @details The nodes, segments and constraints are copied from one arcset to another
+ *  \details The nodes, segments and constraints are copied from one arcset to another
  *  without creating or deleting any nodes or segments; i.e., the arcset object will
  *  include two independent "flows" without a segment to connect them
  * 
  *  \param pSet pointer to an arcset object
- *  @return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
+ *  \return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
  *  equivalent to <tt>Linkable::INVALID_ID</tt> is stored in the associated 
@@ -461,7 +461,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 
 /**
  *  \brief Delete the node with the specified ID
- *  @details In addition to deleting the desired node, the arcset object is "healed"
+ *  \details In addition to deleting the desired node, the arcset object is "healed"
  *  so that time continuity is maintained. In the case of a linear-time set, the two segments
  *  on either side of the deleted node are combined. If the deleted node was the origin
  *  of two segments, they are still combined, but subject to a few extra conditions. First,
@@ -611,7 +611,7 @@ void BaseArcset::deleteNode(int id){
 
 /**
  *  \brief Delete a segment with the specified ID.
- *  @details Additionally, any nodes linked to the specified segment are updated
+ *  \details Additionally, any nodes linked to the specified segment are updated
  *  so that their link arrays no longer include a relationship with the soon-to-be
  *  deceased segment.
  * 
@@ -663,7 +663,7 @@ void BaseArcset::deleteSeg(int id){
  *  with the specified ID
  * 
  *  \param id the ID of a node
- *  @return the acceleration vector
+ *  \return the acceleration vector
  *  \throws Exception if <tt>id</tt> is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
@@ -695,7 +695,7 @@ std::vector<double> BaseArcset::getStateDeriv(int id){
  *	\brief Retrieve an acceleration on the arc
  *	\param ix the step index. If it is negative, the index will count backwards
  *	from the end of the arc (e.g. ix = -1 will return the last acceleration)
- *	@return the acceleration associated with the specified index
+ *	\return the acceleration associated with the specified index
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 std::vector<double> BaseArcset::getStateDerivByIx(int ix){
@@ -722,8 +722,8 @@ std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 
 /**
  *  \brief Retrieve a vector containing all the constraints applied to this arcset object.
- *  @details This vector does not include constraints placed on individual nodes or segments.
- *  @return a vector containing all the constraints applied to this arcset object.
+ *  \details This vector does not include constraints placed on individual nodes or segments.
+ *  \return a vector containing all the constraints applied to this arcset object.
  */
 std::vector<Constraint> BaseArcset::getArcConstraints() const { return cons; }
 
@@ -731,7 +731,7 @@ std::vector<Constraint> BaseArcset::getArcConstraints() const { return cons; }
  *  \brief Determine what order to place the nodes and segments of this object
  *  into to achieve a chronological progression in forward time.
  * 
- *  @return a vector of ArcPiece objects that represent the chronological 
+ *  \return a vector of ArcPiece objects that represent the chronological 
  *  order of the nodes and segments
  */
 std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
@@ -747,10 +747,12 @@ std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
 
 /**
  *  \brief Sort the arcset into chronological order beginning at a specified node
- *  @details [long description]
+ *  \details This function operates recursively to sort all branches of the arcset
  * 
  *  \param ID the ID of a node in the arcset
- *  @return a vector of ArcPiece objects that represent the chronological 
+ *  \param prevPieces already sorted ArcPiece objects from higher levels of the 
+ *  recursive process
+ *  \return a vector of ArcPiece objects that represent the chronological 
  *  order of the nodes and segments that make up the section of the arcset that
  *  contains the specified node
  *  
@@ -899,7 +901,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 /**
  *	\brief Get a vector of one coordinate for all nodes
  *	\param ix the index of the state coordinate
- *	@return a vector containing the specified coordinate for all
+ *	\return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
@@ -940,7 +942,7 @@ unsigned int BaseArcset::getCtrlLawByIx(int ix) const{
  *  with the specified ID
  * 
  *  \param id the ID of a node
- *  @return the epoch
+ *  \return the epoch
  *  \throws Exception if <tt>id</tt> is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
@@ -964,7 +966,7 @@ double BaseArcset::getEpoch(int id) const{
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *  @return The epoch associated with the specified node
+ *  \return The epoch associated with the specified node
  *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 double BaseArcset::getEpochByIx(int ix) const{
@@ -979,10 +981,10 @@ double BaseArcset::getEpochByIx(int ix) const{
 
 /**
  *  \brief Retrieve a vector of all epoch values for the nodes
- *  @details Epochs are returned in the order corresponding
+ *  \details Epochs are returned in the order corresponding
  *  to the nodes vector; to ensure chronological order, it is best
  *  to sort the arcset first.
- *  @return A vector with the epochs for all the nodes
+ *  \return A vector with the epochs for all the nodes
  */
 std::vector<double> BaseArcset::getEpochs() const{
 	std::vector<double> time;
@@ -1000,9 +1002,9 @@ std::vector<double> BaseArcset::getEpochs() const{
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *	\param ix the index of the extra parameter
- *	@return a vector containing the extra parameter at the specified step and index
- *	\throws Exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
+ *	\param key string that identifies the extra parameter
+ *	\return a vector containing the extra parameter at the specified step and index
+ *	\throws Exception if <tt>n</tt> is out of bounds
  */
 double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 	if(n < 0)
@@ -1014,6 +1016,17 @@ double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 	return nodes[n].getExtraParam(key);
 }//====================================================
 
+/**
+ *  \brief Retrieve a set of extra parameters for the specified node
+ * 
+ *  \param n node index within the <tt>nodes</tt> storage array; This value
+ *	is not necessarily the same as the unique ID assigned to the node when it 
+ *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	cound backwards from the end of the array.
+ *  \param key string that identifies the extra parameter
+ * 
+ *  \return the set of extra parameters
+ */
 std::vector<double> BaseArcset::getExtraParamVecByIx(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
@@ -1027,33 +1040,33 @@ std::vector<double> BaseArcset::getExtraParamVecByIx(int n, std::string key) con
 /**
  *  \brief Retrieve the value of the ID that will be assigned to the next 
  *  node added to this arcset object
- *  @return the next node ID
+ *  \return the next node ID
  */
 int BaseArcset::getNextNodeID() const { return nextNodeID; }
 
 /**
  *  \brief Retrieve the value of the ID that will be assigned to the next 
  *  segment added to this arcset object
- *  @return the next segment ID
+ *  \return the next segment ID
  */
 int BaseArcset::getNextSegID() const { return nextSegID; }
 
 /**
  *	\brief Retrieve the number of nodes
- *	@return the number of nodes
+ *	\return the number of nodes
  */
 int BaseArcset::getNumNodes() const { return static_cast<int>(nodes.size()); }
 
 /**
  *	\brief Retrieve the number of segments
- *	@return the number of segments
+ *	\return the number of segments
  */
 int BaseArcset::getNumSegs() const { return static_cast<int>(segs.size()); }
 
 /**
  *  \brief Retrieve the total number of constraints contained by all nodes, segments,
  *  and the arcset object itself
- *  @return the total number of constraints applied to this object and its children
+ *  \return the total number of constraints applied to this object and its children
  */
 int BaseArcset::getNumCons() const {
 	int conCount = static_cast<int>(cons.size());
@@ -1068,7 +1081,7 @@ int BaseArcset::getNumCons() const {
  * 
  *  \param id the ID of the desired node.
  *	
- *  @return the node located with the specified ID
+ *  \return the node located with the specified ID
  *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
  */
 Node BaseArcset::getNode(int id) const{
@@ -1088,7 +1101,7 @@ Node BaseArcset::getNode(int id) const{
  * 
  *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a node at the specified index
+ *  \return a node at the specified index
  *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 Node BaseArcset::getNodeByIx(int ix) const{
@@ -1108,7 +1121,7 @@ Node BaseArcset::getNodeByIx(int ix) const{
  * 
  *  \param id the ID of the desired node.
  *	
- *  @return the node located with the specified ID
+ *  \return the node located with the specified ID
  *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
  */
 Node& BaseArcset::getNodeRef(int id){
@@ -1129,7 +1142,7 @@ Node& BaseArcset::getNodeRef(int id){
  * 
  *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a reference to a node at the specified index
+ *  \return a reference to a node at the specified index
  *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 Node& BaseArcset::getNodeRefByIx(int ix){
@@ -1147,7 +1160,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
  *  \brief Retrieve the index of a specific node within the node storage vector
  * 
  *  \param id node ID
- *  @return the index of the node with the specified ID within the storage vector
+ *  \return the index of the node with the specified ID within the storage vector
  *  \throws Exception if <tt>id</tt> is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
@@ -1162,7 +1175,7 @@ int BaseArcset::getNodeIx(int id) const{
  * 
  *  \param id the ID of the desired node
  *	
- *  @return the node located with the specified ID
+ *  \return the node located with the specified ID
  *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
  */
 Segment BaseArcset::getSeg(int id) const{
@@ -1182,7 +1195,7 @@ Segment BaseArcset::getSeg(int id) const{
  * 
  *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a segment at the specified index
+ *  \return a segment at the specified index
  *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 Segment BaseArcset::getSegByIx(int ix) const{
@@ -1199,7 +1212,7 @@ Segment BaseArcset::getSegByIx(int ix) const{
  *  \brief Retrieve the index of a specific node within the node storage vector
  * 
  *  \param id node ID
- *  @return the index of the node with the specified ID within the storage vector
+ *  \return the index of the node with the specified ID within the storage vector
  *  \throws Exception if <tt>id</tt> is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
@@ -1214,7 +1227,7 @@ int BaseArcset::getSegIx(int id) const{
  *  with the specified ID
  * 
  *  \param id the ID of a node
- *  @return the state vector
+ *  \return the state vector
  *  \throws Exception if <tt>id</tt> is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
@@ -1237,7 +1250,7 @@ std::vector<double> BaseArcset::getState(int id) const{
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *	@return the state associated with the specified index
+ *	\return the state associated with the specified index
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 std::vector<double> BaseArcset::getStateByIx(int ix) const{
@@ -1255,7 +1268,7 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
  *  with the specified ID
  * 
  *  \param id the ID of a segment
- *  @return the STM
+ *  \return the STM
  *  \throws Exception if <tt>id</tt> is out of bounds
  *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
@@ -1276,7 +1289,7 @@ MatrixXRd BaseArcset::getSTM(int id) const{
  *	\param ix the segment index. If it is negative, the index will count backwards
  *	from the end of the <tt>segs</tt> storage array
  *	
- *	@return the STM associated with the specified index
+ *	\return the STM associated with the specified index
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 MatrixXRd BaseArcset::getSTMByIx(int ix) const{
@@ -1294,7 +1307,7 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 
 /**
  *	\brief Retrieve the a pointer to the system data object associated with this arc
- *	@return a pointer to the system data object associated with this arc
+ *	\return a pointer to the system data object associated with this arc
  */
 const SysData* BaseArcset::getSysData() const { return pSysData; }
 
@@ -1303,7 +1316,7 @@ const SysData* BaseArcset::getSysData() const { return pSysData; }
  *  with the specified ID
  * 
  *  \param id the ID of a segment
- *  @return the time-of-flight
+ *  \return the time-of-flight
  *  \throws Exception if <tt>id</tt> is out of bounds
  *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
@@ -1322,7 +1335,7 @@ double BaseArcset::getTOF(int id) const{
  *	\brief Get the time-of-flight for a specific segment
  *	\param ix node index (NOT the ID); if less than 0, the index counts
  *	backwards from the end of the nodeset
- *	@return non-dimensional time-of-flight along the specified segment
+ *	\return non-dimensional time-of-flight along the specified segment
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 double BaseArcset::getTOFByIx(int ix) const {
@@ -1337,15 +1350,15 @@ double BaseArcset::getTOFByIx(int ix) const {
 
 /**
  *	\brief Retrieve the tolerance with which data in this object was computed
- *	@return the tolerance with which data in this object was computed
+ *	\return the tolerance with which data in this object was computed
  */
 double BaseArcset::getTol() const { return tol; }
 
 /**
  *  \brief Determine the total time-of-flight along this arc.
- *  @details This function sums the TOF along each segment; derived
+ *  \details This function sums the TOF along each segment; derived
  *  classes may override this function to use different methods.
- *  @return the total time-of-flight along this arc, units consistent
+ *  \return the total time-of-flight along this arc, units consistent
  *  with the SysData object
  */
 double BaseArcset::getTotalTOF() const{
@@ -1359,11 +1372,11 @@ double BaseArcset::getTotalTOF() const{
 
 /**
  *  \brief Determine if the arcset is arranged in chronological order
- *  @details This is sufficient to prove that the arcset has
+ *  \details This is sufficient to prove that the arcset has
  *  been sorted, but not necessary; i.e., even if the flag is
  *  false, the arcset may indeed be in chronological order, but
  *  the oposite can not be true.
- *  @return a flag indicating if the arcset has been sorted into chronological order
+ *  \return a flag indicating if the arcset has been sorted into chronological order
  */
 bool BaseArcset::isInChronoOrder() const{ return bInChronoOrder; }
 
@@ -1371,7 +1384,7 @@ bool BaseArcset::isInChronoOrder() const{ return bInChronoOrder; }
  *  \brief Rearrange the nodes and segments so that they are listed
  *  in chronological order in their storage arrays.
  *  
- *  @details This does not change the ID of any of the nodes or segments,
+ *  \details This does not change the ID of any of the nodes or segments,
  *  only their index within the storage array. After calling this function,
  *  accessing the -1 node or segment will return the latest (in time) object.
  *  
@@ -1574,7 +1587,7 @@ void BaseArcset::setTol(double d){ tol = d; }
 
 /**
  *  \brief Update the epochs of all nodes such that time is continuous.
- *  @details By specifying the epoch of one node in the set, all other
+ *  \details By specifying the epoch of one node in the set, all other
  *  nodes are updated using the segment times-of-flight between them.
  * 
  *  \param nodeID the ID of a node
@@ -1635,7 +1648,7 @@ void BaseArcset::copyMe(const BaseArcset &d){
 
 /**
  *  \brief Initialize the vectors of node and segment objects from a *.mat file
- *  @details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  \details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
  *  it clears the vectors and then initializes them by calculating the number
  *  of steps in the arcset object from the state vector. Individual nodes and segments are
  *  able to be called by index after this, though they will not contain data
@@ -1736,7 +1749,7 @@ void BaseArcset::printSegIDMap() const{
 
 /**
  *  \brief Read the state vector for this arcset object from a matlab data file
- *  @details This function must be called after initNodeSegsFromMat() as it
+ *  \details This function must be called after initNodeSegsFromMat() as it
  *  populates the step vector objects with state data
  * 
  *  \param pMatFile pointer to an open matlab data file
@@ -2157,6 +2170,7 @@ void BaseArcset::saveExtraParam(mat_t *pMatFile, std::string varKey, const char 
  *	\brief Save one of the extra parameters to file
  *	\param pMatFile a pointer to the destination mat-file
  *	\param varKey the key (i.e., the name) of the scalar parameter
+ *	\param len number of elements in the extra parameter vector (e.g., a 3-element velocity vector)
  *	\param name the name of the variable being saved
  *	\throws Exception if <tt>varIx</tt> is out of bounds
  */

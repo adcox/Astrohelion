@@ -132,49 +132,49 @@ void BodyData::initFromID(int ID){
 
 /**
  *	\brief Retrieve the mean bodyRad of the body, km
- *	@return the mean bodyRad of the body, km
+ *	\return the mean bodyRad of the body, km
  */
 double BodyData::getBodyRad(){return bodyRad;}
 
 /**
  *	\brief Retrieve the mass of the body, kg
- *	@return the mass of the body, kg
+ *	\return the mass of the body, kg
  */
 double BodyData::getMass(){return mass;}
 
 /**
  *	\brief Retrieve the gravitational parameter for the body, km^3/s^2
- *	@return the gravitational parameter for the body, km^3/s^2
+ *	\return the gravitational parameter for the body, km^3/s^2
  */
 double BodyData::getGravParam(){return gravParam;}
 
 /**
  *	\brief Retrieve
- *	@return the mean orbital bodyRad of this body, km
+ *	\return the mean orbital bodyRad of this body, km
  */
 double BodyData::getOrbitRad(){return orbitRad;}
 
 /**
  *	\brief Retrieve the minimum fly-by altitude for this body, km
- * 	@return the minimum fly-by altitude for this body, km
+ * 	\return the minimum fly-by altitude for this body, km
  */
 double BodyData::getMinFlyBy(){return minFlyByAlt;}
 
 /**
  *	\brief Retrieve the name of the body
- *	@return the name of the body
+ *	\return the name of the body
  */
 std::string BodyData::getName(){return name;}
 
 /**
  *	\brief Retrieve the ID (SPICE or HORIZONS ID) associated with this body
- *	@return the ID associated with this body
+ *	\return the ID associated with this body
  */
 int BodyData::getID(){ return ID; }
 
 /**
  *	\brief Retrieve the name of the parent body
- *	@return the name of the parent body. If there is no parent, "None" is returned
+ *	\return the name of the parent body. If there is no parent, "None" is returned
  */
 std::string BodyData::getParent(){return parent;}
 

@@ -240,11 +240,11 @@ void FamMember_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
 
 /**
  *  \brief Convert the family member object to a trajectory object
- *  @details This function simply numerically integrates the IC for the
+ *  \details This function simply numerically integrates the IC for the
  *  specified TOF to produce the trajectory object
  * 
  *  \param sys The system the family member exists in
- *  @return A trajectory object
+ *  \return A trajectory object
  */
 Traj_cr3bp FamMember_cr3bp::toTraj(const SysData_cr3bp *sys){
 	SimEngine sim;

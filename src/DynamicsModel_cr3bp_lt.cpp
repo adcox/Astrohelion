@@ -43,6 +43,7 @@
 #include <gsl/gsl_errno.h>
 
 namespace astrohelion{
+
 /**
  *  \brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
  */
@@ -90,7 +91,7 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getFullEOM_fcn() const{
  *
  *  \param t the epoch at which the computations occur (unused for this system)
  *  \param sysData object describing the specific system
- *  @return an n x 3 vector (row-major order) containing the positions of
+ *  \return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *sysData) const{
@@ -109,7 +110,7 @@ std::vector<double> DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *
  *
  *  \param t the epoch at which the computations occur (unused for this system)
  *  \param sysData object describing the specific system (unused for this system)
- *  @return an n x 3 vector (row-major order) containing the velocities of
+ *  \return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *sysData) const{
@@ -120,6 +121,16 @@ std::vector<double> DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *
     return std::vector<double>(primVel, primVel+6);
 }//==============================================
 
+/**
+ *  \brief Retrieve the state derivative
+ *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  the specified time and state
+ * 
+ *  \param t time parameter
+ *  \param state state vector
+ *  \param params structure containing parameters relevant to the integration
+ *  \return the time-derivative of the state vector
+ */
 std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     if(state.size() != coreStates)
         throw Exception("DynamicsModel_cr3bp_lt::getStateDeriv: State size does not match the core state size specified by the dynamical model");
@@ -166,9 +177,10 @@ void DynamicsModel_cr3bp_lt::sim_saveIntegratedData(const double* y, double t, T
  *  \param ic the core state vector for this system
  *  \param t0 non-dimensional time at the beginning of the search arc
  *  \param tof the time-of-flight for the arc to search over
+ *  \param params structure containing parameters relevant to the integration
  *  \param verbose whether or not we should be verbose with output messages
  *
- *  @return wether or not the event has been located. If it has, a new point
+ *  \return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
 bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
@@ -220,6 +232,13 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
     return true;
 }//=======================================================
 
+/**
+ *  \brief Create default events for a simulation run
+ *  \details These events are intended to prevent numerical issues, e.g., to avoid singularities.
+ * 
+ *  \param pSys pointer to system data object
+ *  \return A vector of events to use in the simulation
+ */
 std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *pSys) const{
     // Create crash events from base dynamics model
     std::vector<Event> events = DynamicsModel::sim_makeDefaultEvents(pSys);
@@ -503,7 +522,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
  *  \param s the state vector; only the position and velocity states are required
  *  \param mu the non-dimensional system mass ratio
  *
- *  @return the Jacobi Constant at this specific state and system
+ *  \return the Jacobi Constant at this specific state and system
  */
 double DynamicsModel_cr3bp_lt::getJacobi(const double s[], double mu){
     double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];

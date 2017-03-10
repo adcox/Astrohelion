@@ -136,7 +136,7 @@ FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
 /**
  *	\brief Locate all members with the specified value of Jacobi Constant
  *	\param jc the desired value for Jacobi
- *	@return a vector of matching family members (some may be interpolated/corrected)
+ *	\return a vector of matching family members (some may be interpolated/corrected)
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
 	// Get an array of all the jacobi values
@@ -153,7 +153,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
 /**
  *	\brief Locate all members with the specified time-of-flight
  *	\param tof the desired value for time-of-flight
- *	@return a vector of matching family members (some may be interpolated/corrected)
+ *	\return a vector of matching family members (some may be interpolated/corrected)
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
 	std::vector<double> allTOF;
@@ -170,7 +170,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
  *	\brief Locate all members with the specified value for the specified state variable in the IC
  *	\param value the desired value
  *	\param ix the index of the state variable [0, 5]
- *	@return a vector of matching family members (some may be interpolated/corrected)
+ *	\return a vector of matching family members (some may be interpolated/corrected)
  *	\throws Exception if <tt>ix</tt> is out of range
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix) const{
@@ -192,25 +192,25 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix
 
 /**
  *	\brief Retrieve the name of this family
- *	@return a descriptive name
+ *	\return a descriptive name
  */
 std::string Fam_cr3bp::getName() const { return name; }
 
 /**
  *	\brief Retrieve number of members in this family
- *	@return number of members in this family
+ *	\return number of members in this family
  */
 int Fam_cr3bp::getNumMembers() const { return members.size(); }
 
 /**
  *	\brief Determine which variable best naturally describes the flow of the family
- *	@return the sorting variable
+ *	\return the sorting variable
  */
 FamSort_tp Fam_cr3bp::getSortType() const { return sortType; }
 
 /**
  *	\brief Retrieve a string describing the sort type in human-readable format
- *	@return a string describing the sort type in human-readable format
+ *	\return a string describing the sort type in human-readable format
  */
 const char* Fam_cr3bp::getSortTypeStr() const{
 	switch(sortType){
@@ -229,13 +229,13 @@ const char* Fam_cr3bp::getSortTypeStr() const{
 
 /**
  *	\brief Retrieve the system data for this family
- *	@return the system data describing the system all family members exist in
+ *	\return the system data describing the system all family members exist in
  */
 SysData_cr3bp Fam_cr3bp::getSysData() const { return sysData; }
 
 /**
  *	\brief Retrieve a pointer to the system data object for this family
- *	@return a pointer to the system data object for this family
+ *	\return a pointer to the system data object for this family
  */
 SysData_cr3bp* Fam_cr3bp::getSysDataPtr() { return &sysData; }
 
@@ -275,7 +275,7 @@ void Fam_cr3bp::copyMe(const Fam_cr3bp& fam){
  *
  *	\param value the value to search for
  *	\param data a pointer to a data set to search in
- *	@return a vector of integers representing the indices of matches
+ *	\return a vector of integers representing the indices of matches
  */
 std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data) const{
 	double numBins = data->size() > 500 ? 100 : (data->size()/5.0);
@@ -328,7 +328,7 @@ std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data)
  *	\param matchCon a constraint that can be applied in a corrections scheme that will
  *	ensure the corrected trajectory has the desired value for the variable of interest.
  *
- *	@return a vector of matches. If no matches are returned, the vector will be empty.
+ *	\return a vector of matches. If no matches are returned, the vector will be empty.
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vector<double> *dataSet,
 	Constraint matchCon) const{

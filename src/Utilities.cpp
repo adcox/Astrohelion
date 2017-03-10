@@ -50,7 +50,7 @@ namespace astrohelion{
 /**
  *  \brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j
  *  \param num a complex number
- *  @return the complex number as a string
+ *  \return the complex number as a string
  */
 std::string complexToStr(std::complex<double> num){
     char buffer[64];
@@ -170,7 +170,7 @@ void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
 
 /**
  * \brief Save a matrix of data to a Matlab .mat file
- * @details The data passed in the <tt>data</tt> vector is transposed 
+ * \details The data passed in the <tt>data</tt> vector is transposed 
  *  and saved to the specified Matlab file
  * 
  * \param filename name/path of the file
@@ -187,7 +187,7 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
 
 /**
  *  \brief Save a matrix of data to an open matlab .mat file
- *  @details The data passed in the <tt>data</tt> vector is transposed 
+ *  \details The data passed in the <tt>data</tt> vector is transposed 
  *  and saved to the specified Matlab file 
  * 
  *  \param matfp An open Matlab .mat file
@@ -233,7 +233,7 @@ void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const
  *  \param filename relative or absolute path to the .mat data file
  *  \param varName the name of the variable/matrix to read from the file
  * 
- *  @return a column-major-order vector containing the data from the desired matrix
+ *  \return a column-major-order vector containing the data from the desired matrix
  *  \throws Exception if the file cannot be opened, if the variable doesn't exist,
  *  or if the variable contains something other than doubles
  *  \throws Exception if the data file cannot be opened or the variable cannot be read
@@ -288,7 +288,7 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  *  \brief Read a double from a mat file
  *  \param matFile a pointer to the matlab file in quesiton
  *  \param varName the name of the variable in the mat file
- *  @return the value of the variable
+ *  \return the value of the variable
  *  \throws Exception if there is trouble reading or parsing the variable
  */
 double readDoubleFromMat(mat_t *matFile, const char* varName){
@@ -351,7 +351,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
  *  \param varName the name of the variable in the mat file
  *  \param aType the expected variable type (e.g. MAT_T_UINT8)
  *  \param aClass the expected variable class (e.g. MAT_C_CHAR)
- *  @return the string
+ *  \return the string
  *  \throws Exception if there is trouble reading or parsing the variable.
  */
 std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types aType,
@@ -391,11 +391,11 @@ void waitForUser(){
 /**
  *  \brief Retrieve a string representing the name of a spacecraft or celestial body
  *  from its SPICE ID Code
- *  @details For a list of SPICE IDs, see the 
+ *  \details For a list of SPICE IDs, see the 
  *  <a href="http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/naif_ids.html">NAIF ID Page</a>
  *  
  *  \param ID Integer ID Code
- *  @return A string representation of the body or satellite
+ *  \return A string representation of the body or satellite
  */
 std::string getNameFromSpiceID(int ID){
     SpiceInt lenout = 128;  // maximum length of output name
@@ -415,12 +415,12 @@ std::string getNameFromSpiceID(int ID){
 
 /**
  *  \brief Get a SPICE ID from a body name
- *  @details Body names are case insensitive and leading/trailing spaces are not
+ *  \details Body names are case insensitive and leading/trailing spaces are not
  *  important. However, when the name is made up of more than word, they must be
  *  separated by at least one space.
  * 
  *  \param name body name to be translated to a SPICE ID code
- *  @return a SPICE integer ID code
+ *  \return a SPICE integer ID code
  */
 SpiceInt getSpiceIDFromName(const char *name){
     ConstSpiceChar *name_spice = static_cast<ConstSpiceChar*>(name);
@@ -479,12 +479,12 @@ void toCSV(MatrixXRd m, const char* filename){
 /**
  *  \brief Resolve double angle ambiquity from inverse trig
  *  functions
- *  @details [long description]
+ *  \details [long description]
  * 
  *  \param asinVal The result of arcsin(value)
  *  \param acosVal The result of arccos(value)
  * 
- *  @return The common value between the double angles returned by arcsin(value)
+ *  \return The common value between the double angles returned by arcsin(value)
  *  and arccos(value)
  */
 double resolveAngle(double asinVal, double acosVal){
@@ -511,7 +511,7 @@ double resolveAngle(double asinVal, double acosVal){
 
 /**
  *  \brief Determine the value of a number within some bounds
- *  @details This is particularly useful for arguments for 
+ *  \details This is particularly useful for arguments for 
  *  inverse trig functions: small numerical errors may result 
  *  in arccos(1 + eps) or arsin(-1 - eps) where eps is some small
  *  value. The resulting inverse trig function will be invalide
@@ -522,7 +522,7 @@ double resolveAngle(double asinVal, double acosVal){
  *  \param val the value to bound
  *  \param min minimum allowable value
  *  \param max maximum allowable value
- *  @return The value if it is within the bounds, or the min/max
+ *  \return The value if it is within the bounds, or the min/max
  *  bound if val is outside the bounds.
  */
 double boundValue(double val, double min, double max){

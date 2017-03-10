@@ -88,7 +88,7 @@ Node::Node(const Node &n) : Linkable(n){
 /**
  *	\brief Assignment operator
  *	\param n a node object reference
- *	@return set this node equal to s and return *this
+ *	\return set this node equal to s and return *this
  */
 Node& Node::operator =(const Node &n){
 	Linkable::operator =(n);
@@ -102,7 +102,7 @@ Node& Node::operator =(const Node &n){
  *	Conditions for identicalness:
  *	* Exact same state vector
  *
- *	@return whether or not two nodes are identical
+ *	\return whether or not two nodes are identical
  */
 bool operator ==(const Node &lhs, const Node &rhs){
 	if(lhs.state.size() != rhs.state.size())
@@ -139,7 +139,7 @@ bool operator ==(const Node &lhs, const Node &rhs){
 
 /**
  *	\brief Determine if two nodes are different
- *	@return whether two nodes are different
+ *	\return whether two nodes are different
  *	@see operator==
  */
 bool operator != (const Node &lhs, const Node &rhs){
@@ -184,7 +184,7 @@ void Node::setConstraints(std::vector<Constraint> constraints){
 
 /**
  *	\brief Get all constraints for this node
- *	@return a vector containing all constraints applied to this node
+ *	\return a vector containing all constraints applied to this node
  */
 std::vector<Constraint> Node::getConstraints() const{
 	return cons;
@@ -192,7 +192,7 @@ std::vector<Constraint> Node::getConstraints() const{
 
 /**
  *  \brief Retrieve the epoch assocated with this node
- *  @return the epoch associated with this node, units consistent with the parent system
+ *  \return the epoch associated with this node, units consistent with the parent system
  */
 double Node::getEpoch() const{ return epoch; }
 
@@ -206,7 +206,7 @@ double Node::getExtraParam(std::string key) const {
 
 /**
  *	\brief Get a vector containing all extra parameters for this node
- *	@return a vector containing all extra parameters for this node
+ *	\return a vector containing all extra parameters for this node
  */
 std::map<std::string, double> Node::getExtraParams() const {
 	return extraParam;
@@ -226,13 +226,13 @@ std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
 
 /**
  *  \brief Retrieve the number of constraints stored by this object
- *  @return the number of constraints stored by this object
+ *  \return the number of constraints stored by this object
  */
 int Node::getNumCons() const { return static_cast<int>(cons.size()); }
 
 /**
  *	\brief Get the 6-element non-dimensional position and velocity state vector
- *	@return the 6-element non-dimensional position and velocity state vector
+ *	\return the 6-element non-dimensional position and velocity state vector
  */
 std::vector<double> Node::getState() const {
 	return state;
@@ -317,6 +317,9 @@ void Node::copyMe(const Node &n){
 	Linkable::copyMe(n);
 }//====================================================
 
+/**
+ *  \brief Print a description of the node and its properties
+ */
 void Node::print() const{
 	printf("Node | id = %d\n", ID);
 	printf("\tEpoch = %.4f\n", epoch);

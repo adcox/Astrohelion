@@ -42,6 +42,20 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(){}
 //      Switchboard Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Retrieve the output of a control law
+ * 	\details A set of outputs are computed according to the specified control law, given
+ * 	the input time, state, and system data.
+ * 	
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param lawID identifies the control law type
+ *  \param law empty, initialized array to store the control law output in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  
+ *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
+ */
 void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysData, unsigned int lawID,
 	double *law, unsigned int len) const{
 
@@ -49,16 +63,16 @@ void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysD
 
 	switch(lawID){
 		case Law_tp::CONST_C_2D_LEFT:
-			getLaw_ConstC_2D_Left(t, s, pSysData_lt, law, len);
+			getLaw_ConstC_2D(t, s, pSysData_lt, law, len, -1);
 			break;
 		case Law_tp::CONST_C_2D_RIGHT:
-			getLaw_ConstC_2D_Right(t, s, pSysData_lt, law, len);
+			getLaw_ConstC_2D(t, s, pSysData_lt, law, len, 1);
 			break;
 		case Law_tp::PRO_VEL:
-			getLaw_Pro_Vel(t, s, pSysData_lt, law, len);
+			getLaw_Along_Vel(t, s, pSysData_lt, law, len, 1);
 			break;
 		case Law_tp::ANTI_VEL:
-			getLaw_Anti_Vel(t, s, pSysData_lt, law, len);
+			getLaw_Along_Vel(t, s, pSysData_lt, law, len, -1);
 			break;
 		default:
 			ControlLaw::getLaw(t, s, pSysData, lawID, law, len);
@@ -66,15 +80,18 @@ void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysD
 }//====================================================
 
 /**
- *  \brief [brief description]
- *  \details [long description]
+ *  \brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  states at the given time, state, in the specified system
  * 
- *  \param t [description]
- *  \param s [description]
- *  \param pSys [description]
- *  \param int [description]
- *  \param partials [description]
- *  \param int [description]
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param lawID identifies the control law type
+ *  \param partials empty, initialized array to store the control law derivatives in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  
+ *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
 void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const{
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
@@ -103,61 +120,61 @@ void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const Sys
 //      Control Laws
 //------------------------------------------------------------------------------------------------------
 
-void ControlLaw_cr3bp_lt::getLaw_ConstC_2D_Right(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *law, unsigned int len) const{
+/**
+ *  \brief Retrieve the output of the Jacobi-preserving 2D control laws
+ * 	\details A set of outputs are computed according to the specified control law, given
+ * 	the input time, state, and system data.
+ * 	
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param law empty, initialized array to store the control law output in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  \param sign specifies which of the ConstC_2D control laws to evaluate: +1 for RIGHT, -1 for LEFT
+ */
+void ControlLaw_cr3bp_lt::getLaw_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *law, unsigned int len, int sign) const{
+
+	if(std::abs(sign) != 1)
+		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
 
 	if(len < 3)
-		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D_Right: law data length must be at least 3!");
+		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	law[0] = s[4]/v;
-	law[1] = -s[3]/v;
+	law[0] = sign*s[4]/v;
+	law[1] = -sign*s[3]/v;
 	law[2] = 0;
 
 	(void) pSys;
 	(void) t;
 }//====================================================
 
-void ControlLaw_cr3bp_lt::getLaw_ConstC_2D_Left(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *law, unsigned int len) const{
+/**
+ *  \brief Retrieve the output of the Jacobi-changing, parallel velocity control laws
+ * 	\details A set of outputs are computed according to the specified control law, given
+ * 	the input time, state, and system data.
+ * 	
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param law empty, initialized array to store the control law output in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  \param sign specifies which of the control laws to evaluate: +1 for with-velocity, -1 for anti-velocity
+ */
+void ControlLaw_cr3bp_lt::getLaw_Along_Vel(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *law, unsigned int len, int sign) const{
 
-	if(len < 3)
-		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D_Left: law data length must be at least 3!");
-
-	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	law[0] = -s[4]/v;
-	law[1] = s[3]/v;
-	law[2] = 0;
-
-	(void) pSys;
-	(void) t;
-}//====================================================
-
-void ControlLaw_cr3bp_lt::getLaw_Pro_Vel(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *law, unsigned int len) const{
+	if(std::abs(sign) != 1)
+		sign = sign/std::abs(sign);	// +1 for With-Velocity, -1 for Anti-Velocity
 
 	if(len < 3)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_Pro_Vel: law data length must be at least 3!");
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	law[0] = s[3]/v;
-	law[1] = s[4]/v;
-	law[2] = s[5]/v;
-
-	(void) pSys;
-	(void) t;
-}//====================================================
-
-void ControlLaw_cr3bp_lt::getLaw_Anti_Vel(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *law, unsigned int len) const{
-
-	if(len < 3)
-		throw Exception("ControlLaw_cr3bp_lt::getLaw_Anti_Vel: law data length must be at least 3!");
-
-	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	law[0] = -s[3]/v;
-	law[1] = -s[4]/v;
-	law[2] = -s[5]/v;
+	law[0] = sign*s[3]/v;
+	law[1] = sign*s[4]/v;
+	law[2] = sign*s[5]/v;
 
 	(void) pSys;
 	(void) t;
@@ -167,9 +184,21 @@ void ControlLaw_cr3bp_lt::getLaw_Anti_Vel(double t, const double *s, const SysDa
 //      Partial Derivatives of Control Laws
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  states at the given time, state, in the specified system
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials empty, initialized array to store the control law derivatives in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  \param sign specifies which of the ConstC_2D control laws to evaluate: +1 for RIGHT, -1 for LEFT
+ */
 void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys, double *partials, unsigned int len, int sign) const{
 	if(std::abs(sign) != 1)
-		sign = 1;	// +1 for RIGHT, -1 for LEFT
+		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
 
 	if(len != 21)
 		throw Exception("ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D: Expects len = 21");
@@ -200,6 +229,12 @@ void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s,
 //      Utility Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Retrieve a string that represents the law ID
+ * 
+ *  \param id control law ID
+ *  \return a string that represents the law ID
+ */
 std::string ControlLaw_cr3bp_lt::lawIDToString(unsigned int id) const{
 	switch(id){
 		case Law_tp::CONST_C_2D_LEFT: return "Jacobi-Preserving, 2D, Left";

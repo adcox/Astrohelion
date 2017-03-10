@@ -85,7 +85,7 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(const SysData_cr3bp_lt &d) : SysData_cr3bp(d)
 /**
  *	\brief Copy operator; makes a clean copy of a data object into this one
  *	\param d a CR3BP system data object
- *	@return this system data object
+ *	\return this system data object
  */
 SysData_cr3bp_lt& SysData_cr3bp_lt::operator= (const SysData_cr3bp_lt &d){
 	SysData_cr3bp::operator= (d);
@@ -94,7 +94,7 @@ SysData_cr3bp_lt& SysData_cr3bp_lt::operator= (const SysData_cr3bp_lt &d){
 
 /**
  *	\brief Retrieve the model that governs the motion for this system type
- *	@return the model that governs the motion for this system type
+ *	\return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_cr3bp_lt::getDynamicsModel() const { return &model; }
 
@@ -106,19 +106,19 @@ const ControlLaw* SysData_cr3bp_lt::getControlLaw() const { return &control; }
 
 /**
  *	\brief Get the nondimensional thrust for P3 in this system
- *	@return the thrust, nondimensional (nondimensionalized in mass by spacecraft reference mass) 
+ *	\return the thrust, nondimensional (nondimensionalized in mass by spacecraft reference mass) 
  */
 double SysData_cr3bp_lt::getThrust() const { return otherParams[1]; }
 
 /**
  *	\brief Get the specific impulse for P3 in this system
- *	@return the specific impulse, seconds
+ *	\return the specific impulse, seconds
  */
 double SysData_cr3bp_lt::getIsp() const { return otherParams[2]; }
 
 /**
  *	\brief Get the reference mass for P3
- *	@return the reference mass of P3, kg
+ *	\return the reference mass of P3, kg
  */
 double SysData_cr3bp_lt::getMass() const { return otherParams[3]; }
 

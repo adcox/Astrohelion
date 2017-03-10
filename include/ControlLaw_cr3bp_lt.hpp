@@ -40,8 +40,6 @@ class SysData_cr3bp_lt;
 /**
  *  \ingroup model cr3bp_lt
  *  \brief Includes control laws specific to the CR3BP-LT problem
- *  \details [long description]
- *  \return [description]
  */
 class ControlLaw_cr3bp_lt : public ControlLaw{
 public:
@@ -60,10 +58,8 @@ public:
 	};
 protected:
 
-	void getLaw_ConstC_2D_Right(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getLaw_ConstC_2D_Left(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getLaw_Pro_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	void getLaw_Anti_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+	void getLaw_ConstC_2D_Right(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
+	void getLaw_Along_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 
 	void getPartials_State_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 };

@@ -100,7 +100,7 @@ Constraint::~Constraint(){}
 /**
  *	\brief Assignment operator
  *	\param c a constraint
- *	@return this constraint, now equal to c
+ *	\return this constraint, now equal to c
  */
 Constraint& Constraint::operator =(const Constraint& c){
 	copyMe(c);
@@ -114,28 +114,28 @@ Constraint& Constraint::operator =(const Constraint& c){
 /**
  *  \brief Retrieve the application type for this constraint, i.e., what type of
  *  objects it controls and can be applied to
- *  @return the application type
+ *  \return the application type
  */
 ConstraintApp_tp Constraint::getAppType() const{ return appType; }
 
 /**
- *	@return what type of constraint this is
+ *	\return what type of constraint this is
  */
 Constraint_tp Constraint::getType() const { return type; }
 
 /**
- *	@return the ID that identifies the object constrained by this constraint
+ *	\return the ID that identifies the object constrained by this constraint
  */
 int Constraint::getID() const { return id; }
 
 /**
- *	@return the data vector for this constraint
+ *	\return the data vector for this constraint
  */
 std::vector<double> Constraint::getData() const { return data; }
 
 /**
  *  \brief Retrieve the first data value that is not an NAN
- *  @return The value of the first data value. If no data
+ *  \return The value of the first data value. If no data
  *  value is located, NAN is returned.
  *  @see getFirstDataValue(int*)
  */
@@ -150,7 +150,7 @@ double Constraint::getFirstDataValue() const{
  *  \param ix The index of the first data value will be
  *  stored in this integer. If no data value is located,
  *  ix will be set to -1.
- *  @return The value of the first data value. If no data
+ *  \return The value of the first data value. If no data
  *  value is located, NAN is returned.
  */
 double Constraint::getFirstDataValue(int *ix) const{
@@ -166,7 +166,7 @@ double Constraint::getFirstDataValue(int *ix) const{
 }//====================================================
 
 /**
- *	@return a count of the constrained states; certain constraint types, 
+ *	\return a count of the constrained states; certain constraint types, 
  *	like Constraint_tp::MATCH_CUST, give the option of constraining a subset of the entire
  *	node.
  */
@@ -228,13 +228,13 @@ void Constraint::copyMe(const Constraint &c){
 
 /**
  *  \brief Get a human-redable string representing the constraint type
- *  @return a human-redable string representing the constraint type
+ *  \return a human-redable string representing the constraint type
  */
 const char* Constraint::getTypeStr() const{ return getConTypeStr(type); }
 
 /**
  *	\param t a constraint type
- *	@return a human-readable string representing a constraint type
+ *	\return a human-readable string representing a constraint type
  */
 const char* Constraint::getConTypeStr(Constraint_tp t){
 	switch(t){
@@ -265,7 +265,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 
 /**
  *  \param t a constraint application type
- *  @return a human-readable string representing an application type
+ *  \return a human-readable string representing an application type
  */
 const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
 	switch(t){

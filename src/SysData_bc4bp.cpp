@@ -160,7 +160,7 @@ SysData_bc4bp::SysData_bc4bp(const SysData_bc4bp &d) : SysData(d){}
 /**
  *	\brief Copy operator; makes a clean copy of a data object into this one
  *	\param d a BCR4BPR system data object
- *	@return this system data object
+ *	\return this system data object
  */
 SysData_bc4bp& SysData_bc4bp::operator= (const SysData_bc4bp &d){
 	SysData::operator= (d);
@@ -169,7 +169,7 @@ SysData_bc4bp& SysData_bc4bp::operator= (const SysData_bc4bp &d){
 
 /**
  *	\brief Retrieve the model that governs the motion for this system type
- *	@return the model that governs the motion for this system type
+ *	\return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_bc4bp::getDynamicsModel() const { return &model; }
 
@@ -180,22 +180,22 @@ const DynamicsModel* SysData_bc4bp::getDynamicsModel() const { return &model; }
 const ControlLaw* SysData_bc4bp::getControlLaw() const { return &control; }
 
 /**
- *	@return the non-dimensional mass ratio for the secondary system (P2 + P3)
+ *	\return the non-dimensional mass ratio for the secondary system (P2 + P3)
  */
 double SysData_bc4bp::getMu() const { return otherParams.at(0); }
 
 /**
- *	@return the non-dimensional mass ratio for P3
+ *	\return the non-dimensional mass ratio for P3
  */
 double SysData_bc4bp::getNu() const { return otherParams.at(1); }
 
 /**
- *	@return the ratio between P3's orbital radius and P2's orbital radius, non-dimensional units
+ *	\return the ratio between P3's orbital radius and P2's orbital radius, non-dimensional units
  */
 double SysData_bc4bp::getCharLRatio() const { return otherParams.at(3); }
 
 /**
- *	@return the scaling constant for this system
+ *	\return the scaling constant for this system
  */
 double SysData_bc4bp::getK() const {
 	return otherParams.at(2);
@@ -203,33 +203,33 @@ double SysData_bc4bp::getK() const {
 
 /**
  *  \brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)
- *  @details The angles Theta0 and Phi0 coincide with time T = 0, but this is
+ *  \details The angles Theta0 and Phi0 coincide with time T = 0, but this is
  *  NOT the J2000 epoch T = 0; Rather, T = 0 is the epoch relative to some reference
  *  epoch T0, which is returned by this function.
- *  @return the epoch associated with T = 0 (seconds, J2000, UTC)
+ *  \return the epoch associated with T = 0 (seconds, J2000, UTC)
  */
 double SysData_bc4bp::getEpoch0() const { return otherParams.at(7); }
 
 /**
- *	@return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
+ *	\return the angle between the P1/P2 line and the inertial x-axis at time t = 0,
  *	angle in radians
  */
 double SysData_bc4bp::getTheta0() const { return otherParams.at(4); }
 
 /**
- *	@return the angle between the P2/P3 line (projected onto inertial XY plane) and the 
+ *	\return the angle between the P2/P3 line (projected onto inertial XY plane) and the 
  *	x-axis at time t = 0, angle in radians
  */
 double SysData_bc4bp::getPhi0() const { return otherParams.at(5); }
 
 /**
- *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane, radians.
+ *	\return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital plane, radians.
  */
 double SysData_bc4bp::getGamma() const { return otherParams.at(6); }
 
 /**
  *  \brief Set the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
- *  @details The angles Theta0 and Phi0 coincide with time T = 0, but this is
+ *  \details The angles Theta0 and Phi0 coincide with time T = 0, but this is
  *  NOT the J2000 epoch T = 0; Rather, T = 0 is the epoch relative to some reference
  *  epoch T0, which is set by this function.
  * 

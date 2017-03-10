@@ -61,7 +61,7 @@ SysData::~SysData(){}
  *	\brief Copy the system data object
  *
  *	\param d a system data object
- *	@return this data object, set to equal the input object
+ *	\return this data object, set to equal the input object
  */
 SysData& SysData::operator =(const SysData &d){
 	copyData(d);
@@ -74,7 +74,7 @@ SysData& SysData::operator =(const SysData &d){
  *
  *	\param lhs
  *	\param rhs
- *	@return whether or not they are the same
+ *	\return whether or not they are the same
  */
 bool operator ==(const SysData &lhs, const SysData &rhs){
 	if(lhs.type != rhs.type)
@@ -97,7 +97,7 @@ bool operator ==(const SysData &lhs, const SysData &rhs){
  *
  *	\param lhs
  *	\param rhs
- *	@return whether or not they are different
+ *	\return whether or not they are different
  */
 bool operator !=(const SysData &lhs, const SysData &rhs){
 	return ! operator==(lhs, rhs);
@@ -118,14 +118,14 @@ void SysData::copyData(const SysData &d){
 }//==========================================
 
 /**
- *	@return the number of primaries this system models
+ *	\return the number of primaries this system models
  */
 int SysData::getNumPrimaries() const { return primaries.size(); }
 
 /**
  *	\brief Retrieve the name of one of the system primaries
  *	\param n the "index" of the primary, starts at 0
- *	@return the name of the n'th primary. If the index valueis invalid, an error
+ *	\return the name of the n'th primary. If the index valueis invalid, an error
  *	is printed to the standard output and a value of "NULL" is returned.
  */
 std::string SysData::getPrimary(int n) const{ 
@@ -140,32 +140,32 @@ std::string SysData::getPrimary(int n) const{
 /**
  *	\brief Retrieve a unique numerical ID (SPICE/NAIF ID) for one of the system primaries
  *	\param n the index of the primary, starts at 0
- *	@return a unique numerical ID for this primary; useful for comparing systems
+ *	\return a unique numerical ID for this primary; useful for comparing systems
  */
 int SysData::getPrimID(int n) const{ return primIDs.at(n); }
 
 /**
- *	@return the characteristic length (km) associated with this system
+ *	\return the characteristic length (km) associated with this system
  */
 double SysData::getCharL() const { return charL; }
 
 /**
- *	@return the charactersitic mass (kg) associated with this system
+ *	\return the charactersitic mass (kg) associated with this system
  */
 double SysData::getCharM() const { return charM; }
 
 /**
- *	@return the characteristic time (s) associated with this system
+ *	\return the characteristic time (s) associated with this system
  */
 double SysData::getCharT() const { return charT; }
 
 /**
- *	@return the tpat_system_tp type associated with this system
+ *	\return the tpat_system_tp type associated with this system
  */
 SysData_tp SysData::getType() const { return type; }
 
 /**
- *	@return a string (human-readable) version of the system type
+ *	\return a string (human-readable) version of the system type
  */
 std::string SysData::getTypeStr() const{
 	switch (type){

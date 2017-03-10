@@ -74,7 +74,7 @@ Traj::~Traj(){}
  *	for the associated time-of-flight and added (via operator +()) to a trajectory object.
  *
  *	\param set a nodeset
- *	@return a trajectory formed from the integrated nodeset
+ *	\return a trajectory formed from the integrated nodeset
  */
 Traj Traj::fromNodeset(Nodeset set){
 	SimEngine simEngine;
@@ -139,12 +139,12 @@ Traj Traj::fromNodeset(Nodeset set){
 
 /**
  *  \brief Create a new trajectory object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param sys pointer to a system data object
- *  @return a pointer to the newly created trajectory
+ *  \return a pointer to the newly created trajectory
  */
 baseArcsetPtr Traj::create( const SysData *sys) const{
 	return baseArcsetPtr(new Traj(sys));
@@ -153,11 +153,11 @@ baseArcsetPtr Traj::create( const SysData *sys) const{
 /**
  *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned trajectory
+ *  \return a pointer to the newly cloned trajectory
  */
 baseArcsetPtr Traj::clone() const{
 	return baseArcsetPtr(new Traj(*this));
@@ -169,7 +169,7 @@ baseArcsetPtr Traj::clone() const{
 
 /**
  *  \brief Combine two trajectories.
- *  @details This function concatenates two trajectory objects. It is assumed
+ *  \details This function concatenates two trajectory objects. It is assumed
  *  that the first state on <tt>rhs</tt> is identical to the final state on
  *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
  *  (chronologically) <tt>lhs</tt>
@@ -177,7 +177,7 @@ baseArcsetPtr Traj::clone() const{
  *  \param lhs reference to a trajectory object
  *  \param rhs reference to a trajectory object
  * 
- *  @return the concatenation of lhs + rhs.
+ *  \return the concatenation of lhs + rhs.
  */
 Traj operator +(const Traj &lhs, const Traj &rhs){
 	const Traj lhs_cpy(lhs);
@@ -193,7 +193,7 @@ Traj operator +(const Traj &lhs, const Traj &rhs){
  *  \brief Concatenate this object with another trajectory
  * 
  *  \param rhs reference to a trajectory object
- *  @return the concatenation of this and <tt>rhs</tt>
+ *  \return the concatenation of this and <tt>rhs</tt>
  *  @see operator +()
  */
 Traj& Traj::operator +=(const Traj &rhs){
@@ -208,7 +208,7 @@ Traj& Traj::operator +=(const Traj &rhs){
 
 /**
  *  \brief Compute the total TOF for this trajectory
- *  @return the total TOF for this trajectory, units consistent
+ *  \return the total TOF for this trajectory, units consistent
  *  with time units of the SysData object for this trajectory.
  *  If the function is unable to determine the initial or final epoch,
  *  a value of NAN is returned.
@@ -250,7 +250,7 @@ double Traj::getTotalTOF() const{
 /**
  *	\brief Retrieve the time along the trajectory at a specific step
  *	\param ix node index; if < 0, it will count backwards from end of trajectory
- *	@return the non-dimensional time along the trajectory at the specified step
+ *	\return the non-dimensional time along the trajectory at the specified step
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 double Traj::getTimeByIx(int ix) const {
@@ -265,7 +265,7 @@ double Traj::getTimeByIx(int ix) const {
 
 /**
  *  \brief Set the time associated with a node
- *  @details [long description]
+ *  \details [long description]
  * 
  *	\param ix node index; if < 0, it will count backwards from end of trajectory
  *  \param t time associated with the node
@@ -283,7 +283,7 @@ void Traj::setTimeByIx(int ix, double t){
 
 /**
  *  \brief Shift all time values by a constant amount
- *  @details This can be useful for use with the EM2SE and SE2EM functions
+ *  \details This can be useful for use with the EM2SE and SE2EM functions
  * 
  *  \param amount a constant, non-dimensional time shift to apply to 
  *  all time values for points on this trajectory
@@ -307,7 +307,7 @@ void Traj::shiftAllTimes(double amount){
  *
  *	\param numNodes number of nodes, including both the initial and final states on 
  *	the trajectory, which are always included
- *	@return a nodeset with the specified number of nodes
+ *	\return a nodeset with the specified number of nodes
  *	\throws Exception if <tt>numNodes</tt> is less than two
  */
 Nodeset Traj::discretize(int numNodes) const{
@@ -366,6 +366,13 @@ void Traj::saveToMat(const char* filename) const{
 	Mat_Close(matfp);
 }//====================================================
 
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \details This function is called from saveToMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj::saveCmds(mat_t* pMatFile) const{
 	saveState(pMatFile);
 	saveStateDeriv(pMatFile);
@@ -407,6 +414,13 @@ void Traj::readFromMat(const char *filepath){
 	Mat_Close(matfp);
 }//====================================================
 
+/**
+ *  \brief Execute commands to read data from a Matlab file
+ *  \details This function is called from readFromMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj::readCmds(mat_t *pMatFile){
 	initNodesSegsFromMat(pMatFile);
 	readStateFromMat(pMatFile);

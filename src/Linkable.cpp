@@ -68,7 +68,7 @@ Linkable::~Linkable(){}
  *  \brief Assignment operator
  * 
  *  \param obj reference to a linkable object
- *  @return reference to a linkable object, now equivalent to the input reference
+ *  \return reference to a linkable object, now equivalent to the input reference
  */
 Linkable& Linkable::operator =(const Linkable &obj){
 	copyMe(obj);
@@ -81,7 +81,7 @@ Linkable& Linkable::operator =(const Linkable &obj){
  *  \param lhs 
  *  \param rhs 
  * 
- *  @return whether or not the two objects are identical
+ *  \return whether or not the two objects are identical
  */
 bool operator ==(const Linkable &lhs, const Linkable &rhs){
 	for(int i = 0; i < Linkable::NUM_LINKS; i++){
@@ -98,7 +98,7 @@ bool operator ==(const Linkable &lhs, const Linkable &rhs){
  *  \param lhs 
  *  \param rhs 
  * 
- *  @return whether or not the two objects are nonidentical
+ *  \return whether or not the two objects are nonidentical
  */
 bool operator !=(const Linkable &lhs, const Linkable &rhs){
 	return !(lhs == rhs);
@@ -110,7 +110,7 @@ bool operator !=(const Linkable &lhs, const Linkable &rhs){
 
 /**
  *  \brief Add a link from this object to another with the specified ID
- *  @details Only two links are allowed; if both slots are already filled,
+ *  \details Only two links are allowed; if both slots are already filled,
  *  an exception is thrown
  * 
  *  \param id the ID of the object that is linked to this object
@@ -127,7 +127,7 @@ void Linkable::addLink(int id){
 
 /**
  *  \brief Remove all links from this object to other objects
- *  @details This function resets the array of links
+ *  \details This function resets the array of links
  */
 void Linkable::clearLinks(){
 	for(int i = 0; i < NUM_LINKS; i++)
@@ -136,7 +136,7 @@ void Linkable::clearLinks(){
 
 /**
  *  \brief Retrieve the ID of this object
- *  @return the ID of this object
+ *  \return the ID of this object
  */
 int Linkable::getID() const { return ID; }
 
@@ -144,7 +144,7 @@ int Linkable::getID() const { return ID; }
  *  \brief Locate a particular ID within the link slots associated with this object
  * 
  *  \param id the ID to search for
- *  @return the index of the ID within the links[] storage array. A value of 
+ *  \return the index of the ID within the links[] storage array. A value of 
  *  Linkable::INVALID_ID is returned if the ID is not located
  */
 int Linkable::getLinkIx(int id) const{	
@@ -162,7 +162,7 @@ int Linkable::getLinkIx(int id) const{
  *  \brief Retrieve one of the links
  * 
  *  \param ix The index of the link, must be in the integer set [0, linkable::NUM_LINKS)
- *  @return the ID stored at the specified index. If the index is out of 
+ *  \return the ID stored at the specified index. If the index is out of 
  *  range, an exception is thrown
  *  \throws Exception if <tt>ix</tt> is out of bounds
  */
@@ -179,7 +179,7 @@ int Linkable::getLink(int ix) const {
  *  to this object
  * 
  *  \param id the ID of the object
- *  @return whether or not the object with the specified ID is linked
+ *  \return whether or not the object with the specified ID is linked
  *  to this object
  */
 bool Linkable::isLinkedTo(int id) const {
@@ -201,7 +201,7 @@ void Linkable::removeLink(int id){
 
 /**
  *  \brief Set the ID of this object
- *  @details Note: This should NOT be done after a segment is added to an arcset
+ *  \details Note: This should NOT be done after a segment is added to an arcset
  * 
  *  \param id the desired ID
  */

@@ -44,7 +44,7 @@ Segment::Segment(){}
 
 /**
  *  \brief Construct a new segment
- * 	@details This constructor creates an STM equal to the 6x6 Identity matrix
+ * 	\details This constructor creates an STM equal to the 6x6 Identity matrix
  *  \param originID ID associated with the origin node
  *  \param terminusID ID associated with the terminal node (if no terminal node exists, 
  *  enter a value of NAN)
@@ -66,6 +66,7 @@ Segment::Segment(int originID, int terminusID, double tof){
  *  \param stm_data a row-major order array containing a state transition matrix
  *  associated with this segment
  *  \param len the number of elements in stm_data (should be a perfect square)
+ *  \param ctrlLawID control law implemented along this segment
  */
 Segment::Segment(int originID, int terminusID, double tof, const double* stm_data, unsigned int len,
 	unsigned int ctrlLawID){
@@ -98,7 +99,7 @@ Segment::Segment(const Segment &s) : Linkable(s){
 /**
  *	\brief Assignment operator
  *	\param s an arc segment object
- *	@return set this object equal to s and return *this
+ *	\return set this object equal to s and return *this
  */
 Segment& Segment::operator =(const Segment &s){
 	Linkable::operator =(s);
@@ -113,7 +114,7 @@ Segment& Segment::operator =(const Segment &s){
  *	* Same origin, terminus, ID, and time-of-flight
  *	* (Not Active) Exact same constraint vector
  *
- *	@return whether or not two segments are identical
+ *	\return whether or not two segments are identical
  */
 bool operator ==(const Segment &lhs, const Segment &rhs){
 	
@@ -127,7 +128,7 @@ bool operator ==(const Segment &lhs, const Segment &rhs){
 
 /**
  *	\brief Determine if two segments are different
- *	@return whether two segments are different
+ *	\return whether two segments are different
  *	@see operator==
  */
 bool operator != (const Segment &lhs, const Segment &rhs){
@@ -153,7 +154,7 @@ void Segment::clearConstraints(){ cons.clear(); }
 
 /**
  *	\brief Get all constraints for this segment
- *	@return a vector containing all constraints applied to this segment
+ *	\return a vector containing all constraints applied to this segment
  */
 std::vector<Constraint> Segment::getConstraints() const{
 	return cons;
@@ -167,31 +168,31 @@ unsigned int Segment::getCtrlLaw() const{ return ctrlLawID; }
 
 /**
  *  \brief Retrieve the number of constraints stored by this object
- *  @return the number of constraints stored by this object
+ *  \return the number of constraints stored by this object
  */
 int Segment::getNumCons() const { return static_cast<int>(cons.size()); }
 
 /**
  *  \brief Retrieve the ID of the origin node (chronologically)
- *  @return the ID of the origin node (chronologically)
+ *  \return the ID of the origin node (chronologically)
  */
 int Segment::getOrigin() const { return links[ORIG_IX]; }
 
 /**
  *  \brief Retrieve the ID of the terminal node (chronologically)
- *  @return the ID of the terminal node (chronologically)
+ *  \return the ID of the terminal node (chronologically)
  */
 int Segment::getTerminus() const { return links[TERM_IX]; }
 
 /**
  *  \brief Retrieve the time-of-flight along this segment
- *  @return time-of-flight along this segment, units consistent with the parent system
+ *  \return time-of-flight along this segment, units consistent with the parent system
  */
 double Segment::getTOF() const { return tof; }
 
 /**
  *  \brief Retrieve the STM associated with this segment
- *  @return the STM associated with this segment
+ *  \return the STM associated with this segment
  */
 MatrixXRd Segment::getSTM() const{ return stm; }
 
@@ -199,7 +200,7 @@ MatrixXRd Segment::getSTM() const{ return stm; }
  *	\brief Retrieve a vector describing which of the velocity states
  *	should be made continuous with the segment before this one in a nodeset.
  *
- *	@return a 3-element boolean vector. The first element describes
+ *	\return a 3-element boolean vector. The first element describes
  *	whether or not the x-velocity is continuous, the second describes
  *	the y-velocity continuity, etc.
  */
@@ -370,6 +371,9 @@ void Segment::copyMe(const Segment &s){
 	Linkable::copyMe(s);
 }//====================================================
 
+/**
+ *  \brief Print a description of the segment
+ */
 void Segment::print() const{
 	printf("Segment | id = %d\n", ID);
 	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());

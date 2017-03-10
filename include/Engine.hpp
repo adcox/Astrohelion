@@ -47,7 +47,7 @@ public:
 	/**
 	 *  \brief Retrieve the verbosity (i.e., how many messages will be printed)
 	 *  of the Engine object
-	 *  @return The verbosity of the engine
+	 *  \return The verbosity of the engine
 	 */
 	Verbosity_tp getVerbosity() const{
 		return verbosity;
@@ -73,7 +73,7 @@ protected:
 
 	/**
 	 *  \brief Make this Engine object the same as the input Engine
-	 *  @details This function is used in copy constructors to avoid
+	 *  \details This function is used in copy constructors to avoid
 	 *  code duplication
 	 * 
 	 *  \param e Reference to an Engine object

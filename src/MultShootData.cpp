@@ -207,7 +207,7 @@ MultShootData& MultShootData::operator =(const MultShootData &it){
  *  \param type the type of object this map object represents (i.e., EPOCH, SLACK, Constraint_tp::STATE, TOF, TOF_TOTAL)
  *  \param refID the ID of the parent object
  * 
- *  @return the variable map object that represents the desired variable
+ *  \return the variable map object that represents the desired variable
  *  @see ms_varMap_type
  *  \throws Exception if the object cannot be located
  *  @todo This function could be greatly sped up by leveraging a hash table

@@ -60,13 +60,13 @@ Traj_cr3bp_lt::Traj_cr3bp_lt(const BaseArcset &a) : Traj_cr3bp(a){}
 
 /**
  *  \brief Create a new trajectory object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param sys pointer to a system data object; should be a 
  *  CR3BP LTVP system as the pointer will be cast to that derived class
- *  @return a pointer to the newly created trajectory
+ *  \return a pointer to the newly created trajectory
  */
 baseArcsetPtr Traj_cr3bp_lt::create( const SysData *sys) const{
 	const SysData_cr3bp_lt *crSys = static_cast<const SysData_cr3bp_lt*>(sys);
@@ -76,11 +76,11 @@ baseArcsetPtr Traj_cr3bp_lt::create( const SysData *sys) const{
 /**
  *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned trajectory
+ *  \return a pointer to the newly cloned trajectory
  */
 baseArcsetPtr Traj_cr3bp_lt::clone() const{
 	return baseArcsetPtr(new Traj_cr3bp_lt(*this));

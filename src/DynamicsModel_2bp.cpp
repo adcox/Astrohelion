@@ -87,7 +87,7 @@ DynamicsModel::eom_fcn DynamicsModel_2bp::getFullEOM_fcn() const{
  *  \param t the epoch at which the computations occur (unused for this system)
  *  \param pSysData object describing the specific system (unused for this system)
  * 
- *  @return n x 3 vector (row-major order) containing the positions of
+ *  \return n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysData) const{
@@ -102,7 +102,7 @@ std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysD
  *  \param t the epoch at which the computations occur (unused for this system)
  *  \param pSysData object describing the specific system (unused for this system)
  * 
- *  @return n x 3 vector (row-major order) containing the velocities of
+ *  \return n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysData) const{
@@ -111,6 +111,16 @@ std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysD
 	return std::vector<double>(3,0);
 }//====================================================
 
+/**
+ *  \brief Retrieve the state derivative
+ *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  the specified time and state
+ * 
+ *  \param t time parameter
+ *  \param state state vector
+ *  \param params structure containing parameters relevant to the integration
+ *  \return the time-derivative of the state vector
+ */
 std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     if(state.size() != coreStates)
         throw Exception("DynamicsModel_2bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
@@ -190,10 +200,34 @@ bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *i
 //      Multiple Shooting Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Perform model-specific initializations on the MultShootData object
+ *  \details NOT YET IMPLEMENTED
+ *  
+ *  \param it pointer to the object to be initialized
+ */
 void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
 	(void)it;
 }//====================================================
 
+/**
+ *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  nodeset
+ *
+ *  \details NOT YET IMPLEMENTED
+ *  
+ *  If <tt>findEvent</tt> is set to true, the
+ *  output nodeset will contain extra information for the simulation engine to use. Rather than
+ *  returning only the position and velocity states, the output nodeset will contain the STM 
+ *  and dqdT values for the final node; this information will be appended to the extraParameter
+ *  vector in the final node.
+ *
+ *  \param it an iteration data object containing all info from the corrections process
+ *  \param nodes_in a pointer to the original, uncorrected nodeset
+ *  \param findEvent whether or not this correction process is locating an event
+ *  \param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
+ */
 void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const{
 	(void)it;
 	(void)nodes_in;

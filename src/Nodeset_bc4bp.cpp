@@ -39,6 +39,7 @@ namespace astrohelion{
 //-----------------------------------------------------
 //      *structors
 //-----------------------------------------------------
+
 /**
  *	\brief Construct a nodeset with no data other than the system
  *	\param pData system data object describing the system the nodes exist in
@@ -97,13 +98,13 @@ Nodeset_bc4bp::Nodeset_bc4bp(const BaseArcset &a) : Nodeset(a) {}
 
 /**
  *  \brief Create a new nodeset object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param pSys pointer to a system data object; should be a 
  *  BCR4BPR system as the pointer will be cast to that derived class
- *  @return a pointer to the newly created nodeset
+ *  \return a pointer to the newly created nodeset
  */
 baseArcsetPtr Nodeset_bc4bp::create( const SysData *pSys) const{
 	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(pSys);
@@ -113,11 +114,11 @@ baseArcsetPtr Nodeset_bc4bp::create( const SysData *pSys) const{
 /**
  *  \brief Create a new nodeset object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned nodeset
+ *  \return a pointer to the newly cloned nodeset
  */
 baseArcsetPtr Nodeset_bc4bp::clone() const{
 	return baseArcsetPtr(new Nodeset_bc4bp(*this));

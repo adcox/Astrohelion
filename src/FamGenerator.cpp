@@ -134,7 +134,7 @@ void FamGenerator::setStep_fitted_2(double d){ step_fitted_2 = d; }
 
 /**
  * \brief  Set the corrector tolerance for the family generator
- * @details This is the tolerance that a periodic orbit will be
+ * \details This is the tolerance that a periodic orbit will be
  * judged by; if constraints are not met to this tolerance, no
  * periodic orbit will be returned. Note that a looser tolerance may
  * allow continuation to make more prorgress
@@ -205,7 +205,7 @@ void FamGenerator::copyMe(const FamGenerator &f){
  *	\param LPt The Lagrange point number [1-5]
  *	\param x0 the initial displacement from the Lagrange point along the x-axis.
  *
- *	@return a family of orbits
+ *	\return a family of orbits
  *	\throws Exception if <tt>LPt</tt> is invalid
  */
 void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
@@ -390,7 +390,7 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
  *  collinear point as the desired vertical family
  *  \param initStepSize initial step size from the bifurcating axial orbit
  *  \param pVertFam pointer to the vertical orbit family object
- *  @return a family of vertical orbits
+ *  \return a family of vertical orbits
  */
 void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize, Fam_cr3bp *pVertFam){
 	Fam_cr3bp axialFam(axialFamFile);
@@ -508,7 +508,7 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 
 /**
  *  \brief Generate the Distant Retrograde Orbit (DRO) family 
- *  @details This family is initialized from a conic orbit with an orbital 
+ *  \details This family is initialized from a conic orbit with an orbital 
  *  radius that corresponds to the minimum flyby altitude, or, if that value is 
  *  less than 1 km, an altitude of 100 km.
  * 
@@ -557,7 +557,7 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 
 /**
  *  \brief Generate the Low Prograde Orbit (LPO) family 
- *  @details This family is initialized from a conic orbit with an orbital 
+ *  \details This family is initialized from a conic orbit with an orbital 
  *  radius that corresponds to the minimum flyby altitude, or, if that value is 
  *  less than 1 km, an altitude of 100 km.
  * 

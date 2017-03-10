@@ -60,13 +60,13 @@ Traj_2bp::Traj_2bp(const BaseArcset &a) : Traj(a){}
 
 /**
  *  \brief Create a new trajectory object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param sys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
- *  @return a pointer to the newly created trajectory
+ *  \return a pointer to the newly created trajectory
  */
 baseArcsetPtr Traj_2bp::create( const SysData *sys) const{
 	const SysData_2bp *crSys = static_cast<const SysData_2bp*>(sys);
@@ -76,11 +76,11 @@ baseArcsetPtr Traj_2bp::create( const SysData *sys) const{
 /**
  *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  *  
- *  @return a pointer to the newly cloned trajectory
+ *  \return a pointer to the newly cloned trajectory
  */
 baseArcsetPtr Traj_2bp::clone() const{
 	return baseArcsetPtr(new Traj_2bp(*this));
@@ -101,7 +101,7 @@ baseArcsetPtr Traj_2bp::clone() const{
  *	the final state of A and in itial state of B are the same
  *
  *	\param rhs the right-hand-side of the addition operation
- *	@return a reference to the concatenated arcset object
+ *	\return a reference to the concatenated arcset object
  */
 Traj& Traj_2bp::operator +=(const Traj &rhs){
 	// Create a copy of rhs (it is const)
@@ -128,6 +128,10 @@ Traj& Traj_2bp::operator +=(const Traj &rhs){
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj_2bp::saveCmds(mat_t* pMatFile) const{
 	Traj::saveCmds(pMatFile);
 
@@ -137,6 +141,10 @@ void Traj_2bp::saveCmds(mat_t* pMatFile) const{
 	saveExtraParam(pMatFile, "energy", "energy");
 }//====================================================
 
+/**
+ *  \brief Execute commands to read data from a Matlab file
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj_2bp::readCmds(mat_t *pMatFile){
 	Traj::readCmds(pMatFile);
 

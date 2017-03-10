@@ -120,13 +120,13 @@ Nodeset_cr3bp::Nodeset_cr3bp(const BaseArcset &a) : Nodeset(a) {}
 
 /**
  *  \brief Create a new nodeset object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param pSys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
- *  @return a pointer to the newly created nodeset
+ *  \return a pointer to the newly created nodeset
  */
 baseArcsetPtr Nodeset_cr3bp::create( const SysData *pSys) const{
 	const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(pSys);
@@ -136,11 +136,11 @@ baseArcsetPtr Nodeset_cr3bp::create( const SysData *pSys) const{
 /**
  *  \brief Create a new nodeset object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned nodeset
+ *  \return a pointer to the newly cloned nodeset
  */
 baseArcsetPtr Nodeset_cr3bp::clone() const{
 	return baseArcsetPtr(new Nodeset_cr3bp(*this));
@@ -159,7 +159,7 @@ baseArcsetPtr Nodeset_cr3bp::clone() const{
  *  with the specified ID
  * 
  *  \param id the ID of a node
- *  @return the Jacobi constant value
+ *  \return the Jacobi constant value
  *  @throw Exception if <tt>id</tt> is out of bounds
  */
 double Nodeset_cr3bp::getJacobi(int id) const{
@@ -172,7 +172,7 @@ double Nodeset_cr3bp::getJacobi(int id) const{
 /**
  *	\brief Retrieve the value of Jacobi's Constant at the specified step or node
  *	\param ix step index; if < 0, counts backwards from end of nodeset
- *	@return Jacobi at the specified step or node
+ *	\return Jacobi at the specified step or node
  *	@throw Exception if <tt>ix</tt> is out of bounds
  */
 double Nodeset_cr3bp::getJacobiByIx(int ix) const{

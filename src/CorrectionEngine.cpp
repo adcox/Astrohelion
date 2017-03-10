@@ -90,7 +90,7 @@ void CorrectionEngine::copyMe(const CorrectionEngine &e){
  *	\brief Copy operator; make a copy of the input correction engine.
  *
  *	\param e
- *	@return this correction engine
+ *	\return this correction engine
  */
 CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
 	copyMe(e);
@@ -103,7 +103,7 @@ CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
 
 /**
  *  \brief Retrieve whether or not we are using variable time
- *	@return whether or not the corrector uses variable time (as opposed
+ *	\return whether or not the corrector uses variable time (as opposed
  * 	to fixed time)
  */
 bool CorrectionEngine::usesVarTime() const { return bVarTime; }
@@ -113,25 +113,25 @@ bool CorrectionEngine::usesVarTime() const { return bVarTime; }
  *	(in time).
  *
  *	This setting only applies if variable time is turned on.
- *	@return whether or not each arc will be forced to have the same length in time
+ *	\return whether or not each arc will be forced to have the same length in time
  */
 bool CorrectionEngine::usesEqualArcTime() const { return bEqualArcTime; }
 
 /**
  *  \brief Retrieve whether or not we are located an event crossing
- *	@return whether or not the algorithm will optimize the process to find an event
+ *	\return whether or not the algorithm will optimize the process to find an event
  */
 bool CorrectionEngine::isFindingEvent() const { return bFindEvent; }
 
 /**
  *  \brief Retrieve the maximum number of iterations to attempt
- *	@return the maximum number of iterations to attempt before giving up
+ *	\return the maximum number of iterations to attempt before giving up
  */
 int CorrectionEngine::getMaxIts() const { return maxIts; }
 
 /**
  *  \brief Retrieve the minimum error tolerance
- *	@return the minimum error tolerance (non-dimensional units); errors
+ *	\return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
  */
 double CorrectionEngine::getTol() const { return tol; }
@@ -162,7 +162,7 @@ void CorrectionEngine::setEqualArcTime(bool b){
 
 /**
  * \brief Tell the corrector to ignore crash events (or to not to).
- * @details By default, the corrector does monitor crashes and will 
+ * \details By default, the corrector does monitor crashes and will 
  * run into issues if the trajectory being corrected passes through a 
  * primary.
  * 
@@ -187,7 +187,7 @@ void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
  *  \brief Set the step size scalar and the limiting tolerance
- *  @details [long description]
+ *  \details [long description]
  * 
  *  \param scale [description]
  *  \param limit [description]
@@ -220,7 +220,7 @@ void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
 
 /**
  *	\brief Correct a generic nodeset using multiple shooting
- *	@details This algorithm employs multiple shooting to correct a set of nodes
+ *	\details This algorithm employs multiple shooting to correct a set of nodes
  *	subject to a set of constraints. The nodes and constraints are all stored in the 
  *	input nodeset object. 
  *	
@@ -232,7 +232,7 @@ void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	\param set pointer to the nodeset that needs to be corrected
  *	\param pNodesOut pointer to the nodeset object that will contain the results of
  *	the shooting process
- *	@return the iteration data object for this corrections process
+ *	\return the iteration data object for this corrections process
  *	\throws DivergeException if the corrections process does not converge
  *	\throws Exception
  *	* if the input and output nodesets contain different system data objects
@@ -411,7 +411,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
  *  derivative types by the other implementation of multShoot()
  *  \param pNodesOut pointer to a nodeset object that will contain the results 
  *  of the shooting process
- *  @return A corrected MultShootData object
+ *  \return A corrected MultShootData object
  *  @see multShoot(Nodeset*)
  *  \throws DivergeException if the multiple shooting process does not converge
  */
@@ -574,7 +574,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
  *
  *	\param it the MultShootData object associated with the corrections process
  *
- *	@return the updated free variable vector \f$ \vec{X}_{n+1} \f$
+ *	\return the updated free variable vector \f$ \vec{X}_{n+1} \f$
  *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
@@ -666,7 +666,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 
 /**
  *  \brief Print out the magnitude of each constraint.
- *  @details This can be useful when debugging to highlight which constraints are unsatisfied
+ *  \details This can be useful when debugging to highlight which constraints are unsatisfied
  * 
  *  \param pIt pointer to an MultShootData object associated with a corrections process
  */

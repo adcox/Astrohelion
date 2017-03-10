@@ -113,7 +113,7 @@ void SysData_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 
 /**
  *	\brief Retrieve the model that governs the motion for this system type
- *	@return the model that governs the motion for this system type
+ *	\return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_cr3bp::getDynamicsModel() const { return &model; }
 
@@ -132,7 +132,7 @@ SysData_cr3bp::SysData_cr3bp(const SysData_cr3bp &d) : SysData(d){}
 /**
  *	\brief Copy operator; makes a clean copy of a data object into this one
  *	\param d a CR3BP system data object
- *	@return this system data object
+ *	\return this system data object
  */
 SysData_cr3bp& SysData_cr3bp::operator= (const SysData_cr3bp &d){
 	SysData::operator= (d);
@@ -140,7 +140,7 @@ SysData_cr3bp& SysData_cr3bp::operator= (const SysData_cr3bp &d){
 }//===================================================
 
 /**
- *	@return the non-dimensional mass ratio for the system
+ *	\return the non-dimensional mass ratio for the system
  */
 double SysData_cr3bp::getMu() const { return otherParams.at(0); }
 

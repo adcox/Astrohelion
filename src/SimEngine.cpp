@@ -98,24 +98,24 @@ SimEngine& SimEngine::operator =(const SimEngine& s){
 //-----------------------------------------------------
 
 /**
- *  @return whether or not the simulation will leverage simple integration, i.e.,
+ *  \return whether or not the simulation will leverage simple integration, i.e.,
  *  integration without propagating the STM or other extra parameters - just the
  *  states.
  */
 bool SimEngine::usesSimpleInt() const { return bSimpleIntegration; }
 
 /**
- *	@return whether or not the simulation will run time in reverse
+ *	\return whether or not the simulation will run time in reverse
  */
 bool SimEngine::usesRevTime() const {return bRevTime;}
 
 /**
- *  @return whether or not the engine uses variable step size
+ *  \return whether or not the engine uses variable step size
  */
 bool SimEngine::usesVarStepSize() const { return bVarStepSize; }
 
 /**
- *	@return the absolute tolerance for the engine, non-dimensional units
+ *	\return the absolute tolerance for the engine, non-dimensional units
  */
 double SimEngine::getAbsTol() const {return absTol;}
 
@@ -125,12 +125,12 @@ double SimEngine::getAbsTol() const {return absTol;}
 unsigned int SimEngine::getCtrlLaw() const {return ctrlLawID; }
 
 /**
- *	@return the relative tolerance for the engine, non-dimensional units
+ *	\return the relative tolerance for the engine, non-dimensional units
  */
 double SimEngine::getRelTol() const {return relTol;}
 
 /**
- *  @return the number of steps the integrator will be forced to take.
+ *  \return the number of steps the integrator will be forced to take.
  *  The integrator may take intermediate steps between those enforced
  *  by the algorithm, but only <tt>numSteps</tt> data points will be output.
  */
@@ -138,14 +138,14 @@ int SimEngine::getNumSteps() const { return numSteps; }
 
 /**
  *  \brief Retrieve a vector of all events being watched for the current simulation
- *  @return a vector of events
+ *  \return a vector of events
  */
 std::vector<Event> SimEngine::getEvents() const { return events; }
 
 /**
  *  \brief Retrieve a vector of all events that occured during the 
  *  most recent simulation
- *  @return a vector of event records; the event indices correspond to
+ *  \return a vector of event records; the event indices correspond to
  *  the indices of the events stored in this simulation engine
  *  @see getEvents()
  */
@@ -155,7 +155,7 @@ std::vector<SimEventRecord> SimEngine::getEventRecords() const { return eventOcc
  *  \brief Retrieve a list of all events that fired at the last step
  *  of the simulation, potentially ending the run.
  *  \param traj pointer to the trajectory that was integrated
- *  @return a vector of events
+ *  \return a vector of events
  */
 std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
     std::vector<Event> endEvents;
@@ -188,7 +188,7 @@ void SimEngine::addEvent(Event evt){
 
 /**
  *  \brief Determine whether or not default events are created for each simulation
- *  @return whether or not default events are created for each simulation
+ *  \return whether or not default events are created for each simulation
  */
 bool SimEngine::makesDefaultEvents() const { return bMakeDefaultEvents; }
 
@@ -689,6 +689,15 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     }
 }//====================================================END of cr3bp_integrate
 
+/**
+ *  \brief Free all GSL ODE pointers that have been initialized/instantiated
+ *  \details [long description]
+ * 
+ *  \param s stepper object pointer
+ *  \param c control object pointer
+ *  \param e evolver object pointer
+ *  \param d driver object pointer
+ */
 void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv2_evolve *e, gsl_odeiv2_driver *d){
     if(bVarStepSize){
         gsl_odeiv2_evolve_free(e);
@@ -725,7 +734,7 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
  *  \param y the most recent state on the integrated arc.
  *  \param t the time associated with y
  *  \param traj pointer to a trajectory object to store the output trajectory
- *  @return whether or not the simulation should end (an event triggers killSim)
+ *  \return whether or not the simulation should end (an event triggers killSim)
  */
 bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
     int numPts = traj->getNumNodes();
@@ -801,7 +810,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
 
 /**
  *  \brief Clean out the trajectory storage variable so a new simulation can be run and store its data
- *  @details This function does not reset any parameters the user has set
+ *  \details This function does not reset any parameters the user has set
  */
 void SimEngine::cleanEngine(){
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");

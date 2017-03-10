@@ -102,7 +102,7 @@ void SysData_2bp::initFromPrimNames(std::string P1){
 
 /**
  *	\brief Retrieve the model that governs the motion for this system type
- *	@return the model that governs the motion for this system type
+ *	\return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_2bp::getDynamicsModel() const { return &model; }
 
@@ -121,7 +121,7 @@ SysData_2bp::SysData_2bp(const SysData_2bp &d) : SysData(d){}
 /**
  *	\brief Copy operator; makes a clean copy of a data object into this one
  *	\param d a CR3BP system data object
- *	@return this system data object
+ *	\return this system data object
  */
 SysData_2bp& SysData_2bp::operator= (const SysData_2bp &d){
 	SysData::operator= (d);
@@ -129,7 +129,7 @@ SysData_2bp& SysData_2bp::operator= (const SysData_2bp &d){
 }//===================================================
 
 /**
- *	@return the mass parameter (km^3/s^2)
+ *	\return the mass parameter (km^3/s^2)
  */
 double SysData_2bp::getMu() const { return otherParams.at(0); }
 

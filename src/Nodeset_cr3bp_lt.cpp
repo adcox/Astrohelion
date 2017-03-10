@@ -32,8 +32,22 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *  \brief Construct a default nodeset
+ *  \param pSys pointer to system data object
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys) : Nodeset(pSys){}
 
+/**
+ *  \brief Construct a nodeset via numerical integration
+ * 
+ *  \param pSys pointer to system data object
+ *  \param ic initial condition on the nodeset (7 elements)
+ *  \param tof total time-of-flight on the nodeset
+ *  \param numNodes number of nodes along the specified TOF
+ *  \param type Nodeset type; default is TIME
+ *  \param ctrlLaw control law applied; default is NO_CTRL
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys, const double ic[7], 
 	double tof, int numNodes, NodeDistro_tp type, unsigned int ctrlLaw) : Nodeset(pSys){
 
@@ -41,29 +55,82 @@ Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys, const double ic
 	initFromICs(ic_vec, 0, tof, numNodes, type, ctrlLaw);
 }//====================================================
 
+/**
+ *  \brief Construct a nodeset via numerical integration
+ *  \details [long description]
+ * 
+ *  \param pSys pointer to system data object
+ *  \param ic initial condition on the nodeset
+ *  \param tof total time-of-flight on the nodeset
+ *  \param numNodes number of nodes along the specified TOF
+ *  \param type Nodeset type; default is TIME
+ *  \param ctrlLaw control law applied; default is NO_CTRL
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys, std::vector<double> ic, 
 	double tof, int numNodes, NodeDistro_tp type, unsigned int ctrlLaw) : Nodeset(pSys){
 
 	initFromICs(ic, 0, tof, numNodes, type, ctrlLaw);
 }//====================================================
 
+/**
+ *  \brief Construct a nodeset from a trajectory
+ *  \details [long description]
+ * 
+ *  \param traj Trajectory to break into nodes and segments
+ *  \param numNodes Number of nodes to use
+ *  \param type how the nodes are placed
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(Traj_cr3bp_lt traj, int numNodes,
 	NodeDistro_tp type) : Nodeset(traj.getSysData()){
 
 	initFromTraj(traj, numNodes, type);
 }//====================================================
 
+/**
+ *  \brief Create a nodeset by clipping another between two specified points
+ *  \details NOT YET IMPLEMENTED
+ * 
+ *  \param orig [description]
+ *  \param first [description]
+ *  \param last [description]
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const Nodeset_cr3bp_lt &orig, int first, int last) : Nodeset(orig, first, last) {}
 
+/**
+ *  \brief Copy Constructor
+ *  \param n Another nodeset
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const Nodeset_cr3bp_lt &n) : Nodeset(n) {}
 
+/**
+ *  \brief Copy constructor
+ *  \param a the base class
+ */
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const BaseArcset &a) : Nodeset(a) {}
 
+/**
+ *  \brief Create a new nodeset object on the stack
+ *  \details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  \param pSys pointer to a system data object
+ *  \return a pointer to the newly created nodeset
+ */
 baseArcsetPtr Nodeset_cr3bp_lt::create( const SysData *pSys) const{
 	const SysData_cr3bp_lt *crSys = static_cast<const SysData_cr3bp_lt*>(pSys);
 	return baseArcsetPtr(new Nodeset_cr3bp_lt(crSys));
 }//====================================================
 
+/**
+ *  \brief Create a new nodeset object on the stack that is a 
+ *  duplicate of this object
+ *  \details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  \return a pointer to the newly cloned nodeset
+ */
 baseArcsetPtr Nodeset_cr3bp_lt::clone() const{
 	return baseArcsetPtr(new Nodeset_cr3bp_lt(*this));
 }//====================================================

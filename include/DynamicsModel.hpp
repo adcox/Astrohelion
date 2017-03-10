@@ -50,13 +50,13 @@ class MultShootData;
 /**
  *  \ingroup model
  *  \brief Container for EOM parameters
- *  @details At the current time, this object stores only the system data object pointer.
+ *  \details At the current time, this object stores only the system data object pointer.
  *  Since the GSL functions demand a null pointer and the system data pointers owned by
  *  most objects are const-modified, this object serves as a non-const wrapper for 
  *  the system data pointers.
  *  
  *  \param sys A system data object
- *  @return a reference to this struct
+ *  \return a reference to this struct
  */
 struct EOM_ParamStruct{
 
@@ -121,7 +121,7 @@ class DynamicsModel : public Core{
 public:
 	/**
 	 *	\brief A function pointer to an EOM function
-	 *	@details All EOM functions must take this form to work with GSL's 
+	 *	\details All EOM functions must take this form to work with GSL's 
 	 *	integrators.
 	 *	
 	 *	\param t time associated with the current integration step; this value is passed
@@ -181,7 +181,7 @@ public:
 	 *
 	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
 	 *	\param sysData object describing the specific system
-	 *	@return an n x 3 vector (row-major order) containing the positions of
+	 *	\return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
 	virtual std::vector<double> getPrimPos(double t, const SysData *sysData) const = 0;
@@ -191,7 +191,7 @@ public:
 	 *
 	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
 	 *	\param sysData object describing the specific system
-	 *	@return an n x 3 vector (row-major order) containing the velocities of
+	 *	\return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
 	virtual std::vector<double> getPrimVel(double t, const SysData *sysData) const = 0;
@@ -234,7 +234,7 @@ public:
 	 *	\param findEvent whether or not this correction process is locating an event
 	 *	\param nodesOut pointer to a nodeset object that will contain the results of
 	 *	the shooting process
-	 *  @return a pointer to a nodeset containing the corrected nodes
+	 *  \return a pointer to a nodeset containing the corrected nodes
 	 */
 	virtual void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const = 0;
 	//\}
@@ -261,7 +261,7 @@ public:
 	 *  \param verbose whether or not we should be verbose with output messages
 	 *	\param ctrlLawID the ID of the control law used in the simulation
 	 *	
-	 *  @return wether or not the event has been located. If it has, a new point
+	 *  \return wether or not the event has been located. If it has, a new point
 	 *  has been appended to the trajectory's data vectors.
 	 */
 	virtual bool sim_locateEvent(Event event, Traj *traj,

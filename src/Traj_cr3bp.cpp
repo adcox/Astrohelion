@@ -72,13 +72,13 @@ Traj_cr3bp::Traj_cr3bp(const char* filepath, const SysData_cr3bp *pSys) : Traj(p
 
 /**
  *  \brief Create a new trajectory object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param sys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
- *  @return a pointer to the newly created trajectory
+ *  \return a pointer to the newly created trajectory
  */
 baseArcsetPtr Traj_cr3bp::create( const SysData *sys) const{
 	const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(sys);
@@ -88,11 +88,11 @@ baseArcsetPtr Traj_cr3bp::create( const SysData *sys) const{
 /**
  *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  *  
- *  @return a pointer to the newly cloned trajectory
+ *  \return a pointer to the newly cloned trajectory
  */
 baseArcsetPtr Traj_cr3bp::clone() const{
 	return baseArcsetPtr(new Traj_cr3bp(*this));
@@ -113,7 +113,7 @@ baseArcsetPtr Traj_cr3bp::clone() const{
  *	the final state of A and in itial state of B are the same
  *
  *	\param rhs the right-hand-side of the addition operation
- *	@return a reference to the concatenated arcset object
+ *	\return a reference to the concatenated arcset object
  */
 Traj& Traj_cr3bp::operator +=(const Traj &rhs){
 	// Create a copy of rhs (it is const)
@@ -138,7 +138,7 @@ Traj& Traj_cr3bp::operator +=(const Traj &rhs){
 /**
  *	\brief Retrieve the value of Jacobi's Constant at the specified step
  *	\param ix step index; if < 0, counts backwards from end of trajectory
- *	@return Jacobi at the specified step
+ *	\return Jacobi at the specified step
  *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 double Traj_cr3bp::getJacobiByIx(int ix) const{
@@ -171,12 +171,20 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj_cr3bp::saveCmds(mat_t* pMatFile) const{
 	Traj::saveCmds(pMatFile);
 
 	saveExtraParam(pMatFile, "J", "Jacobi");
 }//====================================================
 
+/**
+ *  \brief Execute commands to read data from a Matlab file
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj_cr3bp::readCmds(mat_t *pMatFile){
 	Traj::readCmds(pMatFile);
 	readExtraParamFromMat(pMatFile, "J", "Jacobi");

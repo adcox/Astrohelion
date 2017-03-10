@@ -36,15 +36,18 @@ ControlLaw::ControlLaw(){}
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief [brief description]
- *  \details [long description]
- * 
- *  \param t [description]
- *  \param s [description]
- *  \param pSys [description]
- *  \param int [description]
- *  \param law [description]
- *  \param int [description]
+ *  \brief Retrieve the output of a control law
+ * 	\details A set of outputs are computed according to the specified control law, given
+ * 	the input time, state, and system data.
+ * 	
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param lawID identifies the control law type
+ *  \param law empty, initialized array to store the control law output in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  
+ *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
 void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, unsigned int lawID, double *law, unsigned int len) const{
 	switch(lawID){
@@ -63,15 +66,18 @@ void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, unsigned
 }//====================================================
 
 /**
- *  \brief [brief description]
- *  \details [long description]
+ *  \brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  states at the given time, state, in the specified system
  * 
- *  \param t [description]
- *  \param s [description]
- *  \param pSys [description]
- *  \param int [description]
- *  \param partials [description]
- *  \param int [description]
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param lawID identifies the control law type
+ *  \param partials empty, initialized array to store the control law derivatives in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  
+ *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
 void ControlLaw::getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const{
 	switch(lawID){
@@ -94,11 +100,10 @@ void ControlLaw::getPartials_State(double t, const double *s, const SysData *pSy
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief [brief description]
- *  \details [long description]
+ *  \brief Retrieve a string that represents the law ID
  * 
- *  \param int [description]
- *  \return [description]
+ *  \param id control law ID
+ *  \return a string that represents the law ID
  */
 std::string ControlLaw::lawIDToString(unsigned int id) const{
 	switch(id){

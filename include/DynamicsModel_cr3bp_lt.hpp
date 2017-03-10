@@ -32,11 +32,7 @@
 namespace astrohelion{
 /**
  *	\ingroup model cr3bp_lt
- *	\brief Derivative of DynamicsModel, specific to the CR3BP-LT
- *
- *	Under construction. Simulation is fully supported in this model,
- *	but the corrections process will fall back to the base model 
- *	behavior, which may produce unexpected results.
+ *	\brief Derivative of DynamicsModel, specific to the low-thrust CR3BP
  */
 class DynamicsModel_cr3bp_lt : public DynamicsModel{
 public:

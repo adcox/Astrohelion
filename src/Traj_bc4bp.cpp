@@ -72,13 +72,13 @@ Traj_bc4bp::Traj_bc4bp(const char* filepath, const SysData_bc4bp *pSys) : Traj(p
 
 /**
  *  \brief Create a new trajectory object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
  *  \param pSys pointer to a system data object; should be a 
  *  BCR4BPR system as the pointer will be cast to that derived class
- *  @return a pointer to the newly created trajectory
+ *  \return a pointer to the newly created trajectory
  */
 baseArcsetPtr Traj_bc4bp::create( const SysData *pSys) const{
 	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(pSys);
@@ -88,11 +88,11 @@ baseArcsetPtr Traj_bc4bp::create( const SysData *pSys) const{
 /**
  *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned trajectory
+ *  \return a pointer to the newly cloned trajectory
  */
 baseArcsetPtr Traj_bc4bp::clone() const{
 	return baseArcsetPtr(new Traj_bc4bp(*this));
@@ -107,7 +107,7 @@ baseArcsetPtr Traj_bc4bp::clone() const{
 //-----------------------------------------------------
 
 /**
- *	@return the angle between the P1/P2 line and the inertial x-axis, radians
+ *	\return the angle between the P1/P2 line and the inertial x-axis, radians
  */
 double Traj_bc4bp::getTheta0(){
 	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
@@ -115,7 +115,7 @@ double Traj_bc4bp::getTheta0(){
 }//====================================================
 
 /**
- *	@return the angle between the P2/P3 line (projected into the inertial XY plane)
+ *	\return the angle between the P2/P3 line (projected into the inertial XY plane)
  *	and the inertial x-axis, radians
  */
 double Traj_bc4bp::getPhi0(){
@@ -124,7 +124,7 @@ double Traj_bc4bp::getPhi0(){
 }//====================================================
 
 /**
- *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital
+ *	\return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital
  *	plane, radians
  */
 double Traj_bc4bp::getGamma(){
@@ -134,7 +134,7 @@ double Traj_bc4bp::getGamma(){
 
 /**
  *	\param ix the index of the dqdT vector to retrieve
- *	@return the i'th 6-element dqdT vector. If ix is negative, the count
+ *	\return the i'th 6-element dqdT vector. If ix is negative, the count
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
  *	\throws Exception if <tt>ix</tt> is out of bounds
@@ -184,12 +184,20 @@ void Traj_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj_bc4bp::saveCmds(mat_t* pMatFile) const{
 	Traj::saveCmds(pMatFile);
 
 	saveExtraParamVec(pMatFile, "dqdT", 6, "dqdT");
 }//====================================================
 
+/**
+ *  \brief Execute commands to read data from a Matlab file
+ *  \param pMatFile pointer to an open Matlab file
+ */
 void Traj_bc4bp::readCmds(mat_t *pMatFile){
 	Traj::readCmds(pMatFile);
 	readExtraParamVecFromMat(pMatFile, "dqdT", 6, "dqdT");

@@ -57,7 +57,7 @@ static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 
 /**
  *  \brief Default constructor.
- *  @details Runs an initialization sequence the first time the class is instantiated.
+ *  \details Runs an initialization sequence the first time the class is instantiated.
  */
 Core::Core(){
 	if(!bIsInit()){

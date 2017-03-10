@@ -94,7 +94,7 @@ class SysData : public Core{
 
 		/**
 		 *	\brief Retrieve the model that governs the motion for this system type
-		 *	@return the model that governs the motion for this system type
+		 *	\return the model that governs the motion for this system type
 		 */
 		virtual const DynamicsModel* getDynamicsModel() const = 0;
 		

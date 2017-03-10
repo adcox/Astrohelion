@@ -5,7 +5,7 @@
 /**
  *  \brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j
  *  \param num a complex number
- *  @return the complex number as a string
+ *  \return the complex number as a string
  */
 std::string complexToStr(std::complex<double> num){
     char buffer[64];

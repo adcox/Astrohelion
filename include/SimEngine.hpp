@@ -1,10 +1,10 @@
 /**
- *  @file SimEngine.hpp
- *	@brief 
+ *  \file SimEngine.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -50,14 +50,14 @@ class SysData;
 // struct gsl_odeiv2_driver;
 
 /**
- *	@brief A small structure to store event occurrence records
+ *	\brief A small structure to store event occurrence records
  */
 struct SimEventRecord{
 public:
 	/**
-	 *	@brief Construct an event record
-	 *	@param e the event index within the simulation engine event vector
-	 *	@param s the step index; which step did this event occur at?
+	 *	\brief Construct an event record
+	 *	\param e the event index within the simulation engine event vector
+	 *	\param s the step index; which step did this event occur at?
 	 */
 	SimEventRecord(int e, int s) : eventIx(e), stepIx(s) {}
 	int eventIx;	//!< The index of the event (index from simulation engine vector of events)
@@ -71,8 +71,8 @@ enum class Integ_tp{
 };
 
 /**
- *	@ingroup engine
- *	@brief Performs numerical integration on any system type and produces an
+ *	\ingroup engine
+ *	\brief Performs numerical integration on any system type and produces an
  *	Traj object
  *
  *	The simulation engine is the workhorse object for the Core. It
@@ -133,9 +133,9 @@ enum class Integ_tp{
  *	steps are taken where the dynamics are less volatile.
  *	
  *	
- *	@author Andrew Cox
- *	@version June 1, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version June 1, 2015
+ *	\copyright GNU GPL v3.0
  */
 class SimEngine : public Core, public Engine{
 	public:
@@ -150,8 +150,8 @@ class SimEngine : public Core, public Engine{
 		SimEngine& operator =(const SimEngine&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		void addEvent(Event);
 		double getAbsTol() const;
@@ -177,11 +177,11 @@ class SimEngine : public Core, public Engine{
 		void setRevTime(bool);
 		void setVarStepInteg(Integ_tp);
 		void setVarStepSize(bool);
-		//@}
+		//\}
 
 		/**
-		 *  @name Simulation Methods
-		 *  @{
+		 *  \name Simulation Methods
+		 *  \{
 		 */
 		void runSim(const double*, double, Traj*);
 		void runSim(std::vector<double>, double, Traj*);
@@ -190,7 +190,7 @@ class SimEngine : public Core, public Engine{
 		void runSim(const double*, MatrixXRd, double, double, Traj*);
 		void runSim(std::vector<double>, MatrixXRd, double, double, Traj*);
 		void runSim(const double *ic, MatrixXRd, std::vector<double>, Traj*);
-		//@}
+		//\}
 		
 		// Utility Functions
 		void clearEvents();
@@ -207,7 +207,7 @@ class SimEngine : public Core, public Engine{
 		std::vector<SimEventRecord> eventOccurs {};
 		
 		/** a void pointer to some data object that contains data for the EOM function */
-		void *eomParams = 0;
+		EOM_ParamStruct *eomParams = 0;
 
 		/** Whether or not to run the simulation in reverse time */
 		bool bRevTime = false;

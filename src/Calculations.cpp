@@ -1,15 +1,15 @@
 /**
- *  @file Calculations.cpp
+ *  \file Calculations.cpp
  *
- *  @brief  Contains non-member calculation functions
+ *  \brief  Contains non-member calculation functions
  *
  *   This library contains functions to perform miscellaneous calculations.
  *   Common calculations, such as EOM evaluation or primary location, should
  *   be included in the tpat_model class and its derivatives.
  *   
- *   @author Andrew Cox
- *  @version May 25, 2016
- *  @copyright GNU GPL v3.0
+ *   \author Andrew Cox
+ *  \version May 25, 2016
+ *  \copyright GNU GPL v3.0
  */
 /*
  *  Astrohelion 
@@ -74,21 +74,21 @@ namespace astrohelion{
 //-----------------------------------------------------
 /**
  * @addtogroup util
- * @{
+ * \{
  */
 
 
 /**
- *  @brief convert a date to ephemeris time
+ *  \brief convert a date to ephemeris time
  *  
- *  @param pDate a string representing the date. The string can be formatted in one
+ *  \param pDate a string representing the date. The string can be formatted in one
  *  of two ways. First, a Gregorian-style date: 'YYYY/MM/DD HH:II:SS' (UTC, 24-hour clock);
  *  The time 'HH:II:SS' can be ommited, and the function will assume the time is 0:0:00
  *  Second, a Julian date (UTC) can be input with the format 'jd #' where '#' represents
  *  the Julian date.
  *
  *  @return the J2000 ephemeris time, or number of seconds after Jan 1, 2000 at 0:0:00 UTC.
- *  @throws Exception if the SPICE kernels cannot be loaded: the kernel names and
+ *  \throws Exception if the SPICE kernels cannot be loaded: the kernel names and
  *  filepaths are located in the settings XML file
  */
 double dateToEphemerisTime(const char *pDate){
@@ -100,14 +100,14 @@ double dateToEphemerisTime(const char *pDate){
 }//==========================================
 
 /**
- *  @brief Convert a gregorian date to Julian Date
+ *  \brief Convert a gregorian date to Julian Date
  * 
- *  @param yr Year
- *  @param mo Month (Jan = 1, ..., Dec = 12)
- *  @param d Day of mongth
- *  @param h Hour (24-hr clock)
- *  @param m minute
- *  @param s second
+ *  \param yr Year
+ *  \param mo Month (Jan = 1, ..., Dec = 12)
+ *  \param d Day of mongth
+ *  \param h Hour (24-hr clock)
+ *  \param m minute
+ *  \param s second
  *  @return Julian Date (days)
  */
 double gregorianToJulian(double yr, double mo, double d, double h, double m, double s){
@@ -116,16 +116,16 @@ double gregorianToJulian(double yr, double mo, double d, double h, double m, dou
 }//==========================================
 
 /**
- *  @brief Determine the Greenwich Sidereal Time (i.e., angle) at the specified date
+ *  \brief Determine the Greenwich Sidereal Time (i.e., angle) at the specified date
  *  @details Input date must be in UT1 time (always within +/- 0.9 seconds of UTC thanks
  *  to leapseconds)
  *  
- *  @param yr Year
- *  @param mo Month (Jan = 1, ..., Dec = 12)
- *  @param d Day of mongth
- *  @param h Hour (24-hr clock)
- *  @param m minute
- *  @param s second
+ *  \param yr Year
+ *  \param mo Month (Jan = 1, ..., Dec = 12)
+ *  \param d Day of mongth
+ *  \param h Hour (24-hr clock)
+ *  \param m minute
+ *  \param s second
  *  @return The Greenwich Sidereal Time (GST) in radians at the specified date
  */
 double dateToGST(double yr, double mo, double d, double h, double m, double s){
@@ -149,7 +149,7 @@ double dateToGST(double yr, double mo, double d, double h, double m, double s){
 }//==========================================
 
 /**
- *  @brief use least squares to predict new values of variables in a continuation process
+ *  \brief use least squares to predict new values of variables in a continuation process
  *
  *  This function uses a 2nd-order polynomial fit to predict a set of
  *  dependent variables using past relationships between an independent
@@ -165,12 +165,12 @@ double dateToGST(double yr, double mo, double d, double h, double m, double s){
  *  For all these inputs, the "state vector" must take the following form:
  *      [x, y, z, xdot, ydot, zdot, Period, Jacobi Constant]
  *
- *  @param indVarIx the index of the state variable to use as the indpendent variable
- *  @param nextInd The next value of the independent variable
- *  @param depVars a vector specifying the indices of the states that will be
+ *  \param indVarIx the index of the state variable to use as the indpendent variable
+ *  \param nextInd The next value of the independent variable
+ *  \param depVars a vector specifying the indices of the states that will be
  *  dependent variables. The algorithm will predict fugure values for these
  *  variables based on how they have changed with the independent variable.
- *  @param varHistory a vector representing an n x 8 matrix which contains
+ *  \param varHistory a vector representing an n x 8 matrix which contains
  *  information about previous states, period, and JC. n should be at least 
  *  3. If it is larger than MemSize, only the first set of MemSize rows will
  *  be used.
@@ -185,7 +185,7 @@ double dateToGST(double yr, double mo, double d, double h, double m, double s){
  *  continuation. indVarIx would be 0 to represent x. We input the value of x
  *  for the next orbit in the family (nextInd) and specify which variables (from
  *  the 8-element "state") we would like to have predicted by least-squares.
- *  @throws Exception if the <tt>varHistory</tt> vector contains fewer than 
+ *  \throws Exception if the <tt>varHistory</tt> vector contains fewer than 
  *  8 elements or if the <tt>depVars</tt> vector has no data
  */
 std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int> depVars, std::vector<double> varHistory){
@@ -266,8 +266,8 @@ std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int>
 }//====================================================
 
 /**
- *  @brief construct a matrix to mirror a 6-d state over the specified plane or axis
- *  @param mirrorType describes how to mirror a 6-d state
+ *  \brief construct a matrix to mirror a 6-d state over the specified plane or axis
+ *  \param mirrorType describes how to mirror a 6-d state
  *  @return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
  */
 MatrixXRd getMirrorMat(Mirror_tp mirrorType){
@@ -416,17 +416,17 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
 }//====================================================
 
 /**
- *  @brief Compute manifolds of a CR3BP trajectory
+ *  \brief Compute manifolds of a CR3BP trajectory
  *  @details [long description]
  * 
- *  @param type The type of manifolds to generate
- *  @param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
+ *  \param type The type of manifolds to generate
+ *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
  *  so this function also performs well for nearly periodic segments of quasi-periodic
  *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
- *  @param numMans The number of manifolds to generate
- *  @param tof Time-of-flight along each manifold arc after stepping off the specified orbit
+ *  \param numMans The number of manifolds to generate
+ *  \param tof Time-of-flight along each manifold arc after stepping off the specified orbit
  *  @return a vector of trajectory objects, one for each manifold arc.
- *  @throws Exception if the eigenvalues cannot be computed, or if only one
+ *  \throws Exception if the eigenvalues cannot be computed, or if only one
  *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
  */
 std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrbit, int numMans, double tof){
@@ -553,13 +553,13 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp type, const Traj_cr3bp *pPerOrb
 }//====================================================
 
 /**
- *  @brief Compute the stability index of a periodic orbit from a set of eigenvalues
+ *  \brief Compute the stability index of a periodic orbit from a set of eigenvalues
  *  @details This algorithm assumes the orbit is periodic and that the eigenvalues 
  *  have been sorted (so they come in pairs).
  * 
- *  @param eigs A 6-element vector of eigenvalues associated with a periodic orbit
+ *  \param eigs A 6-element vector of eigenvalues associated with a periodic orbit
  *  @return the stability index, or NAN if no real, reciprocal eigenvalue pair is found
- *  @throws Exception if <tt>eigs</tt> does not have six elements
+ *  \throws Exception if <tt>eigs</tt> does not have six elements
  */
 double getStabilityIndex(std::vector<cdouble> eigs){
     if(eigs.size() != 6)
@@ -590,9 +590,9 @@ double getStabilityIndex(std::vector<cdouble> eigs){
 }//====================================================
 
 /**
- *  @brief Compute the total delta-V along a corrected nodeset
+ *  \brief Compute the total delta-V along a corrected nodeset
  * 
- *  @param pIt pointer to an MultShootData object associated with a corrections process
+ *  \param pIt pointer to an MultShootData object associated with a corrections process
  *  @return the total delta-V, units consistent with the nodeset's stored velocity states
  */
 double getTotalDV(const MultShootData *pIt){
@@ -606,28 +606,28 @@ double getTotalDV(const MultShootData *pIt){
 }//=====================================================
 
 /**
- *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
  *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  @param pNodeset A nodeset with some constraints
+ *  \param pNodeset A nodeset with some constraints
  */
-bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity){
+bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity, bool writeToFile){
     CorrectionEngine engine;  // Create engine with default settings
-    return finiteDiff_checkMultShoot(pNodeset, engine, verbosity);
+    return finiteDiff_checkMultShoot(pNodeset, engine, verbosity, writeToFile);
 }//====================================================
 
 /**
- *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
  *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  @param pNodeset A nodeset with some constraints
- *  @param engine correction engine object configured with the appropriate settings (i.e.,
+ *  \param pNodeset A nodeset with some constraints
+ *  \param engine correction engine object configured with the appropriate settings (i.e.,
  *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
  */
-bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine, Verbosity_tp verbosity){
+bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine, Verbosity_tp verbosity, bool writeToFile){
     printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
     CorrectionEngine corrector(engine);
@@ -684,8 +684,6 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine,
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
     MatrixXRd DFest_abs = DFest.cwiseAbs();
 
-    // astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
-    // astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
     diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
 
     // // Divide each element by the magnitude of the DF element to get a relative difference magnitude
@@ -701,7 +699,13 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine,
     //         // }
     //     }
     // }
-    // astrohelion::toCSV(diff, "FiniteDiff_Diff.csv");
+    
+    if(writeToFile){
+        astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
+        astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
+        astrohelion::toCSV(diff, "FiniteDiff_Diff.csv"); 
+    }
+    // 
 
     Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
     Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
@@ -736,7 +740,7 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine,
                     printf("Applies to %s %d: %s Constraint:\n", 
                         Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
                         it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
-                }else if(conCount < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
+                }else if(conCount+1 < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
                     conCount++;
                     printf("Applies to %s %d: %s Constraint:\n", 
                         Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
@@ -766,12 +770,12 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine,
 }//====================================================
 
 /**
- *  @brief Use numerical integration to find a node on a trajectory at
+ *  \brief Use numerical integration to find a node on a trajectory at
  *  the specified time
  *  @details 
  * 
- *  @param traj A trajectory 
- *  @param t The time at which the node is located
+ *  \param traj A trajectory 
+ *  \param t The time at which the node is located
  * 
  *  @return A node on the specified trajectory at time <tt>t</tt>
  */
@@ -808,13 +812,13 @@ Node interpPointAtTime(const Traj *traj, double t){
 
 
 /**
- *  @brief Determine a set of spherical coordinates the describe 
+ *  \brief Determine a set of spherical coordinates the describe 
  *  the position vector specified by x, y, and z
  *  @details [long description]
  * 
- *  @param x x-coordinate
- *  @param y y-coordinate
- *  @param z z-coordinate
+ *  \param x x-coordinate
+ *  \param y y-coordinate
+ *  \param z z-coordinate
  *  
  *  @return a vector containing {lat, long, R} in radians
  *  and the distance units of x, y, and z. Latitude takes a 
@@ -833,14 +837,14 @@ std::vector<double> getSpherical(double x, double y, double z){
 }//====================================================
 
 /**
- *  @brief Convert inertial coordinates to local tangent coordinates
+ *  \brief Convert inertial coordinates to local tangent coordinates
  * 
- *  @param inertPos Object position in inertial, cartesian (x,y,z) coordinates
- *  @param lat Latitude angle, radians, measured from the inertial xy plane;
+ *  \param inertPos Object position in inertial, cartesian (x,y,z) coordinates
+ *  \param lat Latitude angle, radians, measured from the inertial xy plane;
  *  above the plane (z > 0) is a positive latitude.
- *  @param lon Longitude angle, radians, measured from reference meridian in a positive,
+ *  \param lon Longitude angle, radians, measured from reference meridian in a positive,
  *  right-handed rotation about inertial z
- *  @param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
+ *  \param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
  *  right-handed rotation about inertial z. For example, Earth ground stations' longitudes
  *  are relative to the Greenwich Meridian
  *  @return The position of the object in local tangent, cartesian coordinates (East, North, Up)
@@ -861,14 +865,14 @@ std::vector<double> inert2LocalTangent(std::vector<double> inertPos, double lat,
 }//====================================================
 
 /**
- *  @brief Convert local tangent coordinates to inertial coordinates
+ *  \brief Convert local tangent coordinates to inertial coordinates
  * 
- *  @param localPos Object position in local tangent, cartesian (East, North, Up) coordinates
- *  @param lat Latitude angle, radians, measured from the inertial xy plane;
+ *  \param localPos Object position in local tangent, cartesian (East, North, Up) coordinates
+ *  \param lat Latitude angle, radians, measured from the inertial xy plane;
  *  above the plane (z > 0) is a positive latitude.
- *  @param lon Longitude angle, radians, measured from reference meridian in a positive,
+ *  \param lon Longitude angle, radians, measured from reference meridian in a positive,
  *  right-handed rotation about inertial z
- *  @param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
+ *  \param theta_mer Meridian longitude, radians, measured from inertial x in a positive,
  *  right-handed rotation about inertial z. For example, Earth ground stations' longitudes
  *  are relative to the Greenwich Meridian
  *  @return The position of the object in inertial, cartesian coordinates (x, y, z)
@@ -889,13 +893,13 @@ std::vector<double> localTangent2Inert(std::vector<double> localPos, double lat,
 }//====================================================
 
 /**
- *  @brief Get the local tangent coordinates of an object given its 
+ *  \brief Get the local tangent coordinates of an object given its 
  *  azimuth, elevation, and range
  *  @details [long description]
  * 
- *  @param s range distance
- *  @param az azimuth, measured from North toward East, radians
- *  @param el elevation, measured from local horizontal, radians
+ *  \param s range distance
+ *  \param az azimuth, measured from North toward East, radians
+ *  \param el elevation, measured from local horizontal, radians
  *  @return [r_E, r_N, r_Z] the position of the object in local
  *  tangent coordinates (East, North, Up), units that match the input range
  */
@@ -914,11 +918,11 @@ std::vector<double> azEl2LocalTangent(double s, double az, double el){
 //-----------------------------------------------------
 
 /**
- *  @ingroup 2bp
- *  @brief Compute the Keplarian elements at all steps/nodes
+ *  \ingroup 2bp
+ *  \brief Compute the Keplarian elements at all steps/nodes
  *  of a 2-body trajectory or nodeset
  * 
- *  @param pSet Pointer to a nodeset or trajectory
+ *  \param pSet Pointer to a nodeset or trajectory
  */
 void r2bp_computeAllKepler(BaseArcset *pSet){
     if(pSet->getSysData()->getType() == SysData_tp::R2BP_SYS){
@@ -934,12 +938,12 @@ void r2bp_computeAllKepler(BaseArcset *pSet){
 }//====================================================
 
 /**
- *  @ingroup 2bp
- *  @brief Compute the Keplarian orbital elements at a 
+ *  \ingroup 2bp
+ *  \brief Compute the Keplarian orbital elements at a 
  *  specific node
  * 
- *  @param pSys Pointer to the dynamical system the node exists in
- *  @param pNode Pointer to the node
+ *  \param pSys Pointer to the dynamical system the node exists in
+ *  \param pNode Pointer to the node
  */
 void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
     std::vector<double> q = pNode->getState();
@@ -998,17 +1002,17 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
 }//====================================================
 
 /**
- *  @ingroup 2bp
- *  @brief [brief description]
+ *  \ingroup 2bp
+ *  \brief [brief description]
  *  @details [long description]
  * 
- *  @param pSys [description]
- *  @param a [description]
- *  @param e [description]
- *  @param argPeri [description]
- *  @param i [description]
- *  @param RAAN [description]
- *  @param TA [description]
+ *  \param pSys [description]
+ *  \param a [description]
+ *  \param e [description]
+ *  \param argPeri [description]
+ *  \param i [description]
+ *  \param RAAN [description]
+ *  \param TA [description]
  *  @return [description]
  */
 std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, double e, double argPeri, double i, double RAAN, double TA){
@@ -1065,17 +1069,17 @@ std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, doub
 //-----------------------------------------------------
 
 /**
- *  @ingroup cr3bp
- *  @brief Compute the magnitude of a velocity component given Jacobi Constant
+ *  \ingroup cr3bp
+ *  \brief Compute the magnitude of a velocity component given Jacobi Constant
  * 
- *  @param s state vector (non-dimensional); MUST contain at least the 6 position and velocity states.
+ *  \param s state vector (non-dimensional); MUST contain at least the 6 position and velocity states.
  *  Note that the desired velocity component identified by velIxToFind is not required; put a placeholder
  *  zero or NAN (or anything, really) in its place; this value will not be used in computations.
- *  @param mu non-dimensional system mass ratio
- *  @param C Jacobi constant value
- *  @param velIxToFind index of the velocity component to compute (i.e. 3, 4, or 5)
+ *  \param mu non-dimensional system mass ratio
+ *  \param C Jacobi constant value
+ *  \param velIxToFind index of the velocity component to compute (i.e. 3, 4, or 5)
  *  @return the magnitude of vx (3), vy (4), or vz (5).
- *  @throws Exception if <tt>velIxToFind</tt> is out of bounds
+ *  \throws Exception if <tt>velIxToFind</tt> is out of bounds
  */
 double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind){
     double v_squared = 0;
@@ -1095,8 +1099,8 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
 }//=================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Compute a periodic orbit in the CR3BP system
+ *  \ingroup cr3bp
+ *  \brief Compute a periodic orbit in the CR3BP system
  *
  *  The initial and final states are constrained based on the mirror type, but
  *  all other states are allowed to vary during the corrections process. If you
@@ -1106,11 +1110,11 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *
  *  This function also assumes the order of the periodic orbit is 1
  *
- *  @param pSys the dynamical system
- *  @param IC non-dimensional initial state vector
- *  @param period non-dimensional period for the orbit
- *  @param mirrorType how this periodic orbit mirrors in the CR3BP
- *  @param tol tolerance to use in the corrections process
+ *  \param pSys the dynamical system
+ *  \param IC non-dimensional initial state vector
+ *  \param period non-dimensional period for the orbit
+ *  \param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  \param tol tolerance to use in the corrections process
  *  
  *  @return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
@@ -1125,23 +1129,23 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 }//========================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Compute a periodic orbit in the CR3BP system
+ *  \ingroup cr3bp
+ *  \brief Compute a periodic orbit in the CR3BP system
  *  @details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
  *  
- *  @param pSys the dynamical system
- *  @param IC non-dimensional initial state vector
- *  @param period non-dimensional period for the orbit
- *  @param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
+ *  \param pSys the dynamical system
+ *  \param IC non-dimensional initial state vector
+ *  \param period non-dimensional period for the orbit
+ *  \param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
  *  may result in a more robust correction
- *  @param order the number of revolutions about the system/primary this orbit completes before
+ *  \param order the number of revolutions about the system/primary this orbit completes before
  *  it repeats periodically. Think of a period-3 DRO (order = 3) or a butterfly (order = 2)
- *  @param mirrorType how this periodic orbit mirrors in the CR3BP
- *  @param fixedStates a vector containing the indices of which initial states
+ *  \param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  \param fixedStates a vector containing the indices of which initial states
  *  we would like to fix. Not all states are possible for each mirror condition.
  *  See the enum definition for specific details.
- *  @param tol tolerance to use in the corrections process
+ *  \param tol tolerance to use in the corrections process
  *  
  *  @return A periodic orbit. Note that this algorithm only enforces the mirror
  *  condition at the initial state and halfway point. To increase the accuracy
@@ -1158,24 +1162,24 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 }//====================================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Compute a periodic orbit in the CR3BP system
+ *  \ingroup cr3bp
+ *  \brief Compute a periodic orbit in the CR3BP system
  *  @details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
  *  
- *  @param pSys the dynamical system
- *  @param IC non-dimensional initial state vector
- *  @param period non-dimensional period for the orbit
- *  @param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
+ *  \param pSys the dynamical system
+ *  \param IC non-dimensional initial state vector
+ *  \param period non-dimensional period for the orbit
+ *  \param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
  *  may result in a more robust correction
- *  @param order the number of revolutions about the system/primary this orbit completes before
+ *  \param order the number of revolutions about the system/primary this orbit completes before
  *  it repeats periodically. Think of a period-3 DRO (order = 3) or a butterfly (order = 2)
- *  @param mirrorType how this periodic orbit mirrors in the CR3BP
- *  @param fixedStates a vector containing the indices of which initial states
+ *  \param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  \param fixedStates a vector containing the indices of which initial states
  *  we would like to fix. Not all states are possible for each mirror condition.
  *  See the enum definition for specific details.
- *  @param tol tolerance to use in the corrections process
- *  @param pItData a pointer to an iteration data object that contains data from the
+ *  \param tol tolerance to use in the corrections process
+ *  \param pItData a pointer to an iteration data object that contains data from the
  *  multiple shooting run that corrects the periodic orbit; this is useful when
  *  attempting to determine how well (or poorly) the multiple shooting algorithm
  *  performed (e.g., for a variable step-size process)
@@ -1184,8 +1188,8 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
  *  condition at the initial state and halfway point. To increase the accuracy
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
- *  @throws Exception if <tt>mirrorType</tt> is invalid
- *  @throws DivergeException if the multiple shooting algorithm cannot converge on a 
+ *  \throws Exception if <tt>mirrorType</tt> is invalid
+ *  \throws DivergeException if the multiple shooting algorithm cannot converge on a 
  *  mirrored solution.
  */
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
@@ -1375,8 +1379,8 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 }//================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transition a trajectory from the EM system to the SE system
+ *  \ingroup cr3bp
+ *  \brief Transition a trajectory from the EM system to the SE system
  *  
  *  The relative orientation between the two systems is described by the three angles
  *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. These angles describe the
@@ -1384,13 +1388,13 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
  *  with this initial time, be sure to shift the time coordinates to assure that the first
  *  value in the time vector reflects correct initial time.
  *
- *  @param EMTraj a CR3BP Earth-Moon trajectory
- *  @param pSESys a Sun-Earth CR3BP system data object
- *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  \param EMTraj a CR3BP Earth-Moon trajectory
+ *  \param pSESys a Sun-Earth CR3BP system data object
+ *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
- *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
  *  lunar "periapse" at time t = 0.
- *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
 Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0, double gamma){
@@ -1401,21 +1405,21 @@ Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *pSESys, double th
 }//=========================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transition a nodeset from the EM system to the SE system
+ *  \ingroup cr3bp
+ *  \brief Transition a nodeset from the EM system to the SE system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
  *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the EM nodeset
  *  should have node epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
- *  @param EMNodes a CR3BP Earth-Moon nodeset
- *  @param pSESys a Sun-Earth CR3BP system data object
- *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  \param EMNodes a CR3BP Earth-Moon nodeset
+ *  \param pSESys a Sun-Earth CR3BP system data object
+ *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
- *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
  *  lunar "periapse" at time t = 0.
- *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
 Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0,
@@ -1463,21 +1467,21 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, do
 }//=========================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transition a trajectory from the SE system to the EM system
+ *  \ingroup cr3bp
+ *  \brief Transition a trajectory from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
  *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the SE trajectory
  *  should have epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire trajectory may be accomplished via the updateEpochs() function.
  *
- *  @param SETraj a CR3BP Sun-Earth trajectory
- *  @param pEMSys an Earth-Moon CR3BP system data object
- *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  \param SETraj a CR3BP Sun-Earth trajectory
+ *  \param pEMSys an Earth-Moon CR3BP system data object
+ *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
- *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
  *  lunar "periapse" at time t = 0.
- *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
 Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0, double gamma){
@@ -1487,21 +1491,21 @@ Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *pEMSys, double th
 }//=========================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transition a nodeset from the SE system to the EM system
+ *  \ingroup cr3bp
+ *  \brief Transition a nodeset from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
  *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the SE nodeset
  *  should have node epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
- *  @param SENodes a CR3BP Sun-Earth nodeset
- *  @param pEMSys an Earth-Moon CR3BP system data object
- *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  \param SENodes a CR3BP Sun-Earth nodeset
+ *  \param pEMSys an Earth-Moon CR3BP system data object
+ *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
- *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
  *  lunar "periapse" at time t = 0.
- *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
 Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0,
@@ -1551,22 +1555,22 @@ Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, do
 }//=========================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transform a single state from EM coordinates to SE coordinates
+ *  \ingroup cr3bp
+ *  \brief Transform a single state from EM coordinates to SE coordinates
  *
- *  @param state_EM a 6- or 9-element state vector
- *  @param t Earth-Moon nondimensional time associated with the Earth-Moon state
- *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  \param state_EM a 6- or 9-element state vector
+ *  \param t Earth-Moon nondimensional time associated with the Earth-Moon state
+ *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
- *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
  *  lunar "periapse" at time t = 0.
- *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
- *  @param charLE EM characteristic length
- *  @param charTE EM characterstic time
- *  @param charLS SE characteristic length
- *  @param charTS SE characteristic time
- *  @param mu_SE SE mass ratio
+ *  \param charLE EM characteristic length
+ *  \param charTE EM characterstic time
+ *  \param charLS SE characteristic length
+ *  \param charTS SE characteristic time
+ *  \param mu_SE SE mass ratio
  *
  *  @return a 6-element state vector in EM coordinates
  */
@@ -1622,22 +1626,22 @@ std::vector<double> cr3bp_EM2SE_state(std::vector<double> state_EM, double t, do
 }//====================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transform a single state from SE coordinates to EM coordinates
+ *  \ingroup cr3bp
+ *  \brief Transform a single state from SE coordinates to EM coordinates
  *
- *  @param state_SE a 6- or 9-element state vector
- *  @param t Sun-Earth nondimensional time associated with the state
- *  @param thetaE0 the angle (radians) between the Sun-Earth line and the 
+ *  \param state_SE a 6- or 9-element state vector
+ *  \param t Sun-Earth nondimensional time associated with the state
+ *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
- *  @param thetaM0 the angle (radians) between the Earth-Moon line and 
+ *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
  *  lunar "periapse" at time t = 0.
- *  @param gamma the inclination (radians) of the lunar orbital plane relative 
+ *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
- *  @param charLE EM characteristic length, km
- *  @param charTE EM characterstic time, sec
- *  @param charLS SE characteristic length, km
- *  @param charTS SE characteristic time, sec
- *  @param mu_SE SE mass ratio, nondimensional
+ *  \param charLE EM characteristic length, km
+ *  \param charTE EM characterstic time, sec
+ *  \param charLS SE characteristic length, km
+ *  \param charTS SE characteristic time, sec
+ *  \param mu_SE SE mass ratio, nondimensional
  *
  *  @return a 6-element state vector in SE coordinates
  */
@@ -1690,12 +1694,12 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
 }//====================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
+ *  \ingroup cr3bp
+ *  \brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  @param traj CR3BP trajectory
- *  *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
- *  @param centerIx The index of the primary that will be the center of the inertial
+ *  \param traj CR3BP trajectory
+ *  *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
+ *  \param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
  *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
@@ -1710,12 +1714,12 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
 }//==================================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
+ *  \ingroup cr3bp
+ *  \brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  @param nodes CR3BP nodeset
- *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
- *  @param centerIx The index of the primary that will be the center of the inertial
+ *  \param nodes CR3BP nodeset
+ *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
+ *  \param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
  *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
@@ -1760,14 +1764,14 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
 }//==================================================================
 
 /**
- *  @ingroup cr3bp
- *  @brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
+ *  \ingroup cr3bp
+ *  \brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  @param stateRot a 6-element non-dimensional state in rotating coordinates
- *  @param pSys a pointer to the CR3BP system the state exists in
- *  @param t the non-dimensional time associated with the input state
- *  @param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
- *  @param centerIx The index of the primary that will be the center of the inertial
+ *  \param stateRot a 6-element non-dimensional state in rotating coordinates
+ *  \param pSys a pointer to the CR3BP system the state exists in
+ *  \param t the non-dimensional time associated with the input state
+ *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
+ *  \param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
  *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
@@ -1897,13 +1901,13 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
 //-----------------------------------------------------
 
 /**
- *  @brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
+ *  \brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
  *
- *  @param crTraj a CR3BP Sun-Earth trajectory
- *  @param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
+ *  \param crTraj a CR3BP Sun-Earth trajectory
+ *  \param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
  *  scaling and orientation at time t = 0
- *  @param nodeID ID of a node in the set for which the epoch is known
- *  @param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
+ *  \param nodeID ID of a node in the set for which the epoch is known
+ *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
  *  @return a BCR4BPR Trajectory object
  *  @throw Exception if <tt>crTraj</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
@@ -1916,14 +1920,14 @@ Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *pBCSys, int no
 }//==================================================
 
 /**
- *  @ingroup bc4bp
- *  @brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset.
+ *  \ingroup bc4bp
+ *  \brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset.
  *  
- *  @param crNodes a CR3BP Sun-Earth nodeset
- *  @param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
+ *  \param crNodes a CR3BP Sun-Earth nodeset
+ *  \param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
  *  scaling and orientation at time t = 0
- *  @param nodeID ID of a node in the set for which the epoch is known
- *  @param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
+ *  \param nodeID ID of a node in the set for which the epoch is known
+ *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
  *  @return a BCR4BPR nodeset
  *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
@@ -1988,11 +1992,11 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
 }//==================================================
 
 /**
- *  @ingroup bc4bp
- *  @brief Transform a BCR4BPR Sun-Earth-Moon nodeset into a CR3BP Sun-Earth nodeset
+ *  \ingroup bc4bp
+ *  \brief Transform a BCR4BPR Sun-Earth-Moon nodeset into a CR3BP Sun-Earth nodeset
  *
- *  @param bcNodes a BCR4BPR Sun-Earth-Moon nodeset
- *  @param pCRSys a CR3BP Sun-Earth system data object; contains information about system
+ *  \param bcNodes a BCR4BPR Sun-Earth-Moon nodeset
+ *  \param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
  *  @return a CR3BP nodeset object
@@ -2061,11 +2065,11 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
 }//==================================================
 
 /**
- *  @ingroup bc4bp
- *  @brief Transform a BCR4BPR Sun-Earth-Moon trajectory into a CR3BP Sun-Earth nodeset
+ *  \ingroup bc4bp
+ *  \brief Transform a BCR4BPR Sun-Earth-Moon trajectory into a CR3BP Sun-Earth nodeset
  *
- *  @param bcTraj a BCR4BPR Sun-Earth-Moon trajectory
- *  @param pCRSys a CR3BP Sun-Earth system data object; contains information about system
+ *  \param bcTraj a BCR4BPR Sun-Earth-Moon trajectory
+ *  \param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
  *  @return a CR3BP Trajectory object
@@ -2079,14 +2083,14 @@ Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *pCRSys){
 }//==================================================
 
 /**
- *  @ingroup bc4bp
- *  @brief Compute the location of the saddle point for a specific bicircular system
+ *  \ingroup bc4bp
+ *  \brief Compute the location of the saddle point for a specific bicircular system
  *  and epoch
  *  @details This function uses a Newton-Raphson procedure to locate the zeros of the local
  *  acceleration field.
- *  @throws DivergeException if the Newton-Raphson procedure cannot converge
- *  @param pBCSys system data object describing the bicircular system
- *  @param t0 the epoch at which the saddle point's location is computed
+ *  \throws DivergeException if the Newton-Raphson procedure cannot converge
+ *  \param pBCSys system data object describing the bicircular system
+ *  \param t0 the epoch at which the saddle point's location is computed
  * 
  *  @return the location of the saddle pointin BCR4BP rotating coordinates
  *  @throw DivergeException if the multiple shooting algorithm cannot converge on the
@@ -2163,14 +2167,14 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *pBCSys, double t0){
 }//=====================================================
 
 /**
- *  @ingroup bc4bp
- *  @brief Compute coefficients for 2nd-order polynomials in Epoch time that
+ *  \ingroup bc4bp
+ *  \brief Compute coefficients for 2nd-order polynomials in Epoch time that
  *  describe the x, y, and z coordinates of the saddle point.
  *  @details This function employs least squares to compute the coefficients. The
  *  number of points used and time span searched are hard coded in the function.
  * 
- *  @param pBCSys data about the bicircular system
- *  @param T0 the "center" epoch; points are generated within +/- timeSpan of this
+ *  \param pBCSys data about the bicircular system
+ *  \param T0 the "center" epoch; points are generated within +/- timeSpan of this
  *  epoch
  * 
  *  @return a 3x3 matrix of coefficients. The first column contains the coefficients
@@ -2217,7 +2221,7 @@ MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp *pBCSys, double T0){
     return C;
 }//=================================================
 
-/** @} */   // END of util group
+/** \} */   // END of util group
 
 }// END of Astrohelion namespace
 

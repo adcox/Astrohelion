@@ -1,10 +1,10 @@
 /**
- *  @file Fam_cr3bp.hpp
- *	@brief 
+ *  \file Fam_cr3bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -46,7 +46,7 @@ class Constraint;
 
 
 /**
- *	@brief How to sort members of this family
+ *	\brief How to sort members of this family
  *	
  *	Families typically evolve naturally through one variable, and
  *	it makes sense to analyze trends using this parameter as the 
@@ -68,29 +68,29 @@ enum class FamSort_tp : int{
 };
 		
 /**
- *	@ingroup traj cr3bp
- *	@brief A data structure to represent a family of orbits
+ *	\ingroup traj cr3bp
+ *	\brief A data structure to represent a family of orbits
  *
  *	Currently, this structure assumes family members are periodic.
  */
 class Fam_cr3bp : public Core{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		Fam_cr3bp(SysData_cr3bp);
 		Fam_cr3bp(const char*);
 		Fam_cr3bp(const Fam_cr3bp&);
 		~Fam_cr3bp();
-		//@}
+		//\}
 
 		// Operators
 		Fam_cr3bp& operator= (const Fam_cr3bp&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		void addMember(FamMember_cr3bp);
 		
@@ -107,7 +107,7 @@ class Fam_cr3bp : public Core{
 
 		void setName(std::string);
 		void setSortType(FamSort_tp);
-		//@}
+		//\}
 
 		std::vector<int> findBifurcations();
 		void saveToMat(const char*);

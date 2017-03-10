@@ -1,11 +1,11 @@
 /**
- *  @file MultShootData.cpp
- *	@brief Contains member functions for several classes that support
+ *  \file MultShootData.cpp
+ *	\brief Contains member functions for several classes that support
  *	multiple shooting data manipulation and transfer
  *
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
  
 /*
@@ -92,15 +92,17 @@ MSVarMap_Obj::MSVarMap_Obj(MSVarType t) : key(){
 	init();
 }//================================================
 
-MSVarMap_Obj::MSVarMap_Obj(MSVarType t, int row0, int id) : key(){
+MSVarMap_Obj::MSVarMap_Obj(MSVarType t, int row0, int id, int nRows) : key(){
 	key.type = t;
 	key.id = id;
 	this->row0 = row0;
+	this->nRows = nRows;
 	init();
-}//================================================
+}//====================================================
 
-MSVarMap_Obj::MSVarMap_Obj(MSVarMap_Key k, int rowNum) : key(k){
+MSVarMap_Obj::MSVarMap_Obj(MSVarMap_Key k, int rowNum, int nRows) : key(k){
 	this->row0 = rowNum;
+	this->nRows = nRows;
 	init();
 }//================================================
 
@@ -118,16 +120,22 @@ bool MSVarMap_Obj::matches(MSVarType t, int id) const{
 }//================================================
 
 void MSVarMap_Obj::init(){
-	nRows = 1;
 	switch(key.type){
 		case MSVarType::STATE:
 			parent = MSVarParent::NODE;
-			nRows = 6;
 			break;
-		case MSVarType::EPOCH: parent = MSVarParent::NODE; break;
-		case MSVarType::TOF: parent = MSVarParent::SEG; break;
-		case MSVarType::TOF_TOTAL: parent = MSVarParent::ARC; break;
-		case MSVarType::SLACK: parent = MSVarParent::CON; break;
+		case MSVarType::EPOCH:
+			parent = MSVarParent::NODE;
+			break;
+		case MSVarType::TOF:
+			parent = MSVarParent::SEG;
+			break;
+		case MSVarType::TOF_TOTAL:
+			parent = MSVarParent::ARC;
+			break;
+		case MSVarType::SLACK:
+			parent = MSVarParent::CON;
+			break;
 		default: throw Exception("MSVarMap_Obj constructor: Unrecognized type");
 	}
 }//================================================
@@ -159,16 +167,16 @@ const char* MSVarMap_Obj::parent2str(MSVarParent p){
 //-----------------------------------------------------
 
 /**
- *  @brief Construct a new MultShootData object
- *  @param set pointer to the nodeset being corrected
+ *  \brief Construct a new MultShootData object
+ *  \param set pointer to the nodeset being corrected
  */
 MultShootData::MultShootData(const Nodeset *set) : sysData(set->getSysData()), nodeset(set){
 	numNodes = set->getNumNodes();
 }//====================================================
 
 /**
- *  @brief Copy constructor
- *  @param it reference to another MultShootData object
+ *  \brief Copy constructor
+ *  \param it reference to another MultShootData object
  */
 MultShootData::MultShootData(const MultShootData &it) : sysData(it.sysData), nodeset(it.nodeset){
 	copyMe(it);
@@ -179,8 +187,8 @@ MultShootData::MultShootData(const MultShootData &it) : sysData(it.sysData), nod
 //-----------------------------------------------------
 
 /**
- *  @brief Assignment operator
- *  @param it reference to another MultShootData object
+ *  \brief Assignment operator
+ *  \param it reference to another MultShootData object
  */
 MultShootData& MultShootData::operator =(const MultShootData &it){
 	copyMe(it);
@@ -194,14 +202,14 @@ MultShootData& MultShootData::operator =(const MultShootData &it){
 //-----------------------------------------------------
 
 /**
- *  @brief Retrieve a free variable map object by type and reference ID
+ *  \brief Retrieve a free variable map object by type and reference ID
  * 
- *  @param type the type of object this map object represents (i.e., EPOCH, SLACK, Constraint_tp::STATE, TOF, TOF_TOTAL)
- *  @param refID the ID of the parent object
+ *  \param type the type of object this map object represents (i.e., EPOCH, SLACK, Constraint_tp::STATE, TOF, TOF_TOTAL)
+ *  \param refID the ID of the parent object
  * 
  *  @return the variable map object that represents the desired variable
  *  @see ms_varMap_type
- *  @throws Exception if the object cannot be located
+ *  \throws Exception if the object cannot be located
  *  @todo This function could be greatly sped up by leveraging a hash table
  */
 MSVarMap_Obj MultShootData::getVarMap_obj(MSVarType type, int refID) const{
@@ -222,8 +230,8 @@ MSVarMap_Obj MultShootData::getVarMap_obj(MSVarType type, int refID) const{
 //-----------------------------------------------------
 
 /**
- *  @brief Copy all parameters from one MultShootData object to another
- *  @param it reference to source MultShootData object
+ *  \brief Copy all parameters from one MultShootData object to another
+ *  \param it reference to source MultShootData object
  */
 void MultShootData::copyMe(const MultShootData &it){
 	

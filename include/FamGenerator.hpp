@@ -1,10 +1,10 @@
 /**
- *  @file FamGenerator.hpp
- *	@brief 
+ *  \file FamGenerator.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *  Astrohelion 
@@ -46,7 +46,7 @@ class SysData_cr3bp;
 class Traj_cr3bp;
 
 /**
- *	@brief Type of continuation to use when generating a family
+ *	\brief Type of continuation to use when generating a family
  */
 enum class Continuation_tp{
 	NAT_PARAM,	//!< Use natural parameter continuation
@@ -54,26 +54,26 @@ enum class Continuation_tp{
 };
 		
 /**
- *	@ingroup engine
- *	@brief An object to generate families of orbits
+ *	\ingroup engine
+ *	\brief An object to generate families of orbits
  */
 class FamGenerator : public Core, public Engine{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		FamGenerator();
 		FamGenerator(const FamGenerator&);
 		~FamGenerator();
-		//@}
+		//\}
 
 		// operators
 		FamGenerator& operator =(const FamGenerator&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		void setContType(Continuation_tp);
 		void setMaxStepSize(double);
@@ -85,11 +85,11 @@ class FamGenerator : public Core, public Engine{
 		void setStep_fitted_1(double);
 		void setStep_fitted_2(double);
 		void setTol(double);
-		//@}
+		//\}
 
 		/**
-		 *  @name Family Generation
-		 *  @{
+		 *  \name Family Generation
+		 *  \{
 		 */
 		void cr3bp_generateAxial(const char*, double, Fam_cr3bp*);
 		void cr3bp_generateButterfly(int, Fam_cr3bp*);
@@ -103,7 +103,7 @@ class FamGenerator : public Core, public Engine{
 
 		void cr3bp_pacFromTraj(Traj_cr3bp, Mirror_tp, std::vector<int>, Fam_cr3bp*);
 		void cr3bp_pacFromNodeset(Nodeset_cr3bp, Mirror_tp, std::vector<int>, Fam_cr3bp*);
-		//@}
+		//\}
 		
 		void reset();
 

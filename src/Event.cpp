@@ -1,10 +1,10 @@
 /**
- *	@file Event.cpp
- *	@brief Data object that stores information about a simulation event
+ *	\file Event.cpp
+ *	\brief Data object that stores information about a simulation event
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -45,25 +45,25 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *  @brief Basic constructor
+ *  \brief Basic constructor
  *  @details Use one of the two createEvent() functions to initialize the rest
  *  of the event object
  */
 Event::Event(){}
 
 /**
- *	@brief Create an event
+ *	\brief Create an event
  *
  *	Note that creating a CRASH event using this constructor will default to a crash
  *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
  *	primary and miss distance, use the customizable constructor.
  *
- *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	\param t the event type
+ *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
- *	@param willStop whether or not this event should stop the integration
- *	@throws Exception if this constructor is called for an event type that requires data
- *	@throws Exception if the event type is not recognized
+ *	\param willStop whether or not this event should stop the integration
+ *	\throws Exception if this constructor is called for an event type that requires data
+ *	\throws Exception if the event type is not recognized
  */
 void Event::createEvent(Event_tp t, int dir, bool willStop){
 	switch(t){
@@ -87,16 +87,16 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 }//===================================================
 
 /**
- *	@brief Create an event with custom specifications
+ *	\brief Create an event with custom specifications
  *	
  *	Rather than using the default parameters, this constructor allows you to
  *	create more specialized events.
  *
- *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	\param t the event type
+ *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
- *	@param willStop whether or not this event should stop the integration
- *	@param params a vector of doubles that give the constructor extra information. No
+ *	\param willStop whether or not this event should stop the integration
+ *	\param params a vector of doubles that give the constructor extra information. No
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect (otherwise it will read uninitialized memory).
  *
@@ -107,16 +107,16 @@ void Event::createEvent(Event_tp t, int dir, bool willStop, std::vector<double> 
 }//====================================================
 
 /**
- *	@brief Create an event
+ *	\brief Create an event
  *
  *	Note that creating a CRASH event using this constructor will default to a crash
  *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
  *	primary and miss distance, use the customizable constructor.
  *
- *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	\param t the event type
+ *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
- *	@param willStop whether or not this event should stop the integration
+ *	\param willStop whether or not this event should stop the integration
  */
 Event::Event(Event_tp t, int dir, bool willStop){
 	createEvent(t, dir, willStop);
@@ -124,23 +124,23 @@ Event::Event(Event_tp t, int dir, bool willStop){
 
 
 /**
- *	@brief Create an event with custom specifications
+ *	\brief Create an event with custom specifications
  *	
  *	Rather than using the default parameters, this constructor allows you to
  *	create more specialized events.
  *
- *	@param t the event type
- *	@param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	\param t the event type
+ *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
- *	@param willStop whether or not this event should stop the integration
- *	@param params a vector of doubles that give the constructor extra information. No
+ *	\param willStop whether or not this event should stop the integration
+ *	\param params a vector of doubles that give the constructor extra information. No
  *	specific size is required, but params must have at least as many elements as the 
  *	event type will expect.
  *
  *	@see Event_tp::Event_tp
- *	@throws Exception if the dynamic model does not support this event type
- *	@throws Exception if the event type is not recognized
- *	@throws Exception if data values refer to invalid indices
+ *	\throws Exception if the dynamic model does not support this event type
+ *	\throws Exception if the event type is not recognized
+ *	\throws Exception if data values refer to invalid indices
  */
 Event::Event(Event_tp t, int dir , bool willStop, std::vector<double> params){
 	initEvent(t, dir, willStop, params);
@@ -227,15 +227,15 @@ void Event::initialize(const SysData* pSys){
 }//====================================================
 
 /**
- *	@brief copy constructor
+ *	\brief copy constructor
  */
 Event::Event(const Event &ev){
 	copyEvent(ev);
 }//====================================================
 
 /**
- *	@brief copy the event
- *	@param ev an event
+ *	\brief copy the event
+ *	\param ev an event
  */
 void Event::copyEvent(const Event &ev){
 	type = ev.type;
@@ -254,7 +254,7 @@ void Event::copyEvent(const Event &ev){
 }//=============================================
 
 /**
- *	@brief Destructor
+ *	\brief Destructor
  */
 Event::~Event(){}
 
@@ -263,7 +263,7 @@ Event::~Event(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Copy operator
+ *	\brief Copy operator
  */
 Event& Event::operator =(const Event &ev){
 	copyEvent(ev);
@@ -271,9 +271,9 @@ Event& Event::operator =(const Event &ev){
 }//====================================================
 
 /**
- *	@brief Comparison operator
- *	@param lhs
- *	@param rhs
+ *	\brief Comparison operator
+ *	\param lhs
+ *	\param rhs
  *	@return true if the two events are identical
  */
 bool operator ==(const Event &lhs, const Event &rhs){
@@ -292,9 +292,9 @@ bool operator ==(const Event &lhs, const Event &rhs){
 }//====================================================
 
 /**
- *	@brief Comparison operator
- *	@param lhs
- *	@param rhs
+ *	\brief Comparison operator
+ *	\param lhs
+ *	\param rhs
  *	@return true if the two events are not identical
  */
 bool operator !=(const Event &lhs, const Event &rhs){
@@ -360,7 +360,7 @@ Constraint_tp Event::getConType() const { return conType; }
 std::vector<double> Event::getConData() const { return conData; }
 
 /**
- *  @brief Return the system data pointer
+ *  \brief Return the system data pointer
  *  @details This pointer can only be set by runnining the initialize() function
  *  on the event or by copying another event
  *  @return the system data pointer
@@ -368,42 +368,42 @@ std::vector<double> Event::getConData() const { return conData; }
 const SysData* Event::getSysData() { return pSysData; }
 
 /**
- *	@brief Retrieve the current trigger count, or the number of times
+ *	\brief Retrieve the current trigger count, or the number of times
  *	this event has been triggered during the current simulation
  *	@return the trigger count
  */
 int Event::getTriggerCount() const { return triggerCount; }
 
 /**
- *	@brief Retrieve the number of triggers this event can have before 
+ *	\brief Retrieve the number of triggers this event can have before 
  *	the simulation will be stopped (if applicable)
  *	@return the stopping trigger count
  */
 int Event::getStopCount() const { return stopCount; }
 
 /**
- *	@brief Increment the trigger counter by +1
+ *	\brief Increment the trigger counter by +1
  */
 void Event::incrementCount(){ triggerCount++; }
 
 /**
- *	@brief Set the trigger direction for this event
- *	@param d the direction: +1 for positive, -1 for negative, 0 for both/either
+ *	\brief Set the trigger direction for this event
+ *	\param d the direction: +1 for positive, -1 for negative, 0 for both/either
  */
 void Event::setDir(int d){ triggerDir = d; }
 
 /**
- *	@brief Set the number of triggers this event can endure before the simulation
+ *	\brief Set the number of triggers this event can endure before the simulation
  *	is forced to stop (if applicable, i.e. if stopOnEvent() = true)
- *	@param c the maximum number of triggers; simulation will be stopped when this
+ *	\param c the maximum number of triggers; simulation will be stopped when this
  *	number of triggers occurs (not after)
  */
 void Event::setStopCount(int c){ stopCount = c; }
 
 /**
- *  @brief Set the flag that determines whether a simulation ends when the event occurs
+ *  \brief Set the flag that determines whether a simulation ends when the event occurs
  * 
- *  @param s Whether or not the simulation should stop when this event is triggered
+ *  \param s Whether or not the simulation should stop when this event is triggered
  */
 void Event::setStopOnEvent(bool s){ bStop = s; }
 
@@ -412,11 +412,11 @@ void Event::setStopOnEvent(bool s){ bStop = s; }
 //-----------------------------------------------------
 
 /**
- *	@brief Determine (roughly) whether or not this event has occured between the
+ *	\brief Determine (roughly) whether or not this event has occured between the
  *	previous trajectory state and the current one.
  *
- *	@param y the current integrated state (6 elements)
- *	@param t the current time
+ *	\param y the current integrated state (6 elements)
+ *	\param t the current time
  *	@return whether or not the trajectory has passed through this event
  */
 bool Event::crossedEvent(const double y[6], double t) const{
@@ -434,13 +434,13 @@ bool Event::crossedEvent(const double y[6], double t) const{
 }//============================================
 
 /**
- *	@brief Update the distance variable, which will later be compared in 
+ *	\brief Update the distance variable, which will later be compared in 
  *	the <tt>crossedEvent()</tt> function to determine whether or not 
  *	the integration has crossed the event
  *
- *	@param y a 6-element state vector; if y is larger than 42 elements, 
+ *	\param y a 6-element state vector; if y is larger than 42 elements, 
  *	only the first 6 will be copied
- *	@param t non-dimensional time associated with state <tt>y</tt>
+ *	\param t non-dimensional time associated with state <tt>y</tt>
  */
 void Event::updateDist(const double y[6], double t){	
 	// update the dist variable using information from y
@@ -454,12 +454,12 @@ void Event::updateDist(const double y[6], double t){
 }//======================================
 
 /**
- *	@brief Compute the distance from the input state to the event
- *	@param y a state vector representing the current integration state
- *	@param t non-dimensional time associated with state <tt>y</tt>
+ *	\brief Compute the distance from the input state to the event
+ *	\param y a state vector representing the current integration state
+ *	\param t non-dimensional time associated with state <tt>y</tt>
  *	@return the distance
- *	@throws Exception if the event type associated with this event is not implemented
- *	@throws Exception if the system data pointer has not been initialized via the initialize() function
+ *	\throws Exception if the event type associated with this event is not implemented
+ *	\throws Exception if the system data pointer has not been initialized via the initialize() function
  */
 double Event::getDist(const double *y, double t) const{
 	if(!pSysData)
@@ -512,13 +512,13 @@ double Event::getDist(const double *y, double t) const{
 }//====================================================
 
 /**
- *	@brief Get the direction of propagation for the event by comparing an input state <tt>y</tt>
+ *	\brief Get the direction of propagation for the event by comparing an input state <tt>y</tt>
  *	to the state stored in the <tt>state</tt> variable (which was updated last iteration)
  *
- *	@param y a state vector
- *	@param t non-dimensional time associated with state <tt>y</tt>
+ *	\param y a state vector
+ *	\param t non-dimensional time associated with state <tt>y</tt>
  *	@return positive or negative one to correspond with the sign
- *	@throws Exception if the event type associated with this event is not implemented
+ *	\throws Exception if the event type associated with this event is not implemented
  */
 int Event::getDir(const double *y, double t) const{
 	double d = 0;
@@ -544,7 +544,7 @@ int Event::getDir(const double *y, double t) const{
 }//====================================================
 
 /**
- *	@brief Print out a discription of the event
+ *	\brief Print out a discription of the event
  */
 void Event::printStatus() const{
 	printf("Event: Type = %s, Trigger Dir = %d, KillSim = %s\n", getTypeStr(), triggerDir, 
@@ -553,7 +553,7 @@ void Event::printStatus() const{
 }//====================================================
 
 /**
- *  @brief Reset the event to avoid any confusion when a simulation is rerun with the same event
+ *  \brief Reset the event to avoid any confusion when a simulation is rerun with the same event
  */
 void Event::reset(){
 	triggerCount = 0;

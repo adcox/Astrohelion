@@ -1,10 +1,10 @@
 /**
- *  @file Nodeset_bc4bp.cpp
- *	@brief Derivative of Nodeset, specific to BCR4BPR
+ *  \file Nodeset_bc4bp.cpp
+ *	\brief Derivative of Nodeset, specific to BCR4BPR
  *
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
  
 /*
@@ -40,21 +40,21 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------
 /**
- *	@brief Construct a nodeset with no data other than the system
- *	@param pData system data object describing the system the nodes exist in
+ *	\brief Construct a nodeset with no data other than the system
+ *	\param pData system data object describing the system the nodes exist in
  */
 Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData) : Nodeset(pData){}
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	\brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
- *	@param pData a pointer to a system data object that describes the model to integrate in
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param t0 time that corresponds to IC
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type (default is NodeDistro_tp::TIME)
+ *	\param pData a pointer to a system data object that describes the model to integrate in
+ *	\param IC a set of initial conditions, non-dimensional units
+ *	\param t0 time that corresponds to IC
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC
+ *	\param type node distribution type (default is NodeDistro_tp::TIME)
  */
 Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, const double IC[6], 
 	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
@@ -64,15 +64,15 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, const double IC[6],
 }//====================================================
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	\brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
- *	@param pData a pointer to a system data object that describes the model to integrate in
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param t0 time that corresponds to IC
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type (default is NodeDistro_tp::TIME)
+ *	\param pData a pointer to a system data object that describes the model to integrate in
+ *	\param IC a set of initial conditions, non-dimensional units
+ *	\param t0 time that corresponds to IC
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC
+ *	\param type node distribution type (default is NodeDistro_tp::TIME)
  */
 Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, std::vector<double> IC, 
 	double t0, double tof, int numNodes, NodeDistro_tp type) : Nodeset(pData){
@@ -81,27 +81,27 @@ Nodeset_bc4bp::Nodeset_bc4bp(const SysData_bc4bp *pData, std::vector<double> IC,
 }//====================================================
 
 /**
- *	@brief Copy input nodeset. 
+ *	\brief Copy input nodeset. 
  *
  *	This function calls the base-class copy constructor to
  *	handle copying the generic fields like state and tofs
- *	@param n a nodeset reference
+ *	\param n a nodeset reference
  */
 Nodeset_bc4bp::Nodeset_bc4bp(const Nodeset_bc4bp& n) : Nodeset(n) {}
 
 /**
- *	@brief Create a BCR4BPR nodeset from its base class
- *	@param a an arc data reference
+ *	\brief Create a BCR4BPR nodeset from its base class
+ *	\param a an arc data reference
  */
 Nodeset_bc4bp::Nodeset_bc4bp(const BaseArcset &a) : Nodeset(a) {}
 
 /**
- *  @brief Create a new nodeset object on the stack
+ *  \brief Create a new nodeset object on the stack
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param pSys pointer to a system data object; should be a 
+ *  \param pSys pointer to a system data object; should be a 
  *  BCR4BPR system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
@@ -111,7 +111,7 @@ baseArcsetPtr Nodeset_bc4bp::create( const SysData *pSys) const{
 }//====================================================
 
 /**
- *  @brief Create a new nodeset object on the stack that is a 
+ *  \brief Create a new nodeset object on the stack that is a 
  *  duplicate of this object
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 

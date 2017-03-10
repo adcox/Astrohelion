@@ -1,11 +1,11 @@
 /**
- *  @file SimEngine.cpp
- *  @brief Performs numerical integration on a set of initial conditions in 
+ *  \file SimEngine.cpp
+ *  \brief Performs numerical integration on a set of initial conditions in 
  *  any dynamic model and system
  *  
- *  @author Andrew Cox
- *  @version May 25, 2016
- *  @copyright GNU GPL v3.0
+ *  \author Andrew Cox
+ *  \version May 25, 2016
+ *  \copyright GNU GPL v3.0
  */
  
 /*
@@ -59,22 +59,22 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *  @brief Construct a simulation engine for a specific dynamical system
+ *  \brief Construct a simulation engine for a specific dynamical system
  */
 SimEngine::SimEngine(){
     astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
 }//===========================================
 
 /**
- *  @brief Copy constructor
- *  @param s a simulation engine 
+ *  \brief Copy constructor
+ *  \param s a simulation engine 
  */
 SimEngine::SimEngine(const SimEngine& s){
     copyMe(s);
 }//=====================================
 
 /**
- *  @brief Default destructor
+ *  \brief Default destructor
  */
 SimEngine::~SimEngine(){
     astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
@@ -85,8 +85,8 @@ SimEngine::~SimEngine(){
 //-----------------------------------------------------
 
 /**
- *  @brief Assignment operator; make this engine equal another by copying its data
- *  @param s another simulation engine
+ *  \brief Assignment operator; make this engine equal another by copying its data
+ *  \param s another simulation engine
  */
 SimEngine& SimEngine::operator =(const SimEngine& s){
     copyMe(s);
@@ -137,13 +137,13 @@ double SimEngine::getRelTol() const {return relTol;}
 int SimEngine::getNumSteps() const { return numSteps; }
 
 /**
- *  @brief Retrieve a vector of all events being watched for the current simulation
+ *  \brief Retrieve a vector of all events being watched for the current simulation
  *  @return a vector of events
  */
 std::vector<Event> SimEngine::getEvents() const { return events; }
 
 /**
- *  @brief Retrieve a vector of all events that occured during the 
+ *  \brief Retrieve a vector of all events that occured during the 
  *  most recent simulation
  *  @return a vector of event records; the event indices correspond to
  *  the indices of the events stored in this simulation engine
@@ -152,9 +152,9 @@ std::vector<Event> SimEngine::getEvents() const { return events; }
 std::vector<SimEventRecord> SimEngine::getEventRecords() const { return eventOccurs; }
 
 /**
- *  @brief Retrieve a list of all events that fired at the last step
+ *  \brief Retrieve a list of all events that fired at the last step
  *  of the simulation, potentially ending the run.
- *  @param traj pointer to the trajectory that was integrated
+ *  \param traj pointer to the trajectory that was integrated
  *  @return a vector of events
  */
 std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
@@ -170,8 +170,8 @@ std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
 }//============================================
 
 /**
- *  @brief Add an event for this integration
- *  @param evt an event
+ *  \brief Add an event for this integration
+ *  \param evt an event
  */
 void SimEngine::addEvent(Event evt){
     // Make sure this event hasn't been added before
@@ -187,27 +187,27 @@ void SimEngine::addEvent(Event evt){
 }//======================================
 
 /**
- *  @brief Determine whether or not default events are created for each simulation
+ *  \brief Determine whether or not default events are created for each simulation
  *  @return whether or not default events are created for each simulation
  */
 bool SimEngine::makesDefaultEvents() const { return bMakeDefaultEvents; }
 
 /**
- *	@brief Specify whether or not the engine should run in reverse time
- *	@param b whether or not the engine should run in reverse time
+ *	\brief Specify whether or not the engine should run in reverse time
+ *	\param b whether or not the engine should run in reverse time
  */
 void SimEngine::setRevTime(bool b){ bRevTime = b; }
 
 /**
- *  @brief Specify whether or not the engine should use variable step size.
- *  @param b whether or not the engine should use variable step size
+ *  \brief Specify whether or not the engine should use variable step size.
+ *  \param b whether or not the engine should use variable step size
  */
 void SimEngine::setVarStepSize(bool b){ bVarStepSize = b; }
 
 /**
- *	@brief Specify the absolute integration tolerance, non-dimensional units.
+ *	\brief Specify the absolute integration tolerance, non-dimensional units.
  *	The default value is 1e-12
- *	@param t the tolerance
+ *	\param t the tolerance
  */
 void SimEngine::setAbsTol(double t){
     absTol = t;
@@ -216,9 +216,9 @@ void SimEngine::setAbsTol(double t){
 }//====================================================
 
 /**
- *	@brief Specify the relative integration tolerance, non-dimensional units
+ *	\brief Specify the relative integration tolerance, non-dimensional units
  *	The default value is 1e-14
- *	@param t the tolerance
+ *	\param t the tolerance
  */
 void SimEngine::setRelTol(double t){
     relTol = t;
@@ -233,10 +233,10 @@ void SimEngine::setRelTol(double t){
 void SimEngine::setCtrlLaw(unsigned int id){ ctrlLawID = id; }
 
 /**
- *  @brief Tell the simulation engine whether or not to make default events at the
+ *  \brief Tell the simulation engine whether or not to make default events at the
  *  beginning of the simulation
  * 
- *  @param b whether or not to create default events
+ *  \param b whether or not to create default events
  */
 void SimEngine::setMakeDefaultEvents(bool b){ bMakeDefaultEvents = b; }
 
@@ -250,7 +250,7 @@ void SimEngine::setMakeDefaultEvents(bool b){ bMakeDefaultEvents = b; }
 void SimEngine::setMaxCompTime(int t){ maxCompTime = t; }
 
 /**
- *  @brief Specify the number of steps the integrator must take during the 
+ *  \brief Specify the number of steps the integrator must take during the 
  *  the integration. 
  *
  *  Only these points will be output to the 
@@ -260,14 +260,14 @@ void SimEngine::setMaxCompTime(int t){ maxCompTime = t; }
 void SimEngine::setNumSteps(int n){ numSteps = n; }
 
 /**
- *  @brief Tell the engine whether or not to use simple integration (i.e., no STM propagation)
- *  @param b whether or not to use simple integration
+ *  \brief Tell the engine whether or not to use simple integration (i.e., no STM propagation)
+ *  \param b whether or not to use simple integration
  */
 void SimEngine::setSimpleInt(bool b){ bSimpleIntegration = b; }
 
 /**
- *  @brief Set the variable step integration step function
- *  @param integ The type of integrator to use for variable step propagations
+ *  \brief Set the variable step integration step function
+ *  \param integ The type of integrator to use for variable step propagations
  */
 void SimEngine::setVarStepInteg(Integ_tp integ){ 
     switch(integ){
@@ -281,8 +281,8 @@ void SimEngine::setVarStepInteg(Integ_tp integ){
 }//====================================================
 
 /**
- *  @brief Set the fixed step integration step function
- *  @param integ The type of integrator to use for fixed step propagations
+ *  \brief Set the fixed step integration step function
+ *  \param integ The type of integrator to use for fixed step propagations
  */
 void SimEngine::setFixStepInteg(Integ_tp integ){
     switch(integ){
@@ -299,47 +299,47 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
 //-----------------------------------------------------
 
 /**
- *	@brief Run a simulation given a set of initial conditions and run time. 
+ *	\brief Run a simulation given a set of initial conditions and run time. 
  *
  *  It is assumed that t0 = 0
- *	@param ic an array containting the non-dimensional initial state; number
+ *	\param ic an array containting the non-dimensional initial state; number
  *    of elements must match the number of <code>coreStates</code> specified 
  *    in the system dynamics model
- *	@param tof the total integration time, or time-of-flight (non-dim units)
+ *	\param tof the total integration time, or time-of-flight (non-dim units)
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  @param traj pointer to a trajectory object to store the output trajectory
+ *  \param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, double tof, Traj *traj){
 	runSim(ic, 0, tof, traj);
 }//=======================================================
 
 /**
- *  @brief Run a simulation given a set of initial conditions and run time
+ *  \brief Run a simulation given a set of initial conditions and run time
  *
  *  It is assumed that t0 = 0
- *  @param ic a vector containing the IC (nondimensional states)
- *  @param tof the total integration time, or time-of-flight (non-dim units)
+ *  \param ic a vector containing the IC (nondimensional states)
+ *  \param tof the total integration time, or time-of-flight (non-dim units)
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  @param traj pointer to a trajectory object to store the output trajectory
+ *  \param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(std::vector<double> ic, double tof, Traj *traj){
     runSim(ic, 0, tof, traj);
 }//=======================================================
 
 /**
- *  @brief Run a simulation given a set of initial conditions and run time
+ *  \brief Run a simulation given a set of initial conditions and run time
  *
  *  It is assumed that t0 = 0
- *  @param ic a vector containing the IC (nondimensional states)
- *  @param t0 the epoch time associated with the IC (non-dim units)
- *  @param tof the total integration time, or time-of-flight (non-dim units).
+ *  \param ic a vector containing the IC (nondimensional states)
+ *  \param t0 the epoch time associated with the IC (non-dim units)
+ *  \param tof the total integration time, or time-of-flight (non-dim units).
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  @param traj pointer to a trajectory object to store the output trajectory
- *  @throws Exception if <tt>ic</tt> has fewer than 6 elements
- *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
+ *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
  *    data generated up to the integrator failure is saved in the Traj object passed to
  *    the SimEngine regardless of the thrown exception(s).
@@ -355,18 +355,18 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Traj *traj
 }//=======================================================
 
 /**
- *  @brief Run a simulation given a set of initial conditions and run time
+ *  \brief Run a simulation given a set of initial conditions and run time
  *
  *  It is assumed that t0 = 0
- *  @param ic a vector containing the IC (nondimensional states)
- *  @param stm0 initial STM
- *  @param t0 the epoch time associated with the IC (non-dim units)
- *  @param tof the total integration time, or time-of-flight (non-dim units).
+ *  \param ic a vector containing the IC (nondimensional states)
+ *  \param stm0 initial STM
+ *  \param t0 the epoch time associated with the IC (non-dim units)
+ *  \param tof the total integration time, or time-of-flight (non-dim units).
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  @param traj pointer to a trajectory object to store the output trajectory
- *  @throws Exception if <tt>ic</tt> has fewer than 6 elements
- *  @throws DivergeException if the GSL integrators are make steps with acceptable error values.
+ *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
  *    data generated up to the integrator failure is saved in the Traj object passed to
  *    the SimEngine regardless of the thrown exception(s).
@@ -382,16 +382,16 @@ void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double
 }//=======================================================
 
 /**
- *	@brief Run a simulation in the specified system starting with a set of initial conditions,
+ *	\brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
- *	@param ic an array of non-dimensional initial states; number
+ *	\param ic an array of non-dimensional initial states; number
  *    of elements must match the number of <code>coreStates</code> specified 
  *    in the system dynamics model
- *	@param t0 the time at the start of the integration, non-dimensional units
- *	@param tof time-of-flight, non-dimensional time units
+ *	\param t0 the time at the start of the integration, non-dimensional units
+ *	\param tof time-of-flight, non-dimensional time units
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  @param traj pointer to a trajectory object to store the output trajectory
+ *  \param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
     std::vector<double> t_span;
@@ -442,14 +442,14 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
 }//====================================================
 
 /**
- *  @brief Run a simulation in the specified system starting with a set of initial conditions,
+ *  \brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
- *  @param ic an array of non-dimensional initial states; number
+ *  \param ic an array of non-dimensional initial states; number
  *    of elements must match the number of <code>coreStates</code> specified 
  *    in the system dynamics model
- *  @param stm0 initial STM
- *  @param t_span a vector of times to include in the solution.
- *  @param traj pointer to a trajectory object to store the output trajectory
+ *  \param stm0 initial STM
+ *  \param t_span a vector of times to include in the solution.
+ *  \param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Traj *traj){
     astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
@@ -473,22 +473,22 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
 //-----------------------------------------------------
 
 /**
- *  @brief Integrate the 6 state EOMs and 36 STM EOMs with additional integration as required by 
+ *  \brief Integrate the 6 state EOMs and 36 STM EOMs with additional integration as required by 
  *  specific systems.
  *
  *  This function uses values stored in object-wide variables to determine the direction time flows,
  *  whether or not to use simple integration, and whether or not to use variable step sizes. Dad
  *  is saved to object-wide storage vectors via the <tt>sim_saveIntegratedData()</tt> function.
  *
- *  @param ic an array containing the initial state for the trajectory; number
+ *  \param ic an array containing the initial state for the trajectory; number
  *    of elements must match the number of <code>coreStates</code> specified 
  *    in the system dynamics model
- *  @param stm0 initial STM
- *  @param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
- *  @param t_dim the dimension of t
- *  @param traj pointer to a trajectory object to store the output trajectory
+ *  \param stm0 initial STM
+ *  \param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
+ *  \param t_dim the dimension of t
+ *  \param traj pointer to a trajectory object to store the output trajectory
  *  
- *  @throws DivergeException if the integrator fails and cannot proceed
+ *  \throws DivergeException if the integrator fails and cannot proceed
  */
 void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int t_dim, Traj *traj){
     startTimestamp = time(nullptr);
@@ -590,7 +590,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     }
 
     // Save the initial state, time, and STM
-    model->sim_saveIntegratedData(y, t[0], traj);
+    model->sim_saveIntegratedData(y, t[0], traj, eomParams);
 
     // Update all event functions with IC
     astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
@@ -631,7 +631,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 break;
 
             // Put newly integrated state and time into state vector
-            model->sim_saveIntegratedData(y, t0, traj);
+            model->sim_saveIntegratedData(y, t0, traj, eomParams);
         }
     }else{
         // Integrate each segment between the input times
@@ -665,7 +665,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            model->sim_saveIntegratedData(y, t0, traj);
+            model->sim_saveIntegratedData(y, t0, traj, eomParams);
         }
     }
 
@@ -700,7 +700,7 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
 }//====================================================
 
 /**
- *  @brief Locate event occurences as exactly as possible and determine if the simulation 
+ *  \brief Locate event occurences as exactly as possible and determine if the simulation 
  *  should end because of the event.
  *
  *  Look through the list of events and check each one to see if it has occured. This 
@@ -722,9 +722,9 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
  *  the correction engine and saved to the trajectory data vectors like a regularly integrated
  *  state would be.
  *
- *  @param y the most recent state on the integrated arc.
- *  @param t the time associated with y
- *  @param traj pointer to a trajectory object to store the output trajectory
+ *  \param y the most recent state on the integrated arc.
+ *  \param t the time associated with y
+ *  \param traj pointer to a trajectory object to store the output trajectory
  *  @return whether or not the simulation should end (an event triggers killSim)
  */
 bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
@@ -763,7 +763,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, verbosity)){
+            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, eomParams, verbosity)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getNumNodes();
@@ -800,7 +800,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
 //-----------------------------------------------------
 
 /**
- *  @brief Clean out the trajectory storage variable so a new simulation can be run and store its data
+ *  \brief Clean out the trajectory storage variable so a new simulation can be run and store its data
  *  @details This function does not reset any parameters the user has set
  */
 void SimEngine::cleanEngine(){
@@ -817,7 +817,7 @@ void SimEngine::cleanEngine(){
 
 /**
  *  Create default events for the system
- *  @param sysData pointer to the system data object for the simulation
+ *  \param sysData pointer to the system data object for the simulation
  */
 void SimEngine::createDefaultEvents(const SysData *sysData){
     if(!bMadeDefaultEvents){
@@ -831,7 +831,7 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
 }//====================================================
 
 /**
- *  @brief Reset all variables and options
+ *  \brief Reset all variables and options
  *
  *  Completely resets the simulation engine, reverting all variables (including ones the user
  *  has modified with set() functions) to their default values.
@@ -865,7 +865,7 @@ void SimEngine::clearEvents(){
 
 /**
  *  Copy data from an input engine to this one
- *  @param s an input simulation engine
+ *  \param s an input simulation engine
  *  @throw Exception if <tt>s</tt> has an unknown system data type
  */
 void SimEngine::copyMe(const SimEngine &s){

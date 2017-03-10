@@ -1,10 +1,10 @@
 /**
- *  @file DynamicsModel_bc4bp.cpp
- *  @brief Derivative of DynamicsModel, specific to BCR4BPR
+ *  \file DynamicsModel_bc4bp.cpp
+ *  \brief Derivative of DynamicsModel, specific to BCR4BPR
  *  
- *  @author Andrew Cox
- *  @version May 25, 2016
- *  @copyright GNU GPL v3.0
+ *  \author Andrew Cox
+ *  \version May 25, 2016
+ *  \copyright GNU GPL v3.0
  */
  
 /*
@@ -47,7 +47,7 @@
 
 namespace astrohelion{
 /**
- *  @brief Construct a BCR4BP Dynamic DynamicsModel
+ *  \brief Construct a BCR4BP Dynamic DynamicsModel
  */
 DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     coreStates = 6;
@@ -59,14 +59,14 @@ DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MOD
 }//==============================================
 
 /**
- *  @brief Copy constructor
- *  @param m a model reference
+ *  \brief Copy constructor
+ *  \param m a model reference
  */
 DynamicsModel_bc4bp::DynamicsModel_bc4bp(const DynamicsModel_bc4bp &m) : DynamicsModel(m) {}
 
 /**
- *  @brief Assignment operator
- *  @param m a model reference
+ *  \brief Assignment operator
+ *  \param m a model reference
  */
 DynamicsModel_bc4bp& DynamicsModel_bc4bp::operator =(const DynamicsModel_bc4bp &m){
 	DynamicsModel::operator =(m);
@@ -74,7 +74,7 @@ DynamicsModel_bc4bp& DynamicsModel_bc4bp::operator =(const DynamicsModel_bc4bp &
 }//==============================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
 DynamicsModel::eom_fcn DynamicsModel_bc4bp::getSimpleEOM_fcn() const{
@@ -82,7 +82,7 @@ DynamicsModel::eom_fcn DynamicsModel_bc4bp::getSimpleEOM_fcn() const{
 }//==============================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
 DynamicsModel::eom_fcn DynamicsModel_bc4bp::getFullEOM_fcn() const{
@@ -90,10 +90,10 @@ DynamicsModel::eom_fcn DynamicsModel_bc4bp::getFullEOM_fcn() const{
 }//==============================================
 
 /**
- *  @brief Compute the positions of all primaries
+ *  \brief Compute the positions of all primaries
  *
- *  @param t the epoch at which the computations occur
- *  @param sysData object describing the specific system
+ *  \param t the epoch at which the computations occur
+ *  \param sysData object describing the specific system
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
@@ -106,10 +106,10 @@ std::vector<double> DynamicsModel_bc4bp::getPrimPos(double t, const SysData *sys
 }//==============================================
 
 /**
- *  @brief Compute the velocities of all primaries
+ *  \brief Compute the velocities of all primaries
  *
- *  @param t the epoch at which the computations occur
- *  @param sysData object describing the specific system
+ *  \param t the epoch at which the computations occur
+ *  \param sysData object describing the specific system
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
@@ -121,16 +121,15 @@ std::vector<double> DynamicsModel_bc4bp::getPrimVel(double t, const SysData *sys
     return std::vector<double>(primVel, primVel+9);
 }//==============================================
 
-std::vector<double> DynamicsModel_bc4bp::getAccel(const SysData *pSys, double t, std::vector<double> state) const{
+std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     if(state.size() != coreStates)
-        throw Exception("DynamicsModel_bc4bp::getAccel: State size does not match the core state size specified by the dynamical model");
+        throw Exception("DynamicsModel_bc4bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
 
     // Compute the acceleration
     std::vector<double> dsdt(coreStates,0);
-    EOM_ParamStruct paramStruct(pSys, ControlLaw::NO_CTRL);
-    simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
-    return std::vector<double>(dsdt.begin()+3, dsdt.end());
+    return dsdt;
 }//==================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -138,39 +137,39 @@ std::vector<double> DynamicsModel_bc4bp::getAccel(const SysData *pSys, double t,
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Takes an input state and time and saves the data to the trajectory
- *  @param y an array containing the core state and any extra states integrated
+ *  \brief Takes an input state and time and saves the data to the trajectory
+ *  \param y an array containing the core state and any extra states integrated
  *  by the EOM function, including STM elements.
- *  @param t the time at the current integration state
- *  @param traj a pointer to the trajectory we should store the data in
+ *  \param t the time at the current integration state
+ *  \param traj a pointer to the trajectory we should store the data in
  */
-void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj* traj) const{
+void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
 
-    DynamicsModel::sim_saveIntegratedData(y, t, traj);
+    DynamicsModel::sim_saveIntegratedData(y, t, traj, params);
     
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);
     bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
 }//=====================================================
 
 /**
- *  @brief Use a correction algorithm to accurately locate an event crossing
+ *  \brief Use a correction algorithm to accurately locate an event crossing
  *
  *  The simulation engine calls this function if and when it determines that an event 
  *  has been crossed. To accurately locate the event, we employ differential corrections
  *  and find the exact event occurence in space and time.
  *
- *  @param event the event we're looking for
- *  @param traj a pointer to the trajectory the event should occur on
- *  @param ic the core state vector for this system
- *  @param t0 non-dimensional time at the beginning of the search arc
- *  @param tof the time-of-flight for the arc to search over
- *  @param verbose whether or not we should be verbose with output messages
+ *  \param event the event we're looking for
+ *  \param traj a pointer to the trajectory the event should occur on
+ *  \param ic the core state vector for this system
+ *  \param t0 non-dimensional time at the beginning of the search arc
+ *  \param tof the time-of-flight for the arc to search over
+ *  \param verbose whether or not we should be verbose with output messages
  *
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
 bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
-    const double *ic, double t0, double tof, Verbosity_tp verbose) const{
+    const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
     // **** Make sure you fix the epoch of the first node as well as the states
     double IC[7] = {0};
@@ -178,11 +177,11 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
     IC[6] = t0;
 
     // Recast system data pointer
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(traj->getSysData());
+    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(params->sysData);
 
     // Create a nodeset for this particular type of system
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
-    Nodeset_bc4bp eventNodeset(bcSys, IC, t0, tof, 2, Nodeset::TIME);
+    Nodeset_bc4bp eventNodeset(bcSys, IC, t0, tof, 2, Nodeset::TIME);   //bc4bp nodeset does not use control laws
 
     // Constraint to keep first node unchanged
     Constraint fixFirstCon(Constraint_tp::STATE, 0, IC, 7);
@@ -226,7 +225,7 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
     double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    sim_saveIntegratedData(&(state[0]), eventTime, traj);
+    sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
     
     return true;
 }//====================================================
@@ -236,15 +235,15 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Initialize the corrector's design vector with position and velocity states,
+ *  \brief Initialize the corrector's design vector with position and velocity states,
  *  and times-of-flight.
  *
  *  Derived models may replace this function or call it and then append more design 
  *  variables.
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param set a pointer to the nodeset being corrected
- *  @throws Exception if equal arc times is turned ON; this has not been implemented for this system
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param set a pointer to the nodeset being corrected
+ *  \throws Exception if equal arc times is turned ON; this has not been implemented for this system
  */
 void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodeset *set) const{
     // Call base class to do most of the work
@@ -263,8 +262,8 @@ void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodes
 }//====================================================
 
 /**
- *  @brief Perform model-specific initializations on the MultShootData object
- *  @param it pointer to the object to be initialized
+ *  \brief Perform model-specific initializations on the MultShootData object
+ *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_bc4bp::multShoot_initIterData(MultShootData *it) const{
     Traj_bc4bp traj(static_cast<const SysData_bc4bp *>(it->sysData));
@@ -272,13 +271,13 @@ void DynamicsModel_bc4bp::multShoot_initIterData(MultShootData *it) const{
 }//====================================================
 
 /**
- *  @brief Create continuity constraints for the correction algorithm; this function
+ *  \brief Create continuity constraints for the correction algorithm; this function
  *  creates position and velocity constraints.
  *
  *  This function overrides the base model's to add time continuity
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param set a pointer to the nodeset being corrected
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param set a pointer to the nodeset being corrected
  */ 
 void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Nodeset *set) const{
     DynamicsModel::multShoot_createContCons(it, set);
@@ -295,15 +294,15 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Node
 }//============================================================
 
 /**
- *  @brief Retrieve the initial conditions for a segment that the correction
+ *  \brief Retrieve the initial conditions for a segment that the correction
  *  engine will integrate.
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param set a pointer to the nodeset being corrected
- *  @param s the ID of the segment being propagated
- *  @param ic a pointer to a 6-element initial state array
- *  @param t0 a pointer to a double representing the initial time (epoch)
- *  @param tof a pointer to a double the time-of-flight on the segment.
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param set a pointer to the nodeset being corrected
+ *  \param s the ID of the segment being propagated
+ *  \param ic a pointer to a 6-element initial state array
+ *  \param t0 a pointer to a double representing the initial time (epoch)
+ *  \param tof a pointer to a double the time-of-flight on the segment.
  */
 void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nodeset *set, int s,
     double *ic, double *t0, double *tof) const{
@@ -322,7 +321,7 @@ void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nod
 }//============================================================
 
 /**
- *  @brief Compute the value of a slack variable for an inequality constraint.
+ *  \brief Compute the value of a slack variable for an inequality constraint.
  *  @details Computing the value of the slack variable can avoid unneccessary 
  *  shooting iterations when the inequality constraint is already met. If the 
  *  inequality constraint is met, the value returned by this function will make
@@ -334,8 +333,8 @@ void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nod
  *  Note: This function should be called after the state variable vector has 
  *  been initialized by the multiple shooting algorithm
  * 
- *  @param it the MultShootData object associated with the multiple shooting process
- *  @param con the inequality constraint for which the slack variable is being computed
+ *  \param it the MultShootData object associated with the multiple shooting process
+ *  \param con the inequality constraint for which the slack variable is being computed
  * 
  *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
@@ -352,14 +351,14 @@ double DynamicsModel_bc4bp::multShoot_getSlackVarVal(const MultShootData *it, Co
 }//===========================================================
 
 /**
- *  @brief Compute constraint function and partial derivative values for a constraint
+ *  \brief Compute constraint function and partial derivative values for a constraint
  *  
  *  This function calls its relative in the DynamicsModel base class and appends additional
  *  instructions specific to the BCR4BPR
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the total constraint vector (which is, in
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
 void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constraint con, int c) const{
@@ -389,7 +388,7 @@ void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constrain
 }//=========================================================
 
 /**
- *  @brief Compute position and velocity constraint values and partial derivatives
+ *  \brief Compute position and velocity constraint values and partial derivatives
  *
  *  This function computes and stores the default position continuity constraints as well
  *  as velocity constraints for all nodes marked continuous in velocity. The delta-Vs
@@ -399,9 +398,9 @@ void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constrain
  *
  *  This function replaces the one found in the base model
  *
- *  @param it a pointer to the correctors iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the first row this constraint applies to
+ *  \param it a pointer to the correctors iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the first row this constraint applies to
  */
 void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constraint con, int row0) const{
     // Call base function first to do most of the work
@@ -428,13 +427,13 @@ void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constrai
 }//=========================================================
 
 /**
- *  @brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
+ *  \brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
  *
  *  This function overrides the base model function
  *
- *  @param it a pointer to the correctors iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the first row this constraint applies to
+ *  \param it a pointer to the correctors iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the first row this constraint applies to
  */
 void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint con, int row0) const{
     /* Add time-continuity constraints if applicable; we need to match
@@ -459,13 +458,13 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint 
 }//=========================================================
 
 /**
- *  @brief Computes continuity constraints for constraints with the <tt>Constraint_tp::SEG_CONT_EX</tt> type.
+ *  \brief Computes continuity constraints for constraints with the <tt>Constraint_tp::SEG_CONT_EX</tt> type.
  *
  *  This function overrides the base model function
  *
- *  @param it a pointer to the correctors iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the first row this constraint applies to
+ *  \param it a pointer to the correctors iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the first row this constraint applies to
  */
 void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constraint con, int row0) const{
     if(it->bVarTime){
@@ -493,14 +492,14 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constra
 }//=========================================================
 
 /**
- *  @brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::STATE</tt>.
+ *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::STATE</tt>.
  *
  *  This method replaces the base class function and allows the user to constrain epoch as well
  *  as the configuration space states
  *
- *  @param it a pointer to the class containing all the data relevant to the corrections process
- *  @param con the constraint being applied
- *  @param row0 the index of the row this constraint begins at
+ *  \param it a pointer to the class containing all the data relevant to the corrections process
+ *  \param con the constraint being applied
+ *  \param row0 the index of the row this constraint begins at
  */
 void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
@@ -530,14 +529,14 @@ void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint co
 }//=================================================
 
 /**
- *  @brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 
+ *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 
  *  <tt>Constraint_tp::MIN_DIST</tt>, or <tt>Constraint_tp::MAX_DIST</tt>
  *
  *  This method overrides the base class function to add functionality for epoch-time dependencies
  *
- *  @param it a pointer to the class containing all the data relevant to the corrections process
- *  @param con a copy of the constraint object
- *  @param c the index of this constraint in the constraint vector object
+ *  \param it a pointer to the class containing all the data relevant to the corrections process
+ *  \param con a copy of the constraint object
+ *  \param c the index of this constraint in the constraint vector object
  */
 void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con, int c) const{
 
@@ -611,7 +610,7 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
 }// End of targetDist() =========================================
 
 /**
- *  @brief  Compute the value of the slack variable for inequality distance constraints
+ *  \brief  Compute the value of the slack variable for inequality distance constraints
  *  @details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
  *  design, using this value will prevent the multiple shooting algorithm from
@@ -619,8 +618,8 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
  *  
  *  Note: This method overrides the base class function to add functionality for non-zero epochs
  * 
- *  @param it the iteration data object for the multiple shooting process
- *  @param con the constraint the slack variable applies to
+ *  \param it the iteration data object for the multiple shooting process
+ *  \param con the constraint the slack variable applies to
  *  @return the value of the slack variable that minimizes the constraint function
  *  without setting the slack variable equal to zero
  */
@@ -661,7 +660,7 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
 }//==========================================================
 
 /**
- *  @brief Compute partials and constraints for all nodes constrained with <tt>Constraint_tp::DELTA_V</tt> or
+ *  \brief Compute partials and constraints for all nodes constrained with <tt>Constraint_tp::DELTA_V</tt> or
  *  <tt>MIN_DELTA_V</tt>
  *
  *  Because the delta-V constraint applies to the entire trajectory, the constraint function values
@@ -670,9 +669,9 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
  *
  *  This function overrides the base targeting function to add support for epoch dependencies
  *
- *  @param it a pointer to the class containing all the data relevant to the corrections process
- *  @param con the constraint being applied
- *  @param c the index of the first row for this constraint
+ *  \param it a pointer to the class containing all the data relevant to the corrections process
+ *  \param con the constraint being applied
+ *  \param c the index of the first row for this constraint
  */
 void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint con, int c) const{
     // Call base function to take care of most of the constraint computations and partials
@@ -758,15 +757,15 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
 }//===================================================
 
 /**
- *  @brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>
+ *  \brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>
  *
  *  This function computes three constraint values and three rows of partials for the Jacobian.
  *  Each row/function corresponds to one position state. The FX and DF matrices are updated
  *  in place by editing their values stored in <tt>it</tt>
  *
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
- *  @param row0 the index of the first row for this constraint
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
+ *  \param row0 the index of the first row for this constraint
  */
 void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, int row0) const{
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
@@ -905,15 +904,15 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
 }// End of SP Targeting ==============================
 
 /**
- *  @brief Compute partials and constraint values for nodes constrained with <tt>SP_RANGE</tt>
+ *  \brief Compute partials and constraint values for nodes constrained with <tt>SP_RANGE</tt>
  *  @details This function computes one constraint value and one row of partials for the Jacobian
  *  because the total acceleration magnitude is targeted rather than individual acceleration 
  *  vector components. The FX and DF matrices are update in place by editing their values 
  *  stored in <tt>it</tt>
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the constraint vector
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the constraint vector
  */
 void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint con, int c) const{
 
@@ -1196,13 +1195,13 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
 }// End of SP Targeting (Magnitude) ==============================
 
 /**
- *  @brief Compute an initial value for the slack variable for an SP_RANGE inequality constraint 
+ *  \brief Compute an initial value for the slack variable for an SP_RANGE inequality constraint 
  *  @details If the constraint is satisified, the slack variable must be set such that the 
  *  constraint function evaluates to zero; that value is computed here. If the constraint is not
  *  satisfied, a small value is returned.
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
  * 
  *  @return the initial value for the slack variable associated with an SP_RANGE constraint
  */
@@ -1260,13 +1259,13 @@ double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootDa
 }//======================================================
 
 /**
- *  @brief Compute an initial value for the slack variable for an SP_DIST inequality constraint 
+ *  \brief Compute an initial value for the slack variable for an SP_DIST inequality constraint 
  *  @details If the constraint is satisified, the slack variable must be set such that the 
  *  constraint function evaluates to zero; that value is computed here. If the constraint is not
  *  satisfied, a small value is returned.
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
  * 
  *  @return the initial value for the slack variable associated with an SP_DIST constraint
  */
@@ -1301,15 +1300,15 @@ double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultSh
 }//===================================================
 
 /**
- *  @brief Compute partials and constraint values for node constrained with <tt>SP_DIST</tt>
+ *  \brief Compute partials and constraint values for node constrained with <tt>SP_DIST</tt>
  *  and <tt>SP_MAX_DIST</tt>. 
  *  @details One constraint value and one row of partials are computed. This constraint uses
  *  2nd-order polynomials to approximate the saddle point's location as a function of epoch 
  *  and then targets a node to be at or within a set radius of the saddle point.
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the storage vector
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the storage vector
  */
 void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint con, int c) const{
     int row0 = it->conRows[c];
@@ -1387,7 +1386,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
 }//===================================================
 
 /**
- *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
  *  nodeset
  *
  *  If <tt>findEvent</tt> is set to true, the
@@ -1396,10 +1395,10 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
  *  and dqdT values for the final node; this information will be appended to the extraParameter
  *  vector in the final node.
  *
- *  @param it an iteration data object containing all info from the corrections process
- *  @param nodes_in a pointer to the original, uncorrected nodeset
- *  @param findEvent whether or not this correction process is locating an event
- *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  \param it an iteration data object containing all info from the corrections process
+ *  \param nodes_in a pointer to the original, uncorrected nodeset
+ *  \param findEvent whether or not this correction process is locating an event
+ *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  *  
  *  @return a pointer to a nodeset containing the corrected nodes
@@ -1472,6 +1471,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
+        newSeg.setCtrlLaw(seg.getCtrlLaw());
         nodeset_out->addSeg(newSeg);
     }
 
@@ -1486,12 +1486,12 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 //------------------------------------------------------------------------------------------------------
 
 /**
- *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *   \brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
- *   @param t epoch at integration step
- *   @param s the 48-d state vector
- *   @param sdot the 48-d state derivative vector
- *   @param params points to an EOM_ParamStruct object
+ *   \param t epoch at integration step
+ *   \param s the 48-d state vector
+ *   \param sdot the 48-d state derivative vector
+ *   \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
@@ -1610,12 +1610,12 @@ int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], voi
 }//============== END OF BCR4BPR EOMs ======================
 
 /**
- *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *   \brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
- *   @param t epoch at integration step
- *   @param s the 6-d state vector
- *   @param sdot the 6-d state derivative vector
- *   @param params points to an EOM_ParamStruct object
+ *   \param t epoch at integration step
+ *   \param s the 6-d state vector
+ *   \param sdot the 6-d state derivative vector
+ *   \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
@@ -1654,11 +1654,11 @@ int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], v
 }//============== END OF BCR4BPR EOMs ======================
 
 /**
- *  @brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
+ *  \brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
  *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
+ *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  \param sysData a system data object containing information about the BCR4BP primaries
+ *  \param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
  *  row-major order. The first three elements are the position of P1, etc.
  */
 void DynamicsModel_bc4bp::getPrimaryPos(double t, const SysData_bc4bp *sysData, double *primPos){
@@ -1694,11 +1694,11 @@ void DynamicsModel_bc4bp::getPrimaryPos(double t, const SysData_bc4bp *sysData, 
 }//================================================
 
 /**
- *  @brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
+ *  \brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
  *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
+ *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  \param sysData a system data object containing information about the BCR4BP primaries
+ *  \param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
  *  row-major order. The first three elements hold the velocity of P1, etc.
  */
 void DynamicsModel_bc4bp::getPrimaryVel(double t, const SysData_bc4bp *sysData, double *primVel){
@@ -1738,11 +1738,11 @@ void DynamicsModel_bc4bp::getPrimaryVel(double t, const SysData_bc4bp *sysData, 
 }//===================================================================
 
 /**
- *  @brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
+ *  \brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
  * 
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
+ *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  \param sysData a system data object containing information about the BCR4BP primaries
+ *  \param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
  *  row-major order. The first three elements hold the acceleration of P1, etc.
  */
 void DynamicsModel_bc4bp::getPrimaryAccel(double t, const SysData_bc4bp *sysData, double *primAccel){
@@ -1781,10 +1781,10 @@ void DynamicsModel_bc4bp::getPrimaryAccel(double t, const SysData_bc4bp *sysData
 }//=====================================================================
 
 /**
- *  @brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
+ *  \brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
  *  
- *  @param et epoch time (seconds, J2000, UTC)
- *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
+ *  \param et epoch time (seconds, J2000, UTC)
+ *  \param sysData pointer to system data object; A new theta0 and phi0 will be stored
  *  in this data object
  */
 void DynamicsModel_bc4bp::orientAtEpoch(double et, SysData_bc4bp *sysData){

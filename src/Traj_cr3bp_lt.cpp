@@ -1,10 +1,10 @@
 /**
- *  @file Traj_cr3bp_lt.cpp
- *	@brief 
+ *  \file Traj_cr3bp_lt.cpp
+ *	\brief 
  *
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
  
 /*
@@ -41,30 +41,30 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Create a trajectory for a specific system
- *	@param sys a pointer to a system data object
+ *	\brief Create a trajectory for a specific system
+ *	\param sys a pointer to a system data object
  */
 Traj_cr3bp_lt::Traj_cr3bp_lt(const SysData_cr3bp_lt* sys) : Traj_cr3bp(sys){}
 
 /**
- *	@brief Create a trajectory from another trajectory
- *	@param t a trajectory reference
+ *	\brief Create a trajectory from another trajectory
+ *	\param t a trajectory reference
  */
 Traj_cr3bp_lt::Traj_cr3bp_lt(const Traj_cr3bp_lt &t) : Traj_cr3bp(t){}
 
 /**
- *	@brief Create a trajectory from its base class
- *	@param a an arc data reference
+ *	\brief Create a trajectory from its base class
+ *	\param a an arc data reference
  */
 Traj_cr3bp_lt::Traj_cr3bp_lt(const BaseArcset &a) : Traj_cr3bp(a){}
 
 /**
- *  @brief Create a new trajectory object on the stack
+ *  \brief Create a new trajectory object on the stack
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param sys pointer to a system data object; should be a 
+ *  \param sys pointer to a system data object; should be a 
  *  CR3BP LTVP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created trajectory
  */
@@ -74,7 +74,7 @@ baseArcsetPtr Traj_cr3bp_lt::create( const SysData *sys) const{
 }//====================================================
 
 /**
- *  @brief Create a new trajectory object on the stack that is a 
+ *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 

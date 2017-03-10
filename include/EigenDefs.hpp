@@ -1,10 +1,10 @@
 /**
- *  @file EigenDefs.hpp
- *	@brief Definitions for matrices, vectors, and other objects from the Eigen library.
+ *  \file EigenDefs.hpp
+ *	\brief Definitions for matrices, vectors, and other objects from the Eigen library.
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 

@@ -1,10 +1,10 @@
 /**
- *	@file Fam_cr3bp.cpp
- *	@brief Data object for a CR3BP family
+ *	\file Fam_cr3bp.cpp
+ *	\brief Data object for a CR3BP family
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -49,17 +49,17 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Create an empty family for the specified system
- *	@param data a CR3BP system data object
+ *	\brief Create an empty family for the specified system
+ *	\param data a CR3BP system data object
  */
 Fam_cr3bp::Fam_cr3bp(SysData_cr3bp data){
 	sysData = data;
 }//====================================================
 
 /**
- *	@brief load a family from a file
- *	@param filepath an aboslute or relative filepath to the data file
- *	@throws Exception if the file cannot be opened
+ *	\brief load a family from a file
+ *	\param filepath an aboslute or relative filepath to the data file
+ *	\throws Exception if the file cannot be opened
  */
 Fam_cr3bp::Fam_cr3bp(const char* filepath){
 	// Load the matlab file
@@ -82,15 +82,15 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 }//====================================================
 
 /**
- *	@brief Copy Constructor
- *	@brief fam a family reference
+ *	\brief Copy Constructor
+ *	\brief fam a family reference
  */
 Fam_cr3bp::Fam_cr3bp(const Fam_cr3bp& fam){
 	copyMe(fam);
 }//====================================================
 
 /**
- *	@brief Destructor
+ *	\brief Destructor
  */
 Fam_cr3bp::~Fam_cr3bp(){}
 
@@ -99,8 +99,8 @@ Fam_cr3bp::~Fam_cr3bp(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Assignment operator
- *	@param fam a family reference
+ *	\brief Assignment operator
+ *	\param fam a family reference
  */
 Fam_cr3bp& Fam_cr3bp::operator= (const Fam_cr3bp& fam){
 	copyMe(fam);
@@ -113,8 +113,8 @@ Fam_cr3bp& Fam_cr3bp::operator= (const Fam_cr3bp& fam){
 //-----------------------------------------------------
 
 /**
- *	@brief Add a member to the family
- *	@param mem a new family member; NOTE: <tt>mem</tt> should represent
+ *	\brief Add a member to the family
+ *	\param mem a new family member; NOTE: <tt>mem</tt> should represent
  *	a trajectory that exists in the same system as the other family members.
  */
 void Fam_cr3bp::addMember(FamMember_cr3bp mem){
@@ -122,8 +122,8 @@ void Fam_cr3bp::addMember(FamMember_cr3bp mem){
 }//====================================================
 
 /**
- *	@brief Retrieve a family member by its index
- *	@param ix the index of the member. If the index is less than zero,
+ *	\brief Retrieve a family member by its index
+ *	\param ix the index of the member. If the index is less than zero,
  *	it will count backwards from the end.
  */
 FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
@@ -134,8 +134,8 @@ FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
 }//====================================================
 
 /**
- *	@brief Locate all members with the specified value of Jacobi Constant
- *	@param jc the desired value for Jacobi
+ *	\brief Locate all members with the specified value of Jacobi Constant
+ *	\param jc the desired value for Jacobi
  *	@return a vector of matching family members (some may be interpolated/corrected)
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
@@ -151,8 +151,8 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
 }//==============================================
 
 /**
- *	@brief Locate all members with the specified time-of-flight
- *	@param tof the desired value for time-of-flight
+ *	\brief Locate all members with the specified time-of-flight
+ *	\param tof the desired value for time-of-flight
  *	@return a vector of matching family members (some may be interpolated/corrected)
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
@@ -167,11 +167,11 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
 }//==============================================
 
 /**
- *	@brief Locate all members with the specified value for the specified state variable in the IC
- *	@param value the desired value
- *	@param ix the index of the state variable [0, 5]
+ *	\brief Locate all members with the specified value for the specified state variable in the IC
+ *	\param value the desired value
+ *	\param ix the index of the state variable [0, 5]
  *	@return a vector of matching family members (some may be interpolated/corrected)
- *	@throws Exception if <tt>ix</tt> is out of range
+ *	\throws Exception if <tt>ix</tt> is out of range
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix) const{
 	if(ix < 0 || ix > 5){
@@ -191,25 +191,25 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix
 }//==============================================
 
 /**
- *	@brief Retrieve the name of this family
+ *	\brief Retrieve the name of this family
  *	@return a descriptive name
  */
 std::string Fam_cr3bp::getName() const { return name; }
 
 /**
- *	@brief Retrieve number of members in this family
+ *	\brief Retrieve number of members in this family
  *	@return number of members in this family
  */
 int Fam_cr3bp::getNumMembers() const { return members.size(); }
 
 /**
- *	@brief Determine which variable best naturally describes the flow of the family
+ *	\brief Determine which variable best naturally describes the flow of the family
  *	@return the sorting variable
  */
 FamSort_tp Fam_cr3bp::getSortType() const { return sortType; }
 
 /**
- *	@brief Retrieve a string describing the sort type in human-readable format
+ *	\brief Retrieve a string describing the sort type in human-readable format
  *	@return a string describing the sort type in human-readable format
  */
 const char* Fam_cr3bp::getSortTypeStr() const{
@@ -228,27 +228,27 @@ const char* Fam_cr3bp::getSortTypeStr() const{
 }//===========================================
 
 /**
- *	@brief Retrieve the system data for this family
+ *	\brief Retrieve the system data for this family
  *	@return the system data describing the system all family members exist in
  */
 SysData_cr3bp Fam_cr3bp::getSysData() const { return sysData; }
 
 /**
- *	@brief Retrieve a pointer to the system data object for this family
+ *	\brief Retrieve a pointer to the system data object for this family
  *	@return a pointer to the system data object for this family
  */
 SysData_cr3bp* Fam_cr3bp::getSysDataPtr() { return &sysData; }
 
 /**
- *	@brief Set the name of this family
- *	@param n a descriptive name; must be less than 128 characters
+ *	\brief Set the name of this family
+ *	\param n a descriptive name; must be less than 128 characters
  *	if you want to save to a matlab file
  */
 void Fam_cr3bp::setName(std::string n){ name = n; }
 
 /**
- *	@brief Set the sort type for this family
- *	@param type the sort type
+ *	\brief Set the sort type for this family
+ *	\param type the sort type
  */
 void Fam_cr3bp::setSortType(FamSort_tp type){ sortType = type; }
 //-----------------------------------------------------
@@ -256,8 +256,8 @@ void Fam_cr3bp::setSortType(FamSort_tp type){ sortType = type; }
 //-----------------------------------------------------
 
 /**
- *	@brief Copy the family from another family
- *	@param fam a different family
+ *	\brief Copy the family from another family
+ *	\param fam a different family
  */
 void Fam_cr3bp::copyMe(const Fam_cr3bp& fam){
 	members = fam.members;
@@ -267,14 +267,14 @@ void Fam_cr3bp::copyMe(const Fam_cr3bp& fam){
 }//====================================================
 
 /**
- *	@brief Locate places in a data set where a specific value probably exists
+ *	\brief Locate places in a data set where a specific value probably exists
  *
  *	This algorithm will locate both exact matches (within a tolerance) and intersections,
  *	assuming the data is continuous. If an intersection is found, the index of the point
  *	before the intersection is returned.
  *
- *	@param value the value to search for
- *	@param data a pointer to a data set to search in
+ *	\param value the value to search for
+ *	\param data a pointer to a data set to search in
  *	@return a vector of integers representing the indices of matches
  */
 std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data) const{
@@ -313,19 +313,19 @@ std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data)
 }//=====================================================
 
 /**
- *	@brief Locate a family member with a specific attribute
+ *	\brief Locate a family member with a specific attribute
  *	
  *	This function locates a family member or set of members that have a specific value
  *	for one of the variables of interest (e.g. coordinates, Jacobi, TOF). Exact matches
  *	and interpolated matches are returned; interpolated matches are computed using a
  *	differential corrections algorithm.
  *
- *	@param value the value the family member should have
- *	@param dataSet a pointer to a vector containing the set of values to search for matches
+ *	\param value the value the family member should have
+ *	\param dataSet a pointer to a vector containing the set of values to search for matches
  *	in. For example, if the <tt>value</tt> I pass in contains a specific TOF, then 
  *	<tt>dataSet</tt> points to a vector containing the TOFs for the entire family, sorted
  *	according to this family's <tt>sortType</tt>.
- *	@param matchCon a constraint that can be applied in a corrections scheme that will
+ *	\param matchCon a constraint that can be applied in a corrections scheme that will
  *	ensure the corrected trajectory has the desired value for the variable of interest.
  *
  *	@return a vector of matches. If no matches are returned, the vector will be empty.
@@ -383,9 +383,9 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 }//==============================================
 
 /**
- *	@brief Populate an array with a single coordinate from each family member
- *	@param ix the index of the coordinate within the IC vector
- *	@param array a pointer to the array we want to populate
+ *	\brief Populate an array with a single coordinate from each family member
+ *	\param ix the index of the coordinate within the IC vector
+ *	\param array a pointer to the array we want to populate
  */
 void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
 	for(unsigned int i = 0; i < members.size(); i++){
@@ -395,7 +395,7 @@ void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
 }//====================================================
 
 /**
- *	@brief Locate all bifurcations in the family by analyzing the 
+ *	\brief Locate all bifurcations in the family by analyzing the 
  *	eigenvalues
  *
  *	Eigenvalues MUST be sorted, or this will yield completely bogus
@@ -512,9 +512,9 @@ std::vector<int> Fam_cr3bp::findBifurcations(){
 }//====================================================
 
 /**
- *	@brief Attempt to load data from the specified matlab file
- *	@param matFile a pointer to the opened matlab file
- *	@throws Exception if the variable cannot be loaded
+ *	\brief Attempt to load data from the specified matlab file
+ *	\param matFile a pointer to the opened matlab file
+ *	\throws Exception if the variable cannot be loaded
  */	
 void Fam_cr3bp::loadMemberData(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, DATA_VAR_NAME);
@@ -554,11 +554,11 @@ void Fam_cr3bp::loadMemberData(mat_t *matFile){
 }//==============================================
 
 /**
- *	@brief Load eigenvalues from the data file
+ *	\brief Load eigenvalues from the data file
  *
  *	NOTE: the vector of family members MUST be populated before loading the eigenvalues
- *	@param matFile a pointer to the data file in question
- *	@throws Exception if the variable cannot be loaded
+ *	\param matFile a pointer to the data file in question
+ *	\throws Exception if the variable cannot be loaded
  */
 void Fam_cr3bp::loadEigVals(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
@@ -686,7 +686,7 @@ void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
 }//=============================================
 
 /**
- *	@brief Sort all members' eigenvalues so they are in the same order.
+ *	\brief Sort all members' eigenvalues so they are in the same order.
  *
  *	This is necessary before bifurcations can be accurately located.
  */
@@ -727,7 +727,7 @@ void Fam_cr3bp::sortEigs(){
 }//=================================================
 
 /**
- *	@brief Sort the family members by the specified sort variable (in ascending order)
+ *	\brief Sort the family members by the specified sort variable (in ascending order)
  *	
  *	The sorting variable is specified by <tt>sortType</tt>; this is the variable
  *	that best describes the natural progression of the family. For example,
@@ -737,7 +737,7 @@ void Fam_cr3bp::sortEigs(){
  *	you can retrieve family members. The process will run without sorting, but the results
  *	will likely be wonky.
  *	
- *	@throws Exception if the sorting type is not recognized
+ *	\throws Exception if the sorting type is not recognized
  */
 void Fam_cr3bp::sortMembers(){
 	// Don't do any sorting if the sort type is NONE
@@ -788,8 +788,8 @@ void Fam_cr3bp::sortMembers(){
 }//===================================================
 
 /**
- *	@brief Save the family to a mat-file
- *	@param filename a path the the mat-file in question
+ *	\brief Save the family to a mat-file
+ *	\param filename a path the the mat-file in question
  */
 void Fam_cr3bp::saveToMat(const char *filename){
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -818,8 +818,8 @@ void Fam_cr3bp::saveToMat(const char *filename){
 }//====================================================
 
 /**
- *	@brief Save ICs, TOFs, and JCs for each member in a matrix
- *	@param pMatFile a pointer to the destination matlab file
+ *	\brief Save ICs, TOFs, and JCs for each member in a matrix
+ *	\param pMatFile a pointer to the destination matlab file
  */
 void Fam_cr3bp::saveMembers(mat_t *pMatFile){
 	if(members.size() > 0){
@@ -849,9 +849,9 @@ void Fam_cr3bp::saveMembers(mat_t *pMatFile){
 }//====================================================
 
 /**
- *	@brief Save eigenvalue data to a mat file
- *	@param pMatFile a pointer to the mat file in question
- *	@throws Exception if a family member does not have six eigenvalues
+ *	\brief Save eigenvalue data to a mat file
+ *	\param pMatFile a pointer to the mat file in question
+ *	\throws Exception if a family member does not have six eigenvalues
  */
 void Fam_cr3bp::saveEigVals(mat_t *pMatFile){
 	if(members.size() > 0){
@@ -927,8 +927,8 @@ void Fam_cr3bp::saveSTMs(mat_t *pMatFile){
 }//====================================================
 
 /**
- *	@brief Save other useful information to a matlab file
- *	@param pMatFile the destination matlab file
+ *	\brief Save other useful information to a matlab file
+ *	\param pMatFile the destination matlab file
  */
 void Fam_cr3bp::saveMiscData(mat_t *pMatFile){
 	// sortType

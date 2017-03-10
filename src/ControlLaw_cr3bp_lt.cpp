@@ -1,10 +1,10 @@
 /**
- * @file ControlLaw_cr3bp_lt.hpp
- * @brief Control Law for CR3BP-LT system header file 
+ * \file ControlLaw_cr3bp_lt.hpp
+ * \brief Control Law for CR3BP-LT system header file 
  * 
- * @author Andrew Cox
- * @version March 3, 2017
- * @copyright GNU GPL v3.0
+ * \author Andrew Cox
+ * \version March 3, 2017
+ * \copyright GNU GPL v3.0
  */
  
 /*

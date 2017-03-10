@@ -1,10 +1,10 @@
 /**
- *  @file DynamicsModel_bc4bp.hpp
- *	@brief 
+ *  \file DynamicsModel_bc4bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -36,8 +36,8 @@ namespace astrohelion{
 class SysData_bc4bp;
 
 /**
- *	@ingroup model bc4bp
- *	@brief A derivative of the DynamicsModel class, specific to the BCR4BPR
+ *	\ingroup model bc4bp
+ *	\brief A derivative of the DynamicsModel class, specific to the BCR4BPR
  *
  *	This dynamic model overrides many of the base class's functions to add
  *	support for epoch-dependencies present in this non-autonomous system.
@@ -47,30 +47,30 @@ class SysData_bc4bp;
 class DynamicsModel_bc4bp : public DynamicsModel{
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	DynamicsModel_bc4bp();
 	DynamicsModel_bc4bp(const DynamicsModel_bc4bp&);
 	~DynamicsModel_bc4bp() {}
-	//@}
+	//\}
 
 	DynamicsModel_bc4bp& operator=(const DynamicsModel_bc4bp&);
 
 	/**
-	 *  @name Core Functions
-	 *  @{
+	 *  \name Core Functions
+	 *  \{
 	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
-	std::vector<double> getAccel(const SysData*, double, std::vector<double>) const;
-	//@}
+	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
+	//\}
 
 	/**
-	 *  @name Static Calculations
-	 *  @{
+	 *  \name Static Calculations
+	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
@@ -78,19 +78,19 @@ public:
 	static void getPrimaryVel(double, const SysData_bc4bp*, double*);
 	static void getPrimaryAccel(double, const SysData_bc4bp*, double*);
 	static void orientAtEpoch(double, SysData_bc4bp*);
-	//@}
+	//\}
 	
 	/**
-	 *  @name Simulation Support Functions
-	 *  @{
+	 *  \name Simulation Support Functions
+	 *  \{
 	 */
-	void sim_saveIntegratedData(const double*, double, Traj*) const;
-	bool sim_locateEvent(Event, Traj*, const double*, double, double, Verbosity_tp) const;
-	//@}
+	void sim_saveIntegratedData(const double*, double, Traj*, EOM_ParamStruct*) const;
+	bool sim_locateEvent(Event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
+	//\}
 
 	/**
-	 *  @name Multiple Shooting Support Functions
-	 *  @{
+	 *  \name Multiple Shooting Support Functions
+	 *  \{
 	 */
 	void multShoot_initDesignVec(MultShootData*, const Nodeset*) const override;
 	void multShoot_initIterData(MultShootData *it) const override;
@@ -99,13 +99,13 @@ public:
 	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const override;
 	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
 	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
-	//@}
+	//\}
 
 protected:
 
 	/**
-	 *  @name Multiple Shooting Support Functions
-	 *  @{
+	 *  \name Multiple Shooting Support Functions
+	 *  \{
 	 */
 	void multShoot_targetCont_State(MultShootData*, Constraint, int) const override;
 	void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const override;
@@ -120,7 +120,7 @@ protected:
 	void multShoot_targetSP_dist(MultShootData*, Constraint, int) const;
 	double multShoot_targetSPMag_compSlackVar(const MultShootData*, Constraint) const;
 	double multShoot_targetSP_maxDist_compSlackVar(const MultShootData*, Constraint) const;
-	//@}
+	//\}
 };
 
 }

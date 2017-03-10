@@ -1,10 +1,10 @@
 /**
- *  @file Node.hpp
- *	@brief 
+ *  \file Node.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -41,19 +41,19 @@
  
 namespace astrohelion{
 /**
- *	@ingroup traj
- *	@brief A single point or state on an arc
+ *	\ingroup traj
+ *	\brief A single point or state on an arc
  *
- *	@author Andrew Cox
- *	@version September 30, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 30, 2016
+ *	\copyright GNU GPL v3.0
  */
 class Node : public Linkable{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Node();
 	Node(const double[6], unsigned int, double);
@@ -62,7 +62,7 @@ public:
 	// Node(std::vector<double>, std::vector<double>, double);
 	Node(const Node&);
 	// ~Node();
-	//@}
+	//\}
 
 	// Operators
 	Node& operator =(const Node&);
@@ -70,8 +70,8 @@ public:
 	friend bool operator !=(const Node&, const Node&);
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 	void addConstraint(Constraint);
 	void clearConstraints();
@@ -94,7 +94,7 @@ public:
 	void setID(int) override;
 	void setState(const double*, unsigned int);
 	void setState(std::vector<double>);
-	//@}
+	//\}
 
 	void print() const;
 protected:

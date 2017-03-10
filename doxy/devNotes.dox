@@ -130,4 +130,7 @@ Include Order (my convention:)
 	<li> Check out <a href="http://stackoverflow.com/questions/11445619/profiling-c-on-mac-os-x">these</a> instructions for profiling code on OS X</li>
 	<li> Creating copies of objects can be <em>very</em> expensive! Use pointers to objects whenever possible and practical!</li>
 </ul>
+
+<h2>MatIO Read/Write</h2>
+When saving and reading unsigned integers, use <code>MAT_T_UINT32</code> and <code>MAT_C_UINT32</code>. When the 8 and 16 bit versions are used the data is saved with strange trailing zeros, e.g., "1 0 0 0" and "1 0", respectively, in place of a single "1" value.
 */

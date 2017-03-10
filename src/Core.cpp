@@ -1,10 +1,10 @@
 /**
- *  @file Core.cpp
- *	@brief Base class for all library objects that can exist independently
+ *  \file Core.cpp
+ *	\brief Base class for all library objects that can exist independently
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 
 
@@ -56,7 +56,7 @@ static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
 // bool Core::bIsInit = false;
 
 /**
- *  @brief Default constructor.
+ *  \brief Default constructor.
  *  @details Runs an initialization sequence the first time the class is instantiated.
  */
 Core::Core(){
@@ -67,7 +67,7 @@ Core::Core(){
 }//======================================================
 
 /**
- *  @brief Default destructor; doesn't do anything :)
+ *  \brief Default destructor; doesn't do anything :)
  */
 Core::~Core(){}
 
@@ -78,8 +78,8 @@ Core::~Core(){}
 
 
 /**
- *  @brief Load user settings from the prescribed file
- *  @param filename path to the XML settings file
+ *  \brief Load user settings from the prescribed file
+ *  \param filename path to the XML settings file
  */
 void Core_Settings::load(const std::string &filename){
 	// Create empty property tree object
@@ -106,8 +106,8 @@ void Core_Settings::load(const std::string &filename){
 }//==================================================
 
 /**
- *  @brief Save user settings to the prescribed file
- *  @param filename path to the XML settings file
+ *  \brief Save user settings to the prescribed file
+ *  \param filename path to the XML settings file
  */
 void Core_Settings::save(const std::string &filename){
 	// Create empty property tree object
@@ -133,14 +133,14 @@ void Core_Settings::save(const std::string &filename){
 
 
 /**
- *  @brief Default constructor
+ *  \brief Default constructor
  */
 Core_Initializer::Core_Initializer() : settings(){
 	// std::cout << "Constructing Core_Initializer" << std::endl;
 }//================================================
 
 /**
- *	@brief Initialize the library
+ *	\brief Initialize the library
  */
 void Core_Initializer::runInit(){
 	// std::cout << "Initializing Core System" << std::endl;
@@ -319,21 +319,21 @@ void Core_Initializer::runInit(){
 }//================================================
 
 /**
- *	@brief Perform any duties necessary to safely shut down the library
+ *	\brief Perform any duties necessary to safely shut down the library
  */
 Core_Initializer::~Core_Initializer(){
-	std::cout << "Destructing Core_Initializer; Closing out the Core System" << std::endl;
+	// std::cout << "Destructing Core_Initializer; Closing out the Core System" << std::endl;
 
 	SpiceInt count, handle;
 	SpiceChar file[128], filetype[32], source[128];
 	SpiceBoolean found;
 
 	ktotal_c("all", &count);	// Get number of loaded kernels
-	std::cout << "There are " << count << " SPICE kernels loaded; unloading them..." << std::endl;
+	// std::cout << "There are " << count << " SPICE kernels loaded; unloading them..." << std::endl;
 	for(SpiceInt i = 0; i < count; i++){
 		kdata_c(i, "all", 128, 32, 128, file, filetype, source, &handle, &found);
 		if(found){
-			std::cout << "  (" << i << ") unloading " << file << std::endl;
+			// std::cout << "  (" << i << ") unloading " << file << std::endl;
 			unload_c(file);
 
 			if(failed_c()){

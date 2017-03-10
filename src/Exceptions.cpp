@@ -1,10 +1,10 @@
 /**
- *  @file Exceptions.cpp
- *	@brief Contains member functions for various custom exception classes
+ *  \file Exceptions.cpp
+ *	\brief Contains member functions for various custom exception classes
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 #include "Exceptions.hpp"
 
@@ -20,29 +20,29 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *  @brief Default constructor
+ *  \brief Default constructor
  */
 Exception::Exception() : msg("Custom exception!") {}
 
 /**
- *	@brief Create an exception with a custom message
- *	@param m a message
+ *	\brief Create an exception with a custom message
+ *	\param m a message
  */
 Exception::Exception(const char* m) : msg(m) {}
 
 /**
- *  @brief Copy constructor
+ *  \brief Copy constructor
  * 
- *  @param e reference to another exception object
+ *  \param e reference to another exception object
  */
 Exception::Exception(const Exception &e) : msg(e.msg){}
 
 /**
- *  @brief Destructor
+ *  \brief Destructor
  */
 Exception::~Exception(){}
 
-/** @brief describe the exception */
+/** \brief describe the exception */
 const char* Exception::what() const throw(){
 	// void *array[10];
 	// size_t size = backtrace(array, 10);
@@ -64,12 +64,12 @@ const char* Exception::what() const throw(){
 //  ** SizeMismatch Functions **
 //-----------------------------------------------------------------------------
 
-/** @brief Default constructor */
+/** \brief Default constructor */
 SizeMismatchException::SizeMismatchException() : Exception("Matrix dimensions do not match!"), std::runtime_error("Matrix dimensions do not match!"){}
 
 /**
- *	@brief Create an exception with a custom message
- *	@param m a message
+ *	\brief Create an exception with a custom message
+ *	\param m a message
  */
 SizeMismatchException::SizeMismatchException(const char* m) : Exception(m), std::runtime_error(m) {}
 
@@ -82,8 +82,8 @@ SizeMismatchException::SizeMismatchException(const char* m) : Exception(m), std:
 DivergeException::DivergeException() : Exception("Did not converge!"), std::runtime_error("Did not converge!"){}
 
 /**
- *	@brief Create an exception with a custom message
- *	@param m a message
+ *	\brief Create an exception with a custom message
+ *	\param m a message
  */
 DivergeException::DivergeException(const char* m) : Exception(m), std::runtime_error(m) {}
 
@@ -96,8 +96,8 @@ DivergeException::DivergeException(const char* m) : Exception(m), std::runtime_e
 LinAlgException::LinAlgException() : Exception("Linear algebra error!"), std::runtime_error("Linear algebra error!"){}
 
 /**
- *	@brief Create an exception with a custom message
- *	@param m a message
+ *	\brief Create an exception with a custom message
+ *	\param m a message
  */
 LinAlgException::LinAlgException(const char* m) : Exception(m), std::runtime_error(m) {}
 

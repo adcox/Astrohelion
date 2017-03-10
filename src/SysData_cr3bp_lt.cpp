@@ -1,10 +1,10 @@
 /**
- *	@file SysData_cr3bp_lt.cpp
- *	@brief Derivative of SysData, specific to CR3BP-LTVP
+ *	\file SysData_cr3bp_lt.cpp
+ *	\brief Derivative of SysData, specific to CR3BP-LTVP
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -35,7 +35,7 @@
 
 namespace astrohelion{
 /**
- *	@brief Default constructor
+ *	\brief Default constructor
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt() : SysData_cr3bp(){
 	type = SysData_tp::CR3BP_LT_SYS;
@@ -43,12 +43,12 @@ SysData_cr3bp_lt::SysData_cr3bp_lt() : SysData_cr3bp(){
 }//========================================
 
 /**
- *	@brief Create a system data object using data from the two primaries
- *	@param P1 the name of the larger primary
- *	@param P2 the name of the smaller primary; P2 must orbit P1
- *	@param T Thrust value, Newtons
- *	@param I Specific Impulse (Isp), seconds
- *	@param M0 reference mass, kilograms
+ *	\brief Create a system data object using data from the two primaries
+ *	\param P1 the name of the larger primary
+ *	\param P2 the name of the smaller primary; P2 must orbit P1
+ *	\param T Thrust value, Newtons
+ *	\param I Specific Impulse (Isp), seconds
+ *	\param M0 reference mass, kilograms
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double T, double I, double M0){
 	numPrimaries = 2;
@@ -62,9 +62,9 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double T, dou
 }//===================================================
 
 /**
- *  @brief Load the system data object from a Matlab data file
+ *  \brief Load the system data object from a Matlab data file
  * 
- *  @param filepath path to the data file
+ *  \param filepath path to the data file
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(const char *filepath){
 	// Load the matlab file
@@ -77,14 +77,14 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(const char *filepath){
 }//===================================================
 
 /**
- *	@brief Copy constructor
- *	@param d
+ *	\brief Copy constructor
+ *	\param d
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(const SysData_cr3bp_lt &d) : SysData_cr3bp(d){}
 
 /**
- *	@brief Copy operator; makes a clean copy of a data object into this one
- *	@param d a CR3BP system data object
+ *	\brief Copy operator; makes a clean copy of a data object into this one
+ *	\param d a CR3BP system data object
  *	@return this system data object
  */
 SysData_cr3bp_lt& SysData_cr3bp_lt::operator= (const SysData_cr3bp_lt &d){
@@ -93,7 +93,7 @@ SysData_cr3bp_lt& SysData_cr3bp_lt::operator= (const SysData_cr3bp_lt &d){
 }//===================================================
 
 /**
- *	@brief Retrieve the model that governs the motion for this system type
+ *	\brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_cr3bp_lt::getDynamicsModel() const { return &model; }
@@ -105,54 +105,54 @@ const DynamicsModel* SysData_cr3bp_lt::getDynamicsModel() const { return &model;
 const ControlLaw* SysData_cr3bp_lt::getControlLaw() const { return &control; }
 
 /**
- *	@brief Get the nondimensional thrust for P3 in this system
+ *	\brief Get the nondimensional thrust for P3 in this system
  *	@return the thrust, nondimensional (nondimensionalized in mass by spacecraft reference mass) 
  */
 double SysData_cr3bp_lt::getThrust() const { return otherParams[1]; }
 
 /**
- *	@brief Get the specific impulse for P3 in this system
+ *	\brief Get the specific impulse for P3 in this system
  *	@return the specific impulse, seconds
  */
 double SysData_cr3bp_lt::getIsp() const { return otherParams[2]; }
 
 /**
- *	@brief Get the reference mass for P3
+ *	\brief Get the reference mass for P3
  *	@return the reference mass of P3, kg
  */
 double SysData_cr3bp_lt::getMass() const { return otherParams[3]; }
 
 /**
- *	@brief Set the thrust for P3 for this system
- *	@param d the thrust, non-dimensional units (nondimensionalized in mass by spacecraft reference mass)
+ *	\brief Set the thrust for P3 for this system
+ *	\param d the thrust, non-dimensional units (nondimensionalized in mass by spacecraft reference mass)
  */
 void SysData_cr3bp_lt::setThrust(double d){ otherParams[1] = d; }
 
 /**
- *	@brief Set the specific impulse for P3 for this system
- *	@param d the specific impulse, seconds
+ *	\brief Set the specific impulse for P3 for this system
+ *	\param d the specific impulse, seconds
  */
 void SysData_cr3bp_lt::setIsp(double d){ otherParams[2] = d; }
 
 /**
- *	@brief Set the reference mass for P3
- *	@param d the mass, kg
+ *	\brief Set the reference mass for P3
+ *	\param d the mass, kg
  */
 void SysData_cr3bp_lt::setMass(double d){ otherParams[3] = d; }
 
 /**
- *  @brief Save the system data to a matlab file
+ *  \brief Save the system data to a matlab file
  * 
- *  @param filepath path to the data file
+ *  \param filepath path to the data file
  */
 void SysData_cr3bp_lt::saveToMat(const char *filepath) const{
 	SysData::saveToMat(filepath);
 }//==================================================
 
 /**
- *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
- *	@param matFile a pointer to the .mat file
- *	@throws Exception if the number of primaries is incorrect
+ *	\brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	\param matFile a pointer to the .mat file
+ *	\throws Exception if the number of primaries is incorrect
  */
 void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
@@ -197,9 +197,9 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
 }//===================================================
 
 /**
- *	@brief Populate data fiels for this data object by reading the primaries'
+ *	\brief Populate data fiels for this data object by reading the primaries'
  *	names from a Mat file
- *	@param matFile a pointer to the Mat file in question
+ *	\param matFile a pointer to the Mat file in question
  */
 void SysData_cr3bp_lt::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);

@@ -1,10 +1,10 @@
 /**
- *  @file DynamicsModel_cr3bp.cpp
- *  @brief Derivative of DynamicsModel, specific to CR3BP
+ *  \file DynamicsModel_cr3bp.cpp
+ *  \brief Derivative of DynamicsModel, specific to CR3BP
  *  
- *  @author Andrew Cox
- *  @version May 25, 2016
- *  @copyright GNU GPL v3.0
+ *  \author Andrew Cox
+ *  \version May 25, 2016
+ *  \copyright GNU GPL v3.0
  */
  
 /*
@@ -46,7 +46,7 @@
 
 namespace astrohelion{
 /**
- *  @brief Construct a CR3BP Dynamic DynamicsModel
+ *  \brief Construct a CR3BP Dynamic DynamicsModel
  */
 DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     // Allow a few more constraints than the default
@@ -56,14 +56,14 @@ DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel(DynamicsModel_tp::MOD
 }//==============================================
 
 /**
- *  @brief Copy Constructor
- *  @param m a model reference
+ *  \brief Copy Constructor
+ *  \param m a model reference
  */
 DynamicsModel_cr3bp::DynamicsModel_cr3bp(const DynamicsModel_cr3bp &m) : DynamicsModel(m) {}
 
 /**
- *  @brief Assignment operator
- *  @param m a model reference
+ *  \brief Assignment operator
+ *  \param m a model reference
  */
 DynamicsModel_cr3bp& DynamicsModel_cr3bp::operator =(const DynamicsModel_cr3bp &m){
 	DynamicsModel::operator =(m);
@@ -71,7 +71,7 @@ DynamicsModel_cr3bp& DynamicsModel_cr3bp::operator =(const DynamicsModel_cr3bp &
 }//==============================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
 DynamicsModel::eom_fcn DynamicsModel_cr3bp::getSimpleEOM_fcn() const{
@@ -79,7 +79,7 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp::getSimpleEOM_fcn() const{
 }//==============================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
 DynamicsModel::eom_fcn DynamicsModel_cr3bp::getFullEOM_fcn() const{
@@ -87,10 +87,10 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp::getFullEOM_fcn() const{
 }//==============================================
 
 /**
- *  @brief Compute the positions of all primaries
+ *  \brief Compute the positions of all primaries
  *
- *  @param t the epoch at which the computations occur (unused for this system)
- *  @param pSysData object describing the specific system
+ *  \param t the epoch at which the computations occur (unused for this system)
+ *  \param pSysData object describing the specific system
  *  @return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
@@ -106,10 +106,10 @@ std::vector<double> DynamicsModel_cr3bp::getPrimPos(double t, const SysData *pSy
 }//==============================================
 
 /**
- *  @brief Compute the velocities of all primaries
+ *  \brief Compute the velocities of all primaries
  *
- *  @param t the epoch at which the computations occur (unused for this system)
- *  @param sysData object describing the specific system (unused for this system)
+ *  \param t the epoch at which the computations occur (unused for this system)
+ *  \param sysData object describing the specific system (unused for this system)
  *  @return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
@@ -120,16 +120,15 @@ std::vector<double> DynamicsModel_cr3bp::getPrimVel(double t, const SysData *sys
     return std::vector<double>(6, 0);
 }//==============================================
 
-std::vector<double> DynamicsModel_cr3bp::getAccel(const SysData *pSys, double t, std::vector<double> state) const{
+std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     if(state.size() != coreStates)
-        throw Exception("DynamicsModel_cr3bp::getAccel: State size does not match the core state size specified by the dynamical model");
+        throw Exception("DynamicsModel_cr3bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
 
     // Compute the acceleration
     std::vector<double> dsdt(coreStates,0);
-    EOM_ParamStruct paramStruct(pSys, ControlLaw::NO_CTRL);
-    simpleEOMs(t, &(state[0]), &(dsdt[0]), &paramStruct);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
-    return std::vector<double>(dsdt.begin()+3, dsdt.end());
+    return dsdt;
 }//==================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -137,47 +136,47 @@ std::vector<double> DynamicsModel_cr3bp::getAccel(const SysData *pSys, double t,
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Takes an input state and time and saves the data to the trajectory
- *  @param y an array containing the core state and any extra states integrated
+ *  \brief Takes an input state and time and saves the data to the trajectory
+ *  \param y an array containing the core state and any extra states integrated
  *  by the EOM function, including STM elements.
- *  @param t the time at the current integration state
- *  @param traj a pointer to the trajectory we should store the data in
+ *  \param t the time at the current integration state
+ *  \param traj a pointer to the trajectory we should store the data in
  */
-void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj* traj) const{
+void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
 
-    DynamicsModel::sim_saveIntegratedData(y, t, traj);
+    DynamicsModel::sim_saveIntegratedData(y, t, traj, params);
 
 	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(traj->getSysData());
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(params->sysData);
     Traj_cr3bp *cr3bpTraj = static_cast<Traj_cr3bp*>(traj);    
     cr3bpTraj->setJacobiByIx(-1, getJacobi(y, crSys->getMu()));
 }//=====================================================
 
 /**
- *  @brief Use a correction algorithm to accurately locate an event crossing
+ *  \brief Use a correction algorithm to accurately locate an event crossing
  * 
  *  The simulation engine calls this function if and when it determines that an event 
  *  has been crossed. To accurately locate the event, we employ differential corrections
  *  and find the exact event occurence in space and time.
  *
- *  @param event the event we're looking for
- *  @param traj a pointer to the trajectory the event should occur on
- *  @param ic the core state vector for this system
- *  @param t0 non-dimensional time at the beginning of the search arc
- *  @param tof the time-of-flight for the arc to search over
- *  @param verbose whether or not we should be verbose with output messages
+ *  \param event the event we're looking for
+ *  \param traj a pointer to the trajectory the event should occur on
+ *  \param ic the core state vector for this system
+ *  \param t0 non-dimensional time at the beginning of the search arc
+ *  \param tof the time-of-flight for the arc to search over
+ *  \param verbose whether or not we should be verbose with output messages
  *
  *  @return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
 bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
-    const double *ic, double t0, double tof, Verbosity_tp verbose) const{
+    const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(traj->getSysData());
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(params->sysData);
 
     // Create a nodeset for this particular type of system
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
-    Nodeset_cr3bp eventNodeset(crSys, ic, tof, 2, Nodeset::TIME);
+    Nodeset_cr3bp eventNodeset(crSys, ic, tof, 2, Nodeset::TIME); // cr3bp nodeset does not use control laws
 
     // Constraint to keep first node unchanged
     Constraint fixFirstCon(Constraint_tp::STATE, 0, ic, 6);
@@ -218,7 +217,7 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    sim_saveIntegratedData(&(state[0]), eventTime, traj);
+    sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
 
     return true;
 }//======================================================
@@ -228,14 +227,14 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Compute constraint function and partial derivative values for a constraint
+ *  \brief Compute constraint function and partial derivative values for a constraint
  *  
  *  This function calls its relative in the DynamicsModel base class and appends additional
  *  instructions specific to the CR3BP
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the total constraint vector (which is, in
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
 void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, Constraint con, int c) const{
@@ -257,8 +256,8 @@ void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, Constrain
 }//=========================================================
 
 /**
- *  @brief Perform model-specific initializations on the MultShootData object
- *  @param it pointer to the object to be initialized
+ *  \brief Perform model-specific initializations on the MultShootData object
+ *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
     Traj_cr3bp traj(static_cast<const SysData_cr3bp *>(it->sysData));
@@ -266,11 +265,11 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
 }//====================================================
 
 /**
- *  @brief Compute constraint function and partial derivative values for a Jacobi Constraint
+ *  \brief Compute constraint function and partial derivative values for a Jacobi Constraint
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the row this constraint begins on
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the row this constraint begins on
  */
 void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
@@ -310,11 +309,11 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, 
 }//=============================================
 
 /**
- *  @brief Compute constraint function and partial derivative values for Pseudo Arc-Length
+ *  \brief Compute constraint function and partial derivative values for Pseudo Arc-Length
  *  
- *  @param it a pointer to the corrector's iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the row this constraint begins on
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the row this constraint begins on
  *  @throw Exception if the pseudo arclength constraint is not listed as the final constraint
  *  @throw Exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
  */
@@ -347,7 +346,7 @@ void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, Constrain
 }//=============================================
 
 /**
- *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
  *  nodeset
  *
  *  If <tt>findEvent</tt> is set to true, the
@@ -356,10 +355,10 @@ void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, Constrain
  *  and dqdT values for the final node; this information will be appended to the extraParameter
  *  vector in the final node.
  *
- *  @param it an iteration data object containing all info from the corrections process
- *  @param nodes_in a pointer to the original, uncorrected nodeset
- *  @param findEvent whether or not this correction process is locating an event
- *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  \param it an iteration data object containing all info from the corrections process
+ *  \param nodes_in a pointer to the original, uncorrected nodeset
+ *  \param findEvent whether or not this correction process is locating an event
+ *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  *  @return a pointer to a nodeset containing the corrected nodes
  */
@@ -423,6 +422,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
+        newSeg.setCtrlLaw(seg.getCtrlLaw());
         nodeset_out->addSeg(newSeg);
     }
 
@@ -465,11 +465,11 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Integrate the equations of motion for the CR3BP
- *  @param t the current time of the integration; not used for this system
- *  @param s the 42-d state vector
- *  @param sdot the 42-d state derivative vector
- *  @param *params pointer to extra parameters required for integration. For this
+ *  \brief Integrate the equations of motion for the CR3BP
+ *  \param t the current time of the integration; not used for this system
+ *  \param s the 42-d state vector
+ *  \param sdot the 42-d state derivative vector
+ *  \param *params pointer to extra parameters required for integration. For this
  *  function, the pointer points to an EOM_ParamStruct object
  */
 int DynamicsModel_cr3bp::fullEOMs(double t, const double s[], double sdot[], void *params){
@@ -518,11 +518,11 @@ int DynamicsModel_cr3bp::fullEOMs(double t, const double s[], double sdot[], voi
 }//===============================================================
 
 /**
- *  @brief Integrate the equations of motion for the CR3BP without the STM
- *  @param t time at integration step (unused)
- *  @param s the 6-d state vector
- *  @param sdot the 6-d state derivative vector
- *  @param params points to an EOM_ParamStruct object
+ *  \brief Integrate the equations of motion for the CR3BP without the STM
+ *  \param t time at integration step (unused)
+ *  \param s the 6-d state vector
+ *  \param sdot the 6-d state derivative vector
+ *  \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_cr3bp::simpleEOMs(double t, const double s[], double sdot[], void *params){
     (void)t;
@@ -552,14 +552,14 @@ int DynamicsModel_cr3bp::simpleEOMs(double t, const double s[], double sdot[], v
 }//=====================================================
 
 /**
- *  @brief Compute the location of a Lagrange point in the CR3BP
+ *  \brief Compute the location of a Lagrange point in the CR3BP
  *
- *  @param sysData pointer to an object describing the particular CR3BP
- *  @param L the Lagrange point number, 1 to 5
- *  @param tol the tolerance to use; if NAN is input, then a default value of 1e-14 will
+ *  \param sysData pointer to an object describing the particular CR3BP
+ *  \param L the Lagrange point number, 1 to 5
+ *  \param tol the tolerance to use; if NAN is input, then a default value of 1e-14 will
  *  be used.
- *  @param pos a 3-element array to store the position of the Lagrange point
- *  @throws DivergeException if the Newton-Raphson process fails to converge on the 
+ *  \param pos a 3-element array to store the position of the Lagrange point
+ *  \throws DivergeException if the Newton-Raphson process fails to converge on the 
  *  Lagrange point location
  */
 void DynamicsModel_cr3bp::getEquilibPt(const SysData_cr3bp *sysData, int L, double tol, double pos[3]){
@@ -625,10 +625,10 @@ void DynamicsModel_cr3bp::getEquilibPt(const SysData_cr3bp *sysData, int L, doub
 }//========================================
 
 /**
- *  @brief Compute the Jacobi Constant for the CR3BP
+ *  \brief Compute the Jacobi Constant for the CR3BP
  *
- *  @param s the state vector; only the position and velocity states are required
- *  @param mu the non-dimensional system mass ratio
+ *  \param s the state vector; only the position and velocity states are required
+ *  \param mu the non-dimensional system mass ratio
  *
  *  @return the Jacobi Constant at this specific state and system
  */
@@ -641,13 +641,13 @@ double DynamicsModel_cr3bp::getJacobi(const double s[], double mu){
 }//================================================
 
 /**
- *  @brief Compute the second derivatives of the pseudo-potential function
+ *  \brief Compute the second derivatives of the pseudo-potential function
  *
- *  @param mu the mass ratio of the system, non-dimensional
- *  @param x coordinate, non-dimensional units 
- *  @param y coordinate, non-dimensional units 
- *  @param z coordinate, non-dimensional units 
- *  @param ddots a pointer to a 6-element double array where the function will store 
+ *  \param mu the mass ratio of the system, non-dimensional
+ *  \param x coordinate, non-dimensional units 
+ *  \param y coordinate, non-dimensional units 
+ *  \param z coordinate, non-dimensional units 
+ *  \param ddots a pointer to a 6-element double array where the function will store 
  *  values for {Uxx, Uyy, Uzz, Uxy, Uxz, Uyz}. Note that Uyx = Uxy, etc.
  */
 void DynamicsModel_cr3bp::getUDDots(double mu, double x, double y, double z, double* ddots){

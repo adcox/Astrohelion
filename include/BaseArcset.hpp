@@ -1,10 +1,10 @@
 /**
- *  @file BaseArcset.hpp
- *	@brief Basic arcset class (abstract)
+ *  \file BaseArcset.hpp
+ *	\brief Basic arcset class (abstract)
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -47,12 +47,21 @@ struct ArcPiece;
 class BaseArcset;
 
 /**
- * @brief Smart pointer to a BaseArcset object
+ * \brief Smart pointer to a BaseArcset object
  */
 typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
 
+static const char *VARNAME_CTRL_LAW = "CtrlLaw";		//!< Matlab file variable name for control law data
+static const char *VARNAME_EPOCH = "Epoch";			//!< Matlab file variable name for epoch data
+static const char *VARNAME_STATE = "State";			//!< Matlab file variable name for state data
+static const char *VARNAME_STATE_DERIV = "qdot";		//!< Matlab file variable name for state derivative data
+static const char *VARNAME_STM = "STM";				//!< Matlab file variable name for state transition matrix data
+static const char *VARNAME_TOF = "TOF";				//!< Matlab file variable name for time-of-flight data
+
+static const char *PARAMKEY_STATE_DERIV = "qdot";		//!< ExtraParam map key for state derivative data
+
 /**
- *	@brief Abstract class that provides the framework for trajectories and nodesets
+ *	\brief Abstract class that provides the framework for trajectories and nodesets
  *	
  *	The arcset object specifies default and mandatory behaviors for all derivative
  *	classes (i.e. Traj and Nodeset). All variables and data for an arc or 
@@ -82,22 +91,22 @@ typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
  *	they may override the default:
  *	* Assignment operator
  *	* Access to position and velocity values at each step via getState()
- *	* Access to acceleration values at each step via getAccel()
+ *	* Access to acceleration values at each step via getStateDeriv()
  *	* Access to any extra parameters that evolve each step via getExtraParam()
  *	* Access to the STM at each step via getSTM()
  *	* Access to individual step objects via getStep()
  *	* Access to the system data object pointer that describes the system this arc was integrated in
  *
- *	@author Andrew Cox
- *	@version April 28, 2016
- *	@copyright GNU GPL v3.0	
+ *	\author Andrew Cox
+ *	\version April 28, 2016
+ *	\copyright GNU GPL v3.0	
  */
 class BaseArcset : public Core{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	BaseArcset(const SysData*);
 	BaseArcset(const BaseArcset&);
@@ -105,19 +114,19 @@ public:
 	virtual baseArcsetPtr clone() const = 0;							//!< Virtual constructor for copying
 
 	virtual ~BaseArcset();
-	//@}
+	//\}
 
 	/**
-	 *  @name Operators
-	 *  @{
+	 *  \name Operators
+	 *  \{
 	 */
 	BaseArcset& operator =(const BaseArcset&);
 	static void sum(const BaseArcset*, const BaseArcset*, BaseArcset*);
-	//@}
+	//\}
 	
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 	void addConstraint(Constraint);
 	int addNode(Node);
@@ -126,10 +135,9 @@ public:
 	void clearArcConstraints();
 	void clearAllConstraints();
 	std::vector<int> concatArcset(const BaseArcset*);
+	unsigned int getCtrlLawByIx(int) const;
 	void deleteNode(int);
 	void deleteSeg(int);
-	std::vector<double> getAccel(int);
-	std::vector<double> getAccelByIx(int);
 	std::vector<Constraint> getArcConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;
@@ -156,6 +164,8 @@ public:
 	int getSegIx(int) const;
 	std::vector<double> getState(int) const;
 	std::vector<double> getStateByIx(int) const;
+	std::vector<double> getStateDeriv(int);
+	std::vector<double> getStateDerivByIx(int);
 	MatrixXRd getSTM(int) const;
 	MatrixXRd getSTMByIx(int) const;
 	const SysData* getSysData() const;
@@ -163,46 +173,46 @@ public:
 	bool isInChronoOrder() const;
 	
 	void putInChronoOrder(bool force = false);
-	void setAccel(int, std::vector<double>);
-	void setAccelByIx(int, std::vector<double>);
+	void setStateDeriv(int, std::vector<double>);
+	void setStateDerivByIx(int, std::vector<double>);
 	void setState(int, std::vector<double>);
 	void setStateByIx(int, std::vector<double>);
 	void setSTMByIx(int, MatrixXRd);
 	void setSTM(int, MatrixXRd);
 	void setTol(double);
 	void updateEpochs(int, double);
-	//@}
+	//\}
 
 	/**
-	 *  @name Utility Functions
-	 *  @{
+	 *  \name Utility Functions
+	 *  \{
 	 */
 	void printInChrono() const;
 	void printNodeIDMap() const;
 	void printSegIDMap() const;
 	/**
-	 *	@brief Displays a useful messages about the object
+	 *	\brief Displays a useful messages about the object
 	 */
 	virtual void print() const = 0;
-	//@}
+	//\}
 
 	/**
-	 *  @name *File I/O
-	 *  @{
+	 *  \name *File I/O
+	 *  \{
 	 */
 	/**
-	 *  @brief Loads the object from a Matlab binary file
-	 *  @param filepath the filepath to the Matlab file
+	 *  \brief Loads the object from a Matlab binary file
+	 *  \param filepath the filepath to the Matlab file
 	 */
 	virtual void readFromMat(const char *filepath) = 0;
 
 	/**
-	 *	@brief Saves the object to a Matlab binary file
-	 *	@param filepath the filepath to the Matlab file
+	 *	\brief Saves the object to a Matlab binary file
+	 *	\param filepath the filepath to the Matlab file
 	 */
 	virtual void saveToMat(const char *filepath) const = 0;
 
-	//@}
+	//\}
 protected:
 	/** A pointer to the system data object that the describes the system this arc exists in */
 	const SysData *pSysData;
@@ -243,39 +253,41 @@ protected:
 	void copyMe(const BaseArcset&);
 
 	/**
-	 *  @name File I/O
-	 *  @{
+	 *  \name File I/O
+	 *  \{
 	 */
-	void initNodesSegsFromMat(mat_t *, const char*);
-	void readStateFromMat(mat_t*, const char*);
-	void readAccelFromMat(mat_t*);
-	void readEpochFromMat(mat_t*, const char*);
+	void initNodesSegsFromMat(mat_t *, const char* pStateVarName = VARNAME_STATE);
+	void readCtrlLawFromMat(mat_t*, const char* pVarName = VARNAME_CTRL_LAW);
+	void readEpochFromMat(mat_t*, const char* pVarName = VARNAME_EPOCH);
 	void readExtraParamFromMat(mat_t*, std::string, const char*);
 	void readExtraParamVecFromMat(mat_t*, std::string, size_t, const char*);
-	void readSTMFromMat(mat_t*);
-	void readTOFFromMat(mat_t*, const char*);
-	void saveAccel(mat_t*) const;
-	void saveEpoch(mat_t*) const;
-	void saveEpoch(mat_t*, const char*) const;
+	void readStateFromMat(mat_t*, const char* pVarName = VARNAME_STATE);
+	void readStateDerivFromMat(mat_t*, const char* pVarName = VARNAME_STATE_DERIV);
+	void readSTMFromMat(mat_t*, const char* pVarName = VARNAME_STM);
+	void readTOFFromMat(mat_t*, const char* pVarName = VARNAME_TOF);
+
+	void saveCtrlLaw(mat_t*, const char* pVarName = VARNAME_CTRL_LAW) const;
+	void saveEpoch(mat_t*, const char* pVarName = VARNAME_EPOCH) const;
 	void saveExtraParam(mat_t*, std::string, const char*) const;
 	void saveExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
-	void saveState(mat_t*, const char* pVarName = "State") const;
-	void saveSTMs(mat_t*) const;
-	void saveTOF(mat_t*, const char*) const;
-	//@}
+	void saveState(mat_t*, const char* pVarName = VARNAME_STATE) const;
+	void saveStateDeriv(mat_t*, const char* pVarName = VARNAME_STATE_DERIV) const;
+	void saveSTMs(mat_t*, const char* pVarName = VARNAME_STM) const;
+	void saveTOF(mat_t*, const char* pVarName = VARNAME_TOF) const;
+	//\}
 
 	std::vector<ArcPiece> sortArcset(int, std::vector<ArcPiece>) const;
 };//END OF BaseArcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
 /**
- *  @brief A structure used to represent nodes and segments.
+ *  \brief A structure used to represent nodes and segments.
  *  @details This structure is used when putting the arcset
  *  object in chronological order
  */
 struct ArcPiece{
 
 	/**
-	 * @brief Enumerated type to describe the types of objects represented
+	 * \brief Enumerated type to describe the types of objects represented
 	 * by the piece
 	 */
 	enum class Piece_tp {
@@ -287,18 +299,18 @@ struct ArcPiece{
 	int id;	//!< The ID of the object represented by this piece
 
 	/**
-	 *  @brief Constructor
+	 *  \brief Constructor
 	 * 
-	 *  @param tp the type of object represented by this piece
-	 *  @param i the ID of the object represented by this piece
+	 *  \param tp the type of object represented by this piece
+	 *  \param i the ID of the object represented by this piece
 	 */
 	ArcPiece(Piece_tp tp, int i) : type(tp), id(i) {}
 
 	/**
-	 *  @brief Comparison operator
+	 *  \brief Comparison operator
 	 * 
-	 *  @param lhs piece reference
-	 *  @param rhs piece reference
+	 *  \param lhs piece reference
+	 *  \param rhs piece reference
 	 * 
 	 *  @return true if the type and ID of the two pieces match
 	 */
@@ -307,10 +319,10 @@ struct ArcPiece{
 	}//================================================
 
 	/**
-	 *  @brief Comparison operator
+	 *  \brief Comparison operator
 	 * 
-	 *  @param lhs piece reference
-	 *  @param rhs piece reference
+	 *  \param lhs piece reference
+	 *  \param rhs piece reference
 	 * 
 	 *  @return true if the type and ID of the two pieces do NOT match
 	 */

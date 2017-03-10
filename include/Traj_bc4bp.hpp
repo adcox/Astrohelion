@@ -1,10 +1,10 @@
 /**
- *  @file Traj_bc4bp.hpp
- *	@brief 
+ *  \file Traj_bc4bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,20 +38,20 @@ class SysData_bc4bp;
 class Nodeset_bc4bp;
 
 /**
- *	@ingroup traj bc4bp
- *	@brief A derivative class of the Traj object that
+ *	\ingroup traj bc4bp
+ *	\brief A derivative class of the Traj object that
  *	contains trajectory information specific to the CR3BP
  *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 15, 2015
+ *	\copyright GNU GPL v3.0
  */
 class Traj_bc4bp : public Traj{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Traj_bc4bp(const SysData_bc4bp*);
 	Traj_bc4bp(const Traj_bc4bp&);
@@ -60,11 +60,11 @@ public:
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
 	//static Traj_bc4bp fromNodeset(Nodeset_bc4bp);
-	//@}
+	//\}
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 	double getTheta0();
 	double getPhi0();
@@ -73,10 +73,11 @@ public:
 
 	void set_dqdTByIx(int, const double*);
 	void set_dqdTByIx(int, std::vector<double>);
-	//@}
-	
-	void readFromMat(const char*) override;
-	void saveToMat(const char*) const override;
+	//\}
+
+protected:
+	void saveCmds(mat_t*) const override;
+	void readCmds(mat_t*) override;
 };
 
 }// END of Astrohelion namespace

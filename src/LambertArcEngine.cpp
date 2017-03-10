@@ -1,10 +1,10 @@
 /**
- *  @file LambertArcEngine.cpp
- *	@brief Generate Lambert Arcs in the 2BP
+ *  \file LambertArcEngine.cpp
+ *	\brief Generate Lambert Arcs in the 2BP
  *
- *	@author Andrew Cox
- *	@version 
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version 
+ *	\copyright GNU GPL v3.0
  */
  
 /*
@@ -60,26 +60,26 @@ LambertArcEngine& LambertArcEngine::operator =(const LambertArcEngine &e){
 //-----------------------------------------------------
 
 /**
- *  @brief Set the maximum allowable TOF error, seconds
+ *  \brief Set the maximum allowable TOF error, seconds
  *  @details Default value is 1 millisecond
  * 
- *  @param err maximum allowable TOF error, seconds
+ *  \param err maximum allowable TOF error, seconds
  */
 void LambertArcEngine::setMaxErr_tof(double err){ tof_maxErr = err; }
 
 /**
- *  @brief Set the maximum allowable true anomaly error, radians
+ *  \brief Set the maximum allowable true anomaly error, radians
  *  @details Default value is 0.001 deg equivalent
  * 
- *  @param err maximum allowable true anomaly error, radians
+ *  \param err maximum allowable true anomaly error, radians
  */
 void LambertArcEngine::setMaxErr_ta(double err){ ta_maxErr = err; }
 
 /**
- *  @brief Set the maximum allowable iterations to find the semi-major axis
+ *  \brief Set the maximum allowable iterations to find the semi-major axis
  *  @details Default value is 100
  * 
- *  @param its maximum allowable iterations to find the semi-major axis
+ *  \param its maximum allowable iterations to find the semi-major axis
  */
 void LambertArcEngine::setMaxIts(unsigned int its){ maxIts = its; }
 

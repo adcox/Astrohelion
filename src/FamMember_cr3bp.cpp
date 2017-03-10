@@ -1,10 +1,10 @@
 /**
- *	@file FamMember_cr3bp.cpp
- *	@brief Data object for CR3BP family members
+ *	\file FamMember_cr3bp.cpp
+ *	\brief Data object for CR3BP family members
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -44,14 +44,14 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Construct a family member given all the required parameters
+ *	\brief Construct a family member given all the required parameters
  *
- *	@param ic a 6-element vector describing the initial state on the trajectory (non-dim)
- *	@param tof the time-of-flight along the trajectory (non-dim)
- *	@param jc the Jacobi Constant on this trajectory
- *	@param xAmp the maximum amplitude in the x-direction (non-dim)
- *	@param yAmp the maximum amplitude in the y-direction (non-dim)
- *	@param zAmp the maximum amplitude in the z-direction (non-dim)
+ *	\param ic a 6-element vector describing the initial state on the trajectory (non-dim)
+ *	\param tof the time-of-flight along the trajectory (non-dim)
+ *	\param jc the Jacobi Constant on this trajectory
+ *	\param xAmp the maximum amplitude in the x-direction (non-dim)
+ *	\param yAmp the maximum amplitude in the y-direction (non-dim)
+ *	\param zAmp the maximum amplitude in the z-direction (non-dim)
  */
 FamMember_cr3bp::FamMember_cr3bp(double *ic, double tof,
 	double jc, double xAmp, double yAmp, double zAmp){
@@ -66,8 +66,8 @@ FamMember_cr3bp::FamMember_cr3bp(double *ic, double tof,
 }//====================================================
 
 /**
- *	@brief Create a family member from a trajectory object
- *	@param traj a trajectory reference
+ *	\brief Create a family member from a trajectory object
+ *	\param traj a trajectory reference
  */
 FamMember_cr3bp::FamMember_cr3bp(const Traj_cr3bp traj){
 	IC = traj.getStateByIx(0);
@@ -107,15 +107,15 @@ FamMember_cr3bp::FamMember_cr3bp(const Traj_cr3bp traj){
 }//===================================================
 
 /**
- *	@brief Copy constructor
- *	@param mem a family member reference
+ *	\brief Copy constructor
+ *	\param mem a family member reference
  */
 FamMember_cr3bp::FamMember_cr3bp(const FamMember_cr3bp& mem){
 	copyMe(mem);
 }//====================================================
 
 /**
- *	@brief Destructor
+ *	\brief Destructor
  */
 FamMember_cr3bp::~FamMember_cr3bp(){}
 
@@ -125,8 +125,8 @@ FamMember_cr3bp::~FamMember_cr3bp(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Assignment operator
- *	@param mem a family member reference
+ *	\brief Assignment operator
+ *	\param mem a family member reference
  */
 FamMember_cr3bp& FamMember_cr3bp::operator= (const FamMember_cr3bp& mem){
 	copyMe(mem);
@@ -138,19 +138,19 @@ FamMember_cr3bp& FamMember_cr3bp::operator= (const FamMember_cr3bp& mem){
 //-----------------------------------------------------
 
 /**
- *	@brief Retrieve a vector of eigenvalues (of the final STM, likely the Monodromy matrix)
+ *	\brief Retrieve a vector of eigenvalues (of the final STM, likely the Monodromy matrix)
  */
 std::vector<cdouble> FamMember_cr3bp::getEigVals() const { return eigVals; }
 
 MatrixXRcd FamMember_cr3bp::getEigVecs() const { return eigVecs; }
 
 /**
- *	@brief Retrieve the initial state for this trajectory (non-dim)
+ *	\brief Retrieve the initial state for this trajectory (non-dim)
  */
 std::vector<double> FamMember_cr3bp::getIC() const { return IC; }
 
 /**
- *	@brief Retrieve the Time-Of-Flight along this trajectory (non-dim)
+ *	\brief Retrieve the Time-Of-Flight along this trajectory (non-dim)
  */
 double FamMember_cr3bp::getTOF() const { return TOF; }
 
@@ -160,31 +160,31 @@ double FamMember_cr3bp::getTOF() const { return TOF; }
 MatrixXRd FamMember_cr3bp::getSTM() const { return stm; }
 
 /**
- *	@brief Retrieve the Jacobi Constant for this trajectory
+ *	\brief Retrieve the Jacobi Constant for this trajectory
  */
 double FamMember_cr3bp::getJacobi() const { return JC; }
 
 /**
- *	@brief Retrieve the maximum amplitude in the x-direction
+ *	\brief Retrieve the maximum amplitude in the x-direction
  */
 double FamMember_cr3bp::getXAmplitude() const { return xAmplitude; }
 
 /**
- *	@brief Retrieve the maximum amplitude in the y-direction
+ *	\brief Retrieve the maximum amplitude in the y-direction
  */
 double FamMember_cr3bp::getYAmplitude() const { return yAmplitude; }
 
 /**
- *	@brief Retrieve the maximum amplitude in the z-direction
+ *	\brief Retrieve the maximum amplitude in the z-direction
  */
 double FamMember_cr3bp::getZAmplitude() const { return zAmplitude; }
 
 /**
- *	@brief Set the eigenvalues for this orbit
+ *	\brief Set the eigenvalues for this orbit
  *
  *	These should be the eigenvalues of the final STM and/or Monodromy matrix
- *	@param vals the eigenvalues
- *	@throws Exception if <tt>vals</tt> does not have six elements
+ *	\param vals the eigenvalues
+ *	\throws Exception if <tt>vals</tt> does not have six elements
  */
 void FamMember_cr3bp::setEigVals(std::vector<cdouble> vals) {
 	if(vals.size() != 6)
@@ -195,9 +195,9 @@ void FamMember_cr3bp::setEigVals(std::vector<cdouble> vals) {
 void FamMember_cr3bp::setEigVecs(MatrixXRcd vecs){ eigVecs = vecs; }
 
 /**
- *	@brief Set the initial state
- *	@param ic The initial state (non-dim)
- *	@throws Exception if <tt>ic</tt> does not have six elements
+ *	\brief Set the initial state
+ *	\param ic The initial state (non-dim)
+ *	\throws Exception if <tt>ic</tt> does not have six elements
  */
 void FamMember_cr3bp::setIC( std::vector<double> ic ){
 	if(ic.size() != 6)
@@ -206,8 +206,8 @@ void FamMember_cr3bp::setIC( std::vector<double> ic ){
 }//====================================================
 
 /**
- *	@brief Set the time-of-flight
- *	@param tof The time-of-flight (non-dim)
+ *	\brief Set the time-of-flight
+ *	\param tof The time-of-flight (non-dim)
  */
 void FamMember_cr3bp::setTOF( double tof ){ TOF = tof; }
 
@@ -218,32 +218,32 @@ void FamMember_cr3bp::setTOF( double tof ){ TOF = tof; }
 void FamMember_cr3bp::setSTM( MatrixXRd STM){ stm = STM; }
 
 /**
- *	@brief Set the Jacobi Constant
- *	@param jc The Jacobi Constant (non-dim)
+ *	\brief Set the Jacobi Constant
+ *	\param jc The Jacobi Constant (non-dim)
  */
 void FamMember_cr3bp::setJacobi( double jc ){ JC = jc; }
 
 /**
- *	@brief Set the width of this trajectory in the x-direction (non-dim)
+ *	\brief Set the width of this trajectory in the x-direction (non-dim)
  */
 void FamMember_cr3bp::setXAmplitude(double w){ xAmplitude = w; }
 
 /**
- *	@brief Set the width of this trajectory in the x-direction (non-dim)
+ *	\brief Set the width of this trajectory in the x-direction (non-dim)
  */
 void FamMember_cr3bp::setYAmplitude(double w){ yAmplitude = w; }
 
 /**
- *	@brief Set the width of this trajectory in the x-direction (non-dim)
+ *	\brief Set the width of this trajectory in the x-direction (non-dim)
  */
 void FamMember_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
 
 /**
- *  @brief Convert the family member object to a trajectory object
+ *  \brief Convert the family member object to a trajectory object
  *  @details This function simply numerically integrates the IC for the
  *  specified TOF to produce the trajectory object
  * 
- *  @param sys The system the family member exists in
+ *  \param sys The system the family member exists in
  *  @return A trajectory object
  */
 Traj_cr3bp FamMember_cr3bp::toTraj(const SysData_cr3bp *sys){
@@ -258,8 +258,8 @@ Traj_cr3bp FamMember_cr3bp::toTraj(const SysData_cr3bp *sys){
 //-----------------------------------------------------
 
 /**
- *	@brief Copy an input family member into this one
- *	@param mem some other family member
+ *	\brief Copy an input family member into this one
+ *	\param mem some other family member
  */
 void FamMember_cr3bp::copyMe(const FamMember_cr3bp& mem){
 	eigVals = mem.eigVals;

@@ -1,10 +1,10 @@
 /**
- *  @file DynamicsModel_cr3bp_lt.hpp
- *	@brief Dynamical model for a combined low-thrust CR3BP environment
+ *  \file DynamicsModel_cr3bp_lt.hpp
+ *	\brief Dynamical model for a combined low-thrust CR3BP environment
  *	
- *	@author Andrew Cox
- *	@version March 3, 2017
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version March 3, 2017
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -31,8 +31,8 @@
 
 namespace astrohelion{
 /**
- *	@ingroup model cr3bp_lt
- *	@brief Derivative of DynamicsModel, specific to the CR3BP-LT
+ *	\ingroup model cr3bp_lt
+ *	\brief Derivative of DynamicsModel, specific to the CR3BP-LT
  *
  *	Under construction. Simulation is fully supported in this model,
  *	but the corrections process will fall back to the base model 
@@ -41,52 +41,52 @@ namespace astrohelion{
 class DynamicsModel_cr3bp_lt : public DynamicsModel{
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	DynamicsModel_cr3bp_lt();
 	DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt&);
 	~DynamicsModel_cr3bp_lt() {}
-	//@}
+	//\}
 
 	DynamicsModel_cr3bp_lt& operator=(const DynamicsModel_cr3bp_lt&);
 
 	/**
-	 *  @name Core Functions
-	 *  @{
+	 *  \name Core Functions
+	 *  \{
 	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
-	std::vector<double> getAccel(const SysData*, double, std::vector<double>) const;
-	//@}
+	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
+	//\}
 
 	/**
-	 *  @name Static Calculations
-	 *  @{
+	 *  \name Static Calculations
+	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
 	static double getJacobi(const double[], double);
-	//@}
+	//\}
 	
 	/**
-	 *  @name Simulation Support Functions
-	 *  @{
+	 *  \name Simulation Support Functions
+	 *  \{
 	 */
-	void sim_saveIntegratedData(const double*, double, Traj*) const;
-	bool sim_locateEvent(Event, Traj*, const double*, double, double, Verbosity_tp) const;
+	void sim_saveIntegratedData(const double*, double, Traj*, EOM_ParamStruct*) const;
+	bool sim_locateEvent(Event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const;
-	//@}
+	//\}
 
 	/**
-	 *  @name Multiple Shooting Support Functions
-	 *  @{
+	 *  \name Multiple Shooting Support Functions
+	 *  \{
 	 */
 	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
-	//@}
+	//\}
 };
 
 }

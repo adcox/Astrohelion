@@ -1,7 +1,7 @@
 /**
- *	@file AllIncludes.hpp
+ *	\file AllIncludes.hpp
  *
- *	@brief Provides easy include for all headers in the Core library
+ *	\brief Provides easy include for all headers in the Core library
  */
 
 #include "AsciiOutput.hpp"
@@ -10,6 +10,7 @@
 #include "Calculations.hpp"
 #include "Common.hpp"
 #include "Constraint.hpp"
+#include "ControlLaw_cr3bp_lt.hpp"
 #include "CorrectionEngine.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
@@ -21,6 +22,7 @@
 #include "Nodeset.hpp"
 #include "Nodeset_bc4bp.hpp"
 #include "Nodeset_cr3bp.hpp"
+#include "Nodeset_cr3bp_lt.hpp"
 #include "Segment.hpp"
 #include "SimEngine.hpp"
 #include "SysData.hpp"

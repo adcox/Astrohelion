@@ -1,10 +1,10 @@
 /**
- *  @file Nodeset.hpp
- *	@brief 
+ *  \file Nodeset.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,9 +38,11 @@ class Event;
 class Node;
 class Traj;
 
+static const char *VARNAME_NODE = "Node";
+
 /**
- *	@ingroup traj
- *	@brief Similar to Traj, but only holds state data at specific "nodes"
+ *	\ingroup traj
+ *	\brief Similar to Traj, but only holds state data at specific "nodes"
  * 
  *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
  *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
@@ -51,15 +53,15 @@ class Traj;
  *
  *	@see Node
  *
- *	@author Andrew Cox
- *	@version September 2, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 2, 2015
+ *	\copyright GNU GPL v3.0
  */
 class Nodeset : public BaseArcset{
 
 public:
 	/**
-	 *	@brief Node distribution type
+	 *	\brief Node distribution type
 	 *
 	 *	Specified how nodes are distributed along an integrated trajectory
 	 */
@@ -70,8 +72,8 @@ public:
 	};
 
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Nodeset(const SysData*);
 	Nodeset(const Nodeset&);
@@ -81,34 +83,36 @@ public:
 	virtual ~Nodeset();
 	virtual baseArcsetPtr create(const SysData*) const;
 	virtual baseArcsetPtr clone() const;
-	//@}
+	//\}
 
 	// Operators
 	friend Nodeset operator +(const Nodeset&, const Nodeset&);
 	virtual Nodeset& operator +=(const Nodeset&);
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
 	int createNodesAtEvent(int, Event, double minTimeDiff = 1e-2);
 	virtual int createNodesAtEvents(int, std::vector<Event>, double minTimeDiff = 1e-2);
-	//@}
+	//\}
 	
 	// Utility Functions
-	virtual void readFromMat(const char*);
+	void readFromMat(const char*);
 	virtual void print() const;
 	void reverseOrder();
-	virtual void saveToMat(const char*) const;
+	void saveToMat(const char*) const;
 
 protected:
-
-	void initFromICs(std::vector<double>, double, double, int, NodeDistro_tp);
-	void initFromICs_time(std::vector<double>, double, double, int);
-	void initFromICs_arclength(std::vector<double>, double, double, int);
+	virtual void saveCmds(mat_t*) const;
+	virtual void readCmds(mat_t*);
+	
+	void initFromICs(std::vector<double>, double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
+	void initFromICs_time(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
+	void initFromICs_arclength(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	void initFromTraj(Traj, int, NodeDistro_tp);
 
 };

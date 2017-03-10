@@ -1,10 +1,10 @@
 /**
- *  @file FamMember_cr3bp.hpp
- *	@brief 
+ *  \file FamMember_cr3bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -43,8 +43,8 @@ class Traj_cr3bp;
 class SysData_cr3bp;
 
 /**
- *	@ingroup traj cr3bp
- *	@brief A data object to store information about a family member
+ *	\ingroup traj cr3bp
+ *	\brief A data object to store information about a family member
  *	
  *	The purpose of this object is to store just enough information to re-create the
  *	orbit using the simulation engine with additional variables to describe the orbit
@@ -53,21 +53,21 @@ class SysData_cr3bp;
 class FamMember_cr3bp : public Core{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		FamMember_cr3bp(){}
 		FamMember_cr3bp(double*, double, double, double, double, double);
 		FamMember_cr3bp(const Traj_cr3bp);
 		FamMember_cr3bp(const FamMember_cr3bp&);
 		~FamMember_cr3bp();
-		//@}
+		//\}
 
 		FamMember_cr3bp& operator= (const FamMember_cr3bp&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		std::vector<cdouble> getEigVals() const;
 		MatrixXRcd getEigVecs() const;
@@ -88,7 +88,7 @@ class FamMember_cr3bp : public Core{
 		void setXAmplitude(double);
 		void setYAmplitude(double);
 		void setZAmplitude(double);
-		//@}
+		//\}
 
 		Traj_cr3bp toTraj(const SysData_cr3bp*);
 

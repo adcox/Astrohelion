@@ -6,15 +6,18 @@
 
 #include "AsciiOutput.hpp"
 #include "Constraint.hpp"
+#include "ControlLaw_cr3bp_lt.hpp"
 #include "CorrectionEngine.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Node.hpp"
-#include "Nodeset_cr3bp.hpp"
 #include "Nodeset_bc4bp.hpp"
+#include "Nodeset_cr3bp.hpp"
+#include "Nodeset_cr3bp_lt.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
+#include "SysData_cr3bp_lt.hpp"
 #include "Traj_bc4bp.hpp"
 #include "Utilities.hpp"
 
@@ -207,3 +210,28 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 
 	delete bcSet;
 }//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
+	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
+
+	CorrectionEngine corrector;
+
+	SysData_cr3bp_lt ltData("earth", "moon", 12e-3, 1500, 14);
+	Nodeset_cr3bp_lt ltSet(&ltData, ic, 2.77, 5, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+
+	corrector.multShoot(&ltSet, NULL);
+
+	ltSet.saveToMat("data/ltSet.mat");
+	Nodeset_cr3bp_lt temp(&ltData);
+	temp.readFromMat("data/ltSet.mat");
+
+	BOOST_CHECK(ltSet.getStateByIx(-1) == temp.getStateByIx(-1));
+	BOOST_CHECK(temp.getCtrlLawByIx(0) == ltSet.getCtrlLawByIx(0));
+	BOOST_CHECK(ltSet.getCtrlLawByIx(0) == ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	BOOST_CHECK(ltSet.getTOFByIx(-1) == temp.getTOFByIx(-1));
+}//====================================================
+
+
+
+
+

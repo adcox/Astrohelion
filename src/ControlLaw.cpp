@@ -1,7 +1,7 @@
 /**
- *  @file ControlLaw.cpp
- *  @author Andrew Cox
- *  @version March 3, 2017
+ *  \file ControlLaw.cpp
+ *  \author Andrew Cox
+ *  \version March 3, 2017
  */
 /*
  *	Astrohelion 

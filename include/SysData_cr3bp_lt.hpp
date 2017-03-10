@@ -1,10 +1,10 @@
 /**
- *  @file SysData_cr3bp_lt.hpp
- *	@brief 
+ *  \file SysData_cr3bp_lt.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -35,27 +35,27 @@
 namespace astrohelion{
 
 /**
- *	@ingroup model
- *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
+ *	\ingroup model
+ *	\brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
 class SysData_cr3bp_lt : public SysData_cr3bp{
 
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		SysData_cr3bp_lt();
 		SysData_cr3bp_lt(std::string, std::string, double, double, double);
 		SysData_cr3bp_lt(const SysData_cr3bp_lt&);
 		SysData_cr3bp_lt(const char*);
-		//@}
+		//\}
 
 		SysData_cr3bp_lt& operator=(const SysData_cr3bp_lt&);
 		
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
@@ -70,7 +70,7 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		void setMassDim(double);
 		void setThrust(double);
 		void setThrustDim(double);
-		//@}
+		//\}
 		
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;

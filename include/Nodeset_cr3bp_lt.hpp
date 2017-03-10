@@ -1,5 +1,5 @@
 /**
- * @file Nodeset_cr3bp_lt.hpp
+ * \file Nodeset_cr3bp_lt.hpp
  *
  */
 /*
@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Nodeset.hpp"
+#include "ControlLaw.hpp"
 
 namespace astrohelion{
 
@@ -50,8 +51,10 @@ public:
 	 *  \{
 	 */
 	Nodeset_cr3bp_lt(const SysData_cr3bp_lt*);
-	Nodeset_cr3bp_lt(const SysData_cr3bp_lt*, const double[7], double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
-	Nodeset_cr3bp_lt(const SysData_cr3bp_lt*, std::vector<double>, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
+	Nodeset_cr3bp_lt(const SysData_cr3bp_lt*, const double[7], double, int, NodeDistro_tp type = NodeDistro_tp::TIME, 
+		unsigned int ctrlLawID = ControlLaw::NO_CTRL);
+	Nodeset_cr3bp_lt(const SysData_cr3bp_lt*, std::vector<double>, double, int, NodeDistro_tp type = NodeDistro_tp::TIME,
+		unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	Nodeset_cr3bp_lt(Traj_cr3bp_lt, int, NodeDistro_tp);
 
 	Nodeset_cr3bp_lt(const Nodeset_cr3bp_lt&, int, int);

@@ -1,10 +1,10 @@
 /**
- *  @file BodyData.hpp
- *	@brief Stores information about a celestial body
+ *  \file BodyData.hpp
+ *	\brief Stores information about a celestial body
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -33,32 +33,32 @@
 
 namespace astrohelion{
 /**
- *	@ingroup model
- *	@brief The body data object provides a way to store and retrieve information about different
+ *	\ingroup model
+ *	\brief The body data object provides a way to store and retrieve information about different
  *	celestial bodies. 
  *
  *	This may be supplemented/usurped by calls to SPICE in the future.
  *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 15, 2015
+ *	\copyright GNU GPL v3.0
  */
 class BodyData : public Core{
 	public:
 
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		BodyData();	// Copy constructor is defined by compiler, should be fine
 		BodyData(std::string);
 		BodyData(int);
 		BodyData(double m, double R, double r, double mu, std::string name, std::string parent);
-		/** @} */
+		/** \} */
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		double getBodyRad();
 		double getMass();
@@ -75,7 +75,7 @@ class BodyData : public Core{
 		void setGravParam(double);
 		void setName(std::string);
 		void setParent(std::string);
-		/** @} */
+		/** \} */
 		
 		void print();
 	private:

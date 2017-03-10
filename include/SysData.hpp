@@ -1,10 +1,10 @@
 /**
- *  @file SysData.hpp
- *	@brief 
+ *  \file SysData.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -41,7 +41,7 @@ class DynamicsModel;
 class ControlLaw;
 
 /**
- *	@brief Specifies the type of dynamical system
+ *	\brief Specifies the type of dynamical system
  *	
  *	Describes the type of system described by this data object. This
  *	is useful when a function or object specifies only the super-class
@@ -58,8 +58,8 @@ enum class SysData_tp {
 };
 
 /**
- *	@ingroup model
- *	@brief Contains information about a system, like mass ratio, primary names, etc.
+ *	\ingroup model
+ *	\brief Contains information about a system, like mass ratio, primary names, etc.
  *
  *	This object is a super-class for system data objects, "system" being
  *	a dynamical system or model. This class is an abstract base class
@@ -67,9 +67,9 @@ enum class SysData_tp {
  *	object. Other derivative classes can be instantiated as objects and have
  *	variables and functions specific to different dynamical systems.
  *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 15, 2015
+ *	\copyright GNU GPL v3.0
  */
 class SysData : public Core{
 
@@ -85,15 +85,15 @@ class SysData : public Core{
 		friend bool operator !=(const SysData&, const SysData&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		double getCharL() const;
 		double getCharM() const;
 		double getCharT() const;
 
 		/**
-		 *	@brief Retrieve the model that governs the motion for this system type
+		 *	\brief Retrieve the model that governs the motion for this system type
 		 *	@return the model that governs the motion for this system type
 		 */
 		virtual const DynamicsModel* getDynamicsModel() const = 0;
@@ -109,13 +109,13 @@ class SysData : public Core{
 		int getPrimID(int n) const;
 		SysData_tp getType() const;
 		std::string getTypeStr() const;
-		//@}
+		//\}
 		
 		virtual void saveToMat(const char*) const;
 
 		/**
-		 *	@brief Save the system data object to a file
-		 *	@param matFile a pointer to an open mat file
+		 *	\brief Save the system data object to a file
+		 *	\param matFile a pointer to an open mat file
 		 */
 		virtual void saveToMat(mat_t *matFile) const = 0;
 		
@@ -147,8 +147,8 @@ class SysData : public Core{
 		void copyData(const SysData&);
 
 		/**
-		 *  @brief Read the system data object from a Matlab data file
-		 *  @param matfile A pointer to the open matfile
+		 *  \brief Read the system data object from a Matlab data file
+		 *  \param matfile A pointer to the open matfile
 		 */
 		virtual void readFromMat(mat_t *matfile) = 0;
 };

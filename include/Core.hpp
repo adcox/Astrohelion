@@ -1,7 +1,7 @@
 /** 
- *	@file Core.hpp
+ *	\file Core.hpp
  *
- *	@brief Contains functions and variables that are global for the entire library
+ *	\brief Contains functions and variables that are global for the entire library
  *
  *	Note to end user: You do NOT need to include this header
  *
@@ -33,35 +33,35 @@
  */
 
 /**
- * @defgroup engine Engines
+ * \defgroup engine Engines
  * Contains all engine objects and methods
  */ 
 
-/** @defgroup traj Trajectory Representations
+/** \defgroup traj Trajectory Representations
  * Contains objects that represent trajectories in one way or another
  */
 
-/** @defgroup model Model
+/** \defgroup model Model
  * Contains objects that represent models of physical objects and systems
  */
 
-/** @defgroup util Utility
+/** \defgroup util Utility
  * Contains all utility objects and methods
  */
 
-/** @defgroup 2bp 2BP
+/** \defgroup 2bp 2BP
  * Contains objects and methods that handle 2BP data
  */ 
 
-/** @defgroup cr3bp CR3BP
+/** \defgroup cr3bp CR3BP
  * Contains objects and methods that handle CR3BP data
  */ 
 
-/** @defgroup bc4bp BC4BP
+/** \defgroup bc4bp BC4BP
  * Contains objects and methods that handle BC4BP data
  */
 
-/** @defgroup cr3bp_lt CR3BP-LT
+/** \defgroup cr3bp_lt CR3BP-LT
  * Contains objects and methods that handle low-thrust CR3BP data
  */
 
@@ -71,7 +71,7 @@
 #include <map>
 
 /**
- * @brief A namespace to contain all objects that are part of
+ * \brief A namespace to contain all objects that are part of
  * the Astrohelion library; prevent clashes with other libraries
  */
 namespace astrohelion{
@@ -110,7 +110,7 @@ struct Body_Data{
 }; // END OF BODY_DATA
 
 /**
- *  @brief A structure that contains default settings and functions to load
+ *  \brief A structure that contains default settings and functions to load
  *  settings from an XML file
  */
 class Core_Settings{
@@ -133,7 +133,7 @@ public:
 }; // END OF Core_Settings
 
 /**
- *	@brief a structure that contains functions to initialize and unload 
+ *	\brief a structure that contains functions to initialize and unload 
  *	global library stuff
  */
 class Core_Initializer {
@@ -148,7 +148,7 @@ public:
 };
 
 /**
- *  @brief An object that serves as a parent to all Core objects.
+ *  \brief An object that serves as a parent to all Core objects.
  *  @details This object's sole purpose is to load settings from
  *  an XML file when any of the Core objects are instantiated. Static
  *  objects are used to ensure that only one copy of the initializer
@@ -156,9 +156,6 @@ public:
  */
 class Core{
 public:
-	// static Core_Initializer initializer;				//!< Create one to initialize the system	
-	// static bool bIsInit;								//!< Flag to prevent initializations happing lots of times
-
 	Core();												//!< Default constructor
 	virtual ~Core();									//!< Default destructor
 

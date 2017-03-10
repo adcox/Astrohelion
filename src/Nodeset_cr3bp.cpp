@@ -1,10 +1,10 @@
 /**
- *  @file Nodeset_cr3bp.cpp
- *	@brief Derivative of Nodeset, specific to CR3BP
+ *  \file Nodeset_cr3bp.cpp
+ *	\brief Derivative of Nodeset, specific to CR3BP
  *
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
  
 /*
@@ -39,20 +39,20 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Create a nodeset with specified system data
- *	@param pData system data object
+ *	\brief Create a nodeset with specified system data
+ *	\param pData system data object
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData) : Nodeset(pData){}
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	\brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
- *	@param pData a pointer to a system data object that describes the model to integrate in
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type (default is NodeDistro_tp::TIME)
+ *	\param pData a pointer to a system data object that describes the model to integrate in
+ *	\param IC a set of initial conditions, non-dimensional units
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC
+ *	\param type node distribution type (default is NodeDistro_tp::TIME)
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, const double IC[6], double tof,
 	int numNodes, NodeDistro_tp type) : Nodeset(pData){
@@ -62,14 +62,14 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, const double IC[6], dou
 }//======================================================================
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions for some time, then split the
+ *	\brief Compute a set of nodes by integrating from initial conditions for some time, then split the
  *	integrated trajectory into pieces (nodes).
  *
- *	@param pData a pointer to a system data object that describes the model to integrate in
- *	@param IC a set of initial conditions, non-dimensional units
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
- *	@param type node distribution type (default is NodeDistro_tp::TIME)
+ *	\param pData a pointer to a system data object that describes the model to integrate in
+ *	\param IC a set of initial conditions, non-dimensional units
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC
+ *	\param type node distribution type (default is NodeDistro_tp::TIME)
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, std::vector<double> IC, double tof,
 	int numNodes, NodeDistro_tp type) : Nodeset(pData){
@@ -78,15 +78,15 @@ Nodeset_cr3bp::Nodeset_cr3bp(const SysData_cr3bp *pData, std::vector<double> IC,
 }//=====================================================================
 
 /**
- *	@brief Create a noteset by splitting a trajectory into pieces (nodes)
+ *	\brief Create a noteset by splitting a trajectory into pieces (nodes)
  *
  *	This function relies on integration to generate nodes, so do not use this if
  *	the trajectory was created by a linearization or other method that uses something
  *	other than the non-linear dynamics to compute points along the trajectory.
  *
- *	@param traj the trajectory to split
- *	@param numNodes the number of nodes.
- *	@param type the node distribution type
+ *	\param traj the trajectory to split
+ *	\param numNodes the number of nodes.
+ *	\param type the node distribution type
  */
 Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes,
 	NodeDistro_tp type) : Nodeset(traj.getSysData()){
@@ -95,36 +95,36 @@ Nodeset_cr3bp::Nodeset_cr3bp(Traj_cr3bp traj, int numNodes,
 }//===========================================
 
 /**
- *	@brief Create a nodeset as a subset of another
- *	@param orig Original nodeset
- *	@param first index of the first node to be included in the new nodeset
- *	@param last index of the last node to be included in the new nodeset
+ *	\brief Create a nodeset as a subset of another
+ *	\param orig Original nodeset
+ *	\param first index of the first node to be included in the new nodeset
+ *	\param last index of the last node to be included in the new nodeset
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const Nodeset_cr3bp &orig, int first,
 	int last) : Nodeset(orig, first, last){}
 
 /**
- *	@brief Copy input nodeset. 
+ *	\brief Copy input nodeset. 
  *
  *	This function calls the base-class copy constructor to
  *	handle copying the generic fields like state and tofs
- *	@param n a nodeset
+ *	\param n a nodeset
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const Nodeset_cr3bp& n) : Nodeset(n) {}
 
 /**
- *	@brief Create a CR3BP nodeset from its base class
- *	@param a an arc data reference
+ *	\brief Create a CR3BP nodeset from its base class
+ *	\param a an arc data reference
  */
 Nodeset_cr3bp::Nodeset_cr3bp(const BaseArcset &a) : Nodeset(a) {}
 
 /**
- *  @brief Create a new nodeset object on the stack
+ *  \brief Create a new nodeset object on the stack
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param pSys pointer to a system data object; should be a 
+ *  \param pSys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created nodeset
  */
@@ -134,7 +134,7 @@ baseArcsetPtr Nodeset_cr3bp::create( const SysData *pSys) const{
 }//====================================================
 
 /**
- *  @brief Create a new nodeset object on the stack that is a 
+ *  \brief Create a new nodeset object on the stack that is a 
  *  duplicate of this object
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
@@ -155,10 +155,10 @@ baseArcsetPtr Nodeset_cr3bp::clone() const{
 //-----------------------------------------------------
 
 /**
- *  @brief Get the Jacobi constant value associated with a node
+ *  \brief Get the Jacobi constant value associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
+ *  \param id the ID of a node
  *  @return the Jacobi constant value
  *  @throw Exception if <tt>id</tt> is out of bounds
  */
@@ -170,8 +170,8 @@ double Nodeset_cr3bp::getJacobi(int id) const{
 }//====================================================
 
 /**
- *	@brief Retrieve the value of Jacobi's Constant at the specified step or node
- *	@param ix step index; if < 0, counts backwards from end of nodeset
+ *	\brief Retrieve the value of Jacobi's Constant at the specified step or node
+ *	\param ix step index; if < 0, counts backwards from end of nodeset
  *	@return Jacobi at the specified step or node
  *	@throw Exception if <tt>ix</tt> is out of bounds
  */
@@ -186,11 +186,11 @@ double Nodeset_cr3bp::getJacobiByIx(int ix) const{
 }//====================================================
 
 /**
- *  @brief Set the Jacobi constant value associated with a node
+ *  \brief Set the Jacobi constant value associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
- *  @param jacobi Jacobi constant value
+ *  \param id the ID of a node
+ *  \param jacobi Jacobi constant value
  *  @throw Exception if <tt>id</tt> is out of bounds
  */
 void Nodeset_cr3bp::setJacobi(int id, double jacobi){
@@ -201,9 +201,9 @@ void Nodeset_cr3bp::setJacobi(int id, double jacobi){
 }//====================================================
 
 /**
- *	@brief Set Jacobi at the specified step or node
- *	@param ix step index; if < 0, counts backwards from end of nodeset
- *	@param val value of Jacobi
+ *	\brief Set Jacobi at the specified step or node
+ *	\param ix step index; if < 0, counts backwards from end of nodeset
+ *	\param val value of Jacobi
  *	@throw Exception if <tt>ix</tt> is out of bounds
  */
 void Nodeset_cr3bp::setJacobiByIx(int ix, double val){

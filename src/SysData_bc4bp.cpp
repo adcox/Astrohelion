@@ -1,10 +1,10 @@
 /**
- *	@file SysData_bc4bp.cpp
- *	@brief Derivative of SysData, specific to BCR4BPR
+ *	\file SysData_bc4bp.cpp
+ *	\brief Derivative of SysData, specific to BCR4BPR
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -50,7 +50,7 @@ namespace astrohelion{
 double SysData_bc4bp::REF_EPOCH = 172650161;	// 2005/06/21 18:21:35
 
 /**
- *	@brief Default constructor
+ *	\brief Default constructor
  */
 SysData_bc4bp::SysData_bc4bp() : SysData(){
 	numPrimaries = 3;
@@ -59,10 +59,10 @@ SysData_bc4bp::SysData_bc4bp() : SysData(){
 }//========================================
 
 /**
- *	@brief Create a system data object using data from the two primaries
- *	@param P1 the name of the larger primary
- *	@param P2 the name of the medium primary; P2 must orbit P1
- *	@param P3 the name of the smallest primary; P3 must orbit P2
+ *	\brief Create a system data object using data from the two primaries
+ *	\param P1 the name of the larger primary
+ *	\param P2 the name of the medium primary; P2 must orbit P1
+ *	\param P3 the name of the smallest primary; P3 must orbit P2
  */
 SysData_bc4bp::SysData_bc4bp(std::string P1, std::string P2, std::string P3){
 	numPrimaries = 3;
@@ -73,10 +73,10 @@ SysData_bc4bp::SysData_bc4bp(std::string P1, std::string P2, std::string P3){
 }//===================================================
 
 /**
- *  @brief Load the system data object from a Matlab data file
+ *  \brief Load the system data object from a Matlab data file
  * 
- *  @param filepath path to the data file
- *  @throws Exception if the data file cannot be loaded
+ *  \param filepath path to the data file
+ *  \throws Exception if the data file cannot be loaded
  */
 SysData_bc4bp::SysData_bc4bp(const char *filepath){
 	numPrimaries = 3;
@@ -93,11 +93,11 @@ SysData_bc4bp::SysData_bc4bp(const char *filepath){
 }//===================================================
 
 /**
- *	@brief Initialize all data fiels using the primaries' names
- *	@param P1 name of the largest primary in the entire system
- *	@param P2 name of the larger primary in the secondary system
- *	@param P3 name of the smaller primary int he secondary system
- *	@throws Exception if the system architecture is incorrect, i.e.
+ *	\brief Initialize all data fiels using the primaries' names
+ *	\param P1 name of the largest primary in the entire system
+ *	\param P2 name of the larger primary in the secondary system
+ *	\param P3 name of the smaller primary int he secondary system
+ *	\throws Exception if the system architecture is incorrect, i.e.
  *	P1 must be the parent of P2 and P2 must be the parent of P3
  */
 void SysData_bc4bp::initFromPrimNames(std::string P1, std::string P2, std::string P3){
@@ -152,14 +152,14 @@ void SysData_bc4bp::initFromPrimNames(std::string P1, std::string P2, std::strin
 }//===================================================
 
 /**
- *	@brief Copy constructor
- *	@param d
+ *	\brief Copy constructor
+ *	\param d
  */
 SysData_bc4bp::SysData_bc4bp(const SysData_bc4bp &d) : SysData(d){}
 
 /**
- *	@brief Copy operator; makes a clean copy of a data object into this one
- *	@param d a BCR4BPR system data object
+ *	\brief Copy operator; makes a clean copy of a data object into this one
+ *	\param d a BCR4BPR system data object
  *	@return this system data object
  */
 SysData_bc4bp& SysData_bc4bp::operator= (const SysData_bc4bp &d){
@@ -168,7 +168,7 @@ SysData_bc4bp& SysData_bc4bp::operator= (const SysData_bc4bp &d){
 }//=====================================
 
 /**
- *	@brief Retrieve the model that governs the motion for this system type
+ *	\brief Retrieve the model that governs the motion for this system type
  *	@return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_bc4bp::getDynamicsModel() const { return &model; }
@@ -202,7 +202,7 @@ double SysData_bc4bp::getK() const {
 }//====================================================
 
 /**
- *  @brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)
+ *  \brief Retrieve the epoch associated with T = 0 (seconds, J2000, UTC)
  *  @details The angles Theta0 and Phi0 coincide with time T = 0, but this is
  *  NOT the J2000 epoch T = 0; Rather, T = 0 is the epoch relative to some reference
  *  epoch T0, which is returned by this function.
@@ -228,45 +228,45 @@ double SysData_bc4bp::getPhi0() const { return otherParams.at(5); }
 double SysData_bc4bp::getGamma() const { return otherParams.at(6); }
 
 /**
- *  @brief Set the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
+ *  \brief Set the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
  *  @details The angles Theta0 and Phi0 coincide with time T = 0, but this is
  *  NOT the J2000 epoch T = 0; Rather, T = 0 is the epoch relative to some reference
  *  epoch T0, which is set by this function.
  * 
- *  @param T the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
+ *  \param T the reference epoch associated with T = 0 for this system (seconds, J2000, UTC)
  */
 void SysData_bc4bp::setEpoch0(double T){ otherParams.at(7) = T; }
 
 /**
- *	@brief Set the angle theta0
- *	@param t angle in radians
+ *	\brief Set the angle theta0
+ *	\param t angle in radians
  */
 void SysData_bc4bp::setTheta0(double t){ otherParams.at(4) = t; }
 
 /**
- *	@brief Set the angle phi0
- *	@param t angle in radians
+ *	\brief Set the angle phi0
+ *	\param t angle in radians
  */
 void SysData_bc4bp::setPhi0(double t){ otherParams.at(5) = t; }
 
 /**
- *	@brief Set the angle gamma
- *	@param t angle in radians
+ *	\brief Set the angle gamma
+ *	\param t angle in radians
  */
 void SysData_bc4bp::setGamma(double t){ otherParams.at(6) = t; }
 
 /**
- *  @brief Save the system data to a matlab file
+ *  \brief Save the system data to a matlab file
  * 
- *  @param filepath path to the data file
+ *  \param filepath path to the data file
  */
 void SysData_bc4bp::saveToMat(const char *filepath) const{
 	SysData::saveToMat(filepath);
 }//==================================================
 
 /**
- *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
- *	@param matFile a pointer to the .mat file
+ *	\brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	\param matFile a pointer to the .mat file
  */
 void SysData_bc4bp::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
@@ -325,8 +325,8 @@ void SysData_bc4bp::saveToMat(mat_t *matFile) const{
 }//===================================================
 
 /**
- *	@brief Load system data from a mat file
- *	@param matFile a pointer to the mat file in question
+ *	\brief Load system data from a mat file
+ *	\param matFile a pointer to the mat file in question
  */
 void SysData_bc4bp::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);

@@ -27,7 +27,7 @@ double state5[] = {5, 0, 0, 0, 5, 0};
 int ivID = Linkable::INVALID_ID;
 
 /**
- *  @brief Create a basic Linkable object (in this case, a node) and test the functions
+ *  \brief Create a basic Linkable object (in this case, a node) and test the functions
  *  to ensure everything works properly
  */
 void testCreateLinkable(){
@@ -85,7 +85,7 @@ void testCreateLinkable(){
 }//====================================================
 
 /**
- *  @brief Create an arcset out of a set of nodes and segments; test basic_arcset functionality
+ *  \brief Create an arcset out of a set of nodes and segments; test basic_arcset functionality
  */
 void testCreateArcset(){
 	Nodeset set(&sys);
@@ -131,7 +131,7 @@ void testCreateArcset(){
 }//==================================================
 
 /**
- *  @brief Try to delete a segment from a simiple 2-node set
+ *  \brief Try to delete a segment from a simiple 2-node set
  */
 void tryDeleteSeg(){
 	Nodeset set(&sys);
@@ -151,7 +151,7 @@ void tryDeleteSeg(){
 }//==================================================
 
 /**
- *  @brief Try to delete the first node in a set; this should throw an exception
+ *  \brief Try to delete the first node in a set; this should throw an exception
  * 
  *  @return wether or not the test was successful
  */
@@ -175,7 +175,7 @@ bool tryDeleteFirstNode(){
 }//==================================================
 
 /**
- *  @brief Try to delete the last node in a set; this should throw an exception
+ *  \brief Try to delete the last node in a set; this should throw an exception
  * 
  *  @return wether or not the test was successful
  */
@@ -198,7 +198,7 @@ bool tryDeleteLastNode(){
 }//==================================================
 
 /**
- *  @brief Attempt to delete a node from the middle of a linear-time arcset
+ *  \brief Attempt to delete a node from the middle of a linear-time arcset
  *  @details Make sure exceptions are thrown when they should be and that the arcset
  *  "heals" itself properly
  */
@@ -289,7 +289,7 @@ void tryDeleteMiddleNode(){
 }//==================================================
 
 /**
- *  @brief Same procedure as tryDeleteMiddleNode(), but using an arcset that
+ *  \brief Same procedure as tryDeleteMiddleNode(), but using an arcset that
  *  progresses linearly in reverse time
  */
 void tryDeleteMiddleNode_revTime(){
@@ -385,7 +385,7 @@ void tryDeleteMiddleNode_revTime(){
 }//====================================================
 
 /**
- *  @brief Try to delete a node that is the origin of two arcs.
+ *  \brief Try to delete a node that is the origin of two arcs.
  *  @details Make sure the arcset is healed properly.
  */
 void tryDeleteMiddleNode_doubleSource1(){
@@ -440,7 +440,7 @@ void tryDeleteMiddleNode_doubleSource1(){
 }//==================================================
 
 /**
- *  @brief Try to delete a node that is the origin of two arcs where
+ *  \brief Try to delete a node that is the origin of two arcs where
  *  the forward time segment has no terminal point
  */
 void tryDeleteMiddleNode_doubleSource2(){
@@ -468,7 +468,7 @@ void tryDeleteMiddleNode_doubleSource2(){
 }//==================================================
 
 /**
- *  @brief Try to delete a node that is the origin of two arcs where
+ *  \brief Try to delete a node that is the origin of two arcs where
  *  the reverse time segment has no terminal point
  */
 void tryDeleteMiddleNode_doubleSource3(){
@@ -877,7 +877,7 @@ void testPutInChrono2(){
 }//====================================================
 
 /**
- *  @brief Try appending sets; all these cases should work.
+ *  \brief Try appending sets; all these cases should work.
  */
 void tryAppendSet(){
 	Nodeset forwardSet(&sys);
@@ -1154,7 +1154,7 @@ void tryAppendSet(){
 }//=================================================
 
 /**
- *  @brief Try appending sets; all these cases should throw errors
+ *  \brief Try appending sets; all these cases should throw errors
  */
 void tryAppendSet_errs(){
 	Nodeset forwardSet(&sys);

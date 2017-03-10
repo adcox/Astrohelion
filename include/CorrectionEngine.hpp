@@ -1,10 +1,10 @@
 /**
- *  @file CorrectionEngine.hpp
- *	@brief Performs corrections on a nodeset subject to a set of constraints
+ *  \file CorrectionEngine.hpp
+ *	\brief Performs corrections on a nodeset subject to a set of constraints
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -54,8 +54,8 @@ class SysData_bc4bp;
 
 
 /**
- *	@ingroup engine
- *	@brief An engine object to perform corrections, such as multiple shooting.
+ *	\ingroup engine
+ *	\brief An engine object to perform corrections, such as multiple shooting.
  *
  *	### Multiple Shooting Algorithm
  *	The multiple shooting algorithm is initiated by calling the multShoot() function. 
@@ -70,28 +70,28 @@ class SysData_bc4bp;
  *	it may be disadvantageous to scale the variables. In this case, it may be necessary to 
  *	reformulate the problem to shift large variables.
  *	
- *	@author Andrew Cox
- *	@version August 3, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version August 3, 2015
+ *	\copyright GNU GPL v3.0
  */
 class CorrectionEngine : public Core, public Engine{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		/** Default, do-nothing constructor */
 		CorrectionEngine(){}
 		CorrectionEngine(const CorrectionEngine&);
 		~CorrectionEngine();
-		//@}
+		//\}
 
 		// Operators
 		CorrectionEngine& operator =(const CorrectionEngine &e);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		int getMaxIts() const;
 		double getTol() const;
@@ -109,22 +109,22 @@ class CorrectionEngine : public Core, public Engine{
 		void setStepScale(double, double limit = 1e-8);
 		void setTol(double);
 		void setVarTime(bool);
-		//@}
+		//\}
 
 		/**
-		 *  @name Correction Algorithms
-		 *  @{
+		 *  \name Correction Algorithms
+		 *  \{
 		 */
 		MultShootData multShoot(const Nodeset*, Nodeset*);
 		MultShootData multShoot(MultShootData, Nodeset*);
-		//@}
+		//\}
 
 		/**
-		 *  @name Utility Functions
-		 *  @{
+		 *  \name Utility Functions
+		 *  \{
 		 */
 		void reset();
-		//@}
+		//\}
 		
 	private:
 

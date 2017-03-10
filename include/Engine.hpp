@@ -1,6 +1,6 @@
 /**
- *  @file Engine.hpp
- *  @brief Contains the base behavior for engine objects
+ *  \file Engine.hpp
+ *  \brief Contains the base behavior for engine objects
  */
 
 /*
@@ -31,12 +31,12 @@ namespace astrohelion{
 // Forward Declarations
 
 /**
- *	@ingroup engine
- *	@brief Contains the base behavior for engine objects
+ *	\ingroup engine
+ *	\brief Contains the base behavior for engine objects
  *
- *	@author Andrew Cox
- *	@version September 9, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 9, 2016
+ *	\copyright GNU GPL v3.0
  */
 class Engine{
 
@@ -45,7 +45,7 @@ public:
 	virtual ~Engine(){}
 
 	/**
-	 *  @brief Retrieve the verbosity (i.e., how many messages will be printed)
+	 *  \brief Retrieve the verbosity (i.e., how many messages will be printed)
 	 *  of the Engine object
 	 *  @return The verbosity of the engine
 	 */
@@ -54,17 +54,17 @@ public:
 	}//================================================
 
 	/**
-	 *  @brief Set the verbosity (i.e., how many messages will be printed)
+	 *  \brief Set the verbosity (i.e., how many messages will be printed)
 	 *  of the Engine object
 	 * 
-	 *  @param v The verbosity of the engine
+	 *  \param v The verbosity of the engine
 	 */
 	void setVerbosity(Verbosity_tp v){
 		verbosity = v;
 	}//================================================
 	
 	/**
-	 *  @brief Resets the engine, including any parameters the user
+	 *  \brief Resets the engine, including any parameters the user
 	 *  may have set
 	 */
 	virtual void reset() = 0;
@@ -72,18 +72,18 @@ public:
 protected:
 
 	/**
-	 *  @brief Make this Engine object the same as the input Engine
+	 *  \brief Make this Engine object the same as the input Engine
 	 *  @details This function is used in copy constructors to avoid
 	 *  code duplication
 	 * 
-	 *  @param e Reference to an Engine object
+	 *  \param e Reference to an Engine object
 	 */
 	void copyBaseEngine(const Engine &e){
 		verbosity = e.verbosity;
 	}//================================================
 
 	/**
-	 *  @brief Reset data storage parts of the engine, but not parameters the user
+	 *  \brief Reset data storage parts of the engine, but not parameters the user
 	 *  has set (i.e., tolerances, etc.)
 	 */
 	virtual void cleanEngine() = 0;

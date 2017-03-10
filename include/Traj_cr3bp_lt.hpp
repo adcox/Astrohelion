@@ -1,10 +1,10 @@
 /**
- *  @file Traj_cr3bp_lt.hpp
- *	@brief 
+ *  \file Traj_cr3bp_lt.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -37,37 +37,37 @@ namespace astrohelion{
 class SysData_cr3bp_lt;
 
 /**
- *	@ingroup traj
- *	@brief A derivative class of the Traj object, which
+ *	\ingroup traj
+ *	\brief A derivative class of the Traj object, which
  *	contains trajectory information specific to the Low Thrust, 
  *	Velocity-Pointing CR3BP
  *
- *	@author Andrew Cox
- *	@version September 2, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 2, 2015
+ *	\copyright GNU GPL v3.0
  */
 class Traj_cr3bp_lt : public Traj_cr3bp{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Traj_cr3bp_lt(const SysData_cr3bp_lt*);
 	Traj_cr3bp_lt(const Traj_cr3bp_lt&);
 	Traj_cr3bp_lt(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const;
-	//@}
+	//\}
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 
 		// Nothing Here!
 
-	//@}
+	//\}
 };
 
 }// END of Astrohelion namespace

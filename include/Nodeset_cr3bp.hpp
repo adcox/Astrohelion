@@ -1,10 +1,10 @@
 /**
- *  @file Nodeset_cr3bp.hpp
- *	@brief 
+ *  \file Nodeset_cr3bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,23 +38,23 @@ class SysData_cr3bp;
 class Traj_cr3bp;
 
 /**
- *	@ingroup traj cr3bp
- *	@brief This derivative of the Nodeset contains additional information for 
+ *	\ingroup traj cr3bp
+ *	\brief This derivative of the Nodeset contains additional information for 
  *	the CR3BP
  *
  *	Nodes are 6-dimensional, with three position states and three velocity states. Times-
  *	of-flight between nodes are recorded in a separate vector.
  *
- *	@author Andrew Cox
- *	@version September 2, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 2, 2015
+ *	\copyright GNU GPL v3.0
  */
 class Nodeset_cr3bp : public Nodeset{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Nodeset_cr3bp(const SysData_cr3bp*);
 	Nodeset_cr3bp(const SysData_cr3bp*, const double[6], double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
@@ -65,19 +65,19 @@ public:
 	Nodeset_cr3bp(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
-	//@}
+	//\}
 
 	// Operators
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 	double getJacobi(int) const;
 	double getJacobiByIx(int) const;
 	void setJacobi(int, double);
 	void setJacobiByIx(int, double);
-	//@}
+	//\}
 };
 
 }

@@ -1,6 +1,6 @@
 /**
- * @file Nodeset_cr3bp_lt.cpp
- * @brief Derivative of Nodeset object, specific to low-thrust CR3BP
+ * \file Nodeset_cr3bp_lt.cpp
+ * \brief Derivative of Nodeset object, specific to low-thrust CR3BP
  */
 /*
  *  Astrohelion 
@@ -35,16 +35,16 @@ namespace astrohelion{
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys) : Nodeset(pSys){}
 
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys, const double ic[7], 
-	double tof, int numNodes, NodeDistro_tp type) : Nodeset(pSys){
+	double tof, int numNodes, NodeDistro_tp type, unsigned int ctrlLaw) : Nodeset(pSys){
 
 	std::vector<double> ic_vec(ic, ic+7);
-	initFromICs(ic_vec, 0, tof, numNodes, type);
+	initFromICs(ic_vec, 0, tof, numNodes, type, ctrlLaw);
 }//====================================================
 
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(const SysData_cr3bp_lt *pSys, std::vector<double> ic, 
-	double tof, int numNodes, NodeDistro_tp type) : Nodeset(pSys){
+	double tof, int numNodes, NodeDistro_tp type, unsigned int ctrlLaw) : Nodeset(pSys){
 
-	initFromICs(ic, 0, tof, numNodes, type);
+	initFromICs(ic, 0, tof, numNodes, type, ctrlLaw);
 }//====================================================
 
 Nodeset_cr3bp_lt::Nodeset_cr3bp_lt(Traj_cr3bp_lt traj, int numNodes,

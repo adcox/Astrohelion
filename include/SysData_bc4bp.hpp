@@ -1,10 +1,10 @@
 /**
- *  @file SysData_bc4bp.hpp
- *	@brief 
+ *  \file SysData_bc4bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,25 +38,25 @@
 namespace astrohelion{
 
 /**
- *	@ingroup model bc4bp
- *	@brief This derivative class of the SysData super-class
+ *	\ingroup model bc4bp
+ *	\brief This derivative class of the SysData super-class
  *	contains information specific to the BCR4BPR
  *
- *	@author Andrew Cox
- *	@version May 18, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 18, 2015
+ *	\copyright GNU GPL v3.0
  */
 class SysData_bc4bp : public SysData{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		SysData_bc4bp();
 		SysData_bc4bp(std::string, std::string, std::string);
 		SysData_bc4bp(const SysData_bc4bp&);
 		SysData_bc4bp(const char*);
-		//@}
+		//\}
 
 		SysData_bc4bp& operator=(const SysData_bc4bp&);
 		
@@ -64,8 +64,8 @@ class SysData_bc4bp : public SysData{
 		const DynamicsModel* getDynamicsModel() const;
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		double getMu() const;
 		double getNu() const;
@@ -81,7 +81,7 @@ class SysData_bc4bp : public SysData{
 		void setTheta0(double t);
 		void setPhi0(double p);
 		void setGamma(double g);
-		//@}
+		//\}
 		
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;

@@ -10,8 +10,10 @@
 #include "SimEngine.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
+#include "SysData_cr3bp_lt.hpp"
 #include "Traj_bc4bp.hpp"
 #include "Traj_cr3bp.hpp"
+#include "Traj_cr3bp_lt.hpp"
 
 using namespace astrohelion;
 
@@ -154,6 +156,89 @@ BOOST_AUTO_TEST_CASE(BC4BP_Event_Stop){
 	
 	std::vector<double> qf = traj.getStateByIx(-1);
 	BOOST_CHECK(std::abs(qf[2]) < engine.getRelTol());
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
+	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+
+	SimEngine engine;
+	Traj_cr3bp_lt traj(&sys);
+	engine.setCtrlLaw(ControlLaw_cr3bp_lt::CONST_C_2D_RIGHT);
+	engine.addEvent(Event(Event_tp::XZ_PLANE, 0, true));
+	engine.runSim(ic, 0, T, &traj);
+
+	std::vector<double> qf = traj.getStateByIx(-1);
+	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+}//====================================================
+
+/**
+ *  \brief Check that an event does not stop integration
+ *  in a CR3BP simulation and that the event is correctly
+ *  located in the simulation
+ */
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
+	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+
+	SimEngine engine;
+	Traj_cr3bp traj(&sys);
+	Event planeCross(Event_tp::XZ_PLANE, 0, false);
+	engine.addEvent(planeCross);
+	engine.setCtrlLaw(ControlLaw_cr3bp_lt::CONST_C_2D_LEFT);
+
+	double tof = 4*PI;
+	engine.runSim(ic, tof, &traj);
+
+	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getRelTol());
+
+	std::vector<Event> events = engine.getEvents();
+	std::vector<SimEventRecord> records = engine.getEventRecords();
+	bool foundEvent = false;
+	for(unsigned int i = 0; i < records.size(); i++){
+		if(events[records[i].eventIx] == planeCross){
+			foundEvent = true;
+			std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+		}
+	}
+	BOOST_CHECK(foundEvent);
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
+	SysData_cr3bp_lt sys("earth", "moon", 1e-3, 1500, 14);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+
+	SimEngine engine;
+	Traj_cr3bp traj(&sys);
+	Event planeCross(Event_tp::XZ_PLANE, 0, true);
+	unsigned int stopCount = 4;
+	planeCross.setStopCount(stopCount);
+	engine.setMakeDefaultEvents(false);
+	engine.addEvent(planeCross);
+	engine.setCtrlLaw(ControlLaw_cr3bp_lt::CONST_C_2D_LEFT);
+	engine.runSim(ic, 10*PI, &traj);
+
+	// Make sure it ended on the event
+	std::vector<double> qf = traj.getStateByIx(-1);
+	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+
+	// Make sure the correct number of events were recorded
+	std::vector<Event> events = engine.getEvents();
+	std::vector<SimEventRecord> records = engine.getEventRecords();
+	BOOST_CHECK(records.size() == stopCount);
+
+	// Make sure each event is valid
+	bool foundEvent = false;
+	for(unsigned int i = 0; i < records.size(); i++){
+		if(events[records[i].eventIx] == planeCross){
+			foundEvent = true;
+			std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+		}
+	}
+	BOOST_CHECK(foundEvent);
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()

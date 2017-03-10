@@ -1,10 +1,10 @@
 /**
- *  @file Traj_cr3bp.cpp
- *	@brief Derivative of Traj, specific to CR3BP
+ *  \file Traj_cr3bp.cpp
+ *	\brief Derivative of Traj, specific to CR3BP
  *
- *	@author Andrew Cox
- *	@version September 2, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 2, 2015
+ *	\copyright GNU GPL v3.0
  */
  
 /*
@@ -41,28 +41,28 @@ namespace astrohelion{
 //-----------------------------------------------------
  
 /**
- *	@brief Create a trajectory for a specific system
- *	@param sys a pointer to a system data object
+ *	\brief Create a trajectory for a specific system
+ *	\param sys a pointer to a system data object
  */
 Traj_cr3bp::Traj_cr3bp(const SysData_cr3bp *sys) : Traj(sys){}
 
 /**
- *	@brief Create a trajectory from another trajectory
- *	@param t a trajectory reference
+ *	\brief Create a trajectory from another trajectory
+ *	\param t a trajectory reference
  */
 Traj_cr3bp::Traj_cr3bp(const Traj_cr3bp &t) : Traj(t){}
 
 /**
- *	@brief Create a trajectory from its base class
- *	@param a an arc data reference
+ *	\brief Create a trajectory from its base class
+ *	\param a an arc data reference
  */
 Traj_cr3bp::Traj_cr3bp(const BaseArcset &a) : Traj(a){}
 
 /**
- *  @brief Load the trajectory from a saved data file
+ *  \brief Load the trajectory from a saved data file
  * 
- *  @param filepath Absolute or relative path to the data file
- *  @param pSys pointer to the system data object. Load the system object
+ *  \param filepath Absolute or relative path to the data file
+ *  \param pSys pointer to the system data object. Load the system object
  *  from the same file using the filepath constructor of the SysData_cr3bp
  *  object
  */
@@ -71,12 +71,12 @@ Traj_cr3bp::Traj_cr3bp(const char* filepath, const SysData_cr3bp *pSys) : Traj(p
 }//====================================================
 
 /**
- *  @brief Create a new trajectory object on the stack
+ *  \brief Create a new trajectory object on the stack
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param sys pointer to a system data object; should be a 
+ *  \param sys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
  *  @return a pointer to the newly created trajectory
  */
@@ -86,7 +86,7 @@ baseArcsetPtr Traj_cr3bp::create( const SysData *sys) const{
 }//====================================================
 
 /**
- *  @brief Create a new trajectory object on the stack that is a 
+ *  \brief Create a new trajectory object on the stack that is a 
  *  duplicate of this object
  *  @details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
@@ -103,7 +103,7 @@ baseArcsetPtr Traj_cr3bp::clone() const{
 //-----------------------------------------------------
 
 /**
- *	@brief Concatenate two trajectory objects
+ *	\brief Concatenate two trajectory objects
  *
  * 	When adding A + B, if the final state of A and initial state
  *	of B are the same, this algorithm will skip the initial state
@@ -112,7 +112,7 @@ baseArcsetPtr Traj_cr3bp::clone() const{
  *	continuous along the concatentated trajectory regardless of whether
  *	the final state of A and in itial state of B are the same
  *
- *	@param rhs the right-hand-side of the addition operation
+ *	\param rhs the right-hand-side of the addition operation
  *	@return a reference to the concatenated arcset object
  */
 Traj& Traj_cr3bp::operator +=(const Traj &rhs){
@@ -136,10 +136,10 @@ Traj& Traj_cr3bp::operator +=(const Traj &rhs){
 //-----------------------------------------------------
 
 /**
- *	@brief Retrieve the value of Jacobi's Constant at the specified step
- *	@param ix step index; if < 0, counts backwards from end of trajectory
+ *	\brief Retrieve the value of Jacobi's Constant at the specified step
+ *	\param ix step index; if < 0, counts backwards from end of trajectory
  *	@return Jacobi at the specified step
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 double Traj_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0)
@@ -152,10 +152,10 @@ double Traj_cr3bp::getJacobiByIx(int ix) const{
 }//====================================================
 
 /**
- *	@brief Set Jacobi at the specified step
- *	@param ix step index; if < 0, counts backwards from end of trajectory
- *	@param val value of Jacobi
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\brief Set Jacobi at the specified step
+ *	\param ix step index; if < 0, counts backwards from end of trajectory
+ *	\param val value of Jacobi
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 void Traj_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
@@ -171,58 +171,15 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 //      Utility Functions
 //-----------------------------------------------------
 
-/**
- *	@brief Save the trajectory to a file
- *	@param filename the name of the .mat file
- */
-void Traj_cr3bp::saveToMat(const char* filename) const{
-	// TODO: Check for propper file extension, add if necessary
+void Traj_cr3bp::saveCmds(mat_t* pMatFile) const{
+	Traj::saveCmds(pMatFile);
 
-	/*	Create a new Matlab MAT file with the given name and optional
-	 *	header string. If no header string is given, the default string 
-	 *	used containing the software, version, and date in it. If a header
-	 *	string is specified, at most the first 116 characters are written to
-	 *	the file. Arguments are:
-	 *	const char *matname 	- 	the name of the file
-	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
-	 */
-	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
-		astrohelion::printErr("Error creating MAT file\n");
-	}else{
-		saveState(matfp);
-		saveAccel(matfp);
-		saveEpoch(matfp, "Time");
-		saveTOF(matfp, "TOFs");
-		saveSTMs(matfp);
-		saveExtraParam(matfp, "J", "Jacobi");
-		pSysData->saveToMat(matfp);
-	}
-
-	Mat_Close(matfp);
-}//========================================
-
-/**
- *  @brief Populate data in this trajectory from a matlab file
- * 
- *  @param filepath the path to the matlab data file
- *  @throws Exception if the data file cannot be loaded
- */
-void Traj_cr3bp::readFromMat(const char *filepath){
-	Traj::readFromMat(filepath);
-
-	// Load the matlab file
-	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
-	if(NULL == matfp){
-		throw Exception("Traj: Could not load data from file");
-	}
-
-	readExtraParamFromMat(matfp, "J", "Jacobi");
-
-	Mat_Close(matfp);
+	saveExtraParam(pMatFile, "J", "Jacobi");
 }//====================================================
 
-
+void Traj_cr3bp::readCmds(mat_t *pMatFile){
+	Traj::readCmds(pMatFile);
+	readExtraParamFromMat(pMatFile, "J", "Jacobi");
+}//====================================================
 
 }// END of Astrohelion namespace

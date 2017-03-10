@@ -1,10 +1,10 @@
 /**
- *	@file CorrectionEngine.cpp
- *	@brief Engine object that applies differential corrections to nodesets
+ *	\file CorrectionEngine.cpp
+ *	\brief Engine object that applies differential corrections to nodesets
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 
 /*
@@ -53,21 +53,21 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Copy constructor - create this engine by copying the input engine
- *	@param e input correction engine
+ *	\brief Copy constructor - create this engine by copying the input engine
+ *	\param e input correction engine
  */
 CorrectionEngine::CorrectionEngine(const CorrectionEngine &e){
 	copyMe(e);
 }//=======================================================
 
 /**
- *	@brief Destructor
+ *	\brief Destructor
  */
 CorrectionEngine::~CorrectionEngine(){}
 
 /**
- *	@brief Copy all engine variables
- *	@param e an engine reference
+ *	\brief Copy all engine variables
+ *	\param e an engine reference
  */
 void CorrectionEngine::copyMe(const CorrectionEngine &e){
 	Engine::copyBaseEngine(e);
@@ -87,9 +87,9 @@ void CorrectionEngine::copyMe(const CorrectionEngine &e){
 //-----------------------------------------------------
 
 /**
- *	@brief Copy operator; make a copy of the input correction engine.
+ *	\brief Copy operator; make a copy of the input correction engine.
  *
- *	@param e
+ *	\param e
  *	@return this correction engine
  */
 CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
@@ -102,14 +102,14 @@ CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
 //-----------------------------------------------------
 
 /**
- *  @brief Retrieve whether or not we are using variable time
+ *  \brief Retrieve whether or not we are using variable time
  *	@return whether or not the corrector uses variable time (as opposed
  * 	to fixed time)
  */
 bool CorrectionEngine::usesVarTime() const { return bVarTime; }
 
 /**
- *	@brief Retrieve whether or not we force all segments to have the same length
+ *	\brief Retrieve whether or not we force all segments to have the same length
  *	(in time).
  *
  *	This setting only applies if variable time is turned on.
@@ -118,27 +118,27 @@ bool CorrectionEngine::usesVarTime() const { return bVarTime; }
 bool CorrectionEngine::usesEqualArcTime() const { return bEqualArcTime; }
 
 /**
- *  @brief Retrieve whether or not we are located an event crossing
+ *  \brief Retrieve whether or not we are located an event crossing
  *	@return whether or not the algorithm will optimize the process to find an event
  */
 bool CorrectionEngine::isFindingEvent() const { return bFindEvent; }
 
 /**
- *  @brief Retrieve the maximum number of iterations to attempt
+ *  \brief Retrieve the maximum number of iterations to attempt
  *	@return the maximum number of iterations to attempt before giving up
  */
 int CorrectionEngine::getMaxIts() const { return maxIts; }
 
 /**
- *  @brief Retrieve the minimum error tolerance
+ *  \brief Retrieve the minimum error tolerance
  *	@return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
  */
 double CorrectionEngine::getTol() const { return tol; }
 
 /**
- *	@brief Set bVarTime
- *	@param b whether or not the corrector should use variable time
+ *	\brief Set bVarTime
+ *	\param b whether or not the corrector should use variable time
  */
 void CorrectionEngine::setVarTime(bool b){
 	bVarTime = b;
@@ -148,8 +148,8 @@ void CorrectionEngine::setVarTime(bool b){
 }//==================================================
 
 /**
- *	@brief Tell the corrector how to apply variable time
- *	@param b whether or not each arc will be forced to have the same duration
+ *	\brief Tell the corrector how to apply variable time
+ *	\param b whether or not each arc will be forced to have the same duration
  */
 void CorrectionEngine::setEqualArcTime(bool b){
 	if(!bVarTime && b){
@@ -161,36 +161,36 @@ void CorrectionEngine::setEqualArcTime(bool b){
 }//==================================================
 
 /**
- * @brief Tell the corrector to ignore crash events (or to not to).
+ * \brief Tell the corrector to ignore crash events (or to not to).
  * @details By default, the corrector does monitor crashes and will 
  * run into issues if the trajectory being corrected passes through a 
  * primary.
  * 
- * @param b whether or not to ignore crashes (default is false)
+ * \param b whether or not to ignore crashes (default is false)
  */
 void CorrectionEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
 
 /**
- *  @brief Tell the corrector to ignore divergence and return the partially
+ *  \brief Tell the corrector to ignore divergence and return the partially
  *  corrected iteration data instead of throwing an exception when divergence
  *  occurs.
  * 
- *  @param b Whether or not to ignore divergance
+ *  \param b Whether or not to ignore divergance
  */
 void CorrectionEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
 
 /**
- *	@brief Set maximum iterations
- *	@param i the maximum number of iterations to attempt before giving up
+ *	\brief Set maximum iterations
+ *	\param i the maximum number of iterations to attempt before giving up
  */
 void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
- *  @brief Set the step size scalar and the limiting tolerance
+ *  \brief Set the step size scalar and the limiting tolerance
  *  @details [long description]
  * 
- *  @param scale [description]
- *  @param limit [description]
+ *  \param scale [description]
+ *  \param limit [description]
  */
 void CorrectionEngine::setStepScale(double scale, double limit){
 	stepScale = scale;
@@ -198,8 +198,8 @@ void CorrectionEngine::setStepScale(double scale, double limit){
 }//====================================================
 
 /**
- *	@brief Set the error tolerance
- *	@param d errors below this value will be considered negligible
+ *	\brief Set the error tolerance
+ *	\param d errors below this value will be considered negligible
  */
 void CorrectionEngine::setTol(double d){
 	tol = d;
@@ -209,8 +209,8 @@ void CorrectionEngine::setTol(double d){
 }//====================================================
 
 /**
- *	@brief Set the findEven flag
- *	@param b whether or not the algorithm will be looking for an event
+ *	\brief Set the findEven flag
+ *	\param b whether or not the algorithm will be looking for an event
  */
 void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
 
@@ -219,7 +219,7 @@ void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
 //-----------------------------------------------------
 
 /**
- *	@brief Correct a generic nodeset using multiple shooting
+ *	\brief Correct a generic nodeset using multiple shooting
  *	@details This algorithm employs multiple shooting to correct a set of nodes
  *	subject to a set of constraints. The nodes and constraints are all stored in the 
  *	input nodeset object. 
@@ -229,12 +229,12 @@ void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	by the simulation engine, and the step size is fixed to force the usage of the 
  *	Adams-Bashforth Adams-Moulton method.
  *	
- *	@param set pointer to the nodeset that needs to be corrected
- *	@param pNodesOut pointer to the nodeset object that will contain the results of
+ *	\param set pointer to the nodeset that needs to be corrected
+ *	\param pNodesOut pointer to the nodeset object that will contain the results of
  *	the shooting process
  *	@return the iteration data object for this corrections process
- *	@throws DivergeException if the corrections process does not converge
- *	@throws Exception
+ *	\throws DivergeException if the corrections process does not converge
+ *	\throws Exception
  *	* if the input and output nodesets contain different system data objects
  *	* if the dynamic model associated with the input
  *	nodeset does not support one or more of the nodeset's constraints
@@ -404,16 +404,16 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 }//==========================================================
 
 /**
- *  @brief Run a multiple shooting algorithm given an MultShootData object
+ *  \brief Run a multiple shooting algorithm given an MultShootData object
  * 
- *  @param it A completely formed MultShootData object that describes a 
+ *  \param it A completely formed MultShootData object that describes a 
  *  multiple shooting problem. These are created from Nodeset and its
  *  derivative types by the other implementation of multShoot()
- *  @param pNodesOut pointer to a nodeset object that will contain the results 
+ *  \param pNodesOut pointer to a nodeset object that will contain the results 
  *  of the shooting process
  *  @return A corrected MultShootData object
  *  @see multShoot(Nodeset*)
- *  @throws DivergeException if the multiple shooting process does not converge
+ *  \throws DivergeException if the multiple shooting process does not converge
  */
 MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 	it.count = 0;
@@ -439,6 +439,8 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 
 	// Define values for use in corrections loop
 	double err = 10*tol;
+	unsigned int stateSize = it.sysData->getDynamicsModel()->getCoreStateSize();
+
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
 		it.DF.clear();
@@ -455,14 +457,16 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
-			double ic[] = {0,0,0,0,0,0};
+			std::vector<double> ic(stateSize, 0);
 			it.sysData->getDynamicsModel()->multShoot_getSimICs(&it, it.nodeset, it.nodeset->getSegByIx(s).getID(),
-				ic, &t0, &tof);
+				&(ic[0]), &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			// if(verbosity >= Verbosity_tp::DEBUG){
 			// 	printf("Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
 			// }
+			simEngine.setCtrlLaw(it.nodeset->getSegByIx(s).getCtrlLaw());
+
 			simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
 			// if(verbosity >= Verbosity_tp::DEBUG){
 			// 	it.propSegs[s].print();
@@ -540,7 +544,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 }//=====================================================
 
 /**
- *	@brief Apply linear algebra to solve the update equation and obtain an updated free-variable vector
+ *	\brief Apply linear algebra to solve the update equation and obtain an updated free-variable vector
  *
  *	The update equation takes the form
  * 	\f[
@@ -568,10 +572,10 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
  *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
- *	@param it the MultShootData object associated with the corrections process
+ *	\param it the MultShootData object associated with the corrections process
  *
  *	@return the updated free variable vector \f$ \vec{X}_{n+1} \f$
- *	@throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
+ *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
 Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
@@ -661,10 +665,10 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 }// End of solveUpdateEq() =====================================
 
 /**
- *  @brief Print out the magnitude of each constraint.
+ *  \brief Print out the magnitude of each constraint.
  *  @details This can be useful when debugging to highlight which constraints are unsatisfied
  * 
- *  @param pIt pointer to an MultShootData object associated with a corrections process
+ *  \param pIt pointer to an MultShootData object associated with a corrections process
  */
 void CorrectionEngine::reportConMags(const MultShootData *pIt){
 	unsigned int conCount = 0;
@@ -680,7 +684,7 @@ void CorrectionEngine::reportConMags(const MultShootData *pIt){
 }//===============================================================
 
 /**
- *	@brief clean up data so that engine can be used again (or deconstructed safely)
+ *	\brief clean up data so that engine can be used again (or deconstructed safely)
  */
 void CorrectionEngine::cleanEngine(){
 	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");

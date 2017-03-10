@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 	sim.runSim(ic, T, &crTraj);
 
 	// Query the acceleration so it is computed
-	std::vector<double> a = crTraj.getAccelByIx(-1);
+	std::vector<double> a = crTraj.getStateDerivByIx(-1);
 	crTraj.saveToMat("data/crTraj.mat");
 
 	Traj_cr3bp crTemp(&emData);
@@ -30,10 +30,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 
 	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
 	BOOST_CHECK(crTraj.getStateByIx(-1) == crTemp.getStateByIx(-1));
-	BOOST_CHECK(crTraj.getAccelByIx(-1) == crTemp.getAccelByIx(-1));
+	BOOST_CHECK(crTraj.getStateDerivByIx(-1) == crTemp.getStateDerivByIx(-1));
 	BOOST_CHECK(crTraj.getTimeByIx(-1) == crTemp.getTimeByIx(-1));
 	BOOST_CHECK(crTraj.getSTMByIx(-1) == crTemp.getSTMByIx(-1));
 	BOOST_CHECK(crTraj.getJacobiByIx(-1) == crTemp.getJacobiByIx(-1));
+	BOOST_CHECK(crTraj.getTOFByIx(-1) == crTemp.getTOFByIx(-1));
+	BOOST_CHECK(crTraj.getCtrlLawByIx(-1) == crTemp.getCtrlLawByIx(-1));
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
@@ -45,7 +47,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 	sim.runSim(ic, T, &bcTraj);
 
 	// Query the acceleration so it is computed
-	std::vector<double> a = bcTraj.getAccelByIx(-1);
+	std::vector<double> a = bcTraj.getStateDerivByIx(-1);
 	bcTraj.saveToMat("data/bcTraj.mat");
 
 	Traj_bc4bp bcTemp(&semData);
@@ -53,10 +55,12 @@ BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 
 	// printf("Testing Save/Read functions on BC4BP Trajectory\n");
 	BOOST_CHECK(bcTraj.getStateByIx(-1) == bcTemp.getStateByIx(-1));
-	BOOST_CHECK(bcTraj.getAccelByIx(-1) == bcTemp.getAccelByIx(-1));
+	BOOST_CHECK(bcTraj.getStateDerivByIx(-1) == bcTemp.getStateDerivByIx(-1));
 	BOOST_CHECK(bcTraj.getTimeByIx(-1) == bcTemp.getTimeByIx(-1));
 	BOOST_CHECK(bcTraj.getSTMByIx(-1) == bcTemp.getSTMByIx(-1));
 	BOOST_CHECK(bcTraj.get_dqdTByIx(-1) == bcTemp.get_dqdTByIx(-1));
+	BOOST_CHECK(bcTraj.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
+	BOOST_CHECK(bcTraj.getCtrlLawByIx(-1) == bcTemp.getCtrlLawByIx(-1));
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
@@ -69,7 +73,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 	sim.runSim(ic, T, &ltTraj);
 
 	// Query the acceleration so it is computed
-	std::vector<double> a = ltTraj.getAccelByIx(-1);
+	std::vector<double> a = ltTraj.getStateDerivByIx(-1);
 	ltTraj.saveToMat("data/lowthrustTraj.mat");
 
 	Traj_cr3bp_lt ltTemp(&emData);
@@ -77,8 +81,18 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 
 	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
 	BOOST_CHECK(ltTraj.getStateByIx(-1) == ltTemp.getStateByIx(-1));
-	BOOST_CHECK(ltTraj.getAccelByIx(-1) == ltTemp.getAccelByIx(-1));
+	BOOST_CHECK(ltTraj.getStateDerivByIx(-1) == ltTemp.getStateDerivByIx(-1));
 	BOOST_CHECK(ltTraj.getTimeByIx(-1) == ltTemp.getTimeByIx(-1));
 	BOOST_CHECK(ltTraj.getSTMByIx(-1) == ltTemp.getSTMByIx(-1));
-	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));	
+	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));
+	BOOST_CHECK(ltTraj.getTOFByIx(-1) == ltTemp.getTOFByIx(-1));
+	BOOST_CHECK(ltTraj.getCtrlLawByIx(-1) == ltTemp.getCtrlLawByIx(-1));
 }//====================================================
+
+
+
+
+
+
+
+

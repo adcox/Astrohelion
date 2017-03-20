@@ -146,7 +146,7 @@ std::vector<double> Traj_bc4bp::get_dqdTByIx(int ix){
 	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_bc4bp::getdqdT: invalid index");
 
-	return getExtraParamVecByIx(ix, "dqdT");
+	return getExtraParamVecByIx(ix, PARAMKEY_STATE_EPOCH_DERIV);
 }//====================================================
 
 /**
@@ -164,7 +164,7 @@ void Traj_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
 		throw Exception("Traj_bc4bp::setdqdT: invalid index");
 
 	std::vector<double> dqdT_vec(dqdT, dqdT+6);
-	nodes[ix].setExtraParamVec("dqdT", dqdT_vec);
+	nodes[ix].setExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, dqdT_vec);
 }//====================================================
 
 /**
@@ -191,7 +191,7 @@ void Traj_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 void Traj_bc4bp::saveCmds(mat_t* pMatFile) const{
 	Traj::saveCmds(pMatFile);
 
-	saveExtraParamVec(pMatFile, "dqdT", 6, "dqdT");
+	saveExtraParamVec(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
 }//====================================================
 
 /**
@@ -200,7 +200,7 @@ void Traj_bc4bp::saveCmds(mat_t* pMatFile) const{
  */
 void Traj_bc4bp::readCmds(mat_t *pMatFile){
 	Traj::readCmds(pMatFile);
-	readExtraParamVecFromMat(pMatFile, "dqdT", 6, "dqdT");
+	readExtraParamVecFromMat(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
 }//====================================================
 
 }// END of Astrohelion namespace

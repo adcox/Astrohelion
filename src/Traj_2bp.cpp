@@ -135,10 +135,10 @@ Traj& Traj_2bp::operator +=(const Traj &rhs){
 void Traj_2bp::saveCmds(mat_t* pMatFile) const{
 	Traj::saveCmds(pMatFile);
 
-	saveExtraParam(pMatFile, "sma", "sma");
-	saveExtraParam(pMatFile, "ecc", "ecc");
-	saveExtraParam(pMatFile, "angMom", "angMom");
-	saveExtraParam(pMatFile, "energy", "energy");
+	saveExtraParam(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
+	saveExtraParam(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
+	saveExtraParam(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
+	saveExtraParam(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
 }//====================================================
 
 /**
@@ -148,10 +148,10 @@ void Traj_2bp::saveCmds(mat_t* pMatFile) const{
 void Traj_2bp::readCmds(mat_t *pMatFile){
 	Traj::readCmds(pMatFile);
 
-	readExtraParamFromMat(pMatFile, "sma", "sma");
-	readExtraParamFromMat(pMatFile, "ecc", "ecc");
-	readExtraParamFromMat(pMatFile, "angMom", "angMom");
-	readExtraParamFromMat(pMatFile, "energy", "energy");
+	readExtraParamFromMat(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
+	readExtraParamFromMat(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
+	readExtraParamFromMat(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
+	readExtraParamFromMat(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
 }//====================================================
 
 

@@ -37,7 +37,7 @@ namespace astrohelion{
 class Nodeset;
 class Traj;
 
-static const char* VARNAME_TIME = "Time";
+// static const char* VARNAME_TIME = "Time";
 
 /**
  * \brief Smart pointer to a Traj object

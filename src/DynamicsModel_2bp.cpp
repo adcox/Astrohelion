@@ -136,6 +136,24 @@ std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<doubl
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Use a correction algorithm to accurately locate an event crossing
+ * 
+ *  The simulation engine calls this function if and when it determines that an event 
+ *  has been crossed. To accurately locate the event, we employ differential corrections
+ *  and find the exact event occurence in space and time.
+ *
+ *  \param event the event we're looking for
+ *  \param traj a pointer to the trajectory the event should occur on
+ *  \param ic the core state vector for this system
+ *  \param t0 non-dimensional time at the beginning of the search arc
+ *  \param tof the time-of-flight for the arc to search over
+ *  \param params structure containing parameters required by the EOMs
+ *  \param verbose whether or not we should be verbose with output messages
+ *
+ *  \return wether or not the event has been located. If it has, a new point
+ *  has been appended to the trajectory's data vectors.
+ */
 bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof,
     EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
@@ -228,11 +246,13 @@ void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
  *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  */
-void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const{
+void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent,
+    Nodeset *nodes_out) const{
+    
 	(void)it;
 	(void)nodes_in;
 	(void)findEvent;
-	(void)nodesOut;
+	(void)nodes_out;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

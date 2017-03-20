@@ -127,8 +127,11 @@ public:
 	/** SPK Kernel to use */
 	std::string spice_spk_kernel = "de430.bsp";
 
-	std::string settings_filepath = "",
-				body_data_filepath = "";
+	/** Variable to save settings filepath in after it is determined or created */
+	std::string settings_filepath = "";
+
+	/** Variable to save body data filepath in after it is determined or created */
+	std::string body_data_filepath = "";
 	
 }; // END OF Core_Settings
 

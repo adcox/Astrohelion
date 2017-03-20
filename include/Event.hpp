@@ -198,6 +198,7 @@ class Event : public Core{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData {};
 
+		/** Storage vector for data passed to the event before it is manipulated and placed in a constraint object */
 		std::vector<double> paramsIn {};
 		
 		SysData* pSysData = nullptr; 	//!< Copy of the system data pointer

@@ -207,7 +207,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 		std::vector<double> state = set->getNodeByIx(n).getState();
 		rowNum = it->X.size();
 		it->X.insert(it->X.end(), state.begin(), state.end());
-		MSVarMap_Key key(MSVarType::STATE, set->getNodeByIx(n).getID());
+		MSVarMap_Key key(MSVar_tp::STATE, set->getNodeByIx(n).getID());
 		it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, state.size());
 	}
 
@@ -220,13 +220,13 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 			}
 
 			// Append the total TOF for the arc
-			MSVarMap_Key key(MSVarType::TOF_TOTAL, Linkable::INVALID_ID);
+			MSVarMap_Key key(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
 			it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
 			it->X.insert(it->X.end(), set->getTotalTOF());
 		}else{
 			// Append the TOF for each segment
 			for(int s = 0; s < set->getNumSegs(); s++){
-				MSVarMap_Key key(MSVarType::TOF, set->getSegByIx(s).getID());
+				MSVarMap_Key key(MSVar_tp::TOF, set->getSegByIx(s).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
 				it->X.insert(it->X.end(), set->getSegByIx(s).getTOF());
 			}
@@ -291,12 +291,12 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *
 	(void) set;
 
 	// Retrieve  representative object and get data from free var vec
-	MSVarMap_Obj state = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(s).getOrigin());
+	MSVarMap_Obj state = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSeg(s).getOrigin());
 	std::copy(it->X.begin()+state.row0, it->X.begin()+state.row0 + state.nRows, ic);
 
 	if(it->bVarTime){
 		// Retrieve  representative object and get data from free var vec
-		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 			it->bEqualArcTime ? -1 : s);
 		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
 	}else{
@@ -425,8 +425,8 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
 	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);
 
 	// Get index of origin node
-	MSVarMap_Obj state0_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID).getOrigin());
-	MSVarMap_Obj statef_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID).getTerminus());
+	MSVarMap_Obj state0_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSeg(segID).getOrigin());
+	MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSeg(segID).getTerminus());
 
 	// Loop through conData
 	for(unsigned int s = 0; s < conData.size(); s++){
@@ -451,7 +451,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
 				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
 				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 
-				MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+				MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 					it->bEqualArcTime ? Linkable::INVALID_ID : segID);
 				// If equal arc time is enabled, all time derivatives are in one column
 				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
@@ -492,8 +492,8 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
 	int segIx1 = it->nodeset->getSegIx(segID1);
 	int segIx2 = it->nodeset->getSegIx(segID2);
 
-	MSVarMap_Obj state01_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID1).getOrigin());
-	MSVarMap_Obj state02_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSeg(segID2).getOrigin());
+	MSVarMap_Obj state01_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSeg(segID1).getOrigin());
+	MSVarMap_Obj state02_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSeg(segID2).getOrigin());
 
 	std::vector<double> state1 = it->propSegs[segIx1].getStateByIx(-1);
 	std::vector<double> state2 = it->propSegs[segIx2].getStateByIx(-1);
@@ -501,15 +501,15 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
 	MatrixXRd stm2 = it->propSegs[segIx2].getSTMByIx(-1);
 
 	std::vector<double> lastDeriv1, lastDeriv2;
-	MSVarMap_Obj tof1_var(MSVarType::TOF), tof2_var(MSVarType::TOF);
+	MSVarMap_Obj tof1_var(MSVar_tp::TOF), tof2_var(MSVar_tp::TOF);
 	double timeCoeff = 1;
 	if(it->bVarTime){
 		lastDeriv1 = it->propSegs[segIx1].getStateDerivByIx(-1);
 		lastDeriv2 = it->propSegs[segIx2].getStateDerivByIx(-1);
 
-		tof1_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+		tof1_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 			it->bEqualArcTime ? Linkable::INVALID_ID : segID1);
-		tof2_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+		tof2_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 			it->bEqualArcTime ? Linkable::INVALID_ID : segID2);
 
 		// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
@@ -587,7 +587,7 @@ void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData *it, Constraint co
  */
 void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 
 	// Allow user to constrain 6 states	
@@ -618,8 +618,8 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, 
 		throw Exception("DynamicsModel::multShoot_targetMatchAll: No segment ID was located in the cosntraint data vector");
 
 	// Only allow matching 6 states, not TOF (state 7)
-	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
-	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVarType::STATE, con.getData()[0]);
+	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVar_tp::STATE, con.getData()[0]);
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	// int otherNodeIx = it->nodeset->getNodeIx(con.getData()[0]);
 	
@@ -653,8 +653,8 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
 		throw Exception("DynamicsModel::multShoot_targetMatchCust: No segment ID was located in the cosntraint data vector");
 
 	std::vector<double> conData = con.getData();
-	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
-	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVarType::STATE, ID2);
+	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVar_tp::STATE, ID2);
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	// int otherNodeIx = it->nodeset->getNodeIx(conData[0]);
 	int count = 0;
@@ -689,7 +689,7 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
  */
 void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int c) const{
 	std::vector<double> conData = con.getData();
-	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
@@ -745,7 +745,7 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
  */
 double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it, Constraint con) const{
 	std::vector<double> conData = con.getData();
-	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
@@ -820,8 +820,8 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 			// Partial w.r.t. integrated path (newSeg) from origin node
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
 
-			MSVarMap_Obj state0_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSegByIx(s).getOrigin());
-			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getSegByIx(s).getTerminus());
+			MSVarMap_Obj state0_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegByIx(s).getOrigin());
+			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegByIx(s).getTerminus());
 			// int origIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getOrigin());
 			// int termIx = it->nodeset->getNodeIx(it->nodeset->getSegByIx(s).getTerminus());
 
@@ -837,7 +837,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
 
 				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
-				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodeset->getSegByIx(s).getID());
 				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+s;
 
@@ -914,13 +914,13 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
 		throw Exception("DynamicsModel::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
 	if(it->bEqualArcTime){
-		MSVarMap_Obj tof_var = it->getVarMap_obj(MSVarType::TOF_TOTAL, Linkable::INVALID_ID);
+		MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
 		it->FX[row0] = it->X[tof_var.row0];
 		it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 	}else{
 		// Sum all TOF for total, set partials w.r.t. integration times equal to one
 		for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVarType::TOF, it->nodeset->getSegByIx(s).getID());
+			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodeset->getSegByIx(s).getID());
 			it->FX[row0] += it->X[tof_var.row0];
 			it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 		}
@@ -942,7 +942,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
  */
 void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int row0) const{
 	std::vector<double> conData = con.getData();
-	MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	// int nodeIx = it->nodeset->getNodeIx(con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time

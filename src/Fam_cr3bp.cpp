@@ -601,6 +601,13 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 	Mat_VarFree(matvar);
 }//=============================================
 
+/**
+ *	\brief Load eigenvectors from the data file
+ *
+ *	NOTE: the vector of family members MUST be populated before loading the eigenvectors
+ *	\param pMatFile a pointer to the data file in question
+ *	\throws Exception if the variable cannot be loaded
+ */
 void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
 	matvar_t *pMatvar = Mat_VarRead(pMatFile, EIGVEC_VAR_NAME);
 	if(pMatvar == NULL){
@@ -645,8 +652,15 @@ void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
 	Mat_VarFree(pMatvar);
 }//=============================================
 
+/**
+ *	\brief Load state transition matrices from the data file
+ *
+ *	NOTE: the vector of family members MUST be populated before loading the STMs
+ *	\param pMatFile a pointer to the data file in question
+ *	\throws Exception if the variable cannot be loaded
+ */
 void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
-	matvar_t *pAllSTM = Mat_VarRead(pMatFile, "STM");
+	matvar_t *pAllSTM = Mat_VarRead(pMatFile, VARNAME_STM);
 	if(pAllSTM == NULL){
 		throw Exception("Fam_cr3bp::loadSTMs: Could not read data vector");
 	}else{
@@ -687,8 +701,7 @@ void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
 
 /**
  *	\brief Sort all members' eigenvalues so they are in the same order.
- *
- *	This is necessary before bifurcations can be accurately located.
+ *	\details This is necessary before bifurcations can be accurately located.
  */
 void Fam_cr3bp::sortEigs(){
 	std::vector<cdouble> allVals;
@@ -728,8 +741,7 @@ void Fam_cr3bp::sortEigs(){
 
 /**
  *	\brief Sort the family members by the specified sort variable (in ascending order)
- *	
- *	The sorting variable is specified by <tt>sortType</tt>; this is the variable
+ *	\details The sorting variable is specified by <tt>sortType</tt>; this is the variable
  *	that best describes the natural progression of the family. For example,
  *	Lyapunov orbits can be evolved naturally by varying the x-coordinate of the IC.
  *
@@ -877,6 +889,10 @@ void Fam_cr3bp::saveEigVals(mat_t *pMatFile){
 	}
 }//====================================================
 
+/**
+ *	\brief Save eigenvector data to a mat file
+ *	\param pMatFile a pointer to the mat file in question
+ */
 void Fam_cr3bp::saveEigVecs(mat_t *pMatFile){
 	if(members.size() > 0){
 		
@@ -905,7 +921,10 @@ void Fam_cr3bp::saveEigVecs(mat_t *pMatFile){
 	}
 }//====================================================
 
-
+/**
+ *	\brief Save STM data to a mat file
+ *	\param pMatFile a pointer to the mat file in question
+ */
 void Fam_cr3bp::saveSTMs(mat_t *pMatFile){
 	if(members.size() > 0){
 		std::vector<double> allSTMEl(members.size()*36);
@@ -921,8 +940,8 @@ void Fam_cr3bp::saveSTMs(mat_t *pMatFile){
 		}
 
 		size_t dims[3] = {6, 6, members.size()};
-		matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
-		astrohelion::saveVar(pMatFile, pMatVar, "STM", MAT_COMPRESSION_NONE);
+		matvar_t *pMatVar = Mat_VarCreate(VARNAME_STM, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
+		astrohelion::saveVar(pMatFile, pMatVar, VARNAME_STM, MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 

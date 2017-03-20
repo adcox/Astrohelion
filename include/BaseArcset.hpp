@@ -30,6 +30,7 @@
 
 #include "Core.hpp"
 
+#include "Common.hpp"
 #include "Constraint.hpp"
 #include "Node.hpp"
 #include "Segment.hpp"
@@ -51,14 +52,14 @@ class BaseArcset;
  */
 typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
 
-static const char *VARNAME_CTRL_LAW = "CtrlLaw";		//!< Matlab file variable name for control law data
-static const char *VARNAME_EPOCH = "Epoch";				//!< Matlab file variable name for epoch data
-static const char *VARNAME_STATE = "State";				//!< Matlab file variable name for state data
-static const char *VARNAME_STATE_DERIV = "qdot";		//!< Matlab file variable name for state derivative data
-static const char *VARNAME_STM = "STM";					//!< Matlab file variable name for state transition matrix data
-static const char *VARNAME_TOF = "TOF";					//!< Matlab file variable name for time-of-flight data
+// static const char *VARNAME_CTRL_LAW = "CtrlLaw";		//!< Matlab file variable name for control law data
+// static const char *VARNAME_EPOCH = "Epoch";				//!< Matlab file variable name for epoch data
+// static const char *VARNAME_STATE = "State";				//!< Matlab file variable name for state data
+// static const char *VARNAME_STATE_DERIV = "qdot";		//!< Matlab file variable name for state derivative data
+// static const char *VARNAME_STM = "STM";					//!< Matlab file variable name for state transition matrix data
+// static const char *VARNAME_TOF = "TOF";					//!< Matlab file variable name for time-of-flight data
 
-static const char *PARAMKEY_STATE_DERIV = "qdot";		//!< ExtraParam map key for state derivative data
+// static const char *PARAMKEY_STATE_DERIV = "qdot";		//!< ExtraParam map key for state derivative data
 
 /**
  *	\brief Abstract class that provides the framework for trajectories and nodesets

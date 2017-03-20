@@ -93,10 +93,12 @@ class FamMember_cr3bp : public Core{
 		Traj_cr3bp toTraj(const SysData_cr3bp*);
 
 	protected:
-		/** Vector of 6 eigenvalues; initialized to NAN by default */
-		MatrixXRd stm = MatrixXRd::Identity(6,6);
-		MatrixXRcd eigVecs = MatrixXRcd::Zero(6,6);
+		MatrixXRd stm = MatrixXRd::Identity(6,6);	//!< State transition matrix, initialized as 6x6 Identity
+		MatrixXRcd eigVecs = MatrixXRcd::Zero(6,6);	//!< Vector of eigenvectors (as columns)
+
+		/** Vector of eigenvalues*/
 		std::vector<cdouble> eigVals {{NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}};
+		
 		std::vector<double> IC {0,0,0,0,0,0};		//!< Initial state for this trajectory, non-dim units
 		double TOF = NAN;							//!< Time of flight for traj., non-dim units
 		double JC = NAN;							//!< Jacobi constant for traj., non-dimensional

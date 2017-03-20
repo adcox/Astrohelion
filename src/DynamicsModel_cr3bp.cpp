@@ -175,6 +175,7 @@ void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj
  *  \param ic the core state vector for this system
  *  \param t0 non-dimensional time at the beginning of the search arc
  *  \param tof the time-of-flight for the arc to search over
+ *  \param params structure containing parameters required by the EOMs
  *  \param verbose whether or not we should be verbose with output messages
  *
  *  \return wether or not the event has been located. If it has, a new point
@@ -221,7 +222,7 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     }
 
     std::vector<double> state = correctedNodes.getStateByIx(-1);
-    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, "stm");
+    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, PARAMKEY_STM);
     state.insert(state.end(), stm.begin(), stm.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
@@ -284,7 +285,7 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
  */
 void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->sysData);
 
@@ -381,7 +382,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeByIx(n).getID());
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
 
         Node node(state, 0);
@@ -389,7 +390,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
-            node.setExtraParam("J", getJacobi(&(state[0]), crSys->getMu()));
+            node.setExtraParam(PARAMKEY_JACOBI, getJacobi(&(state[0]), crSys->getMu()));
 
             /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
             state for the last node. We do this by appending the STM elements and dqdT elements to the
@@ -402,7 +403,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
                 MatrixXRd stm = lastSeg.getSTMByIx(-1);
                 std::vector<double> stm_vec(stm.data(), stm.data() + stm.rows()*stm.cols());
                 
-                node.setExtraParamVec("stm", stm_vec);
+                node.setExtraParamVec(PARAMKEY_STM, stm_vec);
             }
         }
 
@@ -417,7 +418,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         Segment seg = it->nodeset->getSegByIx(s);
 
         if(it->bVarTime){
-            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
             tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];

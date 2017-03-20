@@ -166,7 +166,7 @@ double Nodeset_cr3bp::getJacobi(int id) const{
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("Nodeset_cr3bp::getJacobi: Node ID out of range");
 
-	return nodes[nodeIDMap.at(id)].getExtraParam("J");
+	return nodes[nodeIDMap.at(id)].getExtraParam(PARAMKEY_JACOBI);
 }//====================================================
 
 /**
@@ -182,7 +182,7 @@ double Nodeset_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Nodeset_cr3bp::getJacobi: invalid index");
 
-	return nodes[ix].getExtraParam("J");
+	return nodes[ix].getExtraParam(PARAMKEY_JACOBI);
 }//====================================================
 
 /**
@@ -197,7 +197,7 @@ void Nodeset_cr3bp::setJacobi(int id, double jacobi){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("Nodeset_cr3bp::setJacobi: Node ID out of range");
 
-	nodes[nodeIDMap.at(id)].setExtraParam("J", jacobi);
+	nodes[nodeIDMap.at(id)].setExtraParam(PARAMKEY_JACOBI, jacobi);
 }//====================================================
 
 /**
@@ -213,7 +213,7 @@ void Nodeset_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Nodeset_cr3bp::setJacobi: invalid index");
 
-	nodes[ix].setExtraParam("J", val);
+	nodes[ix].setExtraParam(PARAMKEY_JACOBI, val);
 }//====================================================
 
 //-----------------------------------------------------

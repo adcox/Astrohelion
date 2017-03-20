@@ -114,8 +114,8 @@ Say I'm writing class A and want to know whether or not to include or forward-de
 	<li> forward declare B if: A contains a B pointer or reference: B* myb; </li>
 	<li> forward declare B if: one or more functions has a B object/pointer/reference
 	as a parementer, or as a return type: B MyFunction(B myb); </li>
-	<li> #include "b.h" if: B is a parent class of A </li>
-	<li> #include "b.h" if: A contains a B object: B myb; </li>
+	<li> <code>#include "b.h"</code> if: B is a parent class of A </li>
+	<li> <code>#include "b.h"</code> if: A contains a B object: B myb; </li>
 </ul>
 
 Include Order (my convention:)

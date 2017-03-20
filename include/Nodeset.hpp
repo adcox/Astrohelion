@@ -38,7 +38,7 @@ class Event;
 class Node;
 class Traj;
 
-static const char *VARNAME_NODE = "Node";
+// static const char *VARNAME_NODE = "Node";
 
 /**
  *	\ingroup traj

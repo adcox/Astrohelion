@@ -572,7 +572,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
  *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
- *	\param it the MultShootData object associated with the corrections process
+ *	\param pIt pointer to the MultShootData object associated with the corrections process
  *
  *	\return the updated free variable vector \f$ \vec{X}_{n+1} \f$
  *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);

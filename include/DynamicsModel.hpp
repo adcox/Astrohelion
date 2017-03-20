@@ -258,8 +258,8 @@ public:
 	 *  \param ic the core state vector for this system
 	 *  \param t0 non-dimensional time at the beginning of the search arc
 	 *  \param tof the time-of-flight for the arc to search over
+	 *  \param params structure containing parameters that are required for EOMs
 	 *  \param verbose whether or not we should be verbose with output messages
-	 *	\param ctrlLawID the ID of the control law used in the simulation
 	 *	
 	 *  \return wether or not the event has been located. If it has, a new point
 	 *  has been appended to the trajectory's data vectors.
@@ -273,6 +273,7 @@ public:
 	 *	by the EOM function, including STM elements.
 	 *	\param t the time at the current integration state
 	 *	\param traj a pointer to the trajectory we should store the data in
+	 *	\param params structure containing parameters that are required for EOMs
 	 */
 	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
 	//\}

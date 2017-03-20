@@ -611,6 +611,8 @@ double getTotalDV(const MultShootData *pIt){
  *  by computing each partial derivative numerically via forward differencing.
  * 
  *  \param pNodeset A nodeset with some constraints
+ *  \param verbosity Specify how verbose the output is
+ *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
  */
 bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity, bool writeToFile){
     CorrectionEngine engine;  // Create engine with default settings
@@ -626,6 +628,8 @@ bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity, 
  *  \param engine correction engine object configured with the appropriate settings (i.e.,
  *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
+ *  \param verbosity Specify how verbose the output is
+ *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
  */
 bool finiteDiff_checkMultShoot(const Nodeset *pNodeset, CorrectionEngine engine, Verbosity_tp verbosity, bool writeToFile){
     printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix... ");
@@ -990,7 +994,7 @@ void r2bp_computeKepler(const SysData_2bp *pSys, Node *pNode){
     pNode->setExtraParam("range", r);
     pNode->setExtraParam("speed", v);
     pNode->setExtraParam("energy", energy);
-    pNode->setExtraParam("sma", a);
+    pNode->setExtraParam(PARAMKEY_SMA, a);
     pNode->setExtraParam("angMom", h);
     pNode->setExtraParam("ecc", e);
     pNode->setExtraParam("fpa", fpa);
@@ -2041,7 +2045,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
         // Use time relative to Epoch0 defined in pBCSys
         Node node(crNodeState, bcNodes.getEpochByIx(n)*charT3/charT2);
         // Node node(crNodeState, (bcNodes.getEpochByIx(n)*charT3 + pBCSys->getEpoch0() - SysData_bc4bp::REF_EPOCH)/charT2);
-        node.setExtraParam("J", DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), pCRSys->getMu()));
+        node.setExtraParam(PARAMKEY_JACOBI, DynamicsModel_cr3bp::getJacobi(&(crNodeState[0]), pCRSys->getMu()));
         
         // Save the new ID
         map_oldID_to_newID[bcNodes.getNodeByIx(n).getID()] = crNodes.addNode(node);

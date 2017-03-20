@@ -36,6 +36,9 @@
 
 namespace astrohelion{
 
+/**
+ *  \brief Construct a default CR3BP low-thrust control law object
+ */
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(){}
 
 //------------------------------------------------------------------------------------------------------
@@ -49,7 +52,7 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(){}
  * 	
  *  \param t time parameter
  *  \param s state vector
- *  \param pSys system data object
+ *  \param pSysData system data object
  *  \param lawID identifies the control law type
  *  \param law empty, initialized array to store the control law output in
  *  \param len number of elements in the <tt>law</tt> array

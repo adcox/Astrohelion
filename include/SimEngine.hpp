@@ -64,6 +64,9 @@ public:
 	int stepIx;		//!< The index of the integration step the event occured at
 };
 
+/**
+ *  \brief Classify integrator types
+ */
 enum class Integ_tp{
 	RKCK,			//!< Explicit embedded Runge-Kutta Cash-Karp (4,5); variable step propagations
 	RK8PD,			//!< Explicit embedded Runge-Kutta Dormance-Prince (8,9); variable step propagations

@@ -152,6 +152,7 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
  *  by the EOM function, including STM elements.
  *  \param t the time at the current integration state
  *  \param traj a pointer to the trajectory we should store the data in
+ *  \param params structure containing parameters required by the EOMs
  */
 void DynamicsModel_cr3bp_lt::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
     
@@ -220,7 +221,7 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
     }
 
     std::vector<double> state = correctedNodes.getStateByIx(-1);
-    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, "stm");
+    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, PARAMKEY_STM);
     state.insert(state.end(), stm.begin(), stm.end());
 
     // event time is the TOF of corrected path + time at the state we integrated from
@@ -277,7 +278,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeByIx(n).getID());
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
 
         Node node(state, 0);
@@ -298,7 +299,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
                 MatrixXRd stm = lastSeg.getSTMByIx(-1);
                 std::vector<double> stm_vec(stm.data(), stm.data() + stm.rows()*stm.cols());
                 
-                node.setExtraParamVec("stm", stm_vec);
+                node.setExtraParamVec(PARAMKEY_STM, stm_vec);
             }
         }
 
@@ -313,7 +314,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
         Segment seg = it->nodeset->getSegByIx(s);
 
         if(it->bVarTime){
-            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
             tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];

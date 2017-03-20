@@ -56,7 +56,7 @@ public:
 	virtual void getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const;
 	virtual std::string lawIDToString(unsigned int) const;
 
-	const static unsigned int NO_CTRL = 0;
+	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented
 };
 
 }// End of astrohelion namespace

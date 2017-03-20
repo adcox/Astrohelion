@@ -68,6 +68,9 @@ FamGenerator::FamGenerator(const FamGenerator &f){
 	copyMe(f);
 }//====================================================
 
+/**
+ *  \brief Destructor
+ */
 FamGenerator::~FamGenerator(){}
 
 //-----------------------------------------------------
@@ -201,10 +204,10 @@ void FamGenerator::copyMe(const FamGenerator &f){
  *	- A good initial guess for r0 is 0.001; smaller values may be possible, but the
  *	  corrector often has trouble.
  *	
- *	\param sysData represents the system the Lyapunov exists in
  *	\param LPt The Lagrange point number [1-5]
  *	\param x0 the initial displacement from the Lagrange point along the x-axis.
- *
+ *	\param pFam pointer to system data object the orbit exists in
+ *	
  *	\return a family of orbits
  *	\throws Exception if <tt>LPt</tt> is invalid
  */
@@ -390,6 +393,7 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
  *  collinear point as the desired vertical family
  *  \param initStepSize initial step size from the bifurcating axial orbit
  *  \param pVertFam pointer to the vertical orbit family object
+ *  
  *  \return a family of vertical orbits
  */
 void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize, Fam_cr3bp *pVertFam){
@@ -671,6 +675,7 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
  *  in the same amount of time as the CR3BP system completes q revolutions in an inertial frame.
  *  \param q Resonance ratio denominator
  *  \param pFam pointer to a family object
+ *  
  *  \throws Exception of the resonance ratio p:q is not implemented or recognized
  */
 void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
@@ -780,6 +785,16 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 	}
 }//====================================================
 
+/**
+ *  \brief Compute a family of periodic orbits using pseudo arclength continuation
+ *  from a nodeset
+ * 
+ *  \param traj An initial guess for a periodic orbit
+ *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
+ *  \param initDir 6-element vector that indicates the initial step direction along the family. For example, to
+ *  step along -xdot, use {0,0,0,-1,0,0} as initDir.
+ *  \param pFam pointer to a family data object in which family member data will be stored
+ */
 void FamGenerator::cr3bp_pacFromTraj(Traj_cr3bp traj, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
 	Nodeset_cr3bp nodes(traj, numNodes);
 	cr3bp_pseudoArcCont(pFam, nodes, mirrorType, initDir);
@@ -788,7 +803,6 @@ void FamGenerator::cr3bp_pacFromTraj(Traj_cr3bp traj, Mirror_tp mirrorType, std:
 /**
  *  \brief Compute a family of periodic orbits using pseudo arclength continuation
  *  from a nodeset
- *  \details [long description]
  * 
  *  \param nodes An initial guess for a periodic orbit
  *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
@@ -1516,9 +1530,13 @@ void FamGenerator::reset(){
 	tol = 1e-12;
 }//====================================================
 
+/**
+ *  \brief Utility function to reset any parameters and flags that are
+ *  assigned during generation processes
+ */
 void FamGenerator::cleanEngine(){
 	// Nothing stored, so nothing to do
 	bIsClean = true;
-}
+}//====================================================
 
 }// END of Astrohelion namespace

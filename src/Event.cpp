@@ -181,6 +181,13 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 	}
 }//====================================================
 
+/**
+ *  \brief Initialize the event
+ *  \details Store parameters from <code>paramsIn</code> in a newly 
+ *  constructed Constraint object and compute any other required values
+ * 
+ *  \param pSys pointer to a system data object
+ */
 void Event::initialize(const SysData* pSys){
 	pSysData = const_cast<SysData*>(pSys);
 
@@ -263,7 +270,7 @@ Event::~Event(){}
 //-----------------------------------------------------
 
 /**
- *	\brief Copy operator
+ *	\brief Assignment operator
  */
 Event& Event::operator =(const Event &ev){
 	copyEvent(ev);
@@ -272,8 +279,8 @@ Event& Event::operator =(const Event &ev){
 
 /**
  *	\brief Comparison operator
- *	\param lhs
- *	\param rhs
+ *	\param lhs left-hand-side object
+ *	\param rhs right-hand-side object
  *	\return true if the two events are identical
  */
 bool operator ==(const Event &lhs, const Event &rhs){
@@ -293,8 +300,8 @@ bool operator ==(const Event &lhs, const Event &rhs){
 
 /**
  *	\brief Comparison operator
- *	\param lhs
- *	\param rhs
+ *	\param lhs left-hand-side object
+ *	\param rhs right-hand-side object
  *	\return true if the two events are not identical
  */
 bool operator !=(const Event &lhs, const Event &rhs){
@@ -306,17 +313,20 @@ bool operator !=(const Event &lhs, const Event &rhs){
 //-----------------------------------------------------
 
 /**
+ *	\brief Retrieve the trigger direction for this Event
  *	\return the trigger direction for this event; -1 for negative, +1
  *	for positive, 0 for both/either
  */
 int Event::getDir() const { return triggerDir; }
 
 /**
+ *	\brief Retrieve the type associated with this Event object
  *	\return the event type
  */
 Event_tp Event::getType() const { return type; }
 
 /**
+ *  \brief Retrieve a human-readable string representing the event type
  *	\return a human-readable string representing the event type
  */
 const char* Event::getTypeStr() const{
@@ -335,26 +345,31 @@ const char* Event::getTypeStr() const{
 }//========================================
 
 /**
+ *  \brief Retrieve the time associated with this event
  *	\return the time associated with this event
  */
 double Event::getTime() const { return theTime; }
 
 /**
+ *  \brief Retrieve a pointer to the state vector object
  *	\return a pointer to the state vector object; useful for in-place reading or writing
  */
 std::vector<double>* Event::getState() { return &state; }
 
 /**
+ *  \brief Determine whether or not this event will stop the integration
  *	\return whether or not this event will stop the integration
  */
 bool Event::stopOnEvent() const { return bStop; }
 
 /**
+ *  \brief Retrieve the type of constraint this event will use to target the exact event occurence
  *	\return the type of constraint this event will use to target the exact event occurence
  */
 Constraint_tp Event::getConType() const { return conType; }
 
 /**
+ *  \brief Retrieve the constraint data used to target this exact event
  *	\return the constraint data used to target this exact event
  */
 std::vector<double> Event::getConData() const { return conData; }

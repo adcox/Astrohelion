@@ -148,7 +148,7 @@ double Traj_cr3bp::getJacobiByIx(int ix) const{
 	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_cr3bp::getJacobiByIx: invalid node index");
 
-	return nodes[ix].getExtraParam("J");
+	return nodes[ix].getExtraParam(PARAMKEY_JACOBI);
 }//====================================================
 
 /**
@@ -164,7 +164,7 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0 || ix > static_cast<int>(nodes.size()))
 		throw Exception("Traj_cr3bp::setJacobiByIx: invalid node index");
 
-	nodes[ix].setExtraParam("J", val);
+	nodes[ix].setExtraParam(PARAMKEY_JACOBI, val);
 }//====================================================
 
 //-----------------------------------------------------
@@ -178,7 +178,7 @@ void Traj_cr3bp::setJacobiByIx(int ix, double val){
 void Traj_cr3bp::saveCmds(mat_t* pMatFile) const{
 	Traj::saveCmds(pMatFile);
 
-	saveExtraParam(pMatFile, "J", "Jacobi");
+	saveExtraParam(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
 }//====================================================
 
 /**
@@ -187,7 +187,7 @@ void Traj_cr3bp::saveCmds(mat_t* pMatFile) const{
  */
 void Traj_cr3bp::readCmds(mat_t *pMatFile){
 	Traj::readCmds(pMatFile);
-	readExtraParamFromMat(pMatFile, "J", "Jacobi");
+	readExtraParamFromMat(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
 }//====================================================
 
 }// END of Astrohelion namespace

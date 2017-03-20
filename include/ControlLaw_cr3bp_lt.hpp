@@ -50,15 +50,18 @@ public:
 
 	std::string lawIDToString(unsigned int) const;
 
+	/**
+	 *  \brief Identify the control law
+	 */
 	enum Law_tp : unsigned int{
-		CONST_C_2D_LEFT = 1,
-		CONST_C_2D_RIGHT = 2,
-		PRO_VEL = 3,
-		ANTI_VEL = 4
+		CONST_C_2D_LEFT = 1,		//!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, thrust left w.r.t. velocity direction
+		CONST_C_2D_RIGHT = 2,		//!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, thrust right w.r.t. velocity direction
+		PRO_VEL = 3,				//!< Thrust along velocity vector (maximum energy increase)
+		ANTI_VEL = 4				//!< Thrust along anti-velocity vector (maximum energy decrease)
 	};
 protected:
 
-	void getLaw_ConstC_2D_Right(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
+	void getLaw_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getLaw_Along_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 
 	void getPartials_State_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;

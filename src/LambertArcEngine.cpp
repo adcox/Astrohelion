@@ -40,8 +40,15 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------
 
+/**
+ *  \brief Construct a default Lambert Arc engine
+ */
 LambertArcEngine::LambertArcEngine(){}
 
+/**
+ *  \brief Copy constructor
+ *  \param e reference to another engine object
+ */
 LambertArcEngine::LambertArcEngine(const LambertArcEngine &e){
 	copyMe(e);
 }//====================================================
@@ -50,6 +57,11 @@ LambertArcEngine::LambertArcEngine(const LambertArcEngine &e){
 //      Operators
 //-----------------------------------------------------
 
+/**
+ *  \brief Assignment operator
+ *  \param e reference to another Lambert Arc engine object
+ *  \return a reference to this engine after the assignment is complete
+ */
 LambertArcEngine& LambertArcEngine::operator =(const LambertArcEngine &e){
 	copyMe(e);
 	return *this;
@@ -87,7 +99,21 @@ void LambertArcEngine::setMaxIts(unsigned int its){ maxIts = its; }
 //      Lambert Arc Generation Functions
 //-----------------------------------------------------
 
-Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> r1, std::vector<double> r2, double tof, unsigned int type){
+/**
+ *  \brief Generate a lambert arc between two points with a specified time-of-flight and type
+ *  \details [long description]
+ * 
+ *  \param pSys System data object pointer that describes the two-body problem system
+ *  \param r1 3D vector that describes the initial point in space (km)
+ *  \param r2 3D vector that describes the final point in space (km)
+ *  \param tof time-of-flight between two points (seconds)
+ *  \param type Type of the transfer (Type = 1 or Type = 2)
+ *  \return A trajectory object that contains a Lambert Arc linking the two points with the
+ *  specified time-of-flight
+ */
+Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> r1, std::vector<double> r2,
+    double tof, unsigned int type){
+
 	if(r1.size() < 3 || r2.size() < 3)
         throw Exception("r2bp_getLambertArc: r1 or r2 has fewer than three elements");
 
@@ -350,16 +376,16 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
         printf("  argPeri = %.2f deg\n", (theta1 - ta1)*180/PI);
 	}
 
-    node1.setExtraParam("sma", a);
-    node1.setExtraParam("ecc", e);
+    node1.setExtraParam(PARAMKEY_SMA, a);
+    node1.setExtraParam(PARAMKEY_ECC, e);
     node1.setExtraParam("fpa", fpa1);
     node1.setExtraParam("ta", ta1);
     node1.setExtraParam("range", r1_mag);
     node1.setExtraParam("speed", v1_mag);
     node1.setExtraParam("argPeri", (theta1 - ta1));
 
-    node2.setExtraParam("sma", a);
-    node2.setExtraParam("ecc", e);
+    node2.setExtraParam(PARAMKEY_SMA, a);
+    node2.setExtraParam(PARAMKEY_ECC, e);
     node2.setExtraParam("fpa", fpa2);
     node2.setExtraParam("ta", ta2);
     node2.setExtraParam("range", r2_mag);
@@ -424,6 +450,10 @@ Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> 
 //      Utility Functions
 //-----------------------------------------------------
 
+/**
+ *  \brief Utility function to copy all attributes of a Lambert engine object into this one
+ *  \param e reference to another LambertArcEngine
+ */
 void LambertArcEngine::copyMe(const LambertArcEngine &e){
 	Engine::copyBaseEngine(e);
 	tof_maxErr = e.tof_maxErr;
@@ -431,10 +461,18 @@ void LambertArcEngine::copyMe(const LambertArcEngine &e){
 	maxIts = e.maxIts;
 }//====================================================
 
+/**
+ *  \brief Reset flags and variables that are set during arc generation
+ */
 void LambertArcEngine::cleanEngine(){
 	bIsClean = true;
 }//====================================================
 
+/**
+ *  \brief Reset the entire engine, including any parameters
+ *  that were set by the user
+ *  \details cleanEngine() is also called by this function
+ */
 void LambertArcEngine::reset(){
 	if(!bIsClean)
 		cleanEngine();

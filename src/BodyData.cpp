@@ -215,6 +215,10 @@ void BodyData::setName(std::string s){name = s;}
  */
 void BodyData::setParent(std::string s){parent = s;}
 
+/**
+ *  \brief Print out information about the body data object to the
+ *  standard output
+ */
 void BodyData::print(){
 	printf("Body data for %s:\n", name.c_str());
 	printf("  SPICE ID = %d\n", ID);

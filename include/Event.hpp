@@ -1,14 +1,14 @@
 /**
- *  @file Event.hpp
- *	@brief Class that contains information about a simulation event
+ *  \file Event.hpp
+ *	\brief Class that contains information about a simulation event
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -38,7 +38,7 @@
 namespace astrohelion{
 
 /**
- *	@brief The type of event
+ *	\brief The type of event
  *
  *	This tells the simulation and correction engines how to interpret the
  *	data stored in this object.
@@ -93,11 +93,14 @@ enum class Event_tp {
  				 *	direction of travel relative to the primary; +1 is away from the primary,
  				 *	-1 is towards the primary, and 0 triggers for either.
  				 */
+	MASS		/*!< occurs when the s/c mass reaches a minimum or maximum amount. The <tt>param</tt>
+				 *	array should have one element: the nondimensional mass limit (between 0 and 1).
+				 */
 };
 
 		
 /**
- *	@brief A data object containing information about an event that may
+ *	\brief A data object containing information about an event that may
  *	occur during simulation
  *
  *	**Adding a New Event**
@@ -109,16 +112,17 @@ enum class Event_tp {
  *		degree of accuracy.
  *	* Update the getDist() function
  * 	* Update the getDir() function
+ * 	* Add event to list of allowed constraints in relevant DynamicalModel derived classes
  *
- *	@author Andrew Cox
- *	@version August 3, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version Mar 7, 2017
+ *	\copyright GNU GPL v3.0
  */
 class Event : public Core{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		Event();
 		Event(Event_tp, int, bool);
@@ -128,7 +132,7 @@ class Event : public Core{
 		void createEvent(Event_tp, int, bool, std::vector<double>);
 		void initialize(const SysData*);
 		~Event();
-		//@}
+		//\}
 
 		// Operators
 		Event& operator =(const Event&);
@@ -136,8 +140,8 @@ class Event : public Core{
 		friend bool operator !=(const Event&, const Event&);
 		
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		std::vector<double> getConData() const;
 		Constraint_tp getConType() const;
@@ -157,10 +161,10 @@ class Event : public Core{
 		void setDir(int);
 		void setStopCount(int);
 		void setStopOnEvent(bool);
-		//@}
+		//\}
 
-		bool crossedEvent(const double[6], double) const;
-		void updateDist(const double[6], double);
+		bool crossedEvent(const double*, double) const;
+		void updateDist(const double*, double);
 
 		void printStatus() const;
 	private:
@@ -194,6 +198,7 @@ class Event : public Core{
 		/** Data for the constraint used by the shooting algorithm to locate this event */
 		std::vector<double> conData {};
 
+		/** Storage vector for data passed to the event before it is manipulated and placed in a constraint object */
 		std::vector<double> paramsIn {};
 		
 		SysData* pSysData = nullptr; 	//!< Copy of the system data pointer

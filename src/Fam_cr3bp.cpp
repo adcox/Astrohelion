@@ -1,14 +1,14 @@
 /**
- *	@file Fam_cr3bp.cpp
- *	@brief Data object for a CR3BP family
+ *	\file Fam_cr3bp.cpp
+ *	\brief Data object for a CR3BP family
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -49,17 +49,17 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Create an empty family for the specified system
- *	@param data a CR3BP system data object
+ *	\brief Create an empty family for the specified system
+ *	\param data a CR3BP system data object
  */
 Fam_cr3bp::Fam_cr3bp(SysData_cr3bp data){
 	sysData = data;
 }//====================================================
 
 /**
- *	@brief load a family from a file
- *	@param filepath an aboslute or relative filepath to the data file
- *	@throws Exception if the file cannot be opened
+ *	\brief load a family from a file
+ *	\param filepath an aboslute or relative filepath to the data file
+ *	\throws Exception if the file cannot be opened
  */
 Fam_cr3bp::Fam_cr3bp(const char* filepath){
 	// Load the matlab file
@@ -70,6 +70,8 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 
 	loadMemberData(matfp);
 	loadEigVals(matfp);
+	loadEigVecs(matfp);
+	loadSTMs(matfp);
 	name = astrohelion::readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	int type = static_cast<int>(astrohelion::readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME));
 	sortType = static_cast<FamSort_tp>(type);
@@ -80,15 +82,15 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 }//====================================================
 
 /**
- *	@brief Copy Constructor
- *	@brief fam a family reference
+ *	\brief Copy Constructor
+ *	\brief fam a family reference
  */
 Fam_cr3bp::Fam_cr3bp(const Fam_cr3bp& fam){
 	copyMe(fam);
 }//====================================================
 
 /**
- *	@brief Destructor
+ *	\brief Destructor
  */
 Fam_cr3bp::~Fam_cr3bp(){}
 
@@ -97,8 +99,8 @@ Fam_cr3bp::~Fam_cr3bp(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Assignment operator
- *	@param fam a family reference
+ *	\brief Assignment operator
+ *	\param fam a family reference
  */
 Fam_cr3bp& Fam_cr3bp::operator= (const Fam_cr3bp& fam){
 	copyMe(fam);
@@ -111,8 +113,8 @@ Fam_cr3bp& Fam_cr3bp::operator= (const Fam_cr3bp& fam){
 //-----------------------------------------------------
 
 /**
- *	@brief Add a member to the family
- *	@param mem a new family member; NOTE: <tt>mem</tt> should represent
+ *	\brief Add a member to the family
+ *	\param mem a new family member; NOTE: <tt>mem</tt> should represent
  *	a trajectory that exists in the same system as the other family members.
  */
 void Fam_cr3bp::addMember(FamMember_cr3bp mem){
@@ -120,8 +122,8 @@ void Fam_cr3bp::addMember(FamMember_cr3bp mem){
 }//====================================================
 
 /**
- *	@brief Retrieve a family member by its index
- *	@param ix the index of the member. If the index is less than zero,
+ *	\brief Retrieve a family member by its index
+ *	\param ix the index of the member. If the index is less than zero,
  *	it will count backwards from the end.
  */
 FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
@@ -132,9 +134,9 @@ FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
 }//====================================================
 
 /**
- *	@brief Locate all members with the specified value of Jacobi Constant
- *	@param jc the desired value for Jacobi
- *	@return a vector of matching family members (some may be interpolated/corrected)
+ *	\brief Locate all members with the specified value of Jacobi Constant
+ *	\param jc the desired value for Jacobi
+ *	\return a vector of matching family members (some may be interpolated/corrected)
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
 	// Get an array of all the jacobi values
@@ -149,9 +151,9 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByJacobi(double jc) const{
 }//==============================================
 
 /**
- *	@brief Locate all members with the specified time-of-flight
- *	@param tof the desired value for time-of-flight
- *	@return a vector of matching family members (some may be interpolated/corrected)
+ *	\brief Locate all members with the specified time-of-flight
+ *	\param tof the desired value for time-of-flight
+ *	\return a vector of matching family members (some may be interpolated/corrected)
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
 	std::vector<double> allTOF;
@@ -165,11 +167,11 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
 }//==============================================
 
 /**
- *	@brief Locate all members with the specified value for the specified state variable in the IC
- *	@param value the desired value
- *	@param ix the index of the state variable [0, 5]
- *	@return a vector of matching family members (some may be interpolated/corrected)
- *	@throws Exception if <tt>ix</tt> is out of range
+ *	\brief Locate all members with the specified value for the specified state variable in the IC
+ *	\param value the desired value
+ *	\param ix the index of the state variable [0, 5]
+ *	\return a vector of matching family members (some may be interpolated/corrected)
+ *	\throws Exception if <tt>ix</tt> is out of range
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix) const{
 	if(ix < 0 || ix > 5){
@@ -189,26 +191,26 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByStateVar(double value, int ix
 }//==============================================
 
 /**
- *	@brief Retrieve the name of this family
- *	@return a descriptive name
+ *	\brief Retrieve the name of this family
+ *	\return a descriptive name
  */
 std::string Fam_cr3bp::getName() const { return name; }
 
 /**
- *	@brief Retrieve number of members in this family
- *	@return number of members in this family
+ *	\brief Retrieve number of members in this family
+ *	\return number of members in this family
  */
 int Fam_cr3bp::getNumMembers() const { return members.size(); }
 
 /**
- *	@brief Determine which variable best naturally describes the flow of the family
- *	@return the sorting variable
+ *	\brief Determine which variable best naturally describes the flow of the family
+ *	\return the sorting variable
  */
 FamSort_tp Fam_cr3bp::getSortType() const { return sortType; }
 
 /**
- *	@brief Retrieve a string describing the sort type in human-readable format
- *	@return a string describing the sort type in human-readable format
+ *	\brief Retrieve a string describing the sort type in human-readable format
+ *	\return a string describing the sort type in human-readable format
  */
 const char* Fam_cr3bp::getSortTypeStr() const{
 	switch(sortType){
@@ -226,27 +228,27 @@ const char* Fam_cr3bp::getSortTypeStr() const{
 }//===========================================
 
 /**
- *	@brief Retrieve the system data for this family
- *	@return the system data describing the system all family members exist in
+ *	\brief Retrieve the system data for this family
+ *	\return the system data describing the system all family members exist in
  */
 SysData_cr3bp Fam_cr3bp::getSysData() const { return sysData; }
 
 /**
- *	@brief Retrieve a pointer to the system data object for this family
- *	@return a pointer to the system data object for this family
+ *	\brief Retrieve a pointer to the system data object for this family
+ *	\return a pointer to the system data object for this family
  */
 SysData_cr3bp* Fam_cr3bp::getSysDataPtr() { return &sysData; }
 
 /**
- *	@brief Set the name of this family
- *	@param n a descriptive name; must be less than 128 characters
+ *	\brief Set the name of this family
+ *	\param n a descriptive name; must be less than 128 characters
  *	if you want to save to a matlab file
  */
 void Fam_cr3bp::setName(std::string n){ name = n; }
 
 /**
- *	@brief Set the sort type for this family
- *	@param type the sort type
+ *	\brief Set the sort type for this family
+ *	\param type the sort type
  */
 void Fam_cr3bp::setSortType(FamSort_tp type){ sortType = type; }
 //-----------------------------------------------------
@@ -254,8 +256,8 @@ void Fam_cr3bp::setSortType(FamSort_tp type){ sortType = type; }
 //-----------------------------------------------------
 
 /**
- *	@brief Copy the family from another family
- *	@param fam a different family
+ *	\brief Copy the family from another family
+ *	\param fam a different family
  */
 void Fam_cr3bp::copyMe(const Fam_cr3bp& fam){
 	members = fam.members;
@@ -265,15 +267,15 @@ void Fam_cr3bp::copyMe(const Fam_cr3bp& fam){
 }//====================================================
 
 /**
- *	@brief Locate places in a data set where a specific value probably exists
+ *	\brief Locate places in a data set where a specific value probably exists
  *
  *	This algorithm will locate both exact matches (within a tolerance) and intersections,
  *	assuming the data is continuous. If an intersection is found, the index of the point
  *	before the intersection is returned.
  *
- *	@param value the value to search for
- *	@param data a pointer to a data set to search in
- *	@return a vector of integers representing the indices of matches
+ *	\param value the value to search for
+ *	\param data a pointer to a data set to search in
+ *	\return a vector of integers representing the indices of matches
  */
 std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data) const{
 	double numBins = data->size() > 500 ? 100 : (data->size()/5.0);
@@ -311,22 +313,22 @@ std::vector<int> Fam_cr3bp::findMatches(double value, std::vector<double> *data)
 }//=====================================================
 
 /**
- *	@brief Locate a family member with a specific attribute
+ *	\brief Locate a family member with a specific attribute
  *	
  *	This function locates a family member or set of members that have a specific value
  *	for one of the variables of interest (e.g. coordinates, Jacobi, TOF). Exact matches
  *	and interpolated matches are returned; interpolated matches are computed using a
  *	differential corrections algorithm.
  *
- *	@param value the value the family member should have
- *	@param dataSet a pointer to a vector containing the set of values to search for matches
+ *	\param value the value the family member should have
+ *	\param dataSet a pointer to a vector containing the set of values to search for matches
  *	in. For example, if the <tt>value</tt> I pass in contains a specific TOF, then 
  *	<tt>dataSet</tt> points to a vector containing the TOFs for the entire family, sorted
  *	according to this family's <tt>sortType</tt>.
- *	@param matchCon a constraint that can be applied in a corrections scheme that will
+ *	\param matchCon a constraint that can be applied in a corrections scheme that will
  *	ensure the corrected trajectory has the desired value for the variable of interest.
  *
- *	@return a vector of matches. If no matches are returned, the vector will be empty.
+ *	\return a vector of matches. If no matches are returned, the vector will be empty.
  */
 std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vector<double> *dataSet,
 	Constraint matchCon) const{
@@ -381,9 +383,9 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 }//==============================================
 
 /**
- *	@brief Populate an array with a single coordinate from each family member
- *	@param ix the index of the coordinate within the IC vector
- *	@param array a pointer to the array we want to populate
+ *	\brief Populate an array with a single coordinate from each family member
+ *	\param ix the index of the coordinate within the IC vector
+ *	\param array a pointer to the array we want to populate
  */
 void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
 	for(unsigned int i = 0; i < members.size(); i++){
@@ -393,100 +395,126 @@ void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
 }//====================================================
 
 /**
- *	@brief Locate all bifurcations in the family by analyzing the 
+ *	\brief Locate all bifurcations in the family by analyzing the 
  *	eigenvalues
  *
  *	Eigenvalues MUST be sorted, or this will yield completely bogus
  *	results
  */
 std::vector<int> Fam_cr3bp::findBifurcations(){
-	// TODO: Incorporate much more advanced ways to compute this
-	double okErr = 1e-3;
-	cdouble one(1,0);
-
-	EigValSet_tp setTypes[3];
-
-	// Determine what "type" of eigenvalue pair we have
-	for(int set = 0; set < 3; set++){
-		double sumImag = 0;
-		// double sumReal = 0;
-		double sumDistFromOne = 0;
-
-		for(unsigned int m = 0; m < members.size(); m++){
-			std::vector<cdouble> eigs = members[m].getEigVals();
-			sumImag += (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
-			sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
-		}
-
-		double count = members.size();
-		double meanImag = sumImag/count;
-		// double meanReal = sumReal/count;
-		double meanDistFromOne = sumDistFromOne/count;
-
-		if(meanImag > okErr){
-			// significant imaginary parts
-			setTypes[set] = EigValSet_tp::EIGSET_COMP_CONJ;
-		}else{
-			if(meanDistFromOne < okErr){
-				setTypes[set] = EigValSet_tp::EIGSET_ONES;
-			}else{
-				setTypes[set] = EigValSet_tp::EIGSET_REAL_RECIP;
-			}
-		}
-	}
-
-	// Find bifurcations
+	double okErr = 1e-6;
 	std::vector<int> bifs;
-	for(unsigned int m = 1; m < members.size(); m++){
-		for(int set = 0; set < 3; set++){
-			std::vector<cdouble> eigs = members[m].getEigVals();
-			std::vector<cdouble> prevEigs = members[m-1].getEigVals();
+	double prevStab[3] = {0};
+	for(unsigned int m = 0; m < members.size(); m++){
+		double stab[3] = {0};
+		std::vector<cdouble> eigs = members[m].getEigVals();
+		for(unsigned int i = 0; i < 3; i++){
+			stab[i] = 1.0 - std::abs(0.5*(eigs[2*i] + eigs[2*i+1]));
+		}
 
-			switch(setTypes[set]){
-				case EigValSet_tp::EIGSET_REAL_RECIP:
-				{
-					// Compute distance of each eigenvalues from +/- 1
-					double d1 = 1 - std::abs(std::real(eigs[set*2]));
-					double d2 = 1 - std::abs(std::real(eigs[set*2+1]));
-					double prev_d1 = 1 - std::abs(std::real(prevEigs[set*2]));
-					double prev_d2 = 1 - std::abs(std::real(prevEigs[set*2+1]));
-
-					// Check to make sure magnitude of differences is significant
-					if( std::abs(d1) > okErr && std::abs(d2) > okErr &&
-						std::abs(prev_d1) > okErr && std::abs(prev_d2) > okErr){
-						if(d1*prev_d1 < 0 && d2*prev_d2 < 0){
-							// Sign changed; bifurcation!
-							// printf("Located a bifurcation!\n");
-							// printf("  Member %03zu - %03zu\n", m-1, m);
-							bifs.push_back(m-1);
-						}
-					}
+		if(m == 0)
+			std::copy(stab, stab+3, prevStab);
+		else{
+			// Look for changes in sign (stability index crosses 1)
+			for(unsigned int i = 0; i < 3; i++){
+				if(stab[i]*prevStab[i] < 0 && std::abs(stab[i] - prevStab[i]) > okErr){
+					// Bifurcation!
+					bifs.push_back(m-1);
 					break;
 				}
-				case EigValSet_tp::EIGSET_COMP_CONJ:
-				{
-					double meanPrevImag = (std::abs(std::imag(prevEigs[set*2])) + std::abs(std::imag(prevEigs[set*2+1])))/2;
-					double meanImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
-
-					// Check to see if we moved from complex to real or vice versa
-					if( (meanPrevImag > okErr) != (meanImag > okErr) ){
-						// printf("Located a bifurcation!\n");
-						// printf("  Member %03zu - %03zu\n", m-1, m);
-						bifs.push_back(m-1);
-					}
-				}
-				default: break;
 			}
+
+			std::copy(stab, stab+3, prevStab);
 		}
 	}
+
+	// // TODO: Incorporate much more advanced ways to compute this
+	// double okErr = 1e-3;
+	// cdouble one(1,0);
+
+	// EigValSet_tp setTypes[3];
+
+	// // Determine what "type" of eigenvalue pair we have
+	// for(int set = 0; set < 3; set++){
+	// 	double sumImag = 0;
+	// 	// double sumReal = 0;
+	// 	double sumDistFromOne = 0;
+
+	// 	for(unsigned int m = 0; m < members.size(); m++){
+	// 		std::vector<cdouble> eigs = members[m].getEigVals();
+	// 		sumImag += (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
+	// 		sumDistFromOne += (std::abs(eigs[set*2] - one) + std::abs(eigs[set*2+1] - one))/2;
+	// 	}
+
+	// 	double count = members.size();
+	// 	double meanImag = sumImag/count;
+	// 	// double meanReal = sumReal/count;
+	// 	double meanDistFromOne = sumDistFromOne/count;
+
+	// 	if(meanImag > okErr){
+	// 		// significant imaginary parts
+	// 		setTypes[set] = EigValSet_tp::EIGSET_COMP_CONJ;
+	// 	}else{
+	// 		if(meanDistFromOne < okErr){
+	// 			setTypes[set] = EigValSet_tp::EIGSET_ONES;
+	// 		}else{
+	// 			setTypes[set] = EigValSet_tp::EIGSET_REAL_RECIP;
+	// 		}
+	// 	}
+	// }
+
+	// // Find bifurcations
+	// std::vector<int> bifs;
+	// for(unsigned int m = 1; m < members.size(); m++){
+	// 	for(int set = 0; set < 3; set++){
+	// 		std::vector<cdouble> eigs = members[m].getEigVals();
+	// 		std::vector<cdouble> prevEigs = members[m-1].getEigVals();
+
+	// 		switch(setTypes[set]){
+	// 			case EigValSet_tp::EIGSET_REAL_RECIP:
+	// 			{
+	// 				// Compute distance of each eigenvalues from +/- 1
+	// 				double d1 = 1 - std::abs(std::real(eigs[set*2]));
+	// 				double d2 = 1 - std::abs(std::real(eigs[set*2+1]));
+	// 				double prev_d1 = 1 - std::abs(std::real(prevEigs[set*2]));
+	// 				double prev_d2 = 1 - std::abs(std::real(prevEigs[set*2+1]));
+
+	// 				// Check to make sure magnitude of differences is significant
+	// 				if( std::abs(d1) > okErr && std::abs(d2) > okErr &&
+	// 					std::abs(prev_d1) > okErr && std::abs(prev_d2) > okErr){
+	// 					if(d1*prev_d1 < 0 && d2*prev_d2 < 0){
+	// 						// Sign changed; bifurcation!
+	// 						// printf("Located a bifurcation!\n");
+	// 						// printf("  Member %03zu - %03zu\n", m-1, m);
+	// 						bifs.push_back(m-1);
+	// 					}
+	// 				}
+	// 				break;
+	// 			}
+	// 			case EigValSet_tp::EIGSET_COMP_CONJ:
+	// 			{
+	// 				double meanPrevImag = (std::abs(std::imag(prevEigs[set*2])) + std::abs(std::imag(prevEigs[set*2+1])))/2;
+	// 				double meanImag = (std::abs(std::imag(eigs[set*2])) + std::abs(std::imag(eigs[set*2+1])))/2;
+
+	// 				// Check to see if we moved from complex to real or vice versa
+	// 				if( (meanPrevImag > okErr) != (meanImag > okErr) ){
+	// 					// printf("Located a bifurcation!\n");
+	// 					// printf("  Member %03zu - %03zu\n", m-1, m);
+	// 					bifs.push_back(m-1);
+	// 				}
+	// 			}
+	// 			default: break;
+	// 		}
+	// 	}
+	// }
 
 	return bifs;
 }//====================================================
 
 /**
- *	@brief Attempt to load data from the specified matlab file
- *	@param matFile a pointer to the opened matlab file
- *	@throws Exception if the variable cannot be loaded
+ *	\brief Attempt to load data from the specified matlab file
+ *	\param matFile a pointer to the opened matlab file
+ *	\throws Exception if the variable cannot be loaded
  */	
 void Fam_cr3bp::loadMemberData(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, DATA_VAR_NAME);
@@ -526,23 +554,23 @@ void Fam_cr3bp::loadMemberData(mat_t *matFile){
 }//==============================================
 
 /**
- *	@brief Load eigenvalues from the data file
+ *	\brief Load eigenvalues from the data file
  *
  *	NOTE: the vector of family members MUST be populated before loading the eigenvalues
- *	@param matFile a pointer to the data file in question
- *	@throws Exception if the variable cannot be loaded
+ *	\param matFile a pointer to the data file in question
+ *	\throws Exception if the variable cannot be loaded
  */
 void Fam_cr3bp::loadEigVals(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
 	if(matvar == NULL){
 		throw Exception("Could not read eigenvalues into family");
 	}else{
-		int numMembers = matvar->dims[0];
+		unsigned int numMembers = matvar->dims[0];
 		if(matvar->dims[1] != 6){
 			throw Exception("Incompatible data file: Data widths are different.");
 		}
 
-		if(static_cast<int>(members.size()) != numMembers){
+		if(members.size() != numMembers){
 			throw Exception("Fam_cr3bp::loadEigVals: # eigenvalues is not same as number of members");
 		}
 
@@ -556,7 +584,7 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 				double *imagParts = static_cast<double *>(splitVals->Im);
 
 				// Read data from column-major order matrix, store in row-major order vector
-				for(int i = 0; i < numMembers; i++){
+				for(unsigned int i = 0; i < numMembers; i++){
 					std::vector<cdouble> vals;
 					for(int j = 0; j < 6; j++){
 						cdouble temp(realParts[j*numMembers + i], imagParts[j*numMembers + i]);
@@ -574,33 +602,146 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 }//=============================================
 
 /**
- *	@brief Sort all members' eigenvalues so they are in the same order.
+ *	\brief Load eigenvectors from the data file
  *
- *	This is necessary before bifurcations can be accurately located.
+ *	NOTE: the vector of family members MUST be populated before loading the eigenvectors
+ *	\param pMatFile a pointer to the data file in question
+ *	\throws Exception if the variable cannot be loaded
+ */
+void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
+	matvar_t *pMatvar = Mat_VarRead(pMatFile, EIGVEC_VAR_NAME);
+	if(pMatvar == NULL){
+		throw Exception("Fam_cr3bp::loadEigVecs: Could not read data vector");
+	}else{
+		unsigned int numSteps = pMatvar->dims[2];
+
+		if(members.size() == 0){
+			throw Exception("Fam_cr3bp::loadEigVecs: Member vector has not been initialized!");
+		}
+
+		if(numSteps != members.size() ){
+			throw Exception("Fam_cr3bp::loadEigVecs: Eigenvector vector does not have the same number of elements as the member vector");
+		}
+
+		if(pMatvar->dims[0] != 6 || pMatvar->dims[1] != 6){
+			throw Exception("Fam_cr3bp::loadEigVecs: Incompatible data file: Eigenvector matrix is not 6x6.");
+		}
+
+		if(pMatvar->class_type == MAT_C_DOUBLE && pMatvar->data_type == MAT_T_DOUBLE){
+			// First cast the data to a special variable matio uses to store complex values
+			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(pMatvar->data);
+
+			if(splitVals != NULL){
+				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
+				double *realParts = static_cast<double *>(splitVals->Re);
+				double *imagParts = static_cast<double *>(splitVals->Im);
+
+				for(unsigned int i = 0; i < numSteps; i++){
+					cdouble vecData[36];
+					for(unsigned int j = 0; j < 36; j++){
+						vecData[j] = cdouble(realParts[j*numSteps + i], imagParts[j*numSteps + i]);
+					}
+					MatrixXRcd vecMat = Eigen::Map<MatrixXRcd>(vecData, 6, 6);
+					members[i].setEigVecs(vecMat.transpose());
+				}
+			}
+		}else{
+			throw Exception("Fam_cr3bp::loadEigVecs: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(pMatvar);
+}//=============================================
+
+/**
+ *	\brief Load state transition matrices from the data file
+ *
+ *	NOTE: the vector of family members MUST be populated before loading the STMs
+ *	\param pMatFile a pointer to the data file in question
+ *	\throws Exception if the variable cannot be loaded
+ */
+void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
+	matvar_t *pAllSTM = Mat_VarRead(pMatFile, VARNAME_STM);
+	if(pAllSTM == NULL){
+		throw Exception("Fam_cr3bp::loadSTMs: Could not read data vector");
+	}else{
+		unsigned int numSteps = pAllSTM->dims[2];
+
+		if(members.size() == 0){
+			throw Exception("Fam_cr3bp::loadSTMs: Member vector has not been initialized!");
+		}
+
+		if(numSteps != members.size() ){
+			throw Exception("Fam_cr3bp::loadSTMs: STM vector does not have the same number of elements as the member vector");
+		}
+
+		if(pAllSTM->dims[0] != 6 || pAllSTM->dims[1] != 6){
+			throw Exception("Fam_cr3bp::loadSTMs: Incompatible data file: STM is not 6x6.");
+		}
+
+		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pAllSTM->data);
+
+			if(data != NULL){
+				for(unsigned int i = 0; i < numSteps; i++){
+					double stmEl[36];
+					for(unsigned int j = 0; j < 36; j++){
+						stmEl[j] = data[36*i + j];
+					}
+
+					MatrixXRd P = Eigen::Map<MatrixXRd>(stmEl, 6, 6);
+					members[i].setSTM(P.transpose());
+				}
+			}
+		}else{
+			throw Exception("Fam_cr3bp::loadSTMs: Incompatible data file: unsupported data type/class");
+		}
+	}
+	Mat_VarFree(pAllSTM);
+}//=============================================
+
+/**
+ *	\brief Sort all members' eigenvalues so they are in the same order.
+ *	\details This is necessary before bifurcations can be accurately located.
  */
 void Fam_cr3bp::sortEigs(){
-	std::vector<cdouble> allEigs;
+	std::vector<cdouble> allVals;
+	std::vector<MatrixXRcd> allVecs;
 	// Create a vector with all the eigenvalues
 	for(unsigned int m = 0; m < members.size(); m++){
 		std::vector<cdouble> vals = members[m].getEigVals();
-		allEigs.insert(allEigs.end(), vals.begin(), vals.end());
+		allVals.insert(allVals.end(), vals.begin(), vals.end());
+		allVecs.insert(allVecs.end(), members[m].getEigVecs());
 	}
 
 	// Sort eigenvalues
-	std::vector<int> sortedIxs;
-	std::vector<cdouble> sortedEigs = sortEig(allEigs, &sortedIxs);
+	std::vector<unsigned int> sortedIxs = sortEig(allVals, allVecs);
+	// std::vector<cdouble> sortedEigs = sortEig(allVals, &sortedIxs);
 
 	// Update all eigenvalues in the family members
+	std::vector<cdouble> sortedVals;
+	MatrixXRcd sortedVecs = MatrixXRcd::Zero(6,6);
 	for(unsigned int m = 0; m < members.size(); m++){
-		std::vector<cdouble> sortedVals(sortedEigs.begin() + m*6, sortedEigs.begin() + (m+1)*6);
+		// Construct new eigenvalue and eigenvector objects with the new index order
+		for(unsigned int c = 0; c < 6; c++){
+			unsigned int ix = sortedIxs[m*6+c];
+			sortedVals.push_back(allVals[m*6+ix]);
+
+			sortedVecs.col(c) = allVecs[m].col(ix);
+		}
+		
+		// Update member with sorted vectors and values
 		members[m].setEigVals(sortedVals);
+		members[m].setEigVecs(sortedVecs);
+
+		// Reset storage variables
+		sortedVals.clear();
+		sortedVecs = MatrixXRcd::Zero(6,6);
 	}
 }//=================================================
 
 /**
- *	@brief Sort the family members by the specified sort variable (in ascending order)
- *	
- *	The sorting variable is specified by <tt>sortType</tt>; this is the variable
+ *	\brief Sort the family members by the specified sort variable (in ascending order)
+ *	\details The sorting variable is specified by <tt>sortType</tt>; this is the variable
  *	that best describes the natural progression of the family. For example,
  *	Lyapunov orbits can be evolved naturally by varying the x-coordinate of the IC.
  *
@@ -608,7 +749,7 @@ void Fam_cr3bp::sortEigs(){
  *	you can retrieve family members. The process will run without sorting, but the results
  *	will likely be wonky.
  *	
- *	@throws Exception if the sorting type is not recognized
+ *	\throws Exception if the sorting type is not recognized
  */
 void Fam_cr3bp::sortMembers(){
 	// Don't do any sorting if the sort type is NONE
@@ -659,8 +800,8 @@ void Fam_cr3bp::sortMembers(){
 }//===================================================
 
 /**
- *	@brief Save the family to a mat-file
- *	@param filename a path the the mat-file in question
+ *	\brief Save the family to a mat-file
+ *	\param filename a path the the mat-file in question
  */
 void Fam_cr3bp::saveToMat(const char *filename){
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -680,6 +821,8 @@ void Fam_cr3bp::saveToMat(const char *filename){
 		saveMembers(matfp);
 		saveMiscData(matfp);
 		saveEigVals(matfp);
+		saveEigVecs(matfp);
+		saveSTMs(matfp);
 		sysData.saveToMat(matfp);
 	}
 
@@ -687,10 +830,10 @@ void Fam_cr3bp::saveToMat(const char *filename){
 }//====================================================
 
 /**
- *	@brief Save ICs, TOFs, and JCs for each member in a matrix
- *	@param matFile a pointer to the destination matlab file
+ *	\brief Save ICs, TOFs, and JCs for each member in a matrix
+ *	\param pMatFile a pointer to the destination matlab file
  */
-void Fam_cr3bp::saveMembers(mat_t *matFile){
+void Fam_cr3bp::saveMembers(mat_t *pMatFile){
 	if(members.size() > 0){
 		// Create a vector with member data stored in column-major order
 		std::vector<double> allData(members.size()*DATA_WIDTH);
@@ -713,16 +856,16 @@ void Fam_cr3bp::saveMembers(mat_t *matFile){
 
 		size_t dims[2] = {members.size(), static_cast<size_t>(DATA_WIDTH)};
 		matvar_t *matvar = Mat_VarCreate(DATA_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allData[0]), MAT_F_DONT_COPY_DATA);
-		astrohelion::saveVar(matFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
+		astrohelion::saveVar(pMatFile, matvar, DATA_VAR_NAME, MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
 /**
- *	@brief Save eigenvalue data to a mat file
- *	@param matFile a pointer to the mat file in question
- *	@throws Exception if a family member does not have six eigenvalues
+ *	\brief Save eigenvalue data to a mat file
+ *	\param pMatFile a pointer to the mat file in question
+ *	\throws Exception if a family member does not have six eigenvalues
  */
-void Fam_cr3bp::saveEigVals(mat_t *matFile){
+void Fam_cr3bp::saveEigVals(mat_t *pMatFile){
 	if(members.size() > 0){
 		// Separate all eigenvalues into real and complex parts
 		std::vector<double> realParts(members.size()*6);
@@ -731,7 +874,7 @@ void Fam_cr3bp::saveEigVals(mat_t *matFile){
 			std::vector<cdouble> vals = members[i].getEigVals();
 				if(vals.size() != 6)
 					throw Exception("Fam_cr3bp::saveEigVals: family member does not have 6 eigenvalues!");
-			for(int j = 0; j < 6; j++){
+			for(unsigned int j = 0; j < 6; j++){
 				realParts[j*members.size() + i] = std::real(vals[j]);
 				imagParts[j*members.size() + i] = std::imag(vals[j]);
 			}
@@ -742,27 +885,83 @@ void Fam_cr3bp::saveEigVals(mat_t *matFile){
 
 		size_t dims[2] = {members.size(), 6};
 		matvar_t *matvar = Mat_VarCreate(EIG_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
-		astrohelion::saveVar(matFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
+		astrohelion::saveVar(pMatFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
 /**
- *	@brief Save other useful information to a matlab file
- *	@param matFile the destination matlab file
+ *	\brief Save eigenvector data to a mat file
+ *	\param pMatFile a pointer to the mat file in question
  */
-void Fam_cr3bp::saveMiscData(mat_t *matFile){
+void Fam_cr3bp::saveEigVecs(mat_t *pMatFile){
+	if(members.size() > 0){
+		
+		std::vector<double> allVec_real(members.size()*36);
+		std::vector<double> allVec_imag(members.size()*36);
+
+		for(unsigned int i = 0; i < members.size(); i++){
+			// get the transpose of the STM matrix; we need to store it in column-major order
+			// and it's currently in row-major order
+			MatrixXRcd P = members[i].getEigVecs().transpose();
+			
+			// Retrieve the data from the matrix
+			cdouble *matData = P.data();
+			
+			// Store that data in our huge vector
+			for(unsigned int j = 0; j < 36; j++){
+				allVec_real[i*36 + j] = std::real(matData[j]);
+				allVec_imag[i*36 + j] = std::imag(matData[j]);
+			}
+		}
+		mat_complex_split_t splitVals = {&(allVec_real[0]), &(allVec_imag[0])};
+
+		size_t dims[3] = {6, 6, members.size()};
+		matvar_t *pMatVar = Mat_VarCreate(EIGVEC_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
+		astrohelion::saveVar(pMatFile, pMatVar, EIGVEC_VAR_NAME, MAT_COMPRESSION_NONE);
+	}
+}//====================================================
+
+/**
+ *	\brief Save STM data to a mat file
+ *	\param pMatFile a pointer to the mat file in question
+ */
+void Fam_cr3bp::saveSTMs(mat_t *pMatFile){
+	if(members.size() > 0){
+		std::vector<double> allSTMEl(members.size()*36);
+
+		for(unsigned int i = 0; i < members.size(); i++){
+			// get the transpose of the STM matrix; we need to store it in column-major order
+			// and it's currently in row-major order
+			MatrixXRd P = members[i].getSTM().transpose();
+			// Retrieve the data from the matrix
+			double *matData = P.data();
+			// Store that data in our huge vector
+			std::copy(matData, matData+36, &(allSTMEl[0]) + i*36);
+		}
+
+		size_t dims[3] = {6, 6, members.size()};
+		matvar_t *pMatVar = Mat_VarCreate(VARNAME_STM, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
+		astrohelion::saveVar(pMatFile, pMatVar, VARNAME_STM, MAT_COMPRESSION_NONE);
+	}
+}//====================================================
+
+/**
+ *	\brief Save other useful information to a matlab file
+ *	\param pMatFile the destination matlab file
+ */
+void Fam_cr3bp::saveMiscData(mat_t *pMatFile){
 	// sortType
 	int type = static_cast<int>(sortType);
 	size_t dims[2] = {1,1};
 	matvar_t *typeVar = Mat_VarCreate(SORT_TYPE_VAR_NAME, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, typeVar, SORT_TYPE_VAR_NAME, MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, typeVar, SORT_TYPE_VAR_NAME, MAT_COMPRESSION_NONE);
 
 	// name
 	char name_str[128];
 	std::strcpy(name_str, name.c_str());
 	dims[1] = name.length();
 	matvar_t *nameVar = Mat_VarCreate(NAME_VAR_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);
+	astrohelion::saveVar(pMatFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);
 }//====================================================
 
 

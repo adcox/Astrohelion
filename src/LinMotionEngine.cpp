@@ -1,14 +1,14 @@
 /**
- *	@file LinMotionEngine.cpp
- *	@brief Uses linear EOMS near libration points to generate trajectories
+ *	\file LinMotionEngine.cpp
+ *	\brief Uses linear EOMS near libration points to generate trajectories
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -46,7 +46,7 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Default, do-nothing constructor
+ *	\brief Default, do-nothing constructor
  */
 LinMotionEngine::LinMotionEngine(){}
 
@@ -55,74 +55,74 @@ LinMotionEngine::LinMotionEngine(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Retrieve the ratio between short- and long-period motion near L4 and L5
+ *	\brief Retrieve the ratio between short- and long-period motion near L4 and L5
  *
  *	This ratio is only applied to mixed-period motion simulations
- *	@return the ratio between short- and long-period motion near L4 and L5
+ *	\return the ratio between short- and long-period motion near L4 and L5
  */
 double LinMotionEngine::getMPORatio() const { return nu; }
 
 /**
- *	@brief Retrieve the number of revolutions to simulate for
+ *	\brief Retrieve the number of revolutions to simulate for
  *
  *	Note that this rev count applies to the in-plane oscillations only; the out-of-plane
  *	motion will most likely have a different period and therefore perform a different
  *	number of revs during the same time period
  *
- *	@return the number of rotatins to simulate for
+ *	\return the number of rotatins to simulate for
  */
 int LinMotionEngine::getNumRevs() const { return rots; }
 
 /**
- *	@brief Retrieve the step size (in non-dimensional units) for the time vector
- *	@return he step size (in non-dimensional units) for the time vector
+ *	\brief Retrieve the step size (in non-dimensional units) for the time vector
+ *	\return he step size (in non-dimensional units) for the time vector
  */
 double LinMotionEngine::getTimeStep() const { return t_step; }
 
 /**
- *	@brief Retrieve the acceptable numerical tolerance for computations
+ *	\brief Retrieve the acceptable numerical tolerance for computations
  *
  *	This tolerance is used to target Lagrange point locations and to determine
  *	where or not numbers are "equal" to zero (or any other value)
- *	@return the acceptable numerical tolerance for computations
+ *	\return the acceptable numerical tolerance for computations
  */
 double LinMotionEngine::getTol() const { return tol; }
 
 /**
- *	@brief Set the ratio for short- and long-period L4 and L5 motion
+ *	\brief Set the ratio for short- and long-period L4 and L5 motion
  *
  *	This ratio is only applied to mixed-period simulations
- *	@param ratio the ratio
+ *	\param ratio the ratio
  */
 void LinMotionEngine::setMPORatio(double ratio) {
 	nu = ratio;
 }
 
 /**
- *	@brief Set the number of revolutions to simulate for.
+ *	\brief Set the number of revolutions to simulate for.
  *
  *	The length of one revolutions is determined by the in-plane period, not the
  *	out-of-plane period
- *	@param numRevs number of revolutions
+ *	\param numRevs number of revolutions
  */
 void LinMotionEngine::setNumRevs(int numRevs) { rots = numRevs; }
 
 /**
- *	@brief Set the step size for the time vector
- *	@param dt non-dimensional time step
+ *	\brief Set the step size for the time vector
+ *	\param dt non-dimensional time step
  */
 void LinMotionEngine::setTimeStep(double dt) { t_step = dt; }
 
 /**
- *	@brief set the tolerance to use
- *	@param t tolerance, non-dimensional units
+ *	\brief set the tolerance to use
+ *	\param t tolerance, non-dimensional units
  */
 void LinMotionEngine::setTol(double t){ tol = t; }
 
 /**
- *	@brief get a human-readable string for a motion type
- *	@param type the motion type
- *	@return a human-redable string
+ *	\brief get a human-readable string for a motion type
+ *	\param type the motion type
+ *	\return a human-redable string
  */
 const char* LinMotionEngine::getTypeStr(LinMotion_tp type) const{
 	switch(type){
@@ -143,16 +143,16 @@ const char* LinMotionEngine::getTypeStr(LinMotion_tp type) const{
 //-----------------------------------------------------
 
 /**
- * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ * 	\brief Construct a trajectory from linear approximations of the CR3BP EOMs
  *
  *	This function chooses the default motion types: Elliptical for the collinear points and
  *	SPO for the triangular points. If the system has a mass ratio such that it falls into 
  *	Case III, then convergent behavior will be employed.
  *
- *	@param L the Lagrange point number [1,5]
- *	@param r0 a three-element vector that specifies the initial position of the arc relative
+ *	\param L the Lagrange point number [1,5]
+ *	\param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
- *	@param sys the CR3BP system data object
+ *	\param sys the CR3BP system data object
  */
 Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], SysData_cr3bp *sys){
 
@@ -160,16 +160,16 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], SysData_cr3bp *s
 }//=======================================================
 
 /**
- *	@brief Compute a linear approximation for a Lissajous orbit
+ *	\brief Compute a linear approximation for a Lissajous orbit
  *
- *	@param L Lagrange point number. Choose 1, 2, or 3
- *	@param Axy in-plane amplitude, non-dimensional units
- *	@param xAmp whether or not Axy describes the x-amplitude; true -> Ax = Axy, false -> Ay = Axy
- *	@param phi starting phase angle for the in-plane motion
- *	@param Az out-of-plane amplitude, non-dimensional units
- *	@param psi starting phase angle for out-of-plane motion
- *	@param sysData a pointer to a system data object
- *	@throws Exception if <tt>L</tt> is not 1, 2, or 3
+ *	\param L Lagrange point number. Choose 1, 2, or 3
+ *	\param Axy in-plane amplitude, non-dimensional units
+ *	\param xAmp whether or not Axy describes the x-amplitude; true -> Ax = Axy, false -> Ay = Axy
+ *	\param phi starting phase angle for the in-plane motion
+ *	\param Az out-of-plane amplitude, non-dimensional units
+ *	\param psi starting phase angle for out-of-plane motion
+ *	\param sysData a pointer to a system data object
+ *	\throws Exception if <tt>L</tt> is not 1, 2, or 3
  */
 Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi,
 	SysData_cr3bp *sysData){
@@ -224,7 +224,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
 
 			double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-			ID = linTraj.addNode(Node(state, 0));
+			ID = linTraj.addNode(Node(state, 6, t));
 			if(t > 0)
 				linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -246,17 +246,17 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
 
 
 /**
- * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ * 	\brief Construct a trajectory from linear approximations of the CR3BP EOMs
  *
  *	This function sets the out-of-plane motion to have zero amplitude
  *
- *	@param L the Lagrange point number [1,5]
- *	@param r0 a three-element vector that specifies the initial position of the arc relative
+ *	\param L the Lagrange point number [1,5]
+ *	\param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
- *	@param type the type of linearized motion desired
- *	@param sysData the CR3BP system data object
+ *	\param type the type of linearized motion desired
+ *	\param sysData the CR3BP system data object
  *
- *	@return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
@@ -266,20 +266,20 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], LinMotion_tp typ
 }//====================================================
 
 /**
- * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ * 	\brief Construct a trajectory from linear approximations of the CR3BP EOMs
  *
- *	@param L the Lagrange point number [1,5]
- *	@param r0 a three-element vector that specifies the initial position of the arc relative
+ *	\param L the Lagrange point number [1,5]
+ *	\param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
- *	@param Az out-of-plane amplitude, in non-dimensional units
- *	@param psi defines the starting elevation angle of the out-of-plane motion, radians
- *	@param type the type of linearized motion desired
- *	@param sysData the CR3BP system data object
+ *	\param Az out-of-plane amplitude, in non-dimensional units
+ *	\param psi defines the starting elevation angle of the out-of-plane motion, radians
+ *	\param type the type of linearized motion desired
+ *	\param sysData the CR3BP system data object
  *
- *	@return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
- *	@throws Exception if the <tt>type</tt> does not correspond with the specified Lagrange
+ *	\throws Exception if the <tt>type</tt> does not correspond with the specified Lagrange
  *	point <tt>L</tt>
  */
 Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
@@ -341,7 +341,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					ID = linTraj.addNode(Node(state, 0));
+					ID = linTraj.addNode(Node(state, 6, t));
 					if(t > 0)
 						linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -367,7 +367,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 					double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-					ID = linTraj.addNode(Node(state, 0));
+					ID = linTraj.addNode(Node(state, 6, t));
 					if(t > 0)
 						linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -423,7 +423,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, 6, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -445,7 +445,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, 6, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -472,7 +472,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, 6, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -500,7 +500,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 				double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-				ID = linTraj.addNode(Node(state, 0));
+				ID = linTraj.addNode(Node(state, 6, t));
 				if(t > 0)
 					linTraj.addSeg(Segment(prev_ID, ID, t_step));
 
@@ -529,7 +529,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 						double state[] = {xi + LPtPos[0], eta + LPtPos[1], zeta + LPtPos[2], xi_dot, eta_dot, zeta_dot};
 
-						ID = linTraj.addNode(Node(state, 0));
+						ID = linTraj.addNode(Node(state, 6, t));
 						if(t > 0)
 							linTraj.addSeg(Segment(prev_ID, ID, t_step));
 

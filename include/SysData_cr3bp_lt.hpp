@@ -1,14 +1,14 @@
 /**
- *  @file SysData_cr3bp_ltvp.hpp
- *	@brief 
+ *  \file SysData_cr3bp_lt.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -25,38 +25,39 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
 #include "SysData_cr3bp.hpp"
 
-#include "DynamicsModel_cr3bp_ltvp.hpp"
+#include "ControlLaw_cr3bp_lt.hpp"
+#include "DynamicsModel_cr3bp_lt.hpp"
 
 namespace astrohelion{
 
 /**
- *	@ingroup model
- *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
+ *	\ingroup model
+ *	\brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
-class SysData_cr3bp_ltvp : public SysData_cr3bp{
+class SysData_cr3bp_lt : public SysData_cr3bp{
 
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
-		SysData_cr3bp_ltvp();
-		SysData_cr3bp_ltvp(std::string, std::string, double, double, double);
-		SysData_cr3bp_ltvp(const SysData_cr3bp_ltvp&);
-		SysData_cr3bp_ltvp(const char*);
-		//@}
+		SysData_cr3bp_lt();
+		SysData_cr3bp_lt(std::string, std::string, double, double, double);
+		SysData_cr3bp_lt(const SysData_cr3bp_lt&);
+		SysData_cr3bp_lt(const char*);
+		//\}
 
-		SysData_cr3bp_ltvp& operator=(const SysData_cr3bp_ltvp&);
+		SysData_cr3bp_lt& operator=(const SysData_cr3bp_lt&);
 		
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
+		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
 		
 		double getIsp() const;
@@ -69,13 +70,17 @@ class SysData_cr3bp_ltvp : public SysData_cr3bp{
 		void setMassDim(double);
 		void setThrust(double);
 		void setThrustDim(double);
-		//@}
+		//\}
 		
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
 	private:
 		/** The dynamic model that governs motion for this system*/
-		DynamicsModel_cr3bp_ltvp model = DynamicsModel_cr3bp_ltvp();
+		DynamicsModel_cr3bp_lt model = DynamicsModel_cr3bp_lt();
+
+		/** Control law object for this system */
+		ControlLaw_cr3bp_lt control = ControlLaw_cr3bp_lt();
+		
 		void readFromMat(mat_t*);
 };
 

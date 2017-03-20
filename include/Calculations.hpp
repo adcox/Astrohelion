@@ -1,15 +1,15 @@
 /**
- *	@file Calculations.hpp
- *	@brief Includes miscellaneous calculation functions
+ *	\file Calculations.hpp
+ *	\brief Includes miscellaneous calculation functions
  *
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
  
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of the Astrohelion.
  *
@@ -52,7 +52,7 @@ class Traj_bc4bp;
 class Traj_cr3bp;
 
 /**
- *	@brief Describes the plane a periodic orbit can be mirrored across
+ *	\brief Describes the plane a periodic orbit can be mirrored across
  */
 enum class Mirror_tp{
 	MIRROR_XZ,		//!< Mirror over the XZ-Plane; x, z, and y-dot can be fixed if desired
@@ -63,7 +63,7 @@ enum class Mirror_tp{
 };
 
 /**
- *	@brief Describes the type of manifold, both stability and direction
+ *	\brief Describes the type of manifold, both stability and direction
  */
 enum class Manifold_tp{
 	MAN_U_P,	//!< Unstable, departing towards +x direction
@@ -73,7 +73,7 @@ enum class Manifold_tp{
 };
 
 /**
- *	@brief Eigenvalue pair types
+ *	\brief Eigenvalue pair types
  *
  *	Eigenvalues come in three different types of pairs. They will
  *	either be complex, real, or exactly equal to 1.0. Since the 
@@ -89,8 +89,8 @@ enum class EigValSet_tp{
 };
 
 /**
- *  @name General Utility Functions
- *  @{
+ *  \name General Utility Functions
+ *  \{
  */
 double dateToEphemerisTime(const char*);
 double dateToGST(double, double, double, double, double, double);
@@ -100,35 +100,35 @@ std::vector<Traj_cr3bp> getManifolds(Manifold_tp, const Traj_cr3bp*, int, double
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 double getTotalDV(const MultShootData*);
-void finiteDiff_checkMultShoot(const Nodeset*);
-void finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine);
+bool finiteDiff_checkMultShoot(const Nodeset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
+bool finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
-std::vector<cdouble> sortEig(std::vector<cdouble>, std::vector<int>*);
+std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
 Node interpPointAtTime(const Traj*, double);
-/** @} */
+/** \} */
 
 /**
- *  @name Orbit Determination
- *  @{
+ *  \name Orbit Determination
+ *  \{
  */
 std::vector<double> getSpherical(double, double, double);
 std::vector<double> inert2LocalTangent(std::vector<double>, double, double, double);
 std::vector<double> localTangent2Inert(std::vector<double>, double, double, double);
 std::vector<double> azEl2LocalTangent(double, double, double);
-/** @} */
+/** \} */
 
 /**
- *  @name 2BP Utility Functions
- *  @{
+ *  \name 2BP Utility Functions
+ *  \{
  */
 void r2bp_computeAllKepler(BaseArcset*);
 void r2bp_computeKepler(const SysData_2bp*, Node*);
 std::vector<double> r2bp_stateFromKepler(const SysData_2bp*, double, double, double, double, double, double);
-/** @} */
+/** \} */
 
 /**
- *  @name CR3BP Utility Functions
- *  @{
+ *  \name CR3BP Utility Functions
+ *  \{
  */
 double cr3bp_getVel_withC(const double s[], double, double, int);
 Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp, const SysData_cr3bp*, double, double, double);
@@ -145,11 +145,11 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double);
 Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double, MultShootData*);
-/** @} */
+/** \} */
 
 /**
- *  @name BC4BP Utility Functions
- *  @{
+ *  \name BC4BP Utility Functions
+ *  \{
  */
 Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp, const SysData_bc4bp*, int, double);
 Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp, const SysData_bc4bp*, int, double);
@@ -157,5 +157,5 @@ Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp, const SysData_cr3bp*);
 Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp, const SysData_cr3bp*);
 MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp*, double);
 Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp*, double);
-/** @} */
+/** \} */
 }// END of Astrohelion namespace

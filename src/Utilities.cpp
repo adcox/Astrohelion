@@ -1,15 +1,15 @@
 /**
- *  @file Utilities.cpp
- *  @brief Similar to tpat_calculations, but these functions are
+ *  \file Utilities.cpp
+ *  \brief Similar to tpat_calculations, but these functions are
  *  more general, less math-y
  *  
- *  @author Andrew Cox
- *  @version May 25, 2016
- *  @copyright GNU GPL v3.0
+ *  \author Andrew Cox
+ *  \version May 25, 2016
+ *  \copyright GNU GPL v3.0
  */
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -43,14 +43,14 @@ namespace astrohelion{
 
 /**
  * @addtogroup util
- * @{
+ * \{
  */
 
 
 /**
- *  @brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j
- *  @param num a complex number
- *  @return the complex number as a string
+ *  \brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j
+ *  \param num a complex number
+ *  \return the complex number as a string
  */
 std::string complexToStr(std::complex<double> num){
     char buffer[64];
@@ -59,9 +59,9 @@ std::string complexToStr(std::complex<double> num){
 }
 
 /**
- *  @brief A wrapper function to print a message
- *	@param verbose whether or not to be verbose; message is not printed if verbose is false
- *	@param format a standard format string literal to pass to <tt>vprintf</tt>
+ *  \brief A wrapper function to print a message
+ *	\param verbose whether or not to be verbose; message is not printed if verbose is false
+ *	\param format a standard format string literal to pass to <tt>vprintf</tt>
  */
 void printVerb(bool verbose, const char * format, ...){
     if(verbose){
@@ -73,8 +73,8 @@ void printVerb(bool verbose, const char * format, ...){
 }//==========================================
 
 /**
- *	@brief Print an error message to the standard output in red
- *	@param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\brief Print an error message to the standard output in red
+ *	\param format a standard format string literal to pass to <tt>vprintf</tt>
  */
 void printErr(const char * format, ...){
 	printf(RED);
@@ -86,8 +86,8 @@ void printErr(const char * format, ...){
 }//==========================================
 
 /**
- *	@brief Print a warning messate to the standard output in yellow
- *	@param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\brief Print a warning messate to the standard output in yellow
+ *	\param format a standard format string literal to pass to <tt>vprintf</tt>
  */
 void printWarn(const char * format, ...){
     printf(YELLOW);
@@ -99,9 +99,9 @@ void printWarn(const char * format, ...){
 }//==========================================
 
 /**
- *	@brief Print a message to the standard output using an ASCII escape-type color
- *	@param color one of the constant color values stored in the ascii-output header
- *	@param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\brief Print a message to the standard output using an ASCII escape-type color
+ *	\param color one of the constant color values stored in the ascii-output header
+ *	\param format a standard format string literal to pass to <tt>vprintf</tt>
  */
 void printColor(const char* color, const char * format, ...){
     printf("%s", color);
@@ -113,10 +113,10 @@ void printColor(const char* color, const char * format, ...){
 }//==========================================
 
 /**
- *	@brief Print a message to the standard output using an ASCII escape-type color
- *	@param verbose whether or not to print the string
- *	@param color one of the constant color values stored in the ascii-output header
- *	@param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\brief Print a message to the standard output using an ASCII escape-type color
+ *	\param verbose whether or not to print the string
+ *	\param color one of the constant color values stored in the ascii-output header
+ *	\param format a standard format string literal to pass to <tt>vprintf</tt>
  */
 void printVerbColor(bool verbose, const char* color, const char * format, ...){
 	if(verbose){
@@ -130,14 +130,14 @@ void printVerbColor(bool verbose, const char* color, const char * format, ...){
 }//==========================================
 
 /**
- *  @brief Save a variable to a .mat file, performing error checks along the way. 
+ *  \brief Save a variable to a .mat file, performing error checks along the way. 
  *
  *  Once the variable is written to file, it is freed from memory
  *
- *  @param matFile a pointer to the matlab output file
- *  @param matvar a pointer to the matlab variable object
- *  @param varName a literal string that describes the variable; only used in error message output
- *  @param comp an enum that describes the compression strategy. Options are:
+ *  \param matFile a pointer to the matlab output file
+ *  \param matvar a pointer to the matlab variable object
+ *  \param varName a literal string that describes the variable; only used in error message output
+ *  \param comp an enum that describes the compression strategy. Options are:
  *      MAT_COMPRESSION_NONE - no compression
  *      MAT_COMPRESSION_ZLIB - zlib compression
  */
@@ -151,32 +151,33 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
 }//=========================================================
 
 /**
- *  @brief Save a single double-precision value to a Matlab file
+ *  \brief Save a single double-precision value to a Matlab file
  * 
- *  @param matfp a pointer to the matlab output file
- *  @param varName the name of the variable
- *  @param data data value
+ *  \param matfp a pointer to the matlab output file
+ *  \param varName the name of the variable
+ *  \param data data value
  */
 void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
     if(NULL != matfp){
         size_t dims[2] = {1, 1};
         matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &data, MAT_F_DONT_COPY_DATA);
         saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
+        Mat_VarFree(matvar);
     }else{
         printErr("Utilities::saveDoubleToFile: Error creating mat file\n");
     }
 }//========================================================
 
 /**
- * @brief Save a matrix of data to a Matlab .mat file
- * @details The data passed in the <tt>data</tt> vector is transposed 
+ * \brief Save a matrix of data to a Matlab .mat file
+ * \details The data passed in the <tt>data</tt> vector is transposed 
  *  and saved to the specified Matlab file
  * 
- * @param filename name/path of the file
- * @param varName variable name
- * @param data vector of data in row-major order
- * @param rows number of rows in the matrix
- * @param cols number of columns in the matrix
+ * \param filename name/path of the file
+ * \param varName variable name
+ * \param data vector of data in row-major order
+ * \param rows number of rows in the matrix
+ * \param cols number of columns in the matrix
  */
 void saveMatrixToFile(const char* filename, const char* varName, std::vector<double> data, size_t rows, size_t cols){
     mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
@@ -185,16 +186,16 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
 }//========================================================
 
 /**
- *  @brief Save a matrix of data to an open matlab .mat file
- *  @details The data passed in the <tt>data</tt> vector is transposed 
+ *  \brief Save a matrix of data to an open matlab .mat file
+ *  \details The data passed in the <tt>data</tt> vector is transposed 
  *  and saved to the specified Matlab file 
  * 
- *  @param matfp An open Matlab .mat file
- *  @param varName name of the variable within the .mat file
- *  @param data a vector of data in row-major order
- *  @param rows number of rows in the matrix
- *  @param cols number of columns in the matrix
- *  @throws Exception if <tt>data</tt> does not have enough elements
+ *  \param matfp An open Matlab .mat file
+ *  \param varName name of the variable within the .mat file
+ *  \param data a vector of data in row-major order
+ *  \param rows number of rows in the matrix
+ *  \param cols number of columns in the matrix
+ *  \throws Exception if <tt>data</tt> does not have enough elements
  *  to construct a matrix with the specified number of rows and columns
  */
 void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> data, size_t rows, size_t cols){
@@ -227,15 +228,15 @@ void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const
 }//=========================================================
 
 /**
- *  @brief Read a matrix of doubles from a .mat file
+ *  \brief Read a matrix of doubles from a .mat file
  * 
- *  @param filename relative or absolute path to the .mat data file
- *  @param varName the name of the variable/matrix to read from the file
+ *  \param filename relative or absolute path to the .mat data file
+ *  \param varName the name of the variable/matrix to read from the file
  * 
- *  @return a column-major-order vector containing the data from the desired matrix
- *  @throws Exception if the file cannot be opened, if the variable doesn't exist,
+ *  \return a column-major-order vector containing the data from the desired matrix
+ *  \throws Exception if the file cannot be opened, if the variable doesn't exist,
  *  or if the variable contains something other than doubles
- *  @throws Exception if the data file cannot be opened or the variable cannot be read
+ *  \throws Exception if the data file cannot be opened or the variable cannot be read
  */
 MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  
@@ -284,11 +285,11 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
 }//==========================================================
 
 /**
- *  @brief Read a double from a mat file
- *  @param matFile a pointer to the matlab file in quesiton
- *  @param varName the name of the variable in the mat file
- *  @return the value of the variable
- *  @throws Exception if there is trouble reading or parsing the variable
+ *  \brief Read a double from a mat file
+ *  \param matFile a pointer to the matlab file in quesiton
+ *  \param varName the name of the variable in the mat file
+ *  \return the value of the variable
+ *  \throws Exception if there is trouble reading or parsing the variable
  */
 double readDoubleFromMat(mat_t *matFile, const char* varName){
     double result = 2;
@@ -344,14 +345,14 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
 }//==============================================
 
 /**
- *  @brief Read a string from a matlab file
+ *  \brief Read a string from a matlab file
  *
- *  @param matFile a pointer to the matlab file in questions
- *  @param varName the name of the variable in the mat file
- *  @param aType the expected variable type (e.g. MAT_T_UINT8)
- *  @param aClass the expected variable class (e.g. MAT_C_CHAR)
- *  @return the string
- *  @throws Exception if there is trouble reading or parsing the variable.
+ *  \param matFile a pointer to the matlab file in questions
+ *  \param varName the name of the variable in the mat file
+ *  \param aType the expected variable type (e.g. MAT_T_UINT8)
+ *  \param aClass the expected variable class (e.g. MAT_C_CHAR)
+ *  \return the string
+ *  \throws Exception if there is trouble reading or parsing the variable.
  */
 std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types aType,
     matio_classes aClass){
@@ -379,7 +380,7 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
 }//=============================================
 
 /**
- *  @brief Suspend operation until the user presses a key
+ *  \brief Suspend operation until the user presses a key
  */
 void waitForUser(){
     std::cout << "Press ENTER to continue...";
@@ -388,13 +389,13 @@ void waitForUser(){
 }//========================================================
 
 /**
- *  @brief Retrieve a string representing the name of a spacecraft or celestial body
+ *  \brief Retrieve a string representing the name of a spacecraft or celestial body
  *  from its SPICE ID Code
- *  @details For a list of SPICE IDs, see the 
+ *  \details For a list of SPICE IDs, see the 
  *  <a href="http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/naif_ids.html">NAIF ID Page</a>
  *  
- *  @param ID Integer ID Code
- *  @return A string representation of the body or satellite
+ *  \param ID Integer ID Code
+ *  \return A string representation of the body or satellite
  */
 std::string getNameFromSpiceID(int ID){
     SpiceInt lenout = 128;  // maximum length of output name
@@ -413,13 +414,13 @@ std::string getNameFromSpiceID(int ID){
 }//============================================
 
 /**
- *  @brief Get a SPICE ID from a body name
- *  @details Body names are case insensitive and leading/trailing spaces are not
+ *  \brief Get a SPICE ID from a body name
+ *  \details Body names are case insensitive and leading/trailing spaces are not
  *  important. However, when the name is made up of more than word, they must be
  *  separated by at least one space.
  * 
- *  @param name body name to be translated to a SPICE ID code
- *  @return a SPICE integer ID code
+ *  \param name body name to be translated to a SPICE ID code
+ *  \return a SPICE integer ID code
  */
 SpiceInt getSpiceIDFromName(const char *name){
     ConstSpiceChar *name_spice = static_cast<ConstSpiceChar*>(name);
@@ -435,11 +436,11 @@ SpiceInt getSpiceIDFromName(const char *name){
 }//============================================
 
 /**
- *  @brief Check to see if SPICE failed; if it did, throw a Exception with
+ *  \brief Check to see if SPICE failed; if it did, throw a Exception with
  *  a custom error message
  * 
- *  @param customMsg A message for the Exception object
- *  @throws Exception if an error occured
+ *  \param customMsg A message for the Exception object
+ *  \throws Exception if an error occured
  */
 void checkAndReThrowSpiceErr(const char* customMsg){
     if(failed_c()){
@@ -452,10 +453,10 @@ void checkAndReThrowSpiceErr(const char* customMsg){
 }//============================================
 
 /**
- *  @brief Save a matrix as a CSV file to be read by Excel or Matlab
+ *  \brief Save a matrix as a CSV file to be read by Excel or Matlab
  * 
- *  @param m the matrix
- *  @param filename Filename of the csv file (include the .csv extension!)
+ *  \param m the matrix
+ *  \param filename Filename of the csv file (include the .csv extension!)
  */
 void toCSV(MatrixXRd m, const char* filename){
     std::ofstream outFile(filename, std::ios::out);
@@ -476,14 +477,14 @@ void toCSV(MatrixXRd m, const char* filename){
 }//=============================================
 
 /**
- *  @brief Resolve double angle ambiquity from inverse trig
+ *  \brief Resolve double angle ambiquity from inverse trig
  *  functions
- *  @details [long description]
+ *  \details [long description]
  * 
- *  @param asinVal The result of arcsin(value)
- *  @param acosVal The result of arccos(value)
+ *  \param asinVal The result of arcsin(value)
+ *  \param acosVal The result of arccos(value)
  * 
- *  @return The common value between the double angles returned by arcsin(value)
+ *  \return The common value between the double angles returned by arcsin(value)
  *  and arccos(value)
  */
 double resolveAngle(double asinVal, double acosVal){
@@ -509,8 +510,8 @@ double resolveAngle(double asinVal, double acosVal){
 }//=============================================
 
 /**
- *  @brief Determine the value of a number within some bounds
- *  @details This is particularly useful for arguments for 
+ *  \brief Determine the value of a number within some bounds
+ *  \details This is particularly useful for arguments for 
  *  inverse trig functions: small numerical errors may result 
  *  in arccos(1 + eps) or arsin(-1 - eps) where eps is some small
  *  value. The resulting inverse trig function will be invalide
@@ -518,10 +519,10 @@ double resolveAngle(double asinVal, double acosVal){
  *  to ensure that the argument inside the trig function is between
  *  -1 and 1.
  * 
- *  @param val the value to bound
- *  @param min minimum allowable value
- *  @param max maximum allowable value
- *  @return The value if it is within the bounds, or the min/max
+ *  \param val the value to bound
+ *  \param min minimum allowable value
+ *  \param max maximum allowable value
+ *  \return The value if it is within the bounds, or the min/max
  *  bound if val is outside the bounds.
  */
 double boundValue(double val, double min, double max){
@@ -534,5 +535,5 @@ double boundValue(double val, double min, double max){
     return val;
 }//=============================================
 
-/** @} */ // END of util group
+/** \} */ // END of util group
 } // End of astrohelion namespace

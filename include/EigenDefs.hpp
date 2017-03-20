@@ -1,14 +1,14 @@
 /**
- *  @file EigenDefs.hpp
- *	@brief Definitions for matrices, vectors, and other objects from the Eigen library.
+ *  \file EigenDefs.hpp
+ *	\brief Definitions for matrices, vectors, and other objects from the Eigen library.
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -35,8 +35,14 @@ namespace astrohelion{
  */
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXRd;
 
+/**
+ * A dynamically sized matrix of complex doubles with data stored in row-major order
+ */
 typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXRcd;
 
+/**
+ * A 3x3 matrix of doubles with data stored in row-major order
+ */
 typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> Matrix3Rd;
 
 }// END of Astrohelion namespace

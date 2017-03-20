@@ -1,14 +1,14 @@
 /**
- *  @file BodyData.hpp
- *	@brief Stores information about a celestial body
+ *  \file BodyData.hpp
+ *	\brief Stores information about a celestial body
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -33,33 +33,34 @@
 
 namespace astrohelion{
 /**
- *	@ingroup model
- *	@brief The body data object provides a way to store and retrieve information about different
+ *	\ingroup model
+ *	\brief The body data object provides a way to store and retrieve information about different
  *	celestial bodies. 
  *
  *	This may be supplemented/usurped by calls to SPICE in the future.
  *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 15, 2015
+ *	\copyright GNU GPL v3.0
  */
 class BodyData : public Core{
 	public:
 
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		BodyData();	// Copy constructor is defined by compiler, should be fine
 		BodyData(std::string);
+		BodyData(int);
 		BodyData(double m, double R, double r, double mu, std::string name, std::string parent);
-		/** @} */
+		/** \} */
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
-		double getRadius();
+		double getBodyRad();
 		double getMass();
 		double getGravParam();
 		double getOrbitRad();
@@ -68,17 +69,18 @@ class BodyData : public Core{
 		int getID();
 		std::string getParent();
 
-		void setRadius(double);
+		void setBodyRad(double);
 		void setMass(double);
 		void setOrbitRad(double);
 		void setGravParam(double);
 		void setName(std::string);
 		void setParent(std::string);
-		/** @} */
+		/** \} */
 		
+		void print();
 	private:
 		/** Mean radius of the body, km */
-		double radius = 0;
+		double bodyRad = 0;
 
 		/** Mass of the body, kg */
 		double mass = 0;
@@ -101,6 +103,8 @@ class BodyData : public Core{
 
 		/** Name of the parent body */
 		std::string parent = "NULL";
+
+		void initFromID(int);
 };
 
 }// END of Astrohelion namespace

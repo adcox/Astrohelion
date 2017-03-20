@@ -1,14 +1,14 @@
 /**
- *  @file Nodeset_bc4bp.hpp
- *	@brief 
+ *  \file Nodeset_bc4bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -40,23 +40,23 @@ class Event;
 class SysData_bc4bp;
 
 /**
- *	@ingroup traj bc4bp
- *	@brief his derivative of the Nodeset object contains additional information
+ *	\ingroup traj bc4bp
+ *	\brief his derivative of the Nodeset object contains additional information
  *	for the BCR4BP
  *
  *	Nodes are 6-dimensional, with three position states and three velocity states. Times-
  *	of-flight between nodes and epoch times at each node are also stored
  *
- *	@author Andrew Cox
- *	@version September 2, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 2, 2015
+ *	\copyright GNU GPL v3.0
  */
 class Nodeset_bc4bp : public Nodeset{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Nodeset_bc4bp(const SysData_bc4bp*);
 	Nodeset_bc4bp(const SysData_bc4bp*, const double[6], double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
@@ -67,7 +67,7 @@ public:
 	Nodeset_bc4bp(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
-	//@}
+	//\}
 	
 	// Operators
 
@@ -76,7 +76,6 @@ public:
 	// Utility Functions
 	
 private:
-	void initExtraParam() override;
 };
 
 }

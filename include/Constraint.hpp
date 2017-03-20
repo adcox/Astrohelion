@@ -1,14 +1,14 @@
 /**
- *  @file Constraint.hpp
- *	@brief Contains information about a constraint on a nodeset, node, or segment
+ *  \file Constraint.hpp
+ *	\brief Contains information about a constraint on a nodeset, node, or segment
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -34,7 +34,7 @@
 
 namespace astrohelion{
 /**
- *	@brief Specify the type of constraint
+ *	\brief Specify the type of constraint
  *
  *	This type tells the correction engine how to interpret and apply the 
  *	information stored in this constraint object.
@@ -183,7 +183,7 @@ enum class Constraint_tp {
 };
 
 /**
- *  @brief Describes how a constraint is applied, i.e., what type of object is controlled
+ *  \brief Describes how a constraint is applied, i.e., what type of object is controlled
  *  by the constraint.
  */
 enum class ConstraintApp_tp{
@@ -193,7 +193,7 @@ enum class ConstraintApp_tp{
 };
 		
 /**
- *	@brief Contains information about how a particular node, segment, or arcset
+ *	\brief Contains information about how a particular node, segment, or arcset
  *	should be constrained during a corrections process
  *
  * 	**Adding a New Constraint**
@@ -212,15 +212,15 @@ enum class ConstraintApp_tp{
  *		the default value of the slack variable (if possible) in the relevant
  *		model and update the multShoot_getSlackVarVal() function.
  *
- *	@author Andrew Cox
- *	@version August 3, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version August 3, 2015
+ *	\copyright GNU GPL v3.0
  */
 class Constraint : public Core{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		Constraint();
 		Constraint(Constraint_tp);
@@ -228,13 +228,13 @@ class Constraint : public Core{
 		Constraint(Constraint_tp, int, const double*, int);
 		Constraint(const Constraint&);
 		~Constraint();
-		//@}
+		//\}
 
 		Constraint& operator =(const Constraint&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		int countConstrainedStates() const;
 		
@@ -252,14 +252,14 @@ class Constraint : public Core{
 		void setID(int);
 		void setData(std::vector<double>);
 		void setData(const double*, int);
-		//@}
+		//\}
 
 		/**
-		 *  @name Utility Functions
-		 *  @{
+		 *  \name Utility Functions
+		 *  \{
 		 */
 		void print() const;
-		//@}
+		//\}
 	private:
 		void copyMe(const Constraint&);
 		void setAppType();

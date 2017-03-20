@@ -57,26 +57,57 @@ MKDIR_P = mkdir -p
 
 all: directories unit run
 
-directories: $(OBJ)
-
-unit: arcDataOps
+unit: utility arcDataOps bcSysDef linMotion simEngine corrector traj nodeset multShootCons
 
 run:
-	./arcDataOps
+	./utility.bin
+	./arcDataOps.bin
+	./bcSysDef.bin
+	./linMotion.bin
+	./simEngine.bin
+	./corrector.bin
+	./traj.bin
+	./nodeset.bin
+	./multShootCons.bin
 	
 ############################################################
 ## UNIT TESTS
 ############################################################
 
 arcDataOps: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_arcDataOps.cpp $(LDFLAGS) -o $@	
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_arcDataOps.cpp $(LDFLAGS) -o $@.bin
+
+bcSysDef: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_bc4bp_def.cpp $(LDFLAGS) -o $@.bin
+
+corrector: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_correctionEngine.cpp $(LDFLAGS) -o $@.bin
+
+linMotion: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_linMotion.cpp $(LDFLAGS) -o $@.bin
+
+multShootCons: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_multShootCons.cpp $(LDFLAGS) -o $@.bin
+
+nodeset: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_nodeset.cpp $(LDFLAGS) -o $@.bin
+
+simEngine: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_simEngine.cpp $(LDFLAGS) -o $@.bin
+
+traj: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_traj.cpp $(LDFLAGS) -o $@.bin
+
+utility: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_utilities.cpp $(LDFLAGS) -o $@.bin
 
 ############################################################
 ## OBJECTS - All the %.o files go in the OBJ directory
 ############################################################
 
-$(OBJ):
+directories:
 	$(MKDIR_P) $(OBJ)
+	$(MKDIR_P) data
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
 	$(COMP) -I $(INC) -isystem $(INC_EXT) -c $< -o $@

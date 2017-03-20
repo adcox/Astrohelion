@@ -1,14 +1,14 @@
 /**
- *  @file FamMember_cr3bp.hpp
- *	@brief 
+ *  \file FamMember_cr3bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -30,6 +30,7 @@
 #include "Core.hpp"
  
 #include "Common.hpp"
+#include "EigenDefs.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -42,8 +43,8 @@ class Traj_cr3bp;
 class SysData_cr3bp;
 
 /**
- *	@ingroup traj cr3bp
- *	@brief A data object to store information about a family member
+ *	\ingroup traj cr3bp
+ *	\brief A data object to store information about a family member
  *	
  *	The purpose of this object is to store just enough information to re-create the
  *	orbit using the simulation engine with additional variables to describe the orbit
@@ -52,44 +53,52 @@ class SysData_cr3bp;
 class FamMember_cr3bp : public Core{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		FamMember_cr3bp(){}
 		FamMember_cr3bp(double*, double, double, double, double, double);
 		FamMember_cr3bp(const Traj_cr3bp);
 		FamMember_cr3bp(const FamMember_cr3bp&);
 		~FamMember_cr3bp();
-		//@}
+		//\}
 
 		FamMember_cr3bp& operator= (const FamMember_cr3bp&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		std::vector<cdouble> getEigVals() const;
+		MatrixXRcd getEigVecs() const;
 		std::vector<double> getIC() const;
 		double getTOF() const;
+		MatrixXRd getSTM() const;
 		double getJacobi() const; 
 		double getXAmplitude() const;
 		double getYAmplitude() const;
 		double getZAmplitude() const;
 
 		void setEigVals(std::vector<cdouble>);
+		void setEigVecs(MatrixXRcd);
 		void setIC(std::vector<double>);
 		void setJacobi(double);
+		void setSTM(MatrixXRd);
 		void setTOF(double);
 		void setXAmplitude(double);
 		void setYAmplitude(double);
 		void setZAmplitude(double);
-		//@}
+		//\}
 
 		Traj_cr3bp toTraj(const SysData_cr3bp*);
 
 	protected:
-		/** Vector of 6 eigenvalues; initialized to NAN by default */
+		MatrixXRd stm = MatrixXRd::Identity(6,6);	//!< State transition matrix, initialized as 6x6 Identity
+		MatrixXRcd eigVecs = MatrixXRcd::Zero(6,6);	//!< Vector of eigenvectors (as columns)
+
+		/** Vector of eigenvalues*/
 		std::vector<cdouble> eigVals {{NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}, {NAN,0}};
+		
 		std::vector<double> IC {0,0,0,0,0,0};		//!< Initial state for this trajectory, non-dim units
 		double TOF = NAN;							//!< Time of flight for traj., non-dim units
 		double JC = NAN;							//!< Jacobi constant for traj., non-dimensional

@@ -40,7 +40,7 @@ void checkLambertSolver_1A(){
 	// node.print();
 
 	cout << "Lambert Solver: Type1A:\n";
-	cout << "  a: " << (std::abs(node.getExtraParam("sma") - 32773.3694) < 1e-3 ? PASS : FAIL) << endl;
+	cout << "  a: " << (std::abs(node.getExtraParam(PARAMKEY_SMA) - 32773.3694) < 1e-3 ? PASS : FAIL) << endl;
 	cout << "  e: " << (std::abs(node.getExtraParam("ecc") - 0.8685) < 1e-3 ? PASS : FAIL) << endl;
 	cout << "  ta1: " << (std::abs(node.getExtraParam("ta") - 100.4889*PI/180) < 1e-3 ? PASS : FAIL) << endl;
 	cout << "  fpa1: " << (std::abs(node.getExtraParam("fpa") - 45.4072*PI/180) < 1e-3 ? PASS : FAIL) << endl;
@@ -51,7 +51,7 @@ void checkLambertSolver_1A(){
 
 	Traj_2bp type1_traj_sim(&sys);
 	SimEngine sim;
-	sim.setMakeCrashEvents(false);
+	sim.setMakeDefaultEvents(false);
 	sim.runSim(node.getState(), node2.getEpoch() - node.getEpoch(), &type1_traj_sim);
 
 	std::vector<double> finalState = type1_traj_sim.getStateByIx(-1);
@@ -87,7 +87,7 @@ void checkLambertSolver_2A(){
 	Node node2 = type2_traj.getNodeByIx(1);
 
 	cout << "Lambert Solver: Type2A:\n";
-	cout << "  a: " << (std::abs(node.getExtraParam("sma") - 32794.2790) < 1e-3 ? PASS : FAIL) << endl;
+	cout << "  a: " << (std::abs(node.getExtraParam(PARAMKEY_SMA) - 32794.2790) < 1e-3 ? PASS : FAIL) << endl;
 	cout << "  e: " << (std::abs(node.getExtraParam("ecc") - 0.8718) < 1e-3 ? PASS : FAIL) << endl;
 	cout << "  ta1: " << (std::abs(node.getExtraParam("ta") - 258.2606*PI/180) < 1e-3 ? PASS : FAIL) << endl;
 	cout << "  fpa1: " << (std::abs(node.getExtraParam("fpa") - -46.0570*PI/180) < 1e-3 ? PASS : FAIL) << endl;
@@ -98,7 +98,7 @@ void checkLambertSolver_2A(){
 
 	Traj_2bp type2_traj_sim(&sys);
 	SimEngine sim;
-	sim.setMakeCrashEvents(false);
+	sim.setMakeDefaultEvents(false);
 	// sim.setVerbosity(Verbosity_tp::ALL_MSG);
 	sim.runSim(node.getState(), node2.getEpoch() - node.getEpoch(), &type2_traj_sim);
 

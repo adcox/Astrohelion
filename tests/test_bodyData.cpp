@@ -10,12 +10,12 @@
 using namespace std;
 
 int main(){
-	astrohelion::BodyData B("earth");
+	astrohelion::BodyData sun("sun");
+	astrohelion::BodyData mer("mercury");
 
-	cout << "Body: " << B.getName() << "\n";
-	cout << "  Mass: " << B.getMass() << " kg\n";
-	cout << "  Radius: " << B.getRadius() << " km\n";
-	cout << "  Parent: " << B.getParent() << "\n";
-	cout << "  Gravitational Parameter: " << B.getGravParam() << " km^3/s^2\n";
-	cout << "  Minimum Fly-by Altitude: " << B.getMinFlyBy() << " km\n";
+	sun.print();
+	mer.print();
+
+	astrohelion::BodyData ear("earth");
+	ear.print();
 }

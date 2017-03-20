@@ -1,14 +1,14 @@
 /**
- *  @file SysData_2bp.hpp
- *	@brief 
+ *  \file SysData_2bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version August 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version August 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -29,6 +29,7 @@
 
 #include "SysData.hpp"
 
+#include "ControlLaw.hpp"
 #include "DynamicsModel_2bp.hpp"
 
 #include "matio.h"
@@ -37,30 +38,32 @@
 namespace astrohelion{
 
 /**
- *	@ingroup model 2bp
- *	@brief A derivative class of the SysData object which
+ *	\ingroup model 2bp
+ *	\brief A derivative class of the SysData object which
  *	contains information specific to the 2BP
  *
- *	@author Andrew Cox
- *	@version August 31, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version August 31, 2015
+ *	\copyright GNU GPL v3.0
  */
 class SysData_2bp : public SysData{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		SysData_2bp();
 		SysData_2bp(std::string);
 		SysData_2bp(const SysData_2bp&);
 		void initFromFile(const char*);
 		virtual ~SysData_2bp();
-		//@}
+		//\}
 		
 		SysData_2bp& operator=(const SysData_2bp&);
 		
+		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
+
 		double getMu() const;
 
 		void saveToMat(const char*) const override;
@@ -73,6 +76,9 @@ class SysData_2bp : public SysData{
 	private:
 		/** The dynamic model that governs motion for this system*/
 		DynamicsModel_2bp model = DynamicsModel_2bp();
+
+		/** Control law object for this system */
+		ControlLaw control = ControlLaw();
 };
 
 

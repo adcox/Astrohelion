@@ -1,14 +1,14 @@
 /**
- *  @file Fam_cr3bp.hpp
- *	@brief 
+ *  \file Fam_cr3bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -46,7 +46,7 @@ class Constraint;
 
 
 /**
- *	@brief How to sort members of this family
+ *	\brief How to sort members of this family
  *	
  *	Families typically evolve naturally through one variable, and
  *	it makes sense to analyze trends using this parameter as the 
@@ -68,29 +68,29 @@ enum class FamSort_tp : int{
 };
 		
 /**
- *	@ingroup traj cr3bp
- *	@brief A data structure to represent a family of orbits
+ *	\ingroup traj cr3bp
+ *	\brief A data structure to represent a family of orbits
  *
  *	Currently, this structure assumes family members are periodic.
  */
 class Fam_cr3bp : public Core{
 	public:
 		/**
-		 *  @name *structors
-		 *  @{
+		 *  \name *structors
+		 *  \{
 		 */
 		Fam_cr3bp(SysData_cr3bp);
 		Fam_cr3bp(const char*);
 		Fam_cr3bp(const Fam_cr3bp&);
 		~Fam_cr3bp();
-		//@}
+		//\}
 
 		// Operators
 		Fam_cr3bp& operator= (const Fam_cr3bp&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		void addMember(FamMember_cr3bp);
 		
@@ -107,7 +107,7 @@ class Fam_cr3bp : public Core{
 
 		void setName(std::string);
 		void setSortType(FamSort_tp);
-		//@}
+		//\}
 
 		std::vector<int> findBifurcations();
 		void saveToMat(const char*);
@@ -116,9 +116,9 @@ class Fam_cr3bp : public Core{
 
 	protected:
 		std::string name = "NULL";								//!< Descriptive name of the family
-		std::vector<FamMember_cr3bp> members {};		//!< Contains all family members
-		SysData_cr3bp sysData = SysData_cr3bp();	//!< Describes the system this family exists in
-		FamSort_tp sortType = FamSort_tp::SORT_NONE;					//!< Describes the most natural variable to sort family members by
+		std::vector<FamMember_cr3bp> members {};				//!< Contains all family members
+		SysData_cr3bp sysData = SysData_cr3bp();				//!< Describes the system this family exists in
+		FamSort_tp sortType = FamSort_tp::SORT_NONE;			//!< Describes the most natural variable to sort family members by
 
 		double matchTol = 1e-8;		//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 
@@ -126,6 +126,7 @@ class Fam_cr3bp : public Core{
 		const char* SORT_TYPE_VAR_NAME = "SortType";		//!< Variable name for the sort type
 		const char* NAME_VAR_NAME = "Name";				//!< Variable name for the name of the family
 		const char* EIG_VAR_NAME = "Eigenvalues";		//!< Variable name for the eigenvalues
+		const char* EIGVEC_VAR_NAME = "Eigenvectors";	//!< Variable name for the eigenvectors
 		const size_t DATA_WIDTH = 11;					//!< Number of elements in one row of member data
 
 		void copyMe(const Fam_cr3bp&);
@@ -135,9 +136,13 @@ class Fam_cr3bp : public Core{
 
 		void loadMemberData(mat_t*);
 		void loadEigVals(mat_t*);
+		void loadEigVecs(mat_t*);
+		void loadSTMs(mat_t*);
 		void saveMembers(mat_t*);
 		void saveMiscData(mat_t*);
 		void saveEigVals(mat_t*);
+		void saveEigVecs(mat_t*);
+		void saveSTMs(mat_t*);
 };
 
 }// END of Astrohelion namespace

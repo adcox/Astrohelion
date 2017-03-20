@@ -14,7 +14,7 @@ int main(void){
 
 	SysData_cr3bp emData("earth", "moon");
 
-	cout << "Data for Sun-Earth System:" << endl;
+	cout << "Data for Earth-Moon System:" << endl;
 	cout << "  Type: " << emData.getTypeStr() << endl;
 	cout << "  P1: " << emData.getPrimary(0) << endl;
 	cout << "  P2: " << emData.getPrimary(1) << endl;
@@ -23,7 +23,7 @@ int main(void){
 	cout << "  charM: " << emData.getCharM() << " kg" << endl;
 	printf("  mu: %.5e\n", emData.getMu());
 
-	SysData_cr3bp seData("sun", "earth");
+	SysData_cr3bp seData("sun", "earth_barycenter");
 	cout << "Data for Sun-Earth System:" << endl;
 	cout << "  Type: " << seData.getTypeStr() << endl;
 	cout << "  P1: " << seData.getPrimary(0) << endl;

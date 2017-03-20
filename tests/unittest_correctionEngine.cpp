@@ -1,4 +1,10 @@
-#include "AsciiOutput.hpp"
+#define BOOST_TEST_MODULE CorrectionEngine
+
+#include <boost/test/unit_test.hpp>
+
+#include <vector>
+#include <iostream>
+
 #include "Constraint.hpp"
 #include "CorrectionEngine.hpp"
 #include "MultShootData.hpp"
@@ -9,17 +15,10 @@
 #include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
 
-#include <vector>
-#include <iostream>
-
 using namespace std;
 using namespace astrohelion;
 
-static const char* PASS = BOLDGREEN "PASS" RESET;
-static const char* FAIL = BOLDRED "FAIL" RESET;
-
-void correctEMRes(){
-	astrohelion::printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit:\n");
+BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	SysData_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -30,8 +29,8 @@ void correctEMRes(){
 	Nodeset_cr3bp nodeset(&sys, IC, tof, 15);
 	Traj_cr3bp traj = Traj_cr3bp::fromNodeset(nodeset);
 
-	nodeset.saveToMat("resNodes.mat");
-	traj.saveToMat("traj.mat");
+	// nodeset.saveToMat("resNodes.mat");
+	// traj.saveToMat("traj.mat");
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
@@ -50,22 +49,10 @@ void correctEMRes(){
 	CorrectionEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
 	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
-
-	correctedNodeset.saveToMat("resNodes_Corrected.mat");
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctEMRes_EqualArcTime(){
-	astrohelion::printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Equal Arc Time):\n");
+BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 	double IC_halo[] = {0.9900, 0, -0.0203, 0, -1.0674, 0};
 	double tof_halo = 1.8632;
 	SysData_cr3bp sys("earth", "moon");
@@ -85,24 +72,12 @@ void correctEMRes_EqualArcTime(){
 	CorrectionEngine corrector;
 	Nodeset_cr3bp correctedHalo(&sys);
 
-	try{
-		// corrector.setVerbosity(true);
-		corrector.setVarTime(true);
-		corrector.setEqualArcTime(true);
-		corrector.multShoot(&halo, &correctedHalo);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
-
-	correctedHalo.saveToMat("CorrectedHalo.mat");
+	corrector.setVarTime(true);
+	corrector.setEqualArcTime(true);
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halo, &correctedHalo));
 }//====================================================
 
-void correctEMRes_revTime(){
-	astrohelion::printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time):\n");
+BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	SysData_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -132,21 +107,10 @@ void correctEMRes_revTime(){
 
 	CorrectionEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctEMRes_doubleSource(){
-	astrohelion::printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time):\n");
+BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 	SysData_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -182,21 +146,10 @@ void correctEMRes_doubleSource(){
 
 	CorrectionEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctEMRes_doubleSource_irregular(){
-	astrohelion::printColor(BOLDBLACK, "CR3BP EM 2:5 Resonant Orbit (Reverse Time, irrgularly spaced nodes):\n");
+BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 	SysData_cr3bp sys("earth", "moon");
 
 	// ICs for a 2:5 Resonant Orbit in the EM System
@@ -241,27 +194,16 @@ void correctEMRes_doubleSource_irregular(){
 
 	CorrectionEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctSEMHalo(){
-	astrohelion::printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo:\n");
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo){
 	SysData_bc4bp sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
 	Nodeset_bc4bp nodeset(&sys, haloIC, 0, tof, 7);
-	nodeset.saveToMat("bc4bp_halo_raw.mat");
+	// nodeset.saveToMat("bc4bp_halo_raw.mat");
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
 	Constraint perpCross(Constraint_tp::STATE, 0, perpCrossData, 6);
 
@@ -275,29 +217,16 @@ void correctSEMHalo(){
 
 	CorrectionEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
-
-	correctedNodeset.saveToMat("bc4bp_halo.mat");
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctSEMHalo_revTime(){
-	astrohelion::printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Reverse Time):\n");
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_RevTime){
 	SysData_bc4bp sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = -310;
 
 	Nodeset_bc4bp nodeset(&sys, haloIC, 0, tof, 7);
-	nodeset.saveToMat("bc4bp_halo_raw.mat");
+	// nodeset.saveToMat("bc4bp_halo_raw.mat");
 
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
 	Constraint perpCross(Constraint_tp::STATE, 0, perpCrossData, 6);
@@ -312,22 +241,10 @@ void correctSEMHalo_revTime(){
 
 	CorrectionEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
-	correctedNodeset.saveToMat("bc4bp_halo.mat");
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctSEMHalo_doubleSource(){
-	astrohelion::printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Double Source):\n");
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_doubleSource){
 	SysData_bc4bp sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
@@ -355,23 +272,10 @@ void correctSEMHalo_doubleSource(){
 
 	CorrectionEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
-
-	// correctedNodeset.saveToMat("bc4bp_halo.mat");
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
-void correctSEMHalo_doubleSource_irregular(){
-	astrohelion::printColor(BOLDBLACK, "BC4BP SEM L1 Quasi-Halo (Double Source, Irregular Nodes):\n");
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_DoubleSource_Irregular){
 	SysData_bc4bp sys("Sun", "earth", "moon");
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
@@ -401,32 +305,6 @@ void correctSEMHalo_doubleSource_irregular(){
 
 	CorrectionEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
-	
-	try{
-		// corrector.setVerbosity(true);
-		corrector.setTol(5e-12);
-		corrector.multShoot(&nodeset, &correctedNodeset);
-		cout << "Successful correction: " << PASS << endl;
-	}catch(DivergeException &e){
-		cout << "Successful correction: " << FAIL << endl;
-	}catch(Exception &e){
-		cout << "Successful correction: " << FAIL << endl;
-		astrohelion::printErr("%s\n", e.what());
-	}
-
-	// correctedNodeset.saveToMat("bc4bp_halo.mat");
+	corrector.setTol(5e-12);
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
-
-int main(void){
-	correctEMRes();
-	correctEMRes_EqualArcTime();	
-	correctEMRes_revTime();
-	correctEMRes_doubleSource();
-	correctEMRes_doubleSource_irregular();
-	
-	correctSEMHalo();
-	correctSEMHalo_revTime();
-	correctSEMHalo_doubleSource();
-	correctSEMHalo_doubleSource_irregular();
-	return EXIT_SUCCESS;
-}

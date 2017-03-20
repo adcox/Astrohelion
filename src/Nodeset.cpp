@@ -1,15 +1,15 @@
 /**
- *  @file Nodeset.cpp
- *	@brief Contains a set of nodes
+ *  \file Nodeset.cpp
+ *	\brief Contains a set of nodes
  *
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
  
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -45,34 +45,28 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Construct a nodeset for the specified system
- *	@param sys a pointer to a system data object
+ *	\brief Construct a nodeset for the specified system
+ *	\param sys a pointer to a system data object
  */
-Nodeset::Nodeset(const SysData *sys) : BaseArcset(sys){
-	initExtraParam();
-}//====================================================
+Nodeset::Nodeset(const SysData *sys) : BaseArcset(sys){}
 
 /**
- *	@brief Create a nodeset from another nodeset
- *	@param n a nodeset reference
+ *	\brief Create a nodeset from another nodeset
+ *	\param n a nodeset reference
  */
-Nodeset::Nodeset(const Nodeset &n) : BaseArcset (n){
-	initExtraParam();
-}//====================================================
+Nodeset::Nodeset(const Nodeset &n) : BaseArcset (n){}
 
 /**
- *	@brief Create a nodeset from its base object
- *	@param a an arc data object
+ *	\brief Create a nodeset from its base object
+ *	\param a an arc data object
  */
-Nodeset::Nodeset(const BaseArcset &a) : BaseArcset (a){
-	initExtraParam();
-}//====================================================
+Nodeset::Nodeset(const BaseArcset &a) : BaseArcset (a){}
 
 /**
- *	@brief Create a nodeset as a subset of another
- *	@param n Original nodeset
- *	@param first index of the first node to be included in the new nodeset
- *	@param last index of the last node to be included in the new nodeset. If
+ *	\brief Create a nodeset as a subset of another
+ *	\param n Original nodeset
+ *	\param first index of the first node to be included in the new nodeset
+ *	\param last index of the last node to be included in the new nodeset. If
  *	last is the same index as first, only one node (with index = first = last)
  *	will be put in the new nodeset
  */
@@ -94,31 +88,31 @@ Nodeset::Nodeset(const Nodeset &n, int first, int last) : BaseArcset(n){
 }//====================================================
 
 /**
- *  @brief Default Destructor
+ *  \brief Default Destructor
  */
 Nodeset::~Nodeset(){}
 
 /**
- *  @brief Create a new nodeset object on the stack
- *  @details the <tt>delete</tt> function must be called to 
+ *  \brief Create a new nodeset object on the stack
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @param sys pointer to a system data object
- *  @return a pointer to the newly created nodeset
+ *  \param sys pointer to a system data object
+ *  \return a pointer to the newly created nodeset
  */
 baseArcsetPtr Nodeset::create( const SysData *sys) const{
 	return baseArcsetPtr(new Nodeset(sys));
 }//====================================================
 
 /**
- *  @brief Create a new nodeset object on the stack that is a 
+ *  \brief Create a new nodeset object on the stack that is a 
  *  duplicate of this object
- *  @details the <tt>delete</tt> function must be called to 
+ *  \details the <tt>delete</tt> function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  @return a pointer to the newly cloned nodeset
+ *  \return a pointer to the newly cloned nodeset
  */
  baseArcsetPtr Nodeset::clone() const{
 	return baseArcsetPtr(new Nodeset(*this));
@@ -129,16 +123,16 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
 //-----------------------------------------------------
 
 /**
- *  @brief Combine two nodesets.
- *  @details This function concatenates two nodeset objects. It is assumed
+ *  \brief Combine two nodesets.
+ *  \details This function concatenates two nodeset objects. It is assumed
  *  that the first state on <tt>rhs</tt> is identical to the final state on
  *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
  *  (chronologically) <tt>lhs</tt>
  * 
- *  @param lhs reference to a nodeset object
- *  @param rhs reference to a nodeset object
+ *  \param lhs reference to a nodeset object
+ *  \param rhs reference to a nodeset object
  * 
- *  @return the concatenation of lhs + rhs.
+ *  \return the concatenation of lhs + rhs.
  */
  Nodeset operator +(const Nodeset &lhs, const Nodeset &rhs){
 	const Nodeset lhs_cpy(lhs);
@@ -151,10 +145,10 @@ baseArcsetPtr Nodeset::create( const SysData *sys) const{
 }//====================================================
 
 /**
- *  @brief Concatenate this object with another nodeset
+ *  \brief Concatenate this object with another nodeset
  * 
- *  @param rhs reference to a nodeset object
- *  @return the concatenation of this and <tt>rhs</tt>
+ *  \param rhs reference to a nodeset object
+ *  \return the concatenation of this and <tt>rhs</tt>
  *  @see operator +()
  */
 Nodeset& Nodeset::operator +=(const Nodeset &rhs){
@@ -168,23 +162,23 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
 //-----------------------------------------------------
 
 /**
- *  @brief Insert a node after the specified node at any locations where the
+ *  \brief Insert a node after the specified node at any locations where the
  *  specified event occurs
- *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  \details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path. A numerical simulation is used to propagate the nonlinear
  *  solution between segments, so the events are defined in the dynamical system
  *  associated with the nodeset.
  * 
- *  @param priorNodeIx Index of the node prior to this one; new nodes will be 
+ *  \param priorNodeIx Index of the node prior to this one; new nodes will be 
  *  inserted after this node.
- *  @param evt the event that identifies the node locations. If multiple occurences
+ *  \param evt the event that identifies the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If the event does not occur,
  *  no nodes are inserted
- *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  * 
- *  @return the number of nodes created and inserted into the nodeset.
+ *  \return the number of nodes created and inserted into the nodeset.
  */
 int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
 	std::vector<Event> events(1, evt);
@@ -192,26 +186,26 @@ int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
 }//====================================================
 
 /**
- *  @brief Insert nodes on the specified segment at locations where the
+ *  \brief Insert nodes on the specified segment at locations where the
  *  specified events occur.
  *  
- *  @details This function <i>does</i> adjust the prior node to ensure that 
+ *  \details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path. A numerical simulation is used to propagate the nonlinear
  *  solution between segments, so the events are defined in the dynamical system
  *  associated with the nodeset.
  *  
- *  @param segID the ID of the segment to add nodes to; this segment will be deleted and
+ *  \param segID the ID of the segment to add nodes to; this segment will be deleted and
  *  replaced by a series of smaller segments (and nodes) if one or more of the input
  *  events occurs
- *  @param evts a vector of events that identify the node locations. If multiple occurences
+ *  \param evts a vector of events that identify the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If nond of the events occur,
  *  no nodes are inserted
- *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  *  
- *  @return the number of nodes created and inserted into the nodeset.
- *  @throws Exception if <tt>segID</tt> is out of bounds
+ *  \return the number of nodes created and inserted into the nodeset.
+ *  \throws Exception if <tt>segID</tt> is out of bounds
  */
 int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
 	if(segIDMap.count(segID) == 0)
@@ -225,7 +219,8 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	// Create a simulation engine and add the events to it
 	SimEngine engine;
 	engine.setRevTime(seg.getTOF() < 0);
-	engine.setMakeCrashEvents(false);
+	engine.setMakeDefaultEvents(false);
+	engine.setCtrlLaw(seg.getCtrlLaw());
 	for(unsigned int i = 0; i < evts.size(); i++){
 		evts[i].setStopOnEvent(false);		// Ignore stopping conditions that other processes may have imposed
 		engine.addEvent(evts[i]);
@@ -260,6 +255,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 					int newID = addNode(Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
 					Segment newSeg = Segment(prevNodeID, newID, tof);
 					newSeg.setSTM(traj.getSTMByIx(stepIx));
+					newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
 					addSeg(newSeg);
 
 					prevNodeID = newID;
@@ -279,6 +275,7 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 
 		Segment newSeg = Segment(prevNodeID, terminus.getID(), tof);
 		newSeg.setSTM(temp.getSTMByIx(-1));
+		newSeg.setCtrlLaw(temp.getCtrlLawByIx(0));
 		addSeg(newSeg);
 	}
 
@@ -286,8 +283,8 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 }//====================================================
 
 /**
- *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
- *	@param id a vector of segment IDs that can have velocity discontinuities
+ *	\brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
+ *	\param id a vector of segment IDs that can have velocity discontinuities
  */
 void Nodeset::allowDV_at(std::vector<int> id) {
 	for(unsigned int i = 0; i < segs.size(); i++){
@@ -301,7 +298,7 @@ void Nodeset::allowDV_at(std::vector<int> id) {
 }//====================================================
 
 /**
- *  @brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
+ *  \brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
  */
 void Nodeset::allowDV_all(){
 	for(unsigned int i = 0; i < segs.size(); i++){
@@ -310,7 +307,7 @@ void Nodeset::allowDV_all(){
 }//====================================================
 
 /**
- *  @brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
+ *  \brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
  */
 void Nodeset::allowDV_none(){
 	for(unsigned int i = 0; i < segs.size(); i++){
@@ -323,7 +320,7 @@ void Nodeset::allowDV_none(){
 //-----------------------------------------------------
 
 /**
- *	@brief Display a textual representation of this object in the standard output
+ *	\brief Display a textual representation of this object in the standard output
  */
 void Nodeset::print() const{
 	printf("%s Nodeset:\n Nodes: %zu\n Segments: %zu\n", pSysData->getTypeStr().c_str(),
@@ -345,8 +342,8 @@ void Nodeset::print() const{
 	for(const auto &index : segIDMap){
 		printf("  %02d (ix %02d):", index.first, index.second);
 		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
-			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
-				segs[index.second].getTerminus(), segs[index.second].getTOF());
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f, Ctrl Law ID = %u\n", segs[index.second].getOrigin(),
+				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw());
 		}else{
 			printf(" [N/A]\n");
 		}
@@ -388,7 +385,7 @@ void Nodeset::print() const{
 }//====================================================
 
 /**
- *	@brief Reverse the order of the nodes in this nodeset
+ *	\brief Reverse the order of the nodes in this nodeset
  *
  *	The constraints are automatically adjusted so they still 
  *	constraint the same states even though the node indices 
@@ -404,8 +401,8 @@ void Nodeset::reverseOrder() {
 }//====================================================
 
 /**
- *	@brief Save the trajectory to a file
- *	@param filename the name of the .mat file
+ *	\brief Save the trajectory to a file
+ *	\param filename the name of the .mat file
  */
 void Nodeset::saveToMat(const char* filename) const{
 	// TODO: Check for propper file extension, add if necessary
@@ -417,57 +414,83 @@ void Nodeset::saveToMat(const char* filename) const{
 	 *	the file. Arguments are:
 	 *	const char *matname 	- 	the name of the file
 	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file @version MAT_FT_MAT5 or MAT_FT_MAT4
+	 *	enum mat_ft 			- 	matlab file \version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
 	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
 	if(NULL == matfp){
 		astrohelion::printErr("Error creating MAT file\n");
 	}else{
-		saveState(matfp, "Nodes");
-		saveEpoch(matfp, "Epochs");
-		saveTOF(matfp, "TOFs");
-		saveSTMs(matfp);
-		pSysData->saveToMat(matfp);
-		// TODO: Add these functions:
-		// saveCons(matfp);
-		// saveVelCon(matfp);
+		saveCmds(matfp);
 	}
 
 	Mat_Close(matfp);
 }//====================================================
 
 /**
- *  @brief Populate data in this nodeset from a matlab file
+ *  \brief Execute commands to save data to a Matlab file
+ *  \details This function is called from saveToMat() and should
+ *  be overridden in derived classes as necessary.
  * 
- *  @param filepath the path to the matlab data file
- *  @throws Exception if the file cannot be loaded
+ *  \param pMatFile pointer to an open Matlab file
+ */
+void Nodeset::saveCmds(mat_t *pMatFile) const{
+	saveState(pMatFile, VARNAME_NODE);
+	saveEpoch(pMatFile);
+	saveTOF(pMatFile);
+	saveSTMs(pMatFile);
+	saveCtrlLaw(pMatFile);
+	pSysData->saveToMat(pMatFile);
+	// TODO: Add these functions:
+	// saveCons(pMatFile);
+	// saveVelCon(pMatFile);
+}//====================================================
+
+/**
+ *  \brief Populate data in this nodeset from a matlab file
+ * 
+ *  \param filepath the path to the matlab data file
+ *  \throws Exception if the file cannot be loaded
  */
 void Nodeset::readFromMat(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
 		throw Exception("Nodeset: Could not load data from file");
+	}else{
+		readCmds(matfp);
 	}
 
-	initNodesSegsFromMat(matfp, "Nodes");	// This function MUST be called before other data reading functions
-	readStateFromMat(matfp, "Nodes");
-	readEpochFromMat(matfp, "Epochs");
-	readTOFFromMat(matfp, "TOFs");
-	readSTMFromMat(matfp);
-	
 	Mat_Close(matfp);
 }//====================================================
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions
- *	@param IC a set of initial conditions, non-dimensional units associated with the 
- *	@param t0 time that corresponds to IC, non-dimensional
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC (must be at least 2)
- *	@param distroType node distribution type
- *	@throws Exception if <tt>numNodes</tt> is less than two
+ *  \brief Execute commands to read data from a Matlab file
+ *  \details This function is called from readFromMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
  */
-void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNodes, NodeDistro_tp distroType){
+void Nodeset::readCmds(mat_t *pMatFile){
+	initNodesSegsFromMat(pMatFile, VARNAME_NODE);	// This function MUST be called before other data reading functions
+	readStateFromMat(pMatFile, VARNAME_NODE);
+	readEpochFromMat(pMatFile);
+	readTOFFromMat(pMatFile);
+	readSTMFromMat(pMatFile);
+	readCtrlLawFromMat(pMatFile);
+}//====================================================
+
+/**
+ *	\brief Compute a set of nodes by integrating from initial conditions
+ *	\param IC a set of initial conditions, non-dimensional units
+ *	\param t0 time that corresponds to IC, non-dimensional
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC (must be at least 2)
+ *	\param distroType node distribution type
+ *	\param ctrlLawID ID of the control law to use while propagating arcs
+ *	
+ *	\throws Exception if <tt>numNodes</tt> is less than two
+ */
+void Nodeset::initFromICs(std::vector<double> IC, double t0, double tof, int numNodes, NodeDistro_tp distroType, unsigned int ctrlLawID){
 
 	if(numNodes < 2){
 		throw Exception("Nodeset::initFromICs: Nodeset must have at least two nodes!");
@@ -483,60 +506,63 @@ void Nodeset::initFromICs(const double IC[6], double t0, double tof, int numNode
 			astrohelion::printWarn("Nodeset type is NONE or not specified, using TIME\n");
 		case Nodeset::TIME:
 			// Initialize using time
-			initFromICs_time(IC, t0, tof, numNodes);
+			initFromICs_time(IC, t0, tof, numNodes, ctrlLawID);
 			break;
 		case Nodeset::ARCLENGTH:
 			// Initialize using arclength
-			initFromICs_arclength(IC, t0, tof, numNodes);
+			initFromICs_arclength(IC, t0, tof, numNodes, ctrlLawID);
 			break;
 	}
 }//==========================================================
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
+ *	\brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
  *	each segment has approximately the same time-of-flight.
- *	@param IC a set of initial conditions, non-dimensional
- *	@param t0 time that corresponds to IC, non-dimensional
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
+ *	\param IC a set of initial conditions, non-dimensional
+ *	\param t0 time that corresponds to IC, non-dimensional
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC
+ *	\param ctrlLawID ID of the control law to use while propagating arcs
  */
-void Nodeset::initFromICs_time(const double IC[6], double t0, double tof, int numNodes){
+void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, int numNodes, unsigned int ctrlLawID){
 	SimEngine engine;
 	engine.setVerbosity(Verbosity_tp::SOME_MSG);
-	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
+	engine.setMakeDefaultEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
-
-	int id = addNode(Node(IC, t0));
+	engine.setCtrlLaw(ctrlLawID);
 
 	double segTOF = tof/(numNodes-1);
-	std::vector<double> ic(IC, IC+6);
-
+	int id = addNode(Node(IC, t0));
+	
 	for(int n = 0; n < numNodes-1; n++){
 		Traj traj(pSysData);
-		engine.runSim(ic, t0 + n*segTOF, segTOF, &traj);
+		engine.runSim(IC, t0 + n*segTOF, segTOF, &traj);
 
 		id = addNode(Node(traj.getStateByIx(-1), traj.getTimeByIx(-1)));
 		Segment newSeg = Segment(id-1, id, segTOF);
 		newSeg.setSTM(traj.getSTMByIx(-1));
+		newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
 		addSeg(newSeg);
 
-		ic = traj.getStateByIx(-1);
+		IC = traj.getStateByIx(-1);
 	}
 }//==========================================================
 
 /**
- *	@brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
+ *	\brief Compute a set of nodes by integrating from initial conditions; discretize the arc such that
  *	each segment has approximately the same arclength in distance.
- *	@param IC a set of initial conditions, non-dimensional units associated with the 
- *	@param t0 time that corresponds to IC, non-dimensional
- *	@param tof duration of the simulation, non-dimensional
- *	@param numNodes number of nodes to create, including IC
+ *	\param IC a set of initial conditions, non-dimensional units associated with the 
+ *	\param t0 time that corresponds to IC, non-dimensional
+ *	\param tof duration of the simulation, non-dimensional
+ *	\param numNodes number of nodes to create, including IC
+ *	\param ctrlLawID ID of the control law to use while propagating arcs
  */
-void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, int numNodes){
+void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double tof, int numNodes, unsigned int ctrlLawID){
 	SimEngine engine;
 	engine.setVerbosity(Verbosity_tp::SOME_MSG);
-	engine.setMakeCrashEvents(false);	// Don't use default crash events to avoid infinite loop
+	engine.setMakeDefaultEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
+	engine.setCtrlLaw(ctrlLawID);
 
 	// Run the simulation and get the trajectory
 	Traj traj(pSysData);
@@ -582,7 +608,9 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
 			// Add a segment to link the previous node and this new one
 			// I'm not setting the STM here; it will be initialized to 
 			// Identity on every arc segment
-			addSeg(Segment(prevID, id, sumTOF));
+			Segment newSeg = Segment(prevID, id, sumTOF);
+			newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
+			addSeg(newSeg);
 
 			// Reset counters and index variables
 			sumArclen = 0;
@@ -593,11 +621,13 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
 
 	// Save the final state as the last node
 	int id2 = addNode(Node(traj.getStateByIx(-1), traj.getEpochByIx(-1)));
-	addSeg(Segment(prevID, id2, sumTOF));
+	Segment newSeg = Segment(prevID, id2, sumTOF);
+	newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
+	addSeg(newSeg);
 }//==========================================================
 
 /**
- *	@brief Split a trajectory into nodes using the specified distribution type
+ *	\brief Split a trajectory into nodes using the specified distribution type
  *
  *	This function relies on integration to generate nodes, so do not use this if
  *	the trajectory was created by a linearization or other method that uses something
@@ -606,24 +636,13 @@ void Nodeset::initFromICs_arclength(const double IC[6], double t0, double tof, i
  *	algorithm will fail to capture these discontinuities and could result in a very different
  *	path.
  *
- *	@param traj a trajectory to make into a nodeset
- *	@param numNodes the number of nodes to create, including IC
- *	@param type the node distribution type
+ *	\param traj a trajectory to make into a nodeset
+ *	\param numNodes the number of nodes to create, including IC
+ *	\param type the node distribution type
  */
 void Nodeset::initFromTraj(Traj traj, int numNodes, NodeDistro_tp type){
 	/* Could I code this more intelligently? Probably. Am I too lazy? Definitely */ 
-	double ic[] = {0,0,0,0,0,0};
-	std::vector<double> trajIC = traj.getStateByIx(0);
-	std::copy(trajIC.begin(), trajIC.begin()+6, ic);
-	
-	initFromICs(ic, traj.getEpochByIx(0), traj.getEpochByIx(-1) - traj.getEpochByIx(0), numNodes, type);
-}//==============================================
-
-/**
- *	@brief Initialize the extraParam vector to hold nodeset-specific data
- */
-void Nodeset::initExtraParam(){
-	// Nothing to do right now!
+	initFromICs(traj.getStateByIx(0), traj.getEpochByIx(0), traj.getEpochByIx(-1) - traj.getEpochByIx(0), numNodes, type);
 }//==============================================
 
 }// END of Astrohelion namespace

@@ -1,16 +1,16 @@
 /**
- *	@file FamGenerator.cpp
- *	@brief Generate families of orbits
+ *	\file FamGenerator.cpp
+ *	\brief Generate families of orbits
  *
  *	So far, this only applies to the CR3BP
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -56,18 +56,21 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief simple, do-nothing constructor
+ *	\brief simple, do-nothing constructor
  */
 FamGenerator::FamGenerator(){}
 
 /** 
- *	@brief Copy constructor
- *	@param f a family generator reference
+ *	\brief Copy constructor
+ *	\param f a family generator reference
  */
 FamGenerator::FamGenerator(const FamGenerator &f){
 	copyMe(f);
 }//====================================================
 
+/**
+ *  \brief Destructor
+ */
 FamGenerator::~FamGenerator(){}
 
 //-----------------------------------------------------
@@ -75,8 +78,8 @@ FamGenerator::~FamGenerator(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Copy operator
- *	@param f a family generator reference
+ *	\brief Copy operator
+ *	\param f a family generator reference
  */
 FamGenerator& FamGenerator::operator =(const FamGenerator &f){
 	copyMe(f);
@@ -88,13 +91,13 @@ FamGenerator& FamGenerator::operator =(const FamGenerator &f){
 //-----------------------------------------------------
 
 /**
- *	@brief Set the continuation type/method
- *	@param t continuation type
+ *	\brief Set the continuation type/method
+ *	\param t continuation type
  */
 void FamGenerator::setContType(Continuation_tp t){ contType = t; }
 
 /**
- *	@brief Set the slope threshold
+ *	\brief Set the slope threshold
  *
  *	This quantity is used to determine which independent variable to fix. If 
  *	one variable is changeing quickly while the other is not, the algorithm changes
@@ -102,74 +105,74 @@ void FamGenerator::setContType(Continuation_tp t){ contType = t; }
  *	accuracy and allowing the code to move around corners in the independent
  *	variable space.
  *
- *	@param d the slope threshold
+ *	\param d the slope threshold
  */
 void FamGenerator::setSlopeThresh(double d){ slopeThresh = std::abs(d); }
 
 /** 
- *	@brief Set the step size we take when performing simple continuation
+ *	\brief Set the step size we take when performing simple continuation
  *
  *	The default value is 0.0005
- *	@param d the step size, non-dimensional units
+ *	\param d the step size, non-dimensional units
  */
 void FamGenerator::setStep_simple(double d){ step_simple = d; }
 
 /** 
- *	@brief Set the step size we take when performing advanced continuation
+ *	\brief Set the step size we take when performing advanced continuation
  *	using independent variable #1
  *
  *	The default value is 0.005
- *	@param d the step size, non-dimensional units
+ *	\param d the step size, non-dimensional units
  */
 void FamGenerator::setStep_fitted_1(double d){ step_fitted_1 = d; }
 
 /** 
- *	@brief Set the step size we take when performing advanced continuation
+ *	\brief Set the step size we take when performing advanced continuation
  *	using independent variable #1
  *
  *	The default value is 0.005
- *	@param d the step size, non-dimensional units
+ *	\param d the step size, non-dimensional units
  */
 void FamGenerator::setStep_fitted_2(double d){ step_fitted_2 = d; }
 
 /**
- * @brief  Set the corrector tolerance for the family generator
- * @details This is the tolerance that a periodic orbit will be
+ * \brief  Set the corrector tolerance for the family generator
+ * \details This is the tolerance that a periodic orbit will be
  * judged by; if constraints are not met to this tolerance, no
  * periodic orbit will be returned. Note that a looser tolerance may
  * allow continuation to make more prorgress
  * 
- * @param t corrector tolerance, non-dimensional
+ * \param t corrector tolerance, non-dimensional
  */
 void FamGenerator::setTol(double t){ tol = t; }
 
 /**
- *	@brief Set the number of nodes used for corrections processes
+ *	\brief Set the number of nodes used for corrections processes
  *
  *	The default value is 3
- *	@param n the number of nodes
+ *	\param n the number of nodes
  */
 void FamGenerator::setNumNodes(int n){ numNodes = n; }
 
 /**
- *	@brief Set the maximum number of orbits for this family
+ *	\brief Set the maximum number of orbits for this family
  *
  *	The default value is 500
- *	@param n the number of orbits
+ *	\param n the number of orbits
  */
 void FamGenerator::setNumOrbits(int n){ numOrbits = n; }
 
 /**
- *  @brief Set the minimum step size for any of the stepping values
+ *  \brief Set the minimum step size for any of the stepping values
  * 
- *  @param s Nondimensional minimum step size
+ *  \param s Nondimensional minimum step size
  */
 void FamGenerator::setMinStepSize(double s){ minStepSize = s;}
 
 /**
- *  @brief Set the maximum step size for any of the stepping values
+ *  \brief Set the maximum step size for any of the stepping values
  * 
- *  @param s Nondimensional maximum step size
+ *  \param s Nondimensional maximum step size
  */
 void FamGenerator::setMaxStepSize(double s){ maxStepSize = s;}
 
@@ -178,8 +181,8 @@ void FamGenerator::setMaxStepSize(double s){ maxStepSize = s;}
 //-----------------------------------------------------
 
 /** 
- *	@brief Copy this object from the specified guy
- *	@param f the source family generator
+ *	\brief Copy this object from the specified guy
+ *	\param f the source family generator
  */
 void FamGenerator::copyMe(const FamGenerator &f){
 	Engine::copyBaseEngine(f);
@@ -193,7 +196,7 @@ void FamGenerator::copyMe(const FamGenerator &f){
 }//====================================================
 
 /**
- *	@brief Generate a Lyapunov family in the CR3BP
+ *	\brief Generate a Lyapunov family in the CR3BP
  *
  *	Tuning:
  *
@@ -201,12 +204,12 @@ void FamGenerator::copyMe(const FamGenerator &f){
  *	- A good initial guess for r0 is 0.001; smaller values may be possible, but the
  *	  corrector often has trouble.
  *	
- *	@param sysData represents the system the Lyapunov exists in
- *	@param LPt The Lagrange point number [1-5]
- *	@param x0 the initial displacement from the Lagrange point along the x-axis.
- *
- *	@return a family of orbits
- *	@throws Exception if <tt>LPt</tt> is invalid
+ *	\param LPt The Lagrange point number [1-5]
+ *	\param x0 the initial displacement from the Lagrange point along the x-axis.
+ *	\param pFam pointer to system data object the orbit exists in
+ *	
+ *	\return a family of orbits
+ *	\throws Exception if <tt>LPt</tt> is invalid
  */
 void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 	if(LPt < 1 || LPt > 3)
@@ -255,7 +258,7 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 }//====================================================
 
 /**
- *	@brief Generate a Halo family in the CR3BP
+ *	\brief Generate a Halo family in the CR3BP
  *
  *	The halo family is generated by finding the first Lyapunov bifurcation and 
  *	perturbing it into a 3D family.
@@ -265,10 +268,10 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
  *	- To generate the Northern Halo families, choose initStepSize > 0 for L2 and < 0
  *	for L1 and L3. In the Earth-Moon system, 20 km (5.2e-5 non-dim) is a good magnitude.
  *
- *	@param lyapFamFile the location of a Lyapunov family file. 
- *	@param initStepSize the size of the initial step away from the bifurcating
+ *	\param lyapFamFile the location of a Lyapunov family file. 
+ *	\param initStepSize the size of the initial step away from the bifurcating
  *	Lyapunov orbit (non-dimensional units)
- *	@param pHaloFam pointer to the halo orbit family object
+ *	\param pHaloFam pointer to the halo orbit family object
  */
 void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSize, Fam_cr3bp *pHaloFam){
 	Fam_cr3bp lyapFam(lyapFamFile);
@@ -321,7 +324,7 @@ void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSi
 }//=======================================================
 
 /**
- *	@brief Generate an Axial family in the CR3BP
+ *	\brief Generate an Axial family in the CR3BP
  *
  *	The axial family is generated by finding the second Lyapunov bifurcation
  *	and perturbing it in the z-dot direction.
@@ -331,9 +334,9 @@ void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSi
  *	- To generate the Northern Axial families, choose initStepSize > 0. In the
  *	  Earth-Moon system, a magnitude of 1e-4 works well
  *
- *	@param lyapFamFile the filepath to a lyapunov family file
- *	@param initStepSize the initial step-off in the z-dot direction
- *	@param pAxialFam pointer to the axial orbit family object
+ *	\param lyapFamFile the filepath to a lyapunov family file
+ *	\param initStepSize the initial step-off in the z-dot direction
+ *	\param pAxialFam pointer to the axial orbit family object
  */
 void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepSize, Fam_cr3bp *pAxialFam){
 	Fam_cr3bp lyapFam(lyapFamFile);
@@ -384,13 +387,14 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
 }//====================================================
 
 /**
- *  @brief Generate a family of vertical orbits
+ *  \brief Generate a family of vertical orbits
  * 
- *  @param axialFamFile a pointer to a file containing the axial family at the same 
+ *  \param axialFamFile a pointer to a file containing the axial family at the same 
  *  collinear point as the desired vertical family
- *  @param initStepSize initial step size from the bifurcating axial orbit
- *  @param pVertFam pointer to the vertical orbit family object
- *  @return a family of vertical orbits
+ *  \param initStepSize initial step size from the bifurcating axial orbit
+ *  \param pVertFam pointer to the vertical orbit family object
+ *  
+ *  \return a family of vertical orbits
  */
 void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initStepSize, Fam_cr3bp *pVertFam){
 	Fam_cr3bp axialFam(axialFamFile);
@@ -457,12 +461,12 @@ void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initS
 }//====================================================
 
 /**
- *	@brief Generate a Butterfly family in the CR3BP
+ *	\brief Generate a Butterfly family in the CR3BP
  *	
- *	@param LPt The Lagrange point number [1-5]
- *	@param pFam pointer to a family object
+ *	\param LPt The Lagrange point number [1-5]
+ *	\param pFam pointer to a family object
  *
- *	@throws Exception if <tt>LPt</tt> is not equal to two (others not implemented)
+ *	\throws Exception if <tt>LPt</tt> is not equal to two (others not implemented)
  */
 void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 	if(LPt != 2)
@@ -474,7 +478,7 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 
 	// The butterfly orbits bifurcate from the Halo Family, but I don't have good enough data
 	// and/or bifurcation detection algorithms to find the proper bifurcation. For now,
-	// use this IC for the bifucating Halo from Dan Grebow's Thesis
+	// use this IC for the bifurcating Halo from Dan Grebow's Thesis
 	double ic[] = {1.0406, 0, 0.1735, 0, -0.0770, 0};
 	std::vector<double> icVec (ic, ic+6);
 	double tof = 2.8077;
@@ -507,18 +511,18 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 }//====================================================
 
 /**
- *  @brief Generate the Distant Retrograde Orbit (DRO) family 
- *  @details This family is initialized from a conic orbit with an orbital 
+ *  \brief Generate the Distant Retrograde Orbit (DRO) family 
+ *  \details This family is initialized from a conic orbit with an orbital 
  *  radius that corresponds to the minimum flyby altitude, or, if that value is 
  *  less than 1 km, an altitude of 100 km.
  * 
- *  @param pFam pointer to a family object
+ *  \param pFam pointer to a family object
  */
 void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
-	BodyData P2Data = BodyData(pSys->getPrimary(1));
-	double orbR = P2Data.getRadius() + 
-		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
+	BodyData P2Data = BodyData(pSys->getPrimID(1));
+	double orbR = P2Data.getBodyRad() + 
+		(P2Data.getMinFlyBy() > P2Data.getBodyRad() ? P2Data.getMinFlyBy() : P2Data.getBodyRad());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
 	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
 
@@ -556,18 +560,18 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 }//====================================================
 
 /**
- *  @brief Generate the Low Prograde Orbit (LPO) family 
- *  @details This family is initialized from a conic orbit with an orbital 
+ *  \brief Generate the Low Prograde Orbit (LPO) family 
+ *  \details This family is initialized from a conic orbit with an orbital 
  *  radius that corresponds to the minimum flyby altitude, or, if that value is 
  *  less than 1 km, an altitude of 100 km.
  * 
- *  @param pFam pointer to a family data object
+ *  \param pFam pointer to a family data object
  */
 void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
-	BodyData P2Data = BodyData(pSys->getPrimary(1));
-	double orbR = P2Data.getRadius() + 
-		(P2Data.getMinFlyBy() > P2Data.getRadius() ? P2Data.getMinFlyBy() : P2Data.getRadius());	// minimum acceptable orbital radius, km
+	BodyData P2Data = BodyData(pSys->getPrimID(1));
+	double orbR = P2Data.getBodyRad() + 
+		(P2Data.getMinFlyBy() > P2Data.getBodyRad() ? P2Data.getMinFlyBy() : P2Data.getBodyRad());	// minimum acceptable orbital radius, km
 	double orbV = sqrt(P2Data.getGravParam()/orbR);							// Circular velocity at orbR, km/s
 	double orbT = 2*PI*sqrt(pow(orbR, 3)/P2Data.getGravParam());					// Orbital period, sec
 
@@ -612,7 +616,7 @@ void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 
-	BodyData P2Data = BodyData(pSys->getPrimary(1));
+	BodyData P2Data = BodyData(pSys->getPrimID(1));
 	double L1_pos[3];
 	DynamicsModel_cr3bp::getEquilibPt(pSys, 1, 1e-12, L1_pos);
 
@@ -665,13 +669,14 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 }//====================================================
 
 /**
- *  @brief Compute a family of p:q resonant orbits
+ *  \brief Compute a family of p:q resonant orbits
  * 
- *  @param p Resonance ratio numerator; the orbit completes p revolutions in an inertial frame
+ *  \param p Resonance ratio numerator; the orbit completes p revolutions in an inertial frame
  *  in the same amount of time as the CR3BP system completes q revolutions in an inertial frame.
- *  @param q Resonance ratio denominator
- *  @param pFam pointer to a family object
- *  @throws Exception of the resonance ratio p:q is not implemented or recognized
+ *  \param q Resonance ratio denominator
+ *  \param pFam pointer to a family object
+ *  
+ *  \throws Exception of the resonance ratio p:q is not implemented or recognized
  */
 void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 	double x = 0, vy = 0, T = 0;
@@ -780,6 +785,16 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 	}
 }//====================================================
 
+/**
+ *  \brief Compute a family of periodic orbits using pseudo arclength continuation
+ *  from a nodeset
+ * 
+ *  \param traj An initial guess for a periodic orbit
+ *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
+ *  \param initDir 6-element vector that indicates the initial step direction along the family. For example, to
+ *  step along -xdot, use {0,0,0,-1,0,0} as initDir.
+ *  \param pFam pointer to a family data object in which family member data will be stored
+ */
 void FamGenerator::cr3bp_pacFromTraj(Traj_cr3bp traj, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
 	Nodeset_cr3bp nodes(traj, numNodes);
 	cr3bp_pseudoArcCont(pFam, nodes, mirrorType, initDir);
@@ -788,7 +803,6 @@ void FamGenerator::cr3bp_pacFromTraj(Traj_cr3bp traj, Mirror_tp mirrorType, std:
 /**
  *  \brief Compute a family of periodic orbits using pseudo arclength continuation
  *  from a nodeset
- *  \details [long description]
  * 
  *  \param nodes An initial guess for a periodic orbit
  *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
@@ -801,27 +815,27 @@ void FamGenerator::cr3bp_pacFromNodeset(Nodeset_cr3bp nodes, Mirror_tp mirrorTyp
 }//====================================================
 
 /**
- *	@brief Continue a family of orbits in the CR3BP via natural parameter continuation
+ *	\brief Continue a family of orbits in the CR3BP via natural parameter continuation
  *	
- * 	@param fam a pointer to a family object to store family members in; the family MUST have
+ * 	\param fam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
- *	@param initialGuess a trajectory that is a good initial guess for the "first" member of the family
- *	@param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
+ *	\param initialGuess a trajectory that is a good initial guess for the "first" member of the family
+ *	\param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
  *	reference frame. Each entry corresponds to an independent variable in <tt>indVarIx</tt>
- *	@param indVarIx a vector containing the indices of the independent variables to be used. You MUST
+ *	\param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
  *	first in the continuation (using stupid-simple continuation), and the second will be toggled
  *	on later if the slope favors it.
- *	@param depVarIx a list of state indices telling the algorithm which states should be predicted
+ *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
- *	@param order the multiplicity or order of the family; i.e. the number of revs around the primary
+ *	\param order the multiplicity or order of the family; i.e. the number of revs around the primary
  *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
  *	has order 2
- *	@throws Exception if <tt>indVarIx</tt> has fewer than two elements
- *	@throws Exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
- *	@throws Exception if the eigenvalues of the monodromy matrix cannot be computed
- *	@throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
+ *	\throws Exception if <tt>indVarIx</tt> has fewer than two elements
+ *	\throws Exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
+ *	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
+ *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
 void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
@@ -955,17 +969,17 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			if(monoErr > 1e-5)
 				astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 			
-			Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
-		    if(eigensolver.info() != Eigen::Success){
-		    	if(pItData){
-					delete(pItData);
-					pItData = nullptr;
-				}
-		        throw Exception("FamGenerator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
-		    }
+			// Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+		 //    if(eigensolver.info() != Eigen::Success){
+		 //    	if(pItData){
+			// 		delete(pItData);
+			// 		pItData = nullptr;
+			// 	}
+		 //        throw Exception("FamGenerator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
+		 //    }
 
-		    Eigen::VectorXcd vals = eigensolver.eigenvalues();
-		    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
+		    // Eigen::VectorXcd vals = eigensolver.eigenvalues();
+		    // std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 			// For debugging:
 			// printf("Eigenvalues:\n");
@@ -974,7 +988,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 
 			// Add orbit to family
 			FamMember_cr3bp child(perOrbit);
-			child.setEigVals(eigVals);
+			// child.setEigVals(eigVals);
 			fam->addMember(child);
 		}
 
@@ -1073,25 +1087,25 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 }//==================================================
 
 /**
- *	@brief Continue a family of orbits in the CR3BP
+ *	\brief Continue a family of orbits in the CR3BP
  *	
  *	This algorithm is specifically tailored to periodic orbits; see the commented out
  *	code about constraint method 1 for a more general approach that can be applied to 
  *	families of non-periodic orbits
  *	
- * 	@param fam a pointer to a family object to store family members in; the family MUST have
+ * 	\param fam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
- *	@param initialGuess a trajectory that is a good initial guess for the "first" member of the family
- *	@param mirrorType describes how this orbit mirrors
- *	@param initDir a vector that contains one non-zero element that indicates the sign of 
+ *	\param initialGuess a trajectory that is a good initial guess for the "first" member of the family
+ *	\param mirrorType describes how this orbit mirrors
+ *	\param initDir a vector that contains one non-zero element that indicates the sign of 
  *	the desired step for the family. The index corresponds to the state index. For example,
  *	if I wish the family to continue with a step in the negative z direction for the first node,
  *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
  * 	a step on any of the free variables, but only one step direction will be considered (the first one
  * 	as the algorithm reads through the vector)
- * 	@throws Exception if the mirrorType is not recognized
- * 	@throws Exception if the free variable vector contains fewer than six states
- * 	@throws Exception if the eigenvalues of the monodromy matrix cannot be computed
+ * 	\throws Exception if the mirrorType is not recognized
+ * 	\throws Exception if the free variable vector contains fewer than six states
+ * 	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
  */
 void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGuess,
 	Mirror_tp mirrorType, std::vector<int> initDir){
@@ -1128,12 +1142,12 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 	 *
 	 *	These were the descriptions for three input ints for this method:
 	 *
-	 *	@param periodicityIgnoreIx (int) index of a state variable to ignore when enforcing periodicity. It is best
+	 *	\param periodicityIgnoreIx (int) index of a state variable to ignore when enforcing periodicity. It is best
 	 *	to ignore one of the planar components (i.e. x or y, corresponding to indices 0 and 1, respectively)
-	 *	@param fixToVal_ix (int) index of a variable to fix to <tt>fixToVal_val</tt> at the first node. If the 
+	 *	\param fixToVal_ix (int) index of a variable to fix to <tt>fixToVal_val</tt> at the first node. If the 
 	 *	index is between 0 and 5, it will constraint one of the usual state variables. An index of 6 will 
 	 *	constrain total TOF, and an index of 7 will constrain Jacobi at the first node
-	 *	@param fixToVal_val (double) the value to constrain state <tt>fixToVal_ix</tt> to
+	 *	\param fixToVal_val (double) the value to constrain state <tt>fixToVal_ix</tt> to
 	 */
 	 /*
 	// Create a periodicity constraint
@@ -1430,29 +1444,29 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		if(monoErr > 1e-5)
 			astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 		
-		Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
-	    if(eigensolver.info() != Eigen::Success)
-	        throw Exception("FamGenerator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
+		// Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
+	 //    if(eigensolver.info() != Eigen::Success)
+	 //        throw Exception("FamGenerator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
 
-	    Eigen::VectorXcd vals = eigensolver.eigenvalues();
-	    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
+	 //    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+	 //    std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
 
 		// Add orbit to family
 		FamMember_cr3bp child(perOrbit);
-		child.setEigVals(eigVals);
+		// child.setEigVals(eigVals);
 		fam->addMember(child);
 	}// end of while loop
 }//==================================================
 
 /**
- *	@brief Create a nodeset that contains an initial guess for a family member
+ *	\brief Create a nodeset that contains an initial guess for a family member
  *	using pseudo arclength continuation
  *
- *	@param convergedFreeVarVec a matrix containing the free variable vector of the previous
+ *	\param convergedFreeVarVec a matrix containing the free variable vector of the previous
  *	(nearest) converged family member
- *	@param N a 1D nullspace vector that lies tangent to the family
- *	@param stepSize scales the size of the step by scaling the nullspace vector
- *	@param pFamilyItData pointer to a MultShootData object containing corrections information about the
+ *	\param N a 1D nullspace vector that lies tangent to the family
+ *	\param stepSize scales the size of the step by scaling the nullspace vector
+ *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
  */
 Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
@@ -1499,7 +1513,7 @@ Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeV
 }//====================================================
 
 /**
- *	@brief Reset all parameters to their default values
+ *	\brief Reset all parameters to their default values
  */
 void FamGenerator::reset(){
 	if(!bIsClean)
@@ -1516,9 +1530,13 @@ void FamGenerator::reset(){
 	tol = 1e-12;
 }//====================================================
 
+/**
+ *  \brief Utility function to reset any parameters and flags that are
+ *  assigned during generation processes
+ */
 void FamGenerator::cleanEngine(){
 	// Nothing stored, so nothing to do
 	bIsClean = true;
-}
+}//====================================================
 
 }// END of Astrohelion namespace

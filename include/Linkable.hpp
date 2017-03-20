@@ -1,14 +1,14 @@
 /**
- *  @file Linkable.hpp
- *	@brief 
+ *  \file Linkable.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -32,12 +32,12 @@
 
 namespace astrohelion{
 	/**
-	 *	@brief A basic object that encapsulates the behavior of nodes and segments that hold
+	 *	\brief A basic object that encapsulates the behavior of nodes and segments that hold
 	 *	information about how they link together
 	 *
-	 *	@author Andrew Cox
-	 *	@version May 1, 2016
-	 *	@copyright GNU GPL v3.0
+	 *	\author Andrew Cox
+	 *	\version May 1, 2016
+	 *	\copyright GNU GPL v3.0
 	 */
 	class Linkable : public Core{
 	public:
@@ -55,8 +55,8 @@ namespace astrohelion{
 		friend bool operator !=(const Linkable&, const Linkable&);
 		
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		virtual void addLink(int);
 		void clearLinks();
@@ -67,7 +67,7 @@ namespace astrohelion{
 		virtual void removeLink(int);
 		virtual void setID(int); 
 		virtual void setLink(int, int);
-		//@}
+		//\}
 		
 	protected:
 		int ID = INVALID_ID;	//!< The ID associated with this object

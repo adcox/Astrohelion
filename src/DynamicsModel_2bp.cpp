@@ -1,15 +1,15 @@
 /**
- *  @file DynamicsModel_2bp.cpp
- *  @brief Derivative of DynamicsModel, specific to 2BP
+ *  \file DynamicsModel_2bp.cpp
+ *  \brief Derivative of DynamicsModel, specific to 2BP
  *  
- *  @author Andrew Cox
- *  @version August 24, 2016
- *  @copyright GNU GPL v3.0
+ *  \author Andrew Cox
+ *  \version August 24, 2016
+ *  \copyright GNU GPL v3.0
  */
  
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -30,12 +30,11 @@
 #include "DynamicsModel_2bp.hpp"
 
 #include "Calculations.hpp"
-// #include "CorrectionEngine.hpp"
+#include "ControlLaw.hpp"
 #include "EigenDefs.hpp"
+#include "Exceptions.hpp"
 #include "Event.hpp"
-// #include "MultShootData.hpp"
 #include "Node.hpp"
-// #include "Nodeset_2bp.hpp"
 #include "Segment.hpp"
 #include "SysData_2bp.hpp"
 #include "Traj_2bp.hpp"
@@ -50,16 +49,16 @@ DynamicsModel_2bp::DynamicsModel_2bp() : DynamicsModel(DynamicsModel_tp::MODEL_2
 }//====================================================
 
 /**
- *  @brief Copy Constructor
- *  @param m a model reference
+ *  \brief Copy Constructor
+ *  \param m a model reference
  */
 DynamicsModel_2bp::DynamicsModel_2bp(const DynamicsModel_2bp &m) : DynamicsModel(m) {
 
 }//====================================================
 
 /**
- *  @brief Assignment operator
- *  @param m a model reference
+ *  \brief Assignment operator
+ *  \param m a model reference
  */
 DynamicsModel_2bp& DynamicsModel_2bp::operator =(const DynamicsModel_2bp &m){
 	DynamicsModel::operator =(m);
@@ -67,7 +66,7 @@ DynamicsModel_2bp& DynamicsModel_2bp::operator =(const DynamicsModel_2bp &m){
 }//====================================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
 DynamicsModel::eom_fcn DynamicsModel_2bp::getSimpleEOM_fcn() const{
@@ -75,7 +74,7 @@ DynamicsModel::eom_fcn DynamicsModel_2bp::getSimpleEOM_fcn() const{
 }//====================================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
 DynamicsModel::eom_fcn DynamicsModel_2bp::getFullEOM_fcn() const{
@@ -83,12 +82,12 @@ DynamicsModel::eom_fcn DynamicsModel_2bp::getFullEOM_fcn() const{
 }//====================================================
 
 /**
- *  @brief Compute the position of the primary body
+ *  \brief Compute the position of the primary body
  * 
- *  @param t the epoch at which the computations occur (unused for this system)
- *  @param pSysData object describing the specific system (unused for this system)
+ *  \param t the epoch at which the computations occur (unused for this system)
+ *  \param pSysData object describing the specific system (unused for this system)
  * 
- *  @return n x 3 vector (row-major order) containing the positions of
+ *  \return n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysData) const{
@@ -98,12 +97,12 @@ std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysD
 }//====================================================
 
 /**
- *  @brief Compute the velocity of the primary body
+ *  \brief Compute the velocity of the primary body
  * 
- *  @param t the epoch at which the computations occur (unused for this system)
- *  @param pSysData object describing the specific system (unused for this system)
+ *  \param t the epoch at which the computations occur (unused for this system)
+ *  \param pSysData object describing the specific system (unused for this system)
  * 
- *  @return n x 3 vector (row-major order) containing the velocities of
+ *  \return n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysData) const{
@@ -112,34 +111,59 @@ std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysD
 	return std::vector<double>(3,0);
 }//====================================================
 
+/**
+ *  \brief Retrieve the state derivative
+ *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  the specified time and state
+ * 
+ *  \param t time parameter
+ *  \param state state vector
+ *  \param params structure containing parameters relevant to the integration
+ *  \return the time-derivative of the state vector
+ */
+std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
+    if(state.size() != coreStates)
+        throw Exception("DynamicsModel_2bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
+
+    // Compute the acceleration
+    std::vector<double> dsdt(coreStates,0);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
+    
+    return dsdt;
+}//==================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
-void DynamicsModel_2bp::sim_saveIntegratedData(const double *y, double t, Traj* traj) const{
-	const SysData_2bp *sys = static_cast<const SysData_2bp *>(traj->getSysData());
+/**
+ *  \brief Use a correction algorithm to accurately locate an event crossing
+ * 
+ *  The simulation engine calls this function if and when it determines that an event 
+ *  has been crossed. To accurately locate the event, we employ differential corrections
+ *  and find the exact event occurence in space and time.
+ *
+ *  \param event the event we're looking for
+ *  \param traj a pointer to the trajectory the event should occur on
+ *  \param ic the core state vector for this system
+ *  \param t0 non-dimensional time at the beginning of the search arc
+ *  \param tof the time-of-flight for the arc to search over
+ *  \param params structure containing parameters required by the EOMs
+ *  \param verbose whether or not we should be verbose with output messages
+ *
+ *  \return wether or not the event has been located. If it has, a new point
+ *  has been appended to the trajectory's data vectors.
+ */
+bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof,
+    EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
-	// Compute acceleration
-	double dsdt[6] = {0};
-	EOM_ParamStruct paramStruct(sys);
-	simpleEOMs(t, y, dsdt, &paramStruct);
-
-	// Save the state (pos, vel, accel)
-	int id = traj->addNode(Node(y, dsdt+3, t));
-
-	if(id > 0){
-		double tof = t - traj->getNode(id-1).getEpoch();
-		traj->addSeg(Segment(id-1, id, tof, y+6));
-	}
-}//====================================================
-
-bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const{
 	(void) event;
     (void) traj;
     (void) ic;
     (void) t0;
     (void) tof;
     (void) verbose;
+    (void) params;
 	// const SysData_2bp *sys = static_cast<const SysData_2bp*>(traj->getSysData());
 
  //    // Create a nodeset for this particular type of system
@@ -194,15 +218,41 @@ bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *i
 //      Multiple Shooting Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Perform model-specific initializations on the MultShootData object
+ *  \details NOT YET IMPLEMENTED
+ *  
+ *  \param it pointer to the object to be initialized
+ */
 void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
 	(void)it;
 }//====================================================
 
-void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const{
+/**
+ *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  nodeset
+ *
+ *  \details NOT YET IMPLEMENTED
+ *  
+ *  If <tt>findEvent</tt> is set to true, the
+ *  output nodeset will contain extra information for the simulation engine to use. Rather than
+ *  returning only the position and velocity states, the output nodeset will contain the STM 
+ *  and dqdT values for the final node; this information will be appended to the extraParameter
+ *  vector in the final node.
+ *
+ *  \param it an iteration data object containing all info from the corrections process
+ *  \param nodes_in a pointer to the original, uncorrected nodeset
+ *  \param findEvent whether or not this correction process is locating an event
+ *  \param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
+ */
+void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent,
+    Nodeset *nodes_out) const{
+    
 	(void)it;
 	(void)nodes_in;
 	(void)findEvent;
-	(void)nodesOut;
+	(void)nodes_out;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -210,11 +260,11 @@ void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const No
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Integrate the equations of motion for the 2BP
- *  @param t time at integration step (unused)
- *  @param s the 42-d state vector
- *  @param sdot the 42-d state derivative vector
- *  @param params points to an EOM_ParamStruct object
+ *  \brief Integrate the equations of motion for the 2BP
+ *  \param t time at integration step (unused)
+ *  \param s the 42-d state vector
+ *  \param sdot the 42-d state derivative vector
+ *  \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void *params){
 	(void)t;
@@ -255,11 +305,11 @@ int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void 
 }//====================================================
 
 /**
- *  @brief Integrate the equations of motion for the 2BP; currently the same as the full EOMs
- *  @param t time at integration step (unused)
- *  @param s the 6-d state vector
- *  @param sdot the 6-d state derivative vector
- *  @param params points to an EOM_ParamStruct object
+ *  \brief Integrate the equations of motion for the 2BP; currently the same as the full EOMs
+ *  \param t time at integration step (unused)
+ *  \param s the 6-d state vector
+ *  \param sdot the 6-d state derivative vector
+ *  \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], void *params){
 	(void)t;
@@ -282,13 +332,13 @@ int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], voi
 }//====================================================
 
 /**
- *  @brief Compute the second derivatives of the potential function
+ *  \brief Compute the second derivatives of the potential function
  *
- *  @param mu the mass parameter of the system, km^3/s^2
- *  @param x coordinate, km
- *  @param y coordinate, km
- *  @param z coordinate, km
- *  @param ddots a pointer to a 6-element double array where the function will store 
+ *  \param mu the mass parameter of the system, km^3/s^2
+ *  \param x coordinate, km
+ *  \param y coordinate, km
+ *  \param z coordinate, km
+ *  \param ddots a pointer to a 6-element double array where the function will store 
  *  values for {Uxx, Uyy, Uzz, Uxy, Uxz, Uyz}. Note that Uyx = Uxy, etc.
  */
 void DynamicsModel_2bp::getUDDots(double mu, double x, double y, double z, double* ddots){

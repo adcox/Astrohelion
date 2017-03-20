@@ -114,8 +114,8 @@ Say I'm writing class A and want to know whether or not to include or forward-de
 	<li> forward declare B if: A contains a B pointer or reference: B* myb; </li>
 	<li> forward declare B if: one or more functions has a B object/pointer/reference
 	as a parementer, or as a return type: B MyFunction(B myb); </li>
-	<li> #include "b.h" if: B is a parent class of A </li>
-	<li> #include "b.h" if: A contains a B object: B myb; </li>
+	<li> <code>#include "b.h"</code> if: B is a parent class of A </li>
+	<li> <code>#include "b.h"</code> if: A contains a B object: B myb; </li>
 </ul>
 
 Include Order (my convention:)
@@ -130,4 +130,7 @@ Include Order (my convention:)
 	<li> Check out <a href="http://stackoverflow.com/questions/11445619/profiling-c-on-mac-os-x">these</a> instructions for profiling code on OS X</li>
 	<li> Creating copies of objects can be <em>very</em> expensive! Use pointers to objects whenever possible and practical!</li>
 </ul>
+
+<h2>MatIO Read/Write</h2>
+When saving and reading unsigned integers, use <code>MAT_T_UINT32</code> and <code>MAT_C_UINT32</code>. When the 8 and 16 bit versions are used the data is saved with strange trailing zeros, e.g., "1 0 0 0" and "1 0", respectively, in place of a single "1" value.
 */

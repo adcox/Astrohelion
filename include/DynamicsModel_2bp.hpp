@@ -1,14 +1,14 @@
 /**
- *  @file DynamicsModel_2bp.hpp
- *	@brief 
+ *  \file DynamicsModel_2bp.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version August 24, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version August 24, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -35,8 +35,8 @@ namespace astrohelion{
 class SysData_2bp;
 
 /**
- *	@ingroup model 2bp
- *	@brief Derivative of DynamicsModel, specific to the 2BP
+ *	\ingroup model 2bp
+ *	\brief Derivative of DynamicsModel, specific to the 2BP
  *
  *	The base class's methods provide a good framework for this system,
  *	so only minimal adjustments are needed.
@@ -45,44 +45,49 @@ class DynamicsModel_2bp : public DynamicsModel{
 public:
 
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	DynamicsModel_2bp();
 	DynamicsModel_2bp(const DynamicsModel_2bp&);
 	~DynamicsModel_2bp() {}
-	//@}
+	//\}
 
 	DynamicsModel_2bp& operator=(const DynamicsModel_2bp&);
 
 	/**
-	 *  @name Core Functions
-	 *  @{
+	 *  \name Core Functions
+	 *  \{
 	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
-	//@}
+	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
+	//\}
 
 	/**
-	 *  @name Multiple Shooting Support Functions
-	 *  @{
+	 *  \name Multiple Shooting Support Functions
+	 *  \{
 	 */
 	void multShoot_initIterData(MultShootData *it) const;
-	void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const;
-	bool sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof, Verbosity_tp verbose) const;
-	void sim_saveIntegratedData(const double *y, double t, Traj* traj) const;
-	//@}
+	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
+	//\}
+	
+	/**
+	 * \name Simulation Support Functions
+	 */
+	bool sim_locateEvent(Event event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
+	//\}
 
 	/**
-	 *  @name Static Calculations
-	 *  @{
+	 *  \name Static Calculations
+	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
 	static void getUDDots(double, double, double, double, double*);
-	//@}
+	//\}
 protected:
 
 };

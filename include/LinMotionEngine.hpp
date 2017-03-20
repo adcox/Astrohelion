@@ -1,14 +1,14 @@
 /**
- *  @file tpat_linMotion_Engine.hpp
- *	@brief 
+ *  \file tpat_linMotion_Engine.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -38,8 +38,8 @@ class Traj_cr3bp;
 class SysData_cr3bp;
 
 /**
- *	@ingroup engine
- *	@brief type of linear motion
+ *	\ingroup engine
+ *	\brief type of linear motion
  *
  *	This type tells the engine what kind of linearization to produce
  */
@@ -55,7 +55,7 @@ enum class LinMotion_tp {
 };	
 
 /**
- *	@brief An engine that will generate a trajectory from the linearized CR3BP EOMs
+ *	\brief An engine that will generate a trajectory from the linearized CR3BP EOMs
  */
 class LinMotionEngine : public Core, public Engine{
 	public:
@@ -65,8 +65,8 @@ class LinMotionEngine : public Core, public Engine{
 		// Operators
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		double getMPORatio() const;
 		int getNumRevs() const;
@@ -78,26 +78,26 @@ class LinMotionEngine : public Core, public Engine{
 		void setTimeStep(double);
 		void setTol(double);
 		const char* getTypeStr(LinMotion_tp) const;
-		//@}
+		//\}
 
 		/**
-		 *  @name Orbit Generation
-		 *  @{
+		 *  \name Orbit Generation
+		 *  \{
 		 */
 		Traj_cr3bp getCR3BPLinear(int, double[3], SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLinear(int, double[3], LinMotion_tp, SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLinear(int, double[3], double, double, LinMotion_tp, SysData_cr3bp*);
 		Traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, SysData_cr3bp*);
-		//@}
+		//\}
 		
 	private:
-		/** @brief step size between points on linear motion trajectory */
+		/** \brief step size between points on linear motion trajectory */
 		double t_step = 0.001;
 
-		/** @brief Number of rotations to propagate */
+		/** \brief Number of rotations to propagate */
 		double rots = 1;
 
-		/** @brief tolerance for numerical methods, like locating Lagrange points */
+		/** \brief tolerance for numerical methods, like locating Lagrange points */
 		double tol = 1e-14;
 
 		/** Ratio between SPO and LPO behavior when constructing an MPO */

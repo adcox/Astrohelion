@@ -30,7 +30,7 @@ int ivID = Linkable::INVALID_ID;
 BOOST_AUTO_TEST_SUITE(Linkable)
 
 BOOST_AUTO_TEST_CASE(Creation){
-	Node n(state1, 10);
+	Node n(state1, 6, 10);
 	BOOST_CHECK(n.getLink(0) == ivID);
 	BOOST_CHECK(n.getLink(1) == ivID);
 
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(Creation){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(func_isLinkedTo){
-	Node n(state1, 10);
+	Node n(state1, 6, 10);
 	n.addLink(3);
 	n.addLink(7);
 
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(func_isLinkedTo){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(func_clearLinks){
-	Node n(state1, 10);
+	Node n(state1, 6, 10);
 	n.addLink(3);
 	n.addLink(7);
 	n.clearLinks();
@@ -66,14 +66,14 @@ BOOST_AUTO_TEST_CASE(func_clearLinks){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(duplicateLinks){
-	Node n(state1, 10);
+	Node n(state1, 6, 10);
 	n.addLink(3);
 	BOOST_CHECK_THROW(n.addLink(3), Exception);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(func_removeLink){
 	// Test to make sure links are removed correctly
-	Node n(state1, 10);
+	Node n(state1, 6, 10);
 	n.addLink(3);
 	n.addLink(7);
 	n.removeLink(3);
@@ -96,8 +96,8 @@ BOOST_AUTO_TEST_SUITE(ArcsetTests)
 BOOST_AUTO_TEST_CASE(createArcset){
 	Nodeset set(&sys);
 
-	Node n1(state1, 10);
-	Node n2(state2, 25);
+	Node n1(state1, 6, 10);
+	Node n2(state2, 6, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE(createArcset){
 
 BOOST_AUTO_TEST_CASE(deleteSeg){
 	Nodeset set(&sys);
-	Node n1(state1, 10);
-	Node n2(state2, 25);
+	Node n1(state1, 6, 10);
+	Node n2(state2, 6, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
@@ -157,8 +157,8 @@ BOOST_AUTO_TEST_CASE(deleteSeg){
 
 BOOST_AUTO_TEST_CASE(deleteFirstNode){
 	Nodeset set(&sys);
-	Node n1(state1, 10);
-	Node n2(state2, 25);
+	Node n1(state1, 6, 10);
+	Node n2(state2, 6, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
@@ -171,8 +171,8 @@ BOOST_AUTO_TEST_CASE(deleteFirstNode){
 
 BOOST_AUTO_TEST_CASE(deleteLastNode){
 	Nodeset set(&sys);
-	Node n1(state1, 10);
-	Node n2(state2, 25);
+	Node n1(state1, 6, 10);
+	Node n2(state2, 6, 25);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
@@ -185,11 +185,11 @@ BOOST_AUTO_TEST_CASE(deleteLastNode){
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
 	Nodeset set(&sys);
-	set.addNode(Node(state1, 0));
-	set.addNode(Node(state2, 1.1));
-	set.addNode(Node(state3, 2.2));
-	set.addNode(Node(state4, 3.3));
-	set.addNode(Node(state5, 4.4));
+	set.addNode(Node(state1, 6, 0));
+	set.addNode(Node(state2, 6, 1.1));
+	set.addNode(Node(state3, 6, 2.2));
+	set.addNode(Node(state4, 6, 3.3));
+	set.addNode(Node(state5, 6, 4.4));
 	set.addSeg(Segment(0, 1, 1.1));
 	set.addSeg(Segment(1, 2, 1.1));
 	set.addSeg(Segment(2, 3, 1.1));
@@ -250,11 +250,11 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_revTime){
 	Nodeset set(&sys);
-	set.addNode(Node(state1, 0));
-	set.addNode(Node(state2, -1.1));
-	set.addNode(Node(state3, -2.2));
-	set.addNode(Node(state4, -3.3));
-	set.addNode(Node(state5, -4.4));
+	set.addNode(Node(state1, 6, 0));
+	set.addNode(Node(state2, 6, -1.1));
+	set.addNode(Node(state3, 6, -2.2));
+	set.addNode(Node(state4, 6, -3.3));
+	set.addNode(Node(state5, 6, -4.4));
 	set.addSeg(Segment(0, 1, -1.1));
 	set.addSeg(Segment(1, 2, -1.1));
 	set.addSeg(Segment(2, 3, -1.1));

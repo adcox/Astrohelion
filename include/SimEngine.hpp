@@ -1,14 +1,14 @@
 /**
- *  @file SimEngine.hpp
- *	@brief 
+ *  \file SimEngine.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -33,6 +33,7 @@
 #include "Core.hpp"
 #include "Engine.hpp"
 
+#include "ControlLaw.hpp"
 #include "DynamicsModel.hpp"
 #include "Event.hpp"
 #include "Traj.hpp"
@@ -41,9 +42,6 @@
 namespace astrohelion{
 
 // Forward declarations
-class Traj_bc4bp;
-class Traj_cr3bp;
-class Traj_cr3bp_ltvp;
 class SysData;
 
 // struct gsl_odeiv2_step;
@@ -52,20 +50,23 @@ class SysData;
 // struct gsl_odeiv2_driver;
 
 /**
- *	@brief A small structure to store event occurrence records
+ *	\brief A small structure to store event occurrence records
  */
 struct SimEventRecord{
 public:
 	/**
-	 *	@brief Construct an event record
-	 *	@param e the event index within the simulation engine event vector
-	 *	@param s the step index; which step did this event occur at?
+	 *	\brief Construct an event record
+	 *	\param e the event index within the simulation engine event vector
+	 *	\param s the step index; which step did this event occur at?
 	 */
 	SimEventRecord(int e, int s) : eventIx(e), stepIx(s) {}
 	int eventIx;	//!< The index of the event (index from simulation engine vector of events)
 	int stepIx;		//!< The index of the integration step the event occured at
 };
 
+/**
+ *  \brief Classify integrator types
+ */
 enum class Integ_tp{
 	RKCK,			//!< Explicit embedded Runge-Kutta Cash-Karp (4,5); variable step propagations
 	RK8PD,			//!< Explicit embedded Runge-Kutta Dormance-Prince (8,9); variable step propagations
@@ -73,8 +74,8 @@ enum class Integ_tp{
 };
 
 /**
- *	@ingroup engine
- *	@brief Performs numerical integration on any system type and produces an
+ *	\ingroup engine
+ *	\brief Performs numerical integration on any system type and produces an
  *	Traj object
  *
  *	The simulation engine is the workhorse object for the Core. It
@@ -87,7 +88,7 @@ enum class Integ_tp{
  *	integrate a trajectory for a specific amount of time. The integration will most likely
  *	run for the specified interval, but crash-detecting event functions are included by default
  *	and will end the integration if triggered. To run a simulation without these events,
- *	call the <tt>clearEvents()</tt> function before running the simulation. Alternatively, 
+ *	use the <tt>setMakesCrashEvents()</tt> to tell the engine to skip creating these events. Alternatively, 
  *	more event functions can be added to the simulation to end (or simply flag) the simulation
  *	at different event occurrences.
  *
@@ -135,9 +136,9 @@ enum class Integ_tp{
  *	steps are taken where the dynamics are less volatile.
  *	
  *	
- *	@author Andrew Cox
- *	@version June 1, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version June 1, 2015
+ *	\copyright GNU GPL v3.0
  */
 class SimEngine : public Core, public Engine{
 	public:
@@ -152,24 +153,26 @@ class SimEngine : public Core, public Engine{
 		SimEngine& operator =(const SimEngine&);
 
 		/**
-		 *  @name Set and Get Functions
-		 *  @{
+		 *  \name Set and Get Functions
+		 *  \{
 		 */
 		void addEvent(Event);
 		double getAbsTol() const;
+		unsigned int getCtrlLaw() const;
 		std::vector<Event> getEndEvents(Traj*) const;
 		std::vector<Event> getEvents() const;
 		std::vector<SimEventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
-		bool makesCrashEvents() const;
+		bool makesDefaultEvents() const;
 		bool usesSimpleInt() const;
 		bool usesRevTime() const;
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
+		void setCtrlLaw(unsigned int);
 		void setFixStepInteg(Integ_tp);
-		void setMakeCrashEvents(bool);
+		void setMakeDefaultEvents(bool);
 		void setMaxCompTime(int);
 		void setNumSteps(int);
 		void setSimpleInt(bool);
@@ -177,11 +180,11 @@ class SimEngine : public Core, public Engine{
 		void setRevTime(bool);
 		void setVarStepInteg(Integ_tp);
 		void setVarStepSize(bool);
-		//@}
+		//\}
 
 		/**
-		 *  @name Simulation Methods
-		 *  @{
+		 *  \name Simulation Methods
+		 *  \{
 		 */
 		void runSim(const double*, double, Traj*);
 		void runSim(std::vector<double>, double, Traj*);
@@ -190,7 +193,7 @@ class SimEngine : public Core, public Engine{
 		void runSim(const double*, MatrixXRd, double, double, Traj*);
 		void runSim(std::vector<double>, MatrixXRd, double, double, Traj*);
 		void runSim(const double *ic, MatrixXRd, std::vector<double>, Traj*);
-		//@}
+		//\}
 		
 		// Utility Functions
 		void clearEvents();
@@ -207,7 +210,7 @@ class SimEngine : public Core, public Engine{
 		std::vector<SimEventRecord> eventOccurs {};
 		
 		/** a void pointer to some data object that contains data for the EOM function */
-		void *eomParams = 0;
+		EOM_ParamStruct *eomParams = 0;
 
 		/** Whether or not to run the simulation in reverse time */
 		bool bRevTime = false;
@@ -219,11 +222,11 @@ class SimEngine : public Core, public Engine{
 		 with the EOMs */
 		bool bSimpleIntegration = false;
 
-		/** Whether or not crash events should be created for the simulation */
-		bool bMakeCrashEvents = true;
+		/** Whether or not default events should be created for the simulation */
+		bool bMakeDefaultEvents = true;
 
-		/** Whether or not the default crash events have been created */
-		bool bMadeCrashEvents = false;
+		/** Whether or not the default events have been created */
+		bool bMadeDefaultEvents = false;
 
 		/** Absolute tolerance for integrated data, units are same as integrated data */
 		double absTol = 1e-12;
@@ -249,9 +252,12 @@ class SimEngine : public Core, public Engine{
 		/** Integrator to use for fixed step-size propagations; Default is MSADAMS */
 		Integ_tp fixStep_integ = Integ_tp::MSADAMS;
 
+		/** Control law ID; Default is 0, or NO_CTRL*/
+		unsigned int ctrlLawID = ControlLaw::NO_CTRL;
+
 		void cleanEngine();
 		void copyMe(const SimEngine&);
-		void createCrashEvents(const SysData*);
+		void createDefaultEvents(const SysData*);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
 		void integrate(const double*, MatrixXRd, const double*, int, Traj*);
 		bool locateEvents(const double*, double, Traj*);

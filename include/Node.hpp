@@ -1,14 +1,14 @@
 /**
- *  @file Node.hpp
- *	@brief 
+ *  \file Node.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -41,28 +41,28 @@
  
 namespace astrohelion{
 /**
- *	@ingroup traj
- *	@brief A single point or state on an arc
+ *	\ingroup traj
+ *	\brief A single point or state on an arc
  *
- *	@author Andrew Cox
- *	@version September 30, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version September 30, 2016
+ *	\copyright GNU GPL v3.0
  */
 class Node : public Linkable{
 
 public:
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	Node();
-	Node(const double[6], double);
+	Node(const double[6], unsigned int, double);
 	Node(std::vector<double>, double);
-	Node(const double[6], const double[3], double);
-	Node(std::vector<double>, std::vector<double>, double);
+	// Node(const double[6], const double[3], double);
+	// Node(std::vector<double>, std::vector<double>, double);
 	Node(const Node&);
 	// ~Node();
-	//@}
+	//\}
 
 	// Operators
 	Node& operator =(const Node&);
@@ -70,12 +70,11 @@ public:
 	friend bool operator !=(const Node&, const Node&);
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
 	void addConstraint(Constraint);
 	void clearConstraints();
-	std::vector<double> getAccel() const;
 	std::vector<Constraint> getConstraints() const;
 	double getEpoch() const;
 	double getExtraParam(std::string) const;
@@ -86,8 +85,6 @@ public:
 	std::vector<double> getState() const;
 
 	void removeConstraint(int);
-	void setAccel(const double*);
-	void setAccel(std::vector<double>);
 	void setConstraints(std::vector<Constraint>);
 	void setEpoch(double);
 	void setExtraParam(std::string, double);
@@ -95,16 +92,18 @@ public:
 	void setExtraParams(std::map<std::string, double>);
 	void setExtraParamVec(std::map<std::string, std::vector<double> >);
 	void setID(int) override;
-	void setState(const double*);
+	void setState(const double*, unsigned int);
 	void setState(std::vector<double>);
-	//@}
+	//\}
 
 	void print() const;
 protected:
 	virtual void copyMe(const Node&);
 
-	double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
-	double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
+	// double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
+	// double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
+
+	std::vector<double> state = {};		//!< Stores states, e.g., position, velocity, mass, thrust
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
 	/** Stores extra parameters (scalars) like mass, costates, etc. */

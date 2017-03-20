@@ -1,15 +1,15 @@
 /**
- *  @file DynamicsModel_bc4bp.cpp
- *  @brief Derivative of DynamicsModel, specific to BCR4BPR
+ *  \file DynamicsModel_bc4bp.cpp
+ *  \brief Derivative of DynamicsModel, specific to BCR4BPR
  *  
- *  @author Andrew Cox
- *  @version May 25, 2016
- *  @copyright GNU GPL v3.0
+ *  \author Andrew Cox
+ *  \version May 25, 2016
+ *  \copyright GNU GPL v3.0
  */
  
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of Astrohelion
  *
@@ -30,8 +30,10 @@
 #include "DynamicsModel_bc4bp.hpp"
 
 #include "Calculations.hpp"
+#include "ControlLaw.hpp"
 #include "CorrectionEngine.hpp"
 #include "EigenDefs.hpp"
+#include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_bc4bp.hpp"
 #include "SysData_bc4bp.hpp"
@@ -45,11 +47,10 @@
 
 namespace astrohelion{
 /**
- *  @brief Construct a BCR4BP Dynamic DynamicsModel
+ *  \brief Construct a BCR4BP Dynamic DynamicsModel
  */
 DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     coreStates = 6;
-    stmStates = 36;
     extraStates = 6;
     allowedCons.push_back(Constraint_tp::SP);
     allowedCons.push_back(Constraint_tp::SP_RANGE);
@@ -58,14 +59,14 @@ DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MOD
 }//==============================================
 
 /**
- *  @brief Copy constructor
- *  @param m a model reference
+ *  \brief Copy constructor
+ *  \param m a model reference
  */
 DynamicsModel_bc4bp::DynamicsModel_bc4bp(const DynamicsModel_bc4bp &m) : DynamicsModel(m) {}
 
 /**
- *  @brief Assignment operator
- *  @param m a model reference
+ *  \brief Assignment operator
+ *  \param m a model reference
  */
 DynamicsModel_bc4bp& DynamicsModel_bc4bp::operator =(const DynamicsModel_bc4bp &m){
 	DynamicsModel::operator =(m);
@@ -73,7 +74,7 @@ DynamicsModel_bc4bp& DynamicsModel_bc4bp::operator =(const DynamicsModel_bc4bp &
 }//==============================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
 DynamicsModel::eom_fcn DynamicsModel_bc4bp::getSimpleEOM_fcn() const{
@@ -81,7 +82,7 @@ DynamicsModel::eom_fcn DynamicsModel_bc4bp::getSimpleEOM_fcn() const{
 }//==============================================
 
 /**
- *  @brief Retrieve a pointer to the EOM function that computes derivatives
+ *  \brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
 DynamicsModel::eom_fcn DynamicsModel_bc4bp::getFullEOM_fcn() const{
@@ -89,11 +90,11 @@ DynamicsModel::eom_fcn DynamicsModel_bc4bp::getFullEOM_fcn() const{
 }//==============================================
 
 /**
- *  @brief Compute the positions of all primaries
+ *  \brief Compute the positions of all primaries
  *
- *  @param t the epoch at which the computations occur
- *  @param sysData object describing the specific system
- *  @return an n x 3 vector (row-major order) containing the positions of
+ *  \param t the epoch at which the computations occur
+ *  \param sysData object describing the specific system
+ *  \return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_bc4bp::getPrimPos(double t, const SysData *sysData) const{
@@ -105,11 +106,11 @@ std::vector<double> DynamicsModel_bc4bp::getPrimPos(double t, const SysData *sys
 }//==============================================
 
 /**
- *  @brief Compute the velocities of all primaries
+ *  \brief Compute the velocities of all primaries
  *
- *  @param t the epoch at which the computations occur
- *  @param sysData object describing the specific system
- *  @return an n x 3 vector (row-major order) containing the velocities of
+ *  \param t the epoch at which the computations occur
+ *  \param sysData object describing the specific system
+ *  \return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_bc4bp::getPrimVel(double t, const SysData *sysData) const{
@@ -120,58 +121,67 @@ std::vector<double> DynamicsModel_bc4bp::getPrimVel(double t, const SysData *sys
     return std::vector<double>(primVel, primVel+9);
 }//==============================================
 
+/**
+ *  \brief Retrieve the state derivative
+ *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  the specified time and state
+ * 
+ *  \param t time parameter
+ *  \param state state vector
+ *  \param params structure containing parameters relevant to the integration
+ *  \return the time-derivative of the state vector
+ */
+std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
+    if(state.size() != coreStates)
+        throw Exception("DynamicsModel_bc4bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
+
+    // Compute the acceleration
+    std::vector<double> dsdt(coreStates,0);
+    simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
+    
+    return dsdt;
+}//==================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Takes an input state and time and saves the data to the trajectory
- *  @param y an array containing the core state and any extra states integrated
+ *  \brief Takes an input state and time and saves the data to the trajectory
+ *  \param y an array containing the core state and any extra states integrated
  *  by the EOM function, including STM elements.
- *  @param t the time at the current integration state
- *  @param traj a pointer to the trajectory we should store the data in
+ *  \param t the time at the current integration state
+ *  \param traj a pointer to the trajectory we should store the data in
+ *  \param params structure containing parameters relevant to the integration
  */
-void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj* traj) const{
+void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
 
-	// Cast the system data to the appropriate derivative type
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(traj->getSysData());
-
-    // Compute acceleration (elements 3-5)
-    double dsdt[6] = {0};
-    EOM_ParamStruct paramStruct(bcSys);
-    simpleEOMs(t, y, dsdt, &paramStruct);
-    
-    // node(state, accel, epoch) - y(0:5) holds the state, y(6:41) holds the STM
-    int id = traj->addNode(Node(y, dsdt+3, t));
-
-    if(id > 0){
-        double tof = t - traj->getNode(id-1).getEpoch();
-        traj->addSeg(Segment(id-1, id, tof, y+6));
-    }
+    DynamicsModel::sim_saveIntegratedData(y, t, traj, params);
     
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);
     bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
 }//=====================================================
 
 /**
- *  @brief Use a correction algorithm to accurately locate an event crossing
+ *  \brief Use a correction algorithm to accurately locate an event crossing
  *
  *  The simulation engine calls this function if and when it determines that an event 
  *  has been crossed. To accurately locate the event, we employ differential corrections
  *  and find the exact event occurence in space and time.
  *
- *  @param event the event we're looking for
- *  @param traj a pointer to the trajectory the event should occur on
- *  @param ic the core state vector for this system
- *  @param t0 non-dimensional time at the beginning of the search arc
- *  @param tof the time-of-flight for the arc to search over
- *  @param verbose whether or not we should be verbose with output messages
+ *  \param event the event we're looking for
+ *  \param traj a pointer to the trajectory the event should occur on
+ *  \param ic the core state vector for this system
+ *  \param t0 non-dimensional time at the beginning of the search arc
+ *  \param tof the time-of-flight for the arc to search over
+ *  \param params structure containing parameters relevant to the integration
+ *  \param verbose whether or not we should be verbose with output messages
  *
- *  @return wether or not the event has been located. If it has, a new point
+ *  \return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
 bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
-    const double *ic, double t0, double tof, Verbosity_tp verbose) const{
+    const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
     // **** Make sure you fix the epoch of the first node as well as the states
     double IC[7] = {0};
@@ -179,11 +189,11 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
     IC[6] = t0;
 
     // Recast system data pointer
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(traj->getSysData());
+    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(params->sysData);
 
     // Create a nodeset for this particular type of system
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
-    Nodeset_bc4bp eventNodeset(bcSys, IC, t0, tof, 2, Nodeset::TIME);
+    Nodeset_bc4bp eventNodeset(bcSys, IC, t0, tof, 2, Nodeset::TIME);   //bc4bp nodeset does not use control laws
 
     // Constraint to keep first node unchanged
     Constraint fixFirstCon(Constraint_tp::STATE, 0, IC, 7);
@@ -216,9 +226,9 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
         return false;
     }
 
-    std::vector<double> state = correctedNodes.getNodeByIx(-1).getState();
-    std::vector<double> stm = correctedNodes.getNodeByIx(-1).getExtraParamVec("stm");
-    std::vector<double> dqdT = correctedNodes.getNodeByIx(-1).getExtraParamVec("dqdT");
+    std::vector<double> state = correctedNodes.getStateByIx(-1);
+    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, PARAMKEY_STM);
+    std::vector<double> dqdT = correctedNodes.getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
     
     state.insert(state.end(), stm.begin(), stm.end());
     state.insert(state.end(), dqdT.begin(), dqdT.end());
@@ -227,7 +237,7 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
     double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    sim_saveIntegratedData(&(state[0]), eventTime, traj);
+    sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
     
     return true;
 }//====================================================
@@ -237,15 +247,15 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief Initialize the corrector's design vector with position and velocity states,
+ *  \brief Initialize the corrector's design vector with position and velocity states,
  *  and times-of-flight.
  *
  *  Derived models may replace this function or call it and then append more design 
  *  variables.
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param set a pointer to the nodeset being corrected
- *  @throws Exception if equal arc times is turned ON; this has not been implemented for this system
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param set a pointer to the nodeset being corrected
+ *  \throws Exception if equal arc times is turned ON; this has not been implemented for this system
  */
 void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodeset *set) const{
     // Call base class to do most of the work
@@ -256,7 +266,7 @@ void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodes
         // epochs come after ALL the TOFs have been added
         const Nodeset_bc4bp *bcSet = static_cast<const Nodeset_bc4bp *>(set);
         for(int n = 0; n < bcSet->getNumNodes(); n++){
-            MSVarMap_Key key(MSVarType::EPOCH, set->getNodeByIx(n).getID());
+            MSVarMap_Key key(MSVar_tp::EPOCH, set->getNodeByIx(n).getID());
             it->freeVarMap[key] = MSVarMap_Obj(key, it->X.size());
             it->X.push_back(bcSet->getEpochByIx(n));
         }
@@ -264,8 +274,8 @@ void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodes
 }//====================================================
 
 /**
- *  @brief Perform model-specific initializations on the MultShootData object
- *  @param it pointer to the object to be initialized
+ *  \brief Perform model-specific initializations on the MultShootData object
+ *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_bc4bp::multShoot_initIterData(MultShootData *it) const{
     Traj_bc4bp traj(static_cast<const SysData_bc4bp *>(it->sysData));
@@ -273,53 +283,13 @@ void DynamicsModel_bc4bp::multShoot_initIterData(MultShootData *it) const{
 }//====================================================
 
 /**
- *  @brief Scale the design variable vector so that all elements have approximately the 
- *  same magnitude.
- *  @details This can improve the corrections process, although it is not guaranteed to,
- *  and CAN impede the corrections process as well. This function calls the default behavior in
- *  DynamicsModel::multShoot_scaleDesignVec and then applies additional scaling on epoch variables.
- * 
- *  @param it iteraiton data object for the current corrections process
- *  @param set the nodeset that corrections are being applied to
- */
-void DynamicsModel_bc4bp::multShoot_scaleDesignVec(MultShootData *it, const Nodeset *set) const{
-    DynamicsModel::multShoot_scaleDesignVec(it, set);   // Perform default behavior
-    const Nodeset_bc4bp *bcSet = static_cast<const Nodeset_bc4bp *>(set);
-
-    // Compute the largest magnitude
-    Eigen::VectorXd allEpochs(it->numNodes);
-    for(int n = 0; n < it->numNodes; n++){
-        if(it->bVarTime){
-            MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getNodeByIx(n).getID());
-            allEpochs(n) = it->X[epochVar.row0];
-        }else{
-            allEpochs(n) = bcSet->getEpochByIx(n);
-        }
-    }
-    double maxEpoch = allEpochs.cwiseAbs().maxCoeff();
-
-    // Scale each variable type by its maximum so that all values are between -1 and +1
-    it->freeVarScale[3] = maxEpoch == 0 ? 1 : 1/maxEpoch;
-
-    // printf("  Epo = %.6f\n", it->freeVarScale[3]);
-
-    // Scale all Epochs
-    if(it->bVarTime){
-        for(int n = 0; n < it->numNodes; n++){
-            MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getNodeByIx(n).getID());
-            it->X[epochVar.row0] *= it->freeVarScale[3];
-        }
-    }
-}//===================================================
-
-/**
- *  @brief Create continuity constraints for the correction algorithm; this function
+ *  \brief Create continuity constraints for the correction algorithm; this function
  *  creates position and velocity constraints.
  *
  *  This function overrides the base model's to add time continuity
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param set a pointer to the nodeset being corrected
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param set a pointer to the nodeset being corrected
  */ 
 void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Nodeset *set) const{
     DynamicsModel::multShoot_createContCons(it, set);
@@ -336,15 +306,15 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Node
 }//============================================================
 
 /**
- *  @brief Retrieve the initial conditions for a segment that the correction
+ *  \brief Retrieve the initial conditions for a segment that the correction
  *  engine will integrate.
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param set a pointer to the nodeset being corrected
- *  @param s the ID of the segment being propagated
- *  @param ic a pointer to a 6-element initial state array
- *  @param t0 a pointer to a double representing the initial time (epoch)
- *  @param tof a pointer to a double the time-of-flight on the segment.
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param set a pointer to the nodeset being corrected
+ *  \param s the ID of the segment being propagated
+ *  \param ic a pointer to a 6-element initial state array
+ *  \param t0 a pointer to a double representing the initial time (epoch)
+ *  \param tof a pointer to a double the time-of-flight on the segment.
  */
 void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nodeset *set, int s,
     double *ic, double *t0, double *tof) const{
@@ -355,18 +325,16 @@ void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nod
     const Nodeset_bc4bp *bcSet = static_cast<const Nodeset_bc4bp *>(set);
 
     if(it->bVarTime){
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSeg(s).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSeg(s).getOrigin());
         *t0 = it->X[epochVar.row0];
-        // *t0 = it->bEqualArcTime ? it->X[6*it->numNodes+1+n] : it->X[7*it->numNodes-1+n];
-        *t0 /= it->freeVarScale[3];
     }else{
         *t0 = bcSet->getEpoch(s);
     }
 }//============================================================
 
 /**
- *  @brief Compute the value of a slack variable for an inequality constraint.
- *  @details Computing the value of the slack variable can avoid unneccessary 
+ *  \brief Compute the value of a slack variable for an inequality constraint.
+ *  \details Computing the value of the slack variable can avoid unneccessary 
  *  shooting iterations when the inequality constraint is already met. If the 
  *  inequality constraint is met, the value returned by this function will make
  *  the constraint function evaluate to zero.
@@ -377,10 +345,10 @@ void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nod
  *  Note: This function should be called after the state variable vector has 
  *  been initialized by the multiple shooting algorithm
  * 
- *  @param it the MultShootData object associated with the multiple shooting process
- *  @param con the inequality constraint for which the slack variable is being computed
+ *  \param it the MultShootData object associated with the multiple shooting process
+ *  \param con the inequality constraint for which the slack variable is being computed
  * 
- *  @return The value of the slack variable that minimizes the constraint function
+ *  \return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
  */
 double DynamicsModel_bc4bp::multShoot_getSlackVarVal(const MultShootData *it, Constraint con) const{
@@ -395,14 +363,14 @@ double DynamicsModel_bc4bp::multShoot_getSlackVarVal(const MultShootData *it, Co
 }//===========================================================
 
 /**
- *  @brief Compute constraint function and partial derivative values for a constraint
+ *  \brief Compute constraint function and partial derivative values for a constraint
  *  
  *  This function calls its relative in the DynamicsModel base class and appends additional
  *  instructions specific to the BCR4BPR
  *
- *  @param it a pointer to the corrector's iteration data structure
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the total constraint vector (which is, in
+ *  \param it a pointer to the corrector's iteration data structure
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
 void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constraint con, int c) const{
@@ -432,7 +400,7 @@ void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constrain
 }//=========================================================
 
 /**
- *  @brief Compute position and velocity constraint values and partial derivatives
+ *  \brief Compute position and velocity constraint values and partial derivatives
  *
  *  This function computes and stores the default position continuity constraints as well
  *  as velocity constraints for all nodes marked continuous in velocity. The delta-Vs
@@ -442,29 +410,28 @@ void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constrain
  *
  *  This function replaces the one found in the base model
  *
- *  @param it a pointer to the correctors iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the first row this constraint applies to
+ *  \param it a pointer to the correctors iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the first row this constraint applies to
  */
-void DynamicsModel_bc4bp::multShoot_targetCont_PosVel(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constraint con, int row0) const{
     // Call base function first to do most of the work
-    DynamicsModel::multShoot_targetCont_PosVel(it, con, row0);
+    DynamicsModel::multShoot_targetCont_State(it, con, row0);
 
     // Add epoch dependencies for this model
     if(it->bVarTime){
         int segIx = it->nodeset->getSegIx(con.getID());
         std::vector<double> conData = con.getData();
-        std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVec(-1, "dqdT");
+        std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
 
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
 
         // Loop through conData
         int count = 0;
         for(unsigned int s = 0; s < conData.size(); s++){
             if(!std::isnan(conData[s])){
-                double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
                 // Epoch dependencies
-                it->DF[it->totalFree*(row0+count) + epochVar.row0] = last_dqdT[s]*scale/it->freeVarScale[3];
+                it->DF[it->totalFree*(row0+count) + epochVar.row0] = last_dqdT[s];
                 count++;
             }
         }
@@ -472,101 +439,97 @@ void DynamicsModel_bc4bp::multShoot_targetCont_PosVel(MultShootData* it, Constra
 }//=========================================================
 
 /**
- *  @brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
+ *  \brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
  *
  *  This function overrides the base model function
  *
- *  @param it a pointer to the correctors iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the first row this constraint applies to
+ *  \param it a pointer to the correctors iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the first row this constraint applies to
  */
 void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint con, int row0) const{
     /* Add time-continuity constraints if applicable; we need to match
     the epoch time of node n to the sum of node n-1's epoch and TOF */
     if(it->bVarTime){
         int segIx = it->nodeset->getSegIx(con.getID());
-        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
-        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
-        MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
+        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
+        MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getID());
         
-        double T0 = it->X[T0_var.row0]/it->freeVarScale[3];
+        double T0 = it->X[T0_var.row0];
         double tof = it->bEqualArcTime ? it->X[tof_var.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var.row0];
-        tof /= it->freeVarScale[2];
-        double T1 = it->X[Tf_var.row0]/it->freeVarScale[3];
+        double T1 = it->X[Tf_var.row0];
 
         it->FX[row0] = T1 - (T0 + tof);
-        it->DF[it->totalFree*(row0) + tof_var.row0] = -1/it->freeVarScale[2];
+        it->DF[it->totalFree*(row0) + tof_var.row0] = -1;
         it->DF[it->totalFree*(row0) + tof_var.row0] /= it->bEqualArcTime ? it->nodeset->getNumSegs() : 1.0;
-        it->DF[it->totalFree*(row0) + T0_var.row0] = -1/it->freeVarScale[3];
-        it->DF[it->totalFree*(row0) + Tf_var.row0] = 1/it->freeVarScale[3];
+        it->DF[it->totalFree*(row0) + T0_var.row0] = -1;
+        it->DF[it->totalFree*(row0) + Tf_var.row0] = 1;
     }
 }//=========================================================
 
 /**
- *  @brief Computes continuity constraints for constraints with the <tt>Constraint_tp::SEG_CONT_EX</tt> type.
+ *  \brief Computes continuity constraints for constraints with the <tt>Constraint_tp::SEG_CONT_EX</tt> type.
  *
  *  This function overrides the base model function
  *
- *  @param it a pointer to the correctors iteration data structure
- *  @param con the constraint being applied
- *  @param row0 the first row this constraint applies to
+ *  \param it a pointer to the correctors iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the first row this constraint applies to
  */
 void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constraint con, int row0) const{
     if(it->bVarTime){
         int segIx1 = it->nodeset->getSegIx(con.getID());
         int segIx2 = it->nodeset->getSegIx(con.getData()[0]);
 
-        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx1).getOrigin());
-        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(segIx2).getOrigin());
-        MSVarMap_Obj tof_var1 = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx1).getOrigin());
+        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx2).getOrigin());
+        MSVarMap_Obj tof_var1 = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getID());
-        MSVarMap_Obj tof_var2 = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+        MSVarMap_Obj tof_var2 = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getData()[0]);
 
-        double T01 = it->X[T0_var1.row0]/it->freeVarScale[3];
-        double T02 = it->X[T0_var2.row0]/it->freeVarScale[3];
+        double T01 = it->X[T0_var1.row0];
+        double T02 = it->X[T0_var2.row0];
         double tof1 = it->bEqualArcTime ? it->X[tof_var1.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var1.row0];
         double tof2 = it->bEqualArcTime ? it->X[tof_var2.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var2.row0];
-        tof1 /= it->freeVarScale[2];
-        tof2 /= it->freeVarScale[2];
 
         it->FX[row0] = T01 + tof1 - (T02 + tof2);
-        it->DF[it->totalFree*row0 + T0_var1.row0] = 1/it->freeVarScale[3];
-        it->DF[it->totalFree*row0 + T0_var2.row0] = -1/it->freeVarScale[3];
-        it->DF[it->totalFree*row0 + tof_var1.row0] = 1/it->freeVarScale[2];
-        it->DF[it->totalFree*row0 + tof_var2.row0] = -1/it->freeVarScale[2];
+        it->DF[it->totalFree*row0 + T0_var1.row0] = 1;
+        it->DF[it->totalFree*row0 + T0_var2.row0] = -1;
+        it->DF[it->totalFree*row0 + tof_var1.row0] = 1;
+        it->DF[it->totalFree*row0 + tof_var2.row0] = -1;
     }
 }//=========================================================
 
 /**
- *  @brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::STATE</tt>.
+ *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::STATE</tt>.
  *
  *  This method replaces the base class function and allows the user to constrain epoch as well
  *  as the configuration space states
  *
- *  @param it a pointer to the class containing all the data relevant to the corrections process
- *  @param con the constraint being applied
- *  @param row0 the index of the row this constraint begins at
+ *  \param it a pointer to the class containing all the data relevant to the corrections process
+ *  \param con the constraint being applied
+ *  \param row0 the index of the row this constraint begins at
  */
 void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
     // Allow user to constrain 7 states
     int count = 0;  // Count # rows since some may be skipped (NAN)
     for(unsigned int s = 0; s < con.getData().size(); s++){
         if(!std::isnan(conData[s])){
             if(s < 6){
-                double scale = s < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-                it->FX[row0+count] = it->X[stateVar.row0+s] - conData[s]*scale;
+                it->FX[row0+count] = it->X[stateVar.row0+s] - conData[s];
                 it->DF[it->totalFree*(row0 + count) + stateVar.row0 + s] = 1;
                 count++;
             }else if(s == 6){
                 // Allow constraining epoch
                 if(it->bVarTime){
-                    MSVarMap_Obj epoch_var = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-                    it->FX[row0+count] = it->X[epoch_var.row0] - conData[s]*it->freeVarScale[3];
+                    MSVarMap_Obj epoch_var = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+                    it->FX[row0+count] = it->X[epoch_var.row0] - conData[s];
                     it->DF[it->totalFree*(row0 + count) + epoch_var.row0] = 1;
                     count++;
                 }
@@ -578,48 +541,46 @@ void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint co
 }//=================================================
 
 /**
- *  @brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 
+ *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 
  *  <tt>Constraint_tp::MIN_DIST</tt>, or <tt>Constraint_tp::MAX_DIST</tt>
  *
  *  This method overrides the base class function to add functionality for epoch-time dependencies
  *
- *  @param it a pointer to the class containing all the data relevant to the corrections process
- *  @param con a copy of the constraint object
- *  @param c the index of this constraint in the constraint vector object
+ *  \param it a pointer to the class containing all the data relevant to the corrections process
+ *  \param con a copy of the constraint object
+ *  \param c the index of this constraint in the constraint vector object
  */
 void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con, int c) const{
 
     std::vector<double> conData = con.getData();
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     int Pix = static_cast<int>(conData[0]);    // index of primary
     int row0 = it->conRows[c];
-    double sr = it->freeVarScale[0];    // Position scalar
-    double sT = it->freeVarScale[3];    // Epoch scalar
 
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
     double t0 = 0;
     if(it->bVarTime){
-        epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        t0 = it->X[epochVar.row0]/sT;
+        epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID())/sT;
+        t0 = it->nodeset->getEpoch(con.getID());
     }
-    // MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
+    // MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
     // double t0 = it->bVarTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
 
     // Get the primary position
     std::vector<double> primPos = getPrimPos(t0, it->sysData);
 
     // Get distance between node and primary in x, y, and z-coordinates
-    double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0]*sr;
-    double dy = it->X[stateVar.row0+1] - primPos[Pix*3+1]*sr;
-    double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2]*sr;
+    double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0];
+    double dy = it->X[stateVar.row0+1] - primPos[Pix*3+1];
+    double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2];
 
     double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
 
     // Compute difference between desired distance and true distance
-    it->FX[row0] = h - conData[1]*sr;
+    it->FX[row0] = h - conData[1];
 
     // Partials with respect to node position states
     it->DF[it->totalFree*row0 + stateVar.row0 + 0] = dx/h;
@@ -635,7 +596,7 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
         Eigen::Vector3d drdT = Eigen::Map<Eigen::Vector3d>(&(primVel[Pix*3]), 3, 1);
         
         double prod = dhdr*drdT;
-        it->DF[it->totalFree*row0 + epochVar.row0] = prod*sr/sT;
+        it->DF[it->totalFree*row0 + epochVar.row0] = prod;
     }
 
     // Extra stuff for inequality constraints
@@ -661,46 +622,44 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
 }// End of targetDist() =========================================
 
 /**
- *  @brief  Compute the value of the slack variable for inequality distance constraints
- *  @details This function computes a value for the slack variable in an
+ *  \brief  Compute the value of the slack variable for inequality distance constraints
+ *  \details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
  *  design, using this value will prevent the multiple shooting algorithm from
  *  searching all over for the propper value.
  *  
  *  Note: This method overrides the base class function to add functionality for non-zero epochs
  * 
- *  @param it the iteration data object for the multiple shooting process
- *  @param con the constraint the slack variable applies to
- *  @return the value of the slack variable that minimizes the constraint function
+ *  \param it the iteration data object for the multiple shooting process
+ *  \param con the constraint the slack variable applies to
+ *  \return the value of the slack variable that minimizes the constraint function
  *  without setting the slack variable equal to zero
  */
 double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootData* it, Constraint con) const{
     std::vector<double> conData = con.getData();
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     int Pix = static_cast<int>(conData[0]);    // index of primary
-    double sr = it->freeVarScale[0];    // Position scalar
-    double sT = it->freeVarScale[3];    // Epoch scalar
 
     // Get the node epoch either from the design vector or from the original set of nodes
     double t0 = 0;
     if(it->bVarTime){
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        t0 = it->X[epochVar.row0]/sT;
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID())/sT;
+        t0 = it->nodeset->getEpoch(con.getID());
     }
 
     // Get the primary position
     std::vector<double> primPos = getPrimPos(t0, it->sysData);
 
     // Get distance between node and primary in x, y, and z-coordinates
-    double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0]*sr;
-    double dy = it->X[stateVar.row0+1] - primPos[Pix*3+1]*sr;
-    double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2]*sr;
+    double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0];
+    double dy = it->X[stateVar.row0+1] - primPos[Pix*3+1];
+    double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2];
 
     double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
     int sign = con.getType() == Constraint_tp::MAX_DIST ? 1 : -1;
-    double diff = conData[1]*sr - h;
+    double diff = conData[1] - h;
 
     /*  If diff and sign have the same sign (+/-), then the constraint
      *  is satisfied, so compute the value of the slack variable that 
@@ -713,7 +672,7 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
 }//==========================================================
 
 /**
- *  @brief Compute partials and constraints for all nodes constrained with <tt>Constraint_tp::DELTA_V</tt> or
+ *  \brief Compute partials and constraints for all nodes constrained with <tt>Constraint_tp::DELTA_V</tt> or
  *  <tt>MIN_DELTA_V</tt>
  *
  *  Because the delta-V constraint applies to the entire trajectory, the constraint function values
@@ -722,9 +681,9 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
  *
  *  This function overrides the base targeting function to add support for epoch dependencies
  *
- *  @param it a pointer to the class containing all the data relevant to the corrections process
- *  @param con the constraint being applied
- *  @param c the index of the first row for this constraint
+ *  \param it a pointer to the class containing all the data relevant to the corrections process
+ *  \param con the constraint being applied
+ *  \param c the index of the first row for this constraint
  */
 void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint con, int c) const{
     // Call base function to take care of most of the constraint computations and partials
@@ -735,14 +694,14 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
         int row0 = it->conRows[c];
 
         // Don't allow dividing by zero, but otherwise scale by value to keep order ~1
-        double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0]*it->freeVarScale[1];
+        double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0];
 
         for(int s = 0; s < it->nodeset->getNumSegs(); s++){
             // compute magnitude of DV between segment s and its terminal point
             // This takes the form v_n,f - v_n+1,0
-            double dvx = it->deltaVs[s*3]  *it->freeVarScale[1];
-            double dvy = it->deltaVs[s*3+1]*it->freeVarScale[1];
-            double dvz = it->deltaVs[s*3+2]*it->freeVarScale[1];
+            double dvx = it->deltaVs[s*3+0];
+            double dvy = it->deltaVs[s*3+1];
+            double dvz = it->deltaVs[s*3+2];
             double dvMag = sqrt(dvx*dvx + dvy*dvy + dvz*dvz);
 
             // Don't bother computing partials if this dv is zero; all partials will equal zero
@@ -753,13 +712,11 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
                 Eigen::RowVectorXd dFdq_n2 = Eigen::Map<Eigen::RowVectorXd>(dFdq_n2_data, 1, 6);
 
                 // Compute partial w.r.t. epoch time n
-                std::vector<double> last_dqdT = it->propSegs.at(s).getExtraParamVec(-1, "dqdT");
+                std::vector<double> last_dqdT = it->propSegs.at(s).getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
                 Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
-                dqdT.segment(0,3) *= it->freeVarScale[0]/it->freeVarScale[3];
-                dqdT.segment(3,3) *= it->freeVarScale[1]/it->freeVarScale[3];
 
                 double dFdT_n = dFdq_n2*dqdT;
-                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, it->nodeset->getSegByIx(s).getOrigin());
+                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(s).getOrigin());
                 it->DF[it->totalFree*row0 + epochVar.row0] = -dFdT_n/dvMax;
             }
         }
@@ -769,21 +726,17 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
 void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     int Pix = static_cast<int>(conData[0]);    // index of primary
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
-
-    double sr = it->freeVarScale[0];
-    double sv = it->freeVarScale[1];
-    double sT = it->freeVarScale[3];
 
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
     double t0 = 0;
     if(it->bVarTime){
-        epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        t0 = it->X[epochVar.row0]/sT;
+        epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID())/sT;
+        t0 = it->nodeset->getEpoch(con.getID());
     }
 
     const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(it->sysData);
@@ -793,58 +746,56 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     getPrimaryVel(t0, bcSys, primVel);
     getPrimaryAccel(t0, bcSys, primAccel);
 
-    double dx = it->X[stateVar.row0+0]/sr - primPos[3*Pix+0];
-    double dy = it->X[stateVar.row0+1]/sr - primPos[3*Pix+1];
-    double dz = it->X[stateVar.row0+2]/sr - primPos[3*Pix+2];
-    double dvx = it->X[stateVar.row0+3]/sv - primVel[3*Pix+0];
-    double dvy = it->X[stateVar.row0+4]/sv - primVel[3*Pix+1];
-    double dvz = it->X[stateVar.row0+5]/sv - primVel[3*Pix+2];
+    double dx = it->X[stateVar.row0+0] - primPos[3*Pix+0];
+    double dy = it->X[stateVar.row0+1] - primPos[3*Pix+1];
+    double dz = it->X[stateVar.row0+2] - primPos[3*Pix+2];
+    double dvx = it->X[stateVar.row0+3] - primVel[3*Pix+0];
+    double dvy = it->X[stateVar.row0+4] - primVel[3*Pix+1];
+    double dvz = it->X[stateVar.row0+5] - primVel[3*Pix+2];
 
     it->FX[row0] = dx*dvx + dy*dvy + dz*dvz;
 
-    it->DF[it->totalFree*row0 + stateVar.row0+0] = dvx/sr;
-    it->DF[it->totalFree*row0 + stateVar.row0+1] = dvy/sr;
-    it->DF[it->totalFree*row0 + stateVar.row0+2] = dvz/sr;
-    it->DF[it->totalFree*row0 + stateVar.row0+3] = dx/sv;
-    it->DF[it->totalFree*row0 + stateVar.row0+4] = dy/sv;
-    it->DF[it->totalFree*row0 + stateVar.row0+5] = dz/sv;
+    it->DF[it->totalFree*row0 + stateVar.row0+0] = dvx;
+    it->DF[it->totalFree*row0 + stateVar.row0+1] = dvy;
+    it->DF[it->totalFree*row0 + stateVar.row0+2] = dvz;
+    it->DF[it->totalFree*row0 + stateVar.row0+3] = dx;
+    it->DF[it->totalFree*row0 + stateVar.row0+4] = dy;
+    it->DF[it->totalFree*row0 + stateVar.row0+5] = dz;
 
     if(it->bVarTime){
-        it->DF[it->totalFree*row0 + epochVar.row0] = -1*(dvx*primVel[3*Pix+0] + dvy*primVel[3*Pix+1] + dvz*primVel[3*Pix+2])/sT;
-        it->DF[it->totalFree*row0 + epochVar.row0] -= (dx*primAccel[3*Pix+0] + dy*primAccel[3*Pix+1] + dz*primAccel[3*Pix+2])/sT;
+        it->DF[it->totalFree*row0 + epochVar.row0] = -1*(dvx*primVel[3*Pix+0] + dvy*primVel[3*Pix+1] + dvz*primVel[3*Pix+2]);
+        it->DF[it->totalFree*row0 + epochVar.row0] -= (dx*primAccel[3*Pix+0] + dy*primAccel[3*Pix+1] + dz*primAccel[3*Pix+2]);
     }
 }//===================================================
 
 /**
- *  @brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>
+ *  \brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>
  *
  *  This function computes three constraint values and three rows of partials for the Jacobian.
  *  Each row/function corresponds to one position state. The FX and DF matrices are updated
  *  in place by editing their values stored in <tt>it</tt>
  *
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
- *  @param row0 the index of the first row for this constraint
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
+ *  \param row0 the index of the first row for this constraint
  */
 void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, int row0) const{
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    double sT = it->freeVarScale[3];
     MSVarMap_Obj epochVar;
     double t0 = 0;
     if(it->bVarTime){
-        epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        t0 = it->X[epochVar.row0]/sT;
+        epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID())/sT;
+        t0 = it->nodeset->getEpoch(con.getID());
     }
 
     const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
 
     std::vector<double> primPosData = getPrimPos(t0, it->sysData);
-    double sr = it->freeVarScale[0];
 
     // Get primary positions at the specified epoch time
     Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
@@ -853,9 +804,9 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+stateVar.row0, 3, 1);   // Position vector
 
     // Create relative position vectors between s/c and primaries
-    Eigen::Vector3d r_p1 = r/sr - primPos.row(0).transpose();
-    Eigen::Vector3d r_p2 = r/sr - primPos.row(1).transpose();
-    Eigen::Vector3d r_p3 = r/sr - primPos.row(2).transpose();
+    Eigen::Vector3d r_p1 = r - primPos.row(0).transpose();
+    Eigen::Vector3d r_p2 = r - primPos.row(1).transpose();
+    Eigen::Vector3d r_p3 = r - primPos.row(2).transpose();
 
     double d1 = r_p1.norm();
     double d2 = r_p2.norm();
@@ -903,7 +854,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
             3*pow(r_p3(2),2)/pow(d3,5)); //dzdz
 
     Matrix3Rd dFdq = Eigen::Map<Matrix3Rd>(dFdq_data, 3, 3);
-    dFdq /= sr;
 
     // Copy data into the correct vectors/matrices
     double* conEvalPtr = conEval.data();
@@ -952,13 +902,12 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
         MatrixXRd dFdr3 = Eigen::Map<MatrixXRd>(dfdr3_data, 6, 3);
 
         // scale matrices by constants
-        dFdr2 *= -1*(mu - nu)/sr;
-        dFdr3 *= -1*nu/sr;
+        dFdr2 *= -1*(mu - nu);
+        dFdr3 *= -1*nu;
 
         // Compute partials of constraint function w.r.t. epoch time
         Eigen::VectorXd dFdT;
         dFdT.noalias() = dFdr2*(primVel.row(1).transpose()) + dFdr3*(primVel.row(2).transpose());
-        dFdT *= sr/(it->freeVarScale[3]);
 
         DF[it->totalFree*row0 + epochVar.row0] = dFdT(3);
         DF[it->totalFree*(row0+1) + epochVar.row0] = dFdT(4);
@@ -967,15 +916,15 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
 }// End of SP Targeting ==============================
 
 /**
- *  @brief Compute partials and constraint values for nodes constrained with <tt>SP_RANGE</tt>
- *  @details This function computes one constraint value and one row of partials for the Jacobian
+ *  \brief Compute partials and constraint values for nodes constrained with <tt>SP_RANGE</tt>
+ *  \details This function computes one constraint value and one row of partials for the Jacobian
  *  because the total acceleration magnitude is targeted rather than individual acceleration 
  *  vector components. The FX and DF matrices are update in place by editing their values 
  *  stored in <tt>it</tt>
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the constraint vector
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the constraint vector
  */
 void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint con, int c) const{
 
@@ -1116,19 +1065,18 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
     // // printf("Node %d %s Con: Slack Var = %.4e\n", n, con.getTypeStr(), it->X[slackCol]);
 
     int row0 = it->conRows[c];
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    double sT = it->freeVarScale[3];
     MSVarMap_Obj epochVar;
     double epoch = 0;
     if(it->bVarTime){
-        epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        epoch = it->X[epochVar.row0]/sT;
+        epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        epoch = it->X[epochVar.row0];
     }else{
-        epoch = it->nodeset->getEpoch(con.getID())/sT;
+        epoch = it->nodeset->getEpoch(con.getID());
     }
     const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
 
@@ -1259,29 +1207,28 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
 }// End of SP Targeting (Magnitude) ==============================
 
 /**
- *  @brief Compute an initial value for the slack variable for an SP_RANGE inequality constraint 
- *  @details If the constraint is satisified, the slack variable must be set such that the 
+ *  \brief Compute an initial value for the slack variable for an SP_RANGE inequality constraint 
+ *  \details If the constraint is satisified, the slack variable must be set such that the 
  *  constraint function evaluates to zero; that value is computed here. If the constraint is not
  *  satisfied, a small value is returned.
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
  * 
- *  @return the initial value for the slack variable associated with an SP_RANGE constraint
+ *  \return the initial value for the slack variable associated with an SP_RANGE constraint
  */
 double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootData *it, Constraint con) const{
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     // int nodeIx = it->nodeset->getNodeIx(con.getID());
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
-    double sT = it->freeVarScale[3];
     double epoch = 0;
     if(it->bVarTime){
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        epoch = it->X[epochVar.row0]/sT;
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        epoch = it->X[epochVar.row0];
     }else{
-        epoch = it->nodeset->getEpoch(con.getID())/sT;
+        epoch = it->nodeset->getEpoch(con.getID());
     }
     const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
 
@@ -1324,29 +1271,27 @@ double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootDa
 }//======================================================
 
 /**
- *  @brief Compute an initial value for the slack variable for an SP_DIST inequality constraint 
- *  @details If the constraint is satisified, the slack variable must be set such that the 
+ *  \brief Compute an initial value for the slack variable for an SP_DIST inequality constraint 
+ *  \details If the constraint is satisified, the slack variable must be set such that the 
  *  constraint function evaluates to zero; that value is computed here. If the constraint is not
  *  satisfied, a small value is returned.
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
  * 
- *  @return the initial value for the slack variable associated with an SP_DIST constraint
+ *  \return the initial value for the slack variable associated with an SP_DIST constraint
  */
 double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultShootData *it, Constraint con) const{
-    double sT = it->freeVarScale[3];
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     double T = 0;
     if(it->bVarTime){
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        T = it->X[epochVar.row0]/sT;
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        T = it->X[epochVar.row0];
     }else{
-        T = it->nodeset->getEpoch(con.getID())/sT;
+        T = it->nodeset->getEpoch(con.getID());
     }
 
     std::vector<double> coeff = con.getData();
-    double sr = it->freeVarScale[0];
 
     // Compute SP position from polynomial approximation
     Eigen::Vector3d spPos;
@@ -1359,40 +1304,38 @@ double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultSh
     std::copy(&(it->X[0])+stateVar.row0, &(it->X[0])+stateVar.row0+3, rData);
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(rData, 3, 1);   // Position vector
 
-    Eigen::Vector3d dist = r - spPos*sr;
-    // double diff = coeff[0]*sr - dist.norm();
-    double diff = coeff[0]*coeff[0]*sr*sr - dist.squaredNorm();
+    Eigen::Vector3d dist = r - spPos;
+    // double diff = coeff[0] - dist.norm();
+    double diff = coeff[0]*coeff[0] - dist.squaredNorm();
     
     return diff > 0 ? sqrt(diff) : 1e-4;
 }//===================================================
 
 /**
- *  @brief Compute partials and constraint values for node constrained with <tt>SP_DIST</tt>
+ *  \brief Compute partials and constraint values for node constrained with <tt>SP_DIST</tt>
  *  and <tt>SP_MAX_DIST</tt>. 
- *  @details One constraint value and one row of partials are computed. This constraint uses
+ *  \details One constraint value and one row of partials are computed. This constraint uses
  *  2nd-order polynomials to approximate the saddle point's location as a function of epoch 
  *  and then targets a node to be at or within a set radius of the saddle point.
  * 
- *  @param it the MultShootData object holding the current data for the corrections process
- *  @param con the constraint being applied
- *  @param c the index of the constraint within the storage vector
+ *  \param it the MultShootData object holding the current data for the corrections process
+ *  \param con the constraint being applied
+ *  \param c the index of the constraint within the storage vector
  */
 void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint con, int c) const{
     int row0 = it->conRows[c];
-    double sT = it->freeVarScale[3];
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVarType::STATE, con.getID());
+    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     MSVarMap_Obj epochVar;
     double T = 0;
     if(it->bVarTime){
-        epochVar = it->getVarMap_obj(MSVarType::EPOCH, con.getID());
-        T = it->X[epochVar.row0]/sT;
+        epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        T = it->X[epochVar.row0];
     }else{
-        T = it->nodeset->getEpoch(con.getID())/sT;
+        T = it->nodeset->getEpoch(con.getID());
     }
 
     // const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
     std::vector<double> coeff = con.getData();
-    double sr = it->freeVarScale[0];
 
     // Compute SP position from polynomial approximation
     Eigen::Vector3d spPos;
@@ -1405,9 +1348,9 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
     double *FX = &(it->FX[0]);
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+stateVar.row0, 3, 1);   // Position vector
 
-    Eigen::Vector3d dist = r - spPos*sr;
+    Eigen::Vector3d dist = r - spPos;
 
-    FX[row0] = dist.squaredNorm() - coeff[0]*coeff[0]*sr*sr;    // This one is much more robust, so choose this one
+    FX[row0] = dist.squaredNorm() - coeff[0]*coeff[0];    // This one is much more robust, so choose this one
     // double d = dist.norm();          
     // FX[row0] = d - coeff[0]*sr;    // This one converges much more quickly but is much less robust
 
@@ -1429,7 +1372,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
             2*dist(1)*(2*coeff[4]*T + coeff[5]) - 2*dist(2)*(2*coeff[7]*T + coeff[8]);
         // DF[it->totalFree*row0 + epochVar.row0] = -1/d*dist(0)*(2*coeff[1]*T + coeff[2]) -
         //     1/d*dist(1)*(2*coeff[4]*T + coeff[5]) - 1/d*dist(2)*(2*coeff[7]*T + coeff[8]);
-        DF[it->totalFree*row0 + epochVar.row0] *= sr/it->freeVarScale[3]; // scale derivative
     }
 
     if(con.getType() == Constraint_tp::SP_MAX_DIST){
@@ -1456,7 +1398,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
 }//===================================================
 
 /**
- *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
  *  nodeset
  *
  *  If <tt>findEvent</tt> is set to true, the
@@ -1465,13 +1407,13 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
  *  and dqdT values for the final node; this information will be appended to the extraParameter
  *  vector in the final node.
  *
- *  @param it an iteration data object containing all info from the corrections process
- *  @param nodes_in a pointer to the original, uncorrected nodeset
- *  @param findEvent whether or not this correction process is locating an event
- *  @param nodes_out pointer to the nodeset object that will contain the output of the
+ *  \param it an iteration data object containing all info from the corrections process
+ *  \param nodes_in a pointer to the original, uncorrected nodeset
+ *  \param findEvent whether or not this correction process is locating an event
+ *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  *  
- *  @return a pointer to a nodeset containing the corrected nodes
+ *  \return a pointer to a nodeset containing the corrected nodes
  */
 void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodes_out) const{
 
@@ -1479,25 +1421,20 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVarType::STATE, it->nodeset->getNodeByIx(n).getID());
-        double state[6];
-        std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
-
-        // Reverse scaling
-        for(int i = 0; i < 6; i++){
-            state[i] /= i < 3 ? it->freeVarScale[0] : it->freeVarScale[1];
-        }
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeByIx(n).getID());
+        // double state[6];
+        std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
 
         Node node(state, 0);
         node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
 
-        double sT = it->freeVarScale[3];
         double T = 0;
         if(it->bVarTime){
-            MSVarMap_Obj epochVar = it->getVarMap_obj(MSVarType::EPOCH, state_var.key.id);
-            T = it->X[epochVar.row0]/sT;
+            MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, state_var.key.id);
+            T = it->X[epochVar.row0];
         }else{
-            T = it->nodeset->getEpoch(state_var.key.id)/sT;
+            T = it->nodeset->getEpoch(state_var.key.id);
         }
         node.setEpoch(T);
 
@@ -1511,12 +1448,12 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
                 // Append the 36 STM elements to the node vector
                 Traj lastSeg = it->propSegs.back();
                 MatrixXRd lastSTM = lastSeg.getSTMByIx(-1);
-                std::vector<double> stm_vec(lastSTM.data(), lastSTM.data()+36);
-                node.setExtraParamVec("stm", stm_vec);
+                std::vector<double> stm_vec(lastSTM.data(), lastSTM.data() + lastSTM.rows()*lastSTM.cols());
+                node.setExtraParamVec(PARAMKEY_STM, stm_vec);
 
                 // Also append the last dqdT vector
-                std::vector<double> dqdT = lastSeg.getExtraParamVec(-1,"dqdT");
-                node.setExtraParamVec("dqdT", dqdT);
+                std::vector<double> dqdT = lastSeg.getExtraParamVecByIx(-1,PARAMKEY_STATE_EPOCH_DERIV);
+                node.setExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, dqdT);
             }
         }
 
@@ -1530,12 +1467,10 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
         Segment seg = it->nodeset->getSegByIx(s);
 
         if(it->bVarTime){
-            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVarType::TOF_TOTAL : MSVarType::TOF,
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
             tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
-            // Reverse scaling
-            tof /= it->freeVarScale[2];     // TOF scaling
         }else{
             tof = seg.getTOF();
         }
@@ -1548,6 +1483,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
         newSeg.setConstraints(seg.getConstraints());
         newSeg.setVelCon(seg.getVelCon());
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
+        newSeg.setCtrlLaw(seg.getCtrlLaw());
         nodeset_out->addSeg(newSeg);
     }
 
@@ -1562,12 +1498,12 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 //------------------------------------------------------------------------------------------------------
 
 /**
- *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *   \brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
- *   @param t epoch at integration step
- *   @param s the 48-d state vector
- *   @param sdot the 48-d state derivative vector
- *   @param params points to an EOM_ParamStruct object
+ *   \param t epoch at integration step
+ *   \param s the 48-d state vector
+ *   \param sdot the 48-d state derivative vector
+ *   \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
@@ -1686,12 +1622,12 @@ int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], voi
 }//============== END OF BCR4BPR EOMs ======================
 
 /**
- *   @brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
+ *   \brief Integrate the equations of motion for the BCR4BP, rotating coordinates.
  *
- *   @param t epoch at integration step
- *   @param s the 6-d state vector
- *   @param sdot the 6-d state derivative vector
- *   @param params points to an EOM_ParamStruct object
+ *   \param t epoch at integration step
+ *   \param s the 6-d state vector
+ *   \param sdot the 6-d state derivative vector
+ *   \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
@@ -1730,11 +1666,11 @@ int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], v
 }//============== END OF BCR4BPR EOMs ======================
 
 /**
- *  @brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
+ *  \brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
  *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
+ *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  \param sysData a system data object containing information about the BCR4BP primaries
+ *  \param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
  *  row-major order. The first three elements are the position of P1, etc.
  */
 void DynamicsModel_bc4bp::getPrimaryPos(double t, const SysData_bc4bp *sysData, double *primPos){
@@ -1770,11 +1706,11 @@ void DynamicsModel_bc4bp::getPrimaryPos(double t, const SysData_bc4bp *sysData, 
 }//================================================
 
 /**
- *  @brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
+ *  \brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
  *
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
+ *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  \param sysData a system data object containing information about the BCR4BP primaries
+ *  \param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
  *  row-major order. The first three elements hold the velocity of P1, etc.
  */
 void DynamicsModel_bc4bp::getPrimaryVel(double t, const SysData_bc4bp *sysData, double *primVel){
@@ -1814,11 +1750,11 @@ void DynamicsModel_bc4bp::getPrimaryVel(double t, const SysData_bc4bp *sysData, 
 }//===================================================================
 
 /**
- *  @brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
+ *  \brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
  * 
- *  @param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  @param sysData a system data object containing information about the BCR4BP primaries
- *  @param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
+ *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
+ *  \param sysData a system data object containing information about the BCR4BP primaries
+ *  \param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
  *  row-major order. The first three elements hold the acceleration of P1, etc.
  */
 void DynamicsModel_bc4bp::getPrimaryAccel(double t, const SysData_bc4bp *sysData, double *primAccel){
@@ -1857,10 +1793,10 @@ void DynamicsModel_bc4bp::getPrimaryAccel(double t, const SysData_bc4bp *sysData
 }//=====================================================================
 
 /**
- *  @brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
+ *  \brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
  *  
- *  @param et epoch time (seconds, J2000, UTC)
- *  @param sysData pointer to system data object; A new theta0 and phi0 will be stored
+ *  \param et epoch time (seconds, J2000, UTC)
+ *  \param sysData pointer to system data object; A new theta0 and phi0 will be stored
  *  in this data object
  */
 void DynamicsModel_bc4bp::orientAtEpoch(double et, SysData_bc4bp *sysData){

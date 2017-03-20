@@ -1,14 +1,14 @@
 /**
- *  @file DynamicsModel.hpp
- *	@brief 
+ *  \file DynamicsModel.hpp
+ *	\brief 
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 25, 2016
+ *	\copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -48,39 +48,43 @@ class SysData;
 class MultShootData;
 
 /**
- *  @ingroup model
- *  @brief Container for EOM parameters
- *  @details At the current time, this object stores only the system data object pointer.
+ *  \ingroup model
+ *  \brief Container for EOM parameters
+ *  \details At the current time, this object stores only the system data object pointer.
  *  Since the GSL functions demand a null pointer and the system data pointers owned by
  *  most objects are const-modified, this object serves as a non-const wrapper for 
  *  the system data pointers.
  *  
- *  @param sys A system data object
- *  @return a reference to this struct
+ *  \param sys A system data object
+ *  \return a reference to this struct
  */
 struct EOM_ParamStruct{
+
 	/**
-	 *  @brief Construct an EOM Parameter structure
+	 *  \brief Construct an EOM Parameter structure
 	 * 
-	 *  @param sys a pointer to a system data object
+	 *  \param sys a pointer to a system data object
+	 *  \param lawID an ID for the control law to use during the integration
 	 */
-	EOM_ParamStruct(const SysData *sys) : sysData(sys) {}
-	const SysData *sysData;	//!< Pointer to a system data object that will be passed into the EOMs
+	EOM_ParamStruct(const SysData *sys, unsigned int lawID) : sysData(sys), ctrlLawID(lawID) {}
+	
+	const SysData *sysData;			//!< Pointer to a system data object that will be passed into the EOMs
+	const unsigned int ctrlLawID;	//!< ID of the control law
 };
 
 /**
- *	@brief Describes the type of dynamic model; used for easy identification
+ *	\brief Describes the type of dynamic model; used for easy identification
  */
 enum class DynamicsModel_tp{
 	MODEL_NULL,			//!< Undefined type
 	MODEL_2BP,			//!< Relative 2-Body Problem
 	MODEL_CR3BP,		//!< Circular Restricted, 3-Body Problem
-	MODEL_CR3BP_LTVP,	//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
+	MODEL_CR3BP_LT,		//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
 	MODEL_BCR4BPR		//!< Bi-Circular Restricted, 4-Body Problem in a rotating reference frame
 };
 
 /**
- *	@brief A base class that defines the behavior of a dynamical model and provides
+ *	\brief A base class that defines the behavior of a dynamical model and provides
  *	functions used in simulation and correction algorithms
  *
  *	This class provides the flexibility that allows the engine objects to operate on
@@ -108,27 +112,27 @@ enum class DynamicsModel_tp{
  *	list of all constraints the model supports in a corrections environment. 
  *	Derived classes can modify these variables to their needs.
  *
- *	@author Andrew Cox
- *	@version August 3, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version August 3, 2015
+ *	\copyright GNU GPL v3.0
  */
 class DynamicsModel : public Core{
 
 public:
 	/**
-	 *	@brief A function pointer to an EOM function
-	 *	@details All EOM functions must take this form to work with GSL's 
+	 *	\brief A function pointer to an EOM function
+	 *	\details All EOM functions must take this form to work with GSL's 
 	 *	integrators.
 	 *	
-	 *	@param t time associated with the current integration step; this value is passed
+	 *	\param t time associated with the current integration step; this value is passed
 	 *	in by the integrator
-	 *	@param q full state vector; the dimension of this vector is set by SimEngine
+	 *	\param q full state vector; the dimension of this vector is set by SimEngine
 	 *	and is equal to <code>coreStates + stmStates + extraStates</code>; this vector is passed
 	 *	in by the integrator
-	 *	@param qdot full state derivative vector, same dimension as <code>q</code>. This vector
+	 *	\param qdot full state derivative vector, same dimension as <code>q</code>. This vector
 	 *	must be initialized by the function (i.e., set all values to zero or another value), or
 	 *	invalid memory access will occur within GSL's integration methods
-	 *	@param params a pointer to a set of extra parameters required for integration. All
+	 *	\param params a pointer to a set of extra parameters required for integration. All
 	 *	of the EOM functions in this software take a pointer to a SysData object
 	 *	consistent with the DynamicsModel as this parameter. The parameter set can be modified 
 	 *	between integration steps (i.e., change model parameters), but the ode functions must be reset
@@ -138,24 +142,24 @@ public:
 	typedef int (*eom_fcn)(double t, const double q[], double qdot[], void *params);
 
 	/**
-	 *  @name *structors
-	 *  @{
+	 *  \name *structors
+	 *  \{
 	 */
 	DynamicsModel(DynamicsModel_tp);
 	DynamicsModel(const DynamicsModel&);
 	virtual ~DynamicsModel();
-	//@}
+	//\}
 
 	// Operators
 	DynamicsModel& operator =(const DynamicsModel&);
 
 	/**
-	 *  @name Core Functions
-	 *  @{
+	 *  \name Core Functions
+	 *  \{
 	 */
 
 	/**
-	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
+	 *	\brief Retrieve a pointer to the EOM function that computes derivatives
 	 *	for only the core states (i.e. simple)
 	 *
 	 *	The EOM function must be a non-member function; we store them in the 
@@ -164,7 +168,7 @@ public:
 	virtual eom_fcn getSimpleEOM_fcn() const = 0;
 
 	/**
-	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
+	 *	\brief Retrieve a pointer to the EOM function that computes derivatives
 	 *	for all states (i.e. full)
 	 *
 	 *	The EOM function must be a non-member function; we store them in the 
@@ -173,49 +177,50 @@ public:
 	virtual eom_fcn getFullEOM_fcn() const = 0;
 
 	/**
-	 *	@brief Compute the positions of all primaries
+	 *	\brief Compute the positions of all primaries
 	 *
-	 *	@param t the time at which the computations occur (only important for non-autonomous systems)
-	 *	@param sysData object describing the specific system
-	 *	@return an n x 3 vector (row-major order) containing the positions of
+	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
+	 *	\param sysData object describing the specific system
+	 *	\return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
 	virtual std::vector<double> getPrimPos(double t, const SysData *sysData) const = 0;
 
 	/**
-	 *	@brief Compute the velocities of all primaries
+	 *	\brief Compute the velocities of all primaries
 	 *
-	 *	@param t the time at which the computations occur (only important for non-autonomous systems)
-	 *	@param sysData object describing the specific system
-	 *	@return an n x 3 vector (row-major order) containing the velocities of
+	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
+	 *	\param sysData object describing the specific system
+	 *	\return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
 	virtual std::vector<double> getPrimVel(double t, const SysData *sysData) const = 0;
 
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 
-	//@}
+	virtual std::vector<double> getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const = 0;
+
+	//\}
 
 	/**
-	 *  @name Multiple Shooting Support Functions
-	 *  @{
+	 *  \name Multiple Shooting Support Functions
+	 *  \{
 	 */
 
 	/**
-	 *  @brief Do any model-specific initializations for the MultShootData object
-	 *  @param it a pointer to the MultShootData object for the multiple shooting process
+	 *  \brief Do any model-specific initializations for the MultShootData object
+	 *  \param it a pointer to the MultShootData object for the multiple shooting process
 	 */
 	virtual void multShoot_initIterData(MultShootData *it) const = 0;
 
 	virtual void multShoot_initDesignVec(MultShootData*, const Nodeset*) const;
-	virtual void multShoot_scaleDesignVec(MultShootData*, const Nodeset*) const;
 	virtual void multShoot_createContCons(MultShootData*, const Nodeset*) const;
 	virtual void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const;
 	virtual void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
 	virtual double multShoot_getSlackVarVal(const MultShootData*, Constraint)const ;
 
 	/**
-	 *  @brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+	 *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
 	 *  nodeset
 	 *
 	 *  If <tt>findEvent</tt> is set to true, the
@@ -224,67 +229,69 @@ public:
 	 *  and other values for the final node; this information will be appended to the extraParameter
 	 *  vector in the final node.
 	 *
-	 *  @param it an iteration data object containing all info from the corrections process
-	 *	@param nodes_in a pointer to the original, uncorrected nodeset
-	 *	@param findEvent whether or not this correction process is locating an event
-	 *	@param nodesOut pointer to a nodeset object that will contain the results of
+	 *  \param it an iteration data object containing all info from the corrections process
+	 *	\param nodes_in a pointer to the original, uncorrected nodeset
+	 *	\param findEvent whether or not this correction process is locating an event
+	 *	\param nodesOut pointer to a nodeset object that will contain the results of
 	 *	the shooting process
-	 *  @return a pointer to a nodeset containing the corrected nodes
+	 *  \return a pointer to a nodeset containing the corrected nodes
 	 */
 	virtual void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const = 0;
-	//@}
+	//\}
 
 	/**
-	 *  @name Simulation Support Functions
-	 *  @{
+	 *  \name Simulation Support Functions
+	 *  \{
 	 */
 
+	virtual std::vector<Event> sim_makeDefaultEvents(const SysData*) const;
+	
 	/**
-	 *  @brief Use a correction algorithm to accurately locate an event crossing
+	 *  \brief Use a correction algorithm to accurately locate an event crossing
 	 *
 	 *  The simulation engine calls this function if and when it determines that an event 
 	 *  has been crossed. To accurately locate the event, we employ differential corrections
 	 *  and find the exact event occurence in space and time.
 	 *
-	 *  @param event the event we're looking for
-	 *  @param traj a pointer to the trajectory the event should occur on
-	 *  @param ic the core state vector for this system
-	 *  @param t0 non-dimensional time at the beginning of the search arc
-	 *  @param tof the time-of-flight for the arc to search over
-	 *  @param verbose whether or not we should be verbose with output messages
-	 *
-	 *  @return wether or not the event has been located. If it has, a new point
+	 *  \param event the event we're looking for
+	 *  \param traj a pointer to the trajectory the event should occur on
+	 *  \param ic the core state vector for this system
+	 *  \param t0 non-dimensional time at the beginning of the search arc
+	 *  \param tof the time-of-flight for the arc to search over
+	 *  \param params structure containing parameters that are required for EOMs
+	 *  \param verbose whether or not we should be verbose with output messages
+	 *	
+	 *  \return wether or not the event has been located. If it has, a new point
 	 *  has been appended to the trajectory's data vectors.
 	 */
 	virtual bool sim_locateEvent(Event event, Traj *traj,
-    	const double *ic, double t0, double tof, Verbosity_tp verbose) const = 0;
+    	const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const = 0;
 
 	/**
-	 *	@brief Takes an input state and time and saves the data to the trajectory
-	 *	@param y an array containing the core state and any extra states integrated
+	 *	\brief Takes an input state and time and saves the data to the trajectory
+	 *	\param y an array containing the core state and any extra states integrated
 	 *	by the EOM function, including STM elements.
-	 *	@param t the time at the current integration state
-	 *	@param traj a pointer to the trajectory we should store the data in
+	 *	\param t the time at the current integration state
+	 *	\param traj a pointer to the trajectory we should store the data in
+	 *	\param params structure containing parameters that are required for EOMs
 	 */
-	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj) const = 0;
-	//@}
+	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
+	//\}
 
 	/**
-	 *  @name Set and Get Functions
-	 *  @{
+	 *  \name Set and Get Functions
+	 *  \{
 	 */
-	int getCoreStateSize() const;
-	int getSTMStateSize() const;
-	int getExtraStateSize() const;
+	unsigned int getCoreStateSize() const;
+	unsigned int getExtraStateSize() const;
 	bool supportsCon(Constraint_tp) const;
 	bool supportsEvent(Event_tp) const;
-	//@}
+	//\}
 
 protected:
 	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
-	int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6
-	int stmStates = 36;		//!< The number of states used to store the STM; will always be 36
-	int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
+	unsigned int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreStates
+	unsigned int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 
 	/** A vector containing the all the types of constraints this model supports */
 	std::vector<Constraint_tp> allowedCons {Constraint_tp::NONE, Constraint_tp::STATE,
@@ -302,8 +309,8 @@ protected:
 	void copyMe(const DynamicsModel&);
 
 	/**
-	 *  @name Multiple Shooting Support Functions
-	 *  @{
+	 *  \name Multiple Shooting Support Functions
+	 *  \{
 	 */
 	virtual void multShoot_targetApse(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetDeltaV(MultShootData*, Constraint, int) const;
@@ -314,11 +321,11 @@ protected:
 	virtual void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetMatchAll(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetMatchCust(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_PosVel(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_PosVel_Seg(MultShootData*, Constraint, int) const;
+	virtual void multShoot_targetCont_State(MultShootData*, Constraint, int) const;
+	virtual void multShoot_targetCont_State_Seg(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetState(MultShootData*, Constraint, int) const;
 	virtual void multShoot_targetTOF(MultShootData*, Constraint, int) const;
-	//@}
+	//\}
 };
 
 

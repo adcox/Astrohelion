@@ -1,15 +1,15 @@
 /**
- *	@file AsciiOutput.hpp
- *	@brief This class contains macros for fancy ASCII outputs
+ *	\file AsciiOutput.hpp
+ *	\brief This class contains macros for fancy ASCII outputs
  *
- *	@author Andrew Cox
- *	@version May 15, 2015
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version May 15, 2015
+ *	\copyright GNU GPL v3.0
  */
 
 /*
  *	Astrohelion 
- *	Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
  *	This file is part of Astrohelion
  *
@@ -37,7 +37,7 @@ namespace astrohelion{
 
 /**
  * @addtogroup util
- * @{
+ * \{
  */
 
 #define RESET   "\033[0m"					/**< Reset ASCII text to default values */
@@ -58,5 +58,5 @@ namespace astrohelion{
 #define BOLDCYAN    "\033[1m\033[36m"		/**< Make ASCII text bold and cyan */
 #define BOLDWHITE   "\033[1m\033[37m"		/**< Make ASCII text bold and white */
 
-/** @} */ // END of util group
+/** \} */ // END of util group
 }// END of Astrohelion namespace

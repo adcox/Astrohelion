@@ -1,15 +1,15 @@
 /**
- *  @file BaseArcset.cpp
- *	@brief Data object that stores information about an integrated arc
+ *  \file BaseArcset.cpp
+ *	\brief Data object that stores information about an integrated arc
  *	
- *	@author Andrew Cox
- *	@version May 25, 2016
- *	@copyright GNU GPL v3.0
+ *	\author Andrew Cox
+ *	\version Feb 24, 2017
+ *	\copyright GNU GPL v3.0
  */
  
 /*
  *  Astrohelion 
- *  Copyright 2016, Andrew Cox; Protected under the GNU GPL v3.0
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *  
  *  This file is part of the Astrohelion.
  *
@@ -45,22 +45,22 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	@brief Constructor (requires system data object)
- *	@param sys a pointer to a system data object that describes
+ *	\brief Constructor (requires system data object)
+ *	\param sys a pointer to a system data object that describes
  *	the system this trajectory is integrated in
  */
 BaseArcset::BaseArcset(const SysData *sys) : pSysData(sys){}
 
 /**
- *	@brief Copy constructor
- *	@param d an arcset reference
+ *	\brief Copy constructor
+ *	\param d an arcset reference
  */
 BaseArcset::BaseArcset(const BaseArcset &d) : pSysData(d.pSysData){
 	copyMe(d);
 }//====================================================
 
 /**
- *	@brief Destructor
+ *	\brief Destructor
  */
 BaseArcset::~BaseArcset(){}
 
@@ -69,9 +69,9 @@ BaseArcset::~BaseArcset(){}
 //-----------------------------------------------------
 
 /**
- *	@brief Set this object equal to another
- *	@param d an arcset reference
- *	@return a reference to this arcset object
+ *	\brief Set this object equal to another
+ *	\param d an arcset reference
+ *	\return a reference to this arcset object
  */
 BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 	copyMe(d);
@@ -80,8 +80,8 @@ BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 }//====================================================
 
 /**
- *  @brief Sum two arcset objects.
- *  @details This function returns <tt>result</tt> = <tt>lhs</tt> + <tt>rhs</tt>; 
+ *  \brief Sum two arcset objects.
+ *  \details This function returns <tt>result</tt> = <tt>lhs</tt> + <tt>rhs</tt>; 
  *  Both <tt>lhs</tt> and <tt>rhs</tt> are copied and sorted into chronological 
  *  order. The <tt>rhs</tt> is then appended to the end of <tt>lhs</tt> with no
  *  time-of-flight between the end of <tt>lhs</tt> and the beginning of <tt>rhs</tt>.
@@ -89,9 +89,9 @@ BaseArcset& BaseArcset::operator =(const BaseArcset &d){
  *  concatenated set. To avoid losing data, make sure the first node of <tt>rhs</tt>
  *  is equivalent to the final node (chronologically) of <tt>lhs</tt>.
  * 
- *  @param lhs pointer to an arcset object
- *  @param rhs pointer to an arcset object
- *  @param result a pointer to the an arcset object that will store the result of
+ *  \param lhs pointer to an arcset object
+ *  \param rhs pointer to an arcset object
+ *  \param result a pointer to the an arcset object that will store the result of
  *  the summing operation.
  */
 void BaseArcset::sum(const BaseArcset *lhs, const BaseArcset *rhs, BaseArcset *result){
@@ -117,13 +117,13 @@ void BaseArcset::sum(const BaseArcset *lhs, const BaseArcset *rhs, BaseArcset *r
 //-----------------------------------------------------
 
 /**
- *  @brief Add a constraint to the arcset object.
- *  @details The constraint application type determines whether the constraint
+ *  \brief Add a constraint to the arcset object.
+ *  \details The constraint application type determines whether the constraint
  *  is applied to a node, segment, or the arc as a whole.
  * 
- *  @param con the constraint
+ *  \param con the constraint
  *  @see ConstraintApp_tp
- *  @throws Exception if node or segment ID is out of bounds, or if the
+ *  \throws Exception if node or segment ID is out of bounds, or if the
  *  constraint application type is unknown
  */
 void BaseArcset::addConstraint(Constraint con){
@@ -150,11 +150,11 @@ void BaseArcset::addConstraint(Constraint con){
 }//=====================================================
 
 /**
- *  @brief Add a node to this data object
- *  @details A unique key is assigned to the node when it is added
+ *  \brief Add a node to this data object
+ *  \details A unique key is assigned to the node when it is added
  * 
- *  @param n the node to add
- *  @return the ID assigned to the node
+ *  \param n the node to add
+ *  \return the ID assigned to the node
  */
 int BaseArcset::addNode(Node n){
 	n.clearLinks();			// Cannot have any links coming in
@@ -167,17 +167,17 @@ int BaseArcset::addNode(Node n){
 }//=====================================================
 
 /**
- *  @brief Add a segment to the arcset object.
- *  @details Besides adding the segment object to the storage vector,
+ *  \brief Add a segment to the arcset object.
+ *  \details Besides adding the segment object to the storage vector,
  *  this function updates the nodes associated with the origin and terminus
  *  of the segment so they contain the proper links. Additionally, the
  *  function checks to make sure time flows in one direction only and that
  *  parallel structures are not created (i.e., two branches extend from
  *  one node in same time direction).
  * 
- *  @param s The segment to add
- *  @return the ID of the segment
- *  @throws Exception if adding the segment will result in a time direction
+ *  \param s The segment to add
+ *  \return the ID of the segment
+ *  \throws Exception if adding the segment will result in a time direction
  *  collision or a parallel structure. Exception is also thrown if the segment
  *  is linked to a non-existant node other than the placeholder 
  *  Linkable::INVALID_ID
@@ -269,19 +269,19 @@ int BaseArcset::addSeg(Segment s){
 }//===========================================
 
 /**
- *  @brief Append an arcset object (i.e., a set of nodes and segments) to this one
+ *  \brief Append an arcset object (i.e., a set of nodes and segments) to this one
  * 
- *  @param pArcsetIn a pointer to the arcset derivative object to append
- *  @param linkTo_ID the ID of the node in *this* arcset object to link to
- *  @param linkFrom_ID the ID of the node in <tt>set</tt> to link from
- *  @param tof time-of-flight between linkFrom_ID to linkTo_ID; if set to zero, 
+ *  \param pArcsetIn a pointer to the arcset derivative object to append
+ *  \param linkTo_ID the ID of the node in *this* arcset object to link to
+ *  \param linkFrom_ID the ID of the node in <tt>set</tt> to link from
+ *  \param tof time-of-flight between linkFrom_ID to linkTo_ID; if set to zero, 
  *  it is assumed that the two nodes are identical, and the original (the one in *this* object)
  *  will be retained, the other deleted, and segments rerouted accordingly.
  *  
- *  @return the ID of a new segment that links the old and new arcset objects
- *	@throws Exception if the two arcset objects have different system data objects
- *  @throws Exception if either ID is out of bounds
- *  @throws Exception if one or both of the identifies nodes does not have
+ *  \return the ID of a new segment that links the old and new arcset objects
+ *	\throws Exception if the two arcset objects have different system data objects
+ *  \throws Exception if either ID is out of bounds
+ *  \throws Exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
 int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int linkFrom_ID, double tof){
@@ -318,6 +318,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	// then the path is known (and will be deleted) so we store the STM in linkSTM
 	int coreSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	MatrixXRd linkSTM = MatrixXRd::Identity(coreSize, coreSize);
+	unsigned int linkCtrlLaw = ControlLaw::NO_CTRL;
 
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
@@ -325,6 +326,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	if(tof == 0){
 		tof = linkFrom_seg.getTOF();						// Update tof
 		linkSTM = linkFrom_seg.getSTM();					// Save STM
+		linkCtrlLaw = linkFrom_seg.getCtrlLaw();			// Save control law
 
 		// Get the next node down the line
 		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
@@ -377,19 +379,20 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	bInChronoOrder = false;
 	Segment linkSeg = Segment(origin, terminus, tof);
 	linkSeg.setSTM(linkSTM);
+	linkSeg.setCtrlLaw(linkCtrlLaw);
 	return addSeg(linkSeg);
 }//====================================================
 
 /**
- *  @brief Remove all constraints from this arcset object.
- *  @details Note that this does not affect any constraints placed on
+ *  \brief Remove all constraints from this arcset object.
+ *  \details Note that this does not affect any constraints placed on
  *  individual nodes or segments
  */
 void BaseArcset::clearArcConstraints(){ cons.clear(); }
 
 
 /**
- *  @brief Remove constraints from this arcset object as well as
+ *  \brief Remove constraints from this arcset object as well as
  *  all its node and segment children
  */
 void BaseArcset::clearAllConstraints(){
@@ -399,19 +402,19 @@ void BaseArcset::clearAllConstraints(){
 }//====================================================
 
 /**
- *  @brief Concatenate two arcset objects
- *  @details The nodes, segments and constraints are copied from one arcset to another
+ *  \brief Concatenate two arcset objects
+ *  \details The nodes, segments and constraints are copied from one arcset to another
  *  without creating or deleting any nodes or segments; i.e., the arcset object will
  *  include two independent "flows" without a segment to connect them
  * 
- *  @param pSet pointer to an arcset object
- *  @return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
+ *  \param pSet pointer to an arcset object
+ *  \return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
  *  equivalent to <tt>Linkable::INVALID_ID</tt> is stored in the associated 
  *  vector element.
  *  
- *  @throws Exception if the input arcset does not have the same system data object as this one
+ *  \throws Exception if the input arcset does not have the same system data object as this one
  */
 std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 	if(pSet->pSysData != pSysData)
@@ -457,8 +460,8 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 }//====================================================
 
 /**
- *  @brief Delete the node with the specified ID
- *  @details In addition to deleting the desired node, the arcset object is "healed"
+ *  \brief Delete the node with the specified ID
+ *  \details In addition to deleting the desired node, the arcset object is "healed"
  *  so that time continuity is maintained. In the case of a linear-time set, the two segments
  *  on either side of the deleted node are combined. If the deleted node was the origin
  *  of two segments, they are still combined, but subject to a few extra conditions. First,
@@ -467,10 +470,10 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
  *  from the deleted node terminate at other segments, an exception is thrown rather than attempting
  *  to step through mulitple segment links to identify the superposition of all the segments.
  * 
- *  @param id the ID of the node to delete; if the ID is out of range, an exception is
+ *  \param id the ID of the node to delete; if the ID is out of range, an exception is
  *  thrown. If the ID is in range but doesn't represent an actual node, no action
  *  is taken.
- *  @throws Exception when:
+ *  \throws Exception when:
  *  * The ID is out of bounds
  *  * The ID is in bounds but the associated node has been deleted (no longer exists)
  *  * Deleting the node will result in multiple segment interfaces; these must be 
@@ -526,10 +529,18 @@ void BaseArcset::deleteNode(int id){
 
 				// Get the IDs of the segments; deleting id1 will change what pOrigSeg points to, which will affect the getID() return value
 				int id1 = pTermSeg->getID(), id2 = pOrigSeg->getID();
+				
+				// Get control laws of the segments
+				unsigned int law1 = pTermSeg->getCtrlLaw(), law2 = pOrigSeg->getCtrlLaw();
 
 				// Replace the two segments with the new combined one
 				deleteSeg(id1);	// CANNOT USE pTermSeg pointer AFTER THIS LINE
 				deleteSeg(id2);	// CANNOT USE pOrigSeg pointer AFTER THIS LINE
+
+				if(law1 != law2)
+					printWarn("BaseArcset::deleteNode: Node deleted between segments with different control laws. A new segment is created using only one of those control laws!\n");
+
+				combo.setCtrlLaw(law1);
 				addSeg(combo);
 			}else{
 				// Both must originate at node and have opposite time directions
@@ -563,9 +574,17 @@ void BaseArcset::deleteNode(int id){
 				// Get the IDs of the segments; deleting id1 will change what pForwardSeg points to, which will affect the getID() return value
 				int id1 = pRevSeg->getID(), id2 = pForwardSeg->getID();
 
+				// Get control laws of the segments
+				unsigned int law1 = pRevSeg->getCtrlLaw(), law2 = pForwardSeg->getCtrlLaw();
+
 				// Replace the two segments with the new one
 				deleteSeg(id1);	// CANNOT USE pRevSeg pointer AFTER THIS LINE
 				deleteSeg(id2);	// CANNOT USE pForwardSeg pointer AFTER THIS LINE
+
+				if(law1 != law2)
+					printWarn("BaseArcset::deleteNode: Node deleted between segments with different control laws. A new segment is created using only one of those control laws!\n");
+
+				combo.setCtrlLaw(law1);
 				addSeg(combo);
 			}
 		}else if(linkedSegIxs.size() == 1){
@@ -591,15 +610,15 @@ void BaseArcset::deleteNode(int id){
 }//===========================================
 
 /**
- *  @brief Delete a segment with the specified ID.
- *  @details Additionally, any nodes linked to the specified segment are updated
+ *  \brief Delete a segment with the specified ID.
+ *  \details Additionally, any nodes linked to the specified segment are updated
  *  so that their link arrays no longer include a relationship with the soon-to-be
  *  deceased segment.
  * 
- *  @param id The ID of the segment to delete. If the ID is out of range, an exception
+ *  \param id The ID of the segment to delete. If the ID is out of range, an exception
  *  is thrown. If the ID is in range but doesn't represent an existing segment,
  *  no deletion is made
- * 	@throws Exception if <tt>id</tt> is out of bounds
+ * 	\throws Exception if <tt>id</tt> is out of bounds
  */
 void BaseArcset::deleteSeg(int id){
 	if(segIDMap.count(id) == 0)
@@ -640,55 +659,79 @@ void BaseArcset::deleteSeg(int id){
 }//===========================================
 
 /**
- *  @brief Retrieve the acceleration vector associated with a node
+ *  \brief Retrieve the state derivative vector associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
- *  @return the acceleration vector
- *  @throws Exception if <tt>id</tt> is out of bounds
- *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
+ *  \param id the ID of a node
+ *  \return the acceleration vector
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
-std::vector<double> BaseArcset::getAccel(int id) const{
+std::vector<double> BaseArcset::getStateDeriv(int id){
 	if(nodeIDMap.count(id) == 0)
-		throw Exception("BaseArcset::getAccel: Node ID out of range");
+		throw Exception("BaseArcset::getStateDeriv: Node ID out of range");
 
 	int ix = nodeIDMap.at(id);
 	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
-		return nodes[ix].getAccel();
+		try{
+			return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
+		}catch(Exception &e){
+			// Control laws are defined on segments, but state derivatives are stored on nodes...
+			// Get the control law associated with the first segment linked to the node (should definitely be one)
+			// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
+			Segment seg = segs[segIDMap[nodes[ix].getLink(0)]];
+			EOM_ParamStruct params(pSysData, seg.getCtrlLaw());
+
+			std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
+			nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
+			return a;
+		}
 	}else{
-		throw Exception("BaseArcset::getAccel: Could not locate the node with the specified ID");
+		throw Exception("BaseArcset::getStateDeriv: Could not locate the node with the specified ID");
 	}
 }//====================================================
 
 /**
- *	@brief Retrieve an acceleration on the arc
- *	@param ix the step index. If it is negative, the index will count backwards
+ *	\brief Retrieve an acceleration on the arc
+ *	\param ix the step index. If it is negative, the index will count backwards
  *	from the end of the arc (e.g. ix = -1 will return the last acceleration)
- *	@return the acceleration associated with the specified index
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\return the acceleration associated with the specified index
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> BaseArcset::getAccelByIx(int ix) const{
+std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getAccelByIx: node index out of bounds");
+		throw Exception("BaseArcset::getStateDerivByIx: node index out of bounds");
 
-	return nodes[ix].getAccel();
+	try{
+		return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
+	}catch(Exception &e){
+		// Control laws are defined on segments, but state derivatives are stored on nodes...
+		// Get the control law associated with the first segment linked to the node (should definitely be one)
+		// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
+		Segment seg = segs[segIDMap[nodes[ix].getLink(0)]];
+		EOM_ParamStruct params(pSysData, seg.getCtrlLaw());
+
+		std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
+		nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
+		return a;
+	}
 }//====================================================
 
 /**
- *  @brief Retrieve a vector containing all the constraints applied to this arcset object.
- *  @details This vector does not include constraints placed on individual nodes or segments.
- *  @return a vector containing all the constraints applied to this arcset object.
+ *  \brief Retrieve a vector containing all the constraints applied to this arcset object.
+ *  \details This vector does not include constraints placed on individual nodes or segments.
+ *  \return a vector containing all the constraints applied to this arcset object.
  */
 std::vector<Constraint> BaseArcset::getArcConstraints() const { return cons; }
 
 /**
- *  @brief Determine what order to place the nodes and segments of this object
+ *  \brief Determine what order to place the nodes and segments of this object
  *  into to achieve a chronological progression in forward time.
  * 
- *  @return a vector of ArcPiece objects that represent the chronological 
+ *  \return a vector of ArcPiece objects that represent the chronological 
  *  order of the nodes and segments
  */
 std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
@@ -703,15 +746,17 @@ std::vector<ArcPiece> BaseArcset::getChronoOrder() const{
 }//====================================================
 
 /**
- *  @brief Sort the arcset into chronological order beginning at a specified node
- *  @details [long description]
+ *  \brief Sort the arcset into chronological order beginning at a specified node
+ *  \details This function operates recursively to sort all branches of the arcset
  * 
- *  @param ID the ID of a node in the arcset
- *  @return a vector of ArcPiece objects that represent the chronological 
+ *  \param ID the ID of a node in the arcset
+ *  \param prevPieces already sorted ArcPiece objects from higher levels of the 
+ *  recursive process
+ *  \return a vector of ArcPiece objects that represent the chronological 
  *  order of the nodes and segments that make up the section of the arcset that
  *  contains the specified node
  *  
- *  @throws Exception if the ID is out of bounds
+ *  \throws Exception if the ID is out of bounds
  */
 std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevPieces) const{
 	if(nodeIDMap.count(ID) == 0){
@@ -854,37 +899,52 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
 }//====================================================
 
 /**
- *	@brief Get a vector of one coordinate for all nodes
- *	@param ix the index of the coordinate; The state is accessed
- *	by indices [0-5] : {x, y, z, vx, vy, vz} and acceleration is
- *	accessed by indices [6-8] : {ax, ay, az}
- *	@return a vector containing the specified coordinate for all
+ *	\brief Get a vector of one coordinate for all nodes
+ *	\param ix the index of the state coordinate
+ *	\return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
-std::vector<double> BaseArcset::getCoord(int ix) const{
-	if(ix < 0 || ix >= 9)
-		throw Exception("BaseArcset::getCoord: Index Out of Range");
+std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
+	if(nodes.size() > 0 && ix >= nodes[0].getState().size())
+		throw Exception("BaseArcset::getCoord: Index out of range");
 
 	std::vector<double> coord;
 	for(unsigned int n = 0; n < nodes.size(); n++){
-		if(ix < 6)
-			coord.push_back(nodes[n].getState()[ix]);
-		else
-			coord.push_back(nodes[n].getAccel()[ix-6]);
+		coord.push_back(nodes[n].getState()[ix]);
 	}
 
 	return coord;
 }//====================================================
 
 /**
- *  @brief Retrieve the epoch associated with a node
+ *  \brief Retrieve the control law ID for a segment at the specified index
+ *  \details [long description]
+ * 
+ *  \param ix Index of the segment within the storage vector. If ix < 0, it 
+ *  will count backwards from the end of the storage vector.
+ *  s
+ *  \return control law ID for the specified segment
+ *  \throws Exception if ix is out of bounds.
+ */
+unsigned int BaseArcset::getCtrlLawByIx(int ix) const{
+	if(ix < 0)
+		ix += segs.size();
+
+	if(ix < 0 || ix >= static_cast<int>(segs.size()))
+		throw Exception("BaseArcset::getCtrlLawIDByIx: Index out of range");
+
+	return segs[ix].getCtrlLaw();
+}//====================================================
+
+/**
+ *  \brief Retrieve the epoch associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
- *  @return the epoch
- *  @throws Exception if <tt>id</tt> is out of bounds
- *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
+ *  \param id the ID of a node
+ *  \return the epoch
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 double BaseArcset::getEpoch(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -899,15 +959,15 @@ double BaseArcset::getEpoch(int id) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the epoch of a specific node
+ *  \brief Retrieve the epoch of a specific node
  * 
- *  @param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the <tt>nodes</tt> storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *  @return The epoch associated with the specified node
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \return The epoch associated with the specified node
+ *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 double BaseArcset::getEpochByIx(int ix) const{
 	if(ix < 0)
@@ -920,11 +980,11 @@ double BaseArcset::getEpochByIx(int ix) const{
 }//=====================================================
 
 /**
- *  @brief Retrieve a vector of all epoch values for the nodes
- *  @details Epochs are returned in the order corresponding
+ *  \brief Retrieve a vector of all epoch values for the nodes
+ *  \details Epochs are returned in the order corresponding
  *  to the nodes vector; to ensure chronological order, it is best
  *  to sort the arcset first.
- *  @return A vector with the epochs for all the nodes
+ *  \return A vector with the epochs for all the nodes
  */
 std::vector<double> BaseArcset::getEpochs() const{
 	std::vector<double> time;
@@ -936,36 +996,17 @@ std::vector<double> BaseArcset::getEpochs() const{
 }//====================================================
 
 /**
- *	@brief Retrieve a set of extra parameters for the specified node
- *	@param n the node index within the <tt>nodes</tt> storage array; This value
+ *	\brief Retrieve a set of extra parameters for the specified node
+ *	\param n the node index within the <tt>nodes</tt> storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *	@param ix the index of the extra parameter
- *	@return a vector containing the extra parameter at the specified step and index
- *	@throws Exception if <tt>n</tt> or <tt>ix</tt> are out of bounds
+ *	\param key string that identifies the extra parameter
+ *	\return a vector containing the extra parameter at the specified step and index
+ *	\throws Exception if <tt>n</tt> is out of bounds
  */
-// std::vector<double> BaseArcset::getExtraParam(int n, int ix) const{
-// 	if(n < 0)
-// 		n += nodes.size();
-
-// 	if(n < 0 || n >= static_cast<int>(nodes.size()))
-// 		throw Exception("BaseArcset::getExtraParam: node index out of bounds");
-
-// 	if(ix < 0 || ix >= static_cast<int>(extraParamRowSize.size()))
-// 		throw Exception("BaseArcset::getExtraParam: parameter index out of bounds");
-
-// 	int startIx = 0;
-// 	for(int i = 0; i < ix; i++)
-// 		startIx += extraParamRowSize[i];
-
-// 	int size = extraParamRowSize[ix];
-// 	std::vector<double> extraParam = nodes[n].getExtraParams();
-// 	return std::vector<double>(extraParam.begin()+startIx, extraParam.begin()+startIx + size);
-// }//====================================================
-
-double BaseArcset::getExtraParam(int n, std::string key) const{
+double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 
@@ -975,7 +1016,18 @@ double BaseArcset::getExtraParam(int n, std::string key) const{
 	return nodes[n].getExtraParam(key);
 }//====================================================
 
-std::vector<double> BaseArcset::getExtraParamVec(int n, std::string key) const{
+/**
+ *  \brief Retrieve a set of extra parameters for the specified node
+ * 
+ *  \param n node index within the <tt>nodes</tt> storage array; This value
+ *	is not necessarily the same as the unique ID assigned to the node when it 
+ *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	cound backwards from the end of the array.
+ *  \param key string that identifies the extra parameter
+ * 
+ *  \return the set of extra parameters
+ */
+std::vector<double> BaseArcset::getExtraParamVecByIx(int n, std::string key) const{
 	if(n < 0)
 		n += nodes.size();
 
@@ -986,35 +1038,35 @@ std::vector<double> BaseArcset::getExtraParamVec(int n, std::string key) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the value of the ID that will be assigned to the next 
+ *  \brief Retrieve the value of the ID that will be assigned to the next 
  *  node added to this arcset object
- *  @return the next node ID
+ *  \return the next node ID
  */
 int BaseArcset::getNextNodeID() const { return nextNodeID; }
 
 /**
- *  @brief Retrieve the value of the ID that will be assigned to the next 
+ *  \brief Retrieve the value of the ID that will be assigned to the next 
  *  segment added to this arcset object
- *  @return the next segment ID
+ *  \return the next segment ID
  */
 int BaseArcset::getNextSegID() const { return nextSegID; }
 
 /**
- *	@brief Retrieve the number of nodes
- *	@return the number of nodes
+ *	\brief Retrieve the number of nodes
+ *	\return the number of nodes
  */
 int BaseArcset::getNumNodes() const { return static_cast<int>(nodes.size()); }
 
 /**
- *	@brief Retrieve the number of segments
- *	@return the number of segments
+ *	\brief Retrieve the number of segments
+ *	\return the number of segments
  */
 int BaseArcset::getNumSegs() const { return static_cast<int>(segs.size()); }
 
 /**
- *  @brief Retrieve the total number of constraints contained by all nodes, segments,
+ *  \brief Retrieve the total number of constraints contained by all nodes, segments,
  *  and the arcset object itself
- *  @return the total number of constraints applied to this object and its children
+ *  \return the total number of constraints applied to this object and its children
  */
 int BaseArcset::getNumCons() const {
 	int conCount = static_cast<int>(cons.size());
@@ -1025,12 +1077,12 @@ int BaseArcset::getNumCons() const {
 }//===================================================
 
 /**
- *  @brief Retrieve a specific node
+ *  \brief Retrieve a specific node
  * 
- *  @param id the ID of the desired node.
+ *  \param id the ID of the desired node.
  *	
- *  @return the node located with the specified ID
- *  @throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \return the node located with the specified ID
+ *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
  */
 Node BaseArcset::getNode(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1045,12 +1097,12 @@ Node BaseArcset::getNode(int id) const{
 }//====================================================
 
 /**
- *  @brief Retrieve a node based on its index in the storage array
+ *  \brief Retrieve a node based on its index in the storage array
  * 
- *  @param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a node at the specified index
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \return a node at the specified index
+ *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 Node BaseArcset::getNodeByIx(int ix) const{
 	if(ix < 0)
@@ -1065,12 +1117,12 @@ Node BaseArcset::getNodeByIx(int ix) const{
 }//=====================================================
 
 /**
- *  @brief Retrieve a reference to a specific node
+ *  \brief Retrieve a reference to a specific node
  * 
- *  @param id the ID of the desired node.
+ *  \param id the ID of the desired node.
  *	
- *  @return the node located with the specified ID
- *  @throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \return the node located with the specified ID
+ *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
  */
 Node& BaseArcset::getNodeRef(int id){
 	if(nodeIDMap.count(id) == 0)
@@ -1086,12 +1138,12 @@ Node& BaseArcset::getNodeRef(int id){
 }//====================================================
 
 /**
- *  @brief Retrieve a reference to a node based on its index in the storage array
+ *  \brief Retrieve a reference to a node based on its index in the storage array
  * 
- *  @param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a reference to a node at the specified index
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \return a reference to a node at the specified index
+ *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 Node& BaseArcset::getNodeRefByIx(int ix){
 	if(ix < 0)
@@ -1105,11 +1157,11 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 }//=====================================================
 
 /**
- *  @brief Retrieve the index of a specific node within the node storage vector
+ *  \brief Retrieve the index of a specific node within the node storage vector
  * 
- *  @param id node ID
- *  @return the index of the node with the specified ID within the storage vector
- *  @throws Exception if <tt>id</tt> is out of bounds
+ *  \param id node ID
+ *  \return the index of the node with the specified ID within the storage vector
+ *  \throws Exception if <tt>id</tt> is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1119,12 +1171,12 @@ int BaseArcset::getNodeIx(int id) const{
 }//====================================================
 
 /**
- *  @brief Retrieve a specific node
+ *  \brief Retrieve a specific node
  * 
- *  @param id the ID of the desired node
+ *  \param id the ID of the desired node
  *	
- *  @return the node located with the specified ID
- *  @throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \return the node located with the specified ID
+ *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
  */
 Segment BaseArcset::getSeg(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1139,12 +1191,12 @@ Segment BaseArcset::getSeg(int id) const{
 }//====================================================
 
 /**
- *  @brief Retrieve a segment based on its index in the storage array
+ *  \brief Retrieve a segment based on its index in the storage array
  * 
- *  @param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
  *  count backwards from the end of the storage array.
- *  @return a segment at the specified index
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \return a segment at the specified index
+ *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 Segment BaseArcset::getSegByIx(int ix) const{
 	if(ix < 0)
@@ -1157,11 +1209,11 @@ Segment BaseArcset::getSegByIx(int ix) const{
 }//=====================================================
 
 /**
- *  @brief Retrieve the index of a specific node within the node storage vector
+ *  \brief Retrieve the index of a specific node within the node storage vector
  * 
- *  @param id node ID
- *  @return the index of the node with the specified ID within the storage vector
- *  @throws Exception if <tt>id</tt> is out of bounds
+ *  \param id node ID
+ *  \return the index of the node with the specified ID within the storage vector
+ *  \throws Exception if <tt>id</tt> is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1171,13 +1223,13 @@ int BaseArcset::getSegIx(int id) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the state vector associated with a node
+ *  \brief Retrieve the state vector associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
- *  @return the state vector
- *  @throws Exception if <tt>id</tt> is out of bounds
- *  @throws Exception if the node with the specified ID is not located in the nodeIDMap
+ *  \param id the ID of a node
+ *  \return the state vector
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getState(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1192,14 +1244,14 @@ std::vector<double> BaseArcset::getState(int id) const{
 }//====================================================
 
 /**
- *	@brief Retrieve a position-velocity state on the arc
- *	@param ix the node index within the <tt>nodes</tt> storage array; This value
+ *	\brief Retrieve a position-velocity state on the arc
+ *	\param ix the node index within the <tt>nodes</tt> storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *	@return the state associated with the specified index
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\return the state associated with the specified index
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 std::vector<double> BaseArcset::getStateByIx(int ix) const{
 	if(ix < 0)
@@ -1212,13 +1264,13 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
 }//====================================================
 
 /**
- *  @brief Retrieve the STM associated with a segment
+ *  \brief Retrieve the STM associated with a segment
  *  with the specified ID
  * 
- *  @param id the ID of a segment
- *  @return the STM
- *  @throws Exception if <tt>id</tt> is out of bounds
- *  @throws Exception if the segment with the specified ID is not located in the segIDMap
+ *  \param id the ID of a segment
+ *  \return the STM
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 MatrixXRd BaseArcset::getSTM(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1233,12 +1285,12 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 }//====================================================
 
 /**
- *	@brief Retrieve an STM on the arc
- *	@param ix the segment index. If it is negative, the index will count backwards
+ *	\brief Retrieve an STM on the arc
+ *	\param ix the segment index. If it is negative, the index will count backwards
  *	from the end of the <tt>segs</tt> storage array
  *	
- *	@return the STM associated with the specified index
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\return the STM associated with the specified index
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 	if(ix < 0)
@@ -1254,19 +1306,19 @@ MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 }//====================================================
 
 /**
- *	@brief Retrieve the a pointer to the system data object associated with this arc
- *	@return a pointer to the system data object associated with this arc
+ *	\brief Retrieve the a pointer to the system data object associated with this arc
+ *	\return a pointer to the system data object associated with this arc
  */
 const SysData* BaseArcset::getSysData() const { return pSysData; }
 
 /**
- *  @brief Retrieve the time-of-flight associated with a segment
+ *  \brief Retrieve the time-of-flight associated with a segment
  *  with the specified ID
  * 
- *  @param id the ID of a segment
- *  @return the time-of-flight
- *  @throws Exception if <tt>id</tt> is out of bounds
- *  @throws Exception if the segment with the specified ID is not located in the segIDMap
+ *  \param id the ID of a segment
+ *  \return the time-of-flight
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 double BaseArcset::getTOF(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1280,11 +1332,11 @@ double BaseArcset::getTOF(int id) const{
 	}
 }//====================================================
 /**
- *	@brief Get the time-of-flight for a specific segment
- *	@param ix node index (NOT the ID); if less than 0, the index counts
+ *	\brief Get the time-of-flight for a specific segment
+ *	\param ix node index (NOT the ID); if less than 0, the index counts
  *	backwards from the end of the nodeset
- *	@return non-dimensional time-of-flight along the specified segment
- *	@throws Exception if <tt>ix</tt> is out of bounds
+ *	\return non-dimensional time-of-flight along the specified segment
+ *	\throws Exception if <tt>ix</tt> is out of bounds
  */
 double BaseArcset::getTOFByIx(int ix) const {
 	if(ix < 0)
@@ -1297,16 +1349,16 @@ double BaseArcset::getTOFByIx(int ix) const {
 }//====================================================
 
 /**
- *	@brief Retrieve the tolerance with which data in this object was computed
- *	@return the tolerance with which data in this object was computed
+ *	\brief Retrieve the tolerance with which data in this object was computed
+ *	\return the tolerance with which data in this object was computed
  */
 double BaseArcset::getTol() const { return tol; }
 
 /**
- *  @brief Determine the total time-of-flight along this arc.
- *  @details This function sums the TOF along each segment; derived
+ *  \brief Determine the total time-of-flight along this arc.
+ *  \details This function sums the TOF along each segment; derived
  *  classes may override this function to use different methods.
- *  @return the total time-of-flight along this arc, units consistent
+ *  \return the total time-of-flight along this arc, units consistent
  *  with the SysData object
  */
 double BaseArcset::getTotalTOF() const{
@@ -1319,27 +1371,27 @@ double BaseArcset::getTotalTOF() const{
 }//=================================================
 
 /**
- *  @brief Determine if the arcset is arranged in chronological order
- *  @details This is sufficient to prove that the arcset has
+ *  \brief Determine if the arcset is arranged in chronological order
+ *  \details This is sufficient to prove that the arcset has
  *  been sorted, but not necessary; i.e., even if the flag is
  *  false, the arcset may indeed be in chronological order, but
  *  the oposite can not be true.
- *  @return a flag indicating if the arcset has been sorted into chronological order
+ *  \return a flag indicating if the arcset has been sorted into chronological order
  */
 bool BaseArcset::isInChronoOrder() const{ return bInChronoOrder; }
 
 /**
- *  @brief Rearrange the nodes and segments so that they are listed
+ *  \brief Rearrange the nodes and segments so that they are listed
  *  in chronological order in their storage arrays.
  *  
- *  @details This does not change the ID of any of the nodes or segments,
+ *  \details This does not change the ID of any of the nodes or segments,
  *  only their index within the storage array. After calling this function,
  *  accessing the -1 node or segment will return the latest (in time) object.
  *  
- *  @param force if true, the arcset will be sorted regardless of the value
+ *  \param force if true, the arcset will be sorted regardless of the value
  *  of the isInChronoOrder() flag.
  *  
- *  @throws Exception if the getChronoOrder() sorting algorithm returns a 
+ *  \throws Exception if the getChronoOrder() sorting algorithm returns a 
  *  set of ArcPiece objects that has a different size than the combined 
  *  node and segment vectors, the function is aborted as it is likely a node or 
  *  segment was skipped and we don't want to lose information.
@@ -1402,49 +1454,58 @@ void BaseArcset::putInChronoOrder(bool force){
 }//=============================================
 
 /**
- *  @brief Set the acceleration vector associated with a node
+ *  \brief Set the state derivative vector associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
- *  @param accel the acceleration vector
- *  @throws Exception if <tt>id</tt> is out of bounds
+ *  \param id the ID of a node
+ *  \param qdot the acceleration vector
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if <tt>qdot</tt> does not have the same size as the 
+ *  state vector
  */
-void BaseArcset::setAccel(int id, std::vector<double> accel){
+void BaseArcset::setStateDeriv(int id, std::vector<double> qdot){
 	if(nodeIDMap.count(id) == 0)
-		throw Exception("BaseArcset::setAccel: Node ID out of range");
+		throw Exception("BaseArcset::setStateDeriv: Node ID out of range");
 
-	nodes[nodeIDMap[id]].setAccel(accel);
+	if(qdot.size() != pSysData->getDynamicsModel()->getCoreStateSize())
+		throw Exception("BaseArcset::setStateDeriv: state derivative vector must have the same dimension as the state vector");
+
+	nodes[nodeIDMap[id]].setExtraParamVec(PARAMKEY_STATE_DERIV, qdot);
 }//====================================================
 
 /**
- *  @brief Set the acceleration vector for a specific step/node
+ *  \brief Set the state derivative vector for a specific step/node
  * 
- *  @param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the <tt>nodes</tt> storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *  @param accelVec 3-element (at least) vector of non-dimensional acceleration 
- *  values (ax, ay, az, ...); only the first three are used
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \param derivVec state derivative vector
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if <tt>qdot</tt> does not have the same size as the 
+ *  state vector
  */
-void BaseArcset::setAccelByIx(int ix, std::vector<double> accelVec){
+void BaseArcset::setStateDerivByIx(int ix, std::vector<double> derivVec){
 	if(ix < 0)
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::setAccelByIx: node index out of bounds");
+		throw Exception("BaseArcset::setStateDerivByIx: node index out of bounds");
 
-	nodes[ix].setAccel(accelVec);
+	if(derivVec.size() != pSysData->getDynamicsModel()->getCoreStateSize())
+		throw Exception("BaseArcset::setStateDeriv: state derivative vector must have the same dimension as the state vector");
+
+	nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, derivVec);
 }//=================================================
 
 /**
- *  @brief Set the state vector associated with a node
+ *  \brief Set the state vector associated with a node
  *  with the specified ID
  * 
- *  @param id the ID of a node
- *  @param state the state vector
- *  @throws Exception if <tt>id</tt> is out of bounds
+ *  \param id the ID of a node
+ *  \param state the state vector
+ *  \throws Exception if <tt>id</tt> is out of bounds
  */
 void BaseArcset::setState(int id, std::vector<double> state){
 	if(nodeIDMap.count(id) == 0)
@@ -1454,16 +1515,15 @@ void BaseArcset::setState(int id, std::vector<double> state){
 }//====================================================
 
 /**
- *  @brief Set the state vector for a specific step/node
+ *  \brief Set the state vector for a specific step/node
  * 
- *  @param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the <tt>nodes</tt> storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
  *	was added to the arcset object. If <tt>n</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
- *  @param stateVec 6-element (at least) vector of non-dimensional state 
- *  values (x, y, z, vx, vy, vz, ...); only the first six are used
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \param stateVec vector of non-dimensional state values
+ *  \throws Exception if <tt>ix</tt> is out of bounds
  */
 void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
 	if(ix < 0)
@@ -1476,28 +1536,34 @@ void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
 }//=================================================
 
 /**
- *  @brief Set the STM associated with a segment
+ *  \brief Set the STM associated with a segment
  *  with the specified ID
  * 
- *  @param id the ID of a segment
- *  @param stm the STM
- *  @throws Exception if <tt>id</tt> is out of bounds
+ *  \param id the ID of a segment
+ *  \param stm the STM
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTM(int id, MatrixXRd stm){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::setSTM: Node ID out of range");
 
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	if(stm.rows() != stateSize || stm.cols() != stateSize)
+		throw Exception("BaseArcset::setSTMByIx: STM size does not match the state size for this dynamical system");
+
 	segs[segIDMap[id]].setSTM(stm);
 }//====================================================
 
 /**
- *  @brief Set the STM for a specific step/node
+ *  \brief Set the STM for a specific step/node
  * 
- *  @param ix index of the segment with the <tt>segs</tt> storage array; if it is negative,
+ *  \param ix index of the segment with the <tt>segs</tt> storage array; if it is negative,
  *  it will count backwards from the end of the array.
  *  
- *  @param stm a 6x6 matrix containing the STM
- *  @throws Exception if <tt>ix</tt> is out of bounds
+ *  \param stm a matrix containing the STM
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){
 	if(ix < 0)
@@ -1506,22 +1572,26 @@ void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
 		throw Exception("BaseArcset::setSTMByIx: node index out of bounds");
 
+	int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	if(stm.rows() != stateSize || stm.cols() != stateSize)
+		throw Exception("BaseArcset::setSTMByIx: STM size does not match the state size for this dynamical system");
+
 	segs[ix].setSTM(stm);
 }//=================================================
 
 /**
- *	@brief Set the computational tolerance for this data object
- *	@param d the tolerance
+ *	\brief Set the computational tolerance for this data object
+ *	\param d the tolerance
  */
 void BaseArcset::setTol(double d){ tol = d; }
 
 /**
- *  @brief Update the epochs of all nodes such that time is continuous.
- *  @details By specifying the epoch of one node in the set, all other
+ *  \brief Update the epochs of all nodes such that time is continuous.
+ *  \details By specifying the epoch of one node in the set, all other
  *  nodes are updated using the segment times-of-flight between them.
  * 
- *  @param nodeID the ID of a node
- *  @param epoch the epoch of the node with the specified ID.
+ *  \param nodeID the ID of a node
+ *  \param epoch the epoch of the node with the specified ID.
  */
 void BaseArcset::updateEpochs(int nodeID, double epoch){
 	if(nodeIDMap.count(nodeID) == 0)
@@ -1561,8 +1631,8 @@ void BaseArcset::updateEpochs(int nodeID, double epoch){
 //-----------------------------------------------------
 
 /**
- *	@brief Copy all data from the input arc data to this one
- *	@param d an arc data object reference
+ *	\brief Copy all data from the input arc data to this one
+ *	\param d an arc data object reference
  */
 void BaseArcset::copyMe(const BaseArcset &d){
 	nodes = d.nodes;
@@ -1577,19 +1647,19 @@ void BaseArcset::copyMe(const BaseArcset &d){
 }//====================================================
 
 /**
- *  @brief Initialize the vectors of node and segment objects from a *.mat file
- *  @details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  \brief Initialize the vectors of node and segment objects from a *.mat file
+ *  \details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
  *  it clears the vectors and then initializes them by calculating the number
  *  of steps in the arcset object from the state vector. Individual nodes and segments are
  *  able to be called by index after this, though they will not contain data
  *  until another function is called to populate the data fields with values from 
  *  the *.mat file
  * 
- *  @param pMatFile pointer to an open matlab data file
- *  @param pVarName the name of a variable that has as many rows as there are
+ *  \param pMatFile pointer to an open matlab data file
+ *  \param pVarName the name of a variable that has as many rows as there are
  *  steps along the data object. Valid variables typically include the time vector,
  *  state matrix, or acceleration matrix
- *  @throws Exception if the state vector variable cannot be read from the data file
+ *  \throws Exception if the state vector variable cannot be read from the data file
  */
 void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
@@ -1627,7 +1697,7 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 }//======================================================
 
 /**
- *  @brief Print a ASCII graphic of the arcset in chronological order
+ *  \brief Print a ASCII graphic of the arcset in chronological order
  */
 void BaseArcset::printInChrono() const{
 	std::vector<ArcPiece> pieces = getChronoOrder();
@@ -1648,7 +1718,7 @@ void BaseArcset::printInChrono() const{
 }//====================================================
 
 /**
- *  @brief Print nodeIDMap to standard output
+ *  \brief Print nodeIDMap to standard output
  */
 void BaseArcset::printNodeIDMap() const{
 	int count = 0;
@@ -1663,7 +1733,7 @@ void BaseArcset::printNodeIDMap() const{
 }//====================================================
 
 /**
- *  @brief Print segIDMap to standard output
+ *  \brief Print segIDMap to standard output
  */
 void BaseArcset::printSegIDMap() const{
 	int count = 0;
@@ -1678,16 +1748,18 @@ void BaseArcset::printSegIDMap() const{
 }//====================================================
 
 /**
- *  @brief Read the state vector for this arcset object from a matlab data file
- *  @details This function must be called after initNodeSegsFromMat() as it
+ *  \brief Read the state vector for this arcset object from a matlab data file
+ *  \details This function must be called after initNodeSegsFromMat() as it
  *  populates the step vector objects with state data
  * 
- *  @param pMatFile pointer to an open matlab data file
- *  @param pVarName the name of the state variable (e.g., "State" or "Nodes")
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open matlab data file
+ *  \param pVarName the name of the state variable (e.g., "State" or "Nodes")
+ *  \throws Exception if there are any issues importing the data
  */
 void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	
 	if(pStateMat == NULL){
 		throw Exception("BaseArcset::readStateFromMat: Could not read state data vector");
 	}else{
@@ -1701,8 +1773,8 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
-		if(pStateMat->dims[1] != 6){
-			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not 6.");
+		if(pStateMat->dims[1] != stateSize){
+			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not consistent with DynamicalModel definition.");
 		}
 
 		if(pStateMat->class_type == MAT_C_DOUBLE && pStateMat->data_type == MAT_T_DOUBLE){
@@ -1710,13 +1782,10 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 
 			if(data != NULL){
 				for(unsigned int i = 0; i < numSteps; i++){
-					double state[] = {0,0,0,0,0,0};
-					state[0] = data[0*numSteps + i];
-					state[1] = data[1*numSteps + i];
-					state[2] = data[2*numSteps + i];
-					state[3] = data[3*numSteps + i];
-					state[4] = data[4*numSteps + i];
-					state[5] = data[5*numSteps + i];
+					std::vector<double> state;
+					for(unsigned int s = 0; s < stateSize; s++){
+						state.push_back(data[s*numSteps + i]);
+					}
 
 					nodes[i].setState(state);
 				}
@@ -1729,28 +1798,31 @@ void BaseArcset::readStateFromMat(mat_t *pMatFile, const char* pVarName){
 }//===============================================
 
 /**
- *  @brief Read acceleration values from a matlab file
+ *  \brief Read state derivative values from a matlab file
  * 
- *  @param pMatFile pointer to an open Matlab file
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param pVarName name of the variable in the Matlab file
+ *  \throws Exception if there are any issues importing the data
  */
-void BaseArcset::readAccelFromMat(mat_t *pMatFile){
-	matvar_t *pAccelMat = Mat_VarRead(pMatFile, "Accel");
+void BaseArcset::readStateDerivFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pAccelMat = Mat_VarRead(pMatFile, pVarName);
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+
 	if(pAccelMat == NULL){
-		throw Exception("BaseArcset::readAccelFromMat: Could not read data vector");
+		throw Exception("BaseArcset::readStateDerivFromMat: Could not read data vector");
 	}else{
 		unsigned int numSteps = pAccelMat->dims[0];
 		
 		if(nodes.size() == 0){
-			throw Exception("BaseArcset::readAccelFromMat: Node vector has not been initialized!");
+			throw Exception("BaseArcset::readStateDerivFromMat: Node vector has not been initialized!");
 		}
 
 		if(numSteps != nodes.size()){
-			throw Exception("BaseArcset::readAccelFromMat: Accel vector has a different size than the initialized node vector");
+			throw Exception("BaseArcset::readStateDerivFromMat: Derivative vector has a different size than the initialized node vector");
 		}
 
-		if(pAccelMat->dims[1] != 3){
-			throw Exception("BaseArcset::readAccelFromMat: Incompatible data file: Accel width is not 3.");
+		if(pAccelMat->dims[1] != stateSize){
+			throw Exception("BaseArcset::readStateDerivFromMat: Incompatible data file: Vector width is not equal to the state size.");
 		}
 
 		if(pAccelMat->class_type == MAT_C_DOUBLE && pAccelMat->data_type == MAT_T_DOUBLE){
@@ -1758,27 +1830,27 @@ void BaseArcset::readAccelFromMat(mat_t *pMatFile){
 
 			if(data != NULL){
 				for(unsigned int i = 0; i < numSteps; i++){
-					double accel[] = {0,0,0};
-					accel[0] = data[0*numSteps + i];
-					accel[1] = data[1*numSteps + i];
-					accel[2] = data[2*numSteps + i];
+					std::vector<double> deriv(stateSize, 0);
 
-					nodes[i].setAccel(accel);
+					for(unsigned int s = 0; s < stateSize; s++){
+						deriv[s] = data[s*numSteps + i];
+					}
+					nodes[i].setExtraParamVec(PARAMKEY_STATE_DERIV, deriv);
 				}
 			}
 		}else{
-			throw Exception("BaseArcset::readAccelFromMat: Incompatible data file: unsupported data type/class");
+			throw Exception("BaseArcset::readStateDerivFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(pAccelMat);
 }//===============================================
 
 /**
- *  @brief Read epoch times from a matlab file in a variable with the specified name
+ *  \brief Read epoch times from a matlab file in a variable with the specified name
  * 
- *  @param pMatFile pointer to an open Matlab file
- *  @param pVarName The name of the variable within the Matlab file
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param pVarName The name of the variable within the Matlab file
+ *  \throws Exception if there are any issues importing the data
  */
 void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pEpochMat = Mat_VarRead(pMatFile, pVarName);
@@ -1812,13 +1884,15 @@ void BaseArcset::readEpochFromMat(mat_t *pMatFile, const char* pVarName){
 }//================================================
 
 /**
- *  @brief Read State Transition Matrices from a matlab file
+ *  \brief Read State Transition Matrices from a matlab file
  * 
- *  @param pMatFile pointer to an open Matlab file
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param pVarName name of the variable in the Matlab file
+ *  \throws Exception if there are any issues importing the data
  */
-void BaseArcset::readSTMFromMat(mat_t *pMatFile){
-	matvar_t *pAllSTM = Mat_VarRead(pMatFile, "STM");
+void BaseArcset::readSTMFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pAllSTM = Mat_VarRead(pMatFile, pVarName);
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	if(pAllSTM == NULL){
 		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
 	}else{
@@ -1833,8 +1907,8 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 			throw Exception("BaseArcset::readSTMFromMat: STM vector has fewer elements than the initialized segment vector");
 		}
 
-		if(pAllSTM->dims[0] != 6 || pAllSTM->dims[1] != 6){
-			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM is not 6x6.");
+		if(pAllSTM->dims[0] != stateSize || pAllSTM->dims[1] != stateSize){
+			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM size is not consistent with DynamicalModel definition.");
 		}
 
 		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
@@ -1844,28 +1918,28 @@ void BaseArcset::readSTMFromMat(mat_t *pMatFile){
 
 			if(data != NULL){
 				for(i = 0; i < numSteps; i++){
-					double stmEl[36];
-					for(unsigned int j = 0; j < 36; j++){
-						stmEl[j] = data[36*i + j];
+					std::vector<double> stmEl(stateSize*stateSize, 0);
+					for(unsigned int j = 0; j < stateSize*stateSize; j++){
+						stmEl[j] = data[stateSize*stateSize*i + j];
 					}
 
-					MatrixXRd P = Eigen::Map<MatrixXRd>(stmEl, 6, 6);
+					MatrixXRd P = Eigen::Map<MatrixXRd>(&(stmEl[0]), stateSize, stateSize);
 					segs[i].setSTM(P.transpose());
 				}
 			}
 		}else{
-			throw Exception("ttpat_arc_data::readSTMFromMat: Incompatible data file: unsupported data type/class");
+			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
 	Mat_VarFree(pAllSTM);
 }//===============================================
 
 /**
- *  @brief Read times-of-flight from a matlab file in a variable with the specified name
+ *  \brief Read times-of-flight from a matlab file in a variable with the specified name
  * 
- *  @param pMatFile pointer to an open Matlab file
- *  @param pVarName The name of the variable within the Matlab file
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param pVarName The name of the variable within the Matlab file
+ *  \throws Exception if there are any issues importing the data
  */
 void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pTofMat = Mat_VarRead(pMatFile, pVarName);
@@ -1875,13 +1949,13 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 		unsigned int numSteps = pTofMat->dims[0];
 
 		if(segs.size() == 0)
-			throw Exception("BaseArcset::readTOFFromMat: Node vector has not been initialized");
+			throw Exception("BaseArcset::readTOFFromMat: Segment vector has not been initialized");
 
 		if(numSteps != segs.size())
-			throw Exception("BaseArcset::readTOFFromMat: Epoch vector has different size than the initialized segment evctor");
+			throw Exception("BaseArcset::readTOFFromMat: TOF vector has different size than the initialized segment evctor");
 
 		if(pTofMat->dims[1] != 1)
-			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: Epoch vector has more than one column");
+			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: TOF vector has more than one column");
 
 		if(pTofMat->class_type == MAT_C_DOUBLE && pTofMat->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pTofMat->data);
@@ -1899,12 +1973,49 @@ void BaseArcset::readTOFFromMat(mat_t *pMatFile, const char* pVarName){
 }//================================================
 
 /**
- *  @brief Read values of the specified extra paramter from a matlab file
+ *  \brief Read control law IDs from a Matlab file in a variable with the specified name
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param pVarName name of the variable within the Matlab file
+ *  \throws Exception if there are any issues importing the data
+ */
+void BaseArcset::readCtrlLawFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pLawMat = Mat_VarRead(pMatFile, pVarName);
+	if(pLawMat == NULL){
+		throw Exception("BaseArcset::readCtrlLawFromMat: Could not read data vector");
+	}else{
+		unsigned int numSteps = pLawMat->dims[0];
+
+		if(segs.size() == 0)
+			throw Exception("BaseArcset::readCtrlLawFromMat: Segment vector has not been initialized");
+
+		if(numSteps != segs.size())
+			throw Exception("BaseArcset::readCtrlLawFromMat: Control Law vector has different size than the initialized segment evctor");
+
+		if(pLawMat->dims[1] != 1)
+			throw Exception("BaseArcset::readCtrlLawFromMat: Incompatible data file: Contrl Law vector has more than one column");
+
+		if(pLawMat->class_type == MAT_C_UINT32 && pLawMat->data_type == MAT_T_UINT32){
+			unsigned int *data = static_cast<unsigned int *>(pLawMat->data);
+
+			if(data != NULL){
+				for(unsigned int i = 0; i < numSteps; i++){
+					segs[i].setCtrlLaw(data[i]);
+				}
+			}
+		}else{
+			throw Exception("BaseArcset::readCtrlLawFromMat: Incompatible data file: unsupported data type or class");
+		}
+	}
+	Mat_VarFree(pLawMat);
+}//================================================
+
+/**
+ *  \brief Read values of the specified extra paramter from a matlab file
  * 
- *  @param pMatFile pointer to an open Matlab file
- *  @param varKey the key (i.e., name) of the extra parameter scalar variable
- *  @param pVarName the name of the storage variable within the Matlab file
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param varKey the key (i.e., name) of the extra parameter scalar variable
+ *  \param pVarName the name of the storage variable within the Matlab file
+ *  \throws Exception if there are any issues importing the data
  */
 void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, std::string varKey, const char *pVarName){
 
@@ -1939,13 +2050,13 @@ void BaseArcset::readExtraParamFromMat(mat_t *pMatFile, std::string varKey, cons
 }//====================================================
 
 /**
- *  @brief Read values of the specified extra paramter from a matlab file
+ *  \brief Read values of the specified extra paramter from a matlab file
  * 
- *  @param pMatFile pointer to an open Matlab file
- *  @param varKey the key (i.e., name) of the extra parameter vector
- *  @param len the length of the extra parameter vector
- *  @param pVarName the name of the storage variable within the Matlab file
- *  @throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open Matlab file
+ *  \param varKey the key (i.e., name) of the extra parameter vector
+ *  \param len the length of the extra parameter vector
+ *  \param pVarName the name of the storage variable within the Matlab file
+ *  \throws Exception if there are any issues importing the data
  */
 void BaseArcset::readExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, size_t len, const char *pVarName){
 	
@@ -1984,38 +2095,39 @@ void BaseArcset::readExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, s
 }//====================================================
 
 /**
- *	@brief Save the acceleration vector to file
- *	@param pMatFile a pointer to the destination mat-file
+ *	\brief Save the state derivative vector to file
+ *	\param pMatFile a pointer to the destination mat-file
+ *	\param pVarName name of the variable in the Matlab file
  */
-void BaseArcset::saveAccel(mat_t *pMatFile) const{
+void BaseArcset::saveStateDeriv(mat_t *pMatFile, const char* pVarName) const{
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> accel_colMaj(3*nodes.size());
+	std::vector<double> deriv_colMaj(stateSize*nodes.size());
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
-		std::vector<double> accel = nodes[r].getAccel();
-		for(unsigned int c = 0; c < 3; c++){
-			accel_colMaj[c*nodes.size() + r] = accel[c];
+		std::vector<double> deriv(stateSize, NAN);
+		try{
+			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
+		}catch(Exception &e){
+			// printErr("Unable to get acceleration vector for node %u\n", r);
+		}
+
+		for(unsigned int c = 0; c < deriv.size(); c++){
+			deriv_colMaj[c*nodes.size() + r] = deriv[c];
 		}
 	}
 	
-	size_t dims[2] = {nodes.size(), 3};
-	matvar_t *pMatVar = Mat_VarCreate("Accel", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(accel_colMaj[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, "Accel", MAT_COMPRESSION_NONE);
+	size_t dims[2] = {nodes.size(), stateSize};
+	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
- *	@brief Save all node epochs to file
- *	@param pMatFile a pointer to the destination mat-file
- */
-void BaseArcset::saveEpoch(mat_t *pMatFile) const{
-	saveEpoch(pMatFile, "Epoch");
-}//=====================================================
-
-/**
- *	@brief Save all node epochs to file with a specified variable name
- *	@param pMatFile a pointer to the destination mat-file
- *	@param pVarName the name of the variable
+ *	\brief Save all node epochs to file with a specified variable name
+ *	\param pMatFile a pointer to the destination mat-file
+ *	\param pVarName the name of the variable
  */
 void BaseArcset::saveEpoch(mat_t *pMatFile, const char* pVarName) const{
 	std::vector<double> allEpochs(nodes.size());
@@ -2030,11 +2142,11 @@ void BaseArcset::saveEpoch(mat_t *pMatFile, const char* pVarName) const{
 }//=====================================================
 
 /**
- *	@brief Save one of the extra parameters to file
- *	@param pMatFile a pointer to the destination mat-file
- *	@param varKey the key (i.e., the name) of the scalar parameter
- *	@param name the name of the variable being saved
- *	@throws Exception if <tt>varIx</tt> is out of bounds
+ *	\brief Save one of the extra parameters to file
+ *	\param pMatFile a pointer to the destination mat-file
+ *	\param varKey the key (i.e., the name) of the scalar parameter
+ *	\param name the name of the variable being saved
+ *	\throws Exception if <tt>varIx</tt> is out of bounds
  */
 void BaseArcset::saveExtraParam(mat_t *pMatFile, std::string varKey, const char *name) const{
 
@@ -2055,11 +2167,12 @@ void BaseArcset::saveExtraParam(mat_t *pMatFile, std::string varKey, const char 
 }//======================================================
 
 /**
- *	@brief Save one of the extra parameters to file
- *	@param pMatFile a pointer to the destination mat-file
- *	@param varKey the key (i.e., the name) of the scalar parameter
- *	@param name the name of the variable being saved
- *	@throws Exception if <tt>varIx</tt> is out of bounds
+ *	\brief Save one of the extra parameters to file
+ *	\param pMatFile a pointer to the destination mat-file
+ *	\param varKey the key (i.e., the name) of the scalar parameter
+ *	\param len number of elements in the extra parameter vector (e.g., a 3-element velocity vector)
+ *	\param name the name of the variable being saved
+ *	\throws Exception if <tt>varIx</tt> is out of bounds
  */
 void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t len, const char *name) const{
 
@@ -2090,18 +2203,19 @@ void BaseArcset::saveExtraParamVec(mat_t *pMatFile, std::string varKey, size_t l
 }//======================================================
 
 /**
- *	@brief Save the state vector [pos, vel] to a file
- *	@param pMatFile a pointer to the destination matlab file 
- *	@param pVarName the name of the variable (e.g. "State" or "Nodes")
+ *	\brief Save the state vector [pos, vel] to a file
+ *	\param pMatFile a pointer to the destination matlab file 
+ *	\param pVarName the name of the variable (e.g. "State" or "Nodes")
  */
 void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> posVel(6*nodes.size());
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	std::vector<double> posVel(stateSize*nodes.size());
 
 	for(unsigned int r = 0; r < nodes.size(); r++){
 		std::vector<double> state = nodes[r].getState();
-		for(unsigned int c = 0; c < 6; c++){
+		for(unsigned int c = 0; c < stateSize; c++){
 			posVel[c*nodes.size() + r] = state[c];
 		}
 	}
@@ -2124,19 +2238,21 @@ void BaseArcset::saveState(mat_t *pMatFile, const char* pVarName) const{
 	 *							MAT_F_GLOBAL: make the matlab variable global
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
-	size_t dims[2] = {nodes.size(), 6};
+	size_t dims[2] = {nodes.size(), stateSize};
 	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
- *	@brief Save the STMs to a file; STMs are stored in a 6x6xn array for 
+ *	\brief Save the STMs to a file; STMs are stored in an array for 
  *	compatibility with existing MATLAB scripts
- *	@param pMatFile a pointer to the destination matlab file 
+ *	\param pMatFile a pointer to the destination Matlab file
+ *	\param pVarName name of the variable in the Matlab file
  */
-void BaseArcset::saveSTMs(mat_t *pMatFile) const{
+void BaseArcset::saveSTMs(mat_t *pMatFile, const char* pVarName) const{
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	// Create one large vector to put all the STM elements in
-	std::vector<double> allSTMEl(segs.size()*36);
+	std::vector<double> allSTMEl(segs.size()*stateSize*stateSize);
 
 	for (unsigned int n = 0; n < segs.size(); n++){
 		// get the transpose of the STM matrix; we need to store it in column-major order
@@ -2145,24 +2261,24 @@ void BaseArcset::saveSTMs(mat_t *pMatFile) const{
 		// Retrieve the data from the matrix
 		double *matData = P.data();
 		// Store that data in our huge vector
-		std::copy(matData, matData+36, &(allSTMEl[0]) + n*36);
+		std::copy(matData, matData+stateSize*stateSize, &(allSTMEl[0]) + n*stateSize*stateSize);
 	}
 
-	size_t dims[3] = {6, 6, segs.size()};
-	matvar_t *pMatVar = Mat_VarCreate("STM", MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, "STM", MAT_COMPRESSION_NONE);
+	size_t dims[3] = {stateSize, stateSize, segs.size()};
+	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
- *	@brief Save all segment times-of-flight to file with a specified variable name
- *	@param pMatFile a pointer to the destination mat-file
- *	@param pVarName the name of the variable
+ *	\brief Save all segment times-of-flight to file with a specified variable name
+ *	\param pMatFile a pointer to the destination mat-file
+ *	\param pVarName the name of the variable
  */
 void BaseArcset::saveTOF(mat_t *pMatFile, const char* pVarName) const{
 	std::vector<double> allTOFs(segs.size());
 
-	for(unsigned int n = 0; n < segs.size(); n++){
-		allTOFs[n] = segs[n].getTOF();
+	for(unsigned int s = 0; s < segs.size(); s++){
+		allTOFs[s] = segs[s].getTOF();
 	}
 	
 	size_t dims[2] = {allTOFs.size(), 1};
@@ -2170,7 +2286,22 @@ void BaseArcset::saveTOF(mat_t *pMatFile, const char* pVarName) const{
 	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
+/**
+ *  \brief Save all segment control laws to file with a specified variable name
+ *  \param pMatFile pointer to the destination mat-file
+ *  \param pVarName name of the variable
+ */
+void BaseArcset::saveCtrlLaw(mat_t *pMatFile, const char *pVarName) const{
+	std::vector<unsigned int> allLawIDs(segs.size());
 
+	for(unsigned int s = 0; s < segs.size(); s++){
+		allLawIDs[s] = segs[s].getCtrlLaw();
+	}
+
+	size_t dims[2] = {allLawIDs.size(), 1};
+	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_UINT32, MAT_T_UINT32, 2, dims, &(allLawIDs[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+}//=====================================================
 
 
 }// END of Astrohelion namespace

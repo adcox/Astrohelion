@@ -284,16 +284,18 @@ Event& Event::operator =(const Event &ev){
  *	\return true if the two events are identical
  */
 bool operator ==(const Event &lhs, const Event &rhs){
-	bool same = lhs.type == rhs.type && lhs.triggerDir == rhs.triggerDir &&
-		lhs.bStop == rhs.bStop;
+	bool same = lhs.type == rhs.type &&
+		lhs.triggerDir == rhs.triggerDir &&
+		lhs.bStop == rhs.bStop &&
+		lhs.paramsIn == rhs.paramsIn;
 
-	if(lhs.paramsIn.size() == rhs.paramsIn.size()){
-		for(unsigned int i = 0; i < lhs.paramsIn.size(); i++){
-			same = same && lhs.paramsIn[i] == rhs.paramsIn[i];
-		}	
-	}else{
-		same = false;
-	}
+	// if(lhs.paramsIn.size() == rhs.paramsIn.size()){
+	// 	for(unsigned int i = 0; i < lhs.paramsIn.size(); i++){
+	// 		same = same && lhs.paramsIn[i] == rhs.paramsIn[i];
+	// 	}	
+	// }else{
+	// 	same = false;
+	// }
 
 	return same;
 }//====================================================

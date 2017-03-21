@@ -131,8 +131,8 @@ void printVerbColor(bool verbose, const char* color, const char * format, ...){
 
 /**
  *  \brief Save a variable to a .mat file, performing error checks along the way. 
- *
- *  Once the variable is written to file, it is freed from memory
+ *  \details Once the variable is written to file, it is freed from memory, thus
+ *  any further calls to Mat_VarFree on the matvar_t object will result in malloc errors.
  *
  *  \param matFile a pointer to the matlab output file
  *  \param matvar a pointer to the matlab variable object
@@ -146,8 +146,8 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
         printErr("Error creating variable for '%s'\n", varName);
     }else{
         Mat_VarWrite(matFile, matvar, comp);
-        Mat_VarFree(matvar);
     }
+    Mat_VarFree(matvar);
 }//=========================================================
 
 /**
@@ -162,7 +162,6 @@ void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
         size_t dims[2] = {1, 1};
         matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &data, MAT_F_DONT_COPY_DATA);
         saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
-        Mat_VarFree(matvar);
     }else{
         printErr("Utilities::saveDoubleToFile: Error creating mat file\n");
     }

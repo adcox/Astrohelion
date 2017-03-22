@@ -163,8 +163,8 @@ class Event : public Core{
 		void setStopOnEvent(bool);
 		//\}
 
-		bool crossedEvent(const double*, double) const;
-		void updateDist(const double*, double);
+		bool crossedEvent(const double*, unsigned int, double) const;
+		void updateDist(const double*, unsigned int, double);
 
 		void printStatus() const;
 	private:
@@ -205,8 +205,8 @@ class Event : public Core{
 
 		void copyEvent(const Event&);
 		void initEvent(Event_tp, int, bool, std::vector<double>);
-		double getDist(const double[6], double) const;
-		int getDir(const double[6], double) const;
+		double getDist(const double*, unsigned int, double) const;
+		int getDir(const double*, unsigned int, double) const;
 };
 
 }

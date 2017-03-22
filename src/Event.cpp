@@ -436,15 +436,15 @@ void Event::setStopOnEvent(bool s){ bStop = s; }
  *	\param t the current time
  *	\return whether or not the trajectory has passed through this event
  */
-bool Event::crossedEvent(const double y[6], double t) const{
-	double newDist = getDist(y, t);
+bool Event::crossedEvent(const double* y, unsigned int len, double t) const{
+	double newDist = getDist(y, len, t);
 
 	// See if we have crossed (in pos. or neg. direction)
 	if(newDist*dist < 0){ // have different signs
 		if(triggerDir == 0){
 			return true;
 		}else{
-			return triggerDir == getDir(y, t);
+			return triggerDir == getDir(y, len, t);
 		}
 	}
 	return false;
@@ -459,14 +459,14 @@ bool Event::crossedEvent(const double y[6], double t) const{
  *	only the first 6 will be copied
  *	\param t non-dimensional time associated with state <tt>y</tt>
  */
-void Event::updateDist(const double y[6], double t){	
+void Event::updateDist(const double* y, unsigned int len, double t){	
 	// update the dist variable using information from y
 	lastDist = dist;
-	dist = getDist(y, t);
+	dist = getDist(y, len, t);
 
 	// Save the state from y for later comparison
 	state.clear();
-	state.insert(state.begin(), y, y+6);
+	state.insert(state.begin(), y, y+len);
 	theTime = t;
 }//======================================
 
@@ -478,49 +478,92 @@ void Event::updateDist(const double y[6], double t){
  *	\throws Exception if the event type associated with this event is not implemented
  *	\throws Exception if the system data pointer has not been initialized via the initialize() function
  */
-double Event::getDist(const double *y, double t) const{
+double Event::getDist(const double *y, unsigned int len, double t) const{
 	if(!pSysData)
 		throw Exception("Event::getDist: SysData pointer has not been initialized; please call initialize() function");
 
 	double d = 0;
 	switch(type){
-		case Event_tp::YZ_PLANE: d = conData[0] - y[0]; break;
-		case Event_tp::XZ_PLANE: d = conData[1] - y[1]; break;
-		case Event_tp::XY_PLANE: d = conData[2] - y[2]; break;
+		case Event_tp::YZ_PLANE:
+			if(len > 0){
+				d = conData[0] - y[0];
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
+			break;
+		case Event_tp::XZ_PLANE:
+			if(len > 1){
+				d = conData[1] - y[1];
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
+
+			break;
+		case Event_tp::XY_PLANE:
+			if(len > 2){
+				d = conData[2] - y[2];
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
+
+			break;
 		case Event_tp::CRASH:
 		{
-			std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
+			if(len > 2){
+				std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
 
-			int Pix = static_cast<int>(conData[0]);
-			double dx = y[0] - primPos[Pix*3 + 0];
-			double dy = y[1] - primPos[Pix*3 + 1];
-			double dz = y[2] - primPos[Pix*3 + 2];
-			d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
+				int Pix = static_cast<int>(conData[0]);
+				double dx = y[0] - primPos[Pix*3 + 0];
+				double dy = y[1] - primPos[Pix*3 + 1];
+				double dz = y[2] - primPos[Pix*3 + 2];
+				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
 			break;
 		}
 		case Event_tp::JC:
 		{
-			const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(pSysData);
-			d = conData[0] - DynamicsModel_cr3bp::getJacobi(y, crSys->getMu());
+			if(len > 5){
+				const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(pSysData);
+				d = conData[0] - DynamicsModel_cr3bp::getJacobi(y, crSys->getMu());
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
 			break;
 		}
 		case Event_tp::APSE:
 		{
-			int Pix = static_cast<int>(conData[0]);
-			d = pSysData->getDynamicsModel()->getRDot(Pix, t, y, pSysData);
+			if(len > 5){
+				int Pix = static_cast<int>(conData[0]);
+				d = pSysData->getDynamicsModel()->getRDot(Pix, t, y, pSysData);
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
 			break;
 		}
 		case Event_tp::DIST:
 		{
-			std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
-			int Pix = static_cast<int>(conData[0]);
-			double dx = y[0] - primPos[Pix*3 + 0];
-			double dy = y[1] - primPos[Pix*3 + 1];
-			double dz = y[2] - primPos[Pix*3 + 2];
-			d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
+			if(len > 2){
+				std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
+				int Pix = static_cast<int>(conData[0]);
+				double dx = y[0] - primPos[Pix*3 + 0];
+				double dy = y[1] - primPos[Pix*3 + 1];
+				double dz = y[2] - primPos[Pix*3 + 2];
+				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
 			break;
 		}
-		case Event_tp::MASS: d = conData[6] - y[6]; break;
+		case Event_tp::MASS:
+			if(len > 6){
+				d = conData[6] - y[6];
+			}else{
+				throw Exception("Event::getDist: input state is too short!");
+			}
+
+			break;
 		default:
 			throw Exception("Event::getDist: Event type not implemented");
 	}
@@ -537,22 +580,47 @@ double Event::getDist(const double *y, double t) const{
  *	\return positive or negative one to correspond with the sign
  *	\throws Exception if the event type associated with this event is not implemented
  */
-int Event::getDir(const double *y, double t) const{
+int Event::getDir(const double *y, unsigned int len, double t) const{
 	double d = 0;
 	double dt = t - theTime;
 
 	// Compute distance from old point (state) to new point (y)
 	switch(type){
-		case Event_tp::YZ_PLANE: d = y[0] - state[0]; break;
-		case Event_tp::XZ_PLANE: d = y[1] - state[1]; break;
-		case Event_tp::XY_PLANE: d = y[2] - state[2]; break;
+		case Event_tp::YZ_PLANE:
+			if(len > 0){
+				d = y[0] - state[0];
+			}else{
+				throw Exception("Event::getDir: input state is too short!");
+			}
+			break;
+		case Event_tp::XZ_PLANE:
+			if(len > 1){
+				d = y[1] - state[1];
+			}else{
+				throw Exception("Event::getDir: input state is too short!");
+			}
+			break;
+		case Event_tp::XY_PLANE:
+			if(len > 2){
+				d = y[2] - state[2];
+			}else{
+				throw Exception("Event::getDir: input state is too short!");
+			}
+			break;
 		case Event_tp::CRASH:
 		case Event_tp::JC:
 		case Event_tp::APSE:
 		case Event_tp::DIST:
 			d = dist - lastDist;
 			break;
-		case Event_tp::MASS: d = y[6] - state[6]; break;
+		case Event_tp::MASS:
+			if(len > 7){
+				d = y[6] - state[6];
+			}else{
+				throw Exception("Event::getDir: input state is too short!");
+			}
+
+			break;
 		default: 
 			throw Exception("Event type not implemented");
 	}

@@ -839,7 +839,6 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodeset->getSegByIx(s).getID());
-				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+s;
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 				it->DF[it->totalFree*row0 + tof_var.row0] = timeCoeff*dFdt_n(0)/dvMax;

@@ -310,7 +310,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 				addToRows = con.countConstrainedStates();
 				break;
 			case Constraint_tp::MATCH_ALL:
-				addToRows = 6;
+				addToRows = pModel->getCoreStateSize();
 				break;
 			case Constraint_tp::SP:
 				addToRows = 3;

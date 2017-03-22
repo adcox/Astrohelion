@@ -56,10 +56,8 @@ public:
 	 *  \{
 	 */
 	Node();
-	Node(const double[6], unsigned int, double);
+	Node(const double*, unsigned int, double);
 	Node(std::vector<double>, double);
-	// Node(const double[6], const double[3], double);
-	// Node(std::vector<double>, std::vector<double>, double);
 	Node(const Node&);
 	// ~Node();
 	//\}

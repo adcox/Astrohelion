@@ -231,8 +231,8 @@ std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
 int Node::getNumCons() const { return static_cast<int>(cons.size()); }
 
 /**
- *	\brief Get the 6-element non-dimensional position and velocity state vector
- *	\return the 6-element non-dimensional position and velocity state vector
+ *	\brief Get the non-dimensional position and velocity state vector
+ *	\return the non-dimensional position and velocity state vector
  */
 std::vector<double> Node::getState() const {
 	return state;

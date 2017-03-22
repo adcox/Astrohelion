@@ -473,7 +473,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
 //-----------------------------------------------------
 
 /**
- *  \brief Integrate the 6 state EOMs and 36 STM EOMs with additional integration as required by 
+ *  \brief Integrate the state EOMs and STM EOMs with additional integration as required by 
  *  specific systems.
  *
  *  This function uses values stored in object-wide variables to determine the direction time flows,
@@ -503,16 +503,16 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     }
 
     // Get the dimension of the state vector for integration
-    int core = model->getCoreStateSize();
-    int ic_dim = core + (!bSimpleIntegration)*(core*core + model->getExtraStateSize());
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  IC has %d initial states\n", ic_dim);
+    unsigned int core = model->getCoreStateSize();
+    unsigned int ic_dim = core + (!bSimpleIntegration)*(core*core + model->getExtraStateSize());
+    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
     std::copy(ic, ic + core, &(fullIC.front()));
 
     if(stm0.rows() != core || stm0.cols() != core){
-        printErr("STM rows = %d, cols = %d, core = %d\n", stm0.rows(), stm0.cols(), core);
+        printErr("STM rows = %d, cols = %d, core = %u\n", stm0.rows(), stm0.cols(), core);
         throw Exception("SimEngine::integrate: Initial STM size does not match the core state size specified by the Dynamic Model");
     }
 
@@ -596,7 +596,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
     for(unsigned int ev = 0; ev < events.size(); ev++){
         astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
-        events.at(ev).updateDist(y, t[0]);
+        events.at(ev).updateDist(y, core, t[0]);
     }
 
     int status; // integrator status
@@ -739,11 +739,12 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
 bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
     int numPts = traj->getNumNodes();
     const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
-    
+    unsigned int core = model->getCoreStateSize();
+
     // Look through all events
     for(unsigned int ev = 0; ev < events.size(); ev++){
         // Don't trigger if only two points have been integrated
-        if(events.at(ev).crossedEvent(y, t) && numPts > 1){
+        if(events.at(ev).crossedEvent(y, core, t) && numPts > 1){
 
             astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
             events.at(ev).incrementCount();  // Update the counter for the event
@@ -782,7 +783,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                 // Update event state
                 std::vector<double> state = traj->getStateByIx(-1);
                 double lastT = traj->getTimeByIx(-1);
-                events.at(ev).updateDist(&(state[0]), lastT);
+                events.at(ev).updateDist(&(state[0]), core, lastT);
                 
                 if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
@@ -791,14 +792,14 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                     return true;    // Tell the simulation to stop
                 }else{
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
-                    events.at(ev).updateDist(y, t); // Remember the most recent point
+                    events.at(ev).updateDist(y, core, t); // Remember the most recent point
                     return false;
                 }
             }
         }// end of If(hasCrossed)
 
         // Save the distance and current state to the event
-        events.at(ev).updateDist(y, t);
+        events.at(ev).updateDist(y, core, t);
     }// end of loop
 
     return false;

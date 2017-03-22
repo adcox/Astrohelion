@@ -57,7 +57,7 @@ MKDIR_P = mkdir -p
 
 all: directories unit run
 
-unit: utility arcDataOps bcSysDef linMotion simEngine corrector traj nodeset multShootCons
+unit: utility arcDataOps bcSysDef linMotion simEngine corrector traj nodeset multShootCons_bc4bp multShootCons_cr3bp multShootCons_cr3bp_lt
 
 run:
 	./utility.bin
@@ -68,7 +68,9 @@ run:
 	./corrector.bin
 	./traj.bin
 	./nodeset.bin
-	./multShootCons.bin
+	./multShootCons_bc4bp.bin
+	./multShootCons_cr3bp.bin
+	./multShootCons_cr3bp_lt.bin
 	
 ############################################################
 ## UNIT TESTS
@@ -86,8 +88,14 @@ corrector: $(OBJECTS)
 linMotion: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_linMotion.cpp $(LDFLAGS) -o $@.bin
 
-multShootCons: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_multShootCons.cpp $(LDFLAGS) -o $@.bin
+multShootCons_bc4bp: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_multShootCons_bc4bp.cpp $(LDFLAGS) -o $@.bin
+
+multShootCons_cr3bp: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_multShootCons_cr3bp.cpp $(LDFLAGS) -o $@.bin
+
+multShootCons_cr3bp_lt: $(OBJECTS)
+	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_multShootCons_cr3bp_lt.cpp $(LDFLAGS) -o $@.bin
 
 nodeset: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_EXT) $^ ../unittest_nodeset.cpp $(LDFLAGS) -o $@.bin

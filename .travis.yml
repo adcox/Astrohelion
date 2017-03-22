@@ -24,3 +24,8 @@ addons:
     packages:
     - gcc-5
     - g++-5
+
+notifications:
+  email:
+    on_success: never     #default is: change
+    on_failure: always    #defaul is: always

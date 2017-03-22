@@ -64,3 +64,4 @@ mkdir -p ~/.config/astrohelion
 mv de430.bsp ~/.config/astrohelion/
 mv naif0012.tls ~/.config/astrohelion/
 cp ../travis_settings.xml ~/.config/astrohelion/user_settings.xml
+cp ../body_data.xml ~/.config/astrohelion/body_data.xml

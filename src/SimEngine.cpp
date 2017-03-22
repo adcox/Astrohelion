@@ -885,7 +885,6 @@ void SimEngine::copyMe(const SimEngine &s){
     verbosity = s.verbosity;
     bVarStepSize = s.bVarStepSize;
     bSimpleIntegration = s.bSimpleIntegration;
-    bIsClean = s.bIsClean;
     absTol = s.absTol;
     relTol = s.relTol;
     dtGuess = s.dtGuess;

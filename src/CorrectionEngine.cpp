@@ -79,7 +79,6 @@ void CorrectionEngine::copyMe(const CorrectionEngine &e){
 	bFindEvent = e.bFindEvent;//
 	bIgnoreCrash = e.bIgnoreCrash;//
 	bIgnoreDiverge = e.bIgnoreDiverge;
-	bIsClean = e.bIsClean;
 }//====================================================
 
 //-----------------------------------------------------

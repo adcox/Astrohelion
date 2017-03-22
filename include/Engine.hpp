@@ -80,6 +80,7 @@ protected:
 	 */
 	void copyBaseEngine(const Engine &e){
 		verbosity = e.verbosity;
+		bIsClean = e.bIsClean;
 	}//================================================
 
 	/**

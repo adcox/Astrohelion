@@ -460,8 +460,9 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
     if(bMakeDefaultEvents)
         createDefaultEvents(traj->getSysData());
 
-    EOM_ParamStruct paramStruct(traj->getSysData(), ctrlLawID);
-    eomParams = &paramStruct;
+    // EOM_ParamStruct paramStruct(traj->getSysData(), ctrlLawID);
+    // eomParams = &paramStruct;
+    eomParams = new EOM_ParamStruct(traj->getSysData(), ctrlLawID);
 
     // Run the simulation
     bIsClean = false;   // Technically, nothing has changed yet, but this flag should be false even if any part of integrate throws an exception
@@ -815,7 +816,8 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
  */
 void SimEngine::cleanEngine(){
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
-    eomParams = 0;  // set pointer to 0 (null pointer)
+    delete eomParams;
+    eomParams = nullptr;  // set pointer to 0 (null pointer)
     eventOccurs.clear();
 
     for(unsigned int e = 0; e < events.size(); e++){
@@ -880,7 +882,8 @@ void SimEngine::clearEvents(){
  */
 void SimEngine::copyMe(const SimEngine &s){
     Engine::copyBaseEngine(s);
-    eomParams = 0;  // void*, will get set again by the runSim() method
+    delete eomParams;
+    eomParams = nullptr;  // Will get set again by the runSim() method
     bRevTime = s.bRevTime;
     verbosity = s.verbosity;
     bVarStepSize = s.bVarStepSize;

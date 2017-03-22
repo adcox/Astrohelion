@@ -209,8 +209,8 @@ class SimEngine : public Core, public Engine{
 		 */
 		std::vector<SimEventRecord> eventOccurs {};
 		
-		/** a void pointer to some data object that contains data for the EOM function */
-		EOM_ParamStruct *eomParams = 0;
+		/** a pointer to a data structure with parameters for the EOM function */
+		EOM_ParamStruct *eomParams = nullptr;
 
 		/** Whether or not to run the simulation in reverse time */
 		bool bRevTime = false;

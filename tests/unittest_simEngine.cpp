@@ -30,6 +30,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_Stop){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	SimEngine engine;
+	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Traj_cr3bp traj(&sys);
 	engine.addEvent(Event(Event_tp::XZ_PLANE, 0, true));
 	// engine.setRevTime(true);

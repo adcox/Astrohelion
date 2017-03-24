@@ -176,7 +176,7 @@ void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj
  *  \param t0 non-dimensional time at the beginning of the search arc
  *  \param tof the time-of-flight for the arc to search over
  *  \param params structure containing parameters required by the EOMs
- *  \param verbose whether or not we should be verbose with output messages
+ *  \param verbose how we should be verbose with output messages
  *
  *  \return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
@@ -199,7 +199,7 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     eventNodeset.addConstraint(fixFirstCon);
     eventNodeset.addConstraint(eventCon);
 
-    if(verbose == Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
+    if(verbose >= Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
 
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
     CorrectionEngine corrector;

@@ -254,9 +254,9 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 	it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
 	it.bEqualArcTime = bEqualArcTime;
 	
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the nodeset
 	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
@@ -388,11 +388,11 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 	// Save the initial free variable vector
 	it.X0 = it.X;
 
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
 
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
-	if(verbosity == Verbosity_tp::ALL_MSG){
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "ALL CONSTRAINTS:\n\n");
+	if(verbosity >= Verbosity_tp::ALL_MSG){
 		for(unsigned int n = 0; n < it.allCons.size(); n++){
 			it.allCons[n].print();
 		}
@@ -508,7 +508,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
 		double err_cons = FX.norm();
 
-		if(verbosity == Verbosity_tp::ALL_MSG)
+		if(verbosity >= Verbosity_tp::ALL_MSG)
 			reportConMags(&it);
 
 		// Compute error: difference between subsequent free variable vectors
@@ -522,7 +522,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		std::string errType = "||F||";
 
 		it.count++;
-		astrohelion::printVerbColor((bFindEvent && verbosity == Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.8e (%s)\n",
+		astrohelion::printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.8e (%s)\n",
 			it.count, err, errType.c_str());
 	}// end of corrections loop
 
@@ -686,7 +686,7 @@ void CorrectionEngine::reportConMags(const MultShootData *pIt){
  *	\brief clean up data so that engine can be used again (or deconstructed safely)
  */
 void CorrectionEngine::cleanEngine(){
-	astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
 	bIsClean = true;
 }//====================================================
 

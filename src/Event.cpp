@@ -67,6 +67,9 @@ Event::Event(){}
  */
 void Event::createEvent(Event_tp t, int dir, bool willStop){
 	switch(t){
+		case Event_tp::SIM_TOF:
+		case Event_tp::SIM_COMPTIME:
+		case Event_tp::SIM_ERR:
 		case Event_tp::YZ_PLANE:
 		case Event_tp::XZ_PLANE:
 		case Event_tp::XY_PLANE:
@@ -158,6 +161,10 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 
 	// Determine the type of constraint that will be needed to detect this event
 	switch(type){
+		case Event_tp::SIM_TOF:
+		case Event_tp::SIM_COMPTIME:
+		case Event_tp::SIM_ERR:
+			break;	// leave the default: conType = Constraint_tp::NONE;
 		case Event_tp::YZ_PLANE:
 		case Event_tp::XZ_PLANE:
 		case Event_tp::XY_PLANE:
@@ -289,14 +296,6 @@ bool operator ==(const Event &lhs, const Event &rhs){
 		lhs.bStop == rhs.bStop &&
 		lhs.paramsIn == rhs.paramsIn;
 
-	// if(lhs.paramsIn.size() == rhs.paramsIn.size()){
-	// 	for(unsigned int i = 0; i < lhs.paramsIn.size(); i++){
-	// 		same = same && lhs.paramsIn[i] == rhs.paramsIn[i];
-	// 	}	
-	// }else{
-	// 	same = false;
-	// }
-
 	return same;
 }//====================================================
 
@@ -334,6 +333,9 @@ Event_tp Event::getType() const { return type; }
 const char* Event::getTypeStr() const{
 	switch(type){
 		case Event_tp::NONE: return "NONE"; break;
+		case Event_tp::SIM_TOF: return "SimEngine Time-of-Flight"; break;
+		case Event_tp::SIM_COMPTIME: return "SimEngine Computation Timeout"; break;
+		case Event_tp::SIM_ERR: return "SimEngine Error"; break;
 		case Event_tp::YZ_PLANE: return "yz-plane"; break;
 		case Event_tp::XZ_PLANE: return "xz-plane"; break;
 		case Event_tp::XY_PLANE: return "xy-plane"; break;
@@ -484,6 +486,11 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 
 	double d = 0;
 	switch(type){
+		case Event_tp::SIM_TOF:
+		case Event_tp::SIM_COMPTIME:
+		case Event_tp::SIM_ERR:
+			d = 1;	// Will never use event location to find these events; they are monitored by the simEngine individually
+			break;
 		case Event_tp::YZ_PLANE:
 			if(len > 0){
 				d = conData[0] - y[0];
@@ -586,6 +593,11 @@ int Event::getDir(const double *y, unsigned int len, double t) const{
 
 	// Compute distance from old point (state) to new point (y)
 	switch(type){
+		case Event_tp::SIM_TOF:
+		case Event_tp::SIM_COMPTIME:
+		case Event_tp::SIM_ERR:
+			d = 1;	// Will never use event location to find these events; they are monitored by the simEngine individually
+			break;
 		case Event_tp::YZ_PLANE:
 			if(len > 0){
 				d = y[0] - state[0];

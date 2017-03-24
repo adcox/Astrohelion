@@ -62,7 +62,7 @@ namespace astrohelion{
  *  \brief Construct a simulation engine for a specific dynamical system
  */
 SimEngine::SimEngine(){
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
 }//===========================================
 
 /**
@@ -77,7 +77,7 @@ SimEngine::SimEngine(const SimEngine& s){
  *  \brief Default destructor
  */
 SimEngine::~SimEngine(){
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
 }//===========================================
 
 //-----------------------------------------------------
@@ -172,18 +172,21 @@ std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
 /**
  *  \brief Add an event for this integration
  *  \param evt an event
+ *  \return the index of the event within the events vector; returns -1 
+ *  if the event is a duplicate and has not been added to the vector.
  */
-void SimEngine::addEvent(Event evt){
+int SimEngine::addEvent(Event evt){
     // Make sure this event hasn't been added before
     for(unsigned int e = 0; e < events.size(); e++){
         if(events[e] == evt){
             printErr("SimEngine::addEvent: Event has already been added to the engine; ignoring this new event\n");
-            return;
+            return -1;
         }
     }
 
     // New event? Great, save it to the list
     events.push_back(evt);
+    return events.size()-1;
 }//======================================
 
 /**
@@ -397,8 +400,8 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
 
     if(bVarStepSize){
         t_span.reserve(2);
@@ -422,8 +425,8 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
 
     if(bVarStepSize){
         t_span.reserve(2);
@@ -452,7 +455,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
  *  \param traj pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Traj *traj){
-    astrohelion::printVerbColor(verbosity == Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
+    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
     }
@@ -492,6 +495,26 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
  *  \throws DivergeException if the integrator fails and cannot proceed
  */
 void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int t_dim, Traj *traj){
+    // delete any auto-generated events from previous integrations
+    for(unsigned int i = 0; i < events.size(); i++){
+        if(static_cast<int>(events[i].getType()) <= 0){
+            events.erase(events.begin() + i);
+            i--;
+        }
+    }
+
+    // Create event that will indicate the propagation ended at a specified time-of-flight
+    Event event_tof(Event_tp::SIM_TOF, 0, false);
+    int event_tof_ix = addEvent(event_tof);
+
+    // Create event that will indicate the propagation ended due to a maximum computational time limit
+    // Only add the event to the list if a maxCompTime limit has been specified
+    Event event_comp(Event_tp::SIM_COMPTIME, 0, false);
+    int event_comp_ix = -1;
+    if(maxCompTime > 0){
+        event_comp_ix = addEvent(event_comp);
+    }
+
     startTimestamp = time(nullptr);
 
     // Save tolerance for trajectory
@@ -506,7 +529,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     // Get the dimension of the state vector for integration
     unsigned int core = model->getCoreStateSize();
     unsigned int ic_dim = core + (!bSimpleIntegration)*(core*core + model->getExtraStateSize());
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
@@ -552,7 +575,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     gsl_odeiv2_driver *d = NULL;
 
     if(bVarStepSize){
-        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
+        astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
         
         // Allocate space for the stepping object
         switch(varStep_integ){
@@ -572,7 +595,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
-        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
+        astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         
         double signed_dt = bRevTime ? -1*dtGuess : dtGuess;
 
@@ -594,9 +617,9 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     model->sim_saveIntegratedData(y, t[0], traj, eomParams);
 
     // Update all event functions with IC
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
+    astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
     for(unsigned int ev = 0; ev < events.size(); ev++){
-        astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "  >>%s\n", events.at(ev).getTypeStr());
+        astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  [%02u] - %s\n", ev, events.at(ev).getTypeStr());
         events.at(ev).updateDist(y, core, t[0]);
     }
 
@@ -617,8 +640,16 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
             }
 
             if(status != GSL_SUCCESS){
-                astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                if(verbosity >= Verbosity_tp::SOME_MSG)
+                    astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
                 free_odeiv2(s, c, e, d);
+
+                // Create event and record that will indicate propagation ended with an error
+                Event event_err(Event_tp::SIM_ERR, 0, false);
+                int event_err_ix = addEvent(event_err);
+                SimEventRecord rec(event_err_ix, traj->getNumNodes() - 1);
+                eventOccurs.push_back(rec);
+
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
 
@@ -651,8 +682,16 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 }
 
                 if(status != GSL_SUCCESS){
-                    astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                    if(verbosity >= Verbosity_tp::SOME_MSG)
+                        astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
                     free_odeiv2(s, c, e, d);
+
+                    // Create event and record that will indicate propagation ended with an error
+                    Event event_err(Event_tp::SIM_ERR, 0, false);
+                    int event_err_ix = addEvent(event_err);
+                    SimEventRecord rec(event_err_ix, traj->getNumNodes() - 1);
+                    eventOccurs.push_back(rec);
+
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }
 
@@ -671,21 +710,26 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     }
 
     // Clean Up - some have been allocated, some have not
-    // if(bVarStepSize){
-    //     gsl_odeiv2_evolve_free(e);
-    //     gsl_odeiv2_control_free(c);
-    // }else{
-    //     gsl_odeiv2_driver_free(d);
-    // }
-    // gsl_odeiv2_step_free(s);
     free_odeiv2(s, c, e, d);
+
+    // Trigger events that may have ended the propagation (other than default or user-defined events)
+    if(!killSim){
+        // Ended at the desired TOF
+        SimEventRecord rec(event_tof_ix, traj->getNumNodes() - 1);
+        eventOccurs.push_back(rec);
+
+    }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
+        // Ended at the time-out
+        SimEventRecord rec(event_comp_ix, traj->getNumNodes() - 1);
+        eventOccurs.push_back(rec);
+    }
 
     // Check lengths of vectors and set the numPoints value in traj
     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
 
     // Summarize event occurrences
     for(unsigned int i = 0; i < eventOccurs.size(); i++){
-        astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
+        astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
             events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
 }//====================================================END of cr3bp_integrate
@@ -745,12 +789,13 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
     // Look through all events
     for(unsigned int ev = 0; ev < events.size(); ev++){
         // Don't trigger if only two points have been integrated
-        if(events.at(ev).crossedEvent(y, core, t) && numPts > 1){
+        // Also don't trigger if the type is 0 or negative: these are managed by the simulation engine
+        if(numPts > 1 && static_cast<int>(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core, t)){
 
             astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
-            events.at(ev).incrementCount();  // Update the counter for the event
+            events[ev].incrementCount();  // Update the counter for the event
 
-            if(verbosity == Verbosity_tp::ALL_MSG){ events.at(ev).printStatus(); }
+            if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrating forwards for half the time between this state and the last one
@@ -762,7 +807,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
             // numerical problems when the previous state is REALLY close to the event
             std::vector<double> generalIC = traj->getStateByIx(-2);
 
-            if(verbosity == Verbosity_tp::ALL_MSG){
+            if(verbosity >= Verbosity_tp::ALL_MSG){
                 astrohelion::printColor(BLUE, "Step index = %d\n", numPts-1);
                 astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
                     traj->getTimeByIx(-1), traj->getTimeByIx(-2));
@@ -774,7 +819,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events.at(ev), traj, &(generalIC[0]), t0, tof, eomParams, verbosity)){
+            if(model->sim_locateEvent(events[ev], traj, &(generalIC[0]), t0, tof, eomParams, verbosity)){
                 // Remember that this event has occured; step # is one less than the current size
                 // of the trajectory
                 int timeSize = traj->getNumNodes();
@@ -784,23 +829,25 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                 // Update event state
                 std::vector<double> state = traj->getStateByIx(-1);
                 double lastT = traj->getTimeByIx(-1);
-                events.at(ev).updateDist(&(state[0]), core, lastT);
+                events[ev].updateDist(&(state[0]), core, lastT);
                 
-                if(events.at(ev).stopOnEvent() && events.at(ev).getTriggerCount() >= events.at(ev).getStopCount()){
+                if(events[ev].stopOnEvent() && events[ev].getTriggerCount() >= events[ev].getStopCount()){
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
                     // the point from mult. shooting as the last
                     return true;    // Tell the simulation to stop
                 }else{
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
-                    events.at(ev).updateDist(y, core, t); // Remember the most recent point
+                    events[ev].updateDist(y, core, t); // Remember the most recent point
                     return false;
                 }
             }
         }// end of If(hasCrossed)
 
-        // Save the distance and current state to the event
-        events.at(ev).updateDist(y, core, t);
+        if(static_cast<int>(events[ev].getType()) > 0){
+            // Save the distance and current state to the event
+            events[ev].updateDist(y, core, t);
+        }
     }// end of loop
 
     return false;
@@ -870,7 +917,7 @@ void SimEngine::reset(){
  *  Clear all events from the simulation, including any created by default.
  */
 void SimEngine::clearEvents(){
-    astrohelion::printVerb(verbosity == Verbosity_tp::ALL_MSG, "Clearing all events...\n");
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Clearing all events...\n");
     events.clear();
     bMadeDefaultEvents = false;
 }//====================================================

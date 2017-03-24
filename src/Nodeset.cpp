@@ -526,7 +526,6 @@ void Nodeset::initFromICs(std::vector<double> IC, double t0, double tof, int num
  */
 void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, int numNodes, unsigned int ctrlLawID){
 	SimEngine engine;
-	engine.setVerbosity(Verbosity_tp::SOME_MSG);
 	engine.setMakeDefaultEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 	engine.setCtrlLaw(ctrlLawID);
@@ -559,7 +558,6 @@ void Nodeset::initFromICs_time(std::vector<double> IC, double t0, double tof, in
  */
 void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double tof, int numNodes, unsigned int ctrlLawID){
 	SimEngine engine;
-	engine.setVerbosity(Verbosity_tp::SOME_MSG);
 	engine.setMakeDefaultEvents(false);	// Don't use default crash events to avoid infinite loop
 	engine.setRevTime(tof < 0);
 	engine.setCtrlLaw(ctrlLawID);

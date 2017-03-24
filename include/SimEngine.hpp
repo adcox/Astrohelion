@@ -44,11 +44,6 @@ namespace astrohelion{
 // Forward declarations
 class SysData;
 
-// struct gsl_odeiv2_step;
-// struct gsl_odeiv2_control;
-// struct gsl_odeiv2_evolve;
-// struct gsl_odeiv2_driver;
-
 /**
  *	\brief A small structure to store event occurrence records
  */
@@ -156,7 +151,7 @@ class SimEngine : public Core, public Engine{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		void addEvent(Event);
+		int addEvent(Event);
 		double getAbsTol() const;
 		unsigned int getCtrlLaw() const;
 		std::vector<Event> getEndEvents(Traj*) const;

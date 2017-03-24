@@ -294,17 +294,33 @@ protected:
 	unsigned int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 
 	/** A vector containing the all the types of constraints this model supports */
-	std::vector<Constraint_tp> allowedCons {Constraint_tp::NONE, Constraint_tp::STATE,
-		Constraint_tp::MATCH_ALL, Constraint_tp::MATCH_CUST,
-		Constraint_tp::DIST, Constraint_tp::MIN_DIST, Constraint_tp::MAX_DIST,
-		Constraint_tp::MAX_DELTA_V, Constraint_tp::DELTA_V,
-		Constraint_tp::TOF, Constraint_tp::APSE,
-		Constraint_tp::CONT_PV, Constraint_tp::CONT_EX,
-		Constraint_tp::SEG_CONT_PV, Constraint_tp::SEG_CONT_EX};
+	std::vector<Constraint_tp> allowedCons {Constraint_tp::NONE,
+		Constraint_tp::STATE,
+		Constraint_tp::MATCH_ALL,
+		Constraint_tp::MATCH_CUST,
+		Constraint_tp::DIST,
+		Constraint_tp::MIN_DIST,
+		Constraint_tp::MAX_DIST,
+		Constraint_tp::MAX_DELTA_V,
+		Constraint_tp::DELTA_V,
+		Constraint_tp::TOF,
+		Constraint_tp::APSE,
+		Constraint_tp::CONT_PV,
+		Constraint_tp::CONT_EX,
+		Constraint_tp::SEG_CONT_PV,
+		Constraint_tp::SEG_CONT_EX};
 
 	/** A vector containing all the types of events this model supports */
-	std::vector<Event_tp> allowedEvents {Event_tp::NONE, Event_tp::XY_PLANE, Event_tp::XZ_PLANE,
-		Event_tp::YZ_PLANE, Event_tp::CRASH, Event_tp::APSE, Event_tp::DIST};
+	std::vector<Event_tp> allowedEvents {Event_tp::NONE,
+		Event_tp::SIM_TOF,
+		Event_tp::SIM_COMPTIME,
+		Event_tp::SIM_ERR,
+		Event_tp::XY_PLANE,
+		Event_tp::XZ_PLANE,
+		Event_tp::YZ_PLANE,
+		Event_tp::CRASH,
+		Event_tp::APSE,
+		Event_tp::DIST};
 
 	void copyMe(const DynamicsModel&);
 

@@ -27,6 +27,8 @@
 #endif
 
 #include "Core.hpp"
+#include "Exceptions.hpp"
+#include "Utilities.hpp"
 
 namespace fs = boost::filesystem;	// shortened for readability
 
@@ -45,7 +47,7 @@ namespace astrohelion{
 static char SPICE_ERR_ACTION[] = "return";
 
 /** The type of message type SPICE should return to us */
-static char SPICE_ERR_MSG_TYPE[] = "short,traceback";
+static char SPICE_ERR_MSG_TYPE[] = "traceback";		// other options: "short" or "none"
 
 
 //-----------------------------------------------------
@@ -234,7 +236,11 @@ void Core_Initializer::runInit(){
 	    sprintf(deKernel, "%s%s", spice_path.c_str(), spk_kernel.c_str());
 
 	    furnsh_c(timeKernel);
+	    checkAndReThrowSpiceErr("Core_Initializer::runInit furnsh_c error");
+
 	    furnsh_c(deKernel);
+	    checkAndReThrowSpiceErr("Core_Initializer::runInit furnsh_c error");
+
 	}catch(std::exception &e){}
 
 	// ************************************************************************
@@ -336,13 +342,10 @@ Core_Initializer::~Core_Initializer(){
 			// std::cout << "  (" << i << ") unloading " << file << std::endl;
 			unload_c(file);
 
-			if(failed_c()){
-		        char errMsg[26];
-		        getmsg_c("short", 25, errMsg);
-		        std::cout << "Spice Error: " << errMsg << std::endl;
-		        reset_c();  // reset error status
-		        // throw Exception("Could not unload SPICE time kernel");
-		    }
+			// Check for errors and report them, but catch the thrown exception
+			try{
+				checkAndReThrowSpiceErr("Core_Initializer::~Core_Initializer unload_c error");
+			}catch(Exception &e){}
 		}
 	}
 }//================================================

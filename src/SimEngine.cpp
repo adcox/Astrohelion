@@ -627,7 +627,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     bool killSim = false;   // flag to stop simulation
 
     if(t_dim == 2){
-        double t0 = t[0], tf = t[1];                // start and finish times for integration
+        double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
         double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
         int sgn = tf > t0 ? 1 : -1;
 
@@ -640,8 +640,10 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
             }
 
             if(status != GSL_SUCCESS){
-                if(verbosity >= Verbosity_tp::SOME_MSG)
+                if(verbosity >= Verbosity_tp::SOME_MSG){
                     astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                }
+
                 free_odeiv2(s, c, e, d);
 
                 // Create event and record that will indicate propagation ended with an error
@@ -649,6 +651,9 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 int event_err_ix = addEvent(event_err);
                 SimEventRecord rec(event_err_ix, traj->getNumNodes() - 1);
                 eventOccurs.push_back(rec);
+
+                // Save the last successful step the integrator was able to take
+                model->sim_saveIntegratedData(y, t0, traj, eomParams);
 
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
@@ -682,8 +687,10 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 }
 
                 if(status != GSL_SUCCESS){
-                    if(verbosity >= Verbosity_tp::SOME_MSG)
+                    if(verbosity >= Verbosity_tp::SOME_MSG){
                         astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                    }
+                    
                     free_odeiv2(s, c, e, d);
 
                     // Create event and record that will indicate propagation ended with an error
@@ -691,6 +698,9 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     int event_err_ix = addEvent(event_err);
                     SimEventRecord rec(event_err_ix, traj->getNumNodes() - 1);
                     eventOccurs.push_back(rec);
+
+                    // Save the last successful step the integrator was able to take
+                    model->sim_saveIntegratedData(y, t0, traj, eomParams);
 
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }

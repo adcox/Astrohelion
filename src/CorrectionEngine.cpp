@@ -185,15 +185,14 @@ void CorrectionEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
 void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
- *  \brief Set the step size scalar and the limiting tolerance
- *  \details [long description]
+ *  \brief Set the attenuation scalar and the limiting tolerance
  * 
- *  \param scale [description]
- *  \param limit [description]
+ *  \param scale Scale the multiple shooting step by this value (multiply)
+ *  \param limit Do not scale step if corrector error is below this value
  */
-void CorrectionEngine::setStepScale(double scale, double limit){
-	stepScale = scale;
-	stepScaleLimitTol = limit;
+void CorrectionEngine::setAttenuation(double scale, double limit){
+	attenuation = scale;
+	attenuationLimitTol = limit;
 }//====================================================
 
 /**
@@ -419,7 +418,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 
 	// create a simulation engine
 	SimEngine simEngine;
-	simEngine.setVerbosity(verbosity);
+	simEngine.setVerbosity(static_cast<Verbosity_tp>(static_cast<int>(verbosity) - 1));
 	
 	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
 	double simTol = tol/1000 < 1e-15 ? 1e-15 : tol/1000;
@@ -466,7 +465,13 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 			// }
 			simEngine.setCtrlLaw(it.nodeset->getSegByIx(s).getCtrlLaw());
 
-			simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
+			try{
+				simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
+			}catch(DivergeException &e){
+				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
+			}catch(Exception &e){
+				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error:\n%s\nEnding corrections.\n", e.what());
+			}
 			// if(verbosity >= Verbosity_tp::DEBUG){
 			// 	it.propSegs[s].print();
 			// }
@@ -659,7 +664,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 		}
 	}
 
-	double scale = FX.norm() < stepScaleLimitTol ? 1.0 : stepScale;
+	double scale = FX.norm() < attenuationLimitTol ? 1.0 : attenuation;
 	return oldX + scale*X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
 

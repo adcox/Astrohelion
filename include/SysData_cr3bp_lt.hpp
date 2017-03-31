@@ -62,14 +62,13 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		
 		double getIsp() const;
 		double getThrust() const;
+		double getThrust_dim() const;
 		double getMass() const;
 
 		void setIsp(double);
-		void setIspDim(double);
 		void setMass(double);
-		void setMassDim(double);
 		void setThrust(double);
-		void setThrustDim(double);
+		void setThrust_dim(double);
 		//\}
 		
 		void saveToMat(const char*) const override;

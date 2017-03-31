@@ -144,7 +144,7 @@ void ControlLaw_cr3bp_lt::getLaw_ConstC_2D(double t, const double *s, const SysD
 	if(len < 3)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
 
-	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+	double v = sqrt(s[3]*s[3] + s[4]*s[4]);
 	law[0] = sign*s[4]/v;
 	law[1] = -sign*s[3]/v;
 	law[2] = 0;

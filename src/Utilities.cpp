@@ -403,7 +403,8 @@ std::string getNameFromSpiceID(int ID){
     SpiceBoolean found = false;
 
     bodc2n_c(code, lenout, name, &found);
-
+    checkAndReThrowSpiceErr("getNameFromSpiceID error");
+    
     if(!found){
         return "BODY NOT FOUND";
     }
@@ -427,6 +428,7 @@ SpiceInt getSpiceIDFromName(const char *name){
     SpiceBoolean found = false;
 
     bodn2c_c(name_spice, &code, &found);
+    checkAndReThrowSpiceErr("getSpiceIDFromName error");
 
     if(!found)
         throw Exception("Utilities::getSpiceIDFromName: Could not find a body name from that SPICE ID");

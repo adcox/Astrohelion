@@ -258,18 +258,37 @@ BOOST_AUTO_TEST_SUITE(EdgeCases)
 BOOST_AUTO_TEST_CASE(DataPreserved){
 	SysData_cr3bp sys("sun", "earth");
 
-	double newIC[] = {1.0065, 0, 0, 3.19189119579733e-16, 0.0158375372644023, 0};
+	double ic[] = {1.0065, 0, 0, 3.19189119579733e-16, 0.0158375372644023, 0};
 
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	
 	// GSL should crash
 	Traj_cr3bp traj(&sys);
-	BOOST_CHECK_THROW(sim.runSim(newIC, 6*PI*400, &traj), Exception);
+	BOOST_CHECK_THROW(sim.runSim(ic, 6*PI*400, &traj), Exception);
 
 	// But some data should still be written to traj
 	BOOST_CHECK(traj.getNumNodes() > 10);
 	BOOST_CHECK(traj.getNumSegs() > 9);
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(DataPreserved_fixedStep){
+	SysData_cr3bp sys("sun", "earth");
+
+	double ic[] = {1.0065, 0, 0, 3.19189119579733e-16, 0.0158375372644023, 0};
+
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.setVarStepSize(false);
+	sim.setNumSteps(2);
+
+	// GSL should crash
+	Traj_cr3bp traj(&sys);
+	BOOST_CHECK_THROW(sim.runSim(ic, 6*PI*400, &traj), Exception);
+
+	// But some data should still be written to traj
+	BOOST_CHECK(traj.getNumNodes() > 1);
+	BOOST_CHECK(traj.getNumSegs() > 0);
 }//====================================================
 
 /**

@@ -170,8 +170,9 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
  *  solution between segments, so the events are defined in the dynamical system
  *  associated with the nodeset.
  * 
- *  \param priorNodeIx Index of the node prior to this one; new nodes will be 
- *  inserted after this node.
+ *  \param segID the ID of the segment to add nodes to; this segment will be deleted and
+ *  replaced by a series of smaller segments (and nodes) if one or more of the input
+ *  events occurs
  *  \param evt the event that identifies the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If the event does not occur,
  *  no nodes are inserted
@@ -180,9 +181,9 @@ Nodeset& Nodeset::operator +=(const Nodeset &rhs){
  * 
  *  \return the number of nodes created and inserted into the nodeset.
  */
-int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
+int Nodeset::createNodesAtEvent(int segID, Event evt, double minTimeDiff){
 	std::vector<Event> events(1, evt);
-	return createNodesAtEvents(priorNodeIx, events, minTimeDiff);
+	return createNodesAtEvents(segID, events, minTimeDiff);
 }//====================================================
 
 /**
@@ -199,7 +200,7 @@ int Nodeset::createNodesAtEvent(int priorNodeIx, Event evt, double minTimeDiff){
  *  replaced by a series of smaller segments (and nodes) if one or more of the input
  *  events occurs
  *  \param evts a vector of events that identify the node locations. If multiple occurences
- *  are located, multiple nodes will be inserted. If nond of the events occur,
+ *  are located, multiple nodes will be inserted. If none of the events occur,
  *  no nodes are inserted
  *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)

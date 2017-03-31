@@ -95,6 +95,7 @@ double dateToEphemerisTime(const char *pDate){
     // Convert the date to ephemeris time
     double et = 0;
     str2et_c(pDate, &et);
+    checkAndReThrowSpiceErr("dateToEphemerisTime error");
 
     return et;
 }//==========================================
@@ -1809,6 +1810,8 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
 
     // Locate P2 relative to P1 at the specified time
     spkezr_c(targ, epoch0 + t*pSys->getCharT(), ref, abcorr, obs, p2State, &lt);
+    checkAndReThrowSpiceErr("cr3bp_rot2inert_state error");
+    
     std::copy(p2State, p2State+3, r_p2);
     std::copy(p2State+3, p2State+6, v_p2);
 

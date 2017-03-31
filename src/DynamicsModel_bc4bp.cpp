@@ -1793,7 +1793,7 @@ void DynamicsModel_bc4bp::getPrimaryAccel(double t, const SysData_bc4bp *sysData
 }//=====================================================================
 
 /**
- *  \brief Orient a BCR4BPR system so that T = 0 corresponds to the specified epoch time
+ *  \brief Orient a Sun-Earth-Moon BCR4BPR system so that T = 0 corresponds to the specified epoch time
  *  
  *  \param et epoch time (seconds, J2000, UTC)
  *  \param sysData pointer to system data object; A new theta0 and phi0 will be stored
@@ -1817,7 +1817,10 @@ void DynamicsModel_bc4bp::orientAtEpoch(double et, SysData_bc4bp *sysData){
 
         // Get ephemeris states for Sun and Moon relative to EMB in inertial, Ecliptic J2000 coordinates
         spkezr_c("MOON", t, "ECLIPJ2000", "NONE", "EMB", moonState, &lt);
+        checkAndReThrowSpiceErr("DynamicsModel_bc4bp::orientAtEpoch error");
+
         spkezr_c("SUN", t, "ECLIPJ2000", "NONE", "EMB", sunState, &lt);
+        checkAndReThrowSpiceErr("DynamicsModel_bc4bp::orientAtEpoch error");
 
         // Compute the angle between the Sun-EMB line and the inertial x-axis (shift by 90 because my alignment is with the y-axis)
         double spice_theta = atan2(-sunState[1], -sunState[0]) + PI/2; 

@@ -105,10 +105,18 @@ const DynamicsModel* SysData_cr3bp_lt::getDynamicsModel() const { return &model;
 const ControlLaw* SysData_cr3bp_lt::getControlLaw() const { return &control; }
 
 /**
- *	\brief Get the nondimensional thrust for P3 in this system
+ *	\brief Get the nondimensional spacecraft thrust
  *	\return the thrust, nondimensional (nondimensionalized in mass by spacecraft reference mass) 
  */
 double SysData_cr3bp_lt::getThrust() const { return otherParams[1]; }
+
+/**
+ *  \brief Get the dimensional spacecraft thrust (Newtons)
+ *  \return the dimensional spacecraft thrust (Newtons)
+ */
+double SysData_cr3bp_lt::getThrust_dim() const{
+	return otherParams[1]*otherParams[3]*charL/charT/charT*1000;
+}//====================================================
 
 /**
  *	\brief Get the specific impulse for P3 in this system
@@ -123,10 +131,20 @@ double SysData_cr3bp_lt::getIsp() const { return otherParams[2]; }
 double SysData_cr3bp_lt::getMass() const { return otherParams[3]; }
 
 /**
- *	\brief Set the thrust for P3 for this system
- *	\param d the thrust, non-dimensional units (nondimensionalized in mass by spacecraft reference mass)
+ *	\brief Set the spacecraft thrust
+ *	\param f the thrust, non-dimensional units (nondimensionalized in mass by spacecraft reference mass)
  */
-void SysData_cr3bp_lt::setThrust(double d){ otherParams[1] = d; }
+void SysData_cr3bp_lt::setThrust(double f){ otherParams[1] = f;}
+
+/**
+ *  \brief Set the spacecraft thrust
+ *  \details [long description]
+ * 
+ *  \param F the Thrust, in Newtons
+ */
+void SysData_cr3bp_lt::setThrust_dim(double F){
+	otherParams[1] = (F/1000)*charT*charT/charL/otherParams[3];		// thrust, non-dimensionalized
+}//====================================================
 
 /**
  *	\brief Set the specific impulse for P3 for this system
@@ -138,7 +156,14 @@ void SysData_cr3bp_lt::setIsp(double d){ otherParams[2] = d; }
  *	\brief Set the reference mass for P3
  *	\param d the mass, kg
  */
-void SysData_cr3bp_lt::setMass(double d){ otherParams[3] = d; }
+void SysData_cr3bp_lt::setMass(double d){
+	// Changing the reference mass affects the nondimensional thrust value
+	double thrust_dim = getThrust_dim();
+	// Update the mass value
+	otherParams[3] = d;
+	// Once mass has been updated, set the thrust again
+	setThrust_dim(thrust_dim);
+}//====================================================
 
 /**
  *  \brief Save the system data to a matlab file

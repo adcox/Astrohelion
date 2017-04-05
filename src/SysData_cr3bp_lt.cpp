@@ -205,18 +205,18 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
 	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 
-	// Save thrust in nondimensional units
-	double T = otherParams[1];//*1000*charL*otherParams[3]/charT/charT;
+	// Save thrust in dimensional units
+	double T = getThrust_dim();
 	matvar_t *thrust_var = Mat_VarCreate("Thrust", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &T, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, thrust_var, "Thrust", MAT_COMPRESSION_NONE);
 
 	// Save Isp in dimensional units
-	double I = otherParams[2];
+	double I = getIsp();
 	matvar_t *imp_var = Mat_VarCreate("Isp", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &I, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, imp_var, "Isp", MAT_COMPRESSION_NONE);
 
 	// Save mass in dimensional units
-	double m = otherParams[3];
+	double m = getMass();
 	matvar_t *mass_var = Mat_VarCreate("Mass0", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &m, MAT_F_DONT_COPY_DATA);
 	astrohelion::saveVar(matFile, mass_var, "Mass0", MAT_COMPRESSION_NONE);
 }//===================================================
@@ -233,9 +233,9 @@ void SysData_cr3bp_lt::readFromMat(mat_t *matFile){
 	type = SysData_tp::CR3BP_LT_SYS;
 	otherParams.assign(4,0);
 	initFromPrimNames(P1, P2);
-	otherParams[1] = astrohelion::readDoubleFromMat(matFile, "Thrust");
-	otherParams[2] = astrohelion::readDoubleFromMat(matFile, "Isp");
-	otherParams[3] = astrohelion::readDoubleFromMat(matFile, "Mass0");
+	setThrust_dim(astrohelion::readDoubleFromMat(matFile, "Thrust"));
+	setIsp(astrohelion::readDoubleFromMat(matFile, "Isp"));
+	setMass(astrohelion::readDoubleFromMat(matFile, "Mass0"));
 }//===================================================
 
 

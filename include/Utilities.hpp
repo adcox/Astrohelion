@@ -341,6 +341,7 @@ namespace astrohelion{
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 	void toCSV(MatrixXRd, const char*);
+	bool fileExists (const char*);
 	//\}
 	
 	double resolveAngle(double, double);

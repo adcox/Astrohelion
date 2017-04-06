@@ -213,10 +213,12 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
     try{
         corrector.multShoot(&eventNodeset, &correctedNodes);
     }catch(DivergeException &e){
-        astrohelion::printErr("Unable to locate event; corrector diverged\n");
+        if(verbose >= Verbosity_tp::SOME_MSG)
+            astrohelion::printErr("Unable to locate event; corrector diverged\n");
         return false;
     }catch(LinAlgException &e){
-        astrohelion::printErr("LinAlg Err while locating event; bug in corrector!\n");
+        if(verbose >= Verbosity_tp::SOME_MSG)
+            astrohelion::printErr("LinAlg Err while locating event; bug in corrector!\n");
         return false;
     }
 

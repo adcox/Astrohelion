@@ -27,17 +27,18 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AsciiOutput.hpp"
-#include "Exceptions.hpp"
-#include "Utilities.hpp"
-
-#include "cspice/SpiceZfc.h"    // prototypes for functions
-#include "matio.h"
-
 #include <complex>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <sys/stat.h>
+
+#include "cspice/SpiceZfc.h"    // prototypes for functions
+#include "matio.h"
+
+#include "AsciiOutput.hpp"
+#include "Exceptions.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
@@ -534,7 +535,12 @@ double boundValue(double val, double min, double max){
         return max;
 
     return val;
-}//=============================================
+}//====================================================
+
+bool fileExists (const char *filename) {
+    struct stat buffer;   
+    return (stat (filename, &buffer) == 0); 
+}//====================================================
 
 /** \} */ // END of util group
 } // End of astrohelion namespace

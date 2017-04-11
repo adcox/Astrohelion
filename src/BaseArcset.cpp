@@ -218,23 +218,23 @@ int BaseArcset::addSeg(Segment s){
 							bool sameTimeDir = nearSeg->getTOF()*s.getTOF() > 0;
 
 							if(sameLinkType && i == Segment::TERM_IX){
-								print();
-								astrohelion::printErr("Adding segment (ID %d) O: %d, T: %d\n", s.getID(), s.getOrigin(), s.getTerminus());
-								astrohelion::printErr("Conflict at node (ID %d): seg (ID %d) also terminates here!\n", linkedNodeID, nearSeg->getID());
+								// print();
+								// astrohelion::printErr("Adding segment (ID %d) O: %d, T: %d\n", s.getID(), s.getOrigin(), s.getTerminus());
+								// astrohelion::printErr("Conflict at node (ID %d): seg (ID %d) also terminates here!\n", linkedNodeID, nearSeg->getID());
 								throw Exception("BaseArcset::addSeg: would create node with two terminating segments");
 							}else if(sameLinkType && sameTimeDir){
 								// either a time collision (both terminate) or parallel structure (both originate)
-								printf("Nearby segment w/ ID %d originates at node %d and terminates at node %d w/ TOF = %.4e\n", nearSeg->getID(), nearSeg->getOrigin(), nearSeg->getTerminus(), nearSeg->getTOF());
-								printf("The new seg (ID %d) originates at node %d and terminates at node %d w/ TOF = %.4e\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
+								// printf("Nearby segment w/ ID %d originates at node %d and terminates at node %d w/ TOF = %.4e\n", nearSeg->getID(), nearSeg->getOrigin(), nearSeg->getTerminus(), nearSeg->getTOF());
+								// printf("The new seg (ID %d) originates at node %d and terminates at node %d w/ TOF = %.4e\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
 								// print();
 								// printInChrono();
 								throw Exception("BaseArcset::addSeg: either time collision or parallel structure");
 							}else if(!sameLinkType && !sameTimeDir){
 								// parallel structure
-								print();
-								astrohelion::printErr("Adding segment (ID %d) O: %d, T: %d, tof = %.4f\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
-								astrohelion::printErr("Conflict at node (ID %d): seg (ID %d) has O: %d, T:%d, tof = %.4f\n", linkedNodeID, nearSeg->getID(),
-									nearSeg->getOrigin(), nearSeg->getTerminus(), nearSeg->getTOF());
+								// print();
+								// astrohelion::printErr("Adding segment (ID %d) O: %d, T: %d, tof = %.4f\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
+								// astrohelion::printErr("Conflict at node (ID %d): seg (ID %d) has O: %d, T:%d, tof = %.4f\n", linkedNodeID, nearSeg->getID(),
+								// 	nearSeg->getOrigin(), nearSeg->getTerminus(), nearSeg->getTOF());
 								throw Exception("BaseArcset::addSeg: parallel structure");
 							}else{
 								foundValidLink = true;

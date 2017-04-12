@@ -100,7 +100,7 @@ std::vector<double> getSpiceMoonPos(double et){
     SpiceDouble ephmState[6];
 
     spkezr_c(targ, et, ref, abcorr, obs, ephmState, &lt);
-    checkandReThrowSpiceErr("getSpiceMoonPos spkezr_c error");
+    checkAndReThrowSpiceErr("getSpiceMoonPos spkezr_c error");
     std::vector<double> moonPos(ephmState, ephmState+6);
 
     return moonPos;

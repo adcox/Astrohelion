@@ -288,7 +288,6 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
 void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    // int nodeIx = it->nodeset->getNodeIx(con.getID());
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->sysData);
 
     // Compute the value of Jacobi at this node
@@ -384,11 +383,11 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeByIx(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeRefByIx_const(n).getID());
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
 
         Node node(state, 0);
-        node.setConstraints(it->nodeset->getNodeByIx(n).getConstraints());
+        node.setConstraints(it->nodeset->getNodeRefByIx_const(n).getConstraints());
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
@@ -417,7 +416,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
     double tof;
     int newOrigID, newTermID;
     for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-        Segment seg = it->nodeset->getSegByIx(s);
+        const Segment &seg = it->nodeset->getSegRefByIx_const(s);
 
         if(it->bVarTime){
             MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
@@ -451,7 +450,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
         if(order[i].type == ArcPiece::Piece_tp::NODE){
             if(std::isnan(epoch)){
                 // Copy the epoch value of the first node
-                epoch = nodeset_out->getNode(order[i].id).getEpoch();
+                epoch = nodeset_out->getEpoch(order[i].id);
             }else{
                 // Set the epoch value of all other nodes
                 nodeset_out->getNodeRef(order[i].id).setEpoch(epoch);       
@@ -462,7 +461,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
                 // When stepping through in chronological order, every step is
                 // forward in time; negative TOFs are associated with segments that
                 // flow opposite the chronological order; ignore sign here.
-                epoch += std::abs(nodeset_out->getSeg(order[i].id).getTOF());
+                epoch += std::abs(nodeset_out->getTOF(order[i].id));
             }
         }
     }
@@ -546,9 +545,6 @@ int DynamicsModel_cr3bp::simpleEOMs(double t, const double s[], double sdot[], v
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
     const SysData_cr3bp *sysData = static_cast<const SysData_cr3bp *>(paramStruct->sysData);
     double mu = sysData->getMu();
-
-    // double x = s[0];    double y = s[1];    double z = s[2];
-    // double xdot = s[3]; double ydot = s[4];
 
     // compute distance to primaries
     double d = sqrt( (s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2] );

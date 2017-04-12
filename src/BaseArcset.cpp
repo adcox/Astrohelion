@@ -1133,7 +1133,45 @@ Node& BaseArcset::getNodeRef(int id){
 		bInChronoOrder = false;
 		return nodes[ix];
 	}else{
-		throw Exception("BaseArcset::getNode: Could not locate a node with the specified ID");
+		throw Exception("BaseArcset::getNodeRef: Could not locate a node with the specified ID");
+	}
+}//====================================================
+
+/**
+ *  \brief Retrieve a reference to a node based on its index in the storage array
+ * 
+ *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  count backwards from the end of the storage array.
+ *  \return a reference to a node at the specified index
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ */
+const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
+	if(ix < 0)
+		ix += nodes.size();
+
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
+		throw Exception("BaseArcset::getNodeRefByIx: Index out of bounds");
+
+	return nodes[ix];
+}//=====================================================
+
+/**
+ *  \brief Retrieve a reference to a specific node
+ * 
+ *  \param id the ID of the desired node.
+ *	
+ *  \return the node located with the specified ID
+ *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ */
+const Node& BaseArcset::getNodeRef_const(int id) const{
+	if(nodeIDMap.count(id) == 0)
+		throw Exception("BaseArcset::getNodeRef: Invalid ID (out of bounds)");
+
+	int ix = nodeIDMap.at(id);
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
+		return nodes[ix];
+	}else{
+		throw Exception("BaseArcset::getNodeRef: Could not locate a node with the specified ID");
 	}
 }//====================================================
 
@@ -1150,7 +1188,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
 		ix += nodes.size();
 
 	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
-		throw Exception("BaseArcset::getNodeByIx: Index out of bounds");
+		throw Exception("BaseArcset::getNodeRefByIx: Index out of bounds");
 
 	bInChronoOrder = false;
 	return nodes[ix];
@@ -1204,6 +1242,84 @@ Segment BaseArcset::getSegByIx(int ix) const{
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
 		throw Exception("BaseArcset::getSegByIx: Index out of bounds");
+
+	return segs[ix];
+}//=====================================================
+
+/**
+ *  \brief Retrieve a reference to a specific segment
+ * 
+ *  \param id the ID of the desired segment.
+ *	
+ *  \return the segment located with the specified ID
+ *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ */
+Segment& BaseArcset::getSegRef(int id){
+	if(segIDMap.count(id) == 0)
+		throw Exception("BaseArcset::getSegRef: Invalid ID (out of bounds)");
+
+	int ix = segIDMap.at(id);
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
+		bInChronoOrder = false;
+		return segs[ix];
+	}else{
+		throw Exception("BaseArcset::getSegRef: Could not locate a node with the specified ID");
+	}
+}//====================================================
+
+/**
+ *  \brief Retrieve a reference to a segment based on its index in the storage array
+ * 
+ *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  count backwards from the end of the storage array.
+ *  \return a reference to a segment at the specified index
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ */
+Segment& BaseArcset::getSegRefByIx(int ix){
+	if(ix < 0)
+		ix += segs.size();
+
+	if(ix < 0 || ix >= static_cast<int>(segs.size()))
+		throw Exception("BaseArcset::getSegRefByIx: Index out of bounds");
+
+	bInChronoOrder = false;
+	return segs[ix];
+}//=====================================================
+
+/**
+ *  \brief Retrieve a reference to a specific segment
+ * 
+ *  \param id the ID of the desired segment.
+ *	
+ *  \return the segment located with the specified ID
+ *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ */
+const Segment& BaseArcset::getSegRef_const(int id) const{
+	if(segIDMap.count(id) == 0)
+		throw Exception("BaseArcset::getSegRef: Invalid ID (out of bounds)");
+
+	int ix = segIDMap.at(id);
+	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(segs.size()) && ix >= 0){
+		return segs[ix];
+	}else{
+		throw Exception("BaseArcset::getSegRef: Could not locate a node with the specified ID");
+	}
+}//====================================================
+
+/**
+ *  \brief Retrieve a reference to a segment based on its index in the storage array
+ * 
+ *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  count backwards from the end of the storage array.
+ *  \return a reference to a segment at the specified index
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ */
+const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
+	if(ix < 0)
+		ix += segs.size();
+
+	if(ix < 0 || ix >= static_cast<int>(segs.size()))
+		throw Exception("BaseArcset::getSegRefByIx: Index out of bounds");
 
 	return segs[ix];
 }//=====================================================

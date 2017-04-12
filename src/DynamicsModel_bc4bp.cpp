@@ -268,7 +268,7 @@ void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodes
         // epochs come after ALL the TOFs have been added
         const Nodeset_bc4bp *bcSet = static_cast<const Nodeset_bc4bp *>(set);
         for(int n = 0; n < bcSet->getNumNodes(); n++){
-            MSVarMap_Key key(MSVar_tp::EPOCH, set->getNodeByIx(n).getID());
+            MSVarMap_Key key(MSVar_tp::EPOCH, set->getNodeRefByIx_const(n).getID());
             it->freeVarMap[key] = MSVarMap_Obj(key, it->X.size());
             it->X.push_back(bcSet->getEpochByIx(n));
         }
@@ -299,8 +299,8 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Node
     if(it->bVarTime){
         std::vector<double> zero {0};
         for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-            if(it->nodeset->getSegByIx(s).getTerminus() != Linkable::INVALID_ID){
-                Constraint timeCont(Constraint_tp::CONT_EX, it->nodeset->getSegByIx(s).getID(), zero);   // 0 value is for Epoch Time
+            if(it->nodeset->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){
+                Constraint timeCont(Constraint_tp::CONT_EX, it->nodeset->getSegRefByIx_const(s).getID(), zero);   // 0 value is for Epoch Time
                 it->allCons.push_back(timeCont);
             }
         }
@@ -327,7 +327,7 @@ void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Nod
     const Nodeset_bc4bp *bcSet = static_cast<const Nodeset_bc4bp *>(set);
 
     if(it->bVarTime){
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSeg(s).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRef_const(s).getOrigin());
         *t0 = it->X[epochVar.row0];
     }else{
         *t0 = bcSet->getEpoch(s);
@@ -426,7 +426,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constrai
         std::vector<double> conData = con.getData();
         std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
 
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx).getOrigin());
 
         // Loop through conData
         int count = 0;
@@ -454,8 +454,8 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint 
     the epoch time of node n to the sum of node n-1's epoch and TOF */
     if(it->bVarTime){
         int segIx = it->nodeset->getSegIx(con.getID());
-        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx).getOrigin()); 
-        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx).getTerminus());
+        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx).getOrigin()); 
+        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx).getTerminus());
         MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getID());
         
@@ -485,8 +485,8 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constra
         int segIx1 = it->nodeset->getSegIx(con.getID());
         int segIx2 = it->nodeset->getSegIx(con.getData()[0]);
 
-        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx1).getOrigin());
-        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(segIx2).getOrigin());
+        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx1).getOrigin());
+        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx2).getOrigin());
         MSVarMap_Obj tof_var1 = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getID());
         MSVarMap_Obj tof_var2 = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
@@ -718,7 +718,7 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
                 Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
 
                 double dFdT_n = dFdq_n2*dqdT;
-                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegByIx(s).getOrigin());
+                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(s).getOrigin());
                 it->DF[it->totalFree*row0 + epochVar.row0] = -dFdT_n/dvMax;
             }
         }
@@ -729,7 +729,6 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     std::vector<double> conData = con.getData();
     int Pix = static_cast<int>(conData[0]);    // index of primary
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    // int nodeIx = it->nodeset->getNodeIx(con.getID());
 
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
@@ -782,7 +781,6 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
  *  \param row0 the index of the first row for this constraint
  */
 void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, int row0) const{
-    // int nodeIx = it->nodeset->getNodeIx(con.getID());
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
     // Get the node epoch either from the design vector or from the original set of nodes
@@ -1068,7 +1066,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
 
     int row0 = it->conRows[c];
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    // int nodeIx = it->nodeset->getNodeIx(con.getID());
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
@@ -1221,7 +1218,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
  */
 double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootData *it, Constraint con) const{
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    // int nodeIx = it->nodeset->getNodeIx(con.getID());
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
@@ -1423,13 +1419,13 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeByIx(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeRefByIx_const(n).getID());
         // double state[6];
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
         // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
 
         Node node(state, 0);
-        node.setConstraints(nodes_in->getNodeByIx(n).getConstraints());
+        node.setConstraints(nodes_in->getNodeRefByIx_const(n).getConstraints());
 
         double T = 0;
         if(it->bVarTime){
@@ -1466,7 +1462,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
     double tof;
     int newOrigID, newTermID;
     for(int s = 0; s < it->nodeset->getNumSegs(); s++){
-        Segment seg = it->nodeset->getSegByIx(s);
+        const Segment &seg = it->nodeset->getSegRefByIx_const(s);
 
         if(it->bVarTime){
             MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,

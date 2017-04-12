@@ -29,6 +29,7 @@
  */
 
 #include <cmath>
+#include <boost/numeric/odeint.hpp>
 #include <ctime>
 #include <cstdlib>
 #include <gsl/gsl_errno.h>
@@ -52,6 +53,8 @@
 #include "Exceptions.hpp"
 #include "DynamicsModel.hpp"
 #include "Utilities.hpp"
+
+namespace boostInt = boost::numeric::odeint;
 
 namespace astrohelion{
 //-----------------------------------------------------
@@ -276,6 +279,9 @@ void SimEngine::setVarStepInteg(Integ_tp integ){
     switch(integ){
         case Integ_tp::RKCK:
         case Integ_tp::RK8PD:
+        case Integ_tp::BOOST_RKCK:
+        case Integ_tp::BOOST_RKF:
+        case Integ_tp::BOOST_BS:
             varStep_integ = integ;
             break;
         default:
@@ -463,8 +469,6 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
     if(bMakeDefaultEvents)
         createDefaultEvents(traj->getSysData());
 
-    // EOM_ParamStruct paramStruct(traj->getSysData(), ctrlLawID);
-    // eomParams = &paramStruct;
     eomParams = new EOM_ParamStruct(traj->getSysData(), ctrlLawID);
 
     // Run the simulation
@@ -560,6 +564,48 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
         "  using control law: %s\n", traj->getSysData()->getControlLaw()->lawIDToString(ctrlLawID).c_str());
 
+    /*
+     * BOOST INTEGRATOR ADDITION
+     */
+    if(bVarStepSize && (
+        varStep_integ == Integ_tp::BOOST_RKCK ||
+        varStep_integ == Integ_tp::BOOST_RKF ||
+        varStep_integ == Integ_tp::BOOST_BS) ){
+
+        if(t_dim != 2)
+            throw Exception("SimEngine::integrate: t_dim must be 2 for BOOST integration right now!");
+
+        boost_eom_wrapper boostEOM(eomFcn, eomParams);
+        boost_observer boostObserver(model, traj, eomParams);
+
+        double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
+        double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
+
+        // Save the initial state, time, and STM
+        // model->sim_saveIntegratedData(y, t[0], traj, eomParams);
+
+        switch(varStep_integ){
+            case Integ_tp::BOOST_RKCK:
+                boostInt::integrate_adaptive(
+                    boostInt::make_controlled< boostInt::runge_kutta_cash_karp54< std::vector<double> > >(absTol, relTol),
+                    boostEOM, fullIC, t0, tf, dt, boostObserver);
+                break;
+            case Integ_tp::BOOST_RKF:
+                boostInt::integrate_adaptive(
+                    boostInt::make_controlled< boostInt::runge_kutta_fehlberg78< std::vector<double> > >(absTol, relTol),
+                    boostEOM, fullIC, t0, tf, dt, boostObserver);
+                break;
+            case Integ_tp::BOOST_BS:
+            {
+                boostInt::bulirsch_stoer<std::vector<double> > stepper(absTol, relTol);
+                integrate_adaptive(stepper, boostEOM, fullIC, t0, tf, dt, boostObserver);
+                break;
+            }    
+        }
+
+        return; // Skip the rest of the function and exit
+    }// END OF BOOST INTEGRATORS
+
     /* Create a system to integrate; we don't include a Jacobin (NULL)
      *  The parameter set eomParams can be modified 
      *  between integration steps (i.e., change model parameters), but the ode functions must be reset
@@ -575,15 +621,15 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     gsl_odeiv2_driver *d = NULL;
 
     if(bVarStepSize){
-        astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
-        
         // Allocate space for the stepping object
         switch(varStep_integ){
             case Integ_tp::RK8PD:
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rk8pd, ic_dim);
+                astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Dormand-Prince 8-9 method\n");
                 break;
             case Integ_tp::RKCK:
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
+                astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
                 break;
             default:
                 free_odeiv2(s, c, e, d);

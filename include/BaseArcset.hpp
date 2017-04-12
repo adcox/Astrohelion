@@ -52,15 +52,6 @@ class BaseArcset;
  */
 typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
 
-// static const char *VARNAME_CTRL_LAW = "CtrlLaw";		//!< Matlab file variable name for control law data
-// static const char *VARNAME_EPOCH = "Epoch";				//!< Matlab file variable name for epoch data
-// static const char *VARNAME_STATE = "State";				//!< Matlab file variable name for state data
-// static const char *VARNAME_STATE_DERIV = "qdot";		//!< Matlab file variable name for state derivative data
-// static const char *VARNAME_STM = "STM";					//!< Matlab file variable name for state transition matrix data
-// static const char *VARNAME_TOF = "TOF";					//!< Matlab file variable name for time-of-flight data
-
-// static const char *PARAMKEY_STATE_DERIV = "qdot";		//!< ExtraParam map key for state derivative data
-
 /**
  *	\brief Abstract class that provides the framework for trajectories and nodesets
  *	
@@ -153,6 +144,8 @@ public:
 	Node getNodeByIx(int) const;
 	Node& getNodeRef(int);
 	Node& getNodeRefByIx(int);
+	const Node& getNodeRef_const(int) const;
+	const Node& getNodeRefByIx_const(int) const;
 	int getNodeIx(int) const;
 	int getNumCons() const;
 	int getNumNodes() const;
@@ -162,6 +155,10 @@ public:
 	virtual double getTotalTOF() const;
 	Segment getSeg(int) const;
 	Segment getSegByIx(int) const;
+	Segment& getSegRef(int);
+	Segment& getSegRefByIx(int);
+	const Segment& getSegRef_const(int) const;
+	const Segment& getSegRefByIx_const(int) const;
 	int getSegIx(int) const;
 	std::vector<double> getState(int) const;
 	std::vector<double> getStateByIx(int) const;

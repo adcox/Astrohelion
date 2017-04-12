@@ -60,12 +60,73 @@ public:
 };
 
 /**
+ *  \brief Wrapper object to use GSL EOM functions with Boost integrators
+ */
+class boost_eom_wrapper{
+	typedef int (*eom_fcn)(double t, const double q[], double qdot[], void *params);
+	
+	eom_fcn gslFcn;		//!< The GSL-ready function that evaluates equations of motion
+	EOM_ParamStruct *eomParams = nullptr;	//!< Parameters to be passed to the GSL EOM function
+
+public:
+	boost_eom_wrapper(eom_fcn f, EOM_ParamStruct *params) : gslFcn(f){
+		eomParams = params;
+	}//================================================
+
+	/**
+	 *  \brief Evalute the equations of motion.
+	 *  \details This function is called by the Boost integrator. 
+	 * 
+	 *  \param q Reference to the current state
+	 *  \param qdot Reference to a vector in which the state time-derivative is stored
+	 *  \param t time
+	 */
+	void operator() (const std::vector<double> &q, std::vector<double> &qdot, const double t){
+		qdot.assign(q.size(), 0);
+		gslFcn(t, &(q.front()), &(qdot.front()), eomParams);	// Evaluate the EOMs from the GSL function
+	}//================================================
+};// END OF BOOST_EOM_WRAPPER--------------------------------------------------
+
+/**
+ *  \brief Wrapper object to use already-written functions to save trajectory data from 
+ *  Boost integrators.
+ *  \details This wrapper does not handle any event detection or other, more advanced, 
+ *  observer behaviors.
+ *  
+ */
+class boost_observer{
+	Traj *traj;		//!< Trajectory being integrated
+	const DynamicsModel *model;	//!< DynamicsModel associated with the problem
+	EOM_ParamStruct *eomParams = nullptr;	//!< Data that is passed to the EOMs
+
+public:
+	boost_observer(const DynamicsModel *m, Traj *t, EOM_ParamStruct *params) : traj(t), model(m){
+		eomParams = params;
+	}//================================================
+
+	/**
+	 *  \brief Observe the propagation.
+	 *  \details This function is called by the Boost integration library after each
+	 *  step. Capabilities such as saving data and event detection should be handled here.
+	 * 
+	 *  \param q reference to the state vector
+	 *  \param t time at the state
+	 */
+	void operator() (const std::vector<double> &q, double t){
+		model->sim_saveIntegratedData(&(q.front()), t, traj, eomParams);
+	}//================================================
+};// END OF BOOST_OBSERVER------------------------------------------------------
+
+/**
  *  \brief Classify integrator types
  */
 enum class Integ_tp{
 	RKCK,			//!< Explicit embedded Runge-Kutta Cash-Karp (4,5); variable step propagations
 	RK8PD,			//!< Explicit embedded Runge-Kutta Dormance-Prince (8,9); variable step propagations
-	MSADAMS			//!< Variable coefficient linear multistep Adams method in Nordisieck form; uses explicit Adams-Bashforth (predictor) and implicit Adams-Moulton (corrector); fixed step propagations
+	MSADAMS,		//!< Variable coefficient linear multistep Adams method in Nordisieck form; uses explicit Adams-Bashforth (predictor) and implicit Adams-Moulton (corrector); fixed step propagations
+	BOOST_RKCK,		//!< Explicit Runge-Kutta Cash-Karp (4,5); variable step propagations. NOTE: limited capabilities (no event detection); "beta" testing
+	BOOST_RKF,		//!< Explicit Runge-Kutta-Felburg (7,8); variable step propagations. NOTE: limited capabilities (no event detection); "beta" testing
+	BOOST_BS 		//!< Explicit Bulirsch-Stoer; variable step propagations. NOTE: limited capabilities (no event detection); "beta" testing
 };
 
 /**
@@ -106,16 +167,11 @@ enum class Integ_tp{
  *	
  *	Two integration algorithms are used in this engine to numerically integrate a model's
  *	equations of motion. One variable determines which integrator will be used: step size
- *	variability. If steps are allowed to vary, a Runge-Kutta Cash-Karp 4-5 method is used.
+ *	variability. If steps are allowed to vary, a Runge-Kutta Cash-Karp 4-5 method or a
+ *	Runge-Kutta Dormand-Prince 8-9 method is used.
  *	If step size is fixed, then an Adams-Bashforth Adams-Moulton method is used. These 
  *	integrators performed best in an error analysis of Jacobi constant in an unscientific
  *	test comparison of multiple methods. Perhaps someday we'll actually do a propper comparison.
- *	
- *	The Runge-Kutta method is similar to Matlab's ode45, which uses a Dormand-Prince 8-9 variation
- *	on the traditional Runge-Kutta method. The Cash-Karp variation used here should be nearly
- *	identical, but it performed better in the error analysis.
- *	
- *	The Adams-Bashforth method is similar to Matlab's ode113.
  *	
  *	Because the Adams-Bashforth method requires a driver object, it is not possible (to our knowledge)
  *	to retrieve intermediate points between the integration bounds. The driver will simply integrate from

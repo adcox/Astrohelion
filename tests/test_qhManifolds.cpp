@@ -16,7 +16,7 @@ int main(void){
 	int numManNodes = 10;
 	int numManifolds = 100;
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	SysData_cr3bp seSys("sun", "earth");
 	SysData_cr3bp emSys("earth", "moon");
 	SysData_bc4bp bcSys("Sun", "Earth", "Moon");

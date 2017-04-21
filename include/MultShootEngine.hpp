@@ -1,5 +1,5 @@
 /**
- *  \file CorrectionEngine.hpp
+ *  \file MultShootEngine.hpp
  *	\brief Performs corrections on a nodeset subject to a set of constraints
  *	
  *	\author Andrew Cox
@@ -27,6 +27,8 @@
  */
 #pragma once
 
+#include <vector>
+
 #include "Core.hpp"
 #include "Engine.hpp"
 
@@ -37,8 +39,6 @@
 #include "Nodeset.hpp"
 #include "SysData.hpp"
 #include "Traj.hpp"
-
-#include <vector>
 
 
 namespace astrohelion{
@@ -74,20 +74,20 @@ class SysData_bc4bp;
  *	\version August 3, 2015
  *	\copyright GNU GPL v3.0
  */
-class CorrectionEngine : public Core, public Engine{
+class MultShootEngine : public Core, public Engine{
 	public:
 		/**
 		 *  \name *structors
 		 *  \{
 		 */
 		/** Default, do-nothing constructor */
-		CorrectionEngine(){}
-		CorrectionEngine(const CorrectionEngine&);
-		~CorrectionEngine();
+		MultShootEngine(){}
+		MultShootEngine(const MultShootEngine&);
+		~MultShootEngine();
 		//\}
 
 		// Operators
-		CorrectionEngine& operator =(const CorrectionEngine &e);
+		MultShootEngine& operator =(const MultShootEngine &e);
 
 		/**
 		 *  \name Set and Get Functions
@@ -124,6 +124,9 @@ class CorrectionEngine : public Core, public Engine{
 		 *  \{
 		 */
 		void reset();
+		static double getTotalDV(const MultShootData*);
+		static bool finiteDiff_checkMultShoot(const Nodeset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
+		static bool finiteDiff_checkMultShoot(const Nodeset*, MultShootEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
 		//\}
 		
 	private:
@@ -162,7 +165,7 @@ class CorrectionEngine : public Core, public Engine{
 		bool bScaleVars = false;
 
 		void cleanEngine();
-		void copyMe(const CorrectionEngine&);
+		void copyMe(const MultShootEngine&);
 		void reportConMags(const MultShootData*);
 		Eigen::VectorXd solveUpdateEq(MultShootData*);
 };

@@ -37,7 +37,7 @@ Engines take objects and manipulate them in some way to produce something useful
 The simulation engine (<code>SimEngine</code>) is a relatively simple engine (at least when compared to the correction engine). It queries a dynamical model to get pointers to the equations of motion and then employs GSL's integration algorithms to evolve the initial state for some time-of-flight.
 
 <b>Corrector</b><br>
-The correction engine (<code>CorrectionEngine</code>) makes heavy use of functions stored in the dynamic models to do its job.
+The correction engine (<code>MultShootEngine</code>) makes heavy use of functions stored in the dynamic models to do its job.
 
 <h2>Data and Constants</h2>
 Celestial mechanics mostly uses letters, but there are a few numbers involved. Here's where we get them:

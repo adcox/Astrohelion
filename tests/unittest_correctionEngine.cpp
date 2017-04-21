@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE CorrectionEngine
+#define BOOST_TEST_MODULE MultShootEngine
 
 #include <boost/test/unit_test.hpp>
 
@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "Constraint.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_bc4bp.hpp"
 #include "Nodeset_cr3bp.hpp"
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	nodeset.addConstraint(perpCross);
 	nodeset.addConstraint(perpCrossEnd);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
 	
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 	halo.addConstraint(fix_halo_x0);
 	halo.addConstraint(periodicity);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_cr3bp correctedHalo(&sys);
 
 	corrector.setVarTime(true);
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	// nodeset.print();
 	// nodeset.printInChrono();
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 	// nodeset.print();
 	// nodeset.printInChrono();
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 	// nodeset.printNodeIDMap();
 	// nodeset.printSegIDMap();
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_cr3bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo){
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_RevTime){
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_doubleSource){
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_DoubleSource_Irregular){
 	nodeset.addConstraint(xzPlaneCon0);
 	nodeset.addConstraint(xzPlaneConF);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_bc4bp correctedNodeset(&sys);
 	corrector.setTol(5e-12);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));

@@ -182,7 +182,7 @@ bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *i
  //    if(verbose == Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
 
  //    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
- //    CorrectionEngine corrector;
+ //    MultShootEngine corrector;
  //    corrector.setVarTime(true);
  //    corrector.setTol(traj->getTol());
  //    corrector.setVerbosity(verbose);

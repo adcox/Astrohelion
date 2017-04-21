@@ -6,7 +6,7 @@
 
 #include "Calculations.hpp"
 #include "Constraint.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_bc4bp.hpp"
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 	
 	// Constraint_tp::STATE
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE){
 	Constraint stateCon(Constraint_tp::STATE, 4, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 	
 	// Constraint_tp::STATE
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_EQUAL_ARC){
 	Constraint stateCon(Constraint_tp::STATE, 4, stateConData, 6);
 	halfLyapNodeset.addConstraint(stateCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	// Constraint_tp::MATCH_ALL
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL){
 	Constraint matchAllCon(Constraint_tp::MATCH_ALL, 4, &matchAllConData, 1);
 	halfLyapNodeset.addConstraint(matchAllCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(matchAllCon.getID());
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	// Constraint_tp::MATCH_ALL
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL_EQUAL_ARC){
 	Constraint matchAllCon(Constraint_tp::MATCH_ALL, 4, &matchAllConData, 1);
 	halfLyapNodeset.addConstraint(matchAllCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(matchAllCon.getID());
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	// Constraint_tp::MATCH_CUST
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST){
 	Constraint matchCustCon(Constraint_tp::MATCH_CUST, 4, matchCustConData, 6);
 	halfLyapNodeset.addConstraint(matchCustCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	
 	std::vector<double> finalState = correctedSet.getState(matchCustCon.getID());
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	// Constraint_tp::MATCH_CUST
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST_EQUAL_ARC){
 	Constraint matchCustCon(Constraint_tp::MATCH_CUST, 4, matchCustConData, 6);
 	halfLyapNodeset.addConstraint(matchCustCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	
 	std::vector<double> finalState = correctedSet.getState(matchCustCon.getID());
@@ -196,14 +196,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	double matchDistConData[] = {1, 1.0};
 	Constraint matchDistCon(Constraint_tp::DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.addConstraint(matchDistCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	std::vector<double> primPos = sys.getDynamicsModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
@@ -218,14 +218,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	double matchDistConData[] = {1, 1.0};
 	Constraint matchDistCon(Constraint_tp::DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.addConstraint(matchDistCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	std::vector<double> primPos = sys.getDynamicsModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
@@ -240,14 +240,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	double matchDistConData[] = {1, 1.1};
 	Constraint matchDistCon(Constraint_tp::MIN_DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.addConstraint(matchDistCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
@@ -263,14 +263,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	double matchDistConData[] = {1, 1.1};
 	Constraint matchDistCon(Constraint_tp::MIN_DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.addConstraint(matchDistCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
@@ -286,14 +286,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	double matchDistConData[] = {1, 0.9};
 	Constraint matchDistCon(Constraint_tp::MAX_DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.addConstraint(matchDistCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	std::vector<double> primPos = sys.getDynamicsModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
@@ -309,14 +309,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	double matchDistConData[] = {1, 0.9};
 	Constraint matchDistCon(Constraint_tp::MAX_DIST, 3, matchDistConData, 2);
 	halfLyapNodeset.addConstraint(matchDistCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	std::vector<double> primPos = sys.getDynamicsModel()->getPrimPos(correctedSet.getEpoch(matchDistCon.getID()), &sys);
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	std::vector<double> state = halfLyapNodeset.getStateByIx(3);
@@ -346,11 +346,11 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V){
 	Constraint dVCon(Constraint_tp::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.addConstraint(dVCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	MultShootData itData(&correctedSet);
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
-	double totalDV = getTotalDV(&itData);
+	double totalDV = MultShootEngine::getTotalDV(&itData);
 	BOOST_CHECK(totalDV <= maxDVConData);
 }//====================================================
 
@@ -361,7 +361,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	std::vector<double> state = halfLyapNodeset.getStateByIx(3);
@@ -375,11 +375,11 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V_EQUAL_ARC){
 	Constraint dVCon(Constraint_tp::MAX_DELTA_V, 0, &maxDVConData, 1);
 	halfLyapNodeset.addConstraint(dVCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	MultShootData itData(&correctedSet);
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
-	double totalDV = getTotalDV(&itData);
+	double totalDV = MultShootEngine::getTotalDV(&itData);
 	BOOST_CHECK(totalDV <= maxDVConData);
 }//====================================================
 
@@ -390,7 +390,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	std::vector<double> state = halfLyapNodeset.getStateByIx(3);
@@ -405,12 +405,12 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V){
 	halfLyapNodeset.addConstraint(dVCon);
 
 	// This one throws errors but is ok
-	BOOST_CHECK(true || finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(true || MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 
 	MultShootData itData(&correctedSet);
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
-	double totalDV = getTotalDV(&itData);
+	double totalDV = MultShootEngine::getTotalDV(&itData);
 	BOOST_CHECK(std::abs(totalDV - maxDVConData) < 1e-12);
 }//====================================================
 
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	std::vector<double> state = halfLyapNodeset.getStateByIx(3);
@@ -436,12 +436,12 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V_EQUAL_ARC){
 	halfLyapNodeset.addConstraint(dVCon);
 
 	// This one throws errors but is ok
-	BOOST_CHECK(true || finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(true || MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 
 	MultShootData itData(&correctedSet);
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
-	double totalDV = getTotalDV(&itData);
+	double totalDV = MultShootEngine::getTotalDV(&itData);
 	BOOST_CHECK(std::abs(totalDV - maxDVConData) < 1e-12);
 }//====================================================
 
@@ -452,14 +452,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	double tofData = 340.0;
 	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
 	halfLyapNodeset.addConstraint(tofCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	double totalTOF = correctedSet.getTotalTOF();
@@ -473,14 +473,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	double tofData = 340.0;
 	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
 	halfLyapNodeset.addConstraint(tofCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	double totalTOF = correctedSet.getTotalTOF();
@@ -494,14 +494,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	double apseData = 2;
 	Constraint apseCon(Constraint_tp::APSE, 4, &apseData, 1);
 	halfLyapNodeset.addConstraint(apseCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(apseCon.getID());
@@ -517,14 +517,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE_EQUAL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	double apseData = 2;
 	Constraint apseCon(Constraint_tp::APSE, 4, &apseData, 1);
 	halfLyapNodeset.addConstraint(apseCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(apseCon.getID());
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	double IC[] = {-0.71200455, 0.16675922, 0.02755461, 0.01186449, -0.00004723, -0.0010737};
@@ -554,7 +554,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact){
 	nodes0.addConstraint(spCon);
 	
 	// This one throws errors but is ok
-	BOOST_CHECK(true || finiteDiff_checkMultShoot(&nodes0, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(true || MultShootEngine::finiteDiff_checkMultShoot(&nodes0, corrector, Verbosity_tp::NO_MSG));
 
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodes0, &correctedSet));
 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getID()));
@@ -570,7 +570,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact_EQAUL_ARC){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
 
 	double IC[] = {-0.71200455, 0.16675922, 0.02755461, 0.01186449, -0.00004723, -0.0010737};
@@ -584,7 +584,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact_EQAUL_ARC){
 	nodes0.addConstraint(spCon);
 	
 	// This one throws errors but is ok
-	BOOST_CHECK(true || finiteDiff_checkMultShoot(&nodes0, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(true || MultShootEngine::finiteDiff_checkMultShoot(&nodes0, corrector, Verbosity_tp::NO_MSG));
 
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodes0, &correctedSet));
 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(&sys, correctedSet.getEpoch(spCon.getID()));
@@ -600,7 +600,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	Nodeset_bc4bp forwardArc(&sys, ic, 0, T/2, 4);
@@ -614,7 +614,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
 	Constraint contCon(Constraint_tp::SEG_CONT_PV, 2, contData, 6);
 	doubleSrcLyap.addConstraint(contCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&doubleSrcLyap, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&doubleSrcLyap, corrector, Verbosity_tp::NO_MSG));
 
 	MultShootData it(&correctedSet);
 	BOOST_CHECK_NO_THROW(it = corrector.multShoot(&doubleSrcLyap, &correctedSet));
@@ -638,7 +638,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
 	Nodeset_bc4bp halfLyapNodeset(&sys, ic, 0, T, 6);	// Create a nodeset
 	Nodeset_bc4bp correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 
 	Nodeset_bc4bp forwardArc(&sys, ic, 0, T/2, 4);
@@ -652,7 +652,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
 	Constraint extraContCon(Constraint_tp::SEG_CONT_EX, 2, contExData, 2);
 	doubleSrcLyap.addConstraint(extraContCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&doubleSrcLyap, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&doubleSrcLyap, corrector, Verbosity_tp::NO_MSG));
 
 	MultShootData it(&correctedSet);
 	BOOST_CHECK_NO_THROW(it = corrector.multShoot(&doubleSrcLyap, &correctedSet));
@@ -683,14 +683,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SOURCE_NODE){
 	Nodeset_cr3bp seNodes = cr3bp_EM2SE(halfPlus, &seSys, semSys.getTheta0(), semSys.getPhi0(), semSys.getGamma());
 	Nodeset_bc4bp semNodes = bcr4bpr_SE2SEM(seNodes, &semSys, 0, 0);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	Nodeset_bc4bp correctedSet(&semSys);
 
 	double stateConData[] = {0.205, 0.178, 0.068, NAN, 0.025, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 3, stateConData, 6);
 	semNodes.addConstraint(stateCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&semNodes, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&semNodes, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&semNodes, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());

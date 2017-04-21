@@ -29,7 +29,7 @@
 
 #include "DynamicsModel.hpp"
 
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "Event.hpp"
 #include "EigenDefs.hpp"
 #include "Exceptions.hpp"

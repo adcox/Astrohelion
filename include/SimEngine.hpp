@@ -136,7 +136,7 @@ enum class Integ_tp{
  *
  *	The simulation engine is the workhorse object for the Core. It
  *	holds functions to integrate equations of motion and is called by the 
- *	<tt>CorrectionEngine</tt> to compute arcs between nodes.
+ *	<tt>MultShootEngine</tt> to compute arcs between nodes.
  *
  *	Creating a simulation engine is simple; it can either be instantiated with no
  *	arguments, or by specifying a system data object. Further settings can be applied

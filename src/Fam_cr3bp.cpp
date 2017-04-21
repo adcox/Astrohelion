@@ -32,7 +32,7 @@
 #include "Calculations.hpp"
 #include "Common.hpp"
 #include "Constraint.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "MultShootData.hpp"
 #include "Nodeset_cr3bp.hpp"
 #include "Traj_cr3bp.hpp"
@@ -366,7 +366,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 			memberSet.addConstraint(matchCon);
 
 			// Correct the nodeset while constraining the orbit to have the desired characterstic
-			CorrectionEngine corrector;
+			MultShootEngine corrector;
 			corrector.setTol(1e-11);
 			try{
 				Nodeset_cr3bp newNodes(&tempSys);

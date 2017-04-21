@@ -31,7 +31,7 @@
 
 #include "Calculations.hpp"
 #include "ControlLaw.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
@@ -201,7 +201,7 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
     if(verbose == Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
 
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
-    CorrectionEngine corrector;
+    MultShootEngine corrector;
     corrector.setVarTime(true);
     corrector.setTol(traj->getTol());
     corrector.setVerbosity(verbose);

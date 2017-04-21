@@ -1,5 +1,5 @@
 /**
- *	\file CorrectionEngine.cpp
+ *	\file MultShootEngine.cpp
  *	\brief Engine object that applies differential corrections to nodesets
  *	
  *	\author Andrew Cox
@@ -27,7 +27,7 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
  
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 
 #include "AsciiOutput.hpp"
 #include "Calculations.hpp"
@@ -56,20 +56,20 @@ namespace astrohelion{
  *	\brief Copy constructor - create this engine by copying the input engine
  *	\param e input correction engine
  */
-CorrectionEngine::CorrectionEngine(const CorrectionEngine &e){
+MultShootEngine::MultShootEngine(const MultShootEngine &e){
 	copyMe(e);
 }//=======================================================
 
 /**
  *	\brief Destructor
  */
-CorrectionEngine::~CorrectionEngine(){}
+MultShootEngine::~MultShootEngine(){}
 
 /**
  *	\brief Copy all engine variables
  *	\param e an engine reference
  */
-void CorrectionEngine::copyMe(const CorrectionEngine &e){
+void MultShootEngine::copyMe(const MultShootEngine &e){
 	Engine::copyBaseEngine(e);
 	verbosity = e.verbosity;//
 	bVarTime = e.bVarTime;//
@@ -91,7 +91,7 @@ void CorrectionEngine::copyMe(const CorrectionEngine &e){
  *	\param e
  *	\return this correction engine
  */
-CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
+MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
 	copyMe(e);
 	return *this;
 }//====================================
@@ -105,7 +105,7 @@ CorrectionEngine& CorrectionEngine::operator =(const CorrectionEngine &e){
  *	\return whether or not the corrector uses variable time (as opposed
  * 	to fixed time)
  */
-bool CorrectionEngine::usesVarTime() const { return bVarTime; }
+bool MultShootEngine::usesVarTime() const { return bVarTime; }
 
 /**
  *	\brief Retrieve whether or not we force all segments to have the same length
@@ -114,32 +114,32 @@ bool CorrectionEngine::usesVarTime() const { return bVarTime; }
  *	This setting only applies if variable time is turned on.
  *	\return whether or not each arc will be forced to have the same length in time
  */
-bool CorrectionEngine::usesEqualArcTime() const { return bEqualArcTime; }
+bool MultShootEngine::usesEqualArcTime() const { return bEqualArcTime; }
 
 /**
  *  \brief Retrieve whether or not we are located an event crossing
  *	\return whether or not the algorithm will optimize the process to find an event
  */
-bool CorrectionEngine::isFindingEvent() const { return bFindEvent; }
+bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
 
 /**
  *  \brief Retrieve the maximum number of iterations to attempt
  *	\return the maximum number of iterations to attempt before giving up
  */
-int CorrectionEngine::getMaxIts() const { return maxIts; }
+int MultShootEngine::getMaxIts() const { return maxIts; }
 
 /**
  *  \brief Retrieve the minimum error tolerance
  *	\return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
  */
-double CorrectionEngine::getTol() const { return tol; }
+double MultShootEngine::getTol() const { return tol; }
 
 /**
  *	\brief Set bVarTime
  *	\param b whether or not the corrector should use variable time
  */
-void CorrectionEngine::setVarTime(bool b){
+void MultShootEngine::setVarTime(bool b){
 	bVarTime = b;
 	// Turn off equal-time arcs too if bVarTime is false
 	if(!bVarTime)
@@ -150,9 +150,9 @@ void CorrectionEngine::setVarTime(bool b){
  *	\brief Tell the corrector how to apply variable time
  *	\param b whether or not each arc will be forced to have the same duration
  */
-void CorrectionEngine::setEqualArcTime(bool b){
+void MultShootEngine::setEqualArcTime(bool b){
 	if(!bVarTime && b){
-		astrohelion::printErr("CorrectionEngine::setequalArcTime: Cannot use equal-time arcs if variable time is disabled; please turn bVarTime ON first\n");
+		astrohelion::printErr("MultShootEngine::setequalArcTime: Cannot use equal-time arcs if variable time is disabled; please turn bVarTime ON first\n");
 		bEqualArcTime = false;
 	}else{
 		bEqualArcTime = b;
@@ -167,7 +167,7 @@ void CorrectionEngine::setEqualArcTime(bool b){
  * 
  * \param b whether or not to ignore crashes (default is false)
  */
-void CorrectionEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
+void MultShootEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
 
 /**
  *  \brief Tell the corrector to ignore divergence and return the partially
@@ -176,13 +176,13 @@ void CorrectionEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
  * 
  *  \param b Whether or not to ignore divergance
  */
-void CorrectionEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
+void MultShootEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
 
 /**
  *	\brief Set maximum iterations
  *	\param i the maximum number of iterations to attempt before giving up
  */
-void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
+void MultShootEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
  *  \brief Set the attenuation scalar and the limiting tolerance
@@ -190,7 +190,7 @@ void CorrectionEngine::setMaxIts(int i){ maxIts = i; }
  *  \param scale Scale the multiple shooting step by this value (multiply)
  *  \param limit Do not scale step if corrector error is below this value
  */
-void CorrectionEngine::setAttenuation(double scale, double limit){
+void MultShootEngine::setAttenuation(double scale, double limit){
 	attenuation = scale;
 	attenuationLimitTol = limit;
 }//====================================================
@@ -199,18 +199,18 @@ void CorrectionEngine::setAttenuation(double scale, double limit){
  *	\brief Set the error tolerance
  *	\param d errors below this value will be considered negligible
  */
-void CorrectionEngine::setTol(double d){
+void MultShootEngine::setTol(double d){
 	tol = d;
 
 	if(tol > 1)
-		astrohelion::printWarn("CorrectionEngine::setTol: tolerance is greater than 1... just FYI\n");
+		astrohelion::printWarn("MultShootEngine::setTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
  *	\brief Set the findEven flag
  *	\param b whether or not the algorithm will be looking for an event
  */
-void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
+void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
 
 //-----------------------------------------------------
 //      Utility Functions
@@ -239,9 +239,9 @@ void CorrectionEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	* if the input nodeset contains more than one delta-v constraint
  *	* if the input nodeset contains more than one TOF constraint
  */
-MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut){
+MultShootData MultShootEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut){
 	if(pNodesOut != NULL && *(set->getSysData()) != *(pNodesOut->getSysData()))
-		throw Exception("CorrectionEngine::multShoot: Input and Output nodesets must use the same system data object");
+		throw Exception("MultShootEngine::multShoot: Input and Output nodesets must use the same system data object");
 
 	if(!bIsClean)
 		cleanEngine();
@@ -296,7 +296,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 		Constraint con = it.allCons[c];
 
 		if(!pModel->supportsCon(con.getType()))
-			throw Exception("CorrectionEngine::multShoot: The dynamic model does not support one of the constraints!");
+			throw Exception("MultShootEngine::multShoot: The dynamic model does not support one of the constraints!");
 
 		switch(con.getType()){
 			case Constraint_tp::CONT_PV:
@@ -351,7 +351,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 						it.slackAssignCon.push_back(c);
 					}
 				}else{
-					throw Exception("CorrectionEngine::multShoot: You can only apply ONE delta-V constraint");
+					throw Exception("MultShootEngine::multShoot: You can only apply ONE delta-V constraint");
 				}
 				break;
 			case Constraint_tp::JC:
@@ -359,12 +359,12 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
 				break;
 			case Constraint_tp::TOF:
 				if(!bVarTime)
-					astrohelion::printWarn("CorrectionEngine::multShoot: Attempting to constraint TOF without variable time... won't work!");
+					astrohelion::printWarn("MultShootEngine::multShoot: Attempting to constraint TOF without variable time... won't work!");
 				
 				if(!foundTOFCon)
 					addToRows = 1;
 				else
-					throw Exception("CorrectionEngine::multShoot: You can only apply ONE TOF constraint");
+					throw Exception("MultShootEngine::multShoot: You can only apply ONE TOF constraint");
 				break;
 			case Constraint_tp::APSE:
 				addToRows = 1;
@@ -413,7 +413,7 @@ MultShootData CorrectionEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut
  *  @see multShoot(Nodeset*)
  *  \throws DivergeException if the multiple shooting process does not converge
  */
-MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
+MultShootData MultShootEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 	it.count = 0;
 
 	// create a simulation engine
@@ -539,7 +539,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		try{
 			it.sysData->getDynamicsModel()->multShoot_createOutput(&it, it.nodeset, bFindEvent, pNodesOut);
 		}catch(Exception &e){
-			astrohelion::printErr("CorrectionEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
+			astrohelion::printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
 			throw e;
 		}
 	}
@@ -582,7 +582,7 @@ MultShootData CorrectionEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
  *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
-Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
+Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(pIt->X[0]), pIt->totalFree, 1);
 	MatrixXRd J = Eigen::Map<MatrixXRd>(&(pIt->DF[0]), pIt->totalCons, pIt->totalFree);
@@ -607,7 +607,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 		// lu.setThreshold(1e-20);
 
 		// if(!lu.isInvertible())
-		// 	throw LinAlgException("CorrectionEngine::solveUpdateEq: Jacobian is singular; cannot solve");
+		// 	throw LinAlgException("MultShootEngine::solveUpdateEq: Jacobian is singular; cannot solve");
 
 		X_diff = lu.solve(FX);
 	}else{
@@ -634,7 +634,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
 
 			// if(!lu.isInvertible()){
 			// 	astrohelion::printErr("Gramm Matrix rank = %ld / %ld\n", lu.rank(), G.rows());
-			// 	throw LinAlgException("CorrectionEngine::solveUpdateEq: Gramm matrix is singular; cannot solve");
+			// 	throw LinAlgException("MultShootEngine::solveUpdateEq: Gramm matrix is singular; cannot solve");
 			// }
 
 			Eigen::VectorXd w = lu.solve(FX);
@@ -674,7 +674,7 @@ Eigen::VectorXd CorrectionEngine::solveUpdateEq(MultShootData* pIt){
  * 
  *  \param pIt pointer to an MultShootData object associated with a corrections process
  */
-void CorrectionEngine::reportConMags(const MultShootData *pIt){
+void MultShootEngine::reportConMags(const MultShootData *pIt){
 	unsigned int conCount = 0;
 	for(unsigned int r = 0; r < (pIt->FX.size()); r++){
         if(r == 0 && pIt->totalCons > 0){
@@ -690,12 +690,12 @@ void CorrectionEngine::reportConMags(const MultShootData *pIt){
 /**
  *	\brief clean up data so that engine can be used again (or deconstructed safely)
  */
-void CorrectionEngine::cleanEngine(){
+void MultShootEngine::cleanEngine(){
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
 	bIsClean = true;
 }//====================================================
 
-void CorrectionEngine::reset(){
+void MultShootEngine::reset(){
 	if(!bIsClean)
 		cleanEngine();
 
@@ -708,7 +708,188 @@ void CorrectionEngine::reset(){
 	bIgnoreDiverge = false;
 }//====================================================
 
+/**
+ *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  by computing each partial derivative numerically via forward differencing.
+ * 
+ *  \param pNodeset A nodeset with some constraints
+ *  \param verbosity Specify how verbose the output is
+ *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
+ */
+bool MultShootEngine::finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity, bool writeToFile){
+    MultShootEngine engine;  // Create engine with default settings
+    return finiteDiff_checkMultShoot(pNodeset, engine, verbosity, writeToFile);
+}//====================================================
+
+/**
+ *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  by computing each partial derivative numerically via forward differencing.
+ * 
+ *  \param pNodeset A nodeset with some constraints
+ *  \param engine correction engine object configured with the appropriate settings (i.e.,
+ *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
+ *  attributes of the engine will be overridden by this function.
+ *  \param verbosity Specify how verbose the output is
+ *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
+ */
+bool MultShootEngine::finiteDiff_checkMultShoot(const Nodeset *pNodeset, MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
+    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix... ");
+    // Create multiple shooter that will only do 1 iteration
+    MultShootEngine corrector(engine);
+    corrector.setMaxIts(1);
+    corrector.setVerbosity(Verbosity_tp::NO_MSG);
+    corrector.setIgnoreDiverge(true);
+
+    // Run multiple shooter to get X, FX, and DF
+    MultShootData it = corrector.multShoot(pNodeset, NULL);
+    Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
+    MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
+    MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
+
+    double pertSize = 1e-8;
+    #pragma omp parallel for firstprivate(it, corrector)
+    for(int i = 0; i < it.totalFree; i++){
+        std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
+        pertX[i] += pertSize;                   // add perturbation
+        it.X = pertX;                           // Copy into iteration data
+        MultShootData pertIt = corrector.multShoot(it, NULL);     // Correct perturbed state
+        Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+        // Do another process for opposite direction
+        pertX = it.X0;
+        pertX[i] -= pertSize;
+        it.X = pertX;
+        pertIt = corrector.multShoot(it, NULL);
+        Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+        // An iteration for twice the perturbation up
+        pertX = it.X0;
+        pertX[i] += 2*pertSize;
+        it.X = pertX;
+        pertIt = corrector.multShoot(it, NULL);
+        Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
+
+        // An iteration for twice the perturbation down
+        pertX = it.X0;
+        pertX[i] -= 2*pertSize;
+        it.X = pertX;
+        pertIt = corrector.multShoot(it, NULL);
+        Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
 
+        // Compute central difference
+        Eigen::VectorXd col = (-1*FX_2up + 8*FX_up - 8*FX_down + FX_2down)/std::abs(12*pertSize);   // Five-point stencil
+        // Eigen::VectorXd col = (FX_up - FX_down)/std::abs(2*pertSize);   // Central Difference
+        // Eigen::VectorXd col = (FX_up - FX)/std::abs(pertSize);       // Forward difference
+        DFest.block(0, i, it.totalCons, 1) = col;
+    }
+
+
+    MatrixXRd diff = DF - DFest;
+    MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
+    MatrixXRd DFest_abs = DFest.cwiseAbs();
+
+    diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
+
+    // // Divide each element by the magnitude of the DF element to get a relative difference magnitude
+    // for(int r = 0; r < diff.rows(); r++){
+    //     for(int c = 0; c < diff.cols(); c++){
+    //         // If one of the elements is zero, let the difference just be the difference; no division
+    //         if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
+    //             diff(r,c) = diff(r,c)/DF_abs(r,c);
+
+    //         // if(r == 50 && c == 98){
+    //         //     printf("DF(50, 98) = %.4e\n", DF(r,c));
+    //         //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
+    //         // }
+    //     }
+    // }
+    
+    if(writeToFile){
+        astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
+        astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
+        astrohelion::toCSV(diff, "FiniteDiff_Diff.csv"); 
+    }
+    // 
+
+    Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
+    Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
+
+    // Make a map that links the row number (column in the Jacobian matrix)
+    // of the free variable to the MSVarMap_Key that represents the MSVarMap_Obj 
+    // that contains information about the free variable
+    std::map<int, MSVarMap_Key> freeVarMap_rowNumToKey;
+    for(auto& obj : it.freeVarMap){
+        for(int r = 0; r < obj.second.nRows; r++){
+            freeVarMap_rowNumToKey[obj.second.row0 + r] = obj.first;
+        }
+    }
+
+    double rowMaxMax = rowMax.maxCoeff();
+    double colMaxMax = colMax.maxCoeff();
+    int errScalar = 10000;
+
+    if(rowMaxMax < errScalar*pertSize && colMaxMax < errScalar*colMaxMax){
+        if(verbosity >= Verbosity_tp::SOME_MSG)
+            astrohelion::printColor(BOLDGREEN, "No significant errors!\n");
+
+        return true;
+    }else{
+        if(verbosity >= Verbosity_tp::SOME_MSG){
+            astrohelion::printColor(BOLDRED, "Significant errors!\n");
+            printf("Maximum relative difference between computed DF and estimated DF\n");
+
+            int conCount = 0;
+            for(long r = 0; r < rowMax.size(); r++){
+                if(r == 0 && it.totalCons > 0){
+                    printf("Applies to %s %d: %s Constraint:\n", 
+                        Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                        it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+                }else if(conCount+1 < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
+                    conCount++;
+                    printf("Applies to %s %d: %s Constraint:\n", 
+                        Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                        it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+                }
+                astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
+                    "  row %03zu: %.6e\n", r, rowMax[r]);
+            }
+            for(long c = 0; c < colMax.size(); c++){
+                std::string parent = "unknown";
+                std::string type = "unknown";
+                MSVarMap_Key key;
+                try{
+                    key = freeVarMap_rowNumToKey.at(c);
+                    MSVarMap_Obj obj = it.freeVarMap.at(key);
+                    parent = MSVarMap_Obj::parent2str(obj.parent);
+                    type = MSVarMap_Key::type2str(key.type);
+                }catch(std::out_of_range &e){}
+
+                astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
+                    "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
+            }
+        }
+
+        return false;
+    }
+}//====================================================
+
+/**
+ *  \brief Compute the total delta-V along a corrected nodeset
+ * 
+ *  \param pIt pointer to an MultShootData object associated with a corrections process
+ *  \return the total delta-V, units consistent with the nodeset's stored velocity states
+ */
+double MultShootEngine::getTotalDV(const MultShootData *pIt){
+    double total = 0;
+    for(unsigned int n = 0; n < pIt->deltaVs.size()/3; n++){
+        total += sqrt(pIt->deltaVs[3*n + 0]*pIt->deltaVs[3*n + 0] +
+            pIt->deltaVs[3*n + 1]*pIt->deltaVs[3*n + 1] + 
+            pIt->deltaVs[3*n + 2]*pIt->deltaVs[3*n + 2]);
+    }
+    return total;
+}//=====================================================
 
 }// END of Astrohelion namespace

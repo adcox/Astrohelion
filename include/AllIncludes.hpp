@@ -11,7 +11,7 @@
 #include "Common.hpp"
 #include "Constraint.hpp"
 #include "ControlLaw_cr3bp_lt.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "Fam_cr3bp.hpp"

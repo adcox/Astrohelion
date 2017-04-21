@@ -968,27 +968,9 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 			double monoErr = std::abs(1.0 - mono.determinant());
 			if(monoErr > 1e-5)
 				astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
-			
-			// Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
-		 //    if(eigensolver.info() != Eigen::Success){
-		 //    	if(pItData){
-			// 		delete(pItData);
-			// 		pItData = nullptr;
-			// 	}
-		 //        throw Exception("FamGenerator::cr3bp_natParamCont: Could not compute eigenvalues of monodromy matrix");
-		 //    }
-
-		    // Eigen::VectorXcd vals = eigensolver.eigenvalues();
-		    // std::vector<cdouble> eigVals(vals.data(), vals.data()+6);
-
-			// For debugging:
-			// printf("Eigenvalues:\n");
-			// for(int i = 0; i < 6; i++){ printf("  %s\n", complexToStr(eigVals[i]).c_str()); }
-			// waitForUser();
 
 			// Add orbit to family
 			FamMember_cr3bp child(perOrbit);
-			// child.setEigVals(eigVals);
 			fam->addMember(child);
 		}
 
@@ -1213,7 +1195,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 	std::vector<Constraint> constraints {perpCross1_Con, perpCross2_Con};
 
 	// Correct the nodeset to retrieve a free-variable vector for a family member
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setVarTime(true);			// Variable time MUST be enabled for PAC
 	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);

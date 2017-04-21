@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <complex>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace astrohelion{
@@ -304,10 +305,36 @@ namespace astrohelion{
 			return 0;
 		else
 			return num < 0 ? -1 : 1;
-	}//===========================================
+	}//================================================
+
+	/**
+	 *  \brief Compare two complex numbers by comparing their magnitudes
+	 * 
+	 *  \param lhs 
+	 *  \param rhs 
+	 *  \return whether or not the magnitude of lhs is less than the magnitude of rhs
+	 */
+	template<typename T>
+	bool compareMagnitude(std::complex<T> lhs, std::complex<T> rhs){
+		return std::abs(lhs) < std::abs(rhs);
+	}//================================================
+
+	/**
+	 *  \brief Explicitly cast a strongly typed enumerate type to its underlying type
+	 *  \details For example, if an enum is declared as <code>enum class tp : int</code>,
+	 *  this function will cast any <code>tp::value</code> class to the underlying type,
+	 *  <code>int</code>. This is useful if you want to compare <code>int</code> values 
+	 *  with the enum values.
+	 * 
+	 *  \param e Object to retrieve the underlying type of
+	 *  \return The underlying type of e.
+	 */
+	template<typename T>
+	constexpr auto to_underlying(T e) -> typename std::underlying_type<T>::type{
+		return static_cast<typename std::underlying_type<T>::type>(e);
+	}//================================================
 
 	/** \} */ // END of util group
-
 
 
 	double boundValue(double, double, double);

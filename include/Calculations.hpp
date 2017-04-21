@@ -37,7 +37,7 @@ namespace astrohelion{
 
 // Forward declarations
 class BaseArcset;
-class CorrectionEngine;
+class MultShootEngine;
 class MultShootData;
 class Node;
 class Nodeset;
@@ -60,16 +60,6 @@ enum class Mirror_tp{
 	MIRROR_YZ,		//!< Mirror over the YZ-Plane; y, z, and x-dot can be fixed if desired
 	MIRROR_X_AX_H, 	//!< Mirror over the X-Axis, orbit is mostly in xy-plane; x, y-dot, and z-dot can be fixed if desired
 	MIRROR_X_AX_V	//!< Mirror over the X-Axis, orbit is mostly in xz-plane; x, y-dot, and z-dot can be fixed if desired
-};
-
-/**
- *	\brief Describes the type of manifold, both stability and direction
- */
-enum class Manifold_tp{
-	MAN_U_P,	//!< Unstable, departing towards +x direction
-	MAN_U_M,	//!< Unstable, departing towards -x direction
-	MAN_S_P,	//!< Stable, arriving from +x direction
-	MAN_S_M		//!< Stable, arriving from -x direction
 };
 
 /**
@@ -96,12 +86,8 @@ double dateToEphemerisTime(const char*);
 double dateToGST(double, double, double, double, double, double);
 double gregorianToJulian(double, double, double, double, double, double);
 std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
-std::vector<Traj_cr3bp> getManifolds(Manifold_tp, const Traj_cr3bp*, int, double);
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
-double getTotalDV(const MultShootData*);
-bool finiteDiff_checkMultShoot(const Nodeset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
-bool finiteDiff_checkMultShoot(const Nodeset*, CorrectionEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
 Node interpPointAtTime(const Traj*, double);
@@ -142,9 +128,8 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, doubl
 Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp, double, int);
 Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp, double, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3bp*, double, double, int);
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double);
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double);
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double, MultShootData*);
+Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double tol = 1e-12);
+Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double tol = 1e-12, MultShootData *pItData = nullptr);
 /** \} */
 
 /**

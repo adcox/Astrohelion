@@ -7,7 +7,7 @@
 #include "AsciiOutput.hpp"
 #include "Constraint.hpp"
 #include "ControlLaw_cr3bp_lt.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
@@ -177,7 +177,7 @@ void test_createBCR4BPRNodeset(SysData_bc4bp *semData){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 
 	SysData_cr3bp emData("earth", "moon");
 	Nodeset_cr3bp crSet = test_createCR3BPNodeset(&emData);
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	
 	SysData_bc4bp semData("sun", "earth", "moon");
 	test_createBCR4BPRNodeset(&semData);
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 
 	SysData_cr3bp_lt ltData("earth", "moon", 12e-3, 1500, 14);
 	Nodeset_cr3bp_lt ltSet(&ltData, ic, 2.77, 5, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);

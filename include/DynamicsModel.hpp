@@ -92,7 +92,7 @@ enum class DynamicsModel_tp{
  *	and, as such, only provides a framework and some common methods for other derived
  *	methods.
  *
- *	The SimEngine and CorrectionEngine make heavy use of dynamic 
+ *	The SimEngine and MultShootEngine make heavy use of dynamic 
  *	models to generalize their code. This allows the developer to easily implement
  *	new dynamic models for use in the simulator and corrector without making major
  *	modifications to their code.

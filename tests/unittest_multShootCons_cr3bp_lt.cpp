@@ -6,7 +6,7 @@
 
 #include "Calculations.hpp"
 #include "Constraint.hpp"
-#include "CorrectionEngine.hpp"
+#include "MultShootEngine.hpp"
 #include "ControlLaw_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
@@ -55,12 +55,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law1){
 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 2, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);	// Create a nodeset
 	Nodeset_cr3bp_lt correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setEqualArcTime(false);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG, true));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG, true));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 }//====================================================
 
@@ -71,11 +71,11 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT);	// Create a nodeset
 	Nodeset_cr3bp_lt correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setEqualArcTime(false);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 }//====================================================
 
@@ -86,10 +86,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 // 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::PRO_VEL);	// Create a nodeset
 // 	Nodeset_cr3bp_lt correctedSet(&sys);
 
-// 	CorrectionEngine corrector;
+// 	MultShootEngine corrector;
 // 	corrector.setEqualArcTime(false);
 
-// 	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 // 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 // }//====================================================
 
@@ -100,10 +100,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 // 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::ANTI_VEL);	// Create a nodeset
 // 	Nodeset_cr3bp_lt correctedSet(&sys);
 
-// 	CorrectionEngine corrector;
+// 	MultShootEngine corrector;
 // 	corrector.setEqualArcTime(false);
 
-// 	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+// 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 // 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 // }//====================================================
 
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 3, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);	// Create a nodeset
 	Nodeset_cr3bp_lt correctedSet(&sys);
 
-	CorrectionEngine corrector;
+	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
 	corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
 	halfLyapNodeset.addConstraint(stateCon);
 
-	BOOST_CHECK(finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());

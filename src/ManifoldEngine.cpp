@@ -125,8 +125,8 @@ std::vector<Traj_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manif
  *  \return A manifold arc
  *  \see manifoldsFromPOPoint()
  */
-std::vector<Traj_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp manifoldType, const Traj_cr3bp *pPerOrbit, double orbitTOF, double manifoldTOF,
-	Manifold_StepOff_tp stepType){
+std::vector<Traj_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp manifoldType, const Traj_cr3bp *pPerOrbit,
+    double orbitTOF, double manifoldTOF, Manifold_StepOff_tp stepType){
 
 	// Change orbitTOF to be between 0 and the periodic orbit period
 	double period = pPerOrbit->getTotalTOF();

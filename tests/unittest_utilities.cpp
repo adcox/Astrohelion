@@ -2,9 +2,10 @@
 
 #include <boost/test/unit_test.hpp>
 #include <iostream>
+#include <typeinfo>
 #include <vector>
 
-#include "AsciiOutput.hpp"
+#include "Common.hpp"
 #include "Utilities.hpp"
 
 
@@ -99,3 +100,37 @@ BOOST_AUTO_TEST_CASE(GetSpiceName){
 	BOOST_CHECK(std::strcmp(n2.c_str(), "CARME") == 0);
 	BOOST_CHECK(std::strcmp(n3.c_str(), "MARS SURVEYOR 01 ORBITER") == 0);
 }//=================================================
+
+BOOST_AUTO_TEST_CASE(Sign){
+	double p = -3.1415926;
+	float a = 12345.12345;
+	double b = 0;
+
+	BOOST_CHECK(astrohelion::sign(p) == -1);
+	BOOST_CHECK(astrohelion::sign(a) == 1);
+	BOOST_CHECK(astrohelion::sign(b) == 0);
+}//=================================================
+
+BOOST_AUTO_TEST_CASE(CompareMagnitude){
+	astrohelion::cdouble a(1,1);
+	astrohelion::cdouble b(2,2);
+	astrohelion::cdouble c(-1, -1);
+	astrohelion::cdouble d(sqrt(2), 0);
+
+	BOOST_CHECK(astrohelion::compareMagnitude(a, b) == true);
+	BOOST_CHECK(astrohelion::compareMagnitude(a, c) == false);
+	BOOST_CHECK(astrohelion::compareMagnitude(a, d) == false);
+}//=================================================
+
+BOOST_AUTO_TEST_CASE(To_Underlying){
+	enum class a : int{ VAL1 = 1, VAL2 = 2 };
+	enum class b : char{ VAL1 = 'a', VAL2 = 'z' };
+
+	BOOST_CHECK(typeid(astrohelion::to_underlying(a::VAL1)) == typeid(int));
+	BOOST_CHECK(typeid(astrohelion::to_underlying(b::VAL2)) == typeid(char));
+}//=================================================
+
+
+
+
+

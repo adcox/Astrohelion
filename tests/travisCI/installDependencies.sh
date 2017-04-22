@@ -1,7 +1,7 @@
 #!/bin/sh
 
 LOG="installLog.log"
-INSTALL_DIR="/opt/local"
+INSTALL_DIR="/usr/local"
 
 # Figure out the OS
 OS="unknown"

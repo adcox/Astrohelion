@@ -846,7 +846,7 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
     for(unsigned int ev = 0; ev < events.size(); ev++){
         // Don't trigger if only two points have been integrated
         // Also don't trigger if the type is 0 or negative: these are managed by the simulation engine
-        if(numPts > 1 && static_cast<int>(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core, t)){
+        if(numPts > 1 && to_underlying(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core, t)){
 
             astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
             events[ev].incrementCount();  // Update the counter for the event
@@ -854,10 +854,10 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
             if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
-            // integrating forwards for half the time between this state and the last one
+            // integrate forwards for half the time between this state and the last one
             double t0 = traj->getTimeByIx(-2);          // Time from the state before last
             double ti = traj->getTimeByIx(-1);          // Time from the previous state
-            double tof = t - t0 - 0.5*(t - ti);     // Approx. TOF 
+            double tof = t - t0 - 0.5*(t - ti);         // Approx. TOF 
 
             // Copy IC into vector - Use the state from two iterations ago to avoid
             // numerical problems when the previous state is REALLY close to the event

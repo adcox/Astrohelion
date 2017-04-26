@@ -70,12 +70,21 @@ Fam_cr3bp::Fam_cr3bp(const char* filepath){
 
 	loadMemberData(matfp);
 	loadEigVals(matfp);
-	loadEigVecs(matfp);
-	loadSTMs(matfp);
+	try{
+		loadEigVecs(matfp);
+	}catch(Exception &e){
+		printWarn("Fam_cr3bp: Could not load eigenvectors from file\n");
+	}
+
+	try{
+		loadSTMs(matfp);
+	}catch(Exception &e){
+		printWarn("Fam_cr3bp: COuld not load STMs from file\n");
+	}
+
 	name = astrohelion::readStringFromMat(matfp, NAME_VAR_NAME, MAT_T_UINT8, MAT_C_CHAR);
 	int type = static_cast<int>(astrohelion::readDoubleFromMat(matfp, SORT_TYPE_VAR_NAME));
 	sortType = static_cast<FamSort_tp>(type);
-	// sysData.readFromMat(matfp);
 
 	Mat_Close(matfp);
 	sysData = SysData_cr3bp(filepath);
@@ -131,6 +140,26 @@ FamMember_cr3bp Fam_cr3bp::getMember(int ix) const{
 		ix += members.size();
 
 	return members.at(ix);
+}//====================================================
+
+/**
+ *  \brief Retrieve a reference to a family member
+ *  \details [long description]
+ * 
+ *  \param ix Index of the family member; if the index is negative, it 
+ *  counts backwards from the end of the storage vector.
+ *  
+ *  \return A reference to the specified family member
+ *  \throws Exception if the index is out of bounds
+ */
+FamMember_cr3bp& Fam_cr3bp::getMemberRef(int ix){
+	if(ix < 0)
+		ix += members.size();
+
+	if(ix < 0 || ix >= static_cast<int>(members.size()))
+		throw Exception("Fam_cr3bp::getMemberRef: Index out of bounds");
+
+	return members[ix];
 }//====================================================
 
 /**

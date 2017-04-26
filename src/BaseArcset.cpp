@@ -295,8 +295,8 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	// Create a copy so we don't affect the original
 	baseArcsetPtr pSetCpy = pArcsetIn->clone();
 
-	Node linkTo_node = nodes[nodeIDMap[linkTo_ID]];
-	Node linkFrom_node = pSetCpy->getNode(linkFrom_ID);		// Will do its own index checks
+	const Node &linkTo_node = nodes[nodeIDMap[linkTo_ID]];
+	const Node linkFrom_node = pSetCpy->getNodeRef_const(linkFrom_ID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
 	if(!linkTo_node.isLinkedTo(Linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(Linkable::INVALID_ID))
@@ -337,17 +337,18 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 		
 		// Update objects and variables that depend on linkFrom_ID
 		linkFrom_ID = new_linkFrom_ID;
-		linkFrom_node = pSetCpy->getNode(linkFrom_ID);
-		int new_linkFrom_segIx = linkFrom_node.getLink(0) == Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0);
+		const Node &newLinkFrom_node = pSetCpy->getNodeRef_const(linkFrom_ID);
+		int new_linkFrom_segIx = newLinkFrom_node.getLink(0) == Linkable::INVALID_ID ? newLinkFrom_node.getLink(1) : newLinkFrom_node.getLink(0);
 		
 		if(new_linkFrom_segIx != Linkable::INVALID_ID){
 			linkFrom_seg = pSetCpy->getSeg(new_linkFrom_segIx);
-			linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
+			linkFrom_isOrigin = linkFrom_seg.getOrigin() == newLinkFrom_node.getID();
 		}else{
 			// No segments left, just a node
 			// Leave linkFrom_seg the same; this is used later to determine the direction of time
-			// make linkFrom_isOrigin = false; no more segments originating from the final node
-			linkFrom_isOrigin = false;
+			// make linkFrom_isOrigin = true if the TOF is negative, false if TOF is positive
+			// to avoid parallel structure problems
+			linkFrom_isOrigin = tof < 0;
 		}
 	}
 
@@ -380,6 +381,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	Segment linkSeg = Segment(origin, terminus, tof);
 	linkSeg.setSTM(linkSTM);
 	linkSeg.setCtrlLaw(linkCtrlLaw);
+	// linkSeg.print();
 	return addSeg(linkSeg);
 }//====================================================
 

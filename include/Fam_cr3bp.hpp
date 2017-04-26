@@ -95,6 +95,7 @@ class Fam_cr3bp : public Core{
 		void addMember(FamMember_cr3bp);
 		
 		FamMember_cr3bp getMember(int) const;
+		FamMember_cr3bp& getMemberRef(int);
 		std::vector<FamMember_cr3bp> getMemberByStateVar(double, int) const;
 		std::vector<FamMember_cr3bp> getMemberByTOF(double) const;
 		std::vector<FamMember_cr3bp> getMemberByJacobi(double) const;

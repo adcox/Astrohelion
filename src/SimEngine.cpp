@@ -792,7 +792,6 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
 /**
  *  \brief Free all GSL ODE pointers that have been initialized/instantiated
- *  \details [long description]
  * 
  *  \param s stepper object pointer
  *  \param c control object pointer

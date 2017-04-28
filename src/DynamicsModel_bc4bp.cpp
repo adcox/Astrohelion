@@ -146,21 +146,23 @@ std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<dou
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
-/**
- *  \brief Takes an input state and time and saves the data to the trajectory
- *  \param y an array containing the core state and any extra states integrated
- *  by the EOM function, including STM elements.
- *  \param t the time at the current integration state
- *  \param traj a pointer to the trajectory we should store the data in
- *  \param params structure containing parameters relevant to the integration
- */
-void DynamicsModel_bc4bp::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
+int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
+    (void) t;
+    (void) params;
+    (void) tp;
 
-    DynamicsModel::sim_saveIntegratedData(y, t, traj, params);
-    
+    int id = traj->addNode(node);
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);
     bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
-}//=====================================================
+    return id;
+}//====================================================
+
+int DynamicsModel_bc4bp::sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
+    (void) y;
+    (void) t;
+    (void) params;
+    return traj->addSeg(seg);
+}//====================================================
 
 /**
  *  \brief Use a correction algorithm to accurately locate an event crossing
@@ -245,7 +247,8 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
     lastSeg.setTerminus(id);
     lastSeg.appendState(&(state.front()), state.size());
     lastSeg.appendTime(eventTime);
-    lastSeg.computeTOF();
+    lastSeg.storeTOF();
+    lastSeg.setSTM(stm);
 
     // Create a new segment if the propagation is going to continue
     if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
@@ -255,7 +258,6 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Traj *traj,
         newSeg.appendTime(eventTime);
         sim_addSeg(newSeg, &(state.front()), eventTime, traj, params);
     }
-    // sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
     
     return true;
 }//====================================================

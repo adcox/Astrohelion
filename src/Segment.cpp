@@ -102,7 +102,6 @@ Segment::Segment(const Segment &s) : Linkable(s){
  *	\return set this object equal to s and return *this
  */
 Segment& Segment::operator =(const Segment &s){
-	Linkable::operator =(s);
 	copyMe(s);
 	return *this;
 }//====================================================
@@ -147,7 +146,7 @@ void Segment::addConstraint(Constraint c){
 	cons.push_back(c);
 }//====================================================
 
-void Segment::appendState(double *q, unsigned int len){
+void Segment::appendState(const double *q, unsigned int len){
 	states.insert(states.end(), q, q+len);
 }//====================================================
 
@@ -433,7 +432,7 @@ void Segment::copyMe(const Segment &s){
  *  \details If there are fewer than 2 time values in the vector,
  *  the time of flight is set to zero
  */
-void Segment::computeTOF(){
+void Segment::storeTOF(){
 	if(times.size() > 1){
 		tof = times.back() - times.front();
 	}else{

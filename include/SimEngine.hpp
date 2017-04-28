@@ -113,7 +113,7 @@ public:
 	 *  \param t time at the state
 	 */
 	void operator() (const std::vector<double> &q, double t){
-		model->sim_saveIntegratedData(&(q.front()), t, traj, eomParams);
+		// model->sim_saveIntegratedData(&(q.front()), t, traj, eomParams);
 	}//================================================
 };// END OF BOOST_OBSERVER------------------------------------------------------
 

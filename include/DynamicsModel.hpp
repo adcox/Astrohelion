@@ -269,16 +269,6 @@ public:
 	virtual bool sim_locateEvent(Event event, Traj *traj,
     	const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const = 0;
 
-	/**
-	 *	\brief Takes an input state and time and saves the data to the trajectory
-	 *	\param y an array containing the core state and any extra states integrated
-	 *	by the EOM function, including STM elements.
-	 *	\param t the time at the current integration state
-	 *	\param traj a pointer to the trajectory we should store the data in
-	 *	\param params structure containing parameters that are required for EOMs
-	 */
-	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
-
 	virtual int sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const;
 	virtual int sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
 

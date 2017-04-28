@@ -76,7 +76,7 @@ public:
 	 *  \{
 	 */
 	void addConstraint(Constraint);
-	void appendState(double*, unsigned int);
+	void appendState(const double*, unsigned int);
 	void appendTime(double);
 	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;
@@ -107,7 +107,8 @@ public:
 	void setVelCon(bool, bool, bool);
 	//\}
 
-	void computeTOF();
+	void storeTOF();
+
 	void print() const;
 protected:
 	virtual void copyMe(const Segment&);

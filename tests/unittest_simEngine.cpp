@@ -18,10 +18,45 @@
 using namespace astrohelion;
 
 //************************************************************
+//* Data Storage Tests
+//************************************************************
+BOOST_AUTO_TEST_SUITE(DataStorage)
+
+BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
+	SysData_cr3bp sys("earth", "moon");
+	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
+
+	SimEngine engine;
+	// engine.setVerbosity(Verbosity_tp::DEBUG);
+	Traj_cr3bp traj(&sys);
+	engine.runSim(ic, 4*PI, &traj);
+
+	// Make sure the correct number of nodes and segments have been created
+	BOOST_CHECK(traj.getNumNodes() == 2);
+	BOOST_CHECK(traj.getNumSegs() == 1);
+
+	// Make sure the times match
+	BOOST_CHECK(std::abs(traj.getTimeByIx(0) - traj.getSegByIx(0).getTimeByIx(0)) < engine.getRelTol());
+	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - traj.getSegByIx(-1).getTimeByIx(-1)) < engine.getRelTol());
+
+	// Make sure the states match
+	std::vector<double> initialNodeState = traj.getStateByIx(0);
+	std::vector<double> finalNodeState = traj.getStateByIx(-1);
+	std::vector<double> initialSegState = traj.getSegByIx(0).getStateByRow(0, 42);	// 6 + 36 = 42 state variables per row
+	std::vector<double> finalSegState = traj.getSegByIx(-1).getStateByRow(-1, 42);
+
+	for(unsigned int i = 0; i < 6; i++){
+		BOOST_CHECK(std::abs(initialNodeState[i] - initialSegState[i]) < engine.getRelTol());
+		BOOST_CHECK(std::abs(finalNodeState[i] - finalSegState[i]) < engine.getRelTol());
+	}
+}//====================================================
+
+BOOST_AUTO_TEST_SUITE_END()
+
+//************************************************************
 //* Event Function Tests
 //************************************************************
 BOOST_AUTO_TEST_SUITE(Events)
-
 /**
  *  \brief Check that an event stops integration in a CR3BP simulation
  */
@@ -50,7 +85,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_NoStop){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	SimEngine engine;
-	engine.setVerbosity(Verbosity_tp::DEBUG);
+	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Traj_cr3bp traj(&sys);
 	Event planeCross(Event_tp::XZ_PLANE, 0, false);
 	engine.addEvent(planeCross);
@@ -269,8 +304,8 @@ BOOST_AUTO_TEST_CASE(DataPreserved){
 	BOOST_CHECK_THROW(sim.runSim(ic, 6*PI*400, &traj), Exception);
 
 	// But some data should still be written to traj
-	BOOST_CHECK(traj.getNumNodes() > 10);
-	BOOST_CHECK(traj.getNumSegs() > 9);
+	BOOST_CHECK(traj.getNumNodes() > 1);
+	BOOST_CHECK(traj.getNumSegs() > 0);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(DataPreserved_fixedStep){

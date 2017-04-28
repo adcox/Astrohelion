@@ -71,7 +71,8 @@ public:
 	 *  \name Simulation Support Functions
 	 *  \{
 	 */
-	void sim_saveIntegratedData(const double*, double, Traj*, EOM_ParamStruct*) const;
+	int sim_addNode(Node&, const double*, double, Traj*, EOM_ParamStruct*, Event_tp) const;
+	int sim_addSeg(Segment&, const double*, double, Traj*, EOM_ParamStruct*) const;
 	bool sim_locateEvent(Event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const;
 	//\}

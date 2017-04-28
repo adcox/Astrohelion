@@ -162,23 +162,6 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
 }//==================================================
 
 /**
- *  \brief Save data from the simulation to a trajectory object
- *  \details [long description]
- * 
- *  \param y pointer to state data array
- *  \param t time
- *  \param traj pointer to trajectory in which the data is stored
- *  \param params Structure that contains parameters used in the integration
- */
-void DynamicsModel::sim_saveIntegratedData(const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
-    int id = traj->addNode(Node(y, coreStates, t));
-	if(id > 0){
-		double tof = t - traj->getNodeRef_const(id-1).getEpoch();
-		traj->addSeg(Segment(id-1, id, tof, y+coreStates, coreStates*coreStates, params->ctrlLawID));
-	}
-}//====================================================
-
-/**
  *  \brief Create a node on the Trajectory
  *  \details [long description]
  * 

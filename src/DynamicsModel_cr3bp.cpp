@@ -145,23 +145,25 @@ std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<dou
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
-/**
- *  \brief Takes an input state and time and saves the data to the trajectory
- *  \param y an array containing the core state and any extra states integrated
- *  by the EOM function, including STM elements.
- *  \param t the time at the current integration state
- *  \param traj a pointer to the trajectory we should store the data in
- *  \param params structure containing parameters relevant to the integration
- */
-void DynamicsModel_cr3bp::sim_saveIntegratedData(const double* y, double t, Traj* traj, EOM_ParamStruct *params) const{
+int DynamicsModel_cr3bp::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
+    (void) t;
+    (void) tp;
 
-    DynamicsModel::sim_saveIntegratedData(y, t, traj, params);
-
-	// Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
+    int id = traj->addNode(node);
+    // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(params->sysData);
     Traj_cr3bp *cr3bpTraj = static_cast<Traj_cr3bp*>(traj);    
     cr3bpTraj->setJacobiByIx(-1, getJacobi(y, crSys->getMu()));
-}//=====================================================
+
+    return id;
+}//====================================================
+
+int DynamicsModel_cr3bp::sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
+    (void) y;
+    (void) t;
+    (void) params;
+    return traj->addSeg(seg);
+}//====================================================
 
 /**
  *  \brief Use a correction algorithm to accurately locate an event crossing
@@ -237,7 +239,8 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     lastSeg.setTerminus(id);
     lastSeg.appendState(&(state.front()), state.size());
     lastSeg.appendTime(eventTime);
-    lastSeg.computeTOF();
+    lastSeg.storeTOF();
+    lastSeg.setSTM(stm);
 
     // Create a new segment if the propagation is going to continue
     if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
@@ -247,7 +250,6 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
         newSeg.appendTime(eventTime);
         sim_addSeg(newSeg, &(state.front()), eventTime, traj, params);
     }
-    // sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
 
     return true;
 }//======================================================

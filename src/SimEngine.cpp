@@ -485,8 +485,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
  *  specific systems.
  *
  *  This function uses values stored in object-wide variables to determine the direction time flows,
- *  whether or not to use simple integration, and whether or not to use variable step sizes. Dad
- *  is saved to object-wide storage vectors via the <tt>sim_saveIntegratedData()</tt> function.
+ *  whether or not to use simple integration, and whether or not to use variable step sizes.
  *
  *  \param ic an array containing the initial state for the trajectory; number
  *    of elements must match the number of <code>coreStates</code> specified 
@@ -674,7 +673,6 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     seg.appendState(y, ic_dim);     // Save the initial state in the segment
     seg.appendTime(t[0]);           // Save the initial time in the segment
     model->sim_addSeg(seg, y, t[0], traj, eomParams);
-    // model->sim_saveIntegratedData(y, t[0], traj, eomParams);
 
     int status;             // integrator status
     int propStepCount = 0;  // Count of propagated steps (different than number of time steps)
@@ -694,9 +692,6 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 status = gsl_odeiv2_driver_apply(d, &t_int, tf, y);
             }
 
-            // Get reference to most recent segment (faster than copying the object!)
-            Segment &lastSeg = traj->getSegRefByIx(-1);
-
             if(status != GSL_SUCCESS){
                 if(verbosity >= Verbosity_tp::SOME_MSG){
                     astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(status));
@@ -713,11 +708,13 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 // Save the last successful step the integrator was able to take
                 Node nodeF(y, core_dim, t_int);    // Construct a basic node
                 int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                // Get reference to most recent segment (faster than copying the object!)
+                Segment &lastSeg = traj->getSegRefByIx(-1);
                 lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                 lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
                 lastSeg.appendTime(t_int);
-                lastSeg.computeTOF();
-                // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
+                lastSeg.storeTOF();
+                lastSeg.setSTM(y+core_dim, core_dim*core_dim);
 
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
@@ -731,10 +728,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
             if(killSim)
                 break;
 
-            // Put newly integrated state and time into state vector
-            // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
-
             // Save propagation state to segment
+            Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
             lastSeg = traj->getSegRefByIx(-1);  // Update in case locateEvents() added a node and segment
             lastSeg.appendState(y, ic_dim);
             lastSeg.appendTime(t_int);
@@ -747,14 +742,15 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
             double t_int = t[j], tf = t[j+1];
             double dt = tf > t_int ? dtGuess : -dtGuess;
             int sgn = tf > t_int ? 1 : -1;
-            Segment &lastSeg = traj->getSegRefByIx(-1);
 
             if(j > 0){
                 // Create a node at every time in the t[] array
                 Node nodeI(y, core_dim, t_int);
                 int nodeID_i = model->sim_addNode(nodeI, y, t_int, traj, eomParams, event_tof.getType());
+                Segment &lastSeg = traj->getSegRefByIx(-1);     // Get reference (not reassignable)
                 lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
-                lastSeg.computeTOF();
+                lastSeg.storeTOF();
+                lastSeg.setSTM(y+core_dim, core_dim*core_dim);
 
                 // Create a new segment for the next time interval
                 Segment newSeg;
@@ -788,32 +784,31 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     // Save the last successful step the integrator was able to take
                     Node nodeF(y, core_dim, t_int);    // Construct a basic node
                     int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                    Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
                     lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                     lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
                     lastSeg.appendTime(t_int);
-                    lastSeg.computeTOF();
-                    // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
+                    lastSeg.storeTOF();
+                    lastSeg.setSTM(y+core_dim, core_dim*core_dim);
 
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }
 
                 killSim = locateEvents(y, t_int, traj, propStepCount);
-                lastSeg = traj->getSegRefByIx(-1);  // Update in case an event occurred
 
                 // Stop the simulation if the maximum computation time has passed
                 killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
 
                 propStepCount++;
+
                 // Save the most recent time and state to the segment
+                Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
                 lastSeg.appendState(y, ic_dim);
                 lastSeg.appendTime(t_int);
             }
 
             if(killSim)
                 break;
-
-            // Add the newly integrated state and current time fo the state vector
-            // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
         }
     }
 
@@ -831,8 +826,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         Segment &lastSeg = traj->getSegRefByIx(-1);
         int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_tof.getType());
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
-        lastSeg.computeTOF();
-
+        lastSeg.storeTOF();
+        lastSeg.setSTM(y+core_dim, core_dim*core_dim);
     }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
         // Ended at the time-out
         SimEventRecord rec(event_comp_ix, traj->getNumNodes() - 1);
@@ -848,7 +843,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         lastSeg.appendState(y, ic_dim);
         lastSeg.appendTime(t_int);
 
-        lastSeg.computeTOF();
+        lastSeg.storeTOF();
+        lastSeg.setSTM(y+core_dim, core_dim*core_dim);
     }
 
     // Check lengths of vectors and set the numPoints value in traj
@@ -970,8 +966,6 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStep
                 }else{
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
                     events[ev].updateDist(y, core_dim, t); // Remember the most recent point
-
-                    // the model->sim_locateEvent() function has created a new segment already
                     return false;
                 }
             }

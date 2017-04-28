@@ -178,7 +178,8 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Traj* traj
 	(void) y;
 	(void) t;
 	(void) params;
-	(void) tp;
+	
+	node.setTriggerEvent(tp);
 	return traj->addNode(node);
 }//====================================================
 

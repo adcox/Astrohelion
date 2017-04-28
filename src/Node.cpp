@@ -231,6 +231,12 @@ std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
 int Node::getNumCons() const { return static_cast<int>(cons.size()); }
 
 /**
+ *  \brief Retrieve the event type that triggered the creation of this Node
+ *  \return the event type that triggered the creation of this Node
+ */
+Event_tp Node::getTriggerEvent() const { return triggerEventTp; }
+
+/**
  *	\brief Get the non-dimensional position and velocity state vector
  *	\return the non-dimensional position and velocity state vector
  */
@@ -299,6 +305,12 @@ void Node::setState(const double *s, unsigned int len){
  *	and velocity states
  */
 void Node::setState(std::vector<double> s){ state = s; }
+
+/**
+ *  \brief Set the event that triggered the creation of this node
+ *  \param tp Event type
+ */
+void Node::setTriggerEvent(Event_tp tp){ triggerEventTp = tp; }
 
 //-----------------------------------------------------
 //      Utility Functions

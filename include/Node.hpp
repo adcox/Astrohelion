@@ -28,13 +28,15 @@
 
 #pragma once
 
-#include "Linkable.hpp"
-
-#include "Constraint.hpp"
-
 #include <cmath>
 #include <vector>
 #include <map>
+
+#include "Linkable.hpp"
+
+#include "Constraint.hpp"
+#include "Event.hpp"
+
  
 // Forward Declarations
 // (none)
@@ -81,6 +83,7 @@ public:
 	std::map<std::string, std::vector<double> > getExtraParamVec() const;
 	int getNumCons() const;
 	std::vector<double> getState() const;
+	Event_tp getTriggerEvent() const;
 
 	void removeConstraint(int);
 	void setConstraints(std::vector<Constraint>);
@@ -92,6 +95,7 @@ public:
 	void setID(int) override;
 	void setState(const double*, unsigned int);
 	void setState(std::vector<double>);
+	void setTriggerEvent(Event_tp);
 	//\}
 
 	void print() const;
@@ -113,6 +117,9 @@ protected:
 
 	/** Stores constraints on this node (especially usefull in nodesets) */
 	std::vector<Constraint> cons {};
+
+	/** The event type that triggered the creation of this node */
+	Event_tp triggerEventTp = Event_tp::NONE;
 };
 
 }// END of Astrohelion namespace

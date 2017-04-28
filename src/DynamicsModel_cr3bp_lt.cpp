@@ -148,15 +148,15 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
 
 int DynamicsModel_cr3bp_lt::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
     (void) t;
-    (void) tp;
-
+    
+    node.setTriggerEvent(tp);
     int id = traj->addNode(node);
 
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const SysData_cr3bp_lt *ltSys = static_cast<const SysData_cr3bp_lt*>(params->sysData);
     Traj_cr3bp_lt *ltTraj = static_cast<Traj_cr3bp_lt*>(traj);
 
-    // Save Jacobi for CR3BP - it won't be constant any more, but is definitely useful to have
+    // Save Jacobi for CR3BP - it won't be constant in general, but is definitely useful to have
     ltTraj->setJacobiByIx(-1, DynamicsModel_cr3bp::getJacobi(y, ltSys->getMu()));
 
     return id;
@@ -166,6 +166,8 @@ int DynamicsModel_cr3bp_lt::sim_addSeg(Segment &seg, const double *y, double t, 
     (void) y;
     (void) t;
     (void) params;
+
+    seg.setCtrlLaw(params->ctrlLawID);
     return traj->addSeg(seg);
 }//====================================================
 

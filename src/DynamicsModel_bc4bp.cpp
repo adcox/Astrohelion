@@ -149,9 +149,10 @@ std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<dou
 int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
     (void) t;
     (void) params;
-    (void) tp;
 
+    node.setTriggerEvent(tp);
     int id = traj->addNode(node);
+    
     Traj_bc4bp *bcTraj = static_cast<Traj_bc4bp*>(traj);
     bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
     return id;

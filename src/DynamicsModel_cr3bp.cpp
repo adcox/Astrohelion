@@ -147,9 +147,10 @@ std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<dou
 
 int DynamicsModel_cr3bp::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
     (void) t;
-    (void) tp;
-
+    
+    node.setTriggerEvent(tp);
     int id = traj->addNode(node);
+    
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(params->sysData);
     Traj_cr3bp *cr3bpTraj = static_cast<Traj_cr3bp*>(traj);    

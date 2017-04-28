@@ -387,12 +387,72 @@ void Traj::saveCmds(mat_t* pMatFile) const{
  *	\brief Print a useful message describing this trajectory to the standard output
  */
 void Traj::print() const {
-	printf("%s Trajectory\n", pSysData->getTypeStr().c_str());
-	for(int i = 0; i < pSysData->getNumPrimaries(); i++)
-		printf("  Primary %d: %s\n", i, pSysData->getPrimary(i).c_str());
+	// printf("%s Trajectory\n", pSysData->getTypeStr().c_str());
+	// for(int i = 0; i < pSysData->getNumPrimaries(); i++)
+	// 	printf("  Primary %d: %s\n", i, pSysData->getPrimary(i).c_str());
 
-	printf("  %d Nodes\n  %d Segments\n", getNumNodes(), getNumSegs());
-	printf("  TOF = %.4f\n", getTotalTOF());
+	// printf("  %d Nodes\n  %d Segments\n", getNumNodes(), getNumSegs());
+	// printf("  TOF = %.4f\n", getTotalTOF());
+
+	printf("%s Trajectory:\n Nodes: %zu\n Segments: %zu\n", pSysData->getTypeStr().c_str(),
+		nodes.size(), segs.size());
+	printf("List of Nodes:\n");
+	for(const auto &index : nodeIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID){
+			std::vector<double> state = nodes[index.second].getState();
+			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
+				nodes[index.second].getEpoch(), state[0], state[1], state[2], state[3],
+				state[4], state[5]);
+		}else{
+			printf(" [N/A]\n");
+		}
+	}
+
+	printf("List of Segments:\n");
+	for(const auto &index : segIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f, Ctrl Law ID = %u\n", segs[index.second].getOrigin(),
+				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw());
+		}else{
+			printf(" [N/A]\n");
+		}
+	}
+
+	printf(" Constraints:\n");
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<Constraint> nodeCons = nodes[n].getConstraints();
+		for(unsigned int c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].print();
+		}
+	}
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<Constraint> segCons = segs[s].getConstraints();
+		for(unsigned int c = 0; c < segCons.size(); c++){
+			segCons[c].print();
+		}
+	}
+	for(unsigned int c = 0; c < cons.size(); c++){
+		cons[c].print();
+	}
+
+	printf(" Velocity Discontinuities allowed on segments: ");
+	char velEl[] = {'x', 'y', 'z'};
+	bool anyDiscon = false;
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<bool> velCon = segs[s].getVelCon();
+		for(unsigned int i = 0; i < velCon.size(); i++){
+			if(!velCon[i]){
+				printf("%uv_%c, ", s, velEl[i]);
+				anyDiscon = true;
+			}
+		}
+	}
+	if(!anyDiscon)
+		printf("None\n");
+	else
+		printf("\n");
 }//====================================================
 
 /**

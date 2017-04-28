@@ -147,6 +147,14 @@ void Segment::addConstraint(Constraint c){
 	cons.push_back(c);
 }//====================================================
 
+void Segment::appendState(double *q, unsigned int len){
+	states.insert(states.end(), q, q+len);
+}//====================================================
+
+void Segment::appendTime(double t){
+	times.push_back(t);
+}//====================================================
+
 /**
  *	\brief Clear all constraints associated with this segment
  */
@@ -179,10 +187,56 @@ int Segment::getNumCons() const { return static_cast<int>(cons.size()); }
 int Segment::getOrigin() const { return links[ORIG_IX]; }
 
 /**
+ *  \brief Retrieve a state from the storage vector
+ *  \details State vectors are stored as rows of a matrix where
+ *  the storage vector represents the matrix in row-major order
+ * 
+ *  \param row Row index, begins at 0. If row < 0, it will count backwards
+ *  from the end of the set of states.
+ *  \param rowLen the number of states in one row; this is usually the 
+ *  combined size of the core state, the STM, and any extra states
+ * 
+ *  \return A vector containing the desired state values
+ */
+std::vector<double> Segment::getStateByRow(int row, unsigned int rowLen) const{
+	if(rowLen == 0)
+		throw Exception("Segment::getStateByRow: rowLen cannot be zero");
+
+	if(row < 0)
+		row += states.size()/rowLen;
+
+	if(row < 0 || row >= static_cast<int>(states.size()/rowLen))
+		throw Exception("Segment::getStateByRow: row out of bounds");
+
+	std::vector<double> q(states.begin()+row*rowLen, states.begin()+(row+1)*rowLen);
+	return q;
+}//====================================================
+
+/**
  *  \brief Retrieve the ID of the terminal node (chronologically)
  *  \return the ID of the terminal node (chronologically)
  */
 int Segment::getTerminus() const { return links[TERM_IX]; }
+
+/**
+ *  \brief Retrieve a time from the segment time vector
+ *  \details [long description]
+ * 
+ *  \param ix index within the time vector; if ix is negative, 
+ *  it will count backward from the end of the vector
+ *  \return The time value at the specified index
+ *  
+ *  \throws Exception if the index is out of bounds
+ */
+double Segment::getTimeByIx(int ix) const{
+	if(ix < 0)
+		ix += times.size();
+
+	if(ix < 0 || ix >= static_cast<int>(times.size()))
+		throw Exception("Segment::getTimeByIx: Index out of bounds");
+
+	return times[ix];
+}//====================================================
 
 /**
  *  \brief Retrieve the time-of-flight along this segment
@@ -368,7 +422,23 @@ void Segment::copyMe(const Segment &s){
 	tof = s.tof;
 	flags = s.flags;
 	ctrlLawID = s.ctrlLawID;
+	times = s.times;
+	states = s.states;
 	Linkable::copyMe(s);
+}//====================================================
+
+/**
+ *  \brief Compute the time-of-flight along a segment from the data stored
+ *  in the times vector
+ *  \details If there are fewer than 2 time values in the vector,
+ *  the time of flight is set to zero
+ */
+void Segment::computeTOF(){
+	if(times.size() > 1){
+		tof = times.back() - times.front();
+	}else{
+		tof = 0;
+	}
 }//====================================================
 
 /**

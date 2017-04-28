@@ -178,6 +178,34 @@ void DynamicsModel::sim_saveIntegratedData(const double *y, double t, Traj* traj
 	}
 }//====================================================
 
+/**
+ *  \brief Create a node on the Trajectory
+ *  \details [long description]
+ * 
+ *  \param y pointer to state data array
+ *  \param t time
+ *  \param traj pointer to trajectory in which the data is stored
+ *  \param params Structure that contains parameters used in the integration
+ *  \param evt Event type that occured at the Node
+ *  \return ID of the node once it is added to the Trajectory
+ *  
+ *  \todo Incorporate the Event-saving part of this function
+ */
+int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
+	(void) y;
+	(void) t;
+	(void) params;
+	(void) tp;
+	return traj->addNode(node);
+}//====================================================
+
+int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
+	(void) y;
+	(void) t;
+	(void) params;
+	return traj->addSeg(seg);
+}//====================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Multiple Shooting Functions
 //------------------------------------------------------------------------------------------------------

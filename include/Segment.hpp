@@ -76,13 +76,17 @@ public:
 	 *  \{
 	 */
 	void addConstraint(Constraint);
+	void appendState(double*, unsigned int);
+	void appendTime(double);
 	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;
 	unsigned int getCtrlLaw() const;
 	int getNumCons() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
+	std::vector<double> getStateByRow(int, unsigned int) const;
 	int getTerminus() const;
+	double getTimeByIx(int) const;
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
 	
@@ -103,6 +107,7 @@ public:
 	void setVelCon(bool, bool, bool);
 	//\}
 
+	void computeTOF();
 	void print() const;
 protected:
 	virtual void copyMe(const Segment&);
@@ -118,6 +123,18 @@ protected:
 
 	/** Stores constraints on this segment */
 	std::vector<Constraint> cons {};
+
+	/**
+	 * Vector of times along the propagated path. Holds, at minimum, two time values
+	 * to represent the starting and ending time (i.e., epoch) on the segment.
+	 */
+	std::vector<double> times {};
+
+	/**
+	 * Vector of states, stored in row-major order. Each "row" of the vector
+	 * contains a single state from the integrator
+	 */
+	std::vector<double> states {};
 };
 
 }// END of Astrohelion namespace

@@ -231,7 +231,23 @@ bool DynamicsModel_cr3bp::sim_locateEvent(Event event, Traj* traj,
     double eventTime = correctedNodes.getTOFByIx(0) + t0;
 
     // Use the data stored in nodes and save the state and time of the event occurence
-    sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
+    Node node(&(state.front()), coreStates, eventTime);
+    int id = sim_addNode(node, &(state.front()), eventTime, traj, params, event.getType());
+    Segment &lastSeg = traj->getSegRefByIx(-1);
+    lastSeg.setTerminus(id);
+    lastSeg.appendState(&(state.front()), state.size());
+    lastSeg.appendTime(eventTime);
+    lastSeg.computeTOF();
+
+    // Create a new segment if the propagation is going to continue
+    if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
+        Segment newSeg;
+        newSeg.setOrigin(id);
+        newSeg.appendState(&(state.front()), state.size());
+        newSeg.appendTime(eventTime);
+        sim_addSeg(newSeg, &(state.front()), eventTime, traj, params);
+    }
+    // sim_saveIntegratedData(&(state[0]), eventTime, traj, params);
 
     return true;
 }//======================================================

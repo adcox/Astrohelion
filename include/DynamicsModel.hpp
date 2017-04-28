@@ -42,8 +42,10 @@ namespace astrohelion{
 // Forward Declarations
 class Constraint;
 class Event;
+class Node;
 class Nodeset;
 class Traj;
+class Segment;
 class SysData;
 class MultShootData;
 
@@ -276,6 +278,10 @@ public:
 	 *	\param params structure containing parameters that are required for EOMs
 	 */
 	virtual void sim_saveIntegratedData(const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
+
+	virtual int sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const;
+	virtual int sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
+
 	//\}
 
 	/**

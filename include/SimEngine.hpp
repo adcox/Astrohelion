@@ -311,7 +311,7 @@ class SimEngine : public Core, public Engine{
 		void createDefaultEvents(const SysData*);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
 		void integrate(const double*, MatrixXRd, const double*, int, Traj*);
-		bool locateEvents(const double*, double, Traj*);
+		bool locateEvents(const double*, double, Traj*, int);
 };
 
 

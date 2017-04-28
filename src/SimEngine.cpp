@@ -422,8 +422,8 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
         }
     }
 
-    int core = traj->getSysData()->getDynamicsModel()->getCoreStateSize();
-    MatrixXRd stm0 = MatrixXRd::Identity(core, core);
+    int core_dim = traj->getSysData()->getDynamicsModel()->getCoreStateSize();
+    MatrixXRd stm0 = MatrixXRd::Identity(core_dim, core_dim);
     runSim(ic, stm0, t_span, traj);
 }//====================================================
 
@@ -531,25 +531,25 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     }
 
     // Get the dimension of the state vector for integration
-    unsigned int core = model->getCoreStateSize();
-    unsigned int ic_dim = core + (!bSimpleIntegration)*(core*core + model->getExtraStateSize());
+    unsigned int core_dim = model->getCoreStateSize();
+    unsigned int ic_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
-    std::copy(ic, ic + core, &(fullIC.front()));
+    std::copy(ic, ic + core_dim, &(fullIC.front()));
 
-    if(stm0.rows() != core || stm0.cols() != core){
-        printErr("STM rows = %d, cols = %d, core = %u\n", stm0.rows(), stm0.cols(), core);
+    if(stm0.rows() != core_dim || stm0.cols() != core_dim){
+        printErr("STM rows = %d, cols = %d, core_dim = %u\n", stm0.rows(), stm0.cols(), core_dim);
         throw Exception("SimEngine::integrate: Initial STM size does not match the core state size specified by the Dynamic Model");
     }
 
     // ASSUMPTION: STM follows immediately after core states; any extras come after the STM
     if(!bSimpleIntegration){
         // Add STM to initial conditions
-        for(unsigned int r = 0; r < static_cast<unsigned int>(core); r++){
-            for(unsigned int c = 0; c < static_cast<unsigned int>(core); c++){
-                fullIC.at(core + r*core + c) = stm0(r,c);
+        for(unsigned int r = 0; r < static_cast<unsigned int>(core_dim); r++){
+            for(unsigned int c = 0; c < static_cast<unsigned int>(core_dim); c++){
+                fullIC.at(core_dim + r*core_dim + c) = stm0(r,c);
             }
         }
     }
@@ -567,44 +567,44 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     /*
      * BOOST INTEGRATOR ADDITION
      */
-    if(bVarStepSize && (
-        varStep_integ == Integ_tp::BOOST_RKCK ||
-        varStep_integ == Integ_tp::BOOST_RKF ||
-        varStep_integ == Integ_tp::BOOST_BS) ){
+    // if(bVarStepSize && (
+    //     varStep_integ == Integ_tp::BOOST_RKCK ||
+    //     varStep_integ == Integ_tp::BOOST_RKF ||
+    //     varStep_integ == Integ_tp::BOOST_BS) ){
 
-        if(t_dim != 2)
-            throw Exception("SimEngine::integrate: t_dim must be 2 for BOOST integration right now!");
+    //     if(t_dim != 2)
+    //         throw Exception("SimEngine::integrate: t_dim must be 2 for BOOST integration right now!");
 
-        boost_eom_wrapper boostEOM(eomFcn, eomParams);
-        boost_observer boostObserver(model, traj, eomParams);
+    //     boost_eom_wrapper boostEOM(eomFcn, eomParams);
+    //     boost_observer boostObserver(model, traj, eomParams);
 
-        double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
-        double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
+    //     double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
+    //     double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
 
-        // Save the initial state, time, and STM
-        // model->sim_saveIntegratedData(y, t[0], traj, eomParams);
+    //     // Save the initial state, time, and STM
+    //     // model->sim_saveIntegratedData(y, t[0], traj, eomParams);
 
-        switch(varStep_integ){
-            case Integ_tp::BOOST_RKCK:
-                boostInt::integrate_adaptive(
-                    boostInt::make_controlled< boostInt::runge_kutta_cash_karp54< std::vector<double> > >(absTol, relTol),
-                    boostEOM, fullIC, t0, tf, dt, boostObserver);
-                break;
-            case Integ_tp::BOOST_RKF:
-                boostInt::integrate_adaptive(
-                    boostInt::make_controlled< boostInt::runge_kutta_fehlberg78< std::vector<double> > >(absTol, relTol),
-                    boostEOM, fullIC, t0, tf, dt, boostObserver);
-                break;
-            case Integ_tp::BOOST_BS:
-            {
-                boostInt::bulirsch_stoer<std::vector<double> > stepper(absTol, relTol);
-                integrate_adaptive(stepper, boostEOM, fullIC, t0, tf, dt, boostObserver);
-                break;
-            }    
-        }
+    //     switch(varStep_integ){
+    //         case Integ_tp::BOOST_RKCK:
+    //             boostInt::integrate_adaptive(
+    //                 boostInt::make_controlled< boostInt::runge_kutta_cash_karp54< std::vector<double> > >(absTol, relTol),
+    //                 boostEOM, fullIC, t0, tf, dt, boostObserver);
+    //             break;
+    //         case Integ_tp::BOOST_RKF:
+    //             boostInt::integrate_adaptive(
+    //                 boostInt::make_controlled< boostInt::runge_kutta_fehlberg78< std::vector<double> > >(absTol, relTol),
+    //                 boostEOM, fullIC, t0, tf, dt, boostObserver);
+    //             break;
+    //         case Integ_tp::BOOST_BS:
+    //         {
+    //             boostInt::bulirsch_stoer<std::vector<double> > stepper(absTol, relTol);
+    //             integrate_adaptive(stepper, boostEOM, fullIC, t0, tf, dt, boostObserver);
+    //             break;
+    //         }    
+    //     }
 
-        return; // Skip the rest of the function and exit
-    }// END OF BOOST INTEGRATORS
+    //     return; // Skip the rest of the function and exit
+    // }// END OF BOOST INTEGRATORS
 
     /* Create a system to integrate; we don't include a Jacobin (NULL)
      *  The parameter set eomParams can be modified 
@@ -659,35 +659,47 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         }
     }
 
-    // Save the initial state, time, and STM
-    model->sim_saveIntegratedData(y, t[0], traj, eomParams);
-
     // Update all event functions with IC
     astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
     for(unsigned int ev = 0; ev < events.size(); ev++){
         astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  [%02u] - %s\n", ev, events.at(ev).getTypeStr());
-        events.at(ev).updateDist(y, core, t[0]);
+        events.at(ev).updateDist(y, core_dim, t[0]);
     }
 
-    int status; // integrator status
+    // Save the initial state, time, and STM
+    Node node0(y, core_dim, t[0]); // Construct a basic node
+    int id0 = model->sim_addNode(node0, y, t[0], traj, eomParams, event_tof.getType()); // Pass the node to the Dynamic Model so specific modifications may be made
+    Segment seg;            // Construct a segment that has an origin at the initial node
+    seg.setOrigin(id0);     // Assign origin ID
+    seg.appendState(y, ic_dim);     // Save the initial state in the segment
+    seg.appendTime(t[0]);           // Save the initial time in the segment
+    model->sim_addSeg(seg, y, t[0], traj, eomParams);
+    // model->sim_saveIntegratedData(y, t[0], traj, eomParams);
+
+    int status;             // integrator status
+    int propStepCount = 0;  // Count of propagated steps (different than number of time steps)
     bool killSim = false;   // flag to stop simulation
+    double t_int = t[0];    // current propagation time
 
     if(t_dim == 2){
-        double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
-        double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
-        int sgn = tf > t0 ? 1 : -1;
+        double tf = t[1];                // start and finish times for integration; t_int will be updated by integrator
+        double dt = tf > t_int ? dtGuess : -dtGuess;   // step size (initial guess)
+        int sgn = tf > t_int ? 1 : -1;
 
-        while (sgn*t0 < sgn*tf && !killSim){
-            // apply integrator for one step; new state and time are stored in y and t0
+        while (sgn*t_int < sgn*tf && !killSim){
+            // apply integrator for one step; new state and time are stored in y and t_int
             if(bVarStepSize){
-                status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t0, tf, &dt, y);
+                status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t_int, tf, &dt, y);
             }else{
-                status = gsl_odeiv2_driver_apply(d, &t0, tf, y);
+                status = gsl_odeiv2_driver_apply(d, &t_int, tf, y);
             }
+
+            // Get reference to most recent segment (faster than copying the object!)
+            Segment &lastSeg = traj->getSegRefByIx(-1);
 
             if(status != GSL_SUCCESS){
                 if(verbosity >= Verbosity_tp::SOME_MSG){
-                    astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                    astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(status));
                 }
 
                 free_odeiv2(s, c, e, d);
@@ -699,13 +711,19 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 eventOccurs.push_back(rec);
 
                 // Save the last successful step the integrator was able to take
-                model->sim_saveIntegratedData(y, t0, traj, eomParams);
+                Node nodeF(y, core_dim, t_int);    // Construct a basic node
+                int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                lastSeg.setTerminus(idf);                       // Update the terminus to the final node
+                lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
+                lastSeg.appendTime(t_int);
+                lastSeg.computeTOF();
+                // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
 
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
 
             // Stop the simulation if a simulation-ending event occurs
-            killSim = locateEvents(y, t0, traj);
+            killSim = locateEvents(y, t_int, traj, propStepCount);
 
             // Stop the simulation if the maximum computation time has passed
             killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
@@ -714,27 +732,49 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 break;
 
             // Put newly integrated state and time into state vector
-            model->sim_saveIntegratedData(y, t0, traj, eomParams);
+            // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
+
+            // Save propagation state to segment
+            lastSeg = traj->getSegRefByIx(-1);  // Update in case locateEvents() added a node and segment
+            lastSeg.appendState(y, ic_dim);
+            lastSeg.appendTime(t_int);
+            propStepCount++;
         }
     }else{
         // Integrate each segment between the input times
         for (int j = 0; j < t_dim - 1; j++){
-            // define start and end times; t0 will be updated by integrator
-            double t0 = t[j], tf = t[j+1];
-            double dt = tf > t0 ? dtGuess : -dtGuess;
-            int sgn = tf > t0 ? 1 : -1;
+            // define start and end times; t_int will be updated by integrator
+            double t_int = t[j], tf = t[j+1];
+            double dt = tf > t_int ? dtGuess : -dtGuess;
+            int sgn = tf > t_int ? 1 : -1;
+            Segment &lastSeg = traj->getSegRefByIx(-1);
 
-            while(sgn*t0 < sgn*tf && !killSim){
-                // printf("Integrating at t = %6.4f\n", t0);
+            if(j > 0){
+                // Create a node at every time in the t[] array
+                Node nodeI(y, core_dim, t_int);
+                int nodeID_i = model->sim_addNode(nodeI, y, t_int, traj, eomParams, event_tof.getType());
+                lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
+                lastSeg.computeTOF();
+
+                // Create a new segment for the next time interval
+                Segment newSeg;
+                newSeg.setOrigin(nodeID_i);
+                newSeg.appendState(y, ic_dim);
+                newSeg.appendTime(t_int);
+                model->sim_addSeg(newSeg, y, t_int, traj, eomParams);
+                lastSeg = traj->getSegRefByIx(-1);  // Update reference to most recent segment
+            }
+            while(sgn*t_int < sgn*tf && !killSim){
+                // printf("Integrating at t = %6.4f\n", t_int);
                 if(bVarStepSize){
-                    status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t0, tf, &dt, y);
+                    status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t_int, tf, &dt, y);
                 }else{
-                    status = gsl_odeiv2_driver_apply(d, &t0, tf, y);
+                    status = gsl_odeiv2_driver_apply(d, &t_int, tf, y);
                 }
 
                 if(status != GSL_SUCCESS){
                     if(verbosity >= Verbosity_tp::SOME_MSG){
-                        astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t0, gsl_strerror(status));
+                        astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(status));
                     }
                     
                     free_odeiv2(s, c, e, d);
@@ -746,22 +786,34 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     eventOccurs.push_back(rec);
 
                     // Save the last successful step the integrator was able to take
-                    model->sim_saveIntegratedData(y, t0, traj, eomParams);
+                    Node nodeF(y, core_dim, t_int);    // Construct a basic node
+                    int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                    lastSeg.setTerminus(idf);                       // Update the terminus to the final node
+                    lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
+                    lastSeg.appendTime(t_int);
+                    lastSeg.computeTOF();
+                    // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
 
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }
 
-                killSim = locateEvents(y, t0, traj);
+                killSim = locateEvents(y, t_int, traj, propStepCount);
+                lastSeg = traj->getSegRefByIx(-1);  // Update in case an event occurred
 
                 // Stop the simulation if the maximum computation time has passed
                 killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
+
+                propStepCount++;
+                // Save the most recent time and state to the segment
+                lastSeg.appendState(y, ic_dim);
+                lastSeg.appendTime(t_int);
             }
 
             if(killSim)
                 break;
 
             // Add the newly integrated state and current time fo the state vector
-            model->sim_saveIntegratedData(y, t0, traj, eomParams);
+            // model->sim_saveIntegratedData(y, t_int, traj, eomParams);
         }
     }
 
@@ -770,22 +822,41 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
     // Trigger events that may have ended the propagation (other than default or user-defined events)
     if(!killSim){
-        // Ended at the desired TOF
+        // Ended normally at the desired TOF
         SimEventRecord rec(event_tof_ix, traj->getNumNodes() - 1);
         eventOccurs.push_back(rec);
+
+        // Create a final node and update the final segment
+        Node nodeF(y, core_dim, t_int);
+        Segment &lastSeg = traj->getSegRefByIx(-1);
+        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_tof.getType());
+        lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
+        lastSeg.computeTOF();
 
     }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
         // Ended at the time-out
         SimEventRecord rec(event_comp_ix, traj->getNumNodes() - 1);
         eventOccurs.push_back(rec);
+        
+        // Create a final node and update the final segment
+        Node nodeF(y, core_dim, t_int);
+        Segment &lastSeg = traj->getSegRefByIx(-1);
+        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_comp.getType());
+        lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
+        
+        // Propagation ended without saving the final state
+        lastSeg.appendState(y, ic_dim);
+        lastSeg.appendTime(t_int);
+
+        lastSeg.computeTOF();
     }
 
     // Check lengths of vectors and set the numPoints value in traj
-    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "  **Integration complete**\n  Total: %d data points\n", traj->getNumNodes()-1);
+    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Integration complete**\nTotal: %d Nodes\n", traj->getNumNodes());
 
     // Summarize event occurrences
     for(unsigned int i = 0; i < eventOccurs.size(); i++){
-        astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, " Event %d (%s) occured at step %d\n", eventOccurs[i].eventIx,
+        astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, " Event %d (%s) occured at Node %d\n", eventOccurs[i].eventIx,
             events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
     }
 }//====================================================END of cr3bp_integrate
@@ -834,38 +905,41 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
  *  \param y the most recent state on the integrated arc.
  *  \param t the time associated with y
  *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param propStepCount the number of steps the propagation has taken so far. This is different
+ *  from the number of time steps as many propagation steps may be taken between specified time steps
  *  \return whether or not the simulation should end (an event triggers killSim)
  */
-bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
-    int numPts = traj->getNumNodes();
+bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStepCount){
     const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
-    unsigned int core = model->getCoreStateSize();
+    unsigned int core_dim = model->getCoreStateSize();
+    unsigned int full_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
 
     // Look through all events
     for(unsigned int ev = 0; ev < events.size(); ev++){
         // Don't trigger if only two points have been integrated
         // Also don't trigger if the type is 0 or negative: these are managed by the simulation engine
-        if(numPts > 1 && to_underlying(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core, t)){
+        if(propStepCount > 1 && to_underlying(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core_dim, t)){
 
-            astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Event %d detected at step %d; searching for exact crossing\n", ev, numPts - 1);
+            astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG,
+                "  Event %d detected on segment %d; searching for exact crossing\n", ev, traj->getNumSegs());
             events[ev].incrementCount();  // Update the counter for the event
 
             if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrate forwards for half the time between this state and the last one
-            double t0 = traj->getTimeByIx(-2);          // Time from the state before last
-            double ti = traj->getTimeByIx(-1);          // Time from the previous state
+            Segment &lastSeg = traj->getSegRefByIx(-1);
+            double t0 = lastSeg.getTimeByIx(-2);          // Time from the state before last
+            double ti = lastSeg.getTimeByIx(-1);          // Time from the previous state
             double tof = t - t0 - 0.5*(t - ti);         // Approx. TOF 
 
             // Copy IC into vector - Use the state from two iterations ago to avoid
             // numerical problems when the previous state is REALLY close to the event
-            std::vector<double> generalIC = traj->getStateByIx(-2);
+            std::vector<double> generalIC = lastSeg.getStateByRow(-2, full_dim);
 
             if(verbosity >= Verbosity_tp::ALL_MSG){
-                astrohelion::printColor(BLUE, "Step index = %d\n", numPts-1);
-                astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, 
-                    traj->getTimeByIx(-1), traj->getTimeByIx(-2));
+                astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
+                astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, ti, t0);
                 astrohelion::printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
                     y[1], y[2], y[3], y[4], y[5]);
                 astrohelion::printColor(BLUE, "tof = %f\n", tof);
@@ -881,11 +955,13 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                 SimEventRecord rec(ev, timeSize - 1);
                 eventOccurs.push_back(rec);
 
-                // Update event state
+                // Update event state from the most recent node (a new node was created at the event occurence)
                 std::vector<double> state = traj->getStateByIx(-1);
                 double lastT = traj->getTimeByIx(-1);
-                events[ev].updateDist(&(state[0]), core, lastT);
+                events[ev].updateDist(&(state[0]), core_dim, lastT);
                 
+                // This condition is also checked in model->sim_locateEvent(): that function adds a new
+                // segment if the simulation is continuing
                 if(events[ev].stopOnEvent() && events[ev].getTriggerCount() >= events[ev].getStopCount()){
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
@@ -893,15 +969,19 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj){
                     return true;    // Tell the simulation to stop
                 }else{
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
-                    events[ev].updateDist(y, core, t); // Remember the most recent point
+                    events[ev].updateDist(y, core_dim, t); // Remember the most recent point
+
+                    // the model->sim_locateEvent() function has created a new segment already
                     return false;
                 }
             }
         }// end of If(hasCrossed)
 
-        if(static_cast<int>(events[ev].getType()) > 0){
+        if(to_underlying(events[ev].getType()) > 0){
             // Save the distance and current state to the event
-            events[ev].updateDist(y, core, t);
+            events[ev].updateDist(y, core_dim, t);
+            printVerbColor(verbosity >= Verbosity_tp::DEBUG, BLUE, "Updating event %d state to [%.4f, %.4f, %.4f,...]\n",
+                ev, y[0], y[1], y[2]);
         }
     }// end of loop
 

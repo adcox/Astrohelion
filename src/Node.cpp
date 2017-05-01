@@ -228,7 +228,7 @@ std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
  *  \brief Retrieve the number of constraints stored by this object
  *  \return the number of constraints stored by this object
  */
-int Node::getNumCons() const { return static_cast<int>(cons.size()); }
+unsigned int Node::getNumCons() const { return cons.size(); }
 
 /**
  *  \brief Retrieve the event type that triggered the creation of this Node
@@ -326,6 +326,7 @@ void Node::copyMe(const Node &n){
 	extraParam = n.extraParam;
 	extraParamVecs = n.extraParamVecs;
 	cons = n.cons;
+	triggerEventTp = n.triggerEventTp;
 	Linkable::copyMe(n);
 }//====================================================
 

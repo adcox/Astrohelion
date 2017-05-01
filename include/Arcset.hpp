@@ -1,9 +1,9 @@
 /**
- *  \file Nodeset.hpp
+ *  \file Arcset.hpp
  *	\brief 
  *	
  *	\author Andrew Cox
- *	\version May 25, 2016
+ *	\version April 28, 2017
  *	\copyright GNU GPL v3.0
  */
 /*
@@ -28,34 +28,20 @@
 
 #pragma once
 
+#include <vector>
+
 #include "BaseArcset.hpp"
+
 #include "matio.h"
 
 namespace astrohelion{
 
 // Forward Declarations
 class Event;
-class Node;
+class SysData;
 class Traj;
 
-/**
- *	\ingroup traj
- *	\brief Similar to Traj, but only holds state data at specific "nodes"
- * 
- *	The nodeset object is similar to a trajectory object, but a nodeset only contains a few
- *	distinct states, or "nodes" and is used in corrections processes to break a trajectory
- *	into smaller pieces, which can improve the corrector's performance.
- *
- *	In addition to nodes, a nodeset stores information about the constraints that should
- *	be applied when the nodeset is passed through a corrections algorithm
- *
- *	@see Node
- *
- *	\author Andrew Cox
- *	\version September 2, 2015
- *	\copyright GNU GPL v3.0
- */
-class Nodeset : public BaseArcset{
+class Arcset : public BaseArcset{
 
 public:
 	/**
@@ -73,19 +59,23 @@ public:
 	 *  \name *structors
 	 *  \{
 	 */
-	Nodeset(const SysData*);
-	Nodeset(const Nodeset&);
-	Nodeset(const BaseArcset&);
-	Nodeset(const Nodeset&, int, int);
-	Nodeset(const char*);
-	virtual ~Nodeset();
+	Arcset(const SysData*);
+	Arcset(const Arcset&);
+	Arcset(const BaseArcset&);
+	Arcset(const char*);
+
+	virtual ~Arcset();
 	virtual baseArcsetPtr create(const SysData*) const;
 	virtual baseArcsetPtr clone() const;
 	//\}
 
-	// Operators
-	friend Nodeset operator +(const Nodeset&, const Nodeset&);
-	virtual Nodeset& operator +=(const Nodeset&);
+	/**
+	 * \name Operators
+	 * \{
+	 */
+	friend Arcset operator +(const Arcset&, const Arcset&);
+	virtual Arcset& operator +=(const Arcset&);
+	//\}
 
 	/**
 	 *  \name Set and Get Functions
@@ -96,17 +86,23 @@ public:
 	void allowDV_none();
 	int createNodesAtEvent(int, Event, double minTimeDiff = 1e-2);
 	virtual int createNodesAtEvents(int, std::vector<Event>, double minTimeDiff = 1e-2);
+
+	double getTimeByIx(int) const;
+
+	void setTimeByIx(int, double);
+	void shiftAllTimes(double);
 	//\}
-	
+
 	/**
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	void readFromMat(const char*);
 	virtual void print() const;
+	void readFromMat(const char*);
 	void reverseOrder();
 	void saveToMat(const char*) const;
 	//\}
+
 protected:
 	virtual void saveCmds(mat_t*) const;
 	virtual void readCmds(mat_t*);
@@ -115,8 +111,6 @@ protected:
 	void initFromICs_time(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	void initFromICs_arclength(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	void initFromTraj(Traj, int, NodeDistro_tp);
-
 };
 
-
-}
+}// End of astrohelion namespace

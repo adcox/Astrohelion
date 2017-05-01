@@ -121,7 +121,7 @@ Traj& Traj_cr3bp::operator +=(const Traj &rhs){
 
 	// Shift the time in temp by the final time in this trajectory
 	double tf = getTimeByIx(-1);
-	for(int s = 0; s < temp.getNumNodes(); s++){
+	for(unsigned int s = 0; s < temp.getNumNodes(); s++){
 		double t = tf + temp.getTimeByIx(s);
 		temp.setTimeByIx(s, t);
 	}

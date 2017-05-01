@@ -45,21 +45,6 @@ namespace astrohelion{
 class SysData;
 
 /**
- *	\brief A small structure to store event occurrence records
- */
-struct SimEventRecord{
-public:
-	/**
-	 *	\brief Construct an event record
-	 *	\param e the event index within the simulation engine event vector
-	 *	\param s the step index; which step did this event occur at?
-	 */
-	SimEventRecord(int e, int s) : eventIx(e), stepIx(s) {}
-	int eventIx;	//!< The index of the event (index from simulation engine vector of events)
-	int stepIx;		//!< The index of the integration step the event occured at
-};
-
-/**
  *  \brief Wrapper object to use GSL EOM functions with Boost integrators
  */
 class boost_eom_wrapper{
@@ -113,6 +98,8 @@ public:
 	 *  \param t time at the state
 	 */
 	void operator() (const std::vector<double> &q, double t){
+		(void) q;
+		(void) t;
 		// model->sim_saveIntegratedData(&(q.front()), t, traj, eomParams);
 	}//================================================
 };// END OF BOOST_OBSERVER------------------------------------------------------
@@ -210,9 +197,7 @@ class SimEngine : public Core, public Engine{
 		int addEvent(Event);
 		double getAbsTol() const;
 		unsigned int getCtrlLaw() const;
-		std::vector<Event> getEndEvents(Traj*) const;
 		std::vector<Event> getEvents() const;
-		std::vector<SimEventRecord> getEventRecords() const;
 		int getNumSteps() const;
 		double getRelTol() const;
 		bool makesDefaultEvents() const;
@@ -254,11 +239,6 @@ class SimEngine : public Core, public Engine{
 	private:
 		/** Vector of events to consider during integration */
 		std::vector<Event> events {};
-
-		/**
-		 *	Contains data recroding which events happened and at which step in the integration
-		 */
-		std::vector<SimEventRecord> eventOccurs {};
 		
 		/** a pointer to a data structure with parameters for the EOM function */
 		EOM_ParamStruct *eomParams = nullptr;

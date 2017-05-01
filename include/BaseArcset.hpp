@@ -147,9 +147,9 @@ public:
 	const Node& getNodeRef_const(int) const;
 	const Node& getNodeRefByIx_const(int) const;
 	int getNodeIx(int) const;
-	int getNumCons() const;
-	int getNumNodes() const;
-	int getNumSegs() const;
+	unsigned int getNumCons() const;
+	unsigned int getNumNodes() const;
+	unsigned int getNumSegs() const;
 	double getTOF(int) const;
 	double getTOFByIx(int) const;
 	virtual double getTotalTOF() const;
@@ -171,6 +171,8 @@ public:
 	bool isInChronoOrder() const;
 	
 	void putInChronoOrder(bool force = false);
+	void setEpoch(int, double);
+	void setEpochByIx(int, double);
 	void setStateDeriv(int, std::vector<double>);
 	void setStateDerivByIx(int, std::vector<double>);
 	void setState(int, std::vector<double>);

@@ -215,7 +215,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 
 	// Copy in the state vector for each node
 	int rowNum = 0;
-	for(int n = 0; n < set->getNumNodes(); n++){
+	for(unsigned int n = 0; n < set->getNumNodes(); n++){
 		std::vector<double> state = set->getStateByIx(n);
 		rowNum = it->X.size();
 		it->X.insert(it->X.end(), state.begin(), state.end());
@@ -226,7 +226,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 	if(it->bVarTime){		
 		if(it->bEqualArcTime){
 			// Make sure all times-of-flight have the same sign
-			for(int s = 1; s < set->getNumSegs(); s++){
+			for(unsigned int s = 1; s < set->getNumSegs(); s++){
 				if(set->getTOFByIx(s) * set->getTOFByIx(s-1) < 0)
 					throw Exception("DynamicsModel::multShoot_initDesignVec: EqualArcTime is ON and times-of-flight have different signs... cannot proceed");
 			}
@@ -237,7 +237,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
 			it->X.insert(it->X.end(), set->getTotalTOF());
 		}else{
 			// Append the TOF for each segment
-			for(int s = 0; s < set->getNumSegs(); s++){
+			for(unsigned int s = 0; s < set->getNumSegs(); s++){
 				MSVarMap_Key key(MSVar_tp::TOF, set->getSegRefByIx_const(s).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
 				it->X.insert(it->X.end(), set->getTOFByIx(s));
@@ -260,7 +260,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
  */	
 void DynamicsModel::multShoot_createContCons(MultShootData *it, const Nodeset *set) const{
 	// Create position and velocity constraints
-	for(int s = 0; s < set->getNumSegs(); s++){
+	for(unsigned int s = 0; s < set->getNumSegs(); s++){
 		// Force all positions to be continuous
 		std::vector<double> contStates(coreStates, 1);
 		if(set->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){	
@@ -796,7 +796,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 
 	// Compute total deltaV magnitude
 	double totalDV = 0;
-	for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+	for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
 		// compute magnitude of DV between segment s and its terminal point
 		// This takes the form v_n,f - v_n+1,0
 		double dvx = it->deltaVs[s*3];
@@ -915,7 +915,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
 		it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 	}else{
 		// Sum all TOF for total, set partials w.r.t. integration times equal to one
-		for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+		for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
 			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodeset->getSegRefByIx_const(s).getID());
 			it->FX[row0] += it->X[tof_var.row0];
 			it->DF[it->totalFree*row0 + tof_var.row0] = 1;

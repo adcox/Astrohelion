@@ -177,7 +177,7 @@ unsigned int Segment::getCtrlLaw() const{ return ctrlLawID; }
  *  \brief Retrieve the number of constraints stored by this object
  *  \return the number of constraints stored by this object
  */
-int Segment::getNumCons() const { return static_cast<int>(cons.size()); }
+unsigned int Segment::getNumCons() const { return cons.size(); }
 
 /**
  *  \brief Retrieve the ID of the origin node (chronologically)

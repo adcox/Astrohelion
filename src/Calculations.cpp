@@ -611,7 +611,7 @@ void r2bp_computeAllKepler(BaseArcset *pSet){
     if(pSet->getSysData()->getType() == SysData_tp::R2BP_SYS){
         const SysData_2bp *pSys = static_cast<const SysData_2bp*>(pSet->getSysData());
         
-        for(int n = 0; n < pSet->getNumNodes(); n++){
+        for(unsigned int n = 0; n < pSet->getNumNodes(); n++){
             Node& node = pSet->getNodeRefByIx(n);
             r2bp_computeKepler(pSys, &node);
         }
@@ -925,8 +925,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     sim.runSim(IC, period, &halfOrbArc);
     
     // Check to make sure the simulation ended with the event (not running out of time)
-    std::vector<Event> endEvts = sim.getEndEvents(&halfOrbArc);
-    if(std::find(endEvts.begin(), endEvts.end(), mirrorEvt) == endEvts.end()){
+    if(halfOrbArc.getNodeByIx(-1).getTriggerEvent() != mirrorEvt.getType()){
         astrohelion::printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
         // halfOrbArc.saveToMat("halfOrbArc_failedMirror.mat");
     }
@@ -969,7 +968,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         // Make the nodeset into a trajectory
         Traj_cr3bp halfPerTraj = Traj_cr3bp::fromNodeset(correctedHalfPer);
         double halfTOF = halfPerTraj.getTimeByIx(-1);
-        double halfPerTraj_len = halfPerTraj.getNumNodes();
+        int halfPerTraj_len = static_cast<int>(halfPerTraj.getNumNodes());
         MatrixXRd halfPerSTM = halfPerTraj.getSTMByIx(-1);
         
         // Use Mirror theorem to create the second half of the orbit
@@ -1089,7 +1088,7 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, do
     std::vector<double> state_SE;
     double epoch;
 
-    for(int n = 0; n < EMNodes.getNumNodes(); n++){
+    for(unsigned int n = 0; n < EMNodes.getNumNodes(); n++){
         epoch = EMNodes.getEpochByIx(n);
         state_SE = cr3bp_EM2SE_state(EMNodes.getStateByIx(n), epoch, thetaE0, thetaM0,
             gamma, charLE, charTE, charLS, charTS, pSESys->getMu());
@@ -1098,7 +1097,7 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, do
     }
 
     // Convert time units for segment TOFs and update IDs of origin and terminus nodes
-    for(int s = 0; s < EMNodes.getNumSegs(); s++){
+    for(unsigned int s = 0; s < EMNodes.getNumSegs(); s++){
         Segment seg = EMNodes.getSegByIx(s);
         seg.setTOF(seg.getTOF()*charTE/charTS);
         seg.setSTM(MatrixXRd::Identity(6, 6));
@@ -1177,7 +1176,7 @@ Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, do
     std::vector<double> state_EM;
     double epoch;
 
-    for(int n = 0; n < SENodes.getNumNodes(); n++){
+    for(unsigned int n = 0; n < SENodes.getNumNodes(); n++){
         epoch = SENodes.getEpochByIx(n);
         // Transform a single node
         state_EM = cr3bp_SE2EM_state(SENodes.getStateByIx(n), epoch, thetaE0, thetaM0,
@@ -1187,7 +1186,7 @@ Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, do
     }
 
     // Convert time units for segment TOFs and update IDs of origin and terminus nodes
-    for(int s = 0; s < SENodes.getNumSegs(); s++){
+    for(unsigned int s = 0; s < SENodes.getNumSegs(); s++){
         Segment seg = SENodes.getSegByIx(s);
         seg.setTOF(seg.getTOF()*charTS/charTE);
         seg.setSTM(MatrixXRd::Identity(6, 6));
@@ -1388,7 +1387,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
     Nodeset_cr3bp inertNodes(pSys);
     std::vector<int> map_oldID_to_newID(nodes.getNextNodeID(), Linkable::INVALID_ID);
 
-    for(int i = 0; i < nodes.getNumNodes(); i++){
+    for(unsigned int i = 0; i < nodes.getNumNodes(); i++){
         std::vector<double> stateInert = cr3bp_rot2inert_state(nodes.getStateByIx(i), pSys, nodes.getEpochByIx(i), epoch0, centerIx);
         
         // Save the new ID and add the node, making sure to update Epoch as well!
@@ -1396,7 +1395,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
             nodes.getEpochByIx(i)*pSys->getCharT() + epoch0));
     }
 
-    for(int s = 0; s < nodes.getNumSegs(); s++){
+    for(unsigned int s = 0; s < nodes.getNumSegs(); s++){
         Segment seg = nodes.getSegByIx(s);
         seg.setTOF(seg.getTOF()*pSys->getCharT());
 
@@ -1609,7 +1608,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
     std::vector<int> map_oldID_to_newID(crNodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> bcNodeState, crNodeState;
     double epoch;
-    for(int n = 0; n < crNodes.getNumNodes(); n++){
+    for(unsigned int n = 0; n < crNodes.getNumNodes(); n++){
         bcNodeState.clear();
         crNodeState = crNodes.getStateByIx(n);
         for(int r = 0; r < static_cast<int>(crNodeState.size()); r++){
@@ -1626,7 +1625,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
         map_oldID_to_newID[crNodes.getNodeByIx(n).getID()] = bcNodes.addNode(Node(bcNodeState, epoch));
     }
 
-    for(int s = 0; s < crNodes.getNumSegs(); s++){
+    for(unsigned int s = 0; s < crNodes.getNumSegs(); s++){
         Segment seg = crNodes.getSegByIx(s);
         seg.setTOF(seg.getTOF()*charT2/charT3);
 
@@ -1677,7 +1676,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
 
     std::vector<int> map_oldID_to_newID(bcNodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> bcState, crNodeState;
-    for(int n = 0; n < bcNodes.getNumNodes(); n++){
+    for(unsigned int n = 0; n < bcNodes.getNumNodes(); n++){
         bcState = bcNodes.getStateByIx(n);
         crNodeState.clear();
 
@@ -1699,7 +1698,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
         map_oldID_to_newID[bcNodes.getNodeByIx(n).getID()] = crNodes.addNode(node);
     }
 
-    for(int s = 0; s < bcNodes.getNumSegs(); s++){
+    for(unsigned int s = 0; s < bcNodes.getNumSegs(); s++){
         Segment seg = bcNodes.getSegByIx(s);
         seg.setTOF(seg.getTOF()*charT3/charT2);
 

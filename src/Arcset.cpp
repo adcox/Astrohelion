@@ -1,0 +1,529 @@
+/**
+ *  \file Arcset.cpp
+ *	\brief 
+ *	
+ *	\author Andrew Cox
+ *	\version April 28, 2017
+ *	\copyright GNU GPL v3.0
+ */
+/*
+ *	Astrohelion 
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of Astrohelion
+ *
+ *  Astrohelion is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Astrohelion is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "Arcset.hpp"
+#include "Exceptions.hpp"
+#include "SysData.hpp"
+#include "Utilities.hpp"
+
+#include "SimEngine.hpp"
+#include "Traj.hpp"
+#include "Nodeset.hpp"
+
+namespace astrohelion{
+
+
+//-----------------------------------------------------
+//      Constructors and Desctructor
+//-----------------------------------------------------
+
+/**
+ *	\brief Create a arcset for a specific system
+ *	\param data a pointer to a system data object
+ */
+Arcset::Arcset(const SysData *data) : BaseArcset(data) {}
+
+/**
+ *	\brief Create a arcset from another arcset
+ *	\param t a arcset reference
+ */
+Arcset::Arcset(const Arcset &t) : BaseArcset(t) {}
+
+/**
+ *	\brief Create a arcset from its base class
+ *	\param a an arc data reference
+ */
+Arcset::Arcset(const BaseArcset &a) : BaseArcset(a) {}
+
+/**
+ *  \brief Default destructor
+ */
+Arcset::~Arcset(){}
+
+/**
+ *  \brief Create a new arcset object on the stack
+ *  \details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  \param sys pointer to a system data object
+ *  \return a pointer to the newly created arcset
+ */
+baseArcsetPtr Arcset::create( const SysData *sys) const{
+	return baseArcsetPtr(new Traj(sys));
+}//====================================================
+
+/**
+ *  \brief Create a new arcset object on the stack that is a 
+ *  duplicate of this object
+ *  \details the <tt>delete</tt> function must be called to 
+ *  free the memory allocated to this object to avoid 
+ *  memory leaks
+ * 
+ *  \return a pointer to the newly cloned arcset
+ */
+baseArcsetPtr Arcset::clone() const{
+	return baseArcsetPtr(new Traj(*this));
+}//====================================================
+
+//-----------------------------------------------------
+//      Operators
+//-----------------------------------------------------
+
+/**
+ *  \brief Combine two arcsets.
+ *  \details This function concatenates two arcset objects. It is assumed
+ *  that the first state on <tt>rhs</tt> is identical to the final state on
+ *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
+ *  (chronologically) <tt>lhs</tt>
+ * 
+ *  \param lhs reference to a arcset object
+ *  \param rhs reference to a arcset object
+ * 
+ *  \return the concatenation of lhs + rhs.
+ */
+Arcset operator +(const Arcset &lhs, const Arcset &rhs){
+	const Arcset lhs_cpy(lhs);
+	const Arcset rhs_cpy(rhs);
+	Arcset result(lhs.pSysData);
+
+	BaseArcset::sum(&lhs, &rhs, &result);
+
+	return result;
+}//====================================================
+
+/**
+ *  \brief Concatenate this object with another arcset
+ * 
+ *  \param rhs reference to a arcset object
+ *  \return the concatenation of this and <tt>rhs</tt>
+ *  @see operator +()
+ */
+Arcset& Arcset::operator +=(const Arcset &rhs){
+	Arcset temp = *this + rhs;
+	copyMe(temp);
+	return *this;
+}//====================================================
+
+//-----------------------------------------------------
+//      Set and Get
+//-----------------------------------------------------
+
+/**
+ *	\brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
+ *	\param id a vector of segment IDs that can have velocity discontinuities
+ */
+void Arcset::allowDV_at(std::vector<int> id) {
+	for(unsigned int i = 0; i < segs.size(); i++){
+		// Check to see if the node should have continuous velocity
+		if(std::find(id.begin(), id.end(), segs[i].getID()) == id.end()){
+			segs[i].setVel_AllCon();
+		}else{
+			segs[i].setVel_AllDiscon();
+		}
+	}
+}//====================================================
+
+/**
+ *  \brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
+ */
+void Arcset::allowDV_all(){
+	for(unsigned int i = 0; i < segs.size(); i++){
+		segs[i].setVel_AllDiscon();
+	}
+}//====================================================
+
+/**
+ *  \brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
+ */
+void Arcset::allowDV_none(){
+	for(unsigned int i = 0; i < segs.size(); i++){
+		segs[i].setVel_AllCon();
+	}
+}//====================================================
+
+/**
+ *  \brief Insert a node after the specified node at any locations where the
+ *  specified event occurs
+ *  \details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path. A numerical simulation is used to propagate the nonlinear
+ *  solution between segments, so the events are defined in the dynamical system
+ *  associated with the nodeset.
+ * 
+ *  \param segID the ID of the segment to add nodes to; this segment will be deleted and
+ *  replaced by a series of smaller segments (and nodes) if one or more of the input
+ *  events occurs
+ *  \param evt the event that identifies the node locations. If multiple occurences
+ *  are located, multiple nodes will be inserted. If the event does not occur,
+ *  no nodes are inserted
+ *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  times-of-flight greater than or equal to this amount (default is 1e-2)
+ * 
+ *  \return the number of nodes created and inserted into the nodeset.
+ */
+int Arcset::createNodesAtEvent(int segID, Event evt, double minTimeDiff){
+	std::vector<Event> events(1, evt);
+	return createNodesAtEvents(segID, events, minTimeDiff);
+}//====================================================
+
+/**
+ *  \brief Insert nodes on the specified segment at locations where the
+ *  specified events occur.
+ *  
+ *  \details This function <i>does</i> adjust the prior node to ensure that 
+ *  times of flights and other parameters will lead to a nearly continuous 
+ *  integrated path. A numerical simulation is used to propagate the nonlinear
+ *  solution between segments, so the events are defined in the dynamical system
+ *  associated with the nodeset.
+ *  
+ *  \param segID the ID of the segment to add nodes to; this segment will be deleted and
+ *  replaced by a series of smaller segments (and nodes) if one or more of the input
+ *  events occurs
+ *  \param evts a vector of events that identify the node locations. If multiple occurences
+ *  are located, multiple nodes will be inserted. If none of the events occur,
+ *  no nodes are inserted
+ *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  times-of-flight greater than or equal to this amount (default is 1e-2)
+ *  
+ *  \return the number of nodes created and inserted into the nodeset.
+ *  \throws Exception if <tt>segID</tt> is out of bounds
+ */
+int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
+	if(segIDMap.count(segID) == 0)
+		throw Exception("Arcset::createNodesAtEvents: Segment ID is out of bounds");
+
+	// Get a copy of the segment we are replacing
+	Segment seg = segs[segIDMap[segID]];
+	Node origin = nodes[nodeIDMap[seg.getOrigin()]];
+	Node terminus = nodes[nodeIDMap[seg.getTerminus()]];
+
+	// Create a simulation engine and add the events to it
+	SimEngine engine;
+	engine.setRevTime(seg.getTOF() < 0);
+	engine.setMakeDefaultEvents(false);
+	engine.setCtrlLaw(seg.getCtrlLaw());
+	for(unsigned int i = 0; i < evts.size(); i++){
+		evts[i].setStopOnEvent(false);		// Ignore stopping conditions that other processes may have imposed
+		engine.addEvent(evts[i]);
+	}
+
+	/*	Get an arc that spans the entire segement less a small amount of time at the end
+	 * 	to ensure that no new nodes are created with TOF less than minTimeDiff
+	 */
+	double segTOF = seg.getTOF() < 0 ? seg.getTOF() + std::abs(minTimeDiff) : seg.getTOF() - std::abs(minTimeDiff);
+	Traj traj(pSysData);
+	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
+
+	int evtCount = 0;
+	for(unsigned int e = 0; e < evts.size(); e++){
+		for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+			if(traj.getNodeByIx(n).getTriggerEvent() == evts[e].getType()){
+				evtCount++;
+			}
+		}
+	}
+
+	if(evtCount > 0){
+		// Delete the old segment, replace it with new ones
+		deleteSeg(segID);
+
+		int prevNodeID = origin.getID();
+		int nextNodeID = Linkable::INVALID_ID;
+		for(unsigned int s = 0; s < traj.getNumSegs(); s++){
+			// Get a copy of the segment from the newly propagated arc
+			Segment newSeg = traj.getSegByIx(s);
+			
+			// Add the terminating node if this isn't the last segment
+			if(s < traj.getNumSegs()-1){
+				Node newNode = traj.getNode(newSeg.getTerminus());
+				nextNodeID = addNode(newNode);
+			}else{
+				nextNodeID = terminus.getID();	// ID of the terminal node from the original segment we deleted
+			}
+
+			// Reset the link, update the origin, and add the segment to the arcset
+			newSeg.clearLinks();
+			newSeg.setOrigin(prevNodeID);
+			newSeg.setTerminus(nextNodeID);
+			addSeg(newSeg);
+			
+			// Shift these for the next roun
+			prevNodeID = nextNodeID;
+		}
+	}
+
+	// double T0 = traj.getEpochByIx(0);
+	// std::vector<Event> events = engine.getEvents();
+	// std::vector<SimEventRecord> evtRecs = engine.getEventRecords();
+	// int evtCount = 0, prevNodeID = origin.getID();
+	// double tof = 0;
+	// for(unsigned int e = 0; e < evtRecs.size(); e++){
+	// 	for(unsigned int i = 0; i < evts.size(); i++){
+
+	// 		// If the event occurred, find the corresponding trajectory state and add that to the nodeset
+	// 		if(events[evtRecs[e].eventIx] == evts[i]){
+				
+	// 			// If at least one event is found, we need to delete the segment that is being replaced
+	// 			if(evtCount == 0)
+	// 				deleteSeg(segID);
+
+	// 			int stepIx = evtRecs[e].stepIx;
+	// 			tof = traj.getEpochByIx(stepIx) - T0;
+
+	// 			if(tof > minTimeDiff){
+	// 				int newID = addNode(Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
+	// 				Segment newSeg = Segment(prevNodeID, newID, tof);
+	// 				newSeg.setSTM(traj.getSTMByIx(stepIx));
+	// 				newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
+	// 				addSeg(newSeg);
+
+	// 				prevNodeID = newID;
+	// 				T0 += tof;
+	// 				evtCount++;
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// if(evtCount > 0){
+	// 	// Add a final segment connecting the last node to the original terminus
+	// 	tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
+	// 	Traj temp(pSysData);
+	// 	engine.clearEvents();
+	// 	engine.runSim(nodes[nodeIDMap[prevNodeID]].getState(), nodes[nodeIDMap[prevNodeID]].getEpoch(), tof, &temp);
+
+	// 	Segment newSeg = Segment(prevNodeID, terminus.getID(), tof);
+	// 	newSeg.setSTM(temp.getSTMByIx(-1));
+	// 	newSeg.setCtrlLaw(temp.getCtrlLawByIx(0));
+	// 	addSeg(newSeg);
+	// }
+
+	return evtCount;
+}//====================================================
+
+/**
+ *	\brief Retrieve the time along the arcset at a specific step
+ *	\param ix node index; if < 0, it will count backwards from end of arcset
+ *	\return the non-dimensional time along the arcset at the specified step
+ *	\throws Exception if <tt>ix</tt> is out of bounds
+ */
+double Arcset::getTimeByIx(int ix) const {
+	return getEpochByIx(ix);
+}//====================================================
+
+
+/**
+ *  \brief Set the time associated with a node
+ * 
+ *	\param ix node index; if < 0, it will count backwards from end of arcset
+ *  \param t time associated with the node
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ */
+void Arcset::setTimeByIx(int ix, double t){
+	setEpochByIx(ix, t);
+}//====================================================
+
+/**
+ *  \brief Shift all time values by a constant amount
+ *  \details This can be useful for use with the EM2SE and SE2EM functions
+ * 
+ *  \param amount a constant, non-dimensional time shift to apply to 
+ *  all time values for points on this trajectory
+ */
+void Arcset::shiftAllTimes(double amount){
+	for(unsigned int i = 0; i < nodes.size(); i++){
+		nodes[i].setEpoch(nodes[i].getEpoch() + amount);
+	}
+}//====================================================
+
+//-----------------------------------------------------
+//      Utility
+//-----------------------------------------------------
+
+/**
+ *	\brief Save the arcset to a file
+ *	\param filename the name of the .mat file
+ */
+void Arcset::saveToMat(const char* filename) const{
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		astrohelion::printErr("Arcset::saveToMat: Error creating MAT file\n");
+	}else{
+		saveCmds(matfp);
+	}
+
+	Mat_Close(matfp);
+}//====================================================
+
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \details This function is called from saveToMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
+void Arcset::saveCmds(mat_t* pMatFile) const{
+	saveState(pMatFile);
+	saveStateDeriv(pMatFile);
+	saveEpoch(pMatFile, VARNAME_TIME);
+	saveTOF(pMatFile);
+	saveSTMs(pMatFile);
+	saveCtrlLaw(pMatFile);
+	pSysData->saveToMat(pMatFile);
+}//====================================================
+
+/**
+ *	\brief Print a useful message describing this arcset to the standard output
+ */
+void Arcset::print() const {
+
+	printf("%s Arcset:\n Nodes: %zu\n Segments: %zu\n", pSysData->getTypeStr().c_str(),
+		nodes.size(), segs.size());
+	printf("List of Nodes:\n");
+	for(const auto &index : nodeIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID){
+			std::vector<double> state = nodes[index.second].getState();
+			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
+				nodes[index.second].getEpoch(), state[0], state[1], state[2], state[3],
+				state[4], state[5]);
+		}else{
+			printf(" [N/A]\n");
+		}
+	}
+
+	printf("List of Segments:\n");
+	for(const auto &index : segIDMap){
+		printf("  %02d (ix %02d):", index.first, index.second);
+		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f, Ctrl Law ID = %u\n", segs[index.second].getOrigin(),
+				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw());
+		}else{
+			printf(" [N/A]\n");
+		}
+	}
+
+	printf(" Constraints:\n");
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<Constraint> nodeCons = nodes[n].getConstraints();
+		for(unsigned int c = 0; c < nodeCons.size(); c++){
+			nodeCons[c].print();
+		}
+	}
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<Constraint> segCons = segs[s].getConstraints();
+		for(unsigned int c = 0; c < segCons.size(); c++){
+			segCons[c].print();
+		}
+	}
+	for(unsigned int c = 0; c < cons.size(); c++){
+		cons[c].print();
+	}
+
+	printf(" Velocity Discontinuities allowed on segments: ");
+	char velEl[] = {'x', 'y', 'z'};
+	bool anyDiscon = false;
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<bool> velCon = segs[s].getVelCon();
+		for(unsigned int i = 0; i < velCon.size(); i++){
+			if(!velCon[i]){
+				printf("%uv_%c, ", s, velEl[i]);
+				anyDiscon = true;
+			}
+		}
+	}
+	if(!anyDiscon)
+		printf("None\n");
+	else
+		printf("\n");
+}//====================================================
+
+/**
+ *  \brief Populate data in this trajectory from a matlab file
+ * 
+ *  \param filepath the path to the matlab data file
+ *  \throws Exception if the data file cannot be opened
+ */
+void Arcset::readFromMat(const char *filepath){
+
+	// Load the matlab file
+	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
+	if(NULL == matfp){
+		throw Exception("Arcset: Could not load data from file");
+	}else{
+		readCmds(matfp);
+	}
+
+	Mat_Close(matfp);
+}//====================================================
+
+/**
+ *	\brief Reverse the order of the nodes in this arcset
+ *
+ *	The constraints are automatically adjusted so they still 
+ *	constraint the same states even though the node indices 
+ *	have changed.
+ */
+void Arcset::reverseOrder() {
+	for(unsigned int s = 0; s < segs.size(); s++){
+		int o = segs[s].getOrigin();
+		segs[s].setOrigin(segs[s].getTerminus());
+		segs[s].setTerminus(o);
+		segs[s].setTOF(segs[s].getTOF()*-1);
+	}
+}//====================================================
+
+/**
+ *  \brief Execute commands to read data from a Matlab file
+ *  \details This function is called from readFromMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
+void Arcset::readCmds(mat_t *pMatFile){
+	initNodesSegsFromMat(pMatFile);
+	readStateFromMat(pMatFile);
+	readStateDerivFromMat(pMatFile);
+	readSTMFromMat(pMatFile);
+	readEpochFromMat(pMatFile, VARNAME_TIME);
+	readTOFFromMat(pMatFile);
+	readCtrlLawFromMat(pMatFile);
+}//====================================================
+
+
+}// End of astrohelion namespace

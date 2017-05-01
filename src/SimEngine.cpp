@@ -146,33 +146,6 @@ int SimEngine::getNumSteps() const { return numSteps; }
 std::vector<Event> SimEngine::getEvents() const { return events; }
 
 /**
- *  \brief Retrieve a vector of all events that occured during the 
- *  most recent simulation
- *  \return a vector of event records; the event indices correspond to
- *  the indices of the events stored in this simulation engine
- *  @see getEvents()
- */
-std::vector<SimEventRecord> SimEngine::getEventRecords() const { return eventOccurs; }
-
-/**
- *  \brief Retrieve a list of all events that fired at the last step
- *  of the simulation, potentially ending the run.
- *  \param traj pointer to the trajectory that was integrated
- *  \return a vector of events
- */
-std::vector<Event> SimEngine::getEndEvents(Traj *traj) const{
-    std::vector<Event> endEvents;
-    if(traj != NULL && traj != 0){
-        for(unsigned int i = 0; i < eventOccurs.size(); i++){
-            if(eventOccurs[i].stepIx == (traj->getNumNodes() - 1)){
-                endEvents.push_back(events[eventOccurs[i].eventIx]);
-            }
-        }
-    }
-    return endEvents;
-}//============================================
-
-/**
  *  \brief Add an event for this integration
  *  \param evt an event
  *  \return the index of the event within the events vector; returns -1 
@@ -506,18 +479,6 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         }
     }
 
-    // Create event that will indicate the propagation ended at a specified time-of-flight
-    Event event_tof(Event_tp::SIM_TOF, 0, false);
-    int event_tof_ix = addEvent(event_tof);
-
-    // Create event that will indicate the propagation ended due to a maximum computational time limit
-    // Only add the event to the list if a maxCompTime limit has been specified
-    Event event_comp(Event_tp::SIM_COMPTIME, 0, false);
-    int event_comp_ix = -1;
-    if(maxCompTime > 0){
-        event_comp_ix = addEvent(event_comp);
-    }
-
     startTimestamp = time(nullptr);
 
     // Save tolerance for trajectory
@@ -667,7 +628,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
     // Save the initial state, time, and STM
     Node node0(y, core_dim, t[0]); // Construct a basic node
-    int id0 = model->sim_addNode(node0, y, t[0], traj, eomParams, event_tof.getType()); // Pass the node to the Dynamic Model so specific modifications may be made
+    int id0 = model->sim_addNode(node0, y, t[0], traj, eomParams, Event_tp::NONE); // Pass the node to the Dynamic Model so specific modifications may be made
     Segment seg;            // Construct a segment that has an origin at the initial node
     seg.setOrigin(id0);     // Assign origin ID
     seg.appendState(y, ic_dim);     // Save the initial state in the segment
@@ -701,9 +662,6 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 // Create event and record that will indicate propagation ended with an error
                 Event event_err(Event_tp::SIM_ERR, 0, false);
-                int event_err_ix = addEvent(event_err);
-                SimEventRecord rec(event_err_ix, traj->getNumNodes() - 1);
-                eventOccurs.push_back(rec);
 
                 // Save the last successful step the integrator was able to take
                 Node nodeF(y, core_dim, t_int);    // Construct a basic node
@@ -746,7 +704,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
             if(j > 0){
                 // Create a node at every time in the t[] array
                 Node nodeI(y, core_dim, t_int);
-                int nodeID_i = model->sim_addNode(nodeI, y, t_int, traj, eomParams, event_tof.getType());
+                int nodeID_i = model->sim_addNode(nodeI, y, t_int, traj, eomParams, Event_tp::SIM_TOF);
                 Segment &lastSeg = traj->getSegRefByIx(-1);     // Get reference (not reassignable)
                 lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
                 lastSeg.storeTOF();
@@ -775,15 +733,10 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     
                     free_odeiv2(s, c, e, d);
 
-                    // Create event and record that will indicate propagation ended with an error
-                    Event event_err(Event_tp::SIM_ERR, 0, false);
-                    int event_err_ix = addEvent(event_err);
-                    SimEventRecord rec(event_err_ix, traj->getNumNodes() - 1);
-                    eventOccurs.push_back(rec);
-
                     // Save the last successful step the integrator was able to take
                     Node nodeF(y, core_dim, t_int);    // Construct a basic node
-                    int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                    // Add the node with info that there was a simulation error here
+                    int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, Event_tp::SIM_ERR);
                     Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
                     lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                     lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
@@ -818,25 +771,19 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     // Trigger events that may have ended the propagation (other than default or user-defined events)
     if(!killSim){
         // Ended normally at the desired TOF
-        SimEventRecord rec(event_tof_ix, traj->getNumNodes() - 1);
-        eventOccurs.push_back(rec);
-
         // Create a final node and update the final segment
         Node nodeF(y, core_dim, t_int);
         Segment &lastSeg = traj->getSegRefByIx(-1);
-        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_tof.getType());
+        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, Event_tp::SIM_TOF);
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
         lastSeg.storeTOF();
         lastSeg.setSTM(y+core_dim, core_dim*core_dim);
     }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
         // Ended at the time-out
-        SimEventRecord rec(event_comp_ix, traj->getNumNodes() - 1);
-        eventOccurs.push_back(rec);
-        
         // Create a final node and update the final segment
         Node nodeF(y, core_dim, t_int);
         Segment &lastSeg = traj->getSegRefByIx(-1);
-        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_comp.getType());
+        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, Event_tp::SIM_COMPTIME);
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
         
         // Propagation ended without saving the final state
@@ -850,10 +797,9 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     // Check lengths of vectors and set the numPoints value in traj
     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Integration complete**\nTotal: %d Nodes\n", traj->getNumNodes());
 
-    // Summarize event occurrences
-    for(unsigned int i = 0; i < eventOccurs.size(); i++){
-        astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, " Event %d (%s) occured at Node %d\n", eventOccurs[i].eventIx,
-            events[eventOccurs[i].eventIx].getTypeStr(), eventOccurs[i].stepIx);
+    for(unsigned int n = 0; n < traj->getNumNodes(); n++){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, " %s Event occured at node %u\n",
+            Event::getEventTpStr(traj->getNodeRefByIx(n).getTriggerEvent()), n);
     }
 }//====================================================END of cr3bp_integrate
 
@@ -945,12 +891,6 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStep
 
             // Use correction to locate the event very accurately
             if(model->sim_locateEvent(events[ev], traj, &(generalIC[0]), t0, tof, eomParams, verbosity)){
-                // Remember that this event has occured; step # is one less than the current size
-                // of the trajectory
-                int timeSize = traj->getNumNodes();
-                SimEventRecord rec(ev, timeSize - 1);
-                eventOccurs.push_back(rec);
-
                 // Update event state from the most recent node (a new node was created at the event occurence)
                 std::vector<double> state = traj->getStateByIx(-1);
                 double lastT = traj->getTimeByIx(-1);
@@ -994,7 +934,6 @@ void SimEngine::cleanEngine(){
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
     delete eomParams;
     eomParams = nullptr;  // set pointer to 0 (null pointer)
-    eventOccurs.clear();
 
     for(unsigned int e = 0; e < events.size(); e++){
         events[e].reset();
@@ -1069,7 +1008,6 @@ void SimEngine::copyMe(const SimEngine &s){
     dtGuess = s.dtGuess;
     numSteps = s.numSteps;
     events = s.events;
-    eventOccurs = s.eventOccurs;
     bMakeDefaultEvents = s.bMakeDefaultEvents;
     bMadeDefaultEvents = s.bMadeDefaultEvents;
     maxCompTime = s.maxCompTime;

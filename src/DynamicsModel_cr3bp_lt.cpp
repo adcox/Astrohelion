@@ -333,7 +333,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
 
     double tof;
     int newOrigID, newTermID;
-    for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+    for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
         Segment seg = it->nodeset->getSegByIx(s);
 
         if(it->bVarTime){

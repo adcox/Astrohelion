@@ -103,7 +103,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_NodesAtEvents){
 	BOOST_CHECK(set2.getStateByIx(1)[0] == xMoonData[0]);
 	BOOST_CHECK(set2.getStateByIx(2)[1] == 0);
 	BOOST_CHECK(set2.getStateByIx(3)[0] == xMoonData[0]);
-	BOOST_CHECK(set2.getTotalTOF() == emDRO_T);
+	BOOST_CHECK(std::abs(set2.getTotalTOF() - emDRO_T) < 1e-10);
+	printf("CR3BP TOF = %.6f\n", set2.getTotalTOF());
 	// set2.print();
 }//====================================================
 
@@ -131,7 +132,8 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesetFromICs){
 	BOOST_CHECK(std::abs(set3.getEpochByIx(1) - qho_T0 - set3.getTOFByIx(0)) < 1e-12);
 	BOOST_CHECK(std::abs(set3.getStateByIx(2)[1]) < 1e-12);
 	BOOST_CHECK(std::abs(set3.getEpochByIx(2) - qho_T0 - set3.getTOFByIx(0)) < 1e-12 + set3.getTOFByIx(1));
-	BOOST_CHECK(set3.getTotalTOF() == qho_Period);
+	BOOST_CHECK(std::abs(set3.getTotalTOF() - qho_Period) < 1e-10);
+	printf("BC4BP TOF = %.6f\n", set3.getTotalTOF());
 	// set3.print();
 }//====================================================
 

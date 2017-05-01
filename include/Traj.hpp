@@ -37,13 +37,6 @@ namespace astrohelion{
 class Nodeset;
 class Traj;
 
-// static const char* VARNAME_TIME = "Time";
-
-/**
- * \brief Smart pointer to a Traj object
- */
-typedef std::shared_ptr<Traj> trajPtr;
-
 /**
  *	\ingroup traj
  *	\brief Contains information about a series of continuous states along a trajectory.

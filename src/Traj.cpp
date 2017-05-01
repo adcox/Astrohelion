@@ -90,7 +90,7 @@ Traj Traj::fromNodeset(Nodeset set){
 	int coreSize = set.getSysData()->getDynamicsModel()->getCoreStateSize();
 	MatrixXRd prevSTM;
 
-	for(int s = 0; s < set.getNumSegs(); s++){
+	for(unsigned int s = 0; s < set.getNumSegs(); s++){
 		double tof = set.getTOFByIx(s);
 		simEngine.setRevTime(tof < 0);
 		simEngine.setCtrlLaw(set.getCtrlLawByIx(s));

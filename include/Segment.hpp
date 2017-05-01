@@ -81,7 +81,7 @@ public:
 	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;
 	unsigned int getCtrlLaw() const;
-	int getNumCons() const;
+	unsigned int getNumCons() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
 	std::vector<double> getStateByRow(int, unsigned int) const;

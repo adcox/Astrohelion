@@ -267,13 +267,13 @@ MultShootData MultShootEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut)
 	pModel->multShoot_createContCons(&it, set);
 
 	// Add all node constraints
-	for(int n = 0; n < set->getNumNodes(); n++){
+	for(unsigned int n = 0; n < set->getNumNodes(); n++){
 		std::vector<Constraint> nodeCons = set->getNodeByIx(n).getConstraints();
 		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
 	// Add all segment constraints
-	for(int s = 0; s < set->getNumSegs(); s++){
+	for(unsigned int s = 0; s < set->getNumSegs(); s++){
 		std::vector<Constraint> segCons = set->getSegByIx(s).getConstraints();
 		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
 	}
@@ -451,7 +451,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		// initialize a vector of trajectory objects to store each propagated segment
 		it.sysData->getDynamicsModel()->multShoot_initIterData(&it);
 
-		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
+		for(unsigned int s = 0; s < it.nodeset->getNumSegs(); s++){
 			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
@@ -480,7 +480,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
 		// waitForUser();
 		
 		// Compute Delta-Vs between node segments
-		for(int s = 0; s < it.nodeset->getNumSegs(); s++){
+		for(unsigned int s = 0; s < it.nodeset->getNumSegs(); s++){
 			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
 			int termID = it.nodeset->getSegByIx(s).getTerminus();
 			if(termID != Linkable::INVALID_ID){

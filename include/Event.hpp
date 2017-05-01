@@ -173,6 +173,8 @@ class Event : public Core{
 		void setStopOnEvent(bool);
 		//\}
 
+		static const char* getEventTpStr(Event_tp);
+
 		bool crossedEvent(const double*, unsigned int, double) const;
 		void updateDist(const double*, unsigned int, double);
 

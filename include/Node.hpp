@@ -81,7 +81,7 @@ public:
 	std::vector<double> getExtraParamVec(std::string) const;
 	std::map<std::string, double> getExtraParams() const;
 	std::map<std::string, std::vector<double> > getExtraParamVec() const;
-	int getNumCons() const;
+	unsigned int getNumCons() const;
 	std::vector<double> getState() const;
 	Event_tp getTriggerEvent() const;
 

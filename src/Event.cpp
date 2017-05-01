@@ -330,8 +330,14 @@ Event_tp Event::getType() const { return type; }
  *  \brief Retrieve a human-readable string representing the event type
  *	\return a human-readable string representing the event type
  */
-const char* Event::getTypeStr() const{
-	switch(type){
+const char* Event::getTypeStr() const{ return getEventTpStr(type); }
+
+/**
+ *  \brief Retrieve a human-readable string representing an event type
+ *	\return a human-readable string representing an event type
+ */
+const char* Event::getEventTpStr(Event_tp t){
+	switch(t){
 		case Event_tp::NONE: return "NONE"; break;
 		case Event_tp::SIM_TOF: return "SimEngine Time-of-Flight"; break;
 		case Event_tp::SIM_COMPTIME: return "SimEngine Computation Timeout"; break;
@@ -346,7 +352,7 @@ const char* Event::getTypeStr() const{
 		case Event_tp::MASS: return "mass"; break;
 		default: return "UNDEFINED!"; break;
 	}
-}//========================================
+}//====================================================
 
 /**
  *  \brief Retrieve the time associated with this event

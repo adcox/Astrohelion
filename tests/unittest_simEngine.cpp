@@ -25,11 +25,12 @@ BOOST_AUTO_TEST_SUITE(DataStorage)
 BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
 	SysData_cr3bp sys("earth", "moon");
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
-
+	double tof = 4*PI;
+	
 	SimEngine engine;
 	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Traj_cr3bp traj(&sys);
-	engine.runSim(ic, 4*PI, &traj);
+	engine.runSim(ic, tof, &traj);
 
 	// Make sure the correct number of nodes and segments have been created
 	BOOST_CHECK(traj.getNumNodes() == 2);
@@ -38,6 +39,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
 	// Make sure the times match
 	BOOST_CHECK(std::abs(traj.getTimeByIx(0) - traj.getSegByIx(0).getTimeByIx(0)) < engine.getRelTol());
 	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - traj.getSegByIx(-1).getTimeByIx(-1)) < engine.getRelTol());
+	BOOST_CHECK(std::abs(traj.getTotalTOF() - tof) < engine.getRelTol());
 
 	// Make sure the states match
 	std::vector<double> initialNodeState = traj.getStateByIx(0);
@@ -93,14 +95,13 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_NoStop){
 	engine.runSim(ic, tof, &traj);
 
 	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getRelTol());
-
-	std::vector<Event> events = engine.getEvents();
-	std::vector<SimEventRecord> records = engine.getEventRecords();
+	BOOST_CHECK(std::abs(traj.getTotalTOF() - tof) < engine.getRelTol());
+	
 	bool foundEvent = false;
-	for(unsigned int i = 0; i < records.size(); i++){
-		if(events[records[i].eventIx] == planeCross){
+	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+		if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 			foundEvent = true;
-			std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+			std::vector<double> q = traj.getStateByIx(n);
 			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
 		}
 	}
@@ -124,21 +125,19 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_ManyRevs){
 	std::vector<double> qf = traj.getStateByIx(-1);
 	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
 
-	// Make sure the correct number of events were recorded
-	std::vector<Event> events = engine.getEvents();
-	std::vector<SimEventRecord> records = engine.getEventRecords();
-	BOOST_CHECK(records.size() == stopCount);
-
 	// Make sure each event is valid
 	bool foundEvent = false;
-	for(unsigned int i = 0; i < records.size(); i++){
-		if(events[records[i].eventIx] == planeCross){
+	unsigned int eventCount = 0;
+	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+		if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 			foundEvent = true;
-			std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+			eventCount++;
+			std::vector<double> q = traj.getStateByIx(n);
 			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
 		}
 	}
 	BOOST_CHECK(foundEvent);
+	BOOST_CHECK(eventCount == stopCount);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
@@ -160,21 +159,19 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
 		std::vector<double> qf = traj.getStateByIx(-1);
 		BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
 
-		// Make sure the correct number of events were recorded
-		std::vector<Event> events = engine.getEvents();
-		std::vector<SimEventRecord> records = engine.getEventRecords();
-		BOOST_CHECK(records.size() == stopCount);
-
 		// Make sure each event is valid
 		bool foundEvent = false;
-		for(unsigned int i = 0; i < records.size(); i++){
-			if(events[records[i].eventIx] == planeCross){
+		unsigned int eventCount = 0;
+		for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+			if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 				foundEvent = true;
-				std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+				eventCount++;
+				std::vector<double> q = traj.getStateByIx(n);
 				BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
 			}
 		}
 		BOOST_CHECK(foundEvent);
+		BOOST_CHECK(eventCount == stopCount);
 	}
 }//====================================================
 
@@ -230,13 +227,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 
 	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getRelTol());
 
-	std::vector<Event> events = engine.getEvents();
-	std::vector<SimEventRecord> records = engine.getEventRecords();
+	// Make sure each event is valid
 	bool foundEvent = false;
-	for(unsigned int i = 0; i < records.size(); i++){
-		if(events[records[i].eventIx] == planeCross){
+	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+		if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 			foundEvent = true;
-			std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+			std::vector<double> q = traj.getStateByIx(n);
 			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
 		}
 	}
@@ -261,21 +257,19 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
 	std::vector<double> qf = traj.getStateByIx(-1);
 	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
 
-	// Make sure the correct number of events were recorded
-	std::vector<Event> events = engine.getEvents();
-	std::vector<SimEventRecord> records = engine.getEventRecords();
-	BOOST_CHECK(records.size() == stopCount);
-
 	// Make sure each event is valid
 	bool foundEvent = false;
-	for(unsigned int i = 0; i < records.size(); i++){
-		if(events[records[i].eventIx] == planeCross){
+	unsigned int eventCount = 0;
+	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+		if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 			foundEvent = true;
-			std::vector<double> q = traj.getStateByIx(records[i].stepIx);
+			eventCount++;
+			std::vector<double> q = traj.getStateByIx(n);
 			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
 		}
 	}
 	BOOST_CHECK(foundEvent);
+	BOOST_CHECK(eventCount == stopCount);
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()

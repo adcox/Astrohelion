@@ -234,51 +234,89 @@ int Nodeset::createNodesAtEvents(int segID, std::vector<Event> evts, double minT
 	Traj traj(pSysData);
 	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
 
-	double T0 = traj.getEpochByIx(0);
-	std::vector<Event> events = engine.getEvents();
-	std::vector<SimEventRecord> evtRecs = engine.getEventRecords();
-	int evtCount = 0, prevNodeID = origin.getID();
-	double tof = 0;
-	for(unsigned int e = 0; e < evtRecs.size(); e++){
-		for(unsigned int i = 0; i < evts.size(); i++){
-
-			// If the event occurred, find the corresponding trajectory state and add that to the nodeset
-			if(events[evtRecs[e].eventIx] == evts[i]){
-				
-				// If at least one event is found, we need to delete the segment that is being replaced
-				if(evtCount == 0)
-					deleteSeg(segID);
-
-				int stepIx = evtRecs[e].stepIx;
-				tof = traj.getEpochByIx(stepIx) - T0;
-
-				if(tof > minTimeDiff){
-					int newID = addNode(Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
-					Segment newSeg = Segment(prevNodeID, newID, tof);
-					newSeg.setSTM(traj.getSTMByIx(stepIx));
-					newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
-					addSeg(newSeg);
-
-					prevNodeID = newID;
-					T0 += tof;
-					evtCount++;
-				}
+	int evtCount = 0;
+	for(unsigned int e = 0; e < evts.size(); e++){
+		for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+			if(traj.getNodeByIx(n).getTriggerEvent() == evts[e].getType()){
+				evtCount++;
 			}
 		}
 	}
 
 	if(evtCount > 0){
-		// Add a final segment connecting the last node to the original terminus
-		tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
-		Traj temp(pSysData);
-		engine.clearEvents();
-		engine.runSim(nodes[nodeIDMap[prevNodeID]].getState(), nodes[nodeIDMap[prevNodeID]].getEpoch(), tof, &temp);
+		// Delete the old segment, replace it with new ones
+		deleteSeg(segID);
 
-		Segment newSeg = Segment(prevNodeID, terminus.getID(), tof);
-		newSeg.setSTM(temp.getSTMByIx(-1));
-		newSeg.setCtrlLaw(temp.getCtrlLawByIx(0));
-		addSeg(newSeg);
+		int prevNodeID = origin.getID();
+		int nextNodeID = Linkable::INVALID_ID;
+		for(unsigned int s = 0; s < traj.getNumSegs(); s++){
+			// Get a copy of the segment from the newly propagated arc
+			Segment newSeg = traj.getSegByIx(s);
+			
+			// Add the terminating node if this isn't the last segment
+			if(s < traj.getNumSegs()-1){
+				Node newNode = traj.getNode(newSeg.getTerminus());
+				nextNodeID = addNode(newNode);
+			}else{
+				nextNodeID = terminus.getID();	// ID of the terminal node from the original segment we deleted
+			}
+
+			// Reset the link, update the origin, and add the segment to the arcset
+			newSeg.clearLinks();
+			newSeg.setOrigin(prevNodeID);
+			newSeg.setTerminus(nextNodeID);
+			addSeg(newSeg);
+			
+			// Shift these for the next roun
+			prevNodeID = nextNodeID;
+		}
 	}
+
+	// double T0 = traj.getEpochByIx(0);
+	// std::vector<Event> events = engine.getEvents();
+	// std::vector<SimEventRecord> evtRecs = engine.getEventRecords();
+	// int evtCount = 0, prevNodeID = origin.getID();
+	// double tof = 0;
+	// for(unsigned int e = 0; e < evtRecs.size(); e++){
+	// 	for(unsigned int i = 0; i < evts.size(); i++){
+
+	// 		// If the event occurred, find the corresponding trajectory state and add that to the nodeset
+	// 		if(events[evtRecs[e].eventIx] == evts[i]){
+				
+	// 			// If at least one event is found, we need to delete the segment that is being replaced
+	// 			if(evtCount == 0)
+	// 				deleteSeg(segID);
+
+	// 			int stepIx = evtRecs[e].stepIx;
+	// 			tof = traj.getEpochByIx(stepIx) - T0;
+
+	// 			if(tof > minTimeDiff){
+	// 				int newID = addNode(Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
+	// 				Segment newSeg = Segment(prevNodeID, newID, tof);
+	// 				newSeg.setSTM(traj.getSTMByIx(stepIx));
+	// 				newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
+	// 				addSeg(newSeg);
+
+	// 				prevNodeID = newID;
+	// 				T0 += tof;
+	// 				evtCount++;
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// if(evtCount > 0){
+	// 	// Add a final segment connecting the last node to the original terminus
+	// 	tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
+	// 	Traj temp(pSysData);
+	// 	engine.clearEvents();
+	// 	engine.runSim(nodes[nodeIDMap[prevNodeID]].getState(), nodes[nodeIDMap[prevNodeID]].getEpoch(), tof, &temp);
+
+	// 	Segment newSeg = Segment(prevNodeID, terminus.getID(), tof);
+	// 	newSeg.setSTM(temp.getSTMByIx(-1));
+	// 	newSeg.setCtrlLaw(temp.getCtrlLawByIx(0));
+	// 	addSeg(newSeg);
+	// }
 
 	return evtCount;
 }//====================================================
@@ -572,7 +610,7 @@ void Nodeset::initFromICs_arclength(std::vector<double> IC, double t0, double to
 	std::vector<double> allArcLen(traj.getNumSegs(), 0);
 	std::vector<double> allTOF(traj.getNumSegs(), 0);
 
-	for (int n = 1; n < traj.getNumNodes(); n++){
+	for (unsigned int n = 1; n < traj.getNumNodes(); n++){
 		std::vector<double> state = traj.getStateByIx(n);
 		std::vector<double> prevState = traj.getStateByIx(n-1);
 

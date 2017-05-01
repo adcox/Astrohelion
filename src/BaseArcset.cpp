@@ -427,7 +427,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 	std::vector<int> map_oldID_to_newID(pSet->getNextNodeID(), Linkable::INVALID_ID);
 
 	// Add all nodes from set to this object and keep track of new IDs
-	for(int n = 0; n < pSet->getNumNodes(); n++){
+	for(unsigned int n = 0; n < pSet->getNumNodes(); n++){
 		Node node = pSet->getNodeByIx(n);
 
 		// Remove all links to segments; these will be added back when the segments are added to this new arcset object
@@ -437,7 +437,7 @@ std::vector<int> BaseArcset::concatArcset(const BaseArcset *pSet){
 
 	// Add all segments from set to this object and update the link IDs
 	// The act of adding the segment will update the links in the newly added nodes
-	for(int s = 0; s < pSet->getNumSegs(); s++){
+	for(unsigned int s = 0; s < pSet->getNumSegs(); s++){
 		Segment seg = pSet->getSegByIx(s);
 		
 		// Remap the origin and terminus to the new IDs
@@ -1057,21 +1057,21 @@ int BaseArcset::getNextSegID() const { return nextSegID; }
  *	\brief Retrieve the number of nodes
  *	\return the number of nodes
  */
-int BaseArcset::getNumNodes() const { return static_cast<int>(nodes.size()); }
+unsigned int BaseArcset::getNumNodes() const { return nodes.size(); }
 
 /**
  *	\brief Retrieve the number of segments
  *	\return the number of segments
  */
-int BaseArcset::getNumSegs() const { return static_cast<int>(segs.size()); }
+unsigned int BaseArcset::getNumSegs() const { return segs.size(); }
 
 /**
  *  \brief Retrieve the total number of constraints contained by all nodes, segments,
  *  and the arcset object itself
  *  \return the total number of constraints applied to this object and its children
  */
-int BaseArcset::getNumCons() const {
-	int conCount = static_cast<int>(cons.size());
+unsigned int BaseArcset::getNumCons() const {
+	unsigned int conCount = cons.size();
 	for(unsigned int n = 0; n < nodes.size(); n++){ conCount += nodes[n].getNumCons(); }
 	for(unsigned int s = 0; s < segs.size(); s++){ conCount += segs[s].getNumCons(); }
 
@@ -1572,6 +1572,42 @@ void BaseArcset::putInChronoOrder(bool force){
 }//=============================================
 
 /**
+ *  \brief Set the epoch time associated with a node
+ *  with the specified ID
+ * 
+ *  \param id the ID of a node
+ *  \param epoch the epoch time
+ *  \throws Exception if <tt>id</tt> is out of bounds
+ */
+void BaseArcset::setEpoch(int id, double epoch){
+	if(nodeIDMap.count(id) == 0)
+		throw Exception("BaseArcset::setEpoch: Node ID out of range");
+
+	nodes[nodeIDMap[id]].setEpoch(epoch);
+}//====================================================
+
+/**
+ *  \brief Set the epoch time for a specific node
+ * 
+ *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *	is not necessarily the same as the unique ID assigned to the node when it 
+ *	was added to the arcset object. If <tt>ix</tt> is negative, this index will
+ *	cound backwards from the end of the array.
+ *	
+ *  \param epoch the epoch time
+ *  \throws Exception if <tt>ix</tt> is out of bounds
+ */
+void BaseArcset::setEpochByIx(int ix, double epoch){
+	if(ix < 0)
+		ix += nodes.size();
+
+	if(ix < 0 || ix >= static_cast<int>(nodes.size()))
+		throw Exception("BaseArcset::setEpochByIx: Node index out of bounds");
+
+	nodes[ix].setEpoch(epoch);
+}//====================================================
+
+/**
  *  \brief Set the state derivative vector associated with a node
  *  with the specified ID
  * 
@@ -1633,11 +1669,11 @@ void BaseArcset::setState(int id, std::vector<double> state){
 }//====================================================
 
 /**
- *  \brief Set the state vector for a specific step/node
+ *  \brief Set the state vector for a specific node
  * 
  *  \param ix the node index within the <tt>nodes</tt> storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If <tt>ix</tt> is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param stateVec vector of non-dimensional state values

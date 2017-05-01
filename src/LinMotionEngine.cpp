@@ -236,7 +236,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
 
 	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
 	// not enforced, but is still useful information
-	for(int i = 0; i < linTraj.getNumNodes(); i++){
+	for(unsigned int i = 0; i < linTraj.getNumNodes(); i++){
 		std::vector<double> state = linTraj.getStateByIx(i);
 		linTraj.setJacobiByIx(i, DynamicsModel_cr3bp::getJacobi(&(state[0]), mu));
 	}
@@ -547,7 +547,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 
 	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
 	// not enforced, but is still useful information
-	for(int i = 0; i < linTraj.getNumNodes(); i++){
+	for(unsigned int i = 0; i < linTraj.getNumNodes(); i++){
 		std::vector<double> state = linTraj.getStateByIx(i);
 		linTraj.setJacobiByIx(i, DynamicsModel_cr3bp::getJacobi(&(state[0]), mu));
 	}

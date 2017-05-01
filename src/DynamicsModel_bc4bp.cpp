@@ -286,7 +286,7 @@ void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Nodes
     if(it->bVarTime){
         // epochs come after ALL the TOFs have been added
         const Nodeset_bc4bp *bcSet = static_cast<const Nodeset_bc4bp *>(set);
-        for(int n = 0; n < bcSet->getNumNodes(); n++){
+        for(unsigned int n = 0; n < bcSet->getNumNodes(); n++){
             MSVarMap_Key key(MSVar_tp::EPOCH, set->getNodeRefByIx_const(n).getID());
             it->freeVarMap[key] = MSVarMap_Obj(key, it->X.size());
             it->X.push_back(bcSet->getEpochByIx(n));
@@ -317,7 +317,7 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Node
 
     if(it->bVarTime){
         std::vector<double> zero {0};
-        for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+        for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
             if(it->nodeset->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){
                 Constraint timeCont(Constraint_tp::CONT_EX, it->nodeset->getSegRefByIx_const(s).getID(), zero);   // 0 value is for Epoch Time
                 it->allCons.push_back(timeCont);
@@ -717,7 +717,7 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
         // Don't allow dividing by zero, but otherwise scale by value to keep order ~1
         double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0];
 
-        for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+        for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
             // compute magnitude of DV between segment s and its terminal point
             // This takes the form v_n,f - v_n+1,0
             double dvx = it->deltaVs[s*3+0];
@@ -1480,7 +1480,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 
     double tof;
     int newOrigID, newTermID;
-    for(int s = 0; s < it->nodeset->getNumSegs(); s++){
+    for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
         const Segment &seg = it->nodeset->getSegRefByIx_const(s);
 
         if(it->bVarTime){

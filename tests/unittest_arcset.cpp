@@ -1,9 +1,12 @@
-#define BOOST_TEST_MODULE Nodeset
+#define BOOST_TEST_MODULE Arcset
 
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <iostream>
 
+#include "Arcset_bc4bp.hpp"
+#include "Arcset_cr3bp.hpp"
+#include "Arcset_cr3bp_lt.hpp"
 #include "AsciiOutput.hpp"
 #include "Constraint.hpp"
 #include "ControlLaw_cr3bp_lt.hpp"
@@ -12,20 +15,17 @@
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Node.hpp"
-#include "Nodeset_bc4bp.hpp"
-#include "Nodeset_cr3bp.hpp"
-#include "Nodeset_cr3bp_lt.hpp"
+#include "SimEngine.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
 #include "SysData_cr3bp_lt.hpp"
-#include "Traj_bc4bp.hpp"
 #include "Utilities.hpp"
 
 using namespace astrohelion;
 
-Nodeset_bc4bp *bcSet;
+Arcset_bc4bp *bcSet;
 
-Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp*);
+Arcset_cr3bp test_createCR3BPNodeset(SysData_cr3bp*);
 void test_createBCR4BPRNodeset(SysData_bc4bp*);
 bool dummy_predicate(Exception&);
 
@@ -34,10 +34,10 @@ bool dummy_predicate( Exception const& ex ) { return true; }
 BOOST_AUTO_TEST_CASE(Concat_CR3BP){
 	SysData_cr3bp sys("Saturn", "Titan");
 	SysData_cr3bp emSys("earth", "moon");
-	Nodeset_cr3bp set1(&sys);
-	Nodeset_cr3bp set2(&sys);
-	Nodeset_cr3bp set3(&sys);
-	Nodeset_cr3bp set4(&emSys);
+	Arcset_cr3bp set1(&sys);
+	Arcset_cr3bp set2(&sys);
+	Arcset_cr3bp set3(&sys);
+	Arcset_cr3bp set4(&emSys);
 
 	double state1[] = {1,0,0,0,0,0};
 	double state2[] = {2,1,0,0,0,0};
@@ -60,12 +60,12 @@ BOOST_AUTO_TEST_CASE(Concat_CR3BP){
 
 	set4.addNode(Node(state4, 6, 0));
 
-	Nodeset_cr3bp sum1 = set1 + set2;
+	Arcset_cr3bp sum1 = set1 + set2;
 	BOOST_CHECK(sum1.getStateByIx(0)[0] == 1);
 	BOOST_CHECK(sum1.getStateByIx(1)[0] == 2);
 	BOOST_CHECK(sum1.getStateByIx(2)[0] == 4);
 
-	Nodeset_cr3bp sum2 = set1;
+	Arcset_cr3bp sum2 = set1;
 	sum2 += set3;
 	BOOST_CHECK(sum2.getStateByIx(0)[0] == 1);
 	BOOST_CHECK(sum2.getStateByIx(1)[0] == 2);
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(Concat_CR3BP){
 	BOOST_CHECK(sum2.getStateByIx(3)[0] == 4);
 
 	// Sum of different systems
-	Nodeset_cr3bp sum3 = set1;
+	Arcset_cr3bp sum3 = set1;
 	BOOST_CHECK_EXCEPTION(sum3 += set4, Exception, dummy_predicate);	
 }//=======================================
 
@@ -83,9 +83,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_NodesAtEvents){
 	double emDRO_T = 5.18136624737627;
 
 	// Second test case: Generate orbit, use createNodesAtEvent and check the functionality, TOF computation, etc.
-	Nodeset_cr3bp set2(&sys, emDRO_ic, emDRO_T, 2);
+	Arcset_cr3bp set2(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(emDRO_ic, emDRO_T, 2, &set2);
+	
 	// set2.saveToMat("emDRO_2Nodes.mat");
-	// cout << "CR3BP Nodeset generated from ICs (saved to emDRO_2Nodes.mat):" << endl;
+	// cout << "CR3BP Arcset generated from ICs (saved to emDRO_2Nodes.mat):" << endl;
 	BOOST_CHECK(set2.getNumNodes() == 2);
 	BOOST_CHECK(set2.getTOFByIx(0) == emDRO_T);
 
@@ -108,13 +111,17 @@ BOOST_AUTO_TEST_CASE(CR3BP_NodesAtEvents){
 	// set2.print();
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_NodesetFromICs){
+BOOST_AUTO_TEST_CASE(BC4BP_ArcsetFromICs){
 	SysData_bc4bp bcSys("sun", "earth", "moon");
 	double qho_ic[] = {-0.86464955943628, -0.523239865136876, -0.0309591111054232, -0.00352683110021282, -0.00217207557203108, 0.00179392516522105};
 	double qho_T0 = 100;
 	double qho_Period = 360;
-	Nodeset_bc4bp set3(&bcSys, qho_ic, qho_T0, qho_Period, 2);
-	// cout << "BC4BP Nodeset generated from ICs:" << endl;
+
+	Arcset_bc4bp set3(&bcSys);
+	SimEngine sim;
+	sim.runSim_manyNodes(qho_ic, qho_T0, qho_Period, 2, &set3);
+	
+	// cout << "BC4BP Arcset generated from ICs:" << endl;
 	BOOST_CHECK(set3.getNumNodes() == 2);
 	BOOST_CHECK(set3.getTOFByIx(0) == qho_Period);
 	BOOST_CHECK(set3.getEpochByIx(0) == qho_T0);
@@ -137,12 +144,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesetFromICs){
 	// set3.print();
 }//====================================================
 
-Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
+Arcset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
 	// Define system and IC
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 
 	// Create a node set from the IC and sysDdata
-	Nodeset_cr3bp crSet(emData, ic, 2.77, 5, Nodeset::TIME);
+	Arcset_cr3bp crSet(emData);
+	SimEngine sim;
+	sim.runSim_manyNodes(ic, 2.77, 5, &crSet);
 	
 	int nodes[] = {3,4};
 	std::vector<int> velCon(nodes, nodes+2);
@@ -162,7 +171,9 @@ Nodeset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
 void test_createBCR4BPRNodeset(SysData_bc4bp *semData){
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet = new Nodeset_bc4bp(semData, ic2, 0, 40, 5, Nodeset::TIME);
+	bcSet = new Arcset_bc4bp(semData);
+	SimEngine sim;
+	sim.runSim_manyNodes(ic2, 0, 40, 5, bcSet);
 
 	// Add a constraint
 	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
@@ -182,12 +193,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 	MultShootEngine corrector;
 
 	SysData_cr3bp emData("earth", "moon");
-	Nodeset_cr3bp crSet = test_createCR3BPNodeset(&emData);
+	Arcset_cr3bp crSet = test_createCR3BPNodeset(&emData);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 	corrector.multShoot(&crSet, NULL);
 
 	crSet.saveToMat("data/crSet.mat");
-	Nodeset_cr3bp crTemp(&emData);
+	Arcset_cr3bp crTemp(&emData);
 	crTemp.readFromMat("data/crSet.mat");
 
 	BOOST_CHECK(crSet.getStateByIx(-1) == crTemp.getStateByIx(-1));
@@ -203,7 +214,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 	corrector.multShoot(bcSet, NULL);
 
 	bcSet->saveToMat("data/bcSet.mat");
-	Nodeset_bc4bp bcTemp(&semData);
+	Arcset_bc4bp bcTemp(&semData);
 	bcTemp.readFromMat("data/bcSet.mat");
 
 	BOOST_CHECK(bcSet->getStateByIx(-1) == bcTemp.getStateByIx(-1));
@@ -219,12 +230,15 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 	MultShootEngine corrector;
 
 	SysData_cr3bp_lt ltData("earth", "moon", 12e-3, 1500, 14);
-	Nodeset_cr3bp_lt ltSet(&ltData, ic, 2.77, 5, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	Arcset_cr3bp_lt ltSet(&ltData);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	sim.runSim_manyNodes(ic, 2.77, 5, &ltSet);
 
 	corrector.multShoot(&ltSet, NULL);
 
 	ltSet.saveToMat("data/ltSet.mat");
-	Nodeset_cr3bp_lt temp(&ltData);
+	Arcset_cr3bp_lt temp(&ltData);
 	temp.readFromMat("data/ltSet.mat");
 
 	BOOST_CHECK(ltSet.getStateByIx(-1) == temp.getStateByIx(-1));
@@ -233,7 +247,81 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 	BOOST_CHECK(ltSet.getTOFByIx(-1) == temp.getTOFByIx(-1));
 }//====================================================
 
+BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
+	SysData_cr3bp emData("earth", "moon");
+	SimEngine sim;
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+	Arcset_cr3bp crTraj(&emData);
+	sim.runSim(ic, T, &crTraj);
 
+	// Query the acceleration so it is computed
+	std::vector<double> a = crTraj.getStateDerivByIx(-1);
+	crTraj.saveToMat("data/crTraj.mat");
+
+	Arcset_cr3bp crTemp(&emData);
+	crTemp.readFromMat("data/crTraj.mat");
+
+	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
+	BOOST_CHECK(crTraj.getStateByIx(-1) == crTemp.getStateByIx(-1));
+	BOOST_CHECK(crTraj.getStateDerivByIx(-1) == crTemp.getStateDerivByIx(-1));
+	BOOST_CHECK(crTraj.getTimeByIx(-1) == crTemp.getTimeByIx(-1));
+	BOOST_CHECK(crTraj.getSTMByIx(-1) == crTemp.getSTMByIx(-1));
+	BOOST_CHECK(crTraj.getJacobiByIx(-1) == crTemp.getJacobiByIx(-1));
+	BOOST_CHECK(crTraj.getTOFByIx(-1) == crTemp.getTOFByIx(-1));
+	BOOST_CHECK(crTraj.getCtrlLawByIx(-1) == crTemp.getCtrlLawByIx(-1));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
+	SysData_bc4bp semData("sun", "earth", "moon");
+	SimEngine sim;
+	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
+	double T = 313;	// SE L1 Period
+	Arcset_bc4bp bcTraj(&semData);
+	sim.runSim(ic, T, &bcTraj);
+
+	// Query the acceleration so it is computed
+	std::vector<double> a = bcTraj.getStateDerivByIx(-1);
+	bcTraj.saveToMat("data/bcTraj.mat");
+
+	Arcset_bc4bp bcTemp(&semData);
+	bcTemp.readFromMat("data/bcTraj.mat");
+
+	// printf("Testing Save/Read functions on BC4BP Trajectory\n");
+	BOOST_CHECK(bcTraj.getStateByIx(-1) == bcTemp.getStateByIx(-1));
+	BOOST_CHECK(bcTraj.getStateDerivByIx(-1) == bcTemp.getStateDerivByIx(-1));
+	BOOST_CHECK(bcTraj.getTimeByIx(-1) == bcTemp.getTimeByIx(-1));
+	BOOST_CHECK(bcTraj.getSTMByIx(-1) == bcTemp.getSTMByIx(-1));
+	BOOST_CHECK(bcTraj.get_dqdTByIx(-1) == bcTemp.get_dqdTByIx(-1));
+	BOOST_CHECK(bcTraj.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
+	BOOST_CHECK(bcTraj.getCtrlLawByIx(-1) == bcTemp.getCtrlLawByIx(-1));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
+	SysData_cr3bp_lt emData("earth", "moon", 12e-3, 1500, 14);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+	Arcset_cr3bp_lt ltTraj(&emData);
+	sim.runSim(ic, T, &ltTraj);
+
+	// Query the acceleration so it is computed
+	std::vector<double> a = ltTraj.getStateDerivByIx(-1);
+	ltTraj.saveToMat("data/lowthrustTraj.mat");
+
+	Arcset_cr3bp_lt ltTemp(&emData);
+	ltTemp.readFromMat("data/lowthrustTraj.mat");
+
+	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
+	BOOST_CHECK(ltTraj.getStateByIx(-1) == ltTemp.getStateByIx(-1));
+	BOOST_CHECK(ltTraj.getStateDerivByIx(-1) == ltTemp.getStateDerivByIx(-1));
+	BOOST_CHECK(ltTraj.getTimeByIx(-1) == ltTemp.getTimeByIx(-1));
+	BOOST_CHECK(ltTraj.getSTMByIx(-1) == ltTemp.getSTMByIx(-1));
+	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));
+	BOOST_CHECK(ltTraj.getTOFByIx(-1) == ltTemp.getTOFByIx(-1));
+	BOOST_CHECK(ltTraj.getCtrlLawByIx(-1) == ltTemp.getCtrlLawByIx(-1));
+}//====================================================
 
 
 

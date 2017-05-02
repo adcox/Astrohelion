@@ -31,7 +31,7 @@
 
 #include "Exceptions.hpp" 
 #include "SysData_2bp.hpp"
-#include "Traj_2bp.hpp"
+#include "Arcset_2bp.hpp"
 #include "Utilities.hpp"
 
 namespace astrohelion{
@@ -111,13 +111,13 @@ void LambertArcEngine::setMaxIts(unsigned int its){ maxIts = its; }
  *  \return A trajectory object that contains a Lambert Arc linking the two points with the
  *  specified time-of-flight
  */
-Traj_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> r1, std::vector<double> r2,
+Arcset_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> r1, std::vector<double> r2,
     double tof, unsigned int type){
 
 	if(r1.size() < 3 || r2.size() < 3)
         throw Exception("r2bp_getLambertArc: r1 or r2 has fewer than three elements");
 
-    Traj_2bp traj(pSys);
+    Arcset_2bp traj(pSys);
     std::vector<double> state1(3,0), state2(3,0);   // three zero velocity components
 
     // Copy the positions into two state vectors; velocity components are initially all set to zero

@@ -31,9 +31,9 @@
 #include "Calculations.hpp"
 #include "Common.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "Exceptions.hpp"
-#include "Traj.hpp"
+#include "Arcset.hpp"
 #include "Utilities.hpp"
 
 #include <cmath>
@@ -154,7 +154,7 @@ const char* LinMotionEngine::getTypeStr(LinMotion_tp type) const{
  *		to the chosen Lagrange point
  *	\param sys the CR3BP system data object
  */
-Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], SysData_cr3bp *sys){
+Arcset_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], SysData_cr3bp *sys){
 
 	return getCR3BPLinear(L, r0, 0, 0, LinMotion_tp::NONE, sys);
 }//=======================================================
@@ -171,7 +171,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], SysData_cr3bp *s
  *	\param sysData a pointer to a system data object
  *	\throws Exception if <tt>L</tt> is not 1, 2, or 3
  */
-Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi,
+Arcset_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi,
 	SysData_cr3bp *sysData){
 
 	double mu = sysData->getMu();
@@ -184,7 +184,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
 	double ddots[6] = {0};
 	DynamicsModel_cr3bp::getUDDots(mu, LPtPos[0], LPtPos[1], LPtPos[2], ddots);
 
-	Traj_cr3bp linTraj(sysData);
+	Arcset_cr3bp linTraj(sysData);
 
 	double xi;
 	double eta;
@@ -260,7 +260,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLiss(int L, double Axy, bool xAmp, double ph
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
-Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], LinMotion_tp type, SysData_cr3bp *sysData){
+Arcset_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], LinMotion_tp type, SysData_cr3bp *sysData){
 
 	return getCR3BPLinear(L, r0, 0, 0, type, sysData);
 }//====================================================
@@ -282,7 +282,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], LinMotion_tp typ
  *	\throws Exception if the <tt>type</tt> does not correspond with the specified Lagrange
  *	point <tt>L</tt>
  */
-Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
+Arcset_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, double psi,
 	LinMotion_tp type, SysData_cr3bp *sysData){
 
 	double mu = sysData->getMu();
@@ -298,7 +298,7 @@ Traj_cr3bp LinMotionEngine::getCR3BPLinear(int L, double r0[3], double Az, doubl
 	double xi0 = r0[0];		// Initial x-variation
 	double eta0 = r0[1];	// Initial y-variation
 
-	Traj_cr3bp linTraj(sysData);
+	Arcset_cr3bp linTraj(sysData);
 
 	double xi;
 	double eta;

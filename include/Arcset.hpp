@@ -39,7 +39,7 @@ namespace astrohelion{
 // Forward Declarations
 class Event;
 class SysData;
-class Traj;
+class Arcset;
 
 class Arcset : public BaseArcset{
 
@@ -110,7 +110,7 @@ protected:
 	void initFromICs(std::vector<double>, double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	void initFromICs_time(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	void initFromICs_arclength(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
-	void initFromTraj(Traj, int, NodeDistro_tp);
+	void initFromTraj(Arcset, int, NodeDistro_tp);
 };
 
 }// End of astrohelion namespace

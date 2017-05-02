@@ -39,7 +39,7 @@
 
 namespace astrohelion{
 
-class Traj_cr3bp;
+class Arcset_cr3bp;
 class SysData_cr3bp;
 
 /**
@@ -58,7 +58,7 @@ class FamMember_cr3bp : public Core{
 		 */
 		FamMember_cr3bp(){}
 		FamMember_cr3bp(double*, double, double, double, double, double);
-		FamMember_cr3bp(const Traj_cr3bp);
+		FamMember_cr3bp(const Arcset_cr3bp);
 		FamMember_cr3bp(const FamMember_cr3bp&);
 		~FamMember_cr3bp();
 		//\}
@@ -90,7 +90,7 @@ class FamMember_cr3bp : public Core{
 		void setZAmplitude(double);
 		//\}
 
-		Traj_cr3bp toTraj(const SysData_cr3bp*);
+		Arcset_cr3bp toTraj(const SysData_cr3bp*);
 
 	protected:
 		MatrixXRd stm = MatrixXRd::Identity(6,6);	//!< State transition matrix, initialized as 6x6 Identity

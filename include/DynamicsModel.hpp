@@ -43,8 +43,8 @@ namespace astrohelion{
 class Constraint;
 class Event;
 class Node;
-class Nodeset;
-class Traj;
+class Arcset;
+class Arcset;
 class Segment;
 class SysData;
 class MultShootData;
@@ -215,9 +215,9 @@ public:
 	 */
 	virtual void multShoot_initIterData(MultShootData *it) const = 0;
 
-	virtual void multShoot_initDesignVec(MultShootData*, const Nodeset*) const;
-	virtual void multShoot_createContCons(MultShootData*, const Nodeset*) const;
-	virtual void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const;
+	virtual void multShoot_initDesignVec(MultShootData*, const Arcset*) const;
+	virtual void multShoot_createContCons(MultShootData*, const Arcset*) const;
+	virtual void multShoot_getSimICs(const MultShootData*, const Arcset*, int, double*, double*, double*) const;
 	virtual void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
 	virtual double multShoot_getSlackVarVal(const MultShootData*, Constraint)const ;
 
@@ -238,7 +238,7 @@ public:
 	 *	the shooting process
 	 *  \return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual void multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodesOut) const = 0;
+	virtual void multShoot_createOutput(const MultShootData* it, const Arcset *nodes_in, bool findEvent, Arcset *nodesOut) const = 0;
 	//\}
 
 	/**
@@ -266,11 +266,11 @@ public:
 	 *  \return wether or not the event has been located. If it has, a new point
 	 *  has been appended to the trajectory's data vectors.
 	 */
-	virtual bool sim_locateEvent(Event event, Traj *traj,
+	virtual bool sim_locateEvent(Event event, Arcset *traj,
     	const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const = 0;
 
-	virtual int sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const;
-	virtual int sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const;
+	virtual int sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const;
+	virtual int sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const;
 
 	//\}
 

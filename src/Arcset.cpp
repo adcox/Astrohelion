@@ -32,8 +32,8 @@
 #include "Utilities.hpp"
 
 #include "SimEngine.hpp"
-#include "Traj.hpp"
-#include "Nodeset.hpp"
+#include "Arcset.hpp"
+#include "Arcset.hpp"
 
 namespace astrohelion{
 
@@ -75,7 +75,7 @@ Arcset::~Arcset(){}
  *  \return a pointer to the newly created arcset
  */
 baseArcsetPtr Arcset::create( const SysData *sys) const{
-	return baseArcsetPtr(new Traj(sys));
+	return baseArcsetPtr(new Arcset(sys));
 }//====================================================
 
 /**
@@ -88,7 +88,7 @@ baseArcsetPtr Arcset::create( const SysData *sys) const{
  *  \return a pointer to the newly cloned arcset
  */
 baseArcsetPtr Arcset::clone() const{
-	return baseArcsetPtr(new Traj(*this));
+	return baseArcsetPtr(new Arcset(*this));
 }//====================================================
 
 //-----------------------------------------------------
@@ -237,7 +237,7 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 	 * 	to ensure that no new nodes are created with TOF less than minTimeDiff
 	 */
 	double segTOF = seg.getTOF() < 0 ? seg.getTOF() + std::abs(minTimeDiff) : seg.getTOF() - std::abs(minTimeDiff);
-	Traj traj(pSysData);
+	Arcset traj(pSysData);
 	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
 
 	int evtCount = 0;
@@ -314,7 +314,7 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 	// if(evtCount > 0){
 	// 	// Add a final segment connecting the last node to the original terminus
 	// 	tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
-	// 	Traj temp(pSysData);
+	// 	Arcset temp(pSysData);
 	// 	engine.clearEvents();
 	// 	engine.runSim(nodes[nodeIDMap[prevNodeID]].getState(), nodes[nodeIDMap[prevNodeID]].getEpoch(), tof, &temp);
 
@@ -422,6 +422,8 @@ void Arcset::print() const {
 			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
 				nodes[index.second].getEpoch(), state[0], state[1], state[2], state[3],
 				state[4], state[5]);
+			printf("            > Link[0] = %02d,  Link[1] = %02d\n", nodes[index.second].getLink(0), 
+				nodes[index.second].getLink(1));
 		}else{
 			printf(" [N/A]\n");
 		}

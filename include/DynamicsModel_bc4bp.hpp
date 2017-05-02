@@ -84,22 +84,22 @@ public:
 	 *  \name Simulation Support Functions
 	 *  \{
 	 */
-	int sim_addNode(Node&, const double*, double, Traj*, EOM_ParamStruct*, Event_tp) const;
-	int sim_addSeg(Segment&, const double*, double, Traj*, EOM_ParamStruct*) const;
-	bool sim_locateEvent(Event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
+	int sim_addNode(Node&, const double*, double, Arcset*, EOM_ParamStruct*, Event_tp) const;
+	int sim_addSeg(Segment&, const double*, double, Arcset*, EOM_ParamStruct*) const;
+	bool sim_locateEvent(Event, Arcset*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	//\}
 
 	/**
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	void multShoot_initDesignVec(MultShootData*, const Nodeset*) const override;
+	void multShoot_initDesignVec(MultShootData*, const Arcset*) const override;
 	void multShoot_initIterData(MultShootData *it) const override;
-	void multShoot_createContCons(MultShootData*, const Nodeset*) const override;
-	void multShoot_getSimICs(const MultShootData*, const Nodeset*, int, double*, double*, double*) const override;
+	void multShoot_createContCons(MultShootData*, const Arcset*) const override;
+	void multShoot_getSimICs(const MultShootData*, const Arcset*, int, double*, double*, double*) const override;
 	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const override;
 	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
-	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
+	void multShoot_createOutput(const MultShootData*, const Arcset*, bool, Arcset*) const;
 	//\}
 
 protected:

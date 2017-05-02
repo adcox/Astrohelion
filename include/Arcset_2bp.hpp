@@ -1,9 +1,9 @@
 /**
- *  \file Nodeset_bc4bp.hpp
+ *  \file Arcset_2bp.hpp
  *	\brief 
  *	
  *	\author Andrew Cox
- *	\version May 25, 2016
+ *	\version May 1, 2017
  *	\copyright GNU GPL v3.0
  */
 /*
@@ -25,57 +25,50 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
-#include "Nodeset.hpp"
-
-#include "matio.h"
-
+#include "Arcset.hpp"
 
 namespace astrohelion{
 
-// Forward Declarations
-class Event;
-class SysData_bc4bp;
+//Forward Declarations
+class SysData_2bp;
 
-/**
- *	\ingroup traj bc4bp
- *	\brief his derivative of the Nodeset object contains additional information
- *	for the BCR4BP
- *
- *	Nodes are 6-dimensional, with three position states and three velocity states. Times-
- *	of-flight between nodes and epoch times at each node are also stored
- *
- *	\author Andrew Cox
- *	\version September 2, 2015
- *	\copyright GNU GPL v3.0
- */
-class Nodeset_bc4bp : public Nodeset{
-
+class Arcset_2bp : public Arcset{
 public:
 	/**
 	 *  \name *structors
 	 *  \{
 	 */
-	Nodeset_bc4bp(const SysData_bc4bp*);
-	Nodeset_bc4bp(const SysData_bc4bp*, const double[6], double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
-	Nodeset_bc4bp(const SysData_bc4bp*, std::vector<double>, double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
-	
-	// Nodeset_bc4bp(const Nodeset_bc4bp&, int, int);
-	Nodeset_bc4bp(const Nodeset_bc4bp&);
-	Nodeset_bc4bp(const BaseArcset&);
+	Arcset_2bp(const SysData_2bp*);
+	Arcset_2bp(const Arcset_2bp&);
+	Arcset_2bp(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;
 	baseArcsetPtr clone() const override;
 	//\}
-	
-	// Operators
 
-	// Set and Get Functions
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
+		// Nothing Here!
+	//\}
 
-	// Utility Functions
-	
-private:
+	/**
+	 *  \name Set and Get Functions
+	 *  \{
+	 */
+		// Nothing Here!
+	//\}
+
+protected:
+	/**
+	 *  \name Utility
+	 *  \{
+	 */
+		void saveCmds(mat_t*) const override;
+		void readCmds(mat_t*) override;
+	//\}
 };
 
-}
+}// End of astrohelion namespace

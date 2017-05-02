@@ -28,15 +28,15 @@
  
 #include "Fam_cr3bp.hpp"
 
+#include "Arcset_cr3bp.hpp"
 #include "AsciiOutput.hpp"
 #include "Calculations.hpp"
 #include "Common.hpp"
 #include "Constraint.hpp"
+#include "Exceptions.hpp"
 #include "MultShootEngine.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
-#include "Exceptions.hpp"
+#include "SimEngine.hpp"
 #include "Utilities.hpp"
 
 #include <algorithm>
@@ -384,9 +384,13 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 			printf("  Correcting candidate %d...\n", n);
 			// Create a nodeset and a constraint to make the orbit periodic
 			double tof = members[idx].getTOF();
-			int numNodes = tof > 2 ? floor(tof) : 2;
+			int numNodes = tof > 2 ? floor(std::abs(tof)) : 2;
 
-			Nodeset_cr3bp memberSet(&tempSys, members[idx].getIC(), tof, numNodes);
+			Arcset_cr3bp memberSet(&tempSys);
+			SimEngine sim;
+			sim.setRevTime(tof < 0);
+			sim.runSim_manyNodes(members[idx].getIC(), tof, numNodes, &memberSet);
+			
 			double end = numNodes-1;
 			double conData[] = {end,end,end,end,end,end};
 			Constraint periodicCon(Constraint_tp::MATCH_CUST, 0, conData, 6);
@@ -398,10 +402,11 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 			MultShootEngine corrector;
 			corrector.setTol(1e-11);
 			try{
-				Nodeset_cr3bp newNodes(&tempSys);
+				Arcset_cr3bp newNodes(&tempSys);
 				corrector.multShoot(&memberSet, &newNodes);
 				
-				Traj_cr3bp newTraj = Traj_cr3bp::fromNodeset(newNodes);
+				// Arcset_cr3bp newTraj = Arcset_cr3bp::fromNodeset(newNodes);
+				Arcset_cr3bp newTraj = newNodes;
 				FamMember_cr3bp newMember(newTraj);
 				matchMembers.push_back(newMember);
 			}catch(DivergeException &e){}

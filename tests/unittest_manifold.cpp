@@ -8,7 +8,7 @@
 #include "ManifoldEngine.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "Utilities.hpp"
 
 using namespace astrohelion;
@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	// Small Lyapunov
 	std::vector<double> ic {0.839367079288131, 0, 0, 0, -0.0201563145344225, 0};
 	double period = 2.7;
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
 	
 	ManifoldEngine engine;
 	std::vector<cdouble> eigVals;
@@ -90,14 +90,14 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	// Small Lyapunov
 	std::vector<double> ic {0.839367079288131, 0, 0, 0, -0.0201563145344225, 0};
 	double period = 2.7;
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
 	
 	ManifoldEngine engine;
 
 	// **************************************
 	// Stable and Unstable Manifolds
 	// **************************************
-	std::vector<Traj_cr3bp> manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_ALL,
+	std::vector<Arcset_cr3bp> manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_ALL,
 		&perOrbit, period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
 
 	BOOST_CHECK(manifolds.size() == 4);

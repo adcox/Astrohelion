@@ -40,16 +40,16 @@ class BaseArcset;
 class MultShootEngine;
 class MultShootData;
 class Node;
-class Nodeset;
-class Nodeset_bc4bp;
-class Nodeset_cr3bp;
+class Arcset;
+class Arcset_bc4bp;
+class Arcset_cr3bp;
 class SysData_2bp;
 class SysData_bc4bp;
 class SysData_cr3bp;
-class Traj;
-class Traj_2bp;
-class Traj_bc4bp;
-class Traj_cr3bp;
+class Arcset;
+class Arcset_2bp;
+class Arcset_bc4bp;
+class Arcset_cr3bp;
 
 /**
  *	\brief Describes the plane a periodic orbit can be mirrored across
@@ -90,7 +90,7 @@ MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
 std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
-Node interpPointAtTime(const Traj*, double);
+Node interpPointAtTime(const Arcset*, double);
 /** \} */
 
 /**
@@ -117,29 +117,24 @@ std::vector<double> r2bp_stateFromKepler(const SysData_2bp*, double, double, dou
  *  \{
  */
 double cr3bp_getVel_withC(const double s[], double, double, int);
-Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp, const SysData_cr3bp*, double, double, double);
-Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp, const SysData_cr3bp*, double, double, double);
-Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp, const SysData_cr3bp*, double, double, double);
-Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp, const SysData_cr3bp*, double, double, double);
+Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp, const SysData_cr3bp*, double, double, double);
+Arcset_cr3bp cr3bp_SE2EM(Arcset_cr3bp, const SysData_cr3bp*, double, double, double);
 std::vector<double> cr3bp_EM2SE_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
 std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, double, double,
 	double, double, double, double, double);
-Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp, double, int);
-Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp, double, int);
+Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp, double, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3bp*, double, double, int);
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double tol = 1e-12);
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double tol = 1e-12, MultShootData *pItData = nullptr);
+Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double tol = 1e-12);
+Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double tol = 1e-12, MultShootData *pItData = nullptr);
 /** \} */
 
 /**
  *  \name BC4BP Utility Functions
  *  \{
  */
-Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp, const SysData_bc4bp*, int, double);
-Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp, const SysData_bc4bp*, int, double);
-Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp, const SysData_cr3bp*);
-Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp, const SysData_cr3bp*);
+Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp, const SysData_bc4bp*, int, double);
+Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp, const SysData_cr3bp*);
 MatrixXRd bcr4bpr_spLoc_polyFit(const SysData_bc4bp*, double);
 Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp*, double);
 /** \} */

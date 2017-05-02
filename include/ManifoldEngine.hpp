@@ -37,7 +37,7 @@
 namespace astrohelion{
 
 // Forward Declarations
-class Traj_cr3bp;
+class Arcset_cr3bp;
 class SysData_cr3bp;
 
 /**
@@ -94,9 +94,9 @@ public:
 	 *  \{
 	 */
 	
-	std::vector<Traj_cr3bp> computeSetFromPeriodic(Manifold_tp, const Traj_cr3bp*, unsigned int, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
-	std::vector<Traj_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Traj_cr3bp*, double, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
-	std::vector<Traj_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>, MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
+	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, const Arcset_cr3bp*, unsigned int, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
+	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
+	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>, MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
 	
 	// Add a function for manifolds from map fixed points; use Wayne's method?
 
@@ -107,7 +107,7 @@ public:
 	 * \{
 	 */
 
-	MatrixXRd eigVecValFromPeriodic(Manifold_tp, const Traj_cr3bp*, std::vector<cdouble> *eigVal_final = nullptr);
+	MatrixXRd eigVecValFromPeriodic(Manifold_tp, const Arcset_cr3bp*, std::vector<cdouble> *eigVal_final = nullptr);
 	void reset();
 	//\}
 private:

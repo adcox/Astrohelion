@@ -81,9 +81,9 @@ public:
 	 *  \name Simulation Support Functions
 	 *  \{
 	 */
-	int sim_addNode(Node&, const double*, double, Traj*, EOM_ParamStruct*, Event_tp) const;
-	int sim_addSeg(Segment&, const double*, double, Traj*, EOM_ParamStruct*) const;
-	bool sim_locateEvent(Event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
+	int sim_addNode(Node&, const double*, double, Arcset*, EOM_ParamStruct*, Event_tp) const;
+	int sim_addSeg(Segment&, const double*, double, Arcset*, EOM_ParamStruct*) const;
+	bool sim_locateEvent(Event, Arcset*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	//\}
 
 	/**
@@ -91,7 +91,7 @@ public:
 	 *  \{
 	 */
 	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
-	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
+	void multShoot_createOutput(const MultShootData*, const Arcset*, bool, Arcset*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
 	//\}
 protected:

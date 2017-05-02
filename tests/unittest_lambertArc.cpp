@@ -15,7 +15,7 @@
 #include "Node.hpp"
 #include "SimEngine.hpp"
 #include "SysData_2bp.hpp"
-#include "Traj_2bp.hpp"
+#include "Arcset_2bp.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(TYPE_1A){
 
 	LambertArcEngine engine;
 	engine.setVerbosity(Verbosity_tp::NO_MSG);
-	Traj_2bp type1_traj = engine.getLambertArc(&sys, r1, r2, tof, 1);
+	Arcset_2bp type1_traj = engine.getLambertArc(&sys, r1, r2, tof, 1);
 
 	Node node = type1_traj.getNodeByIx(0);
 	Node node2 = type1_traj.getNodeByIx(1);
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TYPE_1A){
 	BOOST_CHECK(std::abs(node2.getExtraParam("fpa") - -2.0249*PI/180) < 1e-3);
 	BOOST_CHECK(std::abs(node2.getExtraParam("speed") - 0.9260) < 1e-3);
 
-	Traj_2bp type1_traj_sim(&sys);
+	Arcset_2bp type1_traj_sim(&sys);
 	SimEngine sim;
 	sim.setMakeDefaultEvents(false);
 	sim.runSim(node.getState(), node2.getEpoch() - node.getEpoch(), &type1_traj_sim);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TYPE_2A){
 	LambertArcEngine engine;
 	engine.setVerbosity(Verbosity_tp::NO_MSG);
 
-	Traj_2bp type2_traj = engine.getLambertArc(&sys, r1, r2, tof, 2);
+	Arcset_2bp type2_traj = engine.getLambertArc(&sys, r1, r2, tof, 2);
 
 	Node node = type2_traj.getNodeByIx(0);
 	Node node2 = type2_traj.getNodeByIx(1);
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TYPE_2A){
 	BOOST_CHECK(std::abs(node2.getExtraParam("fpa") - 10.4440*PI/180) < 1e-3);
 	BOOST_CHECK(std::abs(node2.getExtraParam("speed") - 0.9301) < 1e-3);
 
-	Traj_2bp type2_traj_sim(&sys);
+	Arcset_2bp type2_traj_sim(&sys);
 	SimEngine sim;
 	sim.setMakeDefaultEvents(false);
 	// sim.setVerbosity(Verbosity_tp::ALL_MSG);

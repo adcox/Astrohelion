@@ -35,7 +35,7 @@
 #include "Exceptions.hpp" 
 #include "MultShootData.hpp"
 #include "Node.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "SimEngine.hpp"
 #include "Utilities.hpp"
 
@@ -239,7 +239,7 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	* if the input nodeset contains more than one delta-v constraint
  *	* if the input nodeset contains more than one TOF constraint
  */
-MultShootData MultShootEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut){
+MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 	if(pNodesOut != NULL && *(set->getSysData()) != *(pNodesOut->getSysData()))
 		throw Exception("MultShootEngine::multShoot: Input and Output nodesets must use the same system data object");
 
@@ -405,15 +405,15 @@ MultShootData MultShootEngine::multShoot(const Nodeset *set, Nodeset *pNodesOut)
  *  \brief Run a multiple shooting algorithm given an MultShootData object
  * 
  *  \param it A completely formed MultShootData object that describes a 
- *  multiple shooting problem. These are created from Nodeset and its
+ *  multiple shooting problem. These are created from Arcset and its
  *  derivative types by the other implementation of multShoot()
  *  \param pNodesOut pointer to a nodeset object that will contain the results 
  *  of the shooting process
  *  \return A corrected MultShootData object
- *  @see multShoot(Nodeset*)
+ *  @see multShoot(Arcset*)
  *  \throws DivergeException if the multiple shooting process does not converge
  */
-MultShootData MultShootEngine::multShoot(MultShootData it, Nodeset *pNodesOut){
+MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 	it.count = 0;
 
 	// create a simulation engine
@@ -717,7 +717,7 @@ void MultShootEngine::reset(){
  *  \param verbosity Specify how verbose the output is
  *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
  */
-bool MultShootEngine::finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosity_tp verbosity, bool writeToFile){
+bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosity_tp verbosity, bool writeToFile){
     MultShootEngine engine;  // Create engine with default settings
     return finiteDiff_checkMultShoot(pNodeset, engine, verbosity, writeToFile);
 }//====================================================
@@ -734,7 +734,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Nodeset *pNodeset, Verbosi
  *  \param verbosity Specify how verbose the output is
  *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
  */
-bool MultShootEngine::finiteDiff_checkMultShoot(const Nodeset *pNodeset, MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
+bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
     printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix... ");
     // Create multiple shooter that will only do 1 iteration
     MultShootEngine corrector(engine);

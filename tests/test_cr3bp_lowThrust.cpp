@@ -1,7 +1,7 @@
 #include "Exceptions.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
-#include "Traj_cr3bp_lt.hpp"
+#include "Arcset_cr3bp.hpp"
+#include "Arcset_cr3bp_lt.hpp"
 #include "SysData_cr3bp_lt.hpp"
 #include "SimEngine.hpp"
 
@@ -14,7 +14,7 @@ int main(void){
 
 	SysData_cr3bp sys("earth", "moon");
 	SimEngine sim;
-	Traj_cr3bp traj(&sys);
+	Arcset_cr3bp traj(&sys);
 	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT);
 	sim.runSim(ic, tof, &traj);
 	traj.saveToMat("data/circleOrb.mat");
@@ -26,7 +26,7 @@ int main(void){
 
 	// SimEngine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, 1};
-	Traj_cr3bp_lt lowThrustTraj(&lowThrustSys);
+	Arcset_cr3bp_lt lowThrustTraj(&lowThrustSys);
 	sim.setVerbosity(Verbosity_tp::ALL_MSG);
 	// sim.setSimpleInt(true);
 	try{

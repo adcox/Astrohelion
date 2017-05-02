@@ -36,7 +36,7 @@
 #include "Exceptions.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 
 namespace astrohelion{
 //-----------------------------------------------------
@@ -69,10 +69,10 @@ FamMember_cr3bp::FamMember_cr3bp(double *ic, double tof,
  *	\brief Create a family member from a trajectory object
  *	\param traj a trajectory reference
  */
-FamMember_cr3bp::FamMember_cr3bp(const Traj_cr3bp traj){
+FamMember_cr3bp::FamMember_cr3bp(const Arcset_cr3bp traj){
 	IC = traj.getStateByIx(0);
 	TOF = traj.getTotalTOF();
-	JC = traj.getJacobiByIx(0);
+	JC = traj.getJacobiByIx_const(0);
 	stm = traj.getSTMByIx(-1);
 
 	std::vector<double> x = traj.getCoord(0);
@@ -246,9 +246,9 @@ void FamMember_cr3bp::setZAmplitude(double w){ zAmplitude = w; }
  *  \param sys The system the family member exists in
  *  \return A trajectory object
  */
-Traj_cr3bp FamMember_cr3bp::toTraj(const SysData_cr3bp *sys){
+Arcset_cr3bp FamMember_cr3bp::toTraj(const SysData_cr3bp *sys){
 	SimEngine sim;
-	Traj_cr3bp traj(sys);
+	Arcset_cr3bp traj(sys);
 	sim.runSim(IC, TOF, &traj);
 	return traj;
 }//====================================================

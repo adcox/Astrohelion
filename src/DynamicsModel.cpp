@@ -35,8 +35,7 @@
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Node.hpp"
-#include "Nodeset.hpp"
-#include "Traj.hpp"
+#include "Arcset.hpp"
 #include "SysData.hpp"
 #include "Utilities.hpp"
  
@@ -174,7 +173,7 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
  *  
  *  \todo Incorporate the Event-saving part of this function
  */
-int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
+int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const{
 	(void) y;
 	(void) t;
 	(void) params;
@@ -183,7 +182,7 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Traj* traj
 	return traj->addNode(node);
 }//====================================================
 
-int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
+int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
 	(void) y;
 	(void) t;
 	(void) params;
@@ -208,7 +207,7 @@ int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Traj* tra
  *	the nodeset to be corrected includes segments that are propagated in both forward and
  *	reverse time.
  */
-void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *set) const{
+void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Arcset *set) const{
 	// Create the initial state vector
 	it->X.clear();
 	it->freeVarMap.clear();
@@ -258,7 +257,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Nodeset *se
  *	\param it a pointer to the corrector's iteration data structure
  *	\param set a pointer to the nodeset being corrected
  */	
-void DynamicsModel::multShoot_createContCons(MultShootData *it, const Nodeset *set) const{
+void DynamicsModel::multShoot_createContCons(MultShootData *it, const Arcset *set) const{
 	// Create position and velocity constraints
 	for(unsigned int s = 0; s < set->getNumSegs(); s++){
 		// Force all positions to be continuous
@@ -296,9 +295,9 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it, const Nodeset *s
  *	\param ic a pointer to a 6-element initial state array
  *	\param t0 a pointer to a double representing the initial time (epoch)
  *	\param tof a pointer to a double the time-of-flight on the segment.
- *	@todo No need to input Nodeset as well as the MultShootData pointer
+ *	@todo No need to input Arcset as well as the MultShootData pointer
  */
-void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Nodeset *set, int s,
+void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Arcset *set, int s,
 	double *ic, double *t0, double *tof) const{
 	(void) set;
 

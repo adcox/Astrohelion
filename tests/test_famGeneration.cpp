@@ -1,7 +1,7 @@
 
 #include "Fam_cr3bp.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "FamGenerator.hpp"
 #include "Utilities.hpp"
 
@@ -44,15 +44,15 @@ void createSEDPO(){
 	gen.setTol(1e-11);
 
 	// gen.cr3bp_generateDPO(&DPO);
-	Traj_cr3bp dpoTraj("../share/SE_DPO_fromHill.mat", &sysData);
+	Arcset_cr3bp dpoTraj("../share/SE_DPO_fromHill.mat", &sysData);
 	std::vector<int> dir {0,0,0,0,1,0};	// Step in + ydot first
 	
 	// Use pseudo arclength with the precomputed DPO
-	gen.cr3bp_pacFromTraj(dpoTraj, Mirror_tp::MIRROR_XZ, dir, &DPO);
+	gen.cr3bp_pacFromArcset(dpoTraj, Mirror_tp::MIRROR_XZ, dir, &DPO);
 
 	// Run the other direction too
 	dir[4] *= -1;
-	gen.cr3bp_pacFromTraj(dpoTraj, Mirror_tp::MIRROR_XZ, dir, &DPO);
+	gen.cr3bp_pacFromArcset(dpoTraj, Mirror_tp::MIRROR_XZ, dir, &DPO);
 		
 	DPO.sortEigs();
 	DPO.setName("Sun-Earth Distant Prograde Orbit");

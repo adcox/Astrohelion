@@ -5,7 +5,7 @@
 #include "Exceptions.hpp"
 #include "Linkable.hpp"
 #include "Node.hpp"
-#include "Nodeset.hpp"
+#include "Arcset.hpp"
 #include "Segment.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Utilities.hpp"
@@ -23,8 +23,8 @@ double state5[] = {5, 0, 0, 0, 5, 0};
 
 int ivID = Linkable::INVALID_ID;
 
-Nodeset forwardSet(&sys);
-Nodeset revSet(&sys);
+Arcset forwardSet(&sys);
+Arcset revSet(&sys);
 
 bool pieceVecsAreEqual(std::vector<ArcPiece> v1, std::vector<ArcPiece> v2){
 	if(v1.size() != v2.size())
@@ -39,7 +39,7 @@ bool pieceVecsAreEqual(std::vector<ArcPiece> v1, std::vector<ArcPiece> v2){
 }//====================================================
 
 void initForwardSet(){
-	forwardSet = Nodeset(&sys);
+	forwardSet = Arcset(&sys);
 	forwardSet.addNode(Node(state1, 6, 0));
 	forwardSet.addNode(Node(state2, 6, 1.1));
 	forwardSet.addNode(Node(state3, 6, 2.2));
@@ -48,7 +48,7 @@ void initForwardSet(){
 }//====================================================
 
 void initRevSet(){
-	revSet = Nodeset(&sys);
+	revSet = Arcset(&sys);
 	revSet.addNode(Node(state1, 6, 0));
 	revSet.addNode(Node(state2, 6, -1.1));
 	revSet.addNode(Node(state3, 6, -2.2));
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(Arcset_Basics)
 
 BOOST_AUTO_TEST_CASE(createArcset){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 
 	Node n1(state1, 6, 10);
 	Node n2(state2, 6, 25);
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(Arcset_DeleteNodesAndSegs)
 
 BOOST_AUTO_TEST_CASE(deleteSeg){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	Node n1(state1, 6, 10);
 	Node n2(state2, 6, 25);
 
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(deleteSeg){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteFirstNode){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	Node n1(state1, 6, 10);
 	Node n2(state2, 6, 25);
 
@@ -204,27 +204,42 @@ BOOST_AUTO_TEST_CASE(deleteFirstNode){
 	int n2ID = set.addNode(n2);
 
 	Segment s(n1ID, n2ID, 15);
-	set.addSeg(s);
+	int s1ID = set.addSeg(s);
 
-	set.deleteNode(0);	// Should work
+	BOOST_CHECK_NO_THROW(set.deleteNode(n1ID));
+
+	// Check to make sure segments linking to this node were updated
+	BOOST_CHECK(set.getSeg(s1ID).getOrigin() == ivID);
+	BOOST_CHECK(set.getSeg(s1ID).getTerminus() == n2ID);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteLastNode){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	Node n1(state1, 6, 10);
 	Node n2(state2, 6, 25);
+	Node n3(state3, 6, 40);
+	Node n4(state4, 6, 55);
 
 	int n1ID = set.addNode(n1);
 	int n2ID = set.addNode(n2);
+	int n3ID = set.addNode(n3);
+	int n4ID = set.addNode(n4);
 
-	Segment s(n1ID, n2ID, 15);
-	set.addSeg(s);
+	set.addSeg(Segment(n1ID, n2ID, 15));
+	set.addSeg(Segment(n2ID, n3ID, 15));
+	int s3ID = set.addSeg(Segment(n3ID, n4ID, 15));
 
-	set.deleteNode(set.getNumNodes()-1); 	// Should work
+	BOOST_CHECK_NO_THROW(set.deleteNode(n4ID));
+
+	// Check to make sure segments linking to this node were updated
+	BOOST_CHECK(set.getSeg(s3ID).getOrigin() == n3ID);
+	BOOST_CHECK(set.getSeg(s3ID).getTerminus() == ivID);
+	set.print();
+	set.printInChrono();
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, 1.1));
 	set.addNode(Node(state3, 6, 2.2));
@@ -287,7 +302,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_revTime){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, -1.1));
 	set.addNode(Node(state3, 6, -2.2));
@@ -316,7 +331,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_revTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource1){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, -1.1));
 	set.addNode(Node(state3, 6, -2.2));
@@ -359,7 +374,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource1){
  *  the forward time segment has no terminal point
  */
 BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource2){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, -1.1));
 	set.addNode(Node(state3, 6, -2.2));
@@ -380,7 +395,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource2){
  *  the reverse time segment has no terminal point
  */
 BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource3){
-	Nodeset set(&sys);
+	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, 1.1));
 	set.addNode(Node(state3, 6, 2.2));
@@ -404,7 +419,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(Arcset_getChronoOrder)
 
 BOOST_AUTO_TEST_CASE(ForwardTime){
-	Nodeset set1(&sys);
+	Arcset set1(&sys);
 	set1.addNode(Node(state1, 6, 0));
 	set1.addNode(Node(state2, 6, 1.1));
 	set1.addNode(Node(state3, 6, 2.2));
@@ -425,7 +440,7 @@ BOOST_AUTO_TEST_CASE(ForwardTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ReverseTime){
-	Nodeset set2(&sys);
+	Arcset set2(&sys);
 	set2.addNode(Node(state1, 6, 0));
 	set2.addNode(Node(state2, 6, -1.1));
 	set2.addNode(Node(state3, 6, -2.2));
@@ -447,7 +462,7 @@ BOOST_AUTO_TEST_CASE(ReverseTime){
 
 BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
 	// Shuffled forward time
-	Nodeset set3(&sys);
+	Arcset set3(&sys);
 	set3.addNode(Node(state2, 6, 1.1));
 	set3.addNode(Node(state1, 6, 0));
 	set3.addNode(Node(state3, 6, 2.2));
@@ -468,7 +483,7 @@ BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
-	Nodeset set4(&sys);
+	Arcset set4(&sys);
 	set4.addNode(Node(state2, 6, -1.1));
 	set4.addNode(Node(state1, 6, 0));
 	set4.addNode(Node(state3, 6, -2.2));
@@ -489,7 +504,7 @@ BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(MixedTime){
-	Nodeset set5(&sys);
+	Arcset set5(&sys);
 	set5.addNode(Node(state1, 6, 2.2));
 	set5.addNode(Node(state2, 6, 0));
 	set5.addNode(Node(state3, 6, 1.1));
@@ -519,7 +534,7 @@ BOOST_AUTO_TEST_CASE(MixedTime){
 
 BOOST_AUTO_TEST_CASE(MixedTime_LinkedSegs){
 	// Mixed Time Set, Linked Segments
-	Nodeset set6(&sys);
+	Arcset set6(&sys);
 	set6.addNode(Node(state1, 6, 0));
 	set6.addNode(Node(state2, 6, 1.1));
 	// set6.addNode(Node(state3, 2.2));
@@ -550,7 +565,7 @@ BOOST_AUTO_TEST_CASE(MixedTime_LinkedSegs){
 
 BOOST_AUTO_TEST_CASE(MixedTime_LinkedSegs2){
 	// Mixed Time Set, Linked Segments, reversed constraint IDs
-	Nodeset set7(&sys);
+	Arcset set7(&sys);
 	set7.addNode(Node(state1, 6, 0));
 	set7.addNode(Node(state2, 6, 1.1));
 	set7.addNode(Node(state5, 6, -2.2));
@@ -581,7 +596,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(Arcset_putInChronoOrder)
 
 BOOST_AUTO_TEST_CASE(ForwardTime){
-	Nodeset set1(&sys);
+	Arcset set1(&sys);
 	set1.addNode(Node(state1, 6, 0));
 	set1.addNode(Node(state2, 6, 1.1));
 	set1.addNode(Node(state3, 6, 2.2));
@@ -601,7 +616,7 @@ BOOST_AUTO_TEST_CASE(ForwardTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ReverseTime){
-	Nodeset set2(&sys);
+	Arcset set2(&sys);
 	set2.addNode(Node(state1, 6, 0));
 	set2.addNode(Node(state2, 6, -1.1));
 	set2.addNode(Node(state3, 6, -2.2));
@@ -618,7 +633,7 @@ BOOST_AUTO_TEST_CASE(ReverseTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
-	Nodeset set3(&sys);
+	Arcset set3(&sys);
 	set3.addNode(Node(state2, 6, 1.1));
 	set3.addNode(Node(state1, 6, 0));
 	set3.addNode(Node(state3, 6, 2.2));
@@ -636,7 +651,7 @@ BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
-	Nodeset set4(&sys);
+	Arcset set4(&sys);
 	set4.addNode(Node(state2, 6, -1.1));
 	set4.addNode(Node(state1, 6, 0));
 	set4.addNode(Node(state3, 6, -2.2));
@@ -654,7 +669,7 @@ BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(MixedTime){
-	Nodeset set5(&sys);
+	Arcset set5(&sys);
 	set5.addNode(Node(state1, 6, 2.2));
 	set5.addNode(Node(state2, 6, 0));
 	set5.addNode(Node(state3, 6, 1.1));
@@ -688,8 +703,8 @@ BOOST_AUTO_TEST_SUITE(Arcset_AppendSet)
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 	// Append (+) time set to beginning of (+) time set
 	initForwardSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset forSet2 = forwardSet;
+	Arcset forSet1 = forwardSet;
+	Arcset forSet2 = forwardSet;
 
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 1.3);
 	// forSet1.print();
@@ -716,8 +731,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
 	// Append (+) time set to end of (+) time set
 	initForwardSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset forSet2 = forwardSet;
+	Arcset forSet1 = forwardSet;
+	Arcset forSet2 = forwardSet;
 
 	int segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 1.3);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -743,8 +758,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
 	// Append (+) time set to beginning of (+) time set, TOF = 0
 	initForwardSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset forSet2 = forwardSet;
+	Arcset forSet1 = forwardSet;
+	Arcset forSet2 = forwardSet;
 
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 0);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -768,8 +783,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 	// Append (+) time set to end of (+) time set, TOF = 0
 	initForwardSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset forSet2 = forwardSet;
+	Arcset forSet1 = forwardSet;
+	Arcset forSet2 = forwardSet;
 
 	int segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 0);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -793,8 +808,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 	// Append (-) time set to beginning of (-) time set
 	initRevSet();
-	Nodeset revSet1 = revSet;
-	Nodeset revSet2 = revSet;
+	Arcset revSet1 = revSet;
+	Arcset revSet2 = revSet;
 
 	int segID = revSet1.appendSetAtNode(&revSet2, 2, 0, -1.3);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
@@ -820,8 +835,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 	// Append (-) time set to end of (-) time set
 	initRevSet();
-	Nodeset revSet1 = revSet;
-	Nodeset revSet2 = revSet;
+	Arcset revSet1 = revSet;
+	Arcset revSet2 = revSet;
 
 	int segID = revSet1.appendSetAtNode(&revSet2, 0, 2, -1.3);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
@@ -847,8 +862,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
 	// Append (-) time set to beginning of (-) time set, TOF = 0
 	initRevSet();
-	Nodeset revSet1 = revSet;
-	Nodeset revSet2 = revSet;
+	Arcset revSet1 = revSet;
+	Arcset revSet2 = revSet;
 
 	int segID = revSet1.appendSetAtNode(&revSet2, 2, 0, 0);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
@@ -872,8 +887,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 	// Append (-) time set to end of (-) time set, TOF = 0
 	initRevSet();
-	Nodeset revSet1 = revSet;
-	Nodeset revSet2 = revSet;
+	Arcset revSet1 = revSet;
+	Arcset revSet2 = revSet;
 
 	int segID = revSet1.appendSetAtNode(&revSet2, 0, 2, 0);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
@@ -898,8 +913,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 	// Append (-) time set to beginning of (+) time set, TOF > 0
 	initForwardSet();
 	initRevSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset revSet1 = revSet;
+	Arcset forSet1 = forwardSet;
+	Arcset revSet1 = revSet;
 
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 1.3);
 
@@ -927,8 +942,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 	// Append (-) time set to beginning of (+) time set, TOF < 0
 	initForwardSet();
 	initRevSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset revSet1 = revSet;
+	Arcset forSet1 = forwardSet;
+	Arcset revSet1 = revSet;
 
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, -1.3);
 
@@ -956,8 +971,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	// Append (-) time set to beginning of (+) time set, TOF = 0
 	initForwardSet();
 	initRevSet();
-	Nodeset forSet1 = forwardSet;
-	Nodeset revSet1 = revSet;
+	Arcset forSet1 = forwardSet;
+	Arcset revSet1 = revSet;
 
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 0);
 
@@ -981,12 +996,12 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){
 	// Append (-) time set to beginning of (+) time set, TOF = 0
-	Nodeset forSet1(&sys);
+	Arcset forSet1(&sys);
 	forSet1.addNode(Node(state1, 6, 0));
 	forSet1.addNode(Node(state2, 6, 1.1));
 	forSet1.addSeg(Segment(0, 1, 1.1));
 
-	Nodeset revSet1(&sys);
+	Arcset revSet1(&sys);
 	revSet1.addNode(Node(state1, 6, 0));
 	revSet1.addNode(Node(state2, 6, -1.1));
 	revSet1.addSeg(Segment(0, 1, -1.1));
@@ -1010,56 +1025,56 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Parallel01){
 	// Append two (+) time sets at node 0
 	initForwardSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = forwardSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = forwardSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 0, 0, 1.1), Exception);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Parallel02){
 	// Append two (+) time sets at end node
 	initForwardSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = forwardSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = forwardSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 2, 2, 1.1), Exception);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Parallel03){
 	//Append two (+) time sets in the middle
 	initForwardSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = forwardSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = forwardSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 2, 1, 1.1), Exception);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Collision01){
 	// Create time collision with (+) and (+) time sets
 	initForwardSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = forwardSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = forwardSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 2, 0, -1.1), Exception);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Collision02){
 	// Create time collision with (+) and (+) time sets, again
 	initForwardSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = forwardSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = forwardSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 0, 2, -1.1), Exception);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Collision03){
 	// Create time collision with (-) and (-) time sets
 	initRevSet();
-	Nodeset set1 = revSet;
-	Nodeset set2 = revSet;
+	Arcset set1 = revSet;
+	Arcset set2 = revSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 2, 0, 1.1), Exception);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Collision04){
 	// Create time collision with (-) and (-) time sets, again
 	initRevSet();
-	Nodeset set1 = revSet;
-	Nodeset set2 = revSet;
+	Arcset set1 = revSet;
+	Arcset set2 = revSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 0, 2, 1.1), Exception);
 }//=================================================
 
@@ -1067,8 +1082,8 @@ BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Collision05){
 	// Create time collision with (+) and (-) time sets
 	initForwardSet();
 	initRevSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = revSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = revSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 2, 0, 1.1), Exception);
 }//=================================================
 
@@ -1076,8 +1091,8 @@ BOOST_AUTO_TEST_CASE(Arcset_AppendSet_Err_Collision06){
 	// Create time collision with (+) and (-) time sets again
 	initForwardSet();
 	initRevSet();
-	Nodeset set1 = forwardSet;
-	Nodeset set2 = revSet;
+	Arcset set1 = forwardSet;
+	Arcset set2 = revSet;
 	BOOST_CHECK_THROW(set1.appendSetAtNode(&set2, 0, 2, 1.1), Exception);
 }//=================================================
 

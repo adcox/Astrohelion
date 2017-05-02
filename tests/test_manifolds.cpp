@@ -5,7 +5,7 @@
 #include "ManifoldEngine.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 
 #include <vector>
 
@@ -20,12 +20,12 @@ int main(){
 	printf("Found %zu matches!\n", halos.size());
 
 	SimEngine sim;
-	Traj_cr3bp lyap(&sysData);
+	Arcset_cr3bp lyap(&sysData);
 	sim.runSim(halos[0].getIC(), halos[0].getTOF(), &lyap);
 	lyap.saveToMat("data/manifoldTest_periodicOrbit.mat");
 
 	ManifoldEngine engine;
-	std::vector<Traj_cr3bp> manifolds = engine.computeSetFromPeriodic(Manifold_tp::MAN_S_P, &lyap, 100, 2*PI);
+	std::vector<Arcset_cr3bp> manifolds = engine.computeSetFromPeriodic(Manifold_tp::MAN_S_P, &lyap, 100, 2*PI);
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		char filename[128];
 		sprintf(filename, "data/man%03zu.mat", i);

@@ -1,6 +1,6 @@
 #include "AsciiOutput.hpp"
 #include "SimEngine.hpp"
-#include "Traj_2bp.hpp"
+#include "Arcset_2bp.hpp"
 #include "SysData_2bp.hpp"
 
 #include "BodyData.hpp"
@@ -24,7 +24,7 @@ int main(){
 	double ic[] = {r0, 0, 0, 0, v0, 0};
 	double period = 2*PI*sqrt(r0*r0*r0/mu);
 
-	Traj_2bp circOrb(&sys);
+	Arcset_2bp circOrb(&sys);
 	SimEngine sim;
 	sim.runSim(ic, period, &circOrb);
 

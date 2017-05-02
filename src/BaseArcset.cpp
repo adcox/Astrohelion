@@ -151,7 +151,8 @@ void BaseArcset::addConstraint(Constraint con){
 
 /**
  *  \brief Add a node to this data object
- *  \details A unique key is assigned to the node when it is added
+ *  \details A unique key is assigned to the node when it is added.
+ *  Any links the input node has are cleared.
  * 
  *  \param n the node to add
  *  \return the ID assigned to the node
@@ -1461,7 +1462,7 @@ double BaseArcset::getTOFByIx(int ix) const {
 		ix += segs.size();
 
 	if(ix < 0 || ix >= static_cast<int>(segs.size()))
-		throw Exception("Nodeset::getTOFByIx: invalid segment index");
+		throw Exception("Arcset::getTOFByIx: invalid segment index");
 
 	return segs[ix].getTOF();
 }//====================================================

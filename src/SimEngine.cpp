@@ -38,20 +38,14 @@
 #include "SimEngine.hpp"
 
 #include "AsciiOutput.hpp"
-#include "Node.hpp"
-#include "SysData_bc4bp.hpp"
-#include "Traj_bc4bp.hpp"
+#include "Arcset.hpp"
 #include "BodyData.hpp"
 #include "Calculations.hpp"
 #include "Common.hpp"
-#include "MultShootEngine.hpp"
-#include "Nodeset_cr3bp.hpp"
-#include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
-#include "SysData_cr3bp_lt.hpp"
-#include "Traj_cr3bp_lt.hpp"
-#include "Exceptions.hpp"
 #include "DynamicsModel.hpp"
+#include "Exceptions.hpp"
+#include "MultShootEngine.hpp"
+#include "Node.hpp"
 #include "Utilities.hpp"
 
 namespace boostInt = boost::numeric::odeint;
@@ -232,11 +226,23 @@ void SimEngine::setMaxCompTime(int t){ maxCompTime = t; }
  *  \brief Specify the number of steps the integrator must take during the 
  *  the integration. 
  *
- *  Only these points will be output to the 
+ *  \details Only these points will be output to the 
  *  trajectory object, although the GSL driver may take steps in between
  *  those specified to maintain numerical accuracy.
+ *  
+ *  \param n the number of steps. Must be at least 2. If n < 2, the
+ *  simulation will proceed but will use 2 steps rather than the invalid
+ *  number specified.
  */
-void SimEngine::setNumSteps(int n){ numSteps = n; }
+void SimEngine::setNumSteps(int n){
+    if(n < 2){
+        numSteps = 2;
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::setNumSteps: Must use at least 2 steps; input number is too few, using numSteps = 2 and continuing.\n");
+    }
+    else{
+        numSteps = n;
+    }
+}//====================================================
 
 /**
  *  \brief Tell the engine whether or not to use simple integration (i.e., no STM propagation)
@@ -276,9 +282,9 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
     }
 }//====================================================
 
-//-----------------------------------------------------
-// 		Simulation Functions
-//-----------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+// 		Simulation Functions - Default to 2 Nodes
+//-------------------------------------------------------------------------------------------------
 
 /**
  *	\brief Run a simulation given a set of initial conditions and run time. 
@@ -290,10 +296,10 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
  *	\param tof the total integration time, or time-of-flight (non-dim units)
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, double tof, Traj *traj){
-	runSim(ic, 0, tof, traj);
+void SimEngine::runSim(const double *ic, double tof, Arcset *arcset){
+	runSim(ic, 0, tof, arcset);
 }//=======================================================
 
 /**
@@ -304,10 +310,10 @@ void SimEngine::runSim(const double *ic, double tof, Traj *traj){
  *  \param tof the total integration time, or time-of-flight (non-dim units)
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(std::vector<double> ic, double tof, Traj *traj){
-    runSim(ic, 0, tof, traj);
+void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset){
+    runSim(ic, 0, tof, arcset);
 }//=======================================================
 
 /**
@@ -319,17 +325,22 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Traj *traj){
  *  \param tof the total integration time, or time-of-flight (non-dim units).
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
  *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *    data generated up to the integrator failure is saved in the Traj object passed to
+ *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Traj *traj){
-    if(ic.size() >= static_cast<size_t>(traj->getSysData()->getDynamicsModel()->getCoreStateSize())){
+void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset){
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    if(ic.size() >= static_cast<size_t>(arcset->getSysData()->getDynamicsModel()->getCoreStateSize())){
         std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), t0, tof, traj);
+        runSim(&(tempIC[0]), t0, tof, arcset);
     }else{
         printErr("IC size = %zu\n", ic.size());
         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
@@ -346,17 +357,22 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Traj *traj
  *  \param tof the total integration time, or time-of-flight (non-dim units).
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
  *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
- *    data generated up to the integrator failure is saved in the Traj object passed to
+ *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double tof, Traj *traj){
-    if(ic.size() >= static_cast<size_t>(traj->getSysData()->getDynamicsModel()->getCoreStateSize())){
+void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset){
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    if(ic.size() >= static_cast<size_t>(arcset->getSysData()->getDynamicsModel()->getCoreStateSize())){
         std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), stm0, t0, tof, traj);
+        runSim(&(tempIC[0]), stm0, t0, tof, arcset);
     }else{
         printErr("IC size = %zu\n", ic.size());
         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
@@ -373,9 +389,14 @@ void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double
  *	\param tof time-of-flight, non-dimensional time units
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
+void SimEngine::runSim(const double *ic, double t0, double tof, Arcset *arcset){
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
@@ -395,12 +416,12 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Traj *traj){
         }
     }
 
-    int core_dim = traj->getSysData()->getDynamicsModel()->getCoreStateSize();
+    int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     MatrixXRd stm0 = MatrixXRd::Identity(core_dim, core_dim);
-    runSim(ic, stm0, t_span, traj);
+    runSim(ic, stm0, t_span, arcset);
 }//====================================================
 
-void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, Traj *traj){
+void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset){
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
@@ -420,7 +441,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
         }
     }
 
-    runSim(ic, stm0, t_span, traj);
+    runSim(ic, stm0, t_span, arcset);
 }//====================================================
 
 /**
@@ -431,22 +452,68 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
  *    in the system dynamics model
  *  \param stm0 initial STM
  *  \param t_span a vector of times to include in the solution.
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Traj *traj){
+void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Arcset *arcset){
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
     }
 
     if(bMakeDefaultEvents)
-        createDefaultEvents(traj->getSysData());
+        createDefaultEvents(arcset->getSysData());
 
-    eomParams = new EOM_ParamStruct(traj->getSysData(), ctrlLawID);
+    eomParams = new EOM_ParamStruct(arcset->getSysData(), ctrlLawID);
 
     // Run the simulation
     bIsClean = false;   // Technically, nothing has changed yet, but this flag should be false even if any part of integrate throws an exception
-    integrate(ic, stm0, &(t_span.front()), t_span.size(), traj);
+    integrate(ic, stm0, &(t_span.front()), t_span.size(), arcset);
+}//====================================================
+
+//-------------------------------------------------------------------------------------------------
+//      Simulation Functions - User Specifies Number of Nodes
+//-------------------------------------------------------------------------------------------------
+
+
+void SimEngine::runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset){
+    // Set t0 = 0, use more specific function
+    std::vector<double> tempIC = ic;
+    runSim_manyNodes(&(tempIC.front()), 0, tof, numNodes, arcset);
+}//====================================================
+
+void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arcset *arcset){
+    // Set t0 = 0, use more specific function
+    runSim_manyNodes(ic, 0, tof, numNodes, arcset);
+}//====================================================
+
+void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset){
+    std::vector<double> tempIC = ic;
+    runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset);
+}//====================================================
+
+void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int numNodes, Arcset *arcset){
+    if(numNodes < 2){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer than two nodes\n");
+        return;
+    }
+    int t_sign = bRevTime ? -1 : 1;
+
+    std::vector<double> t_span(numNodes, 0);
+    double t_step = std::abs(tof)/static_cast<double>(numNodes - 1);
+
+    for(int s = 0; s < numNodes-1; s++){
+        t_span[s] = t0 + t_sign*s*t_step;
+    }
+    t_span[numNodes-1] = t0 + t_sign*std::abs(tof);  // Final node at the desired TOF
+
+    unsigned int coreSize = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    MatrixXRd stm0 = MatrixXRd::Identity(coreSize, coreSize);
+    runSim(ic, stm0, t_span, arcset);
 }//====================================================
 
 //-----------------------------------------------------
@@ -466,11 +533,16 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
  *  \param stm0 initial STM
  *  \param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
  *  \param t_dim the dimension of t
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  *  
  *  \throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int t_dim, Traj *traj){
+void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int t_dim, Arcset *arcset){
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::integrate: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
     // delete any auto-generated events from previous integrations
     for(unsigned int i = 0; i < events.size(); i++){
         if(static_cast<int>(events[i].getType()) <= 0){
@@ -482,12 +554,12 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     startTimestamp = time(nullptr);
 
     // Save tolerance for trajectory
-    traj->setTol(absTol > relTol ? absTol : relTol);
-    const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
+    arcset->setTol(absTol > relTol ? absTol : relTol);
+    const DynamicsModel *model = arcset->getSysData()->getDynamicsModel();
 
     // Initialize all events with the correct system data pointer
     for(unsigned int i = 0; i < events.size(); i++){
-        events[i].initialize(traj->getSysData());
+        events[i].initialize(arcset->getSysData());
     }
 
     // Get the dimension of the state vector for integration
@@ -522,7 +594,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-        "  using control law: %s\n", traj->getSysData()->getControlLaw()->lawIDToString(ctrlLawID).c_str());
+        "  using control law: %s\n", arcset->getSysData()->getControlLaw()->lawIDToString(ctrlLawID).c_str());
 
     /*
      * BOOST INTEGRATOR ADDITION
@@ -536,13 +608,13 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     //         throw Exception("SimEngine::integrate: t_dim must be 2 for BOOST integration right now!");
 
     //     boost_eom_wrapper boostEOM(eomFcn, eomParams);
-    //     boost_observer boostObserver(model, traj, eomParams);
+    //     boost_observer boostObserver(model, arcset, eomParams);
 
     //     double t0 = t[0], tf = t[1];                // start and finish times for integration; t0 will be updated by integrator
     //     double dt = tf > t0 ? dtGuess : -dtGuess;   // step size (initial guess)
 
     //     // Save the initial state, time, and STM
-    //     // model->sim_saveIntegratedData(y, t[0], traj, eomParams);
+    //     // model->sim_saveIntegratedData(y, t[0], arcset, eomParams);
 
     //     switch(varStep_integ){
     //         case Integ_tp::BOOST_RKCK:
@@ -628,12 +700,13 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
     // Save the initial state, time, and STM
     Node node0(y, core_dim, t[0]); // Construct a basic node
-    int id0 = model->sim_addNode(node0, y, t[0], traj, eomParams, Event_tp::NONE); // Pass the node to the Dynamic Model so specific modifications may be made
-    Segment seg;            // Construct a segment that has an origin at the initial node
-    seg.setOrigin(id0);     // Assign origin ID
+    int id0 = model->sim_addNode(node0, y, t[0], arcset, eomParams, Event_tp::NONE); // Pass the node to the Dynamic Model so specific modifications may be made
+    
+    // Construct a segment with origin at the initial node, undefined terminus, dummy TOF in the correct direction
+    Segment seg(id0, Linkable::INVALID_ID, t[1] - t[0]);
     seg.appendState(y, ic_dim);     // Save the initial state in the segment
     seg.appendTime(t[0]);           // Save the initial time in the segment
-    model->sim_addSeg(seg, y, t[0], traj, eomParams);
+    model->sim_addSeg(seg, y, t[0], arcset, eomParams);
 
     int status;             // integrator status
     int propStepCount = 0;  // Count of propagated steps (different than number of time steps)
@@ -664,21 +737,23 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 Event event_err(Event_tp::SIM_ERR, 0, false);
 
                 // Save the last successful step the integrator was able to take
-                Node nodeF(y, core_dim, t_int);    // Construct a basic node
-                int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
-                // Get reference to most recent segment (faster than copying the object!)
-                Segment &lastSeg = traj->getSegRefByIx(-1);
+                Node nodeF(y, core_dim, t_int);                 // Construct a basic node
+                Segment &lastSeg = arcset->getSegRefByIx(-1);   // Get reference to most recent segment (faster than copying the object!)
+
+                int idf = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                arcset->getNodeRef(idf).addLink(lastSeg.getID());
+
                 lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                 lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
                 lastSeg.appendTime(t_int);
-                lastSeg.storeTOF();
-                lastSeg.setSTM(y+core_dim, core_dim*core_dim);
+                lastSeg.storeTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
+                lastSeg.setSTM(y+core_dim, core_dim*core_dim);  // Set the STM to be the most recent one
 
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
 
             // Stop the simulation if a simulation-ending event occurs
-            killSim = locateEvents(y, t_int, traj, propStepCount);
+            killSim = locateEvents(y, t_int, arcset, propStepCount);
 
             // Stop the simulation if the maximum computation time has passed
             killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
@@ -687,9 +762,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 break;
 
             // Save propagation state to segment
-            Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
-            lastSeg = traj->getSegRefByIx(-1);  // Update in case locateEvents() added a node and segment
-            lastSeg.appendState(y, ic_dim);
+            Segment &lastSeg = arcset->getSegRefByIx(-1);       // Get another reference (not reassignable)
+            lastSeg.appendState(y, ic_dim);                     // Save newest state and time
             lastSeg.appendTime(t_int);
             propStepCount++;
         }
@@ -697,26 +771,28 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         // Integrate each segment between the input times
         for (int j = 0; j < t_dim - 1; j++){
             // define start and end times; t_int will be updated by integrator
-            double t_int = t[j], tf = t[j+1];
+            t_int = t[j];
+            double tf = t[j+1];
             double dt = tf > t_int ? dtGuess : -dtGuess;
             int sgn = tf > t_int ? 1 : -1;
 
             if(j > 0){
                 // Create a node at every time in the t[] array
                 Node nodeI(y, core_dim, t_int);
-                int nodeID_i = model->sim_addNode(nodeI, y, t_int, traj, eomParams, Event_tp::SIM_TOF);
-                Segment &lastSeg = traj->getSegRefByIx(-1);     // Get reference (not reassignable)
+                Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get reference (not reassignable)
+
+                int nodeID_i = model->sim_addNode(nodeI, y, t_int, arcset, eomParams, Event_tp::SIM_TOF);
+                arcset->getNodeRef(nodeID_i).addLink(lastSeg.getID());
+
                 lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
                 lastSeg.storeTOF();
                 lastSeg.setSTM(y+core_dim, core_dim*core_dim);
 
-                // Create a new segment for the next time interval
-                Segment newSeg;
-                newSeg.setOrigin(nodeID_i);
+                // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
+                Segment newSeg(nodeID_i, Linkable::INVALID_ID, tf - t_int);
                 newSeg.appendState(y, ic_dim);
                 newSeg.appendTime(t_int);
-                model->sim_addSeg(newSeg, y, t_int, traj, eomParams);
-                lastSeg = traj->getSegRefByIx(-1);  // Update reference to most recent segment
+                model->sim_addSeg(newSeg, y, t_int, arcset, eomParams);
             }
             while(sgn*t_int < sgn*tf && !killSim){
                 // printf("Integrating at t = %6.4f\n", t_int);
@@ -735,9 +811,12 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                     // Save the last successful step the integrator was able to take
                     Node nodeF(y, core_dim, t_int);    // Construct a basic node
+                    Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get another reference (not reassignable)
+
                     // Add the node with info that there was a simulation error here
-                    int idf = model->sim_addNode(nodeF, y, t_int, traj, eomParams, Event_tp::SIM_ERR);
-                    Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
+                    int idf = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, Event_tp::SIM_ERR);
+                    arcset->getNodeRef(idf).addLink(lastSeg.getID());
+
                     lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                     lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
                     lastSeg.appendTime(t_int);
@@ -747,7 +826,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }
 
-                killSim = locateEvents(y, t_int, traj, propStepCount);
+                killSim = locateEvents(y, t_int, arcset, propStepCount);
 
                 // Stop the simulation if the maximum computation time has passed
                 killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
@@ -755,7 +834,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 propStepCount++;
 
                 // Save the most recent time and state to the segment
-                Segment &lastSeg = traj->getSegRefByIx(-1);     // Get another reference (not reassignable)
+                Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get another reference (not reassignable)
                 lastSeg.appendState(y, ic_dim);
                 lastSeg.appendTime(t_int);
             }
@@ -773,8 +852,12 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         // Ended normally at the desired TOF
         // Create a final node and update the final segment
         Node nodeF(y, core_dim, t_int);
-        Segment &lastSeg = traj->getSegRefByIx(-1);
-        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, Event_tp::SIM_TOF);
+        Segment &lastSeg = arcset->getSegRefByIx(-1);
+
+        // Add the node and add a link to the previous segment
+        int nodeID_f = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, Event_tp::SIM_TOF);
+        arcset->getNodeRef(nodeID_f).addLink(lastSeg.getID());
+
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
         lastSeg.storeTOF();
         lastSeg.setSTM(y+core_dim, core_dim*core_dim);
@@ -782,24 +865,30 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         // Ended at the time-out
         // Create a final node and update the final segment
         Node nodeF(y, core_dim, t_int);
-        Segment &lastSeg = traj->getSegRefByIx(-1);
-        int nodeID_f = model->sim_addNode(nodeF, y, t_int, traj, eomParams, Event_tp::SIM_COMPTIME);
-        lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
-        
+        Segment &lastSeg = arcset->getSegRefByIx(-1);
+
+        // Add the node and add a link to the previous segment
+        int nodeID_f = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, Event_tp::SIM_COMPTIME);
+        arcset->getNodeRef(nodeID_f).addLink(lastSeg.getID());
+    
         // Propagation ended without saving the final state
+        lastSeg.setTerminus(nodeID_f);
         lastSeg.appendState(y, ic_dim);
         lastSeg.appendTime(t_int);
-
         lastSeg.storeTOF();
         lastSeg.setSTM(y+core_dim, core_dim*core_dim);
     }
 
-    // Check lengths of vectors and set the numPoints value in traj
-    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Integration complete**\nTotal: %d Nodes\n", traj->getNumNodes());
+    // Check lengths of vectors and set the numPoints value in arcset
+    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Integration complete**\n");
+    if(verbosity >= Verbosity_tp::ALL_MSG){
+        arcset->print();
+        arcset->printInChrono();
+    }
 
-    for(unsigned int n = 0; n < traj->getNumNodes(); n++){
+    for(unsigned int n = 0; n < arcset->getNumNodes(); n++){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, " %s Event occured at node %u\n",
-            Event::getEventTpStr(traj->getNodeRefByIx(n).getTriggerEvent()), n);
+            Event::getEventTpStr(arcset->getNodeRefByIx(n).getTriggerEvent()), n);
     }
 }//====================================================END of cr3bp_integrate
 
@@ -846,13 +935,13 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
  *
  *  \param y the most recent state on the integrated arc.
  *  \param t the time associated with y
- *  \param traj pointer to a trajectory object to store the output trajectory
+ *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \param propStepCount the number of steps the propagation has taken so far. This is different
  *  from the number of time steps as many propagation steps may be taken between specified time steps
  *  \return whether or not the simulation should end (an event triggers killSim)
  */
-bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStepCount){
-    const DynamicsModel *model = traj->getSysData()->getDynamicsModel();
+bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int propStepCount){
+    const DynamicsModel *model = arcset->getSysData()->getDynamicsModel();
     unsigned int core_dim = model->getCoreStateSize();
     unsigned int full_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
 
@@ -863,14 +952,14 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStep
         if(propStepCount > 1 && to_underlying(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core_dim, t)){
 
             astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG,
-                "  Event %d detected on segment %d; searching for exact crossing\n", ev, traj->getNumSegs());
+                "  Event %d detected on segment %d; searching for exact crossing\n", ev, arcset->getNumSegs());
             events[ev].incrementCount();  // Update the counter for the event
 
             if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
             // Create a nodeset from the previous state (stored in the event) and
             // integrate forwards for half the time between this state and the last one
-            Segment &lastSeg = traj->getSegRefByIx(-1);
+            Segment &lastSeg = arcset->getSegRefByIx(-1);
             double t0 = lastSeg.getTimeByIx(-2);          // Time from the state before last
             double ti = lastSeg.getTimeByIx(-1);          // Time from the previous state
             double tof = t - t0 - 0.5*(t - ti);         // Approx. TOF 
@@ -890,10 +979,10 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStep
             }   
 
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events[ev], traj, &(generalIC[0]), t0, tof, eomParams, verbosity)){
+            if(model->sim_locateEvent(events[ev], arcset, &(generalIC[0]), t0, tof, eomParams, verbosity)){
                 // Update event state from the most recent node (a new node was created at the event occurence)
-                std::vector<double> state = traj->getStateByIx(-1);
-                double lastT = traj->getTimeByIx(-1);
+                std::vector<double> state = arcset->getStateByIx(-1);
+                double lastT = arcset->getTimeByIx(-1);
                 events[ev].updateDist(&(state[0]), core_dim, lastT);
                 
                 // This condition is also checked in model->sim_locateEvent(): that function adds a new
@@ -914,8 +1003,6 @@ bool SimEngine::locateEvents(const double *y, double t, Traj *traj, int propStep
         if(to_underlying(events[ev].getType()) > 0){
             // Save the distance and current state to the event
             events[ev].updateDist(y, core_dim, t);
-            printVerbColor(verbosity >= Verbosity_tp::DEBUG, BLUE, "Updating event %d state to [%.4f, %.4f, %.4f,...]\n",
-                ev, y[0], y[1], y[2]);
         }
     }// end of loop
 

@@ -38,7 +38,7 @@
 namespace astrohelion{
 
 // Forward Declarations
-class Traj_2bp;
+class Arcset_2bp;
 class SysData_2bp;
 
 /**
@@ -58,7 +58,7 @@ public:
 
 	LambertArcEngine& operator =(const LambertArcEngine&);
 
-	Traj_2bp getLambertArc(SysData_2bp*, std::vector<double>, std::vector<double>, double, unsigned int);
+	Arcset_2bp getLambertArc(SysData_2bp*, std::vector<double>, std::vector<double>, double, unsigned int);
 
 	void setMaxErr_tof(double);
 	void setMaxErr_ta(double);

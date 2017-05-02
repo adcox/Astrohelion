@@ -5,10 +5,10 @@
  */
 
 #include "Node.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 
 using namespace astrohelion;
 
@@ -20,15 +20,15 @@ int main(){
 
 	// Generate a set of nodes around the arc
 	SysData_cr3bp sys("earth", "moon");
-	Nodeset_cr3bp scienceOrbitNodes(&sys, IC, tof, 10);
+	Arcset_cr3bp scienceOrbitNodes(&sys, IC, tof, 10);
 
 	SimEngine sim;
-	std::vector<Traj_cr3bp> allArcs;
+	std::vector<Arcset_cr3bp> allArcs;
 	for(int n = 0; n < scienceOrbitNodes.getNumNodes(); n++){
 		printf("Simulating Arc #%03d\n", n);
 		std::vector<double> nodeIC = scienceOrbitNodes.getNodeByIx(n).getState();
 		double tof = 4;
-		Traj_cr3bp traj(&sys);
+		Arcset_cr3bp traj(&sys);
 		sim.runSim(nodeIC, tof, &traj);
 		allArcs.push_back(traj);
 	}

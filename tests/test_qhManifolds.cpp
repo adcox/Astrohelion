@@ -41,11 +41,11 @@ int main(void){
 
 	// Create a simulation engine and propagate the quasihalo for one rev
 	SimEngine engine;
-	Traj_cr3bp quasihalo(&seSys);
+	Arcset_cr3bp quasihalo(&seSys);
 	engine.runSim(quasihaloIC, quasihaloPeriod, &quasihalo);
 	
 	// Compute manifolds from the halo for a short amount of time to get ICs
-	std::vector<Traj_cr3bp> manICs = getManifolds(Manifold_tp::MAN_U_P, &quasihalo, numManifolds, 1e-4);
+	std::vector<Arcset_cr3bp> manICs = getManifolds(Manifold_tp::MAN_U_P, &quasihalo, numManifolds, 1e-4);
 
 	// Create event that trigers when trajectory passes within lunar radius
 	double evtData[] = {1, (1 - emSys.getMu())*emSys.getCharL()/seSys.getCharL()};
@@ -65,7 +65,7 @@ int main(void){
 		printf("Manifold %03zu:\n", n);
 
 		// First propagate to lunar radius and determine epoch shift required to minimize lunar encounter distance
-		Traj_cr3bp traj(&seSys);
+		Arcset_cr3bp traj(&seSys);
 		engine.clearEvents();
 		engine.addEvent(enterLunarRad);
 		engine.runSim(manICs[n].getStateByIx(0), 4*PI, &traj);
@@ -103,7 +103,7 @@ int main(void){
 		}
 
 		// First, propagate to X = X_earth to leave the quasihalo
-		Traj_cr3bp o(&seSys);
+		Arcset_cr3bp o(&seSys);
 		engine.clearEvents();
 		engine.addEvent(cross_EarthPlane);
 		engine.runSim(manICs[n].getStateByIx(0), 2*PI, &o);
@@ -113,7 +113,7 @@ int main(void){
 			printErr("  Manifold %zu did not encounter the Earth-X plane...\n", n);
 		}else{
 			// If the manifold reached that plane, propagate to the XZ plane
-			Traj_cr3bp o2(&seSys);
+			Arcset_cr3bp o2(&seSys);
 			engine.clearEvents();
 			engine.addEvent(cross_Y0);
 			engine.runSim(o.getStateByIx(-1), PI, &o2);
@@ -125,10 +125,10 @@ int main(void){
 				o += o2;
 				
 				// Turn the manifold into a nodeset
-				Nodeset_cr3bp manData(o, numManNodes);
+				Arcset_cr3bp manData(o, numManNodes);
 
 				// Create some nodes to represent the quasihalo
-				Nodeset_cr3bp haloData(o.getStateByIx(0), &seSys, -PI, numHaloNodes);
+				Arcset_cr3bp haloData(o.getStateByIx(0), &seSys, -PI, numHaloNodes);
 				double haloTOF = std::abs(haloData.getTotalTOF());
 
 				// Tack the manifold on to the end
@@ -136,7 +136,7 @@ int main(void){
 
 				// Transform to BCR4BP system
 				double t0 = 0;	// t = 0 occurs at the beginning of the manifold
-				Nodeset_bc4bp bcNodes = bcr4bpr_SE2SEM(haloData, &bcSys, 0, t0);
+				Arcset_bc4bp bcNodes = bcr4bpr_SE2SEM(haloData, &bcSys, 0, t0);
 
 				// Constrain the final node to be on the XZ_Plane
 				double fixY0_Data[] = {NAN, 0, NAN, NAN, NAN, NAN};
@@ -145,36 +145,36 @@ int main(void){
 
 				// Correct to be continuous
 				try{
-					Nodeset_bc4bp bcCorrected(&bcSys);
+					Arcset_bc4bp bcCorrected(&bcSys);
 					corrector.setTol(9e-12);
 					corrector.multShoot(&bcNodes, &bcCorrected);
 
 					// Now propagate forward for a while from the final state
-					Traj_bc4bp natArc(&bcSys);
+					Arcset_bc4bp natArc(&bcSys);
 					// bcEngine.runSim(bcCorrected.getStatebyIx(-1), bcCorrected.getEpochByIx(-1), 360*24*3600/bcSys.getCharT(), &natArc);
 					bcEngine.runSim(bcCorrected.getStateByIx(-1), bcCorrected.getEpochByIx(-1), 540*24*3600/bcSys.getCharT(), &natArc);
-					Traj_bc4bp fullTraj = Traj_bc4bp::fromNodeset(bcCorrected);
+					Arcset_bc4bp fullTraj = Arcset_bc4bp::fromNodeset(bcCorrected);
 					fullTraj += natArc;
 
 					// Save the trajectory to file
 					char name[32];
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Traj%03zu_SEM.mat", n);
+					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_SEM.mat", n);
 					fullTraj.saveToMat(name);
 
-					Traj_cr3bp fullTraj_SE = bcr4bpr_SEM2SE(fullTraj, &seSys);
-					// sprintf(name, "data/Traj%03zu_SE.mat", n);
+					Arcset_cr3bp fullTraj_SE = bcr4bpr_SEM2SE(fullTraj, &seSys);
+					// sprintf(name, "data/Arcset%03zu_SE.mat", n);
 					// fullTraj_SE.saveToMat(name);
 
-					Traj_cr3bp fullTraj_EM = cr3bp_SE2EM(fullTraj_SE, &emSys, bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Traj%03zu_EM.mat", n);
+					Arcset_cr3bp fullTraj_EM = cr3bp_SE2EM(fullTraj_SE, &emSys, bcSys.getTheta0(), bcSys.getPhi0(), bcSys.getGamma());
+					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_EM.mat", n);
 					fullTraj_EM.saveToMat(name);
 
-					Traj_cr3bp fullTraj_ECI = cr3bp_rot2inert(fullTraj_EM, 0);
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Traj%03zu_ECI.mat", n);
+					Arcset_cr3bp fullTraj_ECI = cr3bp_rot2inert(fullTraj_EM, 0);
+					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_ECI.mat", n);
 					fullTraj_ECI.saveToMat(name);
 
-					Traj_cr3bp fullTraj_MCI = cr3bp_rot2inert(fullTraj_EM, 1);
-					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Traj%03zu_MCI.mat", n);
+					Arcset_cr3bp fullTraj_MCI = cr3bp_rot2inert(fullTraj_EM, 1);
+					sprintf(name, "data/LPF_QH_4B_NaturalManifolds/Arcset%03zu_MCI.mat", n);
 					fullTraj_MCI.saveToMat(name);
 
 				}catch(DivergeException &e){

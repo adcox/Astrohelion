@@ -7,7 +7,7 @@
 #include "AsciiOutput.hpp"
 #include "Calculations.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "LinMotionEngine.hpp"
 #include "Utilities.hpp"
 
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(Linear_Nonzero_Time){
 	double r[] = {0.1,0.1,0};
 
 	SysData_cr3bp sys("earth", "moon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(1, r, LinMotion_tp::ELLIP, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(1, r, LinMotion_tp::ELLIP, &sys);
 
 	BOOST_CHECK(traj.getTimeByIx(-1) > 0);
 }//====================================================
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(L1_Elliptical_Linear){
 	double q9[] = {0.937478813500055, 0.092443439352275};
 
 	SysData_cr3bp sys("earth", "moon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(1, r, LinMotion_tp::ELLIP, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(1, r, LinMotion_tp::ELLIP, &sys);
 	
 	for(int i = 0; i < 6; i++){
 		BOOST_CHECK(abs(traj.getStateByIx(0)[i] - q0[i]) < tol);
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(L2_Hyperbolic_Linear){
 	double q9[] = {1.25261820440111, 0.098794357035758};
 
 	SysData_cr3bp sys("earth", "moon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(2, r, LinMotion_tp::HYP, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(2, r, LinMotion_tp::HYP, &sys);
 	
 	for(int i = 0; i < 6; i++){
 		BOOST_CHECK(abs(traj.getStateByIx(0)[i] - q0[i]) < tol);
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(L4_SPO_Linear){
 	double q9[] = {0.589838545236831, 0.964703886338579};
 
 	SysData_cr3bp sys("earth", "moon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(4, r, LinMotion_tp::SPO, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(4, r, LinMotion_tp::SPO, &sys);
 
 	for(int i = 0; i < 6; i++){
 		BOOST_CHECK(abs(traj.getStateByIx(0)[i] - q0[i]) < tol);
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(L5_LPO_Linear){
 	double q9[] = {0.58833121115652, -0.765832920338464};
 
 	SysData_cr3bp sys("earth", "moon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(5, r, LinMotion_tp::LPO, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(5, r, LinMotion_tp::LPO, &sys);
 	
 	for(int i = 0; i < 6; i++){
 		BOOST_CHECK(abs(traj.getStateByIx(0)[i] - q0[i]) < tol);
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(L5_MPO_Linear){
 	double q9[] = {0.58854120640494, -0.766019806926301};
 
 	SysData_cr3bp sys("earth", "moon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(5, r, LinMotion_tp::MPO, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(5, r, LinMotion_tp::MPO, &sys);
 	
 	for(int i = 0; i < 6; i++){
 		BOOST_CHECK(abs(traj.getStateByIx(0)[i] - q0[i]) < tol);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(L4_Convergent_Linear){
 	double q9[] = {0.492647479254839, 0.964400034052942};
 
 	SysData_cr3bp sys("pluto", "charon");
-	Traj_cr3bp traj = engine.getCR3BPLinear(4, r, LinMotion_tp::CONVERGE, &sys);
+	Arcset_cr3bp traj = engine.getCR3BPLinear(4, r, LinMotion_tp::CONVERGE, &sys);
 	
 	for(int i = 0; i < 6; i++){
 		BOOST_CHECK(abs(traj.getStateByIx(0)[i] - q0[i]) < tol);

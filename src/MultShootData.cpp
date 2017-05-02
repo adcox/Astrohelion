@@ -267,7 +267,7 @@ const char* MSVarMap_Obj::parent2str(MSVarParent_tp p){
  *  \brief Construct a new MultShootData object
  *  \param set pointer to the nodeset being corrected
  */
-MultShootData::MultShootData(const Nodeset *set) : sysData(set->getSysData()), nodeset(set){
+MultShootData::MultShootData(const Arcset *set) : sysData(set->getSysData()), nodeset(set){
 	numNodes = set->getNumNodes();
 }//====================================================
 

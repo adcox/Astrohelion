@@ -1,3 +1,30 @@
+/**
+ *  \file ManifoldEngine.cpp
+ *  \brief 
+ *  
+ *  \author Andrew Cox
+ *  \version May 1, 2017
+ *  \copyright GNU GPL v3.0
+ */
+/*
+ *  Astrohelion 
+ *  Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *  
+ *  This file is part of Astrohelion
+ *
+ *  Astrohelion is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Astrohelion is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "ManifoldEngine.hpp"
 
 #include "assert.h"
@@ -7,7 +34,7 @@
 #include "Exceptions.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "Utilities.hpp"
 
 namespace astrohelion{
@@ -57,10 +84,10 @@ ManifoldEngine::ManifoldEngine(const ManifoldEngine &m){
  *  \see computeSingleFromPeriodic()
  *  \see manifoldsFromPOPoint()
  */
-std::vector<Traj_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manifoldType, const Traj_cr3bp *pPerOrbit, unsigned int numMans, double tof,
+std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit, unsigned int numMans, double tof,
 	Manifold_StepOff_tp stepType){
 
-	std::vector<Traj_cr3bp> allManifolds;
+	std::vector<Arcset_cr3bp> allManifolds;
 
 	if(numMans == 0)
 		return allManifolds;
@@ -100,7 +127,7 @@ std::vector<Traj_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manif
     	MatrixXRd STM = pPerOrbit->getSTMByIx(pointIx[m]);
 
     	// Compute manifolds from this point and add them to the big list
-    	std::vector<Traj_cr3bp> subset = manifoldsFromPOPoint(manifoldType, state, STM, eigVals, eigVecs, tof,
+    	std::vector<Arcset_cr3bp> subset = manifoldsFromPOPoint(manifoldType, state, STM, eigVals, eigVecs, tof,
     		static_cast<const SysData_cr3bp *>(pPerOrbit->getSysData()), stepType);
     	allManifolds.insert(allManifolds.end(), subset.begin(), subset.end());
     }// End of point on periodic orbit loop
@@ -125,7 +152,7 @@ std::vector<Traj_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manif
  *  \return A manifold arc
  *  \see manifoldsFromPOPoint()
  */
-std::vector<Traj_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp manifoldType, const Traj_cr3bp *pPerOrbit,
+std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
     double orbitTOF, double manifoldTOF, Manifold_StepOff_tp stepType){
 
 	// Change orbitTOF to be between 0 and the periodic orbit period
@@ -146,7 +173,7 @@ std::vector<Traj_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp ma
 	sim.setNumSteps(2);
 
 	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pPerOrbit->getSysData());
-	Traj_cr3bp arc(sys);
+	Arcset_cr3bp arc(sys);
 	sim.runSim(pPerOrbit->getStateByIx(0), orbitTOF, &arc);
 
 	return manifoldsFromPOPoint(manifoldType, arc.getStateByIx(-1), arc.getSTMByIx(-1), eigVals, eigVecs, manifoldTOF, sys, stepType);
@@ -169,12 +196,12 @@ std::vector<Traj_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp ma
  *  
  *  \return The computed manifold arc(s)
  */
-std::vector<Traj_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
+std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
 	std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, const SysData_cr3bp *pSys, Manifold_StepOff_tp stepType){
 
 	assert(pSys->getDynamicsModel()->getCoreStateSize() == 6);
 
-	std::vector<Traj_cr3bp> manifolds;
+	std::vector<Arcset_cr3bp> manifolds;
 	SimEngine sim;
 	double mu = pSys->getMu();
 	Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
@@ -230,7 +257,7 @@ std::vector<Traj_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifol
 		    }
 
 		    // Simulate for some time to generate a manifold arc
-	        Traj_cr3bp traj(static_cast<const SysData_cr3bp *>(pSys));
+	        Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(pSys));
 	        if(tof > 0){
 	            sim.runSim(ic.data(), tof, &traj);
 	        }else{
@@ -263,7 +290,7 @@ std::vector<Traj_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifol
  *  \throws Exception if the eigenvalue computation is unsuccessful
  *  \throws Excpetion if no stable or unstable eigenvalues are identified
  */
-MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const Traj_cr3bp *pPerOrbit,
+MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
 	std::vector<cdouble> *eigVals_final){
 
 	assert(pPerOrbit->getSysData()->getDynamicsModel()->getCoreStateSize() == 6);

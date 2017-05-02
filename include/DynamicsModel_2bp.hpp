@@ -71,13 +71,13 @@ public:
 	 *  \{
 	 */
 	void multShoot_initIterData(MultShootData *it) const;
-	void multShoot_createOutput(const MultShootData*, const Nodeset*, bool, Nodeset*) const;
+	void multShoot_createOutput(const MultShootData*, const Arcset*, bool, Arcset*) const;
 	//\}
 	
 	/**
 	 * \name Simulation Support Functions
 	 */
-	bool sim_locateEvent(Event event, Traj*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
+	bool sim_locateEvent(Event event, Arcset*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	//\}
 
 	/**

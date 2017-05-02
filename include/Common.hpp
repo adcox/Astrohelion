@@ -61,13 +61,13 @@ static const char VARNAME_CTRL_LAW[] = "CtrlLaw";			//!< Matlab file variable na
 static const char VARNAME_ECC[] = "ecc";					//!< Matlab file variable name for eccentricity data
 static const char VARNAME_EPOCH[] = "Epoch";				//!< Matlab file variable name for epoch data
 static const char VARNAME_JACOBI[] = "Jacobi";				//!< Matlab file variable name for Jacobi constant data
-static const char VARNAME_NODE[] = "Node";					//!< Matlab file variable name for node data (Nodeset)
+static const char VARNAME_NODE[] = "Node";					//!< Matlab file variable name for node data (Arcset)
 static const char VARNAME_SMA[] = "sma";					//!< Matlab file variable name for semimajor axis data
-static const char VARNAME_STATE[] = "State";				//!< Matlab file variable name for state data (Traj)
+static const char VARNAME_STATE[] = "State";				//!< Matlab file variable name for state data (Arcset)
 static const char VARNAME_STATE_DERIV[] = "qdot";			//!< Matlab file variable name for state derivative data
 static const char VARNAME_STATE_EPOCH_DERIV[] = "dqdT";		//!< Matlab file variable name for state derivative w.r.t. epoch
 static const char VARNAME_STM[] = "STM";					//!< Matlab file variable name for state transition matrix data
-static const char VARNAME_TIME[] = "Time";					//!< Matlab file variable name for time data (Traj)
+static const char VARNAME_TIME[] = "Time";					//!< Matlab file variable name for time data (Arcset)
 static const char VARNAME_TOF[] = "TOF";					//!< Matlab file variable name for time-of-flight data
 
 static const char PARAMKEY_2BP_ENERGY[] = "energy";			//!< ExtraParam map key for 2BP energy data

@@ -36,7 +36,7 @@
 #include "ControlLaw.hpp"
 #include "DynamicsModel.hpp"
 #include "Event.hpp"
-#include "Traj.hpp"
+#include "Arcset.hpp"
 
 
 namespace astrohelion{
@@ -80,12 +80,12 @@ public:
  *  
  */
 class boost_observer{
-	Traj *traj;		//!< Trajectory being integrated
+	Arcset *traj;		//!< Trajectory being integrated
 	const DynamicsModel *model;	//!< DynamicsModel associated with the problem
 	EOM_ParamStruct *eomParams = nullptr;	//!< Data that is passed to the EOMs
 
 public:
-	boost_observer(const DynamicsModel *m, Traj *t, EOM_ParamStruct *params) : traj(t), model(m){
+	boost_observer(const DynamicsModel *m, Arcset *t, EOM_ParamStruct *params) : traj(t), model(m){
 		eomParams = params;
 	}//================================================
 
@@ -119,7 +119,7 @@ enum class Integ_tp{
 /**
  *	\ingroup engine
  *	\brief Performs numerical integration on any system type and produces an
- *	Traj object
+ *	Arcset object
  *
  *	The simulation engine is the workhorse object for the Core. It
  *	holds functions to integrate equations of motion and is called by the 
@@ -136,7 +136,7 @@ enum class Integ_tp{
  *	at different event occurrences.
  *
  * 	Once the integration has completed, a trajectory object can be obtained by calling one of the
- *	<tt>get_*Traj()</tt> functions. To reuse the simulation engine, call the <tt>reset()</tt>
+ *	<tt>get_*Arcset()</tt> functions. To reuse the simulation engine, call the <tt>reset()</tt>
  *  function and re-run the simulation with different initial conditions and time-of-flight.
  *
  *	<b>Events</b>
@@ -222,13 +222,18 @@ class SimEngine : public Core, public Engine{
 		 *  \name Simulation Methods
 		 *  \{
 		 */
-		void runSim(const double*, double, Traj*);
-		void runSim(std::vector<double>, double, Traj*);
-		void runSim(const double*, double, double, Traj*);
-		void runSim(std::vector<double>, double, double, Traj*);
-		void runSim(const double*, MatrixXRd, double, double, Traj*);
-		void runSim(std::vector<double>, MatrixXRd, double, double, Traj*);
-		void runSim(const double *ic, MatrixXRd, std::vector<double>, Traj*);
+		void runSim(const double*, double, Arcset*);
+		void runSim(std::vector<double>, double, Arcset*);
+		void runSim(const double*, double, double, Arcset*);
+		void runSim(std::vector<double>, double, double, Arcset*);
+		void runSim(const double*, MatrixXRd, double, double, Arcset*);
+		void runSim(std::vector<double>, MatrixXRd, double, double, Arcset*);
+		void runSim(const double *ic, MatrixXRd, std::vector<double>, Arcset*);
+
+		void runSim_manyNodes(const double*, double, int, Arcset*);
+		void runSim_manyNodes(std::vector<double>, double, int, Arcset*);
+		void runSim_manyNodes(const double*, double, double, int, Arcset*);
+		void runSim_manyNodes(std::vector<double>, double, double, int, Arcset*);
 		//\}
 		
 		// Utility Functions
@@ -290,8 +295,8 @@ class SimEngine : public Core, public Engine{
 		void copyMe(const SimEngine&);
 		void createDefaultEvents(const SysData*);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
-		void integrate(const double*, MatrixXRd, const double*, int, Traj*);
-		bool locateEvents(const double*, double, Traj*, int);
+		void integrate(const double*, MatrixXRd, const double*, int, Arcset*);
+		bool locateEvents(const double*, double, Arcset*, int);
 };
 
 

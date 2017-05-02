@@ -6,7 +6,7 @@
  *	Test out CR3BP Families of Orbits
  */
 #include "Fam_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 
 using namespace astrohelion;
 

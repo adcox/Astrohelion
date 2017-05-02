@@ -39,10 +39,9 @@
 #include "FamMember_cr3bp.hpp"
 #include "LinMotionEngine.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
 
 #include <Eigen/Dense>
@@ -222,7 +221,7 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 	// Begin solving - get linear approximation at ICs
 	double r0[] = {x0, 0, 0};
 	LinMotionEngine linEngine;
-	Traj_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
+	Arcset_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
 		LinMotion_tp::ELLIP, pFam->getSysDataPtr());
 
 	pFam->setSortType(FamSort_tp::SORT_X);
@@ -245,15 +244,15 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 		// for a CONVERGED family member to start PAC
 		std::vector<int> fixStates {0};
 		int order = 1;
-		Traj_cr3bp perOrbit = cr3bp_getPeriodic(pFam->getSysDataPtr(), IC, tof, numNodes, order, Mirror_tp::MIRROR_XZ, fixStates, tol);
+		Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pFam->getSysDataPtr(), IC, tof, numNodes, order, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 		// Turn trajectory object into nodeset; double number of nodes
-		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		// Apply Pseudo Arclength Continuation: Ignore y (ix = 0) for periodicity, force y to equal 0 at node 0
 		int sign = IC[0] - LPt_data[0] < 0 ? -1 : 1;	// force the first step to be away from Lagrange point
 		std::vector<int> initDir {sign, 0, 0, 0, 0, 0};
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -299,7 +298,7 @@ void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSi
 	std::vector<int> fixStates {2};	// force z to be out of plane
 	IC[2] += initStepSize;
 
-	Traj_cr3bp firstHalo = cr3bp_getPeriodic(pHaloFam->getSysDataPtr(), IC, period,
+	Arcset_cr3bp firstHalo = cr3bp_getPeriodic(pHaloFam->getSysDataPtr(), IC, period,
 		numNodes, 1, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -315,11 +314,11 @@ void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSi
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 
 		// Turn trajectory object into nodeset; double number of nodes
-		Nodeset_cr3bp initGuess(firstHalo, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(firstHalo, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
-		cr3bp_pseudoArcCont(pHaloFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pHaloFam, firstHalo, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//=======================================================
 
@@ -363,7 +362,7 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
 	std::vector<int> fixStates {5};	// force z-dot to be non-zero
 	IC[5] += initStepSize;
 
-	Traj_cr3bp firstAxial = cr3bp_getPeriodic(pAxialFam->getSysDataPtr(), IC, period,
+	Arcset_cr3bp firstAxial = cr3bp_getPeriodic(pAxialFam->getSysDataPtr(), IC, period,
 		numNodes, 1, Mirror_tp::MIRROR_X_AX_H, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -378,11 +377,11 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
 		cr3bp_natParamCont(pAxialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		Nodeset_cr3bp initGuess(firstAxial, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(firstAxial, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 		std::vector<int> initDir {0, 0, 0, 0, 0, sign};
-		cr3bp_pseudoArcCont(pAxialFam, initGuess, Mirror_tp::MIRROR_X_AX_H, initDir);
+		cr3bp_pseudoArcCont(pAxialFam, firstAxial, Mirror_tp::MIRROR_X_AX_H, initDir);
 	}
 }//====================================================
 
@@ -427,7 +426,7 @@ void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initS
 	// so the first step is to integrate to that point
 	SimEngine sim;
 	sim.addEvent(Event(Event_tp::XZ_PLANE, 0, true));	// Stop integrated at XZ plane, going opposite direction as initial state
-	Traj_cr3bp quarterArc(pVertFam->getSysDataPtr());
+	Arcset_cr3bp quarterArc(pVertFam->getSysDataPtr());
 	sim.runSim(IC, period/3, &quarterArc);	// 1/3 period should be long enough to fly 1/4 of the trajectory
 
 	IC = quarterArc.getStateByIx(-1);
@@ -436,7 +435,7 @@ void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initS
 	std::vector<int> fixStates {2}; // force z-dot to be non-zero
 	IC[2] += initStepSize;
 
-	Traj_cr3bp firstVertical = cr3bp_getPeriodic(pVertFam->getSysDataPtr(), IC, period,
+	Arcset_cr3bp firstVertical = cr3bp_getPeriodic(pVertFam->getSysDataPtr(), IC, period,
 		numNodes, 2, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -451,12 +450,12 @@ void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initS
 		cr3bp_natParamCont(pVertFam, firstVertical, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		Nodeset_cr3bp initGuess(firstVertical, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(firstVertical, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
 
 		std::vector<int> initDir {0, 0, sign, 0, 0, 0};
-		cr3bp_pseudoArcCont(pVertFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pVertFam, firstVertical, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -486,7 +485,7 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 	printf("Correcting Butterfly...\n");
 	// Correct to a periodic orbit
 	std::vector<int> fixed {4};
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, tof, 8, 2, Mirror_tp::MIRROR_XZ, fixed, tol);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, tof, 8, 2, Mirror_tp::MIRROR_XZ, fixed, tol);
 
 	printf("Creating Family...\n");
 	if(contType == Continuation_tp::NAT_PARAM){
@@ -502,11 +501,11 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -535,7 +534,7 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 	// waitForUser();
 	// Correct to be periodic
 	printf("Correcting initial DRO from conic...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, orbT/pSys->getCharT(), Mirror_tp::MIRROR_XZ, tol);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, orbT/pSys->getCharT(), Mirror_tp::MIRROR_XZ, tol);
 
 	printf("Creating Family...\n");
 
@@ -552,10 +551,10 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -584,7 +583,7 @@ void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 	// waitForUser();
 	// Correct to be periodic
 	printf("Correcting initial LPO from conic...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, orbT/pSys->getCharT(), Mirror_tp::MIRROR_XZ, tol);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, orbT/pSys->getCharT(), Mirror_tp::MIRROR_XZ, tol);
 
 	printf("Creating Family...\n");
 
@@ -601,10 +600,10 @@ void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {-1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -637,7 +636,7 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	// getPeriodic() function will use the mirror condition to stop integration at the mirror plane, so
 	// I use a large TOF to make sure it gets there.
 	printf("Correcting initial DPO from approximation...\n");
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, PI, Mirror_tp::MIRROR_XZ, tol);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pSys, icVec, PI, Mirror_tp::MIRROR_XZ, tol);
 
 	perOrbit.saveToMat("initial_dpo.mat");
 	waitForUser();
@@ -657,14 +656,14 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 1);
 
 	}else if(contType == Continuation_tp:: PSEUDO_ARC){
-		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 		std::vector<int> initDir {0, 0, 0, 0, 1, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 
 		// run the other direction too
 		initDir[5] *= -1;
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -748,7 +747,7 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 	SysData_cr3bp *pSys = pFam->getSysDataPtr();
 	printf("Correcting %d:%d Resonant Orbit...\n", p, q);
 	// Correct to a periodic orbit
-	Traj_cr3bp perOrbit = cr3bp_getPeriodic(pSys, ic, T, numNodes, order, Mirror_tp::MIRROR_XZ, fixed, tol);
+	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pSys, ic, T, numNodes, order, Mirror_tp::MIRROR_XZ, fixed, tol);
 	// perOrbit.saveToMat("resOrbit_initSoln.mat");
 	// waitForUser();
 
@@ -773,15 +772,15 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, order);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 		// Turn trajectory object into nodeset; double number of nodes
-		Nodeset_cr3bp initGuess(perOrbit, 2*numNodes-1);
+		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 		printf("Using pseudo-arclength continuation...\n");
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 
 		// Run the other direction too
 		initDir[0] *= -1;
-		cr3bp_pseudoArcCont(pFam, initGuess, Mirror_tp::MIRROR_XZ, initDir);
+		cr3bp_pseudoArcCont(pFam, perOrbit, Mirror_tp::MIRROR_XZ, initDir);
 	}
 }//====================================================
 
@@ -795,23 +794,14 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
  *  step along -xdot, use {0,0,0,-1,0,0} as initDir.
  *  \param pFam pointer to a family data object in which family member data will be stored
  */
-void FamGenerator::cr3bp_pacFromTraj(Traj_cr3bp traj, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
-	Nodeset_cr3bp nodes(traj, numNodes);
-	cr3bp_pseudoArcCont(pFam, nodes, mirrorType, initDir);
-}//====================================================
+void FamGenerator::cr3bp_pacFromArcset(Arcset_cr3bp arcset, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
+	Arcset_cr3bp nodeset(pFam->getSysDataPtr());
+	SimEngine sim;
+	double tof = arcset.getTotalTOF();
+	sim.setRevTime(tof < 0);
+	sim.runSim_manyNodes(arcset.getStateByIx(0), tof, numNodes, &nodeset);
 
-/**
- *  \brief Compute a family of periodic orbits using pseudo arclength continuation
- *  from a nodeset
- * 
- *  \param nodes An initial guess for a periodic orbit
- *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
- *  \param initDir 6-element vector that indicates the initial step direction along the family. For example, to
- *  step along -xdot, use {0,0,0,-1,0,0} as initDir.
- *  \param pFam pointer to a family data object in which family member data will be stored
- */
-void FamGenerator::cr3bp_pacFromNodeset(Nodeset_cr3bp nodes, Mirror_tp mirrorType, std::vector<int> initDir, Fam_cr3bp *pFam){
-	cr3bp_pseudoArcCont(pFam, nodes, mirrorType, initDir);
+	cr3bp_pseudoArcCont(pFam, nodeset, mirrorType, initDir);
 }//====================================================
 
 /**
@@ -838,7 +828,7 @@ void FamGenerator::cr3bp_pacFromNodeset(Nodeset_cr3bp nodes, Mirror_tp mirrorTyp
  *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
-void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
+void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 	std::vector<Mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
 
 	SysData_cr3bp sys = fam->getSysData();
@@ -868,18 +858,18 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
 	double deltaVar1 = 1;
 	double deltaVar2 = 1;
 
-	std::vector<Traj_cr3bp> members;
+	std::vector<Arcset_cr3bp> members;
 	bool diverged = false;
 
 	// Create a dummy nodeset and create an iteration data object on the stack
 	// The cr3bp_getPeriodic() function will only pass an iteration data pointer back
 	// if the one passed in is not NULL, hence we create a valid object and delete it
 	// before exiting the function
-	Nodeset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+	Arcset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 	MultShootData *pItData = new MultShootData(&tempNodes);
 
 	while(orbitCount < numOrbits){
-		Traj_cr3bp perOrbit(&sys);
+		Arcset_cr3bp perOrbit(&sys);
 		try{
 			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);
@@ -1089,7 +1079,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Traj_cr3bp initialGuess,
  * 	\throws Exception if the free variable vector contains fewer than six states
  * 	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
  */
-void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGuess,
+void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 	Mirror_tp mirrorType, std::vector<int> initDir){
 
 	// Check inputs (Only applies to Constraint Method 1)
@@ -1105,7 +1095,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 	double minStepSize = 1e-7;
 
 	SysData_cr3bp sys = fam->getSysData();
-	Nodeset_cr3bp familyMember(initialGuess);	// Copy the input initial guess
+	Arcset_cr3bp familyMember(initialGuess);	// Copy the input initial guess
 	double tof0 = initialGuess.getTotalTOF();
 
 	printf("Correcting Initial Guess...\n");
@@ -1202,14 +1192,14 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
 	corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	MultShootData familyItData(&familyMember);
-	Nodeset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+	Arcset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
 	// Initialize this nodeset outside the loop because the familyItData will end up with a pointer
 	// to this nodeset after the multiple shooting processs; if the declaration is in the loop,
 	// the nodeset is destroyed each iteration and the pointer ceases to be useful.
-	Nodeset_cr3bp perNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+	Arcset_cr3bp perNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
-	Nodeset_cr3bp newMember(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+	Arcset_cr3bp newMember(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
 	try{
 		familyItData = corrector.multShoot(&familyMember, &tempNodes);
@@ -1226,7 +1216,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 	Eigen::VectorXd convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 	Eigen::VectorXd prevN(familyItData.totalFree, 1);
 	
-	std::vector<Traj_cr3bp> members;
+	std::vector<Arcset_cr3bp> members;
 
 	while(orbitCount < numOrbits){
 
@@ -1326,10 +1316,10 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));
 
-		// Nodeset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
+		// Arcset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
 		newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
 		// Reset perNodes
-		perNodes = Nodeset_cr3bp(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+		perNodes = Arcset_cr3bp(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
@@ -1406,7 +1396,8 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
-		Traj_cr3bp perOrbit = Traj_cr3bp::fromNodeset(perNodes);
+		// Arcset_cr3bp perOrbit = Arcset_cr3bp::fromNodeset(perNodes);
+		Arcset_cr3bp perOrbit = perNodes;
 		// perNodes.saveToMat("temp_perNodes_pac.mat");
 		// newMember.saveToMat("temp_newMember.mat");
 		// perOrbit.saveToMat("temp_perOrbit_pac.mat");
@@ -1451,7 +1442,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Nodeset_cr3bp initialGues
  *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
  */
-Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
+Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
 	Eigen::VectorXd N, double stepSize, MultShootData pFamilyItData){
 
 	/**
@@ -1463,7 +1454,7 @@ Nodeset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeV
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
 	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData.sysData);
-	Nodeset_cr3bp newMember(sys);
+	Arcset_cr3bp newMember(sys);
 
 	sys->getDynamicsModel()->multShoot_createOutput(&pFamilyItData, pFamilyItData.nodeset, false, &newMember);
 

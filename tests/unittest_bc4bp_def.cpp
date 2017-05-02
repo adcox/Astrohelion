@@ -8,8 +8,8 @@
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Node.hpp"
-#include "Nodeset_bc4bp.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "Arcset_bc4bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "Utilities.hpp"
 
 using namespace astrohelion;
@@ -73,16 +73,16 @@ std::vector<double> getInertMoonPos_2(SysData_bc4bp *pBCSys, SysData_cr3bp *pSES
 	Node semNode(bcMoonPos, t);
 	Node semNode2(bcMoonPos, t + 3600/pBCSys->getCharT());
 
-	Nodeset_bc4bp semNodes(pBCSys);
+	Arcset_bc4bp semNodes(pBCSys);
 	int id1 = semNodes.addNode(semNode);
 	int id2 = semNodes.addNode(semNode2);
 	semNodes.addSeg(Segment(id1, id2, semNode2.getEpoch() - semNode.getEpoch()));
 
-	Nodeset_cr3bp seNodes = bcr4bpr_SEM2SE(semNodes, pSESys);
+	Arcset_cr3bp seNodes = bcr4bpr_SEM2SE(semNodes, pSESys);
 	
-	Nodeset_cr3bp eci_fromSE = cr3bp_rot2inert(seNodes, pBCSys->getEpoch0(), 2);
-	Nodeset_cr3bp emNodes = cr3bp_SE2EM(seNodes, &emSys, pBCSys->getTheta0(), pBCSys->getPhi0(), pBCSys->getGamma());
-	Nodeset_cr3bp eci_fromEM = cr3bp_rot2inert(emNodes, pBCSys->getEpoch0(), 1);
+	Arcset_cr3bp eci_fromSE = cr3bp_rot2inert(seNodes, pBCSys->getEpoch0(), 2);
+	Arcset_cr3bp emNodes = cr3bp_SE2EM(seNodes, &emSys, pBCSys->getTheta0(), pBCSys->getPhi0(), pBCSys->getGamma());
+	Arcset_cr3bp eci_fromEM = cr3bp_rot2inert(emNodes, pBCSys->getEpoch0(), 1);
 
 	// return eci_fromSE.getStateByIx(0);
 	return eci_fromEM.getStateByIx(0);

@@ -29,15 +29,15 @@
 
 #include "DynamicsModel_cr3bp_lt.hpp"
 
+#include "Arcset_cr3bp_lt.hpp"
 #include "Calculations.hpp"
 #include "ControlLaw.hpp"
-#include "MultShootEngine.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_cr3bp_lt.hpp"
+#include "MultShootEngine.hpp"
+#include "SimEngine.hpp"
 #include "SysData_cr3bp_lt.hpp"
-#include "Traj_cr3bp_lt.hpp"
 #include "Utilities.hpp"
 
 #include <gsl/gsl_errno.h>
@@ -146,7 +146,7 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
-int DynamicsModel_cr3bp_lt::sim_addNode(Node &node, const double *y, double t, Traj* traj, EOM_ParamStruct *params, Event_tp tp) const{
+int DynamicsModel_cr3bp_lt::sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const{
     (void) t;
     
     node.setTriggerEvent(tp);
@@ -154,7 +154,7 @@ int DynamicsModel_cr3bp_lt::sim_addNode(Node &node, const double *y, double t, T
 
     // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
     const SysData_cr3bp_lt *ltSys = static_cast<const SysData_cr3bp_lt*>(params->sysData);
-    Traj_cr3bp_lt *ltTraj = static_cast<Traj_cr3bp_lt*>(traj);
+    Arcset_cr3bp_lt *ltTraj = static_cast<Arcset_cr3bp_lt*>(traj);
 
     // Save Jacobi for CR3BP - it won't be constant in general, but is definitely useful to have
     ltTraj->setJacobiByIx(-1, DynamicsModel_cr3bp::getJacobi(y, ltSys->getMu()));
@@ -162,7 +162,7 @@ int DynamicsModel_cr3bp_lt::sim_addNode(Node &node, const double *y, double t, T
     return id;
 }//====================================================
 
-int DynamicsModel_cr3bp_lt::sim_addSeg(Segment &seg, const double *y, double t, Traj* traj, EOM_ParamStruct *params) const{
+int DynamicsModel_cr3bp_lt::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
     (void) y;
     (void) t;
     (void) params;
@@ -189,21 +189,27 @@ int DynamicsModel_cr3bp_lt::sim_addSeg(Segment &seg, const double *y, double t, 
  *  \return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
+bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Arcset* traj,
     const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
     const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(params->sysData);
 
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
-    Nodeset_cr3bp_lt eventNodeset(pSys, ic, tof, 2, Nodeset::TIME, params->ctrlLawID);
+    SimEngine sim;
+    sim.setVarStepSize(false);
+    sim.setNumSteps(2);
+    sim.setRevTime(tof < 0);
+    sim.setCtrlLaw(params->ctrlLawID);      // cr3bp_lt arcset DOES use control laws
+    Arcset_cr3bp eventArcset(pSys);
+    sim.runSim(ic, tof, &eventArcset);
 
     Constraint fixFirstCon(Constraint_tp::STATE, 0, ic, 7);
     Constraint eventCon(event.getConType(), 1, event.getConData());
 
-    eventNodeset.addConstraint(fixFirstCon);
-    eventNodeset.addConstraint(eventCon);
+    eventArcset.addConstraint(fixFirstCon);
+    eventArcset.addConstraint(eventCon);
 
-    if(verbose == Verbosity_tp::ALL_MSG){ eventNodeset.print(); }
+    if(verbose == Verbosity_tp::ALL_MSG){ eventArcset.print(); }
 
     astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
     MultShootEngine corrector;
@@ -214,9 +220,9 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
 
     // Because we set findEvent to true, this output nodeset should contain
     // the full (42 or 48 element) final state
-    Nodeset_cr3bp_lt correctedNodes(pSys);
+    Arcset_cr3bp_lt correctedNodes(pSys);
     try{
-        corrector.multShoot(&eventNodeset, &correctedNodes);
+        corrector.multShoot(&eventArcset, &correctedNodes);
     }catch(DivergeException &e){
         if(verbose >= Verbosity_tp::SOME_MSG)
             astrohelion::printErr("Unable to locate event; corrector diverged\n");
@@ -236,8 +242,11 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
 
     // Use the data stored in nodes and save the state and time of the event occurence
     Node node(&(state.front()), coreStates, eventTime);
-    int id = sim_addNode(node, &(state.front()), eventTime, traj, params, event.getType());
     Segment &lastSeg = traj->getSegRefByIx(-1);
+
+    int id = sim_addNode(node, &(state.front()), eventTime, traj, params, event.getType());
+    traj->getNodeRef(id).addLink(lastSeg.getID());  // Link the new node to the previous segment
+
     lastSeg.setTerminus(id);
     lastSeg.appendState(&(state.front()), state.size());
     lastSeg.appendTime(eventTime);
@@ -246,8 +255,8 @@ bool DynamicsModel_cr3bp_lt::sim_locateEvent(Event event, Traj* traj,
 
     // Create a new segment if the propagation is going to continue
     if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
-        Segment newSeg;
-        newSeg.setOrigin(id);
+        // Initialize with origin ID, undetermined terminus, and a dummy TOF with the same sign as the previous segment
+        Segment newSeg(id, Linkable::INVALID_ID, lastSeg.getTOF());
         newSeg.appendState(&(state.front()), state.size());
         newSeg.appendTime(eventTime);
         sim_addSeg(newSeg, &(state.front()), eventTime, traj, params);
@@ -294,10 +303,10 @@ std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *
  *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  */
-void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, const Nodeset *nodes_in, bool findEvent, Nodeset *nodes_out) const{
+void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, const Arcset *nodes_in, bool findEvent, Arcset *nodes_out) const{
     
     const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(it->sysData);
-    Nodeset_cr3bp_lt *nodeset_out = static_cast<Nodeset_cr3bp_lt *>(nodes_out);
+    Arcset_cr3bp_lt *nodeset_out = static_cast<Arcset_cr3bp_lt *>(nodes_out);
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
@@ -318,7 +327,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
             information*/
             if(findEvent){
                 // Append the 36 STM elements to the node vector
-                Traj lastSeg = it->propSegs.back();
+                Arcset lastSeg = it->propSegs.back();
                 MatrixXRd stm = lastSeg.getSTMByIx(-1);
                 std::vector<double> stm_vec(stm.data(), stm.data() + stm.rows()*stm.cols());
                 
@@ -396,7 +405,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
  *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData *it) const{
-    Traj_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it->sysData));
+    Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it->sysData));
     it->propSegs.assign(it->nodeset->getNumSegs(), traj);
 }//====================================================
 

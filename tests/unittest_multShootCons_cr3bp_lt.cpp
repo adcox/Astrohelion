@@ -4,15 +4,15 @@
 
 #include <vector>
 
+#include "Arcset_cr3bp_lt.hpp"
 #include "Calculations.hpp"
 #include "Constraint.hpp"
 #include "MultShootEngine.hpp"
 #include "ControlLaw_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_cr3bp_lt.hpp"
+#include "SimEngine.hpp"
 #include "SysData_cr3bp_lt.hpp"
-#include "Traj_cr3bp_lt.hpp"
 #include "Utilities.hpp"
 
 using namespace astrohelion;
@@ -52,8 +52,11 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law1){
 	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 2, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);	// Create a nodeset
-	Nodeset_cr3bp_lt correctedSet(&sys);
+	
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	sim.runSim_manyNodes(ic, T, 2, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
@@ -68,8 +71,11 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT);	// Create a nodeset
-	Nodeset_cr3bp_lt correctedSet(&sys);
+	
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT);
+	sim.runSim_manyNodes(ic, T, 2, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
@@ -83,8 +89,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 // 	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
 // 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 // 	double T = 3.02796323553149;	// EM L1 Period
-// 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::PRO_VEL);	// Create a nodeset
-// 	Nodeset_cr3bp_lt correctedSet(&sys);
+// 	Arcset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Arcset::TIME, ControlLaw_cr3bp_lt::Law_tp::PRO_VEL);	// Create a nodeset
+// 	Arcset_cr3bp_lt correctedSet(&sys);
 
 // 	MultShootEngine corrector;
 // 	corrector.setEqualArcTime(false);
@@ -97,8 +103,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 // 	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
 // 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 // 	double T = 3.02796323553149;	// EM L1 Period
-// 	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::ANTI_VEL);	// Create a nodeset
-// 	Nodeset_cr3bp_lt correctedSet(&sys);
+// 	Arcset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 6, Arcset::TIME, ControlLaw_cr3bp_lt::Law_tp::ANTI_VEL);	// Create a nodeset
+// 	Arcset_cr3bp_lt correctedSet(&sys);
 
 // 	MultShootEngine corrector;
 // 	corrector.setEqualArcTime(false);
@@ -111,12 +117,15 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp_lt halfLyapNodeset(&sys, ic, T, 3, Nodeset::TIME, ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);	// Create a nodeset
-	Nodeset_cr3bp_lt correctedSet(&sys);
+
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
-	corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
 	double stateConData[] = {0, -0.3, NAN, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
@@ -128,9 +137,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 
-	correctedSet.saveToMat("data/lt_correctedSet.mat");
-	Traj_cr3bp_lt traj = Traj::fromNodeset(correctedSet);
-	traj.saveToMat("data/lt_corrected.mat");
+	// correctedSet.saveToMat("data/lt_correctedSet.mat");
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()

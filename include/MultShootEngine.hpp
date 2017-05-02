@@ -36,9 +36,9 @@
 #include "Constraint.hpp"
 #include "EigenDefs.hpp"
 #include "Node.hpp"
-#include "Nodeset.hpp"
+#include "Arcset.hpp"
 #include "SysData.hpp"
-#include "Traj.hpp"
+#include "Arcset.hpp"
 
 
 namespace astrohelion{
@@ -46,8 +46,8 @@ namespace astrohelion{
 // Forward declarations
 class Constraint;
 class MultShootData;
-class Nodeset_bc4bp;
-class Nodeset_cr3bp;
+class Arcset_bc4bp;
+class Arcset_cr3bp;
 class SimEngine;
 class SysData_bc4bp;
 
@@ -115,8 +115,8 @@ class MultShootEngine : public Core, public Engine{
 		 *  \name Correction Algorithms
 		 *  \{
 		 */
-		MultShootData multShoot(const Nodeset*, Nodeset*);
-		MultShootData multShoot(MultShootData, Nodeset*);
+		MultShootData multShoot(const Arcset*, Arcset*);
+		MultShootData multShoot(MultShootData, Arcset*);
 		//\}
 
 		/**
@@ -125,8 +125,8 @@ class MultShootEngine : public Core, public Engine{
 		 */
 		void reset();
 		static double getTotalDV(const MultShootData*);
-		static bool finiteDiff_checkMultShoot(const Nodeset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
-		static bool finiteDiff_checkMultShoot(const Nodeset*, MultShootEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
+		static bool finiteDiff_checkMultShoot(const Arcset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
+		static bool finiteDiff_checkMultShoot(const Arcset*, MultShootEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
 		//\}
 		
 	private:

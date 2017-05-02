@@ -34,7 +34,7 @@
 namespace astrohelion{
 
 // Forward delcarations
-class Traj_cr3bp;
+class Arcset_cr3bp;
 class SysData_cr3bp;
 
 /**
@@ -84,10 +84,10 @@ class LinMotionEngine : public Core, public Engine{
 		 *  \name Orbit Generation
 		 *  \{
 		 */
-		Traj_cr3bp getCR3BPLinear(int, double[3], SysData_cr3bp*);
-		Traj_cr3bp getCR3BPLinear(int, double[3], LinMotion_tp, SysData_cr3bp*);
-		Traj_cr3bp getCR3BPLinear(int, double[3], double, double, LinMotion_tp, SysData_cr3bp*);
-		Traj_cr3bp getCR3BPLiss(int, double, bool, double, double, double, SysData_cr3bp*);
+		Arcset_cr3bp getCR3BPLinear(int, double[3], SysData_cr3bp*);
+		Arcset_cr3bp getCR3BPLinear(int, double[3], LinMotion_tp, SysData_cr3bp*);
+		Arcset_cr3bp getCR3BPLinear(int, double[3], double, double, LinMotion_tp, SysData_cr3bp*);
+		Arcset_cr3bp getCR3BPLiss(int, double, bool, double, double, double, SysData_cr3bp*);
 		//\}
 		
 	private:

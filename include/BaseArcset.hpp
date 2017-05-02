@@ -56,7 +56,7 @@ typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
  *	\brief Abstract class that provides the framework for trajectories and nodesets
  *	
  *	The arcset object specifies default and mandatory behaviors for all derivative
- *	classes (i.e. Traj and Nodeset). All variables and data for an arc or 
+ *	classes (i.e. Arcset and Arcset). All variables and data for an arc or 
  *	one of its derivative classes are declared and stored here; in other words, no 
  *	derivative classes declare class-specific data objects. This architecture has been
  *	chosen to facilitate easy casting between model-specific derivative classes with

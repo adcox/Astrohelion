@@ -34,6 +34,10 @@
 #include "Calculations.hpp"
 
 #include "AsciiOutput.hpp"
+#include "Arcset.hpp"
+#include "Arcset_2bp.hpp"
+#include "Arcset_bc4bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "BaseArcset.hpp"
 #include "BodyData.hpp"
 #include "Common.hpp"
@@ -41,17 +45,11 @@
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
 #include "Node.hpp"
-#include "Nodeset_bc4bp.hpp"
-#include "Nodeset_cr3bp.hpp"
 #include "SimEngine.hpp"
 #include "SysData_2bp.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
 #include "SysData_cr3bp_lt.hpp"
-#include "Traj.hpp"
-#include "Traj_2bp.hpp"
-#include "Traj_bc4bp.hpp"
-#include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
 
 #include <cspice/SpiceUsr.h>
@@ -457,12 +455,12 @@ double getStabilityIndex(std::vector<cdouble> eigs){
  *  the specified time
  *  \details 
  * 
- *  \param traj A trajectory 
+ *  \param traj An arcset 
  *  \param t The time at which the node is located
  * 
  *  \return A node on the specified trajectory at time <tt>t</tt>
  */
-Node interpPointAtTime(const Traj *traj, double t){
+Node interpPointAtTime(const Arcset *traj, double t){
     // Find the time that is closest to t and before it (assuming allTimes progresses smoothly forwards in time)
     std::vector<double> allTimes = traj->getEpochs();
     size_t i = 0;
@@ -476,7 +474,7 @@ Node interpPointAtTime(const Traj *traj, double t){
     Node node = traj->getNodeByIx(i);
     // node.print();
 
-    Traj *temp = new Traj(traj->getSysData());
+    Arcset *temp = new Arcset(traj->getSysData());
     SimEngine sim;
     // sim.setVerbosity(Verbosity_tp::ALL_MSG);
     sim.setNumSteps(2);
@@ -804,7 +802,7 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
+Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, Mirror_tp mirrorType, double tol){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
@@ -842,7 +840,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
  *  \throws DivergeException if the multiple shooting algorithm cannot converge on a 
  *  mirrored solution.
  */
-Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
+Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, int numNodes, int order, Mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol, MultShootData* pItData){
 
@@ -917,12 +915,9 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         }
     }
 
-    Constraint initStateCon(Constraint_tp::STATE, 0, mirrorCon0, 6);
-    Constraint finalStateCon(Constraint_tp::STATE, numNodes-1, mirrorCon1, 6);
-
     // Run the sim until the event is triggered
-    Traj_cr3bp halfOrbArc(pSys);
-    sim.runSim(IC, period, &halfOrbArc);
+    Arcset_cr3bp halfOrbArc(pSys);
+    sim.runSim_manyNodes(IC, period, numNodes, &halfOrbArc);
     
     // Check to make sure the simulation ended with the event (not running out of time)
     if(halfOrbArc.getNodeByIx(-1).getTriggerEvent() != mirrorEvt.getType()){
@@ -937,10 +932,11 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     if(tofErr > 10)
         astrohelion::printWarn("Calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
 
-    // Create a nodeset from arc
-    Nodeset_cr3bp halfOrbNodes(halfOrbArc, numNodes, Nodeset::TIME);
-    halfOrbNodes.addConstraint(initStateCon);
-    halfOrbNodes.addConstraint(finalStateCon);
+    // Add constraints for correction
+    Constraint initStateCon(Constraint_tp::STATE, 0, mirrorCon0, 6);
+    Constraint finalStateCon(Constraint_tp::STATE, numNodes-1, mirrorCon1, 6);
+    halfOrbArc.addConstraint(initStateCon);
+    halfOrbArc.addConstraint(finalStateCon);
 
     // Use differential corrections to enforce the mirror conditions
     MultShootEngine corrector;
@@ -951,7 +947,7 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     // corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
     try{
-        Nodeset_cr3bp correctedHalfPer(pSys);
+        Arcset_cr3bp correctedHalfPer(pSys);
 
         // If the user passed in a null pointer, create a temporory data object
         // on the stack to avoid seg faults, then delete it before exiting to 
@@ -959,14 +955,14 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
         bool createdTempMSData = false;
         if(!pItData){
             createdTempMSData = true;
-            pItData = new MultShootData(&halfOrbNodes);
+            pItData = new MultShootData(&halfOrbArc);
         }
 
-        *pItData = corrector.multShoot(&halfOrbNodes, &correctedHalfPer);
+        *pItData = corrector.multShoot(&halfOrbArc, &correctedHalfPer);
         // correctedHalfPer.saveToMat("temp_correctedHalfPer.mat");
 
-        // Make the nodeset into a trajectory
-        Traj_cr3bp halfPerTraj = Traj_cr3bp::fromNodeset(correctedHalfPer);
+        // Make a copy
+        Arcset_cr3bp halfPerTraj = correctedHalfPer;
         double halfTOF = halfPerTraj.getTimeByIx(-1);
         int halfPerTraj_len = static_cast<int>(halfPerTraj.getNumNodes());
         MatrixXRd halfPerSTM = halfPerTraj.getSTMByIx(-1);
@@ -1029,32 +1025,6 @@ Traj_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
 
 /**
  *  \ingroup cr3bp
- *  \brief Transition a trajectory from the EM system to the SE system
- *  
- *  The relative orientation between the two systems is described by the three angles
- *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. These angles describe the
- *  system orientation at time t = 0, so if the start of the trajectory does not coincide
- *  with this initial time, be sure to shift the time coordinates to assure that the first
- *  value in the time vector reflects correct initial time.
- *
- *  \param EMTraj a CR3BP Earth-Moon trajectory
- *  \param pSESys a Sun-Earth CR3BP system data object
- *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
- *  inertial x-axis at time t = 0.
- *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
- *  lunar "periapse" at time t = 0.
- *  \param gamma the inclination (radians) of the lunar orbital plane relative 
- *  to the ecliptic; this value is held constant.
- */
-Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0, double gamma){
-    printf("cr3bp_EM2SE\n");
-    // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp seNodes = cr3bp_EM2SE(static_cast<Nodeset_cr3bp>(EMTraj), pSESys, thetaE0, thetaM0, gamma);
-    return static_cast<Traj_cr3bp>(seNodes);
-}//=========================================================
-
-/**
- *  \ingroup cr3bp
  *  \brief Transition a nodeset from the EM system to the SE system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
@@ -1071,13 +1041,13 @@ Traj_cr3bp cr3bp_EM2SE(Traj_cr3bp EMTraj, const SysData_cr3bp *pSESys, double th
  *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0,
+Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, double thetaE0, double thetaM0,
     double gamma){
 
     // astrohelion::printColor(BLUE, "Converting EM to SE\nEM Sys:\n  %d Nodes\n  %d Segments\n", EMNodes.getNumNodes(),
     //     EMNodes.getNumSegs());
 
-    Nodeset_cr3bp SENodes(pSESys);
+    Arcset_cr3bp SENodes(pSESys);
 
     double charTE = EMNodes.getSysData()->getCharT();       // characteristic time in EM system
     double charLE = EMNodes.getSysData()->getCharL();       // characteristic length in EM system
@@ -1117,30 +1087,6 @@ Nodeset_cr3bp cr3bp_EM2SE(Nodeset_cr3bp EMNodes, const SysData_cr3bp *pSESys, do
 
 /**
  *  \ingroup cr3bp
- *  \brief Transition a trajectory from the SE system to the EM system
- *  
- *  The relative orientation between the two systems at time t = 0 is described by the three angles
- *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the SE trajectory
- *  should have epochs such that t = 0 corresponds to the desired geometry; adjusting
- *  the epoch for the entire trajectory may be accomplished via the updateEpochs() function.
- *
- *  \param SETraj a CR3BP Sun-Earth trajectory
- *  \param pEMSys an Earth-Moon CR3BP system data object
- *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
- *  inertial x-axis at time t = 0.
- *  \param thetaM0 the angle (radians) between the Earth-Moon line and 
- *  lunar "periapse" at time t = 0.
- *  \param gamma the inclination (radians) of the lunar orbital plane relative 
- *  to the ecliptic; this value is held constant.
- */
-Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0, double gamma){
-    // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp emNodes = cr3bp_SE2EM(static_cast<Nodeset_cr3bp>(SETraj), pEMSys, thetaE0, thetaM0, gamma);
-    return static_cast<Traj_cr3bp>(emNodes);
-}//=========================================================
-
-/**
- *  \ingroup cr3bp
  *  \brief Transition a nodeset from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
@@ -1157,13 +1103,13 @@ Traj_cr3bp cr3bp_SE2EM(Traj_cr3bp SETraj, const SysData_cr3bp *pEMSys, double th
  *  \param gamma the inclination (radians) of the lunar orbital plane relative 
  *  to the ecliptic; this value is held constant.
  */
-Nodeset_cr3bp cr3bp_SE2EM(Nodeset_cr3bp SENodes, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0,
+Arcset_cr3bp cr3bp_SE2EM(Arcset_cr3bp SENodes, const SysData_cr3bp *pEMSys, double thetaE0, double thetaM0,
     double gamma){
 
     // astrohelion::printColor(BLUE, "Converting SE to EM\nSE Sys:\n  %d Nodes\n  %d Segments\n", SENodes.getNumNodes(),
     //     SENodes.getNumSegs());
 
-    Nodeset_cr3bp EMNodes(pEMSys);
+    Arcset_cr3bp EMNodes(pEMSys);
 
     double charTE = pEMSys->getCharT();                   // characteristic time in EM system
     double charLE = pEMSys->getCharL();                   // characteristic length in EM system
@@ -1346,26 +1292,6 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  \ingroup cr3bp
  *  \brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  \param traj CR3BP trajectory
- *  *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
- *  \param centerIx The index of the primary that will be the center of the inertial
- *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
- *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
- *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
- *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
- * 
- *  \return A trajectory centered around the specified index in inertial, dimensional coordinates
- */
-Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
-    // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp inertNodes = cr3bp_rot2inert(static_cast<Nodeset_cr3bp>(traj), epoch0, centerIx);
-    return static_cast<Traj_cr3bp>(inertNodes);
-}//==================================================================
-
-/**
- *  \ingroup cr3bp
- *  \brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
- * 
  *  \param nodes CR3BP nodeset
  *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  \param centerIx The index of the primary that will be the center of the inertial
@@ -1376,7 +1302,7 @@ Traj_cr3bp cr3bp_rot2inert(Traj_cr3bp traj, double epoch0, int centerIx){
  * 
  *  \return A nodeset centered around the specified index in inertial, dimensional coordinates
  */
-Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
+Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp nodes, double epoch0, int centerIx){
 
     if(centerIx < 0 || centerIx > 2){
         throw Exception("Calculations::cr3bp_rot2inert: Invalid center index");
@@ -1384,7 +1310,7 @@ Nodeset_cr3bp cr3bp_rot2inert(Nodeset_cr3bp nodes, double epoch0, int centerIx){
 
     const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(nodes.getSysData());
 
-    Nodeset_cr3bp inertNodes(pSys);
+    Arcset_cr3bp inertNodes(pSys);
     std::vector<int> map_oldID_to_newID(nodes.getNextNodeID(), Linkable::INVALID_ID);
 
     for(unsigned int i = 0; i < nodes.getNumNodes(); i++){
@@ -1552,27 +1478,8 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
 //-----------------------------------------------------
 
 /**
- *  \brief Convert a CR3BP Sun-Earth trajectory into a BCR4BPR Sun-Earth-Moon trajectory
- *
- *  \param crTraj a CR3BP Sun-Earth trajectory
- *  \param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
- *  scaling and orientation at time t = 0
- *  \param nodeID ID of a node in the set for which the epoch is known
- *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
- *
- *  \return a BCR4BPR Trajectory object
- *  @throw Exception if <tt>crTraj</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
- *  not the Sun-Earth-Moon system.
- */
-Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *pBCSys, int nodeID, double t0){
-    // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_bc4bp bcNodeset = bcr4bpr_SE2SEM(static_cast<Nodeset_cr3bp>(crTraj), pBCSys, nodeID, t0);
-    return static_cast<Traj_bc4bp>(bcNodeset);
-}//==================================================
-
-/**
  *  \ingroup bc4bp
- *  \brief Convert a Sun-Earth CR3BP Nodeset to a Sun-Earth-Moon BCR4BPR Nodeset.
+ *  \brief Convert a Sun-Earth CR3BP Arcset to a Sun-Earth-Moon BCR4BPR Arcset.
  *  
  *  \param crNodes a CR3BP Sun-Earth nodeset
  *  \param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
@@ -1584,7 +1491,7 @@ Traj_bc4bp bcr4bpr_SE2SEM(Traj_cr3bp crTraj, const SysData_bc4bp *pBCSys, int no
  *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
  *  not the Sun-Earth-Moon system.
  */
-Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys, int nodeID, double t0){
+Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, int nodeID, double t0){
     if(crNodes.getSysData()->getPrimID(0) != 10 || crNodes.getSysData()->getPrimID(1) != 399){
         throw Exception("CR3BP trajectory is not in the Sun-Earth System");
     }
@@ -1593,8 +1500,8 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
         throw Exception("BCR4BPR system is not Sun-Earth-Moon");
     }
 
-    // Create a BCR4BPR Nodeset
-    Nodeset_bc4bp bcNodes(pBCSys);
+    // Create a BCR4BPR Arcset
+    Arcset_bc4bp bcNodes(pBCSys);
 
     double charL2 = crNodes.getSysData()->getCharL();
     double charT2 = crNodes.getSysData()->getCharT();
@@ -1654,7 +1561,7 @@ Nodeset_bc4bp bcr4bpr_SE2SEM(Nodeset_cr3bp crNodes, const SysData_bc4bp *pBCSys,
  *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
  *  not in the Sun-Earth-Moon system.
  */
-Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
+Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
     if(pCRSys->getPrimID(0) != 10 || pCRSys->getPrimID(1) != 399){
         throw Exception("CR3BP system is not the Sun-Earth System");
     }
@@ -1667,7 +1574,7 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
     const SysData_bc4bp *pBCSys = static_cast<const SysData_bc4bp *>(bcNodes.getSysData());
 
     // Create a BCR4BPR Trajectory
-    Nodeset_cr3bp crNodes(pCRSys);
+    Arcset_cr3bp crNodes(pCRSys);
 
     double charL2 = pCRSys->getCharL();
     double charT2 = pCRSys->getCharT();
@@ -1713,24 +1620,6 @@ Nodeset_cr3bp bcr4bpr_SEM2SE(Nodeset_bc4bp bcNodes, const SysData_cr3bp *pCRSys)
     }
 
     return crNodes;
-}//==================================================
-
-/**
- *  \ingroup bc4bp
- *  \brief Transform a BCR4BPR Sun-Earth-Moon trajectory into a CR3BP Sun-Earth nodeset
- *
- *  \param bcTraj a BCR4BPR Sun-Earth-Moon trajectory
- *  \param pCRSys a CR3BP Sun-Earth system data object; contains information about system
- *  scaling
- *
- *  \return a CR3BP Trajectory object
- *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcTraj</tt> is
- *  not in the Sun-Earth-Moon system.
- */
-Traj_cr3bp bcr4bpr_SEM2SE(Traj_bc4bp bcTraj, const SysData_cr3bp *pCRSys){
-    // Process is identical for nodesets and trajectories, so cast to nodeset, perform transformation, and cast back
-    Nodeset_cr3bp seNodeset = bcr4bpr_SEM2SE(static_cast<Nodeset_bc4bp>(bcTraj), pCRSys);
-    return static_cast<Traj_cr3bp>(seNodeset);
 }//==================================================
 
 /**

@@ -5,14 +5,14 @@
 #include <vector>
 #include <iostream>
 
+#include "Arcset_bc4bp.hpp"
+#include "Arcset_cr3bp.hpp"
 #include "Constraint.hpp"
 #include "MultShootEngine.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_bc4bp.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "SimEngine.hpp"
 #include "SysData_bc4bp.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
 
 using namespace std;
@@ -25,12 +25,9 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = 31.00065761;
 
-	// Create a nodeset with
-	Nodeset_cr3bp nodeset(&sys, IC, tof, 15);
-	Traj_cr3bp traj = Traj_cr3bp::fromNodeset(nodeset);
-
-	// nodeset.saveToMat("resNodes.mat");
-	// traj.saveToMat("traj.mat");
+	SimEngine sim;
+	Arcset_cr3bp nodeset(&sys), correctedNodeset(&sys);
+	sim.runSim_manyNodes(IC, tof, 15, &nodeset);
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
@@ -47,7 +44,6 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	nodeset.addConstraint(perpCrossEnd);
 
 	MultShootEngine corrector;
-	Nodeset_cr3bp correctedNodeset(&sys);
 	
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
@@ -59,7 +55,9 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 
 	// Create a nodeset
 	int halo_nodes = 6;
-	Nodeset_cr3bp halo(&sys, IC_halo, tof_halo, halo_nodes);
+	Arcset_cr3bp halo(&sys), correctedHalo(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(IC_halo, tof_halo, halo_nodes, &halo);
 
 	double periodic_conData[] = {0,0,0,0,NAN,0};
 	Constraint periodicity(Constraint_tp::MATCH_CUST, halo_nodes-1, periodic_conData, 6);
@@ -70,8 +68,6 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 	halo.addConstraint(periodicity);
 
 	MultShootEngine corrector;
-	Nodeset_cr3bp correctedHalo(&sys);
-
 	corrector.setVarTime(true);
 	corrector.setEqualArcTime(true);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halo, &correctedHalo));
@@ -84,8 +80,9 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = -31.00065761;
 
-	// Create a nodeset
-	Nodeset_cr3bp nodeset(&sys, IC, tof, 15);
+	SimEngine sim;
+	Arcset_cr3bp nodeset(&sys), correctedNodeset(&sys);
+	sim.runSim_manyNodes(IC, tof, 15, &nodeset);
 
 	// Constraint node 07 to be perpendicular to XZ plane
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
@@ -106,7 +103,6 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	// nodeset.printInChrono();
 
 	MultShootEngine corrector;
-	Nodeset_cr3bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -117,10 +113,13 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = 31.00065761;
 
-	Nodeset_cr3bp posTimeArc(&sys, IC, tof/2, 8);
-	Nodeset_cr3bp revTimeArc(&sys, IC, -tof/2, 8);
+	Arcset_cr3bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(IC, tof/2, 8, &posTimeArc);
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(IC, -tof/2, 8, &revTimeArc);
 
-	Nodeset_cr3bp nodeset = posTimeArc;
+	Arcset_cr3bp nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	// nodeset.print();
@@ -145,7 +144,6 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 	// nodeset.printInChrono();
 
 	MultShootEngine corrector;
-	Nodeset_cr3bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -156,10 +154,13 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
 	double tof = 31.00065761;
 
-	Nodeset_cr3bp posTimeArc(&sys, IC, tof/2, 8);
-	Nodeset_cr3bp revTimeArc(&sys, IC, -tof/2, 8);
+	Arcset_cr3bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(IC, tof/2, 8, &posTimeArc);
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(IC, -tof/2, 8, &revTimeArc);
 
-	Nodeset_cr3bp nodeset = posTimeArc;
+	Arcset_cr3bp nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	// nodeset.print();
@@ -193,7 +194,6 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 	// nodeset.printSegIDMap();
 
 	MultShootEngine corrector;
-	Nodeset_cr3bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -202,7 +202,11 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo){
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
-	Nodeset_bc4bp nodeset(&sys, haloIC, 0, tof, 7);
+	Arcset_bc4bp nodeset(&sys), correctedNodeset(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(haloIC, 0, tof, 7, &nodeset);
+
+	
 	// nodeset.saveToMat("bc4bp_halo_raw.mat");
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
 	Constraint perpCross(Constraint_tp::STATE, 0, perpCrossData, 6);
@@ -216,7 +220,6 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
-	Nodeset_bc4bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -225,7 +228,10 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_RevTime){
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = -310;
 
-	Nodeset_bc4bp nodeset(&sys, haloIC, 0, tof, 7);
+	Arcset_bc4bp nodeset(&sys), correctedNodeset(&sys);
+	SimEngine sim;
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(haloIC, 0, tof, 7, &nodeset);
 	// nodeset.saveToMat("bc4bp_halo_raw.mat");
 
 	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
@@ -240,7 +246,6 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_RevTime){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
-	Nodeset_bc4bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -249,10 +254,13 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_doubleSource){
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
-	Nodeset_bc4bp posTimeArc(&sys, haloIC, 0, tof/2, 4);
-	Nodeset_bc4bp revTimeArc(&sys, haloIC, 0, -tof/2, 4);
+	Arcset_bc4bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(haloIC, 0, tof/2, 4, &posTimeArc);
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(haloIC, 0, -tof/2, 4, &revTimeArc);
 
-	Nodeset_bc4bp nodeset = posTimeArc;
+	Arcset_bc4bp nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	// nodeset.print();
@@ -271,7 +279,6 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_doubleSource){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
-	Nodeset_bc4bp correctedNodeset(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -280,10 +287,13 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_DoubleSource_Irregular){
 	std::vector<double> haloIC {-1.144739, 0, 0.089011, 0, 0.011608, 0};
 	double tof = 310;
 
-	Nodeset_bc4bp posTimeArc(&sys, haloIC, 0, tof/2, 4);
-	Nodeset_bc4bp revTimeArc(&sys, haloIC, 0, -tof/2, 4);
+	Arcset_bc4bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(haloIC, 0, tof/2, 4, &posTimeArc);
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(haloIC, 0, -tof/2, 4, &revTimeArc);
 
-	Nodeset_bc4bp nodeset = posTimeArc;
+	Arcset_bc4bp nodeset = posTimeArc;
 	nodeset.appendSetAtNode(&revTimeArc, 0, 0, 0);
 
 	nodeset.deleteNode(1);
@@ -304,7 +314,6 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_DoubleSource_Irregular){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
-	Nodeset_bc4bp correctedNodeset(&sys);
 	corrector.setTol(5e-12);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================

@@ -4,17 +4,22 @@
 
 #include <vector>
 
+#include "Arcset_cr3bp.hpp"
 #include "Calculations.hpp"
 #include "Constraint.hpp"
 #include "MultShootEngine.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
-#include "Nodeset_cr3bp.hpp"
+#include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Traj_cr3bp.hpp"
 #include "Utilities.hpp"
 
 using namespace astrohelion;
+
+double se_lyap_ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
+double em_lyap_ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
+double se_lyap_T = 3.293141367224790;
+double em_lyap_T = 3.02796323553149;
 
 bool stateDiffBelowTol(std::vector<double>, double*, double);
 bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);
@@ -50,11 +55,12 @@ BOOST_AUTO_TEST_SUITE(CR3BP_SunEarth)
 
 BOOST_AUTO_TEST_CASE(CR3BP_SE_STATE){
 	SysData_cr3bp sys("sun", "earth");
-	double ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
-	double T = 3.293141367224790;
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T/1.25, 8);	// Create a nodeset
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(se_lyap_T < 0);
+	sim.runSim_manyNodes(se_lyap_ic, se_lyap_T/1.25, 8, &halfLyapNodeset);
+
 	std::vector<double> initState, finalState;
-	Nodeset_cr3bp correctedSet(&sys);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -70,11 +76,11 @@ BOOST_AUTO_TEST_CASE(CR3BP_SE_STATE){
 
 BOOST_AUTO_TEST_CASE(CR3BP_SE_STATE_EQUAL_ARC){
 	SysData_cr3bp sys("sun", "earth");
-	double ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
-	double T = 3.293141367224790;
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T/1.25, 8);	// Create a nodeset
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(se_lyap_T < 0);
+	sim.runSim_manyNodes(se_lyap_ic, se_lyap_T/1.25, 8, &halfLyapNodeset);
 	std::vector<double> initState, finalState;
-	Nodeset_cr3bp correctedSet(&sys);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -98,10 +104,10 @@ BOOST_AUTO_TEST_SUITE(CR3BP_EarthMoon)
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -119,10 +125,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -140,10 +146,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -163,10 +169,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -186,10 +192,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_CUST){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -212,10 +218,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_CUST){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_CUST_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -238,10 +244,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_CUST_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -261,10 +267,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -284,10 +290,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -308,10 +314,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -332,10 +338,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -356,10 +362,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -380,10 +386,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -409,10 +415,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -438,10 +444,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -467,10 +473,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -496,10 +502,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -516,10 +522,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -536,10 +542,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -556,10 +562,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -576,10 +582,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -605,10 +611,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE_EQUAL_ARC){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -635,21 +641,20 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE_EQUAL_ARC){
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
 	SysData_cr3bp sys("earth", "moon");
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Nodeset_cr3bp halfLyapNodeset(&sys, ic, T, 6);	// Create a nodeset
-	Nodeset_cr3bp correctedSet(&sys);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
-
-	// Constraint_tp::SEG_CONT_PV
-	Nodeset_cr3bp forwardArc(&sys, ic, T/2, 4);
-	Nodeset_cr3bp reverseArc(&sys, ic, -T/2.1, 4);
-	Nodeset_cr3bp doubleSrcLyap = forwardArc;
+	Arcset_cr3bp forwardArc(&sys), reverseArc(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2, 4, &forwardArc);
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2, 4, &reverseArc);
+	Arcset_cr3bp doubleSrcLyap = forwardArc;
 	doubleSrcLyap.appendSetAtNode(&reverseArc, 0, 0, 0);
 	// doubleSrcLyap.print();
 	// doubleSrcLyap.printInChrono();
+
+	MultShootEngine corrector;
+	// corrector.setVerbosity(Verbosity_tp::DEBUG);
+	corrector.setEqualArcTime(false);
+	
 
 	double contData[] = {4, 4, NAN, 4, 4, NAN};
 	Constraint contCon(Constraint_tp::SEG_CONT_PV, 2, contData, 6);
@@ -659,8 +664,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
 	MultShootData it(&correctedSet);
 	BOOST_CHECK_NO_THROW(it = corrector.multShoot(&doubleSrcLyap, &correctedSet));
 
-	Traj forwardTraj = it.propSegs[correctedSet.getSegIx(contCon.getID())];
-	Traj reverseTraj = it.propSegs[correctedSet.getSegIx(contData[0])];
+	Arcset forwardTraj = it.propSegs[correctedSet.getSegIx(contCon.getID())];
+	Arcset reverseTraj = it.propSegs[correctedSet.getSegIx(contData[0])];
 	std::vector<double> for_lastState = forwardTraj.getStateByIx(-1);
 	std::vector<double> rev_lastState = reverseTraj.getStateByIx(-1);
 	double sum = 0;
@@ -680,8 +685,11 @@ BOOST_AUTO_TEST_CASE(CR3BP_DOUBLE_SOURCE){
 	std::vector<double> ic {1.0639767173456007, 0, 0.1644973017995331, 0, -0.0311246472806882, 0};
 	double tof = 3.1256890778;
 
-	Nodeset_cr3bp halfPlus(&sys, ic, tof, 4);
-	Nodeset_cr3bp halfMinus(&sys, ic, -tof, 4);
+	Arcset_cr3bp halfPlus(&sys), halfMinus(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(ic, tof, 4, &halfPlus);
+	sim.setRevTime(true);
+	sim.runSim_manyNodes(ic, tof, 4, &halfMinus);
 	halfPlus.appendSetAtNode(&halfMinus, 0, 0, 0);
 
 	MultShootEngine corrector;
@@ -693,7 +701,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_DOUBLE_SOURCE){
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfPlus, corrector, Verbosity_tp::NO_MSG));
 
-	Nodeset_cr3bp correctedSet(&sys);
+	Arcset_cr3bp correctedSet(&sys);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfPlus, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());

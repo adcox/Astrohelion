@@ -37,7 +37,7 @@
 #include "Node.hpp"
 #include "Segment.hpp"
 #include "SysData_2bp.hpp"
-#include "Traj_2bp.hpp"
+#include "Arcset_2bp.hpp"
 #include "Utilities.hpp"
 
 #include <gsl/gsl_errno.h>
@@ -154,7 +154,7 @@ std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<doubl
  *  \return wether or not the event has been located. If it has, a new point
  *  has been appended to the trajectory's data vectors.
  */
-bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *ic, double t0, double tof,
+bool DynamicsModel_2bp::sim_locateEvent(Event event, Arcset *traj, const double *ic, double t0, double tof,
     EOM_ParamStruct *params, Verbosity_tp verbose) const{
 
 	(void) event;
@@ -168,7 +168,7 @@ bool DynamicsModel_2bp::sim_locateEvent(Event event, Traj *traj, const double *i
 
  //    // Create a nodeset for this particular type of system
  //    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating nodeset for event location\n");
- //    Nodeset_2bp eventNodeset(ic, sys, tof, 2, Nodeset::TIME);
+ //    Nodeset_2bp eventNodeset(ic, sys, tof, 2, Arcset::TIME);
 
  //    // Constraint to keep first node unchanged
  //    Constraint fixFirstCon(Constraint_tp::STATE, 0, ic, 6);
@@ -248,8 +248,8 @@ void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
  *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  */
-void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Nodeset *nodes_in, bool findEvent,
-    Nodeset *nodes_out) const{
+void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Arcset *nodes_in, bool findEvent,
+    Arcset *nodes_out) const{
     
 	(void)it;
 	(void)nodes_in;

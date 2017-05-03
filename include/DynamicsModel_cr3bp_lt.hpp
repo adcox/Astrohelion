@@ -71,7 +71,6 @@ public:
 	 *  \name Simulation Support Functions
 	 *  \{
 	 */
-	bool sim_locateEvent(Event, Arcset*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const;
 	//\}
 

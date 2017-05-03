@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	std::vector<double> ic {0.839367079288131, 0, 0, 0, -0.0201563145344225, 0};
 	double period = 2.7;
 	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
-	
+	perOrbit.saveToMat("data/lyap.mat");
 	ManifoldEngine engine;
 
 	// **************************************

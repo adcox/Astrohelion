@@ -154,115 +154,12 @@ int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Arcs
     node.setTriggerEvent(tp);
     int id = traj->addNode(node);
     
-    Arcset_bc4bp *bcTraj = static_cast<Arcset_bc4bp*>(traj);
-    bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
+    // Update the dqdT variable if the state array is not NULL
+    if(y){
+        Arcset_bc4bp *bcTraj = static_cast<Arcset_bc4bp*>(traj);
+        bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
+    }
     return id;
-}//====================================================
-
-/**
- *  \brief Use a correction algorithm to accurately locate an event crossing
- *
- *  The simulation engine calls this function if and when it determines that an event 
- *  has been crossed. To accurately locate the event, we employ differential corrections
- *  and find the exact event occurence in space and time.
- *
- *  \param event the event we're looking for
- *  \param traj a pointer to the trajectory the event should occur on
- *  \param ic the core state vector for this system
- *  \param t0 non-dimensional time at the beginning of the search arc
- *  \param tof the time-of-flight for the arc to search over
- *  \param params structure containing parameters relevant to the integration
- *  \param verbose whether or not we should be verbose with output messages
- *
- *  \return wether or not the event has been located. If it has, a new point
- *  has been appended to the trajectory's data vectors.
- */
-bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Arcset *traj,
-    const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const{
-
-    // **** Make sure you fix the epoch of the first node as well as the states
-    double IC[7] = {0};
-    std::copy(ic, ic+6, IC);
-    IC[6] = t0;
-
-    // Recast system data pointer
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(params->sysData);
-
-    // Create a arcset for this particular type of system
-    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Creating arcset for event location\n");
-    SimEngine sim;
-    sim.setVarStepSize(false);
-    sim.setNumSteps(2);
-    sim.setRevTime(tof < 0);
-    Arcset_bc4bp eventArcset(bcSys);
-    sim.runSim(ic, t0, tof, &eventArcset);  //bc4bp arcset does not use control laws
-
-    // Constraint to keep first node unchanged
-    Constraint fixFirstCon(Constraint_tp::STATE, 0, IC, 7);
-
-    // Constraint to enforce event
-    Constraint eventCon(event.getConType(), 1, event.getConData());
-
-    eventArcset.addConstraint(fixFirstCon);
-    eventArcset.addConstraint(eventCon);
-
-    if(verbose == Verbosity_tp::ALL_MSG){ eventArcset.print(); }
-
-    astrohelion::printVerb(verbose >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
-    MultShootEngine corrector;
-    corrector.setVarTime(true);
-    corrector.setTol(traj->getTol());
-    corrector.setVerbosity(verbose);
-    corrector.setFindEvent(true);   // apply special settings to minimize computations
-    
-    // Because we set findEvent to true, this output arcset should contain
-    // the full (42 or 48 element) final state
-    Arcset_bc4bp correctedNodes(bcSys);
-    try{
-        corrector.multShoot(&eventArcset, &correctedNodes);
-    }catch(DivergeException &e){
-        if(verbose >= Verbosity_tp::SOME_MSG)
-            astrohelion::printErr("Unable to locate event; corrector diverged\n");
-        return false;
-    }catch(LinAlgException &e){
-        if(verbose >= Verbosity_tp::SOME_MSG)
-            astrohelion::printErr("LinAlg Err while locating event; bug in corrector!\n");
-        return false;
-    }
-
-    std::vector<double> state = correctedNodes.getStateByIx(-1);
-    std::vector<double> stm = correctedNodes.getExtraParamVecByIx(-1, PARAMKEY_STM);
-    std::vector<double> dqdT = correctedNodes.getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
-    
-    state.insert(state.end(), stm.begin(), stm.end());
-    state.insert(state.end(), dqdT.begin(), dqdT.end());
-
-    // event time is the TOF of corrected path + time at the state we integrated from
-    double eventTime = correctedNodes.getTOFByIx(0) + t0;
-
-    // Use the data stored in nodes and save the state and time of the event occurence
-    Node node(&(state.front()), coreStates, eventTime);
-    Segment &lastSeg = traj->getSegRefByIx(-1);
-
-    int id = sim_addNode(node, &(state.front()), eventTime, traj, params, event.getType());
-    traj->getNodeRef(id).addLink(lastSeg.getID());  // Link the new node to the previous segment
-
-    lastSeg.setTerminus(id);
-    lastSeg.appendState(&(state.front()), coreStates);
-    lastSeg.appendTime(eventTime);
-    lastSeg.storeTOF();
-    lastSeg.setSTM(stm);
-
-    // Create a new segment if the propagation is going to continue
-    if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
-        // Initialize with origin ID, undetermined terminus, and a dummy TOF with the same sign as the previous segment
-        Segment newSeg(id, Linkable::INVALID_ID, lastSeg.getTOF());
-        newSeg.appendState(&(state.front()), coreStates);
-        newSeg.appendTime(eventTime);
-        sim_addSeg(newSeg, &(state.front()), eventTime, traj, params);
-    }
-    
-    return true;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

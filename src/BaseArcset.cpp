@@ -1805,6 +1805,21 @@ void BaseArcset::copyMe(const BaseArcset &d){
 }//====================================================
 
 /**
+ *  \brief Delete all data from this object and reset all parameters
+ */
+void BaseArcset::reset(){
+	nodes.clear();
+	nodeIDMap.clear();
+	segs.clear();
+	segIDMap.clear();
+	cons.clear();
+	tol = 0;
+	nextNodeID = 0;
+	nextSegID = 0;
+	bInChronoOrder = false;
+}//====================================================
+
+/**
  *  \brief Print a ASCII graphic of the arcset in chronological order
  */
 void BaseArcset::printInChrono() const{
@@ -2302,7 +2317,6 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 
 void BaseArcset::readSegTimesFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	
 	if(pStateCell == NULL){
 		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");

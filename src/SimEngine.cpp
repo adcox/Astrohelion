@@ -41,9 +41,11 @@
 #include "Arcset.hpp"
 #include "BodyData.hpp"
 #include "Calculations.hpp"
+#include "Constraint.hpp"
 #include "Common.hpp"
 #include "DynamicsModel.hpp"
 #include "Exceptions.hpp"
+#include "MultShootData.hpp"
 #include "MultShootEngine.hpp"
 #include "Node.hpp"
 #include "Utilities.hpp"
@@ -943,7 +945,6 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
 bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int propStepCount){
     const DynamicsModel *model = arcset->getSysData()->getDynamicsModel();
     unsigned int core_dim = model->getCoreStateSize();
-    unsigned int full_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
 
     // Look through all events
     for(unsigned int ev = 0; ev < events.size(); ev++){
@@ -957,29 +958,8 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int prop
 
             if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
-            // Create a nodeset from the previous state (stored in the event) and
-            // integrate forwards for half the time between this state and the last one
-            Segment &lastSeg = arcset->getSegRefByIx(-1);
-            double t0 = lastSeg.getTimeByIx(-2);          // Time from the state before last
-            double ti = lastSeg.getTimeByIx(-1);          // Time from the previous state
-            double tof = t - t0 - 0.5*(t - ti);         // Approx. TOF 
-
-            // Copy IC into vector - Use the state from two iterations ago to avoid
-            // numerical problems when the previous state is REALLY close to the event
-            std::vector<double> generalIC = lastSeg.getStateByRow(-2, full_dim);
-
-            if(verbosity >= Verbosity_tp::ALL_MSG){
-                astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
-                astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, ti, t0);
-                astrohelion::printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
-                    y[1], y[2], y[3], y[4], y[5]);
-                astrohelion::printColor(BLUE, "tof = %f\n", tof);
-                astrohelion::printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", generalIC[0],
-                    generalIC[1], generalIC[2], generalIC[3], generalIC[4], generalIC[5]);
-            }   
-
             // Use correction to locate the event very accurately
-            if(model->sim_locateEvent(events[ev], arcset, &(generalIC[0]), t0, tof, eomParams, verbosity)){
+            if(locateEvent_multShoot(y, t, events[ev], arcset)){
                 // Update event state from the most recent node (a new node was created at the event occurence)
                 std::vector<double> state = arcset->getStateByIx(-1);
                 double lastT = arcset->getTimeByIx(-1);
@@ -1008,6 +988,125 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int prop
 
     return false;
 }//========================================
+
+/**
+ *  \brief Use a multiple shooting correction algorithm to accurately locate an event crossing
+ *
+ *  The simulation engine calls this function if and when it determines that an event 
+ *  has been crossed. To accurately locate the event, we employ differential corrections
+ *  and find the exact event occurence in space and time.
+ *
+ *  \param y full state array at the current integration step
+ *  \param t time at the current integration step
+ *  \param event the event we're looking for
+ *  \param pArcset a pointer to the arcset the event occurred on
+ *  \param ic the core state vector for this system
+ *
+ *  \return wether or not the event has been located. If it has, a new Node
+ *  has been appended to the arcset. If propagation will continue, a new
+ *  segment has also been created
+ */
+bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Arcset* pArcset) const{
+
+    const DynamicsModel *model = pArcset->getSysData()->getDynamicsModel();
+    unsigned int core_dim = model->getCoreStateSize();
+
+    // Create a nodeset from the previous state (stored in the event) and
+    // integrate forwards for half the time between this state and the last one
+    Segment &lastSeg = pArcset->getSegRefByIx(-1);
+    double t0 = lastSeg.getTimeByIx(-2);          // Time from the state before last
+    double ti = lastSeg.getTimeByIx(-1);          // Time from the previous state
+    double tof = t - t0 - 0.5*(t - ti);         // Approx. TOF 
+
+    // Copy IC into vector - Use the state from two iterations ago to avoid
+    // numerical problems when the previous state is REALLY close to the event
+    std::vector<double> arcIC = lastSeg.getStateByRow(-2, core_dim);
+
+    if(verbosity >= Verbosity_tp::ALL_MSG){
+        // astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
+        astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, ti, t0);
+        astrohelion::printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
+            y[1], y[2], y[3], y[4], y[5]);
+        astrohelion::printColor(BLUE, "tof = %f\n", tof);
+        astrohelion::printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", arcIC[0],
+            arcIC[1], arcIC[2], arcIC[3], arcIC[4], arcIC[5]);
+    }   
+
+    // **************************************************
+    // Use correction to locate the event very accurately
+    // **************************************************
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Creating arcset for event location\n");
+    
+    Arcset eventArcset(pArcset->getSysData()), correctedSet(pArcset->getSysData());
+
+    SimEngine sim;
+    sim.setVarStepSize(false);
+    sim.setNumSteps(2);
+    sim.setRevTime(tof < 0);
+    sim.setCtrlLaw(eomParams->ctrlLawID);      // cr3bp_lt arcset DOES use control laws
+    sim.runSim(arcIC, t0, tof, &eventArcset);
+
+    Constraint fixStateCon(Constraint_tp::STATE, 0, arcIC);
+    Constraint eventCon(event.getConType(), 1, event.getConData());
+
+    eventArcset.addConstraint(fixStateCon);
+    eventArcset.addConstraint(eventCon);
+
+    if(model->supportsCon(Constraint_tp::EPOCH)){
+        Constraint epochCon(Constraint_tp::EPOCH, 0, &t0, 1);
+        eventArcset.addConstraint(epochCon);
+    }
+
+    if(verbosity == Verbosity_tp::ALL_MSG){ eventArcset.print(); }
+
+    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
+    MultShootEngine corrector;
+    corrector.setVarTime(true);
+    corrector.setTol(pArcset->getTol());
+    corrector.setVerbosity(verbosity);
+    corrector.setFindEvent(true);   // apply special settings to minimize computations
+
+    // Because we set findEvent to true, this output nodeset should contain
+    // the full (42 or 48 element) final state
+    try{
+        corrector.multShoot(&eventArcset, &correctedSet);
+    }catch(DivergeException &e){
+        if(verbosity >= Verbosity_tp::SOME_MSG)
+            astrohelion::printErr("Unable to locate event; corrector diverged\n");
+        return false;
+    }catch(LinAlgException &e){
+        if(verbosity >= Verbosity_tp::SOME_MSG)
+            astrohelion::printErr("LinAlg Err while locating event; bug in corrector!\n");
+        return false;
+    }
+
+    Node evtNode = correctedSet.getNodeByIx(-1);
+    std::vector<double> state = evtNode.getState();
+    double eventTime = t0 + correctedSet.getTotalTOF();
+    evtNode.clearConstraints();     // Get rid of any cosntraints used to isolate the event
+
+    // Add the node; pass nullptr for the state vector so that none of the state data in evtNode is overwritten (it should be complete)
+    int id = model->sim_addNode(evtNode, nullptr, eventTime, pArcset, eomParams, event.getType());
+    pArcset->getNodeRef(id).addLink(lastSeg.getID());    // Link the new node to the previous segment
+
+
+    lastSeg.setTerminus(id);
+    lastSeg.appendState(&(state.front()), state.size());
+    lastSeg.appendTime(eventTime);
+    lastSeg.storeTOF();
+    lastSeg.setSTM(correctedSet.getExtraParamVecByIx(-1, PARAMKEY_STM));
+
+    // Create a new segment if the propagation is going to continue
+    if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
+        // Initialize with origin ID, undetermined terminus, and a dummy TOF with the same sign as the previous segment
+        Segment newSeg(id, Linkable::INVALID_ID, lastSeg.getTOF());
+        newSeg.appendState(&(state.front()), core_dim);
+        newSeg.appendTime(eventTime);
+        model->sim_addSeg(newSeg, &(state.front()), eventTime, pArcset, eomParams);
+    }
+
+    return true;    // If the code reached this point, the event was definitely located
+}//=======================================================
 
 //-----------------------------------------------------
 //      Utility Functions

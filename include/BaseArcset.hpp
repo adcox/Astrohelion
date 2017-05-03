@@ -103,7 +103,7 @@ public:
 	BaseArcset(const SysData*);
 	BaseArcset(const BaseArcset&);
 	virtual baseArcsetPtr create( const SysData* ) const = 0;		//!< Virtual constructor for creation
-	virtual baseArcsetPtr clone() const = 0;							//!< Virtual constructor for copying
+	virtual baseArcsetPtr clone() const = 0;						//!< Virtual constructor for copying
 
 	virtual ~BaseArcset();
 	//\}
@@ -187,6 +187,7 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
+	void reset();
 	void printInChrono() const;
 	void printNodeIDMap() const;
 	void printSegIDMap() const;

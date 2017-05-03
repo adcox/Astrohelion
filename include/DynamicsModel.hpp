@@ -247,28 +247,6 @@ public:
 	 */
 
 	virtual std::vector<Event> sim_makeDefaultEvents(const SysData*) const;
-	
-	/**
-	 *  \brief Use a correction algorithm to accurately locate an event crossing
-	 *
-	 *  The simulation engine calls this function if and when it determines that an event 
-	 *  has been crossed. To accurately locate the event, we employ differential corrections
-	 *  and find the exact event occurence in space and time.
-	 *
-	 *  \param event the event we're looking for
-	 *  \param traj a pointer to the trajectory the event should occur on
-	 *  \param ic the core state vector for this system
-	 *  \param t0 non-dimensional time at the beginning of the search arc
-	 *  \param tof the time-of-flight for the arc to search over
-	 *  \param params structure containing parameters that are required for EOMs
-	 *  \param verbose whether or not we should be verbose with output messages
-	 *	
-	 *  \return wether or not the event has been located. If it has, a new point
-	 *  has been appended to the trajectory's data vectors.
-	 */
-	virtual bool sim_locateEvent(Event event, Arcset *traj,
-    	const double *ic, double t0, double tof, EOM_ParamStruct *params, Verbosity_tp verbose) const = 0;
-
 	virtual int sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const;
 	virtual int sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const;
 

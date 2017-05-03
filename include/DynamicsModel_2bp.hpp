@@ -77,7 +77,7 @@ public:
 	/**
 	 * \name Simulation Support Functions
 	 */
-	bool sim_locateEvent(Event event, Arcset*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
+		// Use the default Base class functions
 	//\}
 
 	/**

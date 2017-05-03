@@ -886,7 +886,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
         default:
             throw Exception("Mirror type either not defined or not implemented");
     }
-    // sim.setVerbosity(true);
+    // sim.setVerbosity(Verbosity_tp::ALL_MSG);
     mirrorEvt.setStopCount(order);
     sim.addEvent(mirrorEvt);
 
@@ -924,7 +924,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
         astrohelion::printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
         // halfOrbArc.saveToMat("halfOrbArc_failedMirror.mat");
     }
-    // halfOrbArc.saveToMat("HalfOrbArc.mat");
+    // halfOrbArc.saveToMat("data/halfOrbArc.mat");
 
     double halfOrbTOF = halfOrbArc.getTimeByIx(-1);
     double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);
@@ -959,7 +959,8 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
         }
 
         *pItData = corrector.multShoot(&halfOrbArc, &correctedHalfPer);
-        // correctedHalfPer.saveToMat("temp_correctedHalfPer.mat");
+        // correctedHalfPer.print();
+        // correctedHalfPer.saveToMat("data/temp_correctedHalfPer.mat");
 
         // Make a copy
         Arcset_cr3bp halfPerTraj = correctedHalfPer;

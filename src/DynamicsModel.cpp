@@ -313,7 +313,8 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Arcset *s
 	}else{
 		*tof = it->nodeset->getTOF(s);
 	}
-	*t0 = 0;
+	// *t0 = 0;
+	*t0 = it->nodeset->getEpoch(state.key.id);
 }//============================================================
 
 /**

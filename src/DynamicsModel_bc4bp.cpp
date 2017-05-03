@@ -52,6 +52,7 @@ namespace astrohelion{
 DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
     coreStates = 6;
     extraStates = 6;
+    allowedCons.push_back(Constraint_tp::EPOCH);
     allowedCons.push_back(Constraint_tp::SP);
     allowedCons.push_back(Constraint_tp::SP_RANGE);
     allowedCons.push_back(Constraint_tp::SP_DIST);
@@ -414,6 +415,9 @@ void DynamicsModel_bc4bp::multShoot_applyConstraint(MultShootData *it, Constrain
         case Constraint_tp::APSE:
             multShoot_targetApse(it, con, row0);
             break;
+        case Constraint_tp::EPOCH:
+            multShoot_targetEpoch(it, con, row0);
+            break;
         case Constraint_tp::SP:
             multShoot_targetSP(it, con, row0);
             break;
@@ -545,29 +549,36 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constra
 void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+    if(conData.size() > coreStates)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetState: conData has too many states");
 
-    // Allow user to constrain 7 states
-    int count = 0;  // Count # rows since some may be skipped (NAN)
+    int count = 0;  // Count # rows since some may be skipped (NaN)
     for(unsigned int s = 0; s < con.getData().size(); s++){
         if(!std::isnan(conData[s])){
-            if(s < 6){
-                it->FX[row0+count] = it->X[stateVar.row0+s] - conData[s];
-                it->DF[it->totalFree*(row0 + count) + stateVar.row0 + s] = 1;
-                count++;
-            }else if(s == 6){
-                // Allow constraining epoch
-                if(it->bVarTime){
-                    MSVarMap_Obj epoch_var = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
-                    it->FX[row0+count] = it->X[epoch_var.row0] - conData[s];
-                    it->DF[it->totalFree*(row0 + count) + epoch_var.row0] = 1;
-                    count++;
-                }
-            }else{
-                astrohelion::printErr("DynamicsModel_bc4bp::multShoot_targetState: constraint has more than six elements... ignoring the extras\n");
-            }
+            it->FX[row0+count] = it->X[stateVar.row0+s] - conData[s];
+            it->DF[it->totalFree*(row0 + count) + stateVar.row0 + s] = 1;
+            count++;
         }
     }
-}//=================================================
+}//====================================================
+
+/**
+ *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::EPOCH</tt>.
+ * 
+ *  \param pIt a pointer to the class containing all the data relevant to the corrections process
+ *  \param con the constraint being applied
+ *  \param row0 the index of the row this constraint begins at
+ */
+void DynamicsModel_bc4bp::multShoot_targetEpoch(MultShootData* pIt, Constraint con, int row0) const{
+    if(pIt->bVarTime){
+        std::vector<double> conData = con.getData();
+        if(conData.size() > 0){
+            MSVarMap_Obj epoch_var = pIt->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+            pIt->FX[row0] = pIt->X[epoch_var.row0] - conData[0];
+            pIt->DF[pIt->totalFree*row0 + epoch_var.row0] = 1;
+        }
+    }
+}//====================================================
 
 /**
  *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 

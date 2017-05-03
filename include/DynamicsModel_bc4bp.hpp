@@ -112,6 +112,7 @@ protected:
 	void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const override;
 	void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const override;
 	void multShoot_targetState(MultShootData*, Constraint, int) const override;
+	void multShoot_targetEpoch(MultShootData*, Constraint, int) const;
 	void multShoot_targetDeltaV(MultShootData*, Constraint, int) const override;
 	void multShoot_targetDist(MultShootData*, Constraint, int) const override;
 	double multShoot_targetDist_compSlackVar(const MultShootData*, Constraint) const override;

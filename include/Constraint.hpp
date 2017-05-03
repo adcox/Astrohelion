@@ -65,6 +65,10 @@ enum class Constraint_tp {
  				 *	the following values: {5, NAN, 5, NAN, NAN, NAN} and the 
  				 *	<tt>id</tt> value would be set to 2.
  				 */
+	EPOCH,		/*!< Cosntrain the epoch of one node to a specific value.
+	 			 *	The <tt>id</tt> value represents the node to constrain,
+	 			 *	and the <tt>data</tt> value represents the fixed epoch time.
+	 			 */
 	DIST,		/*!< Constrain a node to be at a specific distance from a primmary.
  				 *	The <tt>id</tt> field identifies the constrained node, the 
  				 *	first value in the <tt>data</tt> field (i.e. <tt>data[0]</tt>) 
@@ -80,13 +84,13 @@ enum class Constraint_tp {
  				 *	specific primary. Data is input in the same way as the Constraint_tp::DIST constraint
  				 *	described above.
  				 */
+	DELTA_V,	/*!< Constrain delta V to be exactly the specified amount
+ 				 *	Data is input in the same format as Constraint_tp::MAX_DELTA_V
+ 				 */
 	MAX_DELTA_V,/*!< Constrain total delta V to be less than the specified amount
  				 *	The <tt>id</tt> value is unused in this constraint; make the
  				 *	first value in the data vector be the maximum delta-V in 
  				 *	non-dimensional velocity units
- 				 */
-	DELTA_V,	/*!< Constrain delta V to be exactly the specified amount
- 				 *	Data is input in the same format as Constraint_tp::MAX_DELTA_V
  				 */
 	SP, 		/*!< Constrain the node to intersect the saddle point (BCR4BPR only)
  				 * 	Place the ID of the node you want to constrain in the <tt>id</tt>
@@ -199,7 +203,7 @@ enum class ConstraintApp_tp{
  * 	**Adding a New Constraint**
  * 	* Create a new enumerated type and document it fully
  * 	* Update the getTypStr() function
- * 	* Update the segAppType() function
+ * 	* Update the setAppType() function
  *	* Add the new constraint type to the list of accepted constraints for
  * 		any dynamic models you wish
  *	* Define behavior for dealing with those types of constraints in the

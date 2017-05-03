@@ -98,6 +98,27 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_EQUAL_ARC){
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_EPOCH){
+	SysData_bc4bp sys("sun", "earth", "moon");
+	Arcset_bc4bp halfLyapSet(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(lyap_ic, 0, lyap_T, 6, &halfLyapSet);
+	Arcset_bc4bp correctedSet(&sys);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(false);	// Epoch constraints require variable time
+	
+	// Constraint_tp::EPOCH
+	double epochConData[] = {0.4};
+	Constraint epochCon(Constraint_tp::EPOCH, 0, epochConData, 1);
+	halfLyapSet.addConstraint(epochCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
+	
+	BOOST_CHECK(std::abs(correctedSet.getEpochByIx(0) - epochConData[0]) < 1e-12);
+}//====================================================
+
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL){
 	SysData_bc4bp sys("sun", "earth", "moon");
 	Arcset_bc4bp halfLyapSet(&sys);
@@ -708,3 +729,5 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SOURCE_NODE){
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()
+
+

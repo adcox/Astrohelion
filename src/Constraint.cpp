@@ -239,14 +239,15 @@ const char* Constraint::getTypeStr() const{ return getConTypeStr(type); }
 const char* Constraint::getConTypeStr(Constraint_tp t){
 	switch(t){
 		case Constraint_tp::NONE: { return "NONE"; break; }
-		case Constraint_tp::STATE: { return "Constraint_tp::STATE"; break; }
-		case Constraint_tp::MATCH_ALL: { return "Constraint_tp::MATCH_ALL"; break; }
-		case Constraint_tp::MATCH_CUST: { return "Constraint_tp::MATCH_CUST"; break; }
-		case Constraint_tp::DIST: { return "Constraint_tp::DIST"; break; }
-		case Constraint_tp::MIN_DIST: { return "Constraint_tp::MIN_DIST"; break; }
-		case Constraint_tp::MAX_DIST: { return "Constraint_tp::MAX_DIST"; break; }
-		case Constraint_tp::MAX_DELTA_V: { return "Constraint_tp::MAX_DELTA_V"; break; }
-		case Constraint_tp::DELTA_V: { return "Constraint_tp::DELTA_V"; break; }
+		case Constraint_tp::STATE: { return "STATE"; break; }
+		case Constraint_tp::MATCH_ALL: { return "MATCH_ALL"; break; }
+		case Constraint_tp::MATCH_CUST: { return "MATCH_CUST"; break; }
+		case Constraint_tp::EPOCH: { return "EPOCH"; break; }
+		case Constraint_tp::DIST: { return "DIST"; break; }
+		case Constraint_tp::MIN_DIST: { return "MIN_DIST"; break; }
+		case Constraint_tp::MAX_DIST: { return "MAX_DIST"; break; }
+		case Constraint_tp::MAX_DELTA_V: { return "MAX_DELTA_V"; break; }
+		case Constraint_tp::DELTA_V: { return "DELTA_V"; break; }
 		case Constraint_tp::JC: { return "JC"; break; }
 		case Constraint_tp::SP: { return "SP"; break; }
 		case Constraint_tp::SP_RANGE: { return "SP_RANGE"; break; }
@@ -254,10 +255,10 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::SP_MAX_DIST: { return "SP_MAX_DIST"; break; }
 		case Constraint_tp::TOF: { return "TOF"; break; }
 		case Constraint_tp::APSE: {return "APSE"; break; }
-		case Constraint_tp::CONT_PV: {return "CONTINUOUS Constraint_tp::SEG_2NODE POSITION_VELOCITY"; break; }
-		case Constraint_tp::CONT_EX: { return "CONTINUOUS Constraint_tp::SEG_2NODE EXTRA"; break; }
-		case Constraint_tp::SEG_CONT_PV: { return "CONTINUOUS Constraint_tp::SEG_2Constraint_tp::SEG_ POSITION_VELOCITY"; break; }
-		case Constraint_tp::SEG_CONT_EX: { return "CONTINUOUS Constraint_tp::SEG_2Constraint_tp::SEG_ EXTRA";  break; }
+		case Constraint_tp::CONT_PV: {return "CONTINUOUS SEG_2NODE_POSITION_VELOCITY"; break; }
+		case Constraint_tp::CONT_EX: { return "CONTINUOUS SEG_2NODE_EXTRA"; break; }
+		case Constraint_tp::SEG_CONT_PV: { return "CONTINUOUS SEG_2SEG_POSITION_VELOCITY"; break; }
+		case Constraint_tp::SEG_CONT_EX: { return "CONTINUOUS SEG_2SEG_EXTRA";  break; }
 		case Constraint_tp::PSEUDOARC: { return "PSEUDO-ARCLENGTH"; break; }
 		default: { return "UNDEFINED!"; break; }
 	}

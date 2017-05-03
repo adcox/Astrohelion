@@ -354,22 +354,24 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 					throw Exception("MultShootEngine::multShoot: You can only apply ONE delta-V constraint");
 				}
 				break;
+			case Constraint_tp::APSE:
 			case Constraint_tp::JC:
+			case Constraint_tp::PSEUDOARC:
 				addToRows = 1;
 				break;
 			case Constraint_tp::TOF:
 				if(!bVarTime)
-					astrohelion::printWarn("MultShootEngine::multShoot: Attempting to constraint TOF without variable time... won't work!");
+					astrohelion::printWarn("MultShootEngine::multShoot: Attempting to constraint TOF without variable time... won't work!\n");
 				
 				if(!foundTOFCon)
 					addToRows = 1;
 				else
 					throw Exception("MultShootEngine::multShoot: You can only apply ONE TOF constraint");
 				break;
-			case Constraint_tp::APSE:
-				addToRows = 1;
-				break;
-			case Constraint_tp::PSEUDOARC:
+			case Constraint_tp::EPOCH:
+				if(!bVarTime)
+					printWarn("MultShootEngine::multShoot: Attempting to constrain Epoch without variable time... won't work!\n");
+
 				addToRows = 1;
 				break;
 			default: break;

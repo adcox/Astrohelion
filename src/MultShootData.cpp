@@ -267,7 +267,7 @@ const char* MSVarMap_Obj::parent2str(MSVarParent_tp p){
  *  \brief Construct a new MultShootData object
  *  \param set pointer to the nodeset being corrected
  */
-MultShootData::MultShootData(const Arcset *set) : sysData(set->getSysData()), nodeset(set){
+MultShootData::MultShootData(const Arcset *set) : nodesIn(set){
 	numNodes = set->getNumNodes();
 }//====================================================
 
@@ -275,7 +275,7 @@ MultShootData::MultShootData(const Arcset *set) : sysData(set->getSysData()), no
  *  \brief Copy constructor
  *  \param it reference to another MultShootData object
  */
-MultShootData::MultShootData(const MultShootData &it) : sysData(it.sysData), nodeset(it.nodeset){
+MultShootData::MultShootData(const MultShootData &it) : nodesIn(it.nodesIn){
 	copyMe(it);
 }//====================================================
 
@@ -289,8 +289,6 @@ MultShootData::MultShootData(const MultShootData &it) : sysData(it.sysData), nod
  */
 MultShootData& MultShootData::operator =(const MultShootData &it){
 	copyMe(it);
-	sysData = it.sysData;	// Copying ADDRESS!
-	nodeset = it.nodeset;	// Copying ADDRESS!
 	return *this;
 }//====================================================
 
@@ -348,7 +346,10 @@ void MultShootData::copyMe(const MultShootData &it){
 	totalFree = it.totalFree;
 	bVarTime = it.bVarTime;
 	X = it.X;
-	X0 = it.X0;				
+	X0 = it.X0;
+
+	nodesIn = it.nodesIn;		// Copying address
+	nodesOut = it.nodesOut;		// Copying address			
 }//============================================
 
 

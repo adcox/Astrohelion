@@ -142,20 +142,21 @@ class MultShootData{
 		// Utilities
 
 		// Variables
-		const SysData *sysData;				//!< A pointer to the system data object used for this corrections process
-		const Arcset *nodeset;				//!< A pointer to the nodeset input for this corrections process
+		// const SysData *sysData;				//!< A pointer to the system data object used for this corrections process
+		const Arcset *nodesIn;						//!< A pointer to the arcset input for this corrections process
+		Arcset *nodesOut;							//!< A pointer to arcset that will be output
 		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X {};					//!< Free-Variable Vector
 		std::vector<double> FX {};					//!< Constraint Function Vector
 		std::vector<double> DF {};					//!< Jacobian Matrix
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
-		std::vector<Arcset> propSegs {};				//!< A collection of all propagated segments; index here matches index within the input nodeset
+		std::vector<Arcset> propSegs {};			//!< A collection of all propagated segments; index here matches index within the input arcset
 		std::vector<Constraint> allCons {};			//!< A list of all constraints
 		std::map<MSVarMap_Key, MSVarMap_Obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
 
-		int numNodes = 0;			//!< Number of nodes in the entire nodeset
+		int numNodes = 0;			//!< Number of nodes in the entire arcset
 		int count = 0;				//!< Count of number of iterations through corrections process
 
 		int numSlack = 0;			//!< number of slack variables

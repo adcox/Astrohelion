@@ -198,8 +198,8 @@ void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Arcse
  *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_bc4bp::multShoot_initIterData(MultShootData *it) const{
-    Arcset_bc4bp traj(static_cast<const SysData_bc4bp *>(it->sysData));
-    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
+    Arcset_bc4bp traj(static_cast<const SysData_bc4bp *>(it->nodesIn->getSysData()));
+    it->propSegs.assign(it->nodesIn->getNumSegs(), traj);
 }//====================================================
 
 /**
@@ -216,9 +216,9 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Arcs
 
     if(it->bVarTime){
         std::vector<double> zero {0};
-        for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
-            if(it->nodeset->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){
-                Constraint timeCont(Constraint_tp::CONT_EX, it->nodeset->getSegRefByIx_const(s).getID(), zero);   // 0 value is for Epoch Time
+        for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+            if(it->nodesIn->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){
+                Constraint timeCont(Constraint_tp::CONT_EX, it->nodesIn->getSegRefByIx_const(s).getID(), zero);   // 0 value is for Epoch Time
                 it->allCons.push_back(timeCont);
             }
         }
@@ -245,7 +245,7 @@ void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Arc
     const Arcset_bc4bp *bcSet = static_cast<const Arcset_bc4bp *>(set);
 
     if(it->bVarTime){
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRef_const(s).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRef_const(s).getOrigin());
         *t0 = it->X[epochVar.row0];
     }else{
         *t0 = bcSet->getEpoch(s);
@@ -343,11 +343,11 @@ void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constrai
 
     // Add epoch dependencies for this model
     if(it->bVarTime){
-        int segIx = it->nodeset->getSegIx(con.getID());
+        int segIx = it->nodesIn->getSegIx(con.getID());
         std::vector<double> conData = con.getData();
         std::vector<double> last_dqdT = it->propSegs[segIx].getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
 
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx).getOrigin());
+        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(segIx).getOrigin());
 
         // Loop through conData
         int count = 0;
@@ -374,19 +374,19 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint 
     /* Add time-continuity constraints if applicable; we need to match
     the epoch time of node n to the sum of node n-1's epoch and TOF */
     if(it->bVarTime){
-        int segIx = it->nodeset->getSegIx(con.getID());
-        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx).getOrigin()); 
-        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx).getTerminus());
+        int segIx = it->nodesIn->getSegIx(con.getID());
+        MSVarMap_Obj T0_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(segIx).getOrigin()); 
+        MSVarMap_Obj Tf_var = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(segIx).getTerminus());
         MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getID());
         
         double T0 = it->X[T0_var.row0];
-        double tof = it->bEqualArcTime ? it->X[tof_var.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var.row0];
+        double tof = it->bEqualArcTime ? it->X[tof_var.row0]/(it->nodesIn->getNumSegs()) : it->X[tof_var.row0];
         double T1 = it->X[Tf_var.row0];
 
         it->FX[row0] = T1 - (T0 + tof);
         it->DF[it->totalFree*(row0) + tof_var.row0] = -1;
-        it->DF[it->totalFree*(row0) + tof_var.row0] /= it->bEqualArcTime ? it->nodeset->getNumSegs() : 1.0;
+        it->DF[it->totalFree*(row0) + tof_var.row0] /= it->bEqualArcTime ? it->nodesIn->getNumSegs() : 1.0;
         it->DF[it->totalFree*(row0) + T0_var.row0] = -1;
         it->DF[it->totalFree*(row0) + Tf_var.row0] = 1;
     }
@@ -403,11 +403,11 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint 
  */
 void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constraint con, int row0) const{
     if(it->bVarTime){
-        int segIx1 = it->nodeset->getSegIx(con.getID());
-        int segIx2 = it->nodeset->getSegIx(con.getData()[0]);
+        int segIx1 = it->nodesIn->getSegIx(con.getID());
+        int segIx2 = it->nodesIn->getSegIx(con.getData()[0]);
 
-        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx1).getOrigin());
-        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(segIx2).getOrigin());
+        MSVarMap_Obj T0_var1 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(segIx1).getOrigin());
+        MSVarMap_Obj T0_var2 = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(segIx2).getOrigin());
         MSVarMap_Obj tof_var1 = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
             it->bEqualArcTime ? Linkable::INVALID_ID : con.getID());
         MSVarMap_Obj tof_var2 = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
@@ -415,8 +415,8 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constra
 
         double T01 = it->X[T0_var1.row0];
         double T02 = it->X[T0_var2.row0];
-        double tof1 = it->bEqualArcTime ? it->X[tof_var1.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var1.row0];
-        double tof2 = it->bEqualArcTime ? it->X[tof_var2.row0]/(it->nodeset->getNumSegs()) : it->X[tof_var2.row0];
+        double tof1 = it->bEqualArcTime ? it->X[tof_var1.row0]/(it->nodesIn->getNumSegs()) : it->X[tof_var1.row0];
+        double tof2 = it->bEqualArcTime ? it->X[tof_var2.row0]/(it->nodesIn->getNumSegs()) : it->X[tof_var2.row0];
 
         it->FX[row0] = T01 + tof1 - (T02 + tof2);
         it->DF[it->totalFree*row0 + T0_var1.row0] = 1;
@@ -494,13 +494,13 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
         epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID());
+        t0 = it->nodesIn->getEpoch(con.getID());
     }
     // MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
-    // double t0 = it->bVarTime ? it->X[epochVar.row0]/sT : it->nodeset->getEpoch(con.getID());
+    // double t0 = it->bVarTime ? it->X[epochVar.row0]/sT : it->nodesIn->getEpoch(con.getID());
 
     // Get the primary position
-    std::vector<double> primPos = getPrimPos(t0, it->sysData);
+    std::vector<double> primPos = getPrimPos(t0, it->nodesIn->getSysData());
 
     // Get distance between node and primary in x, y, and z-coordinates
     double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0];
@@ -520,7 +520,7 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
     if(it->bVarTime){
         // Epoch dependencies from primary positions
         double dhdr_data[] = {-dx/h, -dy/h, -dz/h};
-        std::vector<double> primVel = getPrimVel(t0, it->sysData);
+        std::vector<double> primVel = getPrimVel(t0, it->nodesIn->getSysData());
     
         Eigen::RowVector3d dhdr = Eigen::Map<Eigen::RowVector3d>(dhdr_data, 1, 3);
         Eigen::Vector3d drdT = Eigen::Map<Eigen::Vector3d>(&(primVel[Pix*3]), 3, 1);
@@ -576,11 +576,11 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID());
+        t0 = it->nodesIn->getEpoch(con.getID());
     }
 
     // Get the primary position
-    std::vector<double> primPos = getPrimPos(t0, it->sysData);
+    std::vector<double> primPos = getPrimPos(t0, it->nodesIn->getSysData());
 
     // Get distance between node and primary in x, y, and z-coordinates
     double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0];
@@ -626,7 +626,7 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
         // Don't allow dividing by zero, but otherwise scale by value to keep order ~1
         double dvMax = con.getData()[0] == 0 ? 1 : con.getData()[0];
 
-        for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
+        for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
             // compute magnitude of DV between segment s and its terminal point
             // This takes the form v_n,f - v_n+1,0
             double dvx = it->deltaVs[s*3+0];
@@ -646,7 +646,7 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
                 Eigen::VectorXd dqdT = Eigen::Map<Eigen::VectorXd>(&(last_dqdT[0]), 6, 1);
 
                 double dFdT_n = dFdq_n2*dqdT;
-                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodeset->getSegRefByIx_const(s).getOrigin());
+                MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(s).getOrigin());
                 it->DF[it->totalFree*row0 + epochVar.row0] = -dFdT_n/dvMax;
             }
         }
@@ -665,10 +665,10 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
         epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID());
+        t0 = it->nodesIn->getEpoch(con.getID());
     }
 
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(it->sysData);
+    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(it->nodesIn->getSysData());
     double primPos[9], primVel[9], primAccel[9];
 
     getPrimaryPos(t0, bcSys, primPos);
@@ -718,12 +718,12 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
         epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         t0 = it->X[epochVar.row0];
     }else{
-        t0 = it->nodeset->getEpoch(con.getID());
+        t0 = it->nodesIn->getEpoch(con.getID());
     }
 
-    const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
+    const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->nodesIn->getSysData());
 
-    std::vector<double> primPosData = getPrimPos(t0, it->sysData);
+    std::vector<double> primPosData = getPrimPos(t0, it->nodesIn->getSysData());
 
     // Get primary positions at the specified epoch time
     Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
@@ -797,7 +797,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
 
     if(it->bVarTime){
         // Get primary velocities at the specified epoch time
-        std::vector<double> primVelData = getPrimVel(t0, it->sysData);
+        std::vector<double> primVelData = getPrimVel(t0, it->nodesIn->getSysData());
         Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
 
         // Compute partials of state w.r.t. primary positions; dont' compute partials
@@ -860,7 +860,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
     // int n = con.getID();
     // double Amax = con.getData()[0];
     // int epochCol = it->bEqualArcTime ? 6*it->numNodes+1+n : 7*it->numNodes-1+n;
-    // double t0 = it->bVarTime ? it->X[epochCol]/it->freeVarScale[3] : it->nodeset->getNodeByIx(n).getEpoch();
+    // double t0 = it->bVarTime ? it->X[epochCol]/it->freeVarScale[3] : it->nodesIn->getNodeByIx(n).getEpoch();
 
     // const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
     // double sr = it->freeVarScale[0];
@@ -1003,11 +1003,11 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
         epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         epoch = it->X[epochVar.row0];
     }else{
-        epoch = it->nodeset->getEpoch(con.getID());
+        epoch = it->nodesIn->getEpoch(con.getID());
     }
-    const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
+    const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->nodesIn->getSysData());
 
-    std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
+    std::vector<double> primPosData = getPrimPos(epoch, bcSysData);
 
     // Get primary positions at the specified epoch time
     Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
@@ -1062,7 +1062,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
     // dFdq.noalias() = 2*dAdq*A;
 
     // Get primary velocities at the specified epoch time
-    std::vector<double> primVelData = getPrimVel(epoch, it->sysData);
+    std::vector<double> primVelData = getPrimVel(epoch, it->nodesIn->getSysData());
     Matrix3Rd primVel = Eigen::Map<Matrix3Rd>(&(primVelData[0]), 3, 3);
 
     // Compute partials of state w.r.t. primary positions; dont' compute partials
@@ -1154,11 +1154,11 @@ double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootDa
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         epoch = it->X[epochVar.row0];
     }else{
-        epoch = it->nodeset->getEpoch(con.getID());
+        epoch = it->nodesIn->getEpoch(con.getID());
     }
-    const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
+    const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->nodesIn->getSysData());
 
-    std::vector<double> primPosData = getPrimPos(epoch, it->sysData);
+    std::vector<double> primPosData = getPrimPos(epoch, bcSysData);
 
     // Get primary positions at the specified epoch time
     Matrix3Rd primPos = Eigen::Map<Matrix3Rd>(&(primPosData[0]), 3, 3);
@@ -1214,7 +1214,7 @@ double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultSh
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         T = it->X[epochVar.row0];
     }else{
-        T = it->nodeset->getEpoch(con.getID());
+        T = it->nodesIn->getEpoch(con.getID());
     }
 
     std::vector<double> coeff = con.getData();
@@ -1257,10 +1257,9 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
         epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
         T = it->X[epochVar.row0];
     }else{
-        T = it->nodeset->getEpoch(con.getID());
+        T = it->nodesIn->getEpoch(con.getID());
     }
 
-    // const SysData_bc4bp *bcSysData = static_cast<const SysData_bc4bp *> (it->sysData);
     std::vector<double> coeff = con.getData();
 
     // Compute SP position from polynomial approximation
@@ -1347,7 +1346,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeRefByIx_const(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
         // double state[6];
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
         // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
@@ -1360,7 +1359,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
             MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, state_var.key.id);
             T = it->X[epochVar.row0];
         }else{
-            T = it->nodeset->getEpoch(state_var.key.id);
+            T = it->nodesIn->getEpoch(state_var.key.id);
         }
         node.setEpoch(T);
 
@@ -1389,21 +1388,21 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
 
     double tof;
     int newOrigID, newTermID;
-    for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
-        const Segment &seg = it->nodeset->getSegRefByIx_const(s);
+    for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+        const Segment &seg = it->nodesIn->getSegRefByIx_const(s);
 
         if(it->bVarTime){
             MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
-            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
+            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodesIn->getNumSegs()) : it->X[tofVar.row0];
         }else{
             tof = seg.getTOF();
         }
 
-        newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
+        newOrigID = newNodeIDs[it->nodesIn->getNodeIx(seg.getOrigin())];
         int termID = seg.getTerminus();
-        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodesIn->getNodeIx(termID)];
         
         Segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());

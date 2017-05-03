@@ -185,8 +185,8 @@ void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, Constrain
  *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
-    Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(it->sysData));
-    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
+    Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(it->nodesIn->getSysData()));
+    it->propSegs.assign(it->nodesIn->getNumSegs(), traj);
 }//====================================================
 
 /**
@@ -199,7 +199,7 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
 void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, int row0) const{
     std::vector<double> conData = con.getData();
     MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->sysData);
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->nodesIn->getSysData());
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
@@ -289,16 +289,16 @@ void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, Constrain
 void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const Arcset *nodes_in, bool findEvent, Arcset *nodes_out) const{
 
     // Create a nodeset with the same system data as the input
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(it->sysData);
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(it->nodesIn->getSysData());
     Arcset_cr3bp *nodeset_out = static_cast<Arcset_cr3bp *>(nodes_out);
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeRefByIx_const(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
 
         Node node(state, 0);
-        node.setConstraints(it->nodeset->getNodeRefByIx_const(n).getConstraints());
+        node.setConstraints(it->nodesIn->getNodeRefByIx_const(n).getConstraints());
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
@@ -326,21 +326,21 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
 
     double tof;
     int newOrigID, newTermID;
-    for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
-        const Segment &seg = it->nodeset->getSegRefByIx_const(s);
+    for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+        const Segment &seg = it->nodesIn->getSegRefByIx_const(s);
 
         if(it->bVarTime){
             MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
-            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
+            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodesIn->getNumSegs()) : it->X[tofVar.row0];
         }else{
             tof = seg.getTOF();
         }
 
-        newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
+        newOrigID = newNodeIDs[it->nodesIn->getNodeIx(seg.getOrigin())];
         int termID = seg.getTerminus();
-        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodesIn->getNodeIx(termID)];
         
         Segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());
@@ -380,7 +380,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it, const 
     }
 
     // nodeset_out->print();
-    std::vector<Constraint> arcCons = it->nodeset->getArcConstraints();
+    std::vector<Constraint> arcCons = it->nodesIn->getArcConstraints();
     for(unsigned int i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);
     }

@@ -302,19 +302,19 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Arcset *s
 	(void) set;
 
 	// Retrieve  representative object and get data from free var vec
-	MSVarMap_Obj state = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRef_const(s).getOrigin());
+	MSVarMap_Obj state = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(s).getOrigin());
 	std::copy(it->X.begin()+state.row0, it->X.begin()+state.row0 + state.nRows, ic);
 
 	if(it->bVarTime){
 		// Retrieve  representative object and get data from free var vec
 		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 			it->bEqualArcTime ? -1 : s);
-		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodeset->getNumSegs()) : it->X[tof_obj.row0];
+		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodesIn->getNumSegs()) : it->X[tof_obj.row0];
 	}else{
-		*tof = it->nodeset->getTOF(s);
+		*tof = it->nodesIn->getTOF(s);
 	}
 	// *t0 = 0;
-	*t0 = it->nodeset->getEpoch(state.key.id);
+	*t0 = it->nodesIn->getEpoch(state.key.id);
 }//============================================================
 
 /**
@@ -427,13 +427,13 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
 	std::vector<double> conData = con.getData();
 
 	// Get index of segment
-	int segIx = it->nodeset->getSegIx(segID);
+	int segIx = it->nodesIn->getSegIx(segID);
 	std::vector<double> lastState = it->propSegs[segIx].getStateByIx(-1);
 	MatrixXRd stm = it->propSegs[segIx].getSTMByIx(-1);
 
 	// Get index of origin node
-	MSVarMap_Obj state0_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRef_const(segID).getOrigin());
-	MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRef_const(segID).getTerminus());
+	MSVarMap_Obj state0_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(segID).getOrigin());
+	MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(segID).getTerminus());
 
 	// Loop through conData
 	for(unsigned int s = 0; s < conData.size(); s++){
@@ -496,11 +496,11 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
 	std::vector<double> conData = con.getData();
 
 	// Get segment index
-	int segIx1 = it->nodeset->getSegIx(segID1);
-	int segIx2 = it->nodeset->getSegIx(segID2);
+	int segIx1 = it->nodesIn->getSegIx(segID1);
+	int segIx2 = it->nodesIn->getSegIx(segID2);
 
-	MSVarMap_Obj state01_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRef_const(segID1).getOrigin());
-	MSVarMap_Obj state02_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRef_const(segID2).getOrigin());
+	MSVarMap_Obj state01_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(segID1).getOrigin());
+	MSVarMap_Obj state02_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(segID2).getOrigin());
 
 	std::vector<double> state1 = it->propSegs[segIx1].getStateByIx(-1);
 	std::vector<double> state2 = it->propSegs[segIx2].getStateByIx(-1);
@@ -696,7 +696,7 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, it->sysData);
+	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
 
 	// Get distance between node and primary in x, y, and z-coordinates
 	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
@@ -750,7 +750,7 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it,
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, it->sysData);
+	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
 
 	// Get distance between node and primary in x, y, and z-coordinates
 	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
@@ -796,7 +796,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 
 	// Compute total deltaV magnitude
 	double totalDV = 0;
-	for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
+	for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
 		// compute magnitude of DV between segment s and its terminal point
 		// This takes the form v_n,f - v_n+1,0
 		double dvx = it->deltaVs[s*3];
@@ -819,8 +819,8 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 			// Partial w.r.t. integrated path (newSeg) from origin node
 			Eigen::RowVectorXd dFdq_nf = -1*dFdq_n2*stm;
 
-			MSVarMap_Obj state0_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRefByIx_const(s).getOrigin());
-			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getSegRefByIx_const(s).getTerminus());
+			MSVarMap_Obj state0_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRefByIx_const(s).getOrigin());
+			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRefByIx_const(s).getTerminus());
 
 			for(unsigned int i = 0; i < 6; i++){
 				it->DF[it->totalFree*row0 + statef_var.row0 + i] += dFdq_n2(0, i)/dvMax;
@@ -835,7 +835,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 
 				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
 				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodeset->getSegRefByIx_const(s).getID());
+					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodesIn->getSegRefByIx_const(s).getID());
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 				it->DF[it->totalFree*row0 + tof_var.row0] = timeCoeff*dFdt_n(0)/dvMax;
@@ -915,8 +915,8 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
 		it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 	}else{
 		// Sum all TOF for total, set partials w.r.t. integration times equal to one
-		for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
-			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodeset->getSegRefByIx_const(s).getID());
+		for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
 			it->FX[row0] += it->X[tof_var.row0];
 			it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 		}
@@ -943,7 +943,7 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int 
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, it->sysData);
+	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
 
 	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
 	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];

@@ -186,16 +186,16 @@ std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *
  */
 void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, const Arcset *nodes_in, bool findEvent, Arcset *nodes_out) const{
     
-    const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(it->sysData);
+    const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(it->nodesIn->getSysData());
     Arcset_cr3bp_lt *nodeset_out = static_cast<Arcset_cr3bp_lt *>(nodes_out);
 
     std::vector<int> newNodeIDs;
     for(int n = 0; n < it->numNodes; n++){
-        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodeset->getNodeByIx(n).getID());
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeByIx(n).getID());
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
 
         Node node(state, 0);
-        node.setConstraints(it->nodeset->getNodeByIx(n).getConstraints());
+        node.setConstraints(it->nodesIn->getNodeByIx(n).getConstraints());
 
         if(n+1 == it->numNodes){
             // Set Jacobi Constant
@@ -223,21 +223,21 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
 
     double tof;
     int newOrigID, newTermID;
-    for(unsigned int s = 0; s < it->nodeset->getNumSegs(); s++){
-        Segment seg = it->nodeset->getSegByIx(s);
+    for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+        Segment seg = it->nodesIn->getSegByIx(s);
 
         if(it->bVarTime){
             MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
                 it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
             // Get data
-            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodeset->getNumSegs()) : it->X[tofVar.row0];
+            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodesIn->getNumSegs()) : it->X[tofVar.row0];
         }else{
             tof = seg.getTOF();
         }
 
-        newOrigID = newNodeIDs[it->nodeset->getNodeIx(seg.getOrigin())];
+        newOrigID = newNodeIDs[it->nodesIn->getNodeIx(seg.getOrigin())];
         int termID = seg.getTerminus();
-        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodeset->getNodeIx(termID)];
+        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodesIn->getNodeIx(termID)];
         
         Segment newSeg(newOrigID, newTermID, tof);
         newSeg.setConstraints(seg.getConstraints());
@@ -277,7 +277,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
     }
 
     // nodeset_out->print();
-    std::vector<Constraint> arcCons = it->nodeset->getArcConstraints();
+    std::vector<Constraint> arcCons = it->nodesIn->getArcConstraints();
     for(unsigned int i = 0; i < arcCons.size(); i++){
         nodeset_out->addConstraint(arcCons[i]);
     }
@@ -288,8 +288,8 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
  *  \param it pointer to the object to be initialized
  */
 void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData *it) const{
-    Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it->sysData));
-    it->propSegs.assign(it->nodeset->getNumSegs(), traj);
+    Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it->nodesIn->getSysData()));
+    it->propSegs.assign(it->nodesIn->getNumSegs(), traj);
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

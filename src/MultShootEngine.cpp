@@ -439,7 +439,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 
 	// Define values for use in corrections loop
 	double err = 10*tol;
-	unsigned int stateSize = it.sysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int stateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
@@ -451,21 +451,21 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 		it.deltaVs.assign(3*it.numNodes, 0);
 
 		// initialize a vector of trajectory objects to store each propagated segment
-		it.sysData->getDynamicsModel()->multShoot_initIterData(&it);
+		it.nodesIn->getSysData()->getDynamicsModel()->multShoot_initIterData(&it);
 
-		for(unsigned int s = 0; s < it.nodeset->getNumSegs(); s++){
+		for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
 			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
 			std::vector<double> ic(stateSize, 0);
-			it.sysData->getDynamicsModel()->multShoot_getSimICs(&it, it.nodeset, it.nodeset->getSegByIx(s).getID(),
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn, it.nodesIn->getSegByIx(s).getID(),
 				&(ic[0]), &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			// if(verbosity >= Verbosity_tp::DEBUG){
 			// 	printf("Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
 			// }
-			simEngine.setCtrlLaw(it.nodeset->getSegByIx(s).getCtrlLaw());
+			simEngine.setCtrlLaw(it.nodesIn->getSegByIx(s).getCtrlLaw());
 
 			try{
 				simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
@@ -482,14 +482,14 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 		// waitForUser();
 		
 		// Compute Delta-Vs between node segments
-		for(unsigned int s = 0; s < it.nodeset->getNumSegs(); s++){
+		for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
 			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-			int termID = it.nodeset->getSegByIx(s).getTerminus();
+			int termID = it.nodesIn->getSegByIx(s).getTerminus();
 			if(termID != Linkable::INVALID_ID){
-				int termNodeIx = it.nodeset->getNodeIx(termID);
+				int termNodeIx = it.nodesIn->getNodeIx(termID);
 				// velCon has false for a velocity state if there is a discontinuity between
 				// the terminus of the segment and the terminal node
-				std::vector<bool> velCon = it.nodeset->getSegByIx(s).getVelCon();
+				std::vector<bool> velCon = it.nodesIn->getSegByIx(s).getVelCon();
 				for(int i = 3; i < 6; i++){
 					// Compute difference in velocity; if velCon[i-3] is true, then velocity
 					// should be continuous and any difference is numerical error, so set to
@@ -502,7 +502,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
 		for(unsigned int c = 0; c < it.allCons.size(); c++)
-			it.sysData->getDynamicsModel()->multShoot_applyConstraint(&it, it.allCons[c], c);
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(&it, it.allCons[c], c);
 
 		// Solve for newX and copy into working vector X
 		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
@@ -539,7 +539,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 
 	if(pNodesOut){
 		try{
-			it.sysData->getDynamicsModel()->multShoot_createOutput(&it, it.nodeset, bFindEvent, pNodesOut);
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it, it.nodesIn, bFindEvent, pNodesOut);
 		}catch(Exception &e){
 			astrohelion::printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
 			throw e;

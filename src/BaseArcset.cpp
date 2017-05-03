@@ -2273,8 +2273,9 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
 
 void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	
+	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
+	const unsigned int full_size = core_size + core_size*core_size + pSysData->getDynamicsModel()->getExtraStateSize();
+
 	if(pStateCell == NULL){
 		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
 	}else{
@@ -2300,10 +2301,10 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 				if(data != nullptr){
 					for(unsigned int i = 0; i < numSteps; i++){
 						std::vector<double> state(6);
-						for(unsigned int c = 0; c < stateSize; c++)
+						for(unsigned int c = 0; c < full_size; c++)
 							state[c] = data[c*numSteps + i];
 
-						segs[s].appendState(&(state.front()), stateSize);
+						segs[s].appendState(&(state.front()), full_size);
 					}
 				}
 			}else{
@@ -2569,7 +2570,9 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, const char *pVarName) const{
 		return;	// Can't save any data... exit
 	}
 
-	dims[1] = pSysData->getDynamicsModel()->getCoreStateSize();
+	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
+	const unsigned int full_size = core_size + core_size*core_size + pSysData->getDynamicsModel()->getExtraStateSize();
+	dims[1] = full_size;
 	for(unsigned int s = 0; s < segs.size(); s++){
 		std::vector<double> segStates = segs[s].getStateVector();
 		if(segStates.size() % dims[1] != 0){

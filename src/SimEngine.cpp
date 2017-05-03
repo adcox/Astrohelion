@@ -564,9 +564,15 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         events[i].initialize(arcset->getSysData());
     }
 
-    // Get the dimension of the state vector for integration
-    unsigned int core_dim = model->getCoreStateSize();
-    unsigned int ic_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
+    // Number of states in the most basic EOM propagation for this model
+    const unsigned int core_dim = model->getCoreStateSize();
+    // Number of states used for this propagation
+    const unsigned int ic_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
+    // Max number of states for the most complex EOM propagation for this model
+    const unsigned int full_dim = core_dim + core_dim*core_dim + model->getExtraStateSize();
+    // dummy extra state variables to save if not all the states are propagated
+    const std::vector<double> extraStates(full_dim - ic_dim, 0);
+
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
@@ -706,7 +712,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     
     // Construct a segment with origin at the initial node, undefined terminus, dummy TOF in the correct direction
     Segment seg(id0, Linkable::INVALID_ID, t[1] - t[0]);
-    seg.appendState(y, core_dim);     // Save the initial state in the segment
+    seg.appendState(y, ic_dim);     // Save the initial state in the segment
+    seg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
     seg.appendTime(t[0]);           // Save the initial time in the segment
     model->sim_addSeg(seg, y, t[0], arcset, eomParams);
 
@@ -746,7 +753,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
                 lastSeg.setTerminus(idf);                       // Update the terminus to the final node
-                lastSeg.appendState(y, core_dim);                 // Save the final state and time to the segment
+                lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
+                lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                 lastSeg.appendTime(t_int);
                 lastSeg.storeTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
                 lastSeg.setSTM(y+core_dim, core_dim*core_dim);  // Set the STM to be the most recent one
@@ -765,7 +773,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
             // Save propagation state to segment
             Segment &lastSeg = arcset->getSegRefByIx(-1);       // Get another reference (not reassignable)
-            lastSeg.appendState(y, core_dim);                     // Save newest state and time
+            lastSeg.appendState(y, ic_dim);                     // Save newest state and time
+            lastSeg.appendState(extraStates);                   // Save dummy values for extra states that are not propagated
             lastSeg.appendTime(t_int);
             propStepCount++;
         }
@@ -792,7 +801,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
                 Segment newSeg(nodeID_i, Linkable::INVALID_ID, tf - t_int);
-                newSeg.appendState(y, core_dim);
+                newSeg.appendState(y, ic_dim);
+                lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
                 newSeg.appendTime(t_int);
                 model->sim_addSeg(newSeg, y, t_int, arcset, eomParams);
             }
@@ -820,7 +830,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
                     lastSeg.setTerminus(idf);                       // Update the terminus to the final node
-                    lastSeg.appendState(y, core_dim);                 // Save the final state and time to the segment
+                    lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
+                    lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                     lastSeg.appendTime(t_int);
                     lastSeg.storeTOF();
                     lastSeg.setSTM(y+core_dim, core_dim*core_dim);
@@ -836,8 +847,9 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 propStepCount++;
 
                 // Save the most recent time and state to the segment
-                Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get another reference (not reassignable)
-                lastSeg.appendState(y, core_dim);
+                Segment &lastSeg = arcset->getSegRefByIx(-1);   // Get another reference (not reassignable)
+                lastSeg.appendState(y, ic_dim);
+                lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                 lastSeg.appendTime(t_int);
             }
 
@@ -875,7 +887,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     
         // Propagation ended without saving the final state
         lastSeg.setTerminus(nodeID_f);
-        lastSeg.appendState(y, core_dim);
+        lastSeg.appendState(y, ic_dim);
+        lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
         lastSeg.appendTime(t_int);
         lastSeg.storeTOF();
         lastSeg.setSTM(y+core_dim, core_dim*core_dim);
@@ -937,13 +950,13 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
  *
  *  \param y the most recent state on the integrated arc.
  *  \param t the time associated with y
- *  \param arcset pointer to a trajectory object to store the output trajectory
+ *  \param pArcset pointer to a trajectory object to store the output trajectory
  *  \param propStepCount the number of steps the propagation has taken so far. This is different
  *  from the number of time steps as many propagation steps may be taken between specified time steps
  *  \return whether or not the simulation should end (an event triggers killSim)
  */
-bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int propStepCount){
-    const DynamicsModel *model = arcset->getSysData()->getDynamicsModel();
+bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int propStepCount){
+    const DynamicsModel *model = pArcset->getSysData()->getDynamicsModel();
     unsigned int core_dim = model->getCoreStateSize();
 
     // Look through all events
@@ -953,16 +966,16 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int prop
         if(propStepCount > 1 && to_underlying(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core_dim, t)){
 
             astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG,
-                "  Event %d detected on segment %d; searching for exact crossing\n", ev, arcset->getNumSegs());
+                "  Event %d detected on segment %d; searching for exact crossing\n", ev, pArcset->getNumSegs());
             events[ev].incrementCount();  // Update the counter for the event
 
             if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
             // Use correction to locate the event very accurately
-            if(locateEvent_multShoot(y, t, events[ev], arcset)){
+            if(locateEvent_multShoot(y, t, events[ev], pArcset)){
                 // Update event state from the most recent node (a new node was created at the event occurence)
-                std::vector<double> state = arcset->getStateByIx(-1);
-                double lastT = arcset->getTimeByIx(-1);
+                std::vector<double> state = pArcset->getStateByIx(-1);
+                double lastT = pArcset->getTimeByIx(-1);
                 events[ev].updateDist(&(state[0]), core_dim, lastT);
                 
                 // This condition is also checked in model->sim_locateEvent(): that function adds a new
@@ -1009,7 +1022,8 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *arcset, int prop
 bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Arcset* pArcset) const{
 
     const DynamicsModel *model = pArcset->getSysData()->getDynamicsModel();
-    unsigned int core_dim = model->getCoreStateSize();
+    const unsigned int core_dim = model->getCoreStateSize();
+    const unsigned int full_dim = core_dim + core_dim*core_dim + model->getExtraStateSize();
 
     // Create a nodeset from the previous state (stored in the event) and
     // integrate forwards for half the time between this state and the last one
@@ -1020,7 +1034,8 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
 
     // Copy IC into vector - Use the state from two iterations ago to avoid
     // numerical problems when the previous state is REALLY close to the event
-    std::vector<double> arcIC = lastSeg.getStateByRow(-2, core_dim);
+    std::vector<double> fullState = lastSeg.getStateByRow(-2, full_dim);
+    std::vector<double> arcIC(fullState.begin(), fullState.begin()+core_dim);
 
     if(verbosity >= Verbosity_tp::ALL_MSG){
         // astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
@@ -1081,7 +1096,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     }
 
     Node evtNode = correctedSet.getNodeByIx(-1);
-    std::vector<double> state = evtNode.getState();
+    std::vector<double> state = correctedSet.getSegRefByIx(-1).getStateByRow(-1, full_dim);
     double eventTime = t0 + correctedSet.getTotalTOF();
     evtNode.clearConstraints();     // Get rid of any cosntraints used to isolate the event
 
@@ -1089,9 +1104,8 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     int id = model->sim_addNode(evtNode, nullptr, eventTime, pArcset, eomParams, event.getType());
     pArcset->getNodeRef(id).addLink(lastSeg.getID());    // Link the new node to the previous segment
 
-
     lastSeg.setTerminus(id);
-    lastSeg.appendState(&(state.front()), state.size());
+    lastSeg.appendState(state);
     lastSeg.appendTime(eventTime);
     lastSeg.storeTOF();
     lastSeg.setSTM(correctedSet.getExtraParamVecByIx(-1, PARAMKEY_STM));
@@ -1100,7 +1114,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
         // Initialize with origin ID, undetermined terminus, and a dummy TOF with the same sign as the previous segment
         Segment newSeg(id, Linkable::INVALID_ID, lastSeg.getTOF());
-        newSeg.appendState(&(state.front()), core_dim);
+        newSeg.appendState(state);
         newSeg.appendTime(eventTime);
         model->sim_addSeg(newSeg, &(state.front()), eventTime, pArcset, eomParams);
     }

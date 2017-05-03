@@ -150,6 +150,10 @@ void Segment::appendState(const double *q, unsigned int len){
 	states.insert(states.end(), q, q+len);
 }//====================================================
 
+void Segment::appendState(const std::vector<double> q){
+	states.insert(states.end(), q.begin(), q.end());
+}//====================================================
+
 void Segment::appendTime(double t){
 	times.push_back(t);
 }//====================================================

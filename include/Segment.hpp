@@ -77,6 +77,7 @@ public:
 	 */
 	void addConstraint(Constraint);
 	void appendState(const double*, unsigned int);
+	void appendState(const std::vector<double>);
 	void appendTime(double);
 	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;

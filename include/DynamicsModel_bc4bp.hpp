@@ -85,7 +85,6 @@ public:
 	 *  \{
 	 */
 	int sim_addNode(Node&, const double*, double, Arcset*, EOM_ParamStruct*, Event_tp) const;
-	int sim_addSeg(Segment&, const double*, double, Arcset*, EOM_ParamStruct*) const;
 	bool sim_locateEvent(Event, Arcset*, const double*, double, double, EOM_ParamStruct*, Verbosity_tp) const;
 	//\}
 

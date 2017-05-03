@@ -159,13 +159,6 @@ int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Arcs
     return id;
 }//====================================================
 
-int DynamicsModel_bc4bp::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
-    (void) y;
-    (void) t;
-    (void) params;
-    return traj->addSeg(seg);
-}//====================================================
-
 /**
  *  \brief Use a correction algorithm to accurately locate an event crossing
  *

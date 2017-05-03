@@ -146,31 +146,6 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
 //      Simulation Engine Functions
 //------------------------------------------------------------------------------------------------------
 
-int DynamicsModel_cr3bp_lt::sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const{
-    (void) t;
-    
-    node.setTriggerEvent(tp);
-    int id = traj->addNode(node);
-
-    // Cast trajectory to a cr3bp_traj and then store a value for Jacobi Constant
-    const SysData_cr3bp_lt *ltSys = static_cast<const SysData_cr3bp_lt*>(params->sysData);
-    Arcset_cr3bp_lt *ltTraj = static_cast<Arcset_cr3bp_lt*>(traj);
-
-    // Save Jacobi for CR3BP - it won't be constant in general, but is definitely useful to have
-    ltTraj->setJacobiByIx(-1, DynamicsModel_cr3bp::getJacobi(y, ltSys->getMu()));
-
-    return id;
-}//====================================================
-
-int DynamicsModel_cr3bp_lt::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
-    (void) y;
-    (void) t;
-    (void) params;
-
-    seg.setCtrlLaw(params->ctrlLawID);
-    return traj->addSeg(seg);
-}//====================================================
-
 /**
  *  \brief Use a correction algorithm to accurately locate an event crossing
  *

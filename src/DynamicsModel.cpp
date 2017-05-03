@@ -185,7 +185,7 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* tr
 int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
 	(void) y;
 	(void) t;
-	(void) params;
+	seg.setCtrlLaw(params->ctrlLawID);
 	return traj->addSeg(seg);
 }//====================================================
 

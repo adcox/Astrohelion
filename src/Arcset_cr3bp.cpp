@@ -244,7 +244,7 @@ void Arcset_cr3bp::setJacobiByIx(int ix, double val){
 void Arcset_cr3bp::saveCmds(mat_t* pMatFile) const{
 	Arcset::saveCmds(pMatFile);
 
-	saveExtraParam(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
+	saveNodeExtraParam(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
 }//====================================================
 
 /**
@@ -253,7 +253,7 @@ void Arcset_cr3bp::saveCmds(mat_t* pMatFile) const{
  */
 void Arcset_cr3bp::readCmds(mat_t *pMatFile){
 	Arcset::readCmds(pMatFile);
-	readExtraParamFromMat(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
+	readNodeExtraParamFromMat(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
 }//====================================================
 
 }// End of astrohelion namespace

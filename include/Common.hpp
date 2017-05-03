@@ -55,21 +55,35 @@ const double G_GRAV_0 = 9.8065/1000;
 /** Pi */
 const double PI = 3.14159265358979323846264338327950;
 
+// Matlab File Name Variables for 2BP
 static const char VARNAME_2BP_ENERGY[] = "energy";			//!< Matlab file variable name for 2BP energy data
 static const char VARNAME_ANGMOM[] = "angMom";				//!< Matlab file variable name for angular momentum data
-static const char VARNAME_CTRL_LAW[] = "CtrlLaw";			//!< Matlab file variable name for control law data
 static const char VARNAME_ECC[] = "ecc";					//!< Matlab file variable name for eccentricity data
-static const char VARNAME_EPOCH[] = "Epoch";				//!< Matlab file variable name for epoch data
-static const char VARNAME_JACOBI[] = "Jacobi";				//!< Matlab file variable name for Jacobi constant data
-static const char VARNAME_NODE[] = "Node";					//!< Matlab file variable name for node data (Arcset)
 static const char VARNAME_SMA[] = "sma";					//!< Matlab file variable name for semimajor axis data
-static const char VARNAME_STATE[] = "State";				//!< Matlab file variable name for state data (Arcset)
+
+// Matlab File Name Variables for General Arcset
+static const char VARNAME_NODESTATE[] = "NodeState";		//!< Matlab file variable name for node state vectors
+static const char VARNAME_NODETIME[] = "NodeTime";			//!< Matlab file variable name for node time/epoch values
+static const char VARNAME_SEGSTATE[] = "SegState";			//!< Matlab file variable name for segment state vectors
+static const char VARNAME_SEGTIME[] = "SegTime";			//!< Matlab file variable name for segment time vectors
+static const char VARNAME_SEGTOF[] = "SegTOF";				//!< Matlab file variable name for segment time-of-flight values
+
 static const char VARNAME_STATE_DERIV[] = "qdot";			//!< Matlab file variable name for state derivative data
-static const char VARNAME_STATE_EPOCH_DERIV[] = "dqdT";		//!< Matlab file variable name for state derivative w.r.t. epoch
 static const char VARNAME_STM[] = "STM";					//!< Matlab file variable name for state transition matrix data
-static const char VARNAME_TIME[] = "Time";					//!< Matlab file variable name for time data (Arcset)
 static const char VARNAME_TOF[] = "TOF";					//!< Matlab file variable name for time-of-flight data
 
+// Matlab File Name Variables for Specific Arcsets
+static const char VARNAME_CTRL_LAW[] = "CtrlLaw";			//!< Matlab file variable name for control law data
+static const char VARNAME_JACOBI[] = "Jacobi";				//!< Matlab file variable name for Jacobi constant data
+static const char VARNAME_STATE_EPOCH_DERIV[] = "dqdT";		//!< Matlab file variable name for state derivative w.r.t. epoch
+
+// Deprecated Matlab file variable names
+static const char VARNAME_DEP_EPOCH[] = "Epoch";			//!< Matlab file variable name for epoch data
+static const char VARNAME_DEP_NODE[] = "Node";				//!< Matlab file variable name for node data
+static const char VARNAME_DEP_STATE[] = "State";			//!< Matlab file variable name for state data
+static const char VARNAME_DEP_TIME[] = "Time";				//!< Matlab file variable name for time data
+
+// ExtraParam Map Keys
 static const char PARAMKEY_2BP_ENERGY[] = "energy";			//!< ExtraParam map key for 2BP energy data
 static const char PARAMKEY_ANGMOM[] = "angMom";				//!< ExtraParam map key for angular momentum data
 static const char PARAMKEY_ECC[] = "ecc";					//!< ExtraParam map key for eccentricity data
@@ -78,6 +92,5 @@ static const char PARAMKEY_SMA[] = "sma";					//!< ExtraParam map key for semima
 static const char PARAMKEY_STATE_DERIV[] = "qdot";			//!< ExtraParam map key for state derivative data
 static const char PARAMKEY_STATE_EPOCH_DERIV[] = "dqdT";	//!< ExtraParam map key for state derivative w.r.t. epoch 
 static const char PARAMKEY_STM[] = "STM";					//!< ExtraParam map key for state transition matrix data
-
 
 }// END of Astrohelion namespace

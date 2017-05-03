@@ -84,8 +84,10 @@ public:
 	unsigned int getNumCons() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
+	std::vector<double> getStateVector() const;
 	std::vector<double> getStateByRow(int, unsigned int) const;
 	int getTerminus() const;
+	std::vector<double> getTimeVector() const;
 	double getTimeByIx(int) const;
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
@@ -95,7 +97,9 @@ public:
 	void setCtrlLaw(unsigned int);
 	void setID(int) override;
 	void setOrigin(int);
+	void setStateVector(std::vector<double>);
 	void setTerminus(int);
+	void setTimeVector(std::vector<double>);
 	void setTOF(double);
 	void setSTM(MatrixXRd);
 	void setSTM(const double*, unsigned int);

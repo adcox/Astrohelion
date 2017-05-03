@@ -254,7 +254,7 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Arcset *traj,
     traj->getNodeRef(id).addLink(lastSeg.getID());  // Link the new node to the previous segment
 
     lastSeg.setTerminus(id);
-    lastSeg.appendState(&(state.front()), state.size());
+    lastSeg.appendState(&(state.front()), coreStates);
     lastSeg.appendTime(eventTime);
     lastSeg.storeTOF();
     lastSeg.setSTM(stm);
@@ -263,7 +263,7 @@ bool DynamicsModel_bc4bp::sim_locateEvent(Event event, Arcset *traj,
     if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
         // Initialize with origin ID, undetermined terminus, and a dummy TOF with the same sign as the previous segment
         Segment newSeg(id, Linkable::INVALID_ID, lastSeg.getTOF());
-        newSeg.appendState(&(state.front()), state.size());
+        newSeg.appendState(&(state.front()), coreStates);
         newSeg.appendTime(eventTime);
         sim_addSeg(newSeg, &(state.front()), eventTime, traj, params);
     }

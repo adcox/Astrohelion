@@ -99,7 +99,6 @@ public:
 	 */
 	virtual void print() const;
 	void readFromMat(const char*);
-	void reverseOrder();
 	void saveToMat(const char*) const;
 	//\}
 

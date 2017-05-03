@@ -185,6 +185,8 @@ unsigned int Segment::getNumCons() const { return cons.size(); }
  */
 int Segment::getOrigin() const { return links[ORIG_IX]; }
 
+std::vector<double> Segment::getStateVector() const{ return states; }
+
 /**
  *  \brief Retrieve a state from the storage vector
  *  \details State vectors are stored as rows of a matrix where
@@ -216,6 +218,8 @@ std::vector<double> Segment::getStateByRow(int row, unsigned int rowLen) const{
  *  \return the ID of the terminal node (chronologically)
  */
 int Segment::getTerminus() const { return links[TERM_IX]; }
+
+std::vector<double> Segment::getTimeVector() const { return times; }
 
 /**
  *  \brief Retrieve a time from the segment time vector
@@ -309,6 +313,13 @@ void Segment::setID(int id){
 void Segment::setOrigin(int o){ links[ORIG_IX] = o; }
 
 /**
+ *  \brief Set the state vector associated with the propagation along this segment
+ *  \param v the state vector associated with the propagation along this segment, 
+ *  in row-major order.
+ */
+void Segment::setStateVector(std::vector<double> v){ states = v; }
+
+/**
  *	\brief Set the STM for this step
  *	\param m a state transition matrix (non-dim)
  */
@@ -339,6 +350,12 @@ void Segment::setSTM(std::vector<double> elements){
  *  \param t the ID of the node at the terminus (chronologically) of this segment
  */
 void Segment::setTerminus(int t){ links[TERM_IX] = t; }
+
+/**
+ *  \brief Set the time vector associated with the propagated arc along this segment
+ *  \param t he time vector associated with the propagated arc along this segment
+ */
+void Segment::setTimeVector(std::vector<double> t){ times = t; }
 
 /**
  *  \brief Set the TOF along this segment

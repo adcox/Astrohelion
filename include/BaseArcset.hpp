@@ -190,6 +190,7 @@ public:
 	void printInChrono() const;
 	void printNodeIDMap() const;
 	void printSegIDMap() const;
+
 	/**
 	 *	\brief Displays a useful messages about the object
 	 */
@@ -256,27 +257,43 @@ protected:
 	 *  \name File I/O
 	 *  \{
 	 */
-	void initNodesSegsFromMat(mat_t *, const char* pStateVarName = VARNAME_STATE);
-	void readCtrlLawFromMat(mat_t*, const char* pVarName = VARNAME_CTRL_LAW);
-	void readEpochFromMat(mat_t*, const char* pVarName = VARNAME_EPOCH);
-	void readExtraParamFromMat(mat_t*, std::string, const char*);
-	void readExtraParamVecFromMat(mat_t*, std::string, size_t, const char*);
-	void readStateFromMat(mat_t*, const char* pVarName = VARNAME_STATE);
-	void readStateDerivFromMat(mat_t*, const char* pVarName = VARNAME_STATE_DERIV);
-	void readSTMFromMat(mat_t*, const char* pVarName = VARNAME_STM);
-	void readTOFFromMat(mat_t*, const char* pVarName = VARNAME_TOF);
+	void initNodesSegsFromMat(mat_t *, const char* pStateVarName = VARNAME_NODESTATE);
+	
+	// Read Node Data
+	void readNodeTimesFromMat(mat_t*, const char* pVarName = VARNAME_NODETIME);
+	void readNodeExtraParamFromMat(mat_t*, std::string, const char*);
+	void readNodeExtraParamVecFromMat(mat_t*, std::string, size_t, const char*);
+	void readNodeStatesFromMat(mat_t*, const char* pVarName = VARNAME_NODESTATE);
+	void readNodeStateDerivFromMat(mat_t*, const char* pVarName = VARNAME_STATE_DERIV);
+	
+	// Read Segment Data
+	void readSegCtrlLawFromMat(mat_t*, const char* pVarName = VARNAME_CTRL_LAW);
+	void readSegStatesFromMat(mat_t*, const char* pVarName = VARNAME_SEGSTATE);
+	void readSegSTMFromMat(mat_t*, const char* pVarName = VARNAME_STM);
+	void readSegTimesFromMat(mat_t*, const char* pVarName = VARNAME_SEGTIME);
+	void readSegTOFFromMat(mat_t*, const char* pVarName = VARNAME_TOF);
 
-	void saveCtrlLaw(mat_t*, const char* pVarName = VARNAME_CTRL_LAW) const;
-	void saveEpoch(mat_t*, const char* pVarName = VARNAME_EPOCH) const;
-	void saveExtraParam(mat_t*, std::string, const char*) const;
-	void saveExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
-	void saveState(mat_t*, const char* pVarName = VARNAME_STATE) const;
-	void saveStateDeriv(mat_t*, const char* pVarName = VARNAME_STATE_DERIV) const;
-	void saveSTMs(mat_t*, const char* pVarName = VARNAME_STM) const;
-	void saveTOF(mat_t*, const char* pVarName = VARNAME_TOF) const;
+	// Save Node Data
+	void saveNodeExtraParam(mat_t*, std::string, const char*) const;
+	void saveNodeExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
+	void saveNodeStates(mat_t*, const char* pVarName = VARNAME_NODESTATE) const;
+	void saveNodeTimes(mat_t*, const char* pVarName = VARNAME_NODETIME) const;
+	void saveNodeStateDeriv(mat_t*, const char* pVarName = VARNAME_STATE_DERIV) const;
+
+	// Save Segment Data
+	void saveSegCtrlLaw(mat_t*, const char* pVarName = VARNAME_CTRL_LAW) const;
+	void saveSegStates(mat_t*, const char* pVarName = VARNAME_SEGSTATE) const;
+	void saveSegSTMs(mat_t*, const char* pVarName = VARNAME_STM) const;
+	void saveSegTimes(mat_t*, const char *pVarName = VARNAME_SEGTIME) const;
+	void saveSegTOF(mat_t*, const char* pVarName = VARNAME_TOF) const;
 	//\}
 
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	std::vector<ArcPiece> sortArcset(int, std::vector<ArcPiece>) const;
+	//\}
 };//END OF BaseArcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
 /**

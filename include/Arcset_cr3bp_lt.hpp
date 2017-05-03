@@ -41,9 +41,6 @@ public:
 	 *  \{
 	 */
 	Arcset_cr3bp_lt(const SysData_cr3bp_lt*);
-	// Arcset_cr3bp_lt(const SysData_cr3bp_lt*, const double[6], double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
-	// Arcset_cr3bp_lt(const SysData_cr3bp_lt*, std::vector<double>, double, int, NodeDistro_tp type = NodeDistro_tp::TIME);
-	// Arcset_cr3bp_lt(Arcset_cr3bp_lt, int, NodeDistro_tp type = NodeDistro_tp::TIME);
 	Arcset_cr3bp_lt(const Arcset_cr3bp_lt&);
 	Arcset_cr3bp_lt(const BaseArcset&);
 	baseArcsetPtr create(const SysData*) const override;

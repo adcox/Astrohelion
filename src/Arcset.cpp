@@ -367,47 +367,6 @@ void Arcset::shiftAllTimes(double amount){
 //-----------------------------------------------------
 
 /**
- *	\brief Save the arcset to a file
- *	\param filename the name of the .mat file
- */
-void Arcset::saveToMat(const char* filename) const{
-	/*	Create a new Matlab MAT file with the given name and optional
-	 *	header string. If no header string is given, the default string 
-	 *	used containing the software, version, and date in it. If a header
-	 *	string is specified, at most the first 116 characters are written to
-	 *	the file. Arguments are:
-	 *	const char *matname 	- 	the name of the file
-	 *	const char *hdr_str 	- 	the 116 byte header string
-	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
-	 */
-	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
-		astrohelion::printErr("Arcset::saveToMat: Error creating MAT file\n");
-	}else{
-		saveCmds(matfp);
-	}
-
-	Mat_Close(matfp);
-}//====================================================
-
-/**
- *  \brief Execute commands to save data to a Matlab file
- *  \details This function is called from saveToMat() and should
- *  be overridden in derived classes as necessary.
- * 
- *  \param pMatFile pointer to an open Matlab file
- */
-void Arcset::saveCmds(mat_t* pMatFile) const{
-	saveState(pMatFile);
-	saveStateDeriv(pMatFile);
-	saveEpoch(pMatFile, VARNAME_TIME);
-	saveTOF(pMatFile);
-	saveSTMs(pMatFile);
-	saveCtrlLaw(pMatFile);
-	pSysData->saveToMat(pMatFile);
-}//====================================================
-
-/**
  *	\brief Print a useful message describing this arcset to the standard output
  */
 void Arcset::print() const {
@@ -476,6 +435,51 @@ void Arcset::print() const {
 }//====================================================
 
 /**
+ *	\brief Save the arcset to a file
+ *	\param filename the name of the .mat file
+ */
+void Arcset::saveToMat(const char* filename) const{
+	/*	Create a new Matlab MAT file with the given name and optional
+	 *	header string. If no header string is given, the default string 
+	 *	used containing the software, version, and date in it. If a header
+	 *	string is specified, at most the first 116 characters are written to
+	 *	the file. Arguments are:
+	 *	const char *matname 	- 	the name of the file
+	 *	const char *hdr_str 	- 	the 116 byte header string
+	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
+	 */
+	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+	if(NULL == matfp){
+		astrohelion::printErr("Arcset::saveToMat: Error creating MAT file\n");
+	}else{
+		saveCmds(matfp);
+	}
+
+	Mat_Close(matfp);
+}//====================================================
+
+/**
+ *  \brief Execute commands to save data to a Matlab file
+ *  \details This function is called from saveToMat() and should
+ *  be overridden in derived classes as necessary.
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
+void Arcset::saveCmds(mat_t* pMatFile) const{
+	saveNodeStates(pMatFile);
+	saveNodeStateDeriv(pMatFile);
+	saveNodeTimes(pMatFile);
+
+	saveSegStates(pMatFile);
+	saveSegTimes(pMatFile);
+	
+	saveSegTOF(pMatFile);
+	saveSegSTMs(pMatFile);
+	saveSegCtrlLaw(pMatFile);
+	pSysData->saveToMat(pMatFile);
+}//====================================================
+
+/**
  *  \brief Populate data in this trajectory from a matlab file
  * 
  *  \param filepath the path to the matlab data file
@@ -495,36 +499,47 @@ void Arcset::readFromMat(const char *filepath){
 }//====================================================
 
 /**
- *	\brief Reverse the order of the nodes in this arcset
- *
- *	The constraints are automatically adjusted so they still 
- *	constraint the same states even though the node indices 
- *	have changed.
- */
-void Arcset::reverseOrder() {
-	for(unsigned int s = 0; s < segs.size(); s++){
-		int o = segs[s].getOrigin();
-		segs[s].setOrigin(segs[s].getTerminus());
-		segs[s].setTerminus(o);
-		segs[s].setTOF(segs[s].getTOF()*-1);
-	}
-}//====================================================
-
-/**
  *  \brief Execute commands to read data from a Matlab file
  *  \details This function is called from readFromMat() and should
  *  be overridden in derived classes as necessary.
  * 
  *  \param pMatFile pointer to an open Matlab file
+ *  \todo Remove backward compatibility code in future (today: May 3 2017)
  */
 void Arcset::readCmds(mat_t *pMatFile){
-	initNodesSegsFromMat(pMatFile);
-	readStateFromMat(pMatFile);
-	readStateDerivFromMat(pMatFile);
-	readSTMFromMat(pMatFile);
-	readEpochFromMat(pMatFile, VARNAME_TIME);
-	readTOFFromMat(pMatFile);
-	readCtrlLawFromMat(pMatFile);
+	try{
+		initNodesSegsFromMat(pMatFile);
+
+		readNodeStatesFromMat(pMatFile);
+		readNodeStateDerivFromMat(pMatFile);
+		readNodeTimesFromMat(pMatFile);
+
+		readSegStatesFromMat(pMatFile);
+		readSegTimesFromMat(pMatFile);
+		readSegSTMFromMat(pMatFile);
+		readSegTOFFromMat(pMatFile);
+		readSegCtrlLawFromMat(pMatFile);
+	}catch(Exception &e){
+		// if file was saved using older style, try slightly different read commands
+
+		try{
+			// Old trajectory save
+			initNodesSegsFromMat(pMatFile, VARNAME_DEP_STATE);
+			readNodeStatesFromMat(pMatFile, VARNAME_DEP_STATE);
+			readNodeTimesFromMat(pMatFile, VARNAME_DEP_TIME);
+		}catch(Exception &e){
+			// Old nodeset save
+			initNodesSegsFromMat(pMatFile, VARNAME_DEP_NODE);
+			readNodeStatesFromMat(pMatFile, VARNAME_DEP_NODE);
+			readNodeTimesFromMat(pMatFile, VARNAME_DEP_EPOCH);
+		}
+
+		// Old save for both trajectory and nodeset
+		readNodeStateDerivFromMat(pMatFile);
+		readSegSTMFromMat(pMatFile);
+		readSegTOFFromMat(pMatFile);
+		readSegCtrlLawFromMat(pMatFile);
+	}
 }//====================================================
 
 

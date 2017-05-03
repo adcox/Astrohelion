@@ -104,10 +104,10 @@ baseArcsetPtr Arcset_2bp::clone() const{
 void Arcset_2bp::saveCmds(mat_t* pMatFile) const{
 	Arcset::saveCmds(pMatFile);
 
-	saveExtraParam(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
-	saveExtraParam(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
-	saveExtraParam(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
-	saveExtraParam(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
+	saveNodeExtraParam(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
+	saveNodeExtraParam(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
+	saveNodeExtraParam(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
+	saveNodeExtraParam(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
 }//====================================================
 
 /**
@@ -117,9 +117,9 @@ void Arcset_2bp::saveCmds(mat_t* pMatFile) const{
 void Arcset_2bp::readCmds(mat_t *pMatFile){
 	Arcset::readCmds(pMatFile);
 
-	readExtraParamFromMat(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
-	readExtraParamFromMat(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
-	readExtraParamFromMat(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
-	readExtraParamFromMat(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
+	readNodeExtraParamFromMat(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
+	readNodeExtraParamFromMat(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
+	readNodeExtraParamFromMat(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
+	readNodeExtraParamFromMat(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
 }//====================================================
 }// End of astrohelion namespace

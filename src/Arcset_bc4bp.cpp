@@ -180,7 +180,7 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 void Arcset_bc4bp::saveCmds(mat_t* pMatFile) const{
 	Arcset::saveCmds(pMatFile);
 
-	saveExtraParamVec(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
+	saveNodeExtraParamVec(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
 }//====================================================
 
 /**
@@ -189,6 +189,6 @@ void Arcset_bc4bp::saveCmds(mat_t* pMatFile) const{
  */
 void Arcset_bc4bp::readCmds(mat_t *pMatFile){
 	Arcset::readCmds(pMatFile);
-	readExtraParamVecFromMat(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
+	readNodeExtraParamVecFromMat(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
 }//====================================================
 }// End of astrohelion namespace

@@ -704,7 +704,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     
     // Construct a segment with origin at the initial node, undefined terminus, dummy TOF in the correct direction
     Segment seg(id0, Linkable::INVALID_ID, t[1] - t[0]);
-    seg.appendState(y, ic_dim);     // Save the initial state in the segment
+    seg.appendState(y, core_dim);     // Save the initial state in the segment
     seg.appendTime(t[0]);           // Save the initial time in the segment
     model->sim_addSeg(seg, y, t[0], arcset, eomParams);
 
@@ -744,7 +744,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
                 lastSeg.setTerminus(idf);                       // Update the terminus to the final node
-                lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
+                lastSeg.appendState(y, core_dim);                 // Save the final state and time to the segment
                 lastSeg.appendTime(t_int);
                 lastSeg.storeTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
                 lastSeg.setSTM(y+core_dim, core_dim*core_dim);  // Set the STM to be the most recent one
@@ -763,7 +763,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
             // Save propagation state to segment
             Segment &lastSeg = arcset->getSegRefByIx(-1);       // Get another reference (not reassignable)
-            lastSeg.appendState(y, ic_dim);                     // Save newest state and time
+            lastSeg.appendState(y, core_dim);                     // Save newest state and time
             lastSeg.appendTime(t_int);
             propStepCount++;
         }
@@ -790,7 +790,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
                 Segment newSeg(nodeID_i, Linkable::INVALID_ID, tf - t_int);
-                newSeg.appendState(y, ic_dim);
+                newSeg.appendState(y, core_dim);
                 newSeg.appendTime(t_int);
                 model->sim_addSeg(newSeg, y, t_int, arcset, eomParams);
             }
@@ -818,7 +818,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                     arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
                     lastSeg.setTerminus(idf);                       // Update the terminus to the final node
-                    lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
+                    lastSeg.appendState(y, core_dim);                 // Save the final state and time to the segment
                     lastSeg.appendTime(t_int);
                     lastSeg.storeTOF();
                     lastSeg.setSTM(y+core_dim, core_dim*core_dim);
@@ -835,7 +835,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 // Save the most recent time and state to the segment
                 Segment &lastSeg = arcset->getSegRefByIx(-1);     // Get another reference (not reassignable)
-                lastSeg.appendState(y, ic_dim);
+                lastSeg.appendState(y, core_dim);
                 lastSeg.appendTime(t_int);
             }
 
@@ -873,7 +873,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     
         // Propagation ended without saving the final state
         lastSeg.setTerminus(nodeID_f);
-        lastSeg.appendState(y, ic_dim);
+        lastSeg.appendState(y, core_dim);
         lastSeg.appendTime(t_int);
         lastSeg.storeTOF();
         lastSeg.setSTM(y+core_dim, core_dim*core_dim);

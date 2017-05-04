@@ -1220,20 +1220,27 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 
 	while(orbitCount < numOrbits){
 
+		SparseMatXCd sparseDF(familyItData.totalCons, familyItData.totalFree);
+		sparseDF.setFromTriplets(familyItData.DF_elements.begin(), familyItData.DF_elements.end());
+		MatrixXRd DF(sparseDF);
+
 		/* 
 		 *	The first iteration should have a DF matrix that is (n-1) x n, but all further iterations will
 		 * 	have an extra row for the pseudo-arc-length constraint; we want to remove that row and take the
 		 * 	nullspace of the submatrix
 		 */
-		std::vector<double> DF_data;
+		// std::vector<double> DF_data;
+		// if(familyItData.totalCons == familyItData.totalFree){
+		// 	DF_data.insert(DF_data.begin(), familyItData.DF.begin(), familyItData.DF.begin() + familyItData.totalFree * (familyItData.totalCons - 1));
+		// }else{
+		// 	DF_data = familyItData.DF;
+		// }
 		if(familyItData.totalCons == familyItData.totalFree){
-			DF_data.insert(DF_data.begin(), familyItData.DF.begin(), familyItData.DF.begin() + familyItData.totalFree * (familyItData.totalCons - 1));
-		}else{
-			DF_data = familyItData.DF;
+			DF = DF.block(0, 0, familyItData.totalCons-1, familyItData.totalFree);
 		}
 
 		// Compute null space of previously computed member's Jacobian Matrix
-		MatrixXRd DF = Eigen::Map<MatrixXRd>(&(DF_data[0]), familyItData.totalFree-1, familyItData.totalFree);
+		// MatrixXRd DF = Eigen::Map<MatrixXRd>(&(DF_data[0]), familyItData.totalFree-1, familyItData.totalFree);
 		Eigen::FullPivLU<MatrixXRd> lu(DF);
 		lu.setThreshold(1e-14);
 		MatrixXRd N = lu.kernel();

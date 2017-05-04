@@ -26,7 +26,15 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+#include <algorithm>
+#include <cmath>
+// #include <Eigen/Dense>
+#include <Eigen/OrderingMethods>
+#include <Eigen/Sparse>
+#include <Eigen/SparseLU>
+#include <vector>
+
 #include "MultShootEngine.hpp"
 
 #include "AsciiOutput.hpp"
@@ -38,11 +46,6 @@
 #include "Arcset_cr3bp.hpp"
 #include "SimEngine.hpp"
 #include "Utilities.hpp"
-
-#include <algorithm>
-#include <cmath>
-#include <Eigen/Dense>
-#include <vector>
 
 using Eigen::MatrixXd;
 using Eigen::JacobiSVD;
@@ -303,7 +306,6 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 			case Constraint_tp::CONT_PV:
 			case Constraint_tp::CONT_EX:
 			case Constraint_tp::SEG_CONT_PV:
-			case Constraint_tp::SEG_CONT_EX:
 			case Constraint_tp::STATE:
 			case Constraint_tp::MATCH_CUST:
 				addToRows = con.countConstrainedStates();
@@ -358,6 +360,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 			case Constraint_tp::APSE:
 			case Constraint_tp::JC:
 			case Constraint_tp::PSEUDOARC:
+			case Constraint_tp::SEG_CONT_EX:
 				addToRows = 1;
 				break;
 			case Constraint_tp::TOF:
@@ -390,6 +393,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 	// Save the initial free variable vector
 	it.X0 = it.X;
 
+	// Print debugging information
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  # Free: %d\n  # Constraints: %d\n", it.totalFree, it.totalCons);
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  -> # Slack Variables: %d\n", it.numSlack);
 
@@ -443,11 +447,13 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	Arcset arc(it.nodesIn->getSysData());
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
-		it.DF.clear();
+		// it.DF.clear();
+		it.DF_elements.clear();
 		it.deltaVs.clear();
 		it.propSegs.clear();
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
-		it.DF.assign(it.totalCons*it.totalFree, 0);
+		// it.DF.assign(it.totalCons*it.totalFree, 0);
+		it.DF_elements.reserve(it.totalCons * coreStateSize);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
 		// initialize a vector of trajectory objects to store each propagated segment
@@ -501,8 +507,10 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
-		for(unsigned int c = 0; c < it.allCons.size(); c++)
+		for(unsigned int c = 0; c < it.allCons.size(); c++){
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(&it, it.allCons[c], c);
+			printVerb(verbosity >= Verbosity_tp::DEBUG, "* Applying %s constraint\n", it.allCons[c].getTypeStr());
+		}
 
 		// Solve for newX and copy into working vector X
 		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
@@ -587,11 +595,14 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(pIt->X[0]), pIt->totalFree, 1);
-	MatrixXRd J = Eigen::Map<MatrixXRd>(&(pIt->DF[0]), pIt->totalCons, pIt->totalFree);
 	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(pIt->FX[0]), pIt->totalCons, 1);
+	// MatrixXRd J = Eigen::Map<MatrixXRd>(&(pIt->DF[0]), pIt->totalCons, pIt->totalFree);
+	SparseMatXCd J(pIt->totalCons, pIt->totalFree);
+	J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
+	J.makeCompressed();
 
 	// change sign for matrix multiplication
-	FX *= -1;
+	// FX *= -1;
 
 	// Create a vector to put the solution in
 	Eigen::VectorXd X_diff(pIt->totalFree, 1);
@@ -605,42 +616,67 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 		 */
 		
 		// Solve the system Jw = b (In this case, w = X_diff)
-		Eigen::FullPivLU<MatrixXRd> lu(J);
+		// Eigen::FullPivLU<MatrixXRd> lu(J);
 		// lu.setThreshold(1e-20);
 
 		// if(!lu.isInvertible())
 		// 	throw LinAlgException("MultShootEngine::solveUpdateEq: Jacobian is singular; cannot solve");
 
-		X_diff = lu.solve(FX);
+		Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
+		luSolver.analyzePattern(J);
+		luSolver.factorize(J);
+		if(luSolver.info() != Eigen::Success){
+			throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
+		}
+
+		X_diff = luSolver.solve(-FX);
+		if(luSolver.info() != Eigen::Success){
+			throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
+		}
 	}else{
 		if(pIt->totalCons < pIt->totalFree){	// Under-constrained
-			// Compute Gramm matrix
-			MatrixXRd JT = J.transpose();
-			MatrixXRd G = J*JT;
 
-			// astrohelion::toCSV(J, "DF_cpp.csv");
-			// astrohelion::toCSV(FX, "FX_cpp.csv");
-			// astrohelion::toCSV(oldX, "X_cpp.csv");
-
-			// waitForUser();
 			/* Use LU decomposition to invert the Gramm matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 			lies in the column-space of J^T, or in the orthogonal complement of
 			the nullspace of J.
 			Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 			 */
+
+
+			// Compute Gramm matrix
+			// MatrixXRd JT = J.transpose();
+			// MatrixXRd G = J*JT;
+			SparseMatXCd JT = J.transpose();
+			SparseMatXCd G = J*JT;		// G will always be symmetric
+
+			astrohelion::toCSV(J, "DF_cpp.csv");
+			astrohelion::toCSV(FX, "FX_cpp.csv");
+			astrohelion::toCSV(oldX, "X_cpp.csv");
+
+			// waitForUser();
+			
 			
 			// Solve the system Gw = b
-			Eigen::FullPivLU<MatrixXRd> lu(G);
+			// Eigen::FullPivLU<MatrixXRd> lu(G);
 			// lu.setThreshold(1e-20);
-
+			Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
+			luSolver.analyzePattern(G);	
+			// TODO - May be able to improve performance since G is symmetric; see <https://eigen.tuxfamily.org/dox-devel/group__OrderingMethods__Module.html>
+			luSolver.factorize(G);
+			if(luSolver.info() != Eigen::Success){
+				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix");
+			}
 			// if(!lu.isInvertible()){
 			// 	astrohelion::printErr("Gramm Matrix rank = %ld / %ld\n", lu.rank(), G.rows());
 			// 	throw LinAlgException("MultShootEngine::solveUpdateEq: Gramm matrix is singular; cannot solve");
 			// }
 
-			Eigen::VectorXd w = lu.solve(FX);
-			
+			Eigen::VectorXd w = luSolver.solve(-FX);
+			if(luSolver.info() != Eigen::Success){
+				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
+			}
+
 			// Compute optimal x from w
 			X_diff = JT*w;
 
@@ -747,7 +783,10 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     // Run multiple shooter to get X, FX, and DF
     MultShootData it = corrector.multShoot(pNodeset, nullptr);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
-    MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
+    SparseMatXCd sparseDF(it.totalCons, it.totalFree);
+    sparseDF.setFromTriplets(it.DF_elements.begin(), it.DF_elements.end());
+    MatrixXRd DF = MatrixXRd(sparseDF);
+    // MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
 
     double pertSize = 1e-8;

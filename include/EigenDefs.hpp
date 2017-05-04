@@ -28,6 +28,7 @@
 #pragma once
 
 #include "Eigen/Core"
+#include "Eigen/SparseCore"
 
 namespace astrohelion{
 /**
@@ -44,5 +45,15 @@ typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic, Eige
  * A 3x3 matrix of doubles with data stored in row-major order
  */
 typedef Eigen::Matrix<double, 3, 3, Eigen::RowMajor> Matrix3Rd;
+
+/**
+ * Contains the column, row, and value of data to be stored in a sparse matrix
+ */
+typedef Eigen::Triplet<double> Tripletd;
+
+/**
+ * Sparse matrix of doubles, dynamic size, column-major order
+ */
+typedef Eigen::SparseMatrix<double> SparseMatXCd;
 
 }// END of Astrohelion namespace

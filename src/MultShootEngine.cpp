@@ -615,6 +615,9 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 		Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 		 */
 		
+		// Info about solving Sparse matrix systems with Eigen:
+		// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
+		
 		// Solve the system Jw = b (In this case, w = X_diff)
 		// Eigen::FullPivLU<MatrixXRd> lu(J);
 		// lu.setThreshold(1e-20);
@@ -650,9 +653,9 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 			SparseMatXCd JT = J.transpose();
 			SparseMatXCd G = J*JT;		// G will always be symmetric
 
-			astrohelion::toCSV(J, "DF_cpp.csv");
-			astrohelion::toCSV(FX, "FX_cpp.csv");
-			astrohelion::toCSV(oldX, "X_cpp.csv");
+			// astrohelion::toCSV(J, "DF_cpp.csv");
+			// astrohelion::toCSV(FX, "FX_cpp.csv");
+			// astrohelion::toCSV(oldX, "X_cpp.csv");
 
 			// waitForUser();
 			

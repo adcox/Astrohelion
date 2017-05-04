@@ -240,7 +240,7 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	* if the input nodeset contains more than one TOF constraint
  */
 MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
-	if(pNodesOut != NULL && *(set->getSysData()) != *(pNodesOut->getSysData()))
+	if(pNodesOut != nullptr && *(set->getSysData()) != *(pNodesOut->getSysData()))
 		throw Exception("MultShootEngine::multShoot: Input and Output nodesets must use the same system data object");
 
 	if(!bIsClean)
@@ -250,6 +250,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 
 	// Create structure to store iteration data for easy sharing
 	MultShootData it(set);
+	it.nodesOut = pNodesOut;
 	it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
 	it.bEqualArcTime = bEqualArcTime;
 	
@@ -259,12 +260,12 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 
 	// Get the model associated with the nodeset
 	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
-	pModel->multShoot_initDesignVec(&it, set);
+	pModel->multShoot_initDesignVec(&it);
 
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
 	it.allCons.clear();
-	pModel->multShoot_createContCons(&it, set);
+	pModel->multShoot_createContCons(&it);
 
 	// Add all node constraints
 	for(unsigned int n = 0; n < set->getNumNodes(); n++){
@@ -400,7 +401,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 	}
 	
 	// Run the multiple shooting process
-	return multShoot(it, pNodesOut);
+	return multShoot(it);
 }//==========================================================
 
 /**
@@ -409,13 +410,11 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
  *  \param it A completely formed MultShootData object that describes a 
  *  multiple shooting problem. These are created from Arcset and its
  *  derivative types by the other implementation of multShoot()
- *  \param pNodesOut pointer to a nodeset object that will contain the results 
- *  of the shooting process
  *  \return A corrected MultShootData object
  *  @see multShoot(Arcset*)
  *  \throws DivergeException if the multiple shooting process does not converge
  */
-MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
+MultShootData MultShootEngine::multShoot(MultShootData it){
 	it.count = 0;
 
 	// create a simulation engine
@@ -439,8 +438,9 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 
 	// Define values for use in corrections loop
 	double err = 10*tol;
-	unsigned int stateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
+	Arcset arc(it.nodesIn->getSysData());
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
 		it.DF.clear();
@@ -457,14 +457,13 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
-			std::vector<double> ic(stateSize, 0);
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn, it.nodesIn->getSegByIx(s).getID(),
+			std::vector<double> ic(coreStateSize, 0);
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn->getSegByIx(s).getID(),
 				&(ic[0]), &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
-			// if(verbosity >= Verbosity_tp::DEBUG){
-			// 	printf("Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
-			// }
+			
+			printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
 			simEngine.setCtrlLaw(it.nodesIn->getSegByIx(s).getCtrlLaw());
 
 			try{
@@ -474,6 +473,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 			}catch(Exception &e){
 				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error:\n%s\nEnding corrections.\n", e.what());
 			}
+
 			// if(verbosity >= Verbosity_tp::DEBUG){
 			// 	it.propSegs[s].print();
 			// }
@@ -537,9 +537,9 @@ MultShootData MultShootEngine::multShoot(MultShootData it, Arcset *pNodesOut){
 		throw DivergeException();
 	}
 
-	if(pNodesOut){
+	if(it.nodesOut){
 		try{
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it, it.nodesIn, bFindEvent, pNodesOut);
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it);
 		}catch(Exception &e){
 			astrohelion::printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
 			throw e;
@@ -745,7 +745,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     corrector.setIgnoreDiverge(true);
 
     // Run multiple shooter to get X, FX, and DF
-    MultShootData it = corrector.multShoot(pNodeset, NULL);
+    MultShootData it = corrector.multShoot(pNodeset, nullptr);
     Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
     MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
@@ -756,28 +756,28 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
         it.X = pertX;                           // Copy into iteration data
-        MultShootData pertIt = corrector.multShoot(it, NULL);     // Correct perturbed state
+        MultShootData pertIt = corrector.multShoot(it);     // Correct perturbed state
         Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // Do another process for opposite direction
         pertX = it.X0;
         pertX[i] -= pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it, NULL);
+        pertIt = corrector.multShoot(it);
         Eigen::VectorXd FX_down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // An iteration for twice the perturbation up
         pertX = it.X0;
         pertX[i] += 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it, NULL);
+        pertIt = corrector.multShoot(it);
         Eigen::VectorXd FX_2up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // An iteration for twice the perturbation down
         pertX = it.X0;
         pertX[i] -= 2*pertSize;
         it.X = pertX;
-        pertIt = corrector.multShoot(it, NULL);
+        pertIt = corrector.multShoot(it);
         Eigen::VectorXd FX_2down = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
 

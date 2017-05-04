@@ -170,13 +170,8 @@ void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
  *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  */
-void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it, const Arcset *nodes_in, bool findEvent,
-    Arcset *nodes_out) const{
-    
-	(void)it;
-	(void)nodes_in;
-	(void)findEvent;
-	(void)nodes_out;
+void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it) const{
+    (void) it;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

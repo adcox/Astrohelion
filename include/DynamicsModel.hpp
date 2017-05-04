@@ -215,9 +215,9 @@ public:
 	 */
 	virtual void multShoot_initIterData(MultShootData *it) const = 0;
 
-	virtual void multShoot_initDesignVec(MultShootData*, const Arcset*) const;
-	virtual void multShoot_createContCons(MultShootData*, const Arcset*) const;
-	virtual void multShoot_getSimICs(const MultShootData*, const Arcset*, int, double*, double*, double*) const;
+	virtual void multShoot_initDesignVec(MultShootData*) const;
+	virtual void multShoot_createContCons(MultShootData*) const;
+	virtual void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*) const;
 	virtual void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
 	virtual double multShoot_getSlackVarVal(const MultShootData*, Constraint)const ;
 
@@ -232,13 +232,10 @@ public:
 	 *  vector in the final node.
 	 *
 	 *  \param it an iteration data object containing all info from the corrections process
-	 *	\param nodes_in a pointer to the original, uncorrected nodeset
-	 *	\param findEvent whether or not this correction process is locating an event
-	 *	\param nodesOut pointer to a nodeset object that will contain the results of
-	 *	the shooting process
+	 *  
 	 *  \return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual void multShoot_createOutput(const MultShootData* it, const Arcset *nodes_in, bool findEvent, Arcset *nodesOut) const = 0;
+	virtual void multShoot_createOutput(const MultShootData* it) const = 0;
 	//\}
 
 	/**

@@ -184,12 +184,11 @@ std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *
  *  \param nodes_out pointer to the nodeset object that will contain the output of the
  *  shooting process
  */
-void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, const Arcset *nodes_in, bool findEvent, Arcset *nodes_out) const{
-    
-    const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt *>(it->nodesIn->getSysData());
-    Arcset_cr3bp_lt *nodeset_out = static_cast<Arcset_cr3bp_lt *>(nodes_out);
+void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it) const{
 
     std::vector<int> newNodeIDs;
+    newNodeIDs.reserve(it->numNodes);
+    
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeByIx(n).getID());
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
@@ -197,28 +196,8 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
         Node node(state, 0);
         node.setConstraints(it->nodesIn->getNodeByIx(n).getConstraints());
 
-        if(n+1 == it->numNodes){
-            // Set Jacobi Constant
-            // node.setExtraParam("J", getJacobi(&(state[0]), pSys->getMu()));
-
-            /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
-            state for the last node. We do this by appending the STM elements and dqdT elements to the
-            end of the node array. This output nodeset should have two "nodes": the first 6 elements
-            are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
-            information*/
-            if(findEvent){
-                // Append the 36 STM elements to the node vector
-                Arcset lastSeg = it->propSegs.back();
-                MatrixXRd stm = lastSeg.getSTMByIx(-1);
-                std::vector<double> stm_vec(stm.data(), stm.data() + stm.rows()*stm.cols());
-                
-                node.setExtraParamVec(PARAMKEY_STM, stm_vec);
-            }
-        }
-
         // Add the node to the output nodeset and save the new ID
-        newNodeIDs.push_back(nodeset_out->addNode(node));
-        // nodeset_out->setJacobi(newNodeIDs.back(), getJacobi(&(state[0]), pSys->getMu()));
+        newNodeIDs.push_back(it->nodesOut->addNode(node));
     }
 
     double tof;
@@ -244,15 +223,15 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
         newSeg.setVelCon(seg.getVelCon());
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
         newSeg.setCtrlLaw(seg.getCtrlLaw());
-        newSeg.setStateVector(it->propSegs[s].getSeg(0).getStateVector());
-        newSeg.setTimeVector(it->propSegs[s].getSeg(0).getTimeVector());
-        nodeset_out->addSeg(newSeg);
+        newSeg.setStateVector(it->propSegs[s].getSegRef_const(0).getStateVector());
+        newSeg.setTimeVector(it->propSegs[s].getSegRef_const(0).getTimeVector());
+        it->nodesOut->addSeg(newSeg);
     }
 
     // Determine the chronological order of the nodeset
-    // nodeset_out->print();
-    // nodeset_out->printInChrono();
-    std::vector<ArcPiece> order = nodeset_out->getChronoOrder();
+    // it->nodesOut->print();
+    // it->nodesOut->printInChrono();
+    std::vector<ArcPiece> order = it->nodesOut->getChronoOrder();
     // Set the epoch of each node based on the time of flight from
     // the first node
     double epoch = NAN;
@@ -260,10 +239,10 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
         if(order[i].type == ArcPiece::Piece_tp::NODE){
             if(std::isnan(epoch)){
                 // Copy the epoch value of the first node
-                epoch = nodeset_out->getNode(order[i].id).getEpoch();
+                epoch = it->nodesOut->getNode(order[i].id).getEpoch();
             }else{
                 // Set the epoch value of all other nodes
-                nodeset_out->getNodeRef(order[i].id).setEpoch(epoch);       
+                it->nodesOut->getNodeRef(order[i].id).setEpoch(epoch);       
             }
         }
         if(order[i].type == ArcPiece::Piece_tp::SEG){
@@ -271,15 +250,15 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it, con
                 // When stepping through in chronological order, every step is
                 // forward in time; negative TOFs are associated with segments that
                 // flow opposite the chronological order; ignore sign here.
-                epoch += std::abs(nodeset_out->getSeg(order[i].id).getTOF());
+                epoch += std::abs(it->nodesOut->getSeg(order[i].id).getTOF());
             }
         }
     }
 
-    // nodeset_out->print();
+    // it->nodesOut->print();
     std::vector<Constraint> arcCons = it->nodesIn->getArcConstraints();
     for(unsigned int i = 0; i < arcCons.size(); i++){
-        nodeset_out->addConstraint(arcCons[i]);
+        it->nodesOut->addConstraint(arcCons[i]);
     }
 }//======================================================
 

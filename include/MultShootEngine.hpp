@@ -116,7 +116,7 @@ class MultShootEngine : public Core, public Engine{
 		 *  \{
 		 */
 		MultShootData multShoot(const Arcset*, Arcset*);
-		MultShootData multShoot(MultShootData, Arcset*);
+		MultShootData multShoot(MultShootData);
 		//\}
 
 		/**

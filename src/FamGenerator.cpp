@@ -1453,10 +1453,11 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVa
 	double *X = newFreeVarVec.data();
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
-	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData.sysData);
+	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData.nodesIn->getSysData());
 	Arcset_cr3bp newMember(sys);
+	pFamilyItData.nodesOut = &newMember;
 
-	sys->getDynamicsModel()->multShoot_createOutput(&pFamilyItData, pFamilyItData.nodeset, false, &newMember);
+	sys->getDynamicsModel()->multShoot_createOutput(&pFamilyItData);
 
 	// Get rid of any pre-existing pseudo arclength constraints from previous corrections
 	std::vector<Constraint> arcCons = newMember.getArcConstraints();

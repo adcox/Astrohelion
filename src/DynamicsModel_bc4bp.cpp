@@ -177,16 +177,16 @@ int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Arcs
  *  \param set a pointer to the nodeset being corrected
  *  \throws Exception if equal arc times is turned ON; this has not been implemented for this system
  */
-void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it, const Arcset *set) const{
+void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it) const{
     // Call base class to do most of the work
-    DynamicsModel::multShoot_initDesignVec(it, set);
+    DynamicsModel::multShoot_initDesignVec(it);
 
     // Append the Epoch for each node
     if(it->bVarTime){
         // epochs come after ALL the TOFs have been added
-        const Arcset_bc4bp *bcSet = static_cast<const Arcset_bc4bp *>(set);
+        const Arcset_bc4bp *bcSet = static_cast<const Arcset_bc4bp *>(it->nodesIn);
         for(unsigned int n = 0; n < bcSet->getNumNodes(); n++){
-            MSVarMap_Key key(MSVar_tp::EPOCH, set->getNodeRefByIx_const(n).getID());
+            MSVarMap_Key key(MSVar_tp::EPOCH, it->nodesIn->getNodeRefByIx_const(n).getID());
             it->freeVarMap[key] = MSVarMap_Obj(key, it->X.size());
             it->X.push_back(bcSet->getEpochByIx(n));
         }
@@ -209,10 +209,9 @@ void DynamicsModel_bc4bp::multShoot_initIterData(MultShootData *it) const{
  *  This function overrides the base model's to add time continuity
  *
  *  \param it a pointer to the corrector's iteration data structure
- *  \param set a pointer to the nodeset being corrected
  */ 
-void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Arcset *set) const{
-    DynamicsModel::multShoot_createContCons(it, set);
+void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it) const{
+    DynamicsModel::multShoot_createContCons(it);
 
     if(it->bVarTime){
         std::vector<double> zero {0};
@@ -230,25 +229,21 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it, const Arcs
  *  engine will integrate.
  *
  *  \param it a pointer to the corrector's iteration data structure
- *  \param set a pointer to the nodeset being corrected
  *  \param s the ID of the segment being propagated
  *  \param ic a pointer to a 6-element initial state array
  *  \param t0 a pointer to a double representing the initial time (epoch)
  *  \param tof a pointer to a double the time-of-flight on the segment.
  */
-void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, const Arcset *set, int s,
+void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, int s,
     double *ic, double *t0, double *tof) const{
 
-    DynamicsModel::multShoot_getSimICs(it, set, s, ic, t0, tof);   // Perform default behavior
-
-    // Compute and reverse-scale epoch
-    const Arcset_bc4bp *bcSet = static_cast<const Arcset_bc4bp *>(set);
+    DynamicsModel::multShoot_getSimICs(it, s, ic, t0, tof);   // Perform default behavior
 
     if(it->bVarTime){
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRef_const(s).getOrigin());
         *t0 = it->X[epochVar.row0];
     }else{
-        *t0 = bcSet->getEpoch(s);
+        *t0 = it->nodesIn->getEpoch(s);
     }
 }//============================================================
 
@@ -1340,19 +1335,13 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
  *  
  *  \return a pointer to a nodeset containing the corrected nodes
  */
-void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const Arcset *nodes_in, bool findEvent, Arcset *nodes_out) const{
-
-    Arcset_bc4bp *nodeset_out = static_cast<Arcset_bc4bp *>(nodes_out);
-
+void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it) const{
     std::vector<int> newNodeIDs;
+    newNodeIDs.reserve(it->numNodes);
+
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
-        // double state[6];
         std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
-        // std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0+6, state);
-
-        Node node(state, 0);
-        node.setConstraints(nodes_in->getNodeRefByIx_const(n).getConstraints());
 
         double T = 0;
         if(it->bVarTime){
@@ -1361,29 +1350,11 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
         }else{
             T = it->nodesIn->getEpoch(state_var.key.id);
         }
-        node.setEpoch(T);
-
-        if(n+1 == it->numNodes){
-            /* To avoid re-integrating in the simulation engine, we will return the entire 42 or 48-length
-                state for the last node. We do this by appending the STM elements and dqdT elements to the
-                end of the node array. This output nodeset should have two "nodes": the first 6 elements
-                are the first node, the final 42 or 48 elements are the second node with STM and dqdT 
-                information*/
-            if(findEvent){
-                // Append the 36 STM elements to the node vector
-                Arcset lastSeg = it->propSegs.back();
-                MatrixXRd lastSTM = lastSeg.getSTMByIx(-1);
-                std::vector<double> stm_vec(lastSTM.data(), lastSTM.data() + lastSTM.rows()*lastSTM.cols());
-                node.setExtraParamVec(PARAMKEY_STM, stm_vec);
-
-                // Also append the last dqdT vector
-                std::vector<double> dqdT = lastSeg.getExtraParamVecByIx(-1,PARAMKEY_STATE_EPOCH_DERIV);
-                node.setExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, dqdT);
-            }
-        }
+        Node node(state, T);
+        node.setConstraints(it->nodesIn->getNodeRefByIx_const(n).getConstraints());
 
         // Add the node to the output nodeset and save the new ID
-        newNodeIDs.push_back(nodeset_out->addNode(node));
+        newNodeIDs.push_back(it->nodesOut->addNode(node));
     }
 
     double tof;
@@ -1409,14 +1380,14 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it, const 
         newSeg.setVelCon(seg.getVelCon());
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
         newSeg.setCtrlLaw(seg.getCtrlLaw());
-        newSeg.setStateVector(it->propSegs[s].getSeg(0).getStateVector());
-        newSeg.setTimeVector(it->propSegs[s].getSeg(0).getTimeVector());
-        nodeset_out->addSeg(newSeg);
+        newSeg.setStateVector(it->propSegs[s].getSegRef_const(0).getStateVector());
+        newSeg.setTimeVector(it->propSegs[s].getSegRef_const(0).getTimeVector());
+        it->nodesOut->addSeg(newSeg);
     }
 
-    std::vector<Constraint> arcCons = nodes_in->getArcConstraints();
+    std::vector<Constraint> arcCons = it->nodesIn->getArcConstraints();
     for(unsigned int i = 0; i < arcCons.size(); i++){
-        nodeset_out->addConstraint(arcCons[i]);
+        it->nodesOut->addConstraint(arcCons[i]);
     }
 }//====================================================
 

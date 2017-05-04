@@ -71,7 +71,7 @@ public:
 	 *  \{
 	 */
 	void multShoot_initIterData(MultShootData *it) const;
-	void multShoot_createOutput(const MultShootData*, const Arcset*, bool, Arcset*) const;
+	void multShoot_createOutput(const MultShootData*) const;
 	//\}
 	
 	/**

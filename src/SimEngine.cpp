@@ -1108,7 +1108,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     lastSeg.appendState(state);
     lastSeg.appendTime(eventTime);
     lastSeg.storeTOF();
-    lastSeg.setSTM(correctedSet.getExtraParamVecByIx(-1, PARAMKEY_STM));
+    lastSeg.setSTM(&(state[core_dim]), core_dim*core_dim);
 
     // Create a new segment if the propagation is going to continue
     if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){

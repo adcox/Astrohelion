@@ -142,15 +142,14 @@ class MultShootData{
 		// Utilities
 
 		// Variables
-		// const SysData *sysData;				//!< A pointer to the system data object used for this corrections process
 		const Arcset *nodesIn;						//!< A pointer to the arcset input for this corrections process
-		Arcset *nodesOut;							//!< A pointer to arcset that will be output
+		Arcset *nodesOut = nullptr;					//!< A pointer to arcset that will be output
+		std::vector<Arcset> propSegs {};			//!< A collection of all propagated segments; index here matches index within the input arcset
 		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X {};					//!< Free-Variable Vector
 		std::vector<double> FX {};					//!< Constraint Function Vector
 		std::vector<double> DF {};					//!< Jacobian Matrix
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
-		std::vector<Arcset> propSegs {};			//!< A collection of all propagated segments; index here matches index within the input arcset
 		std::vector<Constraint> allCons {};			//!< A list of all constraints
 		std::map<MSVarMap_Key, MSVarMap_Obj> freeVarMap {};	//!< Structure that maps free variables to their rows in the free variable vector
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable

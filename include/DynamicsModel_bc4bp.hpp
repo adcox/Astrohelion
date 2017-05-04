@@ -91,13 +91,13 @@ public:
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	void multShoot_initDesignVec(MultShootData*, const Arcset*) const override;
+	void multShoot_initDesignVec(MultShootData*) const override;
 	void multShoot_initIterData(MultShootData *it) const override;
-	void multShoot_createContCons(MultShootData*, const Arcset*) const override;
-	void multShoot_getSimICs(const MultShootData*, const Arcset*, int, double*, double*, double*) const override;
+	void multShoot_createContCons(MultShootData*) const override;
+	void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*) const override;
 	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const override;
 	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
-	void multShoot_createOutput(const MultShootData*, const Arcset*, bool, Arcset*) const;
+	void multShoot_createOutput(const MultShootData*) const;
 	//\}
 
 protected:

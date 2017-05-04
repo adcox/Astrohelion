@@ -201,45 +201,44 @@ int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* t
  * 	variables.
  *
  *	\param it a pointer to the corrector's iteration data structure
- *	\param set a pointer to the nodeset being corrected
  *	
  *	\throws Exception if equalArcTime is set to true (within the correction engine) and
  *	the nodeset to be corrected includes segments that are propagated in both forward and
  *	reverse time.
  */
-void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Arcset *set) const{
+void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 	// Create the initial state vector
 	it->X.clear();
 	it->freeVarMap.clear();
 
 	// Copy in the state vector for each node
 	int rowNum = 0;
-	for(unsigned int n = 0; n < set->getNumNodes(); n++){
-		std::vector<double> state = set->getStateByIx(n);
+	for(unsigned int n = 0; n < it->nodesIn->getNumNodes(); n++){
+		std::vector<double> state = it->nodesIn->getStateByIx(n);
 		rowNum = it->X.size();
 		it->X.insert(it->X.end(), state.begin(), state.end());
-		MSVarMap_Key key(MSVar_tp::STATE, set->getNodeRefByIx_const(n).getID());
+		MSVarMap_Key key(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
 		it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, state.size());
 	}
 
 	if(it->bVarTime){		
 		if(it->bEqualArcTime){
 			// Make sure all times-of-flight have the same sign
-			for(unsigned int s = 1; s < set->getNumSegs(); s++){
-				if(set->getTOFByIx(s) * set->getTOFByIx(s-1) < 0)
+			for(unsigned int s = 1; s < it->nodesIn->getNumSegs(); s++){
+				if(it->nodesIn->getTOFByIx(s) * it->nodesIn->getTOFByIx(s-1) < 0)
 					throw Exception("DynamicsModel::multShoot_initDesignVec: EqualArcTime is ON and times-of-flight have different signs... cannot proceed");
 			}
 
 			// Append the total TOF for the arc
 			MSVarMap_Key key(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
 			it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
-			it->X.insert(it->X.end(), set->getTotalTOF());
+			it->X.insert(it->X.end(), it->nodesIn->getTotalTOF());
 		}else{
 			// Append the TOF for each segment
-			for(unsigned int s = 0; s < set->getNumSegs(); s++){
-				MSVarMap_Key key(MSVar_tp::TOF, set->getSegRefByIx_const(s).getID());
+			for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+				MSVarMap_Key key(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
-				it->X.insert(it->X.end(), set->getTOFByIx(s));
+				it->X.insert(it->X.end(), it->nodesIn->getTOFByIx(s));
 			}
 		}
 	}
@@ -255,23 +254,22 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it, const Arcset *set
  *	velocity and their continuity is governed by the boolean flags stored in a segment.
  *
  *	\param it a pointer to the corrector's iteration data structure
- *	\param set a pointer to the nodeset being corrected
  */	
-void DynamicsModel::multShoot_createContCons(MultShootData *it, const Arcset *set) const{
+void DynamicsModel::multShoot_createContCons(MultShootData *it) const{
 	// Create position and velocity constraints
-	for(unsigned int s = 0; s < set->getNumSegs(); s++){
+	for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
 		// Force all positions to be continuous
 		std::vector<double> contStates(coreStates, 1);
-		if(set->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){	
+		if(it->nodesIn->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){	
 			// Get a vector specifying which velocity states are continuous
-			std::vector<bool> velCon = set->getSegRefByIx_const(s).getVelCon();
+			std::vector<bool> velCon = it->nodesIn->getSegRefByIx_const(s).getVelCon();
 			// If not continuous, put NAN into the constraint data; else unity
 			contStates[3] = velCon[0] ? 1 : NAN;
 			contStates[4] = velCon[1] ? 1 : NAN;
 			contStates[5] = velCon[2] ? 1 : NAN;
 			
 			// Create a constraint
-			Constraint con(Constraint_tp::CONT_PV, set->getSegRefByIx_const(s).getID(), contStates);
+			Constraint con(Constraint_tp::CONT_PV, it->nodesIn->getSegRefByIx_const(s).getID(), contStates);
 
 			// Save constraint to constraint vector
 			it->allCons.push_back(con);
@@ -290,16 +288,14 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it, const Arcset *se
  *	are chosen from the design vector.
  *
  *	\param it a pointer to the corrector's iteration data structure
- *	\param set a pointer to the nodeset being corrected
  *	\param s the ID of the segment being propagated
  *	\param ic a pointer to a 6-element initial state array
  *	\param t0 a pointer to a double representing the initial time (epoch)
  *	\param tof a pointer to a double the time-of-flight on the segment.
  *	@todo No need to input Arcset as well as the MultShootData pointer
  */
-void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Arcset *set, int s,
+void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 	double *ic, double *t0, double *tof) const{
-	(void) set;
 
 	// Retrieve  representative object and get data from free var vec
 	MSVarMap_Obj state = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(s).getOrigin());
@@ -313,7 +309,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, const Arcset *s
 	}else{
 		*tof = it->nodesIn->getTOF(s);
 	}
-	// *t0 = 0;
+	
 	*t0 = it->nodesIn->getEpoch(state.key.id);
 }//============================================================
 

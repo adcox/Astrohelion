@@ -78,7 +78,7 @@ public:
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	void multShoot_createOutput(const MultShootData*, const Arcset*, bool, Arcset*) const;
+	void multShoot_createOutput(const MultShootData*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
 	//\}
 };

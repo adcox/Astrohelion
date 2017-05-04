@@ -91,6 +91,5 @@ static const char PARAMKEY_JACOBI[] = "J";					//!< ExtraParam map key for Jacob
 static const char PARAMKEY_SMA[] = "sma";					//!< ExtraParam map key for semimajor axis data
 static const char PARAMKEY_STATE_DERIV[] = "qdot";			//!< ExtraParam map key for state derivative data
 static const char PARAMKEY_STATE_EPOCH_DERIV[] = "dqdT";	//!< ExtraParam map key for state derivative w.r.t. epoch 
-static const char PARAMKEY_STM[] = "STM";					//!< ExtraParam map key for state transition matrix data
 
 }// END of Astrohelion namespace

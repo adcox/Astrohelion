@@ -67,7 +67,7 @@ all: directories unit run
 
 unit: arcData bc4bpDef cr3bpFam lambertArc linMotion manifoldEngine\
 	multShootCons_bc4bp multShootCons_cr3bp multShootCons_cr3bp_lt multShootEngine\
-	nodeset simEngine traj utilities
+	arcset simEngine utilities
 
 run:
 	./arcData.bin
@@ -75,14 +75,13 @@ run:
 	#./cr3bpFam.bin		# Requires family data...
 	#./lambertArc.bin	# Fails right now
 	./linMotion.bin
-	./manifoldEngine.bin
+	#./manifoldEngine.bin
 	./multShootCons_bc4bp.bin
 	./multShootCons_cr3bp.bin
 	./multShootCons_cr3bp_lt.bin
 	./multShootEngine.bin
-	./nodeset.bin
+	./arcset.bin
 	./simEngine.bin
-	./traj.bin
 	./utilities.bin
 	
 ############################################################
@@ -92,6 +91,9 @@ run:
 arcData: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_arcDataOps.cpp $(LDFLAGS) -o $@.bin
 
+arcset: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_arcset.cpp $(LDFLAGS) -o $@.bin
+	
 bc4bpDef: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_bc4bp_def.cpp $(LDFLAGS) -o $@.bin
 
@@ -119,14 +121,8 @@ multShootCons_cr3bp_lt: $(OBJECTS)
 multShootEngine: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_multShootEngine.cpp $(LDFLAGS) -o $@.bin
 
-nodeset: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_nodeset.cpp $(LDFLAGS) -o $@.bin
-
 simEngine: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_simEngine.cpp $(LDFLAGS) -o $@.bin
-
-traj: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_traj.cpp $(LDFLAGS) -o $@.bin
 
 utilities: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_utilities.cpp $(LDFLAGS) -o $@.bin

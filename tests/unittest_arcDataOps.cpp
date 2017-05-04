@@ -234,8 +234,6 @@ BOOST_AUTO_TEST_CASE(deleteLastNode){
 	// Check to make sure segments linking to this node were updated
 	BOOST_CHECK(set.getSeg(s3ID).getOrigin() == n3ID);
 	BOOST_CHECK(set.getSeg(s3ID).getTerminus() == ivID);
-	set.print();
-	set.printInChrono();
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){

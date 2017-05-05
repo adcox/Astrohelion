@@ -26,8 +26,8 @@ using namespace astrohelion;
  *  \return inertial, dimensional position of Moon in ecliptic J2000 frame relative to Sun, km
  */
 std::vector<double> getInertMoonPos(SysData_bc4bp *pBCSys, SysData_cr3bp *pSESys, double t){
-	double bcPrimPos[9];
-	DynamicsModel_bc4bp::getPrimaryPos(t, pBCSys, bcPrimPos);
+	double bcPrimPos[9] = {0};
+	pBCSys->getDynamicsModel()->getPrimPos(t, pBCSys, -1, bcPrimPos);
 
 	double sePrimPos[9];
 	std::copy(bcPrimPos, bcPrimPos + 9, sePrimPos);
@@ -64,8 +64,8 @@ std::vector<double> getInertMoonPos(SysData_bc4bp *pBCSys, SysData_cr3bp *pSESys
 std::vector<double> getInertMoonPos_2(SysData_bc4bp *pBCSys, SysData_cr3bp *pSESys, double t){
 	SysData_cr3bp emSys("earth", "moon");
 
-	double bcPrimPos[9];
-	DynamicsModel_bc4bp::getPrimaryPos(t, pBCSys, bcPrimPos);
+	double bcPrimPos[9] = {0};
+	pBCSys->getDynamicsModel()->getPrimPos(t, pBCSys, -1, bcPrimPos);
 
 	std::vector<double> bcMoonPos = {bcPrimPos[6], bcPrimPos[7], bcPrimPos[8], 0, 0, 0};
 

@@ -186,7 +186,22 @@ public:
 	 *	\return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
-	virtual std::vector<double> getPrimPos(double t, const SysData *sysData) const = 0;
+	virtual std::vector<double> getPrimPos(double t, const SysData *pSysData) const = 0;
+
+	/**
+	 *  \brief Compute the position of a specified primary
+	 *  \details This is the faster alternative to getPrimPos(t, pSysData).
+	 * 
+	 *  \param t Nondimensional time
+	 *  \param pSysData pointer to system data object
+	 *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
+	 *  in order of largest to smallest mass
+	 *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
+	 *  For a single primary position, the array must have at least three elements allocated. For all 
+	 *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+	 *  of primaries.
+	 */
+	virtual void getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const = 0;
 
 	/**
 	 *	\brief Compute the velocities of all primaries
@@ -196,7 +211,22 @@ public:
 	 *	\return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
-	virtual std::vector<double> getPrimVel(double t, const SysData *sysData) const = 0;
+	virtual std::vector<double> getPrimVel(double t, const SysData *pSysData) const = 0;
+
+	/**
+	 *  \brief Compute the velocity of a specified primary
+	 *  \details This is the faster alternative to getPrimVel(t, pSysData).
+	 * 
+	 *  \param t Nondimensional time
+	 *  \param pSysData pointer to system data object
+	 *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
+	 *  in order of largest to smallest mass
+	 *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
+	 *  For a single primary velocity, the array must have at least three elements allocated. For all 
+	 *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+	 *  of primaries.
+	 */
+	virtual void getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const = 0;
 
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 

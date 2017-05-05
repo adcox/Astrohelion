@@ -140,12 +140,15 @@ void checkOrientAtEpoch(){
 
 	double epochs[] = {0, 10, -7};
 	for(int i = 0; i < 3; i++){
-		double primPos1[9], primVel1[9], primPos2[9], primVel2[9];
+		double 	primPos1[9] = {0},
+				primVel1[9] = {0},
+				primPos2[9] = {0},
+				primVel2[9] = {0};
 		
-		DynamicsModel_bc4bp::getPrimaryPos(T0 + epochs[i], &sys, primPos1);
-		DynamicsModel_bc4bp::getPrimaryVel(T0 + epochs[i], &sys, primVel1);
-		DynamicsModel_bc4bp::getPrimaryPos(epochs[i], &sys_shifted, primPos2);
-		DynamicsModel_bc4bp::getPrimaryVel(epochs[i], &sys_shifted, primVel2);
+		sys.getDynamicsModel()->getPrimPos(T0 + epochs[i], &sys, -1, primPos1);
+		sys.getDynamicsModel()->getPrimVel(T0 + epochs[i], &sys, -1, primVel1);
+		sys_shifted.getDynamicsModel()->getPrimPos(epochs[i], &sys_shifted, -1, primPos2);
+		sys_shifted.getDynamicsModel()->getPrimVel(epochs[i], &sys_shifted, -1, primVel2);
 
 		bool samePos = true, sameVel = true;
 		for(int n = 0; n < 9; n++){

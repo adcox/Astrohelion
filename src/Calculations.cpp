@@ -1650,7 +1650,7 @@ Eigen::Vector3d bcr4bpr_getSPLoc(const SysData_bc4bp *pBCSys, double t0){
     
     // Get primary positions
     double primPos[9];
-    DynamicsModel_bc4bp::getPrimaryPos(t0, pBCSys, primPos);
+    pBCSys->getDynamicsModel()->getPrimPos(t0, pBCSys, -1, primPos);
     
     double err = 1;
     double okErr = 1e-10;

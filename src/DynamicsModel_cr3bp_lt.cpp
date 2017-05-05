@@ -90,36 +90,82 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getFullEOM_fcn() const{
  *  \brief Compute the positions of all primaries
  *
  *  \param t the epoch at which the computations occur (unused for this system)
- *  \param sysData object describing the specific system
+ *  \param pSysData object describing the specific system
  *  \return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *sysData) const{
-    (void)t;
-    double primPos[6] = {0};
-    const SysData_cr3bp_lt *crSys = static_cast<const SysData_cr3bp_lt *>(sysData);
+std::vector<double> DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *pSysData) const{
+    std::vector<double> primPos(6,0);
+    getPrimPos(t, pSysData, -1, &(primPos.front()));
+    return primPos;
+}//====================================================
 
-    primPos[0] = -1*crSys->getMu();
-    primPos[3] = 1 - crSys->getMu();
+/**
+ *  \brief Compute the position of a specified primary
+ *  \details This is the faster alternative to getPrimPos(t, pSysData).
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
+ *  in order of largest to smallest mass
+ *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
+ *  For a single primary position, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const{
+    (void) t;
+    const SysData_cr3bp *pCrSys = static_cast<const SysData_cr3bp *>(pSysData);
 
-    return std::vector<double>(primPos, primPos+6);
-}//==============================================
+    switch(pIx){
+        case -1:
+            pos[0] = -1*pCrSys->getMu();
+            pos[3] = 1 - pCrSys->getMu();
+            break;
+        case 0:
+            pos[0] = -1*pCrSys->getMu();
+            break;
+        case 1:
+            pos[0] = 1 - pCrSys->getMu();
+            break;
+        default:
+            throw Exception("DynamicsModel_cr3bp::getPrimPos: primary index out of bounds.");
+    }
+}//====================================================
 
 /**
  *  \brief Compute the velocities of all primaries
  *
  *  \param t the epoch at which the computations occur (unused for this system)
- *  \param sysData object describing the specific system (unused for this system)
+ *  \param pSysData object describing the specific system (unused for this system)
  *  \return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
-std::vector<double> DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *sysData) const{
-    (void)t;
-    (void)sysData;
-    double primVel[6] = {0};
-    
-    return std::vector<double>(primVel, primVel+6);
-}//==============================================
+std::vector<double> DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData) const{
+    std::vector<double> vel(6,0);
+    getPrimVel(t, pSysData, -1, &(vel.front()));
+    return vel;
+}//====================================================
+
+/**
+ *  \brief Compute the velocity of a specified primary
+ *  \details This is the faster alternative to getPrimVel(t, pSysData).
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
+ *  in order of largest to smallest mass
+ *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
+ *  For a single primary velocity, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const{
+    (void) t;
+    (void) pSysData;
+    (void) pIx;
+    (void) vel;
+}//====================================================
 
 /**
  *  \brief Retrieve the state derivative

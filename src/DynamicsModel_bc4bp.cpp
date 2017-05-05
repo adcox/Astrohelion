@@ -93,34 +93,257 @@ DynamicsModel::eom_fcn DynamicsModel_bc4bp::getFullEOM_fcn() const{
 /**
  *  \brief Compute the positions of all primaries
  *
- *  \param t the epoch at which the computations occur
- *  \param sysData object describing the specific system
+ *  \param t the epoch at which the computations occur (unused for this system)
+ *  \param pSysData object describing the specific system
  *  \return an n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
-std::vector<double> DynamicsModel_bc4bp::getPrimPos(double t, const SysData *sysData) const{
-    double primPos[9];
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(sysData);
-    getPrimaryPos(t, bcSys, primPos);
+std::vector<double> DynamicsModel_bc4bp::getPrimPos(double t, const SysData *pSysData) const{
+    std::vector<double> primPos(9,0);
+    getPrimPos(t, pSysData, -1, &(primPos.front()));
+    return primPos;
+}//====================================================
 
-    return std::vector<double>(primPos, primPos+9);
-}//==============================================
+/**
+ *  \brief Compute the position of a specified primary
+ *  \details This is the faster alternative to getPrimPos(t, pSysData).
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
+ *  in order of largest to smallest mass
+ *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
+ *  For a single primary position, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_bc4bp::getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const{
+    if(pIx > -2 && pIx < 3){
+        const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
+
+        double k = bcSys->getK();
+
+        if(pIx == 0){
+            pos[0] = -1/k;
+            return;
+        }else{
+            double mu = bcSys->getMu();
+            double nu = bcSys->getNu();
+            double theta0 = bcSys->getTheta0();
+            double phi0 = bcSys->getPhi0();
+            double gamma = bcSys->getGamma();
+            double ratio = bcSys->getCharLRatio();
+
+            // Compute the angles for the system at the specified time
+            double theta = theta0 + k*t;
+            double phi = phi0 + sqrt(mu/pow(ratio, 3)) * t;
+
+            switch(pIx){
+                case -1:
+                    // P1 Position
+                    pos[0] = -1/k;  // All other P1 coordinates are zero
+
+                    // P2 position
+                    pos[3] = -nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+                    pos[4] = -nu/mu*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+                    pos[5] = nu/mu*ratio * cos(phi) * sin(gamma);
+
+                    // P3 position
+                    pos[6] = (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+                    pos[7] = (1 - nu/mu)*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+                    pos[8] = (nu/mu - 1)*ratio * cos(phi)*sin(gamma);
+                    break;
+                case 1:
+                    // P2 position
+                    pos[0] = -nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+                    pos[1] = -nu/mu*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+                    pos[2] = nu/mu*ratio * cos(phi) * sin(gamma);
+                    break;
+                case 2:
+                    // P3 position
+                    pos[0] = (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
+                    pos[1] = (1 - nu/mu)*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
+                    pos[2] = (nu/mu - 1)*ratio * cos(phi)*sin(gamma);
+                    break;
+                default:
+                    throw Exception("DynamicsModel_bc4bp::getPrimPos: Primary index out of bounds.");
+            }
+        }
+    }else{
+        throw Exception("DynamicsModel_bc4bp::getPrimPos: Primary index out of bounds.");
+    }
+}//====================================================
 
 /**
  *  \brief Compute the velocities of all primaries
  *
- *  \param t the epoch at which the computations occur
- *  \param sysData object describing the specific system
+ *  \param t the epoch at which the computations occur (unused for this system)
+ *  \param pSysData object describing the specific system (unused for this system)
  *  \return an n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one velocity vector in non-dimensional units
  */
-std::vector<double> DynamicsModel_bc4bp::getPrimVel(double t, const SysData *sysData) const{
-    double primVel[9];
-    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(sysData);
-    getPrimaryVel(t, bcSys, primVel);
+std::vector<double> DynamicsModel_bc4bp::getPrimVel(double t, const SysData *pSysData) const{
+    std::vector<double> vel(9,0);
+    getPrimVel(t, pSysData, -1, &(vel.front()));
+    return vel;
+}//====================================================
 
-    return std::vector<double>(primVel, primVel+9);
-}//==============================================
+/**
+ *  \brief Compute the velocity of a specified primary
+ *  \details This is the faster alternative to getPrimVel(t, pSysData).
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
+ *  in order of largest to smallest mass
+ *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
+ *  For a single primary velocity, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_bc4bp::getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const{
+    if(pIx > -2 && pIx < 3){
+        if(pIx == 0){
+            // P1 velocity is zero, so don't change any of the elements
+            return;
+        }else{
+            const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
+
+            double k = bcSys->getK();
+            double mu = bcSys->getMu();
+            double nu = bcSys->getNu();
+            double theta0 = bcSys->getTheta0();
+            double phi0 = bcSys->getPhi0();
+            double gamma = bcSys->getGamma();
+            double ratio = bcSys->getCharLRatio();
+
+            // Compute angular velocities for stystem
+            double thetaDot = k;
+            double phiDot = sqrt(mu/pow(ratio, 3));
+
+            // Compute the angles for the system at the specified time
+            double theta = theta0 + thetaDot*t;
+            double phi = phi0 + phiDot * t;
+
+            // Angular velocity of P2-P3 line
+            double v_P2P3Line[3];
+            v_P2P3Line[0] = thetaDot*(sin(phi)*cos(theta) - cos(phi)*sin(theta)*cos(gamma)) + 
+                phiDot*(cos(phi)*sin(theta) - sin(phi)*cos(theta)*cos(gamma));
+            v_P2P3Line[1] = (phiDot - thetaDot)*cos(phi - theta);
+            v_P2P3Line[2] = phiDot*sin(phi)*sin(gamma);
+
+            switch(pIx){
+                case -1:
+                    // P1 Velocity - zero
+
+                    // P2 Velocity
+                    vel[3] = v_P2P3Line[0] * (-nu/mu)*ratio;
+                    vel[4] = v_P2P3Line[1] * (-nu/mu)*ratio;
+                    vel[5] = v_P2P3Line[2] * (-nu/mu)*ratio;
+
+                    // P3 Velocity
+                    vel[6] = v_P2P3Line[0] * (1-nu/mu)*ratio;
+                    vel[7] = v_P2P3Line[1] * (1-nu/mu)*ratio;
+                    vel[8] = v_P2P3Line[2] * (1-nu/mu)*ratio;
+                    break;
+                case 1:
+                    // P2 Velocity
+                    vel[0] = v_P2P3Line[0] * (-nu/mu)*ratio;
+                    vel[1] = v_P2P3Line[1] * (-nu/mu)*ratio;
+                    vel[2] = v_P2P3Line[2] * (-nu/mu)*ratio;
+                    break;
+                case 2:
+                    // P3 Velocity
+                    vel[0] = v_P2P3Line[0] * (1-nu/mu)*ratio;
+                    vel[1] = v_P2P3Line[1] * (1-nu/mu)*ratio;
+                    vel[2] = v_P2P3Line[2] * (1-nu/mu)*ratio;
+                    break;
+                default:
+                    throw Exception("DynamicsModel_bc4bp::getPrimVel: Primary index out of bounds.");
+            }
+        }
+    }else{
+        throw Exception("DynamicsModel_bc4bp::getPrimVel: Primary index out of bounds.");
+    }
+}//====================================================
+
+/**
+ *  \brief Compute the acceleration of a specified primary
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the acclerations of all primaries,
+ *  in order of largest to smallest mass
+ *  \param vel An array to store the primary acceleration(s) in with all elements initialized to zero. 
+ *  For a single primary acceleration, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_bc4bp::getPrimAccel(double t, const SysData *pSysData, int pIx, double *accel) const{
+    if(pIx > -2 && pIx < 3){
+        if(pIx == 0){
+            // P1 acceleration is zero, so don't change any of the elements
+            return;
+        }else{
+            const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
+
+            double k = bcSys->getK();
+            double mu = bcSys->getMu();
+            double nu = bcSys->getNu();
+            double theta0 = bcSys->getTheta0();
+            double phi0 = bcSys->getPhi0();
+            double gamma = bcSys->getGamma();
+            double ratio = bcSys->getCharLRatio();
+
+            // Compute angular velocities for stystem
+            double thetaDot = k;
+            double phiDot = sqrt(mu/pow(ratio, 3));
+
+            // Compute the angles for the system at the specified time
+            double theta = theta0 + thetaDot*t;
+            double phi = phi0 + phiDot * t;
+
+            // Acceleration of P2-P3 line
+            double a_P2P3Line[3] = {0};
+            a_P2P3Line[0] = (-thetaDot*thetaDot - phiDot*phiDot)*(cos(theta)*cos(phi)*cos(gamma) + sin(theta)*sin(phi)) + 
+                2*thetaDot*phiDot*(cos(theta)*cos(phi) + sin(theta)*sin(phi)*cos(gamma));
+            a_P2P3Line[1] = -1*(phiDot - thetaDot)*(phiDot - thetaDot)*sin(phi - theta);
+            a_P2P3Line[2] = phiDot*phiDot*cos(phi)*sin(gamma);
+
+            switch(pIx){
+                case -1:
+                    // P1 Acceleration - zero
+
+                    // P2 Acceleration
+                    accel[3] = a_P2P3Line[0] * (-nu/mu)*ratio;
+                    accel[4] = a_P2P3Line[1] * (-nu/mu)*ratio;
+                    accel[5] = a_P2P3Line[2] * (-nu/mu)*ratio;
+
+                    // P3 Acceleration
+                    accel[6] = a_P2P3Line[0] * (1-nu/mu)*ratio;
+                    accel[7] = a_P2P3Line[1] * (1-nu/mu)*ratio;
+                    accel[8] = a_P2P3Line[2] * (1-nu/mu)*ratio;
+                    break;
+                case 1:
+                    // P2 Acceleration
+                    accel[0] = a_P2P3Line[0] * (-nu/mu)*ratio;
+                    accel[1] = a_P2P3Line[1] * (-nu/mu)*ratio;
+                    accel[2] = a_P2P3Line[2] * (-nu/mu)*ratio;
+                    break;
+                case 2:
+                    // P3 Acceleration
+                    accel[0] = a_P2P3Line[0] * (1-nu/mu)*ratio;
+                    accel[1] = a_P2P3Line[1] * (1-nu/mu)*ratio;
+                    accel[2] = a_P2P3Line[2] * (1-nu/mu)*ratio;
+                    break;
+                default:
+                    throw Exception("DynamicsModel_bc4bp::getPrimAccel: Primary index out of bounds.");
+            }
+        }
+    }else{
+        throw Exception("DynamicsModel_bc4bp::getPrimAccel: Primary index out of bounds.");
+    }
+}//=====================================================================
 
 /**
  *  \brief Retrieve the state derivative
@@ -661,18 +884,17 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     }
 
     const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(it->nodesIn->getSysData());
-    double primPos[9], primVel[9], primAccel[9];
+    double primPos[3] = {0}, primVel[3] = {0};
 
-    getPrimaryPos(t0, bcSys, primPos);
-    getPrimaryVel(t0, bcSys, primVel);
-    getPrimaryAccel(t0, bcSys, primAccel);
+    getPrimPos(t0, bcSys, Pix, primPos);
+    getPrimVel(t0, bcSys, Pix, primVel);
 
-    double dx = it->X[stateVar.row0+0] - primPos[3*Pix+0];
-    double dy = it->X[stateVar.row0+1] - primPos[3*Pix+1];
-    double dz = it->X[stateVar.row0+2] - primPos[3*Pix+2];
-    double dvx = it->X[stateVar.row0+3] - primVel[3*Pix+0];
-    double dvy = it->X[stateVar.row0+4] - primVel[3*Pix+1];
-    double dvz = it->X[stateVar.row0+5] - primVel[3*Pix+2];
+    double dx = it->X[stateVar.row0+0] - primPos[0];
+    double dy = it->X[stateVar.row0+1] - primPos[1];
+    double dz = it->X[stateVar.row0+2] - primPos[2];
+    double dvx = it->X[stateVar.row0+3] - primVel[0];
+    double dvy = it->X[stateVar.row0+4] - primVel[1];
+    double dvz = it->X[stateVar.row0+5] - primVel[2];
 
     it->FX[row0] = dx*dvx + dy*dvy + dz*dvz;
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+0, dvx));
@@ -683,8 +905,11 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+5, dz));
 
     if(it->bVarTime){
-        it->DF_elements.push_back(Tripletd(row0, epochVar.row0, -1*(dvx*primVel[3*Pix+0] + dvy*primVel[3*Pix+1] + dvz*primVel[3*Pix+2]) -
-            (dx*primAccel[3*Pix+0] + dy*primAccel[3*Pix+1] + dz*primAccel[3*Pix+2]) ));
+        double primAccel[3] = {0};
+        getPrimAccel(t0, bcSys, Pix, primAccel);
+
+        it->DF_elements.push_back(Tripletd(row0, epochVar.row0, -1*(dvx*primVel[0] + dvy*primVel[1] + dvz*primVel[2]) -
+            (dx*primAccel[0] + dy*primAccel[1] + dz*primAccel[2]) ));
     }
 }//===================================================
 
@@ -1393,7 +1618,7 @@ int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], voi
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    getPrimaryPos(t, sysData, primPosData);
+    sysData->getDynamicsModel()->getPrimPos(t, sysData, -1, primPosData);
 
     // Create relative position vectors between s/c and primaries
     double r_p1[] = {s[0] - primPosData[0], s[1] - primPosData[1], s[2] - primPosData[2]};
@@ -1481,7 +1706,7 @@ int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], voi
     // Compute time derivative of dqdT
     std::copy(s+45, s+48, sdot+42);     // First three rows are the same as the last three rows of dqdT
     double primVelData[9] = {0};
-    getPrimaryVel(t, sysData, primVelData);
+    sysData->getDynamicsModel()->getPrimVel(t, sysData, -1, primVelData);
 
     // For the final three rows, first compute the product of A*dqdT
     sdot[45] = dxdx*s[42] + dxdy*s[43] + dxdz*s[44] + 2*k*s[46];
@@ -1516,7 +1741,7 @@ int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], v
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
-    getPrimaryPos(t, sysData, primPosData);
+    sysData->getDynamicsModel()->getPrimPos(t, sysData, -1, primPosData);
 
     // Create relative position vectors between s/c and primaries
     double r_p1[] = {s[0] - primPosData[0], s[1] - primPosData[1], s[2] - primPosData[2]};
@@ -1544,133 +1769,6 @@ int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], v
 
     return GSL_SUCCESS;
 }//============== END OF BCR4BPR EOMs ======================
-
-/**
- *  \brief Compute the location of the three primaries in the BCR4BP (rotating coord.)
- *
- *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  \param sysData a system data object containing information about the BCR4BP primaries
- *  \param primPos a pointer to a 1x9 double array that will hold the positions of the three primaries in 
- *  row-major order. The first three elements are the position of P1, etc.
- */
-void DynamicsModel_bc4bp::getPrimaryPos(double t, const SysData_bc4bp *sysData, double *primPos){
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-    double theta0 = sysData->getTheta0();
-    double phi0 = sysData->getPhi0();
-    double gamma = sysData->getGamma();
-    double ratio = sysData->getCharLRatio();
-
-    // Compute the angles for the system at the specified time
-    double theta = theta0 + k*t;
-    double phi = phi0 + sqrt(mu/pow(ratio, 3)) * t;
-
-    // P1 position
-    // primPos[0] = -mu;    // original derivation
-    primPos[0] = -1/k;        // new derivation
-    primPos[1] = 0;
-    primPos[2] = 0;
-
-    // P2 position
-    // primPos[3] = 1/k - mu - nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[3] = -nu/mu*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[4] = -nu/mu*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[5] = nu/mu*ratio * cos(phi) * sin(gamma);
-
-    // P3 position
-    // primPos[6] = 1/k - mu + (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[6] = (1 - nu/mu)*ratio * (cos(phi)*cos(gamma)*cos(theta) + sin(phi)*sin(theta));
-    primPos[7] = (1 - nu/mu)*ratio * (sin(phi)*cos(theta) - cos(phi)*sin(theta));
-    primPos[8] = (nu/mu - 1)*ratio * cos(phi)*sin(gamma);
-}//================================================
-
-/**
- *  \brief Compute the velocity of the three primaries in the BCR4BP, rotating coordinates.
- *
- *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  \param sysData a system data object containing information about the BCR4BP primaries
- *  \param primVel a pointer to a 3x3 double array that will hold the velocities of the three primaries in
- *  row-major order. The first three elements hold the velocity of P1, etc.
- */
-void DynamicsModel_bc4bp::getPrimaryVel(double t, const SysData_bc4bp *sysData, double *primVel){
-
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-    double theta0 = sysData->getTheta0();
-    double phi0 = sysData->getPhi0();
-    double gamma = sysData->getGamma();
-    double ratio = sysData->getCharLRatio();
-
-    double thetaDot = k;
-    double phiDot = sqrt(mu/pow(ratio, 3));
-
-    double theta = theta0 + thetaDot*t;
-    double phi = phi0 + phiDot * t;    
-
-    // P1 is stationary in this coordinate system
-    primVel[0] = 0;  primVel[1] = 0;  primVel[2] = 0;
-
-    // Angular velocity of P2-P3 line
-    double v_P2P3Line[3] = {0};
-    v_P2P3Line[0] = thetaDot*(sin(phi)*cos(theta) - cos(phi)*sin(theta)*cos(gamma)) + 
-        phiDot*(cos(phi)*sin(theta) - sin(phi)*cos(theta)*cos(gamma));
-    v_P2P3Line[1] = (phiDot - thetaDot)*cos(phi - theta);
-    v_P2P3Line[2] = phiDot*sin(phi)*sin(gamma);
-
-    // Multiply by radii of P2 and P3 to get their velocities
-    primVel[3] = v_P2P3Line[0] * (-nu/mu)*ratio;
-    primVel[4] = v_P2P3Line[1] * (-nu/mu)*ratio;
-    primVel[5] = v_P2P3Line[2] * (-nu/mu)*ratio;
-
-    primVel[6] = v_P2P3Line[0] * (1-nu/mu)*ratio;
-    primVel[7] = v_P2P3Line[1] * (1-nu/mu)*ratio;
-    primVel[8] = v_P2P3Line[2] * (1-nu/mu)*ratio;
-}//===================================================================
-
-/**
- *  \brief Compute the acceleration of the primary bodies in the BCR4BP, rotating coordinates
- * 
- *  \param t non-dimensional time since t0, where t0 coincides with the positions specified by theta0 and phi0
- *  \param sysData a system data object containing information about the BCR4BP primaries
- *  \param primAccel a pointer to a 3x3 double array that will hold the accelerations of the three primaries in
- *  row-major order. The first three elements hold the acceleration of P1, etc.
- */
-void DynamicsModel_bc4bp::getPrimaryAccel(double t, const SysData_bc4bp *sysData, double *primAccel){
-    double k = sysData->getK();
-    double mu = sysData->getMu();
-    double nu = sysData->getNu();
-    double theta0 = sysData->getTheta0();
-    double phi0 = sysData->getPhi0();
-    double gamma = sysData->getGamma();
-    double ratio = sysData->getCharLRatio();
-
-    double thetaDot = k;
-    double phiDot = sqrt(mu/pow(ratio, 3));
-
-    double theta = theta0 + thetaDot*t;
-    double phi = phi0 + phiDot * t;    
-
-    // P1 is stationary in this coordinate system
-    primAccel[0] = 0;  primAccel[1] = 0;  primAccel[2] = 0;
-
-    // Acceleration of P2-P3 line
-    double a_P2P3Line[3] = {0};
-    a_P2P3Line[0] = (-thetaDot*thetaDot - phiDot*phiDot)*(cos(theta)*cos(phi)*cos(gamma) + sin(theta)*sin(phi)) + 
-        2*thetaDot*phiDot*(cos(theta)*cos(phi) + sin(theta)*sin(phi)*cos(gamma));
-    a_P2P3Line[1] = -1*(phiDot - thetaDot)*(phiDot - thetaDot)*sin(phi - theta);
-    a_P2P3Line[2] = phiDot*phiDot*cos(phi)*sin(gamma);
-
-    // Multiply by radii of P2 and P3 to get their velocities
-    primAccel[3] = a_P2P3Line[0] * (-nu/mu)*ratio;
-    primAccel[4] = a_P2P3Line[1] * (-nu/mu)*ratio;
-    primAccel[5] = a_P2P3Line[2] * (-nu/mu)*ratio;
-
-    primAccel[6] = a_P2P3Line[0] * (1-nu/mu)*ratio;
-    primAccel[7] = a_P2P3Line[1] * (1-nu/mu)*ratio;
-    primAccel[8] = a_P2P3Line[2] * (1-nu/mu)*ratio;
-}//=====================================================================
 
 /**
  *  \brief Orient a Sun-Earth-Moon BCR4BPR system so that T = 0 corresponds to the specified epoch time

@@ -97,6 +97,26 @@ std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysD
 }//====================================================
 
 /**
+ *  \brief Compute the position of a specified primary
+ *  \details This is the faster alternative to getPrimPos(t, pSysData).
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
+ *  in order of largest to smallest mass
+ *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
+ *  For a single primary position, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const{
+    (void) t;
+    (void) pSysData;
+    (void) pIx;
+    (void) pos; // Always zero, nothing to do here...
+}//====================================================
+
+/**
  *  \brief Compute the velocity of the primary body
  * 
  *  \param t the epoch at which the computations occur (unused for this system)
@@ -111,6 +131,25 @@ std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysD
 	return std::vector<double>(3,0);
 }//====================================================
 
+/**
+ *  \brief Compute the velocity of a specified primary
+ *  \details This is the faster alternative to getPrimVel(t, pSysData).
+ * 
+ *  \param t Nondimensional time
+ *  \param pSysData pointer to system data object
+ *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
+ *  in order of largest to smallest mass
+ *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
+ *  For a single primary velocity, the array must have at least three elements allocated. For all 
+ *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
+ *  of primaries.
+ */
+void DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const{
+    (void) t;
+    (void) pSysData;
+    (void) pIx;
+    (void) vel;
+}//====================================================
 /**
  *  \brief Retrieve the state derivative
  *  \details Evaluate the equations of motion to compute the state time-derivative at 

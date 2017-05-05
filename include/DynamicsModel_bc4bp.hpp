@@ -64,7 +64,10 @@ public:
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getPrimPos(double, const SysData*) const;
+	void getPrimPos(double, const SysData*, int, double*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
+	void getPrimVel(double, const SysData*, int, double*) const;
+	void getPrimAccel(double, const SysData*, int, double*) const;
 	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
 	//\}
 
@@ -74,9 +77,6 @@ public:
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static void getPrimaryPos(double, const SysData_bc4bp*, double*);
-	static void getPrimaryVel(double, const SysData_bc4bp*, double*);
-	static void getPrimaryAccel(double, const SysData_bc4bp*, double*);
 	static void orientAtEpoch(double, SysData_bc4bp*);
 	//\}
 	

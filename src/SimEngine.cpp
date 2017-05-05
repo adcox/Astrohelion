@@ -742,14 +742,11 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 free_odeiv2(s, c, e, d);
 
-                // Create event and record that will indicate propagation ended with an error
-                Event event_err(Event_tp::SIM_ERR, 0, false);
-
                 // Save the last successful step the integrator was able to take
                 Node nodeF(y, core_dim, t_int);                 // Construct a basic node
                 Segment &lastSeg = arcset->getSegRefByIx(-1);   // Get reference to most recent segment (faster than copying the object!)
 
-                int idf = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, event_err.getType()); // Pass the node to the DynamicModel for more specific actions
+                int idf = model->sim_addNode(nodeF, y, t_int, arcset, eomParams, Event_tp::SIM_ERR); // Pass the node to the DynamicModel for more specific actions
                 arcset->getNodeRef(idf).addLink(lastSeg.getID());
 
                 lastSeg.setTerminus(idf);                       // Update the terminus to the final node
@@ -960,10 +957,12 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
     unsigned int core_dim = model->getCoreStateSize();
 
     // Look through all events
+    bool continueSim = true;
     for(unsigned int ev = 0; ev < events.size(); ev++){
         // Don't trigger if only two points have been integrated
         // Also don't trigger if the type is 0 or negative: these are managed by the simulation engine
-        if(propStepCount > 1 && to_underlying(events[ev].getType()) > 0 && events[ev].crossedEvent(y, core_dim, t)){
+        if(propStepCount > 1 && to_underlying(events[ev].getType()) > 0 && 
+            events[ev].crossedEvent(y, core_dim, t, bRevTime ? -1 : 1)){
 
             astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG,
                 "  Event %d detected on segment %d; searching for exact crossing\n", ev, pArcset->getNumSegs());
@@ -972,34 +971,30 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
             if(verbosity >= Verbosity_tp::ALL_MSG){ events[ev].printStatus(); }
 
             // Use correction to locate the event very accurately
-            if(locateEvent_multShoot(y, t, events[ev], pArcset)){
-                // Update event state from the most recent node (a new node was created at the event occurence)
-                std::vector<double> state = pArcset->getStateByIx(-1);
-                double lastT = pArcset->getTimeByIx(-1);
-                events[ev].updateDist(&(state[0]), core_dim, lastT);
-                
+            if(locateEvent_multShoot(y, t, ev, pArcset)){
                 // This condition is also checked in model->sim_locateEvent(): that function adds a new
                 // segment if the simulation is continuing
                 if(events[ev].stopOnEvent() && events[ev].getTriggerCount() >= events[ev].getStopCount()){
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
                     // the point from mult. shooting as the last
-                    return true;    // Tell the simulation to stop
+                    continueSim = continueSim && false;    // Tell the simulation to stop
                 }else{
                     astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
-                    events[ev].updateDist(y, core_dim, t); // Remember the most recent point
-                    return false;
+                    // Save the most recent point (the one after the event that triggered the direction change in events[ev])
+                    events[ev].updateDist(y, core_dim, t);
+                    continueSim = continueSim && true;  // Simulation will continue unless another event has occurred
                 }
             }
-        }// end of If(hasCrossed)
-
-        if(to_underlying(events[ev].getType()) > 0){
-            // Save the distance and current state to the event
-            events[ev].updateDist(y, core_dim, t);
+        }else{
+            if(to_underlying(events[ev].getType()) > 0){
+                // Save the distance and current state to the event
+                events[ev].updateDist(y, core_dim, t);
+            }
         }
     }// end of loop
 
-    return false;
+    return !continueSim;
 }//========================================
 
 /**
@@ -1019,7 +1014,7 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
  *  has been appended to the arcset. If propagation will continue, a new
  *  segment has also been created
  */
-bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Arcset* pArcset) const{
+bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcset* pArcset){
 
     const DynamicsModel *model = pArcset->getSysData()->getDynamicsModel();
     const unsigned int core_dim = model->getCoreStateSize();
@@ -1062,7 +1057,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     sim.runSim(arcIC, t0, tof, &eventArcset);
 
     Constraint fixStateCon(Constraint_tp::STATE, 0, arcIC);
-    Constraint eventCon(event.getConType(), 1, event.getConData());
+    Constraint eventCon(events[evtIx].getConType(), 1, events[evtIx].getConData());
 
     eventArcset.addConstraint(fixStateCon);
     eventArcset.addConstraint(eventCon);
@@ -1072,7 +1067,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
         eventArcset.addConstraint(epochCon);
     }
 
-    if(verbosity == Verbosity_tp::ALL_MSG){ eventArcset.print(); }
+    if(verbosity >= Verbosity_tp::ALL_MSG){ eventArcset.print(); }
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
     MultShootEngine corrector;
@@ -1100,8 +1095,11 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     double eventTime = t0 + correctedSet.getTotalTOF();
     evtNode.clearConstraints();     // Get rid of any cosntraints used to isolate the event
 
+    // Update event state from the most recent node (a new node was created at the event occurence)
+    events[evtIx].updateDist(&(state.front()), core_dim, eventTime);
+
     // Add the node; pass nullptr for the state vector so that none of the state data in evtNode is overwritten (it should be complete)
-    int id = model->sim_addNode(evtNode, nullptr, eventTime, pArcset, eomParams, event.getType());
+    int id = model->sim_addNode(evtNode, nullptr, eventTime, pArcset, eomParams, events[evtIx].getType());
     pArcset->getNodeRef(id).addLink(lastSeg.getID());    // Link the new node to the previous segment
 
     lastSeg.setTerminus(id);
@@ -1111,7 +1109,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, Event event, Ar
     lastSeg.setSTM(&(state[core_dim]), core_dim*core_dim);
 
     // Create a new segment if the propagation is going to continue
-    if(!(event.stopOnEvent() && event.getTriggerCount() >= event.getStopCount())){
+    if(!(events[evtIx].stopOnEvent() && events[evtIx].getTriggerCount() >= events[evtIx].getStopCount())){
         // Initialize with origin ID, undetermined terminus, and a dummy TOF with the same sign as the previous segment
         Segment newSeg(id, Linkable::INVALID_ID, lastSeg.getTOF());
         newSeg.appendState(state);

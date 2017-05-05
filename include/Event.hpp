@@ -121,7 +121,6 @@ enum class Event_tp : int{
  *	* Define or identify a constraint type that can locate this event to a high
  *		degree of accuracy.
  *	* Update the getDist() function
- * 	* Update the getDir() function
  * 	* Add event to list of allowed constraints in relevant DynamicalModel derived classes
  *
  *	\author Andrew Cox
@@ -155,27 +154,25 @@ class Event : public Core{
 		 */
 		std::vector<double> getConData() const;
 		Constraint_tp getConType() const;
-		int getDir() const;
-		double getTime() const;
+		int getTriggerDir() const;
 		int getStopCount() const;
 		int getTriggerCount() const;
 		Event_tp getType() const;
 		const char* getTypeStr() const;
-		std::vector<double>* getState();
 		const SysData* getSysData();
 
 		void incrementCount();
 		void reset();
 		bool stopOnEvent() const;
 
-		void setDir(int);
+		void setTriggerDir(int);
 		void setStopCount(int);
 		void setStopOnEvent(bool);
 		//\}
 
 		static const char* getEventTpStr(Event_tp);
 
-		bool crossedEvent(const double*, unsigned int, double) const;
+		bool crossedEvent(const double*, unsigned int, double, int) const;
 		void updateDist(const double*, unsigned int, double);
 
 		void printStatus() const;
@@ -198,11 +195,6 @@ class Event : public Core{
 
 		double dist = 100000;		//!< Distance to the event; must be able to change sign
 		double lastDist = 100000; 	//!< distance to event at previous iteration
-		double theTime = 0;			//!< Time at which the event occurs
-
-		/** State at which the event occurs; also used to store last state whenver
-		updateDist() is called so we can determine the direction */
-		std::vector<double> state {};
 
 		/** Type of constraint used by the shooting algorithm to locate this event */
 		Constraint_tp conType = Constraint_tp::NONE;
@@ -215,10 +207,10 @@ class Event : public Core{
 		
 		SysData* pSysData = nullptr; 	//!< Copy of the system data pointer
 
-		void copyEvent(const Event&);
+		void copyMe(const Event&);
 		void initEvent(Event_tp, int, bool, std::vector<double>);
 		double getDist(const double*, unsigned int, double) const;
-		int getDir(const double*, unsigned int, double) const;
+		int getDir(const double*, unsigned int, int) const;
 };
 
 }

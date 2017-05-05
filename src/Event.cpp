@@ -62,6 +62,58 @@ Event::Event(){}
  *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
  *	direction, -1 (-) direction, and 0 both directions.
  *	\param willStop whether or not this event should stop the integration
+ */
+Event::Event(Event_tp t, int dir, bool willStop){
+	createEvent(t, dir, willStop);
+}//================================================
+
+
+/**
+ *	\brief Create an event with custom specifications
+ *	
+ *	Rather than using the default parameters, this constructor allows you to
+ *	create more specialized events.
+ *
+ *	\param t the event type
+ *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	direction, -1 (-) direction, and 0 both directions.
+ *	\param willStop whether or not this event should stop the integration
+ *	\param params a vector of doubles that give the constructor extra information. No
+ *	specific size is required, but params must have at least as many elements as the 
+ *	event type will expect.
+ *
+ *	@see Event_tp::Event_tp
+ *	\throws Exception if the dynamic model does not support this event type
+ *	\throws Exception if the event type is not recognized
+ *	\throws Exception if data values refer to invalid indices
+ */
+Event::Event(Event_tp t, int dir , bool willStop, std::vector<double> params){
+	initEvent(t, dir, willStop, params);
+}//==========================================
+
+/**
+ *	\brief copy constructor
+ */
+Event::Event(const Event &ev){
+	copyMe(ev);
+}//====================================================
+
+/**
+ *	\brief Destructor
+ */
+Event::~Event(){}
+
+/**
+ *	\brief Create an event
+ *
+ *	Note that creating a CRASH event using this constructor will default to a crash
+ *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
+ *	primary and miss distance, use the customizable constructor.
+ *
+ *	\param t the event type
+ *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
+ *	direction, -1 (-) direction, and 0 both directions.
+ *	\param willStop whether or not this event should stop the integration
  *	\throws Exception if this constructor is called for an event type that requires data
  *	\throws Exception if the event type is not recognized
  */
@@ -108,47 +160,6 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 void Event::createEvent(Event_tp t, int dir, bool willStop, std::vector<double> params){
 	initEvent(t, dir, willStop, params);
 }//====================================================
-
-/**
- *	\brief Create an event
- *
- *	Note that creating a CRASH event using this constructor will default to a crash
- *	with Primary #0 and a minimum acceptable distance of zero; to specify a different 
- *	primary and miss distance, use the customizable constructor.
- *
- *	\param t the event type
- *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
- *	direction, -1 (-) direction, and 0 both directions.
- *	\param willStop whether or not this event should stop the integration
- */
-Event::Event(Event_tp t, int dir, bool willStop){
-	createEvent(t, dir, willStop);
-}//================================================
-
-
-/**
- *	\brief Create an event with custom specifications
- *	
- *	Rather than using the default parameters, this constructor allows you to
- *	create more specialized events.
- *
- *	\param t the event type
- *	\param dir direction (+/-/both) the event will trigger on. +1 indices (+)
- *	direction, -1 (-) direction, and 0 both directions.
- *	\param willStop whether or not this event should stop the integration
- *	\param params a vector of doubles that give the constructor extra information. No
- *	specific size is required, but params must have at least as many elements as the 
- *	event type will expect.
- *
- *	@see Event_tp::Event_tp
- *	\throws Exception if the dynamic model does not support this event type
- *	\throws Exception if the event type is not recognized
- *	\throws Exception if data values refer to invalid indices
- */
-Event::Event(Event_tp t, int dir , bool willStop, std::vector<double> params){
-	initEvent(t, dir, willStop, params);
-}//==========================================
-
 /**
  *	@see Event(data, t, dir, willStop, params)
  */
@@ -206,7 +217,7 @@ void Event::initialize(const SysData* pSys){
 	}
 
 	// double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
-	std::vector<double> data(6, NAN);
+	std::vector<double> data(pSysData->getDynamicsModel()->getCoreStateSize(), NAN);
 	switch(type){
 		case Event_tp::YZ_PLANE: data[0] = paramsIn[0]; break;	// x = specified value
 		case Event_tp::XZ_PLANE: data[1] = paramsIn[0];	break;	// y = specified value
@@ -240,47 +251,15 @@ void Event::initialize(const SysData* pSys){
 	conData.insert(conData.begin(), data.begin(), data.end());
 }//====================================================
 
-/**
- *	\brief copy constructor
- */
-Event::Event(const Event &ev){
-	copyEvent(ev);
-}//====================================================
-
-/**
- *	\brief copy the event
- *	\param ev an event
- */
-void Event::copyEvent(const Event &ev){
-	type = ev.type;
-	triggerDir = ev.triggerDir;
-	triggerCount = ev.triggerCount;
-	stopCount = ev.stopCount;
-	bStop = ev.bStop;
-	dist = ev.dist;
-	lastDist = ev.lastDist;
-	theTime = ev.theTime;
-	state = ev.state;
-	conType = ev.conType;
-	conData = ev.conData;
-	paramsIn = ev.paramsIn;
-	pSysData = ev.pSysData;	// COPY ADDRESS (ptr) of SYS DATA
-}//=============================================
-
-/**
- *	\brief Destructor
- */
-Event::~Event(){}
-
-//-----------------------------------------------------
+//---------------------------------------------------------------------------------------
 //      Operator Functions
-//-----------------------------------------------------
+//---------------------------------------------------------------------------------------
 
 /**
  *	\brief Assignment operator
  */
 Event& Event::operator =(const Event &ev){
-	copyEvent(ev);
+	copyMe(ev);
 	return *this;
 }//====================================================
 
@@ -309,16 +288,16 @@ bool operator !=(const Event &lhs, const Event &rhs){
 	return !(lhs == rhs);
 }//====================================================
 
-//-----------------------------------------------------
+//---------------------------------------------------------------------------------------
 //      Set and Get Functions
-//-----------------------------------------------------
+//---------------------------------------------------------------------------------------
 
 /**
  *	\brief Retrieve the trigger direction for this Event
  *	\return the trigger direction for this event; -1 for negative, +1
  *	for positive, 0 for both/either
  */
-int Event::getDir() const { return triggerDir; }
+int Event::getTriggerDir() const { return triggerDir; }
 
 /**
  *	\brief Retrieve the type associated with this Event object
@@ -331,40 +310,6 @@ Event_tp Event::getType() const { return type; }
  *	\return a human-readable string representing the event type
  */
 const char* Event::getTypeStr() const{ return getEventTpStr(type); }
-
-/**
- *  \brief Retrieve a human-readable string representing an event type
- *	\return a human-readable string representing an event type
- */
-const char* Event::getEventTpStr(Event_tp t){
-	switch(t){
-		case Event_tp::NONE: return "NONE"; break;
-		case Event_tp::SIM_TOF: return "SimEngine Time-of-Flight"; break;
-		case Event_tp::SIM_COMPTIME: return "SimEngine Computation Timeout"; break;
-		case Event_tp::SIM_ERR: return "SimEngine Error"; break;
-		case Event_tp::YZ_PLANE: return "yz-plane"; break;
-		case Event_tp::XZ_PLANE: return "xz-plane"; break;
-		case Event_tp::XY_PLANE: return "xy-plane"; break;
-		case Event_tp::CRASH: return "crash"; break;
-		case Event_tp::JC: return "jacobi constant"; break;
-		case Event_tp::APSE: return "apse"; break;
-		case Event_tp::DIST: return "distance"; break;
-		case Event_tp::MASS: return "mass"; break;
-		default: return "UNDEFINED!"; break;
-	}
-}//====================================================
-
-/**
- *  \brief Retrieve the time associated with this event
- *	\return the time associated with this event
- */
-double Event::getTime() const { return theTime; }
-
-/**
- *  \brief Retrieve a pointer to the state vector object
- *	\return a pointer to the state vector object; useful for in-place reading or writing
- */
-std::vector<double>* Event::getState() { return &state; }
 
 /**
  *  \brief Determine whether or not this event will stop the integration
@@ -415,7 +360,7 @@ void Event::incrementCount(){ triggerCount++; }
  *	\brief Set the trigger direction for this event
  *	\param d the direction: +1 for positive, -1 for negative, 0 for both/either
  */
-void Event::setDir(int d){ triggerDir = d; }
+void Event::setTriggerDir(int d){ triggerDir = d; }
 
 /**
  *	\brief Set the number of triggers this event can endure before the simulation
@@ -432,19 +377,21 @@ void Event::setStopCount(int c){ stopCount = c; }
  */
 void Event::setStopOnEvent(bool s){ bStop = s; }
 
-//-----------------------------------------------------
-//      Computations, etc.
-//-----------------------------------------------------
+//---------------------------------------------------------------------------------------
+//      Event Computations
+//---------------------------------------------------------------------------------------
 
 /**
  *	\brief Determine (roughly) whether or not this event has occured between the
  *	previous trajectory state and the current one.
  *
  *	\param y the current integrated state (6 elements)
- *	\param t the current time
+ *	\param len number of elements in <tt>y</tt>
+ *	\param t non-dimensional time associated with state <tt>y</tt>
+ *	\param tDir direction that time is being propagated: +1 for forward, -1 for negative
  *	\return whether or not the trajectory has passed through this event
  */
-bool Event::crossedEvent(const double* y, unsigned int len, double t) const{
+bool Event::crossedEvent(const double* y, unsigned int len, double t, int tDir) const{
 	double newDist = getDist(y, len, t);
 
 	// See if we have crossed (in pos. or neg. direction)
@@ -452,7 +399,7 @@ bool Event::crossedEvent(const double* y, unsigned int len, double t) const{
 		if(triggerDir == 0){
 			return true;
 		}else{
-			return triggerDir == getDir(y, len, t);
+			return triggerDir == getDir(y, len, tDir);
 		}
 	}
 	return false;
@@ -463,32 +410,33 @@ bool Event::crossedEvent(const double* y, unsigned int len, double t) const{
  *	the <tt>crossedEvent()</tt> function to determine whether or not 
  *	the integration has crossed the event
  *
- *	\param y a 6-element state vector; if y is larger than 42 elements, 
- *	only the first 6 will be copied
+ *	\param y the state vector; must have at least the core states
+ *	\param len number of elements stored in y
  *	\param t non-dimensional time associated with state <tt>y</tt>
  */
 void Event::updateDist(const double* y, unsigned int len, double t){	
 	// update the dist variable using information from y
 	lastDist = dist;
 	dist = getDist(y, len, t);
-
-	// Save the state from y for later comparison
-	state.clear();
-	state.insert(state.begin(), y, y+len);
-	theTime = t;
 }//======================================
 
 /**
  *	\brief Compute the distance from the input state to the event
  *	\param y a state vector representing the current integration state
+ *	\param len number of elements in y
  *	\param t non-dimensional time associated with state <tt>y</tt>
+ *	
  *	\return the distance
+ *	
  *	\throws Exception if the event type associated with this event is not implemented
  *	\throws Exception if the system data pointer has not been initialized via the initialize() function
  */
 double Event::getDist(const double *y, unsigned int len, double t) const{
 	if(!pSysData)
-		throw Exception("Event::getDist: SysData pointer has not been initialized; please call initialize() function");
+		throw Exception("Event::getDist: SysData pointer has not been initialized; please call initialize() function.");
+
+	if(len < pSysData->getDynamicsModel()->getCoreStateSize())
+		throw Exception("Event::getDist: Input state must contain at least as many elements as the core state size.");
 
 	double d = 0;
 	switch(type){
@@ -498,37 +446,23 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 			d = 1;	// Will never use event location to find these events; they are monitored by the simEngine individually
 			break;
 		case Event_tp::YZ_PLANE:
-			if(len > 0){
-				d = conData[0] - y[0];
-			}else{
-				throw Exception("Event::getDist: input state is too short!");
-			}
+			d = y[0] - conData[0];
 			break;
 		case Event_tp::XZ_PLANE:
-			if(len > 1){
-				d = conData[1] - y[1];
-			}else{
-				throw Exception("Event::getDist: input state is too short!");
-			}
-
+			d = y[1] - conData[1];
 			break;
 		case Event_tp::XY_PLANE:
-			if(len > 2){
-				d = conData[2] - y[2];
-			}else{
-				throw Exception("Event::getDist: input state is too short!");
-			}
-
+			d = y[2] - conData[2];
 			break;
 		case Event_tp::CRASH:
 		{
 			if(len > 2){
-				std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
-
-				int Pix = static_cast<int>(conData[0]);
-				double dx = y[0] - primPos[Pix*3 + 0];
-				double dy = y[1] - primPos[Pix*3 + 1];
-				double dz = y[2] - primPos[Pix*3 + 2];
+				double pos[3] = {0};
+				pSysData->getDynamicsModel()->getPrimPos(t, pSysData, static_cast<int>(conData[0]), pos);
+				
+				double dx = y[0] - pos[0];
+				double dy = y[1] - pos[1];
+				double dz = y[2] - pos[2];
 				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			}else{
 				throw Exception("Event::getDist: input state is too short!");
@@ -539,7 +473,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 		{
 			if(len > 5){
 				const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(pSysData);
-				d = conData[0] - DynamicsModel_cr3bp::getJacobi(y, crSys->getMu());
+				d = DynamicsModel_cr3bp::getJacobi(y, crSys->getMu()) - conData[0];
 			}else{
 				throw Exception("Event::getDist: input state is too short!");
 			}
@@ -558,11 +492,12 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 		case Event_tp::DIST:
 		{
 			if(len > 2){
-				std::vector<double> primPos = pSysData->getDynamicsModel()->getPrimPos(t, pSysData);
-				int Pix = static_cast<int>(conData[0]);
-				double dx = y[0] - primPos[Pix*3 + 0];
-				double dy = y[1] - primPos[Pix*3 + 1];
-				double dz = y[2] - primPos[Pix*3 + 2];
+				double pos[3] = {0};
+				pSysData->getDynamicsModel()->getPrimPos(t, pSysData, static_cast<int>(conData[0]), pos);
+				
+				double dx = y[0] - pos[0];
+				double dy = y[1] - pos[1];
+				double dz = y[2] - pos[2];
 				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			}else{
 				throw Exception("Event::getDist: input state is too short!");
@@ -571,7 +506,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 		}
 		case Event_tp::MASS:
 			if(len > 6){
-				d = conData[6] - y[6];
+				d = y[6] - conData[6];
 			}else{
 				throw Exception("Event::getDist: input state is too short!");
 			}
@@ -585,65 +520,62 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 }//====================================================
 
 /**
- *	\brief Get the direction of propagation for the event by comparing an input state <tt>y</tt>
- *	to the state stored in the <tt>state</tt> variable (which was updated last iteration)
+ *	\brief Get the direction of propagation.
+ *	\details This function should be called after updateDist() to retrieve the most recent
+ *	information.
  *
  *	\param y a state vector
- *	\param t non-dimensional time associated with state <tt>y</tt>
+ *	\param tDir direction that time is being propagated (+1 for forward, -1 for negative)
  *	\return positive or negative one to correspond with the sign
  *	\throws Exception if the event type associated with this event is not implemented
  */
-int Event::getDir(const double *y, unsigned int len, double t) const{
-	double d = 0;
-	double dt = t - theTime;
+int Event::getDir(const double *y, unsigned int len, int tDir) const{
+	double d = dist-lastDist;
+	return static_cast<int>(d*tDir/std::abs(d*tDir));
+}//====================================================
 
-	// Compute distance from old point (state) to new point (y)
-	switch(type){
-		case Event_tp::SIM_TOF:
-		case Event_tp::SIM_COMPTIME:
-		case Event_tp::SIM_ERR:
-			d = 1;	// Will never use event location to find these events; they are monitored by the simEngine individually
-			break;
-		case Event_tp::YZ_PLANE:
-			if(len > 0){
-				d = y[0] - state[0];
-			}else{
-				throw Exception("Event::getDir: input state is too short!");
-			}
-			break;
-		case Event_tp::XZ_PLANE:
-			if(len > 1){
-				d = y[1] - state[1];
-			}else{
-				throw Exception("Event::getDir: input state is too short!");
-			}
-			break;
-		case Event_tp::XY_PLANE:
-			if(len > 2){
-				d = y[2] - state[2];
-			}else{
-				throw Exception("Event::getDir: input state is too short!");
-			}
-			break;
-		case Event_tp::CRASH:
-		case Event_tp::JC:
-		case Event_tp::APSE:
-		case Event_tp::DIST:
-			d = dist - lastDist;
-			break;
-		case Event_tp::MASS:
-			if(len > 7){
-				d = y[6] - state[6];
-			}else{
-				throw Exception("Event::getDir: input state is too short!");
-			}
+//-----------------------------------------------------
+//      Utility Functions
+//-----------------------------------------------------
 
-			break;
-		default: 
-			throw Exception("Event type not implemented");
+/**
+ *	\brief copy the event
+ *	\param ev an event
+ */
+void Event::copyMe(const Event &ev){
+	type = ev.type;
+	triggerDir = ev.triggerDir;
+	triggerCount = ev.triggerCount;
+	stopCount = ev.stopCount;
+	bStop = ev.bStop;
+	dist = ev.dist;
+	lastDist = ev.lastDist;
+	conType = ev.conType;
+	conData = ev.conData;
+	paramsIn = ev.paramsIn;
+	pSysData = ev.pSysData;	// COPY ADDRESS (ptr)
+}//=============================================
+
+/**
+ *  \brief Retrieve a human-readable string representing an event type
+ *	\return a human-readable string representing an event type
+ */
+const char* Event::getEventTpStr(Event_tp t){
+	switch(t){
+		case Event_tp::NONE: return "NONE"; break;
+		case Event_tp::SIM_TOF: return "SimEngine Time-of-Flight"; break;
+		case Event_tp::SIM_COMPTIME: return "SimEngine Computation Timeout"; break;
+		case Event_tp::SIM_ERR: return "SimEngine Error"; break;
+		case Event_tp::YZ_PLANE: return "yz-plane"; break;
+		case Event_tp::XZ_PLANE: return "xz-plane"; break;
+		case Event_tp::XY_PLANE: return "xy-plane"; break;
+		case Event_tp::CRASH: return "crash"; break;
+		case Event_tp::JC: return "jacobi constant"; break;
+		case Event_tp::APSE: return "apse"; break;
+		case Event_tp::DIST: return "distance"; break;
+		case Event_tp::MASS: return "mass"; break;
+		default: return "UNDEFINED!"; break;
 	}
-
-	return static_cast<int>(d*dt/std::abs(d*dt));
 }//====================================================
 
 /**
@@ -662,12 +594,7 @@ void Event::reset(){
 	triggerCount = 0;
 	dist = 100000;
 	lastDist = 100000;
-	theTime = 0;
-	state.clear();
 }//====================================================
-
-
-
 
 
 

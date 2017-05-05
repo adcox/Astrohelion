@@ -297,7 +297,7 @@ class SimEngine : public Core, public Engine{
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
 		void integrate(const double*, MatrixXRd, const double*, int, Arcset*);
 		bool locateEvents(const double*, double, Arcset*, int);
-		bool locateEvent_multShoot(const double*, double, Event, Arcset*) const;
+		bool locateEvent_multShoot(const double*, double, int, Arcset*);
 };
 
 

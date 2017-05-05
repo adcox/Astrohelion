@@ -617,7 +617,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 		
 		// Info about solving Sparse matrix systems with Eigen:
 		// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
-		
+
 		// Solve the system Jw = b (In this case, w = X_diff)
 		// Eigen::FullPivLU<MatrixXRd> lu(J);
 		// lu.setThreshold(1e-20);
@@ -874,6 +874,20 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     double rowMaxMax = rowMax.maxCoeff();
     double colMaxMax = colMax.maxCoeff();
     int errScalar = 10000;
+
+    for(unsigned int r = 0; r < DF.rows(); r++){
+    	if(DF.row(r).norm() == 0){
+    		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED, "Singular Jacobian: row %u contains only zeros\n", r);
+    		return false;
+    	}
+    }
+
+    for(unsigned int c = 0; c < DF.cols(); c++){
+    	if(DF.col(c).norm() == 0){
+    		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED, "Singular Jacobian: column %u contains only zeros\n", c);
+    		return false;
+    	}
+    }
 
     if(rowMaxMax < errScalar*pertSize && colMaxMax < errScalar*colMaxMax){
         if(verbosity >= Verbosity_tp::SOME_MSG)

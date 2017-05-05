@@ -642,7 +642,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 			SparseMatXCd JT = J.transpose();
 			SparseMatXCd G = J*JT;		// G will always be symmetric
 
-			astrohelion::toCSV(J, "DF_cpp.csv");
+			// astrohelion::toCSV(J, "DF_cpp.csv");
 			// astrohelion::toCSV(FX, "FX_cpp.csv");
 			// astrohelion::toCSV(oldX, "X_cpp.csv");
 
@@ -652,7 +652,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 			luSolver.compute(G);	
 			if(luSolver.info() != Eigen::Success){
 				// If LU factorization fails, try QR factorization - it tends to be more robust
-				printVerb(verbosity >= Verbosity_tp::NO_MSG, "LU Factorization failed, trying QR factorization to solve update equation.\n");
+				printVerb(verbosity >= Verbosity_tp::ALL_MSG, "LU Factorization failed, trying QR factorization to solve update equation.\n");
 				Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
 				qrSolver.compute(G);
 				if(qrSolver.info() != Eigen::Success){

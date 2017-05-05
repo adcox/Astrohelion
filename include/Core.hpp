@@ -67,6 +67,8 @@
 
 #pragma once
 
+#define NDEBUG	// Dissable all asserts and other debugging features
+
 #include <string>
 #include <map>
 

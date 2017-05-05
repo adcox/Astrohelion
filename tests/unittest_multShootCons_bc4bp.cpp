@@ -637,7 +637,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
 	// doubleSrcLyap.print();
 	// doubleSrcLyap.printInChrono();
 
-	double contData[] = {4, 4, NAN, 4, 4, NAN};
+	double contData[] = {5, 5, NAN, 5, 5, NAN};
 	Constraint contCon(Constraint_tp::SEG_CONT_PV, 2, contData, 6);
 	doubleSrcLyap.addConstraint(contCon);
 
@@ -676,7 +676,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
 	Arcset_bc4bp doubleSrcLyap = forwardArc;
 	doubleSrcLyap.concatArcset(&reverseArc);
 
-	double contExData[] = {4, 0};
+	double contExData[] = {5, 0};
 	Constraint extraContCon(Constraint_tp::SEG_CONT_EX, 2, contExData, 2);
 	doubleSrcLyap.addConstraint(extraContCon);
 

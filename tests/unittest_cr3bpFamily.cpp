@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	// }
 	// fam.saveToMat("data/LoadedButterflyFam.mat");	// Check to see if data was re-loaded correctly
 
-	// printf("Checing Match State: X\n");
+	printf("Checing Match State: X\n");
 	double matchX = 0.9;
 	std::vector<FamMember_cr3bp> matches = fam.getMemberByStateVar(matchX, 0);
 	// printf("  Found %zu Potential members\n", matches.size());
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 		BOOST_CHECK(std::abs(matches[i].getIC()[0] - matchX) < 1e-9);
 	}
 
-	// printf("Checking Match Jacobi:\n");
+	printf("Checking Match Jacobi:\n");
 	double matchJC = 3;
 	matches.clear();
 	matches = fam.getMemberByJacobi(matchJC);
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 		BOOST_CHECK(std::abs(matches[i].getJacobi() - matchJC) < 1e-9);
 	}
 
-	// printf("Checking Match TOF:\n");
+	printf("Checking Match TOF:\n");
 	double matchTOF = 4.5;
 	matches.clear();
 	matches = fam.getMemberByTOF(matchTOF);

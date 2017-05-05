@@ -29,10 +29,10 @@
 
 #include <algorithm>
 #include <cmath>
-// #include <Eigen/Dense>
 #include <Eigen/OrderingMethods>
 #include <Eigen/Sparse>
 #include <Eigen/SparseLU>
+#include <Eigen/SparseQR>
 #include <vector>
 
 #include "MultShootEngine.hpp"
@@ -447,12 +447,11 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	Arcset arc(it.nodesIn->getSysData());
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
-		// it.DF.clear();
 		it.DF_elements.clear();
 		it.deltaVs.clear();
 		it.propSegs.clear();
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
-		// it.DF.assign(it.totalCons*it.totalFree, 0);
+
 		it.DF_elements.reserve(it.totalCons * coreStateSize);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
@@ -596,7 +595,6 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(pIt->X[0]), pIt->totalFree, 1);
 	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(pIt->FX[0]), pIt->totalCons, 1);
-	// MatrixXRd J = Eigen::Map<MatrixXRd>(&(pIt->DF[0]), pIt->totalCons, pIt->totalFree);
 	SparseMatXCd J(pIt->totalCons, pIt->totalFree);
 	J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
 	J.makeCompressed();
@@ -619,12 +617,6 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 		// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
 
 		// Solve the system Jw = b (In this case, w = X_diff)
-		// Eigen::FullPivLU<MatrixXRd> lu(J);
-		// lu.setThreshold(1e-20);
-
-		// if(!lu.isInvertible())
-		// 	throw LinAlgException("MultShootEngine::solveUpdateEq: Jacobian is singular; cannot solve");
-
 		Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
 		luSolver.analyzePattern(J);
 		luSolver.factorize(J);
@@ -646,44 +638,41 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 			Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 			 */
 
-
 			// Compute Gramm matrix
-			// MatrixXRd JT = J.transpose();
-			// MatrixXRd G = J*JT;
 			SparseMatXCd JT = J.transpose();
 			SparseMatXCd G = J*JT;		// G will always be symmetric
 
-			// astrohelion::toCSV(J, "DF_cpp.csv");
+			astrohelion::toCSV(J, "DF_cpp.csv");
 			// astrohelion::toCSV(FX, "FX_cpp.csv");
 			// astrohelion::toCSV(oldX, "X_cpp.csv");
 
-			// waitForUser();
-			
-			
 			// Solve the system Gw = b
-			// Eigen::FullPivLU<MatrixXRd> lu(G);
-			// lu.setThreshold(1e-20);
+			// LU-Factorization is faster and works most of the time
 			Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
-			luSolver.analyzePattern(G);	
-			// TODO - May be able to improve performance since G is symmetric; see <https://eigen.tuxfamily.org/dox-devel/group__OrderingMethods__Module.html>
-			luSolver.factorize(G);
+			luSolver.compute(G);	
 			if(luSolver.info() != Eigen::Success){
-				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix");
+				// If LU factorization fails, try QR factorization - it tends to be more robust
+				printVerb(verbosity >= Verbosity_tp::NO_MSG, "LU Factorization failed, trying QR factorization to solve update equation.\n");
+				Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
+				qrSolver.compute(G);
+				if(qrSolver.info() != Eigen::Success){
+					throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix.");
+				}
+
+				Eigen::VectorXd w = qrSolver.solve(-FX);
+				if(qrSolver.info() != Eigen::Success){
+					throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
+				}
+
+				X_diff = JT*w;	// Compute optimal x from w
+			}else{
+
+				Eigen::VectorXd w = luSolver.solve(-FX);
+				if(luSolver.info() != Eigen::Success){
+					throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
+				}
+				X_diff = JT*w;	// Compute optimal x from w
 			}
-			// if(!lu.isInvertible()){
-			// 	astrohelion::printErr("Gramm Matrix rank = %ld / %ld\n", lu.rank(), G.rows());
-			// 	throw LinAlgException("MultShootEngine::solveUpdateEq: Gramm matrix is singular; cannot solve");
-			// }
-
-			Eigen::VectorXd w = luSolver.solve(-FX);
-			if(luSolver.info() != Eigen::Success){
-				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
-			}
-
-			// Compute optimal x from w
-			X_diff = JT*w;
-
-
 
 			// Alternative Method: SVD
 			// NOTE: This takes approximately five times as much computation time
@@ -701,7 +690,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 			// X_diff = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
 
 		}else{	// Over-constrained
-			throw LinAlgException("System is over constrained... No solution implemented");
+			throw LinAlgException("MultShootEngine::solveUpdateEq: System is over constrained... No solution implemented");
 		}
 	}
 
@@ -875,17 +864,18 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     double colMaxMax = colMax.maxCoeff();
     int errScalar = 10000;
 
+    bool goodDF = true;
     for(unsigned int r = 0; r < DF.rows(); r++){
     	if(DF.row(r).norm() == 0){
     		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED, "Singular Jacobian: row %u contains only zeros\n", r);
-    		return false;
+    		goodDF = goodDF && false;
     	}
     }
 
     for(unsigned int c = 0; c < DF.cols(); c++){
     	if(DF.col(c).norm() == 0){
     		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED, "Singular Jacobian: column %u contains only zeros\n", c);
-    		return false;
+    		goodDF = goodDF && false;
     	}
     }
 
@@ -893,45 +883,47 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
         if(verbosity >= Verbosity_tp::SOME_MSG)
             astrohelion::printColor(BOLDGREEN, "No significant errors!\n");
 
-        return true;
+        goodDF = goodDF && true;
     }else{
-        if(verbosity >= Verbosity_tp::SOME_MSG){
-            astrohelion::printColor(BOLDRED, "Significant errors!\n");
-            printf("Maximum relative difference between computed DF and estimated DF\n");
-
-            int conCount = 0;
-            for(long r = 0; r < rowMax.size(); r++){
-                if(r == 0 && it.totalCons > 0){
-                    printf("Applies to %s %d: %s Constraint:\n", 
-                        Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
-                        it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
-                }else if(conCount+1 < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
-                    conCount++;
-                    printf("Applies to %s %d: %s Constraint:\n", 
-                        Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
-                        it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
-                }
-                astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
-                    "  row %03zu: %.6e\n", r, rowMax[r]);
-            }
-            for(long c = 0; c < colMax.size(); c++){
-                std::string parent = "unknown";
-                std::string type = "unknown";
-                MSVarMap_Key key;
-                try{
-                    key = freeVarMap_rowNumToKey.at(c);
-                    MSVarMap_Obj obj = it.freeVarMap.at(key);
-                    parent = MSVarMap_Obj::parent2str(obj.parent);
-                    type = MSVarMap_Key::type2str(key.type);
-                }catch(std::out_of_range &e){}
-
-                astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
-                    "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
-            }
-        }
-
-        return false;
+    	astrohelion::printColor(BOLDRED, "Significant errors!\n");
+    	goodDF = goodDF && false;
     }
+
+    // Print out big table of information
+    if((!goodDF && verbosity >= Verbosity_tp::SOME_MSG) || verbosity >= Verbosity_tp::DEBUG){
+        printf("Maximum relative difference between computed DF and estimated DF\n");
+        int conCount = 0;
+        for(long r = 0; r < rowMax.size(); r++){
+            if(r == 0 && it.totalCons > 0){
+                printf("Applies to %s %d: %s Constraint:\n", 
+                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                    it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+            }else if(conCount+1 < static_cast<int>(it.allCons.size()) && r >= it.conRows[conCount+1]){
+                conCount++;
+                printf("Applies to %s %d: %s Constraint:\n", 
+                    Constraint::getAppTypeStr(it.allCons[conCount].getAppType()),
+                    it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+            }
+            astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
+                "  row %03zu: %.6e\n", r, rowMax[r]);
+        }
+        for(long c = 0; c < colMax.size(); c++){
+            std::string parent = "unknown";
+            std::string type = "unknown";
+            MSVarMap_Key key;
+            try{
+                key = freeVarMap_rowNumToKey.at(c);
+                MSVarMap_Obj obj = it.freeVarMap.at(key);
+                parent = MSVarMap_Obj::parent2str(obj.parent);
+                type = MSVarMap_Key::type2str(key.type);
+            }catch(std::out_of_range &e){}
+
+            astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
+                "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
+        }
+    }
+
+    return goodDF;
 }//====================================================
 
 /**

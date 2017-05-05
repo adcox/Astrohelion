@@ -347,7 +347,6 @@ void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData* it, Constrai
         for(unsigned int s = 0; s < conData.size(); s++){
             if(!std::isnan(conData[s])){
                 // Epoch dependencies
-                // it->DF[it->totalFree*(row0+count) + epochVar.row0] = last_dqdT[s];
                 it->DF_elements.push_back(Tripletd(row0+count, epochVar.row0, last_dqdT[s]));
                 count++;
             }
@@ -379,11 +378,6 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, Constraint 
         double T1 = it->X[Tf_var.row0];
 
         it->FX[row0] = T1 - (T0 + tof);
-        // it->DF[it->totalFree*(row0) + tof_var.row0] = -1;
-        // it->DF[it->totalFree*(row0) + tof_var.row0] /= it->bEqualArcTime ? it->nodesIn->getNumSegs() : 1.0;
-        // it->DF[it->totalFree*(row0) + T0_var.row0] = -1;
-        // it->DF[it->totalFree*(row0) + Tf_var.row0] = 1;
-
         it->DF_elements.push_back(Tripletd(row0, tof_var.row0, it->bEqualArcTime ? -1.0/(it->nodesIn->getNumSegs()) : -1.0));
         it->DF_elements.push_back(Tripletd(row0, T0_var.row0, -1.0));
         it->DF_elements.push_back(Tripletd(row0, Tf_var.row0, 1.0));
@@ -417,11 +411,6 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constra
         double tof2 = it->bEqualArcTime ? it->X[tof_var2.row0]/(it->nodesIn->getNumSegs()) : it->X[tof_var2.row0];
 
         it->FX[row0] = T01 + tof1 - (T02 + tof2);
-        // it->DF[it->totalFree*row0 + T0_var1.row0] = 1;
-        // it->DF[it->totalFree*row0 + T0_var2.row0] = -1;
-        // it->DF[it->totalFree*row0 + tof_var1.row0] = 1;
-        // it->DF[it->totalFree*row0 + tof_var2.row0] = -1;
-
         it->DF_elements.push_back(Tripletd(row0, T0_var1.row0, 1.0));
         it->DF_elements.push_back(Tripletd(row0, T0_var2.row0, -1.0));
         it->DF_elements.push_back(Tripletd(row0, tof_var1.row0, 1.0));
@@ -449,7 +438,6 @@ void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint co
     for(unsigned int s = 0; s < con.getData().size(); s++){
         if(!std::isnan(conData[s])){
             it->FX[row0+count] = it->X[stateVar.row0+s] - conData[s];
-            // it->DF[it->totalFree*(row0 + count) + stateVar.row0 + s] = 1;
             it->DF_elements.push_back(Tripletd(row0+count, stateVar.row0+s, 1.0));
             count++;
         }
@@ -469,7 +457,6 @@ void DynamicsModel_bc4bp::multShoot_targetEpoch(MultShootData* pIt, Constraint c
         if(conData.size() > 0){
             MSVarMap_Obj epoch_var = pIt->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
             pIt->FX[row0] = pIt->X[epoch_var.row0] - conData[0];
-            // pIt->DF[pIt->totalFree*row0 + epoch_var.row0] = 1;
             pIt->DF_elements.push_back(Tripletd(row0, epoch_var.row0, 1.0));
         }
     }
@@ -518,10 +505,6 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
     it->FX[row0] = h - conData[1];
 
     // Partials with respect to node position states
-    // it->DF[it->totalFree*row0 + stateVar.row0 + 0] = dx/h;
-    // it->DF[it->totalFree*row0 + stateVar.row0 + 1] = dy/h;
-    // it->DF[it->totalFree*row0 + stateVar.row0 + 2] = dz/h;
-
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+0, dx/h));
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+1, dy/h));
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+2, dz/h));
@@ -535,7 +518,6 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
         Eigen::Vector3d drdT = Eigen::Map<Eigen::Vector3d>(&(primVel[Pix*3]), 3, 1);
         
         double prod = dhdr*drdT;
-        // it->DF[it->totalFree*row0 + epochVar.row0] = prod;
         it->DF_elements.push_back(Tripletd(row0, epochVar.row0, prod));
     }
 
@@ -557,7 +539,6 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
         it->FX[row0] += sign*it->X[slackCol]*it->X[slackCol];
 
         // Partial with respect to slack variable
-        // it->DF[it->totalFree*row0 + slackCol] = sign*2*it->X[slackCol];
         it->DF_elements.push_back(Tripletd(row0, slackCol, sign*2*it->X[slackCol]));
     }
 }// End of targetDist() =========================================
@@ -658,7 +639,6 @@ void DynamicsModel_bc4bp::multShoot_targetDeltaV(MultShootData* it, Constraint c
 
                 double dFdT_n = dFdq_n2*dqdT;
                 MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRefByIx_const(s).getOrigin());
-                // it->DF[it->totalFree*row0 + epochVar.row0] = -dFdT_n/dvMax;
                 it->DF_elements.push_back(Tripletd(row0, epochVar.row0, -dFdT_n/dvMax));
             }
         }
@@ -695,14 +675,6 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     double dvz = it->X[stateVar.row0+5] - primVel[3*Pix+2];
 
     it->FX[row0] = dx*dvx + dy*dvy + dz*dvz;
-
-    // it->DF[it->totalFree*row0 + stateVar.row0+0] = dvx;
-    // it->DF[it->totalFree*row0 + stateVar.row0+1] = dvy;
-    // it->DF[it->totalFree*row0 + stateVar.row0+2] = dvz;
-    // it->DF[it->totalFree*row0 + stateVar.row0+3] = dx;
-    // it->DF[it->totalFree*row0 + stateVar.row0+4] = dy;
-    // it->DF[it->totalFree*row0 + stateVar.row0+5] = dz;
-
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+0, dvx));
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+1, dvy));
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+2, dvz));
@@ -711,9 +683,6 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     it->DF_elements.push_back(Tripletd(row0, stateVar.row0+5, dz));
 
     if(it->bVarTime){
-        // it->DF[it->totalFree*row0 + epochVar.row0] = -1*(dvx*primVel[3*Pix+0] + dvy*primVel[3*Pix+1] + dvz*primVel[3*Pix+2]);
-        // it->DF[it->totalFree*row0 + epochVar.row0] -= (dx*primAccel[3*Pix+0] + dy*primAccel[3*Pix+1] + dz*primAccel[3*Pix+2]);
-
         it->DF_elements.push_back(Tripletd(row0, epochVar.row0, -1*(dvx*primVel[3*Pix+0] + dvy*primVel[3*Pix+1] + dvz*primVel[3*Pix+2]) -
             (dx*primAccel[3*Pix+0] + dy*primAccel[3*Pix+1] + dz*primAccel[3*Pix+2]) ));
     }
@@ -810,7 +779,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
     double* dFdq_ptr = dFdq.data();
 
     double *FX = &(it->FX[0]);
-    // double *DF = &(it->DF[0]);
 
     std::copy(conEvalPtr, conEvalPtr+3, FX+row0);
 
@@ -819,9 +787,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
         it->DF_elements.push_back(Tripletd(row0+1, stateVar.row0+c, dFdq_ptr[3+c]));
         it->DF_elements.push_back(Tripletd(row0+2, stateVar.row0+c, dFdq_ptr[6+c]));
     }
-    // std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + stateVar.row0);
-    // std::copy(dFdq_ptr+3, dFdq_ptr+6, DF + it->totalFree*(row0+1) + stateVar.row0);
-    // std::copy(dFdq_ptr+6, dFdq_ptr+9, DF + it->totalFree*(row0+2) + stateVar.row0);
 
     if(it->bVarTime){
         // Get primary velocities at the specified epoch time
@@ -864,10 +829,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, 
         // Compute partials of constraint function w.r.t. epoch time
         Eigen::VectorXd dFdT;
         dFdT.noalias() = dFdr2*(primVel.row(1).transpose()) + dFdr3*(primVel.row(2).transpose());
-
-        // DF[it->totalFree*row0 + epochVar.row0] = dFdT(3);
-        // DF[it->totalFree*(row0+1) + epochVar.row0] = dFdT(4);
-        // DF[it->totalFree*(row0+2) + epochVar.row0] = dFdT(5);
 
         it->DF_elements.push_back(Tripletd(row0+0, epochVar.row0, dFdT(3)));
         it->DF_elements.push_back(Tripletd(row0+1, epochVar.row0, dFdT(4)));
@@ -1140,18 +1101,14 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
     double* dFdT_ptr = dAdT.data();
 
     double *FX = &(it->FX[0]);
-    // double *DF = &(it->DF[0]);
 
     FX[row0] = A.squaredNorm()/(Amax*Amax) - 1;
-    // FX[row0] = A.squaredNorm() - Amax*Amax;
     
     for(unsigned int c = 0; c < 3; c++){
         it->DF_elements.push_back(Tripletd(row0, stateVar.row0+c, dFdq_ptr[c]));
     }
-    // std::copy(dFdq_ptr, dFdq_ptr+3, DF + it->totalFree*row0 + stateVar.row0);
 
     if(it->bVarTime){
-        // std::copy(dFdT_ptr, dFdT_ptr+1, DF + it->totalFree*row0 + epochVar.row0);
         it->DF_elements.push_back(Tripletd(row0, epochVar.row0, dFdT_ptr[0]));
     }
 
@@ -1166,7 +1123,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
     it->FX[row0] += it->X[slackCol]*it->X[slackCol];
 
     // Partial with respect to slack variable
-    // it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
     it->DF_elements.push_back(Tripletd(row0, slackCol, 2*it->X[slackCol]));
 }// End of SP Targeting (Magnitude) ==============================
 
@@ -1306,39 +1262,22 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
     spPos(2) = T*T*coeff[7] + T*coeff[8] + coeff[9];
 
     double *X = &(it->X[0]);
-    // double *DF = &(it->DF[0]);
     double *FX = &(it->FX[0]);
     Eigen::Vector3d r = Eigen::Map<Eigen::Vector3d>(X+stateVar.row0, 3, 1);   // Position vector
 
     Eigen::Vector3d dist = r - spPos;
 
     FX[row0] = dist.squaredNorm() - coeff[0]*coeff[0];    // This one is much more robust, so choose this one
-    // double d = dist.norm();          
-    // FX[row0] = d - coeff[0]*sr;    // This one converges much more quickly but is much less robust
 
     // Compute partials w.r.t. node states
-    // DF[it->totalFree*row0 + stateVar.row0+0] = 2*dist(0);
-    // DF[it->totalFree*row0 + stateVar.row0+1] = 2*dist(1);
-    // DF[it->totalFree*row0 + stateVar.row0+2] = 2*dist(2);
-    it->DF_elements.push_back(Tripletd(row0, stateVar.row0+0, 2*dist(0)));
-    it->DF_elements.push_back(Tripletd(row0, stateVar.row0+1, 2*dist(1)));
-    it->DF_elements.push_back(Tripletd(row0, stateVar.row0+2, 2*dist(2)));
-    // DF[it->totalFree*row0 + stateVar.row0+0] = dist(0)/d;     // dFdx
-    // DF[it->totalFree*row0 + stateVar.row0+1] = dist(1)/d;     // dFdy
-    // DF[it->totalFree*row0 + stateVar.row0+2] = dist(2)/d;     // dFdz
-
-    // printf("Dist from Approx SP = [%.4f, %.4f, %.4f]\n", dist(0), dist(1), dist(2));
-    // printf("  r = [%.4f, %.4f, %.4f]\n", r(0), r(1), r(2));
-    // printf("  sp_pos = [%.4f, %.4f, %.4f]\n", spPos(0), spPos(1), spPos(2));
+    it->DF_elements.push_back(Tripletd(row0, stateVar.row0+0, 2*dist(0)));      // dFdx
+    it->DF_elements.push_back(Tripletd(row0, stateVar.row0+1, 2*dist(1)));      // dFdy
+    it->DF_elements.push_back(Tripletd(row0, stateVar.row0+2, 2*dist(2)));      // dFdz
 
     // Compute partials w.r.t. epoch Time
     if(it->bVarTime){
-        // DF[it->totalFree*row0 + epochVar.row0] = -2*dist(0)*(2*coeff[1]*T + coeff[2]) -
-        //     2*dist(1)*(2*coeff[4]*T + coeff[5]) - 2*dist(2)*(2*coeff[7]*T + coeff[8]);
         it->DF_elements.push_back(Tripletd(row0, epochVar.row0, -2*dist(0)*(2*coeff[1]*T + coeff[2]) -
             2*dist(1)*(2*coeff[4]*T + coeff[5]) - 2*dist(2)*(2*coeff[7]*T + coeff[8]) ));
-        // DF[it->totalFree*row0 + epochVar.row0] = -1/d*dist(0)*(2*coeff[1]*T + coeff[2]) -
-        //     1/d*dist(1)*(2*coeff[4]*T + coeff[5]) - 1/d*dist(2)*(2*coeff[7]*T + coeff[8]);
     }
 
     if(con.getType() == Constraint_tp::SP_MAX_DIST){
@@ -1353,11 +1292,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
         it->FX[row0] += it->X[slackCol]*it->X[slackCol];
 
         // Partial with respect to slack variable
-        // it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
         it->DF_elements.push_back(Tripletd(row0, slackCol, 2*it->X[slackCol]));
-        // printf("Node %d distance to SP = %.4f km\n", n, dist.norm()*bcSysData->getCharL());
-        // if(FX[row0] < 0)     // I've tested this method in test_multShootCons and found no difference in convergence speed
-        //     FX[row0]= 0;
     }
 
     // printf("SP_DIST constraint: dist = %.4e = %.4f km, ||F|| = %.4e\n", d, d*bcSysData->getCharL(), it->FX[row0]);

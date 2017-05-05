@@ -440,11 +440,9 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
 			for(unsigned int x = 0; x < coreStates; x++){
 				// put STM elements into DF matrix
-				// it->DF[it->totalFree*(row0+s) + state0_var.row0 + x] = stm(s,x);
 				it->DF_elements.push_back(Tripletd(row0+s, state0_var.row0 + x, stm(s,x)));
 				// Negative identity matrix
 				if(s == x){
-					// it->DF[it->totalFree*(row0+s) + statef_var.row0+x] = -1;
 					it->DF_elements.push_back(Tripletd(row0+s, statef_var.row0+x, -1.0));
 				}
 			}
@@ -463,7 +461,6 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
 				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
 				
 				// Column of state time derivatives: [vel; accel; other time derivatives]
-				// it->DF[it->totalFree*(row0+s) + tofVar.row0] = timeCoeff*lastDeriv[s];
 				it->DF_elements.push_back(Tripletd(row0+s, tofVar.row0, timeCoeff*lastDeriv[s]));
 			}
 		}
@@ -533,8 +530,6 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
 			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
 			for(unsigned int x = 0; x < coreStates; x++){
 				// put STM elements into DF matrix
-				// it->DF[it->totalFree*(row0+count) + state01_var.row0+x] = stm1(s,x);
-				// it->DF[it->totalFree*(row0+count) + state02_var.row0+x] = -stm2(s,x);
 				it->DF_elements.push_back(Tripletd(row0+count, state01_var.row0+x, stm1(s,x)));
 				it->DF_elements.push_back(Tripletd(row0+count, state02_var.row0+x, -stm2(s,x)));
 			}
@@ -542,8 +537,6 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
 			// Compute partials of F w.r.t. times-of-flight
 			if(it->bVarTime){
 				// Column of state derivatives: [vel; accel; other time derivatives]
-				// it->DF[it->totalFree*(row0+count) + tof1_var.row0] = timeCoeff*lastDeriv1[s];
-				// it->DF[it->totalFree*(row0+count) + tof2_var.row0] = -timeCoeff*lastDeriv2[s];
 				it->DF_elements.push_back(Tripletd(row0+count, tof1_var.row0, timeCoeff*lastDeriv1[s]));
 				it->DF_elements.push_back(Tripletd(row0+count, tof2_var.row0, -timeCoeff*lastDeriv2[s]));
 			}
@@ -604,7 +597,6 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int
 	for(unsigned int s = 0; s < con.getData().size(); s++){
 		if(!std::isnan(conData[s])){
 			it->FX[row0+count] = it->X[state_var.row0+s] - conData[s];
-			// it->DF[it->totalFree*(row0 + count) + state_var.row0 + s] = 1;
 			it->DF_elements.push_back(Tripletd(row0+count, state_var.row0+s, 1.0));
 			count++;
 		}
@@ -637,10 +629,8 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, 
 		it->FX[row0+row] = it->X[state1_var.row0+row] - it->X[state2_var.row0+row];
 
 		// Partial of this constraint wrt THIS node = I
-		// it->DF[it->totalFree*(row0 + row) + state1_var.row0 + row] = 1;
 		it->DF_elements.push_back(Tripletd(row0+row, state1_var.row0+row, 1.0));
 		// Partial of this constraint wrt other node = -I
-		// it->DF[it->totalFree*(row0 + row) + state2_var.row0 + row] = -1;
 		it->DF_elements.push_back(Tripletd(row0+row, state2_var.row0+row, -1.0));
 	}
 }//=============================================
@@ -671,10 +661,8 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
 			it->FX[row0 + count] = it->X[state1_var.row0+s] - it->X[state2_var.row0+s];
 
 			// partial of this constraint wrt THIS node = 1
-			// it->DF[it->totalFree*(row0 + count) + state1_var.row0+s] = 1;
 			it->DF_elements.push_back(Tripletd(row0+count, state1_var.row0+s, 1.0));
 			// partial of this constraint wrt other node = -1
-			// it->DF[it->totalFree*(row0 + count) + state2_var.row0+s] = -1;
 			it->DF_elements.push_back(Tripletd(row0+count, state2_var.row0+s, -1.0));
 
 			count++;
@@ -716,9 +704,6 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
 	it->FX[row0] = h - conData[1];
 
 	// Partials with respect to node position states
-	// it->DF[it->totalFree*row0 + state_var.row0 + 0] = dx/h;
-	// it->DF[it->totalFree*row0 + state_var.row0 + 1] = dy/h;
-	// it->DF[it->totalFree*row0 + state_var.row0 + 2] = dz/h;
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+0, dx/h));
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+1, dy/h));
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+2, dz/h));
@@ -738,7 +723,6 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
 		it->FX[row0] += sign*it->X[slackCol]*it->X[slackCol];
 
 		// Partial with respect to slack variable
-		// it->DF[it->totalFree*row0 + slackCol] = sign*2*it->X[slackCol];
 		it->DF_elements.push_back(Tripletd(row0, slackCol, sign*2*it->X[slackCol]));
 	}
 }// End of targetDist() =========================================
@@ -834,8 +818,6 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRefByIx_const(s).getTerminus());
 
 			for(unsigned int i = 0; i < 6; i++){
-				// it->DF[it->totalFree*row0 + statef_var.row0 + i] += dFdq_n2(0, i)/dvMax;
-				// it->DF[it->totalFree*row0 + state0_var.row0 + i] += dFdq_nf(0, i)/dvMax;
 				it->DF_elements.push_back(Tripletd(row0, statef_var.row0+i, dFdq_n2(0,i)/dvMax));
 				it->DF_elements.push_back(Tripletd(row0, state0_var.row0+i, dFdq_nf(0,i)/dvMax));
 			}
@@ -851,7 +833,6 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodesIn->getSegRefByIx_const(s).getID());
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
-				// it->DF[it->totalFree*row0 + tof_var.row0] = timeCoeff*dFdt_n(0)/dvMax;
 				it->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dFdt_n(0)/dvMax));
 			}
 		}
@@ -871,7 +852,6 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 		// printf("Constraint_tp::MAX_DELTA_V Constraint Details:\n");
 		// printf("Total DV")
 		it->FX[row0] += it->X[slackCol]*it->X[slackCol];
-		// it->DF[it->totalFree*row0 + slackCol] = 2*it->X[slackCol];
 		it->DF_elements.push_back(Tripletd(row0, slackCol, 2*it->X[slackCol]));
 	}
 }//==============================================
@@ -927,14 +907,12 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
 	if(it->bEqualArcTime){
 		MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
 		it->FX[row0] = it->X[tof_var.row0];
-		// it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 		it->DF_elements.push_back(Tripletd(row0, tof_var.row0, 1.0));
 	}else{
 		// Sum all TOF for total, set partials w.r.t. integration times equal to one
 		for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
 			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
 			it->FX[row0] += it->X[tof_var.row0];
-			// it->DF[it->totalFree*row0 + tof_var.row0] = 1;
 			it->DF_elements.push_back(Tripletd(row0, tof_var.row0, 1.0));
 		}
 	}
@@ -974,13 +952,6 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int 
 	it->FX[row0] = dx*vx + dy*vy + dz*vz;
 
 	// Partials of F w.r.t. node state
-	// it->DF[it->totalFree*row0 + state_var.row0+0] = vx;
-	// it->DF[it->totalFree*row0 + state_var.row0+1] = vy;
-	// it->DF[it->totalFree*row0 + state_var.row0+2] = vz;
-	// it->DF[it->totalFree*row0 + state_var.row0+3] = dx;
-	// it->DF[it->totalFree*row0 + state_var.row0+4] = dy;
-	// it->DF[it->totalFree*row0 + state_var.row0+5] = dz;
-
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+0, vx));
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+1, vy));
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+2, vz));

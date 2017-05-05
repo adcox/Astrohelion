@@ -224,13 +224,6 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, 
     it->FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    // it->DF[it->totalFree*row0 + state_var.row0 + 0] = (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x);    //dFdx
-    // it->DF[it->totalFree*row0 + state_var.row0 + 1] = (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y);                      //dFdy
-    // it->DF[it->totalFree*row0 + state_var.row0 + 2] = (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3));                            //dFdz
-    // it->DF[it->totalFree*row0 + state_var.row0 + 3] = -2*vx;   //dFdx_dot
-    // it->DF[it->totalFree*row0 + state_var.row0 + 4] = -2*vy;   //dFdy_dot
-    // it->DF[it->totalFree*row0 + state_var.row0 + 5] = -2*vz;   //dFdz_dot
-
     it->DF_elements.push_back(Tripletd(row0, state_var.row0+0, (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x) ));
     it->DF_elements.push_back(Tripletd(row0, state_var.row0+1, (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y) ));
     it->DF_elements.push_back(Tripletd(row0, state_var.row0+2, (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)) ));
@@ -272,7 +265,6 @@ void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, Constrain
     it->FX[row0] = dotProd(0) - stepSize;
 
     for(int i = 0; i < it->totalFree; i++){
-        // it->DF[it->totalFree*row0 + i] = N(i);
         it->DF_elements.push_back(Tripletd(row0, i, N(i)));
     }
 }//=============================================

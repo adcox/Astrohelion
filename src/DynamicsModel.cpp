@@ -214,11 +214,31 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 	// Copy in the state vector for each node
 	int rowNum = 0;
 	for(unsigned int n = 0; n < it->nodesIn->getNumNodes(); n++){
-		std::vector<double> state = it->nodesIn->getStateByIx(n);
-		rowNum = it->X.size();
-		it->X.insert(it->X.end(), state.begin(), state.end());
-		MSVarMap_Key key(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
-		it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, state.size());
+		// Determine if this state should be withheld from the free variable vector
+		bool addToFreeVar = true;
+		std::vector<Constraint> nodeCons = it->nodesIn->getNodeRefByIx_const(n).getConstraints();
+		for(const Constraint &con : nodeCons){
+			if(con.getType() == Constraint_tp::RM_STATE){
+				addToFreeVar = false;
+				break;
+			}
+		}
+
+		if(addToFreeVar){
+			// Insert the state into the free variable vector
+			std::vector<double> state = it->nodesIn->getStateByIx(n);
+			rowNum = it->X.size();
+			it->X.insert(it->X.end(), state.begin(), state.end());
+			// Save a key and object that represents the state and remembers its location in 
+			// the free variable vector
+			MSVarMap_Key key(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
+			it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, state.size());
+		}else{
+			// Create a key and object for the free variable map that will tell multiple
+			// shooting functions that the state is not part of the free variable vector
+			MSVarMap_Key key(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
+			it->freeVarMap[key] = MSVarMap_Obj(key, -1, it->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize());
+		}
 	}
 
 	if(it->bVarTime){		
@@ -298,8 +318,13 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 	double *ic, double *t0, double *tof) const{
 
 	// Retrieve  representative object and get data from free var vec
-	MSVarMap_Obj state = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(s).getOrigin());
-	std::copy(it->X.begin()+state.row0, it->X.begin()+state.row0 + state.nRows, ic);
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(s).getOrigin());
+	if(state_var.row0 == -1){
+		std::vector<double> stateVec = it->nodesIn->getState(state_var.key.id);
+		std::copy(stateVec.begin(), stateVec.end(), ic);
+	}else{
+		std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + state_var.nRows, ic);
+	}
 
 	if(it->bVarTime){
 		// Retrieve  representative object and get data from free var vec
@@ -310,7 +335,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 		*tof = it->nodesIn->getTOF(s);
 	}
 	
-	*t0 = it->nodesIn->getEpoch(state.key.id);
+	*t0 = it->nodesIn->getEpoch(state_var.key.id);
 }//============================================================
 
 /**
@@ -401,6 +426,9 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con,
 		case Constraint_tp::APSE:
 			multShoot_targetApse(it, con, row0);
 			break;	
+		case Constraint_tp::RM_STATE:
+			// ToDo: Add function here?
+			break;
 		default: break;
 	}
 }//=========================================================
@@ -435,14 +463,17 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
 	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			// This state is constrained to be continuous; compute error
-			it->FX[row0+s] = lastState[s] - it->X[statef_var.row0+s];
+			double statef_value = statef_var.row0 == -1 ? it->nodesIn->getNodeRef_const(statef_var.key.id).getStateRef_const()[s] : it->X[statef_var.row0 + s];
+			it->FX[row0+s] = lastState[s] - statef_value;
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
 			for(unsigned int x = 0; x < coreStates; x++){
 				// put STM elements into DF matrix
-				it->DF_elements.push_back(Tripletd(row0+s, state0_var.row0 + x, stm(s,x)));
+				if(state0_var.row0 != -1)
+					it->DF_elements.push_back(Tripletd(row0+s, state0_var.row0 + x, stm(s,x)));
+
 				// Negative identity matrix
-				if(s == x){
+				if(statef_var.row0 != -1 && s == x){
 					it->DF_elements.push_back(Tripletd(row0+s, statef_var.row0+x, -1.0));
 				}
 			}
@@ -530,8 +561,11 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
 			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
 			for(unsigned int x = 0; x < coreStates; x++){
 				// put STM elements into DF matrix
-				it->DF_elements.push_back(Tripletd(row0+count, state01_var.row0+x, stm1(s,x)));
-				it->DF_elements.push_back(Tripletd(row0+count, state02_var.row0+x, -stm2(s,x)));
+				if(state01_var.row0 != -1)
+					it->DF_elements.push_back(Tripletd(row0+count, state01_var.row0+x, stm1(s,x)));
+
+				if(state02_var.row0 != -1)
+					it->DF_elements.push_back(Tripletd(row0+count, state02_var.row0+x, -stm2(s,x)));
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
@@ -593,6 +627,12 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
+	if(conData.size() > coreStates)
+		throw Exception("DynamicsModel::multShoot_targetState: ConData has too many states");
+	
+	if(state_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetState: Cannot constrain state that is not in the free variable vector.");
+
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(unsigned int s = 0; s < con.getData().size(); s++){
 		if(!std::isnan(conData[s])){
@@ -623,15 +663,24 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, 
 	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVar_tp::STATE, con.getData()[0]);
 	
+	if(state1_var.row0 == -1 && state2_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetMatchAll: Neither state vector is free; constraint is uncontrollabel.");
+
+	const double *state1 = state1_var.row0 == -1 ? &(it->nodesIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : &(it->X[state1_var.row0]);
+	const double *state2 = state2_var.row0 == -1 ? &(it->nodesIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : &(it->X[state2_var.row0]);
+
 	for(unsigned int row = 0; row < coreStates; row++){
 		// Constrain the states of THIS node to be equal to the node 
 		// with index stored in conData[0]
-		it->FX[row0+row] = it->X[state1_var.row0+row] - it->X[state2_var.row0+row];
+		it->FX[row0+row] = state1[row] - state2[row];
 
 		// Partial of this constraint wrt THIS node = I
-		it->DF_elements.push_back(Tripletd(row0+row, state1_var.row0+row, 1.0));
+		if(state1_var.row0 != -1)
+			it->DF_elements.push_back(Tripletd(row0+row, state1_var.row0+row, 1.0));
+
 		// Partial of this constraint wrt other node = -I
-		it->DF_elements.push_back(Tripletd(row0+row, state2_var.row0+row, -1.0));
+		if(state2_var.row0 != -1)
+			it->DF_elements.push_back(Tripletd(row0+row, state2_var.row0+row, -1.0));
 	}
 }//=============================================
 
@@ -654,16 +703,25 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state1_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	MSVarMap_Obj state2_var = it->getVarMap_obj(MSVar_tp::STATE, ID2);
-	int count = 0;
 	
+	if(state1_var.row0 == -1 && state2_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetMatchAll: Neither state vector is free; constraint is uncontrollabel.");
+
+	const double *state1 = state1_var.row0 == -1 ? &(it->nodesIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : &(it->X[state1_var.row0]);
+	const double *state2 = state2_var.row0 == -1 ? &(it->nodesIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : &(it->X[state2_var.row0]);
+
+	int count = 0;
 	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
-			it->FX[row0 + count] = it->X[state1_var.row0+s] - it->X[state2_var.row0+s];
+			it->FX[row0 + count] = state1[s] - state2[s];
 
 			// partial of this constraint wrt THIS node = 1
-			it->DF_elements.push_back(Tripletd(row0+count, state1_var.row0+s, 1.0));
+			if(state1_var.row0 != -1)
+				it->DF_elements.push_back(Tripletd(row0+count, state1_var.row0+s, 1.0));
+
 			// partial of this constraint wrt other node = -1
-			it->DF_elements.push_back(Tripletd(row0+count, state2_var.row0+s, -1.0));
+			if(state2_var.row0 != -1)
+				it->DF_elements.push_back(Tripletd(row0+count, state2_var.row0+s, -1.0));
 
 			count++;
 		}
@@ -686,6 +744,10 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
 void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int c) const{
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+
+	if(state_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetDist: State vector is not part of free variable vector; cannot target distance.");
+
 	int Pix = static_cast<int>(conData[0]);	// index of primary
 	int row0 = it->conRows[c];
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
@@ -743,6 +805,9 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it,
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
+
+	if(state_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetDist: State vector is not part of free variable vector; cannot target distance.");
 
 	// Get the primary position
 	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
@@ -818,8 +883,11 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
 			MSVarMap_Obj statef_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRefByIx_const(s).getTerminus());
 
 			for(unsigned int i = 0; i < 6; i++){
-				it->DF_elements.push_back(Tripletd(row0, statef_var.row0+i, dFdq_n2(0,i)/dvMax));
-				it->DF_elements.push_back(Tripletd(row0, state0_var.row0+i, dFdq_nf(0,i)/dvMax));
+				if(statef_var.row0 != -1)
+					it->DF_elements.push_back(Tripletd(row0, statef_var.row0+i, dFdq_n2(0,i)/dvMax));
+
+				if(state0_var.row0 != -1)
+					it->DF_elements.push_back(Tripletd(row0, state0_var.row0+i, dFdq_nf(0,i)/dvMax));
 			}
 
 			// Compute partial w.r.t. segment time-of-flight
@@ -937,6 +1005,9 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int 
 	int Pix = static_cast<int>(conData[0]);	// index of primary
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 	
+	if(state_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetApse: State vector is not part of free variable vector; cannot target apse.");
+
 	// Get the primary position
 	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
 

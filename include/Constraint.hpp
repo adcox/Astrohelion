@@ -176,7 +176,7 @@ enum class Constraint_tp {
 				 * <tt>data[0]</tt> and the parameter index in the elements after [0].
 				 *	@see CONT_EX for a list of parameter indices
 				 */
-	PSEUDOARC 	/*!< Pseudo arc-length continuation constraint. This forces a trajectory to
+	PSEUDOARC, 	/*!< Pseudo arc-length continuation constraint. This forces a trajectory to
 				 *	be in the same family as the input arc. The <tt>id</tt> attribute is 
 				 *	meaningless for this constraint, but set it to the index of the last node.
 				 * 	To ensure this is the final constraint, add it to the nodeset last. The <tt>data</tt>
@@ -184,6 +184,10 @@ enum class Constraint_tp {
 				 *	family member. At the end of the data vector, append a double that represents
 				 *	the continuation step size.
 				 */
+	RM_STATE	/*!< State constraint: Remove the indicated state vector from the free variable vector
+				 * during multiple shooting. The <tt>id</tt> attribute specifies which node's state
+				 * vector to remove. The <tt>data</tt> field is currently unnused.
+	     		 */
 };
 
 /**

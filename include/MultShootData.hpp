@@ -44,10 +44,10 @@ namespace astrohelion{
  *  \brief The type of free variable being represented in the free-variable vector
  */
 enum class MSVar_tp : int {EPOCH = 0,		//!< Epoch variable
-							SLACK = 1,		//!< Slack variable used in an inequality constraint
+							SLACK = 1,		//!< Slack variable (e.g., used in an inequality constraint)
 							STATE = 2,		//!< State variable
 							TOF = 3,		//!< Time-of-flight
-							TOF_TOTAL = 4};	//!< Total time-of-flight for a trajectory
+							TOF_TOTAL = 4};	//!< Total time-of-flight for an arcset
 
 /**
  *  \brief The parent object of the variable
@@ -57,7 +57,7 @@ enum class MSVar_tp : int {EPOCH = 0,		//!< Epoch variable
  *  Constraints may own slack variables, and the entire arc may own quantities like total
  *  delta-V or total time-of-flight.
  */
-enum class MSVarParent_tp : int {	ARC = 0,	//!< The entire arc is the parent
+enum class MSVarParent_tp : int {ARC = 0,	//!< The entire arc is the parent
 								CON = 1,	//!< A constraint is the parent (for slack variables)
 								NODE = 2,	//!< A node is the parent
 								SEG = 3};	//!< A segment is the parent

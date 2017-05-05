@@ -1029,8 +1029,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
 
     // Copy IC into vector - Use the state from two iterations ago to avoid
     // numerical problems when the previous state is REALLY close to the event
-    std::vector<double> fullState = lastSeg.getStateByRow(-2, full_dim);
-    std::vector<double> arcIC(fullState.begin(), fullState.begin()+core_dim);
+    std::vector<double> arcIC = lastSeg.getStateByRow(-2, full_dim);
 
     if(verbosity >= Verbosity_tp::ALL_MSG){
         // astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
@@ -1056,10 +1055,10 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     sim.setCtrlLaw(eomParams->ctrlLawID);      // cr3bp_lt arcset DOES use control laws
     sim.runSim(arcIC, t0, tof, &eventArcset);
 
-    Constraint fixStateCon(Constraint_tp::STATE, 0, arcIC);
+    Constraint rmInitState(Constraint_tp::RM_STATE, 0, nullptr, 0);
     Constraint eventCon(events[evtIx].getConType(), 1, events[evtIx].getConData());
 
-    eventArcset.addConstraint(fixStateCon);
+    eventArcset.addConstraint(rmInitState);
     eventArcset.addConstraint(eventCon);
 
     if(model->supportsCon(Constraint_tp::EPOCH)){

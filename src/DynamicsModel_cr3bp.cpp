@@ -248,6 +248,9 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, 
     MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->nodesIn->getSysData());
 
+    if(state_var.row0 == -1)
+        throw Exception("DynamicsModel_cr3bp::multShoot_targetJC: Cannot constrain state that is not in the free variable vector.");
+
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
     double nodeState[6];
@@ -338,7 +341,13 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it) const{
     
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
-        std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        std::vector<double> state;
+
+        if(state_var.row0 == -1){
+            state = it->nodesIn->getState(state_var.key.id);
+        }else{
+            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        }
 
         Node node(state, 0);
         node.setConstraints(it->nodesIn->getNodeRefByIx_const(n).getConstraints());

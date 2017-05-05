@@ -32,6 +32,8 @@
 #include <iostream>
 #include <string>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "cspice/SpiceZfc.h"    // prototypes for functions
 #include "matio.h"
@@ -47,6 +49,11 @@ namespace astrohelion{
  * \{
  */
 
+/**
+ *  \brief Retrieve the current CPU time in seconds past some reference
+ *  \return the current CPU time in seconds past some reference
+ */
+double getCPUTime(){ return static_cast<double>(clock()) / CLOCKS_PER_SEC; }
 
 /**
  *  \brief Turn a complex number into a string, e.g. 1.2345 + 0.9876j

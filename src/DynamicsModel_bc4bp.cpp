@@ -642,32 +642,6 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, Constra
 }//=========================================================
 
 /**
- *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::STATE</tt>.
- *
- *  This method replaces the base class function and allows the user to constrain epoch as well
- *  as the configuration space states
- *
- *  \param it a pointer to the class containing all the data relevant to the corrections process
- *  \param con the constraint being applied
- *  \param row0 the index of the row this constraint begins at
- */
-void DynamicsModel_bc4bp::multShoot_targetState(MultShootData* it, Constraint con, int row0) const{
-    std::vector<double> conData = con.getData();
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    if(conData.size() > coreStates)
-        throw Exception("DynamicsModel_bc4bp::multShoot_targetState: conData has too many states");
-
-    int count = 0;  // Count # rows since some may be skipped (NaN)
-    for(unsigned int s = 0; s < con.getData().size(); s++){
-        if(!std::isnan(conData[s])){
-            it->FX[row0+count] = it->X[stateVar.row0+s] - conData[s];
-            it->DF_elements.push_back(Tripletd(row0+count, stateVar.row0+s, 1.0));
-            count++;
-        }
-    }
-}//====================================================
-
-/**
  *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::EPOCH</tt>.
  * 
  *  \param pIt a pointer to the class containing all the data relevant to the corrections process
@@ -701,6 +675,9 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, Constraint con
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     int Pix = static_cast<int>(conData[0]);    // index of primary
     int row0 = it->conRows[c];
+
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetDist: State vector is not part of the free variable vector, cannot constrain it.");
 
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
@@ -784,6 +761,9 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
     std::vector<double> conData = con.getData();
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     int Pix = static_cast<int>(conData[0]);    // index of primary
+
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar: State vector is not part of the free variable vector, cannot constrain it.");
 
     // Get the node epoch either from the design vector or from the original set of nodes
     double t0 = 0;
@@ -873,6 +853,9 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
     int Pix = static_cast<int>(conData[0]);    // index of primary
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetApse: State vector is not part of the free variable vector, cannot constrain it.");
+
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
     double t0 = 0;
@@ -926,6 +909,8 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, Constraint con
  */
 void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData* it, Constraint con, int row0) const{
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetSP: State vector is not part of the free variable vector, cannot constrain it.");
 
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
@@ -1214,6 +1199,9 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     double Amax = con.getData()[0];
 
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetSP_mag: State vector is not part of the free variable vector, cannot constrain it.");
+
     // Get the node epoch either from the design vector or from the original set of nodes
     MSVarMap_Obj epochVar;
     double epoch = 0;
@@ -1364,6 +1352,9 @@ void DynamicsModel_bc4bp::multShoot_targetSP_mag(MultShootData* it, Constraint c
  */
 double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootData *it, Constraint con) const{
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar: State vector is not part of the free variable vector, cannot constrain it.");
+
     double Amax = con.getData()[0];
 
     // Get the node epoch either from the design vector or from the original set of nodes
@@ -1427,6 +1418,9 @@ double DynamicsModel_bc4bp::multShoot_targetSPMag_compSlackVar(const MultShootDa
  */
 double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultShootData *it, Constraint con) const{
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar: State vector is not part of the free variable vector, cannot constrain it.");
+
     double T = 0;
     if(it->bVarTime){
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
@@ -1469,6 +1463,9 @@ double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultSh
 void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint con, int c) const{
     int row0 = it->conRows[c];
     MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+    if(stateVar.row0 == -1)
+        throw Exception("DynamicsModel_bc4bp::multShoot_targetSP_dist: State vector is not part of the free variable vector, cannot constrain it.");
+
     MSVarMap_Obj epochVar;
     double T = 0;
     if(it->bVarTime){
@@ -1521,7 +1518,6 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, Constraint 
     }
 
     // printf("SP_DIST constraint: dist = %.4e = %.4f km, ||F|| = %.4e\n", d, d*bcSysData->getCharL(), it->FX[row0]);
-
 }//===================================================
 
 /**
@@ -1548,7 +1544,13 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it) const{
 
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
-        std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        std::vector<double> state;
+
+        if(state_var.row0 == -1){
+            state = it->nodesIn->getState(state_var.key.id);
+        }else{
+            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        }
 
         double T = 0;
         if(it->bVarTime){

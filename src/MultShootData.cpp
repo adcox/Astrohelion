@@ -35,9 +35,12 @@
 
 namespace astrohelion{
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------	
+//-----------------------------------------------------------------------------
 //  ** MSVarMap_Key Functions
 //-----------------------------------------------------------------------------
-
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 /**
  *  \brief Construct a default Multiple Shooting Variable Map Key object
  */
@@ -120,8 +123,13 @@ const char* MSVarMap_Key::type2str(MSVar_tp tp){
 	return "Unrecognized Type";
 }//===============================================
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //  ** MSVarMap_Obj Functions
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
 
@@ -144,7 +152,9 @@ MSVarMap_Obj::MSVarMap_Obj(MSVar_tp t) : key(){
  *  \details [long description]
  * 
  *  \param t Variable type
- *  \param row0 index of the first row this object occupies in the free variable vector
+ *  \param row0 index of the first row this object occupies in the free variable vector.
+ *  If row0 is set equal to -1, the variable is not stored in the free variable vector and
+ *  is instead stored in the input nodeset (and not varied).
  *  \param id ID associated with the object that stores this object information (e.g.,
  *  a Node ID for state and epoch variables, or a segment ID for a time-of-flight)
  *  \param nRows Number of rows this object occupies in the free variable vector
@@ -162,7 +172,9 @@ MSVarMap_Obj::MSVarMap_Obj(MSVar_tp t, int row0, int id, int nRows) : key(){
  *  \details [long description]
  * 
  *  \param k MSVarMap_Key object that stores information about the variable type and ID
- *  \param row0 index of the first row this object occupies in the free variable vector
+ *  \param row0 index of the first row this object occupies in the free variable vector.
+ *  If row0 is set equal to -1, the variable is not stored in the free variable vector and
+ *  is instead stored in the input nodeset (and not varied).
  *  \param nRows Number of rows this object occupies in the free variable vector
  */
 MSVarMap_Obj::MSVarMap_Obj(MSVarMap_Key k, int row0, int nRows) : key(k){

@@ -240,9 +240,9 @@ Event_tp Node::getTriggerEvent() const { return triggerEventTp; }
  *	\brief Get the non-dimensional position and velocity state vector
  *	\return the non-dimensional position and velocity state vector
  */
-std::vector<double> Node::getState() const {
-	return state;
-}//====================================================
+std::vector<double> Node::getState() const { return state; }
+
+const std::vector<double>& Node::getStateRef_const() const{ return state; }
 
 /**
  *  \brief Set the epoch associated with this node

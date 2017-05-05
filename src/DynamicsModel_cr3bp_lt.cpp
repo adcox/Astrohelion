@@ -237,7 +237,13 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it) con
     
     for(int n = 0; n < it->numNodes; n++){
         MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getNodeByIx(n).getID());
-        std::vector<double> state(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        std::vector<double> state;
+
+        if(state_var.row0 == -1){
+            state = it->nodesIn->getState(state_var.key.id);
+        }else{
+            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+        }
 
         Node node(state, 0);
         node.setConstraints(it->nodesIn->getNodeByIx(n).getConstraints());

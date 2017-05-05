@@ -309,7 +309,8 @@ protected:
 		Constraint_tp::CONT_PV,
 		Constraint_tp::CONT_EX,
 		Constraint_tp::SEG_CONT_PV,
-		Constraint_tp::SEG_CONT_EX};
+		Constraint_tp::SEG_CONT_EX,
+		Constraint_tp::RM_STATE};
 
 	/** A vector containing all the types of events this model supports */
 	std::vector<Event_tp> allowedEvents {Event_tp::NONE,

@@ -8,7 +8,6 @@
 #include "Arcset_cr3bp.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Arcset_cr3bp.hpp"
 
 using namespace astrohelion;
 

@@ -337,6 +337,7 @@ namespace astrohelion{
 	/** \} */ // END of util group
 
 
+	double getCPUTime();
 	double boundValue(double, double, double);
 	void checkAndReThrowSpiceErr(const char*);
 	std::string complexToStr(std::complex<double>);

@@ -378,6 +378,10 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 
 				addToRows = 1;
 				break;
+			case Constraint_tp::RM_STATE:
+				// These constraints are handled differently
+				addToRows = 0;
+				break;
 			default: break;
 		}
 

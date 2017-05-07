@@ -484,12 +484,10 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 				std::vector<double> lastDeriv = it->propSegs[segIx].getStateDerivByIx(-1);
 
 				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+				double timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs()) : 1.0;
 
 				MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 					it->bEqualArcTime ? Linkable::INVALID_ID : segID);
-				// If equal arc time is enabled, all time derivatives are in one column
-				// int timeCol = it->bEqualArcTime ? 6*it->numNodes : 6*it->numNodes+segIx;
 				
 				// Column of state time derivatives: [vel; accel; other time derivatives]
 				it->DF_elements.push_back(Tripletd(row0+s, tofVar.row0, timeCoeff*lastDeriv[s]));
@@ -548,7 +546,7 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 			it->bEqualArcTime ? Linkable::INVALID_ID : segID2);
 
 		// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-		timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+		timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs() - 1) : 1.0;
 	}
 
 	// Loop through conData
@@ -653,17 +651,16 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, const Constraint& c
 void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
 	int segIx = pIt->nodesIn->getSegIx(con.getID());
-	const Segment &seg = pIt->propSegs[segIx].getSegRef_const(0);
 	
 	// Get object representing origin of segment
-	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, seg.getOrigin());
+	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
 	MSVarMap_Obj tof_var = pIt->bEqualArcTime ? pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID) :
-		pIt->getVarMap_obj(MSVar_tp::TOF, seg.getID());
+		pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
 	
 	// Data associated with the previous node and the propagated segment
 	std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
 	std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
-	MatrixXRd stm = seg.getSTM();
+	MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
 
 	if(conData.size() > coreStates)
 		throw Exception("DynamicsModel::multShoot_targetState: ConData has too many states");
@@ -682,10 +679,10 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 
 			// Partials of F w.r.t. time-of-flight
 			if(pIt->bVarTime){
-				double timeCoeff = pIt->bEqualArcTime ? 1.0/(pIt->numNodes - 1): 1.0;
+				double timeCoeff = pIt->bEqualArcTime ? 1.0/(pIt->nodesIn->getNumSegs()): 1.0;
 
 				// Column of state time derivatives: {vel; accel};
-				pIt->DF_elements.push_back(Tripletd(row0+s, tof_var.row0, timeCoeff*lastDeriv[s]));
+				pIt->DF_elements.push_back(Tripletd(row0+count, tof_var.row0, timeCoeff*lastDeriv[s]));
 			}
 			count++;
 		}
@@ -945,7 +942,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, const Constraint& 
 				std::vector<double> state_dot_data = it->propSegs[s].getStateDerivByIx(-1);
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
 
-				double timeCoeff = it->bEqualArcTime ? 1.0/(it->numNodes - 1) : 1.0;
+				double timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs()) : 1.0;
 				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
 					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodesIn->getSegRefByIx_const(s).getID());
 

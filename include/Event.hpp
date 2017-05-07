@@ -210,7 +210,7 @@ class Event : public Core{
 		void copyMe(const Event&);
 		void initEvent(Event_tp, int, bool, std::vector<double>);
 		double getDist(const double*, unsigned int, double) const;
-		int getDir(const double*, unsigned int, int) const;
+		int getDir(int) const;
 };
 
 }

@@ -98,6 +98,54 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_EQUAL_ARC){
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG){
+	SysData_bc4bp sys("sun", "earth", "moon");
+	Arcset_bc4bp halfLyapSet(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(lyap_ic, 0, lyap_T/2.1, 3, &halfLyapSet);
+	halfLyapSet.deleteNode(2);	// Delete final node so arcset ends with segment
+	Arcset_bc4bp correctedSet(&sys);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(false);
+	
+	// Constraint_tp::ENDSEG_STATE
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
+	halfLyapSet.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
+	
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 48);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG_EQUAL_ARC){
+	SysData_bc4bp sys("sun", "earth", "moon");
+	Arcset_bc4bp halfLyapSet(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(lyap_ic, 0, lyap_T/2.1, 3, &halfLyapSet);
+	halfLyapSet.deleteNode(2);	// Delete final node so arcset ends with segment
+	Arcset_bc4bp correctedSet(&sys);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(true);
+	
+	// Constraint_tp::ENDSEG_STATE
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
+	halfLyapSet.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
+	
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 48);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
+
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMSTATE){
 	SysData_bc4bp sys("sun", "earth", "moon");
 	Arcset_bc4bp halfLyapSet(&sys), correctedSet(&sys);

@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	corrector.setEqualArcTime(false);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
-	double stateConData[] = {0, -0.3, NAN, NAN, NAN, NAN, NAN};
+	double stateConData[] = {-0.1, -0.3, NAN, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
 	halfLyapNodeset.addConstraint(stateCon);
 
@@ -138,6 +138,87 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 
 	// correctedSet.saveToMat("data/lt_correctedSet.mat");
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_EQUAL_ARC){
+	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(true);
+	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+
+	double stateConData[] = {-0.1, -0.4, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+
+	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+
+	// correctedSet.saveToMat("data/lt_correctedSet.mat");
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_ENDSEG){
+	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+	halfLyapNodeset.deleteNode(2);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(false);
+	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+
+	double stateConData[] = {-0.1, -0.4, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 7);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 56);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+7);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_ENDSEG_EQUAL_ARC){
+	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+	halfLyapNodeset.deleteNode(2);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(true);
+	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+
+	double stateConData[] = {-0.1, -0.4, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 7);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 56);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+7);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_RMSTATE){

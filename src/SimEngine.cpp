@@ -1030,6 +1030,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     // Copy IC into vector - Use the state from two iterations ago to avoid
     // numerical problems when the previous state is REALLY close to the event
     std::vector<double> arcIC = lastSeg.getStateByRow(-2, full_dim);
+    std::vector<double> arcFC = lastSeg.getStateByRow(-1, full_dim);
 
     if(verbosity >= Verbosity_tp::ALL_MSG){
         // astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
@@ -1048,22 +1049,39 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     
     Arcset eventArcset(pArcset->getSysData()), correctedSet(pArcset->getSysData());
 
-    SimEngine sim;
-    sim.setVarStepSize(false);
-    sim.setNumSteps(2);
-    sim.setRevTime(tof < 0);
-    sim.setCtrlLaw(eomParams->ctrlLawID);      // cr3bp_lt arcset DOES use control laws
-    sim.runSim(arcIC, t0, tof, &eventArcset);
+    Node n0(&(arcIC.front()), core_dim, t0);
+    Node ni(&(arcFC.front()), core_dim, t0+tof);
+    Segment tempSeg(0, 1, tof);
+    tempSeg.setCtrlLaw(eomParams->ctrlLawID);
+
+    eventArcset.addNode(n0);
+    eventArcset.addNode(ni);
+    eventArcset.addSeg(tempSeg);
+
+    // SimEngine sim;
+    // sim.setVarStepSize(false);
+    // sim.setNumSteps(2);
+    // sim.setRevTime(tof < 0);
+    // sim.setCtrlLaw(eomParams->ctrlLawID);      // cr3bp_lt arcset DOES use control laws
+    // sim.runSim(arcIC, t0, tof, &eventArcset);
 
     Constraint rmInitState(Constraint_tp::RM_STATE, 0, nullptr, 0);
-    Constraint eventCon(events[evtIx].getConType(), 1, events[evtIx].getConData());
-
     eventArcset.addConstraint(rmInitState);
-    eventArcset.addConstraint(eventCon);
+
+    // TODO - Implement other ENDSEG constraints to minimize multiple shooter effort
+    if(events[evtIx].getConType() == Constraint_tp::ENDSEG_STATE){
+        // Delete the last node and constrain the first (and only) segment final state
+        eventArcset.deleteNode(1);
+        Constraint eventCon(events[evtIx].getConType(), 0, events[evtIx].getConData());
+        eventArcset.addConstraint(eventCon);
+    }else{
+        Constraint eventCon(events[evtIx].getConType(), 1, events[evtIx].getConData());
+        eventArcset.addConstraint(eventCon);
+    }
 
     if(model->supportsCon(Constraint_tp::EPOCH)){
-        Constraint epochCon(Constraint_tp::EPOCH, 0, &t0, 1);
-        eventArcset.addConstraint(epochCon);
+        Constraint rmInitEpoch(Constraint_tp::RM_EPOCH, 0, nullptr, 0);
+        eventArcset.addConstraint(rmInitEpoch);
     }
 
     if(verbosity >= Verbosity_tp::ALL_MSG){ eventArcset.print(); }
@@ -1089,16 +1107,26 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
         return false;
     }
 
-    Node evtNode = correctedSet.getNodeByIx(-1);
-    std::vector<double> state = correctedSet.getSegRefByIx(-1).getStateByRow(-1, full_dim);
     double eventTime = t0 + correctedSet.getTotalTOF();
-    evtNode.clearConstraints();     // Get rid of any cosntraints used to isolate the event
-
+    std::vector<double> state = correctedSet.getSegRefByIx(-1).getStateByRow(-1, full_dim);
     // Update event state from the most recent node (a new node was created at the event occurence)
     events[evtIx].updateDist(&(state.front()), core_dim, eventTime);
 
-    // Add the node; pass nullptr for the state vector so that none of the state data in evtNode is overwritten (it should be complete)
-    int id = model->sim_addNode(evtNode, nullptr, eventTime, pArcset, eomParams, events[evtIx].getType());
+    // TODO - eventually all events should use this ENDSEG type behavior
+    Node evtNode;
+    int id;
+    if(events[evtIx].getConType() == Constraint_tp::ENDSEG_STATE){
+        // The final node was deleted; create one to represent the event
+        evtNode = Node(&(state.front()), core_dim, eventTime);
+        id = model->sim_addNode(evtNode, &(state.front()), eventTime, pArcset, eomParams, events[evtIx].getType());
+    }else{
+        // The final node corresponds with the event
+        evtNode = correctedSet.getNodeByIx(-1);
+        evtNode.clearConstraints();     // Get rid of any cosntraints used to isolate the event
+        // Add the node; pass nullptr for the state vector so that none of the state data in evtNode is overwritten (it should be complete)
+        id = model->sim_addNode(evtNode, nullptr, eventTime, pArcset, eomParams, events[evtIx].getType());
+    }
+
     pArcset->getNodeRef(id).addLink(lastSeg.getID());    // Link the new node to the previous segment
 
     lastSeg.setTerminus(id);

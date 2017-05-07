@@ -119,6 +119,7 @@ protected:
 	void multShoot_targetSP_dist(MultShootData*, const Constraint&, int) const;
 	double multShoot_targetSPMag_compSlackVar(const MultShootData*, const Constraint&) const;
 	double multShoot_targetSP_maxDist_compSlackVar(const MultShootData*, const Constraint&) const;
+	void multShoot_targetState_endSeg(MultShootData*, const Constraint&, int) const override;
 	//\}
 };
 

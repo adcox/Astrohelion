@@ -272,13 +272,13 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 
 	// Add all node constraints
 	for(unsigned int n = 0; n < set->getNumNodes(); n++){
-		std::vector<Constraint> nodeCons = set->getNodeByIx(n).getConstraints();
+		std::vector<Constraint> nodeCons = set->getNodeRefByIx_const(n).getConstraints();
 		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
 	// Add all segment constraints
 	for(unsigned int s = 0; s < set->getNumSegs(); s++){
-		std::vector<Constraint> segCons = set->getSegByIx(s).getConstraints();
+		std::vector<Constraint> segCons = set->getSegRefByIx_const(s).getConstraints();
 		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
 	}
 
@@ -471,13 +471,13 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
 			std::vector<double> ic(coreStateSize, 0);
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn->getSegByIx(s).getID(),
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn->getSegRefByIx_const(s).getID(),
 				&(ic[0]), &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			
 			printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
-			simEngine.setCtrlLaw(it.nodesIn->getSegByIx(s).getCtrlLaw());
+			simEngine.setCtrlLaw(it.nodesIn->getSegRefByIx_const(s).getCtrlLaw());
 
 			try{
 				simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
@@ -497,12 +497,12 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		// Compute Delta-Vs between node segments
 		for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
 			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-			int termID = it.nodesIn->getSegByIx(s).getTerminus();
+			int termID = it.nodesIn->getSegRefByIx_const(s).getTerminus();
 			if(termID != Linkable::INVALID_ID){
 				int termNodeIx = it.nodesIn->getNodeIx(termID);
 				// velCon has false for a velocity state if there is a discontinuity between
 				// the terminus of the segment and the terminal node
-				std::vector<bool> velCon = it.nodesIn->getSegByIx(s).getVelCon();
+				std::vector<bool> velCon = it.nodesIn->getSegRefByIx_const(s).getVelCon();
 				for(int i = 3; i < 6; i++){
 					// Compute difference in velocity; if velCon[i-3] is true, then velocity
 					// should be continuous and any difference is numerical error, so set to
@@ -603,102 +603,105 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
 	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(pIt->X[0]), pIt->totalFree, 1);
 	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(pIt->FX[0]), pIt->totalCons, 1);
-	SparseMatXCd J(pIt->totalCons, pIt->totalFree);
-	J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
-	J.makeCompressed();
+	Eigen::VectorXd X_diff(pIt->totalFree, 1);	// Create a vector to put the solution in
 
-	// change sign for matrix multiplication
-	// FX *= -1;
-
-	// Create a vector to put the solution in
-	Eigen::VectorXd X_diff(pIt->totalFree, 1);
-	if(pIt->totalCons == pIt->totalFree){	// J is square, use regular inverse
-
-		/* Use LU decomposition to invert the Jacobian matrix and find a vector
-		w. Multiplying J^T by w yields the minimum-norm solution x, where x 
-		lies in the column-space of J^T, or in the orthogonal complement of
-		the nullspace of J.
-		Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
-		 */
-		
-		// Info about solving Sparse matrix systems with Eigen:
-		// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
-
-		// Solve the system Jw = b (In this case, w = X_diff)
-		Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
-		luSolver.analyzePattern(J);
-		luSolver.factorize(J);
-		if(luSolver.info() != Eigen::Success){
-			throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
-		}
-
-		X_diff = luSolver.solve(-FX);
-		if(luSolver.info() != Eigen::Success){
-			throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
-		}
+	if(pIt->totalCons == 1 && pIt->totalFree == 1){
+		// If Jacobian is 1x1, skip all that linear algebra and just solve the equation
+		X_diff = -FX/(pIt->DF_elements[0].value());
 	}else{
-		if(pIt->totalCons < pIt->totalFree){	// Under-constrained
+		// Jacobian is not scalar; use linear algebra to solve update equation
+		SparseMatXCd J(pIt->totalCons, pIt->totalFree);
+		J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
+		J.makeCompressed();
+		
+		if(pIt->totalCons == pIt->totalFree){	// J is square, use regular inverse
 
-			/* Use LU decomposition to invert the Gramm matrix and find a vector
+			/* Use LU decomposition to invert the Jacobian matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 			lies in the column-space of J^T, or in the orthogonal complement of
 			the nullspace of J.
 			Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 			 */
+			
+			// Info about solving Sparse matrix systems with Eigen:
+			// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
 
-			// Compute Gramm matrix
-			SparseMatXCd JT = J.transpose();
-			SparseMatXCd G = J*JT;		// G will always be symmetric
-
-			// astrohelion::toCSV(J, "DF_cpp.csv");
-			// astrohelion::toCSV(FX, "FX_cpp.csv");
-			// astrohelion::toCSV(oldX, "X_cpp.csv");
-
-			// Solve the system Gw = b
-			// LU-Factorization is faster and works most of the time
+			// Solve the system Jw = b (In this case, w = X_diff)
 			Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
-			luSolver.compute(G);	
+			luSolver.analyzePattern(J);
+			luSolver.factorize(J);
 			if(luSolver.info() != Eigen::Success){
-				// If LU factorization fails, try QR factorization - it tends to be more robust
-				printVerb(verbosity >= Verbosity_tp::ALL_MSG, "LU Factorization failed, trying QR factorization to solve update equation.\n");
-				Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
-				qrSolver.compute(G);
-				if(qrSolver.info() != Eigen::Success){
-					throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix.");
-				}
-
-				Eigen::VectorXd w = qrSolver.solve(-FX);
-				if(qrSolver.info() != Eigen::Success){
-					throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
-				}
-
-				X_diff = JT*w;	// Compute optimal x from w
-			}else{
-
-				Eigen::VectorXd w = luSolver.solve(-FX);
-				if(luSolver.info() != Eigen::Success){
-					throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
-				}
-				X_diff = JT*w;	// Compute optimal x from w
+				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
 			}
 
-			// Alternative Method: SVD
-			// NOTE: This takes approximately five times as much computation time
-			// JacobiSVD<MatrixXd> svd(JT, Eigen::ComputeFullV | Eigen::ComputeFullU);
-			// svd.setThreshold(tol/100.f);
+			X_diff = luSolver.solve(-FX);
+			if(luSolver.info() != Eigen::Success){
+				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
+			}
+		}else{
+			if(pIt->totalCons < pIt->totalFree){	// Under-constrained
 
-			// MatrixXd singVals = svd.singularValues();
-			// double svdTol = (1e-12)*singVals(0);	// First singular value is the biggest one
+				/* Use LU decomposition to invert the Gramm matrix and find a vector
+				w. Multiplying J^T by w yields the minimum-norm solution x, where x 
+				lies in the column-space of J^T, or in the orthogonal complement of
+				the nullspace of J.
+				Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
+				 */
 
-			// MatrixXd Z = MatrixXd::Zero(JT.rows(), JT.cols());
-			// for(unsigned int r = 0; r < singVals.rows(); r++){
-			// 	Z(r,r) = std::abs(singVals(r)) > svdTol ? 1.0/singVals(r) : 0;
-			// }
+				// Compute Gramm matrix
+				SparseMatXCd JT = J.transpose();
+				SparseMatXCd G = J*JT;		// G will always be symmetric
 
-			// X_diff = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
+				// astrohelion::toCSV(J, "DF_cpp.csv");
+				// astrohelion::toCSV(FX, "FX_cpp.csv");
+				// astrohelion::toCSV(oldX, "X_cpp.csv");
 
-		}else{	// Over-constrained
-			throw LinAlgException("MultShootEngine::solveUpdateEq: System is over constrained... No solution implemented");
+				// Solve the system Gw = b
+				// LU-Factorization is faster and works most of the time
+				Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
+				luSolver.compute(G);	
+				if(luSolver.info() != Eigen::Success){
+					// If LU factorization fails, try QR factorization - it tends to be more robust
+					printVerb(verbosity >= Verbosity_tp::ALL_MSG, "LU Factorization failed, trying QR factorization to solve update equation.\n");
+					Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
+					qrSolver.compute(G);
+					if(qrSolver.info() != Eigen::Success){
+						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix.");
+					}
+
+					Eigen::VectorXd w = qrSolver.solve(-FX);
+					if(qrSolver.info() != Eigen::Success){
+						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
+					}
+
+					X_diff = JT*w;	// Compute optimal x from w
+				}else{
+
+					Eigen::VectorXd w = luSolver.solve(-FX);
+					if(luSolver.info() != Eigen::Success){
+						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
+					}
+					X_diff = JT*w;	// Compute optimal x from w
+				}
+
+				// Alternative Method: SVD
+				// NOTE: This takes approximately five times as much computation time
+				// JacobiSVD<MatrixXd> svd(JT, Eigen::ComputeFullV | Eigen::ComputeFullU);
+				// svd.setThreshold(tol/100.f);
+
+				// MatrixXd singVals = svd.singularValues();
+				// double svdTol = (1e-12)*singVals(0);	// First singular value is the biggest one
+
+				// MatrixXd Z = MatrixXd::Zero(JT.rows(), JT.cols());
+				// for(unsigned int r = 0; r < singVals.rows(); r++){
+				// 	Z(r,r) = std::abs(singVals(r)) > svdTol ? 1.0/singVals(r) : 0;
+				// }
+
+				// X_diff = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
+
+			}else{	// Over-constrained
+				throw LinAlgException("MultShootEngine::solveUpdateEq: System is over constrained... No solution implemented");
+			}
 		}
 	}
 
@@ -773,7 +776,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosit
  *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
  */
 bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
-    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix... ");
+    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix...\n");
     // Create multiple shooter that will only do 1 iteration
     MultShootEngine corrector(engine);
     corrector.setMaxIts(1);
@@ -788,6 +791,10 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     MatrixXRd DF = MatrixXRd(sparseDF);
     // MatrixXRd DF = Eigen::Map<MatrixXRd>(&(it.DF[0]), it.totalCons, it.totalFree);
     MatrixXRd DFest = MatrixXRd::Zero(it.totalCons, it.totalFree);
+
+    if(writeToFile){
+        astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
+    }
 
     double pertSize = 1e-8;
     #pragma omp parallel for firstprivate(it, corrector)
@@ -849,7 +856,6 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     // }
     
     if(writeToFile){
-        astrohelion::toCSV(DF, "FiniteDiff_DF.csv");
         astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
         astrohelion::toCSV(diff, "FiniteDiff_Diff.csv"); 
     }

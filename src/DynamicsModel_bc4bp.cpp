@@ -676,6 +676,42 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, const C
 }//=========================================================
 
 /**
+ *  \brief Compute constraint value and partial derivatives of the constraint
+ *  \details This function adds BC4BP-specific partials w.r.t. epoch time to
+ *  the behavior defined in the base model
+ *  
+ *  \param pIt pointer to iteration data object
+ *  \param con Constraint object
+ *  \param row0 The row of the constraint within the constraint vector
+ */
+void DynamicsModel_bc4bp::multShoot_targetState_endSeg(MultShootData* pIt, const Constraint& con, int row0) const{
+    // Call base function first to do most of the work
+    DynamicsModel::multShoot_targetState_endSeg(pIt, con, row0);
+
+    // Add epoch dependencies for this model
+    if(pIt->bVarTime){
+        int segIx = pIt->nodesIn->getSegIx(con.getID());
+        std::vector<double> conData = con.getData();
+        std::vector<double> last_dqdT = pIt->propSegs[segIx].getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
+
+        MSVarMap_Obj epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, pIt->nodesIn->getSegRefByIx_const(segIx).getOrigin());
+
+        // Add epoch dependencies if the epoch time is part of the free variable vector
+        if(epochVar.row0 != -1){
+            // Loop through conData
+            int count = 0;
+            for(unsigned int s = 0; s < conData.size(); s++){
+                if(!std::isnan(conData[s])){
+                    // Epoch dependencies
+                    pIt->DF_elements.push_back(Tripletd(row0+count, epochVar.row0, last_dqdT[s]));
+                    count++;
+                }
+            }
+        }
+    }
+}//=========================================================
+
+/**
  *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::EPOCH</tt>.
  * 
  *  \param pIt a pointer to the class containing all the data relevant to the corrections process

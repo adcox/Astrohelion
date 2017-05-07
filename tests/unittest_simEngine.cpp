@@ -55,9 +55,9 @@ BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
 	}
 
 	// Make sure the times match
-	BOOST_CHECK(std::abs(traj.getTimeByIx(0) - traj.getSegByIx(0).getTimeByIx(0)) < engine.getRelTol());
-	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - traj.getSegByIx(-1).getTimeByIx(-1)) < engine.getRelTol());
-	BOOST_CHECK(std::abs(traj.getTotalTOF() - tof) < engine.getRelTol());
+	BOOST_CHECK(std::abs(traj.getTimeByIx(0) - traj.getSegByIx(0).getTimeByIx(0)) < engine.getAbsTol());
+	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - traj.getSegByIx(-1).getTimeByIx(-1)) < engine.getAbsTol());
+	BOOST_CHECK(std::abs(traj.getTotalTOF() - tof) < engine.getAbsTol());
 
 	// Make sure the states match
 	std::vector<double> initialNodeState = traj.getStateByIx(0);
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
 	std::vector<double> finalSegState = traj.getSegByIx(-1).getStateByRow(-1, 42);
 
 	for(unsigned int i = 0; i < 6; i++){
-		BOOST_CHECK(std::abs(initialNodeState[i] - initialSegState[i]) < engine.getRelTol());
-		BOOST_CHECK(std::abs(finalNodeState[i] - finalSegState[i]) < engine.getRelTol());
+		BOOST_CHECK(std::abs(initialNodeState[i] - initialSegState[i]) < engine.getAbsTol());
+		BOOST_CHECK(std::abs(finalNodeState[i] - finalSegState[i]) < engine.getAbsTol());
 	}
 }//====================================================
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_Stop){
 	engine.runSim(ic, 4*PI, &traj);
 
 	std::vector<double> qf = traj.getStateByIx(-1);
-	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+	BOOST_CHECK(std::abs(qf[1]) < engine.getAbsTol());
 
 	// Make sure linking has occurred correctly - Assumes all nodes
 	// and segments are added in order
@@ -130,15 +130,15 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_NoStop){
 	double tof = 4*PI;
 	engine.runSim(ic, tof, &traj);
 
-	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getRelTol());
-	BOOST_CHECK(std::abs(traj.getTotalTOF() - tof) < engine.getRelTol());
+	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getAbsTol());
+	BOOST_CHECK(std::abs(traj.getTotalTOF() - tof) < engine.getAbsTol());
 	
 	bool foundEvent = false;
 	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
 		if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 			foundEvent = true;
 			std::vector<double> q = traj.getStateByIx(n);
-			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+			BOOST_CHECK(std::abs(q[1]) < engine.getAbsTol());
 		}
 	}
 	BOOST_CHECK(foundEvent);
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_ManyRevs){
 
 	// Make sure it ended on the event
 	std::vector<double> qf = traj.getStateByIx(-1);
-	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+	BOOST_CHECK(std::abs(qf[1]) < engine.getAbsTol());
 
 	// Make sure each event is valid
 	bool foundEvent = false;
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_ManyRevs){
 			foundEvent = true;
 			eventCount++;
 			std::vector<double> q = traj.getStateByIx(n);
-			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+			BOOST_CHECK(std::abs(q[1]) < engine.getAbsTol());
 		}
 	}
 	BOOST_CHECK(foundEvent);
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
 
 		// Make sure it ended on the event
 		std::vector<double> qf = traj.getStateByIx(-1);
-		BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+		BOOST_CHECK(std::abs(qf[1]) < engine.getAbsTol());
 
 		// Make sure each event is valid
 		bool foundEvent = false;
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
 				foundEvent = true;
 				eventCount++;
 				std::vector<double> q = traj.getStateByIx(n);
-				BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+				BOOST_CHECK(std::abs(q[1]) < engine.getAbsTol());
 			}
 		}
 		BOOST_CHECK(foundEvent);
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Event_Stop){
 	engine.runSim(ic, t0, 120*PI, &traj);
 	
 	std::vector<double> qf = traj.getStateByIx(-1);
-	BOOST_CHECK(std::abs(qf[2]) < engine.getRelTol());
+	BOOST_CHECK(std::abs(qf[2]) < engine.getAbsTol());
 
 	// Make sure linking has occurred correctly - Assumes all nodes
 	// and segments are added in order
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
 	engine.runSim(ic, 0, T, &traj);
 
 	std::vector<double> qf = traj.getStateByIx(-1);
-	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+	BOOST_CHECK(std::abs(qf[1]) < engine.getAbsTol());
 
 	// Make sure linking has occurred correctly - Assumes all nodes
 	// and segments are added in order
@@ -351,7 +351,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 	double tof = 4*PI;
 	engine.runSim(ic, tof, &traj);
 
-	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getRelTol());
+	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getAbsTol());
 
 	// Make sure each event is valid
 	bool foundEvent = false;
@@ -359,7 +359,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 		if(traj.getNodeByIx(n).getTriggerEvent() == planeCross.getType()){
 			foundEvent = true;
 			std::vector<double> q = traj.getStateByIx(n);
-			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+			BOOST_CHECK(std::abs(q[1]) < engine.getAbsTol());
 		}
 	}
 	BOOST_CHECK(foundEvent);
@@ -399,7 +399,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
 
 	// Make sure it ended on the event
 	std::vector<double> qf = traj.getStateByIx(-1);
-	BOOST_CHECK(std::abs(qf[1]) < engine.getRelTol());
+	BOOST_CHECK(std::abs(qf[1]) < engine.getAbsTol());
 
 	// Make sure each event is valid
 	bool foundEvent = false;
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
 			foundEvent = true;
 			eventCount++;
 			std::vector<double> q = traj.getStateByIx(n);
-			BOOST_CHECK(std::abs(q[1]) < engine.getRelTol());
+			BOOST_CHECK(std::abs(q[1]) < engine.getAbsTol());
 		}
 	}
 	BOOST_CHECK(foundEvent);
@@ -456,7 +456,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Forward){
 
 	// Make sure the nodes are equally spaced in time (should be at integer time values here)
 	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
-		BOOST_CHECK(std::abs(traj.getEpochByIx(n) - static_cast<double>(n)) < engine.getRelTol());
+		BOOST_CHECK(std::abs(traj.getEpochByIx(n) - static_cast<double>(n)) < engine.getAbsTol());
 	}
 }//====================================================
 
@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Reverse){
 
 	// Make sure the nodes are equally spaced in time (should be at integer time values here)
 	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
-		BOOST_CHECK(std::abs(traj.getEpochByIx(n) + static_cast<double>(n)) < engine.getRelTol());
+		BOOST_CHECK(std::abs(traj.getEpochByIx(n) + static_cast<double>(n)) < engine.getAbsTol());
 	}
 }//==================================================== 
 

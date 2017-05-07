@@ -144,6 +144,52 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_EQUAL_ARC){
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
+BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_ENDSEG){
+	SysData_cr3bp sys("earth", "moon");
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 3, &halfLyapNodeset);
+	halfLyapNodeset.deleteNode(2);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(false);
+
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 42);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_ENDSEG_EQUAL_ARC){
+	SysData_cr3bp sys("earth", "moon");
+	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.setRevTime(em_lyap_T < 0);
+	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 3, &halfLyapNodeset);
+	halfLyapNodeset.deleteNode(2);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(true);
+
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 42);
+	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
+	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+}//====================================================
+
 BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_RMSTATE){
 	SysData_cr3bp sys("earth", "moon");
 	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
@@ -168,7 +214,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_RMSTATE){
 	std::vector<double> initState = correctedSet.getState(rmState.getID());
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-	BOOST_CHECK(stateDiffBelowTol(initState, halfLyapNodeset.getState(rmState.getID())));
+	BOOST_CHECK(stateDiffBelowTol(initState, halfLyapNodeset.getState(rmState.getID()), 1e-12));
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL){

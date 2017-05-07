@@ -180,7 +180,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 		case Event_tp::XZ_PLANE:
 		case Event_tp::XY_PLANE:
 		case Event_tp::MASS:
-			conType = Constraint_tp::STATE;
+			conType = Constraint_tp::ENDSEG_STATE;
 			break;
 		case Event_tp::CRASH:
 			conType = Constraint_tp::MAX_DIST;
@@ -399,7 +399,7 @@ bool Event::crossedEvent(const double* y, unsigned int len, double t, int tDir) 
 		if(triggerDir == 0){
 			return true;
 		}else{
-			return triggerDir == getDir(y, len, tDir);
+			return triggerDir == getDir(tDir);
 		}
 	}
 	return false;
@@ -529,7 +529,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
  *	\return positive or negative one to correspond with the sign
  *	\throws Exception if the event type associated with this event is not implemented
  */
-int Event::getDir(const double *y, unsigned int len, int tDir) const{
+int Event::getDir(int tDir) const{
 	double d = dist-lastDist;
 	return static_cast<int>(d*tDir/std::abs(d*tDir));
 }//====================================================

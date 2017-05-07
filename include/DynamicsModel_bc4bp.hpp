@@ -95,8 +95,8 @@ public:
 	void multShoot_initIterData(MultShootData *it) const override;
 	void multShoot_createContCons(MultShootData*) const override;
 	void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*) const override;
-	double multShoot_getSlackVarVal(const MultShootData*, Constraint) const override;
-	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
+	double multShoot_getSlackVarVal(const MultShootData*, const Constraint&) const override;
+	void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const override;
 	void multShoot_createOutput(const MultShootData*) const;
 	//\}
 
@@ -106,19 +106,19 @@ protected:
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	void multShoot_targetCont_State(MultShootData*, Constraint, int) const override;
-	void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const override;
-	void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const override;
-	void multShoot_targetEpoch(MultShootData*, Constraint, int) const;
-	void multShoot_targetDeltaV(MultShootData*, Constraint, int) const override;
-	void multShoot_targetDist(MultShootData*, Constraint, int) const override;
-	double multShoot_targetDist_compSlackVar(const MultShootData*, Constraint) const override;
-	void multShoot_targetApse(MultShootData*, Constraint, int) const override;
-	void multShoot_targetSP(MultShootData*, Constraint, int) const;
-	void multShoot_targetSP_mag(MultShootData*, Constraint, int) const;
-	void multShoot_targetSP_dist(MultShootData*, Constraint, int) const;
-	double multShoot_targetSPMag_compSlackVar(const MultShootData*, Constraint) const;
-	double multShoot_targetSP_maxDist_compSlackVar(const MultShootData*, Constraint) const;
+	void multShoot_targetCont_State(MultShootData*, const Constraint&, int) const override;
+	void multShoot_targetCont_Ex(MultShootData*, const Constraint&, int) const override;
+	void multShoot_targetCont_Ex_Seg(MultShootData*, const Constraint&, int) const override;
+	void multShoot_targetEpoch(MultShootData*, const Constraint&, int) const;
+	void multShoot_targetDeltaV(MultShootData*, const Constraint&, int) const override;
+	void multShoot_targetDist(MultShootData*, const Constraint&, int) const override;
+	double multShoot_targetDist_compSlackVar(const MultShootData*, const Constraint&) const override;
+	void multShoot_targetApse(MultShootData*, const Constraint&, int) const override;
+	void multShoot_targetSP(MultShootData*, const Constraint&, int) const;
+	void multShoot_targetSP_mag(MultShootData*, const Constraint&, int) const;
+	void multShoot_targetSP_dist(MultShootData*, const Constraint&, int) const;
+	double multShoot_targetSPMag_compSlackVar(const MultShootData*, const Constraint&) const;
+	double multShoot_targetSP_maxDist_compSlackVar(const MultShootData*, const Constraint&) const;
 	//\}
 };
 

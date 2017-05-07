@@ -90,7 +90,7 @@ public:
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	void multShoot_applyConstraint(MultShootData*, Constraint, int) const override;
+	void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const override;
 	void multShoot_createOutput(const MultShootData*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
 	//\}
@@ -100,8 +100,8 @@ protected:
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	void multShoot_targetJC(MultShootData*, Constraint, int) const;
-	void multShoot_targetPseudoArc(MultShootData*, Constraint, int) const;
+	void multShoot_targetJC(MultShootData*, const Constraint&, int) const;
+	void multShoot_targetPseudoArc(MultShootData*, const Constraint&, int) const;
 	//\}
 };
 

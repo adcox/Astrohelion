@@ -261,6 +261,8 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::SEG_CONT_EX: { return "CONTINUOUS SEG_2SEG_EXTRA"; }
 		case Constraint_tp::PSEUDOARC: { return "PSEUDO-ARCLENGTH"; }
 		case Constraint_tp::RM_STATE: { return "RM_STATE"; }
+		case Constraint_tp::RM_EPOCH: { return "RM_EPOCH"; }
+		case Constraint_tp::ENDSEG_STATE: { return "ENDSEG_STATE"; }
 		default: { return "UNDEFINED!"; }
 	}
 }//====================================================
@@ -305,6 +307,7 @@ void Constraint::setAppType(){
 			break;
 		case Constraint_tp::CONT_PV:
 		case Constraint_tp::CONT_EX:
+		case Constraint_tp::ENDSEG_STATE:
 			appType = ConstraintApp_tp::APP_TO_SEG;
 			break;
 		default:

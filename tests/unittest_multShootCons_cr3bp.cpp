@@ -165,8 +165,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_RMSTATE){
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
+	std::vector<double> initState = correctedSet.getState(rmState.getID());
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+	BOOST_CHECK(stateDiffBelowTol(initState, halfLyapNodeset.getState(rmState.getID())));
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL){

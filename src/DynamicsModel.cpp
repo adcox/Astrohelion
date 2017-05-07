@@ -355,7 +355,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
  *  without setting the slack variable to zero
  *  \throws Exception if the constraint type does not include a slack variable
  */
-double DynamicsModel::multShoot_getSlackVarVal(const MultShootData *it, Constraint con) const{
+double DynamicsModel::multShoot_getSlackVarVal(const MultShootData *it, const Constraint& con) const{
 	switch(con.getType()){
 		case Constraint_tp::MAX_DIST:
 		case Constraint_tp::MIN_DIST:
@@ -383,7 +383,7 @@ double DynamicsModel::multShoot_getSlackVarVal(const MultShootData *it, Constrai
  *	\param c the index of the constraint within the total constraint vector (which is, in
  *	turn, stored in the iteration data)
  */	
-void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con, int c) const{
+void DynamicsModel::multShoot_applyConstraint(MultShootData *it, const Constraint& con, int c) const{
 
 	int row0 = it->conRows[c];
 
@@ -426,8 +426,8 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con,
 		case Constraint_tp::APSE:
 			multShoot_targetApse(it, con, row0);
 			break;	
-		case Constraint_tp::RM_STATE:
-			// ToDo: Add function here?
+		case Constraint_tp::ENDSEG_STATE:
+			multShoot_targetState_endSeg(it, con, row0);
 			break;
 		default: break;
 	}
@@ -446,7 +446,7 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, Constraint con,
  *	\param con the constraint being applied
  *	\param row0 the first row this constraint applies to
  */
-void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constraint& con, int row0) const{
 	int segID = con.getID();	// get segment ID
 	std::vector<double> conData = con.getData();
 
@@ -514,7 +514,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, Constraint con
  *	
  *	\throws Exception if the constraint data is not properly formatted
  */
-void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Constraint& con, int row0) const{
 	int segID1 = con.getID();
 	int ix = 0;
 	int segID2 = static_cast<int>(con.getFirstDataValue(&ix));
@@ -590,7 +590,7 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, Constraint
  *	\param con the constraint being applied
  *	\param row0 the first row this constraint applies to
  */
-void DynamicsModel::multShoot_targetCont_Ex(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetCont_Ex(MultShootData *it, const Constraint& con, int row0) const{
 	// Do absoluately nothing
 	(void)it;
 	(void)con;
@@ -607,7 +607,7 @@ void DynamicsModel::multShoot_targetCont_Ex(MultShootData *it, Constraint con, i
  *	\param con the constraint being applied
  *	\param row0 the first row this constraint applies to
  */
-void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData *it, const Constraint& con, int row0) const{
 	// Do absoluately nothing
 	(void)it;
 	(void)con;
@@ -623,7 +623,7 @@ void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData *it, Constraint co
  *	\param con the constraint being applied
  *	\param row0 the index of the row this constraint begins at
  */
-void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetState(MultShootData* it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
@@ -640,7 +640,56 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int
 			it->DF_elements.push_back(Tripletd(row0+count, state_var.row0+s, 1.0));
 			count++;
 		}
-	}	
+	}
+}//=================================================
+
+/**
+ *  \brief Compute constraint value and partial derivatives of the constraint
+ * 
+ *  \param pIt pointer to iteration data object
+ *  \param con Constraint object
+ *  \param row0 The row of the constraint within the constraint vector
+ */
+void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Constraint& con, int row0) const{
+	std::vector<double> conData = con.getData();
+	int segIx = pIt->nodesIn->getSegIx(con.getID());
+	const Segment &seg = pIt->propSegs[segIx].getSegRef_const(0);
+	
+	// Get object representing origin of segment
+	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, seg.getOrigin());
+	MSVarMap_Obj tof_var = pIt->bEqualArcTime ? pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID) :
+		pIt->getVarMap_obj(MSVar_tp::TOF, seg.getID());
+	
+	// Data associated with the previous node and the propagated segment
+	std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+	std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+	MatrixXRd stm = seg.getSTM();
+
+	if(conData.size() > coreStates)
+		throw Exception("DynamicsModel::multShoot_targetState: ConData has too many states");
+
+	int count = 0; 	// Count # rows since some may be skipped (NAN)
+	for(unsigned int s = 0; s < con.getData().size(); s++){
+		if(!std::isnan(conData[s])){
+			pIt->FX[row0+count] = lastState[s] - conData[s];
+
+			// Partials of F w.r.t. previous node states
+			for(unsigned int x = 0; x < coreStates; x++){
+				// put STM elements into DF matrix
+				if(prevNode_var.row0 != -1)
+					pIt->DF_elements.push_back(Tripletd(row0+count, prevNode_var.row0 + x, stm(s,x)));
+			}
+
+			// Partials of F w.r.t. time-of-flight
+			if(pIt->bVarTime){
+				double timeCoeff = pIt->bEqualArcTime ? 1.0/(pIt->numNodes - 1): 1.0;
+
+				// Column of state time derivatives: {vel; accel};
+				pIt->DF_elements.push_back(Tripletd(row0+s, tof_var.row0, timeCoeff*lastDeriv[s]));
+			}
+			count++;
+		}
+	}
 }//=================================================
 
 /**
@@ -655,7 +704,7 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, Constraint con, int
  *	
  *	\throws Exception if the constraint data vector is not properly formatted
  */
-void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, const Constraint& con, int row0) const{
 	if(con.getData().size() < 1)
 		throw Exception("DynamicsModel::multShoot_targetMatchAll: No segment ID was located in the cosntraint data vector");
 
@@ -694,7 +743,7 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, Constraint con, 
  *	\param con a copy of the constraint object
  *	\param row0 the index of the row this constraint begins at
  */
-void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, const Constraint& con, int row0) const{
 	int ix = 0;
 	int ID2 = static_cast<int>(con.getFirstDataValue(&ix));
 	if(ix < 0)
@@ -741,7 +790,7 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData* it, Constraint con,
  *	\param con a copy of the constraint object
  *	\param c the index of this constraint in the constraint vector object
  */
-void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int c) const{
+void DynamicsModel::multShoot_targetDist(MultShootData* it, const Constraint& con, int c) const{
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
@@ -800,7 +849,7 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, Constraint con, int 
  *  \param con the constraint the slack variable applies to
  *  \return the value of the slack variable
  */
-double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it, Constraint con) const{
+double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it, const Constraint& con) const{
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary	
@@ -847,7 +896,7 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it,
  *	\param con the constraint being applied
  *	\param c the index of the first row for this constraint
  */
-void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, int c) const{
+void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, const Constraint& con, int c) const{
 
 	int row0 = it->conRows[c];
 
@@ -933,7 +982,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, Constraint con, in
  * 
  *  \return Ideal value of the slack variable
  */
-double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData *it, Constraint con) const{
+double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData *it, const Constraint& con) const{
 	// double totalDV = 0;
 	// for(int n = 0; n < it->numNodes-1; n++){
 	// 	// compute squared magnitude of DV between node n and n+1
@@ -968,7 +1017,7 @@ double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData *i
  *	
  *	\throws Exception if variable time is set to OFF
  */
-void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetTOF(MultShootData *it, const Constraint& con, int row0) const{
 	if(! it->bVarTime)
 		throw Exception("DynamicsModel::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
@@ -999,7 +1048,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, Constraint con, int r
  *	\param con a copy of the constraint object
  *	\param row0 the index of the row this constraint begins at
  */
-void DynamicsModel::multShoot_targetApse(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel::multShoot_targetApse(MultShootData *it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary

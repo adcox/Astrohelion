@@ -118,8 +118,35 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMSTATE){
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
 
+	// std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	BOOST_CHECK(stateDiffBelowTol(correctedSet.getState(stateCon.getID()), stateConData, 1e-12));
+	BOOST_CHECK(stateDiffBelowTol(correctedSet.getState(rmState.getID()), halfLyapSet.getState(rmState.getID()), 1e-12));
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMEPOCH){
+	SysData_bc4bp sys("sun", "earth", "moon");
+	Arcset_bc4bp halfLyapSet(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(lyap_ic, 0, lyap_T, 7, &halfLyapSet);
+	Arcset_bc4bp correctedSet(&sys);
+
+	MultShootEngine corrector;
+	corrector.setEqualArcTime(false);
+	
+	// Constraint_tp::STATE
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 3, stateConData, 6);
+	Constraint rmEpoch(Constraint_tp::RM_EPOCH, 0, nullptr, 0);
+
+	halfLyapSet.addConstraint(stateCon);
+	halfLyapSet.addConstraint(rmEpoch);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
+	
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
+	BOOST_CHECK(std::abs(halfLyapSet.getEpoch(rmEpoch.getID()) - correctedSet.getEpoch(rmEpoch.getID())) < 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_EPOCH){

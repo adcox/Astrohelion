@@ -248,8 +248,8 @@ public:
 	virtual void multShoot_initDesignVec(MultShootData*) const;
 	virtual void multShoot_createContCons(MultShootData*) const;
 	virtual void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*) const;
-	virtual void multShoot_applyConstraint(MultShootData*, Constraint, int) const;
-	virtual double multShoot_getSlackVarVal(const MultShootData*, Constraint)const ;
+	virtual void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const;
+	virtual double multShoot_getSlackVarVal(const MultShootData*, const Constraint&)const ;
 
 	/**
 	 *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
@@ -330,19 +330,20 @@ protected:
 	 *  \name Multiple Shooting Support Functions
 	 *  \{
 	 */
-	virtual void multShoot_targetApse(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetDeltaV(MultShootData*, Constraint, int) const;
-	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData*, Constraint) const;
-	virtual void multShoot_targetDist(MultShootData*, Constraint, int) const;
-	virtual double multShoot_targetDist_compSlackVar(const MultShootData*, Constraint) const;
-	virtual void multShoot_targetCont_Ex(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_Ex_Seg(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetMatchAll(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetMatchCust(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_State(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetCont_State_Seg(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetState(MultShootData*, Constraint, int) const;
-	virtual void multShoot_targetTOF(MultShootData*, Constraint, int) const;
+	virtual void multShoot_targetApse(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetDeltaV(MultShootData*, const Constraint&, int) const;
+	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData*, const Constraint&) const;
+	virtual void multShoot_targetDist(MultShootData*, const Constraint&, int) const;
+	virtual double multShoot_targetDist_compSlackVar(const MultShootData*, const Constraint&) const;
+	virtual void multShoot_targetCont_Ex(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetCont_Ex_Seg(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetMatchAll(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetMatchCust(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetCont_State(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetCont_State_Seg(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetState(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetState_endSeg(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetTOF(MultShootData*, const Constraint&, int) const;
 	//\}
 };
 

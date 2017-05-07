@@ -209,7 +209,7 @@ std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<dou
  *  \param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, Constraint con, int c) const{
+void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, const Constraint& con, int c) const{
 
     // Let the base class do its thing first
     DynamicsModel::multShoot_applyConstraint(it, con, c);
@@ -243,7 +243,7 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
  *  \param con the constraint being applied
  *  \param row0 the row this constraint begins on
  */
-void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
     MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->nodesIn->getSysData());
@@ -291,7 +291,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, Constraint con, 
  *  @throw Exception if the pseudo arclength constraint is not listed as the final constraint
  *  @throw Exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
  */
-void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, Constraint con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
 
     if(row0 != it->totalCons-1)

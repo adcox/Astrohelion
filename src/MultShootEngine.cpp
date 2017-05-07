@@ -308,6 +308,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 			case Constraint_tp::SEG_CONT_PV:
 			case Constraint_tp::STATE:
 			case Constraint_tp::MATCH_CUST:
+			case Constraint_tp::ENDSEG_STATE:
 				addToRows = con.countConstrainedStates();
 				break;
 			case Constraint_tp::MATCH_ALL:
@@ -379,10 +380,13 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				addToRows = 1;
 				break;
 			case Constraint_tp::RM_STATE:
+			case Constraint_tp::RM_EPOCH:
 				// These constraints are handled differently
 				addToRows = 0;
 				break;
-			default: break;
+			default:
+				printWarn("MultShootEngine::multShoot: Unhandled constraint: %s\n", con.getTypeStr());
+				break;
 		}
 
 		// Save the index of the first row for this constraint

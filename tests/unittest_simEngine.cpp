@@ -502,7 +502,10 @@ BOOST_AUTO_TEST_CASE(DataPreserved){
 	
 	// GSL should crash
 	Arcset_cr3bp traj(&sys);
-	BOOST_CHECK_THROW(sim.runSim(ic, 6*PI*400, &traj), Exception);
+
+	try{
+		sim.runSim(ic, 6*PI*400, &traj);
+	}catch(Exception &e){}
 
 	// But some data should still be written to traj
 	BOOST_CHECK(traj.getNumNodes() > 1);
@@ -521,7 +524,10 @@ BOOST_AUTO_TEST_CASE(DataPreserved_fixedStep){
 
 	// GSL should crash
 	Arcset_cr3bp traj(&sys);
-	BOOST_CHECK_THROW(sim.runSim(ic, 6*PI*400, &traj), Exception);
+
+	try{
+		sim.runSim(ic, 6*PI*400, &traj);
+	}catch(Exception &e){}
 
 	// But some data should still be written to traj
 	BOOST_CHECK(traj.getNumNodes() > 1);

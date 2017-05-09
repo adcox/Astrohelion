@@ -25,6 +25,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <exception>
 
 #include "Arcset.hpp"
 #include "Exceptions.hpp"
@@ -233,12 +234,8 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 		engine.addEvent(evts[i]);
 	}
 
-	/*	Get an arc that spans the entire segement less a small amount of time at the end
-	 * 	to ensure that no new nodes are created with TOF less than minTimeDiff
-	 */
-	double segTOF = seg.getTOF() < 0 ? seg.getTOF() + std::abs(minTimeDiff) : seg.getTOF() - std::abs(minTimeDiff);
 	Arcset traj(pSysData);
-	engine.runSim(origin.getState(), origin.getEpoch(), segTOF, &traj);
+	engine.runSim(origin.getState(), origin.getEpoch(), seg.getTOF(), &traj);
 
 	int evtCount = 0;
 	for(unsigned int e = 0; e < evts.size(); e++){
@@ -259,6 +256,11 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 			// Get a copy of the segment from the newly propagated arc
 			Segment newSeg = traj.getSegByIx(s);
 			
+			if(std::abs(newSeg.getTOF()) < std::abs(minTimeDiff)){
+				// Too close to a previous node!
+				throw Exception("Arcset::createNodesAtEvent: TOF between nodes is less than specified minimum; TODO - Implement a way to continue");
+			}
+
 			// Add the terminating node if this isn't the last segment
 			if(s < traj.getNumSegs()-1){
 				Node newNode = traj.getNode(newSeg.getTerminus());
@@ -452,7 +454,12 @@ void Arcset::saveToMat(const char* filename) const{
 	if(NULL == matfp){
 		astrohelion::printErr("Arcset::saveToMat: Error creating MAT file\n");
 	}else{
-		saveCmds(matfp);
+		try{
+			saveCmds(matfp);
+		}catch(std::exception &e){
+			Mat_Close(matfp);
+			throw e;
+		}
 	}
 
 	Mat_Close(matfp);
@@ -492,7 +499,12 @@ void Arcset::readFromMat(const char *filepath){
 	if(NULL == matfp){
 		throw Exception("Arcset: Could not load data from file");
 	}else{
-		readCmds(matfp);
+		try{
+			readCmds(matfp);
+		}catch(std::exception &e){
+			Mat_Close(matfp);
+			throw e;
+		}
 	}
 
 	Mat_Close(matfp);

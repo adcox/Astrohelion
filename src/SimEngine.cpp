@@ -1049,6 +1049,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     
     Arcset eventArcset(pArcset->getSysData()), correctedSet(pArcset->getSysData());
 
+    // Construct a simple arcset from previous states we know work well
     Node n0(&(arcIC.front()), core_dim, t0);
     Node ni(&(arcFC.front()), core_dim, t0+tof);
     Segment tempSeg(0, 1, tof);
@@ -1057,13 +1058,6 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     eventArcset.addNode(n0);
     eventArcset.addNode(ni);
     eventArcset.addSeg(tempSeg);
-
-    // SimEngine sim;
-    // sim.setVarStepSize(false);
-    // sim.setNumSteps(2);
-    // sim.setRevTime(tof < 0);
-    // sim.setCtrlLaw(eomParams->ctrlLawID);      // cr3bp_lt arcset DOES use control laws
-    // sim.runSim(arcIC, t0, tof, &eventArcset);
 
     Constraint rmInitState(Constraint_tp::RM_STATE, 0, nullptr, 0);
     eventArcset.addConstraint(rmInitState);

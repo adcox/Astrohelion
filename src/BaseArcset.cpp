@@ -1943,14 +1943,17 @@ void BaseArcset::readNodeStatesFromMat(mat_t *pMatFile, const char* pVarName){
 		unsigned int numSteps = pStateMat->dims[0];
 		
 		if(nodes.size() == 0){
+			Mat_VarFree(pStateMat);
 			throw Exception("BaseArcset::readStateFromMat: Step vector has not been initialized!");
 		}
 
 		if(numSteps != nodes.size()){
+			Mat_VarFree(pStateMat);
 			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
 		}
 
 		if(pStateMat->dims[1] != stateSize){
+			Mat_VarFree(pStateMat);
 			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not consistent with DynamicalModel definition.");
 		}
 
@@ -1968,6 +1971,7 @@ void BaseArcset::readNodeStatesFromMat(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}else{
+			Mat_VarFree(pStateMat);
 			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
@@ -1991,14 +1995,17 @@ void BaseArcset::readNodeStateDerivFromMat(mat_t *pMatFile, const char* pVarName
 		unsigned int numSteps = pAccelMat->dims[0];
 		
 		if(nodes.size() == 0){
+			Mat_VarFree(pAccelMat);
 			throw Exception("BaseArcset::readStateDerivFromMat: Node vector has not been initialized!");
 		}
 
 		if(numSteps != nodes.size()){
+			Mat_VarFree(pAccelMat);
 			throw Exception("BaseArcset::readStateDerivFromMat: Derivative vector has a different size than the initialized node vector");
 		}
 
 		if(pAccelMat->dims[1] != stateSize){
+			Mat_VarFree(pAccelMat);
 			throw Exception("BaseArcset::readStateDerivFromMat: Incompatible data file: Vector width is not equal to the state size.");
 		}
 
@@ -2016,6 +2023,7 @@ void BaseArcset::readNodeStateDerivFromMat(mat_t *pMatFile, const char* pVarName
 				}
 			}
 		}else{
+			Mat_VarFree(pAccelMat);
 			throw Exception("BaseArcset::readStateDerivFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
@@ -2036,14 +2044,20 @@ void BaseArcset::readNodeTimesFromMat(mat_t *pMatFile, const char* pVarName){
 	}else{
 		unsigned int numSteps = pEpochMat->dims[0];
 
-		if(nodes.size() == 0)
+		if(nodes.size() == 0){
+			Mat_VarFree(pEpochMat);
 			throw Exception("BaseArcset::readEpochFromMat: Node vector has not been initialized");
+		}
 
-		if(numSteps != nodes.size())
+		if(numSteps != nodes.size()){
+			Mat_VarFree(pEpochMat);
 			throw Exception("BaseArcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
+		}
 
-		if(pEpochMat->dims[1] != 1)
+		if(pEpochMat->dims[1] != 1){
+			Mat_VarFree(pEpochMat);
 			throw Exception("BaseArcset::readEpochFromMat: Incompatible data file: Epoch vector has more than one column");
+		}
 
 		if(pEpochMat->class_type == MAT_C_DOUBLE && pEpochMat->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pEpochMat->data);
@@ -2054,6 +2068,7 @@ void BaseArcset::readNodeTimesFromMat(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}else{
+			Mat_VarFree(pEpochMat);
 			throw Exception("BaseArcset::readEpochFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
@@ -2076,15 +2091,18 @@ void BaseArcset::readSegSTMFromMat(mat_t *pMatFile, const char* pVarName){
 		unsigned int numSteps = pAllSTM->dims[2];
 
 		if(segs.size() == 0){
+			Mat_VarFree(pAllSTM);
 			throw Exception("BaseArcset::readSTMFromMat: Step vector has not been initialized!");
 		}
 
 		if(numSteps < segs.size() ){
+			Mat_VarFree(pAllSTM);
 			printErr("STM size = %d\nInitialized step vector size = %d\n", numSteps, static_cast<int>(segs.size()));
 			throw Exception("BaseArcset::readSTMFromMat: STM vector has fewer elements than the initialized segment vector");
 		}
 
 		if(pAllSTM->dims[0] != stateSize || pAllSTM->dims[1] != stateSize){
+			Mat_VarFree(pAllSTM);
 			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM size is not consistent with DynamicalModel definition.");
 		}
 
@@ -2105,6 +2123,7 @@ void BaseArcset::readSegSTMFromMat(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}else{
+			Mat_VarFree(pAllSTM);
 			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
@@ -2125,14 +2144,20 @@ void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, const char* pVarName){
 	}else{
 		unsigned int numSteps = pTofMat->dims[0];
 
-		if(segs.size() == 0)
+		if(segs.size() == 0){
+			Mat_VarFree(pTofMat);
 			throw Exception("BaseArcset::readTOFFromMat: Segment vector has not been initialized");
+		}
 
-		if(numSteps != segs.size())
+		if(numSteps != segs.size()){
+			Mat_VarFree(pTofMat);
 			throw Exception("BaseArcset::readTOFFromMat: TOF vector has different size than the initialized segment evctor");
+		}
 
-		if(pTofMat->dims[1] != 1)
+		if(pTofMat->dims[1] != 1){
+			Mat_VarFree(pTofMat);
 			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: TOF vector has more than one column");
+		}
 
 		if(pTofMat->class_type == MAT_C_DOUBLE && pTofMat->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pTofMat->data);
@@ -2143,6 +2168,7 @@ void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}else{
+			Mat_VarFree(pTofMat);
 			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
@@ -2162,14 +2188,20 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, const char* pVarName){
 	}else{
 		unsigned int numSteps = pLawMat->dims[0];
 
-		if(segs.size() == 0)
+		if(segs.size() == 0){
+			Mat_VarFree(pLawMat);
 			throw Exception("BaseArcset::readCtrlLawFromMat: Segment vector has not been initialized");
+		}
 
-		if(numSteps != segs.size())
+		if(numSteps != segs.size()){
+			Mat_VarFree(pLawMat);
 			throw Exception("BaseArcset::readCtrlLawFromMat: Control Law vector has different size than the initialized segment evctor");
+		}
 
-		if(pLawMat->dims[1] != 1)
+		if(pLawMat->dims[1] != 1){
+			Mat_VarFree(pLawMat);
 			throw Exception("BaseArcset::readCtrlLawFromMat: Incompatible data file: Contrl Law vector has more than one column");
+		}
 
 		if(pLawMat->class_type == MAT_C_UINT32 && pLawMat->data_type == MAT_T_UINT32){
 			unsigned int *data = static_cast<unsigned int *>(pLawMat->data);
@@ -2180,6 +2212,7 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}else{
+			Mat_VarFree(pLawMat);
 			throw Exception("BaseArcset::readCtrlLawFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
@@ -2203,12 +2236,14 @@ void BaseArcset::readNodeExtraParamFromMat(mat_t *pMatFile, std::string varKey, 
 		unsigned int numSteps = pMatVar->dims[0];
 		
 		if(nodes.size() == 0){
+			Mat_VarFree(pMatVar);
 			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
 		}
 
 		if(pMatVar->dims[1] != 1){
 			char message[64];
 			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", pVarName, 1);
+			Mat_VarFree(pMatVar);
 			throw Exception(message);
 		}
 
@@ -2220,6 +2255,7 @@ void BaseArcset::readNodeExtraParamFromMat(mat_t *pMatFile, std::string varKey, 
 				}
 			}
 		}else{
+			Mat_VarFree(pMatVar);
 			throw Exception("BaseArcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
@@ -2244,12 +2280,14 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
 		unsigned int numSteps = pMatVar->dims[0];
 		
 		if(nodes.size() == 0){
+			Mat_VarFree(pMatVar);
 			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
 		}
 
 		if(pMatVar->dims[1] != len){
 			char message[64];
 			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %zu", pVarName, len);
+			Mat_VarFree(pMatVar);
 			throw Exception(message);
 		}
 
@@ -2265,6 +2303,7 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
 				}
 			}
 		}else{
+			Mat_VarFree(pMatVar);
 			throw Exception("BaseArcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
@@ -2273,12 +2312,12 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
 
 void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
-	const unsigned int full_size = core_size + core_size*core_size + pSysData->getDynamicsModel()->getExtraStateSize();
 
 	if(pStateCell == NULL){
 		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
 	}else{
+		const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
+		const unsigned int full_size = core_size + core_size*core_size + pSysData->getDynamicsModel()->getExtraStateSize();
 		unsigned int numSegs = pStateCell->dims[0];
 		
 		if(segs.size() != numSegs){
@@ -2294,13 +2333,15 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
 
 		for(unsigned int s = 0; s < numSegs; s++){
-			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
-				unsigned int numSteps = cell_elements[s]->dims[0];	
+			if(cell_elements[s] != nullptr && 
+				cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
+
+				unsigned int numSteps = (cell_elements[s]->dims[0])/full_size;	
 				double *data = static_cast<double *>(cell_elements[s]->data);
 
 				if(data != nullptr){
 					for(unsigned int i = 0; i < numSteps; i++){
-						std::vector<double> state(6);
+						std::vector<double> state(full_size);
 						for(unsigned int c = 0; c < full_size; c++)
 							state[c] = data[c*numSteps + i];
 
@@ -2582,7 +2623,7 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, const char *pVarName) const{
 		dims[0] = segStates.size()/dims[1];	// rows
 
 		// Transpose data into column-major order
-		std::vector<double> segStates_trans(segStates.size(), -8);
+		std::vector<double> segStates_trans(segStates.size());
 		for(unsigned int r = 0; r < dims[0]; r++){
 			for(unsigned int c = 0; c < dims[1]; c++){
 				segStates_trans[c*dims[0] + r] = segStates[r*dims[1] + c];

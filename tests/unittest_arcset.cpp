@@ -23,12 +23,7 @@
 
 using namespace astrohelion;
 
-Arcset_bc4bp *bcSet;
-
-Arcset_cr3bp test_createCR3BPNodeset(SysData_cr3bp*);
-void test_createBCR4BPRNodeset(SysData_bc4bp*);
 bool dummy_predicate(Exception&);
-
 bool dummy_predicate( Exception const& ex ) { return true; }
 
 BOOST_AUTO_TEST_CASE(Concat_CR3BP){
@@ -100,18 +95,17 @@ BOOST_AUTO_TEST_CASE(CR3BP_NodesAtEvents){
 	set2.createNodesAtEvents(0, events);
 	set2.putInChronoOrder();
 	// set2.printInChrono();
-	// set2.saveToMat("emDRO_newNodes.mat");
+	// set2.saveToMat("data/emDRO_newNodes.mat");
 	// cout << "CR3BP createNodesAtEvents (saved to emDRO_newNodes.mat):" << endl;
 	BOOST_CHECK(set2.getNumNodes() == 5);
-	BOOST_CHECK(set2.getStateByIx(1)[0] == xMoonData[0]);
-	BOOST_CHECK(set2.getStateByIx(2)[1] == 0);
-	BOOST_CHECK(set2.getStateByIx(3)[0] == xMoonData[0]);
+	BOOST_CHECK(std::abs(set2.getStateByIx(1)[0] - xMoonData[0]) < 1e-10);
+	BOOST_CHECK(std::abs(set2.getStateByIx(2)[1]) < 1e-10);
+	BOOST_CHECK(std::abs(set2.getStateByIx(3)[0] - xMoonData[0]) < 1e-10);
 	BOOST_CHECK(std::abs(set2.getTotalTOF() - emDRO_T) < 1e-10);
-	printf("CR3BP TOF = %.6f\n", set2.getTotalTOF());
 	// set2.print();
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_ArcsetFromICs){
+BOOST_AUTO_TEST_CASE(BC4BP_NodesAtEvent){
 	SysData_bc4bp bcSys("sun", "earth", "moon");
 	double qho_ic[] = {-0.86464955943628, -0.523239865136876, -0.0309591111054232, -0.00352683110021282, -0.00217207557203108, 0.00179392516522105};
 	double qho_T0 = 100;
@@ -140,60 +134,17 @@ BOOST_AUTO_TEST_CASE(BC4BP_ArcsetFromICs){
 	BOOST_CHECK(std::abs(set3.getStateByIx(2)[1]) < 1e-12);
 	BOOST_CHECK(std::abs(set3.getEpochByIx(2) - qho_T0 - set3.getTOFByIx(0)) < 1e-12 + set3.getTOFByIx(1));
 	BOOST_CHECK(std::abs(set3.getTotalTOF() - qho_Period) < 1e-10);
-	printf("BC4BP TOF = %.6f\n", set3.getTotalTOF());
 	// set3.print();
 }//====================================================
 
-Arcset_cr3bp test_createCR3BPNodeset(SysData_cr3bp *emData){
-	// Define system and IC
+BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
-
-	// Create a node set from the IC and sysDdata
-	Arcset_cr3bp crSet(emData);
+	SysData_cr3bp emData("earth", "moon");
+	Arcset_cr3bp crSet(&emData);
 	SimEngine sim;
 	sim.runSim_manyNodes(ic, 2.77, 5, &crSet);
-	
-	int nodes[] = {3,4};
-	std::vector<int> velCon(nodes, nodes+2);
-	// crSet->allowDV_at(velCon);
 
-	// Add a constraint
-	// double data[] = {1,1,1,NAN,NAN,NAN};
-	double data[] = {1.5};
-	Constraint crCon1(Constraint_tp::MAX_DELTA_V, 0, data, 1);
-	// crSet->addConstraint(crCon1);
-
-	// crSet.print();
-
-	return crSet;
-}//====================================================
-
-void test_createBCR4BPRNodeset(SysData_bc4bp *semData){
-	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
-
-	bcSet = new Arcset_bc4bp(semData);
-	SimEngine sim;
-	sim.runSim_manyNodes(ic2, 0, 40, 5, bcSet);
-
-	// Add a constraint
-	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
-	// double data[] = {5,5,5,NAN,NAN,NAN,NAN};
-	double data[] = {1.5};
-	Constraint bcCon1(Constraint_tp::MAX_DELTA_V, 0, data, 1);
-	bcSet->addConstraint(bcCon1);
-
-	int nodes[] = {2,3};
-	std::vector<int> velCon(nodes, nodes+2);
-	bcSet->allowDV_at(velCon);
-
-	// bcSet->print();
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 	MultShootEngine corrector;
-
-	SysData_cr3bp emData("earth", "moon");
-	Arcset_cr3bp crSet = test_createCR3BPNodeset(&emData);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 	corrector.multShoot(&crSet, NULL);
 
@@ -206,22 +157,36 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
-	MultShootEngine corrector;
-	
 	SysData_bc4bp semData("sun", "earth", "moon");
-	test_createBCR4BPRNodeset(&semData);
-	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
-	corrector.multShoot(bcSet, NULL);
+	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
-	bcSet->saveToMat("data/bcSet.mat");
+	Arcset_bc4bp bcSet(&semData);
+	SimEngine sim;
+	sim.runSim_manyNodes(ic2, 0, 40, 5, &bcSet);
+
+	// Add a constraint
+	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
+	// double data[] = {5,5,5,NAN,NAN,NAN,NAN};
+	double data[] = {1.5};
+	Constraint bcCon1(Constraint_tp::MAX_DELTA_V, 0, data, 1);
+	bcSet.addConstraint(bcCon1);
+
+	int nodes[] = {2,3};
+	std::vector<int> velCon(nodes, nodes+2);
+	bcSet.allowDV_at(velCon);
+
+	MultShootEngine corrector;
+	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+	corrector.multShoot(&bcSet, nullptr);
+
+	bcSet.saveToMat("data/bcSet.mat");
 	Arcset_bc4bp bcTemp(&semData);
 	bcTemp.readFromMat("data/bcSet.mat");
 
-	BOOST_CHECK(bcSet->getStateByIx(-1) == bcTemp.getStateByIx(-1));
-	BOOST_CHECK(bcSet->getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
-	BOOST_CHECK(bcSet->getEpochByIx(-1) == bcTemp.getEpochByIx(-1));
+	BOOST_CHECK(bcSet.getStateByIx(-1) == bcTemp.getStateByIx(-1));
+	BOOST_CHECK(bcSet.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
+	BOOST_CHECK(bcSet.getEpochByIx(-1) == bcTemp.getEpochByIx(-1));
 
-	delete bcSet;
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
@@ -235,7 +200,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
 	sim.runSim_manyNodes(ic, 2.77, 5, &ltSet);
 
-	corrector.multShoot(&ltSet, NULL);
+	corrector.multShoot(&ltSet, nullptr);
 
 	ltSet.saveToMat("data/ltSet.mat");
 	Arcset_cr3bp_lt temp(&ltData);
@@ -257,6 +222,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 
 	// Query the acceleration so it is computed
 	std::vector<double> a = crTraj.getStateDerivByIx(-1);
+	crTraj.getJacobiByIx(-1);
 	crTraj.saveToMat("data/crTraj.mat");
 
 	Arcset_cr3bp crTemp(&emData);
@@ -308,6 +274,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 
 	// Query the acceleration so it is computed
 	std::vector<double> a = ltTraj.getStateDerivByIx(-1);
+	ltTraj.getJacobiByIx(-1);
 	ltTraj.saveToMat("data/lowthrustTraj.mat");
 
 	Arcset_cr3bp_lt ltTemp(&emData);

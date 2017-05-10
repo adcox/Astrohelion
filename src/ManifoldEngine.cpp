@@ -59,6 +59,10 @@ ManifoldEngine::ManifoldEngine(const ManifoldEngine &m){
 //      Set and Get Functions
 //-----------------------------------------------------
 
+double ManifoldEngine::getStepOffDist() const{ return stepOffDist; }
+
+void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
+
 //-----------------------------------------------------
 //      Manifold Generation Algorithms
 //-----------------------------------------------------
@@ -104,7 +108,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp man
 	allManifolds.reserve(numMans*propPerMan);
 
     // Get a bunch of points to use as starting guesses for the manifolds
-    if(numMans > pPerOrbit->getNumNodes()){
+    if(numMans > pPerOrbit->getNumSegs()){
     	if(verbosity >= Verbosity_tp::SOME_MSG)
         	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic: Requested too many manifolds... will return fewer\n");
         numMans = pPerOrbit->getNumNodes();
@@ -220,7 +224,9 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
     	sim.setRevTime(std::abs(eigVals[s]) < 1);
 
     	// Scale the vector and make sure it is pointing in the +x direction
-    	Eigen::VectorXd baseDirection = newVec/mag * astrohelion::sign(newVec(0));
+        Eigen::VectorXd baseDirection = newVec/mag;
+        if(astrohelion::sign(newVec(0)) != 0)
+    	   baseDirection *= astrohelion::sign(newVec(0));
 
     	// Determine which directions the user has specified with manifoldType
     	std::vector<int> dirs;
@@ -234,9 +240,9 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
     		if(std::abs(to_underlying(manifoldType)) == 3){ dirs.push_back(-1); }
     	}
 
-    	for(unsigned int d = 0; d < dirs.size(); d++){
+    	for(unsigned int di = 0; di < dirs.size(); di++){
     		// Flip to (+) or (-) direction according to manifoldType
-    		Eigen::VectorXd direction = d*baseDirection;
+    		Eigen::VectorXd direction = dirs[di]*baseDirection;
 
     		// Step away from the point on the arc in the direction of the eigenvector
     		Eigen::VectorXd ic = q0 + stepOffDist/pSys->getCharL() * direction;

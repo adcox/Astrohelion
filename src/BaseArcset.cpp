@@ -323,14 +323,18 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	int coreSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	MatrixXRd linkSTM = MatrixXRd::Identity(coreSize, coreSize);
 	unsigned int linkCtrlLaw = ControlLaw::NO_CTRL;
+	std::vector<double> linkSegStates, linkSegTimes;
+	double linkTOF = tof;
 
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
 	// TOF and linkFrom_ID
 	if(tof == 0){
-		tof = linkFrom_seg.getTOF();						// Update tof
+		linkTOF = linkFrom_seg.getTOF();						// Update tof
 		linkSTM = linkFrom_seg.getSTM();					// Save STM
 		linkCtrlLaw = linkFrom_seg.getCtrlLaw();			// Save control law
+		linkSegStates = linkFrom_seg.getStateVector();
+		linkSegTimes = linkFrom_seg.getTimeVector();
 
 		// Get the next node down the line
 		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
@@ -352,7 +356,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 			// Leave linkFrom_seg the same; this is used later to determine the direction of time
 			// make linkFrom_isOrigin = true if the TOF is negative, false if TOF is positive
 			// to avoid parallel structure problems
-			linkFrom_isOrigin = tof < 0;
+			linkFrom_isOrigin = linkTOF < 0;
 		}
 	}
 
@@ -380,11 +384,32 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 		}
 	}
 
+	if(tof != 0){
+		// Put minimum amount of data in the linkSeg state and time vectors
+		linkSegTimes.push_back(getEpoch(origin));
+		linkSegTimes.push_back(getEpoch(terminus));
+
+		std::vector<double> q0 = getState(origin);
+		std::vector<double> qf = getState(terminus);
+		std::vector<double> extra(pSysData->getDynamicsModel()->getExtraStateSize(), 0);
+
+		// Append state, STM, and extra states for the origin and terimal nodes that the link segment connects to
+		linkSegStates.insert(linkSegStates.end(), q0.begin(), q0.end());
+		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
+		linkSegStates.insert(linkSegStates.end(), extra.begin(), extra.end());
+
+		linkSegStates.insert(linkSegStates.end(), qf.begin(), qf.end());
+		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
+		linkSegStates.insert(linkSegStates.end(), extra.begin(), extra.end());
+	}
 	// print();
 	bInChronoOrder = false;
-	Segment linkSeg = Segment(origin, terminus, tof);
+	Segment linkSeg = Segment(origin, terminus, linkTOF);
 	linkSeg.setSTM(linkSTM);
 	linkSeg.setCtrlLaw(linkCtrlLaw);
+	linkSeg.setStateVector(linkSegStates);
+	linkSeg.setTimeVector(linkSegTimes);
+	
 	// linkSeg.print();
 	return addSeg(linkSeg);
 }//====================================================

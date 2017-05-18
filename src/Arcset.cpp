@@ -362,6 +362,10 @@ void Arcset::shiftAllTimes(double amount){
 	for(unsigned int i = 0; i < nodes.size(); i++){
 		nodes[i].setEpoch(nodes[i].getEpoch() + amount);
 	}
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		segs[s].shiftAllTimes(amount);
+	}
 }//====================================================
 
 //-----------------------------------------------------

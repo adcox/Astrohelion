@@ -110,6 +110,7 @@ public:
 	void setVelCon(const bool[3]);
 	void setVelCon(std::vector<bool>);
 	void setVelCon(bool, bool, bool);
+	void shiftAllTimes(double);
 	//\}
 
 	void storeTOF();

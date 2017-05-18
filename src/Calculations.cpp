@@ -601,9 +601,9 @@ std::vector<double> azEl2LocalTangent(double s, double az, double el){
 /**
  *  \ingroup 2bp
  *  \brief Compute the Keplarian elements at all steps/nodes
- *  of a 2-body trajectory or nodeset
+ *  of a 2-body trajectory or arcset
  * 
- *  \param pSet Pointer to a nodeset or trajectory
+ *  \param pSet Pointer to a arcset or trajectory
  */
 void r2bp_computeAllKepler(BaseArcset *pSet){
     if(pSet->getSysData()->getType() == SysData_tp::R2BP_SYS){
@@ -1026,14 +1026,14 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
 
 /**
  *  \ingroup cr3bp
- *  \brief Transition a nodeset from the EM system to the SE system
+ *  \brief Transition a arcset from the EM system to the SE system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
- *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the EM nodeset
+ *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the EM arcset
  *  should have node epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
- *  \param EMNodes a CR3BP Earth-Moon nodeset
+ *  \param EMNodes a CR3BP Earth-Moon arcset
  *  \param pSESys a Sun-Earth CR3BP system data object
  *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -1058,6 +1058,8 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
     std::vector<int> map_oldID_to_newID(EMNodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> state_SE;
     double epoch;
+    unsigned int core_dim = EMNodes.getSysData()->getDynamicsModel()->getCoreStateSize();
+    unsigned int full_dim = (core_dim + 1)*core_dim + EMNodes.getSysData()->getDynamicsModel()->getExtraStateSize();
 
     for(unsigned int n = 0; n < EMNodes.getNumNodes(); n++){
         epoch = EMNodes.getEpochByIx(n);
@@ -1070,8 +1072,29 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
     // Convert time units for segment TOFs and update IDs of origin and terminus nodes
     for(unsigned int s = 0; s < EMNodes.getNumSegs(); s++){
         Segment seg = EMNodes.getSegByIx(s);
-        seg.setTOF(seg.getTOF()*charTE/charTS);
-        seg.setSTM(MatrixXRd::Identity(6, 6));
+        seg.setSTM(MatrixXRd::Identity(core_dim, core_dim));
+
+        // Get a copy of the state and time vectors and modify them to the proper coordinates / dimensions
+        std::vector<double> segStates = seg.getStateVector();
+        std::vector<double> segTimes = seg.getTimeVector();
+
+        if(segTimes.size() != segStates.size()/full_dim)
+            throw Exception("cr3bp_EM2SE::Segment time and state vectors are not the expected sizes.");
+
+        for(unsigned int i = 0; i < segTimes.size(); i++){
+            std::vector<double> newState = cr3bp_EM2SE_state(seg.getStateByRow(i, full_dim), epoch, thetaE0, thetaM0,
+                gamma, charLE, charTE, charLS, charTS, pSESys->getMu())
+            ;
+            for(unsigned int j = 0; j < newState.size(); j++){
+                segStates[full_dim*i+j] = newState[j];
+            }
+
+            segTimes[i] *= charTE/charTS;
+        }
+
+        seg.setStateVector(segStates);
+        seg.setTimeVector(segTimes);
+        seg.storeTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1088,14 +1111,14 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
 
 /**
  *  \ingroup cr3bp
- *  \brief Transition a nodeset from the SE system to the EM system
+ *  \brief Transition a arcset from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
- *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the SE nodeset
+ *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the SE arcset
  *  should have node epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
- *  \param SENodes a CR3BP Sun-Earth nodeset
+ *  \param SENodes a CR3BP Sun-Earth arcset
  *  \param pEMSys an Earth-Moon CR3BP system data object
  *  \param thetaE0 the angle (radians) between the Sun-Earth line and the 
  *  inertial x-axis at time t = 0.
@@ -1118,6 +1141,8 @@ Arcset_cr3bp cr3bp_SE2EM(Arcset_cr3bp SENodes, const SysData_cr3bp *pEMSys, doub
     double charLS = SENodes.getSysData()->getCharL();    // characteristic length in SE system
 
     const SysData_cr3bp *pSESys = static_cast<const SysData_cr3bp*>(SENodes.getSysData());
+    unsigned int core_dim = pSESys->getDynamicsModel()->getCoreStateSize();
+    unsigned int full_dim = (core_dim + 1)*core_dim + pSESys->getDynamicsModel()->getExtraStateSize();
 
     std::vector<int> map_oldID_to_newID(SENodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> state_EM;
@@ -1135,8 +1160,29 @@ Arcset_cr3bp cr3bp_SE2EM(Arcset_cr3bp SENodes, const SysData_cr3bp *pEMSys, doub
     // Convert time units for segment TOFs and update IDs of origin and terminus nodes
     for(unsigned int s = 0; s < SENodes.getNumSegs(); s++){
         Segment seg = SENodes.getSegByIx(s);
-        seg.setTOF(seg.getTOF()*charTS/charTE);
-        seg.setSTM(MatrixXRd::Identity(6, 6));
+        seg.setSTM(MatrixXRd::Identity(core_dim, core_dim));
+
+        // Get a copy of the state and time vectors and modify them to the proper coordinates / dimensions
+        std::vector<double> segStates = seg.getStateVector();
+        std::vector<double> segTimes = seg.getTimeVector();
+
+        if(segTimes.size() != segStates.size()/full_dim)
+            throw Exception("cr3bp_SE2EM::Segment time and state vectors are not the expected sizes.");
+
+        for(unsigned int i = 0; i < segTimes.size(); i++){
+            std::vector<double> newState = cr3bp_SE2EM_state(seg.getStateByRow(i, full_dim), epoch, thetaE0, thetaM0,
+                gamma, charLE, charTE, charLS, charTS, pSESys->getMu())
+            ;
+            for(unsigned int j = 0; j < newState.size(); j++){
+                segStates[full_dim*i+j] = newState[j];
+            }
+
+            segTimes[i] *= charTS/charTE;
+        }
+
+        seg.setStateVector(segStates);
+        seg.setTimeVector(segTimes);
+        seg.storeTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1293,7 +1339,7 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  \ingroup cr3bp
  *  \brief Transform CR3BP rotating coordinates to inertial, dimensional coordinates
  * 
- *  \param nodes CR3BP nodeset
+ *  \param arcset CR3BP arcset
  *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  \param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
@@ -1301,30 +1347,50 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
  *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
  * 
- *  \return A nodeset centered around the specified index in inertial, dimensional coordinates
+ *  \return A arcset centered around the specified index in inertial, dimensional coordinates
  */
-Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp nodes, double epoch0, int centerIx){
-
+Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp arcset, double epoch0, int centerIx){
     if(centerIx < 0 || centerIx > 2){
         throw Exception("Calculations::cr3bp_rot2inert: Invalid center index");
     }
 
-    const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(nodes.getSysData());
+    const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(arcset.getSysData());
+    unsigned int core_dim = pSys->getDynamicsModel()->getCoreStateSize();
+    unsigned int full_dim = core_dim + core_dim*core_dim + pSys->getDynamicsModel()->getExtraStateSize();
 
     Arcset_cr3bp inertNodes(pSys);
-    std::vector<int> map_oldID_to_newID(nodes.getNextNodeID(), Linkable::INVALID_ID);
+    std::vector<int> map_oldID_to_newID(arcset.getNextNodeID(), Linkable::INVALID_ID);
 
-    for(unsigned int i = 0; i < nodes.getNumNodes(); i++){
-        std::vector<double> stateInert = cr3bp_rot2inert_state(nodes.getStateByIx(i), pSys, nodes.getEpochByIx(i), epoch0, centerIx);
+    for(unsigned int i = 0; i < arcset.getNumNodes(); i++){
+        std::vector<double> stateInert = cr3bp_rot2inert_state(arcset.getStateByIx(i), pSys, arcset.getEpochByIx(i), epoch0, centerIx);
         
         // Save the new ID and add the node, making sure to update Epoch as well!
-        map_oldID_to_newID[nodes.getNodeByIx(i).getID()] = inertNodes.addNode(Node(stateInert,
-            nodes.getEpochByIx(i)*pSys->getCharT() + epoch0));
+        Node newNode(stateInert, arcset.getEpochByIx(i)*pSys->getCharT() + epoch0);
+        map_oldID_to_newID[arcset.getNodeByIx(i).getID()] = inertNodes.addNode(newNode);
     }
 
-    for(unsigned int s = 0; s < nodes.getNumSegs(); s++){
-        Segment seg = nodes.getSegByIx(s);
-        seg.setTOF(seg.getTOF()*pSys->getCharT());
+    for(unsigned int s = 0; s < arcset.getNumSegs(); s++){
+        Segment seg = arcset.getSegByIx(s);
+
+        // Get a copy of the state and time vectors and modify them to the proper coordinates / dimensions
+        std::vector<double> segStates = seg.getStateVector();
+        std::vector<double> segTimes = seg.getTimeVector();
+
+        if(segTimes.size() != segStates.size()/full_dim)
+            throw Exception("cr3bp_rot2inert::Segment time and state vectors are not the expected sizes.");
+
+        for(unsigned int i = 0; i < segTimes.size(); i++){
+            std::vector<double> inertState = cr3bp_rot2inert_state(seg.getStateByRow(i, full_dim), pSys, segTimes[i], epoch0, centerIx);
+            for(unsigned int j = 0; j < inertState.size(); j++){
+                segStates[full_dim*i+j] = inertState[j];
+            }
+
+            segTimes[i] *= pSys->getCharT();
+        }
+
+        seg.setStateVector(segStates);
+        seg.setTimeVector(segTimes);
+        seg.storeTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1372,7 +1438,7 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
     ConstSpiceChar *targ = str_targ.c_str();
     SpiceDouble lt, p2State[6];
 
-    std::vector<double> stateInert;
+    std::vector<double> stateInert(6,0);
     double r_p2[3], v_p2[3], angMom_p2[3], mag_angMom_p2, inst_charL, inst_charT;
     double unit_x[3], unit_y[3], unit_z[3];
 
@@ -1431,13 +1497,12 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
     // Transform rotating state into inertial state: project position onto
     // inertial unit vectors; for velocity, make sure to include cross product
     // of angular velocity and position (BKE)
-    stateInert.clear();
-    stateInert.push_back( unit_x[0]*stateRot[0] + unit_y[0]*stateRot[1] + unit_z[0]*stateRot[2]);   // Inertial X
-    stateInert.push_back( unit_x[1]*stateRot[0] + unit_y[1]*stateRot[1] + unit_z[1]*stateRot[2]);   // Inertial Y
-    stateInert.push_back( unit_x[2]*stateRot[0] + unit_y[2]*stateRot[1] + unit_z[2]*stateRot[2]);   // Inertial Z
-    stateInert.push_back( unit_x[0]*stateRot[3] + unit_y[0]*stateRot[4] + unit_z[0]*stateRot[5] + pow(inst_charL, -2)*(angMom_p2[1]*stateInert[2] - angMom_p2[2]*stateInert[1]));   // Inertial VX
-    stateInert.push_back( unit_x[1]*stateRot[3] + unit_y[1]*stateRot[4] + unit_z[1]*stateRot[5] - pow(inst_charL, -2)*(angMom_p2[0]*stateInert[2] - angMom_p2[2]*stateInert[0]));   // Inertial VY
-    stateInert.push_back( unit_x[2]*stateRot[3] + unit_y[2]*stateRot[4] + unit_z[2]*stateRot[5] + pow(inst_charL, -2)*(angMom_p2[0]*stateInert[1] - angMom_p2[1]*stateInert[0]));   // Inertial VZ
+    stateInert[0] = ( unit_x[0]*stateRot[0] + unit_y[0]*stateRot[1] + unit_z[0]*stateRot[2]);   // Inertial X
+    stateInert[1] = ( unit_x[1]*stateRot[0] + unit_y[1]*stateRot[1] + unit_z[1]*stateRot[2]);   // Inertial Y
+    stateInert[2] = ( unit_x[2]*stateRot[0] + unit_y[2]*stateRot[1] + unit_z[2]*stateRot[2]);   // Inertial Z
+    stateInert[3] = ( unit_x[0]*stateRot[3] + unit_y[0]*stateRot[4] + unit_z[0]*stateRot[5] + pow(inst_charL, -2)*(angMom_p2[1]*stateInert[2] - angMom_p2[2]*stateInert[1]));   // Inertial VX
+    stateInert[4] = ( unit_x[1]*stateRot[3] + unit_y[1]*stateRot[4] + unit_z[1]*stateRot[5] - pow(inst_charL, -2)*(angMom_p2[0]*stateInert[2] - angMom_p2[2]*stateInert[0]));   // Inertial VY
+    stateInert[5] = ( unit_x[2]*stateRot[3] + unit_y[2]*stateRot[4] + unit_z[2]*stateRot[5] + pow(inst_charL, -2)*(angMom_p2[0]*stateInert[1] - angMom_p2[1]*stateInert[0]));   // Inertial VZ
 
     // Nondimensionalize using instantaneous characteristic quantities
     // for(unsigned int j = 0; j < 6; j++){
@@ -1482,13 +1547,13 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
  *  \ingroup bc4bp
  *  \brief Convert a Sun-Earth CR3BP Arcset to a Sun-Earth-Moon BCR4BPR Arcset.
  *  
- *  \param crNodes a CR3BP Sun-Earth nodeset
+ *  \param crNodes a CR3BP Sun-Earth arcset
  *  \param pBCSys a BCR4BPR Sun-Earth-Moon system data object; contains information about system
  *  scaling and orientation at time t = 0
  *  \param nodeID ID of a node in the set for which the epoch is known
  *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
- *  \return a BCR4BPR nodeset
+ *  \return a BCR4BPR arcset
  *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
  *  not the Sun-Earth-Moon system.
  */
@@ -1508,6 +1573,8 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
     double charT2 = crNodes.getSysData()->getCharT();
     double charL3 = pBCSys->getCharL();
     double charT3 = pBCSys->getCharT();
+    unsigned int core_dim = crNodes.getSysData()->getDynamicsModel()->getCoreStateSize();
+    unsigned int full_dim = (core_dim + 1)*core_dim + crNodes.getSysData()->getDynamicsModel()->getExtraStateSize();
 
     crNodes.updateEpochs(nodeID, t0*charT3/charT2);
 
@@ -1519,7 +1586,7 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
     for(unsigned int n = 0; n < crNodes.getNumNodes(); n++){
         bcNodeState.clear();
         crNodeState = crNodes.getStateByIx(n);
-        for(int r = 0; r < static_cast<int>(crNodeState.size()); r++){
+        for(unsigned int r = 0; r < core_dim; r++){
             if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
                 bcNodeState.push_back(crNodeState[r]*charL2/charL3 - (1.0/pBCSys->getK() - pBCSys->getMu()));
             else if(r < 3)   // Convert position
@@ -1535,7 +1602,32 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
 
     for(unsigned int s = 0; s < crNodes.getNumSegs(); s++){
         Segment seg = crNodes.getSegByIx(s);
-        seg.setTOF(seg.getTOF()*charT2/charT3);
+
+        // Get a copy of the state and time vectors and modify them to the proper coordinates / dimensions
+        std::vector<double> segStates = seg.getStateVector();
+        std::vector<double> segTimes = seg.getTimeVector();
+
+        if(segTimes.size() != segStates.size()/full_dim)
+            throw Exception("cr3bp_rot2inert::Segment time and state vectors are not the expected sizes.");
+
+        for(unsigned int i = 0; i < segTimes.size(); i++){
+            std::vector<double> crSegState = seg.getStateByRow(i, full_dim);
+
+            for(unsigned int r = 0; r < core_dim; r++){
+                if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
+                    segStates[full_dim*i+r] = (crSegState[r]*charL2/charL3 - (1.0/pBCSys->getK() - pBCSys->getMu()));
+                else if(r < 3)   // Convert position
+                    segStates[full_dim*i+r] = (crSegState[r]*charL2/charL3);
+                else  // Convert velocity
+                    segStates[full_dim*i+r] = (crSegState[r]*(charL2/charL3)*(charT3/charT2));
+            }
+
+            segTimes[i] *= charT2/charT3;
+        }
+
+        seg.setStateVector(segStates);
+        seg.setTimeVector(segTimes);
+        seg.storeTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1552,13 +1644,13 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
 
 /**
  *  \ingroup bc4bp
- *  \brief Transform a BCR4BPR Sun-Earth-Moon nodeset into a CR3BP Sun-Earth nodeset
+ *  \brief Transform a BCR4BPR Sun-Earth-Moon arcset into a CR3BP Sun-Earth arcset
  *
- *  \param bcNodes a BCR4BPR Sun-Earth-Moon nodeset
+ *  \param bcNodes a BCR4BPR Sun-Earth-Moon arcset
  *  \param pCRSys a CR3BP Sun-Earth system data object; contains information about system
  *  scaling
  *
- *  \return a CR3BP nodeset object
+ *  \return a CR3BP arcset object
  *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
  *  not in the Sun-Earth-Moon system.
  */
@@ -1574,6 +1666,9 @@ Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
 
     const SysData_bc4bp *pBCSys = static_cast<const SysData_bc4bp *>(bcNodes.getSysData());
 
+    unsigned int core_dim = pBCSys->getDynamicsModel()->getCoreStateSize();
+    unsigned int full_dim = (core_dim + 1)*core_dim + pBCSys->getDynamicsModel()->getExtraStateSize();
+
     // Create a BCR4BPR Trajectory
     Arcset_cr3bp crNodes(pCRSys);
 
@@ -1588,7 +1683,7 @@ Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
         bcState = bcNodes.getStateByIx(n);
         crNodeState.clear();
 
-        for(int r = 0; r < static_cast<int>(bcState.size()); r++){
+        for(unsigned int r = 0; r < core_dim; r++){
             if(r == 0)  // Shift origin to P2-P3 barycenter
                 crNodeState.push_back((bcState[r] + 1.0/pBCSys->getK() - pBCSys->getMu())*charL3/charL2);
             else if(r < 3)   // Convert position
@@ -1608,7 +1703,33 @@ Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
 
     for(unsigned int s = 0; s < bcNodes.getNumSegs(); s++){
         Segment seg = bcNodes.getSegByIx(s);
-        seg.setTOF(seg.getTOF()*charT3/charT2);
+
+
+        // Get a copy of the state and time vectors and modify them to the proper coordinates / dimensions
+        std::vector<double> segStates = seg.getStateVector();
+        std::vector<double> segTimes = seg.getTimeVector();
+
+        if(segTimes.size() != segStates.size()/full_dim)
+            throw Exception("cr3bp_rot2inert::Segment time and state vectors are not the expected sizes.");
+
+        for(unsigned int i = 0; i < segTimes.size(); i++){
+            std::vector<double> bcSegState = seg.getStateByRow(i, full_dim);
+
+            for(int r = 0; r < 6; r++){
+                if(r == 0)  // Shift origin to P2-P3 barycenter
+                    segStates[full_dim*i+r] = ((bcSegState[r] + 1.0/pBCSys->getK() - pBCSys->getMu())*charL3/charL2);
+                else if(r < 3)   // Convert position
+                    segStates[full_dim*i+r] = (bcSegState[r]*charL3/charL2);
+                else if(r < 6)  // Convert velocity
+                    segStates[full_dim*i+r] = (bcSegState[r]*(charL3/charL2)*(charT2/charT3));
+            }
+
+            segTimes[i] *= charT3/charT2;
+        }
+
+        seg.setStateVector(segStates);
+        seg.setTimeVector(segTimes);
+        seg.storeTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)

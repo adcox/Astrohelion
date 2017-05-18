@@ -428,6 +428,18 @@ void Segment::setVelCon(bool xCon, bool yCon, bool zCon){
 	flags[1] = yCon;
 	flags[2] = zCon;
 }//====================================================
+
+/**
+ *  \brief Shift all times in the time vector by the 
+ *  specified amount
+ * 
+ *  \param deltaT amount of time to shift by
+ */
+void Segment::shiftAllTimes(double deltaT){
+	for(unsigned int i = 0; i < times.size(); i++)
+		times[i] += deltaT;
+}//====================================================
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
@@ -468,6 +480,13 @@ void Segment::print() const{
 	printf("Segment | id = %d\n", ID);
 	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());
 	printf("\tTOF = %.4f\n", tof);
+	printf("\tTime Vector: %zu x 1\n", times.size());
+	if(times.size() > 0){
+		printf("\tState Vector: %zu x %d (remainder %f)\n", times.size(), static_cast<int>(floor(states.size()/times.size())),
+			states.size() - times.size()*floor(states.size()/times.size()));
+	}else{
+		printf("\tState Vector: %zu x 0\n", states.size());
+	}
 }//====================================================
 
 

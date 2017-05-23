@@ -62,8 +62,8 @@ enum class FamSort_tp : int{
 	SORT_VX 	= 3,	//!< Sort by the x velocity component in the IC
 	SORT_VY  	= 4,	//!< Sort by the y velocity component in the IC
 	SORT_VZ 	= 5,	//!< Sort by the z velocity component in the IC
-	SORT_JC 	= 7,	//!< Sort by Jacobi Constant
 	SORT_TOF 	= 6,	//!< Sort by Time-Of-Flight
+	SORT_JC 	= 7,	//!< Sort by Jacobi Constant
 	SORT_NONE 	= 999	//!< Do not adjust sorting; sortMembers() will do nothing
 };
 		

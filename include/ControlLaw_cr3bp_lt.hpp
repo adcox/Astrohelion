@@ -43,24 +43,65 @@ class SysData_cr3bp_lt;
  */
 class ControlLaw_cr3bp_lt : public ControlLaw{
 public:
-	ControlLaw_cr3bp_lt();
+	/**
+	 *  \name Constructors
+	 *  \{
+	 */
+	ControlLaw_cr3bp_lt(unsigned int id = NO_CTRL, std::vector<double> params = {});
+	ControlLaw_cr3bp_lt(unsigned int, double, double);
 
-	void getLaw(double t, const double *s, const SysData *sysData, unsigned int lawID, double *law, unsigned int len) const;
-	void getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const;
+	/**
+	 *  \name Set and Get Functions
+	 *  \{
+	 */
+	double getThrust() const;
+	double getIsp() const;
 
+	void setThrust(double);
+	void setIsp(double);
+	//\}
+
+	/**
+	 *  \name Dynamics Functions
+	 *  \{
+	 */
+	void getLaw(double t, const double *s, const SysData *sysData, double *law, unsigned int len) const override;
+	void getPartials_State(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
+	//\}
+
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	std::string lawIDToString(unsigned int) const;
+	void saveToMat(mat_t*) const;
+	void readFromMat(mat_t*);
+	//\}
 
 	/**
 	 *  \brief Identify the control law
 	 */
 	enum Law_tp : unsigned int{
-		CONST_C_2D_LEFT = 1,		//!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, thrust left w.r.t. velocity direction
-		CONST_C_2D_RIGHT = 2,		//!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, thrust right w.r.t. velocity direction
-		PRO_VEL = 3,				//!< Thrust along velocity vector (maximum energy increase)
-		ANTI_VEL = 4				//!< Thrust along anti-velocity vector (maximum energy decrease)
+		CONST_C_2D_LEFT = 1,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control,
+									 * thrust left w.r.t. velocity direction. Thrust magnitude is constant.
+									 * - getLaw() returns 3 thrust directions
+									 * - getPartials_State() returns 21 derivatives
+									 */
+		CONST_C_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, 
+									 * thrust right w.r.t. velocity direction. Thrust magnitude is constant.
+									 * - getLaw() returns 3 thrust directions
+									 * - getPartials_State() returns 21 derivatives
+									 */
+		PRO_VEL = 3,				/*!< Thrust along velocity vector (maximum energy increase)
+									 * Not yet implemented
+									 */
+		ANTI_VEL = 4				/*!< Thrust along anti-velocity vector (maximum energy decrease)
+									 * Not yet implemented
+									 */
 	};
 protected:
 
+	void init() override;
 	void getLaw_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getLaw_Along_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 

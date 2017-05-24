@@ -33,16 +33,68 @@
 
 #include "Exceptions.hpp"
 #include "SysData_cr3bp_lt.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
+//------------------------------------------------------------------------------------------------------
+//      Constructors
+//------------------------------------------------------------------------------------------------------
+
 /**
  *  \brief Construct a default CR3BP low-thrust control law object
+ *  
+ *  \param id Control Law ID
+ *  \param params a vector of parameters used by the control law. These parameters 
+ *  must be thrust (in Newtons) and Specific Impulse (in seconds).
  */
-ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(){}
+ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> params) : ControlLaw(id, params){}
+
+/**
+ *  \brief [brief description]
+ *  \details [long description]
+ * 
+ *  \param id Control law ID
+ *  \param T Thrust value, Newtons
+ *	\param I Specific Impulse (Isp), seconds
+ */
+ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double T, double Isp){
+	lawID = id;
+	params.assign(2,0);
+	params[0] = T;
+	params[1] = Isp;
+}//====================================================
 
 //------------------------------------------------------------------------------------------------------
-//      Switchboard Functions
+//      Set and Get Functions
+//------------------------------------------------------------------------------------------------------
+
+/**
+ *	\brief Get the spacecraft thrust in Newtons
+ *	\return the thrust in Newtons
+ */
+double ControlLaw_cr3bp_lt::getThrust() const { return params[0]; }
+
+/**
+ *	\brief Get the specific impulse for the spacecraft
+ *	\return the specific impulse, seconds
+ */
+double ControlLaw_cr3bp_lt::getIsp() const { return params[1]; }
+
+/**
+ *	\brief Set the spacecraft thrust
+ *	\param f the thrust, in Newtons
+ */
+void ControlLaw_cr3bp_lt::setThrust(double f){ params[0] = f;}
+
+/**
+ *	\brief Set the specific impulse for the spacecraft
+ *	\param Isp the specific impulse, seconds
+ */
+void ControlLaw_cr3bp_lt::setIsp(double Isp){ params[1] = Isp; }
+
+//------------------------------------------------------------------------------------------------------
+//      Dynamics Functions
 //------------------------------------------------------------------------------------------------------
 
 /**
@@ -55,11 +107,11 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(){}
  *  \param pSysData system data object
  *  \param lawID identifies the control law type
  *  \param law empty, initialized array to store the control law output in
- *  \param len number of elements in the <tt>law</tt> array
+ *  \param len the number of elements in the <tt>law</tt> array
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysData, unsigned int lawID,
+void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysData,
 	double *law, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSysData);
@@ -78,7 +130,7 @@ void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysD
 			getLaw_Along_Vel(t, s, pSysData_lt, law, len, -1);
 			break;
 		default:
-			ControlLaw::getLaw(t, s, pSysData, lawID, law, len);
+			ControlLaw::getLaw(t, s, pSysData, law, len);
 	}
 }//====================================================
 
@@ -96,7 +148,9 @@ void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysD
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const{
+void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const SysData *pSys, 
+	double *partials, unsigned int len) const{
+
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
 	switch(lawID){
 		case Law_tp::CONST_C_2D_LEFT:
@@ -112,7 +166,7 @@ void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const Sys
 			// getLaw_Anti_Vel(t, s, pSysData, law, len);
 			// break;
 		default:
-			ControlLaw::getPartials_State(t, s, pSys, lawID, partials, len);
+			ControlLaw::getPartials_State(t, s, pSys, partials, len);
 	}
 	(void) t;
 	(void) s;
@@ -211,7 +265,9 @@ void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s,
 	// row 3 = partials of a_z w.r.t. states
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	double f = pSys->getThrust();
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
 
 	// Initialize all partials to zero
 	for(unsigned int i = 0; i < len; i++){ partials[i] = 0; }
@@ -232,6 +288,19 @@ void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s,
 //      Utility Functions
 //------------------------------------------------------------------------------------------------------
 
+void ControlLaw_cr3bp_lt::init(){
+	switch(lawID){
+		case Law_tp::CONST_C_2D_LEFT:
+		case Law_tp::CONST_C_2D_RIGHT:
+		case Law_tp::PRO_VEL:
+		case Law_tp::ANTI_VEL:
+			numStates = 3;	// three thrust-pointing directions
+			break;
+		default:
+			ControlLaw::init();
+	}
+}//====================================================
+
 /**
  *  \brief Retrieve a string that represents the law ID
  * 
@@ -248,5 +317,31 @@ std::string ControlLaw_cr3bp_lt::lawIDToString(unsigned int id) const{
 			return ControlLaw::lawIDToString(id);
 	}
 }//====================================================
+
+void ControlLaw_cr3bp_lt::saveToMat(mat_t *matFile) const{
+	size_t dims[2] = {1,1};
+
+	ControlLaw::saveToMat(matFile);
+
+	// Save thrust in dimensional units
+	double T = getThrust();
+	matvar_t *thrust_var = Mat_VarCreate("Thrust", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &T, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, thrust_var, "Thrust", MAT_COMPRESSION_NONE);
+
+	// Save Isp in dimensional units
+	double I = getIsp();
+	matvar_t *imp_var = Mat_VarCreate("Isp", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &I, MAT_F_DONT_COPY_DATA);
+	saveVar(matFile, imp_var, "Isp", MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
+ *	\brief Populate data fiels for this data object by reading the primaries'
+ *	names from a Mat file
+ *	\param matFile a pointer to the Mat file in question
+ */
+void ControlLaw_cr3bp_lt::readFromMat(mat_t *matFile){
+	setThrust(readDoubleFromMat(matFile, "Thrust"));
+	setIsp(readDoubleFromMat(matFile, "Isp"));
+}//===================================================
 
 }

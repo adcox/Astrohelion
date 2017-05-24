@@ -118,12 +118,6 @@ void SysData_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 const DynamicsModel* SysData_cr3bp::getDynamicsModel() const { return &model; }
 
 /**
- *  \brief Retrieve the object that serves up control law data for this system type
- *  \return the control law object
- */
-const ControlLaw* SysData_cr3bp::getControlLaw() const { return &control; }
-
-/**
  *	\brief Copy constructor
  *	\param d
  */

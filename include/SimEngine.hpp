@@ -196,7 +196,6 @@ class SimEngine : public Core, public Engine{
 		 */
 		int addEvent(Event);
 		double getAbsTol() const;
-		unsigned int getCtrlLaw() const;
 		std::vector<Event> getEvents() const;
 		int getNumSteps() const;
 		double getRelTol() const;
@@ -206,7 +205,6 @@ class SimEngine : public Core, public Engine{
 		bool usesVarStepSize() const;
 		
 		void setAbsTol(double);
-		void setCtrlLaw(unsigned int);
 		void setFixStepInteg(Integ_tp);
 		void setMakeDefaultEvents(bool);
 		void setMaxCompTime(int);
@@ -222,18 +220,18 @@ class SimEngine : public Core, public Engine{
 		 *  \name Simulation Methods
 		 *  \{
 		 */
-		void runSim(const double*, double, Arcset*);
-		void runSim(std::vector<double>, double, Arcset*);
-		void runSim(const double*, double, double, Arcset*);
-		void runSim(std::vector<double>, double, double, Arcset*);
-		void runSim(const double*, MatrixXRd, double, double, Arcset*);
-		void runSim(std::vector<double>, MatrixXRd, double, double, Arcset*);
-		void runSim(const double *ic, MatrixXRd, std::vector<double>, Arcset*);
+		void runSim(const double*, double, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(std::vector<double>, double, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(const double*, double, double, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(std::vector<double>, double, double, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(const double*, MatrixXRd, double, double, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(std::vector<double>, MatrixXRd, double, double, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(const double *ic, MatrixXRd, std::vector<double>, Arcset*, ControlLaw *pLaw = nullptr);
 
-		void runSim_manyNodes(const double*, double, int, Arcset*);
-		void runSim_manyNodes(std::vector<double>, double, int, Arcset*);
-		void runSim_manyNodes(const double*, double, double, int, Arcset*);
-		void runSim_manyNodes(std::vector<double>, double, double, int, Arcset*);
+		void runSim_manyNodes(const double*, double, int, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim_manyNodes(std::vector<double>, double, int, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim_manyNodes(const double*, double, double, int, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim_manyNodes(std::vector<double>, double, double, int, Arcset*, ControlLaw *pLaw = nullptr);
 		//\}
 		
 		// Utility Functions
@@ -287,9 +285,6 @@ class SimEngine : public Core, public Engine{
 		
 		/** Integrator to use for fixed step-size propagations; Default is MSADAMS */
 		Integ_tp fixStep_integ = Integ_tp::MSADAMS;
-
-		/** Control law ID; Default is 0, or NO_CTRL*/
-		unsigned int ctrlLawID = ControlLaw::NO_CTRL;
 
 		void cleanEngine();
 		void copyMe(const SimEngine&);

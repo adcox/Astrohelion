@@ -15,14 +15,14 @@ int main(void){
 	SysData_cr3bp sys("earth", "moon");
 	SimEngine sim;
 	Arcset_cr3bp traj(&sys);
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT);
 	sim.runSim(ic, tof, &traj);
 	traj.saveToMat("data/circleOrb.mat");
 
-	double mass = 14;		// kg
-	double thrust = 12e-3;	// N
-	double Isp = 1500;		// sec
-	SysData_cr3bp_lt lowThrustSys("earth", "moon", thrust, Isp, mass);
+	double mass = 100;		// kg
+	double thrust = 1;		// N
+	double Isp = 5000;		// sec
+	SysData_cr3bp_lt lowThrustSys("earth", "moon", mass);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT, thrust, Isp);
 
 	// SimEngine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, 1};
@@ -30,7 +30,7 @@ int main(void){
 	sim.setVerbosity(Verbosity_tp::ALL_MSG);
 	// sim.setSimpleInt(true);
 	try{
-		sim.runSim(ic_lt, 5*tof, &lowThrustTraj);
+		sim.runSim(ic_lt, 5*tof, &lowThrustTraj, &control);
 	}catch(DivergeException &e){}
 
 	lowThrustTraj.saveToMat("data/circleOrb_lowThrust.mat");

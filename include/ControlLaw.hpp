@@ -34,7 +34,9 @@
 
 #pragma once
 
+#include "matio.h"
 #include <string>
+#include <vector>
 
 #include "Core.hpp"
 
@@ -50,13 +52,62 @@ class SysData;
  */
 class ControlLaw : public Core{
 public:
-	ControlLaw();
+	/**
+	 *  \name Constructors
+	 *  \{
+	 */
+	ControlLaw(unsigned int id = NO_CTRL, std::vector<double> params = {});
+	//\}
 
-	virtual void getLaw(double t, const double *s, const SysData *pSys, unsigned int lawID, double *law, unsigned int len) const;
-	virtual void getPartials_State(double t, const double *s, const SysData *pSys, unsigned int lawID, double *partials, unsigned int len) const;
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
+	ControlLaw& operator =(const ControlLaw&);
+	friend bool operator ==(const ControlLaw&, const ControlLaw&);
+	friend bool operator !=(const ControlLaw&, const ControlLaw&);
+	//\}
+
+	/**
+	 *  \name Set and Get Functions
+	 *  \{
+	 */
+	unsigned int getLawID() const;
+	unsigned int getNumStates() const;
+	std::vector<double> getParams() const;
+	const std::vector<double>& getParamsRef_const() const;
+
+	void setLawID(unsigned int);
+	void setParams(double*, unsigned int);
+	void setParams(std::vector<double>);
+	//\}
+
+	/**
+	 *  \name Dynamics Functions
+	 *  \{
+	 */
+	virtual void getLaw(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const;
+	virtual void getPartials_State(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	virtual std::string lawIDToString(unsigned int) const;
+	//\}
 
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
+	virtual void saveToMat(mat_t*) const {};
+	virtual void readFromMat(mat_t*) {};
+
+	//\}
 	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented
+protected:
+	virtual void init();
+	void copyMe(const ControlLaw&);
+
+	unsigned int lawID = NO_CTRL;		//!< Value identifying the specific control forumalation to apply
+	unsigned int numStates = 0;			//!< Number of control states
+
+	std::vector<double> params {};		//!< Parameters associated with the control law
 };
 
 }// End of astrohelion namespace

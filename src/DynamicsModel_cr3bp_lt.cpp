@@ -338,21 +338,25 @@ void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData *it) const{
  */
 int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], void *params){
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->sysData);
+    const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->pSysData);
+    const ControlLaw_cr3bp_lt *law = static_cast<const ControlLaw_cr3bp_lt *>(paramStruct->pCtrlLaw);
 
     double mu = sysData->getMu();           // nondimensional mass ratio
-    double f = sysData->getThrust();        // nondimensional thrust magnitude
-    double Isp = sysData->getIsp();         // specific impulse (sec)
     double charT = sysData->getCharT();     // characteristic time (sec)
     double charL = sysData->getCharL();     // characteristic length (km)
+
+    double T = law->getThrust();            // thrust magnitude (Newtons)
+    double Isp = law->getIsp();             // specific impulse (sec)
+
+    double f = (T/1000)*charT*charT/charL/sysData->getRefMass();    // nondimensional thrust
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     double thrust_dir[3];
-    const ControlLaw_cr3bp_lt* law = static_cast<const ControlLaw_cr3bp_lt *>(sysData->getControlLaw());
-    law->getLaw(t, s, sysData, paramStruct->ctrlLawID, thrust_dir, 3);
+    
+    law->getLaw(t, s, sysData, thrust_dir, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];
@@ -396,8 +400,8 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     A(4, 3) = -2;
 
     // Get partials of control law and add them to the linear relationship matrix, A
-    double law_partials[3*7];
-    law->getPartials_State(t, s, sysData, paramStruct->ctrlLawID, law_partials, 21);
+    double law_partials[21];
+    law->getPartials_State(t, s, sysData, law_partials, 21);
 
     for(unsigned int r = 0; r < 3; r++){
         for(unsigned int c = 0; c < 7; c++){
@@ -435,21 +439,25 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
  */
 int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[], void *params){
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->sysData);
+    const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->pSysData);
+    const ControlLaw_cr3bp_lt *law = static_cast<const ControlLaw_cr3bp_lt *>(paramStruct->pCtrlLaw);
 
     double mu = sysData->getMu();           // nondimensional mass ratio
-    double f = sysData->getThrust();        // nondimensional thrust magnitude
-    double Isp = sysData->getIsp();         // specific impulse (sec)
     double charT = sysData->getCharT();     // characteristic time (sec)
     double charL = sysData->getCharL();     // characteristic length (km)
+
+    double T = law->getThrust();            // thrust magnitude (Newtons)
+    double Isp = law->getIsp();             // specific impulse (sec)
+
+    double f = (T/1000)*charT*charT/charL/sysData->getRefMass();    // nondimensional thrust
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     double thrust_dir[3];
-    const ControlLaw_cr3bp_lt* law = static_cast<const ControlLaw_cr3bp_lt *>(sysData->getControlLaw());
-    law->getLaw(t, s, sysData, paramStruct->ctrlLawID, thrust_dir, 3);
+    
+    law->getLaw(t, s, sysData, thrust_dir, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];

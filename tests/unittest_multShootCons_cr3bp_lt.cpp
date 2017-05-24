@@ -49,14 +49,14 @@ bool stateDiffBelowTol(std::vector<double> data, std::vector<double> correct, do
 BOOST_AUTO_TEST_SUITE(CR3BP_LT_EarthMoon)
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law1){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, T, 2, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T, 2, &halfLyapNodeset, &law);
 
 	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
@@ -68,14 +68,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law1){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT);
-	sim.runSim_manyNodes(ic, T, 2, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T, 2, &halfLyapNodeset, &law);
 
 	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
@@ -114,14 +114,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 // }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset, &law);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);
@@ -141,14 +141,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_EQUAL_ARC){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset, &law);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(true);
@@ -168,14 +168,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_EQUAL_ARC){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_ENDSEG){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset, &law);
 	halfLyapNodeset.deleteNode(2);
 
 	MultShootEngine corrector;
@@ -195,14 +195,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_ENDSEG){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_ENDSEG_EQUAL_ARC){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T, 3, &halfLyapNodeset, &law);
 	halfLyapNodeset.deleteNode(2);
 
 	MultShootEngine corrector;
@@ -222,14 +222,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_ENDSEG_EQUAL_ARC){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE_RMSTATE){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, T/2.8, 3, &halfLyapNodeset);
+	sim.runSim_manyNodes(ic, T/2.8, 3, &halfLyapNodeset, &law);
 
 	MultShootEngine corrector;
 	corrector.setEqualArcTime(false);

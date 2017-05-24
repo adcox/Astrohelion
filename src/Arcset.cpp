@@ -228,14 +228,13 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 	SimEngine engine;
 	engine.setRevTime(seg.getTOF() < 0);
 	engine.setMakeDefaultEvents(false);
-	engine.setCtrlLaw(seg.getCtrlLaw());
 	for(unsigned int i = 0; i < evts.size(); i++){
 		evts[i].setStopOnEvent(false);		// Ignore stopping conditions that other processes may have imposed
 		engine.addEvent(evts[i]);
 	}
 
 	Arcset traj(pSysData);
-	engine.runSim(origin.getState(), origin.getEpoch(), seg.getTOF(), &traj);
+	engine.runSim(origin.getState(), origin.getEpoch(), seg.getTOF(), &traj, seg.getCtrlLaw());
 
 	int evtCount = 0;
 	for(unsigned int e = 0; e < evts.size(); e++){
@@ -279,53 +278,7 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 			prevNodeID = nextNodeID;
 		}
 	}
-
-	// double T0 = traj.getEpochByIx(0);
-	// std::vector<Event> events = engine.getEvents();
-	// std::vector<SimEventRecord> evtRecs = engine.getEventRecords();
-	// int evtCount = 0, prevNodeID = origin.getID();
-	// double tof = 0;
-	// for(unsigned int e = 0; e < evtRecs.size(); e++){
-	// 	for(unsigned int i = 0; i < evts.size(); i++){
-
-	// 		// If the event occurred, find the corresponding trajectory state and add that to the nodeset
-	// 		if(events[evtRecs[e].eventIx] == evts[i]){
-				
-	// 			// If at least one event is found, we need to delete the segment that is being replaced
-	// 			if(evtCount == 0)
-	// 				deleteSeg(segID);
-
-	// 			int stepIx = evtRecs[e].stepIx;
-	// 			tof = traj.getEpochByIx(stepIx) - T0;
-
-	// 			if(tof > minTimeDiff){
-	// 				int newID = addNode(Node(traj.getStateByIx(stepIx), traj.getEpochByIx(stepIx)));
-	// 				Segment newSeg = Segment(prevNodeID, newID, tof);
-	// 				newSeg.setSTM(traj.getSTMByIx(stepIx));
-	// 				newSeg.setCtrlLaw(traj.getCtrlLawByIx(0));
-	// 				addSeg(newSeg);
-
-	// 				prevNodeID = newID;
-	// 				T0 += tof;
-	// 				evtCount++;
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	// if(evtCount > 0){
-	// 	// Add a final segment connecting the last node to the original terminus
-	// 	tof = terminus.getEpoch() - nodes[nodeIDMap[prevNodeID]].getEpoch();
-	// 	Arcset temp(pSysData);
-	// 	engine.clearEvents();
-	// 	engine.runSim(nodes[nodeIDMap[prevNodeID]].getState(), nodes[nodeIDMap[prevNodeID]].getEpoch(), tof, &temp);
-
-	// 	Segment newSeg = Segment(prevNodeID, terminus.getID(), tof);
-	// 	newSeg.setSTM(temp.getSTMByIx(-1));
-	// 	newSeg.setCtrlLaw(temp.getCtrlLawByIx(0));
-	// 	addSeg(newSeg);
-	// }
-
+	
 	return evtCount;
 }//====================================================
 
@@ -399,7 +352,7 @@ void Arcset::print() const {
 		printf("  %02d (ix %02d):", index.first, index.second);
 		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f, Ctrl Law ID = %u\n", segs[index.second].getOrigin(),
-				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw());
+				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw()->getLawID());
 		}else{
 			printf(" [N/A]\n");
 		}

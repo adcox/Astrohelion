@@ -68,10 +68,10 @@ struct EOM_ParamStruct{
 	 *  \param sys a pointer to a system data object
 	 *  \param lawID an ID for the control law to use during the integration
 	 */
-	EOM_ParamStruct(const SysData *sys, unsigned int lawID) : sysData(sys), ctrlLawID(lawID) {}
+	EOM_ParamStruct(const SysData *sys, ControlLaw *law) : pSysData(sys), pCtrlLaw(law) {}
 	
-	const SysData *sysData;			//!< Pointer to a system data object that will be passed into the EOMs
-	const unsigned int ctrlLawID;	//!< ID of the control law
+	const SysData *pSysData;			//!< Pointer to a system data object that will be passed into the EOMs
+	ControlLaw *pCtrlLaw;				//!< Pointer to a control law object that will be passed into the EOMs
 };
 
 /**

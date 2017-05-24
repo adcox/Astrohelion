@@ -435,7 +435,7 @@ int DynamicsModel_cr3bp::fullEOMs(double t, const double s[], double sdot[], voi
 
     // Extract mu from params
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_cr3bp *sysData = static_cast<const SysData_cr3bp *>(paramStruct->sysData);
+    const SysData_cr3bp *sysData = static_cast<const SysData_cr3bp *>(paramStruct->pSysData);
     
     double mu = sysData->getMu();
 
@@ -488,7 +488,7 @@ int DynamicsModel_cr3bp::simpleEOMs(double t, const double s[], double sdot[], v
     // Extract mu from params
     // SysData_cr3bp *sysData = static_cast<SysData_cr3bp *>(params);
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_cr3bp *sysData = static_cast<const SysData_cr3bp *>(paramStruct->sysData);
+    const SysData_cr3bp *sysData = static_cast<const SysData_cr3bp *>(paramStruct->pSysData);
     double mu = sysData->getMu();
 
     // compute distance to primaries

@@ -61,7 +61,7 @@ public:
 	 */
 	Segment();
 	Segment(int, int, double);
-	Segment(int, int, double, const double*, unsigned int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
+	Segment(int, int, double, const double*, unsigned int, ControlLaw *pLaw = nullptr);
 	Segment(const Segment&);
 	// ~Segment();
 	//\}
@@ -81,7 +81,7 @@ public:
 	void appendTime(double);
 	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;
-	unsigned int getCtrlLaw() const;
+	ControlLaw* getCtrlLaw() const;
 	unsigned int getNumCons() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
@@ -95,7 +95,7 @@ public:
 	
 	void removeConstraint(int);
 	void setConstraints(std::vector<Constraint>);
-	void setCtrlLaw(unsigned int);
+	void setCtrlLaw(ControlLaw*);
 	void setID(int) override;
 	void setOrigin(int);
 	void setStateVector(std::vector<double>);
@@ -122,7 +122,7 @@ protected:
 	/** Stores flags, which are currently used to indicate continuity */
 	std::vector<bool> flags {true, true, true};
 	
-	unsigned int ctrlLawID = ControlLaw::NO_CTRL;	//!< Control law applied during this segment; by default, set to NO_CTRL
+	ControlLaw *pCtrlLaw = nullptr;	//!< Control law applied during this segment; by default, nullptr
 
 	double tof = 0;			//!< Time-of-flight along this segment, units consistent with the system
 	

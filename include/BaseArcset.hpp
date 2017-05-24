@@ -127,12 +127,12 @@ public:
 	void clearArcConstraints();
 	void clearAllConstraints();
 	std::vector<int> concatArcset(const BaseArcset*);
-	unsigned int getCtrlLawByIx(int) const;
 	void deleteNode(int);
 	void deleteSeg(int);
 	std::vector<Constraint> getArcConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;
+	const ControlLaw* getCtrlLawByIx(int) const;
 	double getEpoch(int) const;
 	double getEpochByIx(int) const;
 	std::vector<double> getEpochs() const;

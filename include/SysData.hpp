@@ -97,12 +97,6 @@ class SysData : public Core{
 		 *	\return the model that governs the motion for this system type
 		 */
 		virtual const DynamicsModel* getDynamicsModel() const = 0;
-		
-		/**
-		 *  \brief Retrieve the control law class with control laws for this system type
-		 *  \return object that serves up control laws for this system type
-		 */
-		virtual const ControlLaw* getControlLaw() const = 0;
 
 		int getNumPrimaries() const;
 		std::string getPrimary(int n) const;

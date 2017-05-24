@@ -30,7 +30,6 @@
 #include "DynamicsModel_2bp.hpp"
 
 #include "Calculations.hpp"
-#include "ControlLaw.hpp"
 #include "EigenDefs.hpp"
 #include "Exceptions.hpp"
 #include "Event.hpp"
@@ -228,7 +227,7 @@ int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void 
 	(void)t;
 	
 	EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_2bp *pSys = static_cast<const SysData_2bp *>(paramStruct->sysData);
+    const SysData_2bp *pSys = static_cast<const SysData_2bp *>(paramStruct->pSysData);
 
     double r = sqrt( s[0]*s[0] + s[1]*s[1] + s[2]*s[2] );
     double mult = -pSys->getMu()/pow(r,3);	// G*(mass_primary)/(r^3)
@@ -273,7 +272,7 @@ int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], voi
 	(void)t;
 	
 	EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_2bp *pSys = static_cast<const SysData_2bp *>(paramStruct->sysData);
+    const SysData_2bp *pSys = static_cast<const SysData_2bp *>(paramStruct->pSysData);
 
     double r = sqrt( s[0]*s[0] + s[1]*s[1] + s[2]*s[2] );
     double mult = -pSys->getMu()/pow(r,3);	// G*(mass_primary)/(r^3)

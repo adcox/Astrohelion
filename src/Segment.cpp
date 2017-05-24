@@ -66,15 +66,15 @@ Segment::Segment(int originID, int terminusID, double tof){
  *  \param stm_data a row-major order array containing a state transition matrix
  *  associated with this segment
  *  \param len the number of elements in stm_data (should be a perfect square)
- *  \param ctrlLawID control law implemented along this segment
+ *  \param pLaw pointer to the control law implemented along this segment
  */
 Segment::Segment(int originID, int terminusID, double tof, const double* stm_data, unsigned int len,
-	unsigned int ctrlLawID){
+	ControlLaw* pLaw){
 
 	addLink(originID);
 	addLink(terminusID);
 	this->tof = tof;
-	this->ctrlLawID = ctrlLawID;
+	this->pCtrlLaw = pLaw;
 
 	stm = Eigen::Map<const MatrixXRd>(stm_data, std::sqrt(len), std::sqrt(len));
 }//====================================================
@@ -175,7 +175,7 @@ std::vector<Constraint> Segment::getConstraints() const{
  *  \brief Retrieve the control law ID associated with this segment
  *  \return the control law ID associated with this segment
  */
-unsigned int Segment::getCtrlLaw() const{ return ctrlLawID; }
+ControlLaw* Segment::getCtrlLaw() const{ return pCtrlLaw; }
 
 /**
  *  \brief Retrieve the number of constraints stored by this object
@@ -295,7 +295,7 @@ void Segment::setConstraints(std::vector<Constraint> constraints){
  *  \brief Set the control law for this segment
  *  \param id the ID of the control law used along this segment
  */
-void Segment::setCtrlLaw(unsigned int id){ ctrlLawID = id; }
+void Segment::setCtrlLaw(ControlLaw *law){ pCtrlLaw = law; }
 
 /**
  *  \brief Set the ID and also update the ID of any 
@@ -453,7 +453,7 @@ void Segment::copyMe(const Segment &s){
 	cons = s.cons;
 	tof = s.tof;
 	flags = s.flags;
-	ctrlLawID = s.ctrlLawID;
+	pCtrlLaw = s.pCtrlLaw;	// Copying ADDRESS
 	times = s.times;
 	states = s.states;
 	Linkable::copyMe(s);
@@ -480,6 +480,8 @@ void Segment::print() const{
 	printf("Segment | id = %d\n", ID);
 	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());
 	printf("\tTOF = %.4f\n", tof);
+	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->lawIDToString(pCtrlLaw->getLawID()).c_str() : "NONE");
+
 	printf("\tTime Vector: %zu x 1\n", times.size());
 	if(times.size() > 0){
 		printf("\tState Vector: %zu x %d (remainder %f)\n", times.size(), static_cast<int>(floor(states.size()/times.size())),

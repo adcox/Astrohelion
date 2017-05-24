@@ -301,15 +301,15 @@ BOOST_AUTO_TEST_CASE(BC4BP_Event_Stop){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
 	SimEngine engine;
 	Arcset_cr3bp_lt traj(&sys);
-	engine.setCtrlLaw(ControlLaw_cr3bp_lt::CONST_C_2D_RIGHT);
 	engine.addEvent(Event(Event_tp::XZ_PLANE, 0, true));
-	engine.runSim(ic, 0, T, &traj);
+	engine.runSim(ic, 0, T, &traj, &law);
 
 	std::vector<double> qf = traj.getStateByIx(-1);
 	BOOST_CHECK(std::abs(qf[1]) < engine.getAbsTol());
@@ -339,17 +339,17 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
  *  located in the simulation
  */
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
-	SysData_cr3bp_lt sys("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 
 	SimEngine engine;
 	Arcset_cr3bp traj(&sys);
 	Event planeCross(Event_tp::XZ_PLANE, 0, false);
 	engine.addEvent(planeCross);
-	engine.setCtrlLaw(ControlLaw_cr3bp_lt::CONST_C_2D_LEFT);
 
 	double tof = 4*PI;
-	engine.runSim(ic, tof, &traj);
+	engine.runSim(ic, tof, &traj, &law);
 
 	BOOST_CHECK(std::abs(traj.getTimeByIx(-1) - tof) < engine.getAbsTol());
 
@@ -384,7 +384,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
-	SysData_cr3bp_lt sys("earth", "moon", 1e-3, 1500, 14);
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 
 	SimEngine engine;
@@ -394,8 +395,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
 	planeCross.setStopCount(stopCount);
 	engine.setMakeDefaultEvents(false);
 	engine.addEvent(planeCross);
-	engine.setCtrlLaw(ControlLaw_cr3bp_lt::CONST_C_2D_LEFT);
-	engine.runSim(ic, 10*PI, &traj);
+	engine.runSim(ic, 10*PI, &traj, &law);
 
 	// Make sure it ended on the event
 	std::vector<double> qf = traj.getStateByIx(-1);

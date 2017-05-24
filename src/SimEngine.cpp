@@ -119,11 +119,6 @@ bool SimEngine::usesVarStepSize() const { return bVarStepSize; }
 double SimEngine::getAbsTol() const {return absTol;}
 
 /**
- *  \return ID of the control law implemented during this simulation
- */
-unsigned int SimEngine::getCtrlLaw() const {return ctrlLawID; }
-
-/**
  *	\return the relative tolerance for the engine, non-dimensional units
  */
 double SimEngine::getRelTol() const {return relTol;}
@@ -200,12 +195,6 @@ void SimEngine::setRelTol(double t){
     if(relTol > 1)
         astrohelion::printWarn("SimEngine::setRelTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
-
-/**
- *  \brief Specify the ID of the control law to be implemented during the simulation
- *  \param id control law ID
- */
-void SimEngine::setCtrlLaw(unsigned int id){ ctrlLawID = id; }
 
 /**
  *  \brief Tell the simulation engine whether or not to make default events at the
@@ -300,8 +289,8 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
  *    time, use the setRevTime() function.
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, double tof, Arcset *arcset){
-	runSim(ic, 0, tof, arcset);
+void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, ControlLaw *pLaw){
+	runSim(ic, 0, tof, arcset, pLaw);
 }//=======================================================
 
 /**
@@ -314,8 +303,8 @@ void SimEngine::runSim(const double *ic, double tof, Arcset *arcset){
  *    time, use the setRevTime() function.
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset){
-    runSim(ic, 0, tof, arcset);
+void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw){
+    runSim(ic, 0, tof, arcset, pLaw);
 }//=======================================================
 
 /**
@@ -334,7 +323,7 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset){
  *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset){
+void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
         return;
@@ -342,7 +331,7 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
 
     if(ic.size() >= static_cast<size_t>(arcset->getSysData()->getDynamicsModel()->getCoreStateSize())){
         std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), t0, tof, arcset);
+        runSim(&(tempIC[0]), t0, tof, arcset, pLaw);
     }else{
         printErr("IC size = %zu\n", ic.size());
         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
@@ -366,7 +355,7 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
  *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset){
+void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
         return;
@@ -374,7 +363,7 @@ void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double
 
     if(ic.size() >= static_cast<size_t>(arcset->getSysData()->getDynamicsModel()->getCoreStateSize())){
         std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), stm0, t0, tof, arcset);
+        runSim(&(tempIC[0]), stm0, t0, tof, arcset, pLaw);
     }else{
         printErr("IC size = %zu\n", ic.size());
         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
@@ -393,7 +382,7 @@ void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double
  *    time, use the setRevTime() function.
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, double t0, double tof, Arcset *arcset){
+void SimEngine::runSim(const double *ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
         return;
@@ -420,10 +409,10 @@ void SimEngine::runSim(const double *ic, double t0, double tof, Arcset *arcset){
 
     int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     MatrixXRd stm0 = MatrixXRd::Identity(core_dim, core_dim);
-    runSim(ic, stm0, t_span, arcset);
+    runSim(ic, stm0, t_span, arcset, pLaw);
 }//====================================================
 
-void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset){
+void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     std::vector<double> t_span;
     // Compute the final time based on whether or not we're using reverse time integration
     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
@@ -443,7 +432,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
         }
     }
 
-    runSim(ic, stm0, t_span, arcset);
+    runSim(ic, stm0, t_span, arcset, pLaw);
 }//====================================================
 
 /**
@@ -456,7 +445,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, 
  *  \param t_span a vector of times to include in the solution.
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Arcset *arcset){
+void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
         return;
@@ -470,7 +459,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
     if(bMakeDefaultEvents)
         createDefaultEvents(arcset->getSysData());
 
-    eomParams = new EOM_ParamStruct(arcset->getSysData(), ctrlLawID);
+    eomParams = new EOM_ParamStruct(arcset->getSysData(), pLaw);
 
     // Run the simulation
     bIsClean = false;   // Technically, nothing has changed yet, but this flag should be false even if any part of integrate throws an exception
@@ -482,23 +471,23 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
 //-------------------------------------------------------------------------------------------------
 
 
-void SimEngine::runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset){
+void SimEngine::runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     // Set t0 = 0, use more specific function
     std::vector<double> tempIC = ic;
-    runSim_manyNodes(&(tempIC.front()), 0, tof, numNodes, arcset);
+    runSim_manyNodes(&(tempIC.front()), 0, tof, numNodes, arcset, pLaw);
 }//====================================================
 
-void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arcset *arcset){
+void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     // Set t0 = 0, use more specific function
-    runSim_manyNodes(ic, 0, tof, numNodes, arcset);
+    runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
 }//====================================================
 
-void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset){
+void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     std::vector<double> tempIC = ic;
-    runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset);
+    runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset, pLaw);
 }//====================================================
 
-void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int numNodes, Arcset *arcset){
+void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     if(numNodes < 2){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer than two nodes\n");
         return;
@@ -515,7 +504,7 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
 
     unsigned int coreSize = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     MatrixXRd stm0 = MatrixXRd::Identity(coreSize, coreSize);
-    runSim(ic, stm0, t_span, arcset);
+    runSim(ic, stm0, t_span, arcset, pLaw);
 }//====================================================
 
 //-----------------------------------------------------
@@ -602,7 +591,8 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-        "  using control law: %s\n", arcset->getSysData()->getControlLaw()->lawIDToString(ctrlLawID).c_str());
+        "  using control law: %s\n", eomParams->pCtrlLaw ? 
+            eomParams->pCtrlLaw->lawIDToString(eomParams->pCtrlLaw->getLawID()).c_str() : "NONE");
 
     /*
      * BOOST INTEGRATOR ADDITION
@@ -1053,7 +1043,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     Node n0(&(arcIC.front()), core_dim, t0);
     Node ni(&(arcFC.front()), core_dim, t0+tof);
     Segment tempSeg(0, 1, tof);
-    tempSeg.setCtrlLaw(eomParams->ctrlLawID);
+    tempSeg.setCtrlLaw(eomParams->pCtrlLaw);
 
     eventArcset.addNode(n0);
     eventArcset.addNode(ni);
@@ -1197,7 +1187,6 @@ void SimEngine::reset(){
     bMadeDefaultEvents = false;
     bMakeDefaultEvents = true;
     maxCompTime = -1;
-    ctrlLawID = 0;
 }//====================================================
 
 /**
@@ -1231,7 +1220,6 @@ void SimEngine::copyMe(const SimEngine &s){
     bMadeDefaultEvents = s.bMadeDefaultEvents;
     maxCompTime = s.maxCompTime;
     startTimestamp = s.startTimestamp;
-    ctrlLawID = s.ctrlLawID;
 }//====================================================
 
 }// END of Astrohelion namespace

@@ -322,19 +322,19 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	// then the path is known (and will be deleted) so we store the STM in linkSTM
 	int coreSize = pSysData->getDynamicsModel()->getCoreStateSize();
 	MatrixXRd linkSTM = MatrixXRd::Identity(coreSize, coreSize);
-	unsigned int linkCtrlLaw = ControlLaw::NO_CTRL;
 	std::vector<double> linkSegStates, linkSegTimes;
 	double linkTOF = tof;
+	ControlLaw *pLinkCtrlLaw = nullptr;
 
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
 	// TOF and linkFrom_ID
 	if(tof == 0){
-		linkTOF = linkFrom_seg.getTOF();						// Update tof
+		linkTOF = linkFrom_seg.getTOF();					// Update tof
 		linkSTM = linkFrom_seg.getSTM();					// Save STM
-		linkCtrlLaw = linkFrom_seg.getCtrlLaw();			// Save control law
 		linkSegStates = linkFrom_seg.getStateVector();
 		linkSegTimes = linkFrom_seg.getTimeVector();
+		pLinkCtrlLaw = linkFrom_seg.getCtrlLaw();
 
 		// Get the next node down the line
 		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
@@ -406,7 +406,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	bInChronoOrder = false;
 	Segment linkSeg = Segment(origin, terminus, linkTOF);
 	linkSeg.setSTM(linkSTM);
-	linkSeg.setCtrlLaw(linkCtrlLaw);
+	linkSeg.setCtrlLaw(pLinkCtrlLaw);
 	linkSeg.setStateVector(linkSegStates);
 	linkSeg.setTimeVector(linkSegTimes);
 	
@@ -562,13 +562,14 @@ void BaseArcset::deleteNode(int id){
 				int id1 = pTermSeg->getID(), id2 = pOrigSeg->getID();
 				
 				// Get control laws of the segments
-				unsigned int law1 = pTermSeg->getCtrlLaw(), law2 = pOrigSeg->getCtrlLaw();
+				ControlLaw* law1 = pTermSeg->getCtrlLaw();
+				ControlLaw* law2 = pOrigSeg->getCtrlLaw();
 
 				// Replace the two segments with the new combined one
 				deleteSeg(id1);	// CANNOT USE pTermSeg pointer AFTER THIS LINE
 				deleteSeg(id2);	// CANNOT USE pOrigSeg pointer AFTER THIS LINE
 
-				if(law1 != law2)
+				if((law1 && law2) && (*law1 != *law2))
 					printWarn("BaseArcset::deleteNode: Node deleted between segments with different control laws. A new segment is created using only one of those control laws!\n");
 
 				combo.setCtrlLaw(law1);
@@ -606,13 +607,14 @@ void BaseArcset::deleteNode(int id){
 				int id1 = pRevSeg->getID(), id2 = pForwardSeg->getID();
 
 				// Get control laws of the segments
-				unsigned int law1 = pRevSeg->getCtrlLaw(), law2 = pForwardSeg->getCtrlLaw();
+				ControlLaw* law1 = pRevSeg->getCtrlLaw();
+				ControlLaw* law2 = pForwardSeg->getCtrlLaw();
 
 				// Replace the two segments with the new one
 				deleteSeg(id1);	// CANNOT USE pRevSeg pointer AFTER THIS LINE
 				deleteSeg(id2);	// CANNOT USE pForwardSeg pointer AFTER THIS LINE
 
-				if(law1 != law2)
+				if((law1 && law2) && (*law1 != *law2))
 					printWarn("BaseArcset::deleteNode: Node deleted between segments with different control laws. A new segment is created using only one of those control laws!\n");
 
 				combo.setCtrlLaw(law1);
@@ -958,7 +960,7 @@ std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
  *  \return control law ID for the specified segment
  *  \throws Exception if ix is out of bounds.
  */
-unsigned int BaseArcset::getCtrlLawByIx(int ix) const{
+const ControlLaw* BaseArcset::getCtrlLawByIx(int ix) const{
 	if(ix < 0)
 		ix += segs.size();
 
@@ -2233,7 +2235,8 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, const char* pVarName){
 
 			if(data != NULL){
 				for(unsigned int i = 0; i < numSteps; i++){
-					segs[i].setCtrlLaw(data[i]);
+					//segs[i].setCtrlLaw(data[i]);
+					// Need to implement a different way to load/save these
 				}
 			}
 		}else{
@@ -2618,7 +2621,8 @@ void BaseArcset::saveSegCtrlLaw(mat_t *pMatFile, const char *pVarName) const{
 	std::vector<unsigned int> allLawIDs(segs.size());
 
 	for(unsigned int s = 0; s < segs.size(); s++){
-		allLawIDs[s] = segs[s].getCtrlLaw();
+		ControlLaw *pLaw = segs[s].getCtrlLaw();
+		allLawIDs[s] = pLaw ? pLaw->getLawID() : ControlLaw::NO_CTRL;
 	}
 
 	size_t dims[2] = {allLawIDs.size(), 1};

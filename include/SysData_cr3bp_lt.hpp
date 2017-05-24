@@ -46,7 +46,7 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		 *  \{
 		 */
 		SysData_cr3bp_lt();
-		SysData_cr3bp_lt(std::string, std::string, double, double, double);
+		SysData_cr3bp_lt(std::string, std::string, double);
 		SysData_cr3bp_lt(const SysData_cr3bp_lt&);
 		SysData_cr3bp_lt(const char*);
 		//\}
@@ -57,18 +57,9 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		const ControlLaw* getControlLaw() const;
 		const DynamicsModel* getDynamicsModel() const;
-		
-		double getIsp() const;
-		double getThrust() const;
-		double getThrust_dim() const;
-		double getMass() const;
-
-		void setIsp(double);
-		void setMass(double);
-		void setThrust(double);
-		void setThrust_dim(double);
+		double getRefMass() const;
+		void setRefMass(double);
 		//\}
 		
 		void saveToMat(const char*) const override;
@@ -76,9 +67,6 @@ class SysData_cr3bp_lt : public SysData_cr3bp{
 	private:
 		/** The dynamic model that governs motion for this system*/
 		DynamicsModel_cr3bp_lt model = DynamicsModel_cr3bp_lt();
-
-		/** Control law object for this system */
-		ControlLaw_cr3bp_lt control = ControlLaw_cr3bp_lt();
 		
 		void readFromMat(mat_t*);
 };

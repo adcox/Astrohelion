@@ -1692,7 +1692,7 @@ int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], voi
     // Dereference the eom data object
     // SysData_bc4bp *sysData = static_cast<SysData_bc4bp *>(params);
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_bc4bp *sysData = static_cast<const SysData_bc4bp *>(paramStruct->sysData);
+    const SysData_bc4bp *sysData = static_cast<const SysData_bc4bp *>(paramStruct->pSysData);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};
@@ -1815,7 +1815,7 @@ int DynamicsModel_bc4bp::fullEOMs(double t, const double s[], double sdot[], voi
 int DynamicsModel_bc4bp::simpleEOMs(double t, const double s[], double sdot[], void *params){
     // Dereference the eom data object
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
-    const SysData_bc4bp *sysData = static_cast<const SysData_bc4bp *>(paramStruct->sysData);
+    const SysData_bc4bp *sysData = static_cast<const SysData_bc4bp *>(paramStruct->pSysData);
 
     // Put the positions of the three primaries in a 3x3 matrix
     double primPosData[9] = {0};

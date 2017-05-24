@@ -194,11 +194,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 
 	MultShootEngine corrector;
 
-	SysData_cr3bp_lt ltData("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt ltData("earth", "moon", 14);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
+
 	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
-	sim.runSim_manyNodes(ic, 2.77, 5, &ltSet);
+	sim.runSim_manyNodes(ic, 2.77, 5, &ltSet, &control);
 
 	corrector.multShoot(&ltSet, nullptr);
 
@@ -208,7 +209,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 
 	BOOST_CHECK(ltSet.getStateByIx(-1) == temp.getStateByIx(-1));
 	BOOST_CHECK(temp.getCtrlLawByIx(0) == ltSet.getCtrlLawByIx(0));
-	BOOST_CHECK(ltSet.getCtrlLawByIx(0) == ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
+	BOOST_CHECK(*(ltSet.getCtrlLawByIx(0)) == control);
 	BOOST_CHECK(ltSet.getTOFByIx(-1) == temp.getTOFByIx(-1));
 }//====================================================
 
@@ -264,13 +265,14 @@ BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
-	SysData_cr3bp_lt emData("earth", "moon", 12e-3, 1500, 14);
+	SysData_cr3bp_lt emData("earth", "moon", 14);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
+
 	SimEngine sim;
-	sim.setCtrlLaw(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 	Arcset_cr3bp_lt ltTraj(&emData);
-	sim.runSim(ic, T, &ltTraj);
+	sim.runSim(ic, T, &ltTraj, &control);
 
 	// Query the acceleration so it is computed
 	std::vector<double> a = ltTraj.getStateDerivByIx(-1);

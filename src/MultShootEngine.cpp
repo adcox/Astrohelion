@@ -477,10 +477,9 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			simEngine.setRevTime(tof < 0);
 			
 			printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
-			simEngine.setCtrlLaw(it.nodesIn->getSegRefByIx_const(s).getCtrlLaw());
 
 			try{
-				simEngine.runSim(ic, t0, tof, &(it.propSegs[s]));
+				simEngine.runSim(ic, t0, tof, &(it.propSegs[s]), it.nodesIn->getSegRefByIx_const(s).getCtrlLaw());
 			}catch(DivergeException &e){
 				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
 			}catch(Exception &e){

@@ -48,8 +48,8 @@ namespace astrohelion{
  *  \brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
  */
 DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP_LT) {
-    coreStates = 7;
-    extraStates = 0;
+    coreDim = 7;
+    extraDim = 0;
     allowedCons.push_back(Constraint_tp::JC);
     allowedEvents.push_back(Event_tp::JC);
     allowedEvents.push_back(Event_tp::MASS);
@@ -178,11 +178,11 @@ void DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData, int p
  *  \return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
-    if(state.size() != coreStates)
+    if(state.size() != coreDim)
         throw Exception("DynamicsModel_cr3bp_lt::getStateDeriv: State size does not match the core state size specified by the dynamical model");
 
     // Compute the acceleration
-    std::vector<double> dsdt(coreStates, 0);
+    std::vector<double> dsdt(coreDim, 0);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
     return dsdt;
@@ -242,7 +242,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it) con
         if(state_var.row0 == -1){
             state = it->nodesIn->getState(state_var.key.id);
         }else{
-            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreDim);
         }
 
         Node node(state, 0);
@@ -330,8 +330,8 @@ void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData *it) const{
 /**
  *  \brief Integrate the equations of motion for the CR3BP LTVP
  *  \param t the current time of the integration
- *  \param s the 43-d state vector. The first 6 elements are position and velocity,
- *  the 7th is mass, and the final 36 are STM elements
+ *  \param s the state vector passed in from the SimEngine. This vector includes
+ *  the core states, STM states, extra states, and control states, in that order.
  *  \param sdot the 43-d state derivative vector
  *  \param *params pointer to extra parameters required for integration. For this
  *  function, the pointer points to an EOM_ParamStruct object
@@ -433,7 +433,8 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 /**
  *  \brief Integrate the equations of motion for the CR3BP LTVP without the STM
  *  \param t time at integration step (unused)
- *  \param s the 7-d state vector
+ *  \param s the state vector passed in from the SimEngine. This vector includes
+ *  the core states and control states, in that order.
  *  \param sdot the 7-d state derivative vector
  *  \param params points to an EOM_ParamStruct object
  */

@@ -110,7 +110,6 @@ protected:
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
 	/** Stores extra parameters (scalars) like mass, costates, etc. */
-	// std::vector<double> extraParam {};
 	std::map<std::string, double> extraParam {};
 
 	/** Stores extra parameter vectors, like dqdt, etc. */

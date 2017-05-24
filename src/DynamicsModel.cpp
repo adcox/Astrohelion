@@ -77,21 +77,21 @@ DynamicsModel& DynamicsModel::operator =(const DynamicsModel &m){
  */
 void DynamicsModel::copyMe(const DynamicsModel &m){
 	modelType = m.modelType;
-	coreStates = m.coreStates;
-	extraStates = m.extraStates;
+	coreDim = m.coreDim;
+	extraDim = m.extraDim;
 }//============================================
 
 /**
  *	\brief Retrieve the number of core states
  *	\return the number of core states
  */
-unsigned int DynamicsModel::getCoreStateSize() const { return coreStates; }
+unsigned int DynamicsModel::getCoreStateSize() const { return coreDim; }
 
 /**
  *	\brief Retrieve the number of extra states stored after the core states and STM elements
  *	\return the number of extra states stored after the core states and STM elements
  */
-unsigned int DynamicsModel::getExtraStateSize() const { return extraStates; }
+unsigned int DynamicsModel::getExtraStateSize() const { return extraDim; }
 
 /**
  *	\brief Determine whether the specified constraint type is supported in this model
@@ -179,6 +179,15 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* tr
 	(void) params;
 	
 	node.setTriggerEvent(tp);
+
+	// Save the control law information for each node
+	if(params->pCtrlLaw){
+		unsigned int ctrl_dim = params->pCtrlLaw->getNumStates();
+		if(ctrl_dim > 0){
+			node.setExtraParamVec(PARAMKEY_CTRL, std::vector<double>(y + coreDim, y + coreDim + ctrl_dim));
+		}
+	}
+
 	return traj->addNode(node);
 }//====================================================
 
@@ -279,7 +288,7 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it) const{
 	// Create position and velocity constraints
 	for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
 		// Force all positions to be continuous
-		std::vector<double> contStates(coreStates, 1);
+		std::vector<double> contStates(coreDim, 1);
 		if(it->nodesIn->getSegRefByIx_const(s).getTerminus() != Linkable::INVALID_ID){	
 			// Get a vector specifying which velocity states are continuous
 			std::vector<bool> velCon = it->nodesIn->getSegRefByIx_const(s).getVelCon();
@@ -467,7 +476,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 			it->FX[row0+s] = lastState[s] - statef_value;
 
 			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
-			for(unsigned int x = 0; x < coreStates; x++){
+			for(unsigned int x = 0; x < coreDim; x++){
 				// put STM elements into DF matrix
 				if(state0_var.row0 != -1)
 					it->DF_elements.push_back(Tripletd(row0+s, state0_var.row0 + x, stm(s,x)));
@@ -557,7 +566,7 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 			it->FX[row0+count] = (state1[s]- state2[s]);
 
 			// Loop through all six states of the two origin nodes and compute partials w.r.t. state variables
-			for(unsigned int x = 0; x < coreStates; x++){
+			for(unsigned int x = 0; x < coreDim; x++){
 				// put STM elements into DF matrix
 				if(state01_var.row0 != -1)
 					it->DF_elements.push_back(Tripletd(row0+count, state01_var.row0+x, stm1(s,x)));
@@ -625,7 +634,7 @@ void DynamicsModel::multShoot_targetState(MultShootData* it, const Constraint& c
 	std::vector<double> conData = con.getData();
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
 
-	if(conData.size() > coreStates)
+	if(conData.size() > coreDim)
 		throw Exception("DynamicsModel::multShoot_targetState: ConData has too many states");
 	
 	if(state_var.row0 == -1)
@@ -662,7 +671,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 	std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
 	MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
 
-	if(conData.size() > coreStates)
+	if(conData.size() > coreDim)
 		throw Exception("DynamicsModel::multShoot_targetState: ConData has too many states");
 
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
@@ -671,7 +680,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 			pIt->FX[row0+count] = lastState[s] - conData[s];
 
 			// Partials of F w.r.t. previous node states
-			for(unsigned int x = 0; x < coreStates; x++){
+			for(unsigned int x = 0; x < coreDim; x++){
 				// put STM elements into DF matrix
 				if(prevNode_var.row0 != -1)
 					pIt->DF_elements.push_back(Tripletd(row0+count, prevNode_var.row0 + x, stm(s,x)));
@@ -715,7 +724,7 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData* it, const Constraint
 	const double *state1 = state1_var.row0 == -1 ? &(it->nodesIn->getNodeRef_const(state1_var.key.id).getStateRef_const().front()) : &(it->X[state1_var.row0]);
 	const double *state2 = state2_var.row0 == -1 ? &(it->nodesIn->getNodeRef_const(state2_var.key.id).getStateRef_const().front()) : &(it->X[state2_var.row0]);
 
-	for(unsigned int row = 0; row < coreStates; row++){
+	for(unsigned int row = 0; row < coreDim; row++){
 		// Constrain the states of THIS node to be equal to the node 
 		// with index stored in conData[0]
 		it->FX[row0+row] = state1[row] - state2[row];

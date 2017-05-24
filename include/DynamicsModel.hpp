@@ -129,7 +129,7 @@ public:
 	 *	\param t time associated with the current integration step; this value is passed
 	 *	in by the integrator
 	 *	\param q full state vector; the dimension of this vector is set by SimEngine
-	 *	and is equal to <code>coreStates + stmStates + extraStates</code>; this vector is passed
+	 *	and is equal to <code>coreDim + stmStates + extraDim</code>; this vector is passed
 	 *	in by the integrator
 	 *	\param qdot full state derivative vector, same dimension as <code>q</code>. This vector
 	 *	must be initialized by the function (i.e., set all values to zero or another value), or
@@ -291,8 +291,8 @@ public:
 
 protected:
 	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
-	unsigned int coreStates = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreStates
-	unsigned int extraStates = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
+	unsigned int coreDim = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreDim
+	unsigned int extraDim = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 
 	/** A vector containing the all the types of constraints this model supports */
 	std::vector<Constraint_tp> allowedCons {Constraint_tp::NONE,

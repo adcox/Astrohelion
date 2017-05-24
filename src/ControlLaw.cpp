@@ -156,7 +156,34 @@ void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, double *
 			}
 			break;
 		default:
-			throw Exception("ControlLaw::GetLaw: Unrecognized lawID");
+			throw Exception("ControlLaw::getLaw: Unrecognized lawID");
+	}
+	(void) t;
+	(void) s;
+	(void) pSys;
+}//====================================================
+
+/**
+ *  \brief Retrieve the derivative of the control law
+ *  \details The behavior of this function defaults to returning
+ *  all zeros for the derivatives, which is accurate for control laws that hold
+ *  parameters constant along a thrust arc. By overriding this function in derived
+ *  classes, more specific behavior may be defined.
+ * 
+ *  \param t nondimensional integration time
+ *  \param s integration state vector (from SimEngine / DynamicsModel)
+ *  \param pSys pointer to the system data object
+ *  \param deriv pointer to an array in which to store the derivative of the law
+ *  \param int number of elements in the derivative array
+ */
+void ControlLaw::getLaw_deriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
+	switch(lawID){
+		case NO_CTRL:
+		default:
+			// Handle default case with no control
+			for(unsigned int i = 0; i < len; i++){
+				deriv[i] = 0;
+			}
 	}
 	(void) t;
 	(void) s;

@@ -86,6 +86,7 @@ static const char VARNAME_DEP_TIME[] = "Time";				//!< Matlab file variable name
 // ExtraParam Map Keys
 static const char PARAMKEY_2BP_ENERGY[] = "energy";			//!< ExtraParam map key for 2BP energy data
 static const char PARAMKEY_ANGMOM[] = "angMom";				//!< ExtraParam map key for angular momentum data
+static const char PARAMKEY_CTRL[] = "ctrl";					//!< ExtraParam map key for control vector
 static const char PARAMKEY_ECC[] = "ecc";					//!< ExtraParam map key for eccentricity data
 static const char PARAMKEY_JACOBI[] = "J";					//!< ExtraParam map key for Jacobi constant data
 static const char PARAMKEY_SMA[] = "sma";					//!< ExtraParam map key for semimajor axis data

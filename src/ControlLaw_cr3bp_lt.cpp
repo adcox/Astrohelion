@@ -129,6 +129,8 @@ void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysD
 		case Law_tp::ANTI_VEL:
 			getLaw_Along_Vel(t, s, pSysData_lt, law, len, -1);
 			break;
+		case Law_tp::GENERAL_CONST_F:
+			// Todo: Add Code
 		default:
 			ControlLaw::getLaw(t, s, pSysData, law, len);
 	}
@@ -165,6 +167,8 @@ void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const Sys
 		case Law_tp::ANTI_VEL:
 			// getLaw_Anti_Vel(t, s, pSysData, law, len);
 			// break;
+		case Law_tp::GENERAL_CONST_F:
+			// ToDo: Add code
 		default:
 			ControlLaw::getPartials_State(t, s, pSys, partials, len);
 	}
@@ -237,6 +241,16 @@ void ControlLaw_cr3bp_lt::getLaw_Along_Vel(double t, const double *s, const SysD
 	(void) t;
 }//====================================================
 
+void ControlLaw_cr3bp_lt::getLaw_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *law, unsigned int len) const{
+
+	(void) t;
+	(void) s;
+	(void) pSys;
+	(void) law;
+	(void) len;
+}//====================================================
+
 //------------------------------------------------------------------------------------------------------
 //      Partial Derivatives of Control Laws
 //------------------------------------------------------------------------------------------------------
@@ -294,7 +308,10 @@ void ControlLaw_cr3bp_lt::init(){
 		case Law_tp::CONST_C_2D_RIGHT:
 		case Law_tp::PRO_VEL:
 		case Law_tp::ANTI_VEL:
-			numStates = 3;	// three thrust-pointing directions
+			numStates = 0;	// all directions are functions of other state variables; no need for new ones
+			break;
+		case Law_tp::GENERAL_CONST_F:
+			numStates = 3;	// Three directions are free
 			break;
 		default:
 			ControlLaw::init();
@@ -313,6 +330,7 @@ std::string ControlLaw_cr3bp_lt::lawIDToString(unsigned int id) const{
 		case Law_tp::CONST_C_2D_RIGHT: return "Jacobi-Preserving, 2D, Right";
 		case Law_tp::PRO_VEL: return "Prograde Velocity";
 		case Law_tp::ANTI_VEL: return "Anti-Velocity";
+		case Law_tp::GENERAL_CONST_F: return "General Direction, Const. Thrust";
 		default:
 			return ControlLaw::lawIDToString(id);
 	}

@@ -160,11 +160,11 @@ void DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysData, int pIx, d
  *  \return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
-    if(state.size() != coreStates)
+    if(state.size() != coreDim)
         throw Exception("DynamicsModel_2bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
 
     // Compute the acceleration
-    std::vector<double> dsdt(coreStates,0);
+    std::vector<double> dsdt(coreDim,0);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
     return dsdt;

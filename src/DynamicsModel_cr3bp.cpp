@@ -178,11 +178,11 @@ void DynamicsModel_cr3bp::getPrimVel(double t, const SysData *pSysData, int pIx,
  *  \return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
-    if(state.size() != coreStates)
+    if(state.size() != coreDim)
         throw Exception("DynamicsModel_cr3bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
 
     // Compute the acceleration
-    std::vector<double> dsdt(coreStates,0);
+    std::vector<double> dsdt(coreDim,0);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
     return dsdt;
@@ -346,7 +346,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it) const{
         if(state_var.row0 == -1){
             state = it->nodesIn->getState(state_var.key.id);
         }else{
-            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreDim);
         }
 
         Node node(state, 0);

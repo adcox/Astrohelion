@@ -40,6 +40,16 @@ class SysData_cr3bp_lt;
 /**
  *  \ingroup model cr3bp_lt
  *  \brief Includes control laws specific to the CR3BP-LT problem
+ *  
+ *  <code>params</code> layout for various control laws:
+ *  * CONST_C_2D_LEFT, CONST_C_2D_RIGHT, PRO_VEL, ANTI_VEL - params holds:
+ *  	[0] Thrust (Newtons)
+ *  	[1] Isp (Seconds)
+ *  * GENERAL_CONST_F - params holds:
+ *  	[0] Thrust (Newtons)
+ *  	[1] Isp (Seconds)
+ *  	[2-4] Thrust direction
+ *  
  */
 class ControlLaw_cr3bp_lt : public ControlLaw{
 public:
@@ -95,8 +105,12 @@ public:
 		PRO_VEL = 3,				/*!< Thrust along velocity vector (maximum energy increase)
 									 * Not yet implemented
 									 */
-		ANTI_VEL = 4				/*!< Thrust along anti-velocity vector (maximum energy decrease)
+		ANTI_VEL = 4,				/*!< Thrust along anti-velocity vector (maximum energy decrease)
 									 * Not yet implemented
+									 */
+		GENERAL_CONST_F = 5			/*!< Thrust in an arbitrary direction. Thrust magnitude is constant.
+									 * - getLaw() returns 3 thrust directions
+									 * - getPartials_State() returns 21 derivatives
 									 */
 	};
 protected:
@@ -104,7 +118,7 @@ protected:
 	void init() override;
 	void getLaw_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getLaw_Along_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
-
+	void getLaw_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 	void getPartials_State_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 };
 

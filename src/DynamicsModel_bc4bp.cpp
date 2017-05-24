@@ -50,8 +50,8 @@ namespace astrohelion{
  *  \brief Construct a BCR4BP Dynamic DynamicsModel
  */
 DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
-    coreStates = 6;
-    extraStates = 6;
+    coreDim = 6;
+    extraDim = 6;
     allowedCons.push_back(Constraint_tp::EPOCH);
     allowedCons.push_back(Constraint_tp::SP);
     allowedCons.push_back(Constraint_tp::SP_RANGE);
@@ -357,11 +357,11 @@ void DynamicsModel_bc4bp::getPrimAccel(double t, const SysData *pSysData, int pI
  *  \return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
-    if(state.size() != coreStates)
+    if(state.size() != coreDim)
         throw Exception("DynamicsModel_bc4bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
 
     // Compute the acceleration
-    std::vector<double> dsdt(coreStates,0);
+    std::vector<double> dsdt(coreDim,0);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
     return dsdt;
@@ -373,17 +373,27 @@ std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<dou
 
 int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const{
     (void) t;
-    (void) params;
 
     node.setTriggerEvent(tp);
-    int id = traj->addNode(node);
-    
+
     // Update the dqdT variable if the state array is not NULL
     if(y){
-        Arcset_bc4bp *bcTraj = static_cast<Arcset_bc4bp*>(traj);
-        bcTraj->set_dqdTByIx(-1, y+42); // dqdT is stored in y(42:47)
+        unsigned int ctrlDim = 0;
+        unsigned int stmDim = coreDim*coreDim;
+
+        // Save control law too!
+        if(params->pCtrlLaw){
+            ctrlDim = params->pCtrlLaw->getNumStates();
+            if(ctrlDim > 0){
+                node.setExtraParamVec(PARAMKEY_CTRL, std::vector<double>(y + coreDim, y + coreDim + ctrlDim));
+            }
+        }
+
+        node.setExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, std::vector<double>(y + coreDim + ctrlDim + stmDim, 
+            y + coreDim + ctrlDim + stmDim + extraDim));
     }
-    return id;
+    
+    return traj->addNode(node);
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -1625,7 +1635,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it) const{
         if(state_var.row0 == -1){
             state = it->nodesIn->getState(state_var.key.id);
         }else{
-            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreStates);
+            state = std::vector<double>(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + coreDim);
         }
 
         double T = 0;

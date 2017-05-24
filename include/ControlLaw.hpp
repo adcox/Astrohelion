@@ -87,6 +87,7 @@ public:
 	 *  \{
 	 */
 	virtual void getLaw(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const;
+	virtual void getLaw_deriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const;
 	virtual void getPartials_State(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	virtual std::string lawIDToString(unsigned int) const;
 	//\}

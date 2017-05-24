@@ -2640,10 +2640,19 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, const char *pVarName) const{
 		return;	// Can't save any data... exit
 	}
 
+	// ToDo - Add code to save the full_size value for each segment
+	
 	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
-	const unsigned int full_size = core_size + core_size*core_size + pSysData->getDynamicsModel()->getExtraStateSize();
-	dims[1] = full_size;
+	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
+	
 	for(unsigned int s = 0; s < segs.size(); s++){
+		unsigned int ctrl_size = 0;
+		if(segs[s].getCtrlLaw()){
+			ctrl_size = segs[s].getCtrlLaw()->getNumStates();
+		}
+		unsigned int full_size = core_size*(core_size+1) + ctrl_size + extra_size;
+		dims[1] = full_size;
+
 		std::vector<double> segStates = segs[s].getStateVector();
 		if(segStates.size() % dims[1] != 0){
 			Mat_VarFree(cell_array);

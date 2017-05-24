@@ -450,7 +450,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	// Define values for use in corrections loop
 	double err = 10*tol;
-	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreDimize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	Arcset arc(it.nodesIn->getSysData());
 	while( err > tol && it.count < maxIts){
@@ -460,7 +460,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		it.propSegs.clear();
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
 
-		it.DF_elements.reserve(it.totalCons * coreStateSize);
+		it.DF_elements.reserve(it.totalCons * coreDimize);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
 		// initialize a vector of trajectory objects to store each propagated segment
@@ -470,7 +470,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
-			std::vector<double> ic(coreStateSize, 0);
+			std::vector<double> ic(coreDimize, 0);
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn->getSegRefByIx_const(s).getID(),
 				&(ic[0]), &t0, &tof);
 

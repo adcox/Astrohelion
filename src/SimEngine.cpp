@@ -282,7 +282,7 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
  *
  *  It is assumed that t0 = 0
  *	\param ic an array containting the non-dimensional initial state; number
- *    of elements must match the number of <code>coreStates</code> specified 
+ *    of elements must match the number of <code>coreDim</code> specified 
  *    in the system dynamics model
  *	\param tof the total integration time, or time-of-flight (non-dim units)
  *    Only the absolute value of the TOF is considered; to integrate backwards in
@@ -290,7 +290,8 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, ControlLaw *pLaw){
-	runSim(ic, 0, tof, arcset, pLaw);
+	// Define dummy value: t0 = 0; call the next level of complication
+    runSim(ic, 0, tof, arcset, pLaw);
 }//=======================================================
 
 /**
@@ -304,8 +305,111 @@ void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, ControlLaw 
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
 void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw){
+    // Define dummy value: t0 = 0; call the next level of complication
     runSim(ic, 0, tof, arcset, pLaw);
 }//=======================================================
+
+
+void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+    // Checks
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    if(ic.size() < core_dim){
+        printErr("IC size = %zu\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+    }
+
+    // Call the version that takes a pointer as the first argument; all other arguments are the same
+    std::vector<double> icCopy = ic;
+    runSim(&(icCopy.front()), t0, tof, arcset, pLaw);
+}//=======================================================
+
+void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    // Define dummy values for Ctrl0
+    std::vector<double> ctrl0;
+    if(pLaw){
+        ctrl0.assign(pLaw->getNumStates(), 0);
+    }
+
+    // Define dummy values for STM0
+    unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    std::vector<double> stm0(core_dim*core_dim, 0);
+    for(unsigned int i = 0; i < core_dim; i++){
+        stm0[i*(core_dim+1)] = 1;
+    }
+
+    // Call the next level of complication
+    runSim(ic, &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
+}//=======================================================
+
+void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+    // Checks
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    if(ic.size() < core_dim){
+        printErr("IC size = %zu\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+    }
+
+    if(stm.rows() != core_dim || stm.cols() != core_dim){
+        printErr("STM rows = %d, cols = %d, core_dim = %u\n", stm.rows(), stm.cols(), core_dim);
+        throw Exception("SimEngine::runSim: Initial STM size does not match the core state size specified by the Dynamic Model");
+    }
+    
+    // Copy arrays to pass by reference
+    std::vector<double> icCopy = ic;
+    std::vector<double> ctrlCopy = ctrl0;
+
+    // Call the version that takes a pointers; all other arguments are the same
+    runSim(&(icCopy.front()), &(ctrlCopy.front()), stm.data(), t0, tof, arcset, pLaw);
+}//=======================================================
+
+void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+    std::vector<double> t_span;
+    // Compute the final time based on whether or not we're using reverse time integration
+    double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+
+    if(bVarStepSize){
+        t_span.reserve(2);
+        t_span.push_back(t0);
+        t_span.push_back(tf);
+    }else{
+        t_span.reserve(numSteps);
+        double dt = (tf - t0)/(numSteps - 1);
+
+        for(int n = 0; n < numSteps; n++){
+            t_span.push_back(t0 + dt*n);
+        }
+    }
+
+    // Construct the tspan vector; call the next level of complication
+    runSim(ic, ctrl0, stm0, t_span, arcset, pLaw);
+}//=======================================================
+
+
+
+
+
+
+
+
+
+
 
 /**
  *  \brief Run a simulation given a set of initial conditions and run time
@@ -323,20 +427,20 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, Contr
  *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
-    if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
-        return;
-    }
+// void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+//     if(arcset == nullptr){
+//         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+//         return;
+//     }
 
-    if(ic.size() >= static_cast<size_t>(arcset->getSysData()->getDynamicsModel()->getCoreStateSize())){
-        std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), t0, tof, arcset, pLaw);
-    }else{
-        printErr("IC size = %zu\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
-    }
-}//=======================================================
+//     if(ic.size() != arcset->getSysData()->getDynamicsModel()->getCoreStateSize()){
+//         printErr("IC size = %zu\n", ic.size());
+//         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+//     }
+
+//     std::vector<double> tempIC = ic;
+//     runSim(&(tempIC[0]), t0, tof, arcset, pLaw);
+// }//=======================================================
 
 /**
  *  \brief Run a simulation given a set of initial conditions and run time
@@ -355,26 +459,33 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
  *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
-    if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
-        return;
-    }
+// void SimEngine::runSim(std::vector<double> ic, const MatrixXRd &stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+//     if(arcset == nullptr){
+//         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+//         return;
+//     }
 
-    if(ic.size() >= static_cast<size_t>(arcset->getSysData()->getDynamicsModel()->getCoreStateSize())){
-        std::vector<double> tempIC = ic;
-        runSim(&(tempIC[0]), stm0, t0, tof, arcset, pLaw);
-    }else{
-        printErr("IC size = %zu\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreStates in the Dynamics Model");
-    }
-}//=======================================================
+//     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+
+//     if(ic.size() != core_dim){
+//         printErr("IC size = %zu\n", ic.size());
+//         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+//     }
+
+//     if(stm0.rows() != core_dim || stm0.cols() != core_dim){
+//         printErr("STM rows = %d, cols = %d, core_dim = %u\n", stm0.rows(), stm0.cols(), core_dim);
+//         throw Exception("SimEngine::runSim: Initial STM size does not match the core state size specified by the Dynamic Model");
+//     }
+    
+//     std::vector<double> tempIC = ic;
+//     runSim(&(tempIC.front()), stm0, t0, tof, arcset, pLaw);
+// }//=======================================================
 
 /**
  *	\brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
  *	\param ic an array of non-dimensional initial states; number
- *    of elements must match the number of <code>coreStates</code> specified 
+ *    of elements must match the number of <code>coreDim</code> specified 
  *    in the system dynamics model
  *	\param t0 the time at the start of the integration, non-dimensional units
  *	\param tof time-of-flight, non-dimensional time units
@@ -382,70 +493,94 @@ void SimEngine::runSim(std::vector<double> ic, MatrixXRd stm0, double t0, double
  *    time, use the setRevTime() function.
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
-    if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
-        return;
-    }
+// void SimEngine::runSim(const double *ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+//     if(arcset == nullptr){
+//         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+//         return;
+//     }
 
-    std::vector<double> t_span;
-    // Compute the final time based on whether or not we're using reverse time integration
-    double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+//     std::vector<double> t_span;
+//     // Compute the final time based on whether or not we're using reverse time integration
+//     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
+//     printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+//     printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
 
-    if(bVarStepSize){
-        t_span.reserve(2);
-        t_span.push_back(t0);
-        t_span.push_back(tf);
-    }else{
-        t_span.reserve(numSteps);
-        double dt = (tf - t0)/(numSteps - 1);
+//     if(bVarStepSize){
+//         t_span.reserve(2);
+//         t_span.push_back(t0);
+//         t_span.push_back(tf);
+//     }else{
+//         t_span.reserve(numSteps);
+//         double dt = (tf - t0)/(numSteps - 1);
 
-        for(int n = 0; n < numSteps; n++){
-            t_span.push_back(t0 + dt*n);
-        }
-    }
+//         for(int n = 0; n < numSteps; n++){
+//             t_span.push_back(t0 + dt*n);
+//         }
+//     }
 
-    int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
-    MatrixXRd stm0 = MatrixXRd::Identity(core_dim, core_dim);
-    runSim(ic, stm0, t_span, arcset, pLaw);
-}//====================================================
+//     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+//     std::vector<double> stm0(core_dim*core_dim, 0);
+//     for(unsigned int i = 0; i < core_dim; i++){
+//         stm0[i*(core_dim+1)] = 1;
+//     }
 
-void SimEngine::runSim(const double *ic, MatrixXRd stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
-    std::vector<double> t_span;
-    // Compute the final time based on whether or not we're using reverse time integration
-    double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+//     std::vector<double> ctrl0;
+//     if(pLaw)
+//         ctrl0.assign(pLaw->getNumStates(), 0);
 
-    if(bVarStepSize){
-        t_span.reserve(2);
-        t_span.push_back(t0);
-        t_span.push_back(tf);
-    }else{
-        t_span.reserve(numSteps);
-        double dt = (tf - t0)/(numSteps - 1);
+//     runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
+// }//====================================================
 
-        for(int n = 0; n < numSteps; n++){
-            t_span.push_back(t0 + dt*n);
-        }
-    }
+// void SimEngine::runSim(const double *ic, const double *ctrl0, const MatrixXRd &stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+//     std::vector<double> t_span;
 
-    runSim(ic, stm0, t_span, arcset, pLaw);
-}//====================================================
+//     if(arcset == nullptr){
+//         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+//         return;
+//     }
+
+//     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+//     if(stm0.rows() != core_dim || stm0.cols() != core_dim){
+//         printErr("STM rows = %d, cols = %d, core_dim = %u\n", stm0.rows(), stm0.cols(), core_dim);
+//         throw Exception("SimEngine::runSim: Initial STM size does not match the core state size specified by the Dynamic Model");
+//     }
+
+//     // Compute the final time based on whether or not we're using reverse time integration
+//     double tf = bRevTime ? t0 - std::abs(tof) : t0 + std::abs(tof);
+//     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  time will span from %.3e to %.3e\n", t0, tf);
+//     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  (Reverse Time is %s)\n", bRevTime ? "ON" : "OFF");
+
+//     if(bVarStepSize){
+//         t_span.reserve(2);
+//         t_span.push_back(t0);
+//         t_span.push_back(tf);
+//     }else{
+//         t_span.reserve(numSteps);
+//         double dt = (tf - t0)/(numSteps - 1);
+
+//         for(int n = 0; n < numSteps; n++){
+//             t_span.push_back(t0 + dt*n);
+//         }
+//     }
+
+//     runSim(ic, ctrl0, stm0.data(), t_span, arcset, pLaw);
+// }//====================================================
 
 /**
  *  \brief Run a simulation in the specified system starting with a set of initial conditions,
  *  at a specified initial time, and integrating for a specified time-of-flight
+ *  
+ *  \details This version of runSim is the only function that directly calls the integrate() function;
+ *  all other runSim() functions reroute to this
+ *  
  *  \param ic an array of non-dimensional initial states; number
- *    of elements must match the number of <code>coreStates</code> specified 
+ *    of elements must match the number of <code>coreDim</code> specified 
  *    in the system dynamics model
- *  \param stm0 initial STM
+ *  \param stm0 initial STM data in row-major order
  *  \param t_span a vector of times to include in the solution.
  *  \param arcset pointer to a trajectory object to store the output trajectory
  */
-void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
         return;
@@ -463,7 +598,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
 
     // Run the simulation
     bIsClean = false;   // Technically, nothing has changed yet, but this flag should be false even if any part of integrate throws an exception
-    integrate(ic, stm0, &(t_span.front()), t_span.size(), arcset);
+    integrate(ic, ctrl0, stm0, &(t_span.front()), t_span.size(), arcset);
 }//====================================================
 
 //-------------------------------------------------------------------------------------------------
@@ -473,8 +608,7 @@ void SimEngine::runSim(const double *ic, MatrixXRd stm0, std::vector<double> t_s
 
 void SimEngine::runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     // Set t0 = 0, use more specific function
-    std::vector<double> tempIC = ic;
-    runSim_manyNodes(&(tempIC.front()), 0, tof, numNodes, arcset, pLaw);
+    runSim_manyNodes(ic, 0, tof, numNodes, arcset, pLaw);
 }//====================================================
 
 void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
@@ -483,6 +617,18 @@ void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arc
 }//====================================================
 
 void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+    // Checks
+    if(arcset == nullptr){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    if(ic.size() < core_dim){
+        printErr("IC size = %zu\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+    }
+
     std::vector<double> tempIC = ic;
     runSim_manyNodes(&(tempIC.front()), t0, tof, numNodes, arcset, pLaw);
 }//====================================================
@@ -503,8 +649,18 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
     t_span[numNodes-1] = t0 + t_sign*std::abs(tof);  // Final node at the desired TOF
 
     unsigned int coreSize = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
-    MatrixXRd stm0 = MatrixXRd::Identity(coreSize, coreSize);
-    runSim(ic, stm0, t_span, arcset, pLaw);
+    
+    std::vector<double> ctrl0;
+    if(pLaw){
+        ctrl0.assign(pLaw->getNumStates(), 0);
+    }
+
+    std::vector<double> stm0(coreSize*coreSize, 0);
+    for(unsigned int i = 0; i < coreSize; i++){
+        stm0[i*(coreSize+1)] = 1;
+    }
+
+    runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
 }//====================================================
 
 //-----------------------------------------------------
@@ -515,20 +671,24 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
  *  \brief Integrate the state EOMs and STM EOMs with additional integration as required by 
  *  specific systems.
  *
- *  This function uses values stored in object-wide variables to determine the direction time flows,
+ *  \details This function uses values stored in member variables to determine the direction time flows,
  *  whether or not to use simple integration, and whether or not to use variable step sizes.
  *
  *  \param ic an array containing the initial state for the trajectory; number
- *    of elements must match the number of <code>coreStates</code> specified 
+ *    of elements must match the number of <code>coreDim</code> specified 
  *    in the system dynamics model
- *  \param stm0 initial STM
+ *  \param ctrl0 initial control state; number of elements must match the number
+ *    of states specified in the control law.
+ *  \param stm0 initial STM in row-major order; number of elements is expected to
+ *    be consistent with a square matrix with side length equal to the number of
+ *    <code>coreDim</code>.
  *  \param t an array of times to integrate over; may contain 2 elements (t0, tf), or a range of times
  *  \param t_dim the dimension of t
  *  \param arcset pointer to a trajectory object to store the output trajectory
  *  
  *  \throws DivergeException if the integrator fails and cannot proceed
  */
-void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int t_dim, Arcset *arcset){
+void SimEngine::integrate(const double *ic, const double *ctrl0, const double *stm0, const double *t, unsigned int t_dim, Arcset *arcset){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::integrate: Arcset pointer is NULL; exiting to avoid memory leaks\n");
         return;
@@ -553,14 +713,31 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         events[i].initialize(arcset->getSysData());
     }
 
-    // Number of states in the most basic EOM propagation for this model
-    const unsigned int core_dim = model->getCoreStateSize();
-    // Number of states used for this propagation
-    const unsigned int ic_dim = core_dim + (!bSimpleIntegration)*(core_dim*core_dim + model->getExtraStateSize());
-    // Max number of states for the most complex EOM propagation for this model
-    const unsigned int full_dim = core_dim + core_dim*core_dim + model->getExtraStateSize();
+    /**
+     *  Data is stored in the state vector according to the following structure
+     *  
+     *  q = [core_state; control_state; stm_elements; extra_state]
+     *  
+     *      core_state      -   a (core_dim x 1) vector that contains the "core state," e.g.,
+     *                          the position, velocity, mass of the spacecraft
+     *      control_state   -   a (ctrl_dim x 1) vector that contains control state information
+     *      stm_elements    -   represents a (core_dim x core_dim) state transition matrix in
+     *                          row-major order
+     *      extra_state     -   a (extra_dim x 1) vector that contains "extra states," e.g.,
+     *  
+     *  If simpleIntegration is enabled, the STM and extra states are not included in the
+     *  integration and their values in the Segment state array are filled by zeros 
+     */
+    const unsigned int core_dim = model->getCoreStateSize();            // The number of states in the most basic EOM propagation
+    const unsigned int stm_dim = core_dim*core_dim;                     // Size of the state-transition matrix
+    const unsigned int extra_dim = model->getExtraStateSize();          // The number of extra states
+    const unsigned int ctrl_dim = eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getNumStates() : 0;  // The number of independent control variables
+
+    const unsigned int ic_dim = core_dim + ctrl_dim + (!bSimpleIntegration)*(stm_dim + extra_dim);     // Number of states used for this propagation
+    const unsigned int full_dim = core_dim + ctrl_dim + stm_dim + extra_dim;       // Max number of states for the most complex EOM propagation for this model
+    
     // dummy extra state variables to save if not all the states are propagated
-    const std::vector<double> extraStates(full_dim - ic_dim, 0);
+    const std::vector<double> extraDim(full_dim - ic_dim, 0);
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
@@ -568,19 +745,12 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     std::vector<double> fullIC(ic_dim, 0);
     std::copy(ic, ic + core_dim, &(fullIC.front()));
 
-    if(stm0.rows() != core_dim || stm0.cols() != core_dim){
-        printErr("STM rows = %d, cols = %d, core_dim = %u\n", stm0.rows(), stm0.cols(), core_dim);
-        throw Exception("SimEngine::integrate: Initial STM size does not match the core state size specified by the Dynamic Model");
-    }
+    // Add the control states to the vector
+    std::copy(ctrl0, ctrl0+ctrl_dim, &(fullIC[core_dim]));
 
-    // ASSUMPTION: STM follows immediately after core states; any extras come after the STM
+    // ASSUMPTION: STM follows immediately after core and control states; any extras come after the STM
     if(!bSimpleIntegration){
-        // Add STM to initial conditions
-        for(unsigned int r = 0; r < static_cast<unsigned int>(core_dim); r++){
-            for(unsigned int c = 0; c < static_cast<unsigned int>(core_dim); c++){
-                fullIC.at(core_dim + r*core_dim + c) = stm0(r,c);
-            }
-        }
+        std::copy(stm0, stm0+core_dim*core_dim, &(fullIC[core_dim + ctrl_dim]));
     }
 
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
@@ -703,7 +873,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
     // Construct a segment with origin at the initial node, undefined terminus, dummy TOF in the correct direction
     Segment seg(id0, Linkable::INVALID_ID, t[1] - t[0]);
     seg.appendState(y, ic_dim);     // Save the initial state in the segment
-    seg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
+    seg.appendState(extraDim);   // Save dummy values for extra states that are not propagated
     seg.appendTime(t[0]);           // Save the initial time in the segment
     model->sim_addSeg(seg, y, t[0], arcset, eomParams);
 
@@ -741,7 +911,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                 lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                 lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
-                lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
+                lastSeg.appendState(extraDim);               // Save dummy values for extra states that are not propagated
                 lastSeg.appendTime(t_int);
                 lastSeg.storeTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
                 lastSeg.setSTM(y+core_dim, core_dim*core_dim);  // Set the STM to be the most recent one
@@ -761,13 +931,13 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
             // Save propagation state to segment
             Segment &lastSeg = arcset->getSegRefByIx(-1);       // Get another reference (not reassignable)
             lastSeg.appendState(y, ic_dim);                     // Save newest state and time
-            lastSeg.appendState(extraStates);                   // Save dummy values for extra states that are not propagated
+            lastSeg.appendState(extraDim);                   // Save dummy values for extra states that are not propagated
             lastSeg.appendTime(t_int);
             propStepCount++;
         }
     }else{
         // Integrate each segment between the input times
-        for (int j = 0; j < t_dim - 1; j++){
+        for (unsigned int j = 0; j < t_dim - 1; j++){
             // define start and end times; t_int will be updated by integrator
             t_int = t[j];
             double tf = t[j+1];
@@ -789,7 +959,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
                 Segment newSeg(nodeID_i, Linkable::INVALID_ID, tf - t_int);
                 newSeg.appendState(y, ic_dim);
-                lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
+                lastSeg.appendState(extraDim);   // Save dummy values for extra states that are not propagated
                 newSeg.appendTime(t_int);
                 model->sim_addSeg(newSeg, y, t_int, arcset, eomParams);
             }
@@ -818,7 +988,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
 
                     lastSeg.setTerminus(idf);                       // Update the terminus to the final node
                     lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
-                    lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
+                    lastSeg.appendState(extraDim);               // Save dummy values for extra states that are not propagated
                     lastSeg.appendTime(t_int);
                     lastSeg.storeTOF();
                     lastSeg.setSTM(y+core_dim, core_dim*core_dim);
@@ -836,7 +1006,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
                 // Save the most recent time and state to the segment
                 Segment &lastSeg = arcset->getSegRefByIx(-1);   // Get another reference (not reassignable)
                 lastSeg.appendState(y, ic_dim);
-                lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
+                lastSeg.appendState(extraDim);               // Save dummy values for extra states that are not propagated
                 lastSeg.appendTime(t_int);
             }
 
@@ -875,7 +1045,7 @@ void SimEngine::integrate(const double *ic, MatrixXRd stm0, const double *t, int
         // Propagation ended without saving the final state
         lastSeg.setTerminus(nodeID_f);
         lastSeg.appendState(y, ic_dim);
-        lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
+        lastSeg.appendState(extraDim);   // Save dummy values for extra states that are not propagated
         lastSeg.appendTime(t_int);
         lastSeg.storeTOF();
         lastSeg.setSTM(y+core_dim, core_dim*core_dim);

@@ -220,13 +220,16 @@ class SimEngine : public Core, public Engine{
 		 *  \name Simulation Methods
 		 *  \{
 		 */
-		void runSim(const double*, double, Arcset*, ControlLaw *pLaw = nullptr);
-		void runSim(std::vector<double>, double, Arcset*, ControlLaw *pLaw = nullptr);
-		void runSim(const double*, double, double, Arcset*, ControlLaw *pLaw = nullptr);
-		void runSim(std::vector<double>, double, double, Arcset*, ControlLaw *pLaw = nullptr);
-		void runSim(const double*, MatrixXRd, double, double, Arcset*, ControlLaw *pLaw = nullptr);
-		void runSim(std::vector<double>, MatrixXRd, double, double, Arcset*, ControlLaw *pLaw = nullptr);
-		void runSim(const double *ic, MatrixXRd, std::vector<double>, Arcset*, ControlLaw *pLaw = nullptr);
+		void runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		void runSim(const double* ic, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		
+		void runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		void runSim(const double* ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		
+		void runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		void runSim(const double* ic, const double* ctrl0, const double* stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		
+		void runSim(const double *ic, const double *ctrl0, const double *stm, std::vector<double> tspan, Arcset*, ControlLaw *pLaw = nullptr);
 
 		void runSim_manyNodes(const double*, double, int, Arcset*, ControlLaw *pLaw = nullptr);
 		void runSim_manyNodes(std::vector<double>, double, int, Arcset*, ControlLaw *pLaw = nullptr);
@@ -290,7 +293,7 @@ class SimEngine : public Core, public Engine{
 		void copyMe(const SimEngine&);
 		void createDefaultEvents(const SysData*);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
-		void integrate(const double*, MatrixXRd, const double*, int, Arcset*);
+		void integrate(const double*, const double*, const double*, const double*, unsigned int, Arcset*);
 		bool locateEvents(const double*, double, Arcset*, int);
 		bool locateEvent_multShoot(const double*, double, int, Arcset*);
 };

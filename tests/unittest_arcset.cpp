@@ -217,12 +217,15 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 	corrector.multShoot(&ltSet, nullptr);
 
 	ltSet.saveToMat("data/ltSet.mat");
+	// ltSet.print();
+
 	Arcset_cr3bp_lt temp(&ltData);
 	std::vector<ControlLaw*> loadedLaws;
 	temp.readFromMat("data/ltSet.mat", loadedLaws);
+	// temp.print();
 
 	BOOST_CHECK(ltSet.getStateByIx(-1) == temp.getStateByIx(-1));
-	BOOST_CHECK(temp.getCtrlLawByIx(0) == ltSet.getCtrlLawByIx(0));
+	BOOST_CHECK(*(temp.getCtrlLawByIx(0)) == *(ltSet.getCtrlLawByIx(0)));
 	BOOST_CHECK(*(ltSet.getCtrlLawByIx(0)) == control);
 	BOOST_CHECK(ltSet.getTOFByIx(-1) == temp.getTOFByIx(-1));
 	BOOST_CHECK(loadedLaws.size() == 1);
@@ -325,7 +328,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 	BOOST_CHECK(ltTraj.getSTMByIx(-1) == ltTemp.getSTMByIx(-1));
 	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));
 	BOOST_CHECK(ltTraj.getTOFByIx(-1) == ltTemp.getTOFByIx(-1));
-	BOOST_CHECK(ltTraj.getCtrlLawByIx(-1) == ltTemp.getCtrlLawByIx(-1));
+	BOOST_CHECK(*(ltTraj.getCtrlLawByIx(-1)) == *(ltTemp.getCtrlLawByIx(-1)));
 	BOOST_CHECK(loadedLaws.size() == 1);
 
 	if(loadedLaws.size() > 0){

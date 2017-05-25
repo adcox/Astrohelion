@@ -77,6 +77,8 @@ SimEngine::SimEngine(const SimEngine& s){
  */
 SimEngine::~SimEngine(){
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
+    if(eomParams)
+        delete(eomParams);
 }//===========================================
 
 //-----------------------------------------------------

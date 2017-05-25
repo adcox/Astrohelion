@@ -2213,11 +2213,15 @@ void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, const char* pVarName){
 
 /**
  *  \brief Read control law IDs from a Matlab file in a variable with the specified name
+ *  
  *  \param pMatFile pointer to an open Matlab file
+ *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  *  \param pVarName name of the variable within the Matlab file
  *  \throws Exception if there are any issues importing the data
  */
-void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*> &pLaws, const char* pVarName){
+void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, const char* pVarName){
 	const unsigned int fieldsPerController = 3;
 
 	matvar_t *pLawData = Mat_VarRead(pMatFile, pVarName);
@@ -2295,26 +2299,35 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 						}
 					}// End of loop through controller fields
 					
-					// Allocate a new control law on the stack; by using a function in 
-					// the DynamicsModel, we ensure that the system-specific derived class
-					// is constructed rather than the base class ControlLaw.
-					ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw();
-					newLaw->setLawID(id);
-					newLaw->setParams(params);
+					// Only proceed if the control is nontrivial
+					if(id != ControlLaw::NO_CTRL){
 
-					// Check to see if the controller has been loaded already
-					bool foundDuplicate = false;
-					for(auto &law : pLaws){
-						if(*law == *newLaw){
-							foundDuplicate = true;
-							break;
+						// Allocate a new control law on the stack; by using a function in 
+						// the DynamicsModel, we ensure that the system-specific derived class
+						// is constructed rather than the base class ControlLaw.
+						ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw();
+						newLaw->setLawID(id);
+						newLaw->setParams(params);
+
+						// Check to see if the controller has been loaded already
+						bool foundDuplicate = false;
+						for(auto &law : refLaws){
+							if(*law == *newLaw){
+								delete(newLaw);
+								newLaw = law;
+								foundDuplicate = true;
+								break;
+							}
 						}
-					}
 
-					if(foundDuplicate)
-						delete(newLaw);
-					else
-						pLaws.push_back(newLaw);
+						// Save the pointer to return back to the top level for
+						// further use
+						if(!foundDuplicate)
+							refLaws.push_back(newLaw);
+
+						// Assign the control law to the segment
+						segs[s].setCtrlLaw(newLaw);
+					}
 				}// End loop through structs
 			}else{
 				Mat_VarFree(pLawData);
@@ -2798,22 +2811,30 @@ void BaseArcset::saveSegCtrlLaw(mat_t *pMatFile, const char *pVarName) const{
 
 	for(unsigned int s = 0; s < segs.size(); s++){
 		ControlLaw *pLaw = segs[s].getCtrlLaw();
+
+		// Initialize variables to represent the no control case
+		unsigned int id = 0, numStates = 0;
+		std::vector<double> params;
+		
+		// Update values if a control law has been implemented
 		if(pLaw){
-			unsigned int id = pLaw->getLawID();
-			unsigned int numStates = pLaw->getNumStates();
-			std::vector<double> params = pLaw->getParams();
-
-			size_t field_dims[] = {1,1};
-			field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-			Mat_VarSetStructFieldByName(storageStruct, fieldnames[0], s, field);
-
-			field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-			Mat_VarSetStructFieldByName(storageStruct, fieldnames[1], s, field);
-
-			field_dims[0] = params.size();
-			field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-			Mat_VarSetStructFieldByName(storageStruct, fieldnames[2], s, field);
+			id = pLaw->getLawID();
+			numStates = pLaw->getNumStates();
+			params = pLaw->getParams();
 		}
+
+		// Save structure fields
+		size_t field_dims[] = {1,1};
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		Mat_VarSetStructFieldByName(storageStruct, fieldnames[0], s, field);
+
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		Mat_VarSetStructFieldByName(storageStruct, fieldnames[1], s, field);
+
+		field_dims[0] = params.size();
+		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		Mat_VarSetStructFieldByName(storageStruct, fieldnames[2], s, field);
+		
 	}
 
 	saveVar(pMatFile, storageStruct, pVarName, MAT_COMPRESSION_NONE);

@@ -83,6 +83,13 @@ public:
 	void multShoot_createOutput(const MultShootData*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
 	//\}
+
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
+	ControlLaw* createControlLaw() const override;
+	//\}
 };
 
 }

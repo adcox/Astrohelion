@@ -220,16 +220,24 @@ class SimEngine : public Core, public Engine{
 		 *  \name Simulation Methods
 		 *  \{
 		 */
+
+		// Assume t0, ctrl0, stm0
 		void runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		void runSim(const double* ic, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		
+		// Assume ctrl0, stm0
 		void runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		void runSim(const double* ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		
-		void runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
-		void runSim(const double* ic, const double* ctrl0, const double* stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
+		// Assume stm0
+		void runSim(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw);
+
+		// No assumptions
+		void runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw);
+		void runSim(const double* ic, const double* ctrl0, const double* stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw);
 		
-		void runSim(const double *ic, const double *ctrl0, const double *stm, std::vector<double> tspan, Arcset*, ControlLaw *pLaw = nullptr);
+		// No assumptions, final fcn before calling integrate()
+		void runSim(const double *ic, const double *ctrl0, const double *stm, std::vector<double> tspan, Arcset*, ControlLaw *pLaw);
 
 		void runSim_manyNodes(const double*, double, int, Arcset*, ControlLaw *pLaw = nullptr);
 		void runSim_manyNodes(std::vector<double>, double, int, Arcset*, ControlLaw *pLaw = nullptr);

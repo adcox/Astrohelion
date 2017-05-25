@@ -63,6 +63,8 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double T, double Isp){
 	params.assign(2,0);
 	params[0] = T;
 	params[1] = Isp;
+
+	init();
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -111,28 +113,29 @@ void ControlLaw_cr3bp_lt::setIsp(double Isp){ params[1] = Isp; }
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysData,
+void ControlLaw_cr3bp_lt::getLaw_Accel(double t, const double *s, const SysData *pSysData,
 	double *law, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSysData);
 
 	switch(lawID){
 		case Law_tp::CONST_C_2D_LEFT:
-			getLaw_ConstC_2D(t, s, pSysData_lt, law, len, -1);
+			getAccel_ConstC_2D(t, s, pSysData_lt, law, len, -1);
 			break;
 		case Law_tp::CONST_C_2D_RIGHT:
-			getLaw_ConstC_2D(t, s, pSysData_lt, law, len, 1);
+			getAccel_ConstC_2D(t, s, pSysData_lt, law, len, 1);
 			break;
 		case Law_tp::PRO_VEL:
-			getLaw_Along_Vel(t, s, pSysData_lt, law, len, 1);
+			getAccel_Along_Vel(t, s, pSysData_lt, law, len, 1);
 			break;
 		case Law_tp::ANTI_VEL:
-			getLaw_Along_Vel(t, s, pSysData_lt, law, len, -1);
+			getAccel_Along_Vel(t, s, pSysData_lt, law, len, -1);
 			break;
 		case Law_tp::GENERAL_CONST_F:
-			// Todo: Add Code
+			getAccel_GeneralDir(t, s, pSysData_lt, law, len);
+			break;
 		default:
-			ControlLaw::getLaw(t, s, pSysData, law, len);
+			ControlLaw::getLaw_Accel(t, s, pSysData, law, len);
 	}
 }//====================================================
 
@@ -150,16 +153,19 @@ void ControlLaw_cr3bp_lt::getLaw(double t, const double *s, const SysData *pSysD
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const SysData *pSys, 
+void ControlLaw_cr3bp_lt::getLaw_AccelPartials(double t, const double *s, const SysData *pSys, 
 	double *partials, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
 	switch(lawID){
 		case Law_tp::CONST_C_2D_LEFT:
-			getPartials_State_ConstC_2D(t, s, pSysData_lt, partials, len, -1);
+			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len, -1);
 			break;
 		case Law_tp::CONST_C_2D_RIGHT:
-			getPartials_State_ConstC_2D(t, s, pSysData_lt, partials, len, 1);
+			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len, 1);
+			break;
+		case Law_tp::GENERAL_CONST_F:
+			getAccelPartials_GeneralDir(t, s, pSysData_lt, partials, len);
 			break;
 		case Law_tp::PRO_VEL:
 			// getLaw_Pro_Vel(t, s, pSysData, law, len);
@@ -167,10 +173,9 @@ void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const Sys
 		case Law_tp::ANTI_VEL:
 			// getLaw_Anti_Vel(t, s, pSysData, law, len);
 			// break;
-		case Law_tp::GENERAL_CONST_F:
-			// ToDo: Add code
+		
 		default:
-			ControlLaw::getPartials_State(t, s, pSys, partials, len);
+			ControlLaw::getLaw_AccelPartials(t, s, pSys, partials, len);
 	}
 	(void) t;
 	(void) s;
@@ -193,7 +198,7 @@ void ControlLaw_cr3bp_lt::getPartials_State(double t, const double *s, const Sys
  *  \param len number of elements in the <tt>law</tt> array
  *  \param sign specifies which of the ConstC_2D control laws to evaluate: +1 for RIGHT, -1 for LEFT
  */
-void ControlLaw_cr3bp_lt::getLaw_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
+void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len, int sign) const{
 
 	if(std::abs(sign) != 1)
@@ -202,9 +207,13 @@ void ControlLaw_cr3bp_lt::getLaw_ConstC_2D(double t, const double *s, const SysD
 	if(len < 3)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
 
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+
 	double v = sqrt(s[3]*s[3] + s[4]*s[4]);
-	law[0] = sign*s[4]/v;
-	law[1] = -sign*s[3]/v;
+	law[0] = sign*(f/s[6])*s[4]/v;
+	law[1] = -sign*(f/s[6])*s[3]/v;
 	law[2] = 0;
 
 	(void) pSys;
@@ -223,7 +232,7 @@ void ControlLaw_cr3bp_lt::getLaw_ConstC_2D(double t, const double *s, const SysD
  *  \param len number of elements in the <tt>law</tt> array
  *  \param sign specifies which of the control laws to evaluate: +1 for with-velocity, -1 for anti-velocity
  */
-void ControlLaw_cr3bp_lt::getLaw_Along_Vel(double t, const double *s, const SysData_cr3bp_lt *pSys,
+void ControlLaw_cr3bp_lt::getAccel_Along_Vel(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len, int sign) const{
 
 	if(std::abs(sign) != 1)
@@ -232,23 +241,36 @@ void ControlLaw_cr3bp_lt::getLaw_Along_Vel(double t, const double *s, const SysD
 	if(len < 3)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_Pro_Vel: law data length must be at least 3!");
 
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	law[0] = sign*s[3]/v;
-	law[1] = sign*s[4]/v;
-	law[2] = sign*s[5]/v;
+	law[0] = sign*(f/s[6])*s[3]/v;
+	law[1] = sign*(f/s[6])*s[4]/v;
+	law[2] = sign*(f/s[6])*s[5]/v;
 
 	(void) pSys;
 	(void) t;
 }//====================================================
 
-void ControlLaw_cr3bp_lt::getLaw_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
+void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
 
 	(void) t;
-	(void) s;
-	(void) pSys;
-	(void) law;
-	(void) len;
+
+	if(len < 3)
+		throw Exception("ControlLaw_cr3bp_lt::getLaw_GeneralDir: law data length must be at least 3!");
+
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+
+	// Direction is stored in the state variables after the core states
+	unsigned int core_dim = pSys->getDynamicsModel()->getCoreStateSize();
+	law[0] = (f/s[6])*s[core_dim+0];
+	law[1] = (f/s[6])*s[core_dim+1];
+	law[2] = (f/s[6])*s[core_dim+2];
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -267,7 +289,9 @@ void ControlLaw_cr3bp_lt::getLaw_GeneralDir(double t, const double *s, const Sys
  *  \param len number of elements in the <tt>law</tt> array
  *  \param sign specifies which of the ConstC_2D control laws to evaluate: +1 for RIGHT, -1 for LEFT
  */
-void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys, double *partials, unsigned int len, int sign) const{
+void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *partials, unsigned int len, int sign) const{
+
 	if(std::abs(sign) != 1)
 		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
 
@@ -286,7 +310,6 @@ void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s,
 	// Initialize all partials to zero
 	for(unsigned int i = 0; i < len; i++){ partials[i] = 0; }
 
-	// dax/dvx
 	partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*pow(v,3));							// dax/dvx
 	partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*pow(v,3)));			// dax/dvy
 	partials[7*0 + 6] = -sign*f*s[4]/(s[6]*s[6]*v);									// dax/dm
@@ -294,6 +317,29 @@ void ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D(double t, const double *s,
 	partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*pow(v,3)));			// day/dvx
 	partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*pow(v,3));							// day/dvy
 	partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);									// day/dm
+
+	(void) t;
+}//====================================================
+
+void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *partials, unsigned int len) const{
+
+	if(len != 21)
+		throw Exception("ControlLaw_cr3bp_lt::getPartials_State_GeneralDir: Expects len = 21");
+
+	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz, stm_elements]
+	// partials: row 1 = partials of ax w.r.t. states, row 2 = partials of ay w.r.t. states, etc.
+
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+
+	// Initialize all partials to zero
+	for(unsigned int i = 0; i < len; i++){ partials[i] = 0; }
+
+	partials[7*0 + 6] = -f*s[7]/(s[6]*s[6]);	// dax/dm
+	partials[7*1 + 6] = -f*s[8]/(s[6]*s[6]);	// day/dm
+	partials[7*2 + 6] = -f*s[9]/(s[6]*s[6]);	// daz/dm
 
 	(void) t;
 }//====================================================

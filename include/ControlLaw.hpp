@@ -86,9 +86,9 @@ public:
 	 *  \name Dynamics Functions
 	 *  \{
 	 */
-	virtual void getLaw(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const;
-	virtual void getLaw_deriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const;
-	virtual void getPartials_State(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getLaw_Accel(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const;
+	virtual void getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const;
+	virtual void getLaw_AccelPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	virtual std::string lawIDToString(unsigned int) const;
 	//\}
 
@@ -96,8 +96,6 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	virtual void saveToMat(mat_t*) const {};
-	virtual void readFromMat(mat_t*) {};
 
 	//\}
 	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented

@@ -433,13 +433,14 @@ void Arcset::saveCmds(mat_t* pMatFile) const{
 	saveNodeStates(pMatFile);
 	saveNodeStateDeriv(pMatFile);
 	saveNodeTimes(pMatFile);
+	saveNodeCtrl(pMatFile);
 
 	saveSegStates(pMatFile);
 	saveSegTimes(pMatFile);
-	
 	saveSegTOF(pMatFile);
 	saveSegSTMs(pMatFile);
 	saveSegCtrlLaw(pMatFile);
+
 	pSysData->saveToMat(pMatFile);
 }//====================================================
 
@@ -449,15 +450,15 @@ void Arcset::saveCmds(mat_t* pMatFile) const{
  *  \param filepath the path to the matlab data file
  *  \throws Exception if the data file cannot be opened
  */
-void Arcset::readFromMat(const char *filepath){
+void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws){
 
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
 	if(NULL == matfp){
-		throw Exception("Arcset: Could not load data from file");
+		throw Exception("Arcset::loadFromMat Could not load data from file");
 	}else{
 		try{
-			readCmds(matfp);
+			readCmds(matfp, refLaws);
 		}catch(std::exception &e){
 			Mat_Close(matfp);
 			throw e;
@@ -475,21 +476,23 @@ void Arcset::readFromMat(const char *filepath){
  *  \param pMatFile pointer to an open Matlab file
  *  \todo Remove backward compatibility code in future (today: May 3 2017)
  */
-void Arcset::readCmds(mat_t *pMatFile){
+void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 	try{
 		initNodesSegsFromMat(pMatFile);
 
 		readNodeStatesFromMat(pMatFile);
 		readNodeStateDerivFromMat(pMatFile);
 		readNodeTimesFromMat(pMatFile);
+		readNodeCtrlFromMat(pMatFile);
 
 		readSegStatesFromMat(pMatFile);
 		readSegTimesFromMat(pMatFile);
 		readSegSTMFromMat(pMatFile);
 		readSegTOFFromMat(pMatFile);
-		readSegCtrlLawFromMat(pMatFile);
+		readSegCtrlLawFromMat(pMatFile, refLaws);
 	}catch(Exception &e){
 		// if file was saved using older style, try slightly different read commands
+		printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
 
 		try{
 			// Old trajectory save
@@ -498,6 +501,8 @@ void Arcset::readCmds(mat_t *pMatFile){
 			readNodeTimesFromMat(pMatFile, VARNAME_DEP_TIME);
 		}catch(Exception &e){
 			// Old nodeset save
+			printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
+
 			initNodesSegsFromMat(pMatFile, VARNAME_DEP_NODE);
 			readNodeStatesFromMat(pMatFile, VARNAME_DEP_NODE);
 			readNodeTimesFromMat(pMatFile, VARNAME_DEP_EPOCH);
@@ -507,9 +512,8 @@ void Arcset::readCmds(mat_t *pMatFile){
 		readNodeStateDerivFromMat(pMatFile);
 		readSegSTMFromMat(pMatFile);
 		readSegTOFFromMat(pMatFile);
-		readSegCtrlLawFromMat(pMatFile);
+		readSegCtrlLawFromMat(pMatFile, refLaws);
 	}
 }//====================================================
-
 
 }// End of astrohelion namespace

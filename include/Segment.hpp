@@ -86,7 +86,8 @@ public:
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
 	std::vector<double> getStateVector() const;
-	std::vector<double> getStateByRow(int, unsigned int) const;
+	unsigned int getStateWidth() const;
+	std::vector<double> getStateByRow(int) const;
 	int getTerminus() const;
 	std::vector<double> getTimeVector() const;
 	double getTimeByIx(int) const;
@@ -99,6 +100,7 @@ public:
 	void setID(int) override;
 	void setOrigin(int);
 	void setStateVector(std::vector<double>);
+	void setStateWidth(unsigned int);
 	void setTerminus(int);
 	void setTimeVector(std::vector<double>);
 	void setTOF(double);
@@ -142,6 +144,9 @@ protected:
 	 * contains a single state from the integrator
 	 */
 	std::vector<double> states {};
+
+	/** Size of one state vector (row) in the states array*/
+	unsigned int stateWidth = 0;
 };
 
 }// END of Astrohelion namespace

@@ -62,8 +62,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
 	// Make sure the states match
 	std::vector<double> initialNodeState = traj.getStateByIx(0);
 	std::vector<double> finalNodeState = traj.getStateByIx(-1);
-	std::vector<double> initialSegState = traj.getSegByIx(0).getStateByRow(0, 42);	// 42 (6 + 36) state variables per row
-	std::vector<double> finalSegState = traj.getSegByIx(-1).getStateByRow(-1, 42);
+	std::vector<double> initialSegState = traj.getSegByIx(0).getStateByRow(0);
+	std::vector<double> finalSegState = traj.getSegByIx(-1).getStateByRow(-1);
 
 	for(unsigned int i = 0; i < 6; i++){
 		BOOST_CHECK(std::abs(initialNodeState[i] - initialSegState[i]) < engine.getAbsTol());

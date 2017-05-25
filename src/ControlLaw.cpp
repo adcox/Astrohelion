@@ -59,6 +59,7 @@ ControlLaw::ControlLaw(unsigned int id, std::vector<double> params){
  */
 ControlLaw& ControlLaw::operator =(const ControlLaw &law){
 	copyMe(law);
+	return *this;
 }//====================================================
 
 /**
@@ -135,19 +136,19 @@ void ControlLaw::setParams(std::vector<double> params){
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the output of a control law
- * 	\details A set of outputs are computed according to the specified control law, given
- * 	the input time, state, and system data.
+ *  \brief Retrieve the output of a control law: a set of time derivatives that are incorporated
+ *  into the acceleration values in the EOMs
+ * 	\details In general, three accelerations are stored in <code>law</code>
  * 	
  *  \param t time parameter
  *  \param s state vector
  *  \param pSys system data object
- *  \param law empty, initialized array to store the control law output in
+ *  \param law empty, initialized array in which to store the control law acceleration outputs
  *  \param len number of elements in the <tt>law</tt> array
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const{
+void ControlLaw::getLaw_Accel(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
 			// Handle default case with no control
@@ -164,7 +165,7 @@ void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, double *
 }//====================================================
 
 /**
- *  \brief Retrieve the derivative of the control law
+ *  \brief Retrieve the time derivatives of control states
  *  \details The behavior of this function defaults to returning
  *  all zeros for the derivatives, which is accurate for control laws that hold
  *  parameters constant along a thrust arc. By overriding this function in derived
@@ -173,10 +174,10 @@ void ControlLaw::getLaw(double t, const double *s, const SysData *pSys, double *
  *  \param t nondimensional integration time
  *  \param s integration state vector (from SimEngine / DynamicsModel)
  *  \param pSys pointer to the system data object
- *  \param deriv pointer to an array in which to store the derivative of the law
+ *  \param deriv pointer to an array in which to store the time-derivative of the control states
  *  \param int number of elements in the derivative array
  */
-void ControlLaw::getLaw_deriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
+void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
 		default:
@@ -191,19 +192,18 @@ void ControlLaw::getLaw_deriv(double t, const double *s, const SysData *pSys, do
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  \brief Retrieve the partial derivatives of the acceleration outputs with respect to state variables
  *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
  *  states at the given time, state, in the specified system
  * 
  *  \param t time parameter
  *  \param s state vector
  *  \param pSys system data object
- *  \param partials empty, initialized array to store the control law derivatives in
- *  \param len number of elements in the <tt>law</tt> array
- *  
- *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
+ *  \param partials empty, initialized array in which to store the control law 
+ *  acceleration partial derivatives
+ *  \param len number of elements in the <tt>partials</tt> array
  */
-void ControlLaw::getPartials_State(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
+void ControlLaw::getLaw_AccelPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
 			// Handle default case with no control
@@ -260,4 +260,5 @@ std::string ControlLaw::lawIDToString(unsigned int id) const{
 	}
 }//====================================================
 
-}
+
+}// End of astrohelion namespace

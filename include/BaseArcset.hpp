@@ -202,11 +202,12 @@ public:
 	 *  \name *File I/O
 	 *  \{
 	 */
+
 	/**
 	 *  \brief Loads the object from a Matlab binary file
 	 *  \param filepath the filepath to the Matlab file
 	 */
-	virtual void readFromMat(const char *filepath) = 0;
+	virtual void readFromMat(const char *filepath, std::vector<ControlLaw*>&) = 0;
 
 	/**
 	 *	\brief Saves the object to a Matlab binary file
@@ -261,20 +262,22 @@ protected:
 	void initNodesSegsFromMat(mat_t *, const char* pStateVarName = VARNAME_NODESTATE);
 	
 	// Read Node Data
-	void readNodeTimesFromMat(mat_t*, const char* pVarName = VARNAME_NODETIME);
+	void readNodeCtrlFromMat(mat_t*, const char* pVarName = VARNAME_NODECTRL);
 	void readNodeExtraParamFromMat(mat_t*, std::string, const char*);
 	void readNodeExtraParamVecFromMat(mat_t*, std::string, size_t, const char*);
 	void readNodeStatesFromMat(mat_t*, const char* pVarName = VARNAME_NODESTATE);
 	void readNodeStateDerivFromMat(mat_t*, const char* pVarName = VARNAME_STATE_DERIV);
-	
+	void readNodeTimesFromMat(mat_t*, const char* pVarName = VARNAME_NODETIME);
+
 	// Read Segment Data
-	void readSegCtrlLawFromMat(mat_t*, const char* pVarName = VARNAME_CTRL_LAW);
+	void readSegCtrlLawFromMat(mat_t*, std::vector<ControlLaw*>&, const char* pVarName = VARNAME_SEGCTRL);
 	void readSegStatesFromMat(mat_t*, const char* pVarName = VARNAME_SEGSTATE);
 	void readSegSTMFromMat(mat_t*, const char* pVarName = VARNAME_STM);
 	void readSegTimesFromMat(mat_t*, const char* pVarName = VARNAME_SEGTIME);
 	void readSegTOFFromMat(mat_t*, const char* pVarName = VARNAME_TOF);
 
 	// Save Node Data
+	void saveNodeCtrl(mat_t*, const char *pVarName = VARNAME_NODECTRL) const;
 	void saveNodeExtraParam(mat_t*, std::string, const char*) const;
 	void saveNodeExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
 	void saveNodeStates(mat_t*, const char* pVarName = VARNAME_NODESTATE) const;
@@ -282,7 +285,7 @@ protected:
 	void saveNodeStateDeriv(mat_t*, const char* pVarName = VARNAME_STATE_DERIV) const;
 
 	// Save Segment Data
-	void saveSegCtrlLaw(mat_t*, const char* pVarName = VARNAME_CTRL_LAW) const;
+	void saveSegCtrlLaw(mat_t*, const char* pVarName = VARNAME_SEGCTRL) const;
 	void saveSegStates(mat_t*, const char* pVarName = VARNAME_SEGSTATE) const;
 	void saveSegSTMs(mat_t*, const char* pVarName = VARNAME_STM) const;
 	void saveSegTimes(mat_t*, const char *pVarName = VARNAME_SEGTIME) const;

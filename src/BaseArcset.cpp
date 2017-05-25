@@ -325,6 +325,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	std::vector<double> linkSegStates, linkSegTimes;
 	double linkTOF = tof;
 	ControlLaw *pLinkCtrlLaw = nullptr;
+	unsigned int linkStateWidth = linkFrom_seg.getStateWidth();
 
 	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
 	// To avoid having a segment with a TOF of zero, we delete one and update the
@@ -394,6 +395,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 		std::vector<double> extra(pSysData->getDynamicsModel()->getExtraStateSize(), 0);
 
 		// Append state, STM, and extra states for the origin and terimal nodes that the link segment connects to
+		// Do not add any control information; the default control law is set to nullptr
 		linkSegStates.insert(linkSegStates.end(), q0.begin(), q0.end());
 		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
 		linkSegStates.insert(linkSegStates.end(), extra.begin(), extra.end());
@@ -401,6 +403,8 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 		linkSegStates.insert(linkSegStates.end(), qf.begin(), qf.end());
 		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
 		linkSegStates.insert(linkSegStates.end(), extra.begin(), extra.end());
+
+		linkStateWidth = q0.size() + coreSize*coreSize + extra.size();
 	}
 	// print();
 	bInChronoOrder = false;
@@ -408,6 +412,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	linkSeg.setSTM(linkSTM);
 	linkSeg.setCtrlLaw(pLinkCtrlLaw);
 	linkSeg.setStateVector(linkSegStates);
+	linkSeg.setStateWidth(linkStateWidth);
 	linkSeg.setTimeVector(linkSegTimes);
 	
 	// linkSeg.print();
@@ -565,6 +570,9 @@ void BaseArcset::deleteNode(int id){
 				ControlLaw* law1 = pTermSeg->getCtrlLaw();
 				ControlLaw* law2 = pOrigSeg->getCtrlLaw();
 
+				// Use the control law information from pTermSeg, so use its state width info too
+				combo.setStateWidth(pTermSeg->getStateWidth());
+
 				// Replace the two segments with the new combined one
 				deleteSeg(id1);	// CANNOT USE pTermSeg pointer AFTER THIS LINE
 				deleteSeg(id2);	// CANNOT USE pOrigSeg pointer AFTER THIS LINE
@@ -605,6 +613,9 @@ void BaseArcset::deleteNode(int id){
 
 				// Get the IDs of the segments; deleting id1 will change what pForwardSeg points to, which will affect the getID() return value
 				int id1 = pRevSeg->getID(), id2 = pForwardSeg->getID();
+
+				// Use the control law information from pRevSeg, so use its state width info too
+				combo.setStateWidth(pRevSeg->getStateWidth());
 
 				// Get control laws of the segments
 				ControlLaw* law1 = pRevSeg->getCtrlLaw();
@@ -712,8 +723,7 @@ std::vector<double> BaseArcset::getStateDeriv(int id){
 			// Control laws are defined on segments, but state derivatives are stored on nodes...
 			// Get the control law associated with the first segment linked to the node (should definitely be one)
 			// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
-			Segment seg = segs[segIDMap[nodes[ix].getLink(0)]];
-			EOM_ParamStruct params(pSysData, seg.getCtrlLaw());
+			EOM_ParamStruct params(pSysData, segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw());
 
 			std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
 			nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
@@ -744,8 +754,7 @@ std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 		// Control laws are defined on segments, but state derivatives are stored on nodes...
 		// Get the control law associated with the first segment linked to the node (should definitely be one)
 		// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
-		Segment seg = segs[segIDMap[nodes[ix].getLink(0)]];
-		EOM_ParamStruct params(pSysData, seg.getCtrlLaw());
+		EOM_ParamStruct params(pSysData, segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw());
 
 		std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
 		nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
@@ -2208,44 +2217,159 @@ void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, const char* pVarName){
  *  \param pVarName name of the variable within the Matlab file
  *  \throws Exception if there are any issues importing the data
  */
-void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pLawMat = Mat_VarRead(pMatFile, pVarName);
-	if(pLawMat == NULL){
-		throw Exception("BaseArcset::readCtrlLawFromMat: Could not read data vector");
+void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*> &pLaws, const char* pVarName){
+	const unsigned int fieldsPerController = 3;
+
+	matvar_t *pLawData = Mat_VarRead(pMatFile, pVarName);
+	if(pLawData == NULL){
+		throw Exception("BaseArcset::readSegCtrlLawFromMat: Could not read data vector");
 	}else{
-		unsigned int numSteps = pLawMat->dims[0];
+		unsigned int numStructs = (pLawData->dims[0])*(pLawData->dims[1]);
 
 		if(segs.size() == 0){
-			Mat_VarFree(pLawMat);
-			throw Exception("BaseArcset::readCtrlLawFromMat: Segment vector has not been initialized");
+			Mat_VarFree(pLawData);
+			throw Exception("BaseArcset::readSegCtrlLawFromMat: Segment vector has not been initialized");
 		}
 
-		if(numSteps != segs.size()){
-			Mat_VarFree(pLawMat);
-			throw Exception("BaseArcset::readCtrlLawFromMat: Control Law vector has different size than the initialized segment evctor");
+		if(numStructs != segs.size()){
+			Mat_VarFree(pLawData);
+			throw Exception("BaseArcset::readSegCtrlLawFromMat: Control Law vector has different size than the initialized segment evctor");
 		}
 
-		if(pLawMat->dims[1] != 1){
-			Mat_VarFree(pLawMat);
-			throw Exception("BaseArcset::readCtrlLawFromMat: Incompatible data file: Contrl Law vector has more than one column");
-		}
+		if(pLawData->class_type == MAT_C_STRUCT && pLawData->data_type == MAT_T_STRUCT){
+			matvar_t **fields = static_cast<matvar_t **>(pLawData->data);
+			
+			if(fields){
 
-		if(pLawMat->class_type == MAT_C_UINT32 && pLawMat->data_type == MAT_T_UINT32){
-			unsigned int *data = static_cast<unsigned int *>(pLawMat->data);
+				// Loop through the controllers; should be same as number of segs (checked above)
+				for(unsigned int s = 0; s < numStructs; s++){
+					unsigned int id = 0;
+					std::vector<double> params;
 
-			if(data != NULL){
-				for(unsigned int i = 0; i < numSteps; i++){
-					//segs[i].setCtrlLaw(data[i]);
-					// Need to implement a different way to load/save these
-				}
+					// Loop through fields within one controller structure
+					for(unsigned int f = 0; f < fieldsPerController; f++){
+
+						matvar_t *oneField = fields[s*fieldsPerController + f];
+						if(oneField){
+							switch(f){
+								case 0: // lawID
+								{
+									if(oneField->class_type == MAT_C_INT32 && oneField->data_type == MAT_T_INT32){
+										unsigned int *intData = static_cast<unsigned int *>(oneField->data);
+
+										if(intData)
+											id = intData[0];
+										else{
+											Mat_VarFree(pLawData);
+											throw Exception("BaseArcset::readSegCtrlLawFromMat: controller ID data is NULL");
+										}
+									}else{
+										Mat_VarFree(pLawData);
+										throw Exception("BaseArcset::readSegCtrlLawFromMat: controller ID field has wrong class type or data type");
+									}
+									break;
+								}//-----------------------------------
+								case 1: // numStates
+									// No need to read this in; will be populated when ControlLaw is constructed
+									break;
+								//-----------------------------------
+								case 2: // params
+								{
+									if(oneField->class_type == MAT_C_DOUBLE && oneField->data_type == MAT_T_DOUBLE){
+										double *doubleData = static_cast<double *>(oneField->data);
+
+										if(doubleData){
+											unsigned int len = oneField->dims[0] * oneField->dims[1];
+											params.insert(params.begin(), doubleData, doubleData + len);	
+										}else{
+											Mat_VarFree(pLawData);
+											throw Exception("BaseArcset::readSegCtrlLawFromMat: controller params data is NULL");
+										}
+									}else{
+										Mat_VarFree(pLawData);
+										throw Exception("BaseArcset::readSegCtrlLawFromMat: controller params field has wrong class type or data type");
+									}
+									break;
+								}//-----------------------------------
+							}// End of Switch/Case
+						}
+					}// End of loop through controller fields
+					
+					// Allocate a new control law on the stack; by using a function in 
+					// the DynamicsModel, we ensure that the system-specific derived class
+					// is constructed rather than the base class ControlLaw.
+					ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw();
+					newLaw->setLawID(id);
+					newLaw->setParams(params);
+
+					// Check to see if the controller has been loaded already
+					bool foundDuplicate = false;
+					for(auto &law : pLaws){
+						if(*law == *newLaw){
+							foundDuplicate = true;
+							break;
+						}
+					}
+
+					if(foundDuplicate)
+						delete(newLaw);
+					else
+						pLaws.push_back(newLaw);
+				}// End loop through structs
+			}else{
+				Mat_VarFree(pLawData);
+				throw Exception("BaseArcset::readSegCtrlLawFromMat: Structure array is null");
 			}
 		}else{
-			Mat_VarFree(pLawMat);
-			throw Exception("BaseArcset::readCtrlLawFromMat: Incompatible data file: unsupported data type or class");
+			Mat_VarFree(pLawData);
+			throw Exception("BaseArcset::readSegCtrlLawFromMat: Incompatible data file: unsupported data type or class");
 		}
 	}
-	Mat_VarFree(pLawMat);
+	Mat_VarFree(pLawData);
 }//================================================
+
+/**
+ *  \brief Read control state vector data from a Matlab data file
+ * 
+ *  \param pMatFile Pointer to an open Matlab data file
+ *  \param pVarName Name of the control cell array in the data file
+ */
+void BaseArcset::readNodeCtrlFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pCtrlCell = Mat_VarRead(pMatFile, pVarName);
+	
+	if(pCtrlCell == NULL){
+		throw Exception("BaseArcset::readNodeCtrlFromMat: Could not read state data vector");
+	}else{
+		unsigned int numNodes = pCtrlCell->dims[0];
+		
+		if(nodes.size() != numNodes){
+			Mat_VarFree(pCtrlCell);
+			throw Exception("BaseArcset::readNodeCtrlFromMat: Node vector has been initialized to a different size than the file has data for");
+		}
+
+		if(pCtrlCell->class_type == MAT_C_CELL && pCtrlCell->data_type == MAT_T_DOUBLE){
+			Mat_VarFree(pCtrlCell);
+			throw Exception("BaseArcset::readNodeCtrlFromMat: Node control variable is not a cell array.");
+		}
+
+		matvar_t **cell_elements = static_cast<matvar_t **>(pCtrlCell->data);
+
+		for(unsigned int n = 0; n < numNodes; n++){
+			if(cell_elements[n]->class_type == MAT_C_DOUBLE && cell_elements[n]->data_type == MAT_T_DOUBLE){
+				unsigned int numSteps = cell_elements[n]->dims[0];	
+				if(numSteps > 0){
+					double *data = static_cast<double *>(cell_elements[n]->data);
+					std::vector<double> ctrl(data, data+numSteps);
+					nodes[n].setExtraParamVec(PARAMKEY_CTRL, ctrl);
+				}
+			}else{
+				Mat_VarFree(pCtrlCell);
+				throw Exception("BaseArcset::readNodeCtrlFromMat: Cell element is not a double array.");
+			}
+		}
+	}
+	Mat_VarFree(pCtrlCell);
+}//===============================================
 
 /**
  *  \brief Read values of the specified extra paramter from a matlab file
@@ -2344,8 +2468,6 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 	if(pStateCell == NULL){
 		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
 	}else{
-		const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
-		const unsigned int full_size = core_size + core_size*core_size + pSysData->getDynamicsModel()->getExtraStateSize();
 		unsigned int numSegs = pStateCell->dims[0];
 		
 		if(segs.size() != numSegs){
@@ -2364,16 +2486,18 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
 			if(cell_elements[s] != nullptr && 
 				cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
 
-				unsigned int numSteps = (cell_elements[s]->dims[0])/full_size;	
+				unsigned int width = cell_elements[s]->dims[1];
+				unsigned int numSteps = (cell_elements[s]->dims[0])/width;	
 				double *data = static_cast<double *>(cell_elements[s]->data);
 
+				segs[s].setStateWidth(width);
 				if(data != nullptr){
 					for(unsigned int i = 0; i < numSteps; i++){
-						std::vector<double> state(full_size);
-						for(unsigned int c = 0; c < full_size; c++)
+						std::vector<double> state(width);
+						for(unsigned int c = 0; c < width; c++)
 							state[c] = data[c*numSteps + i];
 
-						segs[s].appendState(&(state.front()), full_size);
+						segs[s].appendState(state);
 					}
 				}
 			}else{
@@ -2529,6 +2653,47 @@ void BaseArcset::saveNodeExtraParamVec(mat_t *pMatFile, std::string varKey, size
 }//======================================================
 
 /**
+ *  \brief Save control information from nodes to a cell-array
+ *  \details Each cell contains the control states for a single node.
+ *  A cell array is used because each segment may leverage a different 
+ *  control law and the length of the control state vector can vary.
+ * 
+ *  \param pMatFile Pointer to an open Matlab data file
+ *  \param pVarName Name of the variable
+ */
+void BaseArcset::saveNodeCtrl(mat_t *pMatFile, const char *pVarName) const{
+	matvar_t *cell_array = nullptr, *cell_element = nullptr;
+
+	// Create the cell array
+	size_t dims[2] = {nodes.size(), 1};
+	cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(cell_array == nullptr){
+		return;	// Can't save any data... exit
+	}
+
+	dims[1] = 1;	 // only one column
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<double> ctrl;
+		try{
+			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
+		}catch(Exception &e){}
+
+		dims[0] = ctrl.size();
+
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		if(cell_element != nullptr)
+			Mat_VarSetCell(cell_array, n, cell_element);
+		else{
+			Mat_VarFree(cell_array);
+			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
+		}
+	}
+
+	saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
  *	\brief Save the node states to a file
  *	\param pMatFile a pointer to the destination matlab file 
  *	\param pVarName the name of the variable (e.g. "State" or "Nodes")
@@ -2618,16 +2783,40 @@ void BaseArcset::saveSegTOF(mat_t *pMatFile, const char* pVarName) const{
  *  \param pVarName name of the variable
  */
 void BaseArcset::saveSegCtrlLaw(mat_t *pMatFile, const char *pVarName) const{
-	std::vector<unsigned int> allLawIDs(segs.size());
+	size_t struct_dims[] = {segs.size(),1};
+	
+	unsigned int nfields = 3;
+	const char *fieldnames[3] = {"Type", "NumStates", "Params"};
+
+	matvar_t *storageStruct = Mat_VarCreateStruct(pVarName, 2, struct_dims, fieldnames, nfields);
+	if(storageStruct == nullptr){
+		printErr("ControlLaw::createMatStruct: Error creating ControlLaw structure variable\n");
+		return;
+	}
+
+	matvar_t *field = nullptr;
 
 	for(unsigned int s = 0; s < segs.size(); s++){
 		ControlLaw *pLaw = segs[s].getCtrlLaw();
-		allLawIDs[s] = pLaw ? pLaw->getLawID() : ControlLaw::NO_CTRL;
+		if(pLaw){
+			unsigned int id = pLaw->getLawID();
+			unsigned int numStates = pLaw->getNumStates();
+			std::vector<double> params = pLaw->getParams();
+
+			size_t field_dims[] = {1,1};
+			field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+			Mat_VarSetStructFieldByName(storageStruct, fieldnames[0], s, field);
+
+			field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+			Mat_VarSetStructFieldByName(storageStruct, fieldnames[1], s, field);
+
+			field_dims[0] = params.size();
+			field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+			Mat_VarSetStructFieldByName(storageStruct, fieldnames[2], s, field);
+		}
 	}
 
-	size_t dims[2] = {allLawIDs.size(), 1};
-	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_UINT32, MAT_T_UINT32, 2, dims, &(allLawIDs[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+	saveVar(pMatFile, storageStruct, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 void BaseArcset::saveSegStates(mat_t *pMatFile, const char *pVarName) const{
@@ -2639,19 +2828,23 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, const char *pVarName) const{
 	if(cell_array == nullptr){
 		return;	// Can't save any data... exit
 	}
-
-	// ToDo - Add code to save the full_size value for each segment
 	
 	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
 	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
 	
+	std::vector<unsigned int> segStateWidths(segs.size(), 0);
+
 	for(unsigned int s = 0; s < segs.size(); s++){
-		unsigned int ctrl_size = 0;
-		if(segs[s].getCtrlLaw()){
-			ctrl_size = segs[s].getCtrlLaw()->getNumStates();
+		
+		if(segs[s].getStateWidth() > 0)
+			dims[1] = segs[s].getStateWidth();
+		else{
+			unsigned int ctrl_size = 0;
+			if(segs[s].getCtrlLaw()){
+				ctrl_size = segs[s].getCtrlLaw()->getNumStates();
+			}
+			dims[1] = core_size*(core_size+1) + ctrl_size + extra_size;
 		}
-		unsigned int full_size = core_size*(core_size+1) + ctrl_size + extra_size;
-		dims[1] = full_size;
 
 		std::vector<double> segStates = segs[s].getStateVector();
 		if(segStates.size() % dims[1] != 0){

@@ -150,10 +150,17 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 
 	crSet.saveToMat("data/crSet.mat");
 	Arcset_cr3bp crTemp(&emData);
-	crTemp.readFromMat("data/crSet.mat");
+	std::vector<ControlLaw*> loadedLaws;
+	crTemp.readFromMat("data/crSet.mat", loadedLaws);
 
 	BOOST_CHECK(crSet.getStateByIx(-1) == crTemp.getStateByIx(-1));
 	BOOST_CHECK(crSet.getTOFByIx(-1) == crTemp.getTOFByIx(-1));
+	BOOST_CHECK(loadedLaws.size() == 0);
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
@@ -181,12 +188,18 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 
 	bcSet.saveToMat("data/bcSet.mat");
 	Arcset_bc4bp bcTemp(&semData);
-	bcTemp.readFromMat("data/bcSet.mat");
+	std::vector<ControlLaw*> loadedLaws;
+	bcTemp.readFromMat("data/bcSet.mat", loadedLaws);
 
 	BOOST_CHECK(bcSet.getStateByIx(-1) == bcTemp.getStateByIx(-1));
 	BOOST_CHECK(bcSet.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
 	BOOST_CHECK(bcSet.getEpochByIx(-1) == bcTemp.getEpochByIx(-1));
+	BOOST_CHECK(loadedLaws.size() == 0);
 
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
@@ -205,12 +218,20 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 
 	ltSet.saveToMat("data/ltSet.mat");
 	Arcset_cr3bp_lt temp(&ltData);
-	temp.readFromMat("data/ltSet.mat");
+	std::vector<ControlLaw*> loadedLaws;
+	temp.readFromMat("data/ltSet.mat", loadedLaws);
 
 	BOOST_CHECK(ltSet.getStateByIx(-1) == temp.getStateByIx(-1));
 	BOOST_CHECK(temp.getCtrlLawByIx(0) == ltSet.getCtrlLawByIx(0));
 	BOOST_CHECK(*(ltSet.getCtrlLawByIx(0)) == control);
 	BOOST_CHECK(ltSet.getTOFByIx(-1) == temp.getTOFByIx(-1));
+	BOOST_CHECK(loadedLaws.size() == 1);
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
+
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
@@ -227,7 +248,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 	crTraj.saveToMat("data/crTraj.mat");
 
 	Arcset_cr3bp crTemp(&emData);
-	crTemp.readFromMat("data/crTraj.mat");
+	std::vector<ControlLaw*> loadedLaws;
+	crTemp.readFromMat("data/crTraj.mat", loadedLaws);
 
 	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
 	BOOST_CHECK(crTraj.getStateByIx(-1) == crTemp.getStateByIx(-1));
@@ -237,6 +259,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 	BOOST_CHECK(crTraj.getJacobiByIx(-1) == crTemp.getJacobiByIx(-1));
 	BOOST_CHECK(crTraj.getTOFByIx(-1) == crTemp.getTOFByIx(-1));
 	BOOST_CHECK(crTraj.getCtrlLawByIx(-1) == crTemp.getCtrlLawByIx(-1));
+	BOOST_CHECK(loadedLaws.size() == 0);
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
@@ -252,7 +280,8 @@ BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 	bcTraj.saveToMat("data/bcTraj.mat");
 
 	Arcset_bc4bp bcTemp(&semData);
-	bcTemp.readFromMat("data/bcTraj.mat");
+	std::vector<ControlLaw*> loadedLaws;
+	bcTemp.readFromMat("data/bcTraj.mat", loadedLaws);
 
 	// printf("Testing Save/Read functions on BC4BP Trajectory\n");
 	BOOST_CHECK(bcTraj.getStateByIx(-1) == bcTemp.getStateByIx(-1));
@@ -262,6 +291,12 @@ BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 	BOOST_CHECK(bcTraj.get_dqdTByIx(-1) == bcTemp.get_dqdTByIx(-1));
 	BOOST_CHECK(bcTraj.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
 	BOOST_CHECK(bcTraj.getCtrlLawByIx(-1) == bcTemp.getCtrlLawByIx(-1));
+	BOOST_CHECK(loadedLaws.size() == 0);
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
@@ -280,7 +315,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 	ltTraj.saveToMat("data/lowthrustTraj.mat");
 
 	Arcset_cr3bp_lt ltTemp(&emData);
-	ltTemp.readFromMat("data/lowthrustTraj.mat");
+	std::vector<ControlLaw*> loadedLaws;
+	ltTemp.readFromMat("data/lowthrustTraj.mat", loadedLaws);
 
 	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
 	BOOST_CHECK(ltTraj.getStateByIx(-1) == ltTemp.getStateByIx(-1));
@@ -290,6 +326,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));
 	BOOST_CHECK(ltTraj.getTOFByIx(-1) == ltTemp.getTOFByIx(-1));
 	BOOST_CHECK(ltTraj.getCtrlLawByIx(-1) == ltTemp.getCtrlLawByIx(-1));
+	BOOST_CHECK(loadedLaws.size() == 1);
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
 }//====================================================
 
 

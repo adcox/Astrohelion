@@ -276,6 +276,7 @@ void DynamicsModel_cr3bp_lt::multShoot_createOutput(const MultShootData *it) con
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
         newSeg.setCtrlLaw(seg.getCtrlLaw());
         newSeg.setStateVector(it->propSegs[s].getSegRef_const(0).getStateVector());
+        newSeg.setStateWidth(it->propSegs[s].getSegRef_const(0).getStateWidth());
         newSeg.setTimeVector(it->propSegs[s].getSegRef_const(0).getTimeVector());
         it->nodesOut->addSeg(newSeg);
     }
@@ -342,30 +343,34 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     const ControlLaw_cr3bp_lt *law = static_cast<const ControlLaw_cr3bp_lt *>(paramStruct->pCtrlLaw);
 
     double mu = sysData->getMu();           // nondimensional mass ratio
-    double charT = sysData->getCharT();     // characteristic time (sec)
-    double charL = sysData->getCharL();     // characteristic length (km)
-
-    double T = law->getThrust();            // thrust magnitude (Newtons)
-    double Isp = law->getIsp();             // specific impulse (sec)
-
-    double f = (T/1000)*charT*charT/charL/sysData->getRefMass();    // nondimensional thrust
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
-    double thrust_dir[3];
-    
-    law->getLaw(t, s, sysData, thrust_dir, 3);
+    // Retrieve the control law acceleration values
+    double control_accel[3];
+    law->getLaw_Accel(t, s, sysData, control_accel, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + f/(s[6])*thrust_dir[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + f/(s[6])*thrust_dir[1];
-    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + f/(s[6])*thrust_dir[2];
-    sdot[6] = -charL*f/(charT*Isp*G_GRAV_0);   // nondimensional mass flow rate
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + control_accel[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + control_accel[1];
+    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + control_accel[2];
+
+    // nondimensional mass flow rate; simplified a bit by cancelling some of the constants
+    sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
+
+    // Save any derivatives of the control states
+    unsigned int ctrl_dim = law->getNumStates();
+    if(ctrl_dim > 0){
+        std::vector<double> control_stateDeriv(ctrl_dim, 0);
+        law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrl_dim);
+
+        std::copy(control_stateDeriv.begin(), control_stateDeriv.begin() + ctrl_dim, sdot+7);
+    }
 
     MatrixXRd A = MatrixXRd::Zero(7, 7);
 
@@ -400,12 +405,12 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     A(4, 3) = -2;
 
     // Get partials of control law and add them to the linear relationship matrix, A
-    double law_partials[21];
-    law->getPartials_State(t, s, sysData, law_partials, 21);
+    double law_accelPartials[21];
+    law->getLaw_AccelPartials(t, s, sysData, law_accelPartials, 21);
 
     for(unsigned int r = 0; r < 3; r++){
         for(unsigned int c = 0; c < 7; c++){
-            A(3+r, c) += law_partials[r*7 + c];
+            A(3+r, c) += law_accelPartials[r*7 + c];
         }
     }
 
@@ -414,7 +419,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     // Copy the STM states into a sub-array
     double stmElements[49];
-    std::copy(s+7, s+56, stmElements);
+    std::copy(s+7+ctrl_dim, s+7+ctrl_dim+49, stmElements);
 
     // Turn sub-array into matrix object for math stuffs
     MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 7, 7);
@@ -425,7 +430,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     // Copy the elements of phiDot into the derivative array
     double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData+49, sdot+7);
+    std::copy(phiDotData, phiDotData+49, sdot+7+ctrl_dim);
 
     return GSL_SUCCESS;
 }//===============================================================
@@ -435,7 +440,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
  *  \param t time at integration step (unused)
  *  \param s the state vector passed in from the SimEngine. This vector includes
  *  the core states and control states, in that order.
- *  \param sdot the 7-d state derivative vector
+ *  \param sdot the state derivative vector
  *  \param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[], void *params){
@@ -444,30 +449,33 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     const ControlLaw_cr3bp_lt *law = static_cast<const ControlLaw_cr3bp_lt *>(paramStruct->pCtrlLaw);
 
     double mu = sysData->getMu();           // nondimensional mass ratio
-    double charT = sysData->getCharT();     // characteristic time (sec)
-    double charL = sysData->getCharL();     // characteristic length (km)
-
-    double T = law->getThrust();            // thrust magnitude (Newtons)
-    double Isp = law->getIsp();             // specific impulse (sec)
-
-    double f = (T/1000)*charT*charT/charL/sysData->getRefMass();    // nondimensional thrust
 
     // compute distance to primaries and velocity magnitude
     double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
-    double thrust_dir[3];
-    
-    law->getLaw(t, s, sysData, thrust_dir, 3);
+    // Retrieve the control law acceleration values
+    double control_accel[3];
+    law->getLaw_Accel(t, s, sysData, control_accel, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + f/(s[6])*thrust_dir[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + f/(s[6])*thrust_dir[1];
-    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + f/(s[6])*thrust_dir[2];
-    sdot[6] = -charL*f/(charT*Isp*G_GRAV_0);   // nondimensional mass flow rate (G_GRAV_0 is in km/s^2)
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + control_accel[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + control_accel[1];
+    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + control_accel[2];
+    
+    // nondimensional mass flow rate; simplified a bit by cancelling some of the constants
+    sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
+
+    // Save any derivatives of the control states
+    if(unsigned int ctrl_dim = law->getNumStates() > 0){
+        std::vector<double> control_stateDeriv(ctrl_dim, 0);
+        law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrl_dim);
+
+        std::copy(control_stateDeriv.begin(), control_stateDeriv.begin() + ctrl_dim, sdot+7);
+    }
 
     return GSL_SUCCESS;
 }//=====================================================
@@ -488,5 +496,14 @@ double DynamicsModel_cr3bp_lt::getJacobi(const double s[], double mu){
     return 2*U - v_squared;
 }//================================================
 
+
+/**
+ *  \brief Construct a new control law and allocated it on the stack.
+ *  \details Each dynamic model will return a pointer to the specific control
+ *  law applicable to the system / model
+ *  \return A pointer to a control law object. The object has been allocated
+ *  on the stack so the delete() function must be employed to free the memory
+ */
+ControlLaw* DynamicsModel_cr3bp_lt::createControlLaw() const{ return new ControlLaw_cr3bp_lt; }
 
 }// END of Astrohelion namespace

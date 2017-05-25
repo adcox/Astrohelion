@@ -187,8 +187,8 @@ void Arcset_bc4bp::saveCmds(mat_t* pMatFile) const{
  *  \brief Execute commands to read data from a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_bc4bp::readCmds(mat_t *pMatFile){
-	Arcset::readCmds(pMatFile);
+void Arcset_bc4bp::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds(pMatFile, refLaws);
 	readNodeExtraParamVecFromMat(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
 }//====================================================
 }// End of astrohelion namespace

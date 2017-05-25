@@ -380,6 +380,7 @@ void DynamicsModel_cr3bp::multShoot_createOutput(const MultShootData *it) const{
         newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
         newSeg.setCtrlLaw(seg.getCtrlLaw());
         newSeg.setStateVector(it->propSegs[s].getSegRef_const(0).getStateVector());
+        newSeg.setStateWidth(it->propSegs[s].getSegRef_const(0).getStateWidth());
         newSeg.setTimeVector(it->propSegs[s].getSegRef_const(0).getTimeVector());
         it->nodesOut->addSeg(newSeg);
     }

@@ -62,7 +62,6 @@ public:
 	Arcset(const SysData*);
 	Arcset(const Arcset&);
 	Arcset(const BaseArcset&);
-	Arcset(const char*);
 
 	virtual ~Arcset();
 	virtual baseArcsetPtr create(const SysData*) const;
@@ -98,13 +97,13 @@ public:
 	 *  \{
 	 */
 	virtual void print() const;
-	void readFromMat(const char*);
+	void readFromMat(const char*, std::vector<ControlLaw*>&);
 	void saveToMat(const char*) const;
 	//\}
 
 protected:
 	virtual void saveCmds(mat_t*) const;
-	virtual void readCmds(mat_t*);
+	virtual void readCmds(mat_t*, std::vector<ControlLaw*>&);
 	
 	void initFromICs(std::vector<double>, double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
 	void initFromICs_time(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);

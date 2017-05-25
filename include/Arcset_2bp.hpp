@@ -67,7 +67,7 @@ protected:
 	 *  \{
 	 */
 		void saveCmds(mat_t*) const override;
-		void readCmds(mat_t*) override;
+		void readCmds(mat_t*, std::vector<ControlLaw*>&) override;
 	//\}
 };
 

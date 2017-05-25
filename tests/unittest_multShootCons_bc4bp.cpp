@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG){
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
 	
-	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 48);
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
 	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG_EQUAL_ARC){
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapSet, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapSet, &correctedSet));
 	
-	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1, 48);
+	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
 	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================

@@ -196,6 +196,15 @@ std::vector<Constraint> Node::getConstraints() const{
  */
 double Node::getEpoch() const{ return epoch; }
 
+/**
+ *  \brief Retrieve an extra parameter associated with the 
+ *  specified key
+ * 
+ *  \param key A string that identifies an extra parameter
+ *  \return the extra parameter value
+ *  
+ *  \throws Exception if the key is invalid
+ */
 double Node::getExtraParam(std::string key) const {
 	if(extraParam.count(key) > 0){
 		return extraParam.at(key);
@@ -212,6 +221,15 @@ std::map<std::string, double> Node::getExtraParams() const {
 	return extraParam;
 }//====================================================
 
+/**
+ *  \brief Retrieve an extra parameter vector associated with the
+ *  specified key
+ * 
+ *  \param key String that identifies the extra parameter vector
+ *  \return the extra parameter vector
+ *  
+ *  \thros Exception if the key is invalid
+ */
 std::vector<double> Node::getExtraParamVec(std::string key) const{
 	if(extraParamVecs.count(key) > 0){
 		return extraParamVecs.at(key);
@@ -220,6 +238,10 @@ std::vector<double> Node::getExtraParamVec(std::string key) const{
 	}
 }//====================================================
 
+/**
+ *  \brief Retrieve the extra parameter vector map
+ *  \return the extra parameter vector map
+ */
 std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
 	return extraParamVecs;
 }//====================================================
@@ -242,6 +264,11 @@ Event_tp Node::getTriggerEvent() const { return triggerEventTp; }
  */
 std::vector<double> Node::getState() const { return state; }
 
+/**
+ *  \brief Retrieve a constant reference to the state
+ *  \details This accessor is useful when computation time is important
+ *  \return a constant reference to the state vector
+ */
 const std::vector<double>& Node::getStateRef_const() const{ return state; }
 
 /**
@@ -268,10 +295,20 @@ void Node::setExtraParams(std::map<std::string, double> p){
 	extraParam = p;
 }//====================================================
 
+/**
+ *  \brief Assign a vector to the designated key
+ * 
+ *  \param key string that identifies the extra parameter vector
+ *  \param vec vector to assign to the key
+ */
 void Node::setExtraParamVec(std::string key, std::vector<double> vec){
 	extraParamVecs[key] = vec;
 }//====================================================
 
+/**
+ *  \brief Assign the entire extraParamVec map
+ *  \param p A map that contains keys and extra parameter vectors
+ */
 void Node::setExtraParamVec(std::map<std::string, std::vector<double> > p){
 	extraParamVecs = p;
 }//====================================================

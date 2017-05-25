@@ -152,8 +152,12 @@ public:
 	virtual ~DynamicsModel();
 	//\}
 
-	// Operators
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
 	DynamicsModel& operator =(const DynamicsModel&);
+	//\}
 
 	/**
 	 *  \name Core Functions
@@ -289,6 +293,12 @@ public:
 	bool supportsEvent(Event_tp) const;
 	//\}
 
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
+	virtual ControlLaw* createControlLaw() const;
+	//\}
 protected:
 	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
 	unsigned int coreDim = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreDim

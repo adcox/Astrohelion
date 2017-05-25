@@ -986,6 +986,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
             // printf("Added node at epoch %.6f\n", node.getEpoch());
             // fprintf("Adding segment with tof = %.6f\n", halfPerTraj.getEpoch(id) - halfPerTraj.getEpoch(prevID))
             Segment seg(prevID, id, halfPerTraj.getEpoch(id) - halfPerTraj.getEpoch(prevID));
+            seg.setStateWidth(halfPerTraj.getSegRefByIx(0).getStateWidth());
             prevID = id;
             halfPerTraj.addSeg(seg);
         }
@@ -1082,7 +1083,7 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
             throw Exception("cr3bp_EM2SE::Segment time and state vectors are not the expected sizes.");
 
         for(unsigned int i = 0; i < segTimes.size(); i++){
-            std::vector<double> newState = cr3bp_EM2SE_state(seg.getStateByRow(i, full_dim), epoch, thetaE0, thetaM0,
+            std::vector<double> newState = cr3bp_EM2SE_state(seg.getStateByRow(i), epoch, thetaE0, thetaM0,
                 gamma, charLE, charTE, charLS, charTS, pSESys->getMu())
             ;
             for(unsigned int j = 0; j < newState.size(); j++){
@@ -1170,7 +1171,7 @@ Arcset_cr3bp cr3bp_SE2EM(Arcset_cr3bp SENodes, const SysData_cr3bp *pEMSys, doub
             throw Exception("cr3bp_SE2EM::Segment time and state vectors are not the expected sizes.");
 
         for(unsigned int i = 0; i < segTimes.size(); i++){
-            std::vector<double> newState = cr3bp_SE2EM_state(seg.getStateByRow(i, full_dim), epoch, thetaE0, thetaM0,
+            std::vector<double> newState = cr3bp_SE2EM_state(seg.getStateByRow(i), epoch, thetaE0, thetaM0,
                 gamma, charLE, charTE, charLS, charTS, pSESys->getMu())
             ;
             for(unsigned int j = 0; j < newState.size(); j++){
@@ -1380,7 +1381,7 @@ Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp arcset, double epoch0, int centerIx){
             throw Exception("cr3bp_rot2inert::Segment time and state vectors are not the expected sizes.");
 
         for(unsigned int i = 0; i < segTimes.size(); i++){
-            std::vector<double> inertState = cr3bp_rot2inert_state(seg.getStateByRow(i, full_dim), pSys, segTimes[i], epoch0, centerIx);
+            std::vector<double> inertState = cr3bp_rot2inert_state(seg.getStateByRow(i), pSys, segTimes[i], epoch0, centerIx);
             for(unsigned int j = 0; j < inertState.size(); j++){
                 segStates[full_dim*i+j] = inertState[j];
             }
@@ -1611,7 +1612,7 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
             throw Exception("cr3bp_rot2inert::Segment time and state vectors are not the expected sizes.");
 
         for(unsigned int i = 0; i < segTimes.size(); i++){
-            std::vector<double> crSegState = seg.getStateByRow(i, full_dim);
+            std::vector<double> crSegState = seg.getStateByRow(i);
 
             for(unsigned int r = 0; r < core_dim; r++){
                 if(r == 0)  // Convert x-coordinate, shift base to P2/P3 Barycenter
@@ -1713,7 +1714,7 @@ Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
             throw Exception("cr3bp_rot2inert::Segment time and state vectors are not the expected sizes.");
 
         for(unsigned int i = 0; i < segTimes.size(); i++){
-            std::vector<double> bcSegState = seg.getStateByRow(i, full_dim);
+            std::vector<double> bcSegState = seg.getStateByRow(i);
 
             for(int r = 0; r < 6; r++){
                 if(r == 0)  // Shift origin to P2-P3 barycenter

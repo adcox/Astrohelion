@@ -114,8 +114,8 @@ void Arcset_2bp::saveCmds(mat_t* pMatFile) const{
  *  \brief Execute commands to read data from a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_2bp::readCmds(mat_t *pMatFile){
-	Arcset::readCmds(pMatFile);
+void Arcset_2bp::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds(pMatFile, refLaws);
 
 	readNodeExtraParamFromMat(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
 	readNodeExtraParamFromMat(pMatFile, PARAMKEY_ECC, VARNAME_ECC);

@@ -192,28 +192,35 @@ int Segment::getOrigin() const { return links[ORIG_IX]; }
 std::vector<double> Segment::getStateVector() const{ return states; }
 
 /**
+ *  \brief Retrieve the size of one state vector in the array
+ *  \details States are stored in row-major order in an array;
+ *  the state width is the number of values in a single state, 
+ *  or row, of the array
+ * 
+ *  \return the number of elements in a single state
+ */
+unsigned int Segment::getStateWidth() const{ return stateWidth; }
+
+/**
  *  \brief Retrieve a state from the storage vector
  *  \details State vectors are stored as rows of a matrix where
- *  the storage vector represents the matrix in row-major order
+ *  the storage vector represents the matrix in row-major order.
+ *  The length of each row is set/retrieved via setStateWidth() and
+ *  getStateWidth()
  * 
  *  \param row Row index, begins at 0. If row < 0, it will count backwards
  *  from the end of the set of states.
- *  \param rowLen the number of states in one row; this is usually the 
- *  combined size of the core state, the STM, and any extra states
  * 
  *  \return A vector containing the desired state values
  */
-std::vector<double> Segment::getStateByRow(int row, unsigned int rowLen) const{
-	if(rowLen == 0)
-		throw Exception("Segment::getStateByRow: rowLen cannot be zero");
-
+std::vector<double> Segment::getStateByRow(int row) const{
 	if(row < 0)
-		row += states.size()/rowLen;
+		row += states.size()/stateWidth;
 
-	if(row < 0 || row >= static_cast<int>(states.size()/rowLen))
+	if(row < 0 || row >= static_cast<int>(states.size()/stateWidth))
 		throw Exception("Segment::getStateByRow: row out of bounds");
 
-	std::vector<double> q(states.begin()+row*rowLen, states.begin()+(row+1)*rowLen);
+	std::vector<double> q(states.begin()+row*stateWidth, states.begin()+(row+1)*stateWidth);
 	return q;
 }//====================================================
 
@@ -322,6 +329,16 @@ void Segment::setOrigin(int o){ links[ORIG_IX] = o; }
  *  in row-major order.
  */
 void Segment::setStateVector(std::vector<double> v){ states = v; }
+
+/**
+ *  \brief Specify the size of one state vector in the array
+ *  \details States are stored in row-major order in an array;
+ *  the state width is the number of values in a single state, 
+ *  or row, of the array
+ * 
+ *  \param w the number of elements in a single state
+ */
+void Segment::setStateWidth(unsigned int w){ stateWidth = w; }
 
 /**
  *	\brief Set the STM for this step
@@ -456,6 +473,7 @@ void Segment::copyMe(const Segment &s){
 	pCtrlLaw = s.pCtrlLaw;	// Copying ADDRESS
 	times = s.times;
 	states = s.states;
+	stateWidth = s.stateWidth;
 	Linkable::copyMe(s);
 }//====================================================
 
@@ -489,6 +507,7 @@ void Segment::print() const{
 	}else{
 		printf("\tState Vector: %zu x 0\n", states.size());
 	}
+	printf("Saved state width = %u\n", stateWidth);
 }//====================================================
 
 

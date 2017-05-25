@@ -84,8 +84,6 @@ public:
 	 *  \{
 	 */
 	std::string lawIDToString(unsigned int) const;
-	void saveToMat(mat_t*) const;
-	void readFromMat(mat_t*);
 	//\}
 
 	/**

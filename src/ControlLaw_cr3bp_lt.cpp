@@ -382,30 +382,4 @@ std::string ControlLaw_cr3bp_lt::lawIDToString(unsigned int id) const{
 	}
 }//====================================================
 
-void ControlLaw_cr3bp_lt::saveToMat(mat_t *matFile) const{
-	size_t dims[2] = {1,1};
-
-	ControlLaw::saveToMat(matFile);
-
-	// Save thrust in dimensional units
-	double T = getThrust();
-	matvar_t *thrust_var = Mat_VarCreate("Thrust", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &T, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, thrust_var, "Thrust", MAT_COMPRESSION_NONE);
-
-	// Save Isp in dimensional units
-	double I = getIsp();
-	matvar_t *imp_var = Mat_VarCreate("Isp", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &I, MAT_F_DONT_COPY_DATA);
-	saveVar(matFile, imp_var, "Isp", MAT_COMPRESSION_NONE);
-}//====================================================
-
-/**
- *	\brief Populate data fiels for this data object by reading the primaries'
- *	names from a Mat file
- *	\param matFile a pointer to the Mat file in question
- */
-void ControlLaw_cr3bp_lt::readFromMat(mat_t *matFile){
-	setThrust(readDoubleFromMat(matFile, "Thrust"));
-	setIsp(readDoubleFromMat(matFile, "Isp"));
-}//===================================================
-
 }

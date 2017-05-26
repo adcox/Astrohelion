@@ -364,7 +364,10 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + control_accel[2];
 
     // nondimensional mass flow rate; simplified a bit by cancelling some of the constants
-    sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
+    if(law)
+        sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
+    else
+        sdot[6] = 0;
 
     // Save any time-derivatives of the control states
     const unsigned int ctrlDim = law ? law->getNumStates() : 0;
@@ -418,7 +421,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
         // Add the control output partials to the existing partials (control outputs are part of core state EOMs)
         for(unsigned int r = 3; r < 6; r++){
             for(unsigned int c = 0; c < coreDim; c++){
-                A(r, c) += law_accelPartials[(r - 3)*coreDim + c];
+                A(r, c) += law_accelPartials.at((r - 3)*coreDim + c);
             }
         }
 
@@ -431,36 +434,29 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
             // Assign the partial derivatives of the time derivatives of the control states w.r.t. all core and control states
             for(unsigned int r = coreDim; r < coreDim + ctrlDim; r++){
                 for(unsigned int c = 0; c < coreDim + ctrlDim; c++){
-                    A(r, c) = law_stateDerivPartials[(r - coreDim)*(coreDim + ctrlDim) + c];
+                    A(r, c) = law_stateDerivPartials.at((r - coreDim)*(coreDim + ctrlDim) + c);
                 }
             }
 
             // Assign the partial derivatives of the EOMs w.r.t. control states
             for(unsigned int r = 0; r < coreDim; r++){
                 for(unsigned int c = coreDim; c < coreDim + ctrlDim; c++){
-                    A(r, c) = law_eomPartials[r*ctrlDim + c - coreDim];
+                    A(r, c) = law_eomPartials.at(r*ctrlDim + c - coreDim);
                 }
             }
         }
     }
 
-    // toCSV(A, "LT_A.csv");
-    // waitForUser();
-
-    // Copy the STM states into a sub-array
-    
-    std::vector<double> stmElements(s + coreDim + ctrlDim, s + coreDim + ctrlDim + stmSide*stmSide);
-
     // Turn sub-array into matrix object for math stuffs
-    MatrixXRd phi = Eigen::Map<MatrixXRd>(&(stmElements.front()), stmSide, stmSide);
+    const MatrixXRd phi = Eigen::Map<const MatrixXRd>(s + coreDim + ctrlDim, stmSide, stmSide);
 
     // Compute derivative of STM
     MatrixXRd phiDot(stmSide, stmSide);
     phiDot.noalias() = A*phi;     // use noalias() to avoid creating an unnecessary temporary matrix in Eigen library
 
     // Copy the elements of phiDot into the derivative array
-    double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData + stmSide, sdot + coreDim + ctrlDim);
+    const double *phiDotData = phiDot.data();
+    std::copy(phiDotData, phiDotData + stmSide*stmSide, sdot + coreDim + ctrlDim);
 
     return GSL_SUCCESS;
 }//===============================================================

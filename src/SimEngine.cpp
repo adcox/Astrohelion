@@ -776,7 +776,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     // Add the control states to the vector
     std::copy(ctrl0, ctrl0+ctrl_dim, &(fullIC[core_dim]));
 
-    // ASSUMPTION: STM follows immediately after core and control states; any extras come after the STM
+    // NOTE: STM follows immediately after core and control states; any extras come after the STM
     if(!bSimpleIntegration){
         std::copy(stm0, stm0 + stm_dim, &(fullIC[core_dim + ctrl_dim]));
     }

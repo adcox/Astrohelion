@@ -48,7 +48,6 @@ class SysData_cr3bp_lt;
  *  * GENERAL_CONST_F - params holds:
  *  	[0] Thrust (Newtons)
  *  	[1] Isp (Seconds)
- *  	[2-4] Thrust direction
  *  
  */
 class ControlLaw_cr3bp_lt : public ControlLaw{

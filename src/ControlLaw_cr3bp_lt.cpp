@@ -212,7 +212,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 	if(std::abs(sign) != 1)
 		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
 
-	if(len < 3)
+	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
 
 	double charT = pSys->getCharT();
@@ -246,7 +246,7 @@ void ControlLaw_cr3bp_lt::getAccel_Along_Vel(double t, const double *s, const Sy
 	if(std::abs(sign) != 1)
 		sign = sign/std::abs(sign);	// +1 for With-Velocity, -1 for Anti-Velocity
 
-	if(len < 3)
+	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_Pro_Vel: law data length must be at least 3!");
 
 	double charT = pSys->getCharT();
@@ -267,18 +267,21 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const S
 
 	(void) t;
 
-	if(len < 3)
+	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_GeneralDir: law data length must be at least 3!");
 
 	double charT = pSys->getCharT();
 	double charL = pSys->getCharL();
 	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+	unsigned int core_dim = pSys->getDynamicsModel()->getCoreStateSize();
+	double alpha = s[core_dim+0];
+	double beta = s[core_dim+1];
 
 	// Direction is stored in the state variables after the core states
-	unsigned int core_dim = pSys->getDynamicsModel()->getCoreStateSize();
-	law[0] = (f/s[6])*s[core_dim+0];
-	law[1] = (f/s[6])*s[core_dim+1];
-	law[2] = (f/s[6])*s[core_dim+2];
+	
+	law[0] = (f/s[6])*cos(beta)*cos(alpha);
+	law[1] = (f/s[6])*cos(beta)*sin(alpha);
+	law[2] = (f/s[6])*sin(beta);
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -303,7 +306,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 	if(std::abs(sign) != 1)
 		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
 
-	if(len != 21)
+	if(len != numOutputs*7)
 		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Expects len = 21");
 
 	// state s : [x, y, z, vx, vy, vz, m, ... stm_elements ...]
@@ -329,7 +332,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
 	
-	if(len != numStates*7)	// 7 core states
+	if(len != numOutputs*7)	// 7 core states
 		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir: unexpected array length");
 
 	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz]
@@ -338,10 +341,12 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 	double charT = pSys->getCharT();
 	double charL = pSys->getCharL();
 	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+	double alpha = s[7];
+	double beta = s[8];
 
-	partials[7*0 + 6] = -f*s[7]/(s[6]*s[6]);	// dax/dm
-	partials[7*1 + 6] = -f*s[8]/(s[6]*s[6]);	// day/dm
-	partials[7*2 + 6] = -f*s[9]/(s[6]*s[6]);	// daz/dm
+	partials[7*0 + 6] = -f*cos(beta)*cos(alpha)/(s[6]*s[6]);	// dax/dm
+	partials[7*1 + 6] = -f*cos(beta)*sin(alpha)/(s[6]*s[6]);	// day/dm
+	partials[7*2 + 6] = -f*sin(beta)/(s[6]*s[6]);	// daz/dm
 
 	(void) t;
 }//====================================================
@@ -358,10 +363,14 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 	double charT = pSys->getCharT();
 	double charL = pSys->getCharL();
 	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+	double alpha = s[7];
+	double beta = s[8];
 
-	partials[numStates*3 + 0] = f/s[6];		// partial of xddot w.r.t. u_x
-	partials[numStates*4 + 1] = f/s[6];		// partial of yddot w.r.t. u_y
-	partials[numStates*5 + 2] = f/s[7];		// partial of zddot w.r.t. u_z
+	partials[numStates*3 + 0] = -f/s[6] * cos(beta)*sin(alpha);		// partial of xddot w.r.t. alpha
+	partials[numStates*3 + 1] = -f/s[6] * sin(beta)*cos(alpha);		// partial of xddot w.r.t. beta
+	partials[numStates*4 + 0] = f/s[6] * cos(beta) * cos(alpha);	// partial of yddot w.r.t. alpha
+	partials[numStates*4 + 1] = -f/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
+	partials[numStates*5 + 2] = f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
 
 	(void) t;
 }//====================================================
@@ -377,9 +386,11 @@ void ControlLaw_cr3bp_lt::init(){
 		case Law_tp::PRO_VEL:
 		case Law_tp::ANTI_VEL:
 			numStates = 0;	// all directions are functions of other state variables; no need for new ones
+			numOutputs = 3;
 			break;
 		case Law_tp::GENERAL_CONST_F:
-			numStates = 3;	// Three directions are free
+			numStates = 2;	// Two angles to represent 3D unit vector
+			numOutputs = 3;
 			break;
 		default:
 			ControlLaw::init();

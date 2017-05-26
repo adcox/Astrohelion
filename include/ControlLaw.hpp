@@ -73,6 +73,7 @@ public:
 	 *  \{
 	 */
 	unsigned int getLawID() const;
+	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;
 	std::vector<double> getParams() const;
 	const std::vector<double>& getParamsRef_const() const;
@@ -109,6 +110,7 @@ protected:
 
 	unsigned int lawID = NO_CTRL;		//!< Value identifying the specific control forumalation to apply
 	unsigned int numStates = 0;			//!< Number of control states
+	unsigned int numOutputs = 0;		//!< Number of control outputs
 
 	std::vector<double> params {};		//!< Parameters associated with the control law
 };

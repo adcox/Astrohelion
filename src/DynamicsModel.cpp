@@ -554,6 +554,25 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 				// Column of state time derivatives: [vel; accel; other time derivatives]
 				it->DF_elements.push_back(Tripletd(row0+s, tofVar.row0, timeCoeff*lastDeriv[s]));
 			}
+
+		}
+	}
+
+	// If the control law is nontrivial, find the control variable and compute partials 
+	// of the continuity constraint w.r.t. control states
+	if(ControlLaw *pLaw = it->nodesIn->getSegRef_const(segID).getCtrlLaw()){
+		// Check to make sure the number of states is nontrivial; if numStates = 0, there won't be any MSVarMap_obj stored
+		if(pLaw->getNumStates() > 0){
+			MSVarMap_Obj ctrl0_var = it->getVarMap_obj(MSVar_tp::CTRL, it->nodesIn->getSegRef_const(segID).getOrigin());
+
+			for(unsigned int s = 0; s < conData.size(); s++){
+				if(!std::isnan(conData[s])){
+					for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+						// put STM elements into DF matrix
+						it->DF_elements.push_back(Tripletd(row0+s, ctrl0_var.row0+c, stm(s, coreDim + c)));
+					}
+				}
+			}
 		}
 	}
 }//====================================================
@@ -636,6 +655,43 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 			}
 
 			count++;
+		}
+	}
+
+	// If the control law is nontrivial, find the control variable and compute partials 
+	// of the continuity constraint w.r.t. control states
+	if(ControlLaw *pLaw = it->nodesIn->getSegRef_const(segID1).getCtrlLaw()){
+		// Check to make sure the number of states is nontrivial; if numStates = 0, there won't be any MSVarMap_obj stored
+		if(pLaw->getNumStates() > 0){
+			MSVarMap_Obj ctrl1_var = it->getVarMap_obj(MSVar_tp::CTRL, it->nodesIn->getSegRef_const(segID1).getOrigin());
+
+			count = 0;
+			for(unsigned int s = 0; s < conData.size(); s++){
+				if(!std::isnan(conData[s])){
+					for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+						// put STM elements into DF matrix
+						it->DF_elements.push_back(Tripletd(row0+count, ctrl1_var.row0+c, stm1(s, coreDim + c)));
+					}
+				}
+			}
+		}
+	}
+
+	// Same for the other segment
+	if(ControlLaw *pLaw = it->nodesIn->getSegRef_const(segID2).getCtrlLaw()){
+		// Check to make sure the number of states is nontrivial; if numStates = 0, there won't be any MSVarMap_obj stored
+		if(pLaw->getNumStates() > 0){
+			MSVarMap_Obj ctrl2_var = it->getVarMap_obj(MSVar_tp::CTRL, it->nodesIn->getSegRef_const(segID2).getOrigin());
+
+			count = 0;
+			for(unsigned int s = 0; s < conData.size(); s++){
+				if(!std::isnan(conData[s])){
+					for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+						// put STM elements into DF matrix
+						it->DF_elements.push_back(Tripletd(row0+count, ctrl2_var.row0+c, stm1(s, coreDim + c)));
+					}
+				}
+			}
 		}
 	}
 }//====================================================

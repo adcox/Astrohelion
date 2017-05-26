@@ -106,6 +106,12 @@ unsigned int ControlLaw::getLawID() const{ return lawID; }
 unsigned int ControlLaw::getNumStates() const {return numStates; }
 
 /**
+ *  \brief Retrieve the number of outputs from the control Law
+ *  \return the number of outputs from the control Law
+ */
+unsigned int ControlLaw::getNumOutputs() const {return numOutputs; }
+
+/**
  *  \brief Retrieve the parameter vector
  *  \return the parameter vector
  */

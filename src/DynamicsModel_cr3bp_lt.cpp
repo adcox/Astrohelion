@@ -371,6 +371,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     // Save any time-derivatives of the control states
     const unsigned int ctrlDim = law ? law->getNumStates() : 0;
+    const unsigned int ctrlOutDim = law ? law->getNumOutputs() : 0;
     if(ctrlDim > 0){
         std::vector<double> control_stateDeriv(ctrlDim, 0);
         law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrlDim);
@@ -414,12 +415,12 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     if(law){
         // Get partial derivatives of acceleration terms (which are part of EOMS 3, 4, 5) w.r.t. all state variables
-        std::vector<double> law_accelPartials(3*coreDim, 0);
+        std::vector<double> law_accelPartials(ctrlOutDim*coreDim, 0);
         
         law->getLaw_OutputPartials(t, s, sysData, &(law_accelPartials.front()), law_accelPartials.size());
 
         // Add the control output partials to the existing partials (control outputs are part of core state EOMs)
-        for(unsigned int r = 3; r < 6; r++){
+        for(unsigned int r = 3; r < 3+ctrlOutDim; r++){
             for(unsigned int c = 0; c < coreDim; c++){
                 A(r, c) += law_accelPartials.at((r - 3)*coreDim + c);
             }
@@ -481,8 +482,9 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     // Retrieve the control law acceleration values
-    double control_accel[3];
-    law->getLaw_Output(t, s, sysData, control_accel, 3);
+    double control_accel[3] = {0};
+    if(law)
+        law->getLaw_Output(t, s, sysData, control_accel, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];

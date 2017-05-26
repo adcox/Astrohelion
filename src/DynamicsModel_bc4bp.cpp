@@ -481,14 +481,15 @@ void DynamicsModel_bc4bp::multShoot_createContCons(MultShootData *it) const{
  *
  *  \param it a pointer to the corrector's iteration data structure
  *  \param s the ID of the segment being propagated
- *  \param ic a pointer to a 6-element initial state array
+ *  \param ic a pointer to the initial state array
+ *  \param ctrl0 a pointer to the initial control state array
  *  \param t0 a pointer to a double representing the initial time (epoch)
  *  \param tof a pointer to a double the time-of-flight on the segment.
  */
 void DynamicsModel_bc4bp::multShoot_getSimICs(const MultShootData *it, int s,
-    double *ic, double *t0, double *tof) const{
+    double *ic, double *ctrl0, double *t0, double *tof) const{
 
-    DynamicsModel::multShoot_getSimICs(it, s, ic, t0, tof);   // Perform default behavior
+    DynamicsModel::multShoot_getSimICs(it, s, ic, ctrl0, t0, tof);   // Perform default behavior
 
     if(it->bVarTime){
         MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, it->nodesIn->getSegRef_const(s).getOrigin());

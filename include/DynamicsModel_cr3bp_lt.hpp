@@ -89,6 +89,7 @@ public:
 	 *  \{
 	 */
 	ControlLaw* createControlLaw() const override;
+	bool supportsControl(const ControlLaw*) const override;
 	//\}
 };
 

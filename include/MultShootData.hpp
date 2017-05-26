@@ -47,7 +47,9 @@ enum class MSVar_tp : int {EPOCH = 0,		//!< Epoch variable
 							SLACK = 1,		//!< Slack variable (e.g., used in an inequality constraint)
 							STATE = 2,		//!< State variable
 							TOF = 3,		//!< Time-of-flight
-							TOF_TOTAL = 4};	//!< Total time-of-flight for an arcset
+							TOF_TOTAL = 4,	//!< Total time-of-flight for an arcset
+							CTRL = 5		//!< Control variable
+							};	
 
 /**
  *  \brief The parent object of the variable

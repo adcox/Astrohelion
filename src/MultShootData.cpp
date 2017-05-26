@@ -119,6 +119,7 @@ const char* MSVarMap_Key::type2str(MSVar_tp tp){
 		case MSVar_tp::STATE: return "STATE"; break;
 		case MSVar_tp::TOF: return "TOF"; break;
 		case MSVar_tp::TOF_TOTAL: return "TOF_TOTAL"; break;
+		case MSVar_tp::CTRL: return "CONTROL"; break;
 	}
 	return "Unrecognized Type";
 }//===============================================
@@ -222,9 +223,8 @@ bool MSVarMap_Obj::matches(MSVar_tp t, int id) const{
 void MSVarMap_Obj::init(){
 	switch(key.type){
 		case MSVar_tp::STATE:
-			parent = MSVarParent_tp::NODE;
-			break;
 		case MSVar_tp::EPOCH:
+		case MSVar_tp::CTRL:
 			parent = MSVarParent_tp::NODE;
 			break;
 		case MSVar_tp::TOF:
@@ -317,11 +317,10 @@ MultShootData& MultShootData::operator =(const MultShootData &it){
  *  \return the variable map object that represents the desired variable
  *  @see ms_varMap_type
  *  \throws Exception if the object cannot be located
- *  @todo This function could be greatly sped up by leveraging a hash table
  */
 MSVarMap_Obj MultShootData::getVarMap_obj(MSVar_tp type, int refID) const{
 	if(freeVarMap.count(MSVarMap_Key(type, refID)) == 0){
-		printErr("Attempted to access MSVar_tp %s, refID %d\n", MSVarMap_Key::type2str(type), refID);
+		// printErr("Attempted to access MSVar_tp %s, refID %d\n", MSVarMap_Key::type2str(type), refID);
 		// printf("freeVarMap = {\n");
 		// for(auto& obj : freeVarMap){
 		// 	printf("  %s obj, ID = %d\n", MSVarMap_Key::type2str(obj.first.type), obj.first.id);

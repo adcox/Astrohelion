@@ -2119,51 +2119,38 @@ void BaseArcset::readNodeTimesFromMat(mat_t *pMatFile, const char* pVarName){
  *  \throws Exception if there are any issues importing the data
  */
 void BaseArcset::readSegSTMFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pAllSTM = Mat_VarRead(pMatFile, pVarName);
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	if(pAllSTM == NULL){
-		throw Exception("BaseArcset::readSTMFromMat: Could not read data vector");
+	matvar_t *pSTMCell = Mat_VarRead(pMatFile, pVarName);
+	
+	if(pSTMCell == NULL){
+		throw Exception("BaseArcset::readSegSTMFromMat: Could not read STM data vector");
 	}else{
-		unsigned int numSteps = pAllSTM->dims[2];
-
-		if(segs.size() == 0){
-			Mat_VarFree(pAllSTM);
-			throw Exception("BaseArcset::readSTMFromMat: Step vector has not been initialized!");
+		unsigned int numSegs = pSTMCell->dims[0];
+		
+		if(segs.size() != numSegs){
+			Mat_VarFree(pSTMCell);
+			throw Exception("BaseArcset::readSegSTMFromMat: Segment vector has been initialized to a different size than the file has data for");
 		}
 
-		if(numSteps < segs.size() ){
-			Mat_VarFree(pAllSTM);
-			printErr("STM size = %d\nInitialized step vector size = %d\n", numSteps, static_cast<int>(segs.size()));
-			throw Exception("BaseArcset::readSTMFromMat: STM vector has fewer elements than the initialized segment vector");
+		if(pSTMCell->class_type != MAT_C_CELL || pSTMCell->data_type != MAT_T_CELL){
+			Mat_VarFree(pSTMCell);
+			throw Exception("BaseArcset::readSegSTMFromMat: Segment STM variable is not a cell array.");
 		}
 
-		if(pAllSTM->dims[0] != stateSize || pAllSTM->dims[1] != stateSize){
-			Mat_VarFree(pAllSTM);
-			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: STM size is not consistent with DynamicalModel definition.");
-		}
+		matvar_t **cell_elements = static_cast<matvar_t **>(pSTMCell->data);
 
-		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pAllSTM->data);
+		for(unsigned int s = 0; s < numSegs; s++){
+			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){				
+				double *data = static_cast<double *>(cell_elements[s]->data);
 
-			unsigned int i = numSteps == segs.size() ? 0 : 1;
-
-			if(data != NULL){
-				for(i = 0; i < numSteps; i++){
-					std::vector<double> stmEl(stateSize*stateSize, 0);
-					for(unsigned int j = 0; j < stateSize*stateSize; j++){
-						stmEl[j] = data[stateSize*stateSize*i + j];
-					}
-
-					MatrixXRd P = Eigen::Map<MatrixXRd>(&(stmEl[0]), stateSize, stateSize);
-					segs[i].setSTM(P.transpose());
-				}
+				MatrixXRd P = Eigen::Map<MatrixXRd>(data, cell_elements[s]->dims[1], cell_elements[s]->dims[0]);
+				segs[s].setSTM(P.transpose());
+			}else{
+				Mat_VarFree(pSTMCell);
+				throw Exception("BaseArcset::readSegSTMFromMat: Cell element is not a double array.");
 			}
-		}else{
-			Mat_VarFree(pAllSTM);
-			throw Exception("BaseArcset::readSTMFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
-	Mat_VarFree(pAllSTM);
+	Mat_VarFree(pSTMCell);
 }//===============================================
 
 /**
@@ -2210,6 +2197,88 @@ void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, const char* pVarName){
 	}
 	Mat_VarFree(pTofMat);
 }//================================================
+
+void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
+
+	if(pStateCell == NULL){
+		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
+	}else{
+		unsigned int numSegs = pStateCell->dims[0];
+		
+		if(segs.size() != numSegs){
+			Mat_VarFree(pStateCell);
+			throw Exception("BaseArcset::readSegStatesFromMat: Segment vector has been initialized to a different size than the file has data for");
+		}
+
+		if(pStateCell->class_type != MAT_C_CELL || pStateCell->data_type != MAT_T_CELL){
+			Mat_VarFree(pStateCell);
+			throw Exception("BaseArcset::readSegStatesFromMat: Segment state variable is not a cell array.");
+		}
+
+		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
+
+		for(unsigned int s = 0; s < numSegs; s++){
+			if(cell_elements[s] != nullptr && 
+				cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
+
+				unsigned int width = cell_elements[s]->dims[1];
+				unsigned int numSteps = (cell_elements[s]->dims[0])/width;	
+				double *data = static_cast<double *>(cell_elements[s]->data);
+
+				segs[s].setStateWidth(width);
+				if(data != nullptr){
+					for(unsigned int i = 0; i < numSteps; i++){
+						std::vector<double> state(width);
+						for(unsigned int c = 0; c < width; c++)
+							state[c] = data[c*numSteps + i];
+
+						segs[s].appendState(state);
+					}
+				}
+			}else{
+				Mat_VarFree(pStateCell);
+				throw Exception("BaseArcset::readSegStatesFromMat: Cell element is not a double array.");
+			}
+		}
+	}
+	Mat_VarFree(pStateCell);
+}//===============================================
+
+void BaseArcset::readSegTimesFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
+	
+	if(pStateCell == NULL){
+		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
+	}else{
+		unsigned int numSegs = pStateCell->dims[0];
+		
+		if(segs.size() != numSegs){
+			Mat_VarFree(pStateCell);
+			throw Exception("BaseArcset::readSegStatesFromMat: Segment vector has been initialized to a different size than the file has data for");
+		}
+
+		if(pStateCell->class_type != MAT_C_CELL || pStateCell->data_type != MAT_T_CELL){
+			Mat_VarFree(pStateCell);
+			throw Exception("BaseArcset::readSegStatesFromMat: Segment state variable is not a cell array.");
+		}
+
+		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
+
+		for(unsigned int s = 0; s < numSegs; s++){
+			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
+				unsigned int numSteps = cell_elements[s]->dims[0];	
+				double *data = static_cast<double *>(cell_elements[s]->data);
+				std::vector<double> times(data, data+numSteps);
+				segs[s].setTimeVector(times);
+			}else{
+				Mat_VarFree(pStateCell);
+				throw Exception("BaseArcset::readSegStatesFromMat: Cell element is not a double array.");
+			}
+		}
+	}
+	Mat_VarFree(pStateCell);
+}//===============================================
 
 /**
  *  \brief Read control law IDs from a Matlab file in a variable with the specified name
@@ -2475,88 +2544,6 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
 	Mat_VarFree(pMatVar);
 }//====================================================
 
-void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-
-	if(pStateCell == NULL){
-		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
-	}else{
-		unsigned int numSegs = pStateCell->dims[0];
-		
-		if(segs.size() != numSegs){
-			Mat_VarFree(pStateCell);
-			throw Exception("BaseArcset::readSegStatesFromMat: Segment vector has been initialized to a different size than the file has data for");
-		}
-
-		if(pStateCell->class_type == MAT_C_CELL && pStateCell->data_type == MAT_T_DOUBLE){
-			Mat_VarFree(pStateCell);
-			throw Exception("BaseArcset::readSegStatesFromMat: Segment state variable is not a cell array.");
-		}
-
-		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
-
-		for(unsigned int s = 0; s < numSegs; s++){
-			if(cell_elements[s] != nullptr && 
-				cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
-
-				unsigned int width = cell_elements[s]->dims[1];
-				unsigned int numSteps = (cell_elements[s]->dims[0])/width;	
-				double *data = static_cast<double *>(cell_elements[s]->data);
-
-				segs[s].setStateWidth(width);
-				if(data != nullptr){
-					for(unsigned int i = 0; i < numSteps; i++){
-						std::vector<double> state(width);
-						for(unsigned int c = 0; c < width; c++)
-							state[c] = data[c*numSteps + i];
-
-						segs[s].appendState(state);
-					}
-				}
-			}else{
-				Mat_VarFree(pStateCell);
-				throw Exception("BaseArcset::readSegStatesFromMat: Cell element is not a double array.");
-			}
-		}
-	}
-	Mat_VarFree(pStateCell);
-}//===============================================
-
-void BaseArcset::readSegTimesFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-	
-	if(pStateCell == NULL){
-		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
-	}else{
-		unsigned int numSegs = pStateCell->dims[0];
-		
-		if(segs.size() != numSegs){
-			Mat_VarFree(pStateCell);
-			throw Exception("BaseArcset::readSegStatesFromMat: Segment vector has been initialized to a different size than the file has data for");
-		}
-
-		if(pStateCell->class_type == MAT_C_CELL && pStateCell->data_type == MAT_T_DOUBLE){
-			Mat_VarFree(pStateCell);
-			throw Exception("BaseArcset::readSegStatesFromMat: Segment state variable is not a cell array.");
-		}
-
-		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
-
-		for(unsigned int s = 0; s < numSegs; s++){
-			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
-				unsigned int numSteps = cell_elements[s]->dims[0];	
-				double *data = static_cast<double *>(cell_elements[s]->data);
-				std::vector<double> times(data, data+numSteps);
-				segs[s].setTimeVector(times);
-			}else{
-				Mat_VarFree(pStateCell);
-				throw Exception("BaseArcset::readSegStatesFromMat: Cell element is not a double array.");
-			}
-		}
-	}
-	Mat_VarFree(pStateCell);
-}//===============================================
-
 /**
  *	\brief Save the state derivative vector to file
  *	\param pMatFile a pointer to the destination mat-file
@@ -2754,23 +2741,30 @@ void BaseArcset::saveNodeStates(mat_t *pMatFile, const char* pVarName) const{
  *	\param pVarName name of the variable in the Matlab file
  */
 void BaseArcset::saveSegSTMs(mat_t *pMatFile, const char* pVarName) const{
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	// Create one large vector to put all the STM elements in
-	std::vector<double> allSTMEl(segs.size()*stateSize*stateSize);
+	matvar_t *cell_array = nullptr, *cell_element = nullptr;
 
-	for (unsigned int n = 0; n < segs.size(); n++){
-		// get the transpose of the STM matrix; we need to store it in column-major order
-		// and it's currently in row-major order
-		MatrixXRd P = segs[n].getSTM().transpose();
-		// Retrieve the data from the matrix
-		double *matData = P.data();
-		// Store that data in our huge vector
-		std::copy(matData, matData+stateSize*stateSize, &(allSTMEl[0]) + n*stateSize*stateSize);
+	size_t dims[2] = {segs.size(), 1};
+	cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(cell_array == nullptr){
+		return;	// can't save any data... exit
 	}
 
-	size_t dims[3] = {stateSize, stateSize, segs.size()};
-	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &(allSTMEl[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+	unsigned int count = 0;
+	for(const Segment &seg : segs){
+		MatrixXRd P = seg.getSTM().transpose();
+		dims[0] = P.cols();
+		dims[1] = P.rows();
+
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		if(cell_element != nullptr){
+			Mat_VarSetCell(cell_array, count++, cell_element);
+		}else{
+			Mat_VarFree(cell_array);
+			throw Exception("BaseArcset::saveSegSTMs: Could not create cell array variable\n");
+		}
+	}
+
+	saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**

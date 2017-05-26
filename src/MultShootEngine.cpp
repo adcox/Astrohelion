@@ -450,7 +450,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	// Define values for use in corrections loop
 	double err = 10*tol;
-	unsigned int coreDimize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	Arcset arc(it.nodesIn->getSysData());
 	while( err > tol && it.count < maxIts){
@@ -460,7 +460,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		it.propSegs.clear();
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
 
-		it.DF_elements.reserve(it.totalCons * coreDimize);
+		it.DF_elements.reserve(it.totalCons * coreStateSize);
 		it.deltaVs.assign(3*it.numNodes, 0);
 
 		// initialize a vector of trajectory objects to store each propagated segment
@@ -470,16 +470,23 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			// printf("Retrieving ICs for segment (ix %02d):\n", s);
 			// Get simulation conditions from design vector via dynamic model implementation
 			double t0 = 0, tof = 0;
-			std::vector<double> ic(coreDimize, 0);
+			std::vector<double> ic(coreStateSize, 0);
+
+			ControlLaw *pLaw = it.nodesIn->getSegRefByIx_const(s).getCtrlLaw();
+			std::vector<double> ctrl0;
+			if(pLaw){
+				ctrl0.assign(pLaw->getNumStates(), 0);
+			}
+
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn->getSegRefByIx_const(s).getID(),
-				&(ic[0]), &t0, &tof);
+				&(ic.front()), &(ctrl0.front()), &t0, &tof);
 
 			simEngine.setRevTime(tof < 0);
 			
 			printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
 
 			try{
-				simEngine.runSim(ic, t0, tof, &(it.propSegs[s]), it.nodesIn->getSegRefByIx_const(s).getCtrlLaw());
+				simEngine.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), it.nodesIn->getSegRefByIx_const(s).getCtrlLaw());
 			}catch(DivergeException &e){
 				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
 			}catch(Exception &e){

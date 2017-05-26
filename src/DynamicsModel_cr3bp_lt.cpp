@@ -506,4 +506,22 @@ double DynamicsModel_cr3bp_lt::getJacobi(const double s[], double mu){
  */
 ControlLaw* DynamicsModel_cr3bp_lt::createControlLaw() const{ return new ControlLaw_cr3bp_lt; }
 
+/**
+ *  \brief Determine whether or not the model supports a specific control law
+ *  \details By default, a DynamicsModel does not support any control laws.
+ * 
+ *  \param pLaw Pointer to a control law
+ *  \return Whether or not the Dynamics model supports the specified control law
+ */
+bool DynamicsModel_cr3bp_lt::supportsControl(const ControlLaw *pLaw) const{
+    // Does support control laws
+    return true;
+}//================================================
+
+
+
+
+
 }// END of Astrohelion namespace
+
+

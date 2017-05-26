@@ -110,6 +110,32 @@ bool DynamicsModel::supportsEvent(Event_tp type) const{
 }//===================================================
 
 /**
+ *  \brief Determine whether or not the model supports a specific control law
+ *  \details By default, a DynamicsModel does not support any control laws.
+ * 
+ *  \param pLaw Pointer to a control law
+ *  \return Whether or not the Dynamics model supports the specified control law
+ */
+bool DynamicsModel::supportsControl(const ControlLaw *pLaw) const{
+	if(pLaw){
+		// By default, a non-null control law is not supported. Special code
+		return false;
+	}else{
+		// If pLaw = nullptr, no control is applied; this is always allowed
+		return true;
+	}
+}//===================================================
+
+/**
+ *  \brief Construct a new control law and allocated it on the stack.
+ *  \details Each dynamic model will return a pointer to the specific control
+ *  law applicable to the system / model
+ *  \return A pointer to a control law object. The object has been allocated
+ *  on the stack so the delete() function must be employed to free the memory
+ */
+ControlLaw* DynamicsModel::createControlLaw() const{ return new ControlLaw; }
+
+/**
  *  \brief Determine the time derivative of the magnitude of a vector from a primary to
  *  the body of interest, non-dimensional units
  *  \details This derivation assumes the primary of interest is fixed in the frame the
@@ -248,6 +274,17 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 			MSVarMap_Key key(MSVar_tp::STATE, it->nodesIn->getNodeRefByIx_const(n).getID());
 			it->freeVarMap[key] = MSVarMap_Obj(key, -1, it->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize());
 		}
+
+		try{
+			std::vector<double> ctrlStates = it->nodesIn->getNodeRefByIx_const(n).getExtraParamVec(PARAMKEY_CTRL);
+			rowNum = it->X.size();
+			it->X.insert(it->X.end(), ctrlStates.begin(), ctrlStates.end());
+
+			MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
+			it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, ctrlStates.size());
+		}catch(Exception &e){
+			// Extra parameter vector doesn't exist; no action necessary
+		}
 	}
 
 	if(it->bVarTime){		
@@ -318,21 +355,37 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it) const{
  *
  *	\param it a pointer to the corrector's iteration data structure
  *	\param s the ID of the segment being propagated
- *	\param ic a pointer to a 6-element initial state array
+ *	\param ic a pointer to the initial state array
+ *	\param ctrl0 a pointer to the initial control state array
  *	\param t0 a pointer to a double representing the initial time (epoch)
  *	\param tof a pointer to a double the time-of-flight on the segment.
  *	@todo No need to input Arcset as well as the MultShootData pointer
  */
 void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
-	double *ic, double *t0, double *tof) const{
+	double *ic, double *ctrl0, double *t0, double *tof) const{
 
-	// Retrieve  representative object and get data from free var vec
-	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, it->nodesIn->getSegRef_const(s).getOrigin());
+	int segOriginID = it->nodesIn->getSegRef_const(s).getOrigin();
+
+	// Retrieve  representative object for state and get data from free var vec
+	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, segOriginID);
 	if(state_var.row0 == -1){
 		std::vector<double> stateVec = it->nodesIn->getState(state_var.key.id);
 		std::copy(stateVec.begin(), stateVec.end(), ic);
 	}else{
 		std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + state_var.nRows, ic);
+	}
+
+	// Retrieve representative object for control and get data from free var vec
+	try{
+		MSVarMap_Obj ctrl_var = it->getVarMap_obj(MSVar_tp::CTRL, segOriginID);
+
+		// // if the control variables are not part of the free variable vector, retrieve from input nodeset:
+		// std::vector<double> ctrlVec = it->nodesIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
+		// std::copy(ctrlVec.begin(), ctrlVec.end(), ctrl0);
+
+		std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+state_var.row0 + state_var.nRows, ctrl0);
+	}catch(Exception &e){
+		// Exception thrown if no control variable is found; likely for most systems
 	}
 
 	if(it->bVarTime){
@@ -475,7 +528,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 			double statef_value = statef_var.row0 == -1 ? it->nodesIn->getNodeRef_const(statef_var.key.id).getStateRef_const()[s] : it->X[statef_var.row0 + s];
 			it->FX[row0+s] = lastState[s] - statef_value;
 
-			// Loop through all design variables for this node (6) and compute partials of F w.r.t. x
+			// Loop through all design variables for this node and compute partials of F w.r.t. state[x]
 			for(unsigned int x = 0; x < coreDim; x++){
 				// put STM elements into DF matrix
 				if(state0_var.row0 != -1)
@@ -1085,15 +1138,6 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, const Constraint& co
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+4, dy));
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+5, dz));
 }//====================================================
-
-/**
- *  \brief Construct a new control law and allocated it on the stack.
- *  \details Each dynamic model will return a pointer to the specific control
- *  law applicable to the system / model
- *  \return A pointer to a control law object. The object has been allocated
- *  on the stack so the delete() function must be employed to free the memory
- */
-ControlLaw* DynamicsModel::createControlLaw() const{ return new ControlLaw; }
 
 
 }// END of Astrohelion namespace

@@ -251,7 +251,7 @@ public:
 
 	virtual void multShoot_initDesignVec(MultShootData*) const;
 	virtual void multShoot_createContCons(MultShootData*) const;
-	virtual void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*) const;
+	virtual void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*, double*) const;
 	virtual void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const;
 	virtual double multShoot_getSlackVarVal(const MultShootData*, const Constraint&)const ;
 
@@ -290,6 +290,7 @@ public:
 	unsigned int getCoreStateSize() const;
 	unsigned int getExtraStateSize() const;
 	bool supportsCon(Constraint_tp) const;
+	virtual bool supportsControl(const ControlLaw*) const;
 	bool supportsEvent(Event_tp) const;
 	//\}
 

@@ -300,6 +300,7 @@ class SimEngine : public Core, public Engine{
 		void cleanEngine();
 		void copyMe(const SimEngine&);
 		void createDefaultEvents(const SysData*);
+		void createDummySTM(std::vector<double>&, unsigned int) const;
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
 		void integrate(const double*, const double*, const double*, const double*, unsigned int, Arcset*);
 		bool locateEvents(const double*, double, Arcset*, int);

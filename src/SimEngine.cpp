@@ -343,7 +343,7 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
 
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     if(ic.size() < core_dim){
-        printErr("IC size = %zu\n", ic.size());
+        printErr("IC size = %zu is too small\n", ic.size());
         throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
     }
 
@@ -379,16 +379,16 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
 
     // Define dummy values for Ctrl0
     std::vector<double> ctrl0;
+    unsigned int ctrl_dim = 0;
     if(pLaw){
-        ctrl0.assign(pLaw->getNumStates(), 0);
+        ctrl_dim = pLaw->getNumStates();
+        ctrl0.assign(ctrl_dim, 0);
     }
 
     // Define dummy values for STM0
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
-    std::vector<double> stm0(core_dim*core_dim, 0);
-    for(unsigned int i = 0; i < core_dim; i++){
-        stm0[i*(core_dim+1)] = 1;
-    }
+    std::vector<double> stm0;
+    createDummySTM(stm0, core_dim + ctrl_dim);
 
     // Call the next level of complication
     runSim(ic, &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
@@ -419,16 +419,28 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
         return;
     }
 
-    // Define dummy values for STM0
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
-    std::vector<double> stm0(core_dim*core_dim, 0);
-    for(unsigned int i = 0; i < core_dim; i++){
-        stm0[i*(core_dim+1)] = 1;
+    unsigned int ctrl_dim = pLaw ? pLaw->getNumStates() : 0;
+
+    if(ic.size() < core_dim){
+        printErr("IC size = %zu is too small\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
     }
 
+    if(ctrl0.size() < ctrl_dim){
+        printErr("Ctrl state size = %zu is too small\n", ctrl0.size());
+        throw Exception("SimEngine::runSim: Ctrl state must have at least the number of states specifed by the Control Law");
+    }
+
+    // Define dummy values for STM0
+    std::vector<double> stm0;
+    createDummySTM(stm0, core_dim + ctrl_dim);
+
     std::vector<double> icCopy = ic;
+    std::vector<double> ctrlCopy = ctrl0;
+
     // Call the next level of complication
-    runSim(&(icCopy.front()), &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
+    runSim(&(icCopy.front()), &(ctrlCopy.front()), &(stm0.front()), t0, tof, arcset, pLaw);
 }//=======================================================
 
 /**
@@ -460,16 +472,24 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const 
     }
 
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    unsigned int ctrl_dim = pLaw ? pLaw->getNumStates() : 0;
+
     if(ic.size() < core_dim){
-        printErr("IC size = %zu\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+        printErr("IC size = %zu is too small\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
     }
 
-    if(stm.rows() != core_dim || stm.cols() != core_dim){
-        printErr("STM rows = %d, cols = %d, core_dim = %u\n", stm.rows(), stm.cols(), core_dim);
-        throw Exception("SimEngine::runSim: Initial STM size does not match the core state size specified by the Dynamic Model");
+    if(ctrl0.size() < ctrl_dim){
+        printErr("Ctrl state size = %zu is too small\n", ctrl0.size());
+        throw Exception("SimEngine::runSim: Ctrl state must have at least the number of states specifed by the Control Law");
+    }
+
+    if(stm.rows() != core_dim + ctrl_dim || stm.cols() != core_dim + ctrl_dim){
+        printErr("STM rows = %d, cols = %d, should = %u\n", stm.rows(), stm.cols(), core_dim + ctrl_dim);
+        throw Exception("SimEngine::runSim: Initial STM size does not match the core state size + control state size");
     }
     
+
     // Copy arrays to pass by reference
     std::vector<double> icCopy = ic;
     std::vector<double> ctrlCopy = ctrl0;
@@ -534,6 +554,11 @@ void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0
 void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        return;
+    }
+
+    if(!arcset->getSysData()->getDynamicsModel()->supportsControl(pLaw)){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Control law is not supported. Exiting without simulation\n");
         return;
     }
 
@@ -614,8 +639,8 @@ void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, 
 
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     if(ic.size() < core_dim){
-        printErr("IC size = %zu\n", ic.size());
-        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by coreDim in the Dynamics Model");
+        printErr("IC size = %zu is too small\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
     }
 
     std::vector<double> tempIC = ic;
@@ -653,14 +678,14 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
     unsigned int coreSize = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     
     std::vector<double> ctrl0;
+    unsigned int ctrlSize = 0;
     if(pLaw){
-        ctrl0.assign(pLaw->getNumStates(), 0);
+        ctrlSize = pLaw->getNumStates();
+        ctrl0.assign(ctrlSize, 0);
     }
 
-    std::vector<double> stm0(coreSize*coreSize, 0);
-    for(unsigned int i = 0; i < coreSize; i++){
-        stm0[i*(coreSize+1)] = 1;
-    }
+    std::vector<double> stm0;
+    createDummySTM(stm0, coreSize + ctrlSize);
 
     runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
 }//====================================================
@@ -731,10 +756,11 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
      *  integration and their values in the Segment state array are filled by zeros 
      */
     const unsigned int core_dim = model->getCoreStateSize();            // The number of states in the most basic EOM propagation
-    const unsigned int stm_dim = core_dim*core_dim;                     // Size of the state-transition matrix
-    const unsigned int extra_dim = model->getExtraStateSize();          // The number of extra states
     const unsigned int ctrl_dim = eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getNumStates() : 0;  // The number of independent control variables
+    const unsigned int extra_dim = model->getExtraStateSize();          // The number of extra states
+    
 
+    const unsigned int stm_dim = pow(core_dim + ctrl_dim, 2);           // Size of the state-transition matrix
     const unsigned int ic_dim = core_dim + ctrl_dim + (!bSimpleIntegration)*(stm_dim + extra_dim);     // Number of states used for this propagation
     const unsigned int full_dim = core_dim + ctrl_dim + stm_dim + extra_dim;       // Max number of states for the most complex EOM propagation for this model
     
@@ -752,7 +778,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
 
     // ASSUMPTION: STM follows immediately after core and control states; any extras come after the STM
     if(!bSimpleIntegration){
-        std::copy(stm0, stm0+core_dim*core_dim, &(fullIC[core_dim + ctrl_dim]));
+        std::copy(stm0, stm0 + stm_dim, &(fullIC[core_dim + ctrl_dim]));
     }
 
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
@@ -917,7 +943,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                 lastSeg.appendTime(t_int);
                 lastSeg.storeTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
-                lastSeg.setSTM(y+core_dim, core_dim*core_dim);  // Set the STM to be the most recent one
+                lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);   // Set the STM to be the most recent one
 
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
             }
@@ -957,7 +983,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
 
                 lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
                 lastSeg.storeTOF();
-                lastSeg.setSTM(y+core_dim, core_dim*core_dim);
+                lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
 
                 // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
                 Segment newSeg(nodeID_i, Linkable::INVALID_ID, tf - t_int);
@@ -995,7 +1021,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                     lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                     lastSeg.appendTime(t_int);
                     lastSeg.storeTOF();
-                    lastSeg.setSTM(y+core_dim, core_dim*core_dim);
+                    lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
 
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
                 }
@@ -1035,7 +1061,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
 
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
         lastSeg.storeTOF();
-        lastSeg.setSTM(y+core_dim, core_dim*core_dim);
+        lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
     }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
         // Ended at the time-out
         // Create a final node and update the final segment
@@ -1052,7 +1078,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
         lastSeg.appendTime(t_int);
         lastSeg.storeTOF();
-        lastSeg.setSTM(y+core_dim, core_dim*core_dim);
+        lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
     }
 
     // Check lengths of vectors and set the numPoints value in arcset
@@ -1182,6 +1208,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
 
     const DynamicsModel *model = pArcset->getSysData()->getDynamicsModel();
     const unsigned int core_dim = model->getCoreStateSize();
+    const unsigned int ctrl_dim = eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getNumStates() : 0;
 
     // Create a nodeset from the previous state (stored in the event) and
     // integrate forwards for half the time between this state and the last one
@@ -1290,7 +1317,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     lastSeg.appendState(state);
     lastSeg.appendTime(eventTime);
     lastSeg.storeTOF();
-    lastSeg.setSTM(&(state[core_dim]), core_dim*core_dim);
+    lastSeg.setSTM(&(state[core_dim+ctrl_dim]), (core_dim+ctrl_dim)*(core_dim+ctrl_dim));
 
     // Create a new segment if the propagation is going to continue
     if(!(events[evtIx].stopOnEvent() && events[evtIx].getTriggerCount() >= events[evtIx].getStopCount())){
@@ -1339,6 +1366,12 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
         bMadeDefaultEvents = true;
     }
 }//====================================================
+
+void SimEngine::createDummySTM(std::vector<double> &stmRef, unsigned int size) const{
+    stmRef.assign(size*size, 0);
+    for(unsigned int i = 0; i < size; i++)
+        stmRef[i*(size+1)] = 1;
+}//=======================================================
 
 /**
  *  \brief Reset all variables and options

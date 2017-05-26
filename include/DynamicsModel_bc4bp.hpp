@@ -94,7 +94,7 @@ public:
 	void multShoot_initDesignVec(MultShootData*) const override;
 	void multShoot_initIterData(MultShootData *it) const override;
 	void multShoot_createContCons(MultShootData*) const override;
-	void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*) const override;
+	void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*, double*) const override;
 	double multShoot_getSlackVarVal(const MultShootData*, const Constraint&) const override;
 	void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const override;
 	void multShoot_createOutput(const MultShootData*) const;

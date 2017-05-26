@@ -341,6 +341,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
     const SysData_cr3bp_lt *sysData = static_cast<const SysData_cr3bp_lt *>(paramStruct->pSysData);
     const ControlLaw_cr3bp_lt *law = static_cast<const ControlLaw_cr3bp_lt *>(paramStruct->pCtrlLaw);
+    const unsigned int coreDim = sysData->getDynamicsModel()->getCoreStateSize();
 
     double mu = sysData->getMu();           // nondimensional mass ratio
 
@@ -349,8 +350,10 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     // Retrieve the control law acceleration values
-    double control_accel[3];
-    law->getLaw_Accel(t, s, sysData, control_accel, 3);
+    double control_accel[3] = {0};
+    if(law){
+        law->getLaw_Output(t, s, sysData, control_accel, 3);
+    }
 
     sdot[0] = s[3];
     sdot[1] = s[4];
@@ -363,37 +366,39 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     // nondimensional mass flow rate; simplified a bit by cancelling some of the constants
     sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
 
-    // Save any derivatives of the control states
-    unsigned int ctrl_dim = law->getNumStates();
-    if(ctrl_dim > 0){
-        std::vector<double> control_stateDeriv(ctrl_dim, 0);
-        law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrl_dim);
+    // Save any time-derivatives of the control states
+    const unsigned int ctrlDim = law ? law->getNumStates() : 0;
+    if(ctrlDim > 0){
+        std::vector<double> control_stateDeriv(ctrlDim, 0);
+        law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrlDim);
 
-        std::copy(control_stateDeriv.begin(), control_stateDeriv.begin() + ctrl_dim, sdot+7);
+        std::copy(control_stateDeriv.begin(), control_stateDeriv.begin() + ctrlDim, sdot + coreDim);
     }
 
-    MatrixXRd A = MatrixXRd::Zero(7, 7);
+    
+    const unsigned int stmSide = (coreDim + ctrlDim);
+    MatrixXRd A = MatrixXRd::Zero(stmSide, stmSide);
 
     // Velocity relationships
-    A(0, 3) = 1;
-    A(1, 4) = 1;
-    A(2, 5) = 1;
+    A(0, 3) = 1;    // d/dvx (dx/dt)
+    A(1, 4) = 1;    // d/dvy (dy/dt)
+    A(2, 5) = 1;    // d/dvz (dz/dt)
 
-    // Uxx
+    // Uxx = d/dx (dvx/dt)
     A(3, 0) = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((s[0] + mu),2)/pow(d,5) + 
         3*mu*pow((s[0] + mu - 1), 2)/pow(r,5);
-    // Uxy
+    // Uxy = d/dy (dvx/dt)
     A(3, 1) = 3*(1-mu)*(s[0] + mu)*s[1]/pow(d,5) + 3*mu*(s[0] + mu - 1)*s[1]/pow(r,5);
-    // Uxz
+    // Uxz = d/dz (dvx/dt)
     A(3, 2) = 3*(1-mu)*(s[0] + mu)*s[2]/pow(d,5) + 3*mu*(s[0] + mu - 1)*s[2]/pow(r,5);
 
-    // Uyy
+    // Uyy = d/dy (dvy/dt)
     A(4, 1) = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*s[1]*s[1]/pow(d,5) + 3*mu*s[1]*s[1]/pow(r,5);
 
-    // Uyz
+    // Uyz = d/dz (dvy/dt)
     A(4, 2) = 3*(1-mu)*s[1]*s[2]/pow(d,5) + 3*mu*s[1]*s[2]/pow(r,5);
 
-    // Uzz
+    // Uzz = d/dz (dvz/dt)
     A(5, 2) = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*s[2]*s[2]/pow(d,5) + 3*mu*s[2]*s[2]/pow(r,5);
 
     // Symmetry
@@ -401,16 +406,41 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     A(5,0) = A(3,2);
     A(5,1) = A(4,2);
 
-    A(3, 4) = 2;
-    A(4, 3) = -2;
+    A(3, 4) = 2;    // d/dvy (dvx/dt)
+    A(4, 3) = -2;   // d/dvx (dvy/dt)
 
-    // Get partials of control law and add them to the linear relationship matrix, A
-    double law_accelPartials[21];
-    law->getLaw_AccelPartials(t, s, sysData, law_accelPartials, 21);
+    if(law){
+        // Get partial derivatives of acceleration terms (which are part of EOMS 3, 4, 5) w.r.t. all state variables
+        std::vector<double> law_accelPartials(3*coreDim, 0);
+        
+        law->getLaw_OutputPartials(t, s, sysData, &(law_accelPartials.front()), law_accelPartials.size());
 
-    for(unsigned int r = 0; r < 3; r++){
-        for(unsigned int c = 0; c < 7; c++){
-            A(3+r, c) += law_accelPartials[r*7 + c];
+        // Add the control output partials to the existing partials (control outputs are part of core state EOMs)
+        for(unsigned int r = 3; r < 6; r++){
+            for(unsigned int c = 0; c < coreDim; c++){
+                A(r, c) += law_accelPartials[(r - 3)*coreDim + c];
+            }
+        }
+
+        if(ctrlDim > 0){
+            std::vector<double> law_eomPartials(coreDim*ctrlDim, 0), law_stateDerivPartials(ctrlDim*(coreDim+ctrlDim), 0);
+
+            law->getLaw_StateDerivPartials(t, s, sysData, &(law_stateDerivPartials.front()), law_stateDerivPartials.size());
+            law->getLaw_EOMPartials(t, s, sysData, &(law_eomPartials.front()), law_eomPartials.size());
+
+            // Assign the partial derivatives of the time derivatives of the control states w.r.t. all core and control states
+            for(unsigned int r = coreDim; r < coreDim + ctrlDim; r++){
+                for(unsigned int c = 0; c < coreDim + ctrlDim; c++){
+                    A(r, c) = law_stateDerivPartials[(r - coreDim)*(coreDim + ctrlDim) + c];
+                }
+            }
+
+            // Assign the partial derivatives of the EOMs w.r.t. control states
+            for(unsigned int r = 0; r < coreDim; r++){
+                for(unsigned int c = coreDim; c < coreDim + ctrlDim; c++){
+                    A(r, c) = law_eomPartials[r*ctrlDim + c - coreDim];
+                }
+            }
         }
     }
 
@@ -418,19 +448,19 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     // waitForUser();
 
     // Copy the STM states into a sub-array
-    double stmElements[49];
-    std::copy(s+7+ctrl_dim, s+7+ctrl_dim+49, stmElements);
+    
+    std::vector<double> stmElements(s + coreDim + ctrlDim, s + coreDim + ctrlDim + stmSide*stmSide);
 
     // Turn sub-array into matrix object for math stuffs
-    MatrixXRd phi = Eigen::Map<MatrixXRd>(stmElements, 7, 7);
+    MatrixXRd phi = Eigen::Map<MatrixXRd>(&(stmElements.front()), stmSide, stmSide);
 
     // Compute derivative of STM
-    MatrixXRd phiDot(7,7);
+    MatrixXRd phiDot(stmSide, stmSide);
     phiDot.noalias() = A*phi;     // use noalias() to avoid creating an unnecessary temporary matrix in Eigen library
 
     // Copy the elements of phiDot into the derivative array
     double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData+49, sdot+7+ctrl_dim);
+    std::copy(phiDotData, phiDotData + stmSide, sdot + coreDim + ctrlDim);
 
     return GSL_SUCCESS;
 }//===============================================================
@@ -456,7 +486,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
 
     // Retrieve the control law acceleration values
     double control_accel[3];
-    law->getLaw_Accel(t, s, sysData, control_accel, 3);
+    law->getLaw_Output(t, s, sysData, control_accel, 3);
 
     sdot[0] = s[3];
     sdot[1] = s[4];
@@ -515,6 +545,7 @@ ControlLaw* DynamicsModel_cr3bp_lt::createControlLaw() const{ return new Control
  */
 bool DynamicsModel_cr3bp_lt::supportsControl(const ControlLaw *pLaw) const{
     // Does support control laws
+    (void) pLaw;
     return true;
 }//================================================
 

@@ -113,7 +113,7 @@ void ControlLaw_cr3bp_lt::setIsp(double Isp){ params[1] = Isp; }
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw_cr3bp_lt::getLaw_Accel(double t, const double *s, const SysData *pSysData,
+void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData *pSysData,
 	double *law, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSysData);
@@ -135,7 +135,7 @@ void ControlLaw_cr3bp_lt::getLaw_Accel(double t, const double *s, const SysData 
 			getAccel_GeneralDir(t, s, pSysData_lt, law, len);
 			break;
 		default:
-			ControlLaw::getLaw_Accel(t, s, pSysData, law, len);
+			ControlLaw::getLaw_Output(t, s, pSysData, law, len);
 	}
 }//====================================================
 
@@ -153,7 +153,7 @@ void ControlLaw_cr3bp_lt::getLaw_Accel(double t, const double *s, const SysData 
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw_cr3bp_lt::getLaw_AccelPartials(double t, const double *s, const SysData *pSys, 
+void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, 
 	double *partials, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
@@ -175,11 +175,19 @@ void ControlLaw_cr3bp_lt::getLaw_AccelPartials(double t, const double *s, const 
 			// break;
 		
 		default:
-			ControlLaw::getLaw_AccelPartials(t, s, pSys, partials, len);
+			ControlLaw::getLaw_OutputPartials(t, s, pSys, partials, len);
 	}
-	(void) t;
-	(void) s;
-	(void) pSys;
+}//====================================================
+
+void ControlLaw_cr3bp_lt::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
+	switch(lawID){
+		case Law_tp::GENERAL_CONST_F:
+			getEOMPartials_GeneralDir(t, s, static_cast<const SysData_cr3bp_lt *>(pSys), partials, len);
+			break;
+		default:
+			// Other control laws default to the base behavior (all partials are zero)
+			ControlLaw::getLaw_EOMPartials(t, s, pSys, partials, len);
+	}
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -296,7 +304,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
 
 	if(len != 21)
-		throw Exception("ControlLaw_cr3bp_lt::getPartials_State_ConstC_2D: Expects len = 21");
+		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Expects len = 21");
 
 	// state s : [x, y, z, vx, vy, vz, m, ... stm_elements ...]
 	// partials: row 1 = partials of a_x w.r.t. states, row 2 = partials of a_y w.r.t. states,
@@ -306,9 +314,6 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 	double charT = pSys->getCharT();
 	double charL = pSys->getCharL();
 	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
-
-	// Initialize all partials to zero
-	for(unsigned int i = 0; i < len; i++){ partials[i] = 0; }
 
 	partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*pow(v,3));							// dax/dvx
 	partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*pow(v,3)));			// dax/dvy
@@ -323,23 +328,40 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 
 void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
+	
+	if(len != numStates*7)	// 7 core states
+		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir: unexpected array length");
 
-	if(len != 21)
-		throw Exception("ControlLaw_cr3bp_lt::getPartials_State_GeneralDir: Expects len = 21");
-
-	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz, stm_elements]
+	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz]
 	// partials: row 1 = partials of ax w.r.t. states, row 2 = partials of ay w.r.t. states, etc.
 
 	double charT = pSys->getCharT();
 	double charL = pSys->getCharL();
 	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
 
-	// Initialize all partials to zero
-	for(unsigned int i = 0; i < len; i++){ partials[i] = 0; }
-
 	partials[7*0 + 6] = -f*s[7]/(s[6]*s[6]);	// dax/dm
 	partials[7*1 + 6] = -f*s[8]/(s[6]*s[6]);	// day/dm
 	partials[7*2 + 6] = -f*s[9]/(s[6]*s[6]);	// daz/dm
+
+	(void) t;
+}//====================================================
+
+void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *partials, unsigned int len) const{
+
+	if(len != numStates*7)	// 7 core states
+		throw Exception("ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir: unexpected array length");
+
+	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz]
+	// partials: row 1 = partials of vx w.r.t. ctrl states, row 2 = partials of vy w.r.t. ctrl states, etc.
+
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+
+	partials[numStates*3 + 0] = f/s[6];		// partial of xddot w.r.t. u_x
+	partials[numStates*4 + 1] = f/s[6];		// partial of yddot w.r.t. u_y
+	partials[numStates*5 + 2] = f/s[7];		// partial of zddot w.r.t. u_z
 
 	(void) t;
 }//====================================================

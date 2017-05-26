@@ -86,9 +86,13 @@ public:
 	 *  \name Dynamics Functions
 	 *  \{
 	 */
-	virtual void getLaw_Accel(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const;
+	virtual void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const;
+	virtual void getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	virtual void getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const;
-	virtual void getLaw_AccelPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
+	virtual void getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
+	
+
 	virtual std::string lawIDToString(unsigned int) const;
 	//\}
 

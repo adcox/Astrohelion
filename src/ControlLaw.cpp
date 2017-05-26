@@ -136,25 +136,22 @@ void ControlLaw::setParams(std::vector<double> params){
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the output of a control law: a set of time derivatives that are incorporated
- *  into the acceleration values in the EOMs
- * 	\details In general, three accelerations are stored in <code>law</code>
+ *  \brief Retrieve the output of a control law.
+ * 	\details For example, a set of accelerations incorporated into the velocity 
+ * 	time derivative EOMs
  * 	
  *  \param t time parameter
  *  \param s state vector
  *  \param pSys system data object
- *  \param law empty, initialized array in which to store the control law acceleration outputs
+ *  \param output initialized array of zeros in which to store the control law outputs
  *  \param len number of elements in the <tt>law</tt> array
  *  
  *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
  */
-void ControlLaw::getLaw_Accel(double t, const double *s, const SysData *pSys, double *law, unsigned int len) const{
+void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
-			// Handle default case with no control
-			for(unsigned int i = 0; i < len; i++){
-				law[i] = 0;
-			}
+			// Leave as a bunch of zeros
 			break;
 		default:
 			throw Exception("ControlLaw::getLaw: Unrecognized lawID");
@@ -162,61 +159,116 @@ void ControlLaw::getLaw_Accel(double t, const double *s, const SysData *pSys, do
 	(void) t;
 	(void) s;
 	(void) pSys;
+	(void) output;
+	(void) len;
 }//====================================================
 
 /**
- *  \brief Retrieve the time derivatives of control states
+ *  \brief Retrieve the time derivatives of control states (if any exist)
  *  \details The behavior of this function defaults to returning
  *  all zeros for the derivatives, which is accurate for control laws that hold
- *  parameters constant along a thrust arc. By overriding this function in derived
+ *  parameters constant along a control segment. By overriding this function in derived
  *  classes, more specific behavior may be defined.
  * 
  *  \param t nondimensional integration time
  *  \param s integration state vector (from SimEngine / DynamicsModel)
  *  \param pSys pointer to the system data object
- *  \param deriv pointer to an array in which to store the time-derivative of the control states
+ *  \param deriv pointer to an array of zeros in which to store the time-derivative of the control states
  *  \param int number of elements in the derivative array
  */
 void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
 		default:
-			// Handle default case with no control
-			for(unsigned int i = 0; i < len; i++){
-				deriv[i] = 0;
-			}
+			// Leave as a bunch of zeros
+			break;
 	}
 	(void) t;
 	(void) s;
 	(void) pSys;
+	(void) deriv;
+	(void) len;
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the acceleration outputs with respect to state variables
- *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
- *  states at the given time, state, in the specified system
+ *  \brief Retrieve the partial derivatives of the control state derivatives with respect to all
+ *  states (spacecraft states and control states).
+ *  \details If a nontrivial set of control state derivatives exists, these partial derivatives
+ *  form the bottom set of rows of the A matrix
  * 
  *  \param t time parameter
  *  \param s state vector
  *  \param pSys system data object
- *  \param partials empty, initialized array in which to store the control law 
- *  acceleration partial derivatives
+ *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  of the control state derivatives
  *  \param len number of elements in the <tt>partials</tt> array
  */
-void ControlLaw::getLaw_AccelPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
+void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawID){
 		case NO_CTRL:
-			// Handle default case with no control
-			for(unsigned int i = 0; i < len; i++){
-				partials[i] = 0;
-			}
-			break;
 		default:
-			throw Exception("ControlLaw::GetPartials_State: Unrecognized lawID");
+			// Leave as zeros
+			break;
 	}
 	(void) t;
 	(void) s;
 	(void) pSys;
+	(void) partials;
+	(void) len;
+}//====================================================
+
+/**
+ *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ *  \details If a nontrivial set of control states exists, these partial derivatives form the right-hand
+ *  block-column of the A matrix for the rows associated with the core spacecraft state EOMs. I.e., these
+ *  partial derivatives do not include the partials of the control state derivatives w.r.t. the control states;
+ *  those partial derivatives are obtained from getLaw_StateDerivPartials()
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  of the control state derivatives
+ *  \param len number of elements in the <tt>partials</tt> array
+ */
+void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
+	switch(lawID){
+		case NO_CTRL:
+		default:
+			// Leave as a bunch of zeros
+			break;
+	}
+	(void) t;
+	(void) s;
+	(void) pSys;
+	(void) partials;
+	(void) len;
+}//====================================================
+
+/**
+ *  \brief Retrieve the partial derivatives of the control outputs with respect to state variables
+ *  \details Control outputs are leveraged in the EOMs, and the partial derivatives of the control 
+ *  outputs w.r.t. state variables are required to form the linear relationship "A matrix."
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  of the control outputs
+ *  \param len number of elements in the <tt>partials</tt> array
+ */
+void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
+	switch(lawID){
+		case NO_CTRL:
+		default:
+			// Leave as a bunch of zeros
+			break;
+	}
+	(void) t;
+	(void) s;
+	(void) pSys;
+	(void) partials;
+	(void) len;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

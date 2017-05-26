@@ -1342,7 +1342,9 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
  */
 void SimEngine::cleanEngine(){
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
-    delete eomParams;
+    
+    if(eomParams)
+        delete eomParams;
     eomParams = nullptr;  // set pointer to 0 (null pointer)
 
     for(unsigned int e = 0; e < events.size(); e++){

@@ -75,8 +75,9 @@ public:
 	 *  \name Dynamics Functions
 	 *  \{
 	 */
-	void getLaw_Accel(double t, const double *s, const SysData *sysData, double *law, unsigned int len) const override;
-	void getLaw_AccelPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
+	void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
+	void getLaw_Output(double t, const double *s, const SysData *sysData, double *law, unsigned int len) const override;
+	void getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
 	//\}
 
 	/**
@@ -120,6 +121,8 @@ protected:
 
 	void getAccelPartials_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccelPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+
+	void getEOMPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 };
 
 }// End of astrohelion namespace

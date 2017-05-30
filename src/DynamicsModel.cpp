@@ -250,16 +250,17 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 	int rowNum = 0;
 	for(unsigned int n = 0; n < it->nodesIn->getNumNodes(); n++){
 		// Determine if this state should be withheld from the free variable vector
-		bool addToFreeVar = true;
+		bool stateIsFree = true, ctrlIsFree = true;
 		std::vector<Constraint> nodeCons = it->nodesIn->getNodeRefByIx_const(n).getConstraints();
 		for(const Constraint &con : nodeCons){
-			if(con.getType() == Constraint_tp::RM_STATE){
-				addToFreeVar = false;
-				break;
-			}
+			if(con.getType() == Constraint_tp::RM_STATE)
+				stateIsFree = false;
+
+			if(con.getType() == Constraint_tp::RM_CTRL)
+				ctrlIsFree = false;
 		}
 
-		if(addToFreeVar){
+		if(stateIsFree){
 			// Insert the state into the free variable vector
 			std::vector<double> state = it->nodesIn->getStateByIx(n);
 			rowNum = it->X.size();
@@ -277,11 +278,17 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 
 		try{
 			std::vector<double> ctrlStates = it->nodesIn->getNodeRefByIx_const(n).getExtraParamVec(PARAMKEY_CTRL);
-			rowNum = it->X.size();
-			it->X.insert(it->X.end(), ctrlStates.begin(), ctrlStates.end());
 
-			MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
-			it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, ctrlStates.size());
+			if(ctrlIsFree){
+				rowNum = it->X.size();
+				it->X.insert(it->X.end(), ctrlStates.begin(), ctrlStates.end());
+
+				MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
+				it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, ctrlStates.size());
+			}else{
+				MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
+				it->freeVarMap[key] = MSVarMap_Obj(key, -1, ctrlStates.size());
+			}
 		}catch(Exception &e){
 			// Extra parameter vector doesn't exist; no action necessary
 		}
@@ -383,9 +390,9 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 		if(ctrl_var.row0 == -1){
 			std::vector<double> ctrlVec = it->nodesIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
 			std::copy(ctrlVec.begin(), ctrlVec.end(), ctrl0);
+		}else{
+			std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
 		}
-
-		std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
 	}catch(Exception &e){
 		// Exception thrown if no control variable is found; likely for most systems
 	}
@@ -568,11 +575,13 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 		if(pLaw->getNumStates() > 0){
 			MSVarMap_Obj ctrl0_var = it->getVarMap_obj(MSVar_tp::CTRL, it->nodesIn->getSegRef_const(segID).getOrigin());
 
-			for(unsigned int s = 0; s < conData.size(); s++){
-				if(!std::isnan(conData[s])){
-					for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
-						// put STM elements into DF matrix
-						it->DF_elements.push_back(Tripletd(row0+s, ctrl0_var.row0+c, stm(s, coreDim + c)));
+			if(ctrl0_var.row0 != -1){
+				for(unsigned int s = 0; s < conData.size(); s++){
+					if(!std::isnan(conData[s])){
+						for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+							// put STM elements into DF matrix
+							it->DF_elements.push_back(Tripletd(row0+s, ctrl0_var.row0+c, stm(s, coreDim + c)));
+						}
 					}
 				}
 			}
@@ -744,12 +753,14 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 		if(pLaw->getNumStates() > 0){
 			MSVarMap_Obj ctrl1_var = it->getVarMap_obj(MSVar_tp::CTRL, it->nodesIn->getSegRef_const(segID1).getOrigin());
 
-			count = 0;
-			for(unsigned int s = 0; s < conData.size(); s++){
-				if(!std::isnan(conData[s])){
-					for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
-						// put STM elements into DF matrix
-						it->DF_elements.push_back(Tripletd(row0+count, ctrl1_var.row0+c, stm1(s, coreDim + c)));
+			if(ctrl1_var.row0 != -1){
+				count = 0;
+				for(unsigned int s = 0; s < conData.size(); s++){
+					if(!std::isnan(conData[s])){
+						for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+							// put STM elements into DF matrix
+							it->DF_elements.push_back(Tripletd(row0+count, ctrl1_var.row0+c, stm1(s, coreDim + c)));
+						}
 					}
 				}
 			}
@@ -762,12 +773,14 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 		if(pLaw->getNumStates() > 0){
 			MSVarMap_Obj ctrl2_var = it->getVarMap_obj(MSVar_tp::CTRL, it->nodesIn->getSegRef_const(segID2).getOrigin());
 
-			count = 0;
-			for(unsigned int s = 0; s < conData.size(); s++){
-				if(!std::isnan(conData[s])){
-					for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
-						// put STM elements into DF matrix
-						it->DF_elements.push_back(Tripletd(row0+count, ctrl2_var.row0+c, stm1(s, coreDim + c)));
+			if(ctrl2_var.row0 != -1){
+				count = 0;
+				for(unsigned int s = 0; s < conData.size(); s++){
+					if(!std::isnan(conData[s])){
+						for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+							// put STM elements into DF matrix
+							it->DF_elements.push_back(Tripletd(row0+count, ctrl2_var.row0+c, stm1(s, coreDim + c)));
+						}
 					}
 				}
 			}

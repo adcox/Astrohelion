@@ -164,6 +164,7 @@ class MultShootEngine : public Core, public Engine{
 		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
 		bool bScaleVars = false;
 
+		void checkDFSingularities(MatrixXRd);
 		void cleanEngine();
 		void copyMe(const MultShootEngine&);
 		void reportConMags(const MultShootData*);

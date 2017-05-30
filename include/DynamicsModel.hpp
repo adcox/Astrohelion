@@ -323,6 +323,7 @@ protected:
 		Constraint_tp::SEG_CONT_PV,
 		Constraint_tp::SEG_CONT_EX,
 		Constraint_tp::RM_STATE,
+		Constraint_tp::RM_CTRL,
 		Constraint_tp::ENDSEG_STATE};
 
 	/** A vector containing all the types of events this model supports */

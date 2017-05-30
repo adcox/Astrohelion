@@ -382,6 +382,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				break;
 			case Constraint_tp::RM_STATE:
 			case Constraint_tp::RM_EPOCH:
+			case Constraint_tp::RM_CTRL:
 				// These constraints are handled differently
 				addToRows = 0;
 				break;
@@ -638,11 +639,13 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 			luSolver.analyzePattern(J);
 			luSolver.factorize(J);
 			if(luSolver.info() != Eigen::Success){
+				checkDFSingularities(J);
 				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
 			}
 
 			X_diff = luSolver.solve(-FX);
 			if(luSolver.info() != Eigen::Success){
+				checkDFSingularities(J);
 				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
 			}
 		}else{
@@ -673,11 +676,13 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 					Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
 					qrSolver.compute(G);
 					if(qrSolver.info() != Eigen::Success){
+						checkDFSingularities(J);
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix.");
 					}
 
 					Eigen::VectorXd w = qrSolver.solve(-FX);
 					if(qrSolver.info() != Eigen::Success){
+						checkDFSingularities(J);
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
 					}
 
@@ -686,6 +691,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 
 					Eigen::VectorXd w = luSolver.solve(-FX);
 					if(luSolver.info() != Eigen::Success){
+						checkDFSingularities(J);
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
 					}
 					X_diff = JT*w;	// Compute optimal x from w
@@ -715,6 +721,26 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 	double scale = FX.norm() < attenuationLimitTol ? 1.0 : attenuation;
 	return oldX + scale*X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
+
+/**
+ *  \brief Checks the Jacobian (DF) matrix for singularities, i.e., rows
+ *  or columns that contain only zeros
+ * 
+ *  \param DF Jacobian matrix employed in the correction process
+ */
+void MultShootEngine::checkDFSingularities(MatrixXRd DF){
+	for(unsigned int r = 0; r < DF.rows(); r++){
+		if(DF.row(r).norm() == 0){
+			printErr("Singular Jacobian! Row %u is all zeros\n", r);
+		}
+	}
+
+	for(unsigned int c = 0; c < DF.cols(); c++){
+		if(DF.col(c).norm() == 0){
+			printErr("Singular Jacobian! Column %u is all zeros\n", c);
+		}
+	}
+}//====================================================
 
 /**
  *  \brief Print out the magnitude of each constraint.

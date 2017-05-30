@@ -192,11 +192,15 @@ enum class Constraint_tp {
 				 */
 	RM_STATE,	/*!< State constraint: Remove the indicated state vector from the free variable vector
 				 * during multiple shooting. The <tt>id</tt> attribute specifies which node's state
-				 * vector to remove. The <tt>data</tt> field is currently unnused.
+				 * vector to remove. The <tt>data</tt> field is currently unused.
 	     		 */
 	RM_EPOCH,	/*!< Epoch constraint: Remove the specified epoch from the free variable vector
 				 *	during multiple shooting. The <tt>id</tt> attribute specifies which node's epoch
-				 *	to remove. The <tt>data</tt> field is currently unnused.
+				 *	to remove. The <tt>data</tt> field is currently unused.
+				 */
+	RM_CTRL, 	/*! Control constraint: Remove the specified control state vector from the free variable
+				 *	vector during multiple shooting. The <tt>id</tt> attribute specifies which node's 
+				 *	control state vector to remove. The <tt>data</tt> is currently unused.
 				 */
 	ENDSEG_STATE/*!< Constrain the end of a segment (not a node) to have a certain state
 				 *

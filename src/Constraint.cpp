@@ -263,6 +263,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::PSEUDOARC: { return "PSEUDO-ARCLENGTH"; }
 		case Constraint_tp::RM_STATE: { return "RM_STATE"; }
 		case Constraint_tp::RM_EPOCH: { return "RM_EPOCH"; }
+		case Constraint_tp::RM_CTRL: { return "RM_CTRL"; }
 		case Constraint_tp::ENDSEG_STATE: { return "ENDSEG_STATE"; }
 		default: { return "UNDEFINED!"; }
 	}

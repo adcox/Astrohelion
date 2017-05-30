@@ -304,7 +304,7 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
  *  are in a consistent order.
  *  
  *      1. Pairs of eigenvalues should occur in sequence ( [0,1] or [2,3], etc.) and have
- *      a product equal to one
+ *      a product equal to one (reciprocal pairs)
  *      
  *      2. Eigenvalues evolve continuously along the family, thus the changes between subsequent 
  *      eigenvalues should be small
@@ -338,14 +338,14 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
 
     // Generate all permutations of the indices 0 through 5
     std::vector<unsigned int> vals {0,1,2,3,4,5};
-    std::vector<unsigned int> ixPerms = astrohelion::generatePerms<unsigned int>(vals);
+    std::vector<unsigned int> ixPerms = generatePerms<unsigned int>(vals);
     std::vector<float> cost(ixPerms.size()/6, 0);
 
     // Sort the first set of eigenvalues so that reciprocal pairs occur near one another
     unsigned int s = 0;
     for(unsigned int p = 0; p < ixPerms.size()/6; p++){
         for(unsigned int i = 0; i < 3; i++){
-            // Penalize configures with pairs that are not reciprocal
+            // Penalize configurations with pairs that are not reciprocal
             cost[p] += std::abs(1.0 - eigVals[s*6 + ixPerms[p*6 + 2*i]] * eigVals[s*6 + ixPerms[p*6 + 2*i + 1]]);
         }
     }
@@ -354,6 +354,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
     std::vector<float>::iterator minCostIt = std::min_element(cost.begin(), cost.end());
     unsigned int minCostIx = minCostIt - cost.begin();
 
+    // Sort the eigenvectors and eigenvalues according to the minimum cost permutation
     // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
     std::vector<cdouble> prevSortVal(6,0);
     MatrixXRcd prevSortVec = MatrixXRcd::Zero(6,6);
@@ -371,12 +372,14 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
     //     std::real(eigVals[sortedIxs[s*6+4]]), std::imag(eigVals[sortedIxs[s*6+4]]),
     //     std::real(eigVals[sortedIxs[s*6+5]]), std::imag(eigVals[sortedIxs[s*6+5]]));
 
+    // Analyze all other eigenvalue sets using axioms while maintaining order of the
+    // first set of eigenvalues/vectors
     for(s = 1; s < eigVals.size()/6; s++){
         MatrixXRd dp_err = MatrixXRd::Zero(6,6);
         for(unsigned int i = 0; i < 6; i++){
             for(unsigned int j = i; j < 6; j++){
                 dp_err(i,j) = std::abs(1.0 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j))));
-                dp_err(j,i) = dp_err(i,j);
+                dp_err(j,i) = dp_err(i,j);  // symmetric
             }
         }
 

@@ -379,11 +379,13 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 	try{
 		MSVarMap_Obj ctrl_var = it->getVarMap_obj(MSVar_tp::CTRL, segOriginID);
 
-		// // if the control variables are not part of the free variable vector, retrieve from input nodeset:
-		// std::vector<double> ctrlVec = it->nodesIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
-		// std::copy(ctrlVec.begin(), ctrlVec.end(), ctrl0);
+		// If the control variables are not part of the free variable vector, retrieve from input nodeset:
+		if(ctrl_var.row0 == -1){
+			std::vector<double> ctrlVec = it->nodesIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
+			std::copy(ctrlVec.begin(), ctrlVec.end(), ctrl0);
+		}
 
-		std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+state_var.row0 + state_var.nRows, ctrl0);
+		std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
 	}catch(Exception &e){
 		// Exception thrown if no control variable is found; likely for most systems
 	}
@@ -451,8 +453,10 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, const Constrain
 
 	switch(con.getType()){
 		case Constraint_tp::CONT_PV:
-			// Apply position-velocity continuity constraints
-			multShoot_targetCont_State(it, con, row0);
+			multShoot_targetCont_State(it, con, row0);		// Apply position-velocity continuity constraints
+			break;
+		case Constraint_tp::CONT_CTRL:
+			multShoot_targetCont_Ctrl(it, con, row0);		// Control state continuity
 			break;
 		case Constraint_tp::SEG_CONT_PV:
 			multShoot_targetCont_State_Seg(it, con, row0);
@@ -461,8 +465,7 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *it, const Constrain
 			multShoot_targetCont_Ex_Seg(it, con, row0);
 			break;
 		case Constraint_tp::CONT_EX:
-			// Apply extra continuity constraints
-			multShoot_targetCont_Ex(it, con, row0);
+			multShoot_targetCont_Ex(it, con, row0);			// Apply extra continuity constraints
 			break;
 		case Constraint_tp::STATE:
 			multShoot_targetState(it, con, row0);
@@ -573,6 +576,82 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 					}
 				}
 			}
+		}
+	}
+}//====================================================
+
+void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData *it, const Constraint& con, int row0) const{
+	int segID = con.getID();	// get segment ID
+	std::vector<double> conData = con.getData();
+
+	int segIx = it->nodesIn->getSegIx(segID);
+	const Segment &propSeg = it->propSegs[segIx].getSegRefByIx_const(0);
+	const Segment &inputSeg = it->nodesIn->getSegRef_const(segID);
+
+	if(propSeg.getCtrlLaw() == nullptr)
+		throw Exception("DynamicsModel::multShoot_targetCont_Ctrl: Constrained segment has a NULL control law");
+	
+
+	const unsigned int ctrlDim = propSeg.getCtrlLaw()->getNumStates();
+
+	std::vector<double> lastFullState = propSeg.getStateByRow(-1);
+	double *lastPropState = &(lastFullState[coreDim]);
+	
+	MatrixXRd stm = propSeg.getSTM();
+
+	MSVarMap_Obj ctrl0_var = it->getVarMap_obj(MSVar_tp::CTRL, inputSeg.getOrigin());
+	MSVarMap_Obj nodeState0_var = it->getVarMap_obj(MSVar_tp::STATE, inputSeg.getOrigin());
+
+	MSVarMap_Obj ctrlf_var = it->getVarMap_obj(MSVar_tp::CTRL, inputSeg.getTerminus());
+
+	std::vector<double> ctrlf_static_vector = it->nodesIn->getNodeRef_const(ctrlf_var.key.id).getExtraParamVec(PARAMKEY_CTRL);
+	// Loop through conData
+	for(unsigned int s = 0; s < conData.size(); s++){
+		if(!std::isnan(conData[s])){
+			// This state is constrained to be continuous; compute error
+			double ctrlf_value = ctrlf_var.row0 == -1 ? ctrlf_static_vector[s] : it->X[ctrlf_var.row0 + s];
+			it->FX[row0+s] = lastPropState[s] - ctrlf_value;
+
+			// Compute partials of F w.r.t. origin node state
+			for(unsigned int x = 0; x < coreDim; x++){
+				// put STM elements into DF matrix
+				if(nodeState0_var.row0 != -1){
+					it->DF_elements.push_back(Tripletd(row0+s, nodeState0_var.row0 + x, stm(coreDim + s, x)));
+				}
+			}
+
+			// Compute partials of F w.r.t. origin and terminal node control states
+			for(unsigned int x = 0; x < ctrlDim; x++){
+				// For origin node: Put STM elements into DF matrix
+				if(ctrl0_var.row0 != -1){
+					it->DF_elements.push_back(Tripletd(row0+s, ctrl0_var.row0 + x, stm(coreDim + s, coreDim + x)));
+				}
+
+				// For terminal node: Negative identity
+				if(ctrlf_var.row0 != -1 && s == x){
+					it->DF_elements.push_back(Tripletd(row0+s, ctrlf_var.row0 + x, -1.0));
+				}
+			}
+
+			// Compute partials of F w.r.t. times-of-flight
+			// Columns of DF based on time constraints
+			if(it->bVarTime){
+				// TODO - Will need to retreive constrol state time derivatives from propagated segment
+				// * Instantaneous time derivatives are available via ControlLaw.getLaw_StateDeriv()
+				// * For now, all time-derivatives of control laws are zero
+
+				// std::vector<double> lastDeriv = propSeg.getStateDerivByIx(-1);
+
+				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
+				// double timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs()) : 1.0;
+
+				// MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
+				// 	it->bEqualArcTime ? Linkable::INVALID_ID : segID);
+				
+				// Column of state time derivatives: [vel; accel; other time derivatives]
+				// it->DF_elements.push_back(Tripletd(row0+s, tofVar.row0, timeCoeff*lastDeriv[s]));
+			}
+
 		}
 	}
 }//====================================================

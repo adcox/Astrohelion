@@ -305,6 +305,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 		switch(con.getType()){
 			case Constraint_tp::CONT_PV:
 			case Constraint_tp::CONT_EX:
+			case Constraint_tp::CONT_CTRL:
 			case Constraint_tp::SEG_CONT_PV:
 			case Constraint_tp::STATE:
 			case Constraint_tp::MATCH_CUST:
@@ -786,7 +787,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     // Create multiple shooter that will only do 1 iteration
     MultShootEngine corrector(engine);
     corrector.setMaxIts(1);
-    corrector.setVerbosity(Verbosity_tp::NO_MSG);
+    corrector.setVerbosity(verbosity < Verbosity_tp::DEBUG ? Verbosity_tp::NO_MSG : Verbosity_tp::ALL_MSG);
     corrector.setIgnoreDiverge(true);
 
     // Run multiple shooter to get X, FX, and DF
@@ -803,7 +804,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     }
 
     double pertSize = 1e-8;
-    #pragma omp parallel for firstprivate(it, corrector)
+    #pragma omp parallel for firstprivate(it, corrector) schedule(dynamic)
     for(int i = 0; i < it.totalFree; i++){
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation

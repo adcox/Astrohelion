@@ -357,11 +357,13 @@ void DynamicsModel_bc4bp::getPrimAccel(double t, const SysData *pSysData, int pI
  *  \return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_bc4bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
-    if(state.size() != coreDim)
-        throw Exception("DynamicsModel_bc4bp::getStateDeriv: State size does not match the core state size specified by the dynamical model");
+    const unsigned int ctrlDim = params->pCtrlLaw ? params->pCtrlLaw->getNumStates() : 0;
+
+    if(state.size() != coreDim + ctrlDim)
+        throw Exception("DynamicsModel_bc4bp::getStateDeriv: State size does not match the state size specified by the dynamical model and control law");
 
     // Compute the acceleration
-    std::vector<double> dsdt(coreDim,0);
+    std::vector<double> dsdt(coreDim + ctrlDim, 0);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), params);
     
     return dsdt;

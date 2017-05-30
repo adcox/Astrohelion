@@ -690,6 +690,48 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
     runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
 }//====================================================
 
+void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
+    // Checks
+    if(numNodes < 2){
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim_manyNodes: Cannot create an arcset with fewer than two nodes\n");
+        return;
+    }
+
+    unsigned int coreSize = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+    unsigned int ctrlSize = pLaw ? pLaw->getNumStates() : 0;
+
+    
+    if(ic.size() < coreSize){
+        printErr("IC size = %zu is too small\n", ic.size());
+        throw Exception("SimEngine::runSim: IC must have at least the number of states specified by the Dynamics Model");
+    }
+
+    if(ctrl0.size() < ctrlSize){
+        printErr("Control state size = %zu is too small\n", ctrl0.size());
+        throw Exception("SimEngine::runSim: Control state must have at least the number of states specified by the Control Law");
+    }
+
+    // Space out nodes in time
+    int t_sign = bRevTime ? -1 : 1;
+
+    std::vector<double> t_span(numNodes, 0);
+    double t_step = std::abs(tof)/static_cast<double>(numNodes - 1);
+
+    for(int s = 0; s < numNodes-1; s++){
+        t_span[s] = t0 + t_sign*s*t_step;
+    }
+    t_span[numNodes-1] = t0 + t_sign*std::abs(tof);  // Final node at the desired TOF
+
+    // Create some dummy variables
+    std::vector<double> stm0;
+    createDummySTM(stm0, coreSize + ctrlSize);
+
+    std::vector<double> icCopy = ic;
+    std::vector<double> ctrlCopy = ctrl0;
+
+    runSim(&(icCopy.front()), &(ctrlCopy.front()), &(stm0.front()), t_span, arcset, pLaw);
+}//====================================================
+
 //-----------------------------------------------------
 // 		Numerical Integration
 //-----------------------------------------------------

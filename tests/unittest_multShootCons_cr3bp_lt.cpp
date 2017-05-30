@@ -113,6 +113,30 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law2){
 // 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 // }//====================================================
 
+BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_CONT_Law5){
+	SysData_cr3bp_lt sys("earth", "moon", 14);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 12e-3, 1500);
+	std::vector<double> thrustAngles {PI/4, PI/10};
+	std::vector<double> ic {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	double T = 3.02796323553149;	// EM L1 Period
+	
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
+	SimEngine sim;
+	sim.runSim_manyNodes(ic, thrustAngles, 0, T, 2, &halfLyapNodeset, &law);
+
+	// Add control continuity constraint for full-rank Jacobian (check ALL the available partials)
+	std::vector<double> conData(law.getNumStates(), 1);
+	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
+	halfLyapNodeset.addConstraint(ctrlCon);
+
+	MultShootEngine corrector;
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+	corrector.setEqualArcTime(false);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+}//====================================================
+
 BOOST_AUTO_TEST_CASE(CR3BP_LT_EM_STATE){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);

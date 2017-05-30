@@ -715,23 +715,31 @@ std::vector<double> BaseArcset::getStateDeriv(int id){
 	if(nodeIDMap.count(id) == 0)
 		throw Exception("BaseArcset::getStateDeriv: Node ID out of range");
 
-	int ix = nodeIDMap.at(id);
-	if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
-		try{
-			return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
-		}catch(Exception &e){
-			// Control laws are defined on segments, but state derivatives are stored on nodes...
-			// Get the control law associated with the first segment linked to the node (should definitely be one)
-			// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
-			EOM_ParamStruct params(pSysData, segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw());
+	return getStateDerivByIx(nodeIDMap.at(id));
+	// int ix = nodeIDMap.at(id);
+	// if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
+	// 	try{
+	// 		return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
+	// 	}catch(Exception &e){
+	// 		// Control laws are defined on segments, but state derivatives are stored on nodes...
+	// 		// Get the control law associated with the first segment linked to the node (should definitely be one)
+	// 		// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
+	// 		ControlLaw *pLaw = segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw();
+	// 		EOM_ParamStruct params(pSysData, pLaw);
 
-			std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
-			nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
-			return a;
-		}
-	}else{
-		throw Exception("BaseArcset::getStateDeriv: Could not locate the node with the specified ID");
-	}
+	// 		std::vector<double> state = nodes[ix].getState();
+	// 		if(pLaw && pLaw->getNumStates() > 0){
+	// 			std::vector<double> ctrlState = nodes[ix].getExtraParamVec(PARAMKEY_CTRL);
+	// 			state.insert(state.end(), ctrlState.begin(), ctrlState.end());
+	// 		}
+
+	// 		std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
+	// 		nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
+	// 		return a;
+	// 	}
+	// }else{
+	// 	throw Exception("BaseArcset::getStateDeriv: Could not locate the node with the specified ID");
+	// }
 }//====================================================
 
 /**
@@ -752,13 +760,20 @@ std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 		return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
 	}catch(Exception &e){
 		// Control laws are defined on segments, but state derivatives are stored on nodes...
-		// Get the control law associated with the first segment linked to the node (should definitely be one)
-		// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
-		EOM_ParamStruct params(pSysData, segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw());
+			// Get the control law associated with the first segment linked to the node (should definitely be one)
+			// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
+			ControlLaw *pLaw = segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw();
+			EOM_ParamStruct params(pSysData, pLaw);
 
-		std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
-		nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
-		return a;
+			std::vector<double> state = nodes[ix].getState();
+			if(pLaw && pLaw->getNumStates() > 0){
+				std::vector<double> ctrlState = nodes[ix].getExtraParamVec(PARAMKEY_CTRL);
+				state.insert(state.end(), ctrlState.begin(), ctrlState.end());
+			}
+
+			std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), state, &params);
+			nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
+			return a;
 	}
 }//====================================================
 

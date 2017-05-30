@@ -134,13 +134,21 @@ enum class Constraint_tp {
  				 *	seven to be an apse relative to P1, I would set <tt>id</tt> 
  				 *	to 7 and set <tt>data</tt> to [0, NAN, NAN, NAN, NAN, NAN]
  				 */
+	CONT_CTRL, 	/*!	Constrain a segment to be continuous with its terminal node in
+				 * 	the specified control states. The <tt>id</tt> value specificies 
+				 * 	the ID of the segment and the <tt>data</tt> field specifies 
+				 * 	which states must be continuous. For example, to constrain the 
+				 * 	first control state but not the second, the <tt>data</tt> field 
+				 * 	would contain <tt>[1 NAN]</tt>. Values of NAN tell the algorithm 
+				 * 	not to force continuity in that state.
+				 */
  	CONT_PV,	/*!< Constrain a segment to be continuous with its terminal node in 
 				 * the specified position and velocity states. The
-				 * <tt>id</tt> value specifies the ID of the node, and the
+				 * <tt>id</tt> value specifies the ID of the segment, and the
 				 * <tt>data</tt> field specifies which states must be continuous.
 				 * For example, if I want the propagation along segment 4 to
 				 * be continuous in all position states and x_dot, then I would set
-				 * <tt>id</tt> to 4 and <tt>data</tt> to [1 1 1 1 NAN NAN]. Values
+				 * <tt>id</tt> to 4 and <tt>data</tt> to <tt>[1 1 1 1 NAN NAN]</tt>. Values
 				 * of NAN tell the algorithm not to force continuity in that state,
 				 * so in this example y_dot and z_dot are allowed to be discontinous.
 				 * NOTE: These constraints are applied automatically by the corrections
@@ -157,8 +165,6 @@ enum class Constraint_tp {
 				 * 
 				 * **Parameter Indices**
 				 * * 0 - Epoch
-				 * * 1 - Mass		[Not Implemented]
-				 * * 2 - Attitude 	[Not Implemented]
 				 */
 	SEG_CONT_PV,/*!< Constrain a segment to be continuous with another segment at their 
 				 * terminal nodes in position and/or velocity. This situation may occur 

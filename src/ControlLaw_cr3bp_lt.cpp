@@ -370,7 +370,7 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 	partials[numStates*3 + 1] = -f/s[6] * sin(beta)*cos(alpha);		// partial of xddot w.r.t. beta
 	partials[numStates*4 + 0] = f/s[6] * cos(beta) * cos(alpha);	// partial of yddot w.r.t. alpha
 	partials[numStates*4 + 1] = -f/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
-	partials[numStates*5 + 2] = f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
+	partials[numStates*5 + 1] = f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
 
 	(void) t;
 }//====================================================

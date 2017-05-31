@@ -91,7 +91,6 @@ public:
 	 *  \{
 	 */
 	void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const override;
-	void multShoot_createOutput(const MultShootData*) const;
 	void multShoot_initIterData(MultShootData *it) const override;
 	//\}
 protected:

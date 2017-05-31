@@ -73,6 +73,7 @@ public:
 	 *  \{
 	 */
 	unsigned int getLawID() const;
+	std::string getLawString() const;
 	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;
 	std::vector<double> getParams() const;

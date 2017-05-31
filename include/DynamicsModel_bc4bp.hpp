@@ -97,7 +97,7 @@ public:
 	void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*, double*) const override;
 	double multShoot_getSlackVarVal(const MultShootData*, const Constraint&) const override;
 	void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const override;
-	void multShoot_createOutput(const MultShootData*) const;
+	void multShoot_createOutput(const MultShootData*) const override;
 	//\}
 
 protected:

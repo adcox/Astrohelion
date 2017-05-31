@@ -23,6 +23,8 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string>
+
 #include "ControlLaw.hpp"
 #include "Exceptions.hpp"
 #include "SysData.hpp"
@@ -96,6 +98,8 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
  *  \return the control law ID
  */
 unsigned int ControlLaw::getLawID() const{ return lawID; }
+
+std::string ControlLaw::getLawString() const{ return lawIDToString(lawID); }
 
 /**
  *  \brief Retrieve the number of control variables that need to be included

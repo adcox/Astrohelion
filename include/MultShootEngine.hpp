@@ -167,6 +167,7 @@ class MultShootEngine : public Core, public Engine{
 		void checkDFSingularities(MatrixXRd);
 		void cleanEngine();
 		void copyMe(const MultShootEngine&);
+		void propSegsFromFreeVars(MultShootData*, SimEngine*);
 		void reportConMags(const MultShootData*);
 		Eigen::VectorXd solveUpdateEq(MultShootData*);
 };

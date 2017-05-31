@@ -273,6 +273,12 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+
+	for(unsigned int n = 0; n < correctedSet.getNumNodes(); n++){
+		BOOST_CHECK_NO_THROW(correctedSet.getNodeByIx(n).getExtraParamVec(PARAMKEY_CTRL));
+		std::vector<double> ctrlState = correctedSet.getNodeByIx(n).getExtraParamVec(PARAMKEY_CTRL);
+		BOOST_CHECK(ctrlState.size() == law.getNumStates());
+	}
 }//====================================================
 
 BOOST_DATA_TEST_CASE(test_continuity_equalArc, randAlphaGen ^ randBetaGen ^ data::xrange(5), alpha, beta, index){

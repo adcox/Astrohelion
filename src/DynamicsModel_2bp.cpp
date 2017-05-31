@@ -192,28 +192,6 @@ void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
 	(void)it;
 }//====================================================
 
-/**
- *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
- *  nodeset
- *
- *  \details NOT YET IMPLEMENTED
- *  
- *  If <tt>findEvent</tt> is set to true, the
- *  output nodeset will contain extra information for the simulation engine to use. Rather than
- *  returning only the position and velocity states, the output nodeset will contain the STM 
- *  and dqdT values for the final node; this information will be appended to the extraParameter
- *  vector in the final node.
- *
- *  \param it an iteration data object containing all info from the corrections process
- *  \param nodes_in a pointer to the original, uncorrected nodeset
- *  \param findEvent whether or not this correction process is locating an event
- *  \param nodes_out pointer to the nodeset object that will contain the output of the
- *  shooting process
- */
-void DynamicsModel_2bp::multShoot_createOutput(const MultShootData* it) const{
-    (void) it;
-}//====================================================
-
 //------------------------------------------------------------------------------------------------------
 //      Static Calculation Functions
 //------------------------------------------------------------------------------------------------------

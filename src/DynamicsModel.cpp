@@ -42,6 +42,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "AsciiOutput.hpp"
+
 namespace astrohelion{
 /**
  *	\brief Default constructor
@@ -202,7 +204,6 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
 int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const{
 	(void) y;
 	(void) t;
-	(void) params;
 	
 	node.setTriggerEvent(tp);
 
@@ -220,6 +221,7 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* tr
 int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
 	(void) y;
 	(void) t;
+
 	seg.setCtrlLaw(params->pCtrlLaw);
 	return traj->addSeg(seg);
 }//====================================================
@@ -286,6 +288,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 				MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, ctrlStates.size());
 			}else{
+				printColor(BLUE, "initDesignVec: Node %u: Control is not free; use value from it->nodesIn\n", n);
 				MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, -1, ctrlStates.size());
 			}
@@ -372,6 +375,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 	double *ic, double *ctrl0, double *t0, double *tof) const{
 
 	int segOriginID = it->nodesIn->getSegRef_const(s).getOrigin();
+	ControlLaw *pLaw = it->nodesIn->getSegRef_const(s).getCtrlLaw();
 
 	// Retrieve  representative object for state and get data from free var vec
 	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, segOriginID);
@@ -382,19 +386,19 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 		std::copy(it->X.begin()+state_var.row0, it->X.begin()+state_var.row0 + state_var.nRows, ic);
 	}
 
-	// Retrieve representative object for control and get data from free var vec
-	try{
-		MSVarMap_Obj ctrl_var = it->getVarMap_obj(MSVar_tp::CTRL, segOriginID);
+	if(pLaw){
+		// Retrieve representative object for control and get data from free var vec
+		try{
+			MSVarMap_Obj ctrl_var = it->getVarMap_obj(MSVar_tp::CTRL, segOriginID);
 
-		// If the control variables are not part of the free variable vector, retrieve from input nodeset:
-		if(ctrl_var.row0 == -1){
-			std::vector<double> ctrlVec = it->nodesIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
-			std::copy(ctrlVec.begin(), ctrlVec.end(), ctrl0);
-		}else{
-			std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
-		}
-	}catch(Exception &e){
-		// Exception thrown if no control variable is found; likely for most systems
+			// If the control variables are not part of the free variable vector, retrieve from input nodeset:
+			if(ctrl_var.row0 == -1){
+				std::vector<double> ctrl = it->nodesIn->getNodeRef_const(segOriginID).getExtraParamVec(PARAMKEY_CTRL);
+				std::copy(ctrl.begin(), ctrl.end(), ctrl0);
+			}else{
+				std::copy(it->X.begin()+ctrl_var.row0, it->X.begin()+ctrl_var.row0 + ctrl_var.nRows, ctrl0);
+			}
+		}catch(Exception &e){ /* No need to handle exception */ }
 	}
 
 	if(it->bVarTime){
@@ -1286,6 +1290,115 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, const Constraint& co
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+4, dy));
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+5, dz));
 }//====================================================
+
+
+/**
+ *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  nodeset
+ *
+ *  If <tt>findEvent</tt> is set to true, the
+ *  output nodeset will contain extra information for the simulation engine to use. Rather than
+ *  returning only the position and velocity states, the output nodeset will contain the STM 
+ *  and dqdT values for the final node; this information will be appended to the extraParameter
+ *  vector in the final node.
+ *
+ *  \param it an iteration data object containing all info from the corrections process
+ *  \param nodes_in a pointer to the original, uncorrected nodeset
+ *  \param findEvent whether or not this correction process is locating an event
+ *  \param nodes_out pointer to the nodeset object that will contain the output of the
+ *  shooting process
+ */
+void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
+
+    std::vector<int> newNodeIDs;
+    newNodeIDs.reserve(it->numNodes);
+    
+    for(int n = 0; n < it->numNodes; n++){
+        Node node = it->nodesIn->getNodeByIx(n);
+
+        MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, node.getID());
+        if(state_var.row0 != -1){
+            node.setState(&(it->X[state_var.row0]), state_var.nRows);
+        }
+
+        // If no control law is applied, getVarMap_obj will throw an exception
+        try{
+            MSVarMap_Obj ctrl_var = it->getVarMap_obj(MSVar_tp::CTRL, node.getID());
+
+            if(ctrl_var.row0 != -1){
+                std::vector<double> ctrl = std::vector<double>(it->X.begin()+ctrl_var.row0, it->X.begin() + ctrl_var.row0 + ctrl_var.nRows);
+                node.setExtraParamVec(PARAMKEY_CTRL, ctrl);
+            }else{
+            	printColor(BLUE, "createOutput: Node %u: Control is not free; use value from it->nodesIn\n", n);
+            }
+        }catch(Exception &e){ /* No need to report exception */ }
+
+        // Add the node to the output nodeset and save the new ID
+        newNodeIDs.push_back(it->nodesOut->addNode(node));
+    }
+
+    double tof;
+    int newOrigID, newTermID;
+    for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+        Segment seg = it->nodesIn->getSegByIx(s);
+
+        if(it->bVarTime){
+            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
+                it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
+            // Get data
+            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodesIn->getNumSegs()) : it->X[tofVar.row0];
+        }else{
+            tof = seg.getTOF();
+        }
+
+        newOrigID = newNodeIDs[it->nodesIn->getNodeIx(seg.getOrigin())];
+        int termID = seg.getTerminus();
+        newTermID = termID == Linkable::INVALID_ID ? termID : newNodeIDs[it->nodesIn->getNodeIx(termID)];
+        
+        Segment newSeg(newOrigID, newTermID, tof);
+        newSeg.setConstraints(seg.getConstraints());
+        newSeg.setVelCon(seg.getVelCon());
+        newSeg.setSTM(it->propSegs[s].getSTMByIx(-1));
+        newSeg.setCtrlLaw(seg.getCtrlLaw());
+        newSeg.setStateVector(it->propSegs[s].getSegRef_const(0).getStateVector());
+        newSeg.setStateWidth(it->propSegs[s].getSegRef_const(0).getStateWidth());
+        newSeg.setTimeVector(it->propSegs[s].getSegRef_const(0).getTimeVector());
+        it->nodesOut->addSeg(newSeg);
+    }
+
+    // Determine the chronological order of the nodeset
+    // it->nodesOut->print();
+    // it->nodesOut->printInChrono();
+    std::vector<ArcPiece> order = it->nodesOut->getChronoOrder();
+    // Set the epoch of each node based on the time of flight from
+    // the first node
+    double epoch = NAN;
+    for(unsigned int i = 0; i < order.size(); i++){
+        if(order[i].type == ArcPiece::Piece_tp::NODE){
+            if(std::isnan(epoch)){
+                // Copy the epoch value of the first node
+                epoch = it->nodesOut->getNode(order[i].id).getEpoch();
+            }else{
+                // Set the epoch value of all other nodes
+                it->nodesOut->getNodeRef(order[i].id).setEpoch(epoch);       
+            }
+        }
+        if(order[i].type == ArcPiece::Piece_tp::SEG){
+            if(!std::isnan(epoch)){
+                // When stepping through in chronological order, every step is
+                // forward in time; negative TOFs are associated with segments that
+                // flow opposite the chronological order; ignore sign here.
+                epoch += std::abs(it->nodesOut->getSeg(order[i].id).getTOF());
+            }
+        }
+    }
+
+    // it->nodesOut->print();
+    std::vector<Constraint> arcCons = it->nodesIn->getArcConstraints();
+    for(unsigned int i = 0; i < arcCons.size(); i++){
+        it->nodesOut->addConstraint(arcCons[i]);
+    }
+}//======================================================
 
 
 }// END of Astrohelion namespace

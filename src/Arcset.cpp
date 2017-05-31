@@ -337,11 +337,34 @@ void Arcset::print() const {
 		printf("  %02d (ix %02d):", index.first, index.second);
 		if(index.second != Linkable::INVALID_ID){
 			std::vector<double> state = nodes[index.second].getState();
-			printf(" @ %13.8f -- {%13.8f, %13.8f, %13.8f, %13.8f, %13.8f, %13.8f}\n",
-				nodes[index.second].getEpoch(), state[0], state[1], state[2], state[3],
-				state[4], state[5]);
-			printf("            > Link[0] = %02d,  Link[1] = %02d\n", nodes[index.second].getLink(0), 
+			printf(" @ %13.8f -- {", nodes[index.second].getEpoch());
+			for(unsigned int i = 0; i < state.size()-1; i++){
+				printf("%13.8f, ", state[i]);
+			}
+
+			if(state.size() > 0){
+				printf("%13.8f}\n", state.back());
+			}else{
+				printf("}\n");
+			}
+
+			printf("\t> Link[0] = %02d,  Link[1] = %02d\n", nodes[index.second].getLink(0), 
 				nodes[index.second].getLink(1));
+
+			try{
+				std::vector<double> ctrlState = nodes[index.second].getExtraParamVec(PARAMKEY_CTRL);
+				printf("\t> Ctrl = {");
+				
+				if(ctrlState.size() > 0){
+					for(unsigned int i = 0; i < ctrlState.size()-1; i++){
+						printf("%13.8f, ", ctrlState[i]);
+					}
+					printf("%13.8f}\n", ctrlState.back());
+				}else{
+					printf("}\n");
+				}
+			}catch(Exception &e){}
+			
 		}else{
 			printf(" [N/A]\n");
 		}
@@ -353,12 +376,14 @@ void Arcset::print() const {
 		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f, Ctrl Law ID = %u\n", segs[index.second].getOrigin(),
 				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw()->getLawID());
+
+			printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawString().c_str());
 		}else{
 			printf(" [N/A]\n");
 		}
 	}
 
-	printf(" Constraints:\n");
+	printf("Constraints:\n-----------------\n");
 	for(unsigned int n = 0; n < nodes.size(); n++){
 		std::vector<Constraint> nodeCons = nodes[n].getConstraints();
 		for(unsigned int c = 0; c < nodeCons.size(); c++){

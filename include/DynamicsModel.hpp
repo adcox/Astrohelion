@@ -269,7 +269,7 @@ public:
 	 *  
 	 *  \return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual void multShoot_createOutput(const MultShootData* it) const = 0;
+	virtual void multShoot_createOutput(const MultShootData* it) const;
 	//\}
 
 	/**

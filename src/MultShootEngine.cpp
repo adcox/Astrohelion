@@ -457,68 +457,32 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	Arcset arc(it.nodesIn->getSysData());
 	while( err > tol && it.count < maxIts){
 		it.FX.clear();					// Clear vectors each iteration
-		it.DF_elements.clear();
-		it.deltaVs.clear();
-		it.propSegs.clear();
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
 
+		it.DF_elements.clear();
 		it.DF_elements.reserve(it.totalCons * coreStateSize);
-		it.deltaVs.assign(3*it.numNodes, 0);
 
-		// initialize a vector of trajectory objects to store each propagated segment
-		it.nodesIn->getSysData()->getDynamicsModel()->multShoot_initIterData(&it);
-
-		for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
-			// printf("Retrieving ICs for segment (ix %02d):\n", s);
-			// Get simulation conditions from design vector via dynamic model implementation
-			double t0 = 0, tof = 0;
-			std::vector<double> ic(coreStateSize, 0);
-
-			ControlLaw *pLaw = it.nodesIn->getSegRefByIx_const(s).getCtrlLaw();
-			std::vector<double> ctrl0;
-			if(pLaw){
-				ctrl0.assign(pLaw->getNumStates(), 0);
-			}
-
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(&it, it.nodesIn->getSegRefByIx_const(s).getID(),
-				&(ic.front()), &(ctrl0.front()), &t0, &tof);
-
-			simEngine.setRevTime(tof < 0);
-			
-			printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
-
-			try{
-				simEngine.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), it.nodesIn->getSegRefByIx_const(s).getCtrlLaw());
-			}catch(DivergeException &e){
-				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
-			}catch(Exception &e){
-				printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error:\n%s\nEnding corrections.\n", e.what());
-			}
-
-			// if(verbosity >= Verbosity_tp::DEBUG){
-			// 	it.propSegs[s].print();
-			// }
-		}
-
+		// Fill each trajectory object with a propagated arc
+		propSegsFromFreeVars(&it, &simEngine);
 		// waitForUser();
 		
-		// Compute Delta-Vs between node segments
-		for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
-			std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-			int termID = it.nodesIn->getSegRefByIx_const(s).getTerminus();
-			if(termID != Linkable::INVALID_ID){
-				int termNodeIx = it.nodesIn->getNodeIx(termID);
-				// velCon has false for a velocity state if there is a discontinuity between
-				// the terminus of the segment and the terminal node
-				std::vector<bool> velCon = it.nodesIn->getSegRefByIx_const(s).getVelCon();
-				for(int i = 3; i < 6; i++){
-					// Compute difference in velocity; if velCon[i-3] is true, then velocity
-					// should be continuous and any difference is numerical error, so set to
-					// zero by multiplying by not-true
-					it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
-				}
-			}
-		}
+		// // Compute Delta-Vs between node segments
+		// for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
+		// 	std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
+		// 	int termID = it.nodesIn->getSegRefByIx_const(s).getTerminus();
+		// 	if(termID != Linkable::INVALID_ID){
+		// 		int termNodeIx = it.nodesIn->getNodeIx(termID);
+		// 		// velCon has false for a velocity state if there is a discontinuity between
+		// 		// the terminus of the segment and the terminal node
+		// 		std::vector<bool> velCon = it.nodesIn->getSegRefByIx_const(s).getVelCon();
+		// 		for(int i = 3; i < 6; i++){
+		// 			// Compute difference in velocity; if velCon[i-3] is true, then velocity
+		// 			// should be continuous and any difference is numerical error, so set to
+		// 			// zero by multiplying by not-true
+		// 			it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
+		// 		}
+		// 	}
+		// }
 
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
@@ -562,6 +526,9 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	if(it.nodesOut){
 		try{
+			// Propagate segments from the final update (currently stored segments are from the previous iteration)
+			propSegsFromFreeVars(&it, &simEngine);
+			// Save propagated data and free variable vector values to the output arcset
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it);
 		}catch(Exception &e){
 			astrohelion::printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
@@ -570,6 +537,64 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	}
 	
 	return it;
+}//=====================================================
+
+void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
+	unsigned int coreStateSize = pIt->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+
+	pIt->deltaVs.clear();
+	pIt->deltaVs.assign(3*pIt->numNodes, 0);
+
+	// initialize a vector of trajectory objects to store each propagated segment
+	pIt->propSegs.clear();
+	pIt->nodesIn->getSysData()->getDynamicsModel()->multShoot_initIterData(pIt);
+
+	for(unsigned int s = 0; s < pIt->nodesIn->getNumSegs(); s++){
+		// printf("Retrieving ICs for segment (ix %02d):\n", s);
+		// Get simulation conditions from design vector via dynamic model implementation
+		double t0 = 0, tof = 0;
+		std::vector<double> ic(coreStateSize, 0);
+
+		ControlLaw *pLaw = pIt->nodesIn->getSegRefByIx_const(s).getCtrlLaw();
+		std::vector<double> ctrl0;
+		if(pLaw){
+			ctrl0.assign(pLaw->getNumStates(), 0);
+		}
+
+		pIt->nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(pIt, pIt->nodesIn->getSegRefByIx_const(s).getID(),
+			&(ic.front()), &(ctrl0.front()), &t0, &tof);
+
+		pSim->setRevTime(tof < 0);
+		
+		printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
+
+		try{
+			pSim->runSim(ic, ctrl0, t0, tof, &(pIt->propSegs[s]), pLaw);
+		}catch(DivergeException &e){
+			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
+		}catch(Exception &e){
+			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error:\n%s\nEnding corrections.\n", e.what());
+		}
+
+		// if(verbosity >= Verbosity_tp::DEBUG){
+		// 	pIt->propSegs[s].print();
+		// }
+
+		std::vector<double> lastState = pIt->propSegs[s].getStateByIx(-1);
+		int termID = pIt->nodesIn->getSegRefByIx_const(s).getTerminus();
+		if(termID != Linkable::INVALID_ID){
+			int termNodeIx = pIt->nodesIn->getNodeIx(termID);
+			// velCon has false for a velocity state if there is a discontinuity between
+			// the terminus of the segment and the terminal node
+			std::vector<bool> velCon = pIt->nodesIn->getSegRefByIx_const(s).getVelCon();
+			for(int i = 3; i < 6; i++){
+				// Compute difference in velocity; if velCon[i-3] is true, then velocity
+				// should be continuous and any difference is numerical error, so set to
+				// zero by multiplying by not-true
+				pIt->deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - pIt->X[6*termNodeIx+i]);
+			}
+		}
+	}
 }//=====================================================
 
 /**

@@ -1,3 +1,8 @@
+/**
+ * Useful info about Boost Unit Tests:
+ * <http://www.boost.org/doc/libs/1_62_0/libs/test/doc/html/index.html>
+ */
+
 #define BOOST_TEST_MODULE MultipleShootingConstraints_BC4BP
 
 #include <boost/test/unit_test.hpp>

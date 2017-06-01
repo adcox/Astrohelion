@@ -379,7 +379,7 @@ void Segment::setTerminus(int t){ links[TERM_IX] = t; }
 void Segment::setTimeVector(std::vector<double> t){ times = t; }
 
 /**
- *  \brief Set the TOF along this segment
+ *  \brief Set the TOF along this segment; 
  *  \param t the TOF along this segment, units consistent with the parent system
  */
 void Segment::setTOF(double t){ tof = t; }
@@ -483,7 +483,7 @@ void Segment::copyMe(const Segment &s){
  *  \details If there are fewer than 2 time values in the vector,
  *  the time of flight is set to zero
  */
-void Segment::storeTOF(){
+void Segment::updateTOF(){
 	if(times.size() > 1){
 		tof = times.back() - times.front();
 	}else{

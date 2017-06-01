@@ -56,6 +56,11 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
+ *  \brief Default constructor
+ */
+MultShootEngine::MultShootEngine(){}
+
+/**
  *	\brief Copy constructor - create this engine by copying the input engine
  *	\param e input correction engine
  */
@@ -82,6 +87,7 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 	bFindEvent = e.bFindEvent;//
 	bIgnoreCrash = e.bIgnoreCrash;//
 	bIgnoreDiverge = e.bIgnoreDiverge;
+	bFullFinalProp = e.bFullFinalProp;
 }//====================================================
 
 //-----------------------------------------------------
@@ -120,10 +126,21 @@ bool MultShootEngine::usesVarTime() const { return bVarTime; }
 bool MultShootEngine::usesEqualArcTime() const { return bEqualArcTime; }
 
 /**
- *  \brief Retrieve whether or not we are located an event crossing
+ *  \brief Retrieve whether or not the engine is locating an event crossing
  *	\return whether or not the algorithm will optimize the process to find an event
  */
 bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
+
+/**
+ *  \brief Retreive whether or not the engine will use a full, variable-step
+ *  propagation for the final propagation.
+ *  \details By default, this setting is TRUE. For lower computation time, 
+ *  set to false via setFullFinalProp().
+ *  
+ *  \return whether or not the engine will use a full, variable-step
+ *  propagation for the final propagation
+ */
+bool MultShootEngine::doesFullFinalProp() const { return bFullFinalProp; }
 
 /**
  *  \brief Retrieve the maximum number of iterations to attempt
@@ -137,6 +154,17 @@ int MultShootEngine::getMaxIts() const { return maxIts; }
  *	less than this value are considered negligible
  */
 double MultShootEngine::getTol() const { return tol; }
+
+/**
+ *  \brief Set whether or not the engine will use a full, variable-step
+ *  propagation for the final propagation
+ *  \details By default, this setting is TRUE. For lower computation time, 
+ *  set to false.
+ * 
+ *  \param b whether or not the engine will use a full, variable-step
+ *  propagation for the final propagation
+ */
+void MultShootEngine::setFullFinalProp(bool b){ bFullFinalProp = b; }
 
 /**
  *	\brief Set bVarTime
@@ -465,24 +493,6 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		// Fill each trajectory object with a propagated arc
 		propSegsFromFreeVars(&it, &simEngine);
 		// waitForUser();
-		
-		// // Compute Delta-Vs between node segments
-		// for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
-		// 	std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-		// 	int termID = it.nodesIn->getSegRefByIx_const(s).getTerminus();
-		// 	if(termID != Linkable::INVALID_ID){
-		// 		int termNodeIx = it.nodesIn->getNodeIx(termID);
-		// 		// velCon has false for a velocity state if there is a discontinuity between
-		// 		// the terminus of the segment and the terminal node
-		// 		std::vector<bool> velCon = it.nodesIn->getSegRefByIx_const(s).getVelCon();
-		// 		for(int i = 3; i < 6; i++){
-		// 			// Compute difference in velocity; if velCon[i-3] is true, then velocity
-		// 			// should be continuous and any difference is numerical error, so set to
-		// 			// zero by multiplying by not-true
-		// 			it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - it.X[6*termNodeIx+i]);
-		// 		}
-		// 	}
-		// }
 
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
@@ -527,6 +537,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	if(it.nodesOut){
 		try{
 			// Propagate segments from the final update (currently stored segments are from the previous iteration)
+			simEngine.setVarStepSize(bFullFinalProp);
 			propSegsFromFreeVars(&it, &simEngine);
 			// Save propagated data and free variable vector values to the output arcset
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it);
@@ -539,6 +550,15 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	return it;
 }//=====================================================
 
+/**
+ *  \brief Propagate all segments along the arcset
+ *  \details Initial conditions and other parameters for each integrated
+ *  arc are obtained from the free variable vector or the input nodeset
+ * 
+ *  \param pIt Pointer to the multiple shooting data structure
+ *  \param pSim Pointer to a simulalation engine initialized for multiple
+ *  shooting propagations
+ */
 void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
 	unsigned int coreStateSize = pIt->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
@@ -754,15 +774,17 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
  *  \param DF Jacobian matrix employed in the correction process
  */
 void MultShootEngine::checkDFSingularities(MatrixXRd DF){
-	for(unsigned int r = 0; r < DF.rows(); r++){
-		if(DF.row(r).norm() == 0){
-			printErr("Singular Jacobian! Row %u is all zeros\n", r);
+	if(verbosity >= Verbosity_tp::SOME_MSG){
+		for(unsigned int r = 0; r < DF.rows(); r++){
+			if(DF.row(r).norm() == 0){
+				printErr("Singular Jacobian! Row %u is all zeros\n", r);
+			}
 		}
-	}
 
-	for(unsigned int c = 0; c < DF.cols(); c++){
-		if(DF.col(c).norm() == 0){
-			printErr("Singular Jacobian! Column %u is all zeros\n", c);
+		for(unsigned int c = 0; c < DF.cols(); c++){
+			if(DF.col(c).norm() == 0){
+				printErr("Singular Jacobian! Column %u is all zeros\n", c);
+			}
 		}
 	}
 }//====================================================
@@ -805,6 +827,7 @@ void MultShootEngine::reset(){
 	bFindEvent = false;
 	bIgnoreCrash = false;
 	bIgnoreDiverge = false;
+	bFullFinalProp = true;
 }//====================================================
 
 /**

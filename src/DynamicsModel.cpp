@@ -288,7 +288,6 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 				MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, rowNum, ctrlStates.size());
 			}else{
-				printColor(BLUE, "initDesignVec: Node %u: Control is not free; use value from it->nodesIn\n", n);
 				MSVarMap_Key key(MSVar_tp::CTRL, it->nodesIn->getNodeRefByIx_const(n).getID());
 				it->freeVarMap[key] = MSVarMap_Obj(key, -1, ctrlStates.size());
 			}
@@ -410,7 +409,8 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 		*tof = it->nodesIn->getTOF(s);
 	}
 	
-	*t0 = it->nodesIn->getEpoch(state_var.key.id);
+	// Most currently implemented systems are autonomous, thus, epoch is not a variable
+	*t0 = 0;//it->nodesIn->getEpoch(state_var.key.id);
 }//============================================================
 
 /**
@@ -1328,8 +1328,6 @@ void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
             if(ctrl_var.row0 != -1){
                 std::vector<double> ctrl = std::vector<double>(it->X.begin()+ctrl_var.row0, it->X.begin() + ctrl_var.row0 + ctrl_var.nRows);
                 node.setExtraParamVec(PARAMKEY_CTRL, ctrl);
-            }else{
-            	printColor(BLUE, "createOutput: Node %u: Control is not free; use value from it->nodesIn\n", n);
             }
         }catch(Exception &e){ /* No need to report exception */ }
 
@@ -1384,6 +1382,19 @@ void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
             }
         }
         if(order[i].type == ArcPiece::Piece_tp::SEG){
+        	// Retrieve the first time in a chronological sense
+        	double firstTime = it->nodesOut->getSegRef_const(order[i].id).getTOF() > 0 ? 
+        		it->nodesOut->getSegRef_const(order[i].id).getTimeByIx(0) :
+        		it->nodesOut->getSegRef_const(order[i].id).getTimeByIx(-1);
+
+        	// If arcset begins with a segment, epoch will be NAN at first
+        	if(std::isnan(epoch))
+        		epoch = firstTime;
+
+        	// Shift all segment times so that the first chronological time is consistent
+        	// with the epoch
+        	it->nodesOut->getSegRef(order[i].id).shiftAllTimes(epoch - firstTime);
+
             if(!std::isnan(epoch)){
                 // When stepping through in chronological order, every step is
                 // forward in time; negative TOFs are associated with segments that

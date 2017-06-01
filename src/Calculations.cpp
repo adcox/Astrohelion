@@ -1098,7 +1098,7 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
 
         seg.setStateVector(segStates);
         seg.setTimeVector(segTimes);
-        seg.storeTOF();
+        seg.updateTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1186,7 +1186,7 @@ Arcset_cr3bp cr3bp_SE2EM(Arcset_cr3bp SENodes, const SysData_cr3bp *pEMSys, doub
 
         seg.setStateVector(segStates);
         seg.setTimeVector(segTimes);
-        seg.storeTOF();
+        seg.updateTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1394,7 +1394,7 @@ Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp arcset, double epoch0, int centerIx){
 
         seg.setStateVector(segStates);
         seg.setTimeVector(segTimes);
-        seg.storeTOF();
+        seg.updateTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1631,7 +1631,7 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
 
         seg.setStateVector(segStates);
         seg.setTimeVector(segTimes);
-        seg.storeTOF();
+        seg.updateTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)
@@ -1733,7 +1733,7 @@ Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){
 
         seg.setStateVector(segStates);
         seg.setTimeVector(segTimes);
-        seg.storeTOF();
+        seg.updateTOF();
 
         // Remap the origin and terminus to the new IDs
         if(seg.getOrigin() != Linkable::INVALID_ID)

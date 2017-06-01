@@ -984,7 +984,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
                 lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                 lastSeg.appendTime(t_int);
-                lastSeg.storeTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
+                lastSeg.updateTOF();                             // Compute the actual TOF from the data and store in dedicated TOF variable
                 lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);   // Set the STM to be the most recent one
 
                 throw DivergeException("SimEngine::integrate: Integration did not succeed");
@@ -1024,7 +1024,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 arcset->getNodeRef(nodeID_i).addLink(lastSeg.getID());
 
                 lastSeg.setTerminus(nodeID_i);  // Update the previous segment to terminate at the new node
-                lastSeg.storeTOF();
+                lastSeg.updateTOF();
                 lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
 
                 // Create a new segment for the next time interval - origin is correct, terminus is undetermined, tof is approximate
@@ -1062,7 +1062,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                     lastSeg.appendState(y, ic_dim);                 // Save the final state and time to the segment
                     lastSeg.appendState(extraStates);               // Save dummy values for extra states that are not propagated
                     lastSeg.appendTime(t_int);
-                    lastSeg.storeTOF();
+                    lastSeg.updateTOF();
                     lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
 
                     throw DivergeException("SimEngine::integrate: Integration did not succeed");
@@ -1102,7 +1102,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         arcset->getNodeRef(nodeID_f).addLink(lastSeg.getID());
 
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
-        lastSeg.storeTOF();
+        lastSeg.updateTOF();
         lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
     }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
         // Ended at the time-out
@@ -1119,7 +1119,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         lastSeg.appendState(y, ic_dim);
         lastSeg.appendState(extraStates);   // Save dummy values for extra states that are not propagated
         lastSeg.appendTime(t_int);
-        lastSeg.storeTOF();
+        lastSeg.updateTOF();
         lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
     }
 
@@ -1318,7 +1318,8 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     corrector.setTol(pArcset->getTol());
     corrector.setVerbosity(verbosity);
     corrector.setFindEvent(true);   // apply special settings to minimize computations
-
+    corrector.setFullFinalProp(false);
+    
     // Because we set findEvent to true, this output nodeset should contain
     // the full (42 or 48 element) final state
     try{
@@ -1358,7 +1359,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     lastSeg.setTerminus(id);
     lastSeg.appendState(state);
     lastSeg.appendTime(eventTime);
-    lastSeg.storeTOF();
+    lastSeg.updateTOF();
     lastSeg.setSTM(&(state[core_dim+ctrl_dim]), (core_dim+ctrl_dim)*(core_dim+ctrl_dim));
 
     // Create a new segment if the propagation is going to continue

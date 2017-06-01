@@ -80,8 +80,7 @@ class MultShootEngine : public Core, public Engine{
 		 *  \name *structors
 		 *  \{
 		 */
-		/** Default, do-nothing constructor */
-		MultShootEngine(){}
+		MultShootEngine();
 		MultShootEngine(const MultShootEngine&);
 		~MultShootEngine();
 		//\}
@@ -95,18 +94,18 @@ class MultShootEngine : public Core, public Engine{
 		 */
 		int getMaxIts() const;
 		double getTol() const;
+		bool doesFullFinalProp() const;
 		bool isFindingEvent() const;
 		bool usesEqualArcTime() const;
-		bool usesScaledVars() const;
 		bool usesVarTime() const;
 
 		void setAttenuation(double, double limit = 1e-8);
 		void setEqualArcTime(bool);
+		void setFullFinalProp(bool);
 		void setIgnoreCrash(bool);
 		void setIgnoreDiverge(bool);
 		void setFindEvent(bool);
 		void setMaxIts(int);
-		void setScaleVars(bool);
 		void setTol(double);
 		void setVarTime(bool);
 		//\}
@@ -138,6 +137,14 @@ class MultShootEngine : public Core, public Engine{
 		 	only applies if variable time is enabled */
 		bool bEqualArcTime = false;
 
+		/** Whether or not to conduct final round of propagations with an 
+			integrator that leverages variable step time. When set to TRUE,
+			the output arcset will have Segments with many states. If set to 
+			FALSE, the final arcset will have Segments with only the first
+			and final state of the propagation. This latter option is best for
+			applications that require speed and efficiency */
+		bool bFullFinalProp = true;
+
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;
 
@@ -160,9 +167,6 @@ class MultShootEngine : public Core, public Engine{
 
 		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
 		bool bIgnoreDiverge = false;
-
-		/** Flag to apply scaling to variables, constraint values, and partial derivatives to ease numerical processes */
-		bool bScaleVars = false;
 
 		void checkDFSingularities(MatrixXRd);
 		void cleanEngine();

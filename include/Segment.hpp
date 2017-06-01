@@ -115,7 +115,7 @@ public:
 	void shiftAllTimes(double);
 	//\}
 
-	void storeTOF();
+	void updateTOF();
 
 	void print() const;
 protected:

@@ -66,7 +66,7 @@ struct EOM_ParamStruct{
 	 *  \brief Construct an EOM Parameter structure
 	 * 
 	 *  \param sys a pointer to a system data object
-	 *  \param lawID an ID for the control law to use during the integration
+	 *  \param lawType an ID for the control law to use during the integration
 	 */
 	EOM_ParamStruct(const SysData *sys, ControlLaw *law) : pSysData(sys), pCtrlLaw(law) {}
 	

@@ -498,7 +498,10 @@ Node interpPointAtTime(const Arcset *traj, double t){
 /**
  *  \brief Determine a set of spherical coordinates the describe 
  *  the position vector specified by x, y, and z
- *  \details [long description]
+ *  \details The longitude angle measures in the in-plane angle, measured 
+ *  from the +x-axis in a right-handed rotationg about the +z-axis. Latitude
+ *  represents the out-of-plane angle measured from the xy-plane, with positive
+ *  angles representing points with positive z-coordinates.
  * 
  *  \param x x-coordinate
  *  \param y y-coordinate
@@ -511,6 +514,9 @@ Node interpPointAtTime(const Arcset *traj, double t){
  */
 std::vector<double> getSpherical(double x, double y, double z){
     double R = sqrt(x*x + y*y + z*z);   // Distance from center of body to point
+    if(R == 0)
+        return std::vector<double>(3,0);
+
     double unit[] = {x/R, y/R, z/R};      // Unit vector pointing from center to point
 
     double lon = atan2(unit[1], unit[0]);           // longitude

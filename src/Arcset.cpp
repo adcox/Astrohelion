@@ -374,8 +374,8 @@ void Arcset::print() const {
 	for(const auto &index : segIDMap){
 		printf("  %02d (ix %02d):", index.first, index.second);
 		if(index.second != Linkable::INVALID_ID && index.second < static_cast<int>(segs.size())){
-			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f, Ctrl Law ID = %u\n", segs[index.second].getOrigin(),
-				segs[index.second].getTerminus(), segs[index.second].getTOF(), segs[index.second].getCtrlLaw()->getLawID());
+			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
+				segs[index.second].getTerminus(), segs[index.second].getTOF());
 
 			printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawString().c_str());
 		}else{
@@ -438,6 +438,9 @@ void Arcset::saveToMat(const char* filename) const{
 	}else{
 		try{
 			saveCmds(matfp);
+		}catch(Exception &E){
+			Mat_Close(matfp);
+			throw E;
 		}catch(std::exception &e){
 			Mat_Close(matfp);
 			throw e;

@@ -30,10 +30,12 @@
 #pragma once
 
 #include "ControlLaw.hpp"
+#include "EigenDefs.hpp"
 
 namespace astrohelion{
 
 // Forward declarations
+class Arcset_cr3bp_lt;
 class SysData;
 class SysData_cr3bp_lt;
 
@@ -83,7 +85,8 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	std::string lawIDToString(unsigned int) const;
+	std::string lawTypeToString(unsigned int) const;
+	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	//\}
 
 	/**
@@ -122,6 +125,9 @@ protected:
 	void getAccelPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 
 	void getEOMPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
+
+	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
+	static void convertTo_GeneralConstF(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 };
 
 }// End of astrohelion namespace

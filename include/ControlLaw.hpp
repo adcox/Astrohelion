@@ -72,14 +72,14 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	unsigned int getLawID() const;
+	unsigned int getLawType() const;
 	std::string getLawString() const;
 	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;
 	std::vector<double> getParams() const;
 	const std::vector<double>& getParamsRef_const() const;
 
-	void setLawID(unsigned int);
+	void setLawType(unsigned int);
 	void setParams(double*, unsigned int);
 	void setParams(std::vector<double>);
 	//\}
@@ -95,7 +95,7 @@ public:
 	virtual void getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	
 
-	virtual std::string lawIDToString(unsigned int) const;
+	virtual std::string lawTypeToString(unsigned int) const;
 	//\}
 
 	/**
@@ -109,7 +109,7 @@ protected:
 	virtual void init();
 	void copyMe(const ControlLaw&);
 
-	unsigned int lawID = NO_CTRL;		//!< Value identifying the specific control forumalation to apply
+	unsigned int lawType = NO_CTRL;		//!< Value identifying the specific control forumalation to apply
 	unsigned int numStates = 0;			//!< Number of control states
 	unsigned int numOutputs = 0;		//!< Number of control outputs
 

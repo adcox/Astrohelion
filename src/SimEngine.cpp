@@ -832,7 +832,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
         "  using control law: %s\n", eomParams->pCtrlLaw ? 
-            eomParams->pCtrlLaw->lawIDToString(eomParams->pCtrlLaw->getLawID()).c_str() : "NONE");
+            eomParams->pCtrlLaw->lawTypeToString(eomParams->pCtrlLaw->getLawType()).c_str() : "NONE");
 
     /*
      * BOOST INTEGRATOR ADDITION

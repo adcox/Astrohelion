@@ -39,11 +39,11 @@ namespace astrohelion{
  *  \brief Default constructor
  *  \details [long description]
  * 
- *  \param id control law ID; by default, set to NO_CTRL
+ *  \param tp control law type; by default, set to NO_CTRL
  *  \param params vector of parameters used by the control law
  */
-ControlLaw::ControlLaw(unsigned int id, std::vector<double> params){
-	this->lawID = id;
+ControlLaw::ControlLaw(unsigned int tp, std::vector<double> params){
+	this->lawType = tp;
 	this->params = params;
 
 	init();
@@ -73,7 +73,7 @@ ControlLaw& ControlLaw::operator =(const ControlLaw &law){
  *  \return Whether or not the two laws are equal
  */
 bool operator ==(const ControlLaw &lhs, const ControlLaw &rhs){
-	return lhs.lawID == rhs.lawID &&
+	return lhs.lawType == rhs.lawType &&
 		lhs.params == rhs.params;
 }//====================================================
 
@@ -97,9 +97,9 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
  *  \brief Retrieve the control law ID
  *  \return the control law ID
  */
-unsigned int ControlLaw::getLawID() const{ return lawID; }
+unsigned int ControlLaw::getLawType() const{ return lawType; }
 
-std::string ControlLaw::getLawString() const{ return lawIDToString(lawID); }
+std::string ControlLaw::getLawString() const{ return lawTypeToString(lawType); }
 
 /**
  *  \brief Retrieve the number of control variables that need to be included
@@ -128,8 +128,8 @@ std::vector<double> ControlLaw::getParams() const { return params; }
  */
 const std::vector<double>& ControlLaw::getParamsRef_const() const { return params; }
 
-void ControlLaw::setLawID(unsigned int id){
-	lawID = id;
+void ControlLaw::setLawType(unsigned int id){
+	lawType = id;
 	init();
 }//====================================================
 
@@ -156,15 +156,15 @@ void ControlLaw::setParams(std::vector<double> params){
  *  \param output initialized array of zeros in which to store the control law outputs
  *  \param len number of elements in the <tt>law</tt> array
  *  
- *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
+ *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
  */
 void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const{
-	switch(lawID){
+	switch(lawType){
 		case NO_CTRL:
 			// Leave as a bunch of zeros
 			break;
 		default:
-			throw Exception("ControlLaw::getLaw: Unrecognized lawID");
+			throw Exception("ControlLaw::getLaw: Unrecognized lawType");
 	}
 	(void) t;
 	(void) s;
@@ -187,7 +187,7 @@ void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, d
  *  \param int number of elements in the derivative array
  */
 void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
-	switch(lawID){
+	switch(lawType){
 		case NO_CTRL:
 		default:
 			// Leave as a bunch of zeros
@@ -214,7 +214,7 @@ void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSy
  *  \param len number of elements in the <tt>partials</tt> array
  */
 void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
-	switch(lawID){
+	switch(lawType){
 		case NO_CTRL:
 		default:
 			// Leave as zeros
@@ -242,7 +242,7 @@ void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysD
  *  \param len number of elements in the <tt>partials</tt> array
  */
 void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
-	switch(lawID){
+	switch(lawType){
 		case NO_CTRL:
 		default:
 			// Leave as a bunch of zeros
@@ -268,7 +268,7 @@ void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pS
  *  \param len number of elements in the <tt>partials</tt> array
  */
 void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
-	switch(lawID){
+	switch(lawType){
 		case NO_CTRL:
 		default:
 			// Leave as a bunch of zeros
@@ -290,7 +290,7 @@ void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData 
  *  \param law reference to the source controlLaw
  */
 void ControlLaw::copyMe(const ControlLaw &law){
-	lawID = law.lawID;
+	lawType = law.lawType;
 	numStates = law.numStates;
 	params = law.params;
 }//====================================================
@@ -300,12 +300,12 @@ void ControlLaw::copyMe(const ControlLaw &law){
  *  \details [long description]
  */
 void ControlLaw::init(){
-	switch(lawID){
+	switch(lawType){
 		case NO_CTRL:
 			numStates = 0;
 			break;
 		default:
-			throw Exception("ControlLaw::init: Unrecognized lawID");
+			throw Exception("ControlLaw::init: Unrecognized lawType");
 	}
 }//====================================================
 
@@ -315,7 +315,7 @@ void ControlLaw::init(){
  *  \param id control law ID
  *  \return a string that represents the law ID
  */
-std::string ControlLaw::lawIDToString(unsigned int id) const{
+std::string ControlLaw::lawTypeToString(unsigned int id) const{
 	switch(id){
 		case NO_CTRL: return "NONE";
 		default: return "UNDEFINED";

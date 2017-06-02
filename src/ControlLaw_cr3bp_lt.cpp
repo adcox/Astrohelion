@@ -31,6 +31,7 @@
 
 #include <cmath>
 
+#include "Arcset_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
 #include "SysData_cr3bp_lt.hpp"
 #include "Utilities.hpp"
@@ -59,7 +60,7 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
  *	\param I Specific Impulse (Isp), seconds
  */
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double T, double Isp){
-	lawID = id;
+	lawType = id;
 	params.assign(2,0);
 	params[0] = T;
 	params[1] = Isp;
@@ -107,18 +108,18 @@ void ControlLaw_cr3bp_lt::setIsp(double Isp){ params[1] = Isp; }
  *  \param t time parameter
  *  \param s state vector
  *  \param pSysData system data object
- *  \param lawID identifies the control law type
+ *  \param lawType identifies the control law type
  *  \param law empty, initialized array to store the control law output in
  *  \param len the number of elements in the <tt>law</tt> array
  *  
- *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
+ *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
  */
 void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData *pSysData,
 	double *law, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSysData);
 
-	switch(lawID){
+	switch(lawType){
 		case Law_tp::CONST_C_2D_LEFT:
 			getAccel_ConstC_2D(t, s, pSysData_lt, law, len, -1);
 			break;
@@ -147,17 +148,17 @@ void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData
  *  \param t time parameter
  *  \param s state vector
  *  \param pSys system data object
- *  \param lawID identifies the control law type
+ *  \param lawType identifies the control law type
  *  \param partials empty, initialized array to store the control law derivatives in
  *  \param len number of elements in the <tt>law</tt> array
  *  
- *  \throws Exception if the control law ID, <tt>lawID</tt>, is not recognized
+ *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
  */
 void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, 
 	double *partials, unsigned int len) const{
 
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
-	switch(lawID){
+	switch(lawType){
 		case Law_tp::CONST_C_2D_LEFT:
 			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len, -1);
 			break;
@@ -180,7 +181,7 @@ void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const
 }//====================================================
 
 void ControlLaw_cr3bp_lt::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
-	switch(lawID){
+	switch(lawType){
 		case Law_tp::GENERAL_CONST_F:
 			getEOMPartials_GeneralDir(t, s, static_cast<const SysData_cr3bp_lt *>(pSys), partials, len);
 			break;
@@ -380,7 +381,7 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 //------------------------------------------------------------------------------------------------------
 
 void ControlLaw_cr3bp_lt::init(){
-	switch(lawID){
+	switch(lawType){
 		case Law_tp::CONST_C_2D_LEFT:
 		case Law_tp::CONST_C_2D_RIGHT:
 		case Law_tp::PRO_VEL:
@@ -403,7 +404,7 @@ void ControlLaw_cr3bp_lt::init(){
  *  \param id control law ID
  *  \return a string that represents the law ID
  */
-std::string ControlLaw_cr3bp_lt::lawIDToString(unsigned int id) const{
+std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id) const{
 	switch(id){
 		case Law_tp::CONST_C_2D_LEFT: return "Jacobi-Preserving, 2D, Left";
 		case Law_tp::CONST_C_2D_RIGHT: return "Jacobi-Preserving, 2D, Right";
@@ -411,7 +412,158 @@ std::string ControlLaw_cr3bp_lt::lawIDToString(unsigned int id) const{
 		case Law_tp::ANTI_VEL: return "Anti-Velocity";
 		case Law_tp::GENERAL_CONST_F: return "General Direction, Const. Thrust";
 		default:
-			return ControlLaw::lawIDToString(id);
+			return ControlLaw::lawTypeToString(id);
+	}
+}//====================================================
+
+void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pLaw){
+	if(pLaw == nullptr)
+		throw Exception("ControlLaw_cr3bp_lt::convertLaws: Input control law is null");
+
+	switch(pLaw->getLawType()){
+		case Law_tp::GENERAL_CONST_F:
+			// call function
+			convertTo_GeneralConstF(pArcset, pLaw);
+			break;
+		default:
+			throw Exception("ControlLaw_cr3bp_lt::convertLaws: Conversion to the specified law type is not supported.");
+	}
+}//====================================================
+
+/**
+ *  \brief Convert all control data from an arcset to control data for the GENERAL_CONST_F
+ *  law
+ *  \details [long description]
+ * 
+ *  \param pArcset Pointer to the arcset to be converted
+ *  \param pNewLaw Pointer to the GENERAL_CONST_F control law
+ */
+void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pNewLaw){
+	// pNewLaw is guaranteed by the calling function, convertLaws(), to be non-null and have the correct law type
+
+	std::vector<double> angles(2,0);	// Store in-plane and out-of-plane angles that describe general law
+	std::vector<int> convertedNodes;	// Store IDs of nodes that have been converted
+	Eigen::Vector3d lawOutput;			// Vector for law outputs
+	const unsigned int coreDim = pArcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+	const unsigned int newCtrlDim = pNewLaw->getNumStates();
+
+	for(unsigned int s = 0; s < pArcset->getNumSegs(); s++){
+		// Use references for more concise code
+		Segment &refSeg = pArcset->getSegRefByIx(s);
+		Node &refOrigin = pArcset->getNodeRef(refSeg.getOrigin());
+
+		ControlLaw *pOldLaw = refSeg.getCtrlLaw();
+		unsigned int oldLawType = pOldLaw ? pOldLaw->getLawType() : NO_CTRL;
+
+		// Make sure we know how to convert
+		bool knownConversion = false;
+		switch(oldLawType){
+			case to_underlying(Law_tp::CONST_C_2D_LEFT):
+			case to_underlying(Law_tp::CONST_C_2D_RIGHT):
+			case to_underlying(Law_tp::PRO_VEL):
+			case to_underlying(Law_tp::ANTI_VEL):
+			case NO_CTRL:
+				knownConversion = true;
+				break;
+			case to_underlying(Law_tp::GENERAL_CONST_F):
+				continue;	// Nothing to do for this segment
+		}
+
+		if(!knownConversion)
+			throw Exception("ControlLaw_cr3bp_lt::convertTo_GeneralConstF: Conversion between input law type and GENERAL_CONST_F is undefined.");
+
+		//--------------------------------------
+		// Convert node control law information
+		//--------------------------------------
+		angles[0] = 0;	// Reset
+		angles[1] = 0;
+		if(pOldLaw){
+			std::vector<double> originState = refOrigin.getState();
+			pOldLaw->getLaw_Output(refOrigin.getEpoch(), &(originState.front()), pArcset->getSysData(), lawOutput.data(), 3);
+			pointingVecToAngles(lawOutput, &(angles[0]), &(angles[1]));
+		}
+		
+		refOrigin.setExtraParamVec(PARAMKEY_CTRL, angles);
+		convertedNodes.push_back(refOrigin.getID());
+
+		//--------------------------------------
+		// Convert segment control law information
+		//--------------------------------------
+		std::vector<double> oldSegStates = refSeg.getStateVector();
+		const unsigned int oldStateWidth = refSeg.getStateWidth();
+		const unsigned int numStates = oldSegStates.size() / oldStateWidth;
+		const unsigned int oldCtrlDim = pOldLaw ? pOldLaw->getNumStates() : 0;
+
+		const unsigned int newStateWidth = oldStateWidth - oldCtrlDim + newCtrlDim;
+		std::vector<double> newSegStates;
+		newSegStates.reserve(numStates*newStateWidth);
+
+		for(unsigned int i = 0; i < numStates; i++){
+			// Copy over the core state
+			newSegStates.insert(newSegStates.end(), oldSegStates.begin() + i*oldStateWidth, oldSegStates.begin() + i*oldStateWidth + coreDim);
+			// If an old law exists, update law output and compute new states
+			// If an old law does not exist, use angles{} computed from node
+			if(pOldLaw){
+				pOldLaw->getLaw_Output(refSeg.getTimeByIx(i), &(oldSegStates[i*oldStateWidth]), pArcset->getSysData(), lawOutput.data(), 3);
+				pointingVecToAngles(lawOutput, &(angles[0]), &(angles[1]));
+			}
+			// Add the new control states
+			newSegStates.insert(newSegStates.end(), angles.begin(), angles.end());
+			// Add all the other states
+			newSegStates.insert(newSegStates.end(), oldSegStates.begin() + i*oldStateWidth + coreDim + oldCtrlDim, oldSegStates.begin() + (i+1)*oldStateWidth);
+		}
+
+		refSeg.setStateVector(newSegStates);
+		refSeg.setStateWidth(newStateWidth);
+		refSeg.setCtrlLaw(pNewLaw);
+	}
+
+	// Check to make sure all nodes have been converted
+	for(unsigned int n = 0; n < pArcset->getNumNodes(); n++){
+		if(std::find(convertedNodes.begin(), convertedNodes.end(), pArcset->getNodeByIx(n).getID()) == convertedNodes.end()){
+			// Node has not been converted
+			Node &refNode = pArcset->getNodeRefByIx(n);
+			int linkedSegID = refNode.getLink(0) == Linkable::INVALID_ID ? refNode.getLink(1) : refNode.getLink(0);
+			ControlLaw *pOldLaw = pArcset->getSegRef(linkedSegID).getCtrlLaw();
+
+			angles[0] = 0;
+			angles[1] = 0;
+			if(pOldLaw){
+				std::vector<double> nodeState = refNode.getState();
+				pOldLaw->getLaw_Output(refNode.getEpoch(), &(nodeState.front()), pArcset->getSysData(), lawOutput.data(), 3);
+				pointingVecToAngles(lawOutput, &(angles[0]), &(angles[1]));
+			}
+
+			refNode.setExtraParamVec(PARAMKEY_CTRL, angles);
+		}
+	}
+}//====================================================
+
+/**
+ *  \brief Convert a vector to spherical coordinates
+ *  \details If the input vector has zero length, both angles are set to zero
+ * 
+ *  \param vec A 3D vector
+ *  \param inPlane The in-plane angle of the vector; measured from x-axis, rotating about
+ *  +z-axis
+ *  \param outOfPlane The out-of-plane angle of the vector; measured from xy-plane, sign
+ *  matches sign of z
+ */
+void ControlLaw_cr3bp_lt::pointingVecToAngles(Eigen::Vector3d vec, double *inPlane, double *outOfPlane){
+	if(vec.norm() == 0){
+		if(inPlane)
+			*inPlane = 0;
+
+		if(outOfPlane)
+			*outOfPlane = 0;
+	}else{
+		vec /= vec.norm();
+		
+		if(inPlane)
+			*inPlane = atan2(vec[1], vec[0]);
+
+		if(outOfPlane)
+			*outOfPlane = atan2(vec[2], sqrt(vec[0]*vec[0] + vec[1]*vec[1]));
 	}
 }//====================================================
 

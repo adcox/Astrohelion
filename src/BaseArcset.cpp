@@ -2340,7 +2340,7 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 						matvar_t *oneField = fields[s*fieldsPerController + f];
 						if(oneField){
 							switch(f){
-								case 0: // lawID
+								case 0: // lawType
 								{
 									if(oneField->class_type == MAT_C_INT32 && oneField->data_type == MAT_T_INT32){
 										unsigned int *intData = static_cast<unsigned int *>(oneField->data);
@@ -2390,7 +2390,7 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 						// the DynamicsModel, we ensure that the system-specific derived class
 						// is constructed rather than the base class ControlLaw.
 						ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw();
-						newLaw->setLawID(id);
+						newLaw->setLawType(id);
 						newLaw->setParams(params);
 
 						// Check to see if the controller has been loaded already
@@ -2827,7 +2827,7 @@ void BaseArcset::saveSegCtrlLaw(mat_t *pMatFile, const char *pVarName) const{
 		
 		// Update values if a control law has been implemented
 		if(pLaw){
-			id = pLaw->getLawID();
+			id = pLaw->getLawType();
 			numStates = pLaw->getNumStates();
 			params = pLaw->getParams();
 		}

@@ -18,6 +18,53 @@
 using namespace std;
 using namespace astrohelion;
 
+BOOST_AUTO_TEST_CASE(CR3BP_EM_IntermediateSolution){
+	SysData_cr3bp sys("earth", "moon");
+
+	// ICs for a 2:5 Resonant Orbit in the EM System
+	double IC[] = {0.6502418226, 0, 0, 0, 0.9609312003, 0};	
+	double tof = 31.00065761;
+
+	SimEngine sim;
+	Arcset_cr3bp nodeset(&sys), correctedNodeset(&sys);
+	sim.runSim_manyNodes(IC, tof, 15, &nodeset);
+
+	// Constraint node 07 to be perpendicular to XZ plane
+	double perpCrossData[] = {NAN,0,NAN,0,NAN,0};
+	Constraint perpCross(Constraint_tp::STATE, 7, perpCrossData, 6);
+
+	// Also constraint final state to be perpendicular
+	Constraint perpCrossEnd(Constraint_tp::STATE, 14, perpCrossData, 6);
+
+	double almostIC[] =  {IC[0], 0, 0, NAN, NAN, NAN};
+	Constraint icCon(Constraint_tp::STATE, 0, almostIC, 6);
+
+	nodeset.addConstraint(icCon);
+	nodeset.addConstraint(perpCross);
+	nodeset.addConstraint(perpCrossEnd);
+
+	// Set up multiple shooting engine to only do a few iterations so that error is still large
+	// Ignore the large error and return the "corrected" arcset
+	MultShootEngine corrector;
+	corrector.setMaxIts(2);
+	corrector.setIgnoreDiverge(true);
+	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
+
+	// Check to make sure that segments and nodes are consistent - previous bugs had discontinuities
+	// between segments and nodes because the free variable vector was updated AFTER the error was calculated
+	for(unsigned int s = 0; s < correctedNodeset.getNumSegs(); s++){
+		Segment &refSeg = correctedNodeset.getSegRefByIx(s);
+		std::vector<double> originState = correctedNodeset.getNodeRef(refSeg.getOrigin()).getState();
+		std::vector<double> segState = refSeg.getStateByRow(0);
+
+		for(unsigned int i = 0; i < 6; i++){
+			BOOST_CHECK_CLOSE(originState[i], segState[i], 1e-12);
+		}
+
+		BOOST_CHECK_CLOSE(correctedNodeset.getNodeRef(refSeg.getOrigin()).getEpoch(), refSeg.getTimeByIx(0), 1e-12);
+	}
+}//====================================================
+
 BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	SysData_cr3bp sys("earth", "moon");
 

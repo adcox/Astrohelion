@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMEPOCH){
 	
 	std::vector<double> finalState = correctedSet->getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-	BOOST_CHECK(std::abs(halfLyapSet->getEpoch(rmEpoch.getID()) - correctedSet->getEpoch(rmEpoch.getID())) < 1e-12);
+	BOOST_CHECK_SMALL(halfLyapSet->getEpoch(rmEpoch.getID()) - correctedSet->getEpoch(rmEpoch.getID()), 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_EPOCH){
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_EPOCH){
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 	
-	BOOST_CHECK(std::abs(correctedSet->getEpochByIx(0) - epochConData[0]) < 1e-12);
+	BOOST_CHECK_SMALL(correctedSet->getEpochByIx(0) - epochConData[0], 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL){
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST){
 	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
 	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	BOOST_CHECK(std::abs(dist - matchDistConData[1]) < 1e-12);
+	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST_EQUAL_ARC){
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST_EQUAL_ARC){
 	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
 	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	BOOST_CHECK(std::abs(dist - matchDistConData[1]) < 1e-12);
+	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST){
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST){
 	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
 	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	BOOST_CHECK(dist >= matchDistConData[1]);
+	BOOST_CHECK_GE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST_EQUAL_ARC){
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST_EQUAL_ARC){
 	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
 	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	BOOST_CHECK(dist >= matchDistConData[1]);
+	BOOST_CHECK_GE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST){
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST){
 	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
 
-	BOOST_CHECK(dist <= matchDistConData[1]);
+	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST_EQUAL_ARC){
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST_EQUAL_ARC){
 	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
 	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
 
-	BOOST_CHECK(dist <= matchDistConData[1]);
+	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V){
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V){
 	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(totalDV <= maxDVConData);
+	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V_EQUAL_ARC){
@@ -419,7 +419,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V_EQUAL_ARC){
 	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(totalDV <= maxDVConData);
+	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V){
@@ -444,7 +444,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V){
 	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(std::abs(totalDV - maxDVConData) < 1e-12);
+	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V_EQUAL_ARC){
@@ -469,7 +469,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V_EQUAL_ARC){
 	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(std::abs(totalDV - maxDVConData) < 1e-12);
+	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF){
@@ -484,7 +484,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF){
 	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalTOF = correctedSet->getTotalTOF();
-	BOOST_CHECK(std::abs(totalTOF - tofData) < 1e-12);
+	BOOST_CHECK_SMALL(totalTOF - tofData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF_EQUAL_ARC){
@@ -499,7 +499,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF_EQUAL_ARC){
 	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalTOF = correctedSet->getTotalTOF();
-	BOOST_CHECK(std::abs(totalTOF - tofData) < 1e-12);
+	BOOST_CHECK_SMALL(totalTOF - tofData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE){
@@ -516,7 +516,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE){
 	std::vector<double> finalState = correctedSet->getState(apseCon.getID());
 	const DynamicsModel *model = sys->getDynamicsModel();
 	double rdot = model->getRDot(apseData, correctedSet->getEpoch(apseCon.getID()), &(finalState[0]), sys);
-	BOOST_CHECK(std::abs(rdot) < 1e-12);
+	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE_EQUAL_ARC){
@@ -533,7 +533,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE_EQUAL_ARC){
 	std::vector<double> finalState = correctedSet->getState(apseCon.getID());
 	const DynamicsModel *model = sys->getDynamicsModel();
 	double rdot = model->getRDot(apseData, correctedSet->getEpoch(apseCon.getID()), &(finalState[0]), sys);
-	BOOST_CHECK(std::abs(rdot) < 1e-12);
+	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact){
@@ -557,7 +557,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact){
 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(sys, correctedSet->getEpoch(spCon.getID()));
 	std::vector<double> finalState = correctedSet->getState(spCon.getID());
 	double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
-	BOOST_CHECK(diff < 1e-10);
+	BOOST_CHECK_SMALL(diff, 1e-10);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact_EQAUL_ARC){
@@ -581,7 +581,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact_EQAUL_ARC){
 	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(sys, correctedSet->getEpoch(spCon.getID()));
 	std::vector<double> finalState = correctedSet->getState(spCon.getID());
 	double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
-	BOOST_CHECK(diff < 1e-10);
+	BOOST_CHECK_SMALL(diff, 1e-10);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
@@ -617,7 +617,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
 		if(!std::isnan(contData[i]))
 			sum += pow(for_lastState[i] - rev_lastState[i], 2);
 	}
-	BOOST_CHECK(std::sqrt(sum) < 1e-12);
+	BOOST_CHECK_SMALL(sum, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
@@ -644,7 +644,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
 
 	Arcset forwardTraj = it.propSegs[correctedSet->getSegIx(extraContCon.getID())];
 	Arcset reverseTraj = it.propSegs[correctedSet->getSegIx(contExData[0])];
-	BOOST_CHECK(std::abs(forwardTraj.getEpochByIx(-1) - reverseTraj.getEpochByIx(-1)) < 1e-12);
+	BOOST_CHECK_SMALL(forwardTraj.getEpochByIx(-1) - reverseTraj.getEpochByIx(-1), 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(BC4BP_SEM_SOURCE_NODE){

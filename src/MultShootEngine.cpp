@@ -482,8 +482,19 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	double err = 10*tol;
 	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
+	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), FX(it.totalCons, 1);
 	Arcset arc(it.nodesIn->getSysData());
+
 	while( err > tol && it.count < maxIts){
+		if(it.count > 0){
+			// Solve for newX and copy into working vector X
+			oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
+			solveUpdateEq(&it, &oldX, &FX, &newX);
+
+			it.X.clear();
+			it.X.insert(it.X.begin(), newX.data(), newX.data()+it.totalFree);
+		}
+
 		it.FX.clear();					// Clear vectors each iteration
 		it.FX.assign(it.totalCons, 0);	// Size the vectors and fill with zeros
 
@@ -501,15 +512,8 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			printVerb(verbosity >= Verbosity_tp::DEBUG, "* Applying %s constraint\n", it.allCons[c].getTypeStr());
 		}
 
-		// Solve for newX and copy into working vector X
-		Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
-		Eigen::VectorXd newX = solveUpdateEq(&it);
-
-		it.X.clear();
-		it.X.insert(it.X.begin(), newX.data(), newX.data()+it.totalFree);
-
-		// Compute error; norm of constraint vector
-		Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
+		// Check to see what the error is; if it's too high, update X and continue another iteration
+		FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
 		double err_cons = FX.norm();
 
 		if(verbosity >= Verbosity_tp::ALL_MSG)
@@ -536,9 +540,6 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	if(it.nodesOut){
 		try{
-			// Propagate segments from the final update (currently stored segments are from the previous iteration)
-			simEngine.setVarStepSize(bFullFinalProp);
-			propSegsFromFreeVars(&it, &simEngine);
 			// Save propagated data and free variable vector values to the output arcset
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it);
 		}catch(Exception &e){
@@ -652,15 +653,12 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
  *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
-Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
-	// Create matrices for X, Jacobian matrix DF, and constraint vector FX
-	Eigen::VectorXd oldX = Eigen::Map<Eigen::VectorXd>(&(pIt->X[0]), pIt->totalFree, 1);
-	Eigen::VectorXd FX = Eigen::Map<Eigen::VectorXd>(&(pIt->FX[0]), pIt->totalCons, 1);
+void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* pOldX, const Eigen::VectorXd *pFX, Eigen::VectorXd *pNewX){
 	Eigen::VectorXd X_diff(pIt->totalFree, 1);	// Create a vector to put the solution in
 
 	if(pIt->totalCons == 1 && pIt->totalFree == 1){
 		// If Jacobian is 1x1, skip all that linear algebra and just solve the equation
-		X_diff = -FX/(pIt->DF_elements[0].value());
+		X_diff = -(*pFX)/(pIt->DF_elements[0].value());
 	}else{
 		// Jacobian is not scalar; use linear algebra to solve update equation
 		SparseMatXCd J(pIt->totalCons, pIt->totalFree);
@@ -688,7 +686,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
 			}
 
-			X_diff = luSolver.solve(-FX);
+			X_diff = luSolver.solve(-(*pFX));
 			if(luSolver.info() != Eigen::Success){
 				checkDFSingularities(J);
 				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
@@ -725,7 +723,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix.");
 					}
 
-					Eigen::VectorXd w = qrSolver.solve(-FX);
+					Eigen::VectorXd w = qrSolver.solve(-(*pFX));
 					if(qrSolver.info() != Eigen::Success){
 						checkDFSingularities(J);
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
@@ -734,7 +732,7 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 					X_diff = JT*w;	// Compute optimal x from w
 				}else{
 
-					Eigen::VectorXd w = luSolver.solve(-FX);
+					Eigen::VectorXd w = luSolver.solve(-(*pFX));
 					if(luSolver.info() != Eigen::Success){
 						checkDFSingularities(J);
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
@@ -763,8 +761,8 @@ Eigen::VectorXd MultShootEngine::solveUpdateEq(MultShootData* pIt){
 		}
 	}
 
-	double scale = FX.norm() < attenuationLimitTol ? 1.0 : attenuation;
-	return oldX + scale*X_diff;	// newX = oldX + X_diff
+	double scale = pFX->norm() < attenuationLimitTol ? 1.0 : attenuation;
+	*pNewX = *pOldX + scale*X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
 
 /**

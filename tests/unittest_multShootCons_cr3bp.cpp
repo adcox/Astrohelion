@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE MultipleShootingConstraints_CR3BP
 
 #include <boost/test/unit_test.hpp>
+#include <boost/test/floating_point_comparison.hpp>
 
 #include <vector>
 
@@ -335,7 +336,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST){
 
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(),2) + pow(finalState[1], 2));
-	BOOST_CHECK(std::abs(dist - matchDistConData[1]) < 1e-12);
+	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST_EQUAL_ARC){
@@ -358,7 +359,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST_EQUAL_ARC){
 
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(),2) + pow(finalState[1], 2));
-	BOOST_CHECK(std::abs(dist - matchDistConData[1]) < 1e-12);
+	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST){
@@ -382,7 +383,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST){
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
 
-	BOOST_CHECK(dist >= matchDistConData[1]);
+	BOOST_CHECK_GE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST_EQUAL_ARC){
@@ -406,7 +407,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST_EQUAL_ARC){
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
 
-	BOOST_CHECK(dist >= matchDistConData[1]);
+	BOOST_CHECK_GE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST){
@@ -430,7 +431,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST){
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
 
-	BOOST_CHECK(dist <= matchDistConData[1]);
+	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST_EQUAL_ARC){
@@ -454,7 +455,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST_EQUAL_ARC){
 	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
 	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
 
-	BOOST_CHECK(dist <= matchDistConData[1]);
+	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V){
@@ -483,7 +484,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V){
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(totalDV <= maxDVConData);
+	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V_EQUAL_ARC){
@@ -512,7 +513,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V_EQUAL_ARC){
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(totalDV <= maxDVConData);
+	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V){
@@ -541,7 +542,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V){
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(std::abs(totalDV - maxDVConData) < 1e-10);
+	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-10);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V_EQUAL_ARC){
@@ -570,7 +571,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V_EQUAL_ARC){
 	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK(std::abs(totalDV - maxDVConData) < 1e-10);
+	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-10);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI){
@@ -590,7 +591,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI){
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK(std::abs(correctedSet.getJacobiByIx(0) - jacobiData) < 1e-12);
+	BOOST_CHECK_SMALL(correctedSet.getJacobiByIx(0) - jacobiData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI_EQUAL_ARC){
@@ -610,7 +611,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI_EQUAL_ARC){
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK(std::abs(correctedSet.getJacobiByIx(0) - jacobiData) < 1e-12);
+	BOOST_CHECK_SMALL(correctedSet.getJacobiByIx(0) - jacobiData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF){
@@ -630,7 +631,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF){
 	
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK(std::abs(correctedSet.getTotalTOF() - tofData) < 1e-12);
+	BOOST_CHECK_SMALL(correctedSet.getTotalTOF() - tofData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF_EQUAL_ARC){
@@ -650,7 +651,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF_EQUAL_ARC){
 	
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK(std::abs(correctedSet.getTotalTOF() - tofData) < 1e-12);
+	BOOST_CHECK_SMALL(correctedSet.getTotalTOF() - tofData, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE){
@@ -679,7 +680,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE){
 	double dz = finalState[2] - primPos[apseData*3 + 2];
 	double rdot = dx*finalState[3] + dy*finalState[4] + dz*finalState[5];
 
-	BOOST_CHECK(std::abs(rdot) < 1e-12);
+	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE_EQUAL_ARC){
@@ -709,7 +710,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE_EQUAL_ARC){
 	double dz = finalState[2] - primPos[apseData*3 + 2];
 	double rdot = dx*finalState[3] + dy*finalState[4] + dz*finalState[5];
 
-	BOOST_CHECK(std::abs(rdot) < 1e-12);
+	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
@@ -748,7 +749,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
 	}
 	double dist = std::sqrt(sum);
 
-	BOOST_CHECK(std::abs(dist) < 1e-12);
+	BOOST_CHECK_SMALL(dist, 1e-12);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(CR3BP_DOUBLE_SOURCE){

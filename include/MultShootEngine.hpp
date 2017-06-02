@@ -173,7 +173,7 @@ class MultShootEngine : public Core, public Engine{
 		void copyMe(const MultShootEngine&);
 		void propSegsFromFreeVars(MultShootData*, SimEngine*);
 		void reportConMags(const MultShootData*);
-		Eigen::VectorXd solveUpdateEq(MultShootData*);
+		void solveUpdateEq(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
 };
 
 }// END of Astrohelion namespace

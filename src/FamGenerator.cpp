@@ -1186,8 +1186,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 
 	// Correct the nodeset to retrieve a free-variable vector for a family member
 	MultShootEngine corrector;
-	corrector.setVarTime(true);			// Variable time MUST be enabled for PAC
-	corrector.setEqualArcTime(true);	// MUST use equal arc time to get propper # of constraints
+	corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
 	corrector.setVerbosity(Verbosity_tp::SOME_MSG);

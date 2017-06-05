@@ -296,25 +296,46 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 		}
 	}
 
-	if(it->bVarTime){		
-		if(it->bEqualArcTime){
-			// Make sure all times-of-flight have the same sign
-			for(unsigned int s = 1; s < it->nodesIn->getNumSegs(); s++){
-				if(it->nodesIn->getTOFByIx(s) * it->nodesIn->getTOFByIx(s-1) < 0)
-					throw Exception("DynamicsModel::multShoot_initDesignVec: EqualArcTime is ON and times-of-flight have different signs... cannot proceed");
-			}
+	if(to_underlying(it->tofTp) > 0){	// TOF is not fixed
+		switch(it->tofTp){
+			case MSTOF_tp::VAR_FREE:
+			{
+				// Append the TOF for each segment
+				for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+					MSVarMap_Key key(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
+					it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
+					it->X.insert(it->X.end(), it->nodesIn->getTOFByIx(s));
+				}
 
-			// Append the total TOF for the arc
-			MSVarMap_Key key(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
-			it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
-			it->X.insert(it->X.end(), it->nodesIn->getTotalTOF());
-		}else{
-			// Append the TOF for each segment
-			for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
-				MSVarMap_Key key(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
-				it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
-				it->X.insert(it->X.end(), it->nodesIn->getTOFByIx(s));
+				break;
 			}
+			case MSTOF_tp::VAR_EQUALARC:
+			{
+				// Make sure all times-of-flight have the same sign
+				for(unsigned int s = 1; s < it->nodesIn->getNumSegs(); s++){
+					if(it->nodesIn->getTOFByIx(s) * it->nodesIn->getTOFByIx(s-1) < 0)
+						throw Exception("DynamicsModel::multShoot_initDesignVec: EqualArcTime is ON and times-of-flight have different signs... cannot proceed");
+				}
+
+				// Append the total TOF for the arc
+				MSVarMap_Key key(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+				it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
+				it->X.insert(it->X.end(), it->nodesIn->getTotalTOF());
+				break;
+			}
+			case MSTOF_tp::VAR_POS:
+			{
+				// Append the sqrt(TOF) for each segment
+				for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+					MSVarMap_Key key(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
+					it->freeVarMap[key] = MSVarMap_Obj(key, static_cast<int>(it->X.size()));
+					it->X.insert(it->X.end(), sqrt(std::abs(it->nodesIn->getTOFByIx(s))));
+				}
+
+				break;
+			}
+			default:
+				throw Exception("DynamicsModel::multShoot_initDesignVec: Unhandled time type");
 		}
 	}
 }//============================================================
@@ -400,13 +421,28 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 		}catch(Exception &e){ /* No need to handle exception */ }
 	}
 
-	if(it->bVarTime){
-		// Retrieve  representative object and get data from free var vec
-		MSVarMap_Obj tof_obj = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-			it->bEqualArcTime ? -1 : s);
-		*tof = it->bEqualArcTime ? it->X[tof_obj.row0]/(it->nodesIn->getNumSegs()) : it->X[tof_obj.row0];
-	}else{
-		*tof = it->nodesIn->getTOF(s);
+	switch(it->tofTp){
+		case MSTOF_tp::FIXED:
+			*tof = it->nodesIn->getTOF(s);
+			break;
+		case MSTOF_tp::VAR_FREE:
+		{
+			MSVarMap_Obj tofObj = it->getVarMap_obj(MSVar_tp::TOF, s);
+			*tof = it->X[tofObj.row0];	
+			break;
+		}
+		case MSTOF_tp::VAR_EQUALARC:
+		{
+			MSVarMap_Obj tofObj = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+			*tof = it->X[tofObj.row0]/(it->nodesIn->getNumSegs());
+			break;
+		}
+		case MSTOF_tp::VAR_POS:
+		{
+			MSVarMap_Obj tofObj = it->getVarMap_obj(MSVar_tp::TOF, s);
+			*tof = astrohelion::sign(it->nodesIn->getTOF(s))*(it->X[tofObj.row0])*(it->X[tofObj.row0]);
+			break;
+		}
 	}
 	
 	// Most currently implemented systems are autonomous, thus, epoch is not a variable
@@ -556,14 +592,26 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
-			if(it->bVarTime){
+			if(to_underlying(it->tofTp) > 0){	// Time is variable
 				std::vector<double> lastDeriv = it->propSegs[segIx].getStateDerivByIx(-1);
+				double timeCoeff = 1;
+				MSVarMap_Obj tofVar;
 
-				// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-				double timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs()) : 1.0;
-
-				MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-					it->bEqualArcTime ? Linkable::INVALID_ID : segID);
+				switch(it->tofTp){
+					case MSTOF_tp::VAR_POS:
+						tofVar = it->getVarMap_obj(MSVar_tp::TOF, segID);
+						timeCoeff = astrohelion::sign(it->nodesIn->getTOF(segID))*2*it->X[tofVar.row0];
+						break;
+					case MSTOF_tp::VAR_FREE:
+						tofVar = it->getVarMap_obj(MSVar_tp::TOF, segID);
+						break;
+					case MSTOF_tp::VAR_EQUALARC:
+						tofVar = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+						timeCoeff = 1.0/(it->nodesIn->getNumSegs());
+						break;
+					default:
+						throw Exception("DynamicsModel::multShoot_targetCont_State: Unhandled time type");
+				}
 				
 				// Column of state time derivatives: [vel; accel; other time derivatives]
 				it->DF_elements.push_back(Tripletd(row0+s, tofVar.row0, timeCoeff*lastDeriv[s]));
@@ -648,7 +696,7 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData *it, const Constrain
 
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
-			if(it->bVarTime){
+			if(to_underlying(it->tofTp) > 0){
 				// TODO - Will need to retreive constrol state time derivatives from propagated segment
 				// * Instantaneous time derivatives are available via ControlLaw.getLaw_StateDeriv()
 				// * For now, all time-derivatives of control laws are zero
@@ -708,18 +756,29 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 
 	std::vector<double> lastDeriv1, lastDeriv2;
 	MSVarMap_Obj tof1_var(MSVar_tp::TOF), tof2_var(MSVar_tp::TOF);
-	double timeCoeff = 1;
-	if(it->bVarTime){
+	double timeCoeff1 = 1, timeCoeff2 = 1;
+	if(to_underlying(it->tofTp) > 0){	// Time is variable
 		lastDeriv1 = it->propSegs[segIx1].getStateDerivByIx(-1);
 		lastDeriv2 = it->propSegs[segIx2].getStateDerivByIx(-1);
 
-		tof1_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-			it->bEqualArcTime ? Linkable::INVALID_ID : segID1);
-		tof2_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-			it->bEqualArcTime ? Linkable::INVALID_ID : segID2);
+		tof1_var = it->getVarMap_obj(it->tofTp == MSTOF_tp::VAR_EQUALARC ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
+			it->tofTp == MSTOF_tp::VAR_EQUALARC ? Linkable::INVALID_ID : segID1);
+		tof2_var = it->getVarMap_obj(it->tofTp == MSTOF_tp::VAR_EQUALARC ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
+			it->tofTp == MSTOF_tp::VAR_EQUALARC ? Linkable::INVALID_ID : segID2);
 
-		// If equal arc time is enabled, place a 1/(n-1) in front of all time derivatives
-		timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs() - 1) : 1.0;
+		switch(it->tofTp){
+			case MSTOF_tp::VAR_FREE: break; 	// Leave both coefficients as unity
+			case MSTOF_tp::VAR_POS:
+				timeCoeff1 = astrohelion::sign(it->nodesIn->getTOF(segID1))*2*it->X[tof1_var.row0];
+				timeCoeff2 = astrohelion::sign(it->nodesIn->getTOF(segID2))*2*it->X[tof2_var.row0];
+				break;
+			case MSTOF_tp::VAR_EQUALARC:
+				timeCoeff1 = 1/(it->nodesIn->getNumSegs());
+				timeCoeff2 = timeCoeff1;
+				break;
+			default:
+				throw Exception("DynamicsModel::multShoot_targetCont_State_Seg: Unhandled time type");
+		}
 	}
 
 	// Loop through conData
@@ -740,10 +799,10 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 			}
 
 			// Compute partials of F w.r.t. times-of-flight
-			if(it->bVarTime){
+			if(to_underlying(it->tofTp) > 0){	// Time is variable
 				// Column of state derivatives: [vel; accel; other time derivatives]
-				it->DF_elements.push_back(Tripletd(row0+count, tof1_var.row0, timeCoeff*lastDeriv1[s]));
-				it->DF_elements.push_back(Tripletd(row0+count, tof2_var.row0, -timeCoeff*lastDeriv2[s]));
+				it->DF_elements.push_back(Tripletd(row0+count, tof1_var.row0, timeCoeff1*lastDeriv1[s]));
+				it->DF_elements.push_back(Tripletd(row0+count, tof2_var.row0, -timeCoeff2*lastDeriv2[s]));
 			}
 
 			count++;
@@ -868,8 +927,21 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 	
 	// Get object representing origin of segment
 	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
-	MSVarMap_Obj tof_var = pIt->bEqualArcTime ? pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID) :
-		pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+
+	MSVarMap_Obj tof_var;
+	if(to_underlying(pIt->tofTp) > 0){
+		switch(pIt->tofTp){
+			case MSTOF_tp::VAR_FREE:
+			case MSTOF_tp::VAR_POS:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				break;
+			case MSTOF_tp::VAR_EQUALARC:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+				break;
+			default:
+				throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+		}
+	}
 	
 	// Data associated with the previous node and the propagated segment
 	std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
@@ -877,7 +949,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 	MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
 
 	if(conData.size() > coreDim)
-		throw Exception("DynamicsModel::multShoot_targetState: ConData has too many states");
+		throw Exception("DynamicsModel::multShoot_targetState_endSeg: ConData has too many states");
 
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
 	for(unsigned int s = 0; s < con.getData().size(); s++){
@@ -892,8 +964,19 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 			}
 
 			// Partials of F w.r.t. time-of-flight
-			if(pIt->bVarTime){
-				double timeCoeff = pIt->bEqualArcTime ? 1.0/(pIt->nodesIn->getNumSegs()): 1.0;
+			if(to_underlying(pIt->tofTp) > 0){
+				double timeCoeff = 1;
+				switch(pIt->tofTp){
+					case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
+					case MSTOF_tp::VAR_POS:
+						timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
+						break;
+					case MSTOF_tp::VAR_EQUALARC:
+						timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
+						break;
+					default:
+						throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+				}
 
 				// Column of state time derivatives: {vel; accel};
 				pIt->DF_elements.push_back(Tripletd(row0+count, tof_var.row0, timeCoeff*lastDeriv[s]));
@@ -1151,14 +1234,28 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, const Constraint& 
 			}
 
 			// Compute partial w.r.t. segment time-of-flight
-			if(it->bVarTime){
+			if(to_underlying(it->tofTp) > 0){	// Time is variable
 				// Derivative of the final state of segment s
 				std::vector<double> state_dot_data = it->propSegs[s].getStateDerivByIx(-1);
 				Eigen::VectorXd state_dot = Eigen::Map<Eigen::VectorXd>(&(state_dot_data[0]), 6, 1);
 
-				double timeCoeff = it->bEqualArcTime ? 1.0/(it->nodesIn->getNumSegs()) : 1.0;
-				MSVarMap_Obj tof_var = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-					it->bEqualArcTime ? Linkable::INVALID_ID : it->nodesIn->getSegRefByIx_const(s).getID());
+				double timeCoeff = 1;
+				MSVarMap_Obj tof_var;
+				switch(it->tofTp){
+					case MSTOF_tp::VAR_POS:
+						tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
+						timeCoeff = astrohelion::sign(it->nodesIn->getTOFByIx(s))*2*it->X[tof_var.row0];
+						break;
+					case MSTOF_tp::VAR_FREE:
+						tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
+						break;
+					case MSTOF_tp::VAR_EQUALARC:
+						tof_var = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+						timeCoeff = 1.0/(it->nodesIn->getNumSegs());
+						break;
+					default:
+						throw Exception("DynamicsModel::multShoot_targetDeltaV: Unhandled time type");
+				}
 
 				Eigen::RowVectorXd dFdt_n = -1*dFdq_n2 * state_dot;
 				it->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dFdt_n(0)/dvMax));
@@ -1229,24 +1326,49 @@ double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData *i
  *	\throws Exception if variable time is set to OFF
  */
 void DynamicsModel::multShoot_targetTOF(MultShootData *it, const Constraint& con, int row0) const{
-	if(! it->bVarTime)
+	if(to_underlying(it->tofTp) <= 0)
 		throw Exception("DynamicsModel::multShoot_targetTOF: Cannot target TOF when variable time is off!");
 
-	if(it->bEqualArcTime){
-		MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
-		it->FX[row0] = it->X[tof_var.row0];
-		it->DF_elements.push_back(Tripletd(row0, tof_var.row0, 1.0));
-	}else{
-		// Sum all TOF for total, set partials w.r.t. integration times equal to one
-		for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
-			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
-			it->FX[row0] += it->X[tof_var.row0];
-			it->DF_elements.push_back(Tripletd(row0, tof_var.row0, 1.0));
+	switch(it->tofTp){
+		case MSTOF_tp::VAR_FREE:
+		{
+			// Sum all TOF for total, set partials w.r.t. integration times equal to one
+			for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+				MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
+				it->FX[row0] += it->X[tof_var.row0];
+				it->DF_elements.push_back(Tripletd(row0, tof_var.row0, astrohelion::sign(it->X[tof_var.row0])));
+			}
+
+			// subtract the desired TOF from the constraint to finish its computation
+			it->FX[row0] -= con.getData()[0];
+			break;
 		}
+		case MSTOF_tp::VAR_POS:
+		{
+			// Sum all TOF for total, set partials w.r.t. integration times equal to one
+			for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
+				MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
+				it->FX[row0] += astrohelion::sign(it->nodesIn->getTOFByIx(s)) * it->X[tof_var.row0] * it->X[tof_var.row0];
+				it->DF_elements.push_back(Tripletd(row0, tof_var.row0, 2*it->X[tof_var.row0] * astrohelion::sign(it->nodesIn->getTOFByIx(s))));
+			}
+
+			// subtract the desired TOF from the constraint to finish its computation
+			it->FX[row0] -= con.getData()[0];
+			break;
+		}
+		case MSTOF_tp::VAR_EQUALARC:
+		{
+			MSVarMap_Obj tof_var = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+			it->FX[row0] = it->X[tof_var.row0];
+			it->DF_elements.push_back(Tripletd(row0, tof_var.row0, 1.0));
+
+			// subtract the desired TOF from the constraint to finish its computation
+			it->FX[row0] -= con.getData()[0];
+			break;
+		}
+		default:
+			throw Exception("DynamicsModel::multShoot_targetTOF: Unhandled time type");
 	}
-	
-	// subtract the desired TOF from the constraint to finish its computation
-	it->FX[row0] -= con.getData()[0];
 }//====================================================
 
 /**
@@ -1340,11 +1462,29 @@ void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
     for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
         Segment seg = it->nodesIn->getSegByIx(s);
 
-        if(it->bVarTime){
-            MSVarMap_Obj tofVar = it->getVarMap_obj(it->bEqualArcTime ? MSVar_tp::TOF_TOTAL : MSVar_tp::TOF,
-                it->bEqualArcTime ? Linkable::INVALID_ID : seg.getID());
-            // Get data
-            tof = it->bEqualArcTime ? it->X[tofVar.row0]/(it->nodesIn->getNumSegs()) : it->X[tofVar.row0];
+        if(to_underlying(it->tofTp) > 0){
+        	switch(it->tofTp){
+        		case MSTOF_tp::VAR_FREE:
+        		{
+        			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
+        			tof = it->X[tofVar.row0];
+        			break;
+        		}
+        		case MSTOF_tp::VAR_POS:
+        		{
+        			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
+        			tof = astrohelion::sign(it->nodesIn->getTOFByIx(s)) * (it->X[tofVar.row0])*(it->X[tofVar.row0]);
+        			break;	
+        		}
+        		case MSTOF_tp::VAR_EQUALARC:
+        		{
+        			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+        			tof = it->X[tofVar.row0]/it->nodesIn->getNumSegs();
+        			break;
+        		}
+        		default:
+					throw Exception("DynamicsModel::multShoot_createOutput: Unhandled time type");
+        	}
         }else{
             tof = seg.getTOF();
         }

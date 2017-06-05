@@ -30,49 +30,49 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	// **************************************
 	// Stable Eigenvector
 	// **************************************
-	MatrixXRd eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_P, &perOrbit, &eigVals);
+	MatrixXRd eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_RIGHT, &perOrbit, &eigVals);
 
-	BOOST_CHECK(eigVals.size() == 1);
-	BOOST_CHECK(std::abs(eigVals[0]) < 1);
-	BOOST_CHECK(eigVecs.cols() == 1);
+	BOOST_CHECK_EQUAL(eigVals.size(), 1);
+	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);
+	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	eigVals.clear();
-	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_M, &perOrbit, &eigVals);
+	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S_LEFT, &perOrbit, &eigVals);
 
-	BOOST_CHECK(eigVals.size() == 1);
-	BOOST_CHECK(std::abs(eigVals[0]) < 1);
-	BOOST_CHECK(eigVecs.cols() == 1);
+	BOOST_CHECK_EQUAL(eigVals.size(), 1);
+	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);
+	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	eigVals.clear();
 	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_S, &perOrbit, &eigVals);
 
-	BOOST_CHECK(eigVals.size() == 1);
-	BOOST_CHECK(std::abs(eigVals[0]) < 1);
-	BOOST_CHECK(eigVecs.cols() == 1);
+	BOOST_CHECK_EQUAL(eigVals.size(), 1);
+	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);
+	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	// **************************************
 	// Unstable Eigenvector
 	// **************************************
 	eigVals.clear();
-	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_U_P, &perOrbit, &eigVals);
+	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_U_RIGHT, &perOrbit, &eigVals);
 
 	BOOST_CHECK(eigVals.size() == 1);
-	BOOST_CHECK(std::abs(eigVals[0]) > 1);
+	BOOST_CHECK_GT(std::abs(eigVals[0]), 1);
 	BOOST_CHECK(eigVecs.cols() == 1);
 
 	eigVals.clear();
-	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_U_M, &perOrbit, &eigVals);
+	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_U_LEFT, &perOrbit, &eigVals);
 
-	BOOST_CHECK(eigVals.size() == 1);
-	BOOST_CHECK(std::abs(eigVals[0]) > 1);
-	BOOST_CHECK(eigVecs.cols() == 1);
+	BOOST_CHECK_EQUAL(eigVals.size(), 1);
+	BOOST_CHECK_GT(std::abs(eigVals[0]), 1);
+	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	eigVals.clear();
 	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_U, &perOrbit, &eigVals);
 
-	BOOST_CHECK(eigVals.size() == 1);
-	BOOST_CHECK(std::abs(eigVals[0]) > 1);
-	BOOST_CHECK(eigVecs.cols() == 1);
+	BOOST_CHECK_EQUAL(eigVals.size(), 1);
+	BOOST_CHECK_GT(std::abs(eigVals[0]), 1);
+	BOOST_CHECK_EQUAL(eigVecs.cols(), 1);
 
 	// **************************************
 	// Stable and Unstable Eigenvector
@@ -80,10 +80,10 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	eigVals.clear();
 	eigVecs = engine.eigVecValFromPeriodic(Manifold_tp::MAN_ALL, &perOrbit, &eigVals);
 
-	BOOST_CHECK(eigVals.size() == 2);
-	BOOST_CHECK(std::abs(eigVals[0]) < 1);	// Stable first
-	BOOST_CHECK(std::abs(eigVals[1]) > 1);	// Unstable second
-	BOOST_CHECK(eigVecs.cols() == 2);
+	BOOST_CHECK_EQUAL(eigVals.size(), 2);
+	BOOST_CHECK_LT(std::abs(eigVals[0]), 1);	// Stable first
+	BOOST_CHECK_GT(std::abs(eigVals[1]),  1);	// Unstable second
+	BOOST_CHECK_EQUAL(eigVecs.cols(), 2);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(Single_Manifold){
@@ -100,18 +100,18 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	std::vector<Arcset_cr3bp> manifolds = engine.computeSingleFromPeriodic(Manifold_tp::MAN_ALL,
 		&perOrbit, period, 1, Manifold_StepOff_tp::STEP_MATCH_JC);
 
-	BOOST_CHECK(manifolds.size() == 4);
+	BOOST_CHECK_EQUAL(manifolds.size(), 4);
 
 	unsigned int numRev = 0, numFor = 0;
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		numRev += manifolds[i].getTimeByIx(-1) < 0;
 		numFor += manifolds[i].getTimeByIx(-1) > 0;
-		BOOST_CHECK(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1) < 1e-8);
-		BOOST_CHECK(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)) < 1e-8);
+		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 1e-8);
+		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)), 1e-8);
 	}
 
-	BOOST_CHECK(numRev == 2);
-	BOOST_CHECK(numFor == 2);
+	BOOST_CHECK_EQUAL(numRev, 2);
+	BOOST_CHECK_EQUAL(numFor, 2);
 
 	// **************************************
 	// Stable Manifolds
@@ -124,12 +124,12 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		numRev += manifolds[i].getTimeByIx(-1) < 0;
 		numFor += manifolds[i].getTimeByIx(-1) > 0;
-		BOOST_CHECK(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1) < 1e-8);
-		BOOST_CHECK(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)) < 1e-8);
+		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 1e-8);
+		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)), 1e-8);
 	}
 
-	BOOST_CHECK(numRev == 2);
-	BOOST_CHECK(numFor == 0);
+	BOOST_CHECK_EQUAL(numRev, 2);
+	BOOST_CHECK_EQUAL(numFor, 0);
 
 	// **************************************
 	// Unstable Manifolds
@@ -142,12 +142,12 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		numRev += manifolds[i].getTimeByIx(-1) < 0;
 		numFor += manifolds[i].getTimeByIx(-1) > 0;
-		BOOST_CHECK(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1) < 1e-8);
-		BOOST_CHECK(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)) < 1e-8);
+		BOOST_CHECK_SMALL(std::abs(std::abs(manifolds[i].getTimeByIx(-1)) - 1), 1e-8);
+		BOOST_CHECK_SMALL(std::abs(manifolds[i].getJacobiByIx(0) - perOrbit.getJacobiByIx(0)), 1e-8);
 	}
 
-	BOOST_CHECK(numRev == 0);
-	BOOST_CHECK(numFor == 2);
+	BOOST_CHECK_EQUAL(numRev, 0);
+	BOOST_CHECK_EQUAL(numFor, 2);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(Many_Manifold){
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	std::vector<Arcset_cr3bp> manifolds = engine.computeSetFromPeriodic(Manifold_tp::MAN_ALL,
 		&discretizedOrbit, numPts, 0.1, Manifold_StepOff_tp::STEP_MATCH_JC);
 
-	BOOST_CHECK(manifolds.size() == 4*numPts);
+	BOOST_CHECK_EQUAL(manifolds.size(), 4*numPts);
 
 	std::vector<double> allICs;
 	unsigned int numRev = 0, numFor = 0;
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 				pow(manifoldIC[2] - orbitState[2], 2));
 
 			allICs.insert(allICs.end(), manifoldIC.begin(), manifoldIC.end());
-			BOOST_CHECK(std::abs(dist*emSys.getCharL() - engine.getStepOffDist()) < 0.1);
+			BOOST_CHECK_LT(std::abs(dist*emSys.getCharL() - engine.getStepOffDist()), 0.1);
 		}
 	}
 
@@ -192,8 +192,8 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	// saveMatrixToFile(matfp, "ics", allICs, allICs.size()/6, 6);
 	// Mat_Close(matfp);
 
-	BOOST_CHECK(numRev == 2*numPts);
-	BOOST_CHECK(numFor == 2*numPts);	
+	BOOST_CHECK_EQUAL(numRev, 2*numPts);
+	BOOST_CHECK_EQUAL(numFor, 2*numPts);	
 }//====================================================
 
 

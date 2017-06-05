@@ -377,7 +377,11 @@ void Arcset::print() const {
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
 				segs[index.second].getTerminus(), segs[index.second].getTOF());
 
-			printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawString().c_str());
+			if(segs[index.second].getCtrlLaw())
+				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawString().c_str());
+			else
+				printf("\t> Ctrl Law: None\n");
+			
 		}else{
 			printf(" [N/A]\n");
 		}

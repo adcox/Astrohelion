@@ -25,7 +25,7 @@ int main(){
 	lyap.saveToMat("data/manifoldTest_periodicOrbit.mat");
 
 	ManifoldEngine engine;
-	std::vector<Arcset_cr3bp> manifolds = engine.computeSetFromPeriodic(Manifold_tp::MAN_S_P, &lyap, 100, 2*PI);
+	std::vector<Arcset_cr3bp> manifolds = engine.computeSetFromPeriodic(Manifold_tp::MAN_S_RIGHT, &lyap, 100, 2*PI);
 	for(unsigned int i = 0; i < manifolds.size(); i++){
 		char filename[128];
 		sprintf(filename, "data/man%03zu.mat", i);

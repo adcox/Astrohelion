@@ -5,7 +5,9 @@
 
 #define BOOST_TEST_MODULE MultipleShootingConstraints_BC4BP
 
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 
 #include <vector>
 
@@ -22,10 +24,14 @@
 #include "Utilities.hpp"
 
 using namespace astrohelion;
+using namespace boost::unit_test;
 
 // Sun-Earth L1 Lyapunov initial state and period
 double lyap_ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
 double lyap_T = 313;
+
+// All the different ways to parameterize time in the multiple shooting algorithm
+std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_POS, MSTOF_tp::VAR_EQUALARC};
 
 bool stateDiffBelowTol(std::vector<double>, double*, double);
 bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);
@@ -70,20 +76,20 @@ struct fixture_SEM_Init{
 		delete sys;
 	}//====================================================
 
-	SysData_bc4bp* sys;
-	Arcset_bc4bp* halfLyapSet, *correctedSet;
-	SimEngine* sim;
-	MultShootEngine* corrector;
+	SysData_bc4bp *sys = nullptr;
+	Arcset_bc4bp *halfLyapSet = nullptr, *correctedSet = nullptr;
+	SimEngine *sim = nullptr;
+	MultShootEngine *corrector = nullptr;
 };	// -- END OF fixture_SEM_Init
 
 
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
-BOOST_FIXTURE_TEST_SUITE(BC4BP_SunEarthMoon, fixture_SEM_Init)
+BOOST_AUTO_TEST_SUITE(BC4BP_SunEarthMoon)
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_State, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 	
 	// Constraint_tp::STATE
 	double stateConData[] = {-0.77, 0.5, NAN, NAN, NAN, NAN};
@@ -97,26 +103,10 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE){
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_EQUAL_ARC){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-	
-	// Constraint_tp::STATE
-	double stateConData[] = {-0.77, 0.5, NAN, NAN, NAN, NAN};
-	Constraint stateCon(Constraint_tp::STATE, 4, stateConData, 6);
-	halfLyapSet->addConstraint(stateCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-	
-	std::vector<double> finalState = correctedSet->getState(stateCon.getID());
-	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_State_EndSeg, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/2.1, 3, halfLyapSet);
 	halfLyapSet->deleteNode(2);	// Delete final node so arcset ends with segment
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 	
 	// Constraint_tp::ENDSEG_STATE
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
@@ -131,27 +121,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG){
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_ENDSEG_EQUAL_ARC){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/2.1, 3, halfLyapSet);
-	halfLyapSet->deleteNode(2);	// Delete final node so arcset ends with segment
-	corrector->setEqualArcTime(true);
-	
-	// Constraint_tp::ENDSEG_STATE
-	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
-	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
-	halfLyapSet->addConstraint(stateCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-	
-	std::vector<double> fullState = correctedSet->getSegByIx(stateCon.getID()).getStateByRow(-1);
-	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
-	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMSTATE){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_State_rmState, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/2.1, 4, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 3, stateConData, 6);
@@ -169,9 +141,12 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMSTATE){
 	BOOST_CHECK(stateDiffBelowTol(correctedSet->getState(rmState.getID()), halfLyapSet->getState(rmState.getID()), 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMEPOCH){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_State_rmEpoch, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 7, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;	// in equal arc configuration, epochs are not stored
+
+	corrector->setTOFType(tofTp);
 	
 	// Constraint_tp::STATE
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
@@ -189,9 +164,12 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_STATE_RMEPOCH){
 	BOOST_CHECK_SMALL(halfLyapSet->getEpoch(rmEpoch.getID()) - correctedSet->getEpoch(rmEpoch.getID()), 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_EPOCH){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Epoch, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);	// Epoch constraints require variable time
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;	// in equal arc configuration, epochs are not stored
+
+	corrector->setTOFType(tofTp);
 	
 	// Constraint_tp::EPOCH
 	double epochConData[] = {0.4};
@@ -204,9 +182,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_EPOCH){
 	BOOST_CHECK_SMALL(correctedSet->getEpochByIx(0) - epochConData[0], 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MatchAll, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MATCH_ALL
 	double matchAllConData = 0;
@@ -221,26 +199,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL){
 	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_ALL_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MatchCust, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	// Constraint_tp::MATCH_ALL
-	double matchAllConData = 0;
-	Constraint matchAllCon(Constraint_tp::MATCH_ALL, 4, &matchAllConData, 1);
-	halfLyapSet->addConstraint(matchAllCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-
-	std::vector<double> finalState = correctedSet->getState(matchAllCon.getID());
-	std::vector<double> initState = correctedSet->getStateByIx(0);
-	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MATCH_CUST
 	double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
@@ -257,28 +218,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST){
 	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MATCH_CUST_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Dist, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	// Constraint_tp::MATCH_CUST
-	double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
-	Constraint matchCustCon(Constraint_tp::MATCH_CUST, 4, matchCustConData, 6);
-	halfLyapSet->addConstraint(matchCustCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-	
-	std::vector<double> finalState = correctedSet->getState(matchCustCon.getID());
-	std::vector<double> initState = correctedSet->getStateByIx(0);
-	finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
-	initState.erase(initState.begin()+2, initState.end());
-	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double matchDistConData[] = {1, 1.0};
 	Constraint matchDistCon(Constraint_tp::DIST, 3, matchDistConData, 2);
@@ -292,25 +234,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST){
 	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_DIST_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MinDist, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	double matchDistConData[] = {1, 1.0};
-	Constraint matchDistCon(Constraint_tp::DIST, 3, matchDistConData, 2);
-	halfLyapSet->addConstraint(matchDistCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
-	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
-	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double matchDistConData[] = {1, 1.1};
 	Constraint matchDistCon(Constraint_tp::MIN_DIST, 3, matchDistConData, 2);
@@ -325,26 +251,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST){
 	BOOST_CHECK_GE(dist, matchDistConData[1]);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MIN_DIST_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MaxDist, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	double matchDistConData[] = {1, 1.1};
-	Constraint matchDistCon(Constraint_tp::MIN_DIST, 3, matchDistConData, 2);
-	halfLyapSet->addConstraint(matchDistCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-
-	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
-	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
-	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-	BOOST_CHECK_GE(dist, matchDistConData[1]);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double matchDistConData[] = {1, 0.9};
 	Constraint matchDistCon(Constraint_tp::MAX_DIST, 3, matchDistConData, 2);
@@ -359,26 +268,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST){
 	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DIST_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MaxDeltaV, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	double matchDistConData[] = {1, 0.9};
-	Constraint matchDistCon(Constraint_tp::MAX_DIST, 3, matchDistConData, 2);
-	halfLyapSet->addConstraint(matchDistCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
-	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(correctedSet->getEpoch(matchDistCon.getID()), sys);
-	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
-
-	BOOST_CHECK_LE(dist, matchDistConData[1]);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	std::vector<double> state = halfLyapSet->getStateByIx(3);
 	state[3] += 0.01;
@@ -399,32 +291,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V){
 	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_MAX_DELTA_V_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_DeltaV, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	std::vector<double> state = halfLyapSet->getStateByIx(3);
-	state[3] += 0.01;
-	state[4] += 0.1;
-	state[5] += 0.001;
-	halfLyapSet->setState(3, state);	// Perturb the velocity of this state to create a discontinuity
-	std::vector<int> dvSegs {2};
-	halfLyapSet->allowDV_at(dvSegs);	// Allow the perturbed node to have a delta-v
-	double maxDVConData = 0.03;
-	Constraint dVCon(Constraint_tp::MAX_DELTA_V, 0, &maxDVConData, 1);
-	halfLyapSet->addConstraint(dVCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	MultShootData itData(correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
-
-	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK_LE(totalDV, maxDVConData);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	std::vector<double> state = halfLyapSet->getStateByIx(3);
 	state[3] += 0.01;
@@ -447,34 +316,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V){
 	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_DELTA_V_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_TOF, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	std::vector<double> state = halfLyapSet->getStateByIx(3);
-	state[3] += 0.01;
-	state[4] += 0.1;
-	state[5] += 0.001;
-	halfLyapSet->setState(3, state);	// Perturb the velocity of this state to create a discontinuity
-	std::vector<int> dvSegs {2};
-	halfLyapSet->allowDV_at(dvSegs);	// Allow the perturbed node to have a delta-v
-	double maxDVConData = 0.02*0.02;
-	Constraint dVCon(Constraint_tp::DELTA_V, 0, &maxDVConData, 1);
-	halfLyapSet->addConstraint(dVCon);
-
-	// This one throws errors but is ok
-	BOOST_CHECK(true || MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-
-	MultShootData itData(correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
-
-	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double tofData = 340.0;
 	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
@@ -487,24 +331,9 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF){
 	BOOST_CHECK_SMALL(totalTOF - tofData, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_TOF_EQUAL_ARC){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Apse, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	double tofData = 340.0;
-	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
-	halfLyapSet->addConstraint(tofCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-
-	double totalTOF = correctedSet->getTotalTOF();
-	BOOST_CHECK_SMALL(totalTOF - tofData, 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double apseData = 2;
 	Constraint apseCon(Constraint_tp::APSE, 4, &apseData, 1);
@@ -519,25 +348,8 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE){
 	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_APSE_EQUAL_ARC){
-	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
-	corrector->setEqualArcTime(true);
-
-	double apseData = 2;
-	Constraint apseCon(Constraint_tp::APSE, 4, &apseData, 1);
-	halfLyapSet->addConstraint(apseCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
-
-	std::vector<double> finalState = correctedSet->getState(apseCon.getID());
-	const DynamicsModel *model = sys->getDynamicsModel();
-	double rdot = model->getRDot(apseData, correctedSet->getEpoch(apseCon.getID()), &(finalState[0]), sys);
-	BOOST_CHECK_SMALL(rdot, 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact){
-	corrector->setEqualArcTime(false);
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_SaddlePoint_Exact, data::make(tofTypes), tofTp){
+	corrector->setTOFType(tofTp);
 
 	double IC[] = {-0.71200455, 0.16675922, 0.02755461, 0.01186449, -0.00004723, -0.0010737};
 	double t0 = 10207.19;
@@ -560,32 +372,11 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact){
 	BOOST_CHECK_SMALL(diff, 1e-10);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_SaddlePoint_Exact_EQAUL_ARC){
-	corrector->setEqualArcTime(true);
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Cont_PV, data::make(tofTypes), tofTp){
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;
 
-	double IC[] = {-0.71200455, 0.16675922, 0.02755461, 0.01186449, -0.00004723, -0.0010737};
-	double t0 = 10207.19;
-	double tof = 51.32;
-	Arcset_bc4bp nodes0(sys);
-	sim->runSim_manyNodes(IC, t0, tof, 5, &nodes0);
-	corrector->setTol(1e-11);
-
-	double spData = 0;
-	Constraint spCon(Constraint_tp::SP, 2, &spData, 1);
-	nodes0.addConstraint(spCon);
-	
-	// This one throws errors but is ok
-	BOOST_CHECK(true || MultShootEngine::finiteDiff_checkMultShoot(&nodes0, *corrector, Verbosity_tp::NO_MSG));
-
-	BOOST_CHECK_NO_THROW(corrector->multShoot(&nodes0, correctedSet));
-	Eigen::Vector3d spPos = bcr4bpr_getSPLoc(sys, correctedSet->getEpoch(spCon.getID()));
-	std::vector<double> finalState = correctedSet->getState(spCon.getID());
-	double diff = sqrt(pow(spPos(0) - finalState[0], 2) + pow(spPos(1) - finalState[1], 2) + pow(spPos(2) - finalState[2], 2));
-	BOOST_CHECK_SMALL(diff, 1e-10);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
-	corrector->setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	Arcset_bc4bp forwardArc(sys), reverseArc(sys);
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/2.0, 4, &forwardArc);
@@ -620,8 +411,11 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_PV){
 	BOOST_CHECK_SMALL(sum, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
-	corrector->setEqualArcTime(false);
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_SegCont_Ex, data::make(tofTypes), tofTp){
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;
+	
+	corrector->setTOFType(tofTp);
 
 	Arcset_bc4bp forwardArc(sys), reverseArc(sys);
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/2.0, 4, &forwardArc);
@@ -647,8 +441,13 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_SEG_CONT_EX){
 	BOOST_CHECK_SMALL(forwardTraj.getEpochByIx(-1) - reverseTraj.getEpochByIx(-1), 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_SEM_SOURCE_NODE){
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_SourceNode, data::make(tofTypes), tofTp){
 	SysData_cr3bp emSys("earth", "moon");
+
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;
+
+	corrector->setTOFType(tofTp);
 
 	// EM L2 Butterfly Orbit
 	std::vector<double> ic {1.0639767173456007, 0, 0.1644973017995331, 0, -0.0311246472806882, 0};

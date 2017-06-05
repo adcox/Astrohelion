@@ -115,8 +115,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 	halo.addConstraint(periodicity);
 
 	MultShootEngine corrector;
-	corrector.setVarTime(true);
-	corrector.setEqualArcTime(true);
+	corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halo, &correctedHalo));
 }//====================================================
 

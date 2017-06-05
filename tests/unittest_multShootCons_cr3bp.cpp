@@ -1,6 +1,8 @@
 #define BOOST_TEST_MODULE MultipleShootingConstraints_CR3BP
 
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
+#include <boost/test/data/monomorphic.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <vector>
@@ -16,11 +18,15 @@
 #include "Utilities.hpp"
 
 using namespace astrohelion;
+using namespace boost::unit_test;
 
 double se_lyap_ic[] = {0.993986593871357, 0, 0, 0, -0.022325793891591, 0};	// SE L1
 double em_lyap_ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
 double se_lyap_T = 3.293141367224790;
 double em_lyap_T = 3.02796323553149;
+
+// All the different ways to parameterize time in the multiple shooting algorithm
+std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_POS, MSTOF_tp::VAR_EQUALARC};
 
 bool stateDiffBelowTol(std::vector<double>, double*, double);
 bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);
@@ -48,50 +54,71 @@ bool stateDiffBelowTol(std::vector<double> data, std::vector<double> correct, do
 	return stateDiffBelowTol(data, &(correct[0]), tol);
 }//====================================================
 
+struct fixture_SE_Init{
+	fixture_SE_Init(){
+		sys = new SysData_cr3bp("Sun", "earth");
+		halfLyapSet = new Arcset_cr3bp(sys);
+		correctedSet = new Arcset_cr3bp(sys);
+		sim = new SimEngine();
+		corrector = new MultShootEngine();
+
+		sim->setRevTime(se_lyap_T < 0);
+		sim->runSim_manyNodes(se_lyap_ic, se_lyap_T/1.25, 8, halfLyapSet);
+	}//====================================================
+
+	~fixture_SE_Init(){
+		delete corrector;
+		delete sim;
+		delete correctedSet;
+		delete halfLyapSet;
+		delete sys;
+	}//====================================================
+
+	SysData_cr3bp *sys = nullptr;
+	Arcset_cr3bp *halfLyapSet = nullptr, *correctedSet = nullptr;
+	SimEngine *sim = nullptr;
+	MultShootEngine *corrector = nullptr;
+};	// -- END OF fixture_SE_Init
+
+struct fixture_EM_Init{
+	fixture_EM_Init(){
+		sys = new SysData_cr3bp("earth", "moon");
+		halfLyapSet = new Arcset_cr3bp(sys);
+		correctedSet = new Arcset_cr3bp(sys);
+		sim = new SimEngine();
+		corrector = new MultShootEngine();
+	}//====================================================
+
+	~fixture_EM_Init(){
+		delete corrector;
+		delete sim;
+		delete correctedSet;
+		delete halfLyapSet;
+		delete sys;
+	}//====================================================
+
+	SysData_cr3bp *sys = nullptr;
+	Arcset_cr3bp *halfLyapSet = nullptr, *correctedSet = nullptr;
+	SimEngine *sim = nullptr;
+	MultShootEngine *corrector = nullptr;
+};	// -- END OF fixture_EM_Init
+
 //************************************************************
 //* CR3BP Sun-Earth Constraints
 //************************************************************
 
 BOOST_AUTO_TEST_SUITE(CR3BP_SunEarth)
 
-BOOST_AUTO_TEST_CASE(CR3BP_SE_STATE){
-	SysData_cr3bp sys("sun", "earth");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(se_lyap_T < 0);
-	sim.runSim_manyNodes(se_lyap_ic, se_lyap_T/1.25, 8, &halfLyapNodeset);
-
+BOOST_DATA_TEST_CASE_F(fixture_SE_Init, CR3BP_SE_State, data::make(tofTypes), tofTp){
 	std::vector<double> initState, finalState;
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double stateConData[] = {0.9934, 0.001, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 7, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
+	halfLyapSet->addConstraint(stateCon);
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
 
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_SE_STATE_EQUAL_ARC){
-	SysData_cr3bp sys("sun", "earth");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(se_lyap_T < 0);
-	sim.runSim_manyNodes(se_lyap_ic, se_lyap_T/1.25, 8, &halfLyapNodeset);
-	std::vector<double> initState, finalState;
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	double stateConData[] = {0.9934, 0.001, NAN, NAN, NAN, NAN};
-	Constraint stateCon(Constraint_tp::STATE, 7, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
@@ -103,578 +130,264 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(CR3BP_EarthMoon)
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_State, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double stateConData[] = {0.9, 0.1, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 4, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
+	halfLyapSet->addConstraint(stateCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	std::vector<double> finalState = correctedSet->getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_State_EndSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 3, halfLyapSet);
+	halfLyapSet->deleteNode(2);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	double stateConData[] = {0.9, 0.1, NAN, NAN, NAN, NAN};
-	Constraint stateCon(Constraint_tp::STATE, 4, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
-	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_ENDSEG){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 3, &halfLyapNodeset);
-	halfLyapNodeset.deleteNode(2);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
+	halfLyapSet->addConstraint(stateCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
+	std::vector<double> fullState = correctedSet->getSegByIx(stateCon.getID()).getStateByRow(-1);
 	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_ENDSEG_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 3, &halfLyapNodeset);
-	halfLyapNodeset.deleteNode(2);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_State_rmState, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 4, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
-	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
-	std::vector<double> finalState(fullState.begin(), fullState.begin()+6);
-	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_STATE_RMSTATE){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2.1, 4, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 3, stateConData, 6);
-	halfLyapNodeset.addConstraint(stateCon);
+	halfLyapSet->addConstraint(stateCon);
 
 	// Remove the initial state from the free variable vector
 	Constraint rmState(Constraint_tp::RM_STATE, 0, nullptr, 0);
-	halfLyapNodeset.addConstraint(rmState);
+	halfLyapSet->addConstraint(rmState);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> initState = correctedSet.getState(rmState.getID());
-	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	std::vector<double> initState = correctedSet->getState(rmState.getID());
+	std::vector<double> finalState = correctedSet->getState(stateCon.getID());
 	BOOST_CHECK(stateDiffBelowTol(finalState, stateConData, 1e-12));
-	BOOST_CHECK(stateDiffBelowTol(initState, halfLyapNodeset.getState(rmState.getID()), 1e-12));
+	BOOST_CHECK(stateDiffBelowTol(initState, halfLyapSet->getState(rmState.getID()), 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MatchAll, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MATCH_ALL
 	double matchAllConData = 0;
 	Constraint matchAllCon(Constraint_tp::MATCH_ALL, 4, &matchAllConData, 1);
-	halfLyapNodeset.addConstraint(matchAllCon);
+	halfLyapSet->addConstraint(matchAllCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(matchAllCon.getID());
-	std::vector<double> initState = correctedSet.getStateByIx(0);
+	std::vector<double> finalState = correctedSet->getState(matchAllCon.getID());
+	std::vector<double> initState = correctedSet->getStateByIx(0);
 	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_ALL_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MatchCust, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::MATCH_ALL
-	double matchAllConData = 0;
-	Constraint matchAllCon(Constraint_tp::MATCH_ALL, 4, &matchAllConData, 1);
-	halfLyapNodeset.addConstraint(matchAllCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(matchAllCon.getID());
-	std::vector<double> initState = correctedSet.getStateByIx(0);
-	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_CUST){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MATCH_CUST
 	double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
 	Constraint matchCustCon(Constraint_tp::MATCH_CUST, 4, matchCustConData, 6);
-	halfLyapNodeset.addConstraint(matchCustCon);
+	halfLyapSet->addConstraint(matchCustCon);
 	
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(matchCustCon.getID());
-	std::vector<double> initState = correctedSet.getStateByIx(0);
+	std::vector<double> finalState = correctedSet->getState(matchCustCon.getID());
+	std::vector<double> initState = correctedSet->getStateByIx(0);
 	finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
 	initState.erase(initState.begin()+2, initState.end());
 
 	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MATCH_CUST_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Dist, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::MATCH_CUST
-	double matchCustConData[] = {0,0,NAN,NAN,NAN,NAN};
-	Constraint matchCustCon(Constraint_tp::MATCH_CUST, 4, matchCustConData, 6);
-	halfLyapNodeset.addConstraint(matchCustCon);
-	
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(matchCustCon.getID());
-	std::vector<double> initState = correctedSet.getStateByIx(0);
-	finalState.erase(finalState.begin()+2, finalState.end());	// Erase entries 2 through 5; we're only comparing the first two
-	initState.erase(initState.begin()+2, initState.end());
-
-	BOOST_CHECK(stateDiffBelowTol(finalState, initState, 1e-12));
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::DIST
 	double matchDistConData[] = {1, 0.2};
 	Constraint matchDistCon(Constraint_tp::DIST, 3, matchDistConData, 2);
-	halfLyapNodeset.addConstraint(matchDistCon);
+	halfLyapSet->addConstraint(matchDistCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
-	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(),2) + pow(finalState[1], 2));
+	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(),2) + pow(finalState[1], 2));
 	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_DIST_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MinDist, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::DIST
-	double matchDistConData[] = {1, 0.2};
-	Constraint matchDistCon(Constraint_tp::DIST, 3, matchDistConData, 2);
-	halfLyapNodeset.addConstraint(matchDistCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
-	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(),2) + pow(finalState[1], 2));
-	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MIN_DIST
 	double matchDistConData[] = {1, 0.4};
 	Constraint matchDistCon(Constraint_tp::MIN_DIST, 3, matchDistConData, 2);
-	halfLyapNodeset.addConstraint(matchDistCon);
+	halfLyapSet->addConstraint(matchDistCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
-	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
-
-	BOOST_CHECK_GE(dist, matchDistConData[1]);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MIN_DIST_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::MIN_DIST
-	double matchDistConData[] = {1, 0.4};
-	Constraint matchDistCon(Constraint_tp::MIN_DIST, 3, matchDistConData, 2);
-	halfLyapNodeset.addConstraint(matchDistCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
-	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
+	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(), 2) + pow(finalState[1], 2));
 
 	BOOST_CHECK_GE(dist, matchDistConData[1]);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDist, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MIN_DIST
 	double matchDistConData[] = {1, 0.15};
 	Constraint matchDistCon(Constraint_tp::MAX_DIST, 3, matchDistConData, 2);
-	halfLyapNodeset.addConstraint(matchDistCon);
+	halfLyapSet->addConstraint(matchDistCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
-	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
-
-	BOOST_CHECK_LE(dist, matchDistConData[1]);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DIST_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::MIN_DIST
-	double matchDistConData[] = {1, 0.15};
-	Constraint matchDistCon(Constraint_tp::MAX_DIST, 3, matchDistConData, 2);
-	halfLyapNodeset.addConstraint(matchDistCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(matchDistCon.getID());
-	double dist = sqrt(pow(finalState[0] - 1 + sys.getMu(), 2) + pow(finalState[1], 2));
+	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(), 2) + pow(finalState[1], 2));
 
 	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDeltaV, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::MAX_DELTA_V
 	std::vector<int> dvNodes {3};
-	std::vector<double> state = halfLyapNodeset.getState(dvNodes[0]);
+	std::vector<double> state = halfLyapSet->getState(dvNodes[0]);
 	state[3] += 0.01;
 	state[4] += 0.1;
-	halfLyapNodeset.setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
-	halfLyapNodeset.allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
+	halfLyapSet->setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
+	halfLyapSet->allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
 	double maxDVConData = 0.01;
 	Constraint dVCon(Constraint_tp::MAX_DELTA_V, 0, &maxDVConData, 1);
-	halfLyapNodeset.addConstraint(dVCon);
+	halfLyapSet->addConstraint(dVCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	MultShootData itData(&correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	MultShootData itData(correctedSet);
+	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
 	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_MAX_DELTA_V_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_DeltaV, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::MAX_DELTA_V
-	std::vector<int> dvNodes {3};
-	std::vector<double> state = halfLyapNodeset.getState(dvNodes[0]);
-	state[3] += 0.01;
-	state[4] += 0.1;
-	halfLyapNodeset.setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
-	halfLyapNodeset.allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
-	double maxDVConData = 0.01;
-	Constraint dVCon(Constraint_tp::MAX_DELTA_V, 0, &maxDVConData, 1);
-	halfLyapNodeset.addConstraint(dVCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	MultShootData itData(&correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK_LE(totalDV, maxDVConData);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	// Constraint_tp::DELTA_V
 	std::vector<int> dvNodes {3};
-	std::vector<double> state = halfLyapNodeset.getState(dvNodes[0]);
+	std::vector<double> state = halfLyapSet->getState(dvNodes[0]);
 	state[3] += 0.01;
 	state[4] += 0.1;
-	halfLyapNodeset.setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
-	halfLyapNodeset.allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
+	halfLyapSet->setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
+	halfLyapSet->allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
 	double maxDVConData = 0.01;
 	Constraint dVCon(Constraint_tp::DELTA_V, 0, &maxDVConData, 1);
-	halfLyapNodeset.addConstraint(dVCon);
+	halfLyapSet->addConstraint(dVCon);
 	
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	MultShootData itData(&correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	MultShootData itData(correctedSet);
+	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
 	double totalDV = MultShootEngine::getTotalDV(&itData);
 	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-10);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_DELTA_V_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Jacobi, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// Constraint_tp::DELTA_V
-	std::vector<int> dvNodes {3};
-	std::vector<double> state = halfLyapNodeset.getState(dvNodes[0]);
-	state[3] += 0.01;
-	state[4] += 0.1;
-	halfLyapNodeset.setState(dvNodes[0], state);	// Perturb the velocity of this state to create a discontinuity
-	halfLyapNodeset.allowDV_at(dvNodes);	// Allow the perturbed node to have a delta-v
-	double maxDVConData = 0.01;
-	Constraint dVCon(Constraint_tp::DELTA_V, 0, &maxDVConData, 1);
-	halfLyapNodeset.addConstraint(dVCon);
-	
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	MultShootData itData(&correctedSet);
-	BOOST_CHECK_NO_THROW(itData = corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	double totalDV = MultShootEngine::getTotalDV(&itData);
-	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-10);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double jacobiData = 3.1149;
 	Constraint jacobiCon(Constraint_tp::JC, 0, &jacobiData, 1);
-	halfLyapNodeset.clearAllConstraints();
-	halfLyapNodeset.addConstraint(jacobiCon);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(jacobiCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK_SMALL(correctedSet.getJacobiByIx(0) - jacobiData, 1e-12);
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+	BOOST_CHECK_SMALL(correctedSet->getJacobiByIx(0) - jacobiData, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_JACOBI_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_TOF, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	double jacobiData = 3.1149;
-	Constraint jacobiCon(Constraint_tp::JC, 0, &jacobiData, 1);
-	halfLyapNodeset.clearAllConstraints();
-	halfLyapNodeset.addConstraint(jacobiCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK_SMALL(correctedSet.getJacobiByIx(0) - jacobiData, 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double tofData = 2.5;
 	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
-	halfLyapNodeset.clearAllConstraints();
-	halfLyapNodeset.addConstraint(tofCon);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(tofCon);
 	
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK_SMALL(correctedSet.getTotalTOF() - tofData, 1e-12);
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+	BOOST_CHECK_SMALL(correctedSet->getTotalTOF() - tofData, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_TOF_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Apse, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
 
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	double tofData = 2.5;
-	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
-	halfLyapNodeset.clearAllConstraints();
-	halfLyapNodeset.addConstraint(tofCon);
-	
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-	BOOST_CHECK_SMALL(correctedSet.getTotalTOF() - tofData, 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(false);
+	corrector->setTOFType(tofTp);
 
 	double apseData = 1;
 	Constraint apseCon(Constraint_tp::APSE, 4, &apseData, 1);
-	halfLyapNodeset.clearAllConstraints();
-	halfLyapNodeset.addConstraint(apseCon);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(apseCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet.getState(apseCon.getID());
-	const DynamicsModel *model = sys.getDynamicsModel();
-	std::vector<double> primPos = model->getPrimPos(0, &sys);
+	std::vector<double> finalState = correctedSet->getState(apseCon.getID());
+	const DynamicsModel *model = sys->getDynamicsModel();
+	std::vector<double> primPos = model->getPrimPos(0, sys);
 	double dx = finalState[0] - primPos[apseData*3 + 0];
 	double dy = finalState[1] - primPos[apseData*3 + 1];
 	double dz = finalState[2] - primPos[apseData*3 + 2];
@@ -683,37 +396,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE){
 	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_EM_APSE_EQUAL_ARC){
-	SysData_cr3bp sys("earth", "moon");
-	Arcset_cr3bp halfLyapNodeset(&sys), correctedSet(&sys);
-	SimEngine sim;
-	sim.setRevTime(em_lyap_T < 0);
-	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, &halfLyapNodeset);
-
-	MultShootEngine corrector;
-	corrector.setEqualArcTime(true);
-
-	// APSE
-	double apseData = 1;
-	Constraint apseCon(Constraint_tp::APSE, 4, &apseData, 1);
-	halfLyapNodeset.clearAllConstraints();
-	halfLyapNodeset.addConstraint(apseCon);
-
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
-	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
-
-	std::vector<double> finalState = correctedSet.getState(apseCon.getID());
-	const DynamicsModel *model = sys.getDynamicsModel();
-	std::vector<double> primPos = model->getPrimPos(0, &sys);
-	double dx = finalState[0] - primPos[apseData*3 + 0];
-	double dy = finalState[1] - primPos[apseData*3 + 1];
-	double dz = finalState[2] - primPos[apseData*3 + 2];
-	double rdot = dx*finalState[3] + dy*finalState[4] + dz*finalState[5];
-
-	BOOST_CHECK_SMALL(rdot, 1e-12);
-}//====================================================
-
-BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
+BOOST_DATA_TEST_CASE(CR3BP_EM_SegCont_PV, data::make(tofTypes), tofTp){
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;
+	
 	SysData_cr3bp sys("earth", "moon");
 	Arcset_cr3bp forwardArc(&sys), reverseArc(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -726,8 +412,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
 	// doubleSrcLyap.printInChrono();
 
 	MultShootEngine corrector;
-	// corrector.setVerbosity(Verbosity_tp::DEBUG);
-	corrector.setEqualArcTime(false);
+	// corrector->setVerbosity(Verbosity_tp::DEBUG);
+	corrector.setTOFType(tofTp);
 	
 
 	double contData[] = {4, 4, NAN, 4, 4, NAN};
@@ -752,7 +438,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_SEG_CONT_PV){
 	BOOST_CHECK_SMALL(dist, 1e-12);
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_DOUBLE_SOURCE){
+BOOST_DATA_TEST_CASE(CR3BP_EM_DoubleSource, data::make(tofTypes), tofTp){
+	if(tofTp == MSTOF_tp::VAR_EQUALARC)
+		return;
+
 	SysData_cr3bp sys("earth", "moon");
 
 	// EM L2 Butterfly Orbit

@@ -45,7 +45,7 @@ int main(void){
 	engine.runSim(quasihaloIC, quasihaloPeriod, &quasihalo);
 	
 	// Compute manifolds from the halo for a short amount of time to get ICs
-	std::vector<Arcset_cr3bp> manICs = getManifolds(Manifold_tp::MAN_U_P, &quasihalo, numManifolds, 1e-4);
+	std::vector<Arcset_cr3bp> manICs = getManifolds(Manifold_tp::MAN_U_RIGHT, &quasihalo, numManifolds, 1e-4);
 
 	// Create event that trigers when trajectory passes within lunar radius
 	double evtData[] = {1, (1 - emSys.getMu())*emSys.getCharL()/seSys.getCharL()};

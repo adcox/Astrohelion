@@ -50,11 +50,11 @@ class SysData_cr3bp;
 enum class Manifold_tp : int{
 	MAN_ALL = 0,		//!< Compute all types of manifolds, arriving/departing from all directions
 	MAN_U = 1,			//!< Unstable, compute both arcs arriving from +x and -x directions
-	MAN_U_P = 2,		//!< Unstable, departing towards +x direction
-	MAN_U_M = 3,		//!< Unstable, departing towards -x direction
+	MAN_U_RIGHT = 2,	//!< Unstable, departing towards +x direction
+	MAN_U_LEFT = 3,		//!< Unstable, departing towards -x direction
 	MAN_S = -1,			//!< Stable, compute both arcs arriving from +x and -x directions
-	MAN_S_P = -2,		//!< Stable, arriving from +x direction
-	MAN_S_M = -3		//!< Stable, arriving from -x direction
+	MAN_S_RIGHT = -2,	//!< Stable, arriving from +x direction
+	MAN_S_LEFT = -3		//!< Stable, arriving from -x direction
 };
 
 enum class Manifold_StepOff_tp{

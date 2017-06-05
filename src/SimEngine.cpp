@@ -1314,7 +1314,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
     MultShootEngine corrector;
-    corrector.setVarTime(true);
+    corrector.setTOFType(MSTOF_tp::VAR_FREE);
     corrector.setTol(pArcset->getTol());
     corrector.setVerbosity(verbosity);
     corrector.setFindEvent(true);   // apply special settings to minimize computations

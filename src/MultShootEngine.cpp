@@ -80,14 +80,15 @@ MultShootEngine::~MultShootEngine(){}
 void MultShootEngine::copyMe(const MultShootEngine &e){
 	Engine::copyBaseEngine(e);
 	verbosity = e.verbosity;//
-	bVarTime = e.bVarTime;//
-	bEqualArcTime = e.bEqualArcTime;//
+	// bVarTime = e.bVarTime;//
+	// bEqualArcTime = e.bEqualArcTime;//
 	maxIts = e.maxIts;//
 	tol = e.tol;//
 	bFindEvent = e.bFindEvent;//
 	bIgnoreCrash = e.bIgnoreCrash;//
 	bIgnoreDiverge = e.bIgnoreDiverge;
 	bFullFinalProp = e.bFullFinalProp;
+	tofTp = e.tofTp;
 }//====================================================
 
 //-----------------------------------------------------
@@ -108,22 +109,6 @@ MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
 //-----------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------
-
-/**
- *  \brief Retrieve whether or not we are using variable time
- *	\return whether or not the corrector uses variable time (as opposed
- * 	to fixed time)
- */
-bool MultShootEngine::usesVarTime() const { return bVarTime; }
-
-/**
- *	\brief Retrieve whether or not we force all segments to have the same length
- *	(in time).
- *
- *	This setting only applies if variable time is turned on.
- *	\return whether or not each arc will be forced to have the same length in time
- */
-bool MultShootEngine::usesEqualArcTime() const { return bEqualArcTime; }
 
 /**
  *  \brief Retrieve whether or not the engine is locating an event crossing
@@ -149,6 +134,14 @@ bool MultShootEngine::doesFullFinalProp() const { return bFullFinalProp; }
 int MultShootEngine::getMaxIts() const { return maxIts; }
 
 /**
+ *  \brief Retrieve the enumerated type describing how time-of-flight values
+ *  are encoded (if at all) in the free variable vector
+ *  
+ *  \return the time-of-flight type
+ */
+MSTOF_tp MultShootEngine::getTOFType() const{ return tofTp; }
+
+/**
  *  \brief Retrieve the minimum error tolerance
  *	\return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
@@ -165,30 +158,6 @@ double MultShootEngine::getTol() const { return tol; }
  *  propagation for the final propagation
  */
 void MultShootEngine::setFullFinalProp(bool b){ bFullFinalProp = b; }
-
-/**
- *	\brief Set bVarTime
- *	\param b whether or not the corrector should use variable time
- */
-void MultShootEngine::setVarTime(bool b){
-	bVarTime = b;
-	// Turn off equal-time arcs too if bVarTime is false
-	if(!bVarTime)
-		bEqualArcTime = false;
-}//==================================================
-
-/**
- *	\brief Tell the corrector how to apply variable time
- *	\param b whether or not each arc will be forced to have the same duration
- */
-void MultShootEngine::setEqualArcTime(bool b){
-	if(!bVarTime && b){
-		astrohelion::printErr("MultShootEngine::setequalArcTime: Cannot use equal-time arcs if variable time is disabled; please turn bVarTime ON first\n");
-		bEqualArcTime = false;
-	}else{
-		bEqualArcTime = b;
-	}
-}//==================================================
 
 /**
  * \brief Tell the corrector to ignore crash events (or to not to).
@@ -225,6 +194,15 @@ void MultShootEngine::setAttenuation(double scale, double limit){
 	attenuation = scale;
 	attenuationLimitTol = limit;
 }//====================================================
+
+/**
+ *  \brief Set the way times-of-flight are encoded (if at all) in the
+ *  free variable vector
+ * 
+ *  \param tp Describes how times-of-flight are encoded in the free
+ *  variable vector
+ */
+void MultShootEngine::setTOFType(MSTOF_tp tp){ tofTp = tp; }
 
 /**
  *	\brief Set the error tolerance
@@ -282,8 +260,9 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 	// Create structure to store iteration data for easy sharing
 	MultShootData it(set);
 	it.nodesOut = pNodesOut;
-	it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
-	it.bEqualArcTime = bEqualArcTime;
+	it.tofTp = tofTp;
+	// it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
+	// it.bEqualArcTime = bEqualArcTime;
 	
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
@@ -394,7 +373,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				addToRows = 1;
 				break;
 			case Constraint_tp::TOF:
-				if(!bVarTime)
+				if(to_underlying(tofTp) <= 0)
 					astrohelion::printWarn("MultShootEngine::multShoot: Attempting to constraint TOF without variable time... won't work!\n");
 				
 				if(!foundTOFCon)
@@ -403,7 +382,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 					throw Exception("MultShootEngine::multShoot: You can only apply ONE TOF constraint");
 				break;
 			case Constraint_tp::EPOCH:
-				if(!bVarTime)
+				if(to_underlying(tofTp) <= 0)
 					printWarn("MultShootEngine::multShoot: Attempting to constrain Epoch without variable time... won't work!\n");
 
 				addToRows = 1;
@@ -541,6 +520,10 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	if(it.nodesOut){
 		try{
 			// Save propagated data and free variable vector values to the output arcset
+			if(bFullFinalProp){
+				simEngine.setVarStepSize(true);
+				propSegsFromFreeVars(&it, &simEngine);
+			}
 			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it);
 		}catch(Exception &e){
 			astrohelion::printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
@@ -818,8 +801,9 @@ void MultShootEngine::reset(){
 	if(!bIsClean)
 		cleanEngine();
 
-	bVarTime = true;
-	bEqualArcTime = false;
+	// bVarTime = true;
+	// bEqualArcTime = false;
+	tofTp = MSTOF_tp::VAR_FREE;
 	maxIts = 20;
 	tol = 1e-12;
 	bFindEvent = false;
@@ -861,6 +845,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     corrector.setMaxIts(1);
     corrector.setVerbosity(verbosity < Verbosity_tp::DEBUG ? Verbosity_tp::NO_MSG : Verbosity_tp::ALL_MSG);
     corrector.setIgnoreDiverge(true);
+    corrector.setFullFinalProp(false);
 
     // Run multiple shooter to get X, FX, and DF
     MultShootData it = corrector.multShoot(pNodeset, nullptr);
@@ -955,7 +940,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
 
     double rowMaxMax = rowMax.maxCoeff();
     double colMaxMax = colMax.maxCoeff();
-    int errScalar = 10000;
+    int errScalar = 100000;
 
     bool goodDF = true;
     for(unsigned int r = 0; r < DF.rows(); r++){

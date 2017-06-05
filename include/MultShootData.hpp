@@ -28,17 +28,36 @@
 
 #pragma once
 
+#include <iostream>
+#include <map>
+#include <vector>
+
 #include "Constraint.hpp"
 #include "Exceptions.hpp"
 #include "Arcset.hpp"
 #include "SysData.hpp"
 #include "Arcset.hpp"
 
-#include <map>
-#include <vector>
+
 
 namespace astrohelion{
-// Forward Declarations
+
+/**
+ *  \brief Describe how time-of-flight data is stored in the free variable vector
+ */
+enum class MSTOF_tp : int{
+	FIXED = 0,			//!< Times-of-flight are fixed and not part of the free variable vector
+	VAR_FREE = 1,		//!< Times-of-flight are variable and part of the free variable vector
+	VAR_EQUALARC = 2,	/*!< Times-of-flight are all equal; one TOF is stored in the free variable vector.
+						 *	All times-of-flight must be of the same sign for this to work
+						 */
+	VAR_POS = 3			/*!< Times-of-flight are all positive; sqrt(TOF) is stored for each arc
+						 *	All times-of-flight must be of the same sign for this to work
+						 */
+};
+
+const char* MSTOF_tp_cStr(const MSTOF_tp&);
+std::ostream& operator<<(std::ostream&, const MSTOF_tp&);
 
 /**
  *  \brief The type of free variable being represented in the free-variable vector
@@ -165,8 +184,9 @@ class MultShootData{
 		int totalCons = 0;			//!< Total # constraints -> # rows of DF
 		int totalFree = 0;			//!< Total # free var. -> # cols of DF
 
-		bool bVarTime = true;		//!< Whether or not the corrector is using variable time
-		bool bEqualArcTime = false;	//!< Whether or not each arc must have an equal duration
+		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
+		// bool bVarTime = true;		//!< Whether or not the corrector is using variable time
+		// bool bEqualArcTime = false;	//!< Whether or not each arc must have an equal duration
 	protected:
 		void copyMe(const MultShootData&);
 };

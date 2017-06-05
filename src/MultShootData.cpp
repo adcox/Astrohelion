@@ -34,6 +34,35 @@
 
 
 namespace astrohelion{
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------	
+//-----------------------------------------------------------------------------
+//  ** MSTOF_tp Functions
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+const char* MSTOF_tp_cStr(const MSTOF_tp &tp){
+	switch(tp){
+		case MSTOF_tp::FIXED: 
+			return "FIXED";
+		case MSTOF_tp::VAR_FREE:
+			return "VAR_FREE";
+		case MSTOF_tp::VAR_EQUALARC:
+			return "VAR_EQUALARC";
+		case MSTOF_tp::VAR_POS:
+			return "VAR_POS";
+		default:
+			return "UNDEFINED";
+	}
+}//====================================================
+
+std::ostream& operator<<(std::ostream& os, const MSTOF_tp &tp){
+	os << MSTOF_tp_cStr(tp);
+	return os;
+}//====================================================
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------	
 //-----------------------------------------------------------------------------
@@ -346,7 +375,7 @@ void MultShootData::copyMe(const MultShootData &it){
 	count = it.count;
 	deltaVs = it.deltaVs;
 	DF_elements = it.DF_elements;
-	bEqualArcTime = it.bEqualArcTime;
+	// bEqualArcTime = it.bEqualArcTime;
 	freeVarMap = it.freeVarMap;
 	FX = it.FX;
 	numNodes = it.numNodes;
@@ -354,11 +383,12 @@ void MultShootData::copyMe(const MultShootData &it){
 	slackAssignCon = it.slackAssignCon;
 	totalCons = it.totalCons;
 	totalFree = it.totalFree;
-	bVarTime = it.bVarTime;
+	// bVarTime = it.bVarTime;
 	X = it.X;
 	X0 = it.X0;
 	propSegs = it.propSegs;
-
+	tofTp = it.tofTp;
+	
 	nodesIn = it.nodesIn;		// Copying address
 	nodesOut = it.nodesOut;		// Copying address			
 }//============================================

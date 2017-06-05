@@ -32,13 +32,14 @@
 #include "Core.hpp"
 #include "Engine.hpp"
 
+#include "Arcset.hpp"
 #include "Common.hpp"
 #include "Constraint.hpp"
 #include "EigenDefs.hpp"
+#include "MultShootData.hpp"
 #include "Node.hpp"
-#include "Arcset.hpp"
 #include "SysData.hpp"
-#include "Arcset.hpp"
+
 
 
 namespace astrohelion{
@@ -50,8 +51,6 @@ class Arcset_bc4bp;
 class Arcset_cr3bp;
 class SimEngine;
 class SysData_bc4bp;
-
-
 
 /**
  *	\ingroup engine
@@ -96,18 +95,17 @@ class MultShootEngine : public Core, public Engine{
 		double getTol() const;
 		bool doesFullFinalProp() const;
 		bool isFindingEvent() const;
-		bool usesEqualArcTime() const;
-		bool usesVarTime() const;
+		MSTOF_tp getTOFType() const;
 
 		void setAttenuation(double, double limit = 1e-8);
-		void setEqualArcTime(bool);
 		void setFullFinalProp(bool);
 		void setIgnoreCrash(bool);
 		void setIgnoreDiverge(bool);
 		void setFindEvent(bool);
 		void setMaxIts(int);
 		void setTol(double);
-		void setVarTime(bool);
+		void setTOFType(MSTOF_tp);
+		
 		//\}
 
 		/**
@@ -130,12 +128,14 @@ class MultShootEngine : public Core, public Engine{
 		
 	private:
 
+		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
+
 		/** Whether or not to use variable time in the corrections process */
-		bool bVarTime = true;
+		// bool bVarTime = true;
 
 		/** Whether or not to force all arcs to have the same length (in time);
 		 	only applies if variable time is enabled */
-		bool bEqualArcTime = false;
+		// bool bEqualArcTime = false;
 
 		/** Whether or not to conduct final round of propagations with an 
 			integrator that leverages variable step time. When set to TRUE,

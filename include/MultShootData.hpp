@@ -169,7 +169,6 @@ class MultShootData{
 		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X {};					//!< Free-Variable Vector
 		std::vector<double> FX {};					//!< Constraint Function Vector
-		// std::vector<double> DF {};					//!< Jacobian Matrix
 		std::vector<Tripletd> DF_elements {};		//!< Triplet vector that contains all nonzero elements of the DF matrix
 		std::vector<double> deltaVs {};				//!< nx3 vector of non-dim delta-Vs
 		std::vector<Constraint> allCons {};			//!< A list of all constraints
@@ -184,9 +183,7 @@ class MultShootData{
 		int totalCons = 0;			//!< Total # constraints -> # rows of DF
 		int totalFree = 0;			//!< Total # free var. -> # cols of DF
 
-		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
-		// bool bVarTime = true;		//!< Whether or not the corrector is using variable time
-		// bool bEqualArcTime = false;	//!< Whether or not each arc must have an equal duration
+		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;		//!< Describes how times-of-flight are stored in the free-variable vector
 	protected:
 		void copyMe(const MultShootData&);
 };

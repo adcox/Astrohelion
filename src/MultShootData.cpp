@@ -375,19 +375,17 @@ void MultShootData::copyMe(const MultShootData &it){
 	count = it.count;
 	deltaVs = it.deltaVs;
 	DF_elements = it.DF_elements;
-	// bEqualArcTime = it.bEqualArcTime;
 	freeVarMap = it.freeVarMap;
 	FX = it.FX;
 	numNodes = it.numNodes;
 	numSlack = it.numSlack;
+	propSegs = it.propSegs;
 	slackAssignCon = it.slackAssignCon;
+	tofTp = it.tofTp;
 	totalCons = it.totalCons;
 	totalFree = it.totalFree;
-	// bVarTime = it.bVarTime;
 	X = it.X;
 	X0 = it.X0;
-	propSegs = it.propSegs;
-	tofTp = it.tofTp;
 	
 	nodesIn = it.nodesIn;		// Copying address
 	nodesOut = it.nodesOut;		// Copying address			

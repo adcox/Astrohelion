@@ -587,7 +587,15 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
 		std::vector<double> lastState = pIt->propSegs[s].getStateByIx(-1);
 		int termID = pIt->nodesIn->getSegRefByIx_const(s).getTerminus();
 		if(termID != Linkable::INVALID_ID){
-			int termNodeIx = pIt->nodesIn->getNodeIx(termID);
+
+			// Get the state of the terminal node
+			MSVarMap_Obj stateVar = pIt->getVarMap_obj(MSVar_tp::STATE, termID);
+			std::vector<double> state;
+			if(stateVar.row0 == -1)
+				state = pIt->nodesIn->getState(termID);
+			else
+				state = std::vector<double>(pIt->X.begin() + stateVar.row0, pIt->X.begin() + stateVar.row0 + stateVar.nRows);
+
 			// velCon has false for a velocity state if there is a discontinuity between
 			// the terminus of the segment and the terminal node
 			std::vector<bool> velCon = pIt->nodesIn->getSegRefByIx_const(s).getVelCon();
@@ -595,7 +603,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
 				// Compute difference in velocity; if velCon[i-3] is true, then velocity
 				// should be continuous and any difference is numerical error, so set to
 				// zero by multiplying by not-true
-				pIt->deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - pIt->X[6*termNodeIx+i]);
+				pIt->deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - state[i]);
 			}
 		}
 	}

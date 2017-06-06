@@ -470,9 +470,14 @@ void checkAndReThrowSpiceErr(const char* customMsg){
 void toCSV(MatrixXRd m, const char* filename){
     std::ofstream outFile(filename, std::ios::out);
     
+    // After this attempt to open a file, we can safely use perror() only  
+    // in case f.is_open() returns False.
+    if (!outFile.is_open())
+        perror("Utilities::toCSV: Error while opening file");
+
     for (int r = 0; r < m.rows(); r++){
         for (int c = 0; c < m.cols(); c++){
-            char buffer[64] = { };
+            char buffer[64] = {0};
             if(c < m.cols()-1)
                 sprintf(buffer, "%.14f, ", m(r,c));
             else
@@ -481,6 +486,11 @@ void toCSV(MatrixXRd m, const char* filename){
             outFile << buffer;
         }
     }
+
+    // Only in case of set badbit we are sure that errno has been set in
+    // the current context. Use perror() to print error details.
+    if (outFile.bad())
+        perror("Utilities::toCSV: Error while writing file ");
 
     outFile.close();
 }//=============================================

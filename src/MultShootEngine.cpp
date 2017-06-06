@@ -903,68 +903,109 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     MatrixXRd DF_abs = DF.cwiseAbs();       // Get coefficient-wise absolute value
     MatrixXRd DFest_abs = DFest.cwiseAbs();
 
-    diff = diff.cwiseAbs();                     // Get coefficient-wise aboslute value
+    diff = diff.cwiseAbs();                     	// Get coefficient-wise aboslute value
+    MatrixXRd relDiff(diff.rows(), diff.cols());	// Relative differences (divide by magnitude of each value)
 
-    // // Divide each element by the magnitude of the DF element to get a relative difference magnitude
-    // for(int r = 0; r < diff.rows(); r++){
-    //     for(int c = 0; c < diff.cols(); c++){
-    //         // If one of the elements is zero, let the difference just be the difference; no division
-    //         if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
-    //             diff(r,c) = diff(r,c)/DF_abs(r,c);
+    // Divide each element by the magnitude of the DF element to get a relative difference magnitude
+    for(int r = 0; r < diff.rows(); r++){
+        for(int c = 0; c < diff.cols(); c++){
+            // If one of the elements is zero, let the difference just be the difference; no division
+            if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
+                relDiff(r,c) = diff(r,c)/DF_abs(r,c);
 
-    //         // if(r == 50 && c == 98){
-    //         //     printf("DF(50, 98) = %.4e\n", DF(r,c));
-    //         //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
-    //         // }
-    //     }
-    // }
+            // if(r == 50 && c == 98){
+            //     printf("DF(50, 98) = %.4e\n", DF(r,c));
+            //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
+            // }
+        }
+    }
     
     if(writeToFile){
         astrohelion::toCSV(DFest, "FiniteDiff_DFest.csv");
         astrohelion::toCSV(diff, "FiniteDiff_Diff.csv"); 
+        astrohelion::toCSV(relDiff, "FiniteDiff_RelDiff.csv");
     }
-    // 
 
-    Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
-    Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
+    // Compute the largest coefficient in each row and column
+    std::vector<unsigned int> rowMaxIndex(diff.rows(), 0), colMaxIndex(diff.rows(), 0);
+    Eigen::VectorXd rowMax(diff.rows(), 1);
+    Eigen::VectorXd colMax(diff.cols(), 1);
+    for(unsigned int r = 0; r < diff.rows(); r++){
+    	rowMax(r) = diff.row(r).maxCoeff(&rowMaxIndex[r]);
+    }
+	for(unsigned int c = 0; c < diff.cols(); c++){
+		colMax(c) = diff.col(c).maxCoeff(&colMaxIndex[c]);
+	}
+
+    // Eigen::VectorXd rowMax = diff.rowwise().maxCoeff();
+    // Eigen::RowVectorXd colMax = diff.colwise().maxCoeff();
 
     // Make a map that links the row number (column in the Jacobian matrix)
     // of the free variable to the MSVarMap_Key that represents the MSVarMap_Obj 
     // that contains information about the free variable
     std::map<int, MSVarMap_Key> freeVarMap_rowNumToKey;
     for(auto& obj : it.freeVarMap){
-        for(int r = 0; r < obj.second.nRows; r++){
-            freeVarMap_rowNumToKey[obj.second.row0 + r] = obj.first;
-        }
+    	if(obj.second.row0 != -1){
+	        for(int r = 0; r < obj.second.nRows; r++){
+	        	freeVarMap_rowNumToKey[obj.second.row0 + r] = obj.first;
+	        }
+	    }
     }
 
-    double rowMaxMax = rowMax.maxCoeff();
-    double colMaxMax = colMax.maxCoeff();
+    unsigned int rowMaxMaxIx = 0, colMaxMaxIx = 0;
+    double rowMaxMax = rowMax.maxCoeff(&rowMaxMaxIx);
+    double colMaxMax = colMax.maxCoeff(&colMaxMaxIx);
     int errScalar = 100000;
 
     bool goodDF = true;
     for(unsigned int r = 0; r < DF.rows(); r++){
     	if(DF.row(r).norm() == 0){
-    		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED, "Singular Jacobian: row %u contains only zeros\n", r);
+    		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED,
+    			"Singular Jacobian: row %u contains only zeros\n", r);
+
     		goodDF = goodDF && false;
     	}
     }
 
     for(unsigned int c = 0; c < DF.cols(); c++){
     	if(DF.col(c).norm() == 0){
-    		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED, "Singular Jacobian: column %u contains only zeros\n", c);
+    		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDRED,
+    			"Singular Jacobian: column %u contains only zeros\n", c);
+
     		goodDF = goodDF && false;
     	}
     }
 
     if(rowMaxMax < errScalar*pertSize && colMaxMax < errScalar*colMaxMax){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            astrohelion::printColor(BOLDGREEN, "No significant errors!\n");
+        printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDGREEN,
+        	"No significant errors! (Abs diff is small)\n");
 
         goodDF = goodDF && true;
     }else{
-    	astrohelion::printColor(BOLDRED, "Significant errors!\n");
-    	goodDF = goodDF && false;
+
+    	if(rowMaxMax >= errScalar*pertSize){
+    		// row error is too big
+    		if(relDiff(rowMaxMaxIx, rowMaxIndex[rowMaxMaxIx]) < errScalar*pertSize){
+    			// The relative difference is small enough
+    			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDGREEN,
+    				"No significant errors! (Abs diff is large, rel diff is small)\n");
+    			goodDF = goodDF && true;
+    		}else{
+    			printColor(BOLDRED, "Significant errors (Abs diff and Rel diff)\n");
+    			goodDF = goodDF && false;
+    		}
+    	}else{
+    		// Column error is too big
+    		if(relDiff(colMaxIndex[colMaxMaxIx], colMaxMaxIx) < errScalar*pertSize){
+    			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDGREEN,
+    				"No significant errors! (Abs diff is large, rel diff is small)\n");
+    			goodDF = goodDF && true;
+    		}else{
+    			printColor(BOLDRED, "Significant errors (Abs diff and Rel diff)\n");
+    			goodDF = goodDF && false;
+    		}
+    	}
     }
 
     // Print out big table of information
@@ -983,7 +1024,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
                     it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
             }
             astrohelion::printColor(rowMax[r] > errScalar*pertSize || std::isnan(rowMax[r]) ? RED : GREEN,
-                "  row %03zu: %.6e\n", r, rowMax[r]);
+                "  row %03zu: %.6e (Abs) %.6e (Rel)\n", r, rowMax[r], relDiff(r, rowMaxIndex[r]));
         }
         for(long c = 0; c < colMax.size(); c++){
             std::string parent = "unknown";
@@ -997,7 +1038,8 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
             }catch(std::out_of_range &e){}
 
             astrohelion::printColor(colMax[c] > errScalar*pertSize || std::isnan(colMax[c]) ? RED : GREEN,
-                "Col %03zu: %s (%d)-owned %s: %.6e\n", c, parent.c_str(), key.id, type.c_str(), colMax[c]);
+                "Col %03zu: %s (%d)-owned %s: %.6e (Abs) %.6e (Rel)\n", c, parent.c_str(), key.id,
+                type.c_str(), colMax[c], relDiff(colMaxIndex[c], c));
         }
     }
 

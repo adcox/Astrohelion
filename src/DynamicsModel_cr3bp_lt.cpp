@@ -183,8 +183,6 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
     if(state.size() != coreDim + ctrlDim)
         throw Exception("DynamicsModel_cr3bp_lt::getStateDeriv: State size does not match the state size specified by the dynamical model and control law");
 
-    
-
     // Compute the acceleration
     std::vector<double> dsdt(coreDim + ctrlDim, 0);
     simpleEOMs(t, &(state[0]), &(dsdt[0]), params);

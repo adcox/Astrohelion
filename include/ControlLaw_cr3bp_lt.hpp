@@ -117,10 +117,11 @@ public:
 protected:
 
 	void init() override;
+	void getAccel_AlongVel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccel_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
-	void getAccel_Along_Vel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccel_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 
+	void getAccelPartials_AlongVel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccelPartials_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccelPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 

@@ -127,10 +127,10 @@ void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData
 			getAccel_ConstC_2D(t, s, pSysData_lt, law, len, 1);
 			break;
 		case Law_tp::PRO_VEL:
-			getAccel_Along_Vel(t, s, pSysData_lt, law, len, 1);
+			getAccel_AlongVel(t, s, pSysData_lt, law, len, 1);
 			break;
 		case Law_tp::ANTI_VEL:
-			getAccel_Along_Vel(t, s, pSysData_lt, law, len, -1);
+			getAccel_AlongVel(t, s, pSysData_lt, law, len, -1);
 			break;
 		case Law_tp::GENERAL_CONST_F:
 			getAccel_GeneralDir(t, s, pSysData_lt, law, len);
@@ -169,11 +169,11 @@ void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const
 			getAccelPartials_GeneralDir(t, s, pSysData_lt, partials, len);
 			break;
 		case Law_tp::PRO_VEL:
-			// getLaw_Pro_Vel(t, s, pSysData, law, len);
-			// break;
+			getAccelPartials_AlongVel(t, s, pSysData_lt, partials, len, 1);
+			break;
 		case Law_tp::ANTI_VEL:
-			// getLaw_Anti_Vel(t, s, pSysData, law, len);
-			// break;
+			getAccelPartials_AlongVel(t, s, pSysData_lt, partials, len, -1);
+			break;
 		
 		default:
 			ControlLaw::getLaw_OutputPartials(t, s, pSys, partials, len);
@@ -241,7 +241,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
  *  \param len number of elements in the <tt>law</tt> array
  *  \param sign specifies which of the control laws to evaluate: +1 for with-velocity, -1 for anti-velocity
  */
-void ControlLaw_cr3bp_lt::getAccel_Along_Vel(double t, const double *s, const SysData_cr3bp_lt *pSys,
+void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len, int sign) const{
 
 	if(std::abs(sign) != 1)
@@ -326,6 +326,54 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 	partials[7*1 + 3] = -sign*(f/(s[6]*v) - f*s[3]*s[3]/(s[6]*pow(v,3)));			// day/dvx
 	partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*pow(v,3));							// day/dvy
 	partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);									// day/dm
+
+	(void) t;
+}//====================================================
+
+/**
+ *  \brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  states at the given time, state, in the specified system
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials empty, initialized array to store the control law derivatives in
+ *  \param len number of elements in the <tt>law</tt> array
+ *  \param sign specifies which of the Pro_Vel and Anti_Vel control laws to evaluate: +1 for PRO, -1 for ANTI
+ */
+void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, const SysData_cr3bp_lt *pSys,
+	double *partials, unsigned int len, int sign) const{
+
+	if(std::abs(sign) != 1)
+		sign = sign/std::abs(sign);	// +1 for PRO, -1 for ANTI
+
+	if(len != numOutputs*7)
+		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_AlongVel: Expects len = 21");
+
+	// state s : [x, y, z, vx, vy, vz, m, ... stm_elements ...]
+	// partials: row 1 = partials of a_x w.r.t. states, row 2 = partials of a_y w.r.t. states,
+	// row 3 = partials of a_z w.r.t. states
+
+	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
+	double charT = pSys->getCharT();
+	double charL = pSys->getCharL();
+	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+
+	partials[7*0 + 3] =  sign*(f/s[6]) * (1.0/v - s[3]*s[3]/pow(v,3));		// dax/dvx
+	partials[7*0 + 4] = -sign*(f/s[6]) * s[3]*s[4]/pow(v,3);				// dax/dvy
+	partials[7*0 + 5] = -sign*(f/s[6]) * s[3]*s[5]/pow(v,3);				// dax/dvz
+	partials[7*0 + 6] = -sign*(f/s[6]) * s[3]/(v*s[6]);						// dax/dm
+
+	partials[7*1 + 3] = partials[7*0 + 4];									// day/dvz
+	partials[7*1 + 4] =  sign*(f/s[6]) * (1.0/v - s[4]*s[4]/pow(v,3));		// day/dvy
+	partials[7*1 + 5] = -sign*(f/s[6]) * s[4]*s[5]/pow(v,3);				// day/dvz
+	partials[7*1 + 6] = -sign*(f/s[6]) * s[4]/(v*s[6]);						// day/dm
+
+	partials[7*2 + 3] = partials[7*1 + 5];									// daz/dvx
+	partials[7*2 + 4] = partials[7*2 + 5];									// daz/dvy
+	partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/pow(v,3));		// daz/dvz
+	partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);						// daz/dm
 
 	(void) t;
 }//====================================================

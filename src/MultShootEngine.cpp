@@ -818,6 +818,8 @@ void MultShootEngine::reset(){
 	bIgnoreCrash = false;
 	bIgnoreDiverge = false;
 	bFullFinalProp = true;
+	attenuation = 1;
+	attenuationLimitTol = 1e-8;
 }//====================================================
 
 /**

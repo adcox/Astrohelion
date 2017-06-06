@@ -912,7 +912,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     MatrixXRd DFest_abs = DFest.cwiseAbs();
 
     diff = diff.cwiseAbs();                     	// Get coefficient-wise aboslute value
-    MatrixXRd relDiff(diff.rows(), diff.cols());	// Relative differences (divide by magnitude of each value)
+    MatrixXRd relDiff = MatrixXRd::Zero(diff.rows(), diff.cols());	// Relative differences (divide by magnitude of each value)
 
     // Divide each element by the magnitude of the DF element to get a relative difference magnitude
     for(int r = 0; r < diff.rows(); r++){
@@ -920,11 +920,6 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
             // If one of the elements is zero, let the difference just be the difference; no division
             if(DF_abs(r,c) > 1e-13 && DFest_abs(r,c) > 1e-13)   // consider 1e-13 to be zero
                 relDiff(r,c) = diff(r,c)/DF_abs(r,c);
-
-            // if(r == 50 && c == 98){
-            //     printf("DF(50, 98) = %.4e\n", DF(r,c));
-            //     printf("DFest(50, 98) = %.4e\n", DFest(r,c));
-            // }
         }
     }
     

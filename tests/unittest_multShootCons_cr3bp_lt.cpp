@@ -76,7 +76,7 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes
 	MultShootEngine corrector;
 	corrector.setTOFType(tofType);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::SOME_MSG, false));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, false));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 }//====================================================
 
@@ -96,7 +96,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tof
 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
 	halfLyapArcset.addConstraint(stateCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::SOME_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
@@ -120,7 +120,7 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes)
 	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 7);
 	halfLyapArcset.addConstraint(stateCon);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::SOME_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 
 	std::vector<double> fullState = correctedSet.getSegByIx(stateCon.getID()).getStateByRow(-1);
@@ -138,6 +138,7 @@ BOOST_DATA_TEST_CASE(test_rmState, data::make(lawTypes) * data::make(tofTypes), 
 
 	MultShootEngine corrector;
 	corrector.setTOFType(tofType);
+	corrector.setTol(1e-11);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN, NAN};
@@ -147,7 +148,7 @@ BOOST_DATA_TEST_CASE(test_rmState, data::make(lawTypes) * data::make(tofTypes), 
 	Constraint rmState(Constraint_tp::RM_STATE, 0, nullptr, 0);
 	halfLyapNodeset.addConstraint(rmState);
 
-	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::SOME_MSG));
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 
 	std::vector<double> finalState = correctedSet.getState(stateCon.getID());
@@ -185,6 +186,7 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setTOFType(tofType);
+	corrector.setTol(1e-11);
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
@@ -220,7 +222,8 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	MultShootEngine corrector;
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setTOFType(tofType);
-
+	corrector.setTol(1e-11);
+	
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapNodeset, &correctedSet));
 }//====================================================

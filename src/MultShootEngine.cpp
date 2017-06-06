@@ -935,7 +935,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     }
 
     // Compute the largest coefficient in each row and column
-    std::vector<unsigned int> rowMaxIndex(diff.rows(), 0), colMaxIndex(diff.rows(), 0);
+    std::vector<unsigned int> rowMaxIndex(diff.rows(), 0), colMaxIndex(diff.cols(), 0);
     Eigen::VectorXd rowMax(diff.rows(), 1);
     Eigen::VectorXd colMax(diff.cols(), 1);
     for(unsigned int r = 0; r < diff.rows(); r++){

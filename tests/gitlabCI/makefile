@@ -18,7 +18,7 @@ else
 		LDFLAGS += -L/opt/local/lib
 	endif
 
-	CXX := g++-5
+	CXX := g++
 endif
 
 CXX += -std=c++11 -fopenmp

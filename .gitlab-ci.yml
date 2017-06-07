@@ -1,0 +1,7 @@
+before_script:
+  - pushd tests/gitlabCI
+  - ./installDeps.sh
+
+test:
+  - pushd tests/gitlabCI
+  - make

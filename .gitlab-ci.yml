@@ -1,7 +1,10 @@
+image: gcc
+
 before_script:
   - pushd tests/gitlabCI
   - pwd
-  - ./installDeps.sh
+  - ls -la
+  - sh ./installDeps.sh
 
 unit-test:
   script:

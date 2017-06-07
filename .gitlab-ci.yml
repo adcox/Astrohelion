@@ -2,6 +2,7 @@ before_script:
   - pushd tests/gitlabCI
   - ./installDeps.sh
 
-test:
-  - pushd tests/gitlabCI
-  - make
+unit-tests:
+  script:
+    - pushd tests/gitlabCI
+    - make

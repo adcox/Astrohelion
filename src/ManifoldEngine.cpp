@@ -59,8 +59,24 @@ ManifoldEngine::ManifoldEngine(const ManifoldEngine &m){
 //      Set and Get Functions
 //-----------------------------------------------------
 
+/**
+ *  \brief Retreive the step-off distance, in kilometers
+ *  \details The details of the step-off type are dictated by
+ *  the Manifold_StepOff_tp passed into the manifold generation
+ *  algorithm
+ * 
+ *  \return The step-off distance, kilometers
+ */
 double ManifoldEngine::getStepOffDist() const{ return stepOffDist; }
 
+/**
+ *  \brief Set the step-off distance, in kilometers
+ *  \details The details of the step-off type are dictated by
+ *  the Manifold_StepOff_tp passed into the manifold generation
+ *  algorithm
+ * 
+ *  \param dist The step-off distance, kilometers
+ */
 void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
 
 //-----------------------------------------------------

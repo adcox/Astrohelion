@@ -113,7 +113,7 @@ public:
 private:
 
 	double tol_eigVal = 1e-5;	//!< Tolerance with which eigenvalues are evaluated to determine if they are on the unit circle
-	double stepOffDist = 200;	//!< Dimensional distance to step along eigenvector, km
+	double stepOffDist = 20;	//!< Dimensional distance to step along eigenvector, km
 
 	void copyMe(const ManifoldEngine&);
 	void cleanEngine(){}

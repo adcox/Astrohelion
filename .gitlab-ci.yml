@@ -1,11 +1,9 @@
 image: gcc
 
-before_script:
-  - pushd tests/gitlabCI
-  - source installDeps.sh
-
 unit-tests:
   script:
+    - pushd tests/gitlabCI
+    - source installDeps.sh
     - make directories
     - make unit
     - make run

@@ -1,14 +1,20 @@
 image: gcc
 
+stages:
+  - build
+  - run
+
 before_script:
   - pushd tests/gitlabCI
   - sh installDeps.sh
 
-build:
+unit-tests:
+  stage: build
   script:
     - make directories
     - make unit
 
-test:
+unit-tests:
+  stage: run
   script:
     - make run

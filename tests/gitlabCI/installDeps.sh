@@ -20,7 +20,7 @@ mkdir -p deps
 cd deps
 
 ## Boost
-wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.gz
+wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.gz >> $LOG
 tar -xvzf boost_1_62_0.tar.gz >> $LOG
 cd boost_1_62_0
 echo "Installing BOOST"
@@ -35,9 +35,9 @@ rm boost_1_62_0.tar.gz
 
 ## CSpice
 if [[ "$OS" == "darwin" ]]; then
-	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/MacIntel_OSX_AppleC_64bit/packages/cspice.tar.Z
+	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/MacIntel_OSX_AppleC_64bit/packages/cspice.tar.Z >> $LOG
 else 
-	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
+	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z >> $LOG
 fi
 tar -xvzf cspice.tar.Z >> $LOG
 cd cspice
@@ -52,24 +52,24 @@ cd ..
 rm cspice.tar.Z
 
 ## MatIO
-wget https://sourceforge.net/projects/matio/files/matio-1.5.10.tar.gz
+wget https://sourceforge.net/projects/matio/files/matio-1.5.10.tar.gz >> $LOG
 tar -xvzf matio-* >> $LOG
 cd matio-*
 echo "Installing MATIO"
 ./configure --prefix=$INSTALL_DIR >> $LOG
 make >> $LOG
-make install >> $LOG
+make install
 cd ..
 rm matio-1.5.10.tar.gz
 
 ## GSL
-wget http://mirror.nexcess.net/gnu/gsl/gsl-2.2.1.tar.gz
+wget http://mirror.nexcess.net/gnu/gsl/gsl-2.2.1.tar.gz >> $LOG
 tar -xvzf gsl-2.2.1.tar.gz >> $LOG
 cd gsl-2.2.1
 echo "Installing GSL"
 ./configure --prefix=$INSTALL_DIR >> $LOG
 make >> $LOG
-make install >> $LOG
+make install
 cd ..
 rm gsl-2.2.1.tar.gz
 
@@ -78,15 +78,15 @@ if [[ "$OS" == "linux" ]]; then
 fi
 
 ## Download and move SPICE data
-wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp
-wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
+wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp >> $LOG
+wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls >> $LOG
 mkdir -p /builds/adcox/.config/astrohelion
 mv de430.bsp data/data_SPICE/
 mv naif0012.tls data/data_SPICE/
 
 ## Eigen - Header only
-wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz
-tar -xvzf 3.3.3.tar.gz
+wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz >> $LOG
+tar -xvzf 3.3.3.tar.gz >> $LOG
 mv eigen* eigen
 mv eigen/Eigen $INSTALL_DIR/include/Eigen
 mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
@@ -99,3 +99,8 @@ LD_RUN_PATH=$LD_RUN_PATH:$INSTALL_DIR
 ## Configuration Files
 cp ../settings.xml /builds/adcox/.config/astrohelion/user_settings.xml
 cp ../body_data.xml /builds/adcox/.config/astrohelion/body_data.xml
+
+## Final print out for debugging purposes
+ls $INSTALL_DIR
+ls $INSTALL_DIR/include
+ls $INSTALL_DIR/lib

@@ -2,7 +2,7 @@ image: gcc
 
 before_script:
   - pushd tests/gitlabCI
-  - sh installDeps.sh
+  - source installDeps.sh
 
 unit-tests:
   script:

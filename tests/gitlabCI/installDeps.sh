@@ -21,7 +21,7 @@ cd deps
 
 ## Boost
 wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.gz >> $LOG
-tar -xvzf boost_1_62_0.tar.gz >> $LOG
+tar -xzf boost_1_62_0.tar.gz >> $LOG
 cd boost_1_62_0
 echo "Installing BOOST"
 ./bootstrap.sh --prefix=$INSTALL_DIR >> $LOG
@@ -39,7 +39,7 @@ if [[ "$OS" == "darwin" ]]; then
 else 
 	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z >> $LOG
 fi
-tar -xvzf cspice.tar.Z >> $LOG
+tar -xzf cspice.tar.Z >> $LOG
 cd cspice
 echo "Installing CSPICE"
 mkdir -p $INSTALL_DIR/include/cspice
@@ -53,7 +53,7 @@ rm cspice.tar.Z
 
 ## MatIO
 wget https://sourceforge.net/projects/matio/files/matio-1.5.10.tar.gz >> $LOG
-tar -xvzf matio-* >> $LOG
+tar -xzf matio-* >> $LOG
 cd matio-*
 echo "Installing MATIO"
 ./configure --prefix=$INSTALL_DIR >> $LOG
@@ -64,7 +64,7 @@ rm matio-1.5.10.tar.gz
 
 ## GSL
 wget http://mirror.nexcess.net/gnu/gsl/gsl-2.2.1.tar.gz >> $LOG
-tar -xvzf gsl-2.2.1.tar.gz >> $LOG
+tar -xzf gsl-2.2.1.tar.gz >> $LOG
 cd gsl-2.2.1
 echo "Installing GSL"
 ./configure --prefix=$INSTALL_DIR >> $LOG
@@ -86,7 +86,7 @@ mv naif0012.tls data/data_SPICE/
 
 ## Eigen - Header only
 wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz >> $LOG
-tar -xvzf 3.3.3.tar.gz >> $LOG
+tar -xzf 3.3.3.tar.gz >> $LOG
 mv eigen* eigen
 mv eigen/Eigen $INSTALL_DIR/include/Eigen
 mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported

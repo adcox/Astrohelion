@@ -129,4 +129,4 @@ directories:
 	$(MKDIR_P) data
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
-	$(COMP) -I $(INC) -isystem $(INC_EXT) -c $< -o $@
+	$(COMP) -I $(INC) $(INC_EXT) -c $< -o $@

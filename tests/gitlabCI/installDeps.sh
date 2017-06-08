@@ -101,9 +101,9 @@ cp ../settings.xml /builds/adcox/.config/astrohelion/user_settings.xml
 cp ../body_data.xml /builds/adcox/.config/astrohelion/body_data.xml
 
 ## Final print out for debugging purposes
-echo "ls $INSTALL_DIR"
-ls $INSTALL_DIR
-echo "ls $INSTALL_DIR/include"
-ls $INSTALL_DIR/include
-echo "ls $INSTALL_DIR/lib"
-ls $INSTALL_DIR/lib
+echo "ls -la $INSTALL_DIR"
+ls -la $INSTALL_DIR
+echo "ls -la $INSTALL_DIR/include"
+ls -la $INSTALL_DIR/include
+echo "ls -la $INSTALL_DIR/lib"
+ls -la $INSTALL_DIR/lib

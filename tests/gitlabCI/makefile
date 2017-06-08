@@ -28,9 +28,9 @@ CFLAGS += -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimpo
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
+LDFLAGS += -Wl,-rpath-link,/opt/local/lib -L/opt/local/lib
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
-LDFLAGS += -L/opt/local/lib
 
 # Get JUST the filenames, no filepaths, of the source files
 SRC_FILES := $(notdir $(shell find $(SRC)/*.cpp))

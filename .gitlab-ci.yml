@@ -1,9 +1,13 @@
 image: gcc
 
+before_script:
+  - pushd tests/gitlabCI
+  - sh installDeps.sh
+
 unit-tests:
   script:
-    - pushd tests/gitlabCI
-    - source installDeps.sh
+    - export LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
+    - export LD_RUN_PATH=/opt/local/lib:$LD_RUN_PATH
     - make directories
     - make unit
     - make run

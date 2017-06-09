@@ -92,9 +92,9 @@ mv eigen/Eigen $INSTALL_DIR/include/Eigen
 mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
 rm 3.3.3.tar.gz
 
-echo "Adding $INSTALL_DIR to LD_LIBRARY_PATH"
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR
-LD_RUN_PATH=$LD_RUN_PATH:$INSTALL_DIR
+# echo "Adding $INSTALL_DIR to LD_LIBRARY_PATH"
+# LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR
+# LD_RUN_PATH=$LD_RUN_PATH:$INSTALL_DIR
 
 ## Configuration Files
 cp ../settings.xml /builds/adcox/.config/astrohelion/user_settings.xml

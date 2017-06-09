@@ -464,7 +464,7 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
  *    data generated up to the integrator failure is saved in the Arcset object passed to
  *    the SimEngine regardless of the thrown exception(s).
  */
-void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
+void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     // Checks
     if(arcset == nullptr){
         printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
@@ -484,8 +484,8 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const 
         throw Exception("SimEngine::runSim: Ctrl state must have at least the number of states specifed by the Control Law");
     }
 
-    if(stm.rows() != core_dim + ctrl_dim || stm.cols() != core_dim + ctrl_dim){
-        printErr("STM rows = %d, cols = %d, should = %u\n", stm.rows(), stm.cols(), core_dim + ctrl_dim);
+    if(stm0.rows() != core_dim + ctrl_dim || stm0.cols() != core_dim + ctrl_dim){
+        printErr("STM rows = %d, cols = %d, should = %u\n", stm0.rows(), stm0.cols(), core_dim + ctrl_dim);
         throw Exception("SimEngine::runSim: Initial STM size does not match the core state size + control state size");
     }
     
@@ -495,7 +495,7 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const 
     std::vector<double> ctrlCopy = ctrl0;
 
     // Call the version that takes a pointers; all other arguments are the same
-    runSim(&(icCopy.front()), &(ctrlCopy.front()), stm.data(), t0, tof, arcset, pLaw);
+    runSim(&(icCopy.front()), &(ctrlCopy.front()), stm0.data(), t0, tof, arcset, pLaw);
 }//=======================================================
 
 /**
@@ -1238,9 +1238,8 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
  *
  *  \param y full state array at the current integration step
  *  \param t time at the current integration step
- *  \param event the event we're looking for
+ *  \param evtIx index of the event being located
  *  \param pArcset a pointer to the arcset the event occurred on
- *  \param ic the core state vector for this system
  *
  *  \return wether or not the event has been located. If it has, a new Node
  *  has been appended to the arcset. If propagation will continue, a new
@@ -1412,6 +1411,14 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
     }
 }//====================================================
 
+/**
+ *  \brief Create an Identity matrix to act as a dummy value for an STM
+ *  \details [long description]
+ * 
+ *  \param stmRef reference to a vector that stores STM elements. Any nonzero elements
+ *  are overwritten
+ *  \param int side length of the STM (e.g., the size of a 6x6 matrix is 6)
+ */
 void SimEngine::createDummySTM(std::vector<double> &stmRef, unsigned int size) const{
     stmRef.assign(size*size, 0);
     for(unsigned int i = 0; i < size; i++)

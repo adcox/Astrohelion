@@ -524,7 +524,6 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
  *	\details This function should be called after updateDist() to retrieve the most recent
  *	information.
  *
- *	\param y a state vector
  *	\param tDir direction that time is being propagated (+1 for forward, -1 for negative)
  *	\return positive or negative one to correspond with the sign
  *	\throws Exception if the event type associated with this event is not implemented

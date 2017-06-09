@@ -52,9 +52,7 @@ SysData_cr3bp_lt::SysData_cr3bp_lt() : SysData_cr3bp(){
  *	\brief Create a system data object using data from the two primaries
  *	\param P1 the name of the larger primary
  *	\param P2 the name of the smaller primary; P2 must orbit P1
- *	\param T Thrust value, Newtons
- *	\param I Specific Impulse (Isp), seconds
- *	\param M0 reference mass, kilograms
+ *	\param refMass reference mass, kilograms
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double refMass){
 	numPrimaries = 2;
@@ -82,7 +80,7 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(const char *filepath){
 
 /**
  *	\brief Copy constructor
- *	\param d
+ *	\param d 
  */
 SysData_cr3bp_lt::SysData_cr3bp_lt(const SysData_cr3bp_lt &d) : SysData_cr3bp(d){}
 

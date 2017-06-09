@@ -87,7 +87,7 @@ void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
  *  \brief Compute manifold arcs from a number of points spaced equally around a
  *  periodic orbit.
  * 	
- *  \param type The type of manifolds to generate
+ *  \param manifoldType The type of manifolds to generate
  *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
  *  so this function also performs well for nearly periodic segments of quasi-periodic
  *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
@@ -161,6 +161,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp man
  *  \param manifoldType Type of manifold
  *  \param pPerOrbit Pointer to a periodic orbit; only include one revolution of the orbit in the
  *  rotating frame.
+ *  \param pPerOrbit pointer to the periodic orbit arcset object
  *  \param orbitTOF Specifies the point on the periodic orbit that the manifold should emenate from.
  *  If the TOF is negative or greater than the period of the periodic orbit, the TOF is adjusted so
  *  that the initial state is propagated for no more than one period of the periodic orbit to avoid
@@ -201,7 +202,6 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp 
 
 /**
  *  \brief Compute manifolds arcs from a point on a periodic orbit (PO)
- *  \details [long description]
  * 
  *  \param manifoldType Describes the type of manifold(s) to be computed
  *  \param state The state on the periodic orbit to compute manifold arcs from
@@ -212,6 +212,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp 
  *  \param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
  *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
  *  node with the initial condition.
+ *  \param pSys Pointer to a SysData object consistent with the periodic orbit
  *  \param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
  *  
  *  \return The computed manifold arc(s)
@@ -468,6 +469,15 @@ void ManifoldEngine::reset(){
 	stepOffDist = 20;	// km
 }//====================================================
 
+/**
+ *  \brief A comparator for complex, double precision numbers
+ *  \details [long description]
+ * 
+ *  \param lhs a complex number
+ *  \param rhs another complex number
+ * 
+ *  \return whether or not the magnitude of lhs is less than the magnitude of rhs
+ */
 bool ManifoldEngine::compareCDouble(cdouble lhs, cdouble rhs){
 	return std::abs(lhs) < std::abs(rhs);
 }//====================================================

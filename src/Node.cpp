@@ -228,7 +228,7 @@ std::map<std::string, double> Node::getExtraParams() const {
  *  \param key String that identifies the extra parameter vector
  *  \return the extra parameter vector
  *  
- *  \thros Exception if the key is invalid
+ *  \throws Exception if the key is invalid
  */
 std::vector<double> Node::getExtraParamVec(std::string key) const{
 	if(extraParamVecs.count(key) > 0){

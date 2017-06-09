@@ -639,8 +639,10 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
  *	\param pIt pointer to the MultShootData object associated with the corrections process
- *
- *	\return the updated free variable vector \f$ \vec{X}_{n+1} \f$
+ *	\param pOldX constant pointer to the current (previous) design vector
+ *	\param pFX constant pointer to the current constraint vector
+ *	\param pNewX pointer to a vector in which to store the updated design variable vector
+ *	
  *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
@@ -805,6 +807,9 @@ void MultShootEngine::cleanEngine(){
 	bIsClean = true;
 }//====================================================
 
+/**
+ *  \brief Reset the multiple shooting engine to the default parameter values
+ */
 void MultShootEngine::reset(){
 	if(!bIsClean)
 		cleanEngine();

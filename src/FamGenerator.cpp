@@ -788,7 +788,7 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
  *  \brief Compute a family of periodic orbits using pseudo arclength continuation
  *  from a nodeset
  * 
- *  \param traj An initial guess for a periodic orbit
+ *  \param arcset An initial guess for a periodic orbit
  *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
  *  \param initDir 6-element vector that indicates the initial step direction along the family. For example, to
  *  step along -xdot, use {0,0,0,-1,0,0} as initDir.

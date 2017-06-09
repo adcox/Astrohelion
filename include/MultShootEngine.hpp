@@ -128,6 +128,7 @@ class MultShootEngine : public Core, public Engine{
 		
 	private:
 
+		/** Describe the way that time is parameterized in the design variable vector */
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
 
 		/** Whether or not to use variable time in the corrections process */

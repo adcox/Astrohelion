@@ -300,7 +300,7 @@ void Segment::setConstraints(std::vector<Constraint> constraints){
 
 /**
  *  \brief Set the control law for this segment
- *  \param id the ID of the control law used along this segment
+ *  \param law a pointer to the control law applied on this segment
  */
 void Segment::setCtrlLaw(ControlLaw *law){ pCtrlLaw = law; }
 

@@ -392,7 +392,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 			sim.runSim_manyNodes(members[idx].getIC(), tof, numNodes, &memberSet);
 			
 			double end = numNodes-1;
-			double conData[] = {end,end,end,end,end,end};
+			double conData[] = {end,end,end,end,end,NAN};
 			Constraint periodicCon(Constraint_tp::MATCH_CUST, 0, conData, 6);
 
 			memberSet.addConstraint(periodicCon);
@@ -409,7 +409,9 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMatchingMember(double value, std::vec
 				Arcset_cr3bp newTraj = newNodes;
 				FamMember_cr3bp newMember(newTraj);
 				matchMembers.push_back(newMember);
-			}catch(DivergeException &e){}
+			}catch(DivergeException &e){
+				printErr("  Unable to converge on a periodic solution for candidate %d...\n", n);
+			}
 		}
 	}
 

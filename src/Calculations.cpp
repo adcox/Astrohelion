@@ -942,8 +942,8 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
         astrohelion::printWarn("Calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
 
     // Add constraints for correction
-    Constraint initStateCon(Constraint_tp::STATE, 0, mirrorCon0, 6);
-    Constraint finalStateCon(Constraint_tp::STATE, numNodes-1, mirrorCon1, 6);
+    Constraint initStateCon(Constraint_tp::STATE, halfOrbArc.getNodeRefByIx(0).getID(), mirrorCon0, 6);
+    Constraint finalStateCon(Constraint_tp::STATE, halfOrbArc.getNodeRefByIx(-1).getID(), mirrorCon1, 6);
     halfOrbArc.addConstraint(initStateCon);
     halfOrbArc.addConstraint(finalStateCon);
 
@@ -954,83 +954,93 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
     corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);
     // corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
+    Arcset_cr3bp correctedHalfPer(pSys);
+
+    // If the user passed in a null pointer, create a temporory data object
+    // on the stack to avoid seg faults, then delete it before exiting to 
+    // avoid memory leaks
+    bool createdTempMSData = false;
+    if(!pItData){
+        createdTempMSData = true;
+        pItData = new MultShootData(&halfOrbArc);
+    }
+
+
     try{
-        Arcset_cr3bp correctedHalfPer(pSys);
-
-        // If the user passed in a null pointer, create a temporory data object
-        // on the stack to avoid seg faults, then delete it before exiting to 
-        // avoid memory leaks
-        bool createdTempMSData = false;
-        if(!pItData){
-            createdTempMSData = true;
-            pItData = new MultShootData(&halfOrbArc);
-        }
-
         *pItData = corrector.multShoot(&halfOrbArc, &correctedHalfPer);
         // correctedHalfPer.print();
         // correctedHalfPer.saveToMat("data/temp_correctedHalfPer.mat");
-
-        // Make a copy
-        Arcset_cr3bp halfPerTraj = correctedHalfPer;
-        double halfTOF = halfPerTraj.getTimeByIx(-1);
-        int halfPerTraj_len = static_cast<int>(halfPerTraj.getNumNodes());
-        MatrixXRd halfPerSTM = halfPerTraj.getSTMByIx(-1);
-        
-        // Use Mirror theorem to create the second half of the orbit
-        MatrixXRd mirrorMat = getMirrorMat(mirrorType);
-        int prevID = halfPerTraj.getNodeByIx(halfPerTraj_len-1).getID();
-        // halfPerTraj.saveToMat("temp_halfPerTraj.mat");
-        for(int i = halfPerTraj_len-2; i >= 0; i--){
-            // Use mirroring to populate second half of the orbit
-            std::vector<double> state = halfPerTraj.getStateByIx(i);
-            Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
-            Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
-
-            Node node;
-            node.setState(newStateVec.data(), newStateVec.cols());
-            node.setEpoch(2*halfTOF - halfPerTraj.getTimeByIx(i));
-
-            int id = halfPerTraj.addNode(node);
-            // printf("Added node at epoch %.6f\n", node.getEpoch());
-            // fprintf("Adding segment with tof = %.6f\n", halfPerTraj.getEpoch(id) - halfPerTraj.getEpoch(prevID))
-            Segment seg(prevID, id, halfPerTraj.getEpoch(id) - halfPerTraj.getEpoch(prevID));
-            seg.setStateWidth(halfPerTraj.getSegRefByIx(0).getStateWidth());
-            prevID = id;
-            halfPerTraj.addSeg(seg);
-        }
-
-        // waitForUser();
-        // Compute the monodromy matrix from the half-period STM
-        double M_data[] = { 0, 0, 0, -1, 0, 0,
-                            0, 0, 0, 0, -1, 0,
-                            0, 0, 0, 0, 0, -1,
-                            1, 0, 0, 0, -2, 0,
-                            0, 1, 0, 2, 0, 0,
-                            0, 0, 1, 0, 0, 0};
-        // Inverse of M
-        double MI_data[] = {0, -2, 0, 1, 0, 0,
-                            2, 0, 0, 0, 1, 0,
-                            0, 0, 0, 0, 0, 1,
-                            -1, 0, 0, 0, 0, 0,
-                            0, -1, 0, 0, 0, 0,
-                            0, 0, -1, 0, 0, 0};
-        MatrixXRd M = Eigen::Map<MatrixXRd>(M_data, 6, 6);
-        MatrixXRd MI = Eigen::Map<MatrixXRd>(MI_data, 6, 6);
-        
-        MatrixXRd monoMat(6,6);
-        monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
-
-        // Set final STM of mirrored trajectory to the one computed here
-        halfPerTraj.setSTMByIx(-1, monoMat);
-        
-        if(createdTempMSData){
-            delete pItData;
-            pItData = nullptr;
-        }
-        return halfPerTraj;     // Now contains entire trajectory
     }catch(DivergeException &e){
-        throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
+        corrector.setDoLineSearch(true);
+        corrector.setMaxIts(250);
+        correctedHalfPer = Arcset_cr3bp(pSys);
+        
+        try{
+            corrector.multShoot(&halfOrbArc, &correctedHalfPer);
+        }catch(DivergeException &ee){
+            throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
+        }
     }
+
+    // Make sure the final STM represents the entire evolution of the trajectory
+    correctedHalfPer.setSTMs_parallel();
+
+    double halfTOF = correctedHalfPer.getTimeByIx(-1);
+    int halfPerTraj_len = static_cast<int>(correctedHalfPer.getNumNodes());
+    MatrixXRd halfPerSTM = correctedHalfPer.getSTMByIx(-1);
+    
+    // Use Mirror theorem to create the second half of the orbit
+    MatrixXRd mirrorMat = getMirrorMat(mirrorType);
+    int prevID = correctedHalfPer.getNodeByIx(halfPerTraj_len-1).getID();
+    // correctedHalfPer.saveToMat("temp_halfPerTraj.mat");
+    for(int i = halfPerTraj_len-2; i >= 0; i--){
+        // Use mirroring to populate second half of the orbit
+        std::vector<double> state = correctedHalfPer.getStateByIx(i);
+        Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
+        Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
+
+        Node node;
+        node.setState(newStateVec.data(), newStateVec.cols());
+        node.setEpoch(2*halfTOF - correctedHalfPer.getTimeByIx(i));
+
+        int id = correctedHalfPer.addNode(node);
+        // printf("Added node at epoch %.6f\n", node.getEpoch());
+        // fprintf("Adding segment with tof = %.6f\n", correctedHalfPer.getEpoch(id) - correctedHalfPer.getEpoch(prevID))
+        Segment seg(prevID, id, correctedHalfPer.getEpoch(id) - correctedHalfPer.getEpoch(prevID));
+        seg.setStateWidth(correctedHalfPer.getSegRefByIx(0).getStateWidth());
+        prevID = id;
+        correctedHalfPer.addSeg(seg);
+    }
+
+    // waitForUser();
+    // Compute the monodromy matrix from the half-period STM
+    double M_data[] = { 0, 0, 0, -1, 0, 0,
+                        0, 0, 0, 0, -1, 0,
+                        0, 0, 0, 0, 0, -1,
+                        1, 0, 0, 0, -2, 0,
+                        0, 1, 0, 2, 0, 0,
+                        0, 0, 1, 0, 0, 0};
+    // Inverse of M
+    double MI_data[] = {0, -2, 0, 1, 0, 0,
+                        2, 0, 0, 0, 1, 0,
+                        0, 0, 0, 0, 0, 1,
+                        -1, 0, 0, 0, 0, 0,
+                        0, -1, 0, 0, 0, 0,
+                        0, 0, -1, 0, 0, 0};
+    MatrixXRd M = Eigen::Map<MatrixXRd>(M_data, 6, 6);
+    MatrixXRd MI = Eigen::Map<MatrixXRd>(MI_data, 6, 6);
+    
+    MatrixXRd monoMat(6,6);
+    monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
+
+    // Set final STM of mirrored trajectory to the one computed here
+    correctedHalfPer.setSTMByIx(-1, monoMat);
+    
+    if(createdTempMSData){
+        delete pItData;
+        pItData = nullptr;
+    }
+    return correctedHalfPer;     // Now contains entire trajectory
 }//================================================
 
 /**

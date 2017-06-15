@@ -31,7 +31,7 @@ double lyap_ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-
 double lyap_T = 313;
 
 // All the different ways to parameterize time in the multiple shooting algorithm
-std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_POS, MSTOF_tp::VAR_EQUALARC};
+std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_FIXSIGN, MSTOF_tp::VAR_EQUALARC};
 
 bool stateDiffBelowTol(std::vector<double>, double*, double);
 bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);

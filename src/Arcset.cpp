@@ -305,6 +305,69 @@ void Arcset::setTimeByIx(int ix, double t){
 }//====================================================
 
 /**
+ *  \brief Set each Segment STM to represent the relationship
+ *  between the begining (chronologically) of the arcset and
+ *  the the end (chronologicay) of each Segment.
+ *  \details No checks are made to ensure the arcset is continuous.
+ *  If the arcset is discontinuous the STMs will lose any 
+ *  accuracy or meaning past the first (chronological) discontinuity.
+ *  
+ *  Only the single STM matrix is updated. The STM elements stored 
+ *  in the Segment state vector are not changed; these elements represent
+ *  the STM for each individual segment (begins at Identity for each 
+ *  segment).
+ *  
+ *  \throws Exception if the multiplication of two consecutive STMs 
+ *  is illegal (e.g., if the matrices have different sizes, which
+ *  is the case if two segments leverage control laws with different 
+ *  numbers of control states)
+ */
+void Arcset::setSTMs_parallel(){
+	putInChronoOrder();	// returns immediately if already in chrono order
+
+	MatrixXRd stmPrev, stmSeg;
+	for(unsigned int s = 1; s < segs.size(); s++){
+		if(segs[s].getCtrlLaw() != segs[s-1].getCtrlLaw())
+			printWarn("Arcset::setSTMs_parallel: Segments leverage different control laws; multiplying STMs may yield non-useful / non-physical values\n");
+		try{
+			segs[s].setSTM(segs[s].getSTM() * segs[s-1].getSTM());
+		}catch(std::exception &e){
+			printErr(e.what());
+			throw Exception("Arcset::setSTMs_parallel: Eigen error, cannot multiply two STMs; likely have a different size because of control laws");
+		}
+	}
+}//====================================================
+
+/**
+ *  \brief Set each Segment STM to represent the evolution of the state
+ *  vector between the beginning (chronologically) of the Segment and the
+ *  end.
+ *  \details The individual segment STMs elements are always stored in the
+ *  Segment state vector
+ */
+void Arcset::setSTMs_sequence(){
+	const unsigned int coreDim = pSysData->getDynamicsModel()->getCoreStateSize();
+
+	unsigned int ctrlDim = 0;
+	unsigned int stmDim = 0;
+	ControlLaw *pLaw = nullptr;
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		pLaw = segs[s].getCtrlLaw();
+
+		if(pLaw)
+			ctrlDim = pLaw->getNumStates();
+		else
+			ctrlDim = 0;
+
+		stmDim = (ctrlDim + coreDim)*(ctrlDim + coreDim);
+		std::vector<double> statef = segs[s].getStateByRow(-1);
+		std::vector<double> stm(statef.begin() + coreDim + ctrlDim, statef.begin() + coreDim + ctrlDim + stmDim);
+		segs[s].setSTM(stm);
+	}
+}//====================================================
+
+/**
  *  \brief Shift all time values by a constant amount
  *  \details This can be useful for use with the EM2SE and SE2EM functions
  * 
@@ -480,6 +543,10 @@ void Arcset::saveCmds(mat_t* pMatFile) const{
  *  \brief Populate data in this trajectory from a matlab file
  * 
  *  \param filepath the path to the matlab data file
+ *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  
  *  \throws Exception if the data file cannot be opened
  */
 void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws){
@@ -506,6 +573,10 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
  *  be overridden in derived classes as necessary.
  * 
  *  \param pMatFile pointer to an open Matlab file
+ *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  
  *  \todo Remove backward compatibility code in future (today: May 3 2017)
  */
 void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){

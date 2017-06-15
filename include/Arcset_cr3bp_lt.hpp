@@ -34,6 +34,14 @@ namespace astrohelion{
 //Forward Declarations
 class SysData_cr3bp_lt;
 
+/**
+ *	\ingroup traj cr3bp_lt
+ *	\brief Supplies functions specific to low-thrust CR3BP arcsets
+ *
+ *	\author Andrew Cox
+ *	\version June 9, 2017
+ *	\copyright GNU GPL v3.0
+ */
 class Arcset_cr3bp_lt : public Arcset_cr3bp{
 public:
 	/**

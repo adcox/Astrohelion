@@ -12,7 +12,7 @@ using namespace astrohelion;
 
 BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	// Load the family
-	Fam_cr3bp fam("../data/families/cr3bp_earthmoon/L1_Lyap.mat");
+	Fam_cr3bp fam("../data/families/cr3bp_earth-moon/L1_Lyap.mat");
 	// Fam_cr3bp fam("../share/families/EM_L2_NButterfly.mat");
 	fam.sortEigs();
 	std::vector<int> bifs = fam.findBifurcations();

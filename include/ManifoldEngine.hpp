@@ -57,6 +57,9 @@ enum class Manifold_tp : int{
 	MAN_S_LEFT = -3		//!< Stable, arriving from -x direction
 };
 
+/**
+ *  \brief Describes the type of manifold step-off strategy
+ */
 enum class Manifold_StepOff_tp{
 	STEP_MATCH_JC,		//!< Step along eigenvector as much as possible but adjust to match the Jacobi constant value of the origin
 	STEP_VEC_NORMPOS,	//!< Step along eigenvector by prescribed distance; eigenvector is normalized by magnitude of position components
@@ -94,9 +97,9 @@ public:
 	 *  \{
 	 */
 	
-	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, const Arcset_cr3bp*, unsigned int, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
-	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
-	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>, MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_MATCH_JC);
+	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, const Arcset_cr3bp*, unsigned int, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>, MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 	
 	// Add a function for manifolds from map fixed points; use Wayne's method?
 

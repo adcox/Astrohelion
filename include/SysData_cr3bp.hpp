@@ -69,6 +69,7 @@ class SysData_cr3bp : public SysData{
 		double getMu() const;
 		//\}
 		
+		void print() const override;
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
 		

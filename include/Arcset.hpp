@@ -41,6 +41,16 @@ class Event;
 class SysData;
 class Arcset;
 
+/**
+ *	\ingroup traj
+ *	\brief Extends BaseArcset in a few areas.
+ *	\details This class is largely unneeded; may replace BaseArcset with Arcset
+ *	or visa-versa; there is no need for an extra inheritance layer here
+ *
+ *	\author Andrew Cox
+ *	\version June 9, 2017
+ *	\copyright GNU GPL v3.0
+ */
 class Arcset : public BaseArcset{
 
 public:
@@ -88,6 +98,9 @@ public:
 
 	double getTimeByIx(int) const;
 
+	void setSTMs_parallel();
+	void setSTMs_sequence();
+	
 	void setTimeByIx(int, double);
 	void shiftAllTimes(double);
 	//\}
@@ -97,18 +110,13 @@ public:
 	 *  \{
 	 */
 	virtual void print() const;
-	void readFromMat(const char*, std::vector<ControlLaw*>&);
+	void readFromMat(const char*, std::vector<ControlLaw*> &refLaws);
 	void saveToMat(const char*) const;
 	//\}
 
 protected:
 	virtual void saveCmds(mat_t*) const;
 	virtual void readCmds(mat_t*, std::vector<ControlLaw*>&);
-	
-	void initFromICs(std::vector<double>, double, double, int, NodeDistro_tp type = NodeDistro_tp::TIME, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
-	void initFromICs_time(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
-	void initFromICs_arclength(std::vector<double>, double, double, int, unsigned int ctrlLawID = ControlLaw::NO_CTRL);
-	void initFromTraj(Arcset, int, NodeDistro_tp);
 };
 
 }// End of astrohelion namespace

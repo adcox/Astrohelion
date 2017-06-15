@@ -43,6 +43,12 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+/**
+ *  \brief Convert an MSTOF_tp object to a human-readable string
+ * 
+ *  \param tp multiple-shooting TOF type
+ *  \return a string representing the TOF type
+ */
 const char* MSTOF_tp_cStr(const MSTOF_tp &tp){
 	switch(tp){
 		case MSTOF_tp::FIXED: 
@@ -51,13 +57,23 @@ const char* MSTOF_tp_cStr(const MSTOF_tp &tp){
 			return "VAR_FREE";
 		case MSTOF_tp::VAR_EQUALARC:
 			return "VAR_EQUALARC";
-		case MSTOF_tp::VAR_POS:
-			return "VAR_POS";
+		case MSTOF_tp::VAR_FIXSIGN:
+			return "VAR_FIXSIGN";
 		default:
 			return "UNDEFINED";
 	}
 }//====================================================
 
+/**
+ *  \brief Stream operator for MSTOF_tp objects
+ *  \details This is required for Boost unit tests with MSTOF_tp
+ *  as a data list input
+ * 
+ *  \param os stream reference
+ *  \param tp MSTOF_tp object to output to the stream
+ *  
+ *  \return a stream reference
+ */
 std::ostream& operator<<(std::ostream& os, const MSTOF_tp &tp){
 	os << MSTOF_tp_cStr(tp);
 	return os;
@@ -70,6 +86,7 @@ std::ostream& operator<<(std::ostream& os, const MSTOF_tp &tp){
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+
 /**
  *  \brief Construct a default Multiple Shooting Variable Map Key object
  */

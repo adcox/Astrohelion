@@ -957,7 +957,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 
 			double monoErr = std::abs(1.0 - mono.determinant());
 			if(monoErr > 1e-5)
-				astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 
 			// Add orbit to family
 			FamMember_cr3bp child(perOrbit);
@@ -1091,8 +1091,8 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 
 	// TODO - Make these editable?
 	double stepSize = 0.001;
-	double maxStepSize = 0.5;
-	double minStepSize = 1e-7;
+	// double maxStepSize = 0.5;
+	// double minStepSize = 1e-7;
 
 	SysData_cr3bp sys = fam->getSysData();
 	Arcset_cr3bp familyMember(initialGuess);	// Copy the input initial guess
@@ -1176,8 +1176,8 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
             throw Exception("Mirror type either not defined or not implemented");
 	}
 	// constrain perpendicular crossings and periodicity
-	Constraint perpCross1_Con(Constraint_tp::STATE, 0, perpCross_data, 6);
-	Constraint perpCross2_Con(Constraint_tp::STATE, familyMember.getNumNodes()-1, perpCross_data, 6);
+	Constraint perpCross1_Con(Constraint_tp::STATE, familyMember.getNodeRefByIx(0).getID(), perpCross_data, 6);
+	Constraint perpCross2_Con(Constraint_tp::STATE, familyMember.getNodeRefByIx(-1).getID(), perpCross_data, 6);
 
 	familyMember.addConstraint(perpCross1_Con);
 	familyMember.addConstraint(perpCross2_Con);
@@ -1196,7 +1196,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 	// Initialize this nodeset outside the loop because the familyItData will end up with a pointer
 	// to this nodeset after the multiple shooting processs; if the declaration is in the loop,
 	// the nodeset is destroyed each iteration and the pointer ceases to be useful.
-	Arcset_cr3bp perNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+	Arcset_cr3bp perOrbit(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
 	Arcset_cr3bp newMember(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
@@ -1300,7 +1300,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 				printf("dot product = %.4f\n", dotProd(0));
 				printf("Angle = %.4f deg\n", angle*180/PI);
 				if(angle > PI/2.0){
-					astrohelion::printColor(CYAN, "Angle is %.4f > pi/2; changing sign and angle\n", angle);
+					printColor(CYAN, "Angle is %.4f > pi/2; changing sign and angle\n", angle);
 					angle = PI - angle;
 					sign = -1;
 				}
@@ -1323,9 +1323,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 			N(0), N(1), N(2), N(3), N(4), N(5));
 
 		// Arcset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
-		newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
-		// Reset perNodes
-		perNodes = Arcset_cr3bp(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+		newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, &familyItData);
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
@@ -1334,30 +1332,58 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		try{
 			while(stepSize >= minStepSize){
 				try{
-					familyItData = corrector.multShoot(&newMember, &perNodes);
 
-					// If convergence was fast, take bigger steps
-					if(familyItData.count < 5){
-						stepSize = stepSize*2 < maxStepSize ? stepSize*2 : maxStepSize;
-						astrohelion::printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
-					}else if(familyItData.count > 10){
-						// If convergence was slow, take smaller steps
-						stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
-						astrohelion::printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
+					// Reset perOrbit
+					perOrbit = Arcset_cr3bp(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
+
+					familyItData = corrector.multShoot(&newMember, &perOrbit);
+
+					std::vector<double> state0 = perOrbit.getStateByIx(0);
+					std::vector<double> statef = perOrbit.getStateByIx(-1);
+					double sumSquared = 0;
+					for(unsigned int i = 0; i < 6; i++){
+						sumSquared += (state0[i] - statef[i])*(state0[i] - statef[i]);
 					}
 
-					// Exit this loop; we converged!
-					break;
+					if(sqrt(sumSquared) > 10*tol){
+						if(stepSize > minStepSize){
+							stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
+							printColor(RED, "NOT PERIODIC! Error = %.4e\n", sqrt(sumSquared));
+							printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
+
+							// Re-Create the initial guess using the new step size
+							newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, &familyItData);
+							continue;	// Go to next iteration
+						}else{
+							astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
+							killLoop = true;
+							break;
+						}
+					}else{
+
+						// If convergence was fast, take bigger steps
+						if(familyItData.count < 5){
+							stepSize = stepSize*2 < maxStepSize ? stepSize*2 : maxStepSize;
+							printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
+						}else if(familyItData.count > 10){
+							// If convergence was slow, take smaller steps
+							stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
+							printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
+						}
+
+						// Exit this loop; we converged!
+						break;
+					}
 				}catch(DivergeException &e){
 					if(stepSize > minStepSize){
 						astrohelion::printWarn("FamGenerator::cr3bp_pseudoArcCont: Corrector diverged... trying smaller step size\n");
 
 						// Decrease step size and try again
 						stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
-						astrohelion::printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
+						printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 						// Re-Create the initial guess using the new step size
-						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
+						newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, &familyItData);
 					}else{
 						astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: Could not converge new family member!\n");
 						killLoop = true;
@@ -1378,6 +1404,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		
 		if(familyItData.totalFree < 6)
 			throw Exception("FamGenerator::PAC algorithm expects at least 6 states in the free variable vector");
+
 		// Check to see if the converged family vector is significantly different from previously computed family member
 		// Note that only the first 6 states (the IC for the trajectory) is checked; differences in other nodes 
 		// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
@@ -1397,16 +1424,16 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 			astrohelion::printErr("Solution changed by amount greater than maxStepSize; solution jumped, ending continuation\n");
 			break;
 		}
-		
+
 		// Save new converged family vector
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
-		// Convert converged nodeset to an orbit to save; TODO - could be improved to be much faster!
-		// Arcset_cr3bp perOrbit = Arcset_cr3bp::fromNodeset(perNodes);
-		Arcset_cr3bp perOrbit = perNodes;
-		// perNodes.saveToMat("temp_perNodes_pac.mat");
-		// newMember.saveToMat("temp_newMember.mat");
-		// perOrbit.saveToMat("temp_perOrbit_pac.mat");
+		// Multiply the Segment STMs through so that the final STM represents
+		// the full periodic orbit. The default functionality stores each 
+		// Segment STM, so the final STM merely represents the evolution of the
+		// final segment.
+		perOrbit.setSTMs_parallel();
+		perOrbit.saveToMat("temp_perOrbit_pac.mat");
 
 		if(perOrbit.getTotalTOF()*tof0 < 0){
 			printErr("Time-of-Flight changed sign; ending continuation\n");
@@ -1421,7 +1448,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		
 		double monoErr = std::abs(1.0 - mono.determinant());
 		if(monoErr > 1e-5)
-			astrohelion::printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+			printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 		
 		// Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
 	 //    if(eigensolver.info() != Eigen::Success)
@@ -1448,8 +1475,8 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
  *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
  */
-Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVarVec,
-	Eigen::VectorXd N, double stepSize, MultShootData pFamilyItData){
+Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(const Eigen::VectorXd &convergedFreeVarVec,
+	const Eigen::VectorXd &N, double stepSize, MultShootData *pFamilyItData){
 
 	/**
 	 *	Step forwards away from previously converged solution
@@ -1457,13 +1484,14 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVa
 
 	Eigen::VectorXd newFreeVarVec = convergedFreeVarVec + stepSize*N;
 	double *X = newFreeVarVec.data();
+	pFamilyItData->X = std::vector<double>(X, X + newFreeVarVec.rows());
 
 	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
-	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData.nodesIn->getSysData());
+	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData->nodesIn->getSysData());
 	Arcset_cr3bp newMember(sys);
-	pFamilyItData.nodesOut = &newMember;
+	pFamilyItData->nodesOut = &newMember;
 
-	sys->getDynamicsModel()->multShoot_createOutput(&pFamilyItData);
+	sys->getDynamicsModel()->multShoot_createOutput(pFamilyItData);
 
 	// Get rid of any pre-existing pseudo arclength constraints from previous corrections
 	std::vector<Constraint> arcCons = newMember.getArcConstraints();
@@ -1476,13 +1504,13 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(Eigen::VectorXd convergedFreeVa
 	/* 
 	 *	Form the Pseudo-Arclength Continuation constraint
 	 */
-	std::vector<double> pacCon_data = pFamilyItData.X;
+	std::vector<double> pacCon_data = pFamilyItData->X;
 	// Append the null vector (i.e. step direction)
 	pacCon_data.insert(pacCon_data.end(), N.data(), N.data()+N.rows());
 	// Append the step size
 	pacCon_data.insert(pacCon_data.end(), stepSize);
 	// Create the actual constraint
-	Constraint pacCon(Constraint_tp::PSEUDOARC, pFamilyItData.numNodes-1, pacCon_data);
+	Constraint pacCon(Constraint_tp::PSEUDOARC, pFamilyItData->numNodes-1, pacCon_data);
 	newMember.addConstraint(pacCon);
 
 	// Outputs for debugging and sanity checks

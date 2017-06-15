@@ -191,7 +191,13 @@ void SysData_cr3bp::readFromMat(mat_t *matFile){
 	type = SysData_tp::CR3BP_SYS;
 	otherParams.assign(1,0);	// make mu = 0
 	initFromPrimNames(P1, P2);
-}//===================================================
+}//====================================================
+
+void SysData_cr3bp::print() const{
+	SysData::print();
+
+	printf("Mass Ratio = %.8e\n", otherParams[0]);
+}//====================================================
 
 
 }// END of Astrohelion namespace

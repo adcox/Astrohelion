@@ -128,15 +128,31 @@ std::vector<double> ControlLaw::getParams() const { return params; }
  */
 const std::vector<double>& ControlLaw::getParamsRef_const() const { return params; }
 
+/**
+ *  \brief Set the control law type
+ * 
+ *  \param id an ID number identifying the control law type
+ */
 void ControlLaw::setLawType(unsigned int id){
 	lawType = id;
 	init();
 }//====================================================
 
+/**
+ *  \brief Set the control law parameters
+ * 
+ *  \param params array of parameters
+ *  \param len number of elements in the parameter array
+ */
 void ControlLaw::setParams(double *params, unsigned int len){
 	std::copy(params, params+len, this->params.begin());
 }//====================================================
 
+/**
+ *  \brief Set the control law parameters
+ * 
+ *  \param params vector of parameters
+ */
 void ControlLaw::setParams(std::vector<double> params){
 	this->params = params;
 }//====================================================
@@ -184,7 +200,7 @@ void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, d
  *  \param s integration state vector (from SimEngine / DynamicsModel)
  *  \param pSys pointer to the system data object
  *  \param deriv pointer to an array of zeros in which to store the time-derivative of the control states
- *  \param int number of elements in the derivative array
+ *  \param len number of elements in the derivative array
  */
 void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
 	switch(lawType){

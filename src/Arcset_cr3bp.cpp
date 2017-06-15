@@ -250,6 +250,9 @@ void Arcset_cr3bp::saveCmds(mat_t* pMatFile) const{
 /**
  *  \brief Execute commands to read data from a Matlab file
  *  \param pMatFile pointer to an open Matlab file
+ *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
 void Arcset_cr3bp::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 	Arcset::readCmds(pMatFile, refLaws);

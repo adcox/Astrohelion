@@ -34,6 +34,14 @@ namespace astrohelion{
 //Forward Declarations
 class SysData_2bp;
 
+/**
+ *	\ingroup traj 2bp
+ *	\brief Supplies functions specific to 2BP arcsets
+ *
+ *	\author Andrew Cox
+ *	\version June 9, 2017
+ *	\copyright GNU GPL v3.0
+ */
 class Arcset_2bp : public Arcset{
 public:
 	/**

@@ -208,7 +208,23 @@ void SysData::saveToMat(const char *filepath) const{
 	}
 
 	Mat_Close(matfp);
-}//======================================================
+}//====================================================
 
+void SysData::print() const{
+	unsigned int i;
+	for(i = 0; i < primaries.size(); i++){
+		printf("%s", primaries[i].c_str());
+		
+		if(i < primaries.size() - 1)
+			printf("-");
+		else
+			printf(" ");
+	}
+	printf("%s System\n", getTypeStr().c_str());
+
+	printf("Char. Length = %.8e km\n", charL);
+	printf("Char. Time = %.8e sec = %.4f hr = %.8f days\n", charT, charT/3600, charT/3600/24);
+	printf("Char. Mass = %.8e kg\n", charM);
+}//====================================================
 
 }// END of Astrohelion namespace

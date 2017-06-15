@@ -34,6 +34,14 @@ namespace astrohelion{
 // Forward Declarations
 class SysData_bc4bp;
 
+/**
+ *	\ingroup traj bc4bp
+ *	\brief Supplies functions specific to BC4BP arcsets
+ *
+ *	\author Andrew Cox
+ *	\version June 9, 2017
+ *	\copyright GNU GPL v3.0
+ */
 class Arcset_bc4bp : public Arcset{
 public:
 	/**

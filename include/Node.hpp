@@ -42,6 +42,7 @@
 // (none)
  
 namespace astrohelion{
+
 /**
  *	\ingroup traj
  *	\brief A single point or state on an arc

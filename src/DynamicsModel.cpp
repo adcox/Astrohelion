@@ -189,19 +189,18 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
 }//==================================================
 
 /**
- *  \brief Create a node on the Trajectory
- *  \details [long description]
+ *  \brief Create a node on the Arcset
  * 
- *  \param y pointer to state data array
- *  \param t time
- *  \param traj pointer to trajectory in which the data is stored
- *  \param params Structure that contains parameters used in the integration
- *  \param evt Event type that occured at the Node
- *  \return ID of the node once it is added to the Trajectory
+ *  \param node a reference to the node that is being added
+ *  \param y pointer to full state data array
+ *  \param t current integration time
+ *  \param arcset pointer to trajectory in which the data is stored
+ *  \param params pointer to a structure that contains parameters used in the integration
+ *  \param tp Event type that occured at the Node
  *  
- *  \todo Incorporate the Event-saving part of this function
+ *  \return ID of the node once it is added to the Trajectory
  */
-int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* traj, EOM_ParamStruct *params, Event_tp tp) const{
+int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* arcset, EOM_ParamStruct *params, Event_tp tp) const{
 	(void) y;
 	(void) t;
 	
@@ -215,15 +214,26 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* tr
 		}
 	}
 
-	return traj->addNode(node);
+	return arcset->addNode(node);
 }//====================================================
 
-int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* traj, EOM_ParamStruct *params) const{
+/**
+ *  \brief Add a segment to the Arcset
+ *  \details [long description]
+ * 
+ *  \param seg Reference to the segment to add to the Arcset
+ *  \param y pointer to full state data array
+ *  \param t current integration time
+ *  \param arcset pointer to the Arcset in which the data is stored
+ *  \param params pointer to structure that contains parameters used in the integration
+ *  \return the ID of the segment once it is added to the arcset
+ */
+int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* arcset, EOM_ParamStruct *params) const{
 	(void) y;
 	(void) t;
 
 	seg.setCtrlLaw(params->pCtrlLaw);
-	return traj->addSeg(seg);
+	return arcset->addSeg(seg);
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -323,7 +333,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 				it->X.insert(it->X.end(), it->nodesIn->getTotalTOF());
 				break;
 			}
-			case MSTOF_tp::VAR_POS:
+			case MSTOF_tp::VAR_FIXSIGN:
 			{
 				// Append the sqrt(TOF) for each segment
 				for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
@@ -389,7 +399,6 @@ void DynamicsModel::multShoot_createContCons(MultShootData *it) const{
  *	\param ctrl0 a pointer to the initial control state array
  *	\param t0 a pointer to a double representing the initial time (epoch)
  *	\param tof a pointer to a double the time-of-flight on the segment.
- *	@todo No need to input Arcset as well as the MultShootData pointer
  */
 void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 	double *ic, double *ctrl0, double *t0, double *tof) const{
@@ -437,7 +446,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 			*tof = it->X[tofObj.row0]/(it->nodesIn->getNumSegs());
 			break;
 		}
-		case MSTOF_tp::VAR_POS:
+		case MSTOF_tp::VAR_FIXSIGN:
 		{
 			MSVarMap_Obj tofObj = it->getVarMap_obj(MSVar_tp::TOF, s);
 			*tof = astrohelion::sign(it->nodesIn->getTOF(s))*(it->X[tofObj.row0])*(it->X[tofObj.row0]);
@@ -598,7 +607,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 				MSVarMap_Obj tofVar;
 
 				switch(it->tofTp){
-					case MSTOF_tp::VAR_POS:
+					case MSTOF_tp::VAR_FIXSIGN:
 						tofVar = it->getVarMap_obj(MSVar_tp::TOF, segID);
 						timeCoeff = astrohelion::sign(it->nodesIn->getTOF(segID))*2*it->X[tofVar.row0];
 						break;
@@ -768,7 +777,7 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 
 		switch(it->tofTp){
 			case MSTOF_tp::VAR_FREE: break; 	// Leave both coefficients as unity
-			case MSTOF_tp::VAR_POS:
+			case MSTOF_tp::VAR_FIXSIGN:
 				timeCoeff1 = astrohelion::sign(it->nodesIn->getTOF(segID1))*2*it->X[tof1_var.row0];
 				timeCoeff2 = astrohelion::sign(it->nodesIn->getTOF(segID2))*2*it->X[tof2_var.row0];
 				break;
@@ -932,7 +941,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 	if(to_underlying(pIt->tofTp) > 0){
 		switch(pIt->tofTp){
 			case MSTOF_tp::VAR_FREE:
-			case MSTOF_tp::VAR_POS:
+			case MSTOF_tp::VAR_FIXSIGN:
 				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
 				break;
 			case MSTOF_tp::VAR_EQUALARC:
@@ -968,7 +977,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 				double timeCoeff = 1;
 				switch(pIt->tofTp){
 					case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
-					case MSTOF_tp::VAR_POS:
+					case MSTOF_tp::VAR_FIXSIGN:
 						timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
 						break;
 					case MSTOF_tp::VAR_EQUALARC:
@@ -1242,7 +1251,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, const Constraint& 
 				double timeCoeff = 1;
 				MSVarMap_Obj tof_var;
 				switch(it->tofTp){
-					case MSTOF_tp::VAR_POS:
+					case MSTOF_tp::VAR_FIXSIGN:
 						tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
 						timeCoeff = astrohelion::sign(it->nodesIn->getTOFByIx(s))*2*it->X[tof_var.row0];
 						break;
@@ -1343,7 +1352,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, const Constraint& con
 			it->FX[row0] -= con.getData()[0];
 			break;
 		}
-		case MSTOF_tp::VAR_POS:
+		case MSTOF_tp::VAR_FIXSIGN:
 		{
 			// Sum all TOF for total, set partials w.r.t. integration times equal to one
 			for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
@@ -1418,17 +1427,7 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, const Constraint& co
  *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
  *  nodeset
  *
- *  If <tt>findEvent</tt> is set to true, the
- *  output nodeset will contain extra information for the simulation engine to use. Rather than
- *  returning only the position and velocity states, the output nodeset will contain the STM 
- *  and dqdT values for the final node; this information will be appended to the extraParameter
- *  vector in the final node.
- *
  *  \param it an iteration data object containing all info from the corrections process
- *  \param nodes_in a pointer to the original, uncorrected nodeset
- *  \param findEvent whether or not this correction process is locating an event
- *  \param nodes_out pointer to the nodeset object that will contain the output of the
- *  shooting process
  */
 void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
 
@@ -1470,7 +1469,7 @@ void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
         			tof = it->X[tofVar.row0];
         			break;
         		}
-        		case MSTOF_tp::VAR_POS:
+        		case MSTOF_tp::VAR_FIXSIGN:
         		{
         			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
         			tof = astrohelion::sign(it->nodesIn->getTOFByIx(s)) * (it->X[tofVar.row0])*(it->X[tofVar.row0]);

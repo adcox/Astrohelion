@@ -94,10 +94,12 @@ class MultShootEngine : public Core, public Engine{
 		int getMaxIts() const;
 		double getTol() const;
 		bool doesFullFinalProp() const;
+		bool doesLineSearch() const;
 		bool isFindingEvent() const;
 		MSTOF_tp getTOFType() const;
 
 		void setAttenuation(double, double limit = 1e-8);
+		void setDoLineSearch(bool);
 		void setFullFinalProp(bool);
 		void setIgnoreCrash(bool);
 		void setIgnoreDiverge(bool);
@@ -131,13 +133,6 @@ class MultShootEngine : public Core, public Engine{
 		/** Describe the way that time is parameterized in the design variable vector */
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
 
-		/** Whether or not to use variable time in the corrections process */
-		// bool bVarTime = true;
-
-		/** Whether or not to force all arcs to have the same length (in time);
-		 	only applies if variable time is enabled */
-		// bool bEqualArcTime = false;
-
 		/** Whether or not to conduct final round of propagations with an 
 			integrator that leverages variable step time. When set to TRUE,
 			the output arcset will have Segments with many states. If set to 
@@ -169,12 +164,17 @@ class MultShootEngine : public Core, public Engine{
 		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
 		bool bIgnoreDiverge = false;
 
+		/** Whether or not to use a rough line search to choose the size of the Newton step. Default is false*/
+		bool bLineSearchStepSize = false;
+
 		void checkDFSingularities(MatrixXRd);
+		void chooseStep_LineSearch(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
 		void cleanEngine();
 		void copyMe(const MultShootEngine&);
 		void propSegsFromFreeVars(MultShootData*, SimEngine*);
 		void reportConMags(const MultShootData*);
 		void solveUpdateEq(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
+		
 };
 
 }// END of Astrohelion namespace

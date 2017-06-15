@@ -35,7 +35,7 @@
 namespace astrohelion{
 
 /**
- *	\ingroup model
+ *	\ingroup model cr3bp_lt
  *	\brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
 class SysData_cr3bp_lt : public SysData_cr3bp{

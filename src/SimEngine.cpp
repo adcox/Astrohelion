@@ -292,6 +292,7 @@ void SimEngine::setFixStepInteg(Integ_tp integ){
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
  *  \param arcset pointer to a trajectory object to store the output trajectory
+ *  \param pLaw pointer to a control law to apply on all simulated segments
  */
 void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, ControlLaw *pLaw){
 	// Define dummy value: t0 = 0; call the next level of complication
@@ -309,6 +310,7 @@ void SimEngine::runSim(const double *ic, double tof, Arcset *arcset, ControlLaw 
  *    Only the absolute value of the TOF is considered; to integrate backwards in
  *    time, use the setRevTime() function.
  *  \param arcset pointer to a trajectory object to store the output trajectory
+ *  \param pLaw pointer to a control law to apply on all simulated segments
  */
 void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw){
     // Define dummy value: t0 = 0; call the next level of complication
@@ -547,9 +549,11 @@ void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0
  *  \param ic an array of non-dimensional initial states; number
  *    of elements must match the number of <code>coreDim</code> specified 
  *    in the system dynamics model
+ *  \param ctrl0 initial control state vector
  *  \param stm0 initial STM data in row-major order
  *  \param t_span a vector of times to include in the solution.
  *  \param arcset pointer to a trajectory object to store the output trajectory
+ *  \param pLaw pointer to the control law to apply during propagation
  */
 void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
@@ -690,6 +694,20 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
     runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
 }//====================================================
 
+/**
+ *  \brief Run a simulation with more than two nodes - initial STM is assumed to be identity
+ *  \details [long description]
+ * 
+ *  \param ic initial state vector
+ *  \param ctrl0 initial control state vector
+ *  \param t0 nondimensional epoch associated with the initial state
+ *  \param tof nondimensional time-of-flight along the trajectory. The sign of <code>tof</code>
+ *  is ignored; for reverse time, set the reverse time flag via setRevTime()
+ *  \param numNodes Number of nodes (including the initial and final nodes) to place
+ *  on the trajectory
+ *  \param arcset Data structure in which to store the propagated trajectory
+ *  \param pLaw control law to apply while propagating
+ */
 void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     // Checks
     if(numNodes < 2){
@@ -1417,7 +1435,7 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
  * 
  *  \param stmRef reference to a vector that stores STM elements. Any nonzero elements
  *  are overwritten
- *  \param int side length of the STM (e.g., the size of a 6x6 matrix is 6)
+ *  \param size side length of the STM (e.g., the size of a 6x6 matrix is 6)
  */
 void SimEngine::createDummySTM(std::vector<double> &stmRef, unsigned int size) const{
     stmRef.assign(size*size, 0);

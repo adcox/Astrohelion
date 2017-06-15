@@ -2396,7 +2396,7 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 						// Check to see if the controller has been loaded already
 						bool foundDuplicate = false;
 						for(auto &law : refLaws){
-							if(*law == *newLaw){
+							if(law && *law == *newLaw){
 								delete(newLaw);
 								newLaw = law;
 								foundDuplicate = true;

@@ -45,15 +45,30 @@ namespace astrohelion{
 class SysData;
 
 /**
- *  \brief Wrapper object to use GSL EOM functions with Boost integrators
+ *  \brief DEPRECATED Wrapper object to use GSL EOM functions with Boost integrators
  */
 class boost_eom_wrapper{
+	/**
+	 *  \brief Definition of a function that the boost integrators use
+	 * 
+	 *  \param t integration time
+	 *  \param q state vector
+	 *  \param qdot state time-derivative vector
+	 *  \param params void pointer that stores parameters relevant to the integration
+	 */
 	typedef int (*eom_fcn)(double t, const double q[], double qdot[], void *params);
 	
 	eom_fcn gslFcn;		//!< The GSL-ready function that evaluates equations of motion
 	EOM_ParamStruct *eomParams = nullptr;	//!< Parameters to be passed to the GSL EOM function
 
 public:
+	/**
+	 *  \brief DEPRECATED Construct an EOM wrapper for 
+	 *  \details 
+	 * 
+	 *  \param f 
+	 *  \param params 
+	 */
 	boost_eom_wrapper(eom_fcn f, EOM_ParamStruct *params) : gslFcn(f){
 		eomParams = params;
 	}//================================================
@@ -72,8 +87,9 @@ public:
 	}//================================================
 };// END OF BOOST_EOM_WRAPPER--------------------------------------------------
 
+
 /**
- *  \brief Wrapper object to use already-written functions to save trajectory data from 
+ *  \brief DEPRECATED Wrapper object to use already-written functions to save trajectory data from 
  *  Boost integrators.
  *  \details This wrapper does not handle any event detection or other, more advanced, 
  *  observer behaviors.
@@ -85,6 +101,13 @@ class boost_observer{
 	EOM_ParamStruct *eomParams = nullptr;	//!< Data that is passed to the EOMs
 
 public:
+	/**
+	 *  \brief DEPRECATED
+	 * 
+	 *  \param m 
+	 *  \param t 
+	 *  \param params 
+	 */
 	boost_observer(const DynamicsModel *m, Arcset *t, EOM_ParamStruct *params) : traj(t), model(m){
 		eomParams = params;
 	}//================================================

@@ -105,6 +105,8 @@ class SysData : public Core{
 		std::string getTypeStr() const;
 		//\}
 		
+		virtual void print() const;
+		
 		virtual void saveToMat(const char*) const;
 
 		/**

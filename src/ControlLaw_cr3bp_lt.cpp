@@ -57,7 +57,7 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
  * 
  *  \param id Control law ID
  *  \param T Thrust value, Newtons
- *	\param I Specific Impulse (Isp), seconds
+ *	\param Isp Specific Impulse (Isp), seconds
  */
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double T, double Isp){
 	lawType = id;
@@ -108,11 +108,8 @@ void ControlLaw_cr3bp_lt::setIsp(double Isp){ params[1] = Isp; }
  *  \param t time parameter
  *  \param s state vector
  *  \param pSysData system data object
- *  \param lawType identifies the control law type
  *  \param law empty, initialized array to store the control law output in
  *  \param len the number of elements in the <tt>law</tt> array
- *  
- *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
  */
 void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData *pSysData,
 	double *law, unsigned int len) const{
@@ -148,11 +145,8 @@ void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData
  *  \param t time parameter
  *  \param s state vector
  *  \param pSys system data object
- *  \param lawType identifies the control law type
  *  \param partials empty, initialized array to store the control law derivatives in
  *  \param len number of elements in the <tt>law</tt> array
- *  
- *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
  */
 void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, 
 	double *partials, unsigned int len) const{
@@ -180,6 +174,20 @@ void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const
 	}
 }//====================================================
 
+/**
+ *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ *  \details If a nontrivial set of control states exists, these partial derivatives form the right-hand
+ *  block-column of the A matrix for the rows associated with the core spacecraft state EOMs. I.e., these
+ *  partial derivatives do not include the partials of the control state derivatives w.r.t. the control states;
+ *  those partial derivatives are obtained from getLaw_StateDerivPartials()
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  of the control state derivatives
+ *  \param len number of elements in the <tt>partials</tt> array
+ */
 void ControlLaw_cr3bp_lt::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
 		case Law_tp::GENERAL_CONST_F:
@@ -263,6 +271,17 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
 	(void) t;
 }//====================================================
 
+/**
+ *  \brief Retrieve the output of the general direction, constant thrust control law
+ * 	\details A set of outputs are computed according to the specified control law, given
+ * 	the input time, state, and system data.
+ * 	
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param law empty, initialized array to store the control law output in
+ *  \param len number of elements in the <tt>law</tt> array
+ */
 void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
 
@@ -378,6 +397,17 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 	(void) t;
 }//====================================================
 
+/**
+ *  \brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  states at the given time, state, in the specified system
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials empty, initialized array to store the control law derivatives in
+ *  \param len number of elements in the <tt>law</tt> array
+ */
 void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
 	
@@ -400,6 +430,16 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 	(void) t;
 }//====================================================
 
+/**
+ *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ * 
+ *  \param t time parameter
+ *  \param s state vector
+ *  \param pSys system data object
+ *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  of the control state derivatives
+ *  \param len number of elements in the <tt>partials</tt> array
+ */
 void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
 
@@ -428,6 +468,12 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 //      Utility Functions
 //------------------------------------------------------------------------------------------------------
 
+/**
+ *  \brief Initialize the control law
+ *  \details This function sets variables that specify the number of control states and
+ *  output states. The base class functionality is called if the law type is not specific
+ *  to the this derived class
+ */
 void ControlLaw_cr3bp_lt::init(){
 	switch(lawType){
 		case Law_tp::CONST_C_2D_LEFT:
@@ -464,6 +510,17 @@ std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id) const{
 	}
 }//====================================================
 
+/**
+ *  \brief Convert an arcset with an arbitrary set of control laws to leverage
+ *  the specified control law on all segments
+ *  \details Not all conversions are valid or well-defined. For those that are, 
+ *  the input arcset is modified to have the propper number of control state variables
+ *  in the Segment state vector and the control law objects and parameters are updated 
+ *  on all Nodes and Segments.
+ * 
+ *  \param pArcset pointer to the arcset to convert
+ *  \param pLaw pointer to the control law that should be leveraged
+ */
 void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pLaw){
 	if(pLaw == nullptr)
 		throw Exception("ControlLaw_cr3bp_lt::convertLaws: Input control law is null");
@@ -481,7 +538,9 @@ void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp
 /**
  *  \brief Convert all control data from an arcset to control data for the GENERAL_CONST_F
  *  law
- *  \details [long description]
+ *  \details This conversion is well-defined from all of the simplified control laws, i.e.,
+ *  CONST_C_2D_LEFT, CONST_C_2D_RIGHT, PRO_VEL, and ANTI_VEL because their directions are
+ *  easily computed at each instant in time.
  * 
  *  \param pArcset Pointer to the arcset to be converted
  *  \param pNewLaw Pointer to the GENERAL_CONST_F control law
@@ -615,4 +674,4 @@ void ControlLaw_cr3bp_lt::pointingVecToAngles(Eigen::Vector3d vec, double *inPla
 	}
 }//====================================================
 
-}
+}// End of astrohelion namespace

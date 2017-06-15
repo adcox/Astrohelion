@@ -275,7 +275,7 @@ void DynamicsModel_bc4bp::getPrimVel(double t, const SysData *pSysData, int pIx,
  *  \param pSysData pointer to system data object
  *  \param pIx Index of the primary; a value of -1 will return the acclerations of all primaries,
  *  in order of largest to smallest mass
- *  \param vel An array to store the primary acceleration(s) in with all elements initialized to zero. 
+ *  \param accel An array to store the primary acceleration(s) in with all elements initialized to zero. 
  *  For a single primary acceleration, the array must have at least three elements allocated. For all 
  *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
  *  of primaries.
@@ -410,8 +410,6 @@ int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Arcs
  *  variables.
  *
  *  \param it a pointer to the corrector's iteration data structure
- *  \param set a pointer to the nodeset being corrected
- *  \throws Exception if equal arc times is turned ON; this has not been implemented for this system
  */
 void DynamicsModel_bc4bp::multShoot_initDesignVec(MultShootData *it) const{
     // Call base class to do most of the work
@@ -636,7 +634,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, const Const
         double timeCoeff = 1.0;
         double tof = 0;
         switch(it->tofTp){
-            case MSTOF_tp::VAR_POS:
+            case MSTOF_tp::VAR_FIXSIGN:
                 tof_var = it->getVarMap_obj(MSVar_tp::TOF, con.getID());
                 timeCoeff = astrohelion::sign(it->nodesIn->getTOF(con.getID()))*2*it->X[tof_var.row0];
                 tof = astrohelion::sign(it->nodesIn->getTOF(con.getID())) * it->X[tof_var.row0] * it->X[tof_var.row0];
@@ -690,7 +688,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, const C
         double timeCoeff1 = 1, timeCoeff2 = 1;
         double tof1 = 0, tof2 = 0;
         switch(it->tofTp){
-            case MSTOF_tp::VAR_POS:
+            case MSTOF_tp::VAR_FIXSIGN:
                 tof_var1 = it->getVarMap_obj(MSVar_tp::TOF, con.getID());
                 tof_var2 = it->getVarMap_obj(MSVar_tp::TOF, con.getData()[0]);
                 timeCoeff1 = astrohelion::sign(it->nodesIn->getTOF(con.getID()))*2*it->X[tof_var1.row0];
@@ -1658,19 +1656,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData *it, const Const
  *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
  *  nodeset
  *
- *  If <tt>findEvent</tt> is set to true, the
- *  output nodeset will contain extra information for the simulation engine to use. Rather than
- *  returning only the position and velocity states, the output nodeset will contain the STM 
- *  and dqdT values for the final node; this information will be appended to the extraParameter
- *  vector in the final node.
- *
  *  \param it an iteration data object containing all info from the corrections process
- *  \param nodes_in a pointer to the original, uncorrected nodeset
- *  \param findEvent whether or not this correction process is locating an event
- *  \param nodes_out pointer to the nodeset object that will contain the output of the
- *  shooting process
- *  
- *  \return a pointer to a nodeset containing the corrected nodes
  */
 void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it) const{
     std::vector<int> newNodeIDs;
@@ -1712,7 +1698,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it) const{
                     tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
                     tof = it->X[tofVar.row0];
                     break;
-                case MSTOF_tp::VAR_POS:
+                case MSTOF_tp::VAR_FIXSIGN:
                     tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
                     tof = astrohelion::sign(it->nodesIn->getTOFByIx(s)) * it->X[tofVar.row0] * it->X[tofVar.row0];
                     break;

@@ -66,7 +66,7 @@ struct EOM_ParamStruct{
 	 *  \brief Construct an EOM Parameter structure
 	 * 
 	 *  \param sys a pointer to a system data object
-	 *  \param lawType an ID for the control law to use during the integration
+	 *  \param law a pointer to a control law object
 	 */
 	EOM_ParamStruct(const SysData *sys, ControlLaw *law) : pSysData(sys), pCtrlLaw(law) {}
 	
@@ -186,7 +186,7 @@ public:
 	 *	\brief Compute the positions of all primaries
 	 *
 	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
-	 *	\param sysData object describing the specific system
+	 *	\param pSysData object describing the specific system
 	 *	\return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
@@ -211,7 +211,7 @@ public:
 	 *	\brief Compute the velocities of all primaries
 	 *
 	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
-	 *	\param sysData object describing the specific system
+	 *	\param pSysData object describing the specific system
 	 *	\return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
@@ -234,6 +234,16 @@ public:
 
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 
+	/**
+	 *  \brief Retrieve the derivative of the state vector
+	 *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ 	 *  the specified time and state
+	 * 
+	 *  \param t current integration time
+	 *  \param state full state vector
+	 *  \param params EOM parameter structure
+	 *  \return the time-derivative of the state vector
+	 */
 	virtual std::vector<double> getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const = 0;
 
 	//\}

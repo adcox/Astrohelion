@@ -26,7 +26,7 @@ double se_lyap_T = 3.293141367224790;
 double em_lyap_T = 3.02796323553149;
 
 // All the different ways to parameterize time in the multiple shooting algorithm
-std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_POS, MSTOF_tp::VAR_EQUALARC};
+std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_FIXSIGN, MSTOF_tp::VAR_EQUALARC};
 
 bool stateDiffBelowTol(std::vector<double>, double*, double);
 bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);

@@ -67,17 +67,17 @@ FamMember_cr3bp::FamMember_cr3bp(double *ic, double tof,
 
 /**
  *	\brief Create a family member from a trajectory object
- *	\param traj a trajectory reference
+ *	\param arcset an Arcset reference
  */
-FamMember_cr3bp::FamMember_cr3bp(const Arcset_cr3bp traj){
-	IC = traj.getStateByIx(0);
-	TOF = traj.getTotalTOF();
-	JC = traj.getJacobiByIx_const(0);
-	stm = traj.getSTMByIx(-1);
+FamMember_cr3bp::FamMember_cr3bp(const Arcset_cr3bp arcset){
+	IC = arcset.getStateByIx(0);
+	TOF = arcset.getTotalTOF();
+	JC = arcset.getJacobiByIx_const(0);
+	stm = arcset.getSTMByIx(-1);
 
-	std::vector<double> x = traj.getCoord(0);
-	std::vector<double> y = traj.getCoord(1);
-	std::vector<double> z = traj.getCoord(2);
+	std::vector<double> x = arcset.getCoord(0);
+	std::vector<double> y = arcset.getCoord(1);
+	std::vector<double> z = arcset.getCoord(2);
 
 	double xMax = *std::max_element(x.begin(), x.end());
 	double xMin = *std::min_element(x.begin(), x.end());

@@ -126,7 +126,7 @@ class FamGenerator : public Core, public Engine{
 		void cleanEngine();
 		void cr3bp_natParamCont(Fam_cr3bp*, Arcset_cr3bp, std::vector<Mirror_tp>, std::vector<int>, std::vector<int>, int order = 1);
 		void cr3bp_pseudoArcCont(Fam_cr3bp*, Arcset_cr3bp, Mirror_tp, std::vector<int>);
-		Arcset_cr3bp cr3bp_getNextPACGuess(Eigen::VectorXd, Eigen::VectorXd, double, MultShootData);
+		Arcset_cr3bp cr3bp_getNextPACGuess(const Eigen::VectorXd&, const Eigen::VectorXd&, double, MultShootData*);
 };
 
 }

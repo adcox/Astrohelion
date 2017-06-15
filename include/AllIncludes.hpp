@@ -20,6 +20,7 @@
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "Fam_cr3bp.hpp"
+#include "FamGenerator.hpp"
 #include "FamMember_cr3bp.hpp"
 #include "LinMotionEngine.hpp"
 #include "MultShootData.hpp"

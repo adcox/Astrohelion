@@ -1082,17 +1082,12 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 	Mirror_tp mirrorType, std::vector<int> initDir){
 
-	// Check inputs (Only applies to Constraint Method 1)
-	// if(periodicityIgnoreIx < 0 || periodicityIgnoreIx > 5)
-	// 	throw Exception("FamGenerator::cr3bp_pseudoArcCont: Periodicity Ignore Index out of range");
-
-	// if(fixToVal_ix < 0 || fixToVal_ix > 7)
-	// 	throw Exception("FamGenerator::cr3bp_pseudoArcCont: FixToVal Index out of range");
-
-	// TODO - Make these editable?
 	double stepSize = 0.001;
+<<<<<<< Updated upstream
 	double maxStepSize = 0.5;
 	double minStepSize = 1e-7;
+=======
+>>>>>>> Stashed changes
 
 	SysData_cr3bp sys = fam->getSysData();
 	Arcset_cr3bp familyMember(initialGuess);	// Copy the input initial guess

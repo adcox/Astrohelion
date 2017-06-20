@@ -324,7 +324,11 @@ protected:
 		Constraint_tp::SEG_CONT_EX,
 		Constraint_tp::RM_STATE,
 		Constraint_tp::RM_CTRL,
-		Constraint_tp::ENDSEG_STATE};
+		Constraint_tp::ENDSEG_STATE,
+		Constraint_tp::ENDSEG_DIST,
+		Constraint_tp::ENDSEG_MIN_DIST,
+		Constraint_tp::ENDSEG_MAX_DIST,
+		Constraint_tp::ENDSEG_APSE};
 
 	/** A vector containing all the types of events this model supports */
 	std::vector<Event_tp> allowedEvents {Event_tp::NONE,
@@ -345,10 +349,13 @@ protected:
 	 *  \{
 	 */
 	virtual void multShoot_targetApse(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetApse_endSeg(MultShootData*, const Constraint&, int) const;
 	virtual void multShoot_targetDeltaV(MultShootData*, const Constraint&, int) const;
 	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData*, const Constraint&) const;
 	virtual void multShoot_targetDist(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetDist_endSeg(MultShootData*, const Constraint&, int) const;
 	virtual double multShoot_targetDist_compSlackVar(const MultShootData*, const Constraint&) const;
+	virtual double multShoot_targetDist_endSeg_compSlackVar(const MultShootData*, const Constraint&) const;
 	virtual void multShoot_targetCont_Ctrl(MultShootData*, const Constraint&, int) const;
 	virtual void multShoot_targetCont_Ex(MultShootData*, const Constraint&, int) const;
 	virtual void multShoot_targetCont_Ex_Seg(MultShootData*, const Constraint&, int) const;

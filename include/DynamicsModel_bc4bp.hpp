@@ -114,6 +114,7 @@ protected:
 	void multShoot_targetDist(MultShootData*, const Constraint&, int) const override;
 	double multShoot_targetDist_compSlackVar(const MultShootData*, const Constraint&) const override;
 	void multShoot_targetApse(MultShootData*, const Constraint&, int) const override;
+	void multShoot_targetApse_endSeg(MultShootData*, const Constraint&, int) const override;
 	void multShoot_targetSP(MultShootData*, const Constraint&, int) const;
 	void multShoot_targetSP_mag(MultShootData*, const Constraint&, int) const;
 	void multShoot_targetSP_dist(MultShootData*, const Constraint&, int) const;

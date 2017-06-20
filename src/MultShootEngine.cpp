@@ -340,11 +340,14 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				break;
 			case Constraint_tp::MAX_DIST:
 			case Constraint_tp::MIN_DIST:
+			case Constraint_tp::ENDSEG_MAX_DIST:
+			case Constraint_tp::ENDSEG_MIN_DIST:
 				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);	// remember where this slack variable is hiding
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for Constraint_tp::DIST as well
 			case Constraint_tp::DIST:
+			case Constraint_tp::ENDSEG_DIST:
 				addToRows = 1;
 				break;
 			case Constraint_tp::MAX_DELTA_V:
@@ -367,6 +370,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				}
 				break;
 			case Constraint_tp::APSE:
+			case Constraint_tp::ENDSEG_APSE:
+			case Constraint_tp::ENDSEG_JC:
 			case Constraint_tp::JC:
 			case Constraint_tp::PSEUDOARC:
 			case Constraint_tp::SEG_CONT_EX:
@@ -752,9 +757,162 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 		}
 	}
 
+<<<<<<< Updated upstream
 	double scale = pFX->norm() < attenuationLimitTol ? 1.0 : attenuation;
 	*pNewX = *pOldX + scale*X_diff;	// newX = oldX + X_diff
 }// End of solveUpdateEq() =====================================
+=======
+	if(bLineSearchStepSize){
+		chooseStep_LineSearch(pIt, pOldX, pFX, &fullStep, pNewX);
+	}else{
+		double scale = pFX->norm() < attenuationLimitTol ? 1.0 : attenuation;
+		*pNewX = *pOldX + scale*fullStep;	// newX = oldX + fullStep
+	}
+}// End of solveUpdateEq() ============================
+
+void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::VectorXd* pOldX, const Eigen::VectorXd *pOldFX,
+	const Eigen::VectorXd *pFullStep, Eigen::VectorXd *pNewX){
+
+	// Fixed parameters
+	double maxStepSize = 100;
+	double alpha = 1e-4;
+
+	double f_old = 0.5*pOldFX->norm();
+
+	// Initialize full step
+	Eigen::VectorXd fullStep = *pFullStep;
+	
+	// Scale if attempted step is too big (i.e., if there is some unbounded thing going on)
+	if(fullStep.norm() > maxStepSize){
+		fullStep *= maxStepSize/fullStep.norm();
+	}
+
+	SparseMatXCd J(pIt->totalCons, pIt->totalFree);
+	J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
+	J.makeCompressed();
+
+	Eigen::VectorXd slopeProd = J.transpose() * (*pOldFX);
+	slopeProd = slopeProd.transpose() * (*pFullStep);
+	assert(slopeProd.rows() == 1 && slopeProd.cols() == 1);
+	double slope = slopeProd(0);
+
+	if(slope >= 0.0){
+		throw DivergeException("MultShootEngine::updateFreeVarVec: Slope is positive... roundoff error in line search.\n");
+	}
+
+	// Compute min step size
+	double big = 0, temp = 0;
+	for(unsigned int i = 0; i < fullStep.rows(); i++){
+		temp = std::abs(fullStep(i))/std::max(std::abs((*pOldX)(i)), 1.0);
+		if(temp > big)
+			big = temp;
+	}
+	double minStep = 1e-7/big;
+	double step = 1;
+
+	printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Line Search: Minimum Step Size = %.4e\n", minStep);
+
+	// Set up a simulation engine to propagate segments
+	SimEngine sim;
+	double simTol = tol/1000 < 1e-15 ? 1e-15 : tol/1000;
+	sim.setAbsTol(simTol);
+	sim.setRelTol(simTol);
+	sim.setVarStepSize(false);
+	sim.setNumSteps(2);
+	sim.setMakeDefaultEvents(false);
+	sim.setVerbosity(verbosity);
+	
+	unsigned int maxCount = 10;		// Max number of line search iterations
+	double tempStep = 1;			// Storage for the next step size
+	double step2 = 1;				// Step size from the previous iteration of the line search
+	double f = 1;					// Error term for the current iteration
+	double f2 = 1;;					// Error term from the previous iteration of the line search
+
+	unsigned int coreDim = pIt->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+
+	for(unsigned int count = 0; count < maxCount; count++){
+		// Compute next free variable vector give the current step size
+		*pNewX = *pOldX + step * fullStep;
+
+		// Compute an updated constraint vector
+		MultShootData tempData = *pIt;
+		tempData.FX.clear();
+		tempData.FX.assign(tempData.totalCons, 0);
+		tempData.DF_elements.clear();
+		tempData.DF_elements.reserve(tempData.totalCons * coreDim);
+
+		// Update free variable vector in the temporary data object
+		assert(pNewX->rows() > 1 && pNewX->cols() == 1);
+		tempData.X = std::vector<double>(pNewX->data(), pNewX->data() + pNewX->rows());
+		
+		// Do all those expensive function evaluations
+		propSegsFromFreeVars(&tempData, &sim);
+		for(unsigned int c = 0; c < tempData.allCons.size(); c++){
+			tempData.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(&tempData, tempData.allCons[c], c);
+		}
+
+		// Compute magnitude of new FX vector
+		temp = 0;
+		for(unsigned int i = 0; i < tempData.FX.size(); i++){
+			temp += tempData.FX[i]*tempData.FX[i];
+		}
+		// Scaled norm of the constraint vector (an error metric)
+		f = 0.5*sqrt(temp);
+
+		if(step < minStep){
+			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "  Line search decreased past minimum bound.\n");
+			return;
+		}
+
+
+		if(f <= f_old + alpha*step*slope){
+			printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  Line Search: Step Size = %.4e (%u its)\n", step, count);
+			return;	// We're all set, so return!
+		}else{	// Need to backtrack
+			if(count == 0){
+				// Approximate step-size as a quadratic, find step size that yields better guess
+				tempStep = -slope/(2.0*(f - f_old - slope));
+			}else{
+				// Approximate step-size as a cubic
+				double term1 = f - f_old - step*slope;
+				double term2 = f2 - f_old - step2*slope;
+				double a = (term1/(step*step) - term2/(step2*step2))/(step - step2);
+				double b = (-step2*term1/(step*step) + step*term2/(step2*step2))/(step - step2);
+
+				if(a == 0){
+					tempStep = -slope/(2.0*b);
+				}else{
+					double disc = b*b - 3*a*slope;
+					if(disc < 0){
+						tempStep = 0.5*step;
+					}else if(b <= 0){
+						tempStep = (-b + sqrt(disc))/(3.0*a);
+					}else{
+						tempStep = -slope/(b + sqrt(disc));
+					}
+
+					// Ensure that step size decreases by at least a factor of 2
+					if(tempStep > 0.5*step){
+						tempStep = 0.5*step;
+					}
+				}
+			}
+
+			// Update storage for next iteration
+			step2 = step;
+			f2 = f;
+
+			// Ensure that step size decreases by no more than 90%
+			step = std::max(tempStep, 0.1*step);
+		}
+	}
+
+	if(f <= f_old + alpha*step*slope)
+		throw DivergeException("MultShootEngine::updateFreeVarVec: Line search for step size diverged.");
+
+	printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  Line Search: Step Size = %.4e (%d its)\n", step, maxCount);
+}//====================================================
+>>>>>>> Stashed changes
 
 /**
  *  \brief Checks the Jacobian (DF) matrix for singularities, i.e., rows

@@ -189,7 +189,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 			conType = Constraint_tp::JC;
 			break;
 		case Event_tp::APSE:
-			conType = Constraint_tp::APSE;
+			conType = Constraint_tp::ENDSEG_APSE;
 			break;
 		case Event_tp::DIST:
 			conType = Constraint_tp::DIST;

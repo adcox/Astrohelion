@@ -90,7 +90,7 @@ protected:
 	virtual void cleanEngine() = 0;
 
 	/** Describes the number of messages the engine should output by default */
-	Verbosity_tp verbosity = Verbosity_tp::NO_MSG;
+	Verbosity_tp verbosity = Verbosity_tp::SOME_MSG;
 
 	/** Whether or not the engine is "clean"; if it isn't data is being stored that may be cleaned out
 		by the cleanEngine() function */

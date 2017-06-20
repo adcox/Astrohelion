@@ -265,6 +265,11 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::RM_EPOCH: { return "RM_EPOCH"; }
 		case Constraint_tp::RM_CTRL: { return "RM_CTRL"; }
 		case Constraint_tp::ENDSEG_STATE: { return "ENDSEG_STATE"; }
+		case Constraint_tp::ENDSEG_APSE: { return "ENDSEG_APSE"; }
+		case Constraint_tp::ENDSEG_JC: { return "ENDSEG_JC"; }
+		case Constraint_tp::ENDSEG_DIST: { return "ENDSEG_DIST"; }
+		case Constraint_tp::ENDSEG_MIN_DIST: { return "ENDSEG_MIN_DIST"; }
+		case Constraint_tp::ENDSEG_MAX_DIST: { return "ENDSEG_MAX_DIST"; }
 		default: { return "UNDEFINED!"; }
 	}
 }//====================================================
@@ -311,6 +316,11 @@ void Constraint::setAppType(){
 		case Constraint_tp::CONT_PV:
 		case Constraint_tp::CONT_EX:
 		case Constraint_tp::ENDSEG_STATE:
+		case Constraint_tp::ENDSEG_APSE:
+		case Constraint_tp::ENDSEG_DIST:
+		case Constraint_tp::ENDSEG_MIN_DIST:
+		case Constraint_tp::ENDSEG_MAX_DIST:
+		case Constraint_tp::ENDSEG_JC:
 			appType = ConstraintApp_tp::APP_TO_SEG;
 			break;
 		default:

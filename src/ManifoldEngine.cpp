@@ -86,6 +86,9 @@ void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
 /**
  *  \brief Compute manifold arcs from a number of points spaced equally around a
  *  periodic orbit.
+ *  \details Make sure that the STMs along the orbit represent the cumulative evolution
+ *  rather than the segment-wise evolution. This characteristic can be guaranteed by calling
+ *  setSTMs_sequence() on the Arcset in question.
  * 	
  *  \param manifoldType The type of manifolds to generate
  *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
@@ -124,7 +127,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp man
 	allManifolds.reserve(numMans*propPerMan);
 
     // Get a bunch of points to use as starting guesses for the manifolds
-    if(numMans > pPerOrbit->getNumSegs()){
+    if(numMans > pPerOrbit->getNumNodes()){
     	if(verbosity >= Verbosity_tp::SOME_MSG)
         	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic: Requested too many manifolds... will return fewer\n");
         numMans = pPerOrbit->getNumNodes();
@@ -144,7 +147,8 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp man
     for(unsigned int m = 0; m < numMans; m++){
     	// Get the state on the periodic orbit to step away from
 		std::vector<double> state = pPerOrbit->getStateByIx(pointIx[m]);
-    	MatrixXRd STM = pPerOrbit->getSTMByIx(pointIx[m]);
+
+    	MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) : pPerOrbit->getSTMByIx(pointIx[m] - 1);
 
     	// Compute manifolds from this point and add them to the big list
     	std::vector<Arcset_cr3bp> subset = manifoldsFromPOPoint(manifoldType, state, STM, eigVals, eigVecs, tof,
@@ -329,14 +333,14 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
 
     Eigen::VectorXcd vals = eigensolver.eigenvalues();
     MatrixXRcd eigVecs = eigensolver.eigenvectors();
-    std::vector<cdouble> eigData(vals.data(), vals.data()+6);
+    std::vector<cdouble> eigData(vals.data(), vals.data() + vals.rows());
 
     // Sort eigenvalues to put them in a "propper" order, get indices
     // to sort the eigenvectors to match
     std::vector<MatrixXRcd> tempVecs {eigVecs};
     std::vector<unsigned int> sortedIx = sortEig(eigData, tempVecs);
     std::vector<cdouble> sortedEig;
-    for(unsigned int i = 0; i < 6; i++){
+    for(unsigned int i = 0; i < eigData.size(); i++){
         sortedEig.push_back(eigData[sortedIx[i]]);
     }
 
@@ -381,6 +385,11 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
     	if(verbosity >= Verbosity_tp::SOME_MSG)
         	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
         throw Exception("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
+    }
+
+    if(nonCenterVals.size() == sortedEig.size()){
+        if(verbosity >= Verbosity_tp::SOME_MSG)
+            printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No center eigenvalues were found\nCheck to make sure the input orbit is truely periodic and the STMs represent the\nsequential evolution rather than parallel");
     }
 
     // Only keep the real parts of the eigenvectors

@@ -1312,7 +1312,8 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     eventArcset.addConstraint(rmInitState);
 
     // TODO - Implement other ENDSEG constraints to minimize multiple shooter effort
-    if(events[evtIx].getConType() == Constraint_tp::ENDSEG_STATE){
+    if(events[evtIx].getConType() == Constraint_tp::ENDSEG_STATE ||
+        events[evtIx].getConType() == Constraint_tp::ENDSEG_APSE){
         // Delete the last node and constrain the first (and only) segment final state
         eventArcset.deleteNode(1);
         Constraint eventCon(events[evtIx].getConType(), 0, events[evtIx].getConData());

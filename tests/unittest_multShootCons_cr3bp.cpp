@@ -62,8 +62,11 @@ struct fixture_SE_Init{
 		sim = new SimEngine();
 		corrector = new MultShootEngine();
 
+		sim->setVerbosity(Verbosity_tp::NO_MSG);
 		sim->setRevTime(se_lyap_T < 0);
 		sim->runSim_manyNodes(se_lyap_ic, se_lyap_T/1.25, 8, halfLyapSet);
+
+		corrector->setVerbosity(Verbosity_tp::NO_MSG);
 	}//====================================================
 
 	~fixture_SE_Init(){
@@ -87,6 +90,9 @@ struct fixture_EM_Init{
 		correctedSet = new Arcset_cr3bp(sys);
 		sim = new SimEngine();
 		corrector = new MultShootEngine();
+
+		sim->setVerbosity(Verbosity_tp::NO_MSG);
+		corrector->setVerbosity(Verbosity_tp::NO_MSG);
 	}//====================================================
 
 	~fixture_EM_Init(){
@@ -289,6 +295,66 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDist, data::make(tofTypes), 
 	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Dist_EndSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+
+	corrector->setTOFType(tofTp);
+
+	// Constraint_tp::DIST
+	double matchDistConData[] = {1, 0.2};
+	Constraint matchDistCon(Constraint_tp::ENDSEG_DIST, 2, matchDistConData, 2);
+	halfLyapSet->addConstraint(matchDistCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(matchDistCon.getID()).getStateByRow(-1);
+	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(),2) + pow(finalState[1], 2));
+	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
+}//====================================================
+
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MinDist_EndSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+
+	corrector->setTOFType(tofTp);
+	corrector->setDoLineSearch(true);	// This one has trouble converging
+	
+	// Constraint_tp::MIN_DIST
+	double matchDistConData[] = {1, 0.4};
+	Constraint matchDistCon(Constraint_tp::ENDSEG_MIN_DIST, 2, matchDistConData, 2);
+	halfLyapSet->addConstraint(matchDistCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(), 2) + pow(finalState[1], 2));
+
+	BOOST_CHECK_GE(dist, matchDistConData[1]);
+}//====================================================
+
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDist_EndSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+
+	corrector->setTOFType(tofTp);
+
+	// Constraint_tp::MIN_DIST
+	double matchDistConData[] = {1, 0.15};
+	Constraint matchDistCon(Constraint_tp::ENDSEG_MAX_DIST, 2, matchDistConData, 2);
+	halfLyapSet->addConstraint(matchDistCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(), 2) + pow(finalState[1], 2));
+
+	BOOST_CHECK_LE(dist, matchDistConData[1]);
+}//====================================================
+
 BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDeltaV, data::make(tofTypes), tofTp){
 	sim->setRevTime(em_lyap_T < 0);
 	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
@@ -396,6 +462,33 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Apse, data::make(tofTypes), tof
 	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Apse_EndSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+
+	corrector->setTOFType(tofTp);
+	// corrector->setVerbosity(Verbosity_tp::SOME_MSG);
+
+	double apseData = 1;
+	Constraint apseCon(Constraint_tp::ENDSEG_APSE, 3, &apseData, 1);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(apseCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(apseCon.getID()).getStateByRow(-1);
+	const DynamicsModel *model = sys->getDynamicsModel();
+	std::vector<double> primPos = model->getPrimPos(0, sys);
+	double dx = finalState[0] - primPos[apseData*3 + 0];
+	double dy = finalState[1] - primPos[apseData*3 + 1];
+	double dz = finalState[2] - primPos[apseData*3 + 2];
+	double rdot = dx*finalState[3] + dy*finalState[4] + dz*finalState[5];
+
+	BOOST_CHECK_SMALL(rdot, 1e-12);
+}//====================================================
+
 BOOST_DATA_TEST_CASE(CR3BP_EM_SegCont_PV, data::make(tofTypes), tofTp){
 	if(tofTp == MSTOF_tp::VAR_EQUALARC)
 		return;
@@ -403,6 +496,7 @@ BOOST_DATA_TEST_CASE(CR3BP_EM_SegCont_PV, data::make(tofTypes), tofTp){
 	SysData_cr3bp sys("earth", "moon");
 	Arcset_cr3bp forwardArc(&sys), reverseArc(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2, 4, &forwardArc);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(em_lyap_ic, em_lyap_T/2, 4, &reverseArc);
@@ -414,7 +508,7 @@ BOOST_DATA_TEST_CASE(CR3BP_EM_SegCont_PV, data::make(tofTypes), tofTp){
 	MultShootEngine corrector;
 	// corrector->setVerbosity(Verbosity_tp::DEBUG);
 	corrector.setTOFType(tofTp);
-	
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 
 	double contData[] = {4, 4, NAN, 4, 4, NAN};
 	Constraint contCon(Constraint_tp::SEG_CONT_PV, 2, contData, 6);
@@ -450,12 +544,14 @@ BOOST_DATA_TEST_CASE(CR3BP_EM_DoubleSource, data::make(tofTypes), tofTp){
 
 	Arcset_cr3bp halfPlus(&sys), halfMinus(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(ic, tof, 4, &halfPlus);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(ic, tof, 4, &halfMinus);
 	halfPlus.appendSetAtNode(&halfMinus, 0, 0, 0);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 
 	// Constraint_tp::STATE
 	double stateConData[] = {1.1, 0, NAN, 0, NAN, 0};

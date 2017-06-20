@@ -191,8 +191,8 @@ enum class Constraint_tp {
 				 *	the continuation step size.
 				 */
 	RM_STATE,	/*!< State constraint: Remove the indicated state vector from the free variable vector
-				 * during multiple shooting. The <tt>id</tt> attribute specifies which node's state
-				 * vector to remove. The <tt>data</tt> field is currently unused.
+				 * 	during multiple shooting. The <tt>id</tt> attribute specifies which node's state
+				 * 	vector to remove. The <tt>data</tt> field is currently unused.
 	     		 */
 	RM_EPOCH,	/*!< Epoch constraint: Remove the specified epoch from the free variable vector
 				 *	during multiple shooting. The <tt>id</tt> attribute specifies which node's epoch
@@ -202,9 +202,23 @@ enum class Constraint_tp {
 				 *	vector during multiple shooting. The <tt>id</tt> attribute specifies which node's 
 				 *	control state vector to remove. The <tt>data</tt> is currently unused.
 				 */
-	ENDSEG_STATE/*!< Constrain the end of a segment (not a node) to have a certain state
-				 *
+	ENDSEG_STATE,/*!< Constrain the end of a segment (not a node) to have a certain state
+				 * 	The <tt>id</tt> value represents the segment to constrain,
+ 			 	 * 	and the <tt>data</tt> vector contains values for each state.
+ 			 	 * 	to leave a state unconstrained, place a NAN value in the
+ 			 	 * 	place of that state. 
 				 */
+	ENDSEG_APSE,/*!< Constrain the end of a segment (not a node) to be an apse
+				 * 	relative to one of the primaries. The <tt>data</tt> field specifies 
+				 * 	the index of the primary (e.g. 0 for P1, 1 for P2, etc.) in the FIRST
+ 				 *	element of the array. For example, if I want to constrain segment
+ 				 *	seven to be an apse relative to P1, I would set <tt>id</tt> 
+ 				 *	to 7 and set <tt>data</tt> to [0]
+				 */
+	ENDSEG_DIST,
+	ENDSEG_MAX_DIST,
+	ENDSEG_MIN_DIST,
+	ENDSEG_JC
 };
 
 /**

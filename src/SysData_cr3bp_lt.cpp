@@ -46,6 +46,7 @@ SysData_cr3bp_lt::SysData_cr3bp_lt() : SysData_cr3bp(){
 	numPrimaries = 2;
 	type = SysData_tp::CR3BP_LT_SYS;
 	otherParams.assign(2,0);	// make mu = 0 and M0 = 0
+	otherParams[1] = 1;		// Assign M0 = 1 to avoid singularities
 }//========================================
 
 /**
@@ -60,6 +61,10 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double refMas
 	otherParams.assign(2,0);	// make mu = 0 and M0 = 0
 	
 	initFromPrimNames(P1, P2);
+
+	if(refMass <= 0)
+		throw Exception("SysData_cr3bp_lt: Cannot use negative or zero reference mass");
+	
 	otherParams[1] = refMass;
 }//===================================================
 

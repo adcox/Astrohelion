@@ -66,9 +66,11 @@ public:
 	 *  \{
 	 */
 	double getThrust() const;
+	double getThrust_nondim(const SysData_cr3bp_lt*) const;
 	double getIsp() const;
 
 	void setThrust(double);
+	void setThrust_nondim(double, const SysData_cr3bp_lt*);
 	void setIsp(double);
 	//\}
 

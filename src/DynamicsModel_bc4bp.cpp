@@ -1029,6 +1029,108 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, const Constrai
 }//===================================================
 
 /**
+ *  \brief Compute partials and constraint function values for apse constraints
+ *  on segment ends
+ *
+ *  \details This method overrides the default behavior and includes the 
+ *  relevant partials for this nonautonomous system
+ *  
+ *  \param it a pointer to the class containing all the data relevant to the 
+ *  corrections process
+ *  \param con a copy of the constraint object
+ *  \param row0 the index of the row this constraint begins at
+ */
+void DynamicsModel_bc4bp::multShoot_targetApse_endSeg(MultShootData *pIt, const Constraint& con, int row0) const{
+    std::vector<double> conData = con.getData();
+    int segIx = pIt->nodesIn->getSegIx(con.getID());
+
+    // Get object representing origin of segment
+    MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+
+    MSVarMap_Obj tof_var;
+    if(to_underlying(pIt->tofTp) > 0){
+        switch(pIt->tofTp){
+            case MSTOF_tp::VAR_FREE:
+            case MSTOF_tp::VAR_FIXSIGN:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                break;
+            case MSTOF_tp::VAR_EQUALARC:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                break;
+            default:
+                throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+        }
+    }   
+
+    // Get the node epoch either from the design vector or from the original set of nodes
+    MSVarMap_Obj epochVar;
+    double t0 = 0;
+    if(to_underlying(pIt->tofTp) > 0){  // Time is variable
+        epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+        t0 = epochVar.row0 == -1 ? pIt->nodesIn->getEpoch(epochVar.key.id) : pIt->X[epochVar.row0];
+    }else{
+        t0 = pIt->nodesIn->getEpoch(pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+    }
+
+    // Data associated with the previous node and the propagated segment
+    std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+
+    int Pix = static_cast<int>(conData[0]); // index of primary
+    const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pIt->nodesIn->getSysData());
+    double primPos[3] = {0}, primVel[3] = {0};
+
+    getPrimPos(t0, bcSys, Pix, primPos);
+    getPrimVel(t0, bcSys, Pix, primVel);
+
+    // Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
+    double dx = lastState[0] - primPos[0];
+    double dy = lastState[1] - primPos[1];
+    double dz = lastState[2] - primPos[2];
+    double dvx = lastState[3] - primVel[0];
+    double dvy = lastState[4] - primVel[1];
+    double dvz = lastState[5] - primVel[2];
+
+    // Constraint function: r_dot = 0 (using non-scaled coordinates)
+    pIt->FX[row0] = dx*dvx + dy*dvy + dz*dvz;
+
+    // Partials of F w.r.t. propagated state at segment end
+    double dFdq_nf[6] = {dvx, dvy, dvz, dx, dy, dz};
+        
+    if(prevNode_var.row0 != -1){
+        MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
+
+        // Do the matrix multiplication with loops to avoid expensive vector allocation
+        double sum;
+        for(unsigned int c = 0; c < 6; c++){
+            sum = 0;
+            for(unsigned int r = 0; r < 6; r++){
+                sum += dFdq_nf[r]*stm(c,r);
+            }
+            pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+        }
+    }
+
+    if(tof_var.row0 != -1){
+        std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+
+        // Compute dot product between dFdq_nf and final state derivative vector
+        double dp = 0;
+        for(unsigned int r = 0; r < 6; r++){
+            dp += dFdq_nf[r]*lastDeriv[r];
+        }
+        pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, dp));
+    }
+
+    if(to_underlying(pIt->tofTp) > 0 && epochVar.row0 != -1){
+        double primAccel[3] = {0};
+        getPrimAccel(t0, bcSys, Pix, primAccel);
+
+        pIt->DF_elements.push_back(Tripletd(row0, epochVar.row0, -1*(dvx*primVel[0] + dvy*primVel[1] + dvz*primVel[2]) -
+            (dx*primAccel[0] + dy*primAccel[1] + dz*primAccel[2]) ));
+    }
+}//====================================================
+
+/**
  *  \brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>
  *
  *  This function computes three constraint values and three rows of partials for the Jacobian.

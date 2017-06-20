@@ -51,6 +51,7 @@ DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_t
     coreDim = 7;
     extraDim = 0;
     allowedCons.push_back(Constraint_tp::JC);
+    allowedCons.push_back(Constraint_tp::ENDSEG_JC);
     allowedEvents.push_back(Event_tp::JC);
     allowedEvents.push_back(Event_tp::MASS);
 }//==============================================

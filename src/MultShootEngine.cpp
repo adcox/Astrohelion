@@ -80,8 +80,6 @@ MultShootEngine::~MultShootEngine(){}
 void MultShootEngine::copyMe(const MultShootEngine &e){
 	Engine::copyBaseEngine(e);
 	verbosity = e.verbosity;//
-	// bVarTime = e.bVarTime;//
-	// bEqualArcTime = e.bEqualArcTime;//
 	maxIts = e.maxIts;//
 	tol = e.tol;//
 	bFindEvent = e.bFindEvent;//
@@ -89,6 +87,7 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 	bIgnoreDiverge = e.bIgnoreDiverge;
 	bFullFinalProp = e.bFullFinalProp;
 	tofTp = e.tofTp;
+	bDoLineSearch = e.bDoLineSearch;
 }//====================================================
 
 //-----------------------------------------------------
@@ -115,6 +114,8 @@ MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
  *	\return whether or not the algorithm will optimize the process to find an event
  */
 bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
+
+bool MultShootEngine::doesLineSearch() const { return bDoLineSearch; }
 
 /**
  *  \brief Retreive whether or not the engine will use a full, variable-step
@@ -155,6 +156,8 @@ MSTOF_tp MultShootEngine::getTOFType() const{ return tofTp; }
  *	less than this value are considered negligible
  */
 double MultShootEngine::getTol() const { return tol; }
+
+void MultShootEngine::setDoLineSearch(bool b){ bDoLineSearch = b; }
 
 /**
  *  \brief Set whether or not the engine conducts a line search to choose 
@@ -362,11 +365,14 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				break;
 			case Constraint_tp::MAX_DIST:
 			case Constraint_tp::MIN_DIST:
+			case Constraint_tp::ENDSEG_MAX_DIST:
+			case Constraint_tp::ENDSEG_MIN_DIST:
 				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
 				it.slackAssignCon.push_back(c);	// remember where this slack variable is hiding
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for Constraint_tp::DIST as well
 			case Constraint_tp::DIST:
+			case Constraint_tp::ENDSEG_DIST:
 				addToRows = 1;
 				break;
 			case Constraint_tp::MAX_DELTA_V:
@@ -389,6 +395,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				}
 				break;
 			case Constraint_tp::APSE:
+			case Constraint_tp::ENDSEG_APSE:
+			case Constraint_tp::ENDSEG_JC:
 			case Constraint_tp::JC:
 			case Constraint_tp::PSEUDOARC:
 			case Constraint_tp::SEG_CONT_EX:
@@ -833,7 +841,8 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::Vec
 	sim.setVarStepSize(false);
 	sim.setNumSteps(2);
 	sim.setMakeDefaultEvents(false);
-
+	sim.setVerbosity(verbosity);
+	
 	unsigned int maxCount = 10;		// Max number of line search iterations
 	double tempStep = 1;			// Storage for the next step size
 	double step2 = 1;				// Step size from the previous iteration of the line search

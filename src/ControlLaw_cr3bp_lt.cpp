@@ -52,17 +52,16 @@ namespace astrohelion{
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> params) : ControlLaw(id, params){}
 
 /**
- *  \brief [brief description]
- *  \details [long description]
+ *  \brief Construct a control law
  * 
  *  \param id Control law ID
- *  \param T Thrust value, Newtons
+ *  \param F Thrust magnitude, Newtons
  *	\param Isp Specific Impulse (Isp), seconds
  */
-ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double T, double Isp){
+ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double F, double Isp){
 	lawType = id;
 	params.assign(2,0);
-	params[0] = T;
+	params[0] = F;
 	params[1] = Isp;
 
 	init();
@@ -79,16 +78,52 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double T, double Isp){
 double ControlLaw_cr3bp_lt::getThrust() const { return params[0]; }
 
 /**
+ *  \brief Retreive the nondimensional thrust magnitude
+ *  \details The nondimsionalization of the thrust magnitude relies
+ *  on the spacecraft reference mass as well as the 
+ *  characteristic quantities associated with the 3BP. Hence,
+ *  the System Data object is required to perform this computation.
+ * 
+ *  \param pSys A pointer to the system data object
+ *  \return the nondimensional thrust magnitude
+ */
+double ControlLaw_cr3bp_lt::getThrust_nondim(const SysData_cr3bp_lt *pSys) const{
+	return params[0]*pSys->getCharT()*pSys->getCharT()/ ( 1000*pSys->getCharL()*pSys->getRefMass());
+}//====================================================
+
+/**
  *	\brief Get the specific impulse for the spacecraft
  *	\return the specific impulse, seconds
  */
 double ControlLaw_cr3bp_lt::getIsp() const { return params[1]; }
+
 
 /**
  *	\brief Set the spacecraft thrust
  *	\param f the thrust, in Newtons
  */
 void ControlLaw_cr3bp_lt::setThrust(double f){ params[0] = f;}
+
+/**
+ *  \brief Set the thrust via the nondimensional representation.
+ *  \details Thrust is nondimensionalized in the EOMs by the spacecraft
+ *  reference mass, and the characteristic quantities associated with
+ *  the system. Hence, the system data object is required. The nondimensional
+ *  input is converted to a dimensional by leveraging those quantities. 
+ *  Note that a change in the s/c reference mass after calling this function
+ *  will effectively change the nondimensional thrust magnitude leveraged
+ *  in this control law.
+ *  
+ *  Nondimensional thrust values supply a flexible inter-system metric
+ *  to quantify the strength of the low-thrust perturbation relative
+ *  to the natural system dynamics.
+ * 
+ *  \param f nondimensional thrust value
+ *  \param pSys A pointer to the system data object
+ */
+void ControlLaw_cr3bp_lt::setThrust_nondim(double f, const SysData_cr3bp_lt *pSys){
+	params[0] = 1000*pSys->getRefMass()*pSys->getCharL()*f / (pSys->getCharT()*pSys->getCharT());
+}//====================================================
 
 /**
  *	\brief Set the specific impulse for the spacecraft

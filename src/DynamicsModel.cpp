@@ -480,6 +480,9 @@ double DynamicsModel::multShoot_getSlackVarVal(const MultShootData *it, const Co
 		case Constraint_tp::MAX_DIST:
 		case Constraint_tp::MIN_DIST:
 			return multShoot_targetDist_compSlackVar(it, con);
+		case Constraint_tp::ENDSEG_MAX_DIST:
+		case Constraint_tp::ENDSEG_MIN_DIST:
+			return multShoot_targetDist_endSeg_compSlackVar(it, con);
 		case Constraint_tp::MAX_DELTA_V:
 			return multShoot_targetDeltaV_compSlackVar(it, con);
 		default:
@@ -498,57 +501,65 @@ double DynamicsModel::multShoot_getSlackVarVal(const MultShootData *it, const Co
  *	developer to ensure any new constraints are implemented in a derived model, and any
  *	existing constraints are treated fully and appropriately by the new, derived model.
  *
- *	\param it a pointer to the corrector's iteration data structure
+ *	\param pIt a pointer to the corrector's iteration data structure
  *	\param con the constraint being applied
  *	\param c the index of the constraint within the total constraint vector (which is, in
  *	turn, stored in the iteration data)
  */	
-void DynamicsModel::multShoot_applyConstraint(MultShootData *it, const Constraint& con, int c) const{
+void DynamicsModel::multShoot_applyConstraint(MultShootData *pIt, const Constraint& con, int c) const{
 
-	int row0 = it->conRows[c];
+	int row0 = pIt->conRows[c];
 
 	switch(con.getType()){
 		case Constraint_tp::CONT_PV:
-			multShoot_targetCont_State(it, con, row0);		// Apply position-velocity continuity constraints
+			multShoot_targetCont_State(pIt, con, row0);		// Apply position-velocity continuity constraints
 			break;
 		case Constraint_tp::CONT_CTRL:
-			multShoot_targetCont_Ctrl(it, con, row0);		// Control state continuity
+			multShoot_targetCont_Ctrl(pIt, con, row0);		// Control state continuity
 			break;
 		case Constraint_tp::SEG_CONT_PV:
-			multShoot_targetCont_State_Seg(it, con, row0);
+			multShoot_targetCont_State_Seg(pIt, con, row0);
 			break;
 		case Constraint_tp::SEG_CONT_EX:
-			multShoot_targetCont_Ex_Seg(it, con, row0);
+			multShoot_targetCont_Ex_Seg(pIt, con, row0);
 			break;
 		case Constraint_tp::CONT_EX:
-			multShoot_targetCont_Ex(it, con, row0);			// Apply extra continuity constraints
+			multShoot_targetCont_Ex(pIt, con, row0);			// Apply extra continuity constraints
 			break;
 		case Constraint_tp::STATE:
-			multShoot_targetState(it, con, row0);
+			multShoot_targetState(pIt, con, row0);
 			break;
 		case Constraint_tp::MATCH_ALL:
-			multShoot_targetMatchAll(it, con, row0);
+			multShoot_targetMatchAll(pIt, con, row0);
 			break;
 		case Constraint_tp::MATCH_CUST:
-			multShoot_targetMatchCust(it, con, row0);
+			multShoot_targetMatchCust(pIt, con, row0);
 			break;
 		case Constraint_tp::MAX_DIST:
 		case Constraint_tp::MIN_DIST:
 		case Constraint_tp::DIST:
-			multShoot_targetDist(it, con, c);
+			multShoot_targetDist(pIt, con, c);
 			break;
 		case Constraint_tp::DELTA_V:
 		case Constraint_tp::MAX_DELTA_V:
-			multShoot_targetDeltaV(it, con, c);
+			multShoot_targetDeltaV(pIt, con, c);
 			break;
 		case Constraint_tp::TOF:
-			multShoot_targetTOF(it, con, row0);
+			multShoot_targetTOF(pIt, con, row0);
 			break;
 		case Constraint_tp::APSE:
-			multShoot_targetApse(it, con, row0);
+			multShoot_targetApse(pIt, con, row0);
 			break;	
 		case Constraint_tp::ENDSEG_STATE:
-			multShoot_targetState_endSeg(it, con, row0);
+			multShoot_targetState_endSeg(pIt, con, row0);
+			break;
+		case Constraint_tp::ENDSEG_APSE:
+			multShoot_targetApse_endSeg(pIt, con, row0);
+			break;
+		case Constraint_tp::ENDSEG_MAX_DIST:
+		case Constraint_tp::ENDSEG_MIN_DIST:
+		case Constraint_tp::ENDSEG_DIST:
+			multShoot_targetDist_endSeg(pIt, con, c);
 			break;
 		default: break;
 	}
@@ -1105,12 +1116,13 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, const Constraint& co
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
+	double primPos[3] = {0};
+	getPrimPos(t, it->nodesIn->getSysData(), Pix, primPos);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
-	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1];
-	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2];
+	double dx = it->X[state_var.row0+0] - primPos[0];
+	double dy = it->X[state_var.row0+1] - primPos[1];
+	double dz = it->X[state_var.row0+2] - primPos[2];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 
@@ -1142,19 +1154,137 @@ void DynamicsModel::multShoot_targetDist(MultShootData* it, const Constraint& co
 }// End of targetDist() =========================================
 
 /**
+ *	\brief Compute partials and constraint functions for segments constrained with <tt>Constraint_tp::ENDSEG_DIST</tt>, 
+ *	<tt>Constraint_tp::ENDSEG_MIN_DIST</tt>, or <tt>Constraint_tp::ENDSEG_MAX_DIST</tt>
+ *
+ *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
+ *	functions, which all models define and uses dynamic-independent computations to populate
+ *	the constraint vector and Jacobian matrix. Nonautonomous models will need to include time
+ *	dependencies.
+ *
+ *	\param pIt a pointer to the class containing all the data relevant to the corrections process
+ *	\param con a copy of the constraint object
+ *	\param c the index of this constraint in the constraint vector object
+ */
+void DynamicsModel::multShoot_targetDist_endSeg(MultShootData* pIt, const Constraint& con, int c) const{
+	std::vector<double> conData = con.getData();
+	int segIx = pIt->nodesIn->getSegIx(con.getID());
+
+	// Get object representing origin node state of segment
+	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+	
+	MSVarMap_Obj tof_var;
+	if(to_underlying(pIt->tofTp) > 0){
+		switch(pIt->tofTp){
+			case MSTOF_tp::VAR_FREE:
+			case MSTOF_tp::VAR_FIXSIGN:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				break;
+			case MSTOF_tp::VAR_EQUALARC:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+				break;
+			default:
+				throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+		}
+	}
+
+	int Pix = static_cast<int>(conData[0]);	// index of primary
+	int row0 = pIt->conRows[c];
+	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
+
+	// Get the primary position
+	double primPos[3] = {0};
+	getPrimPos(t, pIt->nodesIn->getSysData(), Pix, primPos);
+
+	std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+
+	// Get distance between node and primary in x, y, and z-coordinates
+	double dx = lastState[0] - primPos[0];
+	double dy = lastState[1] - primPos[1];
+	double dz = lastState[2] - primPos[2];
+
+	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
+
+	// Compute difference between desired distance and true distance
+	pIt->FX[row0] = h - conData[1];
+
+	double dFdr_nf[3] = {dx/h, dy/h, dz/h};
+
+	// Partials with respect to node position states
+	if(prevNode_var.row0 != -1){
+		MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
+
+		// Do matrix multiplication with loops to avoid expensive vector allocation
+		double sum;
+		for(unsigned int c = 0; c < 6; c++){
+			sum = 0;
+			for(unsigned int r = 0; r < 3; r++){
+				sum += dFdr_nf[r]*stm(r,c);
+			}
+
+			pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+		}
+	}
+
+	// Partials with respect to time-of-flight
+	if(to_underlying(pIt->tofTp) > 0 && tof_var.row0 != -1){
+		double timeCoeff = 1;
+		switch(pIt->tofTp){
+			case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
+			case MSTOF_tp::VAR_FIXSIGN:
+				timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
+				break;
+			case MSTOF_tp::VAR_EQUALARC:
+				timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
+				break;
+			default:
+				throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
+		}
+
+		std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+
+		// Compute dot product between dFdr_nf and final state derivative vector
+		double dp = 0;
+		for(unsigned int r = 0; r < 3; r++){
+			dp += dFdr_nf[r]*lastDeriv[r];
+		}
+		pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
+	}
+
+	// Extra stuff for inequality constraints
+	if(con.getType() == Constraint_tp::ENDSEG_MIN_DIST || 
+		con.getType() == Constraint_tp::ENDSEG_MAX_DIST ){
+		// figure out which of the slack variables correspond to this constraint
+		std::vector<int>::iterator slackIx = std::find(pIt->slackAssignCon.begin(), 
+			pIt->slackAssignCon.end(), c);
+
+		// which column of the DF matrix the slack variable is in
+		int slackCol = pIt->totalFree - pIt->numSlack + (slackIx - pIt->slackAssignCon.begin());
+		int sign = con.getType() == Constraint_tp::ENDSEG_MAX_DIST ? 1 : -1;
+
+		// Subtract squared slack variable from constraint
+		pIt->FX[row0] += sign*pIt->X[slackCol]*pIt->X[slackCol];
+
+		// Partial with respect to slack variable
+		pIt->DF_elements.push_back(Tripletd(row0, slackCol, sign*2*pIt->X[slackCol]));
+	}
+}// End of targetDist_endSeg() ====================================
+
+/**
  *  \brief Compute the value of the slack variable for inequality distance constraints
  *  \details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
  *  design, using this value will prevent the multiple shooting algorithm from
  *  searching all over for the propper value.
  * 
- *  \param it the iteration data object for the multiple shooting process
+ *  \param pIt the iteration data object for the multiple shooting process
  *  \param con the constraint the slack variable applies to
  *  \return the value of the slack variable
  */
-double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it, const Constraint& con) const{
+double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* pIt, const Constraint& con) const{
 	std::vector<double> conData = con.getData();
-	MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+
+	MSVarMap_Obj state_var = pIt->getVarMap_obj(MSVar_tp::STATE, con.getID());
 	int Pix = static_cast<int>(conData[0]);	// index of primary	
 	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
 
@@ -1162,12 +1292,55 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* it,
 		throw Exception("DynamicsModel::multShoot_targetDist: State vector is not part of free variable vector; cannot target distance.");
 
 	// Get the primary position
-	std::vector<double> primPos = getPrimPos(t, it->nodesIn->getSysData());
+	double primPos[3] = {0};
+	getPrimPos(t, pIt->nodesIn->getSysData(), Pix, primPos);
 
 	// Get distance between node and primary in x, y, and z-coordinates
-	double dx = it->X[state_var.row0+0] - primPos[Pix*3+0];
-	double dy = it->X[state_var.row0+1] - primPos[Pix*3+1];
-	double dz = it->X[state_var.row0+2] - primPos[Pix*3+2];
+	double dx = pIt->X[state_var.row0+0] - primPos[0];
+	double dy = pIt->X[state_var.row0+1] - primPos[1];
+	double dz = pIt->X[state_var.row0+2] - primPos[2];
+
+	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
+	int sign = con.getType() == Constraint_tp::MAX_DIST ? 1 : -1;
+    double diff = conData[1] - h;
+
+    /*  If diff and sign have the same sign (+/-), then the constraint
+     *  is satisfied, so compute the value of the slack variable that 
+     *  sets the constraint function equal to zero. Otherwise, choose 
+     *  a small value of the slack variable but don't set it to zero as 
+     *  that will make the partials zero and will prevent the mulitple
+     *  shooting algorithm from updating the slack variable
+     */
+    return diff*sign > 0 ? sqrt(std::abs(diff)) : 1e-4;
+}//==========================================================
+
+/**
+ *  \brief Compute the value of the slack variable for inequality distance constraints
+ *  \details This function computes a value for the slack variable in an
+ *  inequality distance constraint. If the constraint is already met by the initial
+ *  design, using this value will prevent the multiple shooting algorithm from
+ *  searching all over for the propper value.
+ * 
+ *  \param pIt the iteration data object for the multiple shooting process
+ *  \param con the constraint the slack variable applies to
+ *  \return the value of the slack variable
+ */
+double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootData* pIt, const Constraint& con) const{
+	std::vector<double> conData = con.getData();
+
+	std::vector<double> lastState = pIt->nodesIn->getSegRef_const(con.getID()).getStateByRow(-1);
+	
+	int Pix = static_cast<int>(conData[0]);	// index of primary
+	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
+
+	// Get the primary position
+	double primPos[3] = {0};
+	getPrimPos(t, pIt->nodesIn->getSysData(), Pix, primPos);
+
+	// Get distance between node and primary in x, y, and z-coordinates
+	double dx = lastState[0] - primPos[0];
+	double dy = lastState[1] - primPos[1];
+	double dz = lastState[2] - primPos[2];
 
 	double h = sqrt(dx*dx + dy*dy + dz*dz); 	// true distance
 	int sign = con.getType() == Constraint_tp::MAX_DIST ? 1 : -1;
@@ -1422,6 +1595,100 @@ void DynamicsModel::multShoot_targetApse(MultShootData *it, const Constraint& co
 	it->DF_elements.push_back(Tripletd(row0, state_var.row0+5, dz));
 }//====================================================
 
+/**
+ *	\brief Compute partials and constraint function values for apse constraints
+ *	on segment ends
+ *
+ *	This method *should* provide full functionality for any autonomous model. Non-
+ *	autonomous models will need to modify the function to account for epoch time
+ *	
+ *	\param it a pointer to the class containing all the data relevant to the corrections process
+ *	\param con a copy of the constraint object
+ *	\param row0 the index of the row this constraint begins at
+ */
+void DynamicsModel::multShoot_targetApse_endSeg(MultShootData *pIt, const Constraint& con, int row0) const{
+	std::vector<double> conData = con.getData();
+	int segIx = pIt->nodesIn->getSegIx(con.getID());
+
+	// Get object representing origin of segment
+	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+
+	MSVarMap_Obj tof_var;
+	if(to_underlying(pIt->tofTp) > 0){
+		switch(pIt->tofTp){
+			case MSTOF_tp::VAR_FREE:
+			case MSTOF_tp::VAR_FIXSIGN:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				break;
+			case MSTOF_tp::VAR_EQUALARC:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+				break;
+			default:
+				throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+		}
+	}	
+
+	// Data associated with the previous node and the propagated segment
+	std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+
+	int Pix = static_cast<int>(conData[0]);	// index of primary
+	double t = 0;	// If the system is non-autonomous, this will need to be replaced with an epoch time
+	double primPos[3] = {0};
+	getPrimPos(t, pIt->nodesIn->getSysData(), Pix, primPos);
+
+	// Get distance between node and primary in x, y, and z-coordinates, use non-scaled coordinates
+	double dx = lastState[0] - primPos[0];
+	double dy = lastState[1] - primPos[1];
+	double dz = lastState[2] - primPos[2];
+	double vx = lastState[3];
+	double vy = lastState[4];
+	double vz = lastState[5];
+
+	// Constraint function: r_dot = 0 (using non-scaled coordinates)
+	pIt->FX[row0] = dx*vx + dy*vy + dz*vz;
+
+	// Partials of F w.r.t. propagated state at segment end
+	double dFdq_nf[6] = {vx, vy, vz, dx, dy, dz};
+	
+	if(prevNode_var.row0 != -1){
+		MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
+
+		// Do the matrix multiplication with loops to avoid expensive vector allocation
+		double sum;
+		for(unsigned int c = 0; c < 6; c++){
+			sum = 0;
+			for(unsigned int r = 0; r < 6; r++){
+				sum += dFdq_nf[r]*stm(r,c);
+			}
+			pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+		}
+	}
+
+	// Partials of F w.r.t. time-of-flight
+	if(to_underlying(pIt->tofTp) > 0 && tof_var.row0 != -1){
+		double timeCoeff = 1;
+		switch(pIt->tofTp){
+			case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
+			case MSTOF_tp::VAR_FIXSIGN:
+				timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
+				break;
+			case MSTOF_tp::VAR_EQUALARC:
+				timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
+				break;
+			default:
+				throw Exception("DynamicsModel::multShoot_targetApse_endSeg: Unhandled time type");
+		}
+
+		std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+
+		// Compute dot product between dFdq_nf and final state derivative vector
+		double dp = 0;
+		for(unsigned int r = 0; r < 6; r++){
+			dp += dFdq_nf[r]*lastDeriv[r];
+		}
+		pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
+	}
+}//====================================================
 
 /**
  *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 

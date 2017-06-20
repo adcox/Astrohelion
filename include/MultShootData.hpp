@@ -51,7 +51,7 @@ enum class MSTOF_tp : int{
 	VAR_EQUALARC = 2,	/*!< Times-of-flight are all equal; one TOF is stored in the free variable vector.
 						 *	All times-of-flight must be of the same sign for this to work
 						 */
-	VAR_POS = 3			/*!< Times-of-flight are all positive; sqrt(TOF) is stored for each arc
+	VAR_FIXSIGN = 3		/*!< Times-of-flight are all positive; sqrt(TOF) is stored for each arc
 						 *	All times-of-flight must be of the same sign for this to work
 						 */
 };

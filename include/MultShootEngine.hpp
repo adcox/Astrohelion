@@ -130,13 +130,6 @@ class MultShootEngine : public Core, public Engine{
 
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
 
-		/** Whether or not to use variable time in the corrections process */
-		// bool bVarTime = true;
-
-		/** Whether or not to force all arcs to have the same length (in time);
-		 	only applies if variable time is enabled */
-		// bool bEqualArcTime = false;
-
 		/** Whether or not to conduct final round of propagations with an 
 			integrator that leverages variable step time. When set to TRUE,
 			the output arcset will have Segments with many states. If set to 
@@ -169,6 +162,7 @@ class MultShootEngine : public Core, public Engine{
 		bool bIgnoreDiverge = false;
 
 		void checkDFSingularities(MatrixXRd);
+		void chooseStep_LineSearch(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
 		void cleanEngine();
 		void copyMe(const MultShootEngine&);
 		void propSegsFromFreeVars(MultShootData*, SimEngine*);

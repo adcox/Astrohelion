@@ -636,7 +636,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData *it, const Const
         double timeCoeff = 1.0;
         double tof = 0;
         switch(it->tofTp){
-            case MSTOF_tp::VAR_POS:
+            case MSTOF_tp::VAR_FIXSIGN:
                 tof_var = it->getVarMap_obj(MSVar_tp::TOF, con.getID());
                 timeCoeff = astrohelion::sign(it->nodesIn->getTOF(con.getID()))*2*it->X[tof_var.row0];
                 tof = astrohelion::sign(it->nodesIn->getTOF(con.getID())) * it->X[tof_var.row0] * it->X[tof_var.row0];
@@ -690,7 +690,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex_Seg(MultShootData *it, const C
         double timeCoeff1 = 1, timeCoeff2 = 1;
         double tof1 = 0, tof2 = 0;
         switch(it->tofTp){
-            case MSTOF_tp::VAR_POS:
+            case MSTOF_tp::VAR_FIXSIGN:
                 tof_var1 = it->getVarMap_obj(MSVar_tp::TOF, con.getID());
                 tof_var2 = it->getVarMap_obj(MSVar_tp::TOF, con.getData()[0]);
                 timeCoeff1 = astrohelion::sign(it->nodesIn->getTOF(con.getID()))*2*it->X[tof_var1.row0];
@@ -1814,7 +1814,7 @@ void DynamicsModel_bc4bp::multShoot_createOutput(const MultShootData *it) const{
                     tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
                     tof = it->X[tofVar.row0];
                     break;
-                case MSTOF_tp::VAR_POS:
+                case MSTOF_tp::VAR_FIXSIGN:
                     tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
                     tof = astrohelion::sign(it->nodesIn->getTOFByIx(s)) * it->X[tofVar.row0] * it->X[tofVar.row0];
                     break;

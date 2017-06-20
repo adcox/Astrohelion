@@ -1083,11 +1083,6 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 	Mirror_tp mirrorType, std::vector<int> initDir){
 
 	double stepSize = 0.001;
-<<<<<<< Updated upstream
-	double maxStepSize = 0.5;
-	double minStepSize = 1e-7;
-=======
->>>>>>> Stashed changes
 
 	SysData_cr3bp sys = fam->getSysData();
 	Arcset_cr3bp familyMember(initialGuess);	// Copy the input initial guess

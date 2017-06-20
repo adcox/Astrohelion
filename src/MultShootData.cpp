@@ -51,8 +51,8 @@ const char* MSTOF_tp_cStr(const MSTOF_tp &tp){
 			return "VAR_FREE";
 		case MSTOF_tp::VAR_EQUALARC:
 			return "VAR_EQUALARC";
-		case MSTOF_tp::VAR_POS:
-			return "VAR_POS";
+		case MSTOF_tp::VAR_FIXSIGN:
+			return "VAR_FIXSIGN";
 		default:
 			return "UNDEFINED";
 	}

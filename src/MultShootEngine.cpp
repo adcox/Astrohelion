@@ -757,11 +757,6 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 		}
 	}
 
-<<<<<<< Updated upstream
-	double scale = pFX->norm() < attenuationLimitTol ? 1.0 : attenuation;
-	*pNewX = *pOldX + scale*X_diff;	// newX = oldX + X_diff
-}// End of solveUpdateEq() =====================================
-=======
 	if(bLineSearchStepSize){
 		chooseStep_LineSearch(pIt, pOldX, pFX, &fullStep, pNewX);
 	}else{
@@ -912,7 +907,6 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::Vec
 
 	printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  Line Search: Step Size = %.4e (%d its)\n", step, maxCount);
 }//====================================================
->>>>>>> Stashed changes
 
 /**
  *  \brief Checks the Jacobian (DF) matrix for singularities, i.e., rows

@@ -323,7 +323,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData *it) const{
 				it->X.insert(it->X.end(), it->nodesIn->getTotalTOF());
 				break;
 			}
-			case MSTOF_tp::VAR_POS:
+			case MSTOF_tp::VAR_FIXSIGN:
 			{
 				// Append the sqrt(TOF) for each segment
 				for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
@@ -437,7 +437,7 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData *it, int s,
 			*tof = it->X[tofObj.row0]/(it->nodesIn->getNumSegs());
 			break;
 		}
-		case MSTOF_tp::VAR_POS:
+		case MSTOF_tp::VAR_FIXSIGN:
 		{
 			MSVarMap_Obj tofObj = it->getVarMap_obj(MSVar_tp::TOF, s);
 			*tof = astrohelion::sign(it->nodesIn->getTOF(s))*(it->X[tofObj.row0])*(it->X[tofObj.row0]);
@@ -609,7 +609,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 				MSVarMap_Obj tofVar;
 
 				switch(it->tofTp){
-					case MSTOF_tp::VAR_POS:
+					case MSTOF_tp::VAR_FIXSIGN:
 						tofVar = it->getVarMap_obj(MSVar_tp::TOF, segID);
 						timeCoeff = astrohelion::sign(it->nodesIn->getTOF(segID))*2*it->X[tofVar.row0];
 						break;
@@ -779,7 +779,7 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData *it, const Cons
 
 		switch(it->tofTp){
 			case MSTOF_tp::VAR_FREE: break; 	// Leave both coefficients as unity
-			case MSTOF_tp::VAR_POS:
+			case MSTOF_tp::VAR_FIXSIGN:
 				timeCoeff1 = astrohelion::sign(it->nodesIn->getTOF(segID1))*2*it->X[tof1_var.row0];
 				timeCoeff2 = astrohelion::sign(it->nodesIn->getTOF(segID2))*2*it->X[tof2_var.row0];
 				break;
@@ -943,7 +943,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 	if(to_underlying(pIt->tofTp) > 0){
 		switch(pIt->tofTp){
 			case MSTOF_tp::VAR_FREE:
-			case MSTOF_tp::VAR_POS:
+			case MSTOF_tp::VAR_FIXSIGN:
 				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
 				break;
 			case MSTOF_tp::VAR_EQUALARC:
@@ -979,7 +979,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData* pIt, const Const
 				double timeCoeff = 1;
 				switch(pIt->tofTp){
 					case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
-					case MSTOF_tp::VAR_POS:
+					case MSTOF_tp::VAR_FIXSIGN:
 						timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
 						break;
 					case MSTOF_tp::VAR_EQUALARC:
@@ -1319,7 +1319,6 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData* pIt
 double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootData* pIt, const Constraint& con) const{
 	std::vector<double> conData = con.getData();
 
-	int segIx = pIt->nodesIn->getSegIx(con.getID());
 	std::vector<double> lastState = pIt->nodesIn->getSegRef_const(con.getID()).getStateByRow(-1);
 	
 	int Pix = static_cast<int>(conData[0]);	// index of primary
@@ -1416,7 +1415,7 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData* it, const Constraint& 
 				double timeCoeff = 1;
 				MSVarMap_Obj tof_var;
 				switch(it->tofTp){
-					case MSTOF_tp::VAR_POS:
+					case MSTOF_tp::VAR_FIXSIGN:
 						tof_var = it->getVarMap_obj(MSVar_tp::TOF, it->nodesIn->getSegRefByIx_const(s).getID());
 						timeCoeff = astrohelion::sign(it->nodesIn->getTOFByIx(s))*2*it->X[tof_var.row0];
 						break;
@@ -1517,7 +1516,7 @@ void DynamicsModel::multShoot_targetTOF(MultShootData *it, const Constraint& con
 			it->FX[row0] -= con.getData()[0];
 			break;
 		}
-		case MSTOF_tp::VAR_POS:
+		case MSTOF_tp::VAR_FIXSIGN:
 		{
 			// Sum all TOF for total, set partials w.r.t. integration times equal to one
 			for(unsigned int s = 0; s < it->nodesIn->getNumSegs(); s++){
@@ -1738,7 +1737,7 @@ void DynamicsModel::multShoot_createOutput(const MultShootData *it) const{
         			tof = it->X[tofVar.row0];
         			break;
         		}
-        		case MSTOF_tp::VAR_POS:
+        		case MSTOF_tp::VAR_FIXSIGN:
         		{
         			MSVarMap_Obj tofVar = it->getVarMap_obj(MSVar_tp::TOF, seg.getID());
         			tof = astrohelion::sign(it->nodesIn->getTOFByIx(s)) * (it->X[tofVar.row0])*(it->X[tofVar.row0]);

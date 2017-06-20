@@ -87,7 +87,7 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 	bIgnoreDiverge = e.bIgnoreDiverge;
 	bFullFinalProp = e.bFullFinalProp;
 	tofTp = e.tofTp;
-	bDoLineSearch = e.bDoLineSearch;
+	bLineSearchStepSize = e.bLineSearchStepSize;
 }//====================================================
 
 //-----------------------------------------------------
@@ -114,8 +114,6 @@ MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
  *	\return whether or not the algorithm will optimize the process to find an event
  */
 bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
-
-bool MultShootEngine::doesLineSearch() const { return bDoLineSearch; }
 
 /**
  *  \brief Retreive whether or not the engine will use a full, variable-step
@@ -156,8 +154,6 @@ MSTOF_tp MultShootEngine::getTOFType() const{ return tofTp; }
  *	less than this value are considered negligible
  */
 double MultShootEngine::getTol() const { return tol; }
-
-void MultShootEngine::setDoLineSearch(bool b){ bDoLineSearch = b; }
 
 /**
  *  \brief Set whether or not the engine conducts a line search to choose 

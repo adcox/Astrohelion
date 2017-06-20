@@ -53,6 +53,7 @@ enum class MSTOF_tp : int{
 						 */
 	VAR_FIXSIGN = 3		/*!< Times-of-flight have same sign as initial guess; sqrt(TOF) is stored for 
 						 * each arc
+						 */
 };
 
 const char* MSTOF_tp_cStr(const MSTOF_tp&);

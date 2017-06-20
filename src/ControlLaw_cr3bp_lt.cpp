@@ -55,13 +55,8 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
  *  \brief Construct a control law
  * 
  *  \param id Control law ID
-<<<<<<< Updated upstream
- *  \param T Thrust value, Newtons
- *	\param I Specific Impulse (Isp), seconds
-=======
  *  \param F Thrust magnitude, Newtons
  *	\param Isp Specific Impulse (Isp), seconds
->>>>>>> Stashed changes
  */
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double F, double Isp){
 	lawType = id;

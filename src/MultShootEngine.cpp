@@ -80,8 +80,6 @@ MultShootEngine::~MultShootEngine(){}
 void MultShootEngine::copyMe(const MultShootEngine &e){
 	Engine::copyBaseEngine(e);
 	verbosity = e.verbosity;//
-	// bVarTime = e.bVarTime;//
-	// bEqualArcTime = e.bEqualArcTime;//
 	maxIts = e.maxIts;//
 	tol = e.tol;//
 	bFindEvent = e.bFindEvent;//
@@ -89,6 +87,7 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 	bIgnoreDiverge = e.bIgnoreDiverge;
 	bFullFinalProp = e.bFullFinalProp;
 	tofTp = e.tofTp;
+	bDoLineSearch = e.bDoLineSearch;
 }//====================================================
 
 //-----------------------------------------------------
@@ -115,6 +114,8 @@ MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
  *	\return whether or not the algorithm will optimize the process to find an event
  */
 bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
+
+bool MultShootEngine::doesLineSearch() const { return bDoLineSearch; }
 
 /**
  *  \brief Retreive whether or not the engine will use a full, variable-step
@@ -147,6 +148,8 @@ MSTOF_tp MultShootEngine::getTOFType() const{ return tofTp; }
  *	less than this value are considered negligible
  */
 double MultShootEngine::getTol() const { return tol; }
+
+void MultShootEngine::setDoLineSearch(bool b){ bDoLineSearch = b; }
 
 /**
  *  \brief Set whether or not the engine will use a full, variable-step
@@ -650,11 +653,11 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
  *	This can be updated to use a least-squares solution (TODO)
  */
 void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* pOldX, const Eigen::VectorXd *pFX, Eigen::VectorXd *pNewX){
-	Eigen::VectorXd X_diff(pIt->totalFree, 1);	// Create a vector to put the solution in
+	Eigen::VectorXd fullStep(pIt->totalFree, 1);	// Create a vector to put the solution in
 
 	if(pIt->totalCons == 1 && pIt->totalFree == 1){
 		// If Jacobian is 1x1, skip all that linear algebra and just solve the equation
-		X_diff = -(*pFX)/(pIt->DF_elements[0].value());
+		fullStep = -(*pFX)/(pIt->DF_elements[0].value());
 	}else{
 		// Jacobian is not scalar; use linear algebra to solve update equation
 		SparseMatXCd J(pIt->totalCons, pIt->totalFree);
@@ -673,7 +676,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 			// Info about solving Sparse matrix systems with Eigen:
 			// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
 
-			// Solve the system Jw = b (In this case, w = X_diff)
+			// Solve the system Jw = b (In this case, w = fullStep)
 			Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
 			luSolver.analyzePattern(J);
 			luSolver.factorize(J);
@@ -682,7 +685,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
 			}
 
-			X_diff = luSolver.solve(-(*pFX));
+			fullStep = luSolver.solve(-(*pFX));
 			if(luSolver.info() != Eigen::Success){
 				checkDFSingularities(J);
 				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
@@ -725,7 +728,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
 					}
 
-					X_diff = JT*w;	// Compute optimal x from w
+					fullStep = JT*w;	// Compute optimal x from w
 				}else{
 
 					Eigen::VectorXd w = luSolver.solve(-(*pFX));
@@ -733,7 +736,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 						checkDFSingularities(J);
 						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
 					}
-					X_diff = JT*w;	// Compute optimal x from w
+					fullStep = JT*w;	// Compute optimal x from w
 				}
 
 				// Alternative Method: SVD
@@ -749,7 +752,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 				// 	Z(r,r) = std::abs(singVals(r)) > svdTol ? 1.0/singVals(r) : 0;
 				// }
 
-				// X_diff = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
+				// fullStep = svd.matrixU() * Z * svd.matrixV().transpose() * FX;
 
 			}else{	// Over-constrained
 				throw LinAlgException("MultShootEngine::solveUpdateEq: System is over constrained... No solution implemented");
@@ -757,7 +760,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 		}
 	}
 
-	if(bLineSearchStepSize){
+	if(bDoLineSearch){
 		chooseStep_LineSearch(pIt, pOldX, pFX, &fullStep, pNewX);
 	}else{
 		double scale = pFX->norm() < attenuationLimitTol ? 1.0 : attenuation;

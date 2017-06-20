@@ -94,10 +94,12 @@ class MultShootEngine : public Core, public Engine{
 		int getMaxIts() const;
 		double getTol() const;
 		bool doesFullFinalProp() const;
+		bool doesLineSearch() const;
 		bool isFindingEvent() const;
 		MSTOF_tp getTOFType() const;
 
 		void setAttenuation(double, double limit = 1e-8);
+		void setDoLineSearch(bool);
 		void setFullFinalProp(bool);
 		void setIgnoreCrash(bool);
 		void setIgnoreDiverge(bool);
@@ -129,6 +131,12 @@ class MultShootEngine : public Core, public Engine{
 	private:
 
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
+
+		/**
+		 * Whether or not to do a line search to choose the best step size; this slows the engine down
+		 * but can increase accuracy!
+		 */
+		bool bDoLineSearch = false;
 
 		/** Whether or not to conduct final round of propagations with an 
 			integrator that leverages variable step time. When set to TRUE,

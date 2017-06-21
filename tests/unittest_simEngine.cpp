@@ -28,6 +28,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Propagation){
 	double tof = 4*PI;
 	
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Arcset_cr3bp traj(&sys);
 	engine.runSim(ic, tof, &traj);
@@ -85,6 +86,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_Stop){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Arcset_cr3bp traj(&sys);
 	engine.addEvent(Event(Event_tp::XZ_PLANE, 0, true));
@@ -123,6 +125,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_NoStop){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Arcset_cr3bp traj(&sys);
 	Event planeCross(Event_tp::XZ_PLANE, 0, false);
@@ -167,6 +170,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_ManyRevs){
 	double ic[] = {0.912877132059092, 0, 0, 0, -0.367515774495231, 0};
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp traj(&sys);
 	Event planeCross(Event_tp::XZ_PLANE, 0, true);
 	unsigned int stopCount = 4;
@@ -217,6 +221,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
 	double ic[] = {0.912877132059092, 0, 0, 0, -0.367515774495231, 0};
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	Event planeCross(Event_tp::XZ_PLANE, 0, true);
 	unsigned int stopCount = 4;
 	planeCross.setStopCount(stopCount);
@@ -274,6 +279,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Event_Stop){
 	double t0 = 0;
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_bc4bp traj(&sys);
 	engine.addEvent(Event(Event_tp::XY_PLANE, 0, true));
 	engine.runSim(ic, t0, 120*PI, &traj);
@@ -307,6 +313,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
 	double T = 3.02796323553149;	// EM L1 Period
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp_lt traj(&sys);
 	engine.addEvent(Event(Event_tp::XZ_PLANE, 0, true));
 	engine.runSim(ic, 0, T, &traj, &law);
@@ -344,6 +351,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp traj(&sys);
 	Event planeCross(Event_tp::XZ_PLANE, 0, false);
 	engine.addEvent(planeCross);
@@ -389,6 +397,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp traj(&sys);
 	Event planeCross(Event_tp::XZ_PLANE, 0, true);
 	unsigned int stopCount = 4;
@@ -446,6 +455,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Forward){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Arcset_cr3bp traj(&sys);
 	engine.runSim_manyNodes(ic, 4.0, 5, &traj);
@@ -465,6 +475,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Reverse){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};	// L1 Halo
 
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	// engine.setVerbosity(Verbosity_tp::DEBUG);
 	Arcset_cr3bp traj(&sys);
 	engine.setRevTime(true);
@@ -544,6 +555,7 @@ BOOST_AUTO_TEST_CASE(Timeout){
 	double ic[] = {1-mu,0,0,0,0,0};
 
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp traj(&sys);
 	sim.setMaxCompTime(3);
 

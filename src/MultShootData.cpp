@@ -282,7 +282,12 @@ void MSVarMap_Obj::init(){
 		case MSVar_tp::SLACK:
 			parent = MSVarParent_tp::CON;
 			break;
-		default: throw Exception("MSVarMap_Obj constructor: Unrecognized type");
+		default: 
+		{
+			char msg[128];
+			sprintf(msg, "MSVarMap_Obj::init: Unrecognized type: %s", MSVarMap_Key::type2str(key.type));
+			throw Exception(msg);
+		}
 	}
 }//================================================
 

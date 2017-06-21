@@ -26,6 +26,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_IntermediateSolution){
 	double tof = 31.00065761;
 
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp nodeset(&sys), correctedNodeset(&sys);
 	sim.runSim_manyNodes(IC, tof, 15, &nodeset);
 
@@ -46,6 +47,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_IntermediateSolution){
 	// Set up multiple shooting engine to only do a few iterations so that error is still large
 	// Ignore the large error and return the "corrected" arcset
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setMaxIts(2);
 	corrector.setIgnoreDiverge(true);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
@@ -73,6 +75,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	double tof = 31.00065761;
 
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp nodeset(&sys), correctedNodeset(&sys);
 	sim.runSim_manyNodes(IC, tof, 15, &nodeset);
 
@@ -91,7 +94,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant){
 	nodeset.addConstraint(perpCrossEnd);
 
 	MultShootEngine corrector;
-	
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -104,6 +107,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 	int halo_nodes = 6;
 	Arcset_cr3bp halo(&sys), correctedHalo(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(IC_halo, tof_halo, halo_nodes, &halo);
 
 	double periodic_conData[] = {0,0,0,0,NAN,0};
@@ -115,6 +119,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Halo_EqualArcTime){
 	halo.addConstraint(periodicity);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&halo, &correctedHalo));
 }//====================================================
@@ -127,6 +132,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	double tof = -31.00065761;
 
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	Arcset_cr3bp nodeset(&sys), correctedNodeset(&sys);
 	sim.runSim_manyNodes(IC, tof, 15, &nodeset);
 
@@ -149,6 +155,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_RevTime){
 	// nodeset.printInChrono();
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -161,6 +168,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 
 	Arcset_cr3bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(IC, tof/2, 8, &posTimeArc);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(IC, -tof/2, 8, &revTimeArc);
@@ -190,6 +198,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_doubleSource){
 	// nodeset.printInChrono();
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -202,6 +211,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 
 	Arcset_cr3bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(IC, tof/2, 8, &posTimeArc);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(IC, -tof/2, 8, &revTimeArc);
@@ -240,6 +250,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_Resonant_Irregular){
 	// nodeset.printSegIDMap();
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -250,6 +261,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo){
 
 	Arcset_bc4bp nodeset(&sys), correctedNodeset(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(haloIC, 0, tof, 7, &nodeset);
 
 	
@@ -266,6 +278,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -276,6 +289,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_RevTime){
 
 	Arcset_bc4bp nodeset(&sys), correctedNodeset(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(haloIC, 0, tof, 7, &nodeset);
 	// nodeset.saveToMat("bc4bp_halo_raw.mat");
@@ -292,6 +306,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_RevTime){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -302,6 +317,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_doubleSource){
 
 	Arcset_bc4bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(haloIC, 0, tof/2, 4, &posTimeArc);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(haloIC, 0, -tof/2, 4, &revTimeArc);
@@ -325,6 +341,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_doubleSource){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================
 
@@ -335,6 +352,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_DoubleSource_Irregular){
 
 	Arcset_bc4bp posTimeArc(&sys), revTimeArc(&sys), correctedNodeset(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(haloIC, 0, tof/2, 4, &posTimeArc);
 	sim.setRevTime(true);
 	sim.runSim_manyNodes(haloIC, 0, -tof/2, 4, &revTimeArc);
@@ -360,6 +378,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_SEM_Halo_DoubleSource_Irregular){
 	nodeset.addConstraint(xzPlaneConF);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTol(5e-12);
 	BOOST_CHECK_NO_THROW(corrector.multShoot(&nodeset, &correctedNodeset));
 }//====================================================

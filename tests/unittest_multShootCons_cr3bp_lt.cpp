@@ -71,9 +71,11 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emL1Lyap_ic, emL1Lyap_T, 2, &halfLyapArcset, &law);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, false));
@@ -86,9 +88,11 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tof
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emL1Lyap_ic, emL1Lyap_T/2, 3, &halfLyapArcset, &law);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
@@ -109,10 +113,12 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes)
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emL1Lyap_ic, emL1Lyap_T/2, 3, &halfLyapArcset, &law);
 	halfLyapArcset.deleteNode(2);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
@@ -134,9 +140,11 @@ BOOST_DATA_TEST_CASE(test_rmState, data::make(lawTypes) * data::make(tofTypes), 
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emL1Lyap_ic, emL1Lyap_T/2.8, 3, &halfLyapNodeset, &law);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 	corrector.setTol(1e-11);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
@@ -176,6 +184,7 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T, 2, &halfLyapNodeset, &law);
 
 	// Add control continuity constraint for full-rank Jacobian (check ALL the available partials)
@@ -184,6 +193,7 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 	halfLyapNodeset.addConstraint(ctrlCon);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setTOFType(tofType);
 	corrector.setTol(1e-11);
@@ -207,6 +217,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T/2, 2, &halfLyapNodeset, &law);
 
 	// Add control continuity constraint for full-rank Jacobian (check ALL the available partials)
@@ -220,6 +231,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	halfLyapNodeset.addConstraint(stateCon);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setTOFType(tofType);
 	corrector.setTol(1e-11);

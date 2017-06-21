@@ -297,7 +297,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDist, data::make(tofTypes), 
 
 BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Dist_EndSeg, data::make(tofTypes), tofTp){
 	sim->setRevTime(em_lyap_T < 0);
-	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T/1.5, 4, halfLyapSet);
 
 	corrector->setTOFType(tofTp);
 
@@ -316,7 +316,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Dist_EndSeg, data::make(tofType
 
 BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MinDist_EndSeg, data::make(tofTypes), tofTp){
 	sim->setRevTime(em_lyap_T < 0);
-	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T/1.5, 4, halfLyapSet);
 
 	corrector->setTOFType(tofTp);
 	corrector->setDoLineSearch(true);	// This one has trouble converging
@@ -329,7 +329,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MinDist_EndSeg, data::make(tofT
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	std::vector<double> finalState = correctedSet->getSegRef(matchDistCon.getID()).getStateByRow(-1);
 	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(), 2) + pow(finalState[1], 2));
 
 	BOOST_CHECK_GE(dist, matchDistConData[1]);
@@ -337,7 +337,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MinDist_EndSeg, data::make(tofT
 
 BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDist_EndSeg, data::make(tofTypes), tofTp){
 	sim->setRevTime(em_lyap_T < 0);
-	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T/1.5, 4, halfLyapSet);
 
 	corrector->setTOFType(tofTp);
 
@@ -349,7 +349,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDist_EndSeg, data::make(tofT
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
 	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
 
-	std::vector<double> finalState = correctedSet->getState(matchDistCon.getID());
+	std::vector<double> finalState = correctedSet->getSegRef(matchDistCon.getID()).getStateByRow(-1);
 	double dist = sqrt(pow(finalState[0] - 1 + sys->getMu(), 2) + pow(finalState[1], 2));
 
 	BOOST_CHECK_LE(dist, matchDistConData[1]);

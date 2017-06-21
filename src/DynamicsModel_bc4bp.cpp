@@ -821,12 +821,13 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, const Constrai
     }
 
     // Get the primary position
-    std::vector<double> primPos = getPrimPos(t0, it->nodesIn->getSysData());
+    double primPos[3] = {0};
+    getPrimPos(t0, it->nodesIn->getSysData(), Pix, primPos);
 
     // Get distance between node and primary in x, y, and z-coordinates
-    double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0];
-    double dy = it->X[stateVar.row0+1] - primPos[Pix*3+1];
-    double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2];
+    double dx = it->X[stateVar.row0+0] - primPos[0];
+    double dy = it->X[stateVar.row0+1] - primPos[1];
+    double dz = it->X[stateVar.row0+2] - primPos[2];
 
     double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
 
@@ -873,6 +874,144 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, const Constrai
 }// End of targetDist() =========================================
 
 /**
+ *  \brief Compute partials and constraint functions for segments constrained with <tt>Constraint_tp::ENDSEG_DIST</tt>, 
+ *  <tt>Constraint_tp::ENDSEG_MIN_DIST</tt>, or <tt>Constraint_tp::ENDSEG_MAX_DIST</tt>
+ *
+ *  This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
+ *  functions, which all models define and uses dynamic-independent computations to populate
+ *  the constraint vector and Jacobian matrix. Nonautonomous models will need to include time
+ *  dependencies.
+ *
+ *  \param pIt a pointer to the class containing all the data relevant to the corrections process
+ *  \param con a copy of the constraint object
+ *  \param c the index of this constraint in the constraint vector object
+ */
+void DynamicsModel_bc4bp::multShoot_targetDist_endSeg(MultShootData* pIt, const Constraint& con, int c) const{
+    std::vector<double> conData = con.getData();
+    int segIx = pIt->nodesIn->getSegIx(con.getID());
+    int originID = pIt->nodesIn->getSegRef_const(con.getID()).getOrigin();
+    
+    // Get object representing origin node state of segment
+    MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, originID);
+    
+    MSVarMap_Obj tof_var, epochVar;
+    double t0 = 0, tof = 0, timeCoeff = 1;
+    if(to_underlying(pIt->tofTp) > 0){
+        switch(pIt->tofTp){
+            case MSTOF_tp::VAR_FREE:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof = pIt->X[tof_var.row0];
+                break;
+            case MSTOF_tp::VAR_FIXSIGN:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof = (pIt->X[tof_var.row0])*(pIt->X[tof_var.row0]);
+                tof *= astrohelion::sign(pIt->nodesIn->getTOF(con.getID()));
+                timeCoeff = astrohelion::sign(tof)*2*(pIt->X[tof_var.row0]);
+                break;
+            case MSTOF_tp::VAR_EQUALARC:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                tof = pIt->X[tof_var.row0]/pIt->nodesIn->getNumSegs();
+                timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
+                break;
+            default:
+                throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+        }
+
+        epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, originID);
+        t0 = epochVar.row0 == -1 ? pIt->propSegs[segIx].getTimeByIx(-1) : pIt->X[epochVar.row0] + tof;
+    }else{
+        t0 = pIt->nodesIn->getSegRef_const(con.getID()).getTimeByIx(-1);
+    }
+
+    int Pix = static_cast<int>(conData[0]); // index of primary
+    int row0 = pIt->conRows[c];
+
+    // Get the primary position
+    double primPos[3] = {0};
+    getPrimPos(t0, pIt->nodesIn->getSysData(), Pix, primPos);
+
+    std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+
+    // Get distance between node and primary in x, y, and z-coordinates
+    double dx = lastState[0] - primPos[0];
+    double dy = lastState[1] - primPos[1];
+    double dz = lastState[2] - primPos[2];
+
+    double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
+
+    // Compute difference between desired distance and true distance
+    pIt->FX[row0] = h - conData[1];
+
+    double dFdr_nf[3] = {dx/h, dy/h, dz/h};
+
+    // Partials with respect to node position states
+    if(prevNode_var.row0 != -1){
+        MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
+
+        // Do matrix multiplication with loops to avoid expensive vector allocation
+        double sum;
+        for(unsigned int c = 0; c < 6; c++){
+            sum = 0;
+            for(unsigned int r = 0; r < 3; r++){
+                sum += dFdr_nf[r]*stm(r,c);
+            }
+
+            pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+        }
+    }
+
+    
+    if(to_underlying(pIt->tofTp) > 0){
+        // Partials with respect to time-of-flight    
+        std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+
+        // Epoch dependencies from primary positions
+        double primVel[3] = {0};
+        getPrimVel(t0, pIt->nodesIn->getSysData(), Pix, primVel);
+
+        // Compute dot product between dFdr_nf and final state derivative vector
+        double sum = dFdr_nf[0]*lastDeriv[0] + dFdr_nf[1]*lastDeriv[1] + dFdr_nf[2]*lastDeriv[2];
+
+        // Add partials that include effects of TOF on primary position
+        sum += (-dFdr_nf[0]*primVel[0] - dFdr_nf[1]*primVel[1] - dFdr_nf[2]*primVel[2]);
+
+        pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*sum));
+
+        // Partials w.r.t. epoch
+        if(epochVar.row0 != -1){
+            // Epoch dependencies on propagated state
+            std::vector<double> last_dqdT = pIt->propSegs[segIx].getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
+
+            double sum = 0;
+            for(unsigned int r = 0; r < 3; r++){
+                // Partials w.r.t. primary positions are opposite sign as dFdr (partials w.r.t. segment end state)
+                sum += dFdr_nf[r]*last_dqdT[r] - dFdr_nf[r]*primVel[r];
+            }
+            
+            pIt->DF_elements.push_back(Tripletd(row0, epochVar.row0, sum));
+        }
+    }
+
+    // Extra stuff for inequality constraints
+    if(con.getType() == Constraint_tp::ENDSEG_MIN_DIST || 
+        con.getType() == Constraint_tp::ENDSEG_MAX_DIST ){
+        // figure out which of the slack variables correspond to this constraint
+        std::vector<int>::iterator slackIx = std::find(pIt->slackAssignCon.begin(), 
+            pIt->slackAssignCon.end(), c);
+
+        // which column of the DF matrix the slack variable is in
+        int slackCol = pIt->totalFree - pIt->numSlack + (slackIx - pIt->slackAssignCon.begin());
+        int sign = con.getType() == Constraint_tp::ENDSEG_MAX_DIST ? 1 : -1;
+
+        // Subtract squared slack variable from constraint
+        pIt->FX[row0] += sign*pIt->X[slackCol]*pIt->X[slackCol];
+
+        // Partial with respect to slack variable
+        pIt->DF_elements.push_back(Tripletd(row0, slackCol, sign*2*pIt->X[slackCol]));
+    }
+}// End of targetDist_endSeg() ====================================
+
+/**
  *  \brief  Compute the value of the slack variable for inequality distance constraints
  *  \details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
@@ -881,14 +1020,14 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData* it, const Constrai
  *  
  *  Note: This method overrides the base class function to add functionality for non-zero epochs
  * 
- *  \param it the iteration data object for the multiple shooting process
+ *  \param pIt the iteration data object for the multiple shooting process
  *  \param con the constraint the slack variable applies to
  *  \return the value of the slack variable that minimizes the constraint function
  *  without setting the slack variable equal to zero
  */
-double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootData* it, const Constraint& con) const{
+double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootData* pIt, const Constraint& con) const{
     std::vector<double> conData = con.getData();
-    MSVarMap_Obj stateVar = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
+    MSVarMap_Obj stateVar = pIt->getVarMap_obj(MSVar_tp::STATE, con.getID());
     int Pix = static_cast<int>(conData[0]);    // index of primary
 
     if(stateVar.row0 == -1)
@@ -896,20 +1035,92 @@ double DynamicsModel_bc4bp::multShoot_targetDist_compSlackVar(const MultShootDat
 
     // Get the node epoch either from the design vector or from the original set of nodes
     double t0 = 0;
-    if(to_underlying(it->tofTp) > 0){  // Time is variable
-        MSVarMap_Obj epochVar = it->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
-        t0 = epochVar.row0 == -1 ? it->nodesIn->getEpoch(epochVar.key.id) : it->X[epochVar.row0];
+    if(to_underlying(pIt->tofTp) > 0){  // Time is variable
+        MSVarMap_Obj epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, con.getID());
+        t0 = epochVar.row0 == -1 ? pIt->nodesIn->getEpoch(epochVar.key.id) : pIt->X[epochVar.row0];
     }else{
-        t0 = it->nodesIn->getEpoch(con.getID());
+        t0 = pIt->nodesIn->getEpoch(con.getID());
     }
 
     // Get the primary position
-    std::vector<double> primPos = getPrimPos(t0, it->nodesIn->getSysData());
+    double primPos[3] = {0};
+    getPrimPos(t0, pIt->nodesIn->getSysData(), Pix, primPos);
 
     // Get distance between node and primary in x, y, and z-coordinates
-    double dx = it->X[stateVar.row0+0] - primPos[Pix*3+0];
-    double dy = it->X[stateVar.row0+1] - primPos[Pix*3+1];
-    double dz = it->X[stateVar.row0+2] - primPos[Pix*3+2];
+    double dx = pIt->X[stateVar.row0+0] - primPos[0];
+    double dy = pIt->X[stateVar.row0+1] - primPos[1];
+    double dz = pIt->X[stateVar.row0+2] - primPos[2];
+
+    double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
+    int sign = con.getType() == Constraint_tp::MAX_DIST ? 1 : -1;
+    double diff = conData[1] - h;
+
+    /*  If diff and sign have the same sign (+/-), then the constraint
+     *  is satisfied, so compute the value of the slack variable that 
+     *  sets the constraint function equal to zero. Otherwise, choose 
+     *  a small value of the slack variable but don't set it to zero as 
+     *  that will make the partials zero and will prevent the mulitple
+     *  shooting algorithm from updating the slack variable
+     */
+    return diff*sign > 0 ? sqrt(std::abs(diff)) : 1e-4;
+}//==========================================================
+
+/**
+ *  \brief Compute the value of the slack variable for inequality distance constraints
+ *  \details This function computes a value for the slack variable in an
+ *  inequality distance constraint. If the constraint is already met by the initial
+ *  design, using this value will prevent the multiple shooting algorithm from
+ *  searching all over for the propper value.
+ * 
+ *  \param pIt the iteration data object for the multiple shooting process
+ *  \param con the constraint the slack variable applies to
+ *  \return the value of the slack variable
+ */
+double DynamicsModel_bc4bp::multShoot_targetDist_endSeg_compSlackVar(const MultShootData* pIt, const Constraint& con) const{
+    std::vector<double> conData = con.getData();
+
+    std::vector<double> lastState = pIt->nodesIn->getSegRef_const(con.getID()).getStateByRow(-1);
+    
+    // Get the node epoch either from the design vector or from the original set of nodes
+    double t0 = 0;
+    int originID = pIt->nodesIn->getSegRef_const(con.getID()).getOrigin();
+    if(to_underlying(pIt->tofTp) > 0){  // Time is variable
+        MSVarMap_Obj epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, originID);
+        MSVarMap_Obj tofVar;
+        double tof;
+        switch(pIt->tofTp){
+            case MSTOF_tp::VAR_FREE:
+                tofVar = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof = pIt->X[tofVar.row0];
+                break;
+            case MSTOF_tp::VAR_FIXSIGN:
+                tofVar = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof = pIt->X[tofVar.row0];
+                tof *= tof;
+                tof *= astrohelion::sign(pIt->nodesIn->getTOF(con.getID()));
+                break;
+            case MSTOF_tp::VAR_EQUALARC:
+                tofVar = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                tof = pIt->X[tofVar.row0]/(pIt->nodesIn->getNumSegs());
+                break;
+            default:
+                throw Exception("DynamicsModel_bc4bp::multShoot_targetDist_endSeg_compSlackVar: Unhanlded TOF parameterization");
+        }
+
+        t0 = epochVar.row0 == -1 ? pIt->nodesIn->getSegRef_const(con.getID()).getTimeByIx(-1) : pIt->X[epochVar.row0] + tof;
+    }else{
+        t0 = pIt->nodesIn->getSegRef_const(con.getID()).getTimeByIx(-1);
+    }
+
+    // Get the primary position
+    int Pix = static_cast<int>(conData[0]); // index of primary
+    double primPos[3] = {0};
+    getPrimPos(t0, pIt->nodesIn->getSysData(), Pix, primPos);
+
+    // Get distance between node and primary in x, y, and z-coordinates
+    double dx = lastState[0] - primPos[0];
+    double dy = lastState[1] - primPos[1];
+    double dz = lastState[2] - primPos[2];
 
     double h = sqrt(dx*dx + dy*dy + dz*dz);     // true distance
     int sign = con.getType() == Constraint_tp::MAX_DIST ? 1 : -1;
@@ -1043,33 +1254,38 @@ void DynamicsModel_bc4bp::multShoot_targetApse(MultShootData *it, const Constrai
 void DynamicsModel_bc4bp::multShoot_targetApse_endSeg(MultShootData *pIt, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
     int segIx = pIt->nodesIn->getSegIx(con.getID());
+    int originID = pIt->nodesIn->getSegRef_const(con.getID()).getOrigin();
 
     // Get object representing origin of segment
-    MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+    MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, originID);
 
-    MSVarMap_Obj tof_var;
+    MSVarMap_Obj tof_var, epochVar;
+    double t0 = 0, tof = 0, timeCoeff = 1;
     if(to_underlying(pIt->tofTp) > 0){
         switch(pIt->tofTp){
             case MSTOF_tp::VAR_FREE:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof = pIt->X[tof_var.row0];
+                break;
             case MSTOF_tp::VAR_FIXSIGN:
                 tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof = (pIt->X[tof_var.row0])*(pIt->X[tof_var.row0]);
+                tof *= astrohelion::sign(pIt->nodesIn->getTOF(con.getID()));
+                timeCoeff = astrohelion::sign(tof)*2*(pIt->X[tof_var.row0]);
                 break;
             case MSTOF_tp::VAR_EQUALARC:
                 tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                tof = pIt->X[tof_var.row0]/pIt->nodesIn->getNumSegs();
+                timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
                 break;
             default:
                 throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
         }
-    }   
 
-    // Get the node epoch either from the design vector or from the original set of nodes
-    MSVarMap_Obj epochVar;
-    double t0 = 0;
-    if(to_underlying(pIt->tofTp) > 0){  // Time is variable
-        epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
-        t0 = epochVar.row0 == -1 ? pIt->nodesIn->getEpoch(epochVar.key.id) : pIt->X[epochVar.row0];
+        epochVar = pIt->getVarMap_obj(MSVar_tp::EPOCH, originID);
+        t0 = epochVar.row0 == -1 ? pIt->propSegs[segIx].getTimeByIx(-1) : pIt->X[epochVar.row0] + tof;
     }else{
-        t0 = pIt->nodesIn->getEpoch(pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+        t0 = pIt->nodesIn->getSegRef_const(con.getID()).getTimeByIx(-1);
     }
 
     // Data associated with the previous node and the propagated segment
@@ -1104,29 +1320,39 @@ void DynamicsModel_bc4bp::multShoot_targetApse_endSeg(MultShootData *pIt, const 
         for(unsigned int c = 0; c < 6; c++){
             sum = 0;
             for(unsigned int r = 0; r < 6; r++){
-                sum += dFdq_nf[r]*stm(c,r);
+                sum += dFdq_nf[r]*stm(r,c);
             }
             pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
         }
     }
 
-    if(tof_var.row0 != -1){
+    if(to_underlying(pIt->tofTp) > 0){
+        double primAccel[3] = {0};
+        getPrimAccel(t0, bcSys, Pix, primAccel);
         std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
 
         // Compute dot product between dFdq_nf and final state derivative vector
-        double dp = 0;
+        double sum = 0;
         for(unsigned int r = 0; r < 6; r++){
-            dp += dFdq_nf[r]*lastDeriv[r];
+            sum += dFdq_nf[r]*lastDeriv[r];
         }
-        pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, dp));
-    }
 
-    if(to_underlying(pIt->tofTp) > 0 && epochVar.row0 != -1){
-        double primAccel[3] = {0};
-        getPrimAccel(t0, bcSys, Pix, primAccel);
+        // Add terms that account for effect of TOF on primary positions
+        sum += (-dvx*primVel[0] - dvy*primVel[1] - dvz*primVel[2]) +
+            (-dx*primAccel[0] - dy*primAccel[1] - dz*primAccel[2]);
 
-        pIt->DF_elements.push_back(Tripletd(row0, epochVar.row0, -1*(dvx*primVel[0] + dvy*primVel[1] + dvz*primVel[2]) -
-            (dx*primAccel[0] + dy*primAccel[1] + dz*primAccel[2]) ));
+        pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*sum));
+
+        if(epochVar.row0 != -1){
+            
+            std::vector<double> last_dqdT = pIt->propSegs[segIx].getExtraParamVecByIx(-1, PARAMKEY_STATE_EPOCH_DERIV);
+
+
+            pIt->DF_elements.push_back(Tripletd(row0, epochVar.row0,
+                -1*(dvx*primVel[0] + dvy*primVel[1] + dvz*primVel[2]) -
+                (dx*primAccel[0] + dy*primAccel[1] + dz*primAccel[2]) +
+                (dvx*last_dqdT[0] + dvy*last_dqdT[1] + dvz*last_dqdT[2]) ));
+        }
     }
 }//====================================================
 

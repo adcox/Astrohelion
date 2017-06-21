@@ -1174,17 +1174,22 @@ void DynamicsModel::multShoot_targetDist_endSeg(MultShootData* pIt, const Constr
 	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
 	
 	MSVarMap_Obj tof_var;
+	double timeCoeff = 1;
 	if(to_underlying(pIt->tofTp) > 0){
 		switch(pIt->tofTp){
 			case MSTOF_tp::VAR_FREE:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				break;
 			case MSTOF_tp::VAR_FIXSIGN:
 				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
 				break;
 			case MSTOF_tp::VAR_EQUALARC:
 				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+				timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
 				break;
 			default:
-				throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+				throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
 		}
 	}
 
@@ -1227,27 +1232,12 @@ void DynamicsModel::multShoot_targetDist_endSeg(MultShootData* pIt, const Constr
 	}
 
 	// Partials with respect to time-of-flight
-	if(to_underlying(pIt->tofTp) > 0 && tof_var.row0 != -1){
-		double timeCoeff = 1;
-		switch(pIt->tofTp){
-			case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
-			case MSTOF_tp::VAR_FIXSIGN:
-				timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
-				break;
-			case MSTOF_tp::VAR_EQUALARC:
-				timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
-				break;
-			default:
-				throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
-		}
-
+	if(to_underlying(pIt->tofTp) > 0){
 		std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
 
 		// Compute dot product between dFdr_nf and final state derivative vector
-		double dp = 0;
-		for(unsigned int r = 0; r < 3; r++){
-			dp += dFdr_nf[r]*lastDeriv[r];
-		}
+		double dp = dFdr_nf[0]*lastDeriv[0] + dFdr_nf[1]*lastDeriv[1] + dFdr_nf[2]*lastDeriv[2];
+
 		pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
 	}
 
@@ -1614,17 +1604,22 @@ void DynamicsModel::multShoot_targetApse_endSeg(MultShootData *pIt, const Constr
 	MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
 
 	MSVarMap_Obj tof_var;
+	double timeCoeff = 1;
 	if(to_underlying(pIt->tofTp) > 0){
 		switch(pIt->tofTp){
 			case MSTOF_tp::VAR_FREE:
+				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				break;
 			case MSTOF_tp::VAR_FIXSIGN:
 				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+				timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
 				break;
 			case MSTOF_tp::VAR_EQUALARC:
 				tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+				timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
 				break;
 			default:
-				throw Exception("DynamicsModel::multShoot_targetState_endSeg: Unhandled time type");
+				throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
 		}
 	}	
 
@@ -1665,20 +1660,7 @@ void DynamicsModel::multShoot_targetApse_endSeg(MultShootData *pIt, const Constr
 	}
 
 	// Partials of F w.r.t. time-of-flight
-	if(to_underlying(pIt->tofTp) > 0 && tof_var.row0 != -1){
-		double timeCoeff = 1;
-		switch(pIt->tofTp){
-			case MSTOF_tp::VAR_FREE: break;	// Leave timeCoeff = 1
-			case MSTOF_tp::VAR_FIXSIGN:
-				timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
-				break;
-			case MSTOF_tp::VAR_EQUALARC:
-				timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
-				break;
-			default:
-				throw Exception("DynamicsModel::multShoot_targetApse_endSeg: Unhandled time type");
-		}
-
+	if(to_underlying(pIt->tofTp) > 0){
 		std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
 
 		// Compute dot product between dFdq_nf and final state derivative vector

@@ -206,19 +206,43 @@ enum class Constraint_tp {
 				 * 	The <tt>id</tt> value represents the segment to constrain,
  			 	 * 	and the <tt>data</tt> vector contains values for each state.
  			 	 * 	to leave a state unconstrained, place a NAN value in the
- 			 	 * 	place of that state. 
+ 			 	 * 	place of that state. This constraint performs best when the constrained
+ 			 	 * 	segment is the final segment on the trajectory.
 				 */
 	ENDSEG_APSE,/*!< Constrain the end of a segment (not a node) to be an apse
 				 * 	relative to one of the primaries. The <tt>data</tt> field specifies 
 				 * 	the index of the primary (e.g. 0 for P1, 1 for P2, etc.) in the FIRST
  				 *	element of the array. For example, if I want to constrain segment
  				 *	seven to be an apse relative to P1, I would set <tt>id</tt> 
- 				 *	to 7 and set <tt>data</tt> to [0]
+ 				 *	to 7 and set <tt>data</tt> to [0]. This constraint performs best when 
+ 				 *	the constrained segment is the final segment on the trajectory.
 				 */
-	ENDSEG_DIST,
-	ENDSEG_MAX_DIST,
-	ENDSEG_MIN_DIST,
-	ENDSEG_JC
+	ENDSEG_DIST,/*!< Constrain the end of a segment (not a node) to be a specified
+				 * 	distance from the center of a specified primary. The <tt>id</tt> 
+				 * 	field identifies the constrained segment, the 
+ 				 *	first value in the <tt>data</tt> field (i.e. <tt>data[0]</tt>) 
+ 				 *	identifies the primary number (index 0) and the second value in 
+ 				 *	<tt>data</tt> gives the desired distance from the primary's center
+ 				 *	in non-dimensional units. This constraint performs best when 
+ 				 *	the constrained segment is the final segment on the trajectory.
+				 */
+	ENDSEG_MAX_DIST,	/*!< Constrain the end of a segment (not a node) to be, at
+						 * 	most, a specified distance (constraint the maximum 
+						 * 	distance from the primary). Parameter storage is consistent
+						 * 	with the details for Constraint_tp::ENDSEG_DIST. Note that
+						 *	this constraint performs best when the constrained segment
+						 *	is the final segment on the trajectory.
+						 */
+	ENDSEG_MIN_DIST,	/*!< Constrain the end of a segment (not a node) to be at
+						 * 	lease a specified distance (constraint the minimum 
+						 * 	distance from the primary). Parameter storage is consistent
+						 * 	with the details for Constraint_tp::ENDSEG_DIST. Note that
+						 *	this constraint performs best when the constrained segment
+						 *	is the final segment on the trajectory.
+						 */
+	ENDSEG_JC	/*!<
+				 *
+				 */
 };
 
 /**

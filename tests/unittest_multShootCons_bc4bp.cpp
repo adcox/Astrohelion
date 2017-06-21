@@ -66,6 +66,9 @@ struct fixture_SEM_Init{
 		correctedSet = new Arcset_bc4bp(sys);
 		sim = new SimEngine();
 		corrector = new MultShootEngine();
+
+		corrector->setVerbosity(Verbosity_tp::NO_MSG);
+		sim->setVerbosity(Verbosity_tp::NO_MSG);
 	}//====================================================
 
 	~fixture_SEM_Init(){
@@ -268,6 +271,61 @@ BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MaxDist, data::make(tofTypes)
 	BOOST_CHECK_LE(dist, matchDistConData[1]);
 }//====================================================
 
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Dist_endSeg, data::make(tofTypes), tofTp){
+	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/1.5, 4, halfLyapSet);
+	corrector->setTOFType(tofTp);
+
+	double matchDistConData[] = {1, 1.0};
+	Constraint matchDistCon(Constraint_tp::ENDSEG_DIST, 2, matchDistConData, 2);
+	halfLyapSet->addConstraint(matchDistCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(matchDistCon.getID()).getStateByRow(-1);
+	double epoch = correctedSet->getSegRef(matchDistCon.getID()).getTimeByIx(-1);
+	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(epoch, sys);
+	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
+	BOOST_CHECK_SMALL(dist - matchDistConData[1], 1e-12);
+}//====================================================
+
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MinDist_endSeg, data::make(tofTypes), tofTp){
+	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/1.5, 4, halfLyapSet);
+	corrector->setTOFType(tofTp);
+
+	double matchDistConData[] = {1, 1.1};
+	Constraint matchDistCon(Constraint_tp::ENDSEG_MIN_DIST, 2, matchDistConData, 2);
+	halfLyapSet->addConstraint(matchDistCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(matchDistCon.getID()).getStateByRow(-1);
+	double epoch = correctedSet->getSegRef(matchDistCon.getID()).getTimeByIx(-1);
+	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(epoch, sys);
+	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
+	BOOST_CHECK_GE(dist, matchDistConData[1]);
+}//====================================================
+
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MaxDist_endSeg, data::make(tofTypes), tofTp){
+	sim->runSim_manyNodes(lyap_ic, 0, lyap_T/1.5, 4, halfLyapSet);
+	corrector->setTOFType(tofTp);
+
+	double matchDistConData[] = {1, 0.9};
+	Constraint matchDistCon(Constraint_tp::ENDSEG_MAX_DIST, 2, matchDistConData, 2);
+	halfLyapSet->addConstraint(matchDistCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(matchDistCon.getID()).getStateByRow(-1);
+	double epoch = correctedSet->getSegRef(matchDistCon.getID()).getTimeByIx(-1);
+	std::vector<double> primPos = sys->getDynamicsModel()->getPrimPos(epoch, sys);
+	double dist = sqrt(pow(finalState[0] - primPos[3] ,2) + pow(finalState[1] - primPos[4], 2) + pow(finalState[2] - primPos[5], 2));
+
+	BOOST_CHECK_LE(dist, matchDistConData[1]);
+}//====================================================
+
 BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_MaxDeltaV, data::make(tofTypes), tofTp){
 	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
 	corrector->setTOFType(tofTp);
@@ -345,6 +403,24 @@ BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Apse, data::make(tofTypes), t
 	std::vector<double> finalState = correctedSet->getState(apseCon.getID());
 	const DynamicsModel *model = sys->getDynamicsModel();
 	double rdot = model->getRDot(apseData, correctedSet->getEpoch(apseCon.getID()), &(finalState[0]), sys);
+	BOOST_CHECK_SMALL(rdot, 1e-12);
+}//====================================================
+
+BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_Apse_endSeg, data::make(tofTypes), tofTp){
+	sim->runSim_manyNodes(lyap_ic, 0, lyap_T, 6, halfLyapSet);
+	corrector->setTOFType(tofTp);
+
+	double apseData = 2;
+	Constraint apseCon(Constraint_tp::ENDSEG_APSE, 3, &apseData, 1);
+	halfLyapSet->addConstraint(apseCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(apseCon.getID()).getStateByRow(-1);
+	double epoch = correctedSet->getSegRef(apseCon.getID()).getTimeByIx(-1);
+	const DynamicsModel *model = sys->getDynamicsModel();
+	double rdot = model->getRDot(apseData, epoch, &(finalState[0]), sys);
 	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 

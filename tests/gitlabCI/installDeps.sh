@@ -97,6 +97,7 @@ rm 3.3.3.tar.gz
 # LD_RUN_PATH=$LD_RUN_PATH:$INSTALL_DIR
 
 ## Configuration Files
+mkdir -p /root/.config/astrohelion
 cp ../settings.xml /root/.config/astrohelion/user_settings.xml
 cp ../body_data.xml /root/.config/astrohelion/body_data.xml
 

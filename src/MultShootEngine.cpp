@@ -392,8 +392,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				break;
 			case Constraint_tp::APSE:
 			case Constraint_tp::ENDSEG_APSE:
-			case Constraint_tp::ENDSEG_JC:
 			case Constraint_tp::JC:
+			case Constraint_tp::ENDSEG_JC:
 			case Constraint_tp::PSEUDOARC:
 			case Constraint_tp::SEG_CONT_EX:
 				addToRows = 1;

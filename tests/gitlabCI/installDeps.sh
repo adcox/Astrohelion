@@ -80,9 +80,9 @@ fi
 ## Download and move SPICE data
 wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp >> $LOG
 wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls >> $LOG
-mkdir -p /builds/adcox/.config/astrohelion
-mv de430.bsp data/data_SPICE/
-mv naif0012.tls data/data_SPICE/
+mkdir -p /root/.config/astrohelion
+mv de430.bsp /root/.config/astrohelion/
+mv naif0012.tls /root/.config/astrohelion/
 
 ## Eigen - Header only
 wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz >> $LOG
@@ -97,7 +97,6 @@ rm 3.3.3.tar.gz
 # LD_RUN_PATH=$LD_RUN_PATH:$INSTALL_DIR
 
 ## Configuration Files
-mkdir -p /root/.config/astrohelion
 cp ../settings.xml /root/.config/astrohelion/user_settings.xml
 cp ../body_data.xml /root/.config/astrohelion/body_data.xml
 

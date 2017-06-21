@@ -224,8 +224,12 @@ void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, const Con
         case Constraint_tp::JC:
             multShoot_targetJC(it, con, row0);
             break;
+        case Constraint_tp::ENDSEG_JC:
+            multShoot_targetJC_endSeg(it, con, row0);
+            break;
         case Constraint_tp::PSEUDOARC:
             multShoot_targetPseudoArc(it, con, row0);
+            break;
         default: break;
     }
 }//=========================================================
@@ -283,6 +287,98 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, const Constraint
     it->DF_elements.push_back(Tripletd(row0, state_var.row0+3, -2*vx));
     it->DF_elements.push_back(Tripletd(row0, state_var.row0+4, -2*vy));
     it->DF_elements.push_back(Tripletd(row0, state_var.row0+5, -2*vz));
+}//=============================================
+
+/**
+ *  \brief Compute constraint function and partial derivative values for a Jacobi Constraint on a Segment propagated state
+ *
+ *  \param pIt a pointer to the corrector's iteration data structure
+ *  \param con the constraint being applied
+ *  \param row0 the row this constraint begins on
+ */
+void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData* pIt, const Constraint& con, int row0) const{
+    std::vector<double> conData = con.getData();
+    int segIx = pIt->nodesIn->getSegIx(con.getID());
+
+    // Get object representing origin of segment
+    MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+
+    MSVarMap_Obj tof_var;
+    double timeCoeff = 1;
+    if(to_underlying(pIt->tofTp) > 0){
+        switch(pIt->tofTp){
+            case MSTOF_tp::VAR_FREE:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                break;
+            case MSTOF_tp::VAR_FIXSIGN:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
+                break;
+            case MSTOF_tp::VAR_EQUALARC:
+                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
+                break;
+            default:
+                throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
+        }
+    }   
+
+    // Data associated with the previous node and the propagated segment
+    std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+
+    // Compute the value of Jacobi at this node
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (pIt->nodesIn->getSysData());
+    double mu = crSys->getMu();
+    double segJC = getJacobi(&(lastState.front()), mu);
+    
+    pIt->FX[row0] = segJC - conData[0];
+    // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], segJC);
+
+    // temp variables to make equations more readable; compute partials w.r.t. node state
+    double x = lastState[0];
+    double y = lastState[1];
+    double z = lastState[2];
+    double vx = lastState[3];
+    double vy = lastState[4];
+    double vz = lastState[5];
+
+    double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
+    double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+
+    // Partial derivative of constraint w.r.t. origin node states
+    double dFdq_nf[6] = {
+        (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x),
+        (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y),
+        (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)),
+        -2*vx,
+        -2*vy,
+        -2*vz
+    };
+
+    if(prevNode_var.row0 != -1){
+        MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
+        // Do the matrix multiplication with loops to avoid expensive vector allocation
+        double sum;
+        for(unsigned int c = 0; c < 6; c++){
+            sum = 0;
+            for(unsigned int r = 0; r < 6; r++){
+                sum += dFdq_nf[r]*stm(r,c);
+            }
+            pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+        }
+    }
+
+    // Partials of F w.r.t. time-of-flight
+    if(to_underlying(pIt->tofTp) > 0){
+        std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+
+        // Compute dot product between dFdq_nf and final state derivative vector
+        double dp = 0;
+        for(unsigned int r = 0; r < 6; r++){
+            dp += dFdq_nf[r]*lastDeriv[r];
+        }
+        pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
+    }
 }//=============================================
 
 /**

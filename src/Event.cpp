@@ -183,16 +183,16 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 			conType = Constraint_tp::ENDSEG_STATE;
 			break;
 		case Event_tp::CRASH:
-			conType = Constraint_tp::MAX_DIST;
+			conType = Constraint_tp::ENDSEG_MAX_DIST;
 			break;
 		case Event_tp::JC:
-			conType = Constraint_tp::JC;
+			conType = Constraint_tp::ENDSEG_JC;
 			break;
 		case Event_tp::APSE:
 			conType = Constraint_tp::ENDSEG_APSE;
 			break;
 		case Event_tp::DIST:
-			conType = Constraint_tp::DIST;
+			conType = Constraint_tp::ENDSEG_DIST;
 			break;
 		default: 
 			throw Exception("Event::initEvent: Creating event with no type");

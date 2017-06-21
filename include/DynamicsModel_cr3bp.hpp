@@ -100,6 +100,7 @@ protected:
 	 *  \{
 	 */
 	void multShoot_targetJC(MultShootData*, const Constraint&, int) const;
+	void multShoot_targetJC_endSeg(MultShootData*, const Constraint&, int) const;
 	void multShoot_targetPseudoArc(MultShootData*, const Constraint&, int) const;
 	//\}
 };

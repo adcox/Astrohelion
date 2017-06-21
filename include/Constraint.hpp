@@ -240,9 +240,12 @@ enum class Constraint_tp {
 						 *	this constraint performs best when the constrained segment
 						 *	is the final segment on the trajectory.
 						 */
-	ENDSEG_JC	/*!<
-				 *
-				 */
+	ENDSEG_JC	/*!< Constrain the segment state to have a specific Jacobi constant 
+				 * 	(CR3BP only) Place the ID of the node you want to cosntraint in 
+				 * 	the <tt>id</tt> variable; <tt>data</tt> holds the value of Jacobi.
+				 * 	Note that this constraint performs best when the constrained segment
+				 * 	is the final segment on the trajectory.
+ 				 */
 };
 
 /**

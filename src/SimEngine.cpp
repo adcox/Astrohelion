@@ -1300,29 +1300,57 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
 
     // Construct a simple arcset from previous states we know work well
     Node n0(&(arcIC.front()), core_dim, t0);
-    Node ni(&(arcFC.front()), core_dim, t0+tof);
-    Segment tempSeg(0, 1, tof);
+    eventArcset.addNode(n0);
+
+    // Determine whether or not we're using an "ENDSEG" type constraint
+    bool useEndSeg;
+    switch(events[evtIx].getConType()){
+        case Constraint_tp::ENDSEG_STATE:
+        case Constraint_tp::ENDSEG_JC:
+        case Constraint_tp::ENDSEG_APSE:
+        case Constraint_tp::ENDSEG_DIST:
+        case Constraint_tp::ENDSEG_MIN_DIST:
+        case Constraint_tp::ENDSEG_MAX_DIST:
+            useEndSeg = true;
+            break;
+        default:
+            useEndSeg = false;
+            break;
+    }
+
+    Segment tempSeg(0, Linkable::INVALID_ID, tof);
+    tempSeg.appendState(arcIC);
+    tempSeg.appendState(arcFC);
+    tempSeg.setStateWidth(arcIC.size());
     tempSeg.setCtrlLaw(eomParams->pCtrlLaw);
 
-    eventArcset.addNode(n0);
-    eventArcset.addNode(ni);
-    eventArcset.addSeg(tempSeg);
+    if(useEndSeg){
+        // No need to add a terminal node, just add the segment
+        eventArcset.addSeg(tempSeg);
 
-    Constraint rmInitState(Constraint_tp::RM_STATE, 0, nullptr, 0);
-    eventArcset.addConstraint(rmInitState);
-
-    // TODO - Implement other ENDSEG constraints to minimize multiple shooter effort
-    if(events[evtIx].getConType() == Constraint_tp::ENDSEG_STATE ||
-        events[evtIx].getConType() == Constraint_tp::ENDSEG_APSE){
-        // Delete the last node and constrain the first (and only) segment final state
-        eventArcset.deleteNode(1);
+        // Constrain the end of the segment
         Constraint eventCon(events[evtIx].getConType(), 0, events[evtIx].getConData());
         eventArcset.addConstraint(eventCon);
     }else{
+        // Add a final node
+        Node ni(&(arcFC.front()), core_dim, t0+tof);
+        eventArcset.addNode(ni);
+
+        // Add a segment to link the two
+        tempSeg.setTerminus(1);
+        eventArcset.addSeg(tempSeg);
+
+        // Constrain the final node
         Constraint eventCon(events[evtIx].getConType(), 1, events[evtIx].getConData());
         eventArcset.addConstraint(eventCon);
     }
 
+    // Remove the initial state from the design vector; it is fixed.
+    // This reduces the size of the Jacobian matrix and expedites the shooting process
+    Constraint rmInitState(Constraint_tp::RM_STATE, 0, nullptr, 0);
+    eventArcset.addConstraint(rmInitState);
+
+    // Remove the initial epoch too, if applicable
     if(model->supportsCon(Constraint_tp::EPOCH)){
         Constraint rmInitEpoch(Constraint_tp::RM_EPOCH, 0, nullptr, 0);
         eventArcset.addConstraint(rmInitEpoch);

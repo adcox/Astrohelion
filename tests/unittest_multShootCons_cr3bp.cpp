@@ -421,6 +421,22 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Jacobi, data::make(tofTypes), t
 	BOOST_CHECK_SMALL(correctedSet->getJacobiByIx(0) - jacobiData, 1e-12);
 }//====================================================
 
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Jacobi_endSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);
+
+	corrector->setTOFType(tofTp);
+
+	double jacobiData = 3.1149;
+	Constraint jacobiCon(Constraint_tp::ENDSEG_JC, 0, &jacobiData, 1);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(jacobiCon);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+	BOOST_CHECK_SMALL(correctedSet->getJacobiByIx(1) - jacobiData, 1e-12);
+}//====================================================
+
 BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_TOF, data::make(tofTypes), tofTp){
 	sim->setRevTime(em_lyap_T < 0);
 	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 6, halfLyapSet);

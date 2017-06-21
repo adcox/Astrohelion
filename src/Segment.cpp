@@ -146,14 +146,35 @@ void Segment::addConstraint(Constraint c){
 	cons.push_back(c);
 }//====================================================
 
+/**
+ *  \brief Append a state vector to the storage vector
+ *  \details The state does not have to be the full state;
+ *  it is frequently useful to call this function multiple times
+ *  with different pieces of the state
+ * 
+ *  \param q an array of state variables
+ *  \param len length of the input array
+ */
 void Segment::appendState(const double *q, unsigned int len){
 	states.insert(states.end(), q, q+len);
 }//====================================================
 
+/**
+ *  \brief Append a state vector to the storage vector
+ *  \details The state does not have to be the full state;
+ *  it is frequently useful to call this function multiple times
+ *  with different pieces of the state
+ * 
+ *  \param q a vector of state variables
+ */
 void Segment::appendState(const std::vector<double> q){
 	states.insert(states.end(), q.begin(), q.end());
 }//====================================================
 
+/**
+ *  \brief Append a time value to the storage vector
+ *  \param t a time value (nondimensional)
+ */
 void Segment::appendTime(double t){
 	times.push_back(t);
 }//====================================================
@@ -189,6 +210,15 @@ unsigned int Segment::getNumCons() const { return cons.size(); }
  */
 int Segment::getOrigin() const { return links[ORIG_IX]; }
 
+/**
+ *  \brief Retrieve a copy of the entire state vector
+ *  \details The state vector includes, in row-major order,
+ *  every state along the Segment. Depending on how the propagation
+ *  is conducted, there may be as few as two states. The width of
+ *  one state (i.e., one row) is available from getStateWidth()
+ *  
+ *  \return a copy of the entire state vector
+ */
 std::vector<double> Segment::getStateVector() const{ return states; }
 
 /**
@@ -214,11 +244,17 @@ unsigned int Segment::getStateWidth() const{ return stateWidth; }
  *  \return A vector containing the desired state values
  */
 std::vector<double> Segment::getStateByRow(int row) const{
+	if(stateWidth == 0)
+		throw Exception("Segment::getStateByRow: stateWidth is zero! Set the state width before calling this function.");
+
 	if(row < 0)
 		row += states.size()/stateWidth;
 
-	if(row < 0 || row >= static_cast<int>(states.size()/stateWidth))
-		throw Exception("Segment::getStateByRow: row out of bounds");
+	if(row < 0 || row >= static_cast<int>(states.size()/stateWidth)){
+		char msg[128];
+		sprintf(msg, "Segment::getStateByRow: Index %d out of bounds; expected between 0 and %u", row, (states.size()/stateWidth) - 1);
+		throw Exception(msg);
+	}
 
 	std::vector<double> q(states.begin()+row*stateWidth, states.begin()+(row+1)*stateWidth);
 	return q;
@@ -230,6 +266,13 @@ std::vector<double> Segment::getStateByRow(int row) const{
  */
 int Segment::getTerminus() const { return links[TERM_IX]; }
 
+/**
+ *  \brief Retrieve a copy of the entire time vector.
+ *  \details Each time value corresponds to one state stored
+ *  in the state vector.
+ *  
+ *  \return a copy of the entire time vector
+ */
 std::vector<double> Segment::getTimeVector() const { return times; }
 
 /**
@@ -246,8 +289,11 @@ double Segment::getTimeByIx(int ix) const{
 	if(ix < 0)
 		ix += times.size();
 
-	if(ix < 0 || ix >= static_cast<int>(times.size()))
-		throw Exception("Segment::getTimeByIx: Index out of bounds");
+	if(ix < 0 || ix >= static_cast<int>(times.size())){
+		char msg[128];
+		sprintf(msg, "Segment::getTimeByIx: Index %d out of bounds; expected between 0 and %zu", ix, times.size() - 1);
+		throw Exception(msg);
+	}
 
 	return times[ix];
 }//====================================================
@@ -424,8 +470,11 @@ void Segment::setVelCon(const bool data[3]){
  *	@throw Exception if <tt>data</tt> has fewer than three elements
  */
 void Segment::setVelCon(std::vector<bool> data){
-	if(data.size() < 3)
-		throw Exception("Segment::setVelCon: Need at least three velocity continuity booleans");
+	if(data.size() < 3){
+		char msg[128];
+		sprintf(msg, "Segment::setVelCon: data size = %zu; need at least three elements", data.size());
+		throw Exception(msg);
+	}
 
 	std::copy(data.begin(), data.begin()+3, flags.begin());
 }//====================================================

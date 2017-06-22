@@ -60,7 +60,7 @@ all: directories unit run
 
 unit: arcData bc4bpDef cr3bpFam lambertArc linMotion manifoldEngine\
 	multShootCons_bc4bp multShootCons_cr3bp multShootCons_cr3bp_lt multShootEngine\
-	arcset simEngine utilities
+	arcset simEngine utilities event
 
 run:
 	./arcData.bin
@@ -76,6 +76,7 @@ run:
 	./arcset.bin
 	./simEngine.bin
 	./utilities.bin
+	./event.bin
 	
 ############################################################
 ## UNIT TESTS
@@ -92,6 +93,9 @@ bc4bpDef: $(OBJECTS)
 
 cr3bpFam: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_cr3bpFamily.cpp $(LDFLAGS) -o $@.bin	
+
+event: $(OBJECTS)
+	$(COMP) -I $(INC) $(INC_SYS) $^  ../unittest_event.cpp $(LDFLAGS) -o $@.bin
 
 lambertArc: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_lambertArc.cpp $(LDFLAGS) -o $@.bin	

@@ -1381,6 +1381,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     }
 
     double eventTime = t0 + correctedSet.getTotalTOF();
+    // Get the full (including STM, etc) state from the end of the propagated segment
     std::vector<double> state = correctedSet.getSegRefByIx(-1).getStateByRow(-1);
     // Update event state from the most recent node (a new node was created at the event occurence)
     events[evtIx].updateDist(&(state.front()), core_dim, eventTime);
@@ -1388,7 +1389,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     // TODO - eventually all events should use this ENDSEG type behavior
     Node evtNode;
     int id;
-    if(events[evtIx].getConType() == Constraint_tp::ENDSEG_STATE){
+    if(useEndSeg){
         // The final node was deleted; create one to represent the event
         evtNode = Node(&(state.front()), core_dim, eventTime);
         id = model->sim_addNode(evtNode, &(state.front()), eventTime, pArcset, eomParams, events[evtIx].getType());

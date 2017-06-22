@@ -80,6 +80,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_NodesAtEvents){
 	// Second test case: Generate orbit, use createNodesAtEvent and check the functionality, TOF computation, etc.
 	Arcset_cr3bp set2(&sys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(emDRO_ic, emDRO_T, 2, &set2);
 	
 	// set2.saveToMat("emDRO_2Nodes.mat");
@@ -113,6 +114,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesAtEvent){
 
 	Arcset_bc4bp set3(&bcSys);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(qho_ic, qho_T0, qho_Period, 2, &set3);
 	
 	// cout << "BC4BP Arcset generated from ICs:" << endl;
@@ -142,9 +144,11 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 	SysData_cr3bp emData("earth", "moon");
 	Arcset_cr3bp crSet(&emData);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(ic, 2.77, 5, &crSet);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 	corrector.multShoot(&crSet, NULL);
 
@@ -169,6 +173,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 
 	Arcset_bc4bp bcSet(&semData);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(ic2, 0, 40, 5, &bcSet);
 
 	// Add a constraint
@@ -183,6 +188,7 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 	bcSet.allowDV_at(velCon);
 
 	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 	corrector.multShoot(&bcSet, nullptr);
 
@@ -206,12 +212,14 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
 
 	MultShootEngine corrector;
-
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
 	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 
 	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(ic, 2.77, 5, &ltSet, &control);
 
 	corrector.multShoot(&ltSet, nullptr);
@@ -240,6 +248,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 	SysData_cr3bp emData("earth", "moon");
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 	Arcset_cr3bp crTraj(&emData);
@@ -273,6 +282,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
 BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
 	SysData_bc4bp semData("sun", "earth", "moon");
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
 	double T = 313;	// SE L1 Period
 	Arcset_bc4bp bcTraj(&semData);
@@ -307,6 +317,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
 	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
 
 	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 	Arcset_cr3bp_lt ltTraj(&emData);

@@ -246,8 +246,8 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 
     	// Scale the vector and make sure it is pointing in the +x direction
         Eigen::VectorXd baseDirection = newVec/mag;
-        if(astrohelion::sign(newVec(0)) != 0)
-    	   baseDirection *= astrohelion::sign(newVec(0));
+        // if(astrohelion::sign(newVec(0)) != 0)
+    	   // baseDirection *= astrohelion::sign(newVec(0));
 
     	// Determine which directions the user has specified with manifoldType
     	std::vector<int> dirs;

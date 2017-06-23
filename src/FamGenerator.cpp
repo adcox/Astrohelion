@@ -1330,17 +1330,10 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 
 					familyItData = corrector.multShoot(&newMember, &perOrbit);
 
-					std::vector<double> state0 = perOrbit.getStateByIx(0);
-					std::vector<double> statef = perOrbit.getStateByIx(-1);
-					double sumSquared = 0;
-					for(unsigned int i = 0; i < 6; i++){
-						sumSquared += (state0[i] - statef[i])*(state0[i] - statef[i]);
-					}
+					if(!cr3bp_checkPACSolution(&perOrbit, &familyItData, convergedFreeVarVec, stepSize, &killLoop)){
 
-					if(sqrt(sumSquared) > 10*tol){
 						if(stepSize > minStepSize){
 							stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
-							printColor(RED, "NOT PERIODIC! Error = %.4e\n", sqrt(sumSquared));
 							printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 							// Re-Create the initial guess using the new step size
@@ -1392,30 +1385,6 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 			break;
 
 		printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
-
-		
-		if(familyItData.totalFree < 6)
-			throw Exception("FamGenerator::PAC algorithm expects at least 6 states in the free variable vector");
-
-		// Check to see if the converged family vector is significantly different from previously computed family member
-		// Note that only the first 6 states (the IC for the trajectory) is checked; differences in other nodes 
-		// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
-		Eigen::VectorXd newX_init = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), 6, 1);
-		Eigen::VectorXd oldX_init = Eigen::Map<Eigen::VectorXd>(convergedFreeVarVec.data(), 6, 1);
-
-		Eigen::VectorXd diff = newX_init - oldX_init;
-		double diffX = diff.norm();
-		astrohelion::printErr("||diff in X(1:6)|| = %.4e\n", diffX);
-
-		if(diffX < tol){
-			astrohelion::printErr("Solutions from pseudo-arc-length have ceased changing; ending continuation\n");
-			break;
-		}
-
-		if(diffX > 2*maxStepSize){
-			astrohelion::printErr("Solution changed by amount greater than maxStepSize; solution jumped, ending continuation\n");
-			break;
-		}
 
 		// Save new converged family vector
 		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
@@ -1510,6 +1479,67 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(const Eigen::VectorXd &converge
 		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.rows()-1]);
 
 	return newMember;
+}//====================================================
+
+/**
+ *  \brief Check to see if the converged solution is valid
+ * 
+ *  \param pSol Converged solution from the most recent multiple shooting process
+ *  \param pIt Iteration data from the most recent multiple shooting process
+ *  \param convergedFreeVarVec Free variable vector describing the previous 
+ *  converged and accepted solution
+ *  \param killLoop Whether or not to end the continuation. For example,
+ *  if the converged solutions have ceased changing then killLoop is set 
+ *  to true.
+ *  \return whether or not the converged solution is valid
+ */
+bool FamGenerator::cr3bp_checkPACSolution(const Arcset_cr3bp *pSol, const MultShootData *pIt,
+	const Eigen::VectorXd &convergedFreeVarVec, double stepSize, bool *killLoop){
+
+	*killLoop = false;
+	
+	// Check periodicity
+	std::vector<double> state0 = pSol->getStateByIx(0);
+	std::vector<double> statef = pSol->getStateByIx(-1);
+	double sumSquared = 0;
+	for(unsigned int i = 0; i < state0.size(); i++){
+		sumSquared += (state0[i] - statef[i])*(state0[i] - statef[i]);
+	}
+
+	if(sqrt(sumSquared) > 10*tol){
+		printColor(RED, "NOT PERIODIC! Error = %.4e\n", sqrt(sumSquared));
+		return false;
+	}
+
+	if(pIt->totalFree < 6){
+		char msg[128];
+		sprintf(msg, "FamGenerator::cr3bp_checkPACSolution: there are %d free variables; expect 6!", pIt->totalFree);
+		throw Exception(msg);
+	}
+
+	// Check to see if the converged family vector is significantly different from previously computed family member
+	// Note that only the first 6 states (the IC for the trajectory) is checked; differences in other nodes 
+	// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
+	sumSquared = 0;
+	for(unsigned int i = 0; i < 6; i++){
+		sumSquared += (pIt->X[i] - convergedFreeVarVec[i])*(pIt->X[i] - convergedFreeVarVec[i]);
+	}
+	double diffX = sqrt(sumSquared);
+	astrohelion::printErr("||diff in X(1:6)|| = %.4e\n", diffX);
+
+	if(diffX < tol){
+		astrohelion::printErr("Solutions from pseudo-arc-length have ceased changing; ending continuation\n");
+		*killLoop = true;	// End continuation
+		return true;		// The solution is fine
+	}
+
+	if(diffX > 2*stepSize){
+		astrohelion::printErr("Solution changed by %.4e > 2*(stepSize = %.4e).\n", diffX, stepSize);
+		return false;	// Solution is no good
+	}
+
+	// Default: Solution is ok!
+	return true;
 }//====================================================
 
 /**

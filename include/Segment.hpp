@@ -83,6 +83,7 @@ public:
 	std::vector<Constraint> getConstraints() const;
 	ControlLaw* getCtrlLaw() const;
 	unsigned int getNumCons() const;
+	unsigned int getNumTimes() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
 	std::vector<double> getStateVector() const;

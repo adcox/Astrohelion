@@ -383,7 +383,7 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
 
     if(nonCenterVals.size() == 0){
     	if(verbosity >= Verbosity_tp::SOME_MSG)
-        	astrohelion::printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
+        	printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
         throw Exception("ManifoldEngine::computeEigVecValFromPeriodic: No stable/unstable eigenvalues were found\n");
     }
 

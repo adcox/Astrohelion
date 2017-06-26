@@ -205,6 +205,12 @@ ControlLaw* Segment::getCtrlLaw() const{ return pCtrlLaw; }
 unsigned int Segment::getNumCons() const { return cons.size(); }
 
 /**
+ *  \brief Retrieve the number of times stored in the time vector
+ *  \return the number of times stored in the time vector
+ */
+unsigned int Segment::getNumTimes() const { return times.size(); }
+
+/**
  *  \brief Retrieve the ID of the origin node (chronologically)
  *  \return the ID of the origin node (chronologically)
  */
@@ -252,7 +258,7 @@ std::vector<double> Segment::getStateByRow(int row) const{
 
 	if(row < 0 || row >= static_cast<int>(states.size()/stateWidth)){
 		char msg[128];
-		sprintf(msg, "Segment::getStateByRow: Index %d out of bounds; expected between 0 and %u", row, (states.size()/stateWidth) - 1);
+		sprintf(msg, "Segment::getStateByRow: Index %d out of bounds; expected between 0 and %d", row, static_cast<int>(states.size()/stateWidth) - 1);
 		throw Exception(msg);
 	}
 

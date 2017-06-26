@@ -11,6 +11,7 @@
 #include <exception> 
 #include <iostream>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -313,7 +314,10 @@ void Core_Initializer::runInit(){
 		try{
 			bd.orbitRad = bodyTree.get<double>("circ_r");
 		}catch(std::exception &e){
-			std::cout << "Error reading " << bd.name << " body data: circ_r:\n" << e.what() << std::endl;
+
+			// Report the error unless the body is the sun, which never has a "circ_r" property
+			if(!boost::iequals(bd.name, "sun"))
+				std::cout << "Error reading " << bd.name << " body data: circ_r:\n" << e.what() << std::endl;
 		}
 
 		if(bd.id != 0 && allBodyData.find(bd.id) == allBodyData.end()){

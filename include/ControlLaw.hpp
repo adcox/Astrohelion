@@ -27,11 +27,6 @@
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* TODO
- *	- Write control laws for LowThrust
- *	- Test it out!
- */
-
 #pragma once
 
 #include "matio.h"

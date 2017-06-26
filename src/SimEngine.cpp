@@ -1272,14 +1272,24 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     // Create a nodeset from the previous state (stored in the event) and
     // integrate forwards for half the time between this state and the last one
     Segment &lastSeg = pArcset->getSegRefByIx(-1);
-    double t0 = lastSeg.getTimeByIx(-2);          // Time from the state before last
-    double ti = lastSeg.getTimeByIx(-1);          // Time from the previous state
-    double tof = t - t0 - 0.5*(t - ti);         // Approx. TOF 
 
-    // Copy IC into vector - Use the state from two iterations ago to avoid
-    // numerical problems when the previous state is REALLY close to the event
-    std::vector<double> arcIC = lastSeg.getStateByRow(-2);
-    std::vector<double> arcFC = lastSeg.getStateByRow(-1);
+    double t0 = 0, tof = 0, ti = NAN;
+    std::vector<double> arcIC(lastSeg.getStateWidth()), arcFC(lastSeg.getStateWidth());
+    if(lastSeg.getNumTimes() == 1){
+        t0 = lastSeg.getTimeByIx(0);
+        tof = 0.5*(t - t0);
+        arcIC = lastSeg.getStateByRow(0);
+        arcFC = std::vector<double>(y, y + arcIC.size());
+    }else{
+        t0 = lastSeg.getTimeByIx(-2);           // Time from the state before last
+        double ti = lastSeg.getTimeByIx(-1);    // Time from the previous state
+        tof = t - t0 - 0.5*(t - ti);            // Approx. TOF 
+        
+        // Copy IC into vector - Use the state from two iterations ago to avoid
+        // numerical problems when the previous state is REALLY close to the event
+        arcIC = lastSeg.getStateByRow(-2);
+        arcFC = lastSeg.getStateByRow(-1);
+    }
 
     if(verbosity >= Verbosity_tp::ALL_MSG){
         // astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);

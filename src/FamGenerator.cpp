@@ -897,7 +897,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 			double percChange = std::abs(dTOF/perOrbit.getTimeByIx(-1));
 			if(percChange > 0.25){
 				printWarn("percChange = %.4f\n", percChange);
-				astrohelion::printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTimeByIx(-1));
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTimeByIx(-1));
 				diverged = true;
 			}
 		}
@@ -913,7 +913,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 					step_simple = step_simple/2 > minStepSize ? step_simple/2 : minStepSize;
 					printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", step_simple, minStepSize);
 				}else{
-					astrohelion::printErr("Minimum step size reached, could not converge... exiting\n");
+					printErr("Minimum step size reached, could not converge... exiting\n");
 					break;
 				}
 			}else{
@@ -928,7 +928,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 					else
 						step_fitted_2 = dq;
 				}else{
-					astrohelion::printErr("Minimum step size reached, could not converge... exiting\n");
+					printErr("Minimum step size reached, could not converge... exiting\n");
 					break;
 				}
 			}

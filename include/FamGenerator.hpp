@@ -45,13 +45,7 @@ class Arcset_cr3bp;
 class SysData_cr3bp;
 class Arcset_cr3bp;
 
-/**
- *	\brief Type of continuation to use when generating a family
- */
-enum class Continuation_tp{
-	NAT_PARAM,	//!< Use natural parameter continuation
-	PSEUDO_ARC	//!> Use pseudo arclength continuation
-};
+
 		
 /**
  *	\ingroup engine

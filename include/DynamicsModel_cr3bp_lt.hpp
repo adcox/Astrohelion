@@ -27,14 +27,14 @@
  */
 #pragma once
 
-#include "DynamicsModel.hpp"
+#include "DynamicsModel_cr3bp.hpp"
 
 namespace astrohelion{
 /**
  *	\ingroup model cr3bp_lt
  *	\brief Derivative of DynamicsModel, specific to the low-thrust CR3BP
  */
-class DynamicsModel_cr3bp_lt : public DynamicsModel{
+class DynamicsModel_cr3bp_lt : public DynamicsModel_cr3bp{
 public:
 	/**
 	 *  \name *structors
@@ -53,10 +53,10 @@ public:
 	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
-	std::vector<double> getPrimPos(double, const SysData*) const;
-	void getPrimPos(double, const SysData*, int, double*) const;
-	std::vector<double> getPrimVel(double, const SysData*) const;
-	void getPrimVel(double, const SysData*, int, double*) const;
+	// std::vector<double> getPrimPos(double, const SysData*) const;
+	// void getPrimPos(double, const SysData*, int, double*) const;
+	// std::vector<double> getPrimVel(double, const SysData*) const;
+	// void getPrimVel(double, const SysData*, int, double*) const;
 	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
 	//\}
 
@@ -66,7 +66,7 @@ public:
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static double getJacobi(const double[], double);
+	// static double getJacobi(const double[], double);
 	//\}
 	
 	/**

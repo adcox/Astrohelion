@@ -1220,18 +1220,11 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		 * 	have an extra row for the pseudo-arc-length constraint; we want to remove that row and take the
 		 * 	nullspace of the submatrix
 		 */
-		// std::vector<double> DF_data;
-		// if(familyItData.totalCons == familyItData.totalFree){
-		// 	DF_data.insert(DF_data.begin(), familyItData.DF.begin(), familyItData.DF.begin() + familyItData.totalFree * (familyItData.totalCons - 1));
-		// }else{
-		// 	DF_data = familyItData.DF;
-		// }
 		if(familyItData.totalCons == familyItData.totalFree){
 			DF = DF.block(0, 0, familyItData.totalCons-1, familyItData.totalFree);
 		}
 
 		// Compute null space of previously computed member's Jacobian Matrix
-		// MatrixXRd DF = Eigen::Map<MatrixXRd>(&(DF_data[0]), familyItData.totalFree-1, familyItData.totalFree);
 		Eigen::FullPivLU<MatrixXRd> lu(DF);
 		lu.setThreshold(1e-14);
 		MatrixXRd N = lu.kernel();
@@ -1314,7 +1307,6 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));
 
-		// Arcset_cr3bp newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, familyItData);
 		newMember = cr3bp_getNextPACGuess(convergedFreeVarVec, N, stepSize, &familyItData);
 
 		/*

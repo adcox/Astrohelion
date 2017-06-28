@@ -49,9 +49,7 @@ namespace astrohelion{
  *	\brief Default constructor
  *	\param type the model type
  */
-DynamicsModel::DynamicsModel(DynamicsModel_tp type){
-	modelType = type;
-}//===========================================
+DynamicsModel::DynamicsModel(){}
 
 /**
  *	\brief Copy constructor
@@ -78,7 +76,6 @@ DynamicsModel& DynamicsModel::operator =(const DynamicsModel &m){
  *	\param m another dynamic model
  */
 void DynamicsModel::copyMe(const DynamicsModel &m){
-	modelType = m.modelType;
 	coreDim = m.coreDim;
 	extraDim = m.extraDim;
 }//============================================

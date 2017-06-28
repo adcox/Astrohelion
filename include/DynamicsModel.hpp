@@ -75,17 +75,6 @@ struct EOM_ParamStruct{
 };
 
 /**
- *	\brief Describes the type of dynamic model; used for easy identification
- */
-enum class DynamicsModel_tp{
-	MODEL_NULL,			//!< Undefined type
-	MODEL_2BP,			//!< Relative 2-Body Problem
-	MODEL_CR3BP,		//!< Circular Restricted, 3-Body Problem
-	MODEL_CR3BP_LT,		//!< Circular Restricted, 3-Body Problem with Velocity-Pointing Low Thrust (constant)
-	MODEL_BCR4BPR		//!< Bi-Circular Restricted, 4-Body Problem in a rotating reference frame
-};
-
-/**
  *	\brief A base class that defines the behavior of a dynamical model and provides
  *	functions used in simulation and correction algorithms
  *
@@ -147,7 +136,7 @@ public:
 	 *  \name *structors
 	 *  \{
 	 */
-	DynamicsModel(DynamicsModel_tp);
+	DynamicsModel();
 	DynamicsModel(const DynamicsModel&);
 	virtual ~DynamicsModel();
 	//\}
@@ -311,7 +300,6 @@ public:
 	virtual ControlLaw* createControlLaw() const;
 	//\}
 protected:
-	DynamicsModel_tp modelType = DynamicsModel_tp::MODEL_NULL;	//!< Describes the model type
 	unsigned int coreDim = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreDim
 	unsigned int extraDim = 0;	//!< The number of extra states stored after the core states and STM states; default is zero.
 

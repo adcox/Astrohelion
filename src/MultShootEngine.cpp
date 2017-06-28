@@ -837,7 +837,7 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::Vec
 	sim.setVarStepSize(false);
 	sim.setNumSteps(2);
 	sim.setMakeDefaultEvents(false);
-	sim.setVerbosity(verbosity);
+	sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity)-1));
 	
 	unsigned int maxCount = 10;		// Max number of line search iterations
 	double tempStep = 1;			// Storage for the next step size
@@ -877,13 +877,13 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::Vec
 		f = 0.5*sqrt(temp);
 
 		if(step < minStep){
-			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "  Line search decreased past minimum bound.\n");
+			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, RED, "  Line search decreased past minimum bound.\n");
 			return;
 		}
 
 
 		if(f <= f_old + alpha*step*slope){
-			printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  Line Search: Step Size = %.4e (%u its)\n", step, count);
+			printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Line Search: Step Size = %.4e (%u its)\n", step, count);
 			return;	// We're all set, so return!
 		}else{	// Need to backtrack
 			if(count == 0){

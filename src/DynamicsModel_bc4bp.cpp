@@ -49,7 +49,7 @@ namespace astrohelion{
 /**
  *  \brief Construct a BCR4BP Dynamic DynamicsModel
  */
-DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
+DynamicsModel_bc4bp::DynamicsModel_bc4bp() : DynamicsModel() {
     coreDim = 6;
     extraDim = 6;
     allowedCons.push_back(Constraint_tp::EPOCH);

@@ -43,9 +43,7 @@
 
 namespace astrohelion{
 
-DynamicsModel_2bp::DynamicsModel_2bp() : DynamicsModel(DynamicsModel_tp::MODEL_2BP) {
-
-}//====================================================
+DynamicsModel_2bp::DynamicsModel_2bp() : DynamicsModel() {}
 
 /**
  *  \brief Copy Constructor

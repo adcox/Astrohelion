@@ -47,12 +47,9 @@ namespace astrohelion{
 /**
  *  \brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
  */
-DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP_LT) {
+DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel_cr3bp() {
     coreDim = 7;
     extraDim = 0;
-    allowedCons.push_back(Constraint_tp::JC);
-    allowedCons.push_back(Constraint_tp::ENDSEG_JC);
-    allowedEvents.push_back(Event_tp::JC);
     allowedEvents.push_back(Event_tp::MASS);
 }//==============================================
 
@@ -60,7 +57,7 @@ DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_t
  *  \brief Copy Constructor
  *  \param m a model reference
  */ 
-DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt &m) : DynamicsModel(m) {}
+DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt &m) : DynamicsModel_cr3bp(m) {}
 
 /**
  *  \brief Assignment operator
@@ -86,87 +83,6 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getSimpleEOM_fcn() const{
 DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getFullEOM_fcn() const{
 	return &fullEOMs;
 }//==============================================
-
-/**
- *  \brief Compute the positions of all primaries
- *
- *  \param t the epoch at which the computations occur (unused for this system)
- *  \param pSysData object describing the specific system
- *  \return an n x 3 vector (row-major order) containing the positions of
- *  n primaries; each row is one position vector in non-dimensional units
- */
-std::vector<double> DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *pSysData) const{
-    std::vector<double> primPos(6,0);
-    getPrimPos(t, pSysData, -1, &(primPos.front()));
-    return primPos;
-}//====================================================
-
-/**
- *  \brief Compute the position of a specified primary
- *  \details This is the faster alternative to getPrimPos(t, pSysData).
- * 
- *  \param t Nondimensional time
- *  \param pSysData pointer to system data object
- *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
- *  in order of largest to smallest mass
- *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
- *  For a single primary position, the array must have at least three elements allocated. For all 
- *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
- *  of primaries.
- */
-void DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const{
-    (void) t;
-    const SysData_cr3bp *pCrSys = static_cast<const SysData_cr3bp *>(pSysData);
-
-    switch(pIx){
-        case -1:
-            pos[0] = -1*pCrSys->getMu();
-            pos[3] = 1 - pCrSys->getMu();
-            break;
-        case 0:
-            pos[0] = -1*pCrSys->getMu();
-            break;
-        case 1:
-            pos[0] = 1 - pCrSys->getMu();
-            break;
-        default:
-            throw Exception("DynamicsModel_cr3bp::getPrimPos: primary index out of bounds.");
-    }
-}//====================================================
-
-/**
- *  \brief Compute the velocities of all primaries
- *
- *  \param t the epoch at which the computations occur (unused for this system)
- *  \param pSysData object describing the specific system (unused for this system)
- *  \return an n x 3 vector (row-major order) containing the velocities of
- *  n primaries; each row is one velocity vector in non-dimensional units
- */
-std::vector<double> DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData) const{
-    std::vector<double> vel(6,0);
-    getPrimVel(t, pSysData, -1, &(vel.front()));
-    return vel;
-}//====================================================
-
-/**
- *  \brief Compute the velocity of a specified primary
- *  \details This is the faster alternative to getPrimVel(t, pSysData).
- * 
- *  \param t Nondimensional time
- *  \param pSysData pointer to system data object
- *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
- *  in order of largest to smallest mass
- *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
- *  For a single primary velocity, the array must have at least three elements allocated. For all 
- *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
- *  of primaries.
- */
-void DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const{
-    (void) t;
-    (void) pSysData;
-    (void) pIx;
-    (void) vel;
-}//====================================================
 
 /**
  *  \brief Retrieve the state derivative
@@ -409,22 +325,6 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
 
     return GSL_SUCCESS;
 }//=====================================================
-
-/**
- *  \brief Compute the Jacobi Constant for the CR3BP
- *
- *  \param s the state vector; only the position and velocity states are required
- *  \param mu the non-dimensional system mass ratio
- *
- *  \return the Jacobi Constant at this specific state and system
- */
-double DynamicsModel_cr3bp_lt::getJacobi(const double s[], double mu){
-    double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
-    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
-    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
-    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
-    return 2*U - v_squared;
-}//================================================
 
 
 /**

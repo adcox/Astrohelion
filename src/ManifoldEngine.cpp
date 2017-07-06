@@ -194,6 +194,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp 
 
     // Get the state and STM from the initial periodic orbit state to the desired state at orbitTOF
 	SimEngine sim;
+    sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity) - 1));
 	sim.setVarStepSize(false);	// Do really simple propagation; only need the final state
 	sim.setNumSteps(2);
 
@@ -228,6 +229,7 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 
 	std::vector<Arcset_cr3bp> manifolds;
 	SimEngine sim;
+    sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity) - 1));
 	double mu = pSys->getMu();
 	Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 6, 1);
 	double C = DynamicsModel_cr3bp::getJacobi(&(state.front()), mu);
@@ -389,7 +391,7 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
 
     if(nonCenterVals.size() == sortedEig.size()){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No center eigenvalues were found\nCheck to make sure the input orbit is truely periodic and the STMs represent the\nsequential evolution rather than parallel");
+            printWarn("ManifoldEngine::computeEigVecValFromPeriodic: No center eigenvalues were found\nCheck to make sure the input orbit is truely periodic and the STMs represent the\nsequential evolution rather than parallel\n");
     }
 
     // Only keep the real parts of the eigenvectors

@@ -493,7 +493,12 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		if(it.count > 0){
 			// Solve for newX and copy into working vector X
 			oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
-			solveUpdateEq(&it, &oldX, &FX, &newX);
+			
+			try{
+				solveUpdateEq(&it, &oldX, &FX, &newX);
+			}catch(LinAlgException &e){
+				throw e;	// Rethrow error
+			}
 
 			it.X.clear();
 			it.X.insert(it.X.begin(), newX.data(), newX.data()+it.totalFree);
@@ -668,7 +673,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
  *	\param pFX constant pointer to the current constraint vector
  *	\param pNewX pointer to a vector in which to store the updated design variable vector
  *	
- *	\throws Exception if the problem is over constrained (i.e. Jacobian has more rows than columns);
+ *	\throws LinAlgException if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	This can be updated to use a least-squares solution (TODO)
  */
 void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* pOldX, const Eigen::VectorXd *pFX, Eigen::VectorXd *pNewX){

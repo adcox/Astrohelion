@@ -1076,7 +1076,7 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
 
     std::vector<int> map_oldID_to_newID(EMNodes.getNextNodeID(), Linkable::INVALID_ID);
     std::vector<double> state_SE;
-    double epoch;
+    double epoch = 0;
     unsigned int core_dim = EMNodes.getSysData()->getDynamicsModel()->getCoreStateSize();
     unsigned int full_dim = (core_dim + 1)*core_dim + EMNodes.getSysData()->getDynamicsModel()->getExtraStateSize();
 

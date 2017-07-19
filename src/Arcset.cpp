@@ -489,7 +489,7 @@ void Arcset::print() const {
  *	\brief Save the arcset to a file
  *	\param filename the name of the .mat file
  */
-void Arcset::saveToMat(const char* filename) const{
+void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 
 	 *	used containing the software, version, and date in it. If a header
@@ -504,7 +504,7 @@ void Arcset::saveToMat(const char* filename) const{
 		astrohelion::printErr("Arcset::saveToMat: Error creating MAT file\n");
 	}else{
 		try{
-			saveCmds(matfp);
+			saveCmds(matfp, saveTp);
 		}catch(Exception &E){
 			Mat_Close(matfp);
 			throw E;
@@ -524,17 +524,17 @@ void Arcset::saveToMat(const char* filename) const{
  * 
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset::saveCmds(mat_t* pMatFile) const{
+void Arcset::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
 	saveNodeStates(pMatFile);
 	saveNodeStateDeriv(pMatFile);
 	saveNodeTimes(pMatFile);
 	saveNodeCtrl(pMatFile);
 
-	saveSegStates(pMatFile);
-	saveSegTimes(pMatFile);
-	saveSegTOF(pMatFile);
-	saveSegSTMs(pMatFile);
-	saveSegCtrlLaw(pMatFile);
+	saveSegStates(pMatFile, saveTp);
+	saveSegTimes(pMatFile, saveTp);
+	saveSegTOF(pMatFile, saveTp);
+	saveSegSTMs(pMatFile, saveTp);
+	saveSegCtrlLaw(pMatFile, saveTp);
 
 	pSysData->saveToMat(pMatFile);
 }//====================================================
@@ -580,6 +580,8 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
  *  \todo Remove backward compatibility code in future (today: May 3 2017)
  */
 void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	Save_tp saveTp = Save_tp::SAVE_ALL;
+
 	try{
 		initNodesSegsFromMat(pMatFile);
 
@@ -588,11 +590,11 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 		readNodeTimesFromMat(pMatFile);
 		readNodeCtrlFromMat(pMatFile);
 
-		readSegStatesFromMat(pMatFile);
-		readSegTimesFromMat(pMatFile);
-		readSegSTMFromMat(pMatFile);
-		readSegTOFFromMat(pMatFile);
-		readSegCtrlLawFromMat(pMatFile, refLaws);
+		readSegStatesFromMat(pMatFile, saveTp);
+		readSegTimesFromMat(pMatFile, saveTp);
+		readSegSTMFromMat(pMatFile, saveTp);
+		readSegTOFFromMat(pMatFile, saveTp);
+		readSegCtrlLawFromMat(pMatFile, refLaws, saveTp);
 	}catch(Exception &e){
 		// if file was saved using older style, try slightly different read commands
 		printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
@@ -613,9 +615,9 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 
 		// Old save for both trajectory and nodeset
 		readNodeStateDerivFromMat(pMatFile);
-		readSegSTMFromMat(pMatFile);
-		readSegTOFFromMat(pMatFile);
-		readSegCtrlLawFromMat(pMatFile, refLaws);
+		readSegSTMFromMat(pMatFile, Save_tp::SAVE_ALL);
+		readSegTOFFromMat(pMatFile, Save_tp::SAVE_ALL);
+		readSegCtrlLawFromMat(pMatFile, refLaws, Save_tp::SAVE_ALL);
 	}
 }//====================================================
 

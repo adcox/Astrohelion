@@ -212,8 +212,9 @@ public:
 	/**
 	 *	\brief Saves the object to a Matlab binary file
 	 *	\param filepath the filepath to the Matlab file
+	 *	\param saveTp describe how much data should be saved
 	 */
-	virtual void saveToMat(const char *filepath) const = 0;
+	virtual void saveToMat(const char *filepath, Save_tp saveTp = Save_tp::SAVE_ALL) const = 0;
 
 	//\}
 protected:
@@ -270,11 +271,11 @@ protected:
 	void readNodeTimesFromMat(mat_t*, const char* pVarName = VARNAME_NODETIME);
 
 	// Read Segment Data
-	void readSegCtrlLawFromMat(mat_t*, std::vector<ControlLaw*>&, const char* pVarName = VARNAME_SEGCTRL);
-	void readSegStatesFromMat(mat_t*, const char* pVarName = VARNAME_SEGSTATE);
-	void readSegSTMFromMat(mat_t*, const char* pVarName = VARNAME_STM);
-	void readSegTimesFromMat(mat_t*, const char* pVarName = VARNAME_SEGTIME);
-	void readSegTOFFromMat(mat_t*, const char* pVarName = VARNAME_TOF);
+	void readSegCtrlLawFromMat(mat_t*, std::vector<ControlLaw*>&, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGCTRL);
+	void readSegStatesFromMat(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGSTATE);
+	void readSegSTMFromMat(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_STM);
+	void readSegTimesFromMat(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGTIME);
+	void readSegTOFFromMat(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_TOF);
 
 	// Save Node Data
 	void saveNodeCtrl(mat_t*, const char *pVarName = VARNAME_NODECTRL) const;
@@ -285,11 +286,11 @@ protected:
 	void saveNodeStateDeriv(mat_t*, const char* pVarName = VARNAME_STATE_DERIV) const;
 
 	// Save Segment Data
-	void saveSegCtrlLaw(mat_t*, const char* pVarName = VARNAME_SEGCTRL) const;
-	void saveSegStates(mat_t*, const char* pVarName = VARNAME_SEGSTATE) const;
-	void saveSegSTMs(mat_t*, const char* pVarName = VARNAME_STM) const;
-	void saveSegTimes(mat_t*, const char *pVarName = VARNAME_SEGTIME) const;
-	void saveSegTOF(mat_t*, const char* pVarName = VARNAME_TOF) const;
+	void saveSegCtrlLaw(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGCTRL) const;
+	void saveSegStates(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGSTATE) const;
+	void saveSegSTMs(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_STM) const;
+	void saveSegTimes(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_SEGTIME) const;
+	void saveSegTOF(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_TOF) const;
 	//\}
 
 	/**

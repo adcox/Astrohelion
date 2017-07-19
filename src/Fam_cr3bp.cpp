@@ -438,14 +438,40 @@ void Fam_cr3bp::getCoord(int ix, std::vector<double> *array) const{
  *	results
  */
 std::vector<int> Fam_cr3bp::findBifurcations(){
-	double okErr = 1e-6;
-	std::vector<int> bifs;
-	double prevStab[3] = {0};
+	// Find the eigenvalues that are exactly (in theory) equal to one
+	double onesErrTotal[3] = {0};
 	for(unsigned int m = 0; m < members.size(); m++){
-		double stab[3] = {0};
+		std::vector<cdouble> eigs = members[m].getEigVals();
+		// printf("Eigs[ %s, %s, %s, %s, %s, %s]\n", complexToStr(eigs[0]).c_str(),
+		// 	complexToStr(eigs[1]).c_str(), complexToStr(eigs[2]).c_str(), complexToStr(eigs[3]).c_str(),
+		// 	complexToStr(eigs[4]).c_str(), complexToStr(eigs[5]).c_str());
+
+		for(unsigned int e = 0; e < 3; e++){
+			onesErrTotal[e] += std::abs(1.0 - eigs[2*e]);
+		}
+	}
+	unsigned int onesIx = 0;
+	if(onesErrTotal[0] > onesErrTotal[1] || onesErrTotal[0] > onesErrTotal[1]){
+		onesIx = onesErrTotal[1] < onesErrTotal[2] ? 1 : 2;
+	}
+
+	// printf("Ones at index %u\n", onesIx);
+
+	double okErr = 1e-6;		// Tolerance to determine if an eigenvalue equals 1.0
+	std::vector<int> bifs;
+	double stab[3] = {0};		// Stability indices for current family member
+	double prevStab[3] = {0};	// Stability indices from the previous family member
+	for(unsigned int m = 0; m < members.size(); m++){
+		
+		// Compute the stability indices for this family member
 		std::vector<cdouble> eigs = members[m].getEigVals();
 		for(unsigned int i = 0; i < 3; i++){
 			stab[i] = 1.0 - std::abs(0.5*(eigs[2*i] + eigs[2*i+1]));
+
+			// if(abs(1.0 - eigs[2*i]) < okErr && abs(1.0 - eigs[2*i+1]) < okErr){
+			// 	// Eigenvalues are the two ones
+			// 	onesErr = abs(stab[i]);
+			// }
 		}
 
 		if(m == 0)
@@ -453,15 +479,19 @@ std::vector<int> Fam_cr3bp::findBifurcations(){
 		else{
 			// Look for changes in sign (stability index crosses 1)
 			for(unsigned int i = 0; i < 3; i++){
-				if(stab[i]*prevStab[i] < 0 && std::abs(stab[i] - prevStab[i]) > okErr){
+				if(i != onesIx && stab[i]*prevStab[i] < 0 && std::abs(stab[i] - prevStab[i]) > okErr){
 					// Bifurcation!
 					bifs.push_back(m-1);
+					// printf("vvvv -Bifurcation- vvvv\n");
 					break;
 				}
 			}
 
 			std::copy(stab, stab+3, prevStab);
 		}
+
+		// printf("Member %03u: stability = [%.4f, %.4f, %.4f]; onesErr = %.2e\n", m,
+		// 	stab[0], stab[1], stab[2], onesErr);
 	}
 
 	// // TODO: Incorporate much more advanced ways to compute this

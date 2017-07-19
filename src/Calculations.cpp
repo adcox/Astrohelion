@@ -361,7 +361,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
     for(unsigned int i = 0; i < 6; i++){
         sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
         prevSortVal[i] = eigVals[s*6 + ixPerms[minCostIx*6 + i]];
-        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*6+i]);
+        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*6+i]).normalized();
     }
 
     // printf("[%f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi]\n",
@@ -378,7 +378,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
         MatrixXRd dp_err = MatrixXRd::Zero(6,6);
         for(unsigned int i = 0; i < 6; i++){
             for(unsigned int j = i; j < 6; j++){
-                dp_err(i,j) = std::abs(1.0 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j))));
+                dp_err(i,j) = std::abs(1.0 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j).normalized())));
                 dp_err(j,i) = dp_err(i,j);  // symmetric
             }
         }
@@ -386,18 +386,33 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
         cost.clear();
         cost.assign(ixPerms.size()/6, 0);
         for(unsigned int p = 0; p < ixPerms.size()/6; p++){
+            // bool printOut = s < 5 && (ixPerms[6*p+0] == 0 && ixPerms[6*p+1] == 1 && ixPerms[6*p+2] == 2 && ixPerms[6*p+3] == 3 &&
+            //     ixPerms[6*p+4] == 4 && ixPerms[6*p+5] == 5);
+
+            // if(printOut)
+            //     printf("Eigenvalue set %u:\n", s);
+
             for(unsigned int i = 0; i < 6; i++){
                 // Assign cost based on the dot product between this new arrangement
                 // of eigenvectors and the previous arrangement
+                // Ranges from 0 to 1
                 cost[p] += dp_err(i, ixPerms[6*p + i]);
+                // if(printOut)
+                //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[6*p + i]));
 
                 // Assign cost based on the distance from the previous sorted eigenvalues
-                cost[p] += std::abs(eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i]);
+                // Scale by 50 to give it more weight that some of the others
+                cost[p] += 50*std::abs((eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i]);
+                // if(printOut)
+                //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i]));
 
                 // Assign cost based on the reciprocal nature of the eigenvalues
                 // This test could be removed to sort eigenvalues that don't occur in pairs
-                if(i%2 == 1)
-                    cost[p] += std::abs(1.0 - eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]]);
+                if(i%2 == 1){
+                    cost[p] += sqrt(std::abs(1.0 - std::abs(eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]])));
+                    // if(printOut)
+                    //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]]))));
+                }
             }
         }
 

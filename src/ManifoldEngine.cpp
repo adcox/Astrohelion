@@ -29,12 +29,16 @@
 
 #include "assert.h"
 #include <Eigen/Dense>
+#include <iostream>
 
+#include "Arcset_cr3bp.hpp"
+#include "Arcset_cr3bp_lt.hpp"
 #include "Calculations.hpp"
+#include "ControlLaw_cr3bp_lt.hpp"
 #include "Exceptions.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Arcset_cr3bp.hpp"
+#include "SysData_cr3bp_lt.hpp"
 #include "Utilities.hpp"
 
 namespace astrohelion{
@@ -82,6 +86,85 @@ void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
 //-----------------------------------------------------
 //      Manifold Generation Algorithms
 //-----------------------------------------------------
+
+/**
+ *  \brief Compute manifold arcs from a number of points spaced equally around a
+ *  low-thrust periodic orbit.
+ *  \details Make sure that the STMs along the orbit represent the cumulative evolution
+ *  rather than the segment-wise evolution. This characteristic can be guaranteed by calling
+ *  setSTMs_sequence() on the Arcset in question.
+ *  
+ *  \param manifoldType The type of manifolds to generate
+ *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
+ *  so this function also performs well for nearly periodic segments of quasi-periodic
+ *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
+ *  \param numMans The number of manifolds to generate
+ *  \param tof Time-of-flight along each manifold arc after stepping off the specified orbit. If
+ *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
+ *  node with the initial condition.
+ *  \param stepType Describes the method leveraged to step off of the fixed point along the 
+ *  stable or unstable eigenvector
+ *  
+ *  \return a vector of trajectory objects, one for each manifold arc.
+ *  \throws Exception if the eigenvalues cannot be computed, or if only one
+ *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
+ *  \see computeSingleFromPeriodic()
+ *  \see manifoldsFromPOPoint()
+ */
+std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp_lt *pPerOrbit,
+    ControlLaw_cr3bp_lt *pLaw, unsigned int numMans, double tof, Manifold_StepOff_tp stepType){
+
+    std::vector<Arcset_cr3bp_lt> allManifolds;
+
+    if(numMans == 0)
+        return allManifolds;
+
+    // Determine how many propagations will be made per manifold
+    unsigned int propPerMan = 0;
+    switch(std::abs(to_underlying(manifoldType))){
+        case 0: propPerMan = 4; break;      // All stable and unstable manifolds
+        case 1: propPerMan = 2; break;      // All stable or all unstable manifolds
+        default: propPerMan = 1; break;     // One stable or one unstable manifold
+    }
+
+    // Pre-allocate space for the computed trajectories
+    allManifolds.reserve(numMans*propPerMan);
+
+    // Get a bunch of points to use as starting guesses for the manifolds
+    if(numMans > pPerOrbit->getNumNodes()){
+        if(verbosity >= Verbosity_tp::SOME_MSG)
+            astrohelion::printWarn("ManifoldEngine::computeSetFromLTPeriodic: Requested too many manifolds... will return fewer\n");
+        numMans = pPerOrbit->getNumNodes();
+    }
+
+    double stepSize = (static_cast<double>(pPerOrbit->getNumSegs()))/(static_cast<double>(numMans));
+    std::vector<int> pointIx(numMans, 0);
+    for(unsigned int i = 0; i < numMans; i++){
+        pointIx[i] = floor(i*stepSize+0.5);
+    }
+
+    // Get the eigenvalues and eigenvectors
+    std::vector<cdouble> eigVals;
+    MatrixXRd eigVecs = eigVecValFromPeriodic(manifoldType, pPerOrbit, &eigVals);
+
+    // Loop through each point from which to generate manifolds
+    for(unsigned int m = 0; m < numMans; m++){
+        // Get the state on the periodic orbit to step away from
+        std::vector<double> state = pPerOrbit->getStateByIx(pointIx[m]);
+
+        MatrixXRd STM = pointIx[m] == 0 ? MatrixXRd::Identity(6,6) : pPerOrbit->getSTMByIx(pointIx[m] - 1);
+
+        if(STM.rows() > 6 && STM.cols() > 6)
+            STM = STM.block<6,6>(0,0);
+
+        // Compute manifolds from this point and add them to the big list
+        std::vector<Arcset_cr3bp_lt> subset = manifoldsFromLTPOPoint(manifoldType, state, STM, eigVals, eigVecs, tof,
+            static_cast<const SysData_cr3bp_lt *>(pPerOrbit->getSysData()), pLaw, stepType);
+        allManifolds.insert(allManifolds.end(), subset.begin(), subset.end());
+    }// End of point on periodic orbit loop
+
+    return allManifolds;
+}//====================================================
 
 /**
  *  \brief Compute manifold arcs from a number of points spaced equally around a
@@ -299,6 +382,103 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 	return manifolds;
 }//====================================================
 
+/**
+ *  \brief Compute manifolds arcs from a point on a low-thrust periodic orbit (LTPO)
+ * 
+ *  \param manifoldType Describes the type of manifold(s) to be computed
+ *  \param state The state on the periodic orbit to compute manifold arcs from
+ *  \param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
+ *  this is NOT the monodromy matrix (in general).
+ *  \param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
+ *  \param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
+ *  \param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
+ *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
+ *  node with the initial condition.
+ *  \param pSys Pointer to a SysData object consistent with the periodic orbit
+ *  \param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
+ *  
+ *  \return The computed manifold arc(s)
+ */
+std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
+    std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, const SysData_cr3bp_lt *pSys, ControlLaw_cr3bp_lt *pLaw,
+    Manifold_StepOff_tp stepType){
+
+    assert(pSys->getDynamicsModel()->getCoreStateSize() == 7);
+
+    std::vector<Arcset_cr3bp_lt> manifolds;
+    SimEngine sim;
+    sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity) - 1));
+    double mu = pSys->getMu();
+    Eigen::VectorXd q0 = Eigen::Map<Eigen::VectorXd>(&(state[0]), 7, 1);
+    double C = DynamicsModel_cr3bp::getJacobi(&(state.front()), mu);
+
+    // Loop through each stability type
+    for(unsigned int s = 0; s < eigVals.size(); s++){
+        // Transform the eigenvectors to this updated time
+        MatrixXRd newVec = STM*eigVecs.col(s);
+
+        // Factor with which to normalize the eigenvector
+        double mag = (stepType == Manifold_StepOff_tp::STEP_VEC_NORMFULL) ?
+            newVec.norm() : sqrt(newVec(0)*newVec(0) + newVec(1)*newVec(1) + newVec(2)*newVec(2));
+
+        // Use reverse time for stable manifolds
+        sim.setRevTime(std::abs(eigVals[s]) < 1);
+
+        // Scale the vector and make sure it is pointing in the +x direction
+        Eigen::VectorXd baseDirection(7);
+        baseDirection.head(6) = newVec/mag;
+        baseDirection[6] = 0;
+        // if(astrohelion::sign(newVec(0)) != 0)
+           // baseDirection *= astrohelion::sign(newVec(0));
+
+        // Determine which directions the user has specified with manifoldType
+        std::vector<int> dirs;
+        if(std::abs(to_underlying(manifoldType)) <= 1){
+            // Both directions are desired
+            dirs.push_back(1);
+            dirs.push_back(-1);
+        }else{
+            // Only one direction is desired
+            if(std::abs(to_underlying(manifoldType)) == 2){ dirs.push_back(1); }
+            if(std::abs(to_underlying(manifoldType)) == 3){ dirs.push_back(-1); }
+        }
+
+        for(unsigned int di = 0; di < dirs.size(); di++){
+            // Flip to (+) or (-) direction according to manifoldType
+            Eigen::VectorXd direction = dirs[di]*baseDirection;
+
+            // Step away from the point on the arc in the direction of the eigenvector
+            Eigen::VectorXd ic = q0 + stepOffDist/pSys->getCharL() * direction;
+
+            // Scale the velocity part of ic to match Jacobi if that setting is enabled
+            if(stepType == Manifold_StepOff_tp::STEP_MATCH_JC){
+                Eigen::Vector3d v = ic.block<3,1>(3,0);
+                v /= v.norm();  // make it a unit vector
+
+                // Compute the pseudopotential 
+                double d = sqrt((ic[0] + mu)*(ic[0] + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
+                double r = sqrt((ic[0] - 1 + mu)*(ic[0] - 1 + mu) + ic[1]*ic[1] + ic[2]*ic[2]);
+                double U = (1 - mu)/d + mu/r + 0.5*(ic[0]*ic[0] + ic[1]*ic[1]);
+
+                // Rescale the velocity vector so that the magnitude yields the exact Jacobi Constant
+                v *= sqrt(2*U - C);
+                ic.block<3,1>(3,0) = v; // Reassign the velocity components of ic
+            }
+
+            // Simulate for some time to generate a manifold arc
+            Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(pSys));
+            if(tof > 0){
+                sim.runSim(ic.data(), tof, &traj, pLaw);
+            }else{
+                traj.addNode(Node(ic.data(), ic.size(), 0));
+            }
+            manifolds.push_back(traj);
+        } // End of +/- direction loop
+    }// End of Stable/Unstable eigenvector loop
+
+    return manifolds;
+}//====================================================
+
 //-----------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------
@@ -322,12 +502,22 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
 	std::vector<cdouble> *eigVals_final){
 
-	assert(pPerOrbit->getSysData()->getDynamicsModel()->getCoreStateSize() == 6);
+    unsigned int coreDim = pPerOrbit->getSysData()->getDynamicsModel()->getCoreStateSize();
+	// assert(pPerOrbit->getSysData()->getDynamicsModel()->getCoreStateSize() == 6);
 
 	printVerb(verbosity >= Verbosity_tp::DEBUG, "Eigenvector/Eigenvalue Computations\n");
 
 	// First, get the monodromy matrix and compute the eigenvectors/values
     MatrixXRd mono = pPerOrbit->getSTMByIx(-1);
+    if(verbosity >= Verbosity_tp::DEBUG)
+        std::cout << "Monodromy Matrix:\n" << mono << std::endl;
+
+    if(coreDim > 6){
+        MatrixXRd temp = mono.block<6,6>(0,0);
+        mono = temp;
+        if(verbosity >= Verbosity_tp::DEBUG)
+            std::cout << "Trimmed M to\n" << mono << std::endl;
+    }
 
     Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)

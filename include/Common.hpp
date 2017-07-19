@@ -42,6 +42,15 @@ enum class Verbosity_tp : int{
 	DEBUG 		= 3		//!< Even more messages; helpful for debugging
 };
 
+/**
+ *  \brief Describe how much data is saved
+ */
+enum class Save_tp : int{
+	SAVE_ALL = 0, 		//!< Save all data
+	SAVE_CURVE = 1,		//!< Do not save STM and extra parameter values along segment evolutions
+	SAVE_FRAME = 2		//!< Do not save any states along segment evolutions
+};
+
 // Custom types
 typedef std::complex<double> cdouble;	//!< A complex double
 typedef std::complex<int> cint;			//!< A complex integer

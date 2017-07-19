@@ -111,11 +111,11 @@ public:
 	 */
 	virtual void print() const;
 	void readFromMat(const char*, std::vector<ControlLaw*> &refLaws);
-	void saveToMat(const char*) const;
+	void saveToMat(const char*, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	//\}
 
 protected:
-	virtual void saveCmds(mat_t*) const;
+	virtual void saveCmds(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	virtual void readCmds(mat_t*, std::vector<ControlLaw*>&);
 };
 

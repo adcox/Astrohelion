@@ -241,8 +241,8 @@ void Arcset_cr3bp::setJacobiByIx(int ix, double val){
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_cr3bp::saveCmds(mat_t* pMatFile) const{
-	Arcset::saveCmds(pMatFile);
+void Arcset_cr3bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
+	Arcset::saveCmds(pMatFile, saveTp);
 
 	saveNodeExtraParam(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
 }//====================================================

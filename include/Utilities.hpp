@@ -153,6 +153,20 @@ namespace astrohelion{
 	}//=======================================
 
 	/**
+	 *  \brief Create an Identity matrix (e.g., to act as a dummy value for an STM)
+	 * 
+	 *  \param matRef reference to a vector that stores matrix elements. Any nonzero elements
+	 *  are overwritten
+	 *  \param size side length of the matrix (e.g., the size of a 6x6 matrix is 6)
+	 */
+	template<class T>
+	void createIdentity(std::vector<T> &matRef, unsigned int size){
+	    matRef.assign(size*size, 0);
+	    for(unsigned int i = 0; i < size; i++)
+	        matRef[i*(size+1)] = 1;
+	}//=======================================================
+
+	/**
 	 *	\brief sort a vector and retrieve the indices of the sorted elements
 	 *
 	 *	Takes a copy of a vector and sorts it, retaining the original indices

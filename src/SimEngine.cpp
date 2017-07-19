@@ -390,7 +390,7 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
     // Define dummy values for STM0
     unsigned int core_dim = arcset->getSysData()->getDynamicsModel()->getCoreStateSize();
     std::vector<double> stm0;
-    createDummySTM(stm0, core_dim + ctrl_dim);
+    createIdentity(stm0, core_dim + ctrl_dim);
 
     // Call the next level of complication
     runSim(ic, &(ctrl0.front()), &(stm0.front()), t0, tof, arcset, pLaw);
@@ -436,7 +436,7 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
 
     // Define dummy values for STM0
     std::vector<double> stm0;
-    createDummySTM(stm0, core_dim + ctrl_dim);
+    createIdentity(stm0, core_dim + ctrl_dim);
 
     std::vector<double> icCopy = ic;
     std::vector<double> ctrlCopy = ctrl0;
@@ -689,7 +689,7 @@ void SimEngine::runSim_manyNodes(const double *ic, double t0, double tof, int nu
     }
 
     std::vector<double> stm0;
-    createDummySTM(stm0, coreSize + ctrlSize);
+    createIdentity(stm0, coreSize + ctrlSize);
 
     runSim(ic, &(ctrl0.front()), &(stm0.front()), t_span, arcset, pLaw);
 }//====================================================
@@ -742,7 +742,7 @@ void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctr
 
     // Create some dummy variables
     std::vector<double> stm0;
-    createDummySTM(stm0, coreSize + ctrlSize);
+    createIdentity(stm0, coreSize + ctrlSize);
 
     std::vector<double> icCopy = ic;
     std::vector<double> ctrlCopy = ctrl0;
@@ -1468,20 +1468,6 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
         bMadeDefaultEvents = true;
     }
 }//====================================================
-
-/**
- *  \brief Create an Identity matrix to act as a dummy value for an STM
- *  \details [long description]
- * 
- *  \param stmRef reference to a vector that stores STM elements. Any nonzero elements
- *  are overwritten
- *  \param size side length of the STM (e.g., the size of a 6x6 matrix is 6)
- */
-void SimEngine::createDummySTM(std::vector<double> &stmRef, unsigned int size) const{
-    stmRef.assign(size*size, 0);
-    for(unsigned int i = 0; i < size; i++)
-        stmRef[i*(size+1)] = 1;
-}//=======================================================
 
 /**
  *  \brief Reset all variables and options

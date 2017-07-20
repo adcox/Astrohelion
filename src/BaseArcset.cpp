@@ -2223,7 +2223,9 @@ void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, Save_tp saveTp, const char* 
 
 /**
  *  \brief Read Segment states (along the segment) from a Matlab data file
- * 
+ * 	\details Must be called after readSegCtrlLawFromMat() and after 
+ * 	readSegSTMFromMat() to avoid errors.
+ * 	
  *  \param pMatFile pointer to an open Matlab file
  *  \param saveTp Describes the amount of detail that was saved to the file
  *  \param pVarName name of the variable within the data file
@@ -2259,18 +2261,27 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, Save_tp saveTp, const cha
 				unsigned int ctrlDim = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
 
 				// If all data is read, this is the expected width
-				unsigned int expectedWidth = coreDim + coreDim*coreDim + extraDim + ctrlDim;
+				unsigned int expectedWidth = coreDim + (coreDim+ctrlDim)*(coreDim+ctrlDim) + extraDim + ctrlDim;
 				std::vector<double> fillerStates;
 
 
 				unsigned int width = cell_elements[s]->dims[1];
-				unsigned int numSteps = (cell_elements[s]->dims[0])/width;	
+				unsigned int numSteps = cell_elements[s]->dims[0];
 				double *data = static_cast<double *>(cell_elements[s]->data);
+
+				if(expectedWidth < width){
+					char msg[128];
+					sprintf(msg, "BaseArcset::readSegStatesFromMat: expected width, %u, is less than data width, %u. Cannot proceed",
+						expectedWidth, width);
+					throw Exception(msg);
+				}
 
 				// If some states are missing from the data file (e.g., if a conservative save method was used)
 				// append a "filler state" full of zeros
-				if(expectedWidth - width > 0)
+				if(expectedWidth - width > 0){
+					// printf("Segment %u: filling states with %u zeros\n", s, expectedWidth - width);
 					fillerStates.assign(expectedWidth - width, 0);
+				}
 
 				segs[s].setStateWidth(expectedWidth);
 				if(data != nullptr){
@@ -2913,15 +2924,9 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, Save_tp saveTp, const char *pVar
 
 	for(unsigned int s = 0; s < segs.size(); s++){
 		unsigned int ctrl_size = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
-		unsigned int full_size = core_size*(1 + core_size) + ctrl_size + extra_size;
+		unsigned int full_size = core_size + (core_size + ctrl_size)*(core_size + ctrl_size) + extra_size + ctrl_size;
 
-		if(saveTp == Save_tp::SAVE_ALL){
-			dims[1] = full_size;
-		}else if(saveTp == Save_tp::SAVE_CURVE){
-			dims[1] = core_size;
-		}else if(saveTp == Save_tp::SAVE_FRAME){
-			dims[1] = core_size;
-		}
+		dims[1] = saveTp == Save_tp::SAVE_ALL ? full_size : core_size + ctrl_size;
 
 		std::vector<double> segStates = segs[s].getStateVector();
 		if(segStates.size() % full_size != 0){
@@ -2933,15 +2938,16 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, Save_tp saveTp, const char *pVar
 		if(saveTp == Save_tp::SAVE_FRAME){
 			dims[0] = 2;	// rows
 			segStates_trans.assign(dims[0]*dims[1], 0);
-			unsigned int lastRow = segStates.size()/dims[1] - 1;
+			unsigned int lastRow = segStates.size()/full_size - 1;
 
 			// Transpose data into column-major order
 			for(unsigned int c = 0; c < dims[1]; c++){
 				segStates_trans[c*dims[0] + 0] = segStates[0 + c];
 				segStates_trans[c*dims[0] + 1] = segStates[lastRow*full_size + c];
+
 			}
 		}else{
-			dims[0] = segStates.size()/dims[1];	// rows
+			dims[0] = segStates.size()/full_size;	// rows
 			segStates_trans.assign(dims[0]*dims[1], 0);
 
 			// Transpose data into column-major order

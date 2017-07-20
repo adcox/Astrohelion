@@ -226,6 +226,7 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 
 	// Create a simulation engine and add the events to it
 	SimEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	engine.setRevTime(seg.getTOF() < 0);
 	engine.setMakeDefaultEvents(false);
 	for(unsigned int i = 0; i < evts.size(); i++){
@@ -590,11 +591,12 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 		readNodeTimesFromMat(pMatFile);
 		readNodeCtrlFromMat(pMatFile);
 
+		readSegCtrlLawFromMat(pMatFile, refLaws, saveTp);
+		readSegSTMFromMat(pMatFile, saveTp);
 		readSegStatesFromMat(pMatFile, saveTp);
 		readSegTimesFromMat(pMatFile, saveTp);
-		readSegSTMFromMat(pMatFile, saveTp);
 		readSegTOFFromMat(pMatFile, saveTp);
-		readSegCtrlLawFromMat(pMatFile, refLaws, saveTp);
+		
 	}catch(Exception &e){
 		// if file was saved using older style, try slightly different read commands
 		printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
@@ -615,9 +617,9 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 
 		// Old save for both trajectory and nodeset
 		readNodeStateDerivFromMat(pMatFile);
+		readSegCtrlLawFromMat(pMatFile, refLaws, Save_tp::SAVE_ALL);
 		readSegSTMFromMat(pMatFile, Save_tp::SAVE_ALL);
 		readSegTOFFromMat(pMatFile, Save_tp::SAVE_ALL);
-		readSegCtrlLawFromMat(pMatFile, refLaws, Save_tp::SAVE_ALL);
 	}
 }//====================================================
 

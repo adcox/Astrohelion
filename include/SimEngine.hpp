@@ -262,12 +262,15 @@ class SimEngine : public Core, public Engine{
 		// No assumptions, final fcn before calling integrate()
 		void runSim(const double *ic, const double *ctrl0, const double *stm, std::vector<double> tspan, Arcset*, ControlLaw *pLaw);
 
+		// Assume t0, ctrl0, stm0
 		void runSim_manyNodes(const double* ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		void runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 
+		// Assume ctrl0, stm0
 		void runSim_manyNodes(const double* ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		void runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 
+		// Assume stm0
 		void runSim_manyNodes(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw);
 		//\}
 		

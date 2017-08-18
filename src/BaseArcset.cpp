@@ -198,8 +198,12 @@ int BaseArcset::addSeg(Segment s){
 		int linkedNodeID = s.getLink(i);
 		if(linkedNodeID != Linkable::INVALID_ID){
 
-			if(nodeIDMap.count(linkedNodeID) == 0)
-				throw Exception("BaseArcset::addSeg: Segment has link to an invalid node ID");
+			if(nodeIDMap.count(linkedNodeID) == 0){
+				char msg[128];
+				sprintf(msg, "BaseArcset::addSeg: Segment (ID = %d) has link to an invalid node (ID = %d)\n",
+					s.getID(), linkedNodeID);
+				throw Exception(msg);
+			}
 
 			// Get the index of that node within the storage array
 			int linkedNodeIx = nodeIDMap[linkedNodeID];
@@ -235,6 +239,7 @@ int BaseArcset::addSeg(Segment s){
 								throw Exception("BaseArcset::addSeg: either time collision or parallel structure");
 							}else if(!sameLinkType && !sameTimeDir){
 								// parallel structure
+								printErr("Parallel structure!\n");
 								print();
 								printErr("Adding segment (ID %d) O: %d, T: %d, tof = %.4f\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
 								printErr("Conflict at node (ID %d): seg (ID %d) has O: %d, T:%d, tof = %.4f\n", linkedNodeID, nearSeg->getID(),
@@ -1927,7 +1932,8 @@ void BaseArcset::printSegIDMap() const{
 
 /**
  *  \brief Initialize the vectors of node and segment objects from a *.mat file
- *  \details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  \details Deprecated; replaced by readLinkTable().
+ *  THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
  *  it clears the vectors and then initializes them by calculating the number
  *  of steps in the arcset object from the state vector. Individual nodes and segments are
  *  able to be called by index after this, though they will not contain data
@@ -1976,6 +1982,85 @@ void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
 }//======================================================
 
 /**
+ *  \brief Initialize the vectors of node and segment objects from a Matlab data file
+ *  \details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  it clears the vectors and then initializes them from the stored link table.
+ *  Individual nodes and segments may be referenced by index after this, though they
+ *  will not contain any data until the other read_data-type functions are called.
+ * 
+ *  \param pMatFile Pointer to an open Matlab data file
+ *  \param pVarName The name of the link table variable.
+ *  \throws Exception if the variable cannot be read from the file, if the variable
+ *  has the wrong dimensions, or if the variable is the wrong data type
+ */
+void BaseArcset::readLinkTable(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pLinkTableVar = Mat_VarRead(pMatFile, pVarName);
+
+	if(pLinkTableVar == NULL){
+		throw Exception("BaseArcset::readLinkTable: Could not read link table from file");
+	}else{
+		unsigned int numSegs = pLinkTableVar->dims[0];
+
+		if(pLinkTableVar->dims[1] != 4){
+			Mat_VarFree(pLinkTableVar);
+			throw Exception("BaseArcset::readLinkTable: Link table width is not the expected dimension (4)");
+		}
+
+		if(pLinkTableVar->class_type == MAT_C_INT32 && pLinkTableVar->data_type == MAT_T_INT32){
+			int *data = static_cast<int *>(pLinkTableVar->data);
+
+			if(data != NULL){
+				// Step 0: Clear all variables
+				nodes.clear();
+				segs.clear();
+				nodeIDMap.clear();
+				segIDMap.clear();
+				nextNodeID = 0;
+				nextSegID = 0;
+
+				// Step 1: Count the unique node indices to get a count of the number of nodes
+				std::vector<int> nodeIxs;
+				for(unsigned int s = 0; s < numSegs; s++){
+					int oldOriginIx = data[1*numSegs + s];
+					int oldTerminusIx = data[2*numSegs + s];
+
+					if(oldOriginIx != Linkable::INVALID_ID && std::find(nodeIxs.begin(), nodeIxs.end(), oldOriginIx) == nodeIxs.end())
+						nodeIxs.push_back(oldOriginIx);
+
+					if(oldTerminusIx != Linkable::INVALID_ID && std::find(nodeIxs.begin(), nodeIxs.end(), oldTerminusIx) == nodeIxs.end())
+						nodeIxs.push_back(oldTerminusIx);
+				}
+
+				if(nodeIxs.size() == 0)
+					throw Exception("BaseArcset::readLinkTable: No nodes linked from segments... not built to handle this");
+
+				int numNodes = *std::max_element(nodeIxs.begin(), nodeIxs.end()) + 1;
+
+				// Step 2: Create the nodes; index = id in this case
+				for(unsigned int n = 0; n < numNodes; n++){
+					addNode(Node());	// updates the nextNodeID counter and the nodeIDMap
+				}
+
+				// Step 3: Create the segments: Use the link indices from the link table to get
+				// the correct link network.
+				for(unsigned int s = 0; s < numSegs; s++){
+					// The fourth column lists +1 for forward-time and -1 for reverse-time
+					// Updates the nextSegID counter and the segIDMap
+					addSeg(Segment(data[1*numSegs + s], data[2*numSegs + s], data[3*numSegs + s]));
+				}
+
+				// std::cout << "tempNodeIDMap:\n";
+				// for(auto it = tempNodeIDMap.cbegin(); it != tempNodeIDMap.cend(); ++ it){
+				// 	std::cout << it->first << " -> " << it->second << std::endl;
+				// }
+			}
+		}
+	}
+
+	Mat_VarFree(pLinkTableVar);
+}//====================================================
+
+/**
  *  \brief Read the state vector for this arcset object from a matlab data file
  *  \details This function must be called after initNodeSegsFromMat() as it
  *  populates the step vector objects with state data
@@ -1995,12 +2080,12 @@ void BaseArcset::readNodeStatesFromMat(mat_t *pMatFile, const char* pVarName){
 		
 		if(nodes.size() == 0){
 			Mat_VarFree(pStateMat);
-			throw Exception("BaseArcset::readStateFromMat: Step vector has not been initialized!");
+			throw Exception("BaseArcset::readStateFromMat: Node vector has not been initialized!");
 		}
 
 		if(numSteps != nodes.size()){
 			Mat_VarFree(pStateMat);
-			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized step vector");
+			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized node vector");
 		}
 
 		if(pStateMat->dims[1] != stateSize){
@@ -2615,6 +2700,34 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
 }//====================================================
 
 /**
+ *  \brief Save a link table for the arcset
+ *  \details The link table stores information about how the segments and nodes
+ *  are linked together. The first column lists the ID of a segment. The second
+ *  column lists the index of origin node associated with the segment and the third
+ *  column lists the index of terminus node associated with the segment. The final (fourth)
+ *  column lists +1 for a forward time segment and -1 for a reverse time segment
+ * 
+ *  \param pMatFile [description]
+ *  \param pVarName [description]
+ */
+void BaseArcset::saveLinkTable(mat_t *pMatFile, const char* pVarName) const{
+	unsigned int numSegs = segs.size();
+	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
+
+	// Store data in column-major order
+	for(unsigned int s = 0; s < segs.size(); s++){
+		segTable[0*numSegs + s] = segs[s].getID();
+		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
+		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
+		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
+	}
+
+	size_t dims[2] = {segs.size(), 4};
+	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), MAT_F_DONT_COPY_DATA);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
  *	\brief Save the state derivative vector to file
  *	\param pMatFile a pointer to the destination mat-file
  *	\param pVarName name of the variable in the Matlab file
@@ -2641,7 +2754,7 @@ void BaseArcset::saveNodeStateDeriv(mat_t *pMatFile, const char* pVarName) const
 	
 	size_t dims[2] = {nodes.size(), stateSize};
 	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
@@ -2658,7 +2771,7 @@ void BaseArcset::saveNodeTimes(mat_t *pMatFile, const char* pVarName) const{
 	
 	size_t dims[2] = {allEpochs.size(), 1};
 	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
+	saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
@@ -2683,7 +2796,7 @@ void BaseArcset::saveNodeExtraParam(mat_t *pMatFile, std::string varKey, const c
 
 	size_t dims[2] = {nodes.size(), 1};
 	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
+	saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -2719,7 +2832,7 @@ void BaseArcset::saveNodeExtraParamVec(mat_t *pMatFile, std::string varKey, size
 
 	size_t dims[2] = {nodes.size(), len};
 	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
+	saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -2801,7 +2914,7 @@ void BaseArcset::saveNodeStates(mat_t *pMatFile, const char* pVarName) const{
 	 */
 	size_t dims[2] = {nodes.size(), stateSize};
 	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**

@@ -139,6 +139,88 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesAtEvent){
 	// set3.print();
 }//====================================================
 
+BOOST_AUTO_TEST_CASE(Arcset_MixedTime_Save_Load){
+	SysData_cr3bp sys("earth", "moon");
+	double state[] = {1, 2, 3, 4, 5, 6};
+	double errTol = 1e-14;
+
+	Arcset_cr3bp set(&sys);
+	set.addNode(Node(state, 6, 2.2));
+	set.addNode(Node(state, 6, 0));
+	set.addNode(Node(state, 6, 1.1));
+	set.addNode(Node(state, 6, -2.2));
+	set.addNode(Node(state, 6, -1.1));
+	set.addSeg(Segment(4, 3, -1.1));
+	set.addSeg(Segment(1, 2, 1.1));
+	set.addSeg(Segment(1, 4, -1.1));
+	set.addSeg(Segment(2, 0, 1.1));
+
+	set.saveToMat("data/mixedTimeSet.mat");
+
+	Arcset_cr3bp tempSet(&sys);
+	std::vector<ControlLaw*> loadedLaws;
+	tempSet.readFromMat("data/mixedTimeSet.mat", loadedLaws);
+
+	BOOST_CHECK_EQUAL(set.getNumNodes(), tempSet.getNumNodes());
+	for(unsigned int n = 0; n < set.getNumNodes(); n++){
+		std::vector<double> state1 = set.getStateByIx(n);
+		std::vector<double> state2 = tempSet.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(set.getEpochByIx(n) - tempSet.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(set.getNumSegs(), tempSet.getNumSegs());
+	for(unsigned int s = 0; s < set.getNumSegs(); s++){
+		BOOST_CHECK_EQUAL(set.getSegRefByIx(s).getOrigin(), tempSet.getSegRefByIx(s).getOrigin());
+		BOOST_CHECK_EQUAL(set.getSegRefByIx(s).getTerminus(), tempSet.getSegRefByIx(s).getTerminus());
+
+		std::vector<double> states1 = set.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = tempSet.getSegRefByIx(s).getStateVector();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+		}
+
+		std::vector<double> times1 = set.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = tempSet.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(set.getTOFByIx(s) - tempSet.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = set.getSTMByIx(s);
+		MatrixXRd stm2 = tempSet.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK_EQUAL(set.getCtrlLawByIx(s), tempSet.getCtrlLawByIx(s));
+	}
+
+	set.print();
+	set.printInChrono();
+
+	tempSet.print();
+	tempSet.printInChrono();
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
+}//====================================================
+
 BOOST_AUTO_TEST_CASE(CR3BP_Arcset_Save_Load){
 	double errTol = 1e-14;
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};

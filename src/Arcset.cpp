@@ -402,11 +402,11 @@ void Arcset::print() const {
 		if(index.second != Linkable::INVALID_ID){
 			std::vector<double> state = nodes[index.second].getState();
 			printf(" @ %13.8f -- {", nodes[index.second].getEpoch());
-			for(unsigned int i = 0; i < state.size()-1; i++){
-				printf("%13.8f, ", state[i]);
-			}
 
 			if(state.size() > 0){
+				for(unsigned int i = 0; i < state.size()-1; i++){
+					printf("%13.8f, ", state[i]);
+				}
 				printf("%13.8f}\n", state.back());
 			}else{
 				printf("}\n");
@@ -526,6 +526,8 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
  *  \param pMatFile pointer to an open Matlab file
  */
 void Arcset::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
+	saveLinkTable(pMatFile);
+
 	saveNodeStates(pMatFile);
 	saveNodeStateDeriv(pMatFile);
 	saveNodeTimes(pMatFile);
@@ -584,7 +586,12 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 	Save_tp saveTp = Save_tp::SAVE_ALL;
 
 	try{
-		initNodesSegsFromMat(pMatFile);
+		try{
+			readLinkTable(pMatFile);
+		}catch(Exception &e){
+			printErr("Arcset::readCmds: Could not read link table\n\t%s\n", e.what());
+			initNodesSegsFromMat(pMatFile);
+		}
 
 		readNodeStatesFromMat(pMatFile);
 		readNodeStateDerivFromMat(pMatFile);
@@ -600,7 +607,7 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 	}catch(Exception &e){
 		// if file was saved using older style, try slightly different read commands
 		printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
-
+		
 		try{
 			// Old trajectory save
 			initNodesSegsFromMat(pMatFile, VARNAME_DEP_STATE);

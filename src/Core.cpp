@@ -55,9 +55,6 @@ static char SPICE_ERR_MSG_TYPE[] = "traceback";		// other options: "short" or "n
 //      CLASS Core FUNCTIONS
 //-----------------------------------------------------
 
-// Core_Initializer Core::initializer;
-// bool Core::bIsInit = false;
-
 /**
  *  \brief Default constructor.
  *  \details Runs an initialization sequence the first time the class is instantiated.

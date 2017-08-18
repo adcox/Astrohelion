@@ -102,8 +102,8 @@ public:
 	 */
 	BaseArcset(const SysData*);
 	BaseArcset(const BaseArcset&);
-	virtual baseArcsetPtr create( const SysData* ) const = 0;		//!< Virtual constructor for creation
-	virtual baseArcsetPtr clone() const = 0;						//!< Virtual constructor for copying
+	virtual baseArcsetPtr create( const SysData* ) const = 0;		//!< Virtual constructor for creation (virtual constructor idiom)
+	virtual baseArcsetPtr clone() const = 0;						//!< Virtual constructor for copying (virtual constructor idiom)
 
 	virtual ~BaseArcset();
 	//\}
@@ -261,6 +261,8 @@ protected:
 	 *  \{
 	 */
 	void initNodesSegsFromMat(mat_t *, const char* pStateVarName = VARNAME_NODESTATE);
+	void readLinkTable(mat_t*, const char* pVarName = VARNAME_LINKTABLE);
+	void saveLinkTable(mat_t*, const char* pVarName = VARNAME_LINKTABLE) const;
 	
 	// Read Node Data
 	void readNodeCtrlFromMat(mat_t*, const char* pVarName = VARNAME_NODECTRL);

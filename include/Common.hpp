@@ -71,6 +71,7 @@ static const char VARNAME_ECC[] = "ecc";					//!< Matlab file variable name for 
 static const char VARNAME_SMA[] = "sma";					//!< Matlab file variable name for semimajor axis data
 
 // Matlab File Name Variables for General Arcset
+static const char VARNAME_LINKTABLE[] = "LinkTable";		//!< Matlab file variable name for the segment link table
 static const char VARNAME_NODECTRL[] = "NodeCtrlState";		//!< Matlab file variable name for node control state
 static const char VARNAME_NODESTATE[] = "NodeState";		//!< Matlab file variable name for node state vectors
 static const char VARNAME_NODETIME[] = "NodeTime";			//!< Matlab file variable name for node time/epoch values

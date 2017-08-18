@@ -849,8 +849,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
     astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
-        "  using control law: %s\n", eomParams->pCtrlLaw ? 
-            eomParams->pCtrlLaw->lawTypeToString(eomParams->pCtrlLaw->getLawType()).c_str() : "NONE");
+        "  using control law: %s\n", eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getLawTypeString().c_str() : "NONE");
 
     /*
      * BOOST INTEGRATOR ADDITION

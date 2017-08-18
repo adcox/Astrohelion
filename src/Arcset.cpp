@@ -442,7 +442,7 @@ void Arcset::print() const {
 				segs[index.second].getTerminus(), segs[index.second].getTOF());
 
 			if(segs[index.second].getCtrlLaw())
-				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawString().c_str());
+				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawTypeString().c_str());
 			else
 				printf("\t> Ctrl Law: None\n");
 			

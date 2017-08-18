@@ -99,7 +99,11 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
  */
 unsigned int ControlLaw::getLawType() const{ return lawType; }
 
-std::string ControlLaw::getLawString() const{ return lawTypeToString(lawType); }
+/**
+ *  \brief Retrieve the name of the law type as a string
+ *  \return the name of the law type as a string
+ */
+std::string ControlLaw::getLawTypeString() const{ return ControlLaw::lawTypeToString(lawType); }
 
 /**
  *  \brief Retrieve the number of control variables that need to be included
@@ -331,7 +335,7 @@ void ControlLaw::init(){
  *  \param id control law ID
  *  \return a string that represents the law ID
  */
-std::string ControlLaw::lawTypeToString(unsigned int id) const{
+std::string ControlLaw::lawTypeToString(unsigned int id){
 	switch(id){
 		case NO_CTRL: return "NONE";
 		default: return "UNDEFINED";

@@ -65,6 +65,7 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
+	std::string getLawTypeString() const override;
 	double getThrust() const;
 	double getThrust_nondim(const SysData_cr3bp_lt*) const;
 	double getIsp() const;
@@ -87,7 +88,7 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	std::string lawTypeToString(unsigned int) const;
+	static std::string lawTypeToString(unsigned int);
 	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	//\}
 

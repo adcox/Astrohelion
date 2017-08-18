@@ -97,6 +97,11 @@ double ControlLaw_cr3bp_lt::getThrust_nondim(const SysData_cr3bp_lt *pSys) const
  */
 double ControlLaw_cr3bp_lt::getIsp() const { return params[1]; }
 
+/**
+ *  \brief Retrieve the name of the law type as a string
+ *  \return the name of the law type as a string
+ */
+std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3bp_lt::lawTypeToString(lawType); }
 
 /**
  *	\brief Set the spacecraft thrust
@@ -533,7 +538,7 @@ void ControlLaw_cr3bp_lt::init(){
  *  \param id control law ID
  *  \return a string that represents the law ID
  */
-std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id) const{
+std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id){
 	switch(id){
 		case Law_tp::CONST_C_2D_LEFT: return "Jacobi-Preserving, 2D, Left";
 		case Law_tp::CONST_C_2D_RIGHT: return "Jacobi-Preserving, 2D, Right";

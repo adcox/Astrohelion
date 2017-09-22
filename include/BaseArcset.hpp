@@ -264,6 +264,9 @@ protected:
 	void readLinkTable(mat_t*, const char* pVarName = VARNAME_LINKTABLE);
 	void saveLinkTable(mat_t*, const char* pVarName = VARNAME_LINKTABLE) const;
 	
+	void readConstraints(mat_t*, const char* pVarName = VARNAME_CONSTRAINTS);
+	void saveConstraints(mat_t*, const char* pVarName = VARNAME_CONSTRAINTS) const;
+
 	// Read Node Data
 	void readNodeCtrlFromMat(mat_t*, const char* pVarName = VARNAME_NODECTRL);
 	void readNodeExtraParamFromMat(mat_t*, std::string, const char*);

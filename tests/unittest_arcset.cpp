@@ -209,12 +209,6 @@ BOOST_AUTO_TEST_CASE(Arcset_MixedTime_Save_Load){
 		BOOST_CHECK_EQUAL(set.getCtrlLawByIx(s), tempSet.getCtrlLawByIx(s));
 	}
 
-	set.print();
-	set.printInChrono();
-
-	tempSet.print();
-	tempSet.printInChrono();
-
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
 			delete(law);

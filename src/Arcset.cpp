@@ -540,6 +540,7 @@ void Arcset::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
 	saveSegCtrlLaw(pMatFile, saveTp);
 
 	pSysData->saveToMat(pMatFile);
+	saveConstraints(pMatFile);
 }//====================================================
 
 /**
@@ -589,7 +590,7 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 		try{
 			readLinkTable(pMatFile);
 		}catch(Exception &e){
-			printErr("Arcset::readCmds: Could not read link table\n\t%s\n", e.what());
+			// printErr("Arcset::readCmds: Could not read link table\n\t%s\n", e.what());
 			initNodesSegsFromMat(pMatFile);
 		}
 
@@ -603,6 +604,8 @@ void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 		readSegStatesFromMat(pMatFile, saveTp);
 		readSegTimesFromMat(pMatFile, saveTp);
 		readSegTOFFromMat(pMatFile, saveTp);
+		
+		readConstraints(pMatFile);
 		
 	}catch(Exception &e){
 		// if file was saved using older style, try slightly different read commands

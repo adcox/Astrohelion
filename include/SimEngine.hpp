@@ -74,7 +74,7 @@ public:
 	}//================================================
 
 	/**
-	 *  \brief Evalute the equations of motion.
+	 *  \brief Evaluate the equations of motion.
 	 *  \details This function is called by the Boost integrator. 
 	 * 
 	 *  \param q Reference to the current state

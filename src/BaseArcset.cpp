@@ -2061,6 +2061,49 @@ void BaseArcset::readLinkTable(mat_t *pMatFile, const char* pVarName){
 }//====================================================
 
 /**
+ *  \brief Read constraints from a data file
+ * 
+ *  \param pMatFile Pointer to an open Matlab data file
+ *  \param pVarName The name of the link table variable.
+ */
+void BaseArcset::readConstraints(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pCellArray = Mat_VarRead(pMatFile, pVarName);
+
+	if(pCellArray != nullptr){
+		unsigned int numCons = pCellArray->dims[0];
+
+		if(pCellArray->class_type != MAT_C_CELL || pCellArray->data_type != MAT_T_CELL){
+			Mat_VarFree(pCellArray);
+			throw Exception("BaseArcset::readConstraints: Constraint cell array variable is not stored as a cell array");
+		}
+
+		matvar_t **cell_elements = static_cast<matvar_t **>(pCellArray->data);
+
+		for(unsigned int c = 0; c < numCons; c++){
+			if(cell_elements[c] != nullptr && 
+				cell_elements[c]->class_type == MAT_C_DOUBLE && cell_elements[c]->data_type == MAT_T_DOUBLE){
+
+				unsigned int width = cell_elements[c]->dims[0];
+				
+				if(width < 2 || cell_elements[c]->dims[1] == 0){
+					Mat_VarFree(pCellArray);
+					throw Exception("BaseArcset::readConstraints: Constraint data has less than 2 (the minimum) data values");
+				}
+
+				double *data = static_cast<double *>(cell_elements[c]->data);
+				if(data != nullptr){
+					Constraint_tp tp = static_cast<Constraint_tp>(static_cast<int>(data[0]));
+					int parentIx = static_cast<int>(data[1]);
+					addConstraint(Constraint(tp, parentIx, data+2, width-2));
+				}
+			}
+		}
+	}
+
+	Mat_VarFree(pCellArray);
+}//====================================================
+
+/**
  *  \brief Read the state vector for this arcset object from a matlab data file
  *  \details This function must be called after initNodeSegsFromMat() as it
  *  populates the step vector objects with state data
@@ -2727,6 +2770,57 @@ void BaseArcset::saveLinkTable(mat_t *pMatFile, const char* pVarName) const{
 	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//====================================================
 
+void BaseArcset::saveConstraints(mat_t *pMatFile, const char* pVarName) const{
+	// Step 1: Gather all the constraints
+	std::vector<Constraint> allCons = cons;
+
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<Constraint> temp = nodes[n].getConstraints();
+		allCons.insert(allCons.end(), temp.begin(), temp.end());
+	}
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<Constraint> temp = segs[s].getConstraints();
+		allCons.insert(allCons.end(), temp.begin(), temp.end());
+	}
+
+	if(allCons.size() > 0){
+		matvar_t *cell_array = nullptr, *cell_element = nullptr;
+
+		// Step 2: Create the cell array
+		size_t dims[2] = {allCons.size(), 1};
+		cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+		if(cell_array == nullptr){
+			return; 	// Can't save any data... exit
+		}
+
+		for(unsigned int c = 0; c < allCons.size(); c++){
+			// Get the constraint data
+			std::vector<double> conData = allCons[c].getData();
+			// Append the type and parent index to the beginning of the data vector: [type, parent_index, data0, data1, ...]
+			int parentIx = -1;
+			if(allCons[c].getAppType() != ConstraintApp_tp::APP_TO_ARC){
+				parentIx = allCons[c].getAppType() == ConstraintApp_tp::APP_TO_NODE ? nodeIDMap.at(allCons[c].getID()) : segIDMap.at(allCons[c].getID());
+			}else{
+				parentIx = allCons[c].getID();
+			}
+			conData.insert(conData.begin(), static_cast<double>(parentIx));
+			conData.insert(conData.begin(), static_cast<double>(to_underlying(allCons[c].getType())));
+
+			dims[1] = conData.size();
+			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+			if(cell_element != nullptr){
+				Mat_VarSetCell(cell_array, c, cell_element);
+			}else{
+				Mat_VarFree(cell_array);
+				throw Exception("BaseArcset::saveConstraints: Could not create cell array variable\n");
+			}
+		}
+
+		saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
+	}
+}//====================================================
+
 /**
  *	\brief Save the state derivative vector to file
  *	\param pMatFile a pointer to the destination mat-file
@@ -3032,8 +3126,6 @@ void BaseArcset::saveSegStates(mat_t *pMatFile, Save_tp saveTp, const char *pVar
 	
 	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
 	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
-	
-	std::vector<unsigned int> segStateWidths(segs.size(), 0);
 
 	for(unsigned int s = 0; s < segs.size(); s++){
 		unsigned int ctrl_size = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;

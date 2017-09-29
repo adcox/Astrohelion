@@ -6,7 +6,7 @@ install-deps:
     - sh installDeps.sh
   artifacts:
     paths:
-      - /opt/local/
+      - deps/
       - installLog.log
     expire_in: 2 month
 
@@ -14,6 +14,7 @@ unit-test:
   stage: test
   image: gcc
   script:
+    - cd tests/gitlabCI/
     - export LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
     - export LD_RUN_PATH=/opt/local/lib:$LD_RUN_PATH
     - make directories

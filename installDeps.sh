@@ -5,7 +5,7 @@
 # the directory specified by INSTALL_DIR
 
 LOG="installLog.log"
-INSTALL_DIR="/opt/local"
+INSTALL_DIR="installed"
 
 # Figure out the OS
 OS="unknown"
@@ -18,6 +18,7 @@ fi
 
 mkdir -p deps
 cd deps
+mkdir -p $INSTALL_DIR
 
 ## Boost
 if [ ! -f "$INSTALL_DIR/include/boost" ]; then

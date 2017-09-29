@@ -3,7 +3,7 @@ UNAME_S := $(shell uname -s)
 # My headers
 INC := ../../include
 # System headers; these are included to not throw warnings
-INC_EXT  := -isystem/opt/local/include
+INC_EXT  := -isystem../../deps/installed/include
 # Source files
 SRC := ../../src
 # Directory for object files
@@ -28,7 +28,7 @@ CFLAGS += -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimpo
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LDFLAGS += -L/opt/local/lib
+LDFLAGS += -L../../deps/installed/lib
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 

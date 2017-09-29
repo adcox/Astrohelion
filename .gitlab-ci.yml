@@ -15,8 +15,8 @@ unit-test:
   image: gcc
   script:
     - pushd tests/gitlabCI/
-    - export LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
-    - export LD_RUN_PATH=/opt/local/lib:$LD_RUN_PATH
+    - export LD_LIBRARY_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_LIBRARY_PATH
+    - export LD_RUN_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_RUN_PATH
     - make directories
     - make unit
     - make run

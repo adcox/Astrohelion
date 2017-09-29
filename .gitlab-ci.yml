@@ -7,7 +7,7 @@ install-deps:
   artifacts:
     paths:
       - /opt/local/
-  expire_in: 2 month
+    expire_in: 2 month
 
 unit-test:
   stage: test

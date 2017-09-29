@@ -1,13 +1,26 @@
 image: gcc
 
-before_script:
-  - pushd tests/gitlabCI
-  - sh installDeps.sh
+cache:
+  paths:
+    - /opt/local
 
-unit-tests:
+test:
   script:
+    - pushd tests/gitlabCI
+    - sh installDeps.sh
     - export LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
     - export LD_RUN_PATH=/opt/local/lib:$LD_RUN_PATH
     - make directories
     - make unit
     - make run
+
+pages:
+  script:
+    - apk update && apk add doxygen
+    - doxygen doxy/dox_config
+    - mv docs/html/ public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

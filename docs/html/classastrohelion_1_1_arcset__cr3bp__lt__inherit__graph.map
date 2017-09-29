@@ -1,0 +1,6 @@
+<map id="astrohelion::Arcset_cr3bp_lt" name="astrohelion::Arcset_cr3bp_lt">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_arcset__cr3bp.html" title="Supplies functions specific to CR3BP arcsets. " alt="" coords="21,225,152,264"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_arcset.html" title="Extends BaseArcset in a few areas. " alt="" coords="21,152,152,177"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_base_arcset.html" title="Abstract class that provides the framework for trajectories and nodesets. " alt="" coords="5,79,167,104"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="25,5,148,31"/>
+</map>

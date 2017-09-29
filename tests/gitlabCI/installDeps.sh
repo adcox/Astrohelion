@@ -121,3 +121,6 @@ echo "ls -la $INSTALL_DIR/include"
 ls -la $INSTALL_DIR/include
 echo "ls -la $INSTALL_DIR/lib"
 ls -la $INSTALL_DIR/lib
+
+# Navigate back to the parent directory
+cd ..

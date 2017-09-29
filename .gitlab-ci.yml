@@ -7,6 +7,7 @@ install-deps:
   artifacts:
     paths:
       - /opt/local/
+      - installLog.log
     expire_in: 2 month
 
 unit-test:
@@ -26,6 +27,7 @@ pages:
   image: alpine
   script:
     - apk update && apk add doxygen
+    - apk add graphviz
     - doxygen doxy/dox_config
     - mv docs/html/ public/
   artifacts:

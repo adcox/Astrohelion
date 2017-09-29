@@ -47,7 +47,8 @@ namespace astrohelion{
  *  
  *  \param id Control Law ID
  *  \param params a vector of parameters used by the control law. These parameters 
- *  must be thrust (in Newtons) and Specific Impulse (in seconds).
+ *  are generally thrust (nondimensional) and Specific Impulse (in seconds) for
+ *  most control law implementations
  */
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> params) : ControlLaw(id, params){}
 
@@ -55,13 +56,13 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
  *  \brief Construct a control law
  * 
  *  \param id Control law ID
- *  \param F Thrust magnitude, Newtons
+ *  \param f Thrust magnitude, nondimensional
  *	\param Isp Specific Impulse (Isp), seconds
  */
-ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double F, double Isp){
+ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double f, double Isp){
 	lawType = id;
 	params.assign(2,0);
-	params[0] = F;
+	params[0] = f;
 	params[1] = Isp;
 
 	init();
@@ -72,23 +73,23 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double F, double Isp){
 //------------------------------------------------------------------------------------------------------
 
 /**
- *	\brief Get the spacecraft thrust in Newtons
- *	\return the thrust in Newtons
+ *	\brief Get the spacecraft thrust in nondimensional units
+ *	\return the thrust in nondimensional units
  */
 double ControlLaw_cr3bp_lt::getThrust() const { return params[0]; }
 
 /**
- *  \brief Retreive the nondimensional thrust magnitude
+ *  \brief Retreive the dimensional thrust magnitude in Newtons
  *  \details The nondimsionalization of the thrust magnitude relies
  *  on the spacecraft reference mass as well as the 
  *  characteristic quantities associated with the 3BP. Hence,
  *  the System Data object is required to perform this computation.
  * 
  *  \param pSys A pointer to the system data object
- *  \return the nondimensional thrust magnitude
+ *  \return the thrust magnitude in Newtons
  */
-double ControlLaw_cr3bp_lt::getThrust_nondim(const SysData_cr3bp_lt *pSys) const{
-	return params[0]*pSys->getCharT()*pSys->getCharT()/ ( 1000*pSys->getCharL()*pSys->getRefMass());
+double ControlLaw_cr3bp_lt::getThrust_dim(const SysData_cr3bp_lt *pSys) const{
+	return params[0]*1000*pSys->getCharL()*pSys->getRefMass() / (pSys->getCharT()*pSys->getCharT());
 }//====================================================
 
 /**
@@ -105,16 +106,16 @@ std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3
 
 /**
  *	\brief Set the spacecraft thrust
- *	\param f the thrust, in Newtons
+ *	\param f the thrust, in nondimensional units
  */
 void ControlLaw_cr3bp_lt::setThrust(double f){ params[0] = f;}
 
 /**
- *  \brief Set the thrust via the nondimensional representation.
+ *  \brief Set the thrust in Newtons
  *  \details Thrust is nondimensionalized in the EOMs by the spacecraft
  *  reference mass, and the characteristic quantities associated with
- *  the system. Hence, the system data object is required. The nondimensional
- *  input is converted to a dimensional by leveraging those quantities. 
+ *  the system. Hence, the system data object is required. The dimensional
+ *  input is converted to nondimensional by leveraging those quantities. 
  *  Note that a change in the s/c reference mass after calling this function
  *  will effectively change the nondimensional thrust magnitude leveraged
  *  in this control law.
@@ -123,11 +124,11 @@ void ControlLaw_cr3bp_lt::setThrust(double f){ params[0] = f;}
  *  to quantify the strength of the low-thrust perturbation relative
  *  to the natural system dynamics.
  * 
- *  \param f nondimensional thrust value
+ *  \param F thrust value, Newtons
  *  \param pSys A pointer to the system data object
  */
-void ControlLaw_cr3bp_lt::setThrust_nondim(double f, const SysData_cr3bp_lt *pSys){
-	params[0] = 1000*pSys->getRefMass()*pSys->getCharL()*f / (pSys->getCharT()*pSys->getCharT());
+void ControlLaw_cr3bp_lt::setThrust_dim(double F, const SysData_cr3bp_lt *pSys){
+	params[0] = F*pSys->getCharT()*pSys->getCharT() / (1000*pSys->getCharL()*pSys->getRefMass());
 }//====================================================
 
 /**
@@ -264,9 +265,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
 
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+	double f = getThrust();    			// nondimensional thrust
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4]);
 	law[0] = sign*(f/s[6])*s[4]/v;
@@ -298,9 +297,7 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
 	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_Pro_Vel: law data length must be at least 3!");
 
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+	double f = getThrust();    // nondimensional thrust
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
 	law[0] = sign*(f/s[6])*s[3]/v;
@@ -325,14 +322,10 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
 void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
 
-	(void) t;
-
 	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_GeneralDir: law data length must be at least 3!");
 
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();    // nondimensional thrust
+	double f = getThrust();    // nondimensional thrust
 	unsigned int core_dim = pSys->getDynamicsModel()->getCoreStateSize();
 	double alpha = s[core_dim+0];
 	double beta = s[core_dim+1];
@@ -342,6 +335,9 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const S
 	law[0] = (f/s[6])*cos(beta)*cos(alpha);
 	law[1] = (f/s[6])*cos(beta)*sin(alpha);
 	law[2] = (f/s[6])*sin(beta);
+
+	(void) pSys;
+	(void) t;
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------
@@ -374,9 +370,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 	// row 3 = partials of a_z w.r.t. states
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+	double f = getThrust();
 
 	partials[7*0 + 3] = -sign*f*s[3]*s[4]/(s[6]*pow(v,3));							// dax/dvx
 	partials[7*0 + 4] = sign*(f/(s[6]*v) - f*s[4]*s[4]/(s[6]*pow(v,3)));			// dax/dvy
@@ -386,6 +380,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 	partials[7*1 + 4] = sign*f*s[3]*s[4]/(s[6]*pow(v,3));							// day/dvy
 	partials[7*1 + 6] = sign*f*s[3]/(s[6]*s[6]*v);									// day/dm
 
+	(void) pSys;
 	(void) t;
 }//====================================================
 
@@ -415,9 +410,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 	// row 3 = partials of a_z w.r.t. states
 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+	double f = getThrust();
 
 	partials[7*0 + 3] =  sign*(f/s[6]) * (1.0/v - s[3]*s[3]/pow(v,3));		// dax/dvx
 	partials[7*0 + 4] = -sign*(f/s[6]) * s[3]*s[4]/pow(v,3);				// dax/dvy
@@ -434,6 +427,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 	partials[7*2 + 5] =  sign*(f/s[6]) * (1.0/v - s[5]*s[5]/pow(v,3));		// daz/dvz
 	partials[7*2 + 6] = -sign*(f/s[6]) * s[5]/(v*s[6]);						// daz/dm
 
+	(void) pSys;
 	(void) t;
 }//====================================================
 
@@ -457,9 +451,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz]
 	// partials: row 1 = partials of ax w.r.t. states, row 2 = partials of ay w.r.t. states, etc.
 
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+	double f = getThrust();
 	double alpha = s[7];
 	double beta = s[8];
 
@@ -467,6 +459,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 	partials[7*1 + 6] = -f*cos(beta)*sin(alpha)/(s[6]*s[6]);	// day/dm
 	partials[7*2 + 6] = -f*sin(beta)/(s[6]*s[6]);	// daz/dm
 
+	(void) pSys;
 	(void) t;
 }//====================================================
 
@@ -489,9 +482,7 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 	// State s : [x, y, z, vx, vy, vz, m, ux, uy, uz]
 	// partials: row 1 = partials of vx w.r.t. ctrl states, row 2 = partials of vy w.r.t. ctrl states, etc.
 
-	double charT = pSys->getCharT();
-	double charL = pSys->getCharL();
-	double f = (getThrust()/1000)*charT*charT/charL/pSys->getRefMass();
+	double f = getThrust();
 	double alpha = s[7];
 	double beta = s[8];
 
@@ -501,6 +492,7 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 	partials[numStates*4 + 1] = -f/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
 	partials[numStates*5 + 1] = f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
 
+	(void) pSys;
 	(void) t;
 }//====================================================
 

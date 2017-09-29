@@ -479,9 +479,9 @@ void toCSV(MatrixXRd m, const char* filename){
         for (int c = 0; c < m.cols(); c++){
             char buffer[64] = "";
             if(c < m.cols()-1)
-                sprintf(buffer, "%.14f, ", m(r,c));
+                sprintf(buffer, "%.20f, ", m(r,c));
             else
-                sprintf(buffer, "%.14f\n", m(r,c));
+                sprintf(buffer, "%.20f\n", m(r,c));
 
             outFile << buffer;
         }
@@ -557,6 +557,17 @@ double boundValue(double val, double min, double max){
 bool fileExists (const char *filename) {
     struct stat buffer;   
     return (stat (filename, &buffer) == 0); 
+}//====================================================
+
+/**
+ *  \brief Convert and angle to its equivalent between -pi and pi
+ * 
+ *  \param val value in radians
+ *  \return An equivalent value between -pi and pi
+ */
+double wrapToPi(double val){
+    while(abs(val) > PI)
+        val -= astrohelion::sign(val)*2*PI;
 }//====================================================
 
 /** \} */ // END of util group

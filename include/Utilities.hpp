@@ -387,6 +387,7 @@ namespace astrohelion{
 	//\}
 	
 	double resolveAngle(double, double);
+	double wrapToPi(double);
 	
 	void waitForUser();
 }

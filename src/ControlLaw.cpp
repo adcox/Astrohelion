@@ -305,6 +305,18 @@ void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData 
 //      Utility Functions
 //------------------------------------------------------------------------------------------------------
 
+void ControlLaw::print() const{
+	printf("Control Law\n  Type = %s\n", lawTypeToString(lawType).c_str());
+	printf("  NumStates = %u\n  NumOutputs = %u\n", numStates, numOutputs);
+	printf("  params = {");
+	for(unsigned int i = 0; i < params.size(); i++){
+		printf("%f", params[i]);
+		if(i < params.size() - 1)
+			printf(",  ");
+	}
+	printf("}\n");
+}//====================================================
+
 /**
  *  \brief Copy the ControlLaw object
  *  \param law reference to the source controlLaw
@@ -324,8 +336,7 @@ void ControlLaw::init(){
 		case NO_CTRL:
 			numStates = 0;
 			break;
-		default:
-			throw Exception("ControlLaw::init: Unrecognized lawType");
+		default: break;
 	}
 }//====================================================
 

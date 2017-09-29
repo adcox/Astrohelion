@@ -97,9 +97,10 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-
+	virtual void print() const;
 	//\}
 	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented
+
 protected:
 	virtual void init();
 	void copyMe(const ControlLaw&);

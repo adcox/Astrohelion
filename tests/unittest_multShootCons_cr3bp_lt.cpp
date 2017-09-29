@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_SUITE(CR3BP_LT_CONST_C)
 
 BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(lawType, 12e-3, 1500);
+	ControlLaw_cr3bp_lt law(lawType, 0.3, 1500);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -78,7 +78,7 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes
 	sim.runSim_manyNodes(emL3Lyap_ic, emL3Lyap_T, 2, &halfLyapArcset, &law);
 
 	MultShootEngine corrector;
-	corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 	corrector.setTOFType(tofType);
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, false));
@@ -102,7 +102,7 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes
 
 BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	ControlLaw_cr3bp_lt law(lawType, 12e-3, 1500);
+	ControlLaw_cr3bp_lt law(lawType, 9e-3, 1500);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -112,7 +112,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tof
 	MultShootEngine corrector;
 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
-	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 
 	double stateConData[] = {0.78, 0, NAN, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
@@ -127,7 +127,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tof
 
 BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	ControlLaw_cr3bp_lt law(lawType, 12e-3, 1500);
+	ControlLaw_cr3bp_lt law(lawType, 9e-3, 1500);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -138,7 +138,7 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes)
 	MultShootEngine corrector;
 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
-	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 
 	double stateConData[] = {0.78, 0, NAN, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::ENDSEG_STATE, 1, stateConData, 7);
@@ -154,7 +154,7 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes)
 
 BOOST_DATA_TEST_CASE(test_rmState, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(lawType, 12e-3, 1500);
+	ControlLaw_cr3bp_lt law(lawType, 0.3, 1500);
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -165,7 +165,7 @@ BOOST_DATA_TEST_CASE(test_rmState, data::make(lawTypes) * data::make(tofTypes), 
 	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 	corrector.setTol(1e-11);
-	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
 
 	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
@@ -197,7 +197,7 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 	(void) index;
 
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 12e-3, 1500);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
 	std::vector<double> thrustAngles {alpha, beta};
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
@@ -236,7 +236,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	(void) index;
 
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 12e-3, 1500);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 9e-3, 1500);
 	std::vector<double> thrustAngles {alpha, beta};
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);

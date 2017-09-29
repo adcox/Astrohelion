@@ -37,7 +37,7 @@
 #include "EigenDefs.hpp"
 #include "Fam_cr3bp.hpp"
 #include "FamMember_cr3bp.hpp"
-#include "LinMotionEngine.hpp"
+#include "LinMotionEngine_cr3bp.hpp"
 #include "MultShootData.hpp"
 #include "Arcset_cr3bp.hpp"
 #include "SimEngine.hpp"
@@ -220,9 +220,9 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 
 	// Begin solving - get linear approximation at ICs
 	double r0[] = {x0, 0, 0};
-	LinMotionEngine linEngine;
-	Arcset_cr3bp linTraj = linEngine.getCR3BPLinear(LPt, r0,
-		LinMotion_tp::ELLIP, pFam->getSysDataPtr());
+	LinMotionEngine_cr3bp linEngine;
+	Arcset_cr3bp linTraj(pFam->getSysDataPtr());
+	linEngine.getLinear(LPt, r0, LinMotion_cr3bp_tp::OSC, &linTraj);
 
 	pFam->setSortType(FamSort_tp::SORT_X);
 

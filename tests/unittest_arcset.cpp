@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_Save_Load){
 	std::vector<double> ctrl0 {1.25, 0.1};
 
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 12e-3, 1500);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
 
 	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
@@ -519,7 +519,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_SaveCurve_Load){
 	std::vector<double> ctrl0 {1.25, 0.1};
 
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 12e-3, 1500);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
 
 	unsigned int coreDim = ltData.getDynamicsModel()->getCoreStateSize();
 
@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_SaveFrame_Load){
 	std::vector<double> ctrl0 {1.25, 0.1};
 
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 12e-3, 1500);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
 
 	unsigned int coreDim = ltData.getDynamicsModel()->getCoreStateSize();
 

@@ -9,7 +9,7 @@ void computeMap(const std::vector<double> ICs, const int numReturns, const doubl
 	int numICs = ICs.size()/stateSize;
 
 	printf("Beginning map creation for C = %.2f, Manifold type = %c, ", C, manType);
-	printf("Law = %u, Isp = %.0f, F = %.2f mN, M0 = %.2f kg\n", pLaw->getLawType(), pLaw->getIsp(), pLaw->getThrust()*1000, pSys->getRefMass());
+	printf("Law = %u, Isp = %.0f, F = %.2f mN, M0 = %.2f kg\n", pLaw->getLawType(), pLaw->getIsp(), pLaw->getThrust_dim()*1000, pSys->getRefMass());
 	printf("  Will integrate %d orbits, %d total integrations\n", numICs, 
 		numICs*numReturns);
 
@@ -57,7 +57,7 @@ void computeMap(const std::vector<double> ICs, const int numReturns, const doubl
 	for(int n = 0; n < numICs; n++){
 		char filename[128];
 		sprintf(filename, "data_%c_law%u/JC-%08d_M0-%.0fkg_F-%.0fmN_Isp-%.0fsec_Orb%08d.mat",
-			manType, pLaw->getLawType(), (int)floor(C*1e7), pSys->getRefMass(), pLaw->getThrust()*1000, pLaw->getIsp(), n);
+			manType, pLaw->getLawType(), (int)floor(C*1e7), pSys->getRefMass(), pLaw->getThrust_dim()*1000, pLaw->getIsp(), n);
 
 		if(!fileExists(filename)){
 			std::vector<double> IC(ICs.begin()+n*stateSize, ICs.begin()+(n+1)*stateSize);

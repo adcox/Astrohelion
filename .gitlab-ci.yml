@@ -1,20 +1,29 @@
-image: gcc
-
-cache:
-  paths:
-    - /opt/local
-
-test:
+install-deps:
+  stage: build
+  image: gcc
   script:
     - pushd tests/gitlabCI
     - sh installDeps.sh
+  artifacts:
+    paths:
+      - /opt/local/
+  expire_in: 2 month
+
+unit-test:
+  stage: test
+  image: gcc
+  script:
     - export LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
     - export LD_RUN_PATH=/opt/local/lib:$LD_RUN_PATH
     - make directories
     - make unit
     - make run
+  dependencies:
+    - install-deps
 
 pages:
+  stage: deploy
+  image: alpine
   script:
     - apk update && apk add doxygen
     - doxygen doxy/dox_config

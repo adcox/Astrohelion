@@ -5,7 +5,7 @@
 # the directory specified by INSTALL_DIR
 
 LOG="installLog.log"
-INSTALL_DIR="installed"
+INSTALL_DIR="/builds/adcox/Astrohelion/deps/installed"
 
 # Figure out the OS
 OS="unknown"
@@ -123,4 +123,4 @@ echo "ls -la $INSTALL_DIR/lib"
 ls -la $INSTALL_DIR/lib
 
 # Navigate back to the parent directory
-cd ..
+cd $INSTALL_DIR

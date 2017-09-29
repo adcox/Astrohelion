@@ -6,8 +6,8 @@ install-deps:
     - sh installDeps.sh
   artifacts:
     paths:
-      - deps/
-      - installLog.log
+      - /builds/adcox/Astrohelion/deps/
+      - /builds/adcox/Astrohelion/deps/installLog.log
     expire_in: 2 month
 
 unit-test:

@@ -21,6 +21,7 @@ unit-test:
   image: gcc
   script:
     - pushd tests/gitlabCI/
+    - mkdir -p /root/.config/astrohelion
     - cp settings.xml /root/.config/astrohelion/user_settings.xml
     - cp body_data.xml /root/.config/astrohelion/body_data.xml
     - export LD_LIBRARY_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_LIBRARY_PATH
@@ -33,14 +34,13 @@ unit-test:
 
 pages:
   stage: build
-  image: alpine
+  image: ubuntu:trusty
   script:
-    - apk update && apk add doxygen
-    - apk add graphviz
+    - apt-get update && apt-get install graphviz && apt-get install doxygen
     - doxygen doxy/dox_config
     - mv docs/html/ public/
   artifacts:
     paths:
       - public
-  only:
-    - master
+  # only:
+  #   - master

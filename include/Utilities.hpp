@@ -374,7 +374,9 @@ namespace astrohelion{
 	            //     sprintf(buffer, "%.20f\n", m(r,c));
 
 	            outFile << buffer;
-	            if(c == m.cols() - 1)
+	            if(c < m.cols()-1)
+	            	outFile << ", ";
+	            else
 	            	outFile << '\n';
 	        }
 	    }
@@ -385,7 +387,7 @@ namespace astrohelion{
 	        perror("Utilities::toCSV: Error while writing file ");
 
 	    outFile.close();
-	}
+	}//================================================
 
 	/** \} */ // END of util group
 

@@ -94,7 +94,7 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 	std::vector<cdouble> eigVals = std::vector<cdouble>(vals.data(), vals.data()+6);
 	MatrixXRcd eigVecs = eigensolver.eigenvectors();
 
-	toCSV(eigVecs, "deta/temp_eigVecs.csv");
+	toCSV(eigVecs, "data/temp_eigVecs.csv");
 	bool pureReal[4], pureImag[4], mixed[4];
 	int numPureReal = 0, numPureImag = 0, numMixed = 0;
 	for(unsigned int i = 0; i < 4; i++){

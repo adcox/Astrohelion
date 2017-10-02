@@ -7,7 +7,7 @@ install-deps:
   artifacts:
     paths:
       - /builds/adcox/Astrohelion/deps/
-      - /builds/adcox/Astrohelion/deps/installLog.log
+      - /root/.config/astrohelion
     expire_in: 2 month
 
 unit-test:

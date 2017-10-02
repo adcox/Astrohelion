@@ -50,7 +50,9 @@ namespace astrohelion{
  *  are generally thrust (nondimensional) and Specific Impulse (in seconds) for
  *  most control law implementations
  */
-ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> params) : ControlLaw(id, params){}
+ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> params) : ControlLaw(id, params){
+	init();
+}//====================================================
 
 /**
  *  \brief Construct a control law

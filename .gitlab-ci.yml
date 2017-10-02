@@ -1,7 +1,8 @@
 cache:
   paths:
     - /builds/adcox/Astrohelion/deps/
-    - /root/.config/astrohelion/
+    - /builds/adcox/Astrohelion/data/
+    # - /root/.config/astrohelion/
 
 install-deps:
   stage: build
@@ -20,6 +21,8 @@ unit-test:
   image: gcc
   script:
     - pushd tests/gitlabCI/
+    - cp settings.xml /root/.config/astrohelion/user_settings.xml
+    - cp body_data.xml /root/.config/astrohelion/body_data.xml
     - export LD_LIBRARY_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_LIBRARY_PATH
     - export LD_RUN_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_RUN_PATH
     - make directories

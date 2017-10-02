@@ -38,6 +38,8 @@
  
 #include <algorithm>
 #include <complex>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -348,6 +350,43 @@ namespace astrohelion{
 		return static_cast<typename std::underlying_type<T>::type>(e);
 	}//================================================
 
+	template<typename T>
+	void toCSV(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m, const char* filename){
+		std::ofstream outFile(filename, std::ios::out);
+    
+	    // After this attempt to open a file, we can safely use perror() only  
+	    // in case f.is_open() returns False.
+	    if (!outFile.is_open())
+	        perror("Utilities::toCSV: Error while opening file");
+
+	    for (int r = 0; r < m.rows(); r++){
+	        for (int c = 0; c < m.cols(); c++){
+	            char buffer[64] = "";
+
+	            if(std::is_same<T, std::complex<double> >::value){
+	            	sprintf(buffer, "%.20f%c%.20fi", std::real(m(r,c)), std::imag(m(r,c)) >= 0.f ? '+':'\0', std::imag(m(r,c)));
+	            }else{
+	            	sprintf(buffer, "%.20f", m(r,c));
+	            }
+	            // if(c < m.cols()-1)
+	            //     sprintf(buffer, "%.20f, ", m(r,c));
+	            // else
+	            //     sprintf(buffer, "%.20f\n", m(r,c));
+
+	            outFile << buffer;
+	            if(c == m.cols() - 1)
+	            	outFile << '\n';
+	        }
+	    }
+
+	    // Only in case of set badbit we are sure that errno has been set in
+	    // the current context. Use perror() to print error details.
+	    if (outFile.bad())
+	        perror("Utilities::toCSV: Error while writing file ");
+
+	    outFile.close();
+	}
+
 	/** \} */ // END of util group
 
 
@@ -382,7 +421,7 @@ namespace astrohelion{
 	void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
-	void toCSV(MatrixXRd, const char*);
+	// void toCSV(MatrixXRd, const char*);
 	bool fileExists (const char*);
 	//\}
 	

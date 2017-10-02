@@ -467,33 +467,34 @@ void checkAndReThrowSpiceErr(const char* customMsg){
  *  \param m the matrix
  *  \param filename Filename of the csv file (include the .csv extension!)
  */
-void toCSV(MatrixXRd m, const char* filename){
-    std::ofstream outFile(filename, std::ios::out);
+// void toCSV(MatrixXRd m, const char* filename){
+//     std::ofstream outFile(filename, std::ios::out);
     
-    // After this attempt to open a file, we can safely use perror() only  
-    // in case f.is_open() returns False.
-    if (!outFile.is_open())
-        perror("Utilities::toCSV: Error while opening file");
+//     // After this attempt to open a file, we can safely use perror() only  
+//     // in case f.is_open() returns False.
+//     if (!outFile.is_open())
+//         perror("Utilities::toCSV: Error while opening file");
 
-    for (int r = 0; r < m.rows(); r++){
-        for (int c = 0; c < m.cols(); c++){
-            char buffer[64] = "";
-            if(c < m.cols()-1)
-                sprintf(buffer, "%.20f, ", m(r,c));
-            else
-                sprintf(buffer, "%.20f\n", m(r,c));
+//     for (int r = 0; r < m.rows(); r++){
+//         for (int c = 0; c < m.cols(); c++){
+//             char buffer[64] = "";
+//             if(c < m.cols()-1)
+//                 sprintf(buffer, "%.20f, ", m(r,c));
+//             else
+//                 sprintf(buffer, "%.20f\n", m(r,c));
 
-            outFile << buffer;
-        }
-    }
+//             outFile << buffer;
+//         }
+//     }
 
-    // Only in case of set badbit we are sure that errno has been set in
-    // the current context. Use perror() to print error details.
-    if (outFile.bad())
-        perror("Utilities::toCSV: Error while writing file ");
+//     // Only in case of set badbit we are sure that errno has been set in
+//     // the current context. Use perror() to print error details.
+//     if (outFile.bad())
+//         perror("Utilities::toCSV: Error while writing file ");
 
-    outFile.close();
-}//=============================================
+//     outFile.close();
+// }//=============================================
+
 
 /**
  *  \brief Resolve double angle ambiquity from inverse trig

@@ -83,7 +83,7 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 	A(3,0) = ddots[3];	A(3,1) = ddots[1];
 	A(2,3) = 2;			A(3,2) = -2;		// Velocity terms
 
-	toCSV(A, "data/temp_A.csv");
+	// toCSV(A, "data/temp_A.csv");
 
 	// Compute the eigenvalues and eigenvectors
 	Eigen::EigenSolver<MatrixXRd> eigensolver(A);
@@ -94,11 +94,14 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 	std::vector<cdouble> eigVals = std::vector<cdouble>(vals.data(), vals.data()+6);
 	MatrixXRcd eigVecs = eigensolver.eigenvectors();
 
-	toCSV(eigVecs, "data/temp_eigVecs.csv");
+	// toCSV(eigVecs, "data/temp_eigVecs.csv");
+	// std::cout << "Eigenvectors:\n" << eigVecs << std::endl;
+
 	bool pureReal[4], pureImag[4], mixed[4];
 	int numPureReal = 0, numPureImag = 0, numMixed = 0;
 	for(unsigned int i = 0; i < 4; i++){
-		printf("Eigenvalue: %f + %fj\n", real(eigVals[i]), imag(eigVals[i]));
+		if(verbosity >= Verbosity_tp::ALL_MSG)
+			printf("Eigenvalue: %f + %fj\n", real(eigVals[i]), imag(eigVals[i]));
 		
 		pureReal[i] = std::abs(imag(eigVals[i])) < 1e-12;
 		pureImag[i] = std::abs(real(eigVals[i])) < 1e-12;
@@ -123,7 +126,8 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 
 	switch(motionTp){
 		case LinMotion_tp::HYP:
-			printErr("LinMotionEngine_cr3bp_lt::getLinear: Hyperbolic mode is not implemented\n");
+			if(verbosity > Verbosity_tp::NO_MSG)
+				printErr("LinMotionEngine_cr3bp_lt::getLinear: Hyperbolic mode is not implemented\n");
 			break;
 		case LinMotion_tp::NONE:
 		case LinMotion_tp::OSC:
@@ -131,7 +135,8 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 		case LinMotion_tp::UNSTAB_OSC:
 		{
 			if(numPureImag < 2){
-				printErr("LinMotionEngine_cr3bp_lt::getLinear: There is not a center subspace\n");
+				if(verbosity > Verbosity_tp::NO_MSG)
+					printErr("LinMotionEngine_cr3bp_lt::getLinear: There is not a center subspace\n");
 			}else{
 				// Find the largest (i.e., positive) frequency
 				double freq = 0;
@@ -150,26 +155,31 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 				double c4 = (x0[1]*u[0] - x0[0]*u[1])/(w[1]*u[0] - w[0]*u[1]);
 				double c3 = (x0[0] - c4*w[0])/u[0];
 				double rate = std::abs(real(eigVals[ix]))*(motionTp == LinMotion_tp::STAB_OSC ? -1 : 1);
+				if(std::abs(rate) < 1e-14)
+					rate = 0;
 
 				if(motionTp == LinMotion_tp::OSC && std::abs(rate) > 1e-12){
-					printErr("LinMotionEngine_cr3bp_lt::getLinear: Requested oscillatory motion, but the oscillatory modes are spirals; aborting\n");
+					if(verbosity > Verbosity_tp::NO_MSG)
+						printErr("LinMotionEngine_cr3bp_lt::getLinear: Requested oscillatory motion, but the oscillatory modes are spirals; aborting\n");
 					return;
 				}
 				if((motionTp == LinMotion_tp::STAB_OSC || motionTp == LinMotion_tp::UNSTAB_OSC) && std::abs(rate) < 1e-12){
-					printWarn("LinMotionEngine_cr3bp_lt::getLinear: No stable/unstable component to oscillatory motion; proceeding with pure oscillatory\n");
+					if(verbosity > Verbosity_tp::NO_MSG)
+						printWarn("LinMotionEngine_cr3bp_lt::getLinear: No stable/unstable component to oscillatory motion; proceeding with pure oscillatory\n");
 				}
 
 				double period = 2*PI/freq;
 
 				std::vector<double> state(full_dim, 0);
 				state[6] = 1;					// Set mass = 1 for all time
-				state[core_dim + 1] = alpha;	// Set alpha, beta (core_dim + 2) is always zero
+				state[core_dim] = alpha;		// Set alpha, beta (core_dim + 1) is always zero
 				double t;
 				for(t = 0; t < revs*period; t += t_step){
 					for(unsigned int i = 0; i < 6; i++){
 						// Leave zeta and zeta_dot as zeros
+						int ix = i - std::floor(i/3);
 						if(i != 2 && i < 5)
-							state[i] = c3*exp(rate*t)*(u[i]*cos(freq*t) - w[i]*sin(freq*t)) + c4*exp(rate*t)*(w[i]*cos(freq*t) + u[i]*sin(freq*t));
+							state[i] = c3*exp(rate*t)*(u[ix]*cos(freq*t) - w[ix]*sin(freq*t)) + c4*exp(rate*t)*(w[ix]*cos(freq*t) + u[ix]*sin(freq*t));
 						else
 							state[i] = 0;
 					}

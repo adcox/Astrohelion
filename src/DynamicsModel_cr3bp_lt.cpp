@@ -190,7 +190,7 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     // Save any time-derivatives of the control states
     const unsigned int ctrlDim = law ? law->getNumStates() : 0;
     const unsigned int ctrlOutDim = law ? law->getNumOutputs() : 0;
-    if(ctrlDim > 0){
+    if(law && ctrlDim > 0){
         std::vector<double> control_stateDeriv(ctrlDim, 0);
         law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrlDim);
 
@@ -337,7 +337,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
  *  \param zac [description]
  */
 void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, double f,
-    double tol, std::vector<double> *zac){
+    double tol, std::vector<double> *zac, Verbosity_tp verb){
 
     unsigned int maxCount = 20;
     unsigned int maxOuterCount = 10000;
@@ -439,7 +439,7 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
         // Ok - we have an initial solution from analytical or semi-analytical methods
         // Now, set up continuation process
         double slope = L < 4 ? 999 : 0;             // Force vertical step for collinear points, hoirzontal step for triangular points
-        double alphaSpan = L < 4 ? PI : 2*PI;       // Required angle range that must be computed (can use symmetry on collinear points)
+        // double alphaSpan = L < 4 ? PI : 2*PI;       // Required angle range that must be computed (can use symmetry on collinear points)
         double step_x = f*1e-3, step_y = f*1e-3;    // Initial step sizes for continuation
         double step_alpha = (PI/100.0)*cos(initSol[0]); // Initial step size for continuation
         double diffAlpha = 0;                       // Change in alpha between solution iterations
@@ -465,11 +465,12 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
             if(L >= 4){
                 // Old check: std::abs(alpha - initSol[0]) < alphaSpan - PI/200.0
                 // Check for looped all the way around
-                reachedEnd = (outerCount > 5) && std::abs(x - initSol[1]) < stepChangeFactor*std::abs(step_x) && 
-                    std::abs(y - initSol[2]) < stepChangeFactor*std::abs(step_y);
+                reachedEnd = (outerCount > 15) && std::abs(x - initSol[1]) < stepChangeFactor*std::abs(step_x) && 
+                    std::abs(y - initSol[2]) < stepChangeFactor*std::abs(step_y) &&
+                    std::abs(sin(alpha) - sin(initSol[0])) < stepChangeFactor*std::abs(step_alpha);
             }else{
                 // Check for x-axis crossing
-                reachedEnd = (outerCount > 5) && zacRef[zac->size() - 1]*zacRef[zac->size() - 4] < 0;
+                reachedEnd = (outerCount > 15) && zacRef[zac->size() - 1]*zacRef[zac->size() - 4] < 0;
             }
 
             if(std::abs(slope) > 1.0){
@@ -506,20 +507,20 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                 if(err >= tol || std::abs(diffAlpha) > maxDiffAlpha){
                     if(std::abs(diffAlpha) > maxDiffAlpha){
                         alpha = zacRef[zac->size()-3]; // Reset to previous value
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  |diffAlpha = %f| > %f\n", diffAlpha, maxDiffAlpha);
                     }
 
                     if(std::abs(step_y/stepChangeFactor) > minStep_y){
                         y = zacRef[zac->size() - 1];    // Reset to previous value
+                        x = zacRef[zac->size() - 2];
                         step_y /= stepChangeFactor;                  // Decrease step size
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  decreasing step_y to %e\n", step_y);
                     }else{
                         // Can't step any smaller in y, so try stepping in alpha
                         doAlphaStep = true;
                     }
                 }else{
                     // No errors and angular separation is good!
-                    if(innerCount < 5)
-                        step_y *= stepChangeFactor;    // Increase step size to expedite process
-
                     // Save data, update slope
                     zac->push_back(alpha);
                     zac->push_back(x);
@@ -531,6 +532,14 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         step_alpha = diffAlpha;
                         slope = (zacRef[zac->size() - 1] - zacRef[zac->size() - 4])/step_x;
                         if(std::isnan(slope)){ slope = 999; }
+
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "STEP_Y: alpha = %f, [%f, %f]; step_x = %f, step_y = %f, step_alpha = %f, slope = %f\n",
+                            alpha, x, y, step_x, step_y, step_alpha, slope);
+                    }
+
+                    if(innerCount < 5 && maxDiffAlpha/std::abs(diffAlpha) > stepChangeFactor && std::abs(slope) > 1.0){
+                        step_y *= stepChangeFactor;    // Increase step size to expedite process
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  increasing step_y = %e\n", step_y);
                     }
                 }
             }else{
@@ -568,20 +577,20 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                 if(err >= tol || std::abs(diffAlpha) > maxDiffAlpha){
                     if(std::abs(diffAlpha) > maxDiffAlpha){
                         alpha = zacRef[zac->size()-3]; // Reset to previous value
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  |diffAlpha = %f| > %f\n", diffAlpha, maxDiffAlpha);
                     }
 
                     if(std::abs(step_x/stepChangeFactor) > minStep_x){
-                        y = zacRef[zac->size() - 1];   // Reset to previous value
+                        y = zacRef[zac->size() - 1];   // Reset to previous values
+                        x = zacRef[zac->size() - 2];
                         step_x /= stepChangeFactor;              // Decrease step size
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  decreasing step_x to %e\n", step_x);
                     }else{
                         // Can't step any smaller in x, so try stepping in alpha
                         doAlphaStep = true;
                     }
                 }else{
                     // No errors and angular separation is good!
-                    if(innerCount < 5)
-                        step_x *= stepChangeFactor;    // Increase step size to expedite process
-
                     // Save data, update slope
                     zac->push_back(alpha);
                     zac->push_back(x);
@@ -593,6 +602,14 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         step_alpha = diffAlpha;
                         slope = step_y/(zacRef[zac->size() - 2] - zacRef[zac->size() - 5]);
                         if(std::isnan(slope)){ slope = 999; }
+
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "STEP_X: alpha = %f, [%f, %f]; step_x = %f, step_y = %f, step_alpha = %f, slope = %f\n",
+                            alpha, x, y, step_x, step_y, step_alpha, slope);
+                    }
+
+                    if(innerCount < 5 && maxDiffAlpha/std::abs(diffAlpha) > stepChangeFactor && std::abs(slope) < 1.0){
+                        step_x *= stepChangeFactor;    // Increase step size to expedite process
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  increasing step_x = %e\n", step_x);
                     }
                 }
             }// End of if/else for abs(slope) > 1
@@ -626,6 +643,7 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                 if(err >= tol){
                     if(std::abs(step_alpha/stepChangeFactor) > minStep_alpha){
                         step_alpha /= stepChangeFactor;
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  decreasing step_alpha to %e\n", step_alpha);
                     }else{
                         // Could not converge with alpha step... give up on this one
                         printWarn("Could not converge L%d with alpha step... ending\n", L);
@@ -646,6 +664,9 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
 
                         diffAlpha = zacRef[zac->size() - 6] - zacRef[zac->size() - 3];
                         doAlphaStep = false;
+
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "STEP_A: alpha = %f, [%f, %f]; step_x = %f, step_y = %f, step_alpha = %f, slope = %f\n",
+                            alpha, x, y, step_x, step_y, step_alpha, slope);
                     }
                 }
             }
@@ -654,9 +675,9 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
         }// End of loop
 
         if(reachedEnd)
-            printf("L%d loop ended because reachedEnd = true\n", L);
+            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended because reachedEnd = true\n", L);
         else if(outerCount < maxOuterCount)
-            printf("L%d loop ended due to iteration max-out\n", L);
+            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended due to iteration max-out\n", L);
 
         
         if(L <= 3){

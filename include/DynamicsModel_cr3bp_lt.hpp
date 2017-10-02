@@ -66,7 +66,7 @@ public:
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static void getEquilibPt(const SysData_cr3bp_lt*, int, double, double, std::vector<double>*);
+	static void getEquilibPt(const SysData_cr3bp_lt*, int, double, double, std::vector<double>*, Verbosity_tp verb = Verbosity_tp::NO_MSG);
 	//\}
 	
 	/**

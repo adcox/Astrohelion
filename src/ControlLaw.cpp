@@ -324,6 +324,7 @@ void ControlLaw::print() const{
 void ControlLaw::copyMe(const ControlLaw &law){
 	lawType = law.lawType;
 	numStates = law.numStates;
+	numOutputs = law.numOutputs;
 	params = law.params;
 }//====================================================
 
@@ -335,6 +336,7 @@ void ControlLaw::init(){
 	switch(lawType){
 		case NO_CTRL:
 			numStates = 0;
+			numOutputs = 0;
 			break;
 		default: break;
 	}

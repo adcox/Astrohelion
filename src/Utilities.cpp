@@ -226,6 +226,15 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
     }
 }//=========================================================
 
+/**
+ *  \brief Save a string to an open Matlab data file
+ *  \details [long description]
+ * 
+ *  \param matfp pointer to Matlab file
+ *  \param varName name of the variable within the Matlab file
+ *  \param text value of the variable within the Matlab file
+ *  \param strlen number of characters (including the final null char) in <tt>text</tt>
+ */
 void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const int strlen){
     char text_chars[strlen];
     strcpy(text_chars, text.c_str());

@@ -88,10 +88,10 @@ if [[ "$OS" == "linux" ]]; then
 fi
 
 ## Download and move SPICE data
-if [ ! -d ~/.config/astrohelion ]; then
+if [ ! -d /root/.config/astrohelion ]; then
 	wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de430.bsp
 	wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls
-	mkdir -p ~/.config/astrohelion
+	mkdir -p /root/.config/astrohelion
 	mv de430.bsp data/data_SPICE/
 	mv naif0012.tls data/data_SPICE/
 fi
@@ -105,10 +105,6 @@ if [ ! -d "$INSTALL_DIR/include/Eigen" ]; then
 	mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
 	rm 3.3.3.tar.gz
 fi
-
-# echo "Adding $INSTALL_DIR to LD_LIBRARY_PATH"
-# LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR
-# LD_RUN_PATH=$LD_RUN_PATH:$INSTALL_DIR
 
 ## Configuration Files
 cp ../settings.xml /root/.config/astrohelion/user_settings.xml

@@ -1,6 +1,0 @@
-<map id="include/ManifoldEngine.hpp" name="include/ManifoldEngine.hpp">
-<area shape="rect" id="node3" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="87,79,163,104"/>
-<area shape="rect" id="node6" href="$_engine_8hpp.html" title="Contains the base behavior for engine objects. " alt="" coords="187,79,276,104"/>
-<area shape="rect" id="node9" href="$_eigen_defs_8hpp.html" title="Definitions for matrices, vectors, and other objects from the Eigen library. " alt="" coords="300,79,409,104"/>
-<area shape="rect" id="node7" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="181,152,282,177"/>
-</map>

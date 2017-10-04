@@ -1,7 +1,0 @@
-<map id="include/Segment.hpp" name="include/Segment.hpp">
-<area shape="rect" id="node2" href="$_linkable_8hpp.html" title="Linkable.hpp" alt="" coords="5,79,102,104"/>
-<area shape="rect" id="node6" href="$_constraint_8hpp.html" title="Contains information about a constraint on a nodeset, node, or segment. " alt="" coords="126,79,235,104"/>
-<area shape="rect" id="node8" href="$_control_law_8hpp.html" title="Control Law header file. " alt="" coords="310,79,424,104"/>
-<area shape="rect" id="node10" href="$_eigen_defs_8hpp.html" title="Definitions for matrices, vectors, and other objects from the Eigen library. " alt="" coords="450,79,559,104"/>
-<area shape="rect" id="node3" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="66,152,143,177"/>
-</map>

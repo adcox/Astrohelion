@@ -1,7 +1,0 @@
-<map id="include/Node.hpp" name="include/Node.hpp">
-<area shape="rect" id="node5" href="$_linkable_8hpp.html" title="Linkable.hpp" alt="" coords="495,152,592,177"/>
-<area shape="rect" id="node8" href="$_constraint_8hpp.html" title="Contains information about a constraint on a nodeset, node, or segment. " alt="" coords="139,152,247,177"/>
-<area shape="rect" id="node9" href="$_event_8hpp.html" title="Class that contains information about a simulation event. " alt="" coords="244,79,326,104"/>
-<area shape="rect" id="node6" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="436,225,512,251"/>
-<area shape="rect" id="node10" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="323,152,420,177"/>
-</map>

@@ -1,6 +1,0 @@
-<map id="src/LinMotionEngine.cpp" name="src/LinMotionEngine.cpp">
-<area shape="rect" id="node2" href="$_lin_motion_engine_8hpp.html" title="LinMotionEngine.hpp" alt="" coords="83,79,230,104"/>
-<area shape="rect" id="node3" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="65,152,141,177"/>
-<area shape="rect" id="node6" href="$_engine_8hpp.html" title="Contains the base behavior for engine objects. " alt="" coords="165,152,254,177"/>
-<area shape="rect" id="node7" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="159,225,260,251"/>
-</map>

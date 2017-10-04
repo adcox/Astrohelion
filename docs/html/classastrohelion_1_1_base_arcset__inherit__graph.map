@@ -1,8 +1,0 @@
-<map id="astrohelion::BaseArcset" name="astrohelion::BaseArcset">
-<area shape="rect" id="node3" href="$classastrohelion_1_1_arcset.html" title="Extends BaseArcset in a few areas. " alt="" coords="191,152,323,177"/>
-<area shape="rect" id="node2" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="195,5,318,31"/>
-<area shape="rect" id="node4" href="$classastrohelion_1_1_arcset__2bp.html" title="Supplies functions specific to 2BP arcsets. " alt="" coords="5,232,167,257"/>
-<area shape="rect" id="node5" href="$classastrohelion_1_1_arcset__bc4bp.html" title="Supplies functions specific to BC4BP arcsets. " alt="" coords="191,225,323,264"/>
-<area shape="rect" id="node6" href="$classastrohelion_1_1_arcset__cr3bp.html" title="Supplies functions specific to CR3BP arcsets. " alt="" coords="347,225,479,264"/>
-<area shape="rect" id="node7" href="$classastrohelion_1_1_arcset__cr3bp__lt.html" title="Supplies functions specific to low&#45;thrust CR3BP arcsets. " alt="" coords="347,312,479,351"/>
-</map>

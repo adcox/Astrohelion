@@ -1,6 +1,0 @@
-<map id="astrohelion::SysData_2bp" name="astrohelion::SysData_2bp">
-<area shape="rect" id="node2" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="5,129,150,155"/>
-<area shape="rect" id="node3" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="36,5,159,31"/>
-<area shape="rect" id="node5" href="$classastrohelion_1_1_dynamics_model.html" title="A base class that defines the behavior of a dynamical model and provides functions used in simulation..." alt="" coords="121,80,309,105"/>
-<area shape="rect" id="node4" href="$classastrohelion_1_1_dynamics_model__2bp.html" title="Derivative of DynamicsModel, specific to the 2BP. " alt="" coords="108,179,327,204"/>
-</map>

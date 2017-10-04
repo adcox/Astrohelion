@@ -1,9 +1,0 @@
-<map id="astrohelion::boost_observer" name="astrohelion::boost_observer">
-<area shape="rect" id="node2" href="$structastrohelion_1_1_e_o_m___param_struct.html" title="Container for EOM parameters. " alt="" coords="576,33,782,59"/>
-<area shape="rect" id="node3" href="$classastrohelion_1_1_control_law.html" title="Stores control law equations and derivatives for flexible applications throughout the astrohelion fra..." alt="" coords="178,5,339,31"/>
-<area shape="rect" id="node4" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="5,105,128,131"/>
-<area shape="rect" id="node5" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="186,71,330,96"/>
-<area shape="rect" id="node7" href="$classastrohelion_1_1_base_arcset.html" title="Abstract class that provides the framework for trajectories and nodesets. " alt="" coords="598,105,760,131"/>
-<area shape="rect" id="node8" href="$classastrohelion_1_1_dynamics_model.html" title="A base class that defines the behavior of a dynamical model and provides functions used in simulation..." alt="" coords="363,163,552,188"/>
-<area shape="rect" id="node6" href="$classastrohelion_1_1_arcset.html" title="Extends BaseArcset in a few areas. " alt="" coords="870,105,1001,131"/>
-</map>

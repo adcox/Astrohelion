@@ -1,6 +1,0 @@
-<map id="astrohelion::boost_eom_wrapper" name="astrohelion::boost_eom_wrapper">
-<area shape="rect" id="node2" href="$structastrohelion_1_1_e_o_m___param_struct.html" title="Container for EOM parameters. " alt="" coords="71,167,277,192"/>
-<area shape="rect" id="node3" href="$classastrohelion_1_1_control_law.html" title="Stores control law equations and derivatives for flexible applications throughout the astrohelion fra..." alt="" coords="5,80,167,105"/>
-<area shape="rect" id="node4" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="113,5,235,31"/>
-<area shape="rect" id="node5" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="191,80,336,105"/>
-</map>

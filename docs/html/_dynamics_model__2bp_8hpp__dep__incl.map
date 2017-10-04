@@ -1,9 +1,0 @@
-<map id="include/DynamicsModel_2bp.hpp" name="include/DynamicsModel_2bp.hpp">
-<area shape="rect" id="node2" href="$_dynamics_model__2bp_8cpp.html" title="Derivative of DynamicsModel, specific to 2BP. " alt="" coords="5,165,198,191"/>
-<area shape="rect" id="node3" href="$_sys_data__2bp_8hpp.html" title="include/SysData_2bp.hpp" alt="" coords="366,92,539,117"/>
-<area shape="rect" id="node4" href="$_arcset__2bp_8cpp.html" title="src/Arcset_2bp.cpp" alt="" coords="222,165,357,191"/>
-<area shape="rect" id="node5" href="$_calculations_8cpp.html" title="Contains non&#45;member calculation functions. " alt="" coords="382,165,523,191"/>
-<area shape="rect" id="node6" href="$_lambert_arc_engine_8cpp.html" title="Generate Lambert Arcs in the 2BP. " alt="" coords="547,165,725,191"/>
-<area shape="rect" id="node7" href="$_sys_data__2bp_8cpp.html" title="Derivative of SysData, specific to 2BP. " alt="" coords="749,165,897,191"/>
-<area shape="rect" id="node8" href="$_all_includes_8hpp.html" title="Provides easy include for all headers in the Core library. " alt="" coords="921,165,1079,191"/>
-</map>

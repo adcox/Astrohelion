@@ -1,6 +1,0 @@
-<map id="astrohelion::LinMotionEngine" name="astrohelion::LinMotionEngine">
-<area shape="rect" id="node4" href="$classastrohelion_1_1_lin_motion_engine__cr3bp.html" title="Construct trajectories in the linearized dynamics of the CR3BP. " alt="" coords="5,152,199,191"/>
-<area shape="rect" id="node5" href="$classastrohelion_1_1_lin_motion_engine__cr3bp__lt.html" title="astrohelion::LinMotionEngine\l_cr3bp_lt" alt="" coords="223,152,416,191"/>
-<area shape="rect" id="node2" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="73,5,195,31"/>
-<area shape="rect" id="node3" href="$classastrohelion_1_1_engine.html" title="Contains the base behavior for engine objects. " alt="" coords="220,5,355,31"/>
-</map>

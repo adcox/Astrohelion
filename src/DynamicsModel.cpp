@@ -563,9 +563,9 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *pIt, const Constrai
 }//=========================================================
 
 /**
- *	\brief Compute state continuity constraint values and partial derivatives
+ *	\brief Compute core state continuity constraint values and partial derivatives
  *
- *	This function computes and stores the default state continuity constraints. The partial 
+ *	This function computes and stores the default core state continuity constraints. The partial 
  *	derivatives of each node with respect to other nodes and integration time are all 
  *	computed and placed in the appropriate spots in the Jacobian matrix.
  *
@@ -658,6 +658,19 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData* it, const Constrai
 	}
 }//====================================================
 
+/**
+ *	\brief Compute control state continuity constraint values and partial derivatives
+ *
+ *	This function computes and stores control state continuity constraints. The partial 
+ *	derivatives of each node with respect to other nodes and integration times are all 
+ *	computed and placed in the appropriate spots in the Jacobian matrix.
+ *
+ *	Derived models may replace this function.
+ *
+ *	\param it a pointer to the correctors iteration data structure
+ *	\param con the constraint being applied
+ *	\param row0 the first row this constraint applies to
+ */
 void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData *it, const Constraint& con, int row0) const{
 	int segID = con.getID();	// get segment ID
 	std::vector<double> conData = con.getData();
@@ -714,9 +727,10 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData *it, const Constrain
 			// Compute partials of F w.r.t. times-of-flight
 			// Columns of DF based on time constraints
 			if(to_underlying(it->tofTp) > 0){
+				// * For now, all time-derivatives of control laws are zero
+				//
 				// TODO - Will need to retreive constrol state time derivatives from propagated segment
 				// * Instantaneous time derivatives are available via ControlLaw.getLaw_StateDeriv()
-				// * For now, all time-derivatives of control laws are zero
 
 				// std::vector<double> lastDeriv = propSeg.getStateDerivByIx(-1);
 

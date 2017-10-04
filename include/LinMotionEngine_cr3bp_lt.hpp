@@ -44,7 +44,7 @@ class LinMotionEngine_cr3bp_lt : public LinMotionEngine{
 		 *  \name Orbit Generation
 		 *  \{
 		 */
-		void getLinear(double[3], double, double, double[3], unsigned int, Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
+		void getLinear(double[3], double, double, double[3], unsigned int, Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*, unsigned int numNodes = 2);
 		//\}
 };
 

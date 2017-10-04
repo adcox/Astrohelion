@@ -65,9 +65,15 @@ LinMotionEngine_cr3bp_lt::LinMotionEngine_cr3bp_lt() : LinMotionEngine(){}
  *  \param x0 Initial variational state (nondimensional, relative to eqPt)
  *  \param motionTp describes the type of motion
  *  \param pArc pointer to an arcset in which to store the linear trajectory
+ *  \param pLaw pointer to a control law object; the control used on the linear trajectory is 
+ *  stored in this object.
+ *  \param numNodes How many nodes to create on the trajectory. Must be >= 2
  */
 void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha, double x0[3],
-	unsigned int motionTp, Arcset_cr3bp_lt *pArc, ControlLaw_cr3bp_lt *pLaw){
+	unsigned int motionTp, Arcset_cr3bp_lt *pArc, ControlLaw_cr3bp_lt *pLaw, unsigned int numNodes){
+
+	if(numNodes < 2)
+		throw Exception("LinMotionEngine_cr3bp_lt::getLinear: Must specify at least 2 nodes");
 
 	const SysData_cr3bp_lt *pSys = static_cast<const SysData_cr3bp_lt*>(pArc->getSysData());
 	double mu = pSys->getMu();
@@ -173,7 +179,8 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 				std::vector<double> state(full_dim, 0);
 				state[6] = 1;					// Set mass = 1 for all time
 				state[core_dim] = alpha;		// Set alpha, beta (core_dim + 1) is always zero
-				double t;
+				double t = 0, dt = revs*period/(numNodes - 1);
+				unsigned int nodeCount = 0;
 				for(t = 0; t < revs*period; t += t_step){
 					for(unsigned int i = 0; i < 6; i++){
 						// Leave zeta and zeta_dot as zeros
@@ -188,14 +195,27 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 					state[2] += eqPt[2];
 					
 
-					if(t == 0){
+					if(t >= dt*nodeCount){
+						// Add a node
 						Node node0(&(state.front()), core_dim, t);
 						int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
+						// Link the previous segment, if it exists
+						if(nodeCount > 0){
+							Segment &lastSeg = pArc->getSegRefByIx(-1);
+							lastSeg.setTerminus(ID);
+
+							lastSeg.appendState(&(state.front()), full_dim);
+							lastSeg.appendTime(t);
+							lastSeg.updateTOF();
+						}
+
+						// Create a new segment
 						Segment seg(ID, Linkable::INVALID_ID, t_step);
 						seg.appendState(&(state.front()), full_dim);
 						seg.setStateWidth(full_dim);
 						seg.appendTime(t);
 						model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
+						nodeCount++;
 					}else{
 						Segment &lastSeg = pArc->getSegRefByIx(-1);
 						lastSeg.appendState(&(state.front()), full_dim);
@@ -211,6 +231,8 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 				int idf = model->sim_addNode(nodeF, &(state.front()), t, pArc, &eomParams, Event_tp::SIM_TOF);
 				pArc->getNodeRef(idf).addLink(lastSeg.getID());
 				lastSeg.setTerminus(idf);
+				lastSeg.appendState(&(state.front()), full_dim);
+				lastSeg.appendTime(t);
 				lastSeg.updateTOF();
 			}
 

@@ -29,6 +29,7 @@
 #include "LinMotionEngine_cr3bp.hpp"
 
 #include "Arcset_cr3bp.hpp"
+#include "DynamicsModel.hpp"
 #include "Exceptions.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Utilities.hpp"
@@ -84,6 +85,53 @@ const char* LinMotionEngine_cr3bp::getTypeStr(unsigned int type) const{
 //-----------------------------------------------------------------------------
 
 /**
+ *  \brief Save data from the linear model to an Arcset object
+ *  \details [long description]
+ * 
+ *  \param model Describes the relevant dynamical model
+ *  \param pArc Pointer to the storage arcset
+ *  \param t current time on the solution
+ *  \param pState current state on the solution
+ *  \param nodeCount current number of nodes that have been created
+ *  \param eomParams object that stores parameters used to evaluate the nonlinear equations of motion
+ *  \param dt time step between nodes
+ *  \param t_step step between points on the solution
+ *  \param core_dim dimension of the core state
+ *  \param full_dim dimension of the full state (core + control + stm + extras)
+ */
+void LinMotionEngine_cr3bp::saveData(const DynamicsModel *model, Arcset_cr3bp *pArc, const double &t, std::vector<double> *pState,
+	unsigned int &nodeCount, EOM_ParamStruct *eomParams, const double& dt, const double &t_step,
+	const unsigned int &core_dim, const unsigned int &full_dim){
+
+	if(t >= dt*nodeCount){
+		// Add a node
+		Node node(&(pState->front()), core_dim, t);
+		int ID = model->sim_addNode(node, &(pState->front()), t, pArc, eomParams, Event_tp::NONE);
+		// Link the previous segment, if it exists
+		if(nodeCount > 0){
+			Segment &lastSeg = pArc->getSegRefByIx(-1);
+			lastSeg.setTerminus(ID);
+
+			lastSeg.appendState(&(pState->front()), full_dim);
+			lastSeg.appendTime(t);
+			lastSeg.updateTOF();
+		}
+
+		// Create a new segment
+		Segment seg(ID, Linkable::INVALID_ID, t_step);
+		seg.appendState(&(pState->front()), full_dim);
+		seg.setStateWidth(full_dim);
+		seg.appendTime(t);
+		model->sim_addSeg(seg, &(pState->front()), t, pArc, eomParams);
+		nodeCount++;
+	}else{
+		Segment &lastSeg = pArc->getSegRefByIx(-1);
+		lastSeg.appendState(&(pState->front()), full_dim);
+		lastSeg.appendTime(t);
+	}
+}//====================================================
+
+/**
  *	\brief Compute a linear approximation for a Lissajous orbit
  *
  *	\param L Lagrange point number. Choose 1, 2, or 3
@@ -96,7 +144,12 @@ const char* LinMotionEngine_cr3bp::getTypeStr(unsigned int type) const{
  *	
  *	\throws Exception if <tt>L</tt> is not 1, 2, or 3
  */
-void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi, Arcset_cr3bp* pArc){
+void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi, Arcset_cr3bp* pArc,
+	unsigned int numNodes){
+
+	if(numNodes < 2)
+		throw Exception("LinMotionEngine_cr3bp::getLinear: Must specify at least 2 nodes");
+
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(pArc->getSysData());
 
 	double mu = pSys->getMu();
@@ -138,7 +191,8 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
 		double eta0 = xAmp ? -Axy*beta3*sin(phi) : Axy*sin(phi);
 
 		std::vector<double> state(full_dim, 0);
-		double t;
+		double t = 0, dt = revs*period_xy/(numNodes - 1);
+		unsigned int nodeCount = 0;
 		for(t = 0; t < revs*period_xy; t += t_step){
 			state[0] = xi0*cos(s*t) + eta0/beta3*sin(s*t);			// xi
 			state[1] = eta0*cos(s*t) - beta3*xi0*sin(s*t);			// eta
@@ -151,19 +205,7 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
 			state[1] += LPtPos[1];
 			state[2] += LPtPos[2];
 
-			if(t == 0){
-				Node node0(&(state.front()), core_dim, t);
-				int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-				Segment seg(ID, Linkable::INVALID_ID, t_step);
-				seg.appendState(&(state.front()), full_dim);
-				seg.setStateWidth(full_dim);
-				seg.appendTime(t);
-				model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-			}else{
-				Segment &lastSeg = pArc->getSegRefByIx(-1);
-				lastSeg.appendState(&(state.front()), full_dim);
-				lastSeg.appendTime(t);
-			}
+			saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 		}
 
 		// Add a final node
@@ -174,6 +216,8 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
 		int idf = model->sim_addNode(nodeF, &(state.front()), t, pArc, &eomParams, Event_tp::SIM_TOF);
 		pArc->getNodeRef(idf).addLink(lastSeg.getID());
 		lastSeg.setTerminus(idf);
+		lastSeg.appendState(&(state.front()), full_dim);
+		lastSeg.appendTime(t);
 		lastSeg.updateTOF();
 	}else{
 		throw Exception("LinMotionEngine::getCR3BPLiss: Cannot compute Lissajous motion for anything other than the collinear points");
@@ -203,8 +247,8 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
-void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], unsigned int type, Arcset_cr3bp* pArc){
-	return getLinear(L, r0, 0, 0, type, pArc);
+void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], unsigned int type, Arcset_cr3bp* pArc, unsigned int numNodes){
+	return getLinear(L, r0, 0, 0, type, pArc, numNodes);
 }//====================================================
 
 /**
@@ -224,7 +268,12 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], unsigned int type, Ar
  *	\throws Exception if the <tt>type</tt> does not correspond with the specified Lagrange
  *	point <tt>L</tt>
  */
-void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi, unsigned int type, Arcset_cr3bp* pArc){
+void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi, unsigned int type, Arcset_cr3bp* pArc,
+	unsigned int numNodes){
+
+	if(numNodes < 2)
+		throw Exception("LinMotionEngine_cr3bp::getLinear: Must specify at least 2 nodes");
+
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(pArc->getSysData());
 	double mu = pSys->getMu();
 
@@ -250,7 +299,8 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 	const unsigned int full_dim = core_dim + ctrl_dim + pow(core_dim + ctrl_dim, 2) + extra_dim;
 
 	std::vector<double> state(full_dim, 0);
-	double t = 0, period_xy = 0;
+	double t = 0, period_xy = 0, dt = 0;
+	unsigned int nodeCount = 0;
 	EOM_ParamStruct eomParams(pSys, nullptr);
 
 	if(L < 4){
@@ -269,7 +319,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 				s = std::imag(eigenval[2]);
 				double beta3 = (s*s + ddots[0])/(2*s);
 				period_xy = 2*PI/s;
-
+				dt = revs*period_xy/(numNodes - 1);
 				for(t = 0; t < revs*period_xy; t += t_step){
 					state[0] = xi0*cos(s*t) + eta0/beta3*sin(s*t) + LPtPos[0];
 					state[1] = eta0*cos(s*t) - beta3*xi0*sin(s*t) + LPtPos[1];
@@ -278,20 +328,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 					state[4] = -s*eta0*sin(s*t) - s*beta3*xi0*cos(s*t);
 					state[5] = -w_z*Az*cos(w_z*t + psi);
 
-
-					if(t == 0){
-						Node node0(&(state.front()), core_dim, t);
-						int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-						Segment seg(ID, Linkable::INVALID_ID, t_step);
-						seg.appendState(&(state.front()), full_dim);
-						seg.setStateWidth(full_dim);
-						seg.appendTime(t);
-						model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-					}else{
-						Segment &lastSeg = pArc->getSegRefByIx(-1);
-						lastSeg.appendState(&(state.front()), full_dim);
-						lastSeg.appendTime(t);
-					}
+					saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 				}
 				break;
 			}
@@ -300,7 +337,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 				s = std::real(eigenval[0]);
 				double alpha = (s*s - ddots[0])/(2*s);
 				period_xy = 2*PI/s;
-
+				dt = revs*period_xy/(numNodes - 1);
 				for(t = 0; t < revs*period_xy; t += t_step){
 					state[0] = xi0*cosh(s*t) + eta0/alpha*sinh(s*t) + LPtPos[0];
 					state[1] = eta0*cosh(s*t) + alpha*xi0*sinh(s*t) + LPtPos[1];
@@ -311,19 +348,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 					state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 					state[5] = -w_z*Az*cos(w_z*t + psi);
 
-					if(t == 0){
-						Node node0(&(state.front()), core_dim, t);
-						int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-						Segment seg(ID, Linkable::INVALID_ID, t_step);
-						seg.appendState(&(state.front()), full_dim);
-						seg.setStateWidth(full_dim);
-						seg.appendTime(t);
-						model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-					}else{
-						Segment &lastSeg = pArc->getSegRefByIx(-1);
-						lastSeg.appendState(&(state.front()), full_dim);
-						lastSeg.appendTime(t);
-					}
+					saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 				}
 	            break;
 			}
@@ -361,7 +386,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 			switch(type){
 				case LinMotion_cr3bp_tp::LPO:
 					period_xy = 2*PI/s1d;
-
+					dt = revs*period_xy/(numNodes - 1);
 					for(t = 0; t < revs*period_xy; t+= t_step){
 						state[0] = xi0*cos(s1d*t) + (eta0 - a1*xi0)/b1 * sin(s1d*t) + LPtPos[0];
 						state[1] = eta0*cos(s1d*t) - (b1*xi0 - a1*(eta0 - a1*xi0)/b1)*sin(s1d*t) + LPtPos[1];
@@ -371,25 +396,13 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 						state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						if(t == 0){
-							Node node0(&(state.front()), core_dim, t);
-							int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-							Segment seg(ID, Linkable::INVALID_ID, t_step);
-							seg.appendState(&(state.front()), full_dim);
-							seg.setStateWidth(full_dim);
-							seg.appendTime(t);
-							model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-						}else{
-							Segment &lastSeg = pArc->getSegRefByIx(-1);
-							lastSeg.appendState(&(state.front()), full_dim);
-							lastSeg.appendTime(t);
-						}
+						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
                 	break;
                 case LinMotion_tp::NONE: // for default behavior
 				case LinMotion_cr3bp_tp::SPO:
 					period_xy = 2*PI/s3d;
-
+					dt = revs*period_xy/(numNodes - 1);
 					for(t = 0; t < revs*period_xy; t+= t_step){
 						state[0] = xi0*cos(s3d*t) + (eta0 - a3*xi0)/b3 * sin(s3d*t) + LPtPos[0];
 						state[1] = eta0*cos(s3d*t) - (b3*xi0 - a3*(eta0 - a3*xi0)/b3)*sin(s3d*t) + LPtPos[1];
@@ -399,19 +412,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 						state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						if(t == 0){
-							Node node0(&(state.front()), core_dim, t);
-							int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-							Segment seg(ID, Linkable::INVALID_ID, t_step);
-							seg.appendState(&(state.front()), full_dim);
-							seg.setStateWidth(full_dim);
-							seg.appendTime(t);
-							model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-						}else{
-							Segment &lastSeg = pArc->getSegRefByIx(-1);
-							lastSeg.appendState(&(state.front()), full_dim);
-							lastSeg.appendTime(t);
-						}
+						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
                 	break;
 				case LinMotion_cr3bp_tp::MPO:
@@ -419,7 +420,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 					period_xy = s1d < s3d ? 2*PI/s1d : 2*PI/s3d;
 					double R1 = xi0/(1 + nu);
                 	double C1 = xi0*(a1 + nu*a3)/(2*(1 + nu)*(b1 + nu*b3)) - eta0/(2*(b1 + nu*b3));
-
+                	dt = revs*period_xy/(numNodes - 1);
                 	for(t = 0; t < revs*period_xy; t+= t_step){
 						state[0] = R1*cos(s1d*t) - 2*C1*sin(s1d*t) + nu*R1*cos(s3d*t) - 2*nu*C1*sin(s3d*t) + LPtPos[0];
 						state[1] = (a1*R1 - 2*b1*C1)*cos(s1d*t) - (b1*R1 + 2*a1*C1)*sin(s1d*t) +
@@ -432,19 +433,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 						state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						if(t == 0){
-							Node node0(&(state.front()), core_dim, t);
-							int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-							Segment seg(ID, Linkable::INVALID_ID, t_step);
-							seg.appendState(&(state.front()), full_dim);
-							seg.setStateWidth(full_dim);
-							seg.appendTime(t);
-							model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-						}else{
-							Segment &lastSeg = pArc->getSegRefByIx(-1);
-							lastSeg.appendState(&(state.front()), full_dim);
-							lastSeg.appendTime(t);
-						}
+						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
                 	break;
                 }
@@ -455,7 +444,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 			// Case II, g is 0 (approx.)
 			double s1d = s1.imag();
 			period_xy = 2*PI/s1d;
-
+			dt = revs*period_xy/(numNodes - 1);
 			for(t = 0; t < revs*period_xy; t+= t_step){
 				state[0] = xi0*cos(s1d*t) - (a1*xi0 - eta0)/b1 * sin(s1d*t) + LPtPos[0];
 				state[1] = eta0*cos(s1d*t) - (xi0*std::abs(alpha1) - a1*eta0)/b1 * sin(s1d*t) +  LPtPos[1];
@@ -466,19 +455,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 				state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 				state[5] = -w_z*Az*cos(w_z*t + psi);
 
-				if(t == 0){
-					Node node0(&(state.front()), core_dim, t);
-					int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-					Segment seg(ID, Linkable::INVALID_ID, t_step);
-					seg.appendState(&(state.front()), full_dim);
-					seg.setStateWidth(full_dim);
-					seg.appendTime(t);
-					model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-				}else{
-					Segment &lastSeg = pArc->getSegRefByIx(-1);
-					lastSeg.appendState(&(state.front()), full_dim);
-					lastSeg.appendTime(t);
-				}
+				saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 			}
 		}else{
 			// Case III
@@ -488,7 +465,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 				case LinMotion_tp::NONE: // for default behavior
 				case LinMotion_tp::STAB_OSC:
 					period_xy = 2*PI/q;
-
+					dt = revs*period_xy/(numNodes - 1);
 					for(t = 0; t < revs*period_xy; t += t_step){
 						state[0] = exp(-p*t)*(xi0*cos(q*t) + (eta0 - a3*xi0)/b3 * sin(q*t)) + LPtPos[0];
 	                    state[1] = exp(-p*t)*(eta0*cos(q*t) - (b3*xi0 - a3*(eta0 - a3*xi0)/b3)*sin(q*t)) + LPtPos[1];
@@ -501,19 +478,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 	                    state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						if(t == 0){
-							Node node0(&(state.front()), core_dim, t);
-							int ID = model->sim_addNode(node0, &(state.front()), t, pArc, &eomParams, Event_tp::NONE);
-							Segment seg(ID, Linkable::INVALID_ID, t_step);
-							seg.appendState(&(state.front()), full_dim);
-							seg.setStateWidth(full_dim);
-							seg.appendTime(t);
-							model->sim_addSeg(seg, &(state.front()), t, pArc, &eomParams);
-						}else{
-							Segment &lastSeg = pArc->getSegRefByIx(-1);
-							lastSeg.appendState(&(state.front()), full_dim);
-							lastSeg.appendTime(t);
-						}
+						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
 					break;	
 				case LinMotion_tp::UNSTAB_OSC:
@@ -533,14 +498,9 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 	int idf = model->sim_addNode(nodeF, &(state.front()), t, pArc, &eomParams, Event_tp::SIM_TOF);
 	pArc->getNodeRef(idf).addLink(lastSeg.getID());
 	lastSeg.setTerminus(idf);
+	lastSeg.appendState(&(state.front()), full_dim);
+	lastSeg.appendTime(t);
 	lastSeg.updateTOF();
-
-	// Compute Jacobi Constant for each step; won't be constant because non-linear dynamics are
-	// not enforced, but is still useful information
-	// for(unsigned int i = 0; i < pArc->getNumNodes(); i++){
-	// 	std::vector<double> state = pArc->getStateByIx(i);
-	// 	pArc->setJacobiByIx(i, DynamicsModel_cr3bp::getJacobi(&(state[0]), mu));
-	// }
 }//====================================================
 
 //-----------------------------------------------------------------------------

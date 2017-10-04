@@ -44,20 +44,20 @@ enum class Constraint_tp : int{
 								 * placeholder, but attempting to complete a corrections process
 								 * with a constraint of this type will result in a thrown exception
 								 */
-	STATE = 1,					/*!< Constrain specific states to specified numeric values.
+	STATE = 1,					/*!< Constrain specific core states to specified numeric values.
 				 			 	 * The <tt>id</tt> value represents the node to constrain,
 				 			 	 * and the <tt>data</tt> vector contains values for each state.
 				 			 	 * to leave a state unconstrained, place a NAN value in the
 				 			 	 * place of that state. 
 				 			 	 */
-	MATCH_ALL = 2, 				/*!< Make one node match another in all states.
+	MATCH_ALL = 2, 				/*!< Make one node match another in all core states.
 				 				 * The <tt>id</tt> value represents the source node, and the
 				 				 * first value in <tt>data</tt> represents the node that will
 				 				 * be matched to the first. Note that, for non-autonomous systems,
 				 				 * the corrector will not attempt to match epoch time because it
 				 				 * doesn't make sense to make two nodes occur at the same time.
 								 */
-	MATCH_CUST = 3,				/*!< Make one node match another in the specified states.
+	MATCH_CUST = 3,				/*!< Make one node match another in the specified core states.
 				 				 *	The <tt>id</tt> value represents the source node; place the
 				 				 *	index of the constrained node in the place of each state you
 				 				 *	wish to constrain. For example, to constrain node 5 to match 
@@ -159,8 +159,8 @@ enum class Constraint_tp : int{
 								 * <tt>id</tt> to 4 and <tt>data</tt> to <tt>[1 1 1 1 NAN NAN]</tt>. Values
 								 * of NAN tell the algorithm not to force continuity in that state,
 								 * so in this example y_dot and z_dot are allowed to be discontinous.
-								 * NOTE: These constraints are applied automatically by the corrections
-								 * algorithm: DO NOT CREATE THESE.
+								 * <b>NOTE: These constraints are applied automatically by the corrections
+								 * algorithm: DO NOT CREATE THESE.</b>
 								 */
 	CONT_EX = 502,				/*!< Constrain one of the extra parameters stored in a nodeset to be
 								 * continuous along a segment. This may apply to epoch time, spacecraft mass,
@@ -168,8 +168,8 @@ enum class Constraint_tp : int{
 								 * parameter in the first data field, i.e. <tt>data[0]</tt>. The specified
 								 * node will then be made continuous with the previous node in the nodeset
 								 * provided it isn't the first one.
-								 * NOTE: These constraints are applied automatically by the corrections
-								 * algorithm: DO NOT CREATE THESE.
+								 * <b>NOTE: These constraints are applied automatically by the corrections
+								 * algorithm: DO NOT CREATE THESE.</b>
 								 * 
 								 * **Parameter Indices**
 								 * * 0 - Epoch
@@ -198,7 +198,7 @@ enum class Constraint_tp : int{
 								 *	during multiple shooting. The <tt>id</tt> attribute specifies which node's epoch
 								 *	to remove. The <tt>data</tt> field is currently unused.
 								 */
-	RM_CTRL = -12, 				/*! Control constraint: Remove the specified control state vector from the free variable
+	RM_CTRL = -12, 				/*!< Control constraint: Remove the specified control state vector from the free variable
 								 *	vector during multiple shooting. The <tt>id</tt> attribute specifies which node's 
 								 *	control state vector to remove. The <tt>data</tt> is currently unused.
 								 */

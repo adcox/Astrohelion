@@ -30,10 +30,14 @@
 
 #include "LinMotionEngine.hpp"
 
+#include <vector>
+
 namespace astrohelion{
 
 // Forward Declarations
 class Arcset_cr3bp;
+class DynamicsModel;
+struct EOM_ParamStruct;
 
 /**
  *  \brief Describe the type of linear motion to construct
@@ -69,9 +73,12 @@ class LinMotionEngine_cr3bp : public LinMotionEngine{
 		 *  \name Orbit Generation
 		 *  \{
 		 */
-		void getLinear(int, double[3], unsigned int, Arcset_cr3bp*);
-		void getLinear(int, double[3], double, double, unsigned int, Arcset_cr3bp*);
-		void getLiss(int, double, bool, double, double, double, Arcset_cr3bp*);
+		void getLinear(int, double[3], unsigned int, Arcset_cr3bp*, unsigned int numNodes = 2);
+		void getLinear(int, double[3], double, double, unsigned int, Arcset_cr3bp*, unsigned int numNodes = 2);
+		void getLiss(int, double, bool, double, double, double, Arcset_cr3bp*, unsigned int numNodes = 2);
+		void saveData(const DynamicsModel*, Arcset_cr3bp*, const double&, std::vector<double>*,
+			unsigned int&, EOM_ParamStruct*, const double&, const double&,
+			const unsigned int&, const unsigned int&);
 		//\}
 	
 		void reset();

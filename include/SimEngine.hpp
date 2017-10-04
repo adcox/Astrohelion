@@ -74,7 +74,7 @@ public:
 	}//================================================
 
 	/**
-	 *  \brief Evalute the equations of motion.
+	 *  \brief Evaluate the equations of motion.
 	 *  \details This function is called by the Boost integrator. 
 	 * 
 	 *  \param q Reference to the current state
@@ -262,12 +262,15 @@ class SimEngine : public Core, public Engine{
 		// No assumptions, final fcn before calling integrate()
 		void runSim(const double *ic, const double *ctrl0, const double *stm, std::vector<double> tspan, Arcset*, ControlLaw *pLaw);
 
+		// Assume t0, ctrl0, stm0
 		void runSim_manyNodes(const double* ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		void runSim_manyNodes(std::vector<double> ic, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 
+		// Assume ctrl0, stm0
 		void runSim_manyNodes(const double* ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 		void runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw = nullptr);
 
+		// Assume stm0
 		void runSim_manyNodes(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw);
 		//\}
 		
@@ -326,7 +329,6 @@ class SimEngine : public Core, public Engine{
 		void cleanEngine();
 		void copyMe(const SimEngine&);
 		void createDefaultEvents(const SysData*);
-		void createDummySTM(std::vector<double>&, unsigned int) const;
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
 		void integrate(const double*, const double*, const double*, const double*, unsigned int, Arcset*);
 		bool locateEvents(const double*, double, Arcset*, int);

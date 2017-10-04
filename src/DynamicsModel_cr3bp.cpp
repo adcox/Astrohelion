@@ -48,7 +48,7 @@ namespace astrohelion{
 /**
  *  \brief Construct a CR3BP Dynamic DynamicsModel
  */
-DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP) {
+DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel() {
     // Allow a few more constraints than the default
     allowedCons.push_back(Constraint_tp::JC);
     allowedCons.push_back(Constraint_tp::PSEUDOARC);
@@ -276,7 +276,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, const Constraint
     double vz = nodeState[5];
 
     double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
-    double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
+    double r = sqrt((x - 1 + mu)*(x - 1 + mu) + y*y + z*z);
 
     it->FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);

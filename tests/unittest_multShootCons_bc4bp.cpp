@@ -2,10 +2,9 @@
  * Useful info about Boost Unit Tests:
  * <http://www.boost.org/doc/libs/1_62_0/libs/test/doc/html/index.html>
  */
-
 #define BOOST_TEST_MODULE MultipleShootingConstraints_BC4BP
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 #include <boost/test/data/monomorphic.hpp>
 #include <boost/test/floating_point_comparison.hpp>

@@ -1,0 +1,9 @@
+<map id="include/SysData_bc4bp.hpp" name="include/SysData_bc4bp.hpp">
+<area shape="rect" id="node3" href="$_sys_data_8hpp.html" title="SysData.hpp" alt="" coords="48,299,145,324"/>
+<area shape="rect" id="node8" href="$_common_8hpp.html" title="Contains values for physical constants like pi, G, etc. and custom data wrappers. ..." alt="" coords="506,225,607,251"/>
+<area shape="rect" id="node10" href="$_dynamics_model__bc4bp_8hpp.html" title="DynamicsModel_bc4bp.hpp" alt="" coords="150,79,336,104"/>
+<area shape="rect" id="node4" href="$_core_8hpp.html" title="Contains functions and variables that are global for the entire library. " alt="" coords="344,372,420,397"/>
+<area shape="rect" id="node11" href="$_dynamics_model_8hpp.html" title="DynamicsModel.hpp" alt="" coords="191,152,333,177"/>
+<area shape="rect" id="node12" href="$_constraint_8hpp.html" title="Contains information about a constraint on a nodeset, node, or segment. " alt="" coords="272,299,380,324"/>
+<area shape="rect" id="node13" href="$_event_8hpp.html" title="Class that contains information about a simulation event. " alt="" coords="221,225,303,251"/>
+</map>

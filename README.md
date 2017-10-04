@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/adcox/Astrohelion.svg?branch=master)](https://travis-ci.org/adcox/Astrohelion)
+![Build Status](https://gitlab.com/adcox/Astrohelion/badges/master/build.svg)
 
 ## Welcome!
 

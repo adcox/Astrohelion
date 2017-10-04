@@ -47,12 +47,9 @@ namespace astrohelion{
 /**
  *  \brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
  */
-DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_tp::MODEL_CR3BP_LT) {
+DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel_cr3bp() {
     coreDim = 7;
     extraDim = 0;
-    allowedCons.push_back(Constraint_tp::JC);
-    allowedCons.push_back(Constraint_tp::ENDSEG_JC);
-    allowedEvents.push_back(Event_tp::JC);
     allowedEvents.push_back(Event_tp::MASS);
 }//==============================================
 
@@ -60,7 +57,7 @@ DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel(DynamicsModel_t
  *  \brief Copy Constructor
  *  \param m a model reference
  */ 
-DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt &m) : DynamicsModel(m) {}
+DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt &m) : DynamicsModel_cr3bp(m) {}
 
 /**
  *  \brief Assignment operator
@@ -86,87 +83,6 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getSimpleEOM_fcn() const{
 DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getFullEOM_fcn() const{
 	return &fullEOMs;
 }//==============================================
-
-/**
- *  \brief Compute the positions of all primaries
- *
- *  \param t the epoch at which the computations occur (unused for this system)
- *  \param pSysData object describing the specific system
- *  \return an n x 3 vector (row-major order) containing the positions of
- *  n primaries; each row is one position vector in non-dimensional units
- */
-std::vector<double> DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *pSysData) const{
-    std::vector<double> primPos(6,0);
-    getPrimPos(t, pSysData, -1, &(primPos.front()));
-    return primPos;
-}//====================================================
-
-/**
- *  \brief Compute the position of a specified primary
- *  \details This is the faster alternative to getPrimPos(t, pSysData).
- * 
- *  \param t Nondimensional time
- *  \param pSysData pointer to system data object
- *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
- *  in order of largest to smallest mass
- *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
- *  For a single primary position, the array must have at least three elements allocated. For all 
- *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
- *  of primaries.
- */
-void DynamicsModel_cr3bp_lt::getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const{
-    (void) t;
-    const SysData_cr3bp *pCrSys = static_cast<const SysData_cr3bp *>(pSysData);
-
-    switch(pIx){
-        case -1:
-            pos[0] = -1*pCrSys->getMu();
-            pos[3] = 1 - pCrSys->getMu();
-            break;
-        case 0:
-            pos[0] = -1*pCrSys->getMu();
-            break;
-        case 1:
-            pos[0] = 1 - pCrSys->getMu();
-            break;
-        default:
-            throw Exception("DynamicsModel_cr3bp::getPrimPos: primary index out of bounds.");
-    }
-}//====================================================
-
-/**
- *  \brief Compute the velocities of all primaries
- *
- *  \param t the epoch at which the computations occur (unused for this system)
- *  \param pSysData object describing the specific system (unused for this system)
- *  \return an n x 3 vector (row-major order) containing the velocities of
- *  n primaries; each row is one velocity vector in non-dimensional units
- */
-std::vector<double> DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData) const{
-    std::vector<double> vel(6,0);
-    getPrimVel(t, pSysData, -1, &(vel.front()));
-    return vel;
-}//====================================================
-
-/**
- *  \brief Compute the velocity of a specified primary
- *  \details This is the faster alternative to getPrimVel(t, pSysData).
- * 
- *  \param t Nondimensional time
- *  \param pSysData pointer to system data object
- *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
- *  in order of largest to smallest mass
- *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
- *  For a single primary velocity, the array must have at least three elements allocated. For all 
- *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
- *  of primaries.
- */
-void DynamicsModel_cr3bp_lt::getPrimVel(double t, const SysData *pSysData, int pIx, double *vel) const{
-    (void) t;
-    (void) pSysData;
-    (void) pIx;
-    (void) vel;
-}//====================================================
 
 /**
  *  \brief Retrieve the state derivative
@@ -267,14 +183,14 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     // nondimensional mass flow rate; simplified a bit by cancelling some of the constants
     if(law)
-        sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
+        sdot[6] = -law->getThrust()*sysData->getCharL()/(sysData->getCharT()*law->getIsp()*G_GRAV_0);
     else
         sdot[6] = 0;
 
     // Save any time-derivatives of the control states
     const unsigned int ctrlDim = law ? law->getNumStates() : 0;
     const unsigned int ctrlOutDim = law ? law->getNumOutputs() : 0;
-    if(ctrlDim > 0){
+    if(law && ctrlDim > 0){
         std::vector<double> control_stateDeriv(ctrlDim, 0);
         law->getLaw_StateDeriv(t, s, sysData, &(control_stateDeriv.front()), ctrlDim);
 
@@ -397,7 +313,7 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + control_accel[2];
     
     // nondimensional mass flow rate; simplified a bit by cancelling some of the constants
-    sdot[6] = -(law->getThrust()/1000)*sysData->getCharT()/(sysData->getRefMass()*law->getIsp()*G_GRAV_0);
+    sdot[6] = -law->getThrust()*sysData->getCharL()/(sysData->getCharT()*law->getIsp()*G_GRAV_0);
 
     // Save any derivatives of the control states
     if(unsigned int ctrl_dim = law->getNumStates() > 0){
@@ -408,24 +324,380 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
     }
 
     return GSL_SUCCESS;
-}//=====================================================
+}//====================================================
 
 /**
- *  \brief Compute the Jacobi Constant for the CR3BP
- *
- *  \param s the state vector; only the position and velocity states are required
- *  \param mu the non-dimensional system mass ratio
- *
- *  \return the Jacobi Constant at this specific state and system
+ *  \brief Compute the location of the equilibria given a planar low-thrust vector
+ *  \details [long description]
+ * 
+ *  \param pSys [description]
+ *  \param L [description]
+ *  \param f [description]
+ *  \param tol [description]
+ *  \param zac [description]
  */
-double DynamicsModel_cr3bp_lt::getJacobi(const double s[], double mu){
-    double v_squared = s[3]*s[3] + s[4]*s[4] + s[5]*s[5];
-    double d = sqrt((s[0] + mu)*(s[0] + mu) + s[1]*s[1] + s[2]*s[2]);
-    double r = sqrt((s[0] - 1 + mu)*(s[0] - 1 + mu) + s[1]*s[1] + s[2]*s[2]);
-    double U = (1 - mu)/d + mu/r + 0.5*(s[0]*s[0] + s[1]*s[1]);
-    return 2*U - v_squared;
-}//================================================
+void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, double f,
+    double tol, std::vector<double> *zac, Verbosity_tp verb){
 
+    unsigned int maxCount = 20;
+    unsigned int maxOuterCount = 10000;
+    double maxDiffAlpha = PI/100.0;
+    double minStep_x = f*1e-6;
+    double minStep_y = f*1e-6;
+    double minStep_alpha = PI/500.0;
+    double stepChangeFactor = 2;
+
+    if(L < 1 || L > 5)
+        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: input L value is invalid");
+
+    if(f == 0){
+        zac->assign(3, 0);
+        DynamicsModel_cr3bp::getEquilibPt(pSys, L, tol, &(zac->front()));
+    }else{
+        double mu = pSys->getMu();
+        double initSol[3] = {0};    //[alpha, x, y]
+        std::vector<double>& zacRef = *zac;
+
+        // First, compute location at alpha = 0 (or pi)
+        if(L > 3){
+            if(f < mu){
+                double r13 = pow( (1-mu)/(1-mu+f), 1.0/3.0 );
+                double r23 = pow( 1 - f/mu, -1.0/3.0);
+                double theta = acos((1 + r13*r13 - r23*r23)/(2*r13));
+
+                if(r13 - 1 < r23 && r13 + 1 > r23 && r13 + r23 > 1){
+                    if(!std::isnan(theta)){
+                        int sgn = L == 4 ? 1 : -1;
+                        initSol[1] = r13*cos(sgn*theta) - mu;
+                        initSol[2] = r13*sin(sgn*theta);
+                    }else{
+                        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: Did not catch imaginary number in L4/5 at alpha = 0");
+                    }
+                }
+            }else{
+                // Start at alpha = pi instead of alpha = 0
+                if(f < 1-mu){
+                    double r13 = pow( (1.0 - mu)/(1.0 - mu - f), 1.0/3.0);
+                    double r23 = pow( 1.0 + f/mu, -1.0/3.0);
+
+                    if(r13 - 1 < r23 && r13 + 1 > r23 && r13 + r23 > 1){
+                        double theta = acos( (1 + r13*r13 - r23*r23)/(2*r13) );
+                        int sgn = L == 4 ? 1 : -1;
+
+                        initSol[0] = PI;
+                        initSol[1] = r13*cos(sgn*theta) - mu;
+                        initSol[2] = r13*sin(sgn*theta);
+                    }else{
+                        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: Could not compute initial value for L4/5");
+                    }
+                }else{
+                    // This shouldn't happen for "reasonable" values of f
+                    throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: f is too large for analytical solution for L4/5");
+                }
+            }
+
+        }else{  // end of L > 3; thus L = 1, 2, or 3
+            // No analytical solution is available for the locations of L1, L2, L3, so use
+            // a Newton-Raphson algorithm to solve.
+            //
+            // Assume alpha0 = 0 for these
+
+            double gamma = L > 2 ? 1 : 0.1;
+            double gamma_prev = -999;
+            unsigned int count = 0;
+
+            while(std::abs(gamma - gamma_prev) > tol && count < maxCount){
+                count++;
+                gamma_prev = gamma;
+                switch(L){
+                    case 1:
+                        gamma -= (mu/(gamma*gamma) - (1-mu)/((1-gamma)*(1-gamma)) - gamma - mu + 1 + f) / (-2*mu/pow(gamma, 3) - 2*(1-mu)/pow(1-gamma, 3) - 1);
+                        break;
+                    case 2:
+                        gamma -= (-mu/(gamma*gamma) - (1-mu)/((1+gamma)*(1+gamma)) + gamma - mu + 1 + f) / (2*mu/pow(gamma, 3) - 2*(1-mu)/pow(1+gamma, 3) + 1);
+                        break;
+                    case 3:
+                        gamma -= (mu/((1+gamma)*(1+gamma)) + (1-mu)/(gamma*gamma) - gamma - mu + f) / (-2*mu/pow(1+gamma, 3) - 2*(1-mu)/pow(gamma, 3) - 1);
+                        break;
+                    default:
+                        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: Invalid L number in Newton-Raphson process");
+                }
+            }
+
+            if(std::abs(gamma - gamma_prev) > tol){
+                throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: L1/2/3 Newton process did not converge for alpha = 0");
+            }
+
+            if(L < 3){
+                int sgn = L == 1 ? -1 : 1;
+                initSol[1] = 1-mu + sgn*gamma;
+            }else{
+                initSol[1] = -mu - gamma;
+            }
+        }
+
+        // Ok - we have an initial solution from analytical or semi-analytical methods
+        // Now, set up continuation process
+        double slope = L < 4 ? 999 : 0;             // Force vertical step for collinear points, hoirzontal step for triangular points
+        // double alphaSpan = L < 4 ? PI : 2*PI;       // Required angle range that must be computed (can use symmetry on collinear points)
+        double step_x = f*1e-3, step_y = f*1e-3;    // Initial step sizes for continuation
+        double step_alpha = (PI/100.0)*cos(initSol[0]); // Initial step size for continuation
+        double diffAlpha = 0;                       // Change in alpha between solution iterations
+        bool doAlphaStep = false;
+
+        double alpha = initSol[0];
+        double x = initSol[1];
+        double y = initSol[2];
+
+        double err = 999;
+        unsigned int innerCount = 0;
+
+        // Store initial solution
+        zac->push_back(alpha);
+        zac->push_back(x);
+        zac->push_back(y);
+
+        // Begin loop
+        unsigned int outerCount = 0;
+        bool reachedEnd = false;
+        while( !reachedEnd && outerCount < maxOuterCount){
+
+            if(L >= 4){
+                // Old check: std::abs(alpha - initSol[0]) < alphaSpan - PI/200.0
+                // Check for looped all the way around
+                reachedEnd = (outerCount > 15) && std::abs(x - initSol[1]) < stepChangeFactor*std::abs(step_x) && 
+                    std::abs(y - initSol[2]) < stepChangeFactor*std::abs(step_y) &&
+                    std::abs(sin(alpha) - sin(initSol[0])) < stepChangeFactor*std::abs(step_alpha);
+            }else{
+                // Check for x-axis crossing
+                reachedEnd = (outerCount > 15) && zacRef[zac->size() - 1]*zacRef[zac->size() - 4] < 0;
+            }
+
+            if(std::abs(slope) > 1.0){
+                y += step_y;        // Take a step in y (this value is fixed)
+                x += step_y/slope;  // Linear approximation
+
+                // Newton-Raphson to solve for x and alpha given y
+                err = 999;
+                innerCount = 0;
+                while(err >= tol && innerCount < maxCount){
+                    double Uddots[6] = {0};
+                    DynamicsModel_cr3bp::getUDDots(mu, x, y, 0, Uddots);
+                    double r13 = sqrt((x+mu)*(x+mu) + y*y);
+                    double r23 = sqrt((x-1+mu)*(x-1+mu) + y*y);
+
+                    // 2D acceleration vector - we want to find the zeros of this guy
+                    double F[] = {x - (1-mu)*(x+mu)/pow(r13, 3) - mu*(x-1+mu)/pow(r23,3) + f*cos(alpha),
+                                    y - (1-mu)*y/pow(r13,3) - mu*y/pow(r23,3) + f*sin(alpha)};
+                    // A is the Jacobian of F w.r.t. x and alpha; use analytical inverse; this is the determinant
+                    double detA = Uddots[0]*f*cos(alpha) + f*sin(alpha)*Uddots[3];
+
+                    // Update p -= inv(A)*F where p = [x; alpha]
+                    x -= (f*cos(alpha)*F[0] + f*sin(alpha)*F[1])/detA;
+                    alpha -= (-Uddots[3]*F[0] + Uddots[0]*F[1])/detA;
+
+                    err = sqrt(F[0]*F[0] + F[1]*F[1]);
+                    innerCount++;
+                }
+
+                // Check the change in angle
+                diffAlpha = alpha - zacRef[zac->size()-3];
+
+                // Decrease step size if Newton-Raphson does not converge OR if the change in angle is too large (makes pictures look better)
+                if(err >= tol || std::abs(diffAlpha) > maxDiffAlpha){
+                    if(std::abs(diffAlpha) > maxDiffAlpha){
+                        alpha = zacRef[zac->size()-3]; // Reset to previous value
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  |diffAlpha = %f| > %f\n", diffAlpha, maxDiffAlpha);
+                    }
+
+                    if(std::abs(step_y/stepChangeFactor) > minStep_y){
+                        y = zacRef[zac->size() - 1];    // Reset to previous value
+                        x = zacRef[zac->size() - 2];
+                        step_y /= stepChangeFactor;                  // Decrease step size
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  decreasing step_y to %e\n", step_y);
+                    }else{
+                        // Can't step any smaller in y, so try stepping in alpha
+                        doAlphaStep = true;
+                    }
+                }else{
+                    // No errors and angular separation is good!
+                    // Save data, update slope
+                    zac->push_back(alpha);
+                    zac->push_back(x);
+                    zac->push_back(y);
+
+                    if(zac->size() >= 6){
+                        // Adjust step_x as we move along y for the future when stepping changes to the horizontal direction
+                        step_x = zacRef[zac->size() - 2] - zacRef[zac->size() - 5];
+                        step_alpha = diffAlpha;
+                        slope = (zacRef[zac->size() - 1] - zacRef[zac->size() - 4])/step_x;
+                        if(std::isnan(slope)){ slope = 999; }
+
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "STEP_Y: alpha = %f, [%f, %f]; step_x = %f, step_y = %f, step_alpha = %f, slope = %f\n",
+                            alpha, x, y, step_x, step_y, step_alpha, slope);
+                    }
+
+                    if(innerCount < 5 && maxDiffAlpha/std::abs(diffAlpha) > stepChangeFactor && std::abs(slope) > 1.0){
+                        step_y *= stepChangeFactor;    // Increase step size to expedite process
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  increasing step_y = %e\n", step_y);
+                    }
+                }
+            }else{
+                x += step_x;            // slope <= 1, so step in x
+                y += step_x*slope;      // Linear approximation
+
+                // Newton-Raphson to solve for y and alpha given x
+                err = 999;
+                innerCount = 0;
+                while(err >= tol && innerCount < maxCount){
+                    double Uddots[6] = {0};
+                    DynamicsModel_cr3bp::getUDDots(mu, x, y, 0, Uddots);
+                    double r13 = sqrt((x+mu)*(x+mu) + y*y);
+                    double r23 = sqrt((x-1+mu)*(x-1+mu) + y*y);
+
+                    // 2D acceleration vector - we want to find the zeros of this guy
+                    double F[] = {x - (1-mu)*(x+mu)/pow(r13, 3) - mu*(x-1+mu)/pow(r23,3) + f*cos(alpha),
+                                    y - (1-mu)*y/pow(r13,3) - mu*y/pow(r23,3) + f*sin(alpha)};
+
+                    // A is the Jacobian of F w.r.t. y and alpha; use analytical inverse; this is the determinant
+                    double detA = Uddots[3]*f*cos(alpha) + f*sin(alpha)*Uddots[1];
+
+                    // Update p -= inv(A)*F where p = [y; alpha]
+                    y -= (f*cos(alpha)*F[0] + f*sin(alpha)*F[1])/detA;
+                    alpha -= (-Uddots[1]*F[0] + Uddots[3]*F[1])/detA;
+
+                    err = sqrt(F[0]*F[0] + F[1]*F[1]);
+                    innerCount++;
+                }
+
+                // Check the change in angle
+                diffAlpha = alpha - zacRef[zac->size()-3];
+
+                // Decrease step size if Newton-Raphson does not converge OR if the change in angle is too large (makes pictures look better)
+                if(err >= tol || std::abs(diffAlpha) > maxDiffAlpha){
+                    if(std::abs(diffAlpha) > maxDiffAlpha){
+                        alpha = zacRef[zac->size()-3]; // Reset to previous value
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  |diffAlpha = %f| > %f\n", diffAlpha, maxDiffAlpha);
+                    }
+
+                    if(std::abs(step_x/stepChangeFactor) > minStep_x){
+                        y = zacRef[zac->size() - 1];   // Reset to previous values
+                        x = zacRef[zac->size() - 2];
+                        step_x /= stepChangeFactor;              // Decrease step size
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  decreasing step_x to %e\n", step_x);
+                    }else{
+                        // Can't step any smaller in x, so try stepping in alpha
+                        doAlphaStep = true;
+                    }
+                }else{
+                    // No errors and angular separation is good!
+                    // Save data, update slope
+                    zac->push_back(alpha);
+                    zac->push_back(x);
+                    zac->push_back(y);
+
+                    if(zac->size() >= 6){
+                        // Adjust step_y as we move along x for the future when stepping changes in the vertical direction
+                        step_y = zacRef[zac->size() - 1] - zacRef[zac->size() - 4];
+                        step_alpha = diffAlpha;
+                        slope = step_y/(zacRef[zac->size() - 2] - zacRef[zac->size() - 5]);
+                        if(std::isnan(slope)){ slope = 999; }
+
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "STEP_X: alpha = %f, [%f, %f]; step_x = %f, step_y = %f, step_alpha = %f, slope = %f\n",
+                            alpha, x, y, step_x, step_y, step_alpha, slope);
+                    }
+
+                    if(innerCount < 5 && maxDiffAlpha/std::abs(diffAlpha) > stepChangeFactor && std::abs(slope) < 1.0){
+                        step_x *= stepChangeFactor;    // Increase step size to expedite process
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  increasing step_x = %e\n", step_x);
+                    }
+                }
+            }// End of if/else for abs(slope) > 1
+
+            if(doAlphaStep){
+                alpha = zacRef[zac->size() - 3] + step_alpha;   // Reset and take a step
+
+                err = 999;
+                innerCount = 0;
+                while(err >= tol && innerCount < maxCount){
+                    double Uddots[6] = {0};
+                    DynamicsModel_cr3bp::getUDDots(mu, x, y, 0, Uddots);
+                    double r13 = sqrt((x+mu)*(x+mu) + y*y);
+                    double r23 = sqrt((x-1+mu)*(x-1+mu) + y*y);
+
+                    // 2D acceleration vector - we want to find the zeros of this guy
+                    double F[] = {x - (1-mu)*(x+mu)/pow(r13, 3) - mu*(x-1+mu)/pow(r23,3) + f*cos(alpha),
+                                    y - (1-mu)*y/pow(r13,3) - mu*y/pow(r23,3) + f*sin(alpha)};
+
+                    // A is the Jacobian of F w.r.t. x and y; use analytical inverse; this is the determinant
+                    double detA = Uddots[0]*Uddots[1] - Uddots[3]*Uddots[3];
+
+                    // Update p -= inv(A)*F where p = [x; y]
+                    x -= (Uddots[1]*F[0] - Uddots[3]*F[1])/detA;
+                    y -= (-Uddots[3]*F[0] + Uddots[0]*F[1])/detA;
+
+                    err = sqrt(F[0]*F[0] + F[1]*F[1]);
+                    innerCount++;
+                }
+
+                if(err >= tol){
+                    if(std::abs(step_alpha/stepChangeFactor) > minStep_alpha){
+                        step_alpha /= stepChangeFactor;
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "  decreasing step_alpha to %e\n", step_alpha);
+                    }else{
+                        // Could not converge with alpha step... give up on this one
+                        printWarn("Could not converge L%d with alpha step... ending\n", L);
+                        break;
+                    }
+                }else{
+                    // Save data, update slope
+                    zac->push_back(alpha);
+                    zac->push_back(x);
+                    zac->push_back(y);
+
+                    if(zac->size() >= 6){
+                        step_x = zacRef[zac->size() - 2] - zacRef[zac->size() - 5];
+                        step_y = zacRef[zac->size() - 1] - zacRef[zac->size() - 4];
+                        slope = step_y/step_x;
+
+                        if(std::isnan(slope)){ slope = 999; }
+
+                        diffAlpha = zacRef[zac->size() - 6] - zacRef[zac->size() - 3];
+                        doAlphaStep = false;
+
+                        printVerb(verb >= Verbosity_tp::SOME_MSG, "STEP_A: alpha = %f, [%f, %f]; step_x = %f, step_y = %f, step_alpha = %f, slope = %f\n",
+                            alpha, x, y, step_x, step_y, step_alpha, slope);
+                    }
+                }
+            }
+
+            outerCount++;
+        }// End of loop
+
+        if(reachedEnd)
+            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended because reachedEnd = true\n", L);
+        else if(outerCount < maxOuterCount)
+            printVerb(verb >= Verbosity_tp::SOME_MSG, "L%d loop ended due to iteration max-out\n", L);
+
+        
+        if(L <= 3){
+            std::vector<double> sym;
+            for(unsigned int i = 0; i < zac->size()/3.0; i++){
+                zacRef[3*i] = wrapToPi(zacRef[3*i]);    // Wrap angles to [-pi, pi]
+
+                // Leverage Symmetry        
+                sym.insert(sym.begin(), -1.0*zacRef[3*i+2]);
+                sym.insert(sym.begin(),  zacRef[3*i+1]);
+                sym.insert(sym.begin(), -1.0*zacRef[3*i+0]);
+            }
+            zac->insert(zac->begin(), sym.begin(), sym.end());
+        }else{
+            for(unsigned int i = 0; i < zac->size()/3.0; i++){
+                zacRef[3*i] = wrapToPi(zacRef[3*i]);    // Wrap angles to [-pi, pi]
+            }
+        }
+    }// End of if/else f == 0
+}//====================================================
 
 /**
  *  \brief Construct a new control law and allocated it on the stack.
@@ -447,7 +719,7 @@ bool DynamicsModel_cr3bp_lt::supportsControl(const ControlLaw *pLaw) const{
     // Does support control laws
     (void) pLaw;
     return true;
-}//================================================
+}//====================================================
 
 
 

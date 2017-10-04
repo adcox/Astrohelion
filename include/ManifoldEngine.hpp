@@ -38,7 +38,10 @@ namespace astrohelion{
 
 // Forward Declarations
 class Arcset_cr3bp;
+class Arcset_cr3bp_lt;
+class ControlLaw_cr3bp_lt;
 class SysData_cr3bp;
+class SysData_cr3bp_lt;
 
 /**
  *	\brief Describes the type of manifold, both stability and direction
@@ -94,15 +97,26 @@ public:
 
 	/**
 	 *  \name Manifold Generation Algorithms
+	 *  \todo Add a function for manifolds from map fixed points; use Wayne's method?
 	 *  \{
 	 */
 	
-	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, const Arcset_cr3bp*, unsigned int, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
-	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double, double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
-	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>, MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
-	
-	// Add a function for manifolds from map fixed points; use Wayne's method?
+	std::vector<Arcset_cr3bp> computeSetFromPeriodic(Manifold_tp, const Arcset_cr3bp*, unsigned int,
+		double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 
+	std::vector<Arcset_cr3bp_lt> computeSetFromLTPeriodic(Manifold_tp, const Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*,
+		unsigned int, double, Manifold_StepOff_tp = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+
+	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double,
+		double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	
+	std::vector<Arcset_cr3bp> manifoldsFromPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>,
+		MatrixXRd, double, const SysData_cr3bp*, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	
+	
+	std::vector<Arcset_cr3bp_lt> manifoldsFromLTPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>,
+		MatrixXRd, double, const SysData_cr3bp_lt*, ControlLaw_cr3bp_lt*,
+		Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
 	//\}
 
 	/**

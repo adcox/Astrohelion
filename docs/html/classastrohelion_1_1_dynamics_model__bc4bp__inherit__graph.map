@@ -1,0 +1,4 @@
+<map id="astrohelion::DynamicsModel_bc4bp" name="astrohelion::DynamicsModel_bc4bp">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_dynamics_model.html" title="A base class that defines the behavior of a dynamical model and provides functions used in simulation..." alt="" coords="5,79,194,104"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="38,5,161,31"/>
+</map>

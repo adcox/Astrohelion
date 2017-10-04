@@ -1,13 +1,49 @@
-image: gcc
+cache:
+  paths:
+    - /builds/adcox/Astrohelion/deps/
+    - /builds/adcox/Astrohelion/data/
+    # - /root/.config/astrohelion/
 
-before_script:
-  - pushd tests/gitlabCI
-  - sh installDeps.sh
-
-unit-tests:
+install-deps:
+  stage: build
+  image: gcc
   script:
-    - export LD_LIBRARY_PATH=/opt/local/lib:$LD_LIBRARY_PATH
-    - export LD_RUN_PATH=/opt/local/lib:$LD_RUN_PATH
+    - pushd tests/gitlabCI
+    - sh installDeps.sh
+  # artifacts:
+  #   paths:
+  #     - /builds/adcox/Astrohelion/deps/
+  #     - /root/.config/astrohelion/
+  #   expire_in: 2 month
+
+unit-test:
+  stage: test
+  image: gcc
+  script:
+    - pushd tests/gitlabCI/
+    - mkdir -p /root/.config/astrohelion
+    - cp settings.xml /root/.config/astrohelion/user_settings.xml
+    - cp body_data.xml /root/.config/astrohelion/body_data.xml
+    - export LD_LIBRARY_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_LIBRARY_PATH
+    - export LD_RUN_PATH=/builds/adcox/Astrohelion/deps/installed/lib:$LD_RUN_PATH
     - make directories
     - make unit
     - make run
+  dependencies:
+    - install-deps
+
+pages:
+  stage: build
+  image: ubuntu:trusty
+  script:
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get -yq update
+    - apt-get -yq install graphviz
+    - apt-get -yq install doxygen
+    - doxygen doxy/dox_config
+    - mv docs/html/ public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

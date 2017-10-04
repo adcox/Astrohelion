@@ -25,6 +25,7 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
 	
 	ManifoldEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	std::vector<cdouble> eigVals;
 
 	// **************************************
@@ -93,6 +94,7 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
 	perOrbit.saveToMat("data/lyap.mat");
 	ManifoldEngine engine;
+	engine.setVerbosity(Verbosity_tp::NO_MSG);
 
 	// **************************************
 	// Stable and Unstable Manifolds
@@ -161,6 +163,7 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	SimEngine sim;
 	sim.setVarStepSize(false);
 	sim.setNumSteps(numPts);
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(perOrbit.getStateByIx(0), perOrbit.getTotalTOF(), numPts+1, &discretizedOrbit);
 	// discretizedOrbit.saveToMat("data/discretizedOrbit.mat");
 

@@ -68,7 +68,7 @@ public:
 	 *  \{
 	 */
 	unsigned int getLawType() const;
-	std::string getLawString() const;
+	virtual std::string getLawTypeString() const;
 	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;
 	std::vector<double> getParams() const;
@@ -90,16 +90,17 @@ public:
 	virtual void getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	
 
-	virtual std::string lawTypeToString(unsigned int) const;
+	static std::string lawTypeToString(unsigned int);
 	//\}
 
 	/**
 	 *  \name Utility Functions
 	 *  \{
 	 */
-
+	virtual void print() const;
 	//\}
 	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented
+
 protected:
 	virtual void init();
 	void copyMe(const ControlLaw&);

@@ -43,14 +43,6 @@ class SysData_cr3bp_lt;
  *  \ingroup model cr3bp_lt
  *  \brief Includes control laws specific to the CR3BP-LT problem
  *  
- *  <code>params</code> layout for various control laws:
- *  * CONST_C_2D_LEFT, CONST_C_2D_RIGHT, PRO_VEL, ANTI_VEL - params holds:
- *  	[0] Thrust (Newtons)
- *  	[1] Isp (Seconds)
- *  * GENERAL_CONST_F - params holds:
- *  	[0] Thrust (Newtons)
- *  	[1] Isp (Seconds)
- *  
  */
 class ControlLaw_cr3bp_lt : public ControlLaw{
 public:
@@ -65,12 +57,13 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
+	std::string getLawTypeString() const override;
 	double getThrust() const;
-	double getThrust_nondim(const SysData_cr3bp_lt*) const;
+	double getThrust_dim(const SysData_cr3bp_lt*) const;
 	double getIsp() const;
 
 	void setThrust(double);
-	void setThrust_nondim(double, const SysData_cr3bp_lt*);
+	void setThrust_dim(double, const SysData_cr3bp_lt*);
 	void setIsp(double);
 	//\}
 
@@ -87,7 +80,7 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	std::string lawTypeToString(unsigned int) const;
+	static std::string lawTypeToString(unsigned int);
 	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	//\}
 
@@ -99,21 +92,25 @@ public:
 									 * thrust left w.r.t. velocity direction. Thrust magnitude is constant.
 									 * - getLaw() returns 3 thrust directions
 									 * - getPartials_State() returns 21 derivatives
+									 * - params contains: { thrust (Newtons), Isp (seconds) }
 									 */
 		CONST_C_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, 
 									 * thrust right w.r.t. velocity direction. Thrust magnitude is constant.
 									 * - getLaw() returns 3 thrust directions
 									 * - getPartials_State() returns 21 derivatives
+									 * * - params contains: { thrust (Newtons), Isp (seconds) }
 									 */
 		PRO_VEL = 3,				/*!< Thrust along velocity vector (maximum energy increase)
-									 * Not yet implemented
+									 * - params contains: { thrust (Newtons), Isp (seconds) }
 									 */
 		ANTI_VEL = 4,				/*!< Thrust along anti-velocity vector (maximum energy decrease)
-									 * Not yet implemented
+									 * - params contains: { thrust (Newtons), Isp (seconds) }
 									 */
 		GENERAL_CONST_F = 5			/*!< Thrust in an arbitrary direction. Thrust magnitude is constant.
 									 * - getLaw() returns 3 thrust directions
 									 * - getPartials_State() returns 21 derivatives
+									 * - params contains: { thrust (Newtons), Isp (seconds) }
+									 * - requires two additional states {alpha, beta} for numerical integration
 									 */
 	};
 protected:

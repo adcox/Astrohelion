@@ -139,7 +139,84 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesAtEvent){
 	// set3.print();
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
+BOOST_AUTO_TEST_CASE(Arcset_MixedTime_Save_Load){
+	SysData_cr3bp sys("earth", "moon");
+	double state[] = {1, 2, 3, 4, 5, 6};
+	double errTol = 1e-14;
+
+	Arcset_cr3bp set(&sys);
+	set.addNode(Node(state, 6, 2.2));
+	set.addNode(Node(state, 6, 0));
+	set.addNode(Node(state, 6, 1.1));
+	set.addNode(Node(state, 6, -2.2));
+	set.addNode(Node(state, 6, -1.1));
+	set.addSeg(Segment(4, 3, -1.1));
+	set.addSeg(Segment(1, 2, 1.1));
+	set.addSeg(Segment(1, 4, -1.1));
+	set.addSeg(Segment(2, 0, 1.1));
+
+	set.saveToMat("data/mixedTimeSet.mat");
+
+	Arcset_cr3bp tempSet(&sys);
+	std::vector<ControlLaw*> loadedLaws;
+	tempSet.readFromMat("data/mixedTimeSet.mat", loadedLaws);
+
+	BOOST_CHECK_EQUAL(set.getNumNodes(), tempSet.getNumNodes());
+	for(unsigned int n = 0; n < set.getNumNodes(); n++){
+		std::vector<double> state1 = set.getStateByIx(n);
+		std::vector<double> state2 = tempSet.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(set.getEpochByIx(n) - tempSet.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(set.getNumSegs(), tempSet.getNumSegs());
+	for(unsigned int s = 0; s < set.getNumSegs(); s++){
+		BOOST_CHECK_EQUAL(set.getSegRefByIx(s).getOrigin(), tempSet.getSegRefByIx(s).getOrigin());
+		BOOST_CHECK_EQUAL(set.getSegRefByIx(s).getTerminus(), tempSet.getSegRefByIx(s).getTerminus());
+
+		std::vector<double> states1 = set.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = tempSet.getSegRefByIx(s).getStateVector();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+		}
+
+		std::vector<double> times1 = set.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = tempSet.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(set.getTOFByIx(s) - tempSet.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = set.getSTMByIx(s);
+		MatrixXRd stm2 = tempSet.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK_EQUAL(set.getCtrlLawByIx(s), tempSet.getCtrlLawByIx(s));
+	}
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(CR3BP_Arcset_Save_Load){
+	double errTol = 1e-14;
 	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
 	SysData_cr3bp emData("earth", "moon");
 	Arcset_cr3bp crSet(&emData);
@@ -147,19 +224,60 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
 	sim.runSim_manyNodes(ic, 2.77, 5, &crSet);
 
-	MultShootEngine corrector;
-	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
-	corrector.multShoot(&crSet, NULL);
+	// crSet.print();
 
 	crSet.saveToMat("data/crSet.mat");
 	Arcset_cr3bp crTemp(&emData);
 	std::vector<ControlLaw*> loadedLaws;
 	crTemp.readFromMat("data/crSet.mat", loadedLaws);
 
-	BOOST_CHECK(crSet.getStateByIx(-1) == crTemp.getStateByIx(-1));
-	BOOST_CHECK(crSet.getTOFByIx(-1) == crTemp.getTOFByIx(-1));
-	BOOST_CHECK(loadedLaws.size() == 0);
+	BOOST_CHECK_EQUAL(loadedLaws.size(), 0);
+
+	BOOST_CHECK_EQUAL(crSet.getNumNodes(), crTemp.getNumNodes());
+	for(unsigned int n = 0; n < crSet.getNumNodes(); n++){
+		std::vector<double> state1 = crSet.getStateByIx(n);
+		std::vector<double> state2 = crTemp.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(crSet.getEpochByIx(n) - crTemp.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(crSet.getNumSegs(), crTemp.getNumSegs());
+	for(unsigned int s = 0; s < crSet.getNumSegs(); s++){
+
+		std::vector<double> states1 = crSet.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = crTemp.getSegRefByIx(s).getStateVector();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+		}
+
+		std::vector<double> times1 = crSet.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = crTemp.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(crSet.getTOFByIx(s) - crTemp.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = crSet.getSTMByIx(s);
+		MatrixXRd stm2 = crTemp.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK_EQUAL(crSet.getCtrlLawByIx(s), crTemp.getCtrlLawByIx(s));
+	}
 
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
@@ -167,40 +285,153 @@ BOOST_AUTO_TEST_CASE(CR3BP_Nodeset_Save_Load){
 	}
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
+BOOST_AUTO_TEST_CASE(CR3BP_Arcset_SaveCurve_Load){
+	double errTol = 1e-14;
+	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0};
+	SysData_cr3bp emData("earth", "moon");
+	Arcset_cr3bp crSet(&emData);
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(ic, 2.77, 5, &crSet);
+
+	unsigned int coreDim = emData.getDynamicsModel()->getCoreStateSize();
+	// crSet.print();
+
+	crSet.saveToMat("data/crSet_curve.mat", Save_tp::SAVE_CURVE);
+	Arcset_cr3bp crTemp(&emData);
+	std::vector<ControlLaw*> loadedLaws;
+	crTemp.readFromMat("data/crSet_curve.mat", loadedLaws);
+
+	BOOST_CHECK_EQUAL(loadedLaws.size(), 0);
+
+	BOOST_CHECK_EQUAL(crSet.getNumNodes(), crTemp.getNumNodes());
+	for(unsigned int n = 0; n < crSet.getNumNodes(); n++){
+		std::vector<double> state1 = crSet.getStateByIx(n);
+		std::vector<double> state2 = crTemp.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(crSet.getEpochByIx(n) - crTemp.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(crSet.getNumSegs(), crTemp.getNumSegs());
+	for(unsigned int s = 0; s < crSet.getNumSegs(); s++){
+
+		std::vector<double> states1 = crSet.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = crTemp.getSegRefByIx(s).getStateVector();
+		unsigned int stateDim = crTemp.getSegRefByIx(s).getStateWidth();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			if(i % stateDim < coreDim)
+				BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+			else{
+				// Only core states are saved/loaded; others should be zero
+				BOOST_CHECK_SMALL(states2[i], errTol);
+			}
+		}
+
+		std::vector<double> times1 = crSet.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = crTemp.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(crSet.getTOFByIx(s) - crTemp.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = crSet.getSTMByIx(s);
+		MatrixXRd stm2 = crTemp.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK_EQUAL(crSet.getCtrlLawByIx(s), crTemp.getCtrlLawByIx(s));
+	}
+
+	if(loadedLaws.size() > 0){
+		for(auto law : loadedLaws)
+			delete(law);
+	}
+}//====================================================
+
+BOOST_AUTO_TEST_CASE(BC4BP_Arcset_Save_Load){
+	double errTol = 1e-14;
 	SysData_bc4bp semData("sun", "earth", "moon");
 	double ic2[] = {82.575887, 0, 8.0, 0, 0.19369725, 0};
 
 	Arcset_bc4bp bcSet(&semData);
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(ic2, 0, 40, 5, &bcSet);
-
-	// Add a constraint
-	// double data[] = {82.576, 0, 8.001, NAN, NAN, NAN, NAN};
-	// double data[] = {5,5,5,NAN,NAN,NAN,NAN};
-	double data[] = {1.5};
-	Constraint bcCon1(Constraint_tp::MAX_DELTA_V, 0, data, 1);
-	bcSet.addConstraint(bcCon1);
-
-	int nodes[] = {2,3};
-	std::vector<int> velCon(nodes, nodes+2);
-	bcSet.allowDV_at(velCon);
-
-	MultShootEngine corrector;
-	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-	// corrector.setVerbosity(Verbosity_tp::ALL_MSG);
-	corrector.multShoot(&bcSet, nullptr);
+	sim.runSim_manyNodes(ic2, 0, 40, 5, &bcSet);	
 
 	bcSet.saveToMat("data/bcSet.mat");
 	Arcset_bc4bp bcTemp(&semData);
 	std::vector<ControlLaw*> loadedLaws;
 	bcTemp.readFromMat("data/bcSet.mat", loadedLaws);
+	
+	BOOST_CHECK_EQUAL(loadedLaws.size(), 0);
 
-	BOOST_CHECK(bcSet.getStateByIx(-1) == bcTemp.getStateByIx(-1));
-	BOOST_CHECK(bcSet.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
-	BOOST_CHECK(bcSet.getEpochByIx(-1) == bcTemp.getEpochByIx(-1));
-	BOOST_CHECK(loadedLaws.size() == 0);
+	BOOST_CHECK_EQUAL(bcSet.getNumNodes(), bcTemp.getNumNodes());
+	for(unsigned int n = 0; n < bcSet.getNumNodes(); n++){
+		std::vector<double> state1 = bcSet.getStateByIx(n);
+		std::vector<double> state2 = bcTemp.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		std::vector<double> dqdT1 = bcSet.get_dqdTByIx(n);
+		std::vector<double> dqdT2 = bcTemp.get_dqdTByIx(n);
+
+		BOOST_CHECK_EQUAL(dqdT1.size(), dqdT2.size());
+		for(unsigned int c = 0; c < dqdT1.size(); c++){
+			BOOST_CHECK_SMALL(dqdT1[c] - dqdT2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(bcSet.getEpochByIx(n) - bcTemp.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(bcSet.getNumSegs(), bcTemp.getNumSegs());
+	for(unsigned int s = 0; s < bcSet.getNumSegs(); s++){
+
+		std::vector<double> states1 = bcSet.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = bcTemp.getSegRefByIx(s).getStateVector();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+		}
+
+		std::vector<double> times1 = bcSet.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = bcTemp.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(bcSet.getTOFByIx(s) - bcTemp.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = bcSet.getSTMByIx(s);
+		MatrixXRd stm2 = bcTemp.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK_EQUAL(bcSet.getCtrlLawByIx(s), bcTemp.getCtrlLawByIx(s));
+	}
 
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
@@ -208,35 +439,72 @@ BOOST_AUTO_TEST_CASE(BC4BP_Nodeset_Save_Load){
 	}
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
-	double ic[] = {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_Save_Load){
+	double errTol = 1e-14;
+	std::vector<double> ic {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
+	std::vector<double> ctrl0 {1.25, 0.1};
 
-	MultShootEngine corrector;
-	corrector.setVerbosity(Verbosity_tp::NO_MSG);
-	
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
 
 	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(ic, 2.77, 5, &ltSet, &control);
-
-	corrector.multShoot(&ltSet, nullptr);
-
-	ltSet.saveToMat("data/ltSet.mat");
+	sim.runSim_manyNodes(ic, ctrl0, 0, 2.8, 5, &ltSet, &control);
+	
 	// ltSet.print();
-
+	ltSet.saveToMat("data/ltSet.mat");
 	Arcset_cr3bp_lt temp(&ltData);
 	std::vector<ControlLaw*> loadedLaws;
 	temp.readFromMat("data/ltSet.mat", loadedLaws);
-	// temp.print();
 
-	BOOST_CHECK(ltSet.getStateByIx(-1) == temp.getStateByIx(-1));
-	BOOST_CHECK(*(temp.getCtrlLawByIx(0)) == *(ltSet.getCtrlLawByIx(0)));
-	BOOST_CHECK(*(ltSet.getCtrlLawByIx(0)) == control);
-	BOOST_CHECK(ltSet.getTOFByIx(-1) == temp.getTOFByIx(-1));
-	BOOST_CHECK(loadedLaws.size() == 1);
+	BOOST_CHECK_EQUAL(loadedLaws.size(), 1);
+
+	BOOST_CHECK_EQUAL(ltSet.getNumNodes(), temp.getNumNodes());
+	for(unsigned int n = 0; n < ltSet.getNumNodes(); n++){
+		std::vector<double> state1 = ltSet.getStateByIx(n);
+		std::vector<double> state2 = temp.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(ltSet.getEpochByIx(n) - temp.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(ltSet.getNumSegs(), temp.getNumSegs());
+	for(unsigned int s = 0; s < ltSet.getNumSegs(); s++){
+
+		std::vector<double> states1 = ltSet.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = temp.getSegRefByIx(s).getStateVector();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+		}
+
+		std::vector<double> times1 = ltSet.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = temp.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(ltSet.getTOFByIx(s) - temp.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = ltSet.getSTMByIx(s);
+		MatrixXRd stm2 = temp.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK(*(ltSet.getCtrlLawByIx(s)) == *(temp.getCtrlLawByIx(s)));
+	}
 
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
@@ -245,108 +513,186 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Nodeset_Save_Load){
 
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_Save_Load){
-	SysData_cr3bp emData("earth", "moon");
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_SaveCurve_Load){
+	double errTol = 1e-14;
+	std::vector<double> ic {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
+	std::vector<double> ctrl0 {1.25, 0.1};
+
+	SysData_cr3bp_lt ltData("earth", "moon", 14);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
+
+	unsigned int coreDim = ltData.getDynamicsModel()->getCoreStateSize();
+
+	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Arcset_cr3bp crTraj(&emData);
-	sim.runSim(ic, T, &crTraj);
-
-	// Query the acceleration so it is computed
-	std::vector<double> a = crTraj.getStateDerivByIx(-1);
-	crTraj.getJacobiByIx(-1);
-	crTraj.saveToMat("data/crTraj.mat");
-
-	Arcset_cr3bp crTemp(&emData);
+	sim.runSim_manyNodes(ic, ctrl0, 0, 2.8, 5, &ltSet, &control);
+	
+	// ltSet.print();
+	ltSet.saveToMat("data/ltSet_curve.mat", Save_tp::SAVE_CURVE);
+	Arcset_cr3bp_lt temp(&ltData);
 	std::vector<ControlLaw*> loadedLaws;
-	crTemp.readFromMat("data/crTraj.mat", loadedLaws);
+	temp.readFromMat("data/ltSet_curve.mat", loadedLaws);
 
-	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
-	BOOST_CHECK(crTraj.getStateByIx(-1) == crTemp.getStateByIx(-1));
-	BOOST_CHECK(crTraj.getStateDerivByIx(-1) == crTemp.getStateDerivByIx(-1));
-	BOOST_CHECK(crTraj.getTimeByIx(-1) == crTemp.getTimeByIx(-1));
-	BOOST_CHECK(crTraj.getSTMByIx(-1) == crTemp.getSTMByIx(-1));
-	BOOST_CHECK(crTraj.getJacobiByIx(-1) == crTemp.getJacobiByIx(-1));
-	BOOST_CHECK(crTraj.getTOFByIx(-1) == crTemp.getTOFByIx(-1));
-	BOOST_CHECK(crTraj.getCtrlLawByIx(-1) == crTemp.getCtrlLawByIx(-1));
-	BOOST_CHECK(loadedLaws.size() == 0);
+	BOOST_CHECK_EQUAL(loadedLaws.size(), 1);
+
+	BOOST_CHECK_EQUAL(ltSet.getNumNodes(), temp.getNumNodes());
+	for(unsigned int n = 0; n < ltSet.getNumNodes(); n++){
+		std::vector<double> state1 = ltSet.getStateByIx(n);
+		std::vector<double> state2 = temp.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(ltSet.getEpochByIx(n) - temp.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(ltSet.getNumSegs(), temp.getNumSegs());
+	for(unsigned int s = 0; s < ltSet.getNumSegs(); s++){
+		unsigned int ctrlDim = temp.getCtrlLawByIx(s)->getNumStates();
+
+		std::vector<double> states1 = ltSet.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = temp.getSegRefByIx(s).getStateVector();
+		unsigned int stateDim = temp.getSegRefByIx(s).getStateWidth();
+
+		BOOST_CHECK_EQUAL(states1.size(), states2.size());
+		for(unsigned int i = 0; i < states1.size(); i++){
+			if(i % stateDim < coreDim + ctrlDim)
+				BOOST_CHECK_SMALL(states1[i] - states2[i], errTol);
+			else{
+				// Only core states are saved/loaded; others should be zero
+				BOOST_CHECK_SMALL(states2[i], errTol);
+			}
+		}
+
+		std::vector<double> times1 = ltSet.getSegRefByIx(s).getTimeVector();
+		std::vector<double> times2 = temp.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(times1.size(), times2.size());
+		for(unsigned int i = 0; i < times1.size(); i++){
+			BOOST_CHECK_SMALL(times1[i] - times2[i], errTol);
+		}
+
+		BOOST_CHECK_SMALL(ltSet.getTOFByIx(s) - temp.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = ltSet.getSTMByIx(s);
+		MatrixXRd stm2 = temp.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK(*(ltSet.getCtrlLawByIx(s)) == *(temp.getCtrlLawByIx(s)));
+	}
 
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
 			delete(law);
 	}
+
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(BC4BP_Save_Load){
-	SysData_bc4bp semData("sun", "earth", "moon");
+BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_SaveFrame_Load){
+	double errTol = 1e-14;
+	std::vector<double> ic {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
+	std::vector<double> ctrl0 {1.25, 0.1};
+
+	SysData_cr3bp_lt ltData("earth", "moon", 14);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
+
+	unsigned int coreDim = ltData.getDynamicsModel()->getCoreStateSize();
+
+	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	double ic[] = {-0.745230328320519, 7.22625684942683e-04, 7.45549413286038e-05, -7.30710697247992e-06, -0.0148897145134465, -1.23266135281459e-06};
-	double T = 313;	// SE L1 Period
-	Arcset_bc4bp bcTraj(&semData);
-	sim.runSim(ic, T, &bcTraj);
-
-	// Query the acceleration so it is computed
-	std::vector<double> a = bcTraj.getStateDerivByIx(-1);
-	bcTraj.saveToMat("data/bcTraj.mat");
-
-	Arcset_bc4bp bcTemp(&semData);
+	sim.runSim_manyNodes(ic, ctrl0, 0, 2.8, 5, &ltSet, &control);
+	
+	// ltSet.print();
+	ltSet.saveToMat("data/ltSet_frame.mat", Save_tp::SAVE_FRAME);
+	Arcset_cr3bp_lt temp(&ltData);
 	std::vector<ControlLaw*> loadedLaws;
-	bcTemp.readFromMat("data/bcTraj.mat", loadedLaws);
+	temp.readFromMat("data/ltSet_frame.mat", loadedLaws);
 
-	// printf("Testing Save/Read functions on BC4BP Trajectory\n");
-	BOOST_CHECK(bcTraj.getStateByIx(-1) == bcTemp.getStateByIx(-1));
-	BOOST_CHECK(bcTraj.getStateDerivByIx(-1) == bcTemp.getStateDerivByIx(-1));
-	BOOST_CHECK(bcTraj.getTimeByIx(-1) == bcTemp.getTimeByIx(-1));
-	BOOST_CHECK(bcTraj.getSTMByIx(-1) == bcTemp.getSTMByIx(-1));
-	BOOST_CHECK(bcTraj.get_dqdTByIx(-1) == bcTemp.get_dqdTByIx(-1));
-	BOOST_CHECK(bcTraj.getTOFByIx(-1) == bcTemp.getTOFByIx(-1));
-	BOOST_CHECK(bcTraj.getCtrlLawByIx(-1) == bcTemp.getCtrlLawByIx(-1));
-	BOOST_CHECK(loadedLaws.size() == 0);
+	BOOST_CHECK_EQUAL(loadedLaws.size(), 1);
+
+	BOOST_CHECK_EQUAL(ltSet.getNumNodes(), temp.getNumNodes());
+	for(unsigned int n = 0; n < ltSet.getNumNodes(); n++){
+		std::vector<double> state1 = ltSet.getStateByIx(n);
+		std::vector<double> state2 = temp.getStateByIx(n);
+
+		BOOST_CHECK_EQUAL(state1.size(), state2.size());
+		for(unsigned int c = 0; c < state1.size(); c++){
+			BOOST_CHECK_SMALL(state1[c] - state2[c], errTol);
+		}
+
+		BOOST_CHECK_SMALL(ltSet.getEpochByIx(n) - temp.getEpochByIx(n), errTol);
+	}
+
+	BOOST_CHECK_EQUAL(ltSet.getNumSegs(), temp.getNumSegs());
+	for(unsigned int s = 0; s < ltSet.getNumSegs(); s++){
+		unsigned int ctrlDim = temp.getCtrlLawByIx(s)->getNumStates();
+
+		std::vector<double> states1 = ltSet.getSegRefByIx(s).getStateVector();
+		std::vector<double> states2 = temp.getSegRefByIx(s).getStateVector();
+
+		BOOST_CHECK_EQUAL(temp.getSegRefByIx(s).getStateWidth(), ltSet.getSegRefByIx(s).getStateWidth());
+		unsigned int stateDim = temp.getSegRefByIx(s).getStateWidth();
+
+		BOOST_CHECK_EQUAL(states2.size(), 2*stateDim);
+
+		std::vector<double> ref_q0 = ltSet.getSegRefByIx(s).getStateByRow(0);
+		std::vector<double> ref_qf = ltSet.getSegRefByIx(s).getStateByRow(-1);
+		std::vector<double> load_q0 = temp.getSegRefByIx(s).getStateByRow(0);
+		std::vector<double> load_qf = temp.getSegRefByIx(s).getStateByRow(-1);
+
+		BOOST_CHECK_EQUAL(ref_q0.size(), stateDim);
+		BOOST_CHECK_EQUAL(ref_qf.size(), stateDim);
+		BOOST_CHECK_EQUAL(load_q0.size(), stateDim);
+		BOOST_CHECK_EQUAL(load_qf.size(), stateDim);
+
+		for(unsigned int c = 0; c < stateDim; c++){
+			if(c < coreDim + ctrlDim){
+				BOOST_CHECK_SMALL(load_q0[c] - load_q0[c], errTol);
+				BOOST_CHECK_SMALL(load_qf[c] - load_qf[c], errTol);
+			}else{
+				// Only core states are saved/loaded; others should be zero
+				BOOST_CHECK_SMALL(load_q0[c], errTol);
+				BOOST_CHECK_SMALL(load_qf[c], errTol);
+			}
+		}
+
+		std::vector<double> ref_times = ltSet.getSegRefByIx(s).getTimeVector();
+		std::vector<double> load_times = temp.getSegRefByIx(s).getTimeVector();
+		BOOST_CHECK_EQUAL(load_times.size(), 2);
+		BOOST_CHECK_SMALL(ref_times.front() - load_times[0], errTol);
+		BOOST_CHECK_SMALL(ref_times.back() - load_times[1], errTol);
+
+		BOOST_CHECK_SMALL(ltSet.getTOFByIx(s) - temp.getTOFByIx(s), errTol);
+
+		MatrixXRd stm1 = ltSet.getSTMByIx(s);
+		MatrixXRd stm2 = temp.getSTMByIx(s);
+		BOOST_CHECK_EQUAL(stm1.rows(), stm2.rows());
+		BOOST_CHECK_EQUAL(stm1.cols(), stm2.cols());
+		for(unsigned int r = 0; r < stm1.rows(); r++){
+			for(unsigned int c = 0; c < stm1.cols(); c++){
+				BOOST_CHECK_SMALL(stm1(r,c) - stm2(r,c), errTol);
+			}
+		}
+
+		BOOST_CHECK(*(ltSet.getCtrlLawByIx(s)) == *(temp.getCtrlLawByIx(s)));
+	}
 
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
 			delete(law);
 	}
+
 }//====================================================
 
-BOOST_AUTO_TEST_CASE(CR3BP_LT_Save_Load){
-	SysData_cr3bp_lt emData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 12e-3, 1500);
-
-	SimEngine sim;
-	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
-	double T = 3.02796323553149;	// EM L1 Period
-	Arcset_cr3bp_lt ltTraj(&emData);
-	sim.runSim(ic, T, &ltTraj, &control);
-
-	// Query the acceleration so it is computed
-	std::vector<double> a = ltTraj.getStateDerivByIx(-1);
-	ltTraj.getJacobiByIx(-1);
-	ltTraj.saveToMat("data/lowthrustTraj.mat");
-
-	Arcset_cr3bp_lt ltTemp(&emData);
-	std::vector<ControlLaw*> loadedLaws;
-	ltTemp.readFromMat("data/lowthrustTraj.mat", loadedLaws);
-
-	// printf("Testing Save/Read functions on CR3BP Trajectory\n");
-	BOOST_CHECK(ltTraj.getStateByIx(-1) == ltTemp.getStateByIx(-1));
-	BOOST_CHECK(ltTraj.getStateDerivByIx(-1) == ltTemp.getStateDerivByIx(-1));
-	BOOST_CHECK(ltTraj.getTimeByIx(-1) == ltTemp.getTimeByIx(-1));
-	BOOST_CHECK(ltTraj.getSTMByIx(-1) == ltTemp.getSTMByIx(-1));
-	BOOST_CHECK(ltTraj.getJacobiByIx(-1) == ltTemp.getJacobiByIx(-1));
-	BOOST_CHECK(ltTraj.getTOFByIx(-1) == ltTemp.getTOFByIx(-1));
-	BOOST_CHECK(*(ltTraj.getCtrlLawByIx(-1)) == *(ltTemp.getCtrlLawByIx(-1)));
-	BOOST_CHECK(loadedLaws.size() == 1);
-
-	if(loadedLaws.size() > 0){
-		for(auto law : loadedLaws)
-			delete(law);
-	}
-}//====================================================
 
 
 

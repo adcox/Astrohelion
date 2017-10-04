@@ -1,0 +1,5 @@
+<map id="astrohelion::EOM_ParamStruct" name="astrohelion::EOM_ParamStruct">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_control_law.html" title="Stores control law equations and derivatives for flexible applications throughout the astrohelion fra..." alt="" coords="5,80,167,105"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="113,5,235,31"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="191,80,336,105"/>
+</map>

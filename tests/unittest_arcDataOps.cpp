@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource1){
  *  @brief Try to delete a node that is the origin of two arcs where
  *  the forward time segment has no terminal point
  */
-BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource2){
+BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource2){
 	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, -1.1));
@@ -392,7 +392,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource2){
  *  @brief Try to delete a node that is the origin of two arcs where
  *  the reverse time segment has no terminal point
  */
-BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource3){
+BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource3){
 	Arcset set(&sys);
 	set.addNode(Node(state1, 6, 0));
 	set.addNode(Node(state2, 6, 1.1));
@@ -412,7 +412,7 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNOde_doubleSource3){
 BOOST_AUTO_TEST_SUITE_END()
 
 //************************************************************
-//* Arcset Creation
+//* getChronoOrder() Function
 //************************************************************
 BOOST_AUTO_TEST_SUITE(Arcset_getChronoOrder)
 

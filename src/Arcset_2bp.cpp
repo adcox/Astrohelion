@@ -101,8 +101,8 @@ baseArcsetPtr Arcset_2bp::clone() const{
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_2bp::saveCmds(mat_t* pMatFile) const{
-	Arcset::saveCmds(pMatFile);
+void Arcset_2bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
+	Arcset::saveCmds(pMatFile, saveTp);
 
 	saveNodeExtraParam(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
 	saveNodeExtraParam(pMatFile, PARAMKEY_ECC, VARNAME_ECC);

@@ -1,9 +1,9 @@
 /**
- *  \file tpat_linMotion_Engine.hpp
+ *  \file LinMotionEngine.hpp
  *	\brief 
  *	
  *	\author Andrew Cox
- *	\version May 25, 2016
+ *	\version September 28, 2017
  *	\copyright GNU GPL v3.0
  */
 /*
@@ -33,78 +33,75 @@
 
 namespace astrohelion{
 
-// Forward delcarations
-class Arcset_cr3bp;
-class SysData_cr3bp;
-
 /**
  *	\ingroup engine
  *	\brief type of linear motion
  *
  *	This type tells the engine what kind of linearization to produce
  */
-enum class LinMotion_tp {
-	NONE,	//!< No motion specified
-	HYP,	//!< Hyperbolic motion, applies only to linearizations near collinear points
-	ELLIP,	//!< Elliptical motion, applies only to linearizations near collinear points
-	SPO,	//!< Short-Period Orbit, applies only to Case I linearizations near triangular points
-	LPO,	//!< Long-Period Orbit, applies only to Case I linearizations near triangular points
-	MPO,	//!< Mixed-Period Orbit, applies only to Case I linearizations near triangular points
-	CONVERGE,	//!< Convergent motion, applies only to Case III linearizations near triangular points
-	DIVERGE		//!< Divergent motion, applies only to Case III linearizations near triangular points
-};	
+class LinMotion_tp{
+public:
+	static const unsigned int NONE = 0;			//!< No motion specified
+	static const unsigned int HYP = 10;			//!< Stable/Unstable mode (real eigenvalues)
+	static const unsigned int OSC = 20;			//!< Oscillatory mode (imaginary eigenvalues)
+	static const unsigned int STAB_OSC = 30; 	//!< Stable Oscillatory (complex with negative real part)
+	static const unsigned int UNSTAB_OSC = 40;	//!< Unstable Oscillatory (complex with positive real part)
+};
 
 /**
- *	\brief An engine that will generate a trajectory from the linearized CR3BP EOMs
+ *	\brief An engine that will generate a trajectory in the linearized EOMs
+ *	\details This class is merely a shell for the guts that are model-specific
+ *	
+ *	\see LinMotionEngine_cr3bp
  */
 class LinMotionEngine : public Core, public Engine{
 	public:
-		// *structors
-		LinMotionEngine();
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
+
+		/**
+		 *	\brief Default, do-nothing constructor
+		 */
+		LinMotionEngine() {}
+
+		/**
+		 *  \brief Default, do-nothing desctructor
+		 */
+		virtual ~LinMotionEngine() {}
+
+		//\}
 
 		// Operators
+		//  - None!
 
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		double getMPORatio() const;
 		int getNumRevs() const;
 		double getTimeStep() const;
 		double getTol() const;
 
-		void setMPORatio(double);
 		void setNumRevs(int);
 		void setTimeStep(double);
 		void setTol(double);
-		const char* getTypeStr(LinMotion_tp) const;
-		//\}
-
-		/**
-		 *  \name Orbit Generation
-		 *  \{
-		 */
-		Arcset_cr3bp getCR3BPLinear(int, double[3], SysData_cr3bp*);
-		Arcset_cr3bp getCR3BPLinear(int, double[3], LinMotion_tp, SysData_cr3bp*);
-		Arcset_cr3bp getCR3BPLinear(int, double[3], double, double, LinMotion_tp, SysData_cr3bp*);
-		Arcset_cr3bp getCR3BPLiss(int, double, bool, double, double, double, SysData_cr3bp*);
+		virtual const char* getTypeStr(unsigned int) const;
 		//\}
 		
-	private:
+	protected:
 		/** \brief step size between points on linear motion trajectory */
 		double t_step = 0.001;
 
-		/** \brief Number of rotations to propagate */
-		double rots = 1;
+		/** \brief Number of revolutions to propagate */
+		double revs = 1;
 
 		/** \brief tolerance for numerical methods, like locating Lagrange points */
 		double tol = 1e-14;
 
-		/** Ratio between SPO and LPO behavior when constructing an MPO */
-		double nu = 1;
-
-		void cleanEngine();
-		void reset();
+		virtual void cleanEngine();
+		virtual void reset();
 };
 
 }// END of Astrohelion namespace

@@ -99,7 +99,11 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
  */
 unsigned int ControlLaw::getLawType() const{ return lawType; }
 
-std::string ControlLaw::getLawString() const{ return lawTypeToString(lawType); }
+/**
+ *  \brief Retrieve the name of the law type as a string
+ *  \return the name of the law type as a string
+ */
+std::string ControlLaw::getLawTypeString() const{ return ControlLaw::lawTypeToString(lawType); }
 
 /**
  *  \brief Retrieve the number of control variables that need to be included
@@ -301,6 +305,18 @@ void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData 
 //      Utility Functions
 //------------------------------------------------------------------------------------------------------
 
+void ControlLaw::print() const{
+	printf("Control Law\n  Type = %s\n", lawTypeToString(lawType).c_str());
+	printf("  NumStates = %u\n  NumOutputs = %u\n", numStates, numOutputs);
+	printf("  params = {");
+	for(unsigned int i = 0; i < params.size(); i++){
+		printf("%f", params[i]);
+		if(i < params.size() - 1)
+			printf(",  ");
+	}
+	printf("}\n");
+}//====================================================
+
 /**
  *  \brief Copy the ControlLaw object
  *  \param law reference to the source controlLaw
@@ -308,6 +324,7 @@ void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData 
 void ControlLaw::copyMe(const ControlLaw &law){
 	lawType = law.lawType;
 	numStates = law.numStates;
+	numOutputs = law.numOutputs;
 	params = law.params;
 }//====================================================
 
@@ -319,9 +336,9 @@ void ControlLaw::init(){
 	switch(lawType){
 		case NO_CTRL:
 			numStates = 0;
+			numOutputs = 0;
 			break;
-		default:
-			throw Exception("ControlLaw::init: Unrecognized lawType");
+		default: break;
 	}
 }//====================================================
 
@@ -331,7 +348,7 @@ void ControlLaw::init(){
  *  \param id control law ID
  *  \return a string that represents the law ID
  */
-std::string ControlLaw::lawTypeToString(unsigned int id) const{
+std::string ControlLaw::lawTypeToString(unsigned int id){
 	switch(id){
 		case NO_CTRL: return "NONE";
 		default: return "UNDEFINED";

@@ -226,6 +226,15 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
     }
 }//=========================================================
 
+/**
+ *  \brief Save a string to an open Matlab data file
+ *  \details [long description]
+ * 
+ *  \param matfp pointer to Matlab file
+ *  \param varName name of the variable within the Matlab file
+ *  \param text value of the variable within the Matlab file
+ *  \param strlen number of characters (including the final null char) in <tt>text</tt>
+ */
 void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const int strlen){
     char text_chars[strlen];
     strcpy(text_chars, text.c_str());
@@ -462,40 +471,6 @@ void checkAndReThrowSpiceErr(const char* customMsg){
 }//============================================
 
 /**
- *  \brief Save a matrix as a CSV file to be read by Excel or Matlab
- * 
- *  \param m the matrix
- *  \param filename Filename of the csv file (include the .csv extension!)
- */
-void toCSV(MatrixXRd m, const char* filename){
-    std::ofstream outFile(filename, std::ios::out);
-    
-    // After this attempt to open a file, we can safely use perror() only  
-    // in case f.is_open() returns False.
-    if (!outFile.is_open())
-        perror("Utilities::toCSV: Error while opening file");
-
-    for (int r = 0; r < m.rows(); r++){
-        for (int c = 0; c < m.cols(); c++){
-            char buffer[64] = "";
-            if(c < m.cols()-1)
-                sprintf(buffer, "%.14f, ", m(r,c));
-            else
-                sprintf(buffer, "%.14f\n", m(r,c));
-
-            outFile << buffer;
-        }
-    }
-
-    // Only in case of set badbit we are sure that errno has been set in
-    // the current context. Use perror() to print error details.
-    if (outFile.bad())
-        perror("Utilities::toCSV: Error while writing file ");
-
-    outFile.close();
-}//=============================================
-
-/**
  *  \brief Resolve double angle ambiquity from inverse trig
  *  functions
  *  \details [long description]
@@ -557,6 +532,17 @@ double boundValue(double val, double min, double max){
 bool fileExists (const char *filename) {
     struct stat buffer;   
     return (stat (filename, &buffer) == 0); 
+}//====================================================
+
+/**
+ *  \brief Convert and angle to its equivalent between -pi and pi
+ * 
+ *  \param val value in radians
+ *  \return An equivalent value between -pi and pi
+ */
+double wrapToPi(double val){
+    while(abs(val) > PI)
+        val -= astrohelion::sign(val)*2*PI;
 }//====================================================
 
 /** \} */ // END of util group

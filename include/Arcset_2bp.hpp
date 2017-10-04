@@ -74,7 +74,7 @@ protected:
 	 *  \name Utility
 	 *  \{
 	 */
-		void saveCmds(mat_t*) const override;
+		void saveCmds(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const override;
 		void readCmds(mat_t*, std::vector<ControlLaw*>&) override;
 	//\}
 };

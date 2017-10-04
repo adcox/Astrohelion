@@ -1,0 +1,6 @@
+<map id="astrohelion::MultShootData" name="astrohelion::MultShootData">
+<area shape="rect" id="node2" href="$classastrohelion_1_1_arcset.html" title="Extends BaseArcset in a few areas. " alt="" coords="31,241,162,267"/>
+<area shape="rect" id="node3" href="$classastrohelion_1_1_base_arcset.html" title="Abstract class that provides the framework for trajectories and nodesets. " alt="" coords="15,167,177,192"/>
+<area shape="rect" id="node4" href="$classastrohelion_1_1_core.html" title="An object that serves as a parent to all Core objects. " alt="" coords="30,5,153,31"/>
+<area shape="rect" id="node5" href="$classastrohelion_1_1_sys_data.html" title="Contains information about a system, like mass ratio, primary names, etc. " alt="" coords="112,80,257,105"/>
+</map>

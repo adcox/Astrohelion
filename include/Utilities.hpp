@@ -38,6 +38,8 @@
  
 #include <algorithm>
 #include <complex>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -151,6 +153,20 @@ namespace astrohelion{
 		tempVec.insert(tempVec.end(), rhs.begin(), rhs.end());
 		return tempVec;
 	}//=======================================
+
+	/**
+	 *  \brief Create an Identity matrix (e.g., to act as a dummy value for an STM)
+	 * 
+	 *  \param matRef reference to a vector that stores matrix elements. Any nonzero elements
+	 *  are overwritten
+	 *  \param size side length of the matrix (e.g., the size of a 6x6 matrix is 6)
+	 */
+	template<class T>
+	void createIdentity(std::vector<T> &matRef, unsigned int size){
+	    matRef.assign(size*size, 0);
+	    for(unsigned int i = 0; i < size; i++)
+	        matRef[i*(size+1)] = 1;
+	}//=======================================================
 
 	/**
 	 *	\brief sort a vector and retrieve the indices of the sorted elements
@@ -334,6 +350,45 @@ namespace astrohelion{
 		return static_cast<typename std::underlying_type<T>::type>(e);
 	}//================================================
 
+	template<typename T>
+	void toCSV(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m, const char* filename){
+		std::ofstream outFile(filename, std::ios::out);
+    
+	    // After this attempt to open a file, we can safely use perror() only  
+	    // in case f.is_open() returns False.
+	    if (!outFile.is_open())
+	        perror("Utilities::toCSV: Error while opening file");
+	    
+	    bool isComplex = std::is_same<T, std::complex<double> >::value ||
+	    				std::is_same<T, std::complex<float> >::value;
+
+	    for (int r = 0; r < m.rows(); r++){
+	        for (int c = 0; c < m.cols(); c++){
+	            char buffer[64] = "";
+
+	            if(isComplex){
+	            	sprintf(buffer, "%.20f%c%.20fi", std::real(m(r,c)),
+	            		std::imag(m(r,c)) >= 0.f ? '+':'-', std::abs(std::imag(m(r,c))));
+	            }else{
+	            	sprintf(buffer, "%.20f", m(r,c));
+	            }
+
+	            outFile << buffer;
+	            if(c < m.cols()-1)
+	            	outFile << ", ";
+	            else
+	            	outFile << '\n';
+	        }
+	    }
+
+	    // Only in case of set badbit we are sure that errno has been set in
+	    // the current context. Use perror() to print error details.
+	    if (outFile.bad())
+	        perror("Utilities::toCSV: Error while writing file ");
+
+	    outFile.close();
+	}//================================================
+
 	/** \} */ // END of util group
 
 
@@ -368,11 +423,11 @@ namespace astrohelion{
 	void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
-	void toCSV(MatrixXRd, const char*);
 	bool fileExists (const char*);
 	//\}
 	
 	double resolveAngle(double, double);
+	double wrapToPi(double);
 	
 	void waitForUser();
 }

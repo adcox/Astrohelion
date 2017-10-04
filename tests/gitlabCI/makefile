@@ -3,7 +3,7 @@ UNAME_S := $(shell uname -s)
 # My headers
 INC := ../../include
 # System headers; these are included to not throw warnings
-INC_EXT  := -isystem/opt/local/include
+INC_EXT  := -isystem../../deps/installed/include
 # Source files
 SRC := ../../src
 # Directory for object files
@@ -15,7 +15,7 @@ ifeq ($(UNAME_S), Darwin)
 else
 	
 	ifeq ($(UNAME_S), Linux)
-		LDFLAGS += -L/opt/local/lib
+		LDFLAGS += -Wl,-rpath-link,/opt/local/lib
 	endif
 
 	CXX := g++
@@ -28,7 +28,7 @@ CFLAGS += -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimpo
 COMP := $(CXX) $(CFLAGS)
 
 # Library names and locations
-LDFLAGS += -Wl,-rpath-link,/opt/local/lib -L/opt/local/lib
+LDFLAGS += -L../../deps/installed/lib
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system boost_unit_test_framework boost_test_exec_monitor
 LDFLAGS += $(foreach lib, $(LIBS),-l$(lib))
 
@@ -95,7 +95,7 @@ cr3bpFam: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_cr3bpFamily.cpp $(LDFLAGS) -o $@.bin	
 
 event: $(OBJECTS)
-	$(COMP) -I $(INC) $(INC_SYS) $^  ../unittest_event.cpp $(LDFLAGS) -o $@.bin
+	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_event.cpp $(LDFLAGS) -o $@.bin
 
 lambertArc: $(OBJECTS)
 	$(COMP) -I $(INC) $(INC_EXT) $^  ../unittest_lambertArc.cpp $(LDFLAGS) -o $@.bin	

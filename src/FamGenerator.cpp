@@ -229,10 +229,10 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 
 	if(contType == Continuation_tp::NAT_PARAM){
 	
-		std::vector<int> indVars;
+		std::vector<unsigned int> indVars;
 		indVars.push_back(0);	// We're going to fix the x-coordinate in the corrector to keep it from slipping
 		indVars.push_back(4);	// Optionally, allow y-dot to be an independent variable if x is changing too quickly
-		std::vector<int> depVars {4}; // Predict y-dot with least squares in the algorithm
+		std::vector<unsigned int> depVars {4}; // Predict y-dot with least squares in the algorithm
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 		cr3bp_natParamCont(pFam, linTraj, mirrorTypes, indVars, depVars, 1);
 
@@ -303,8 +303,8 @@ void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSi
 		numNodes, 1, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		std::vector<int> indVars {2,0};	// begin stepping in z, optionally using x
-		std::vector<int> depVars {4};	// Predict y-dot with least-squares
+		std::vector<unsigned int> indVars {2,0};	// begin stepping in z, optionally using x
+		std::vector<unsigned int> depVars {4};	// Predict y-dot with least-squares
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
@@ -367,8 +367,8 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
 		numNodes, 1, Mirror_tp::MIRROR_X_AX_H, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		std::vector<int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
-		std::vector<int> depVars {0,6};	// Predict x and period with least squares
+		std::vector<unsigned int> indVars {5,4};	// begin stepping in z-dot, optionally use y-dot
+		std::vector<unsigned int> depVars {0,6};	// Predict x and period with least squares
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_X_AX_H, Mirror_tp::MIRROR_X_AX_V};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
@@ -440,8 +440,8 @@ void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initS
 		numNodes, 2, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
 	if(contType == Continuation_tp::NAT_PARAM){
-		std::vector<int> indVars {2, 0};	// Begin stepping in z, optionally use x
-		std::vector<int> depVars {5, 6}; 	// Predict y-dot and period with least squares
+		std::vector<unsigned int> indVars {2, 0};	// Begin stepping in z, optionally use x
+		std::vector<unsigned int> depVars {5, 6}; 	// Predict y-dot and period with least squares
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative if the user inputs a negative step-off distance
@@ -493,9 +493,9 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 		// Butterfly-specific settings
 		pFam->setSortType(FamSort_tp::SORT_X);
 		// std::vector<int> indVars {0,2};
-		std::vector<int> indVars {0, 2};
+		std::vector<unsigned int> indVars {0, 2};
 		// std::vector<int> depVars {4,6};
-		std::vector<int> depVars {4, 6};
+		std::vector<unsigned int> depVars {4, 6};
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
@@ -541,8 +541,8 @@ void FamGenerator::cr3bp_generateDRO(Fam_cr3bp *pFam){
 
 	if(contType == Continuation_tp::NAT_PARAM){
 		pFam->setSortType(FamSort_tp::SORT_X);
-		std::vector<int> indVars {0, 4};			// Vary x and vy
-		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
+		std::vector<unsigned int> indVars {0, 4};			// Vary x and vy
+		std::vector<unsigned int> depVars {0, 4, 6};			// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative so that it moves away from P2
@@ -590,8 +590,8 @@ void FamGenerator::cr3bp_generateLPO(Fam_cr3bp *pFam){
 
 	if(contType == Continuation_tp::NAT_PARAM){
 		pFam->setSortType(FamSort_tp::SORT_X);
-		std::vector<int> indVars {0, 4};			// Vary x and vy
-		std::vector<int> depVars {0, 4, 6};			// Predict x, vy, and period
+		std::vector<unsigned int> indVars {0, 4};			// Vary x and vy
+		std::vector<unsigned int> depVars {0, 4, 6};			// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		// Set the simple step size to be negative so that it moves away from P2
@@ -645,8 +645,8 @@ void FamGenerator::cr3bp_generateDPO(Fam_cr3bp *pFam){
 	printf("Creating family...\n");
 	if(contType == Continuation_tp::NAT_PARAM){
 		pFam->setSortType(FamSort_tp::SORT_VY);
-		std::vector<int> indVars {4, 0};		// Vary vy and x
-		std::vector<int> depVars {0, 4, 6};		// Predict x, vy, and period
+		std::vector<unsigned int> indVars {4, 0};		// Vary vy and x
+		std::vector<unsigned int> depVars {0, 4, 6};		// Predict x, vy, and period
 		std::vector<Mirror_tp> mirrorTypes{Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
@@ -760,9 +760,9 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 		// Butterfly-specific settings
 		pFam->setSortType(FamSort_tp::SORT_X);
 		// std::vector<int> indVars {0,2};
-		std::vector<int> indVars {0, 4};
+		std::vector<unsigned int> indVars {0, 4};
 		// std::vector<int> depVars {4,6};
-		std::vector<int> depVars {4, 6};
+		std::vector<unsigned int> depVars {4, 6};
 		std::vector<Mirror_tp> mirrorTypes {Mirror_tp::MIRROR_XZ, Mirror_tp::MIRROR_XZ};
 
 		printf("Using natural parameter continuation...\n");
@@ -830,7 +830,7 @@ void FamGenerator::cr3bp_pacFromArcset(Arcset_cr3bp arcset, Mirror_tp mirrorType
  *	out of range
  */
 void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
-	std::vector<Mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
+	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx, int order){
 
 	SysData_cr3bp sys = fam->getSysData();
 
@@ -998,7 +998,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 			}
 
 			// This will hold the input depVars plus the unused independent variable
-			std::vector<int> allDepVars;
+			std::vector<unsigned int> allDepVars;
 			std::vector<double> predictedIC;
 			if(std::abs(indVarSlope) > slopeThresh){
 				mirrorType = mirrorTypes[0];
@@ -1032,7 +1032,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 
 			// Update IC with predicted variables
 			for(unsigned int n = 0; n < allDepVars.size(); n++){
-				int ix = allDepVars[n];
+				unsigned int ix = allDepVars[n];
 				if(ix < 6)
 					IC[ix] = predictedIC[ix];
 				else if(ix == 6)

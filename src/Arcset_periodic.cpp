@@ -40,6 +40,7 @@ namespace astrohelion{
 
 Arcset_periodic::Arcset_periodic(const SysData *pSys) : Arcset(pSys) {}
 Arcset_periodic::Arcset_periodic(const Arcset_periodic &a) : Arcset(a) {}
+Arcset_periodic::Arcset_periodic(const Arcset &a) : Arcset(a) {}
 Arcset_periodic::~Arcset_periodic() {}
 
 //-----------------------------------------------------------------------------

@@ -56,7 +56,7 @@ NatParamEngine::NatParamEngine() : ContinuationEngine() {}
  *  \param mem Number of solutions to use when fitting a curve to predict
  *  the continuation variables
  */
-void NatParamEngine::setCurveFitMem(int mem){ curveFitMem = mem; }
+void NatParamEngine::setCurveFitMem(unsigned int mem){ curveFitMem = mem; }
 
 /**
  *  \brief Set the number of simple continuation (i.e., no curve fitting)
@@ -64,7 +64,7 @@ void NatParamEngine::setCurveFitMem(int mem){ curveFitMem = mem; }
  * 
  *  \param num the number of simple continuation iterations to perform
  */
-void NatParamEngine::setNumSimple(int num){ numSimple = num; }
+void NatParamEngine::setNumSimple(unsigned int num){ numSimple = num; }
 
 /**
  *  \brief Set the slope threshold that is the limit between
@@ -121,8 +121,8 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
-void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
-	std::vector<Mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
+void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
+	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx, int order){
 
 	// Assume family is CR3BP
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(fam->getSysData());
@@ -138,29 +138,28 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 	Mirror_tp mirrorType = mirrorTypes[0];
 
 	// Initially assume that we're fixing indVar1
-	std::vector<int> fixStates;
+	std::vector<unsigned int> fixStates;
 	fixStates.push_back(indVar1);
 
 	// Get info from the initial guess trajectory
 	std::vector<double> IC = initialGuess->getStateByIx(0);
-	double tof = initialGuess->getTimeByIx(-1);
+	double tof = initialGuess->getTotalTOF();
 	double tof0 = tof;
 
 	// Initialize counters and storage containers
-	int orbitCount = 0;
-	double indVarSlope = NAN;
-	double deltaVar1 = 1;
-	double deltaVar2 = 1;
+	unsigned int orbitCount = 0;
+	double indVarSlope = NAN, deltaVar1 = 1, deltaVar2 = 1;
 
 	std::vector<Arcset_periodic> members;
 	bool diverged = false;
 
-	// Create a dummy nodeset and create an iteration data object on the stack
+	// Create a dummy arcset and create an iteration data object on the stack
 	// The cr3bp_getPeriodic() function will only pass an iteration data pointer back
 	// if the one passed in is not NULL, hence we create a valid object and delete it
 	// before exiting the function
-	Arcset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));
-	MultShootData *pItData = new MultShootData(&tempNodes);
+	Arcset_cr3bp halfPerGuess(*initialGuess);
+	Arcset_cr3bp halfPerCorrected(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));
+	MultShootData *pItData = new MultShootData(&halfPerGuess);
 
 	while(orbitCount < numOrbits){
 		Arcset_periodic perOrbit(pSys);
@@ -172,8 +171,11 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 			printf("\n");
 			printf("Slope = %.3f\n", indVarSlope);
 
-			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(pSys, IC, tof, numNodes, order, mirrorType, fixStates, tol, pItData);
+			// Add constraints to the guess to enforce the mirror conition and fix the specified states
+			cr3bp_addMirrorCons(&halfPerGuess, mirrorType, fixStates);
+			// Correct using multiple shooting, save the corrected half-period arc for next time
+			perOrbit = cr3bp_getSymPO(&halfPerGuess, &halfPerCorrected, mirrorType, tol, pItData);
+			// perOrbit = cr3bp_getPeriodic(pSys, IC, tof, numNodes, order, mirrorType, fixStates, tol, pItData);
 
 			diverged = false;
 			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
@@ -187,11 +189,11 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 		// Check for large changes in period to detect leaving family
 		if(!diverged && orbitCount > 2){
 			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
-			double dTOF = std::abs(perOrbit.getTimeByIx(-1)) - std::abs(members[members.size()-1].getTimeByIx(-1));
-			double percChange = std::abs(dTOF/perOrbit.getTimeByIx(-1));
+			double dTOF = std::abs(perOrbit.getTotalTOF()) - std::abs(members[members.size()-1].getTotalTOF());
+			double percChange = std::abs(dTOF/perOrbit.getTotalTOF());
 			if(percChange > 0.25){
 				printWarn("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTimeByIx(-1));
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTotalTOF());
 				diverged = true;
 			}
 		}
@@ -280,7 +282,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 
 			// Use least-squares fitting to predict the value for the independent and dependent variables
 			std::vector<double> prevStates;
-			int first = static_cast<int>(members.size()) - curveFitMem < 0 ? 0 : static_cast<int>(members.size()) - curveFitMem;
+			int first = static_cast<int>(members.size()) - static_cast<int>(curveFitMem) < 0 ? 0 : members.size() - curveFitMem;
 
 			for(unsigned int n = first; n < members.size(); n++){
 				std::vector<double> ic = members[n].getStateByIx(0);
@@ -292,7 +294,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 			}
 
 			// This will hold the input depVars plus the unused independent variable
-			std::vector<int> allDepVars;
+			std::vector<unsigned int> allDepVars;
 			std::vector<double> predictedIC;
 			if(std::abs(indVarSlope) > slopeThresh){
 				mirrorType = mirrorTypes[0];
@@ -306,8 +308,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 				if(std::find(depVarIx.begin(), depVarIx.end(), indVar2) == depVarIx.end()){
 					allDepVars.push_back(indVar2);	// only add if it isn't already part of depVarIx
 				}
-				predictedIC = familyCont_LS(indVar1, IC.at(indVar1),
-					allDepVars, prevStates);
+				predictedIC = familyCont_LS(indVar1, IC.at(indVar1), allDepVars, prevStates);
 			}else{
 				mirrorType = mirrorTypes[1];
 				// Use continuation in indVar2
@@ -320,13 +321,12 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 				if(std::find(depVarIx.begin(), depVarIx.end(), indVar1) == depVarIx.end()){
 					allDepVars.push_back(indVar1);	// only add if it isn't already part of depVarIx
 				}
-				predictedIC = familyCont_LS(indVar2, IC.at(indVar2),
-					allDepVars, prevStates);
+				predictedIC = familyCont_LS(indVar2, IC.at(indVar2), allDepVars, prevStates);
 			}
 
 			// Update IC with predicted variables
 			for(unsigned int n = 0; n < allDepVars.size(); n++){
-				int ix = allDepVars[n];
+				unsigned int ix = allDepVars[n];
 				if(ix < 6)
 					IC[ix] = predictedIC[ix];
 				else if(ix == 6)
@@ -345,6 +345,18 @@ void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *
 			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
 			indVarSlope = deltaVar1/deltaVar2;
 		}
+
+		// Update the initial guess
+		halfPerGuess = halfPerCorrected;
+		halfPerGuess.setStateByIx(0, IC);	// Use the new guess for the initial state
+
+		// Change the TOF on the final segment
+		// WARNING - might cause issues of TOF goes negative
+		double dt = tof - halfPerGuess.getTotalTOF();
+		halfPerGuess.getSegRefByIx(-1).setTOF(halfPerGuess.getTOFByIx(-1) + dt);
+		
+		if(halfPerGuess.getTOFByIx(-1)*halfPerCorrected.getTOFByIx(-1) < 0)
+			printWarn("NatParamEngine::generateSymmetricPO_cr3bp: updated TOF has changed sign\n");
 	}// end of while loop
 
 	if(pItData){

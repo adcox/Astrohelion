@@ -80,11 +80,11 @@ class LinMotionEngine : public Core, public Engine{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		int getNumRevs() const;
+		double getNumRevs() const;
 		double getTimeStep() const;
 		double getTol() const;
 
-		void setNumRevs(int);
+		void setNumRevs(double);
 		void setTimeStep(double);
 		void setTol(double);
 		virtual const char* getTypeStr(unsigned int) const;

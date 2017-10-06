@@ -188,8 +188,8 @@ double dateToGST(double yr, double mo, double d, double h, double m, double s){
  *  \throws Exception if the <tt>varHistory</tt> vector contains fewer than 
  *  8 elements or if the <tt>depVars</tt> vector has no data
  */
-std::vector<double> familyCont_LS(int indVarIx, double nextInd, std::vector<int> depVars, std::vector<double> varHistory){
-    const int STATE_SIZE = 8;
+std::vector<double> familyCont_LS(unsigned int indVarIx, double nextInd, std::vector<unsigned int> depVars, std::vector<double> varHistory){
+    const unsigned int STATE_SIZE = 8;
     const double EPS = 1e-14;
 
     if(varHistory.size() < STATE_SIZE)
@@ -836,6 +836,264 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
 
 /**
  *  \ingroup cr3bp
+ *  \brief Generate an arcset that is a suitable guess for a symmetric periodic orbit
+ *  in the CR3BP
+ *  
+ *  \details The output half-period arcset can be passed to <FUNCTION_NAME> for corrections.
+ *  
+ *  Note: This method ignores all crash events, so it is possible to compute a
+ *  periodic orbit that passes through a primary. 
+ *  
+ *  \param pSys the dynamical system
+ *  \param ic non-dimensional initial state vector
+ *  \param period non-dimensional orbit period
+ *  \param numNodes the number of nodes to use for HALF of the periodic orbit; more nodes 
+ *  may result in a more robust correction
+ *  \param order the number of revolutions about the system/primary this orbit completes before
+ *  it repeats periodically. Think of a period-3 DRO (order = 3) or a butterfly (order = 2)
+ *  \param mirrorType how this periodic orbit mirrors in the CR3BP
+ *  \param fixedStates a vector containing the indices of which initial states
+ *  we would like to fix. Not all states are possible for each mirror condition.
+ *  See the enum definition for specific details.
+ *  \param tol tolerance to use in the corrections process
+ *  
+ *  \return An arcset that represents half of the desired periodic orbit and is constrained
+ *  according to the specified mirror conditions
+ *  
+ *  \throws Exception if <tt>mirrorType</tt> is invalid
+ *  \throws DivergeException if the multiple shooting algorithm cannot converge on a 
+ *  mirrored solution.
+ */
+Arcset_cr3bp cr3bp_propSymPO(const SysData_cr3bp *pSys, std::vector<double> ic, double period, unsigned int numNodes,
+    unsigned int order, Mirror_tp mirrorType, std::vector<unsigned int> fixedStates, double tol){
+
+    SimEngine sim;                              // Engine to perform simulation
+    sim.setAbsTol(tol < 1e-12 ? 1e-15 : tol/1000.0);
+    sim.setRelTol(sim.getAbsTol());
+    sim.setMakeDefaultEvents(false);            // Ignore any crashes into the primaries
+    
+    // Determine which states must be zero for mirroring
+    Event mirrorEvt;
+    switch(mirrorType){
+        case Mirror_tp::MIRROR_XZ:
+            mirrorEvt.createEvent(Event_tp::XZ_PLANE, 0, true);     // Tell the sim to quit once it reaches the XZ plane
+            break;
+        case Mirror_tp::MIRROR_YZ:
+            mirrorEvt.createEvent(Event_tp::YZ_PLANE, 0, true);
+            break;
+        case Mirror_tp::MIRROR_XY:
+            mirrorEvt.createEvent(Event_tp::YZ_PLANE, 0, true);
+            break;
+        case Mirror_tp::MIRROR_X_AX_H:
+            mirrorEvt.createEvent(Event_tp::XZ_PLANE, 0, true);
+            break;
+        case Mirror_tp::MIRROR_X_AX_V:
+            mirrorEvt.createEvent(Event_tp::XY_PLANE, 0, true);
+            break;
+        default:
+            throw Exception("Mirror type either not defined or not implemented");
+    }
+
+    mirrorEvt.setStopCount(order);
+    sim.addEvent(mirrorEvt);
+
+    // Run the sim until the event is triggered
+    Arcset_cr3bp halfOrbArc(pSys);
+    sim.runSim_manyNodes(ic, period, numNodes, &halfOrbArc);
+
+    // Check to make sure the simulation ended with the event (not running out of time)
+    if(halfOrbArc.getNodeByIx(-1).getTriggerEvent() != mirrorEvt.getType()){
+        printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
+        // halfOrbArc.saveToMat("halfOrbArc_failedMirror.mat");
+    }
+
+    // Create constraints to ensure the mirroring is preserved and the fixedStates are fixed
+    cr3bp_addMirrorCons(&halfOrbArc, mirrorType, fixedStates);
+
+    // Arcset has been created and constrained
+    return halfOrbArc;
+}//====================================================
+
+Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *halfPerCorrected, Mirror_tp mirrorType,
+    double tol, MultShootData *pItData){
+
+    if(halfPerGuess == nullptr)
+        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a null input pointer for halfPerGuess");
+
+    if(halfPerCorrected == nullptr)
+        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a null input pointer for halfPerCorrected");
+
+    if(halfPerCorrected->getSysData() != halfPerGuess->getSysData())
+        throw Exception("Calculations::cr3bp_getSymPO: input arcsets have different system data objects");
+
+    // Use differential corrections to enforce the mirror conditions
+    MultShootEngine corrector;
+    corrector.setTol(tol);
+    corrector.setIgnoreCrash(true); // Corrector also ignores crash events
+    corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);
+    // corrector.setVerbosity(Verbosity_tp::ALL_MSG);
+
+    // If the user passed in a null pointer, create a temporory data object
+    // on the stack to avoid seg faults, then delete it before exiting to 
+    // avoid memory leaks
+    bool createdTempMSData = false;
+    if(!pItData){
+        createdTempMSData = true;
+        pItData = new MultShootData(halfPerGuess);
+    }
+
+
+    try{
+        // Try once with the standard multiple-shooting parameters
+        *pItData = corrector.multShoot(halfPerGuess, halfPerCorrected);
+        // halfPerCorrected.print();
+        // halfPerCorrected.saveToMat("data/temp_halfPerCorrected.mat");
+    }catch(DivergeException &e){
+        // Try again using a line search
+        corrector.setDoLineSearch(true);
+        corrector.setMaxIts(250);
+        *halfPerCorrected = Arcset_cr3bp(static_cast<const SysData_cr3bp *>(halfPerGuess->getSysData()));   // reset
+        
+        try{
+            corrector.multShoot(halfPerGuess, halfPerCorrected);
+            
+            halfPerCorrected->print();
+        }catch(DivergeException &ee){
+            throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
+        }
+    }
+
+    // Make a copy for the final output periodic orbit
+    Arcset_periodic po(*halfPerCorrected);
+
+    // Make sure the final STM represents the entire evolution of the trajectory
+    po.setSTMs_cumulative();
+
+    halfPerGuess->print();
+    halfPerCorrected->print();
+    halfPerGuess->saveToMat("data/temp_halfPerGuess.mat");
+    halfPerCorrected->saveToMat("data/temp_halfPerCorrected.mat");
+    waitForUser();
+
+    double halfTOF = po.getTimeByIx(-1);
+    int halfPerTraj_len = static_cast<int>(po.getNumNodes());
+    MatrixXRd halfPerSTM = po.getSTMByIx(-1);
+    
+    // Use Mirror theorem to create the second half of the orbit
+    MatrixXRd mirrorMat = getMirrorMat(mirrorType);
+    int prevID = po.getNodeByIx(halfPerTraj_len-1).getID();
+    // po.saveToMat("temp_halfPerTraj.mat");
+    for(int i = halfPerTraj_len-2; i >= 0; i--){
+        // Use mirroring to populate second half of the orbit
+        std::vector<double> state = po.getStateByIx(i);
+        Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
+        Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
+
+        Node node;
+        node.setState(newStateVec.data(), newStateVec.cols());
+        node.setEpoch(2*halfTOF - po.getTimeByIx(i));
+
+        int id = po.addNode(node);
+        // printf("Added node at epoch %.6f\n", node.getEpoch());
+        // fprintf("Adding segment with tof = %.6f\n", po.getEpoch(id) - po.getEpoch(prevID))
+        Segment seg(prevID, id, po.getEpoch(id) - po.getEpoch(prevID));
+        seg.setStateWidth(po.getSegRefByIx(0).getStateWidth());
+        prevID = id;
+        po.addSeg(seg);
+    }
+
+    // waitForUser();
+    // Compute the monodromy matrix from the half-period STM
+    double M_data[] = { 0, 0, 0, -1, 0, 0,
+                        0, 0, 0, 0, -1, 0,
+                        0, 0, 0, 0, 0, -1,
+                        1, 0, 0, 0, -2, 0,
+                        0, 1, 0, 2, 0, 0,
+                        0, 0, 1, 0, 0, 0};
+    // Inverse of M
+    double MI_data[] = {0, -2, 0, 1, 0, 0,
+                        2, 0, 0, 0, 1, 0,
+                        0, 0, 0, 0, 0, 1,
+                        -1, 0, 0, 0, 0, 0,
+                        0, -1, 0, 0, 0, 0,
+                        0, 0, -1, 0, 0, 0};
+    MatrixXRd M = Eigen::Map<MatrixXRd>(M_data, 6, 6);
+    MatrixXRd MI = Eigen::Map<MatrixXRd>(MI_data, 6, 6);
+    
+    MatrixXRd monoMat(6,6);
+    monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
+
+    // Set final STM of mirrored trajectory to the one computed here
+    po.setSTMByIx(-1, monoMat);
+    
+    if(createdTempMSData){
+        delete pItData;
+        pItData = nullptr;
+    }
+    return po;     // Now contains entire trajectory
+}//====================================================
+
+void cr3bp_addMirrorCons(Arcset_cr3bp *pArc, Mirror_tp mirrorType, std::vector<unsigned int> fixedStates){
+    // Determine which states must be zero for mirroring
+    std::vector<double> conData0(6, NAN);
+    switch(mirrorType){
+        case Mirror_tp::MIRROR_XZ:
+            conData0[1] = 0; // y
+            conData0[3] = 0; // x-dot
+            conData0[5] = 0; // z-dot
+            break;
+        case Mirror_tp::MIRROR_YZ:
+            conData0[0] = 0;    // x
+            conData0[4] = 0;    // y-dot
+            conData0[5] = 0;    // z-dot
+            break;
+        case Mirror_tp::MIRROR_XY:
+            conData0[2] = 0;    // z
+            conData0[3] = 0;    // x-dot
+            conData0[4] = 0;    // y-dot
+            break;
+        case Mirror_tp::MIRROR_X_AX_H:
+            conData0[1] = 0;    // y
+            conData0[2] = 0;    // z
+            conData0[3] = 0;    // x-dot
+            break;
+        case Mirror_tp::MIRROR_X_AX_V:
+            conData0[1] = 0;    // y
+            conData0[2] = 0;    // z
+            conData0[3] = 0;    // x-dot
+            break;
+        default:
+            throw Exception("Calculations::cr3bp_addMirrorCons: Mirror type not defined");
+    }
+
+    std::vector<double> conDataf = conData0;    // Same states must be zero at the halfway point
+
+    // Constrain initial node as desired
+    std::vector<double> ic = pArc->getStateByIx(0);
+    for(unsigned int i = 0; i < fixedStates.size(); i++){
+        bool okToFix = true;
+        for(unsigned int n = 0; n < conData0.size(); n++){
+            if(!std::isnan(conData0[fixedStates[i]])){
+                printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring\n", fixedStates[i]);
+                okToFix = false;
+                break;
+            }
+        }
+        if(okToFix){
+            conData0[fixedStates[i]] = ic[fixedStates[i]];
+        }
+    }
+
+    Constraint con_0(Constraint_tp::STATE, pArc->getNodeRefByIx(0).getID(), conData0);
+    Constraint con_f(Constraint_tp::STATE, pArc->getNodeRefByIx(-1).getID(), conDataf);
+    pArc->getNodeRefByIx(0).clearConstraints();
+    pArc->getNodeRefByIx(-1).clearConstraints();
+    pArc->addConstraint(con_0);
+    pArc->addConstraint(con_f);
+}//====================================================
+
+/**
+ *  \ingroup cr3bp
  *  \brief Compute a periodic orbit in the CR3BP system
  *  \details This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary
@@ -999,6 +1257,7 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
         
         try{
             corrector.multShoot(&halfOrbArc, &correctedHalfPer);
+            
             correctedHalfPer.print();
         }catch(DivergeException &ee){
             throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
@@ -1007,6 +1266,11 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
 
     // Make sure the final STM represents the entire evolution of the trajectory
     correctedHalfPer.setSTMs_cumulative();
+
+    correctedHalfPer.saveToMat("data/temp_correctedHalfPer.mat");
+    halfOrbArc.saveToMat("data/temp_halfOrbArc.mat");
+
+    waitForUser();
 
     double halfTOF = correctedHalfPer.getTimeByIx(-1);
     int halfPerTraj_len = static_cast<int>(correctedHalfPer.getNumNodes());
@@ -1064,7 +1328,7 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
         pItData = nullptr;
     }
     return correctedHalfPer;     // Now contains entire trajectory
-}//================================================
+}//====================================================
 
 /**
  *  \ingroup cr3bp

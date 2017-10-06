@@ -45,6 +45,7 @@ public:
 	 */
 	Arcset_periodic(const SysData*);
 	Arcset_periodic(const Arcset_periodic&);
+	Arcset_periodic(const Arcset&);
 	~Arcset_periodic();
 	//\}
 

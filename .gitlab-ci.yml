@@ -2,7 +2,6 @@ cache:
   paths:
     - /builds/adcox/Astrohelion/deps/
     - /builds/adcox/Astrohelion/data/
-    # - /root/.config/astrohelion/
 
 install-deps:
   stage: build
@@ -10,11 +9,9 @@ install-deps:
   script:
     - pushd tests/gitlabCI
     - sh installDeps.sh
-  # artifacts:
-  #   paths:
-  #     - /builds/adcox/Astrohelion/deps/
-  #     - /root/.config/astrohelion/
-  #   expire_in: 2 month
+  only:
+    - master
+    - mainDev
 
 unit-test:
   stage: test
@@ -31,6 +28,9 @@ unit-test:
     - make run
   dependencies:
     - install-deps
+  only:
+    - master
+    - mainDev
 
 pages:
   stage: build

@@ -100,7 +100,7 @@ class ContinuationEngine : public Core, public Engine{
 		 * 
 		 *  \param num number of nodes to use in multiple shooting corrections
 		 */
-		void setNumNodes(int num){ numNodes = num; }
+		void setNumNodes(unsigned int num){ numNodes = num; }
 
 		/**
 		 *  \brief Set the number of orbits to generate
@@ -111,7 +111,7 @@ class ContinuationEngine : public Core, public Engine{
 		 * 
 		 *  \param num maximum number of orbits to generate via continuation
 		 */
-		void setNumOrbits(int num){ numOrbits = num; }
+		void setNumOrbits(unsigned int num){ numOrbits = num; }
 
 		/**
 		 *  \brief Set the numerical tolerance
@@ -143,8 +143,8 @@ class ContinuationEngine : public Core, public Engine{
 		
 		double minStepSize = 1e-6;		//!< Minimum allowable step size
 		double maxStepSize = 0.05;		//!< Maximum allowable step size
-		double numOrbits = 500;			//!< Maximum number of orbits in the continuation
-		double numNodes = 3;			//!< Number of nodes to use on each trajectory
+		unsigned int numOrbits = 500;	//!< Maximum number of orbits in the continuation
+		unsigned int numNodes = 3;		//!< Number of nodes to use on each trajectory
 		double tol = 1e-12;				//!< Tolerance for corrections
 
 		/**
@@ -160,6 +160,8 @@ class ContinuationEngine : public Core, public Engine{
 		virtual void copyMe(const ContinuationEngine &engine){
 			Engine::copyBaseEngine(engine);
 			tol = engine.tol;
+			minStepSize = engine.minStepSize;
+			maxStepSize = engine.maxStepSize;
 			numOrbits = engine.numOrbits;
 			numNodes = engine.numNodes;
 		}//============================================

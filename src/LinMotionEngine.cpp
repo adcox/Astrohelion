@@ -48,7 +48,7 @@ namespace astrohelion{
  *
  *	\return the number of rotatins to simulate for
  */
-int LinMotionEngine::getNumRevs() const { return revs; }
+double LinMotionEngine::getNumRevs() const { return revs; }
 
 /**
  *	\brief Retrieve the step size (in non-dimensional units) for the time vector
@@ -72,7 +72,7 @@ double LinMotionEngine::getTol() const { return tol; }
  *	out-of-plane period
  *	\param numRevs number of revolutions
  */
-void LinMotionEngine::setNumRevs(int numRevs) { revs = numRevs; }
+void LinMotionEngine::setNumRevs(double numRevs) { revs = numRevs; }
 
 /**
  *	\brief Set the step size for the time vector

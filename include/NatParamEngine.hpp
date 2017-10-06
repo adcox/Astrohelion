@@ -39,8 +39,8 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	void setCurveFitMem(int);
-	void setNumSimple(int);
+	void setCurveFitMem(unsigned int);
+	void setNumSimple(unsigned int);
 	void setSlopeThresh(double);
 	void setStep_simple(double);
 	void setStep_fitted_1(double);
@@ -51,7 +51,7 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void continuePeriodic_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<int>, std::vector<int>, int order = 1);
+	void generateSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<unsigned int>, std::vector<unsigned int>, int order = 1);
 	//\}
 
 	/**
@@ -64,8 +64,8 @@ public:
 	//\}
 
 private:
-	int curveFitMem = 5;			//!< Number of points to use with Least-Squares algorithm
-	int numSimple = 3;				//!< Number of simply-continued family members
+	unsigned int curveFitMem = 5;			//!< Number of points to use with Least-Squares algorithm
+	unsigned int numSimple = 3;				//!< Number of simply-continued family members
 	double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 	double step_simple = 5e-4;		//!< Step size in the independent variable when using simple continuation
 	double step_fitted_1 = 5e-3;	//!< Step size in first ind. var. when using advanced continuation

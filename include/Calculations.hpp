@@ -86,7 +86,7 @@ enum class EigValSet_tp{
 double dateToEphemerisTime(const char*);
 double dateToGST(double, double, double, double, double, double);
 double gregorianToJulian(double, double, double, double, double, double);
-std::vector<double> familyCont_LS(int, double, std::vector<int>, std::vector<double>);
+std::vector<double> familyCont_LS(unsigned int, double, std::vector<unsigned int>, std::vector<double>);
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
@@ -128,6 +128,10 @@ Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp, double, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3bp*, double, double, int);
 Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double tol = 1e-12);
 Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double tol = 1e-12, MultShootData *pItData = nullptr);
+
+void cr3bp_addMirrorCons(Arcset_cr3bp*, Mirror_tp, std::vector<unsigned int>);
+Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp*, Arcset_cr3bp*, Mirror_tp, double tol = 1e-12, MultShootData *pItData = nullptr);
+Arcset_cr3bp cr3bp_propSymPO(const SysData_cr3bp*, std::vector<double>, double, unsigned int, unsigned int, Mirror_tp, std::vector<unsigned int>, double tol = 1e-12);
 /** \} */
 
 /**

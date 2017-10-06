@@ -40,6 +40,7 @@ class DynamicsModel;
 struct EOM_ParamStruct;
 
 /**
+ *  \ingroup engine
  *  \brief Describe the type of linear motion to construct
  *  \details
  *  
@@ -57,7 +58,12 @@ public:
  */
 class LinMotionEngine_cr3bp : public LinMotionEngine{
 	public:
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		LinMotionEngine_cr3bp();
+		//\}
 
 		/**
 		 *  \name Set and Get Functions
@@ -70,18 +76,23 @@ class LinMotionEngine_cr3bp : public LinMotionEngine{
 		//\}
 
 		/**
-		 *  \name Orbit Generation
+		 *  \name Analysis Functions
 		 *  \{
 		 */
 		void getLinear(int, double[3], unsigned int, Arcset_cr3bp*, unsigned int numNodes = 2);
 		void getLinear(int, double[3], double, double, unsigned int, Arcset_cr3bp*, unsigned int numNodes = 2);
 		void getLiss(int, double, bool, double, double, double, Arcset_cr3bp*, unsigned int numNodes = 2);
-		void saveData(const DynamicsModel*, Arcset_cr3bp*, const double&, std::vector<double>*,
+		void storeData(const DynamicsModel*, Arcset_cr3bp*, const double&, std::vector<double>*,
 			unsigned int&, EOM_ParamStruct*, const double&, const double&,
 			const unsigned int&, const unsigned int&);
 		//\}
 	
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void reset();
+		//\}
 	private:
 		/** Ratio between SPO and LPO behavior when constructing an MPO */
 		double nu = 1;

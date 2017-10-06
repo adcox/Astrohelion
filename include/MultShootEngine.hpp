@@ -84,8 +84,12 @@ class MultShootEngine : public Core, public Engine{
 		~MultShootEngine();
 		//\}
 
-		// Operators
+		/**
+		 * \name Operators
+		 * \{
+		 */
 		MultShootEngine& operator =(const MultShootEngine &e);
+		//\}
 
 		/**
 		 *  \name Set and Get Functions
@@ -111,7 +115,7 @@ class MultShootEngine : public Core, public Engine{
 		//\}
 
 		/**
-		 *  \name Correction Algorithms
+		 *  \name Analysis Functions
 		 *  \{
 		 */
 		MultShootData multShoot(const Arcset*, Arcset*);
@@ -167,14 +171,24 @@ class MultShootEngine : public Core, public Engine{
 		/** Whether or not to use a rough line search to choose the size of the Newton step. Default is false*/
 		bool bLineSearchStepSize = false;
 
+		/**
+		 * \name Analysis Functions
+		 * \{
+		 */
 		void checkDFSingularities(MatrixXRd);
 		void chooseStep_LineSearch(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
-		void cleanEngine();
-		void copyMe(const MultShootEngine&);
 		void propSegsFromFreeVars(MultShootData*, SimEngine*);
 		void reportConMags(const MultShootData*);
 		void solveUpdateEq(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
-		
+		//\}
+
+		/**
+		 * \name Utility Functions
+		 * \{
+		 */
+		void cleanEngine();
+		void copyMe(const MultShootEngine&);
+		//\}
 };
 
 }// END of Astrohelion namespace

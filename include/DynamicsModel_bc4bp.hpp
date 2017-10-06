@@ -55,10 +55,15 @@ public:
 	~DynamicsModel_bc4bp() {}
 	//\}
 
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
 	DynamicsModel_bc4bp& operator=(const DynamicsModel_bc4bp&);
+	//\}
 
 	/**
-	 *  \name Core Functions
+	 *  \name Core Analysis Functions
 	 *  \{
 	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
@@ -72,7 +77,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Static Calculations
+	 *  \name Equations of Motion
 	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
@@ -81,14 +86,14 @@ public:
 	//\}
 	
 	/**
-	 *  \name Simulation Support Functions
+	 *  \name Simulation Analysis Functions
 	 *  \{
 	 */
 	int sim_addNode(Node&, const double*, double, Arcset*, EOM_ParamStruct*, Event_tp) const;
 	//\}
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	void multShoot_initDesignVec(MultShootData*) const override;
@@ -103,7 +108,7 @@ public:
 protected:
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	void multShoot_targetApse(MultShootData*, const Constraint&, int) const override;

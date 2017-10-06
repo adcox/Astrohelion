@@ -379,7 +379,7 @@ BOOST_DATA_TEST_CASE_F(fixture_SEM_Init, BC4BP_SEM_TOF, data::make(tofTypes), to
 	corrector->setTOFType(tofTp);
 
 	double tofData = 340.0;
-	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
+	Constraint tofCon(Constraint_tp::TOF_TOTAL, 0, &tofData, 1);
 	halfLyapSet->addConstraint(tofCon);
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));

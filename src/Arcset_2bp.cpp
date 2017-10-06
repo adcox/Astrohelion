@@ -38,9 +38,9 @@ namespace astrohelion{
 
 /**
  *	\brief Create an arcset with specified system data
- *	\param pData system data object
+ *	\param pSys system data object
  */
-Arcset_2bp::Arcset_2bp(const SysData_2bp *pData) : Arcset(pData){}
+Arcset_2bp::Arcset_2bp(const SysData_2bp *pSys) : Arcset(pSys){}
 
 /**
  *	\brief Copy input arcset. 

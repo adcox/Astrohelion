@@ -74,15 +74,23 @@ enum class SysData_tp {
 class SysData : public Core{
 
 	public:
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		SysData();
 		SysData(const SysData&);
 		virtual ~SysData();
-		
+		//\}
 
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		SysData& operator =(const SysData&);
-
 		friend bool operator ==(const SysData&, const SysData&);
 		friend bool operator !=(const SysData&, const SysData&);
+		//\}
 
 		/**
 		 *  \name Set and Get Functions
@@ -105,8 +113,17 @@ class SysData : public Core{
 		std::string getTypeStr() const;
 		//\}
 		
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		virtual void print() const;
-		
+		//\}
+
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		virtual void saveToMat(const char*) const;
 
 		/**
@@ -114,7 +131,8 @@ class SysData : public Core{
 		 *	\param matFile a pointer to an open mat file
 		 */
 		virtual void saveToMat(mat_t *matFile) const = 0;
-		
+		//\}
+
 	protected:
 		/** Number of primaries that exist in this system */
 		int numPrimaries = 0;
@@ -140,13 +158,23 @@ class SysData : public Core{
 		/** The type of system this data object describes */
 		SysData_tp type = SysData_tp::UNDEF_SYS;
 
-		void copyData(const SysData&);
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
+		void copyMe(const SysData&);
+		//\}
 
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		/**
 		 *  \brief Read the system data object from a Matlab data file
 		 *  \param matfile A pointer to the open matfile
 		 */
 		virtual void readFromMat(mat_t *matfile) = 0;
+		//\}
 };
 
 }// END of Astrohelion namespace

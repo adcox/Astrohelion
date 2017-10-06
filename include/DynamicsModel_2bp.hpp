@@ -53,10 +53,15 @@ public:
 	~DynamicsModel_2bp() {}
 	//\}
 
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
 	DynamicsModel_2bp& operator=(const DynamicsModel_2bp&);
+	//\}
 
 	/**
-	 *  \name Core Functions
+	 *  \name Core Analysis Functions
 	 *  \{
 	 */
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
@@ -69,27 +74,26 @@ public:
 	//\}
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	void multShoot_initIterData(MultShootData *it) const;
 	//\}
 	
 	/**
-	 * \name Simulation Support Functions
+	 * \name Simulation Analysis Functions
 	 */
 		// Use the default Base class functions
 	//\}
 
 	/**
-	 *  \name Static Calculations
+	 *  \name Equations of Motion
 	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
 	static void getUDDots(double, double, double, double, double*);
 	//\}
-protected:
 
 };
 

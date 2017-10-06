@@ -1,16 +1,11 @@
 /**
- *  \file LinMotionEngine_cr3bp_lt.hpp
- *	\brief 
- *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ * \file Family_PO_cr3bp.hpp
  */
 /*
  *	Astrohelion 
  *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
  *	
- *	This file is part of Astrohelion
+ *	This file is part of the Astrohelion.
  *
  *  Astrohelion is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,33 +20,21 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
-#include "LinMotionEngine.hpp"
+#include "Family_PO_cr3bp.hpp"
 
 namespace astrohelion{
 
-// Forward declarations
-class Arcset_cr3bp_lt;
-class ControlLaw_cr3bp_lt;
-
-/**
- *  \ingroup engine
- *  \brief Linear motion engine for the CR3BP-LT
- *  \details [long description]
- *  \return [description]
- */
-class LinMotionEngine_cr3bp_lt : public LinMotionEngine{
+class Family_PO_cr3bp_lt : public Family_PO_cr3bp{
 	public:
-		LinMotionEngine_cr3bp_lt();
-
 		/**
 		 *  \name Analysis Functions
-		 *  \{
-		 */
-		void getLinear(double[3], double, double, double[3], unsigned int, Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*, unsigned int numNodes = 2);
+		 *  \
+		 */		
+		std::vector<Arcset_periodic> getMemberByThrustMag(double) const;
+		std::vector<Arcset_periodic> getMemberByThrustAngle(double, double beta = 0) const;
 		//\}
 };
 
-}// END of astrohelion namespace
+}// End of astrohelion namespace

@@ -149,7 +149,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Core Functions
+	 *  \name Core Analysis Functions
 	 *  \{
 	 */
 
@@ -238,7 +238,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 
@@ -272,7 +272,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Simulation Support Functions
+	 *  \name Simulation Analysis Functions
 	 *  \{
 	 */
 
@@ -313,7 +313,7 @@ protected:
 		Constraint_tp::MAX_DIST,
 		Constraint_tp::MAX_DELTA_V,
 		Constraint_tp::DELTA_V,
-		Constraint_tp::TOF,
+		Constraint_tp::TOF_TOTAL,
 		Constraint_tp::APSE,
 		Constraint_tp::CONT_CTRL,
 		Constraint_tp::CONT_PV,
@@ -343,7 +343,7 @@ protected:
 	void copyMe(const DynamicsModel&);
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	virtual void multShoot_targetApse(MultShootData*, const Constraint&, int) const;

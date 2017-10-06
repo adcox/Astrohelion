@@ -48,7 +48,7 @@ class SysData;
 class ControlLaw : public Core{
 public:
 	/**
-	 *  \name Constructors
+	 *  \name *structors
 	 *  \{
 	 */
 	ControlLaw(unsigned int id = NO_CTRL, std::vector<double> params = {});
@@ -80,7 +80,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Dynamics Functions
+	 *  \name Analysis Functions
 	 *  \{
 	 */
 	virtual void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
@@ -88,22 +88,26 @@ public:
 	virtual void getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
 	virtual void getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const;
 	virtual void getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const;
-	
-
-	static std::string lawTypeToString(unsigned int);
 	//\}
 
 	/**
 	 *  \name Utility Functions
 	 *  \{
 	 */
+	static std::string lawTypeToString(unsigned int);
 	virtual void print() const;
 	//\}
+	
 	const static unsigned int NO_CTRL = 0;	//!< Value to use for the control law ID when no control law is implemented
 
 protected:
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	virtual void init();
 	void copyMe(const ControlLaw&);
+	//\}
 
 	unsigned int lawType = NO_CTRL;		//!< Value identifying the specific control forumalation to apply
 	unsigned int numStates = 0;			//!< Number of control states

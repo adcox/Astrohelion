@@ -47,7 +47,7 @@ class SysData_cr3bp_lt;
 class ControlLaw_cr3bp_lt : public ControlLaw{
 public:
 	/**
-	 *  \name Constructors
+	 *  \name *structors
 	 *  \{
 	 */
 	ControlLaw_cr3bp_lt(unsigned int id = NO_CTRL, std::vector<double> params = {});
@@ -68,7 +68,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Dynamics Functions
+	 *  \name Analysis Functions
 	 *  \{
 	 */
 	void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
@@ -115,7 +115,17 @@ public:
 	};
 protected:
 
+	/**
+	 *  \name *structors
+	 *  \{
+	 */
 	void init() override;
+	//\}
+
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
 	void getAccel_AlongVel(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccel_ConstC_2D(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int, int) const;
 	void getAccel_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
@@ -128,6 +138,7 @@ protected:
 
 	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
 	static void convertTo_GeneralConstF(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
+	//\}
 };
 
 }// End of astrohelion namespace

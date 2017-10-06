@@ -190,7 +190,7 @@ std::vector<FamMember_cr3bp> Fam_cr3bp::getMemberByTOF(double tof) const{
 		allTOF.push_back(members[n].getTOF());
 	}
 
-	Constraint tofCon(Constraint_tp::TOF, 0, &tof, 1);
+	Constraint tofCon(Constraint_tp::TOF_TOTAL, 0, &tof, 1);
 
 	return getMatchingMember(tof, &allTOF, tofCon);
 }//==============================================

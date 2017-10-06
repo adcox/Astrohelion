@@ -30,7 +30,7 @@
 #include <Eigen/Eigenvalues>
 #include <iostream>
 
-#include "FamMember_cr3bp.hpp"
+#include "old_FamMember_cr3bp.hpp"
 
 #include "Common.hpp"
 #include "Exceptions.hpp"

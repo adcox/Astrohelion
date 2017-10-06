@@ -44,31 +44,45 @@ namespace astrohelion{
 		static const int INVALID_ID;	//!< Reserved ID value
 		static const int NUM_LINKS;		//!< Number of links stored by a linkable object
 
-		// *structors
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		Linkable();
 		Linkable(const Linkable&);
 		virtual ~Linkable();
-		
-		// Operators
+		//\}
+
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		Linkable& operator =(const Linkable&);
 		friend bool operator ==(const Linkable&, const Linkable&);
 		friend bool operator !=(const Linkable&, const Linkable&);
-		
+		//\}
+
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		virtual void addLink(int);
-		void clearLinks();
 		int getID() const;
 		int getLink(int) const;
 		int getLinkIx(int) const;
 		bool isLinkedTo(int) const;
-		virtual void removeLink(int);
+		
 		virtual void setID(int); 
 		virtual void setLink(int, int);
 		//\}
 		
+		/**
+		 *  \name Analysis Functions
+		 *  \{
+		 */
+		virtual void addLink(int);
+		void clearLinks();
+		virtual void removeLink(int);
+		//\}
 	protected:
 		int ID = INVALID_ID;	//!< The ID associated with this object
 		
@@ -78,6 +92,11 @@ namespace astrohelion{
 		 */
 		int links[2] = {INVALID_ID, INVALID_ID};
 
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void copyMe(const Linkable&);
+		//\}
 	};
 }

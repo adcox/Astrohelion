@@ -253,7 +253,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::SP_RANGE: { return "SP_RANGE"; }
 		case Constraint_tp::SP_DIST: { return "SP_DIST"; }
 		case Constraint_tp::SP_MAX_DIST: { return "SP_MAX_DIST"; }
-		case Constraint_tp::TOF: { return "TOF"; }
+		case Constraint_tp::TOF_TOTAL: { return "TOF"; }
 		case Constraint_tp::APSE: { return "APSE"; }
 		case Constraint_tp::CONT_CTRL: { return "CONTINUOUS CONTROL STATES"; }
 		case Constraint_tp::CONT_PV: { return "CONTINUOUS SEG2NODE_POSITION_VELOCITY"; }
@@ -305,7 +305,7 @@ void Constraint::print() const {
 void Constraint::setAppType(){
 	switch(type){
 		case Constraint_tp::PSEUDOARC:
-		case Constraint_tp::TOF:
+		case Constraint_tp::TOF_TOTAL:
 		case Constraint_tp::MAX_DELTA_V:
 		case Constraint_tp::DELTA_V:
 		case Constraint_tp::SEG_CONT_PV:

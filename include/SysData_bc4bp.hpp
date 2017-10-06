@@ -59,14 +59,18 @@ class SysData_bc4bp : public SysData{
 		SysData_bc4bp(const char*);
 		//\}
 
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		SysData_bc4bp& operator=(const SysData_bc4bp&);
-		
-		const DynamicsModel* getDynamicsModel() const;
+		//\}
 
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
+		const DynamicsModel* getDynamicsModel() const;
 		double getMu() const;
 		double getNu() const;
 		double getK() const;
@@ -83,8 +87,13 @@ class SysData_bc4bp : public SysData{
 		void setGamma(double g);
 		//\}
 		
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
+		//\}
 
 		/** Time when geometry is at reference orientation (theta = phi = 0), seconds, J2000, UTC */
 		static double REF_EPOCH;	// 2005/06/21 18:21:35
@@ -93,8 +102,19 @@ class SysData_bc4bp : public SysData{
 		/** The dynamic model that governs motion for this system*/
 		DynamicsModel_bc4bp model = DynamicsModel_bc4bp();
 
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		void initFromPrimNames(std::string, std::string, std::string);
+		//\}
+
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		void readFromMat(mat_t*);
+		//\}
 };
 
 }// END of Astrohelion namespace

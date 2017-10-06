@@ -77,7 +77,13 @@ class BodyData : public Core{
 		void setParent(std::string);
 		/** \} */
 		
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void print();
+		//\}
+
 	private:
 		/** Mean radius of the body, km */
 		double bodyRad = 0;
@@ -104,7 +110,12 @@ class BodyData : public Core{
 		/** Name of the parent body */
 		std::string parent = "NULL";
 
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		void initFromID(int);
+		//\}
 };
 
 }// END of Astrohelion namespace

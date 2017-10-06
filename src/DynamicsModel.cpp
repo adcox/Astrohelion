@@ -541,7 +541,7 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData *pIt, const Constrai
 		case Constraint_tp::MAX_DELTA_V:
 			multShoot_targetDeltaV(pIt, con, c);
 			break;
-		case Constraint_tp::TOF:
+		case Constraint_tp::TOF_TOTAL:
 			multShoot_targetTOF(pIt, con, row0);
 			break;
 		case Constraint_tp::APSE:

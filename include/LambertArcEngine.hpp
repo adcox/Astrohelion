@@ -53,22 +53,37 @@ class LambertArcEngine : public Core, public Engine{
 
 public:
 
+	/**
+	 *  \name *structors
+	 *  \{
+	 */
 	LambertArcEngine();
 	LambertArcEngine(const LambertArcEngine&);
+	//\}
 
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
 	LambertArcEngine& operator =(const LambertArcEngine&);
+	//\}
 
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
 	Arcset_2bp getLambertArc(SysData_2bp*, std::vector<double>, std::vector<double>, double, unsigned int);
+	//\}
 
+	/**
+	 *  \name Set and Get Functions
+	 *  \{
+	 */
 	void setMaxErr_tof(double);
 	void setMaxErr_ta(double);
 	void setMaxIts(unsigned int);
-
+	//\}
 private:
-
-	void cleanEngine();
-	void reset();
-	void copyMe(const LambertArcEngine&);
 
 	/** Maximum acceptable error in time-of-flight, seconds */
 	double tof_maxErr = 1e-3;
@@ -79,7 +94,14 @@ private:
 	/** Maximum number of iterations to solve the Lambert problem */
 	unsigned int maxIts = 100;
 
-
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
+	void cleanEngine();
+	void reset();
+	void copyMe(const LambertArcEngine&);
+	//\}
 
 };
 

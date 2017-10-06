@@ -92,7 +92,7 @@ enum class Constraint_tp : int{
 				 				 *	first value in the data vector be the maximum delta-V in 
 				 				 *	non-dimensional velocity units
 				 				 */
-	TOF = 10,					/*!< Constrain the trajectory to have a total time-of-flight
+	TOF_TOTAL = 10,				/*!< Constrain the trajectory to have a total time-of-flight
 				 				 *	The index of the node is unused, and <tt>data</tt> holds the
 				 				 *	value for the total TOF in non-dimensional units
 				 				 */
@@ -296,14 +296,17 @@ class Constraint : public Core{
 		~Constraint();
 		//\}
 
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		Constraint& operator =(const Constraint&);
+		//\}
 
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		int countConstrainedStates() const;
-		
 		ConstraintApp_tp getAppType() const;
 		static const char* getAppTypeStr(ConstraintApp_tp);
 		static const char* getConTypeStr(Constraint_tp);
@@ -321,19 +324,37 @@ class Constraint : public Core{
 		//\}
 
 		/**
+		 *  \name Analysis Functions
+		 *  \{
+		 */
+		int countConstrainedStates() const;
+		//\}
+
+		/**
 		 *  \name Utility Functions
 		 *  \{
 		 */
 		void print() const;
 		//\}
 	private:
-		void copyMe(const Constraint&);
-		void setAppType();
-
 		Constraint_tp type = Constraint_tp::NONE;		//!< The type of constraint
 		ConstraintApp_tp appType = ConstraintApp_tp::APP_TO_NODE;	//!< How this constraint is applied
 		int id = 0;						//!< object ID that this constraint applies to
 		std::vector<double> data {};			//!< Data for this constraint
+
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
+		void copyMe(const Constraint&);
+		//\}
+
+		/**
+		 *  \name Set and Get Functions
+		 *  \{
+		 */
+		void setAppType();
+		//\}
 };
 
 }// END of Astrohelion namespace

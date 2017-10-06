@@ -99,7 +99,7 @@ const char* LinMotionEngine_cr3bp::getTypeStr(unsigned int type) const{
  *  \param core_dim dimension of the core state
  *  \param full_dim dimension of the full state (core + control + stm + extras)
  */
-void LinMotionEngine_cr3bp::saveData(const DynamicsModel *model, Arcset_cr3bp *pArc, const double &t, std::vector<double> *pState,
+void LinMotionEngine_cr3bp::storeData(const DynamicsModel *model, Arcset_cr3bp *pArc, const double &t, std::vector<double> *pState,
 	unsigned int &nodeCount, EOM_ParamStruct *eomParams, const double& dt, const double &t_step,
 	const unsigned int &core_dim, const unsigned int &full_dim){
 
@@ -205,7 +205,7 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
 			state[1] += LPtPos[1];
 			state[2] += LPtPos[2];
 
-			saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+			storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 		}
 
 		// Add a final node
@@ -328,7 +328,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 					state[4] = -s*eta0*sin(s*t) - s*beta3*xi0*cos(s*t);
 					state[5] = -w_z*Az*cos(w_z*t + psi);
 
-					saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+					storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 				}
 				break;
 			}
@@ -348,7 +348,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 					state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 					state[5] = -w_z*Az*cos(w_z*t + psi);
 
-					saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+					storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 				}
 	            break;
 			}
@@ -396,7 +396,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 						state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+						storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
                 	break;
                 case LinMotion_tp::NONE: // for default behavior
@@ -412,7 +412,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 						state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+						storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
                 	break;
 				case LinMotion_cr3bp_tp::MPO:
@@ -433,7 +433,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 						state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+						storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
                 	break;
                 }
@@ -455,7 +455,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 				state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 				state[5] = -w_z*Az*cos(w_z*t + psi);
 
-				saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+				storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 			}
 		}else{
 			// Case III
@@ -478,7 +478,7 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi
 	                    state[2] = Az*sin(w_z*t + psi) + LPtPos[2];
 						state[5] = -w_z*Az*cos(w_z*t + psi);
 
-						saveData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
+						storeData(model, pArc, t, &state, nodeCount, &eomParams, dt, t_step, core_dim, full_dim);
 					}
 					break;	
 				case LinMotion_tp::UNSTAB_OSC:

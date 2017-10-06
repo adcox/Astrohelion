@@ -143,17 +143,22 @@ class Event : public Core{
 		~Event();
 		//\}
 
-		// Operators
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		Event& operator =(const Event&);
 		friend bool operator ==(const Event&, const Event&);
 		friend bool operator !=(const Event&, const Event&);
-		
+		//\}
+
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
 		std::vector<double> getConData() const;
 		Constraint_tp getConType() const;
+		static const char* getEventTpStr(Event_tp);
 		int getTriggerDir() const;
 		int getStopCount() const;
 		int getTriggerCount() const;
@@ -161,21 +166,29 @@ class Event : public Core{
 		const char* getTypeStr() const;
 		const SysData* getSysData();
 
-		void incrementCount();
-		void reset();
-		bool stopOnEvent() const;
-
 		void setTriggerDir(int);
 		void setStopCount(int);
 		void setStopOnEvent(bool);
+
+		bool stopOnEvent() const;
 		//\}
 
-		static const char* getEventTpStr(Event_tp);
-
+		/**
+		 *  \name Analysis Functions
+		 *  \{
+		 */
 		bool crossedEvent(const double*, unsigned int, double, int) const;
+		void incrementCount();
+		void reset();
 		void updateDist(const double*, unsigned int, double);
+		//\}
 
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void printStatus() const;
+		//\}
 	private:
 
 		Event_tp type = Event_tp::NONE; //!< The type of event this is
@@ -207,10 +220,27 @@ class Event : public Core{
 		
 		SysData* pSysData = nullptr; 	//!< Copy of the system data pointer
 
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void copyMe(const Event&);
+		//\}
+
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		void initEvent(Event_tp, int, bool, std::vector<double>);
+		//\}
+
+		/**
+		 *  \name Analysis Functions
+		 *  \{
+		 */
 		double getDist(const double*, unsigned int, double) const;
 		int getDir(int) const;
+		//\}
 };
 
 }

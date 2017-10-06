@@ -31,12 +31,13 @@
 #include "FamGenerator.hpp"
 
 #include "AsciiOutput.hpp"
+#include "Arcset_periodic.hpp"
 #include "BodyData.hpp"
 #include "Constraint.hpp"
 #include "Event.hpp"
 #include "EigenDefs.hpp"
 #include "Fam_cr3bp.hpp"
-#include "FamMember_cr3bp.hpp"
+#include "old_FamMember_cr3bp.hpp"
 #include "LinMotionEngine_cr3bp.hpp"
 #include "MultShootData.hpp"
 #include "Arcset_cr3bp.hpp"
@@ -1126,7 +1127,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		extraCon = Constraint(Constraint_tp::STATE, 0, extraCon_data, 6);
 	}else if(fixToVal_ix == 6){
 		double val = fixToVal_val;
-		extraCon = Constraint(Constraint_tp::TOF, 0, &val, 1);
+		extraCon = Constraint(Constraint_tp::TOF_TOTAL, 0, &val, 1);
 	}else if(fixToVal_ix == 7){
 		double val = fixToVal_val;
 		extraCon = Constraint(Constraint_tp::JC, 0, &val, 1);
@@ -1385,7 +1386,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		// the full periodic orbit. The default functionality stores each 
 		// Segment STM, so the final STM merely represents the evolution of the
 		// final segment.
-		perOrbit.setSTMs_parallel();
+		perOrbit.setSTMs_cumulative();
 		perOrbit.saveToMat("temp_perOrbit_pac.mat");
 
 		if(perOrbit.getTotalTOF()*tof0 < 0){

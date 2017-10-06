@@ -9,17 +9,38 @@
 
 #pragma once
 
+#include <vector>
+
+#include "ContinuationEngine.hpp"
+
 namespace astrohelion{
 
+// Forward Declarations
+class Family_PO;
+class Arcset_cr3bp;
+class Arcset_periodic;
+enum class Mirror_tp;
 
+/**
+ *  \ingroup engine
+ *  \brief Perform natural parameter continuation on various types of structures
+ *  in different models
+ */
 class NatParamEngine : public ContinuationEngine{
 public:
+	/**
+	 *  \name *structors
+	 *  \{
+	 */
 	NatParamEngine();
+	//\}
 
 	/**
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
+	void setCurveFitMem(int);
+	void setNumSimple(int);
 	void setSlopeThresh(double);
 	void setStep_simple(double);
 	void setStep_fitted_1(double);
@@ -27,10 +48,10 @@ public:
 	//\}
 
 	/**
-	 *  \name Continuation Functions
+	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void continuePeriodic_cr3bp(Fam_cr3bp*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<int>, std::vector<int>, int order = 1);
+	void continuePeriodic_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<int>, std::vector<int>, int order = 1);
 	//\}
 
 	/**

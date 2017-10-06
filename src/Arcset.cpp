@@ -39,9 +39,9 @@
 namespace astrohelion{
 
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Constructors and Desctructor
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *	\brief Create a arcset for a specific system
@@ -92,9 +92,9 @@ baseArcsetPtr Arcset::clone() const{
 	return baseArcsetPtr(new Arcset(*this));
 }//====================================================
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Operators
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *  \brief Combine two arcsets.
@@ -131,9 +131,9 @@ Arcset& Arcset::operator +=(const Arcset &rhs){
 	return *this;
 }//====================================================
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Set and Get
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *	\brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
@@ -323,18 +323,18 @@ void Arcset::setTimeByIx(int ix, double t){
  *  is the case if two segments leverage control laws with different 
  *  numbers of control states)
  */
-void Arcset::setSTMs_parallel(){
+void Arcset::setSTMs_cumulative(){
 	putInChronoOrder();	// returns immediately if already in chrono order
 
 	MatrixXRd stmPrev, stmSeg;
 	for(unsigned int s = 1; s < segs.size(); s++){
 		if(segs[s].getCtrlLaw() != segs[s-1].getCtrlLaw())
-			printWarn("Arcset::setSTMs_parallel: Segments leverage different control laws; multiplying STMs may yield non-useful / non-physical values\n");
+			printWarn("Arcset::setSTMs_cumulative: Segments leverage different control laws; multiplying STMs may yield non-useful / non-physical values\n");
 		try{
 			segs[s].setSTM(segs[s].getSTM() * segs[s-1].getSTM());
 		}catch(std::exception &e){
 			printErr(e.what());
-			throw Exception("Arcset::setSTMs_parallel: Eigen error, cannot multiply two STMs; likely have a different size because of control laws");
+			throw Exception("Arcset::setSTMs_cumulative: Eigen error, cannot multiply two STMs; likely have a different size because of control laws");
 		}
 	}
 }//====================================================
@@ -385,9 +385,9 @@ void Arcset::shiftAllTimes(double amount){
 	}
 }//====================================================
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Utility
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *	\brief Print a useful message describing this arcset to the standard output

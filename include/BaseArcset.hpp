@@ -120,15 +120,6 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	void addConstraint(Constraint);
-	int addNode(Node);
-	int addSeg(Segment);
-	int appendSetAtNode(const BaseArcset*, int, int, double);
-	void clearArcConstraints();
-	void clearAllConstraints();
-	std::vector<int> concatArcset(const BaseArcset*);
-	void deleteNode(int);
-	void deleteSeg(int);
 	std::vector<Constraint> getArcConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;
@@ -150,9 +141,6 @@ public:
 	unsigned int getNumCons() const;
 	unsigned int getNumNodes() const;
 	unsigned int getNumSegs() const;
-	double getTOF(int) const;
-	double getTOFByIx(int) const;
-	virtual double getTotalTOF() const;
 	Segment getSeg(int) const;
 	Segment getSegByIx(int) const;
 	Segment& getSegRef(int);
@@ -167,10 +155,13 @@ public:
 	MatrixXRd getSTM(int) const;
 	MatrixXRd getSTMByIx(int) const;
 	const SysData* getSysData() const;
+	double getTOF(int) const;
+	double getTOFByIx(int) const;
+	virtual double getTotalTOF() const;
 	double getTol() const;
 	bool isInChronoOrder() const;
 	
-	void putInChronoOrder(bool force = false);
+	
 	void setEpoch(int, double);
 	void setEpochByIx(int, double);
 	void setStateDeriv(int, std::vector<double>);
@@ -180,6 +171,23 @@ public:
 	void setSTMByIx(int, MatrixXRd);
 	void setSTM(int, MatrixXRd);
 	void setTol(double);
+	
+	//\}
+
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
+	void addConstraint(Constraint);
+	int addNode(Node);
+	int addSeg(Segment);
+	int appendSetAtNode(const BaseArcset*, int, int, double);
+	void clearArcConstraints();
+	void clearAllConstraints();
+	std::vector<int> concatArcset(const BaseArcset*);
+	void deleteNode(int);
+	void deleteSeg(int);
+	void putInChronoOrder(bool force = false);
 	void updateEpochs(int, double);
 	//\}
 
@@ -199,7 +207,7 @@ public:
 	//\}
 
 	/**
-	 *  \name *File I/O
+	 *  \name File I/O
 	 *  \{
 	 */
 
@@ -299,7 +307,7 @@ protected:
 	//\}
 
 	/**
-	 *  \name Utility Functions
+	 *  \name Analysis Functions
 	 *  \{
 	 */
 	std::vector<ArcPiece> sortArcset(int, std::vector<ArcPiece>) const;

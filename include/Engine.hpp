@@ -42,8 +42,17 @@ class Engine{
 
 public:
 	
+	/**
+	 *  \name *structors
+	 *  \{
+	 */
 	virtual ~Engine(){}
+	//\}
 
+	/**
+	 *  \name Set and Get Functions
+	 *  \{
+	 */
 	/**
 	 *  \brief Retrieve the verbosity (i.e., how many messages will be printed)
 	 *  of the Engine object
@@ -62,15 +71,31 @@ public:
 	void setVerbosity(Verbosity_tp v){
 		verbosity = v;
 	}//================================================
-	
+	//\}
+
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	/**
 	 *  \brief Resets the engine, including any parameters the user
 	 *  may have set
 	 */
 	virtual void reset() = 0;
+	//\}
 
 protected:
+	/** Describes the number of messages the engine should output by default */
+	Verbosity_tp verbosity = Verbosity_tp::SOME_MSG;
 
+	/** Whether or not the engine is "clean"; if it isn't data is being stored that may be cleaned out
+		by the cleanEngine() function */
+	bool bIsClean = true;
+
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	/**
 	 *  \brief Make this Engine object the same as the input Engine
 	 *  \details This function is used in copy constructors to avoid
@@ -88,15 +113,7 @@ protected:
 	 *  has set (i.e., tolerances, etc.)
 	 */
 	virtual void cleanEngine() = 0;
-
-	/** Describes the number of messages the engine should output by default */
-	Verbosity_tp verbosity = Verbosity_tp::SOME_MSG;
-
-	/** Whether or not the engine is "clean"; if it isn't data is being stored that may be cleaned out
-		by the cleanEngine() function */
-	bool bIsClean = true;
-
-private:
+	//\}
 
 };
 

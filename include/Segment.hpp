@@ -66,20 +66,20 @@ public:
 	// ~Segment();
 	//\}
 
-	// Operators
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
 	Segment& operator =(const Segment&);
 	friend bool operator ==(const Segment&, const Segment&);
 	friend bool operator !=(const Segment&, const Segment&);
+	//\}
 
 	/**
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	void addConstraint(Constraint);
-	void appendState(const double*, unsigned int);
-	void appendState(const std::vector<double>);
-	void appendTime(double);
-	void clearConstraints();
+	
 	std::vector<Constraint> getConstraints() const;
 	ControlLaw* getCtrlLaw() const;
 	unsigned int getNumCons() const;
@@ -95,7 +95,6 @@ public:
 	double getTOF() const;
 	std::vector<bool> getVelCon() const;
 	
-	void removeConstraint(int);
 	void setConstraints(std::vector<Constraint>);
 	void setCtrlLaw(ControlLaw*);
 	void setID(int) override;
@@ -113,12 +112,29 @@ public:
 	void setVelCon(const bool[3]);
 	void setVelCon(std::vector<bool>);
 	void setVelCon(bool, bool, bool);
-	void shiftAllTimes(double);
+	
 	//\}
 
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
+	void addConstraint(Constraint);
+	void appendState(const double*, unsigned int);
+	void appendState(const std::vector<double>);
+	void appendTime(double);
+	void clearConstraints();
+	void removeConstraint(int);
+	void shiftAllTimes(double);
 	void updateTOF();
+	//\}
 
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	void print() const;
+	//\}
 protected:
 	virtual void copyMe(const Segment&);
 

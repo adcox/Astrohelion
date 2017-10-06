@@ -49,7 +49,7 @@ SysData::SysData(){}
  *	\param d a system data object
  */
 SysData::SysData(const SysData& d){
-	copyData(d);
+	copyMe(d);
 }//============================================
 
 /**
@@ -64,7 +64,7 @@ SysData::~SysData(){}
  *	\return this data object, set to equal the input object
  */
 SysData& SysData::operator =(const SysData &d){
-	copyData(d);
+	copyMe(d);
 	return *this;
 }//==========================================
 
@@ -107,7 +107,7 @@ bool operator !=(const SysData &lhs, const SysData &rhs){
  *	\brief Copy this system data object
  *	\param d a system data reference
  */
-void SysData::copyData(const SysData &d){
+void SysData::copyMe(const SysData &d){
 	charL = d.charL;
 	charT = d.charT;
 	charM = d.charM;

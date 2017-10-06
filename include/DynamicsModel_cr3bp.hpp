@@ -53,14 +53,21 @@ public:
 	~DynamicsModel_cr3bp() {}
 	//\}
 
-	DynamicsModel_cr3bp& operator=(const DynamicsModel_cr3bp&);
-
 	/**
-	 *  \name Core Functions
+	 *  \name Operators
 	 *  \{
 	 */
+	DynamicsModel_cr3bp& operator=(const DynamicsModel_cr3bp&);
+	//\}
+
+	/**
+	 *  \name Core Analysis Functions
+	 *  \{
+	 */
+	static void getEquilibPt(const SysData_cr3bp*, int, double, double[3]);
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
+	static double getJacobi(const double[], double);
 	std::vector<double> getPrimPos(double, const SysData*) const;
 	void getPrimPos(double, const SysData*, int, double*) const;
 	std::vector<double> getPrimVel(double, const SysData*) const;
@@ -69,25 +76,23 @@ public:
 	//\}
 
 	/**
-	 *  \name Static Calculations
+	 *  \name Equations of Motion
 	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static void getEquilibPt(const SysData_cr3bp*, int, double, double[3]);
-	static double getJacobi(const double[], double);
 	static void getUDDots(double, double, double, double, double* ddots);
 	//\}
 
 	/**
-	 *  \name Simulation Support Functions
+	 *  \name Simulation Analysis Functions
 	 *  \{
 	 */
 		// Use the default Base class functions
 	//\}
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const override;
@@ -96,7 +101,7 @@ public:
 protected:
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	void multShoot_targetJC(MultShootData*, const Constraint&, int) const;

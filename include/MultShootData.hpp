@@ -90,19 +90,39 @@ enum class MSVarParent_tp : int {ARC = 0,	//!< The entire arc is the parent
  */
 struct MSVarMap_Key{
 	public:
+		/**
+		 * \name *structors
+		 * \{
+		 */
 		MSVarMap_Key();
 		MSVarMap_Key(MSVar_tp, int);
 		MSVarMap_Key(const MSVarMap_Key&);
-		
+		//\}
+
+		/**
+		 * \name Operators
+		 * \{
+		 */
 		MSVarMap_Key& operator =(const MSVarMap_Key&);
 		bool friend operator <(const MSVarMap_Key&, const MSVarMap_Key&);
-		
+		//\}
+
+		/**
+		 * \name Utility Functions
+		 * \{
+		 */
 		static const char* type2str(MSVar_tp);
+		//\}
 
 		MSVar_tp type = MSVar_tp::STATE;	//!< Type of variable
 		int id = -1;						//!< ID of the parent object
 	private:
+		/**
+		 * \name Utility Functions
+		 * \{
+		 */
 		void copyMe(const MSVarMap_Key&);
+		//\}
 };
 
 /**
@@ -114,25 +134,50 @@ struct MSVarMap_Key{
  */
 struct MSVarMap_Obj{
 	public:
+		/**
+		 * \name *structors
+		 * \{
+		 */
 		MSVarMap_Obj();
 		MSVarMap_Obj(MSVar_tp);
 		MSVarMap_Obj(MSVar_tp, int, int, int nRows = 1);
 		MSVarMap_Obj(MSVarMap_Key, int, int nRows = 1);
 		MSVarMap_Obj(const MSVarMap_Obj&);
+		//\}
 
+		/**
+		 * \name Operators
+		 * \{
+		 */
 		MSVarMap_Obj& operator =(const MSVarMap_Obj&);
+		//\}
 
+		/**
+		 * \name Utility Functions
+		 * \{
+		 */
 		bool matches(MSVar_tp, int) const;
-		
 		static const char* parent2str(MSVarParent_tp);
+		//\}
 
 		MSVarMap_Key key;					//!< Identifies this object by variable type and parent ID
 		MSVarParent_tp parent = MSVarParent_tp::NODE;		//!< Object type that owns the represented variable
 		int row0 = -1;		//!< Index of the first row of the free variable vector this variable occupies
 		int nRows = -1;		//!< Number of rows of the free variable vector this variable occupies
 	private:
+		/**
+		 * \name Utility Functions
+		 * \{
+		 */
 		void copyMe(const MSVarMap_Obj&);
+		//\}
+
+		/**
+		 * \name *structors
+		 * \{
+		 */
 		void init();
+		//\}
 };
 
 /**		
@@ -150,15 +195,27 @@ struct MSVarMap_Obj{
 class MultShootData{
 	public:
 
-		// *structors
+		/**
+		 * \name *structors
+		 * \{
+		 */
 		MultShootData(const Arcset*);
 		MultShootData(const MultShootData&);
+		//\}
 
-		// Operators
+		/**
+		 * \name Operators
+		 * \{
+		 */
 		MultShootData& operator =(const MultShootData&);
+		//\}
 
-		// Set and Get
+		/**
+		 * \name Set and Get Functions
+		 * \{
+		 */
 		MSVarMap_Obj getVarMap_obj(MSVar_tp, int) const;
+		//\}
 
 		// Utilities
 
@@ -185,7 +242,12 @@ class MultShootData{
 
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;		//!< Describes how times-of-flight are stored in the free-variable vector
 	protected:
+		/**
+		 * \name Utility Functions
+		 * \{
+		 */
 		void copyMe(const MultShootData&);
+		//\}
 };
 
 }// END of Astrohelion namespace

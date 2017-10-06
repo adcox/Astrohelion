@@ -6,7 +6,6 @@
  *	\version May 25, 2016
  *	\copyright GNU GPL v3.0
  */
-
 /*
  *	Astrohelion 
  *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
@@ -398,7 +397,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 			case Constraint_tp::SEG_CONT_EX:
 				addToRows = 1;
 				break;
-			case Constraint_tp::TOF:
+			case Constraint_tp::TOF_TOTAL:
 				if(to_underlying(tofTp) <= 0)
 					astrohelion::printWarn("MultShootEngine::multShoot: Attempting to constraint TOF without variable time... won't work!\n");
 				

@@ -100,8 +100,13 @@ class LinMotionEngine : public Core, public Engine{
 		/** \brief tolerance for numerical methods, like locating Lagrange points */
 		double tol = 1e-14;
 
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		virtual void cleanEngine();
 		virtual void reset();
+		//\}
 };
 
 }// END of Astrohelion namespace

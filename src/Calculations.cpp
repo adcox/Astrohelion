@@ -38,6 +38,7 @@
 #include "Arcset_2bp.hpp"
 #include "Arcset_bc4bp.hpp"
 #include "Arcset_cr3bp.hpp"
+#include "Arcset_periodic.hpp"
 #include "BaseArcset.hpp"
 #include "BodyData.hpp"
 #include "Common.hpp"
@@ -826,7 +827,7 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *  of the periodic orbit, run it through a corrector to force the final state 
  *  to equal the first
  */
-Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
+Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, Mirror_tp mirrorType, double tol){
     
     std::vector<int> fixedStates;   // Initialize an empty vector
@@ -864,7 +865,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
  *  \throws DivergeException if the multiple shooting algorithm cannot converge on a 
  *  mirrored solution.
  */
-Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
+Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC,
     double period, int numNodes, int order, Mirror_tp mirrorType, std::vector<int> fixedStates,
     double tol, MultShootData* pItData){
 
@@ -929,7 +930,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
         bool okToFix = true;
         for(unsigned int n = 0; n < zeroStates.size(); n++){
             if(fixedStates[i] == zeroStates[n]){
-                astrohelion::printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring\n", fixedStates[i]);
+                printWarn("Cannot fix state %d; it must be zero for this mirror condition; ignoring\n", fixedStates[i]);
                 okToFix = false;
                 break;
             }
@@ -945,7 +946,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
     
     // Check to make sure the simulation ended with the event (not running out of time)
     if(halfOrbArc.getNodeByIx(-1).getTriggerEvent() != mirrorEvt.getType()){
-        astrohelion::printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
+        printErr("Calculations::cr3bp_getPeriodic: simulation of half-period orbit did not end in mirror event; may have diverged\n");
         // halfOrbArc.saveToMat("halfOrbArc_failedMirror.mat");
     }
     // halfOrbArc.saveToMat("data/halfOrbArc.mat");
@@ -953,8 +954,12 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
     double halfOrbTOF = halfOrbArc.getTimeByIx(-1);
     double tofErr = 100*std::abs(halfOrbTOF-period/2.0)/(period/2.0);
 
-    if(tofErr > 10)
-        astrohelion::printWarn("Calculations::cr3bp_getPeriodic: Half-Period arc TOF varies from input half-period by more than 10%%\n");
+    if(tofErr > 10){
+        char msg[256];
+        sprintf(msg, "Calculations::cr3bp_getPeriodic: Half-period arc TOF = %f, but guess for half period is %f (%.2f%c error)\n",
+            halfOrbTOF, period/2.0, tofErr, '%');
+        printWarn(msg);
+    }
 
     // Add constraints for correction
     Constraint initStateCon(Constraint_tp::STATE, halfOrbArc.getNodeRefByIx(0).getID(), mirrorCon0, 6);
@@ -969,7 +974,7 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
     corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);
     // corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
-    Arcset_cr3bp correctedHalfPer(pSys);
+    Arcset_periodic correctedHalfPer(pSys);
 
     // If the user passed in a null pointer, create a temporory data object
     // on the stack to avoid seg faults, then delete it before exiting to 
@@ -982,23 +987,26 @@ Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double> IC
 
 
     try{
+        // Try once with the standard multiple-shooting parameters
         *pItData = corrector.multShoot(&halfOrbArc, &correctedHalfPer);
         // correctedHalfPer.print();
         // correctedHalfPer.saveToMat("data/temp_correctedHalfPer.mat");
     }catch(DivergeException &e){
+        // Try again using a line search
         corrector.setDoLineSearch(true);
         corrector.setMaxIts(250);
-        correctedHalfPer = Arcset_cr3bp(pSys);
+        correctedHalfPer = Arcset_periodic(pSys);   // reset
         
         try{
             corrector.multShoot(&halfOrbArc, &correctedHalfPer);
+            correctedHalfPer.print();
         }catch(DivergeException &ee){
             throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
         }
     }
 
     // Make sure the final STM represents the entire evolution of the trajectory
-    correctedHalfPer.setSTMs_parallel();
+    correctedHalfPer.setSTMs_cumulative();
 
     double halfTOF = correctedHalfPer.getTimeByIx(-1);
     int halfPerTraj_len = static_cast<int>(correctedHalfPer.getNumNodes());

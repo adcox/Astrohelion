@@ -203,21 +203,26 @@ enum class Integ_tp{
  */
 class SimEngine : public Core, public Engine{
 	public:
-		// Constructors
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		SimEngine();
 		SimEngine(const SimEngine&);	//copy constructor
-		
-		//Destructor
 		~SimEngine();
+		//\}
 
-		//Operators
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		SimEngine& operator =(const SimEngine&);
+		//\}
 
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-		int addEvent(Event);
 		double getAbsTol() const;
 		std::vector<Event> getEvents() const;
 		int getNumSteps() const;
@@ -240,9 +245,10 @@ class SimEngine : public Core, public Engine{
 		//\}
 
 		/**
-		 *  \name Simulation Methods
+		 *  \name Analysis Functions
 		 *  \{
 		 */
+		int addEvent(Event);
 
 		// Assume t0, ctrl0, stm0
 		void runSim(std::vector<double> ic, double tof, Arcset *arcset, ControlLaw *pLaw = nullptr);
@@ -274,10 +280,13 @@ class SimEngine : public Core, public Engine{
 		void runSim_manyNodes(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw);
 		//\}
 		
-		// Utility Functions
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void clearEvents();
 		void reset();
-		
+		//\}
 
 	private:
 		/** Vector of events to consider during integration */
@@ -326,13 +335,25 @@ class SimEngine : public Core, public Engine{
 		/** Integrator to use for fixed step-size propagations; Default is MSADAMS */
 		Integ_tp fixStep_integ = Integ_tp::MSADAMS;
 
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */		
 		void cleanEngine();
 		void copyMe(const SimEngine&);
-		void createDefaultEvents(const SysData*);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
+		//\}
+
+		/**
+		 *  \name Analysis Functions
+		 *  \{
+		 */
+		void createDefaultEvents(const SysData*);
 		void integrate(const double*, const double*, const double*, const double*, unsigned int, Arcset*);
 		bool locateEvents(const double*, double, Arcset*, int);
 		bool locateEvent_multShoot(const double*, double, int, Arcset*);
+		//\}
+		
 };
 
 

@@ -6,17 +6,96 @@
  * \version June 27, 2017
  * \copyright GNU GPL v3.0
  */
+/*
+ *	Astrohelion 
+ *	Copyright 2015-2017, Andrew Cox; Protected under the GNU GPL v3.0
+ *	
+ *	This file is part of Astrohelion
+ *
+ *  Astrohelion is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Astrohelion is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Astrohelion.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "NatParamEngine.hpp"
+
+#include <Eigen/Dense>
+
+#include "AsciiOutput.hpp"
+#include "Arcset_cr3bp.hpp"
+#include "Arcset_periodic.hpp"
+#include "Calculations.hpp"
+#include "Exceptions.hpp"
+#include "Family_PO.hpp"
+#include "MultShootData.hpp"
+#include "SysData_cr3bp.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
+/**
+ *  \brief Default constructor
+ */
 NatParamEngine::NatParamEngine() : ContinuationEngine() {}
 
-NatParamEngine::setCurveFitMem(int mem){ curveFitMem = mem; }
-NatParamEngine::setNumSimple(int num){ numSimple = num; }
-NatParamEngine::setSlopeThresh(double thresh){ slopeThresh = thresh; }
-NatParamEngine::setStep_simple(double step){ step_simple = step; }
-NatParamEngine::setStep_fitted_1(double step){ step_fitted_1 = step; }
-NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
+/**
+ *  \brief Set the number of solutions to store in the "curve fit memory"
+ *  \details The number of solutions saved informs the least-squares
+ *  curve-fitting algorithm that improves the performance of the natural 
+ *  parameter continuation.
+ * 
+ *  \param mem Number of solutions to use when fitting a curve to predict
+ *  the continuation variables
+ */
+void NatParamEngine::setCurveFitMem(int mem){ curveFitMem = mem; }
+
+/**
+ *  \brief Set the number of simple continuation (i.e., no curve fitting)
+ *  iterations to perform before switching to curve-fitted solutions
+ * 
+ *  \param num the number of simple continuation iterations to perform
+ */
+void NatParamEngine::setNumSimple(int num){ numSimple = num; }
+
+/**
+ *  \brief Set the slope threshold that is the limit between
+ *  two step directions
+ *  \details The natural parameter continuation typically leverages 
+ *  several "independent" stepping variables to facilitate continuation 
+ *  along a nonlinear contour. When a step in one variable results in
+ *  large changes in the other, the stepping variable is changed to 
+ *  limit the sensitivity.
+ * 
+ *  \param thresh slope threshold between stepping strategies
+ */
+void NatParamEngine::setSlopeThresh(double thresh){ slopeThresh = thresh; }
+
+/**
+ *  \brief Set the step size for simple (no curve-fitting) continuation
+ *  \param step the step size for simple (no curve-fitting) continuation
+ */
+void NatParamEngine::setStep_simple(double step){ step_simple = step; }
+
+/**
+ *  \brief Set the step size for fitted continuation: variable 1
+ *  \param step the step size for fitted continuation: variable 1
+ */
+void NatParamEngine::setStep_fitted_1(double step){ step_fitted_1 = step; }
+
+/**
+ *  \brief Set the step size for fitted continuation: variable 2
+ *  \param step the step size for fitted continuation: variable 2
+ */
+void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
 
 /**
  *	\brief Continue a family of periodic orbits via natural parameter continuation
@@ -42,10 +121,11 @@ NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
-void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *initialGuess,
+void NatParamEngine::continuePeriodic_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
 	std::vector<Mirror_tp> mirrorTypes, std::vector<int> indVarIx, std::vector<int> depVarIx, int order){
 
-	SysData_cr3bp sys = fam->getSysData();
+	// Assume family is CR3BP
+	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(fam->getSysData());
 
 	if(indVarIx.size() < 2)
 		throw Exception("FamGenerator::cr3bp_natParamCont: Must specify two independent variables");
@@ -72,7 +152,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *
 	double deltaVar1 = 1;
 	double deltaVar2 = 1;
 
-	std::vector<Arcset_cr3bp> members;
+	std::vector<Arcset_periodic> members;
 	bool diverged = false;
 
 	// Create a dummy nodeset and create an iteration data object on the stack
@@ -83,7 +163,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *
 	MultShootData *pItData = new MultShootData(&tempNodes);
 
 	while(orbitCount < numOrbits){
-		Arcset_cr3bp perOrbit(&sys);
+		Arcset_periodic perOrbit(pSys);
 		try{
 			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
 				IC[4], IC[5], tof);
@@ -93,7 +173,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *
 			printf("Slope = %.3f\n", indVarSlope);
 
 			// Simulate the orbit
-			perOrbit = cr3bp_getPeriodic(&sys, IC, tof, numNodes, order, mirrorType, fixStates, tol, pItData);
+			perOrbit = cr3bp_getPeriodic(pSys, IC, tof, numNodes, order, mirrorType, fixStates, tol, pItData);
 
 			diverged = false;
 			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
@@ -174,8 +254,7 @@ void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *
 				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 
 			// Add orbit to family
-			FamMember_cr3bp child(perOrbit);
-			fam->addMember(child);
+			fam->addMember(perOrbit);
 		}
 
 		// Create next initial guess
@@ -207,7 +286,9 @@ void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *
 				std::vector<double> ic = members[n].getStateByIx(0);
 				prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
 				prevStates.push_back(members[n].getTimeByIx(-1));
-				prevStates.push_back(members[n].getJacobiByIx(0));
+
+				Arcset_cr3bp temp = static_cast<Arcset_cr3bp>(members[n]);
+				prevStates.push_back(temp.getJacobiByIx(0));
 			}
 
 			// This will hold the input depVars plus the unused independent variable
@@ -272,6 +353,11 @@ void NatParamEngine::continuePeriodic_cr3bp(Fam_cr3bp *fam, const Arcset_cr3bp *
 	}
 }//==================================================
 
+/**
+ *  \brief Make a copy of the natural parameter engine
+ * 
+ *  \param engine the source of the copy
+ */
 void NatParamEngine::copyMe(const NatParamEngine &engine){
 	ContinuationEngine::copyMe(engine);
 	curveFitMem = engine.curveFitMem;
@@ -282,6 +368,9 @@ void NatParamEngine::copyMe(const NatParamEngine &engine){
 	step_fitted_2 = engine.step_fitted_2;
 }//====================================================
 
+/**
+ *  \brief Reset all continuation parameters
+ */
 void NatParamEngine::reset(){
 	ContinuationEngine::reset();
 	curveFitMem = 5;
@@ -292,9 +381,10 @@ void NatParamEngine::reset(){
 	step_fitted_2 = 5e-3;
 }//====================================================
 
+/**
+ *  \brief Reset any variables specific to an individual continuation process
+ */
 void NatParamEngine::cleanEngine(){}
-
-
 
 }// End of astrohelion namespace
 

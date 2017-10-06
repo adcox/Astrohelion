@@ -444,7 +444,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_TOF, data::make(tofTypes), tofT
 	corrector->setTOFType(tofTp);
 
 	double tofData = 2.5;
-	Constraint tofCon(Constraint_tp::TOF, 0, &tofData, 1);
+	Constraint tofCon(Constraint_tp::TOF_TOTAL, 0, &tofData, 1);
 	halfLyapSet->clearAllConstraints();
 	halfLyapSet->addConstraint(tofCon);
 	

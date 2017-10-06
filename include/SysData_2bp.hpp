@@ -58,18 +58,44 @@ class SysData_2bp : public SysData{
 		virtual ~SysData_2bp();
 		//\}
 		
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		SysData_2bp& operator=(const SysData_2bp&);
-		
+		//\}
+
+		/**
+		 *  \name Set and Get Functions
+		 *  \{
+		 */
 		const DynamicsModel* getDynamicsModel() const;
 
 		double getMu() const;
+		//\}
 
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
-		
+		//\}
+
 	protected:
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		void initFromPrimNames(std::string);
+		//\}
+
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		void readFromMat(mat_t*) override;
+		//\}
 		
 	private:
 		/** The dynamic model that governs motion for this system*/

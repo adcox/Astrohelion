@@ -65,17 +65,19 @@ public:
 	// ~Node();
 	//\}
 
-	// Operators
+	/**
+	 *  \name Operators
+	 *  \{
+	 */
 	Node& operator =(const Node&);
 	friend bool operator ==(const Node&, const Node&);
 	friend bool operator !=(const Node&, const Node&);
+	//\}
 
 	/**
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	void addConstraint(Constraint);
-	void clearConstraints();
 	std::vector<Constraint> getConstraints() const;
 	double getEpoch() const;
 	double getExtraParam(std::string) const;
@@ -86,8 +88,7 @@ public:
 	std::vector<double> getState() const;
 	const std::vector<double>& getStateRef_const() const;
 	Event_tp getTriggerEvent() const;
-
-	void removeConstraint(int);
+	
 	void setConstraints(std::vector<Constraint>);
 	void setEpoch(double);
 	void setExtraParam(std::string, double);
@@ -100,13 +101,23 @@ public:
 	void setTriggerEvent(Event_tp);
 	//\}
 
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
+	void addConstraint(Constraint);
+	void clearConstraints();
+	void removeConstraint(int);
+	//\}
+
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
 	void print() const;
+	//\}
+
 protected:
-	virtual void copyMe(const Node&);
-
-	// double state[6] = {NAN, NAN, NAN, NAN, NAN, NAN};	//!< Stores 3 position and 3 velocity states
-	// double accel[3] = {NAN, NAN, NAN};					//!< Stores 3 acceleration states
-
 	std::vector<double> state = {};		//!< Stores states, e.g., position, velocity, mass, thrust
 	double epoch = 0;	//!< The epoch associated with this node, relative to some base epoch
 
@@ -121,6 +132,13 @@ protected:
 
 	/** The event type that triggered the creation of this node */
 	Event_tp triggerEventTp = Event_tp::NONE;
+
+	/**
+	 *  \name Utility Functions
+	 *  \{
+	 */
+	virtual void copyMe(const Node&);
+	//\}
 };
 
 }// END of Astrohelion namespace

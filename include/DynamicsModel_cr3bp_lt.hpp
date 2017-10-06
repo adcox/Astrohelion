@@ -49,35 +49,40 @@ public:
 	~DynamicsModel_cr3bp_lt() {}
 	//\}
 
-	DynamicsModel_cr3bp_lt& operator=(const DynamicsModel_cr3bp_lt&);
-
 	/**
-	 *  \name Core Functions
+	 *  \name Operators
 	 *  \{
 	 */
+	DynamicsModel_cr3bp_lt& operator=(const DynamicsModel_cr3bp_lt&);
+	//\}
+
+	/**
+	 *  \name Core Analysis Functions
+	 *  \{
+	 */
+	static void getEquilibPt(const SysData_cr3bp_lt*, int, double, double, std::vector<double>*, Verbosity_tp verb = Verbosity_tp::NO_MSG);
 	DynamicsModel::eom_fcn getFullEOM_fcn() const;
 	DynamicsModel::eom_fcn getSimpleEOM_fcn() const;
 	std::vector<double> getStateDeriv(double, std::vector<double>, EOM_ParamStruct*) const;
 	//\}
 
 	/**
-	 *  \name Static Calculations
+	 *  \name Equations of Motion
 	 *  \{
 	 */
 	static int fullEOMs(double, const double[], double[], void*);
 	static int simpleEOMs(double, const double[], double[], void*);
-	static void getEquilibPt(const SysData_cr3bp_lt*, int, double, double, std::vector<double>*, Verbosity_tp verb = Verbosity_tp::NO_MSG);
 	//\}
 	
 	/**
-	 *  \name Simulation Support Functions
+	 *  \name Simulation Analysis Functions
 	 *  \{
 	 */
 	std::vector<Event> sim_makeDefaultEvents(const SysData *pSys) const;
 	//\}
 
 	/**
-	 *  \name Multiple Shooting Support Functions
+	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
 	void multShoot_initIterData(MultShootData *it) const override;

@@ -71,7 +71,7 @@ public:
 
 protected:
 	/**
-	 *  \name Utility
+	 *  \name File I/O
 	 *  \{
 	 */
 		void saveCmds(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const override;

@@ -90,18 +90,23 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
+	double getTimeByIx(int) const;
+
+	void setSTMs_cumulative();
+	void setSTMs_sequence();
+	void setTimeByIx(int, double);
+	
+	//\}
+
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
 	void allowDV_at(std::vector<int>);
 	void allowDV_all();
 	void allowDV_none();
 	int createNodesAtEvent(int, Event, double minTimeDiff = 1e-2);
 	virtual int createNodesAtEvents(int, std::vector<Event>, double minTimeDiff = 1e-2);
-
-	double getTimeByIx(int) const;
-
-	void setSTMs_parallel();
-	void setSTMs_sequence();
-	
-	void setTimeByIx(int, double);
 	void shiftAllTimes(double);
 	//\}
 
@@ -110,13 +115,24 @@ public:
 	 *  \{
 	 */
 	virtual void print() const;
+	//\}
+
+	/**
+	 *  \name File I/O
+	 *  \{
+	 */
 	void readFromMat(const char*, std::vector<ControlLaw*> &refLaws);
 	void saveToMat(const char*, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	//\}
 
 protected:
+	/**
+	 *  \name File I/O
+	 *  \{
+	 */
 	virtual void saveCmds(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	virtual void readCmds(mat_t*, std::vector<ControlLaw*>&);
+	//\}
 };
 
 }// End of astrohelion namespace

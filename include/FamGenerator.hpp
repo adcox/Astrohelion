@@ -31,6 +31,7 @@
 #include "Engine.hpp"
 
 #include "Calculations.hpp"
+#include "ContinuationEngine.hpp"
 #include "MultShootEngine.hpp"
 #include "EigenDefs.hpp"
  

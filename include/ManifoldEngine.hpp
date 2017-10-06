@@ -96,7 +96,7 @@ public:
 	//\}
 
 	/**
-	 *  \name Manifold Generation Algorithms
+	 *  \name Analysis Functions
 	 *  \todo Add a function for manifolds from map fixed points; use Wayne's method?
 	 *  \{
 	 */
@@ -106,6 +106,8 @@ public:
 
 	std::vector<Arcset_cr3bp_lt> computeSetFromLTPeriodic(Manifold_tp, const Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*,
 		unsigned int, double, Manifold_StepOff_tp = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+
+	MatrixXRd eigVecValFromPeriodic(Manifold_tp, const Arcset_cr3bp*, std::vector<cdouble> *eigVal_final = nullptr);
 
 	std::vector<Arcset_cr3bp> computeSingleFromPeriodic(Manifold_tp, const Arcset_cr3bp*, double,
 		double, Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
@@ -117,14 +119,13 @@ public:
 	std::vector<Arcset_cr3bp_lt> manifoldsFromLTPOPoint(Manifold_tp, std::vector<double>, MatrixXRd, std::vector<cdouble>,
 		MatrixXRd, double, const SysData_cr3bp_lt*, ControlLaw_cr3bp_lt*,
 		Manifold_StepOff_tp stepType = Manifold_StepOff_tp::STEP_VEC_NORMFULL);
+	
 	//\}
 
 	/**
 	 * \name Utility Functions
 	 * \{
 	 */
-
-	MatrixXRd eigVecValFromPeriodic(Manifold_tp, const Arcset_cr3bp*, std::vector<cdouble> *eigVal_final = nullptr);
 	void reset();
 	//\}
 private:
@@ -132,9 +133,14 @@ private:
 	double tol_eigVal = 1e-5;	//!< Tolerance with which eigenvalues are evaluated to determine if they are on the unit circle
 	double stepOffDist = 20;	//!< Dimensional distance to step along eigenvector, km
 
+	/**
+	 * \name Utility Functions
+	 * \{
+	 */
 	void copyMe(const ManifoldEngine&);
 	void cleanEngine(){}
 	static bool compareCDouble(cdouble, cdouble);
+	//\}
 };// End of ManifoldEngine class
 
 }// END of astrohelion namespace

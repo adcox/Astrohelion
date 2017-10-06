@@ -43,6 +43,7 @@ class Node;
 class Arcset;
 class Arcset_bc4bp;
 class Arcset_cr3bp;
+class Arcset_periodic;
 class SysData_2bp;
 class SysData_bc4bp;
 class SysData_cr3bp;
@@ -79,7 +80,7 @@ enum class EigValSet_tp{
 };
 
 /**
- *  \name General Utility Functions
+ *  \name General Analysis Functions
  *  \{
  */
 double dateToEphemerisTime(const char*);
@@ -104,7 +105,7 @@ std::vector<double> azEl2LocalTangent(double, double, double);
 /** \} */
 
 /**
- *  \name 2BP Utility Functions
+ *  \name 2BP Analysis Functions
  *  \{
  */
 void r2bp_computeAllKepler(BaseArcset*);
@@ -113,7 +114,7 @@ std::vector<double> r2bp_stateFromKepler(const SysData_2bp*, double, double, dou
 /** \} */
 
 /**
- *  \name CR3BP Utility Functions
+ *  \name CR3BP Analysis Functions
  *  \{
  */
 double cr3bp_getVel_withC(const double s[], double, double, int);
@@ -125,12 +126,12 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double>, double, double, doubl
 	double, double, double, double, double);
 Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp, double, int);
 std::vector<double> cr3bp_rot2inert_state(std::vector<double>, const SysData_cr3bp*, double, double, int);
-Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double tol = 1e-12);
-Arcset_cr3bp cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double tol = 1e-12, MultShootData *pItData = nullptr);
+Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, Mirror_tp, double tol = 1e-12);
+Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp*, std::vector<double>, double, int, int, Mirror_tp, std::vector<int>, double tol = 1e-12, MultShootData *pItData = nullptr);
 /** \} */
 
 /**
- *  \name BC4BP Utility Functions
+ *  \name BC4BP Analysis Functions
  *  \{
  */
 Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp, const SysData_bc4bp*, int, double);

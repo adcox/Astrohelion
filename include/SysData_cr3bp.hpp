@@ -58,24 +58,49 @@ class SysData_cr3bp : public SysData{
 		virtual ~SysData_cr3bp();
 		//\}
 
+		/**
+		 *  \name Operators
+		 *  \{
+		 */
 		SysData_cr3bp& operator=(const SysData_cr3bp&);
-		
+		//\}
+
 		/**
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
-
 		const DynamicsModel* getDynamicsModel() const;
 		double getMu() const;
 		//\}
 		
+		/**
+		 *  \name Utility Functions
+		 *  \{
+		 */
 		void print() const override;
+		//\}
+
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		void saveToMat(const char*) const override;
 		void saveToMat(mat_t*) const;
-		
+		//\}
 	protected:
+		/**
+		 *  \name *structors
+		 *  \{
+		 */
 		void initFromPrimNames(std::string, std::string);
+		//\}
+
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
 		void readFromMat(mat_t*);
+		//\}
 		
 	private:
 		/** The dynamic model that governs motion for this system*/

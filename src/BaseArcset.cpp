@@ -1906,6 +1906,15 @@ void BaseArcset::printSegIDMap() const{
 //      File I/O Utility Functions
 //-------------------------------------------------------------------------------------
 
+/**
+ *  \brief Create a matio variable for the segment times
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_SegTimes(Save_tp saveTp, const char *pVarName) const{
 	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
 
@@ -1929,7 +1938,7 @@ matvar_t* BaseArcset::createVar_SegTimes(Save_tp saveTp, const char *pVarName) c
 		}
 
 		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segTimes.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segTimes.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 		if(cell_element != nullptr)
 			Mat_VarSetCell(pMatVar, s, cell_element);
 		else{
@@ -1941,6 +1950,15 @@ matvar_t* BaseArcset::createVar_SegTimes(Save_tp saveTp, const char *pVarName) c
 	return pMatVar;
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the segment states
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_SegStates(Save_tp saveTp, const char *pVarName) const{
 	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
 
@@ -1991,7 +2009,7 @@ matvar_t* BaseArcset::createVar_SegStates(Save_tp saveTp, const char *pVarName) 
 		}
 
 		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segStates_trans.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segStates_trans.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 		if(cell_element != nullptr)
 			Mat_VarSetCell(pMatVar, s, cell_element);
 		else{
@@ -2003,6 +2021,15 @@ matvar_t* BaseArcset::createVar_SegStates(Save_tp saveTp, const char *pVarName) 
 	return pMatVar;
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the segment control law data
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	size_t struct_dims[] = {segs.size(),1};
@@ -2034,14 +2061,14 @@ matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName)
 
 		// Save structure fields
 		size_t field_dims[] = {1,1};
-		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Do copy the data (it is freed at the end of the function!)
 		Mat_VarSetStructFieldByName(pMatVar, fieldnames[0], s, field);
 
-		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Do copy the data (it is freed at the end of the function!)
 		Mat_VarSetStructFieldByName(pMatVar, fieldnames[1], s, field);
 
 		field_dims[0] = params.size();
-		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 		Mat_VarSetStructFieldByName(pMatVar, fieldnames[2], s, field);
 		
 	}
@@ -2049,6 +2076,15 @@ matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName)
 	return pMatVar;
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the segment times-of-flight
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	std::vector<double> allTOFs(segs.size());
@@ -2058,9 +2094,18 @@ matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) con
 	}
 	
 	size_t dims[2] = {allTOFs.size(), 1};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the segment STMs
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_SegSTMs(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
@@ -2077,7 +2122,7 @@ matvar_t* BaseArcset::createVar_SegSTMs(Save_tp saveTp, const char *pVarName) co
 		dims[0] = P.cols();
 		dims[1] = P.rows();
 
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Do copy the data (it is freed at the end of the function!)
 		if(cell_element != nullptr){
 			Mat_VarSetCell(pMatVar, count++, cell_element);
 		}else{
@@ -2089,17 +2134,31 @@ matvar_t* BaseArcset::createVar_SegSTMs(Save_tp saveTp, const char *pVarName) co
 	return pMatVar;
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the node states
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_NodeStates(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
 	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	std::vector<double> posVel(stateSize*nodes.size());
+	unsigned int numNodes = nodes.size();
+	std::vector<double> posVel(stateSize*numNodes, NAN);
 
-	for(unsigned int r = 0; r < nodes.size(); r++){
+	for(unsigned int r = 0; r < numNodes; r++){
 		std::vector<double> state = nodes[r].getState();
+
+		if(state.size() < stateSize)
+			throw Exception("BaseArcset::createVar_NodeStates: state vector doesn't match core state size");
+
 		for(unsigned int c = 0; c < stateSize; c++){
-			posVel[c*nodes.size() + r] = state[c];
+			posVel[c*numNodes + r] = state[c];
 		}
 	}
 
@@ -2121,10 +2180,19 @@ matvar_t* BaseArcset::createVar_NodeStates(Save_tp saveTp, const char *pVarName)
 	 *							MAT_F_GLOBAL: make the matlab variable global
 	 *							MAT_F_LOGICAL: this variable is a logical variable
 	 */
-	size_t dims[2] = {nodes.size(), stateSize};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+	size_t dims[2] = {numNodes, stateSize};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the node control data
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) const{
 	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
 
@@ -2146,7 +2214,7 @@ matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) c
 		dims[0] = ctrl.size();
 
 		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 		if(cell_element != nullptr)
 			Mat_VarSetCell(pMatVar, n, cell_element);
 		else{
@@ -2158,6 +2226,17 @@ matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) c
 	return pMatVar;
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the vector node extra parameters
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param varKey the key (i.e., the name) of the vector parameter
+ * 	\param len number of elements in the extra parameter vector
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_NodeExtraParamVec(std::string varKey, size_t len,
 	Save_tp saveTp, const char *pVarName) const{
 
@@ -2184,9 +2263,19 @@ matvar_t* BaseArcset::createVar_NodeExtraParamVec(std::string varKey, size_t len
 	}
 
 	size_t dims[2] = {nodes.size(), len};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the scalar node extra parameters
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 	
+ * 	\param varKey the unique key (i.e., name) of the scalar paremeter
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey, 
 	Save_tp saveTp, const char *pVarName) const{
 
@@ -2203,9 +2292,18 @@ matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey,
 	}
 
 	size_t dims[2] = {nodes.size(), 1};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the node times
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_NodeTimes(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	std::vector<double> allEpochs(nodes.size());
@@ -2215,9 +2313,18 @@ matvar_t* BaseArcset::createVar_NodeTimes(Save_tp saveTp, const char *pVarName) 
 	}
 	
 	size_t dims[2] = {allEpochs.size(), 1};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), MAT_F_DONT_COPY_DATA);
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the node state derivatives
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
@@ -2240,9 +2347,18 @@ matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarN
 	}
 	
 	size_t dims[2] = {nodes.size(), stateSize};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), MAT_F_DONT_COPY_DATA);
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the constraints
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	// Step 1: Gather all the constraints
@@ -2283,7 +2399,7 @@ matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName
 			conData.insert(conData.begin(), static_cast<double>(to_underlying(allCons[c].getType())));
 
 			dims[1] = conData.size();
-			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 			if(cell_element != nullptr){
 				Mat_VarSetCell(pMatVar, c, cell_element);
 			}else{
@@ -2296,20 +2412,28 @@ matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName
 	return pMatVar;
 }//====================================================
 
+/**
+ *  \brief Create a matio variable for the link table
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
 matvar_t* BaseArcset::createVar_LinkTable(const char *pVarName) const{
 	unsigned int numSegs = segs.size();
 	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
 
 	// Store data in column-major order
-	for(unsigned int s = 0; s < segs.size(); s++){
+	for(unsigned int s = 0; s < numSegs; s++){
 		segTable[0*numSegs + s] = segs[s].getID();
 		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
 		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
 		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
 	}
 
-	size_t dims[2] = {segs.size(), 4};
-	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), MAT_F_DONT_COPY_DATA);
+	size_t dims[2] = {numSegs, 4};
+	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
@@ -3183,7 +3307,7 @@ void BaseArcset::saveNodeExtraParam(mat_t *pMatFile, std::string varKey, Save_tp
 /**
  *	\brief Save one of the extra parameters to file
  *	\param pMatFile a pointer to the destination mat-file
- *	\param varKey the key (i.e., the name) of the scalar parameter
+ *	\param varKey the key (i.e., the name) of the vector parameter
  *	\param len number of elements in the extra parameter vector (e.g., a 3-element velocity vector)
  *	\param pVarName the name of the variable being saved
  *	\throws Exception if <tt>varIx</tt> is out of bounds

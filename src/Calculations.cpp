@@ -943,6 +943,12 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
     }
 
 
+    // printf("\n************************************\nHalf Period Guess:\n************************************\n");
+    // halfPerGuess->print();
+    // halfPerGuess->saveToMat("data/temp_halfPerGuess.mat");
+
+    *halfPerCorrected = Arcset_cr3bp(static_cast<const SysData_cr3bp *>(halfPerGuess->getSysData()));   // reset
+    
     try{
         // Try once with the standard multiple-shooting parameters
         *pItData = corrector.multShoot(halfPerGuess, halfPerCorrected);
@@ -954,10 +960,14 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
         corrector.setMaxIts(250);
         *halfPerCorrected = Arcset_cr3bp(static_cast<const SysData_cr3bp *>(halfPerGuess->getSysData()));   // reset
         
+        // printf("\n************************************\nHalf Period Guess:\n************************************\n");
+        // halfPerGuess->print();
+        // halfPerGuess->saveToMat("data/temp_halfPerGuess.mat");
+
         try{
             corrector.multShoot(halfPerGuess, halfPerCorrected);
             
-            halfPerCorrected->print();
+            // halfPerCorrected->print();
         }catch(DivergeException &ee){
             throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
         }
@@ -969,11 +979,10 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
     // Make sure the final STM represents the entire evolution of the trajectory
     po.setSTMs_cumulative();
 
-    halfPerGuess->print();
-    halfPerCorrected->print();
-    halfPerGuess->saveToMat("data/temp_halfPerGuess.mat");
-    halfPerCorrected->saveToMat("data/temp_halfPerCorrected.mat");
-    waitForUser();
+    // printf("\n************************************\nHalf Period Corrected:\n************************************\n");
+    // halfPerCorrected->print();
+    // halfPerCorrected->saveToMat("data/temp_halfPerCorrected.mat");
+    // waitForUser();
 
     double halfTOF = po.getTimeByIx(-1);
     int halfPerTraj_len = static_cast<int>(po.getNumNodes());

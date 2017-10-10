@@ -180,7 +180,7 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 void Arcset_bc4bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds(pMatFile, saveTp);
 
-	saveNodeExtraParamVec(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
+	saveNodeExtraParamVec(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, saveTp, VARNAME_STATE_EPOCH_DERIV);
 }//====================================================
 
 /**

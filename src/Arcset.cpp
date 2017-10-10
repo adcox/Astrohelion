@@ -528,10 +528,10 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 void Arcset::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
 	saveLinkTable(pMatFile);
 
-	saveNodeStates(pMatFile);
-	saveNodeStateDeriv(pMatFile);
-	saveNodeTimes(pMatFile);
-	saveNodeCtrl(pMatFile);
+	saveNodeStates(pMatFile, saveTp);
+	saveNodeStateDeriv(pMatFile, saveTp);
+	saveNodeTimes(pMatFile, saveTp);
+	saveNodeCtrl(pMatFile, saveTp);
 
 	saveSegStates(pMatFile, saveTp);
 	saveSegTimes(pMatFile, saveTp);

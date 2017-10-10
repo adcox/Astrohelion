@@ -269,11 +269,14 @@ protected:
 	 *  \{
 	 */
 	void initNodesSegsFromMat(mat_t *, const char* pStateVarName = VARNAME_NODESTATE);
+
+	matvar_t* createVar_LinkTable(const char *pVarName = VARNAME_LINKTABLE) const;
 	void readLinkTable(mat_t*, const char* pVarName = VARNAME_LINKTABLE);
 	void saveLinkTable(mat_t*, const char* pVarName = VARNAME_LINKTABLE) const;
 	
+	matvar_t* createVar_Constraints(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_CONSTRAINTS) const;
 	void readConstraints(mat_t*, const char* pVarName = VARNAME_CONSTRAINTS);
-	void saveConstraints(mat_t*, const char* pVarName = VARNAME_CONSTRAINTS) const;
+	void saveConstraints(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_CONSTRAINTS) const;
 
 	// Read Node Data
 	void readNodeCtrlFromMat(mat_t*, const char* pVarName = VARNAME_NODECTRL);
@@ -291,14 +294,27 @@ protected:
 	void readSegTOFFromMat(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_TOF);
 
 	// Save Node Data
-	void saveNodeCtrl(mat_t*, const char *pVarName = VARNAME_NODECTRL) const;
-	void saveNodeExtraParam(mat_t*, std::string, const char*) const;
-	void saveNodeExtraParamVec(mat_t*, std::string, size_t len, const char*) const;
-	void saveNodeStates(mat_t*, const char* pVarName = VARNAME_NODESTATE) const;
-	void saveNodeTimes(mat_t*, const char* pVarName = VARNAME_NODETIME) const;
-	void saveNodeStateDeriv(mat_t*, const char* pVarName = VARNAME_STATE_DERIV) const;
+	matvar_t* createVar_NodeCtrl(Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_NODECTRL) const;
+	matvar_t* createVar_NodeExtraParam(std::string, Save_tp, const char*) const;
+	matvar_t* createVar_NodeExtraParamVec(std::string, size_t, Save_tp saveTp, const char*) const;
+	matvar_t* createVar_NodeStates(Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_NODESTATE) const;
+	matvar_t* createVar_NodeTimes(Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_NODETIME) const;
+	matvar_t* createVar_NodeStateDeriv(Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_STATE_DERIV) const;
+
+	void saveNodeCtrl(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_NODECTRL) const;
+	void saveNodeExtraParam(mat_t*, std::string, Save_tp, const char*) const;
+	void saveNodeExtraParamVec(mat_t*, std::string, size_t len, Save_tp, const char*) const;
+	void saveNodeStates(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_NODESTATE) const;
+	void saveNodeTimes(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_NODETIME) const;
+	void saveNodeStateDeriv(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_STATE_DERIV) const;
 
 	// Save Segment Data
+	matvar_t* createVar_SegCtrlLaw(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_SEGCTRL) const;
+	matvar_t* createVar_SegStates(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_SEGSTATE) const;
+	matvar_t* createVar_SegSTMs(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_STM) const;
+	matvar_t* createVar_SegTimes(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_SEGTIME) const;
+	matvar_t* createVar_SegTOF(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_TOF) const;
+
 	void saveSegCtrlLaw(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGCTRL) const;
 	void saveSegStates(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_SEGSTATE) const;
 	void saveSegSTMs(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL, const char* pVarName = VARNAME_STM) const;

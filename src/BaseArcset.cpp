@@ -721,30 +721,6 @@ std::vector<double> BaseArcset::getStateDeriv(int id){
 		throw Exception("BaseArcset::getStateDeriv: Node ID out of range");
 
 	return getStateDerivByIx(nodeIDMap.at(id));
-	// int ix = nodeIDMap.at(id);
-	// if(ix != Linkable::INVALID_ID && ix < static_cast<int>(nodes.size()) && ix >= 0){
-	// 	try{
-	// 		return nodes[ix].getExtraParamVec(PARAMKEY_STATE_DERIV);
-	// 	}catch(Exception &e){
-	// 		// Control laws are defined on segments, but state derivatives are stored on nodes...
-	// 		// Get the control law associated with the first segment linked to the node (should definitely be one)
-	// 		// CAUTION: If two segments link to a node with different control laws, this behavior may be undesirable.
-	// 		ControlLaw *pLaw = segs[segIDMap[nodes[ix].getLink(0)]].getCtrlLaw();
-	// 		EOM_ParamStruct params(pSysData, pLaw);
-
-	// 		std::vector<double> state = nodes[ix].getState();
-	// 		if(pLaw && pLaw->getNumStates() > 0){
-	// 			std::vector<double> ctrlState = nodes[ix].getExtraParamVec(PARAMKEY_CTRL);
-	// 			state.insert(state.end(), ctrlState.begin(), ctrlState.end());
-	// 		}
-
-	// 		std::vector<double> a = pSysData->getDynamicsModel()->getStateDeriv(nodes[ix].getEpoch(), nodes[ix].getState(), &params);
-	// 		nodes[ix].setExtraParamVec(PARAMKEY_STATE_DERIV, a);
-	// 		return a;
-	// 	}
-	// }else{
-	// 	throw Exception("BaseArcset::getStateDeriv: Could not locate the node with the specified ID");
-	// }
 }//====================================================
 
 /**
@@ -1930,6 +1906,412 @@ void BaseArcset::printSegIDMap() const{
 //      File I/O Utility Functions
 //-------------------------------------------------------------------------------------
 
+matvar_t* BaseArcset::createVar_SegTimes(Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+
+	// Create the cell array
+	size_t dims[2] = {segs.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// Can't save any data... exit
+	}
+
+	dims[1] = 1;	 // only one column
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<double> segTimes = segs[s].getTimeVector();
+
+		if(saveTp == Save_tp::SAVE_FRAME){
+			// Only save the first and last time
+			dims[0] = 2;
+			segTimes.erase(segTimes.begin()+1, segTimes.end()-1);
+		}else{
+			dims[0] = segTimes.size();
+		}
+
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segTimes.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		if(cell_element != nullptr)
+			Mat_VarSetCell(pMatVar, s, cell_element);
+		else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
+		}
+	}
+
+	return pMatVar;
+}//====================================================
+
+matvar_t* BaseArcset::createVar_SegStates(Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+
+	// Create the cell array
+	size_t dims[2] = {segs.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// Can't save any data... exit
+	}
+	
+	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
+	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		unsigned int ctrl_size = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
+		unsigned int full_size = core_size + (core_size + ctrl_size)*(core_size + ctrl_size) + extra_size + ctrl_size;
+
+		dims[1] = saveTp == Save_tp::SAVE_ALL ? full_size : core_size + ctrl_size;
+
+		std::vector<double> segStates = segs[s].getStateVector();
+		if(segStates.size() % full_size != 0){
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset:saveSegStates: Segment state vector size is not a multiple of the core state size; cannot proceed");
+		}
+
+		std::vector<double> segStates_trans;
+		if(saveTp == Save_tp::SAVE_FRAME){
+			dims[0] = 2;	// rows
+			segStates_trans.assign(dims[0]*dims[1], 0);
+			unsigned int lastRow = segStates.size()/full_size - 1;
+
+			// Transpose data into column-major order
+			for(unsigned int c = 0; c < dims[1]; c++){
+				segStates_trans[c*dims[0] + 0] = segStates[0 + c];
+				segStates_trans[c*dims[0] + 1] = segStates[lastRow*full_size + c];
+
+			}
+		}else{
+			dims[0] = segStates.size()/full_size;	// rows
+			segStates_trans.assign(dims[0]*dims[1], 0);
+
+			// Transpose data into column-major order
+			for(unsigned int r = 0; r < dims[0]; r++){
+				for(unsigned int c = 0; c < dims[1]; c++){
+					segStates_trans[c*dims[0] + r] = segStates[r*full_size + c];
+				}
+			}
+		}
+
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segStates_trans.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		if(cell_element != nullptr)
+			Mat_VarSetCell(pMatVar, s, cell_element);
+		else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
+		}
+	}
+
+	return pMatVar;
+}//====================================================
+
+matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	size_t struct_dims[] = {segs.size(),1};
+	
+	unsigned int nfields = 3;
+	const char *fieldnames[3] = {"Type", "NumStates", "Params"};
+
+	matvar_t *pMatVar = Mat_VarCreateStruct(pVarName, 2, struct_dims, fieldnames, nfields);
+	if(pMatVar == nullptr){
+		printErr("ControlLaw::createMatStruct: Error creating ControlLaw structure variable\n");
+		return pMatVar;
+	}
+
+	matvar_t *field = nullptr;
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		ControlLaw *pLaw = segs[s].getCtrlLaw();
+
+		// Initialize variables to represent the no control case
+		unsigned int id = 0, numStates = 0;
+		std::vector<double> params;
+		
+		// Update values if a control law has been implemented
+		if(pLaw){
+			id = pLaw->getLawType();
+			numStates = pLaw->getNumStates();
+			params = pLaw->getParams();
+		}
+
+		// Save structure fields
+		size_t field_dims[] = {1,1};
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		Mat_VarSetStructFieldByName(pMatVar, fieldnames[0], s, field);
+
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		Mat_VarSetStructFieldByName(pMatVar, fieldnames[1], s, field);
+
+		field_dims[0] = params.size();
+		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		Mat_VarSetStructFieldByName(pMatVar, fieldnames[2], s, field);
+		
+	}
+
+	return pMatVar;
+}//====================================================
+
+matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	std::vector<double> allTOFs(segs.size());
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		allTOFs[s] = segs[s].getTOF();
+	}
+	
+	size_t dims[2] = {allTOFs.size(), 1};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
+matvar_t* BaseArcset::createVar_SegSTMs(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+
+	size_t dims[2] = {segs.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// can't save any data... exit
+	}
+
+	unsigned int count = 0;
+	for(const Segment &seg : segs){
+		MatrixXRd P = seg.getSTM().transpose();
+		dims[0] = P.cols();
+		dims[1] = P.rows();
+
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		if(cell_element != nullptr){
+			Mat_VarSetCell(pMatVar, count++, cell_element);
+		}else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveSegSTMs: Could not create cell array variable\n");
+		}
+	}
+
+	return pMatVar;
+}//====================================================
+
+matvar_t* BaseArcset::createVar_NodeStates(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	// We store data in row-major order, but the Matlab file-writing algorithm takes data
+	// in column-major order, so we transpose our vector and split it into two smaller ones
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+	std::vector<double> posVel(stateSize*nodes.size());
+
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		std::vector<double> state = nodes[r].getState();
+		for(unsigned int c = 0; c < stateSize; c++){
+			posVel[c*nodes.size() + r] = state[c];
+		}
+	}
+
+	// Next, create a matlab variable for the state and save it to the file
+	/*	Create a matlab variable. Arguments are:
+	 *	const char *name 	- pVarName, the name of the variable
+	 *	enum matio_classes 	- MAT_C_DOUBLE, Matlab double-precision variable class
+	 *	enum matio_types 	- MAT_T_DOUBLE, Matlab IEEE 754 double precision data type
+	 * 	int rank 			- 2 - the variable rank. Must be 2 or more; not really sure what this does
+	 *	size_t dims 		- dims - the dimensions of the variable (e.g. matrix size) {rows, cols}
+	 *	void *data 			- data - the variable we're saving. The algorithm assumes data is in column-major 
+	 *							format
+	 *	int opt 			- 0, or bit-wise OR of the following options:
+	 *							MAT_F_DONT_COPY_DATA: just use the pointer to the data, don't copy it. 
+	 *								Note that the pointer should not be freed until you are done with 
+	 *								the matvar. The Mat_VarFree function will NOT free data that was
+	 *								created with MAT_F_DONT_COPY_DATA, so free it yourself.
+	 *							MAT_F_COMPLEX: specify that the data is complex
+	 *							MAT_F_GLOBAL: make the matlab variable global
+	 *							MAT_F_LOGICAL: this variable is a logical variable
+	 */
+	size_t dims[2] = {nodes.size(), stateSize};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
+matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+
+	(void) saveTp;
+	// Create the cell array
+	size_t dims[2] = {nodes.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// Can't save any data... exit
+	}
+
+	dims[1] = 1;	 // only one column
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<double> ctrl;
+		try{
+			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
+		}catch(Exception &e){}
+
+		dims[0] = ctrl.size();
+
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+		if(cell_element != nullptr)
+			Mat_VarSetCell(pMatVar, n, cell_element);
+		else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
+		}
+	}
+
+	return pMatVar;
+}//====================================================
+
+matvar_t* BaseArcset::createVar_NodeExtraParamVec(std::string varKey, size_t len,
+	Save_tp saveTp, const char *pVarName) const{
+
+	(void) saveTp;
+	// Get the specified coordinate
+	std::vector<double> param(nodes.size()*len);
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+		std::vector<double> vec(len, NAN);
+
+		try{
+			vec = nodes[r].getExtraParamVec(varKey);
+			for(unsigned int c = 0; c < vec.size(); c++){
+				if(c >= len)
+					break;
+
+				param[c*nodes.size() + r] = vec[c];
+			}
+		}catch(Exception &e){
+			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+			for(unsigned int c = 0; c < len; c++)
+				param[c*nodes.size() + r] = vec[c];
+		}
+	}
+
+	size_t dims[2] = {nodes.size(), len};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
+matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey, 
+	Save_tp saveTp, const char *pVarName) const{
+
+	(void) saveTp;
+	// Get the specified coordinate
+	std::vector<double> param(nodes.size());
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		try{
+			param[r] = nodes[r].getExtraParam(varKey);
+		}catch(Exception &e){
+			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
+			param[r] = NAN;
+		}
+	}
+
+	size_t dims[2] = {nodes.size(), 1};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
+matvar_t* BaseArcset::createVar_NodeTimes(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	std::vector<double> allEpochs(nodes.size());
+
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		allEpochs[n] = nodes[n].getEpoch();
+	}
+	
+	size_t dims[2] = {allEpochs.size(), 1};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
+matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+
+	// We store data in row-major order, but the Matlab file-writing algorithm takes data
+	// in column-major order, so we transpose our vector and split it into two smaller ones
+	std::vector<double> deriv_colMaj(stateSize*nodes.size());
+
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		std::vector<double> deriv(stateSize, NAN);
+		try{
+			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
+		}catch(Exception &e){
+			// printErr("Unable to get acceleration vector for node %u\n", r);
+		}
+
+		for(unsigned int c = 0; c < deriv.size(); c++){
+			deriv_colMaj[c*nodes.size() + r] = deriv[c];
+		}
+	}
+	
+	size_t dims[2] = {nodes.size(), stateSize};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
+matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	// Step 1: Gather all the constraints
+	std::vector<Constraint> allCons = cons;
+	matvar_t* pMatVar = nullptr;
+
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<Constraint> temp = nodes[n].getConstraints();
+		allCons.insert(allCons.end(), temp.begin(), temp.end());
+	}
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<Constraint> temp = segs[s].getConstraints();
+		allCons.insert(allCons.end(), temp.begin(), temp.end());
+	}
+
+	if(allCons.size() > 0){
+		matvar_t *cell_element = nullptr;
+
+		// Step 2: Create the cell array
+		size_t dims[2] = {allCons.size(), 1};
+		pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+		if(pMatVar == nullptr){
+			return pMatVar; 	// Can't save any data... exit
+		}
+
+		for(unsigned int c = 0; c < allCons.size(); c++){
+			// Get the constraint data
+			std::vector<double> conData = allCons[c].getData();
+			// Append the type and parent index to the beginning of the data vector: [type, parent_index, data0, data1, ...]
+			int parentIx = -1;
+			if(allCons[c].getAppType() != ConstraintApp_tp::APP_TO_ARC){
+				parentIx = allCons[c].getAppType() == ConstraintApp_tp::APP_TO_NODE ? nodeIDMap.at(allCons[c].getID()) : segIDMap.at(allCons[c].getID());
+			}else{
+				parentIx = allCons[c].getID();
+			}
+			conData.insert(conData.begin(), static_cast<double>(parentIx));
+			conData.insert(conData.begin(), static_cast<double>(to_underlying(allCons[c].getType())));
+
+			dims[1] = conData.size();
+			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
+			if(cell_element != nullptr){
+				Mat_VarSetCell(pMatVar, c, cell_element);
+			}else{
+				Mat_VarFree(pMatVar);
+				throw Exception("BaseArcset::saveConstraints: Could not create cell array variable\n");
+			}
+		}
+	}
+
+	return pMatVar;
+}//====================================================
+
+matvar_t* BaseArcset::createVar_LinkTable(const char *pVarName) const{
+	unsigned int numSegs = segs.size();
+	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
+
+	// Store data in column-major order
+	for(unsigned int s = 0; s < segs.size(); s++){
+		segTable[0*numSegs + s] = segs[s].getID();
+		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
+		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
+		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
+	}
+
+	size_t dims[2] = {segs.size(), 4};
+	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), MAT_F_DONT_COPY_DATA);
+}//====================================================
+
 /**
  *  \brief Initialize the vectors of node and segment objects from a *.mat file
  *  \details Deprecated; replaced by readLinkTable().
@@ -2034,7 +2416,7 @@ void BaseArcset::readLinkTable(mat_t *pMatFile, const char* pVarName){
 				if(nodeIxs.size() == 0)
 					throw Exception("BaseArcset::readLinkTable: No nodes linked from segments... not built to handle this");
 
-				int numNodes = *std::max_element(nodeIxs.begin(), nodeIxs.end()) + 1;
+				unsigned int numNodes = *std::max_element(nodeIxs.begin(), nodeIxs.end()) + 1;
 
 				// Step 2: Create the nodes; index = id in this case
 				for(unsigned int n = 0; n < numNodes; n++){
@@ -2754,71 +3136,14 @@ void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKe
  *  \param pVarName [description]
  */
 void BaseArcset::saveLinkTable(mat_t *pMatFile, const char* pVarName) const{
-	unsigned int numSegs = segs.size();
-	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
-
-	// Store data in column-major order
-	for(unsigned int s = 0; s < segs.size(); s++){
-		segTable[0*numSegs + s] = segs[s].getID();
-		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
-		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
-		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
-	}
-
-	size_t dims[2] = {segs.size(), 4};
-	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), MAT_F_DONT_COPY_DATA);
+	matvar_t *pMatVar = createVar_LinkTable(pVarName);
 	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//====================================================
 
-void BaseArcset::saveConstraints(mat_t *pMatFile, const char* pVarName) const{
-	// Step 1: Gather all the constraints
-	std::vector<Constraint> allCons = cons;
-
-	for(unsigned int n = 0; n < nodes.size(); n++){
-		std::vector<Constraint> temp = nodes[n].getConstraints();
-		allCons.insert(allCons.end(), temp.begin(), temp.end());
-	}
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		std::vector<Constraint> temp = segs[s].getConstraints();
-		allCons.insert(allCons.end(), temp.begin(), temp.end());
-	}
-
-	if(allCons.size() > 0){
-		matvar_t *cell_array = nullptr, *cell_element = nullptr;
-
-		// Step 2: Create the cell array
-		size_t dims[2] = {allCons.size(), 1};
-		cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-		if(cell_array == nullptr){
-			return; 	// Can't save any data... exit
-		}
-
-		for(unsigned int c = 0; c < allCons.size(); c++){
-			// Get the constraint data
-			std::vector<double> conData = allCons[c].getData();
-			// Append the type and parent index to the beginning of the data vector: [type, parent_index, data0, data1, ...]
-			int parentIx = -1;
-			if(allCons[c].getAppType() != ConstraintApp_tp::APP_TO_ARC){
-				parentIx = allCons[c].getAppType() == ConstraintApp_tp::APP_TO_NODE ? nodeIDMap.at(allCons[c].getID()) : segIDMap.at(allCons[c].getID());
-			}else{
-				parentIx = allCons[c].getID();
-			}
-			conData.insert(conData.begin(), static_cast<double>(parentIx));
-			conData.insert(conData.begin(), static_cast<double>(to_underlying(allCons[c].getType())));
-
-			dims[1] = conData.size();
-			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-			if(cell_element != nullptr){
-				Mat_VarSetCell(cell_array, c, cell_element);
-			}else{
-				Mat_VarFree(cell_array);
-				throw Exception("BaseArcset::saveConstraints: Could not create cell array variable\n");
-			}
-		}
-
-		saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
-	}
+void BaseArcset::saveConstraints(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
+	matvar_t *pMatVar = createVar_Constraints(saveTp, pVarName);
+	if(pMatVar)
+		saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**
@@ -2826,28 +3151,8 @@ void BaseArcset::saveConstraints(mat_t *pMatFile, const char* pVarName) const{
  *	\param pMatFile a pointer to the destination mat-file
  *	\param pVarName name of the variable in the Matlab file
  */
-void BaseArcset::saveNodeStateDeriv(mat_t *pMatFile, const char* pVarName) const{
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-
-	// We store data in row-major order, but the Matlab file-writing algorithm takes data
-	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> deriv_colMaj(stateSize*nodes.size());
-
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		std::vector<double> deriv(stateSize, NAN);
-		try{
-			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
-		}catch(Exception &e){
-			// printErr("Unable to get acceleration vector for node %u\n", r);
-		}
-
-		for(unsigned int c = 0; c < deriv.size(); c++){
-			deriv_colMaj[c*nodes.size() + r] = deriv[c];
-		}
-	}
-	
-	size_t dims[2] = {nodes.size(), stateSize};
-	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), MAT_F_DONT_COPY_DATA);
+void BaseArcset::saveNodeStateDeriv(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
+	matvar_t *pMatVar = createVar_NodeStateDeriv(saveTp, pVarName);
 	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
@@ -2856,41 +3161,23 @@ void BaseArcset::saveNodeStateDeriv(mat_t *pMatFile, const char* pVarName) const
  *	\param pMatFile a pointer to the destination mat-file
  *	\param pVarName the name of the variable
  */
-void BaseArcset::saveNodeTimes(mat_t *pMatFile, const char* pVarName) const{
-	std::vector<double> allEpochs(nodes.size());
-
-	for(unsigned int n = 0; n < nodes.size(); n++){
-		allEpochs[n] = nodes[n].getEpoch();
-	}
-	
-	size_t dims[2] = {allEpochs.size(), 1};
-	matvar_t *matvar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(pMatFile, matvar, pVarName, MAT_COMPRESSION_NONE);
+void BaseArcset::saveNodeTimes(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
+	matvar_t *pMatVar = createVar_NodeTimes(saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 /**
  *	\brief Save one of the extra parameters to file
  *	\param pMatFile a pointer to the destination mat-file
  *	\param varKey the key (i.e., the name) of the scalar parameter
- *	\param name the name of the variable being saved
+ *	\param pVarName the name of the variable being saved
  *	\throws Exception if <tt>varIx</tt> is out of bounds
  */
-void BaseArcset::saveNodeExtraParam(mat_t *pMatFile, std::string varKey, const char *name) const{
+void BaseArcset::saveNodeExtraParam(mat_t *pMatFile, std::string varKey, Save_tp saveTp,
+	const char *pVarName) const{
 
-	// Get the specified coordinate
-	std::vector<double> param(nodes.size());
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		try{
-			param[r] = nodes[r].getExtraParam(varKey);
-		}catch(Exception &e){
-			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-			param[r] = NAN;
-		}
-	}
-
-	size_t dims[2] = {nodes.size(), 1};
-	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = createVar_NodeExtraParam(varKey, saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -2898,35 +3185,14 @@ void BaseArcset::saveNodeExtraParam(mat_t *pMatFile, std::string varKey, const c
  *	\param pMatFile a pointer to the destination mat-file
  *	\param varKey the key (i.e., the name) of the scalar parameter
  *	\param len number of elements in the extra parameter vector (e.g., a 3-element velocity vector)
- *	\param name the name of the variable being saved
+ *	\param pVarName the name of the variable being saved
  *	\throws Exception if <tt>varIx</tt> is out of bounds
  */
-void BaseArcset::saveNodeExtraParamVec(mat_t *pMatFile, std::string varKey, size_t len, const char *name) const{
+void BaseArcset::saveNodeExtraParamVec(mat_t *pMatFile, std::string varKey, size_t len,
+	Save_tp saveTp, const char *pVarName) const{
 
-	// Get the specified coordinate
-	std::vector<double> param(nodes.size()*len);
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-		std::vector<double> vec(len, NAN);
-
-		try{
-			vec = nodes[r].getExtraParamVec(varKey);
-			for(unsigned int c = 0; c < vec.size(); c++){
-				if(c >= len)
-					break;
-
-				param[c*nodes.size() + r] = vec[c];
-			}
-		}catch(Exception &e){
-			// Save NAN (rather than un-allocated memory) if the node does not have the specified parameter
-			for(unsigned int c = 0; c < len; c++)
-				param[c*nodes.size() + r] = vec[c];
-		}
-	}
-
-	size_t dims[2] = {nodes.size(), len};
-	matvar_t *pMatVar = Mat_VarCreate(name, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(param[0]), MAT_F_DONT_COPY_DATA);
-	saveVar(pMatFile, pMatVar, name, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = createVar_NodeExtraParamVec(varKey, len, saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -2938,36 +3204,9 @@ void BaseArcset::saveNodeExtraParamVec(mat_t *pMatFile, std::string varKey, size
  *  \param pMatFile Pointer to an open Matlab data file
  *  \param pVarName Name of the variable
  */
-void BaseArcset::saveNodeCtrl(mat_t *pMatFile, const char *pVarName) const{
-	matvar_t *cell_array = nullptr, *cell_element = nullptr;
-
-	// Create the cell array
-	size_t dims[2] = {nodes.size(), 1};
-	cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(cell_array == nullptr){
-		return;	// Can't save any data... exit
-	}
-
-	dims[1] = 1;	 // only one column
-	for(unsigned int n = 0; n < nodes.size(); n++){
-		std::vector<double> ctrl;
-		try{
-			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
-		}catch(Exception &e){}
-
-		dims[0] = ctrl.size();
-
-		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		if(cell_element != nullptr)
-			Mat_VarSetCell(cell_array, n, cell_element);
-		else{
-			Mat_VarFree(cell_array);
-			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
-		}
-	}
-
-	saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
+void BaseArcset::saveNodeCtrl(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = createVar_NodeCtrl(saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**
@@ -2975,39 +3214,8 @@ void BaseArcset::saveNodeCtrl(mat_t *pMatFile, const char *pVarName) const{
  *	\param pMatFile a pointer to the destination matlab file 
  *	\param pVarName the name of the variable (e.g. "State" or "Nodes")
  */
-void BaseArcset::saveNodeStates(mat_t *pMatFile, const char* pVarName) const{
-	// We store data in row-major order, but the Matlab file-writing algorithm takes data
-	// in column-major order, so we transpose our vector and split it into two smaller ones
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	std::vector<double> posVel(stateSize*nodes.size());
-
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		std::vector<double> state = nodes[r].getState();
-		for(unsigned int c = 0; c < stateSize; c++){
-			posVel[c*nodes.size() + r] = state[c];
-		}
-	}
-
-	// Next, create a matlab variable for the state and save it to the file
-	/*	Create a matlab variable. Arguments are:
-	 *	const char *name 	- pVarName, the name of the variable
-	 *	enum matio_classes 	- MAT_C_DOUBLE, Matlab double-precision variable class
-	 *	enum matio_types 	- MAT_T_DOUBLE, Matlab IEEE 754 double precision data type
-	 * 	int rank 			- 2 - the variable rank. Must be 2 or more; not really sure what this does
-	 *	size_t dims 		- dims - the dimensions of the variable (e.g. matrix size) {rows, cols}
-	 *	void *data 			- data - the variable we're saving. The algorithm assumes data is in column-major 
-	 *							format
-	 *	int opt 			- 0, or bit-wise OR of the following options:
-	 *							MAT_F_DONT_COPY_DATA: just use the pointer to the data, don't copy it. 
-	 *								Note that the pointer should not be freed until you are done with 
-	 *								the matvar. The Mat_VarFree function will NOT free data that was
-	 *								created with MAT_F_DONT_COPY_DATA, so free it yourself.
-	 *							MAT_F_COMPLEX: specify that the data is complex
-	 *							MAT_F_GLOBAL: make the matlab variable global
-	 *							MAT_F_LOGICAL: this variable is a logical variable
-	 */
-	size_t dims[2] = {nodes.size(), stateSize};
-	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(posVel[0]), MAT_F_DONT_COPY_DATA);
+void BaseArcset::saveNodeStates(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
+	matvar_t *pMatVar = createVar_NodeStates(saveTp, pVarName);
 	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
@@ -3018,31 +3226,8 @@ void BaseArcset::saveNodeStates(mat_t *pMatFile, const char* pVarName) const{
  *	\param pVarName name of the variable in the Matlab file
  */
 void BaseArcset::saveSegSTMs(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	(void) saveTp;
-	matvar_t *cell_array = nullptr, *cell_element = nullptr;
-
-	size_t dims[2] = {segs.size(), 1};
-	cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(cell_array == nullptr){
-		return;	// can't save any data... exit
-	}
-
-	unsigned int count = 0;
-	for(const Segment &seg : segs){
-		MatrixXRd P = seg.getSTM().transpose();
-		dims[0] = P.cols();
-		dims[1] = P.rows();
-
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		if(cell_element != nullptr){
-			Mat_VarSetCell(cell_array, count++, cell_element);
-		}else{
-			Mat_VarFree(cell_array);
-			throw Exception("BaseArcset::saveSegSTMs: Could not create cell array variable\n");
-		}
-	}
-
-	saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = createVar_SegSTMs(saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//======================================================
 
 /**
@@ -3051,15 +3236,7 @@ void BaseArcset::saveSegSTMs(mat_t *pMatFile, Save_tp saveTp, const char* pVarNa
  *	\param pVarName the name of the variable
  */
 void BaseArcset::saveSegTOF(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	(void) saveTp;
-	std::vector<double> allTOFs(segs.size());
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		allTOFs[s] = segs[s].getTOF();
-	}
-	
-	size_t dims[2] = {allTOFs.size(), 1};
-	matvar_t *pMatVar = Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), MAT_F_DONT_COPY_DATA);
+	matvar_t *pMatVar = createVar_SegTOF(saveTp, pVarName);
 	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
@@ -3069,146 +3246,18 @@ void BaseArcset::saveSegTOF(mat_t *pMatFile, Save_tp saveTp, const char* pVarNam
  *  \param pVarName name of the variable
  */
 void BaseArcset::saveSegCtrlLaw(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	size_t struct_dims[] = {segs.size(),1};
-	
-	unsigned int nfields = 3;
-	const char *fieldnames[3] = {"Type", "NumStates", "Params"};
-
-	matvar_t *storageStruct = Mat_VarCreateStruct(pVarName, 2, struct_dims, fieldnames, nfields);
-	if(storageStruct == nullptr){
-		printErr("ControlLaw::createMatStruct: Error creating ControlLaw structure variable\n");
-		return;
-	}
-
-	matvar_t *field = nullptr;
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		ControlLaw *pLaw = segs[s].getCtrlLaw();
-
-		// Initialize variables to represent the no control case
-		unsigned int id = 0, numStates = 0;
-		std::vector<double> params;
-		
-		// Update values if a control law has been implemented
-		if(pLaw){
-			id = pLaw->getLawType();
-			numStates = pLaw->getNumStates();
-			params = pLaw->getParams();
-		}
-
-		// Save structure fields
-		size_t field_dims[] = {1,1};
-		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		Mat_VarSetStructFieldByName(storageStruct, fieldnames[0], s, field);
-
-		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		Mat_VarSetStructFieldByName(storageStruct, fieldnames[1], s, field);
-
-		field_dims[0] = params.size();
-		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		Mat_VarSetStructFieldByName(storageStruct, fieldnames[2], s, field);
-		
-	}
-
-	saveVar(pMatFile, storageStruct, pVarName, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = createVar_SegCtrlLaw(saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//=====================================================
 
 void BaseArcset::saveSegStates(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	matvar_t *cell_array = nullptr, *cell_element = nullptr;
-
-	// Create the cell array
-	size_t dims[2] = {segs.size(), 1};
-	cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(cell_array == nullptr){
-		return;	// Can't save any data... exit
-	}
-	
-	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
-	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		unsigned int ctrl_size = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
-		unsigned int full_size = core_size + (core_size + ctrl_size)*(core_size + ctrl_size) + extra_size + ctrl_size;
-
-		dims[1] = saveTp == Save_tp::SAVE_ALL ? full_size : core_size + ctrl_size;
-
-		std::vector<double> segStates = segs[s].getStateVector();
-		if(segStates.size() % full_size != 0){
-			Mat_VarFree(cell_array);
-			throw Exception("BaseArcset:saveSegStates: Segment state vector size is not a multiple of the core state size; cannot proceed");
-		}
-
-		std::vector<double> segStates_trans;
-		if(saveTp == Save_tp::SAVE_FRAME){
-			dims[0] = 2;	// rows
-			segStates_trans.assign(dims[0]*dims[1], 0);
-			unsigned int lastRow = segStates.size()/full_size - 1;
-
-			// Transpose data into column-major order
-			for(unsigned int c = 0; c < dims[1]; c++){
-				segStates_trans[c*dims[0] + 0] = segStates[0 + c];
-				segStates_trans[c*dims[0] + 1] = segStates[lastRow*full_size + c];
-
-			}
-		}else{
-			dims[0] = segStates.size()/full_size;	// rows
-			segStates_trans.assign(dims[0]*dims[1], 0);
-
-			// Transpose data into column-major order
-			for(unsigned int r = 0; r < dims[0]; r++){
-				for(unsigned int c = 0; c < dims[1]; c++){
-					segStates_trans[c*dims[0] + r] = segStates[r*full_size + c];
-				}
-			}
-		}
-
-		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segStates_trans.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		if(cell_element != nullptr)
-			Mat_VarSetCell(cell_array, s, cell_element);
-		else{
-			Mat_VarFree(cell_array);
-			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
-		}
-	}
-
-	saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = createVar_SegStates(saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//====================================================
 
 void BaseArcset::saveSegTimes(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	matvar_t *cell_array = nullptr, *cell_element = nullptr;
-
-	// Create the cell array
-	size_t dims[2] = {segs.size(), 1};
-	cell_array = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(cell_array == nullptr){
-		return;	// Can't save any data... exit
-	}
-
-	dims[1] = 1;	 // only one column
-	for(unsigned int s = 0; s < segs.size(); s++){
-		std::vector<double> segTimes = segs[s].getTimeVector();
-
-		if(saveTp == Save_tp::SAVE_FRAME){
-			// Only save the first and last time
-			dims[0] = 2;
-			segTimes.erase(segTimes.begin()+1, segTimes.end()-1);
-		}else{
-			dims[0] = segTimes.size();
-		}
-
-		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segTimes.front()), 0);	// Using MAT_F_DONT_COPY_DATA seems to cause issues
-		if(cell_element != nullptr)
-			Mat_VarSetCell(cell_array, s, cell_element);
-		else{
-			Mat_VarFree(cell_array);
-			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
-		}
-	}
-
-	saveVar(pMatFile, cell_array, pVarName, MAT_COMPRESSION_NONE);
+	matvar_t *pMatVar = createVar_SegTimes(saveTp, pVarName);
+	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
 }//====================================================
 
 }// END of Astrohelion namespace

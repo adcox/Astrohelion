@@ -141,6 +141,8 @@ void LinMotionEngine_cr3bp::storeData(const DynamicsModel *model, Arcset_cr3bp *
  *	\param Az out-of-plane amplitude, non-dimensional units
  *	\param psi starting phase angle for out-of-plane motion
  *	\param pArc pointer to an arcset to store the linear trajectory in
+ *	\param numNodes the number of nodes to place around the linear trajectory; 
+ *	this is nodes for the entire propagation (period * num revs)
  *	
  *	\throws Exception if <tt>L</tt> is not 1, 2, or 3
  */
@@ -242,6 +244,8 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
  *		to the chosen Lagrange point
  *	\param type the type of linearized motion desired
  *	\param pArc pointer to an arcset to store the linear trajectory in
+ *	\param numNodes the number of nodes to place around the linear trajectory; 
+ *	this is nodes for the entire propagation (period * num revs)
  *
  *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
@@ -261,6 +265,8 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], unsigned int type, Ar
  *	\param psi defines the starting elevation angle of the out-of-plane motion, radians
  *	\param type the type of linearized motion desired
  *	\param pArc pointer to an arcset to store the linear trajectory in
+ *	\param numNodes the number of nodes to place around the linear trajectory; 
+ *	this is nodes for the entire propagation (period * num revs)
  *
  *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 

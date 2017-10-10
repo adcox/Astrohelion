@@ -104,10 +104,10 @@ baseArcsetPtr Arcset_2bp::clone() const{
 void Arcset_2bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds(pMatFile, saveTp);
 
-	saveNodeExtraParam(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
-	saveNodeExtraParam(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
-	saveNodeExtraParam(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
-	saveNodeExtraParam(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
+	saveNodeExtraParam(pMatFile, PARAMKEY_SMA, saveTp, VARNAME_SMA);
+	saveNodeExtraParam(pMatFile, PARAMKEY_ECC, saveTp, VARNAME_ECC);
+	saveNodeExtraParam(pMatFile, PARAMKEY_ANGMOM, saveTp, VARNAME_ANGMOM);
+	saveNodeExtraParam(pMatFile, PARAMKEY_2BP_ENERGY, saveTp, VARNAME_2BP_ENERGY);
 }//====================================================
 
 /**

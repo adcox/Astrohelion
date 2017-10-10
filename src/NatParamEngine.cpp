@@ -158,6 +158,7 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	// if the one passed in is not NULL, hence we create a valid object and delete it
 	// before exiting the function
 	Arcset_cr3bp halfPerGuess(*initialGuess);
+	Arcset_cr3bp tempCorrected(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));
 	Arcset_cr3bp halfPerCorrected(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));
 	MultShootData *pItData = new MultShootData(&halfPerGuess);
 
@@ -174,10 +175,11 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 			// Add constraints to the guess to enforce the mirror conition and fix the specified states
 			cr3bp_addMirrorCons(&halfPerGuess, mirrorType, fixStates);
 			// Correct using multiple shooting, save the corrected half-period arc for next time
-			perOrbit = cr3bp_getSymPO(&halfPerGuess, &halfPerCorrected, mirrorType, tol, pItData);
+			perOrbit = cr3bp_getSymPO(&halfPerGuess, &tempCorrected, mirrorType, tol, pItData);
 			// perOrbit = cr3bp_getPeriodic(pSys, IC, tof, numNodes, order, mirrorType, fixStates, tol, pItData);
 
 			diverged = false;
+			halfPerCorrected = tempCorrected;
 			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
 		}catch(DivergeException &e){
 			diverged = true;
@@ -352,7 +354,7 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 
 		// Change the TOF on the final segment
 		// WARNING - might cause issues of TOF goes negative
-		double dt = tof - halfPerGuess.getTotalTOF();
+		double dt = tof/2.0 - halfPerGuess.getTotalTOF();
 		halfPerGuess.getSegRefByIx(-1).setTOF(halfPerGuess.getTOFByIx(-1) + dt);
 		
 		if(halfPerGuess.getTOFByIx(-1)*halfPerCorrected.getTOFByIx(-1) < 0)

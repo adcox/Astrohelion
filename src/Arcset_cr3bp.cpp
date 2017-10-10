@@ -244,7 +244,7 @@ void Arcset_cr3bp::setJacobiByIx(int ix, double val){
 void Arcset_cr3bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds(pMatFile, saveTp);
 
-	saveNodeExtraParam(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
+	saveNodeExtraParam(pMatFile, PARAMKEY_JACOBI, saveTp, VARNAME_JACOBI);
 }//====================================================
 
 /**

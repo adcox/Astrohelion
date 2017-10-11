@@ -692,7 +692,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 			/* Use LU decomposition to invert the Jacobian matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 			lies in the column-space of J^T, or in the orthogonal complement of
-			the nullspace of J.
+			the nullptrspace of J.
 			Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 			 */
 			
@@ -719,7 +719,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 				/* Use LU decomposition to invert the Gramm matrix and find a vector
 				w. Multiplying J^T by w yields the minimum-norm solution x, where x 
 				lies in the column-space of J^T, or in the orthogonal complement of
-				the nullspace of J.
+				the nullptrspace of J.
 				Source: <http://www.math.usm.edu/lambers/mat419/lecture15.pdf>
 				 */
 

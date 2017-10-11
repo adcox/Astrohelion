@@ -401,12 +401,12 @@ void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, const Con
 
     // All elements except the last are the free-variable vector for a converged family member
     std::vector<double> famFreeVec(conData.begin(), conData.begin()+it->totalFree);
-    std::vector<double> nullspace(conData.begin()+it->totalFree, conData.end()-1);
+    std::vector<double> nullptrspace(conData.begin()+it->totalFree, conData.end()-1);
     double stepSize = conData.back();   // The last element is the step size
 
     Eigen::RowVectorXd X = Eigen::Map<Eigen::RowVectorXd>(&(it->X[0]), 1, it->totalFree);
     Eigen::RowVectorXd X_fam = Eigen::Map<Eigen::RowVectorXd>(&(famFreeVec[0]), 1, famFreeVec.size());
-    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullspace[0]), nullspace.size(), 1);
+    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullptrspace[0]), nullptrspace.size(), 1);
     
     MatrixXRd dotProd;
     dotProd.noalias() = (X - X_fam)*N;

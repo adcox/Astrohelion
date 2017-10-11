@@ -9,7 +9,7 @@ using Eigen::MatrixXd;
 using Eigen::JacobiSVD;
 using Eigen::Vector3d;
 
-MatrixXd getNullspace(MatrixXd A){
+MatrixXd getnullptrspace(MatrixXd A){
 	JacobiSVD<MatrixXd> svd(A, Eigen::ComputeFullV | Eigen::ComputeFullU);
 	svd.setThreshold(1e-14);
 
@@ -44,6 +44,6 @@ int main(){
 	std::cout << "Its left singular vectors are the columns of the thin U matrix:" << std::endl << svd.matrixU() << std::endl;
 	std::cout << "Its right singular vectors are the columns of the thin V matrix:" << std::endl << svd.matrixV() << std::endl;
 
-	MatrixXd N = getNullspace(Z);
-	std::cout << "Nullspace:\n" << N << std::endl;
+	MatrixXd N = getnullptrspace(Z);
+	std::cout << "nullptrspace:\n" << N << std::endl;
 }

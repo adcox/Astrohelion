@@ -150,7 +150,7 @@ void printVerbColor(bool verbose, const char* color, const char * format, ...){
  *      MAT_COMPRESSION_ZLIB - zlib compression
  */
 void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compression comp){
-    if(NULL == matvar){
+    if(nullptr == matvar){
         printErr("Error creating variable for '%s'\n", varName);
     }else{
         Mat_VarWrite(matFile, matvar, comp);
@@ -166,7 +166,7 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
  *  \param data data value
  */
 void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
-    if(NULL != matfp){
+    if(nullptr != matfp){
         size_t dims[2] = {1, 1};
         matvar_t *matvar = Mat_VarCreate(varName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &data, MAT_F_DONT_COPY_DATA);
         saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
@@ -187,7 +187,7 @@ void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
  * \param cols number of columns in the matrix
  */
 void saveMatrixToFile(const char* filename, const char* varName, std::vector<double> data, size_t rows, size_t cols){
-    mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+    mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
     saveMatrixToFile(matfp, varName, data, rows, cols);
     Mat_Close(matfp);
 }//========================================================
@@ -209,7 +209,7 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
     if(data.size() < rows*cols)
         throw Exception("Utilities::saveMatrixToFile: Input data has fewer elements than specified by the rows and cols arguments");
 
-    if(NULL != matfp){
+    if(nullptr != matfp){
         size_t dims[2] = {rows, cols};
 
         std::vector<double> data_trans(data.size());
@@ -233,7 +233,7 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
  *  \param matfp pointer to Matlab file
  *  \param varName name of the variable within the Matlab file
  *  \param text value of the variable within the Matlab file
- *  \param strlen number of characters (including the final null char) in <tt>text</tt>
+ *  \param strlen number of characters (including the final nullptr char) in <tt>text</tt>
  */
 void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const int strlen){
     char text_chars[strlen];
@@ -257,19 +257,19 @@ void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const
 MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
  
     mat_t *matfp = Mat_Open(filename, MAT_ACC_RDONLY);
-    if(matfp ==  NULL)
+    if(matfp ==  nullptr)
         throw Exception("Utilities::readMatrixFromFile: Could not open data file\n");
 
     // For debugging, to print a list of all variables in the file
     // matvar_t *tempvar;
-    // while( (tempvar = Mat_VarReadNextInfo(matfp)) != NULL){
+    // while( (tempvar = Mat_VarReadNextInfo(matfp)) != nullptr){
     //     printf("%s\n", tempvar->name);
     //     Mat_VarFree(tempvar);
-    //     tempvar = NULL;
+    //     tempvar = nullptr;
     // }
 
     matvar_t *matvar = Mat_VarRead(matfp, varName);
-    if(matvar == NULL){
+    if(matvar == nullptr){
         Mat_Close(matfp);
         throw Exception("Utilities::readMatrixFromFile: Could not read variable data");
     }else{
@@ -279,7 +279,7 @@ MatrixXRd readMatrixFromMat(const char *filename, const char *varName){
 
             MatrixXRd mat;
             
-            if(data != NULL){
+            if(data != nullptr){
                 mat = Eigen::Map<MatrixXRd>(data, matvar->dims[1], matvar->dims[0]);
                 
                 Mat_VarFree(matvar);
@@ -311,7 +311,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
     double result = 2;
     
     matvar_t *matvar = Mat_VarRead(matFile, varName);
-    if(matvar == NULL){
+    if(matvar == nullptr){
         char msg[256];
         sprintf(msg, "Utilities::readDoubleFromMat: Could not read %s from file", varName);
         throw Exception(msg);
@@ -323,7 +323,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
             case MAT_T_UINT64:
             {
                 unsigned int *data = static_cast<unsigned int *>(matvar->data);
-                if(data != NULL)
+                if(data != nullptr)
                     result = double(*data);
                 else
                     throw Exception("Utilities::readDoubleFromMat: No data");
@@ -335,7 +335,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
             case MAT_T_INT64:
             {
                 int *data = static_cast<int *>(matvar->data);
-                if(data != NULL)
+                if(data != nullptr)
                     result = double(*data);
                 else
                     throw Exception("Utilities::readDoubleFromMat: No data");
@@ -345,7 +345,7 @@ double readDoubleFromMat(mat_t *matFile, const char* varName){
             case MAT_T_DOUBLE:
             {
                 double *data = static_cast<double *>(matvar->data);
-                if(data != NULL)
+                if(data != nullptr)
                     result = double(*data);
                 else
                     throw Exception("Utilities::readDoubleFromMat: No data");
@@ -375,13 +375,13 @@ std::string readStringFromMat(mat_t *matFile, const char* varName, matio_types a
 
     std::string result = "";
     matvar_t *matvar = Mat_VarRead(matFile, varName);
-    if(matvar == NULL){
+    if(matvar == nullptr){
         throw Exception("Utilities::readStringFromMat: Could not read variable from file");
     }else{
         if(matvar->class_type == aClass && matvar->data_type == aType){
             char *data = static_cast<char *>(matvar->data);
 
-            if(data != NULL){
+            if(data != nullptr){
                 result = std::string(data, matvar->dims[1]);
             }else{
                 throw Exception("Utilities::readStringFromMat: No data");

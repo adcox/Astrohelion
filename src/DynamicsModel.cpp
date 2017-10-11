@@ -117,7 +117,7 @@ bool DynamicsModel::supportsEvent(Event_tp type) const{
  */
 bool DynamicsModel::supportsControl(const ControlLaw *pLaw) const{
 	if(pLaw){
-		// By default, a non-null control law is not supported. Special code
+		// By default, a non-nullptr control law is not supported. Special code
 		return false;
 	}else{
 		// If pLaw = nullptr, no control is applied; this is always allowed
@@ -680,7 +680,7 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData *it, const Constrain
 	const Segment &inputSeg = it->nodesIn->getSegRef_const(segID);
 
 	if(propSeg.getCtrlLaw() == nullptr)
-		throw Exception("DynamicsModel::multShoot_targetCont_Ctrl: Constrained segment has a NULL control law");
+		throw Exception("DynamicsModel::multShoot_targetCont_Ctrl: Constrained segment has a nullptr control law");
 	
 
 	const unsigned int ctrlDim = propSeg.getCtrlLaw()->getNumStates();

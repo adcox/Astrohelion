@@ -107,8 +107,8 @@ struct Body_Data{
 	trigger a crash event in the numerical simulation */
 	double minFlyByAlt = 0;
 
-	std::string name = "NULL";		//!< Name of this body
-	std::string parent = "NULL";	//!< Name of the parent body
+	std::string name = "nullptr";		//!< Name of this body
+	std::string parent = "nullptr";	//!< Name of the parent body
 }; // END OF BODY_DATA
 
 /**

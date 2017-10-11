@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 		}
 	}
 
-	// mat_t *matfp = Mat_CreateVer("data/returns.mat", NULL, MAT_FT_DEFAULT);
+	// mat_t *matfp = Mat_CreateVer("data/returns.mat", nullptr, MAT_FT_DEFAULT);
 	// saveMatrixToFile(matfp, "ics", allICs, allICs.size()/6, 6);
 	// Mat_Close(matfp);
 

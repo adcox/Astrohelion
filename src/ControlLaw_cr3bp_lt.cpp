@@ -557,7 +557,7 @@ std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id){
  */
 void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pLaw){
 	if(pLaw == nullptr)
-		throw Exception("ControlLaw_cr3bp_lt::convertLaws: Input control law is null");
+		throw Exception("ControlLaw_cr3bp_lt::convertLaws: Input control law is nullptr");
 
 	switch(pLaw->getLawType()){
 		case Law_tp::GENERAL_CONST_F:
@@ -580,7 +580,7 @@ void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp
  *  \param pNewLaw Pointer to the GENERAL_CONST_F control law
  */
 void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pNewLaw){
-	// pNewLaw is guaranteed by the calling function, convertLaws(), to be non-null and have the correct law type
+	// pNewLaw is guaranteed by the calling function, convertLaws(), to be non-nullptr and have the correct law type
 
 	std::vector<double> angles(2,0);	// Store in-plane and out-of-plane angles that describe general law
 	std::vector<int> convertedNodes;	// Store IDs of nodes that have been converted

@@ -1907,51 +1907,31 @@ void BaseArcset::printSegIDMap() const{
 //-------------------------------------------------------------------------------------
 
 /**
- *  \brief Create a matio variable for the segment times
+ *  \brief Create a matio variable for the link table
  *  \details The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
- * 	\param saveTp describes how much data to save
  *  \param pVarName variable name
  *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-matvar_t* BaseArcset::createVar_SegTimes(Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+matvar_t* BaseArcset::createVar_LinkTable(const char *pVarName) const{
+	unsigned int numSegs = segs.size();
+	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
 
-	// Create the cell array
-	size_t dims[2] = {segs.size(), 1};
-	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(pMatVar == nullptr){
-		return pMatVar;	// Can't save any data... exit
+	// Store data in column-major order
+	for(unsigned int s = 0; s < numSegs; s++){
+		segTable[0*numSegs + s] = segs[s].getID();
+		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
+		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
+		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
 	}
 
-	dims[1] = 1;	 // only one column
-	for(unsigned int s = 0; s < segs.size(); s++){
-		std::vector<double> segTimes = segs[s].getTimeVector();
-
-		if(saveTp == Save_tp::SAVE_FRAME){
-			// Only save the first and last time
-			dims[0] = 2;
-			segTimes.erase(segTimes.begin()+1, segTimes.end()-1);
-		}else{
-			dims[0] = segTimes.size();
-		}
-
-		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segTimes.front()), 0);	// Do copy the data (it is freed at the end of the function!)
-		if(cell_element != nullptr)
-			Mat_VarSetCell(pMatVar, s, cell_element);
-		else{
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
-		}
-	}
-
-	return pMatVar;
+	size_t dims[2] = {numSegs, 4};
+	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
- *  \brief Create a matio variable for the segment states
+ *  \brief Create a matio variable for the constraints
  *  \details The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
@@ -1959,175 +1939,53 @@ matvar_t* BaseArcset::createVar_SegTimes(Save_tp saveTp, const char *pVarName) c
  *  \param pVarName variable name
  *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-matvar_t* BaseArcset::createVar_SegStates(Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	// Step 1: Gather all the constraints
+	std::vector<Constraint> allCons = cons;
+	matvar_t* pMatVar = nullptr;
 
-	// Create the cell array
-	size_t dims[2] = {segs.size(), 1};
-	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(pMatVar == nullptr){
-		return pMatVar;	// Can't save any data... exit
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<Constraint> temp = nodes[n].getConstraints();
+		allCons.insert(allCons.end(), temp.begin(), temp.end());
 	}
-	
-	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
-	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
 
 	for(unsigned int s = 0; s < segs.size(); s++){
-		unsigned int ctrl_size = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
-		unsigned int full_size = core_size + (core_size + ctrl_size)*(core_size + ctrl_size) + extra_size + ctrl_size;
+		std::vector<Constraint> temp = segs[s].getConstraints();
+		allCons.insert(allCons.end(), temp.begin(), temp.end());
+	}
 
-		dims[1] = saveTp == Save_tp::SAVE_ALL ? full_size : core_size + ctrl_size;
+	if(allCons.size() > 0){
+		matvar_t *cell_element = nullptr;
 
-		std::vector<double> segStates = segs[s].getStateVector();
-		if(segStates.size() % full_size != 0){
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset:saveSegStates: Segment state vector size is not a multiple of the core state size; cannot proceed");
+		// Step 2: Create the cell array
+		size_t dims[2] = {allCons.size(), 1};
+		pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+		if(pMatVar == nullptr){
+			return pMatVar; 	// Can't save any data... exit
 		}
 
-		std::vector<double> segStates_trans;
-		if(saveTp == Save_tp::SAVE_FRAME){
-			dims[0] = 2;	// rows
-			segStates_trans.assign(dims[0]*dims[1], 0);
-			unsigned int lastRow = segStates.size()/full_size - 1;
-
-			// Transpose data into column-major order
-			for(unsigned int c = 0; c < dims[1]; c++){
-				segStates_trans[c*dims[0] + 0] = segStates[0 + c];
-				segStates_trans[c*dims[0] + 1] = segStates[lastRow*full_size + c];
-
+		for(unsigned int c = 0; c < allCons.size(); c++){
+			// Get the constraint data
+			std::vector<double> conData = allCons[c].getData();
+			// Append the type and parent index to the beginning of the data vector: [type, parent_index, data0, data1, ...]
+			int parentIx = -1;
+			if(allCons[c].getAppType() != ConstraintApp_tp::APP_TO_ARC){
+				parentIx = allCons[c].getAppType() == ConstraintApp_tp::APP_TO_NODE ? nodeIDMap.at(allCons[c].getID()) : segIDMap.at(allCons[c].getID());
+			}else{
+				parentIx = allCons[c].getID();
 			}
-		}else{
-			dims[0] = segStates.size()/full_size;	// rows
-			segStates_trans.assign(dims[0]*dims[1], 0);
+			conData.insert(conData.begin(), static_cast<double>(parentIx));
+			conData.insert(conData.begin(), static_cast<double>(to_underlying(allCons[c].getType())));
 
-			// Transpose data into column-major order
-			for(unsigned int r = 0; r < dims[0]; r++){
-				for(unsigned int c = 0; c < dims[1]; c++){
-					segStates_trans[c*dims[0] + r] = segStates[r*full_size + c];
-				}
+			dims[1] = conData.size();
+			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+			if(cell_element != nullptr){
+				Mat_VarSetCell(pMatVar, c, cell_element);
+			}else{
+				Mat_VarFree(pMatVar);
+				throw Exception("BaseArcset::saveConstraints: Could not create cell array variable\n");
 			}
-		}
-
-		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segStates_trans.front()), 0);	// Do copy the data (it is freed at the end of the function!)
-		if(cell_element != nullptr)
-			Mat_VarSetCell(pMatVar, s, cell_element);
-		else{
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
-		}
-	}
-
-	return pMatVar;
-}//====================================================
-
-/**
- *  \brief Create a matio variable for the segment control law data
- *  \details The data is copied into a matvar_t pointer, which is
- *  allocated on the stack
- * 
- * 	\param saveTp describes how much data to save
- *  \param pVarName variable name
- *  \return pointer to the matio variable (must be freed by MatVar_Free())
- */
-matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	size_t struct_dims[] = {segs.size(),1};
-	
-	unsigned int nfields = 3;
-	const char *fieldnames[3] = {"Type", "NumStates", "Params"};
-
-	matvar_t *pMatVar = Mat_VarCreateStruct(pVarName, 2, struct_dims, fieldnames, nfields);
-	if(pMatVar == nullptr){
-		printErr("ControlLaw::createMatStruct: Error creating ControlLaw structure variable\n");
-		return pMatVar;
-	}
-
-	matvar_t *field = nullptr;
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		ControlLaw *pLaw = segs[s].getCtrlLaw();
-
-		// Initialize variables to represent the no control case
-		unsigned int id = 0, numStates = 0;
-		std::vector<double> params;
-		
-		// Update values if a control law has been implemented
-		if(pLaw){
-			id = pLaw->getLawType();
-			numStates = pLaw->getNumStates();
-			params = pLaw->getParams();
-		}
-
-		// Save structure fields
-		size_t field_dims[] = {1,1};
-		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Do copy the data (it is freed at the end of the function!)
-		Mat_VarSetStructFieldByName(pMatVar, fieldnames[0], s, field);
-
-		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Do copy the data (it is freed at the end of the function!)
-		Mat_VarSetStructFieldByName(pMatVar, fieldnames[1], s, field);
-
-		field_dims[0] = params.size();
-		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Do copy the data (it is freed at the end of the function!)
-		Mat_VarSetStructFieldByName(pMatVar, fieldnames[2], s, field);
-		
-	}
-
-	return pMatVar;
-}//====================================================
-
-/**
- *  \brief Create a matio variable for the segment times-of-flight
- *  \details The data is copied into a matvar_t pointer, which is
- *  allocated on the stack
- * 
- * 	\param saveTp describes how much data to save
- *  \param pVarName variable name
- *  \return pointer to the matio variable (must be freed by MatVar_Free())
- */
-matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	std::vector<double> allTOFs(segs.size());
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		allTOFs[s] = segs[s].getTOF();
-	}
-	
-	size_t dims[2] = {allTOFs.size(), 1};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
-}//====================================================
-
-/**
- *  \brief Create a matio variable for the segment STMs
- *  \details The data is copied into a matvar_t pointer, which is
- *  allocated on the stack
- * 
- * 	\param saveTp describes how much data to save
- *  \param pVarName variable name
- *  \return pointer to the matio variable (must be freed by MatVar_Free())
- */
-matvar_t* BaseArcset::createVar_SegSTMs(Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
-
-	size_t dims[2] = {segs.size(), 1};
-	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(pMatVar == nullptr){
-		return pMatVar;	// can't save any data... exit
-	}
-
-	unsigned int count = 0;
-	for(const Segment &seg : segs){
-		MatrixXRd P = seg.getSTM().transpose();
-		dims[0] = P.cols();
-		dims[1] = P.rows();
-
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Do copy the data (it is freed at the end of the function!)
-		if(cell_element != nullptr){
-			Mat_VarSetCell(pMatVar, count++, cell_element);
-		}else{
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::saveSegSTMs: Could not create cell array variable\n");
 		}
 	}
 
@@ -2143,7 +2001,7 @@ matvar_t* BaseArcset::createVar_SegSTMs(Save_tp saveTp, const char *pVarName) co
  *  \param pVarName variable name
  *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-matvar_t* BaseArcset::createVar_NodeStates(Save_tp saveTp, const char *pVarName) const{
+matvar_t* BaseArcset::createVar_NodeState(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
 	// We store data in row-major order, but the Matlab file-writing algorithm takes data
 	// in column-major order, so we transpose our vector and split it into two smaller ones
@@ -2185,7 +2043,7 @@ matvar_t* BaseArcset::createVar_NodeStates(Save_tp saveTp, const char *pVarName)
 }//====================================================
 
 /**
- *  \brief Create a matio variable for the node control data
+ *  \brief Create a matio variable for the node epoch times
  *  \details The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
@@ -2193,37 +2051,50 @@ matvar_t* BaseArcset::createVar_NodeStates(Save_tp saveTp, const char *pVarName)
  *  \param pVarName variable name
  *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
-
+matvar_t* BaseArcset::createVar_NodeEpoch(Save_tp saveTp, const char *pVarName) const{
 	(void) saveTp;
-	// Create the cell array
-	size_t dims[2] = {nodes.size(), 1};
-	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-	if(pMatVar == nullptr){
-		return pMatVar;	// Can't save any data... exit
-	}
+	std::vector<double> allEpochs(nodes.size());
 
-	dims[1] = 1;	 // only one column
 	for(unsigned int n = 0; n < nodes.size(); n++){
-		std::vector<double> ctrl;
+		allEpochs[n] = nodes[n].getEpoch();
+	}
+	
+	size_t dims[2] = {allEpochs.size(), 1};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
+}//====================================================
+
+/**
+ *  \brief Create a matio variable for the node state derivatives
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
+matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+
+	// We store data in row-major order, but the Matlab file-writing algorithm takes data
+	// in column-major order, so we transpose our vector and split it into two smaller ones
+	std::vector<double> deriv_colMaj(stateSize*nodes.size());
+
+	for(unsigned int r = 0; r < nodes.size(); r++){
+		std::vector<double> deriv(stateSize, NAN);
 		try{
-			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
-		}catch(Exception &e){}
+			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
+		}catch(Exception &e){
+			// printErr("Unable to get acceleration vector for node %u\n", r);
+		}
 
-		dims[0] = ctrl.size();
-
-		// Save the data to an element of the cell array 		
-		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Do copy the data (it is freed at the end of the function!)
-		if(cell_element != nullptr)
-			Mat_VarSetCell(pMatVar, n, cell_element);
-		else{
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
+		for(unsigned int c = 0; c < deriv.size(); c++){
+			deriv_colMaj[c*nodes.size() + r] = deriv[c];
 		}
 	}
-
-	return pMatVar;
+	
+	size_t dims[2] = {nodes.size(), stateSize};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), 0);	// Do copy the data (it is freed at the end of the function!)
 }//====================================================
 
 /**
@@ -2296,7 +2167,7 @@ matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey,
 }//====================================================
 
 /**
- *  \brief Create a matio variable for the node times
+ *  \brief Create a matio variable for the node control data
  *  \details The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
@@ -2304,108 +2175,33 @@ matvar_t* BaseArcset::createVar_NodeExtraParam(std::string varKey,
  *  \param pVarName variable name
  *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-matvar_t* BaseArcset::createVar_NodeTimes(Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	std::vector<double> allEpochs(nodes.size());
+matvar_t* BaseArcset::createVar_NodeCtrl(Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
 
-	for(unsigned int n = 0; n < nodes.size(); n++){
-		allEpochs[n] = nodes[n].getEpoch();
+	(void) saveTp;
+	// Create the cell array
+	size_t dims[2] = {nodes.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// Can't save any data... exit
 	}
-	
-	size_t dims[2] = {allEpochs.size(), 1};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allEpochs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
-}//====================================================
 
-/**
- *  \brief Create a matio variable for the node state derivatives
- *  \details The data is copied into a matvar_t pointer, which is
- *  allocated on the stack
- * 
- * 	\param saveTp describes how much data to save
- *  \param pVarName variable name
- *  \return pointer to the matio variable (must be freed by MatVar_Free())
- */
-matvar_t* BaseArcset::createVar_NodeStateDeriv(Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-
-	// We store data in row-major order, but the Matlab file-writing algorithm takes data
-	// in column-major order, so we transpose our vector and split it into two smaller ones
-	std::vector<double> deriv_colMaj(stateSize*nodes.size());
-
-	for(unsigned int r = 0; r < nodes.size(); r++){
-		std::vector<double> deriv(stateSize, NAN);
+	dims[1] = 1;	 // only one column
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<double> ctrl;
 		try{
-			deriv = nodes[r].getExtraParamVec(PARAMKEY_STATE_DERIV);
-		}catch(Exception &e){
-			// printErr("Unable to get acceleration vector for node %u\n", r);
-		}
+			ctrl = nodes[n].getExtraParamVec(PARAMKEY_CTRL);
+		}catch(Exception &e){}
 
-		for(unsigned int c = 0; c < deriv.size(); c++){
-			deriv_colMaj[c*nodes.size() + r] = deriv[c];
-		}
-	}
-	
-	size_t dims[2] = {nodes.size(), stateSize};
-	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(deriv_colMaj[0]), 0);	// Do copy the data (it is freed at the end of the function!)
-}//====================================================
+		dims[0] = ctrl.size();
 
-/**
- *  \brief Create a matio variable for the constraints
- *  \details The data is copied into a matvar_t pointer, which is
- *  allocated on the stack
- * 
- * 	\param saveTp describes how much data to save
- *  \param pVarName variable name
- *  \return pointer to the matio variable (must be freed by MatVar_Free())
- */
-matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName) const{
-	(void) saveTp;
-	// Step 1: Gather all the constraints
-	std::vector<Constraint> allCons = cons;
-	matvar_t* pMatVar = nullptr;
-
-	for(unsigned int n = 0; n < nodes.size(); n++){
-		std::vector<Constraint> temp = nodes[n].getConstraints();
-		allCons.insert(allCons.end(), temp.begin(), temp.end());
-	}
-
-	for(unsigned int s = 0; s < segs.size(); s++){
-		std::vector<Constraint> temp = segs[s].getConstraints();
-		allCons.insert(allCons.end(), temp.begin(), temp.end());
-	}
-
-	if(allCons.size() > 0){
-		matvar_t *cell_element = nullptr;
-
-		// Step 2: Create the cell array
-		size_t dims[2] = {allCons.size(), 1};
-		pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
-		if(pMatVar == nullptr){
-			return pMatVar; 	// Can't save any data... exit
-		}
-
-		for(unsigned int c = 0; c < allCons.size(); c++){
-			// Get the constraint data
-			std::vector<double> conData = allCons[c].getData();
-			// Append the type and parent index to the beginning of the data vector: [type, parent_index, data0, data1, ...]
-			int parentIx = -1;
-			if(allCons[c].getAppType() != ConstraintApp_tp::APP_TO_ARC){
-				parentIx = allCons[c].getAppType() == ConstraintApp_tp::APP_TO_NODE ? nodeIDMap.at(allCons[c].getID()) : segIDMap.at(allCons[c].getID());
-			}else{
-				parentIx = allCons[c].getID();
-			}
-			conData.insert(conData.begin(), static_cast<double>(parentIx));
-			conData.insert(conData.begin(), static_cast<double>(to_underlying(allCons[c].getType())));
-
-			dims[1] = conData.size();
-			cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(conData.front()), 0);	// Do copy the data (it is freed at the end of the function!)
-			if(cell_element != nullptr){
-				Mat_VarSetCell(pMatVar, c, cell_element);
-			}else{
-				Mat_VarFree(pMatVar);
-				throw Exception("BaseArcset::saveConstraints: Could not create cell array variable\n");
-			}
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(ctrl.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+		if(cell_element != nullptr)
+			Mat_VarSetCell(pMatVar, n, cell_element);
+		else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveNodeCtrl: Could not create cell array variable\n");
 		}
 	}
 
@@ -2413,109 +2209,250 @@ matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName
 }//====================================================
 
 /**
- *  \brief Create a matio variable for the link table
+ *  \brief Create a matio variable for the segment states
  *  \details The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
+ * 	\param saveTp describes how much data to save
  *  \param pVarName variable name
  *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-matvar_t* BaseArcset::createVar_LinkTable(const char *pVarName) const{
-	unsigned int numSegs = segs.size();
-	std::vector<int> segTable(numSegs*4, Linkable::INVALID_ID);
+matvar_t* BaseArcset::createVar_SegState(Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
 
-	// Store data in column-major order
-	for(unsigned int s = 0; s < numSegs; s++){
-		segTable[0*numSegs + s] = segs[s].getID();
-		segTable[1*numSegs + s] = nodeIDMap.at(segs[s].getOrigin());
-		segTable[2*numSegs + s] = nodeIDMap.at(segs[s].getTerminus());
-		segTable[3*numSegs + s] = astrohelion::sign(segs[s].getTOF());
+	// Create the cell array
+	size_t dims[2] = {segs.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// Can't save any data... exit
+	}
+	
+	const unsigned int core_size = pSysData->getDynamicsModel()->getCoreStateSize();
+	const unsigned int extra_size = pSysData->getDynamicsModel()->getExtraStateSize();
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		unsigned int ctrl_size = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
+		unsigned int full_size = core_size + (core_size + ctrl_size)*(core_size + ctrl_size) + extra_size + ctrl_size;
+
+		dims[1] = saveTp == Save_tp::SAVE_ALL ? full_size : core_size + ctrl_size;
+
+		std::vector<double> segStates = segs[s].getStateVector();
+		if(segStates.size() % full_size != 0){
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset:saveSegStates: Segment state vector size is not a multiple of the core state size; cannot proceed");
+		}
+
+		std::vector<double> segStates_trans;
+		if(saveTp == Save_tp::SAVE_FRAME){
+			dims[0] = 2;	// rows
+			segStates_trans.assign(dims[0]*dims[1], 0);
+			unsigned int lastRow = segStates.size()/full_size - 1;
+
+			// Transpose data into column-major order
+			for(unsigned int c = 0; c < dims[1]; c++){
+				segStates_trans[c*dims[0] + 0] = segStates[0 + c];
+				segStates_trans[c*dims[0] + 1] = segStates[lastRow*full_size + c];
+
+			}
+		}else{
+			dims[0] = segStates.size()/full_size;	// rows
+			segStates_trans.assign(dims[0]*dims[1], 0);
+
+			// Transpose data into column-major order
+			for(unsigned int r = 0; r < dims[0]; r++){
+				for(unsigned int c = 0; c < dims[1]; c++){
+					segStates_trans[c*dims[0] + r] = segStates[r*full_size + c];
+				}
+			}
+		}
+
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segStates_trans.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+		if(cell_element != nullptr)
+			Mat_VarSetCell(pMatVar, s, cell_element);
+		else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
+		}
 	}
 
-	size_t dims[2] = {numSegs, 4};
-	return Mat_VarCreate(pVarName, MAT_C_INT32, MAT_T_INT32, 2, dims, &(segTable.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+	return pMatVar;
 }//====================================================
 
 /**
- *  \brief Initialize the vectors of node and segment objects from a *.mat file
- *  \details Deprecated; replaced by readLinkTable().
- *  THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
- *  it clears the vectors and then initializes them by calculating the number
- *  of steps in the arcset object from the state vector. Individual nodes and segments are
- *  able to be called by index after this, though they will not contain data
- *  until another function is called to populate the data fields with values from 
- *  the *.mat file
+ *  \brief Create a matio variable for the segment times
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
  * 
- *  \param pMatFile pointer to an open matlab data file
- *  \param pVarName the name of a variable that has as many rows as there are
- *  steps along the data object. Valid variables typically include the time vector,
- *  state matrix, or acceleration matrix
- *  \throws Exception if the state vector variable cannot be read from the data file
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
-	if(pStateMat == NULL){
-		throw Exception("BaseArcset::initNodesSegsFromMat: Could not read state data vector");
-	}else{
-		unsigned int numSteps = pStateMat->dims[0];
-		nodes.clear();
-		segs.clear();
-		nodeIDMap.clear();
-		segIDMap.clear();
-		
-		// Create a set of nodes and segments all linked together in linear time
-		for(unsigned int i = 0; i < numSteps; i++){
-			Node node;
-			node.setID(i);
+matvar_t* BaseArcset::createVar_SegTime(Save_tp saveTp, const char *pVarName) const{
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
 
-			if(i > 0)
-				node.addLink(i-1);
-			if(i < numSteps-1)
-				node.addLink(i);
+	// Create the cell array
+	size_t dims[2] = {segs.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// Can't save any data... exit
+	}
 
-			nodes.push_back(node);
-			nodeIDMap[i] = i;
-			
-			if(i > 0){
-				Segment seg(i-1, i, NAN);
-				seg.setID(i-1);
-				segs.push_back(seg);
-				segIDMap[i-1] = i-1;
-			}
+	dims[1] = 1;	 // only one column
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<double> segTimes = segs[s].getTimeVector();
+
+		if(saveTp == Save_tp::SAVE_FRAME){
+			// Only save the first and last time
+			dims[0] = 2;
+			segTimes.erase(segTimes.begin()+1, segTimes.end()-1);
+		}else{
+			dims[0] = segTimes.size();
+		}
+
+		// Save the data to an element of the cell array 		
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(segTimes.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+		if(cell_element != nullptr)
+			Mat_VarSetCell(pMatVar, s, cell_element);
+		else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveSegStates: Could not create cell array variable\n");
 		}
 	}
-	Mat_VarFree(pStateMat);
-}//======================================================
+
+	return pMatVar;
+}//====================================================
 
 /**
- *  \brief Initialize the vectors of node and segment objects from a Matlab data file
- *  \details THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
- *  it clears the vectors and then initializes them from the stored link table.
- *  Individual nodes and segments may be referenced by index after this, though they
- *  will not contain any data until the other read_data-type functions are called.
+ *  \brief Create a matio variable for the segment times-of-flight
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
  * 
- *  \param pMatFile Pointer to an open Matlab data file
- *  \param pVarName The name of the link table variable.
- *  \throws Exception if the variable cannot be read from the file, if the variable
- *  has the wrong dimensions, or if the variable is the wrong data type
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
  */
-void BaseArcset::readLinkTable(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pLinkTableVar = Mat_VarRead(pMatFile, pVarName);
+matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	std::vector<double> allTOFs(segs.size());
 
-	if(pLinkTableVar == NULL){
-		throw Exception("BaseArcset::readLinkTable: Could not read link table from file");
-	}else{
-		unsigned int numSegs = pLinkTableVar->dims[0];
+	for(unsigned int s = 0; s < segs.size(); s++){
+		allTOFs[s] = segs[s].getTOF();
+	}
+	
+	size_t dims[2] = {allTOFs.size(), 1};
+	return Mat_VarCreate(pVarName, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &(allTOFs[0]), 0);	// Do copy the data (it is freed at the end of the function!)
+}//====================================================
 
-		if(pLinkTableVar->dims[1] != 4){
-			Mat_VarFree(pLinkTableVar);
-			throw Exception("BaseArcset::readLinkTable: Link table width is not the expected dimension (4)");
+/**
+ *  \brief Create a matio variable for the segment STMs
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
+matvar_t* BaseArcset::createVar_SegSTM(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	matvar_t *pMatVar = nullptr, *cell_element = nullptr;
+
+	size_t dims[2] = {segs.size(), 1};
+	pMatVar = Mat_VarCreate(pVarName, MAT_C_CELL, MAT_T_CELL, 2, dims, nullptr, 0);
+	if(pMatVar == nullptr){
+		return pMatVar;	// can't save any data... exit
+	}
+
+	unsigned int count = 0;
+	for(const Segment &seg : segs){
+		MatrixXRd P = seg.getSTM().transpose();
+		dims[0] = P.cols();
+		dims[1] = P.rows();
+
+		cell_element = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, P.data(), 0);	// Do copy the data (it is freed at the end of the function!)
+		if(cell_element != nullptr){
+			Mat_VarSetCell(pMatVar, count++, cell_element);
+		}else{
+			Mat_VarFree(pMatVar);
+			throw Exception("BaseArcset::saveSegSTMs: Could not create cell array variable\n");
+		}
+	}
+
+	return pMatVar;
+}//====================================================
+
+/**
+ *  \brief Create a matio variable for the segment control law data
+ *  \details The data is copied into a matvar_t pointer, which is
+ *  allocated on the stack
+ * 
+ * 	\param saveTp describes how much data to save
+ *  \param pVarName variable name
+ *  \return pointer to the matio variable (must be freed by MatVar_Free())
+ */
+matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName) const{
+	(void) saveTp;
+	size_t struct_dims[] = {segs.size(),1};
+	
+	unsigned int nfields = 3;
+	const char *fieldnames[3] = {"Type", "NumStates", "Params"};
+
+	matvar_t *pMatVar = Mat_VarCreateStruct(pVarName, 2, struct_dims, fieldnames, nfields);
+	if(pMatVar == nullptr){
+		printErr("ControlLaw::createMatStruct: Error creating ControlLaw structure variable\n");
+		return pMatVar;
+	}
+
+	matvar_t *field = nullptr;
+
+	for(unsigned int s = 0; s < segs.size(); s++){
+		ControlLaw *pLaw = segs[s].getCtrlLaw();
+
+		// Initialize variables to represent the no control case
+		unsigned int id = 0, numStates = 0;
+		std::vector<double> params;
+		
+		// Update values if a control law has been implemented
+		if(pLaw){
+			id = pLaw->getLawType();
+			numStates = pLaw->getNumStates();
+			params = pLaw->getParams();
 		}
 
-		if(pLinkTableVar->class_type == MAT_C_INT32 && pLinkTableVar->data_type == MAT_T_INT32){
-			int *data = static_cast<int *>(pLinkTableVar->data);
+		// Save structure fields
+		size_t field_dims[] = {1,1};
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &id, 0);	// Do copy the data (it is freed at the end of the function!)
+		Mat_VarSetStructFieldByName(pMatVar, fieldnames[0], s, field);
+		// No need to free `field`; Mat_VarSetStructFieldByName frees the variable
+		
+		field = Mat_VarCreate(nullptr, MAT_C_INT32, MAT_T_INT32, 2, field_dims, &numStates, 0);	// Do copy the data (it is freed at the end of the function!)
+		Mat_VarSetStructFieldByName(pMatVar, fieldnames[1], s, field);
 
-			if(data != NULL){
+		field_dims[0] = params.size();
+		field = Mat_VarCreate(nullptr, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, field_dims, &(params.front()), 0);	// Do copy the data (it is freed at the end of the function!)
+		Mat_VarSetStructFieldByName(pMatVar, fieldnames[2], s, field);
+	}
+
+	return pMatVar;
+}//====================================================
+
+
+bool BaseArcset::readVar_LinkTable(matvar_t *pVar){
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_LinkTable: Could not read link table from file");
+		return false;
+	}else{
+		unsigned int numSegs = pVar->dims[0];
+
+		if(pVar->dims[1] != 4){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_LinkTable: Link table width is not the expected dimension (4)");
+		}
+
+		if(pVar->class_type == MAT_C_INT32 && pVar->data_type == MAT_T_INT32){
+			int *data = static_cast<int *>(pVar->data);
+
+			if(data != nullptr){
 				// Step 0: Clear all variables
 				nodes.clear();
 				segs.clear();
@@ -2538,7 +2475,7 @@ void BaseArcset::readLinkTable(mat_t *pMatFile, const char* pVarName){
 				}
 
 				if(nodeIxs.size() == 0)
-					throw Exception("BaseArcset::readLinkTable: No nodes linked from segments... not built to handle this");
+					throw Exception("BaseArcset::readVar_LinkTable: No nodes linked from segments... not built to handle this");
 
 				unsigned int numNodes = *std::max_element(nodeIxs.begin(), nodeIxs.end()) + 1;
 
@@ -2562,28 +2499,30 @@ void BaseArcset::readLinkTable(mat_t *pMatFile, const char* pVarName){
 			}
 		}
 	}
-
-	Mat_VarFree(pLinkTableVar);
+	return true;
 }//====================================================
 
 /**
- *  \brief Read constraints from a data file
+ *  \brief Read constraints from a matio variable
  * 
- *  \param pMatFile Pointer to an open Matlab data file
- *  \param pVarName The name of the link table variable.
+ *  \param pVar a pointer to a cell array variable that stores the constraints
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readConstraints(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pCellArray = Mat_VarRead(pMatFile, pVarName);
+bool BaseArcset::readVar_Constraints(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
 
-	if(pCellArray != nullptr){
-		unsigned int numCons = pCellArray->dims[0];
+	if(pVar != nullptr){
+		unsigned int numCons = pVar->dims[0];
 
-		if(pCellArray->class_type != MAT_C_CELL || pCellArray->data_type != MAT_T_CELL){
-			Mat_VarFree(pCellArray);
-			throw Exception("BaseArcset::readConstraints: Constraint cell array variable is not stored as a cell array");
+		if(pVar->class_type != MAT_C_CELL || pVar->data_type != MAT_T_CELL){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_Constraints: Constraint cell array variable is not stored as a cell array");
 		}
 
-		matvar_t **cell_elements = static_cast<matvar_t **>(pCellArray->data);
+		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
 		for(unsigned int c = 0; c < numCons; c++){
 			if(cell_elements[c] != nullptr && 
@@ -2592,8 +2531,8 @@ void BaseArcset::readConstraints(mat_t *pMatFile, const char* pVarName){
 				unsigned int width = cell_elements[c]->dims[0];
 				
 				if(width < 2 || cell_elements[c]->dims[1] == 0){
-					Mat_VarFree(pCellArray);
-					throw Exception("BaseArcset::readConstraints: Constraint data has less than 2 (the minimum) data values");
+					Mat_VarFree(pVar);
+					throw Exception("BaseArcset::readVar_Constraints: Constraint data has less than 2 (the minimum) data values");
 				}
 
 				double *data = static_cast<double *>(cell_elements[c]->data);
@@ -2604,51 +2543,53 @@ void BaseArcset::readConstraints(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}
+		return true;
+	}else{
+		return false;
 	}
-
-	Mat_VarFree(pCellArray);
 }//====================================================
 
 /**
- *  \brief Read the state vector for this arcset object from a matlab data file
- *  \details This function must be called after initNodeSegsFromMat() as it
- *  populates the step vector objects with state data
+ *  \brief Read node states from a matio variable
  * 
- *  \param pMatFile pointer to an open matlab data file
- *  \param pVarName the name of the state variable (e.g., "State" or "Nodes")
- *  \throws Exception if there are any issues importing the data
+ *  \param pVar a pointer to a variable that stores the node states
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readNodeStatesFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
-	
-	if(pStateMat == NULL){
-		throw Exception("BaseArcset::readStateFromMat: Could not read state data vector");
+bool BaseArcset::readVar_NodeState(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
+
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_NodeState: Could not read state data vector");
+		return false;
 	}else{
-		unsigned int numSteps = pStateMat->dims[0];
+		unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+		unsigned int numSteps = pVar->dims[0];
 		
 		if(nodes.size() == 0){
-			Mat_VarFree(pStateMat);
-			throw Exception("BaseArcset::readStateFromMat: Node vector has not been initialized!");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeState: Node vector has not been initialized!");
 		}
 
 		if(numSteps != nodes.size()){
-			Mat_VarFree(pStateMat);
-			throw Exception("BaseArcset::readStateFromMat: State vector has a different size than the initialized node vector");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeState: State vector has a different size than the initialized node vector");
 		}
 
-		if(pStateMat->dims[1] != stateSize){
-			Mat_VarFree(pStateMat);
-			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: State width is not consistent with DynamicalModel definition.");
+		if(pVar->dims[1] != core_dim){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeState: Incompatible data file: State width is not consistent with DynamicalModel definition.");
 		}
 
-		if(pStateMat->class_type == MAT_C_DOUBLE && pStateMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pStateMat->data);
+		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pVar->data);
 
-			if(data != NULL){
+			if(data != nullptr){
 				for(unsigned int i = 0; i < numSteps; i++){
 					std::vector<double> state;
-					for(unsigned int s = 0; s < stateSize; s++){
+					for(unsigned int s = 0; s < core_dim; s++){
 						state.push_back(data[s*numSteps + i]);
 					}
 
@@ -2656,237 +2597,294 @@ void BaseArcset::readNodeStatesFromMat(mat_t *pMatFile, const char* pVarName){
 				}
 			}
 		}else{
-			Mat_VarFree(pStateMat);
-			throw Exception("BaseArcset::readStateFromMat: Incompatible data file: unsupported data type/class");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeState: Incompatible data file: unsupported data type/class");
 		}
+		return true;
 	}
-	Mat_VarFree(pStateMat);
-}//===============================================
+}//====================================================
 
 /**
- *  \brief Read state derivative values from a matlab file
+ *  \brief Read node state derivatives from a matio variable
  * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param pVarName name of the variable in the Matlab file
- *  \throws Exception if there are any issues importing the data
+ *  \param pVar a pointer to a variable that stores the node state derivatives
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readNodeStateDerivFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pAccelMat = Mat_VarRead(pMatFile, pVarName);
-	unsigned int stateSize = pSysData->getDynamicsModel()->getCoreStateSize();
+bool BaseArcset::readVar_NodeStateDeriv(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
 
-	if(pAccelMat == NULL){
-		throw Exception("BaseArcset::readStateDerivFromMat: Could not read data vector");
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_NodeStateDeriv: Could not read data vector");
+		return false;
 	}else{
-		unsigned int numSteps = pAccelMat->dims[0];
+		unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+		unsigned int numSteps = pVar->dims[0];
 		
 		if(nodes.size() == 0){
-			Mat_VarFree(pAccelMat);
-			throw Exception("BaseArcset::readStateDerivFromMat: Node vector has not been initialized!");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeStateDeriv: Node vector has not been initialized!");
 		}
 
 		if(numSteps != nodes.size()){
-			Mat_VarFree(pAccelMat);
-			throw Exception("BaseArcset::readStateDerivFromMat: Derivative vector has a different size than the initialized node vector");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeStateDeriv: Derivative vector has a different size than the initialized node vector");
 		}
 
-		if(pAccelMat->dims[1] != stateSize){
-			Mat_VarFree(pAccelMat);
-			throw Exception("BaseArcset::readStateDerivFromMat: Incompatible data file: Vector width is not equal to the state size.");
+		if(pVar->dims[1] != core_dim){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeStateDeriv: Incompatible data file: Vector width is not equal to the state size.");
 		}
 
-		if(pAccelMat->class_type == MAT_C_DOUBLE && pAccelMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pAccelMat->data);
+		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pVar->data);
 
-			if(data != NULL){
+			if(data != nullptr){
 				for(unsigned int i = 0; i < numSteps; i++){
-					std::vector<double> deriv(stateSize, 0);
+					std::vector<double> deriv(core_dim, 0);
 
-					for(unsigned int s = 0; s < stateSize; s++){
+					for(unsigned int s = 0; s < core_dim; s++){
 						deriv[s] = data[s*numSteps + i];
 					}
 					nodes[i].setExtraParamVec(PARAMKEY_STATE_DERIV, deriv);
 				}
 			}
 		}else{
-			Mat_VarFree(pAccelMat);
-			throw Exception("BaseArcset::readStateDerivFromMat: Incompatible data file: unsupported data type/class");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeStateDeriv: Incompatible data file: unsupported data type/class");
 		}
+
+		return true;
 	}
-	Mat_VarFree(pAccelMat);
-}//===============================================
+}//====================================================
 
 /**
- *  \brief Read epoch times from a matlab file in a variable with the specified name
+ *  \brief Read node epochs from a matio variable
  * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param pVarName The name of the variable within the Matlab file
- *  \throws Exception if there are any issues importing the data
+ *  \param pVar a pointer to a variable that stores the node epochs
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readNodeTimesFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pEpochMat = Mat_VarRead(pMatFile, pVarName);
-	if(pEpochMat == NULL){
-		throw Exception("BaseArcset::readEpochFromMat: Could not read data vector");
+bool BaseArcset::readVar_NodeEpoch(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
+
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_NodeEpoch: Could not read data vector");
+		return false;
 	}else{
-		unsigned int numSteps = pEpochMat->dims[0];
+		unsigned int numSteps = pVar->dims[0];
 
 		if(nodes.size() == 0){
-			Mat_VarFree(pEpochMat);
-			throw Exception("BaseArcset::readEpochFromMat: Node vector has not been initialized");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeEpoch: Node vector has not been initialized");
 		}
 
 		if(numSteps != nodes.size()){
-			Mat_VarFree(pEpochMat);
-			throw Exception("BaseArcset::readEpochFromMat: Epoch vector has different size than the initialized node evctor");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeEpoch: Epoch vector has different size than the initialized node evctor");
 		}
 
-		if(pEpochMat->dims[1] != 1){
-			Mat_VarFree(pEpochMat);
-			throw Exception("BaseArcset::readEpochFromMat: Incompatible data file: Epoch vector has more than one column");
+		if(pVar->dims[1] != 1){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeEpoch: Incompatible data file: Epoch vector has more than one column");
 		}
 
-		if(pEpochMat->class_type == MAT_C_DOUBLE && pEpochMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pEpochMat->data);
+		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pVar->data);
 
-			if(data != NULL){
+			if(data != nullptr){
 				for(unsigned int i = 0; i < numSteps; i++){
 					nodes[i].setEpoch(data[i]);
 				}
 			}
 		}else{
-			Mat_VarFree(pEpochMat);
-			throw Exception("BaseArcset::readEpochFromMat: Incompatible data file: unsupported data type or class");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeEpoch: Incompatible data file: unsupported data type or class");
 		}
+
+		return true;
 	}
-	Mat_VarFree(pEpochMat);
-}//================================================
+}//====================================================
 
 /**
- *  \brief Read State Transition Matrices from a matlab file
+ *  \brief Read node control data from a matio variable
  * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param saveTp Describes the amount of detail that was saved to the file (unused in this fcn)
- *  \param pVarName name of the variable in the Matlab file
- *  
- *  \throws Exception if there are any issues importing the data
+ *  \param pVar a pointer to a variable that stores the node control data
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readSegSTMFromMat(mat_t *pMatFile, Save_tp saveTp, const char* pVarName){
+bool BaseArcset::readVar_NodeCtrl(matvar_t *pVar, Save_tp saveTp){
 	(void) saveTp;
-
-	matvar_t *pSTMCell = Mat_VarRead(pMatFile, pVarName);
-	
-	if(pSTMCell == NULL){
-		throw Exception("BaseArcset::readSegSTMFromMat: Could not read STM data vector");
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_NodeCtrl: Could not read state data vector");
+		return false;
 	}else{
-		unsigned int numSegs = pSTMCell->dims[0];
+		unsigned int numNodes = pVar->dims[0];
 		
-		if(segs.size() != numSegs){
-			Mat_VarFree(pSTMCell);
-			throw Exception("BaseArcset::readSegSTMFromMat: Segment vector has been initialized to a different size than the file has data for");
+		if(nodes.size() != numNodes){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeCtrl: Node vector has been initialized to a different size than the file has data for");
 		}
 
-		if(pSTMCell->class_type != MAT_C_CELL || pSTMCell->data_type != MAT_T_CELL){
-			Mat_VarFree(pSTMCell);
-			throw Exception("BaseArcset::readSegSTMFromMat: Segment STM variable is not a cell array.");
+		if(pVar->class_type == MAT_C_CELL && pVar->data_type == MAT_T_DOUBLE){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeCtrl: Node control variable is not a cell array.");
 		}
 
-		matvar_t **cell_elements = static_cast<matvar_t **>(pSTMCell->data);
+		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
-		for(unsigned int s = 0; s < numSegs; s++){
-			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){				
-				double *data = static_cast<double *>(cell_elements[s]->data);
-
-				MatrixXRd P = Eigen::Map<MatrixXRd>(data, cell_elements[s]->dims[1], cell_elements[s]->dims[0]);
-				segs[s].setSTM(P.transpose());
+		for(unsigned int n = 0; n < numNodes; n++){
+			if(cell_elements[n]->class_type == MAT_C_DOUBLE && cell_elements[n]->data_type == MAT_T_DOUBLE){
+				unsigned int numSteps = cell_elements[n]->dims[0];	
+				if(numSteps > 0){
+					double *data = static_cast<double *>(cell_elements[n]->data);
+					std::vector<double> ctrl(data, data+numSteps);
+					nodes[n].setExtraParamVec(PARAMKEY_CTRL, ctrl);
+				}
 			}else{
-				Mat_VarFree(pSTMCell);
-				throw Exception("BaseArcset::readSegSTMFromMat: Cell element is not a double array.");
+				Mat_VarFree(pVar);
+				throw Exception("BaseArcset::readVar_NodeCtrl: Cell element is not a double array.");
 			}
 		}
+
+		return true;
 	}
-	Mat_VarFree(pSTMCell);
-}//===============================================
+}//====================================================
 
 /**
- *  \brief Read times-of-flight from a matlab file in a variable with the specified name
+ *  \brief Read node extra parameter data from a matio variable
  * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param saveTp Describes the amount of detail that was saved to the file (unused in this fcn)
- *  \param pVarName The name of the variable within the Matlab file
- *  
- *  \throws Exception if there are any issues importing the data
+ *  \param pVar a pointer to a variable that stores the node extra parameters
+ *  \param varKey the key (i.e., name) of the extra parameter vector
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readSegTOFFromMat(mat_t *pMatFile, Save_tp saveTp, const char* pVarName){
+bool BaseArcset::readVar_NodeExtraParam(matvar_t *pVar, std::string varKey, Save_tp saveTp){
 	(void) saveTp;
-	matvar_t *pTofMat = Mat_VarRead(pMatFile, pVarName);
-
-	if(pTofMat == NULL){
-		throw Exception("BaseArcset::readTOFFromMat: Could not read data vector");
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_NodeExtraParam: Could not read data vector");
+		return false;
 	}else{
-		unsigned int numSteps = pTofMat->dims[0];
-
-		if(segs.size() == 0){
-			Mat_VarFree(pTofMat);
-			throw Exception("BaseArcset::readTOFFromMat: Segment vector has not been initialized");
+		unsigned int numSteps = pVar->dims[0];
+		
+		if(nodes.size() == 0){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeExtraParam: Step vector has not been initialized!");
 		}
 
-		if(numSteps != segs.size()){
-			Mat_VarFree(pTofMat);
-			throw Exception("BaseArcset::readTOFFromMat: TOF vector has different size than the initialized segment evctor");
+		if(pVar->dims[1] != 1){
+			char message[64];
+			const char * pVarName = pVar->name ? pVar->name : "NULL";
+			sprintf(message, "BaseArcset::readVar_NodeExtraParam: Incompatible data file: %s width is not %d", pVarName, 1);
+			Mat_VarFree(pVar);
+			throw Exception(message);
 		}
 
-		if(pTofMat->dims[1] != 1){
-			Mat_VarFree(pTofMat);
-			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: TOF vector has more than one column");
-		}
-
-		if(pTofMat->class_type == MAT_C_DOUBLE && pTofMat->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pTofMat->data);
-
-			if(data != NULL){
+		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pVar->data);
+			if(data != nullptr){
 				for(unsigned int i = 0; i < numSteps; i++){
-					segs[i].setTOF(data[i]);
+					nodes[i].setExtraParam(varKey, data[i]);
 				}
 			}
 		}else{
-			Mat_VarFree(pTofMat);
-			throw Exception("BaseArcset::readTOFFromMat: Incompatible data file: unsupported data type or class");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeExtraParam: Incompatible data file: unsupported data type/class");
 		}
+
+		return true;
 	}
-	Mat_VarFree(pTofMat);
-}//================================================
+}//====================================================
 
 /**
- *  \brief Read Segment states (along the segment) from a Matlab data file
- * 	\details Must be called after readSegCtrlLawFromMat() and after 
- * 	readSegSTMFromMat() to avoid errors.
- * 	
- *  \param pMatFile pointer to an open Matlab file
+ *  \brief Read node extra parameter vectors from a matio variable
+ * 
+ *  \param pVar a pointer to a variable that stores the node extra parameter vectors
+ *  \param varKey the key (i.e., name) of the extra parameter vector
+ *  \param len the length of the extra parameter vector
  *  \param saveTp Describes the amount of detail that was saved to the file
- *  \param pVarName name of the variable within the data file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, Save_tp saveTp, const char* pVarName){
+bool BaseArcset::readVar_NodeExtraParamVec(matvar_t *pVar, std::string varKey, size_t len, Save_tp saveTp){
 	(void) saveTp;
-	unsigned int coreDim = pSysData->getDynamicsModel()->getCoreStateSize();
-	unsigned int extraDim = pSysData->getDynamicsModel()->getExtraStateSize();
-
-	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-
-	if(pStateCell == NULL){
-		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_NodeExtraParamVec: Could not read data vector");
+		return false;
 	}else{
-		unsigned int numSegs = pStateCell->dims[0];
+		unsigned int numSteps = pVar->dims[0];
+		
+		if(nodes.size() == 0){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeExtraParamVec: Step vector has not been initialized!");
+		}
+
+		if(pVar->dims[1] != len){
+			char msg[64];
+			const char *varName = pVar->name ? pVar->name : "NULL";
+			sprintf(msg, "BaseArcset::readVar_NodeExtraParamVec: Incompatible data file: %s width is not %zu", varName, len);
+			Mat_VarFree(pVar);
+			throw Exception(msg);
+		}
+
+		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pVar->data);
+			if(data != nullptr){
+				for(unsigned int i = 0; i < numSteps; i++){
+					std::vector<double> vec(len,0);
+					for(unsigned int c = 0; c < len; c++){
+						vec[c] = data[c*numSteps + i];
+					}
+					nodes[i].setExtraParamVec(varKey, vec);
+				}
+			}
+		}else{
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeExtraParamVec: Incompatible data file: unsupported data type/class");
+		}
+		return true;
+	}
+}//====================================================
+
+/**
+ *  \brief Read segment state data from a matio variable
+ * 
+ *  \param pVar a pointer to a cell array variable that stores the segment states
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
+ */
+bool BaseArcset::readVar_SegState(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_SegState: Could not read state data vector");
+		return false;
+	}else{
+		unsigned int coreDim = pSysData->getDynamicsModel()->getCoreStateSize();
+		unsigned int extraDim = pSysData->getDynamicsModel()->getExtraStateSize();
+		unsigned int numSegs = pVar->dims[0];
 		
 		if(segs.size() != numSegs){
-			Mat_VarFree(pStateCell);
-			throw Exception("BaseArcset::readSegStatesFromMat: Segment vector has been initialized to a different size than the file has data for");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegState: Segment vector has been initialized to a different size than the file has data for");
 		}
 
-		if(pStateCell->class_type != MAT_C_CELL || pStateCell->data_type != MAT_T_CELL){
-			Mat_VarFree(pStateCell);
-			throw Exception("BaseArcset::readSegStatesFromMat: Segment state variable is not a cell array.");
+		if(pVar->class_type != MAT_C_CELL || pVar->data_type != MAT_T_CELL){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegState: Segment state variable is not a cell array.");
 		}
 
-		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
+		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
 		for(unsigned int s = 0; s < numSegs; s++){
 			if(cell_elements[s] != nullptr && 
@@ -2905,7 +2903,7 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, Save_tp saveTp, const cha
 
 				if(expectedWidth < width){
 					char msg[128];
-					sprintf(msg, "BaseArcset::readSegStatesFromMat: expected width, %u, is less than data width, %u. Cannot proceed",
+					sprintf(msg, "BaseArcset::readVar_SegState: expected width, %u, is less than data width, %u. Cannot proceed",
 						expectedWidth, width);
 					throw Exception(msg);
 				}
@@ -2931,41 +2929,44 @@ void BaseArcset::readSegStatesFromMat(mat_t *pMatFile, Save_tp saveTp, const cha
 					}
 				}
 			}else{
-				Mat_VarFree(pStateCell);
-				throw Exception("BaseArcset::readSegStatesFromMat: Cell element is not a double array.");
+				Mat_VarFree(pVar);
+				throw Exception("BaseArcset::readVar_SegState: Cell element is not a double array.");
 			}
 		}
+
+		return true;
 	}
-	Mat_VarFree(pStateCell);
-}//===============================================
+}//====================================================
 
 /**
- *  \brief Read Segment times from a Matlab data file
+ *  \brief Read segment time data from a matio variable
  * 
- *  \param pMatFile pointer to an open Matlab file
+ *  \param pVar a pointer to a cell array variable that stores the segment times
  *  \param saveTp Describes the amount of detail that was saved to the file
- *  \param pVarName name of the variable within the data file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readSegTimesFromMat(mat_t *pMatFile, Save_tp saveTp, const char* pVarName){
+bool BaseArcset::readVar_SegTime(matvar_t *pVar, Save_tp saveTp){
 	(void) saveTp;
-	matvar_t *pStateCell = Mat_VarRead(pMatFile, pVarName);
-	
-	if(pStateCell == NULL){
-		throw Exception("BaseArcset::readSegStatesFromMat: Could not read state data vector");
+
+	if(pVar == nullptr){
+		printErr("BaseArcset::readSegStatesFromMat: Could not read state data vector");
+		return false;
 	}else{
-		unsigned int numSegs = pStateCell->dims[0];
+		unsigned int numSegs = pVar->dims[0];
 		
 		if(segs.size() != numSegs){
-			Mat_VarFree(pStateCell);
+			Mat_VarFree(pVar);
 			throw Exception("BaseArcset::readSegStatesFromMat: Segment vector has been initialized to a different size than the file has data for");
 		}
 
-		if(pStateCell->class_type != MAT_C_CELL || pStateCell->data_type != MAT_T_CELL){
-			Mat_VarFree(pStateCell);
+		if(pVar->class_type != MAT_C_CELL || pVar->data_type != MAT_T_CELL){
+			Mat_VarFree(pVar);
 			throw Exception("BaseArcset::readSegStatesFromMat: Segment state variable is not a cell array.");
 		}
 
-		matvar_t **cell_elements = static_cast<matvar_t **>(pStateCell->data);
+		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
 		for(unsigned int s = 0; s < numSegs; s++){
 			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){
@@ -2974,47 +2975,48 @@ void BaseArcset::readSegTimesFromMat(mat_t *pMatFile, Save_tp saveTp, const char
 				std::vector<double> times(data, data+numSteps);
 				segs[s].setTimeVector(times);
 			}else{
-				Mat_VarFree(pStateCell);
+				Mat_VarFree(pVar);
 				throw Exception("BaseArcset::readSegStatesFromMat: Cell element is not a double array.");
 			}
 		}
+
+		return true;
 	}
-	Mat_VarFree(pStateCell);
-}//===============================================
+}//====================================================
 
 /**
- *  \brief Read control law IDs from a Matlab file in a variable with the specified name
- *  
- *  \param pMatFile pointer to an open Matlab file
+ *  \brief Read segment control law data from a matio variable
+ * 
+ *  \param pVar a pointer to a structure array variable that stores the segment control laws
  *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
- *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  from the matio variable, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
- *	\param saveTp Describes the amount of detail that was saved to the file (unused in this fcn)
- *  \param pVarName name of the variable within the Matlab file
- *  \throws Exception if there are any issues importing the data
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, Save_tp saveTp, const char* pVarName){
+bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &refLaws, Save_tp saveTp){
 	(void) saveTp;
-	const unsigned int fieldsPerController = 3;
-
-	matvar_t *pLawData = Mat_VarRead(pMatFile, pVarName);
-	if(pLawData == NULL){
-		throw Exception("BaseArcset::readSegCtrlLawFromMat: Could not read data vector");
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_SegCtrlLaw: Could not read data vector");
+		return false;
 	}else{
-		unsigned int numStructs = (pLawData->dims[0])*(pLawData->dims[1]);
+		const unsigned int fieldsPerController = 3;
+		unsigned int numStructs = (pVar->dims[0])*(pVar->dims[1]);
 
 		if(segs.size() == 0){
-			Mat_VarFree(pLawData);
-			throw Exception("BaseArcset::readSegCtrlLawFromMat: Segment vector has not been initialized");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegCtrlLaw: Segment vector has not been initialized");
 		}
 
 		if(numStructs != segs.size()){
-			Mat_VarFree(pLawData);
-			throw Exception("BaseArcset::readSegCtrlLawFromMat: Control Law vector has different size than the initialized segment evctor");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegCtrlLaw: Control Law vector has different size than the initialized segment evctor");
 		}
 
-		if(pLawData->class_type == MAT_C_STRUCT && pLawData->data_type == MAT_T_STRUCT){
-			matvar_t **fields = static_cast<matvar_t **>(pLawData->data);
+		if(pVar->class_type == MAT_C_STRUCT && pVar->data_type == MAT_T_STRUCT){
+			matvar_t **fields = static_cast<matvar_t **>(pVar->data);
 			
 			if(fields){
 
@@ -3037,12 +3039,12 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 										if(intData)
 											id = intData[0];
 										else{
-											Mat_VarFree(pLawData);
-											throw Exception("BaseArcset::readSegCtrlLawFromMat: controller ID data is NULL");
+											Mat_VarFree(pVar);
+											throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID data is nullptr");
 										}
 									}else{
-										Mat_VarFree(pLawData);
-										throw Exception("BaseArcset::readSegCtrlLawFromMat: controller ID field has wrong class type or data type");
+										Mat_VarFree(pVar);
+										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID field has wrong class type or data type");
 									}
 									break;
 								}//-----------------------------------
@@ -3059,12 +3061,12 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 											unsigned int len = oneField->dims[0] * oneField->dims[1];
 											params.insert(params.begin(), doubleData, doubleData + len);	
 										}else{
-											Mat_VarFree(pLawData);
-											throw Exception("BaseArcset::readSegCtrlLawFromMat: controller params data is NULL");
+											Mat_VarFree(pVar);
+											throw Exception("BaseArcset::readVar_SegCtrlLaw: controller params data is nullptr");
 										}
 									}else{
-										Mat_VarFree(pLawData);
-										throw Exception("BaseArcset::readSegCtrlLawFromMat: controller params field has wrong class type or data type");
+										Mat_VarFree(pVar);
+										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller params field has wrong class type or data type");
 									}
 									break;
 								}//-----------------------------------
@@ -3103,285 +3105,162 @@ void BaseArcset::readSegCtrlLawFromMat(mat_t *pMatFile, std::vector<ControlLaw*>
 					}
 				}// End loop through structs
 			}else{
-				Mat_VarFree(pLawData);
-				throw Exception("BaseArcset::readSegCtrlLawFromMat: Structure array is null");
+				Mat_VarFree(pVar);
+				throw Exception("BaseArcset::readVar_SegCtrlLaw: Structure array is nullptr");
 			}
 		}else{
-			Mat_VarFree(pLawData);
-			throw Exception("BaseArcset::readSegCtrlLawFromMat: Incompatible data file: unsupported data type or class");
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegCtrlLaw: Incompatible data file: unsupported data type or class");
 		}
+
+		return true;
 	}
-	Mat_VarFree(pLawData);
-}//================================================
+}//====================================================
 
 /**
- *  \brief Read control state vector data from a Matlab data file
+ *  \brief Read segment TOF data from a matio variable
  * 
- *  \param pMatFile Pointer to an open Matlab data file
- *  \param pVarName Name of the control cell array in the data file
+ *  \param pVar a pointer to a variable that stores the segment TOFs
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
  */
-void BaseArcset::readNodeCtrlFromMat(mat_t *pMatFile, const char* pVarName){
-	matvar_t *pCtrlCell = Mat_VarRead(pMatFile, pVarName);
-	
-	if(pCtrlCell == NULL){
-		throw Exception("BaseArcset::readNodeCtrlFromMat: Could not read state data vector");
+bool BaseArcset::readVar_SegTOF(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_SegTOF: Could not read data vector");
+		return false;
 	}else{
-		unsigned int numNodes = pCtrlCell->dims[0];
-		
-		if(nodes.size() != numNodes){
-			Mat_VarFree(pCtrlCell);
-			throw Exception("BaseArcset::readNodeCtrlFromMat: Node vector has been initialized to a different size than the file has data for");
+		unsigned int numSteps = pVar->dims[0];
+
+		if(segs.size() == 0){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegTOF: Segment vector has not been initialized");
 		}
 
-		if(pCtrlCell->class_type == MAT_C_CELL && pCtrlCell->data_type == MAT_T_DOUBLE){
-			Mat_VarFree(pCtrlCell);
-			throw Exception("BaseArcset::readNodeCtrlFromMat: Node control variable is not a cell array.");
+		if(numSteps != segs.size()){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegTOF: TOF vector has different size than the initialized segment evctor");
 		}
 
-		matvar_t **cell_elements = static_cast<matvar_t **>(pCtrlCell->data);
+		if(pVar->dims[1] != 1){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegTOF: Incompatible data file: TOF vector has more than one column");
+		}
 
-		for(unsigned int n = 0; n < numNodes; n++){
-			if(cell_elements[n]->class_type == MAT_C_DOUBLE && cell_elements[n]->data_type == MAT_T_DOUBLE){
-				unsigned int numSteps = cell_elements[n]->dims[0];	
-				if(numSteps > 0){
-					double *data = static_cast<double *>(cell_elements[n]->data);
-					std::vector<double> ctrl(data, data+numSteps);
-					nodes[n].setExtraParamVec(PARAMKEY_CTRL, ctrl);
+		if(pVar->class_type == MAT_C_DOUBLE && pVar->data_type == MAT_T_DOUBLE){
+			double *data = static_cast<double *>(pVar->data);
+
+			if(data != nullptr){
+				for(unsigned int i = 0; i < numSteps; i++){
+					segs[i].setTOF(data[i]);
 				}
+			}
+		}else{
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegTOF: Incompatible data file: unsupported data type or class");
+		}
+
+		return true;
+	}
+}//====================================================
+
+/**
+ *  \brief Read segment STM data from a matio variable
+ * 
+ *  \param pVar a pointer to a cell array variable that stores the segment STMs
+ *  \param saveTp Describes the amount of detail that was saved to the file
+ * 
+ *  \return whether or not the matio variable needs to be freed
+ *  \throws Exception if there are any errors while importing the data
+ */
+bool BaseArcset::readVar_SegSTM(matvar_t *pVar, Save_tp saveTp){
+	(void) saveTp;
+	if(pVar == nullptr){
+		printErr("BaseArcset::readVar_SegSTM: Could not read STM data vector");
+		return false;
+	}else{
+		unsigned int numSegs = pVar->dims[0];
+		
+		if(segs.size() != numSegs){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegSTM: Segment vector has been initialized to a different size than the file has data for");
+		}
+
+		if(pVar->class_type != MAT_C_CELL || pVar->data_type != MAT_T_CELL){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_SegSTM: Segment STM variable is not a cell array.");
+		}
+
+		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
+
+		for(unsigned int s = 0; s < numSegs; s++){
+			if(cell_elements[s]->class_type == MAT_C_DOUBLE && cell_elements[s]->data_type == MAT_T_DOUBLE){				
+				double *data = static_cast<double *>(cell_elements[s]->data);
+
+				MatrixXRd P = Eigen::Map<MatrixXRd>(data, cell_elements[s]->dims[1], cell_elements[s]->dims[0]);
+				segs[s].setSTM(P.transpose());
 			}else{
-				Mat_VarFree(pCtrlCell);
-				throw Exception("BaseArcset::readNodeCtrlFromMat: Cell element is not a double array.");
+				Mat_VarFree(pVar);
+				throw Exception("BaseArcset::readVar_SegSTM: Cell element is not a double array.");
 			}
 		}
+
+		return true;
 	}
-	Mat_VarFree(pCtrlCell);
-}//===============================================
+}//====================================================
 
 /**
- *  \brief Read values of the specified extra paramter from a matlab file
+ *  \brief Initialize the vectors of node and segment objects from a *.mat file
+ *  \details DEPRECATED; replaced by readLinkTable().
+ *  
+ *  THIS FUNCTION MUST BE THE FIRST READ_DATA-TYPE FUNCTION CALLED because
+ *  it clears the vectors and then initializes them by calculating the number
+ *  of steps in the arcset object from the state vector. Individual nodes and segments are
+ *  able to be called by index after this, though they will not contain data
+ *  until another function is called to populate the data fields with values from 
+ *  the *.mat file
  * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param varKey the key (i.e., name) of the extra parameter scalar variable
- *  \param pVarName the name of the storage variable within the Matlab file
- *  \throws Exception if there are any issues importing the data
+ *  \param pMatFile pointer to an open matlab data file
+ *  \param pVarName the name of a variable that has as many rows as there are
+ *  steps along the data object. Valid variables typically include the time vector,
+ *  state matrix, or acceleration matrix
+ *  \throws Exception if the state vector variable cannot be read from the data file
  */
-void BaseArcset::readNodeExtraParamFromMat(mat_t *pMatFile, std::string varKey, const char *pVarName){
-
-	matvar_t *pMatVar = Mat_VarRead(pMatFile, pVarName);
-	if(pMatVar == NULL){
-		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
+void BaseArcset::initNodesSegsFromMat(mat_t *pMatFile, const char* pVarName){
+	matvar_t *pStateMat = Mat_VarRead(pMatFile, pVarName);
+	if(pStateMat == nullptr){
+		throw Exception("BaseArcset::initNodesSegsFromMat: Could not read state data vector");
 	}else{
-		unsigned int numSteps = pMatVar->dims[0];
+		unsigned int numSteps = pStateMat->dims[0];
+		nodes.clear();
+		segs.clear();
+		nodeIDMap.clear();
+		segIDMap.clear();
 		
-		if(nodes.size() == 0){
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
-		}
+		// Create a set of nodes and segments all linked together in linear time
+		for(unsigned int i = 0; i < numSteps; i++){
+			Node node;
+			node.setID(i);
 
-		if(pMatVar->dims[1] != 1){
-			char message[64];
-			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %d", pVarName, 1);
-			Mat_VarFree(pMatVar);
-			throw Exception(message);
-		}
+			if(i > 0)
+				node.addLink(i-1);
+			if(i < numSteps-1)
+				node.addLink(i);
 
-		if(pMatVar->class_type == MAT_C_DOUBLE && pMatVar->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pMatVar->data);
-			if(data != NULL){
-				for(unsigned int i = 0; i < numSteps; i++){
-					nodes[i].setExtraParam(varKey, data[i]);
-				}
+			nodes.push_back(node);
+			nodeIDMap[i] = i;
+			
+			if(i > 0){
+				Segment seg(i-1, i, NAN);
+				seg.setID(i-1);
+				segs.push_back(seg);
+				segIDMap[i-1] = i-1;
 			}
-		}else{
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
 		}
 	}
-	Mat_VarFree(pMatVar);
-}//====================================================
-
-/**
- *  \brief Read values of the specified extra paramter from a matlab file
- * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param varKey the key (i.e., name) of the extra parameter vector
- *  \param len the length of the extra parameter vector
- *  \param pVarName the name of the storage variable within the Matlab file
- *  \throws Exception if there are any issues importing the data
- */
-void BaseArcset::readNodeExtraParamVecFromMat(mat_t *pMatFile, std::string varKey, size_t len, const char *pVarName){
-	
-	matvar_t *pMatVar = Mat_VarRead(pMatFile, pVarName);
-	if(pMatVar == NULL){
-		throw Exception("BaseArcset::readExtraParamFromMat: Could not read data vector");
-	}else{
-		unsigned int numSteps = pMatVar->dims[0];
-		
-		if(nodes.size() == 0){
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::readExtraParamFromMat: Step vector has not been initialized!");
-		}
-
-		if(pMatVar->dims[1] != len){
-			char message[64];
-			sprintf(message, "BaseArcset::readExtraParamFromMat: Incompatible data file: %s width is not %zu", pVarName, len);
-			Mat_VarFree(pMatVar);
-			throw Exception(message);
-		}
-
-		if(pMatVar->class_type == MAT_C_DOUBLE && pMatVar->data_type == MAT_T_DOUBLE){
-			double *data = static_cast<double *>(pMatVar->data);
-			if(data != NULL){
-				for(unsigned int i = 0; i < numSteps; i++){
-					std::vector<double> vec(len,0);
-					for(unsigned int c = 0; c < len; c++){
-						vec[c] = data[c*numSteps + i];
-					}
-					nodes[i].setExtraParamVec(varKey, vec);
-				}
-			}
-		}else{
-			Mat_VarFree(pMatVar);
-			throw Exception("BaseArcset::readExtraParamFromMat: Incompatible data file: unsupported data type/class");
-		}
-	}
-	Mat_VarFree(pMatVar);
-}//====================================================
-
-/**
- *  \brief Save a link table for the arcset
- *  \details The link table stores information about how the segments and nodes
- *  are linked together. The first column lists the ID of a segment. The second
- *  column lists the index of origin node associated with the segment and the third
- *  column lists the index of terminus node associated with the segment. The final (fourth)
- *  column lists +1 for a forward time segment and -1 for a reverse time segment
- * 
- *  \param pMatFile [description]
- *  \param pVarName [description]
- */
-void BaseArcset::saveLinkTable(mat_t *pMatFile, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_LinkTable(pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//====================================================
-
-void BaseArcset::saveConstraints(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_Constraints(saveTp, pVarName);
-	if(pMatVar)
-		saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//====================================================
-
-/**
- *	\brief Save the state derivative vector to file
- *	\param pMatFile a pointer to the destination mat-file
- *	\param pVarName name of the variable in the Matlab file
- */
-void BaseArcset::saveNodeStateDeriv(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_NodeStateDeriv(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//=====================================================
-
-/**
- *	\brief Save all node times to file with a specified variable name
- *	\param pMatFile a pointer to the destination mat-file
- *	\param pVarName the name of the variable
- */
-void BaseArcset::saveNodeTimes(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_NodeTimes(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//=====================================================
-
-/**
- *	\brief Save one of the extra parameters to file
- *	\param pMatFile a pointer to the destination mat-file
- *	\param varKey the key (i.e., the name) of the scalar parameter
- *	\param pVarName the name of the variable being saved
- *	\throws Exception if <tt>varIx</tt> is out of bounds
- */
-void BaseArcset::saveNodeExtraParam(mat_t *pMatFile, std::string varKey, Save_tp saveTp,
-	const char *pVarName) const{
-
-	matvar_t *pMatVar = createVar_NodeExtraParam(varKey, saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
+	Mat_VarFree(pStateMat);
 }//======================================================
-
-/**
- *	\brief Save one of the extra parameters to file
- *	\param pMatFile a pointer to the destination mat-file
- *	\param varKey the key (i.e., the name) of the vector parameter
- *	\param len number of elements in the extra parameter vector (e.g., a 3-element velocity vector)
- *	\param pVarName the name of the variable being saved
- *	\throws Exception if <tt>varIx</tt> is out of bounds
- */
-void BaseArcset::saveNodeExtraParamVec(mat_t *pMatFile, std::string varKey, size_t len,
-	Save_tp saveTp, const char *pVarName) const{
-
-	matvar_t *pMatVar = createVar_NodeExtraParamVec(varKey, len, saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//======================================================
-
-/**
- *  \brief Save control information from nodes to a cell-array
- *  \details Each cell contains the control states for a single node.
- *  A cell array is used because each segment may leverage a different 
- *  control law and the length of the control state vector can vary.
- * 
- *  \param pMatFile Pointer to an open Matlab data file
- *  \param pVarName Name of the variable
- */
-void BaseArcset::saveNodeCtrl(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = createVar_NodeCtrl(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//====================================================
-
-/**
- *	\brief Save the node states to a file
- *	\param pMatFile a pointer to the destination matlab file 
- *	\param pVarName the name of the variable (e.g. "State" or "Nodes")
- */
-void BaseArcset::saveNodeStates(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_NodeStates(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//======================================================
-
-/**
- *	\brief Save the STMs to a file; STMs are stored in an array for 
- *	compatibility with existing MATLAB scripts
- *	\param pMatFile a pointer to the destination Matlab file
- *	\param pVarName name of the variable in the Matlab file
- */
-void BaseArcset::saveSegSTMs(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_SegSTMs(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//======================================================
-
-/**
- *	\brief Save all segment times-of-flight to file with a specified variable name
- *	\param pMatFile a pointer to the destination mat-file
- *	\param pVarName the name of the variable
- */
-void BaseArcset::saveSegTOF(mat_t *pMatFile, Save_tp saveTp, const char* pVarName) const{
-	matvar_t *pMatVar = createVar_SegTOF(saveTp, pVarName);
-	astrohelion::saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//=====================================================
-
-/**
- *  \brief Save all segment control laws to file with a specified variable name
- *  \param pMatFile pointer to the destination mat-file
- *  \param pVarName name of the variable
- */
-void BaseArcset::saveSegCtrlLaw(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = createVar_SegCtrlLaw(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//=====================================================
-
-void BaseArcset::saveSegStates(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = createVar_SegStates(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//====================================================
-
-void BaseArcset::saveSegTimes(mat_t *pMatFile, Save_tp saveTp, const char *pVarName) const{
-	matvar_t *pMatVar = createVar_SegTimes(saveTp, pVarName);
-	saveVar(pMatFile, pMatVar, pVarName, MAT_COMPRESSION_NONE);
-}//====================================================
 
 }// END of Astrohelion namespace

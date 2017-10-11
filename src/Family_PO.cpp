@@ -430,12 +430,12 @@ void Family_PO::saveToMat(const char *filename){
 	 *	const char *hdr_str 	- 	the 116 byte header string
 	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
-	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
+	mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
+	if(nullptr == matfp){
 		astrohelion::printErr("Fam_cr3bp::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things
-		// saveMembers(matfp);
+		saveMembers(matfp);
 		saveMiscData(matfp);
 		saveEigVals(matfp);
 		saveEigVecs(matfp);
@@ -453,8 +453,8 @@ void Family_PO::saveToMat(const char *filename){
  *	\throws Exception if the variable cannot be loaded
  */
 void Family_PO::loadEigVals(mat_t *matFile){
-	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
-	if(matvar == NULL){
+	matvar_t *matvar = Mat_VarRead(matFile, VARNAME_FAM_EIGVAL);
+	if(matvar == nullptr){
 		throw Exception("Could not read eigenvalues into family");
 	}else{
 		unsigned int numMembers = matvar->dims[0];
@@ -470,7 +470,7 @@ void Family_PO::loadEigVals(mat_t *matFile){
 			// First cast the data to a special variable matio uses to store complex values
 			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(matvar->data);
 
-			if(splitVals != NULL){
+			if(splitVals != nullptr){
 				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
 				double *realParts = static_cast<double *>(splitVals->Re);
 				double *imagParts = static_cast<double *>(splitVals->Im);
@@ -498,8 +498,8 @@ void Family_PO::loadEigVals(mat_t *matFile){
  *	\throws Exception if the variable cannot be loaded
  */
 void Family_PO::loadEigVecs(mat_t* pMatFile){
-	matvar_t *pMatvar = Mat_VarRead(pMatFile, EIGVEC_VAR_NAME);
-	if(pMatvar == NULL){
+	matvar_t *pMatvar = Mat_VarRead(pMatFile, VARNAME_FAM_EIGVEC);
+	if(pMatvar == nullptr){
 		throw Exception("Family_PO::loadEigVecs: Could not read data vector");
 	}else{
 		unsigned int numSteps = pMatvar->dims[2];
@@ -522,7 +522,7 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 			// First cast the data to a special variable matio uses to store complex values
 			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(pMatvar->data);
 
-			if(splitVals != NULL){
+			if(splitVals != nullptr){
 				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
 				double *realParts = static_cast<double *>(splitVals->Re);
 				double *imagParts = static_cast<double *>(splitVals->Im);
@@ -540,7 +540,31 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 		}
 	}
 	Mat_VarFree(pMatvar);
-}//=============================================
+}//====================================================
+
+void Family_PO::saveMembers(mat_t *pMatFile){
+	if(members.size() == 0)
+		return;
+
+	const char *fieldNames[11] = {VARNAME_LINKTABLE,
+		VARNAME_NODESTATE, VARNAME_STATE_DERIV, VARNAME_NODETIME, VARNAME_NODECTRL,
+		VARNAME_SEGSTATE, VARNAME_SEGTIME, VARNAME_TOF, VARNAME_STM, VARNAME_SEGCTRL,
+		VARNAME_CONSTRAINTS};
+	const unsigned int numMembers = members.size();
+	size_t dims[2] = {numMembers, 1};
+
+	matvar_t *pStruct = Mat_VarCreateStruct(VARNAME_FAM_MEMBER, 2, dims, fieldNames, 11);
+	if(pStruct == nullptr){
+		throw Exception("Family_PO::saveMembers: Could not create family member structure array");
+	}
+
+	for(unsigned int m = 0; m < numMembers; m++){
+		members[m].print();
+		members[m].saveToStruct(pStruct, m, Save_tp::SAVE_FRAME);
+	}
+
+	saveVar(pMatFile, pStruct, VARNAME_FAM_MEMBER, MAT_COMPRESSION_NONE);
+}//====================================================
 
 /**
  *	\brief Save eigenvalue data to a mat file
@@ -569,8 +593,8 @@ void Family_PO::saveEigVals(mat_t *pMatFile){
 		mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
 
 		size_t dims[2] = {members.size(), 6};
-		matvar_t *matvar = Mat_VarCreate(EIG_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
-		astrohelion::saveVar(pMatFile, matvar, EIG_VAR_NAME, MAT_COMPRESSION_NONE);
+		matvar_t *matvar = Mat_VarCreate(VARNAME_FAM_EIGVAL, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
+		astrohelion::saveVar(pMatFile, matvar, VARNAME_FAM_EIGVAL, MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 
@@ -605,8 +629,8 @@ void Family_PO::saveEigVecs(mat_t *pMatFile){
 		mat_complex_split_t splitVals = {&(allVec_real[0]), &(allVec_imag[0])};
 
 		size_t dims[3] = {nE, nE, members.size()};
-		matvar_t *pMatVar = Mat_VarCreate(EIGVEC_VAR_NAME, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
-		astrohelion::saveVar(pMatFile, pMatVar, EIGVEC_VAR_NAME, MAT_COMPRESSION_NONE);
+		matvar_t *pMatVar = Mat_VarCreate(VARNAME_FAM_EIGVEC, MAT_C_DOUBLE, MAT_T_DOUBLE, 3, dims, &splitVals, MAT_F_COMPLEX);
+		astrohelion::saveVar(pMatFile, pMatVar, VARNAME_FAM_EIGVEC, MAT_COMPRESSION_NONE);
 	}
 }//====================================================
 

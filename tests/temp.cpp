@@ -87,7 +87,7 @@ void computeMap(const std::vector<double> ICs, const int numReturns, const doubl
 			// printf("Manifold %d ended with %s event\n", n, Event::getEventTpStr(traj.getNodeByIx(-1).getTriggerEvent()));
 			
 			// Save data to file
-			mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
+			mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
 			saveMatrixToFile(matfp, "data", returns, returns.size()/stateSize, stateSize);
 			saveMatrixToFile(matfp, "times", times, times.size(), 1);
 			saveDoubleToFile(matfp, "IC_ix", static_cast<double>(n));

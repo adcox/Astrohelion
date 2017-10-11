@@ -80,8 +80,8 @@ protected:
 	 *  \name File I/O
 	 *  \{
 	 */
-		void saveCmds(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const override;
-		void readCmds(mat_t*, std::vector<ControlLaw*>&) override;
+		void saveCmds_toFile(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const override;
+		void readCmds_fromFile(mat_t*, std::vector<ControlLaw*>&) override;
 	//\}
 };
 

@@ -102,13 +102,13 @@ class BodyData : public Core{
 		double minFlyByAlt = 0;
 
 		/** Name of this body */
-		std::string name = "NULL";
+		std::string name = "nullptr";
 
 		/** Unique ID (same as SPICE ID or HORIZONS ID) for this body */
 		int ID = 0;
 
 		/** Name of the parent body */
-		std::string parent = "NULL";
+		std::string parent = "nullptr";
 
 		/**
 		 *  \name *structors

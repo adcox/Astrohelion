@@ -53,7 +53,7 @@ Arcset_periodic::~Arcset_periodic() {}
  *	\param pVals pointer to a vector of complex doubles to store the eigenvalues in
  *	\param pVecs pointer to a matrix to store the eigenvectors in (as columns)
  *	
- *	\throws Exception if either input pointer is NULL
+ *	\throws Exception if either input pointer is nullptr
  */
 void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs){
 	if(pVals == nullptr && pVecs == nullptr)

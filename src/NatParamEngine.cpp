@@ -155,7 +155,7 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 
 	// Create a dummy arcset and create an iteration data object on the stack
 	// The cr3bp_getPeriodic() function will only pass an iteration data pointer back
-	// if the one passed in is not NULL, hence we create a valid object and delete it
+	// if the one passed in is not nullptr, hence we create a valid object and delete it
 	// before exiting the function
 	Arcset_cr3bp halfPerGuess(*initialGuess);
 	Arcset_cr3bp tempCorrected(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));

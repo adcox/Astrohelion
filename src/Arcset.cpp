@@ -500,12 +500,12 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 	 *	const char *hdr_str 	- 	the 116 byte header string
 	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
-	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
+	mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
+	if(nullptr == matfp){
 		astrohelion::printErr("Arcset::saveToMat: Error creating MAT file\n");
 	}else{
 		try{
-			saveCmds(matfp, saveTp);
+			saveCmds_toFile(matfp, saveTp);
 		}catch(Exception &E){
 			Mat_Close(matfp);
 			throw E;
@@ -525,22 +525,91 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
  * 
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
-	saveLinkTable(pMatFile);
+void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
+	matvar_t *pLinkTable = createVar_LinkTable(VARNAME_LINKTABLE);
+	saveVar(pMatFile, pLinkTable, VARNAME_LINKTABLE, MAT_COMPRESSION_NONE);
 
-	saveNodeStates(pMatFile, saveTp);
-	saveNodeStateDeriv(pMatFile, saveTp);
-	saveNodeTimes(pMatFile, saveTp);
-	saveNodeCtrl(pMatFile, saveTp);
+	matvar_t *pNodeState = createVar_NodeState(saveTp, VARNAME_NODESTATE);
+	saveVar(pMatFile, pNodeState, VARNAME_NODESTATE, MAT_COMPRESSION_NONE);
 
-	saveSegStates(pMatFile, saveTp);
-	saveSegTimes(pMatFile, saveTp);
-	saveSegTOF(pMatFile, saveTp);
-	saveSegSTMs(pMatFile, saveTp);
-	saveSegCtrlLaw(pMatFile, saveTp);
+	matvar_t *pNodeStateDeriv = createVar_NodeStateDeriv(saveTp, VARNAME_STATE_DERIV);
+	saveVar(pMatFile, pNodeStateDeriv, VARNAME_STATE_DERIV, MAT_COMPRESSION_NONE);
+
+	matvar_t *pNodeEpoch = createVar_NodeEpoch(saveTp, VARNAME_NODETIME);
+	saveVar(pMatFile, pNodeEpoch, VARNAME_NODETIME, MAT_COMPRESSION_NONE);
+
+	matvar_t *pNodeCtrl = createVar_NodeCtrl(saveTp, VARNAME_NODECTRL);
+	saveVar(pMatFile, pNodeCtrl, VARNAME_NODECTRL, MAT_COMPRESSION_NONE);
+
+	matvar_t *pSegState = createVar_SegState(saveTp, VARNAME_SEGSTATE);
+	saveVar(pMatFile, pSegState, VARNAME_SEGSTATE, MAT_COMPRESSION_NONE);
+
+	matvar_t *pSegTime = createVar_SegTime(saveTp, VARNAME_SEGTIME);
+	saveVar(pMatFile, pSegTime, VARNAME_SEGTIME, MAT_COMPRESSION_NONE);
+
+	matvar_t *pSegTOF = createVar_SegTOF(saveTp, VARNAME_TOF);
+	saveVar(pMatFile, pSegTOF, VARNAME_TOF, MAT_COMPRESSION_NONE);
+
+	matvar_t *pSTM = createVar_SegSTM(saveTp, VARNAME_STM);
+	saveVar(pMatFile, pSTM, VARNAME_STM, MAT_COMPRESSION_NONE);
+
+	matvar_t *pSegCtrl = createVar_SegCtrlLaw(saveTp, VARNAME_SEGCTRL);
+	saveVar(pMatFile, pSegCtrl, VARNAME_SEGCTRL, MAT_COMPRESSION_NONE);
+
+	matvar_t *pCons = createVar_Constraints(saveTp, VARNAME_CONSTRAINTS);
+	if(pCons)
+		saveVar(pMatFile, pCons, VARNAME_CONSTRAINTS, MAT_COMPRESSION_NONE);
 
 	pSysData->saveToMat(pMatFile);
-	saveConstraints(pMatFile);
+}//====================================================
+
+void Arcset::saveToStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
+	
+	// Don't need to use variable name since each variable is saved as a field in the structure
+	if(matvar_t *pLinkTable = createVar_LinkTable(nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_LINKTABLE, ix, pLinkTable);
+	}
+
+	if(matvar_t *pNodeState = createVar_NodeState(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_NODESTATE, ix, pNodeState);
+	}
+
+	if(matvar_t *pNodeStateDeriv = createVar_NodeStateDeriv(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_STATE_DERIV, ix, pNodeStateDeriv);
+	}
+
+	if(matvar_t *pNodeEpoch = createVar_NodeEpoch(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_NODETIME, ix, pNodeEpoch);
+	}
+
+	if(matvar_t *pNodeCtrl = createVar_NodeCtrl(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_NODECTRL, ix, pNodeCtrl);
+	}
+
+	if(matvar_t *pSegState = createVar_SegState(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_SEGSTATE, ix, pSegState);
+	}
+
+	if(matvar_t *pSegTime = createVar_SegTime(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_SEGTIME, ix, pSegTime);
+	}
+
+	if(matvar_t *pSegTOF = createVar_SegTOF(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_TOF, ix, pSegTOF);
+	}
+
+	if(matvar_t *pSTM = createVar_SegSTM(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_STM, ix, pSTM);
+	}
+
+	if(matvar_t *pSegCtrl = createVar_SegCtrlLaw(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_SEGCTRL, ix, pSegCtrl);
+	}
+
+	if(matvar_t *pCons = createVar_Constraints(saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_CONSTRAINTS, ix, pCons);
+	}
+
 }//====================================================
 
 /**
@@ -557,11 +626,11 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
 
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
-	if(NULL == matfp){
+	if(nullptr == matfp){
 		throw Exception("Arcset::loadFromMat Could not load data from file");
 	}else{
 		try{
-			readCmds(matfp, refLaws);
+			readCmds_fromFile(matfp, refLaws);
 		}catch(std::exception &e){
 			Mat_Close(matfp);
 			throw e;
@@ -583,54 +652,76 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
  *  
  *  \todo Remove backward compatibility code in future (today: May 3 2017)
  */
-void Arcset::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 	Save_tp saveTp = Save_tp::SAVE_ALL;
 
 	try{
+		// Read data that initializes the structure of the arcset
 		try{
-			readLinkTable(pMatFile);
+			matvar_t *pLinkTable = Mat_VarRead(pMatFile, VARNAME_LINKTABLE);
+			if(readVar_LinkTable(pLinkTable)){
+				Mat_VarFree(pLinkTable);
+			}else{
+				throw Exception("Arcset::readCmds_fromFile: Could not read link table");
+			}
 		}catch(Exception &e){
-			// printErr("Arcset::readCmds: Could not read link table\n\t%s\n", e.what());
+			// Try the old initialization scheme
 			initNodesSegsFromMat(pMatFile);
 		}
 
-		readNodeStatesFromMat(pMatFile);
-		readNodeStateDerivFromMat(pMatFile);
-		readNodeTimesFromMat(pMatFile);
-		readNodeCtrlFromMat(pMatFile);
+		// Read node information
+		matvar_t *pNodeState = Mat_VarRead(pMatFile, VARNAME_NODESTATE);
+		matvar_t *pNodeStateDeriv = Mat_VarRead(pMatFile, VARNAME_STATE_DERIV);
+		matvar_t *pNodeEpoch = Mat_VarRead(pMatFile, VARNAME_NODETIME);
+		matvar_t *pNodeCtrl = Mat_VarRead(pMatFile, VARNAME_NODECTRL);
 
-		readSegCtrlLawFromMat(pMatFile, refLaws, saveTp);
-		readSegSTMFromMat(pMatFile, saveTp);
-		readSegStatesFromMat(pMatFile, saveTp);
-		readSegTimesFromMat(pMatFile, saveTp);
-		readSegTOFFromMat(pMatFile, saveTp);
-		
-		readConstraints(pMatFile);
-		
+		if(readVar_NodeState(pNodeState, saveTp)){ Mat_VarFree(pNodeState); }
+		if(readVar_NodeStateDeriv(pNodeStateDeriv, saveTp)){ Mat_VarFree(pNodeStateDeriv); }
+		if(readVar_NodeEpoch(pNodeEpoch, saveTp)){ Mat_VarFree(pNodeEpoch); }
+		if(readVar_NodeCtrl(pNodeCtrl, saveTp)){ Mat_VarFree(pNodeCtrl); }
+
+		// Read Segment information
+		matvar_t *pSegCtrl = Mat_VarRead(pMatFile, VARNAME_SEGCTRL);
+		matvar_t *pSegSTM = Mat_VarRead(pMatFile, VARNAME_STM);
+		matvar_t *pSegState = Mat_VarRead(pMatFile, VARNAME_SEGSTATE);
+		matvar_t *pSegTime = Mat_VarRead(pMatFile, VARNAME_SEGTIME);
+		matvar_t *pSegTOF = Mat_VarRead(pMatFile, VARNAME_TOF);
+
+		if(readVar_SegCtrlLaw(pSegCtrl, refLaws, saveTp)){ Mat_VarFree(pSegCtrl); }
+		if(readVar_SegSTM(pSegSTM, saveTp)){ Mat_VarFree(pSegSTM); }
+		if(readVar_SegState(pSegState, saveTp)){ Mat_VarFree(pSegState); }
+		if(readVar_SegTime(pSegTime, saveTp)){ Mat_VarFree(pSegTime); }
+		if(readVar_SegTOF(pSegTOF, saveTp)){ Mat_VarFree(pSegTOF); }
+
+		// Read extra info
+		matvar_t *pCons = Mat_VarRead(pMatFile, VARNAME_CONSTRAINTS);
+		if(readVar_Constraints(pCons, saveTp)){ Mat_VarFree(pCons); }
+
 	}catch(Exception &e){
-		// if file was saved using older style, try slightly different read commands
-		printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
+		throw Exception("Arcset:readCmds_fromFile: Deprecated file structure; fix commented-out code to read");
+		// // if file was saved using older style, try slightly different read commands
+		// printErr("Arcset::readCmds_fromFile: Encountered error:\n\t%s\n", e.what());
 		
-		try{
-			// Old trajectory save
-			initNodesSegsFromMat(pMatFile, VARNAME_DEP_STATE);
-			readNodeStatesFromMat(pMatFile, VARNAME_DEP_STATE);
-			readNodeTimesFromMat(pMatFile, VARNAME_DEP_TIME);
-		}catch(Exception &e){
-			// Old nodeset save
-			printErr("Arcset::readCmds: Encountered error:\n\t%s\n", e.what());
+		// try{
+		// 	// Old trajectory save
+		// 	initNodesSegsFromMat(pMatFile, VARNAME_DEP_STATE);
+		// 	readNodeStatesFromMat(pMatFile, saveTp, VARNAME_DEP_STATE);
+		// 	readNodeTimesFromMat(pMatFile, saveTp, VARNAME_DEP_TIME);
+		// }catch(Exception &e){
+		// 	// Old nodeset save
+		// 	printErr("Arcset::readCmds_fromFile: Encountered error:\n\t%s\n", e.what());
 
-			initNodesSegsFromMat(pMatFile, VARNAME_DEP_NODE);
-			readNodeStatesFromMat(pMatFile, VARNAME_DEP_NODE);
-			readNodeTimesFromMat(pMatFile, VARNAME_DEP_EPOCH);
-		}
+		// 	initNodesSegsFromMat(pMatFile, VARNAME_DEP_NODE);
+		// 	readNodeStatesFromMat(pMatFile, saveTp, VARNAME_DEP_NODE);
+		// 	readNodeTimesFromMat(pMatFile, saveTp, VARNAME_DEP_EPOCH);
+		// }
 
-		// Old save for both trajectory and nodeset
-		readNodeStateDerivFromMat(pMatFile);
-		readSegCtrlLawFromMat(pMatFile, refLaws, Save_tp::SAVE_ALL);
-		readSegSTMFromMat(pMatFile, Save_tp::SAVE_ALL);
-		readSegTOFFromMat(pMatFile, Save_tp::SAVE_ALL);
+		// // Old save for both trajectory and nodeset
+		// readNodeStateDerivFromMat(pMatFile);
+		// readSegCtrlLawFromMat(pMatFile, refLaws, Save_tp::SAVE_ALL);
+		// readSegSTMFromMat(pMatFile, Save_tp::SAVE_ALL);
+		// readSegTOFFromMat(pMatFile, Save_tp::SAVE_ALL);
 	}
-}//====================================================
+}
 
 }// End of astrohelion namespace

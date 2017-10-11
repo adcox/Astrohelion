@@ -53,7 +53,7 @@ class MultShootData;
  *  \ingroup model
  *  \brief Container for EOM parameters
  *  \details At the current time, this object stores only the system data object pointer.
- *  Since the GSL functions demand a null pointer and the system data pointers owned by
+ *  Since the GSL functions demand a nullptr pointer and the system data pointers owned by
  *  most objects are const-modified, this object serves as a non-const wrapper for 
  *  the system data pointers.
  *  

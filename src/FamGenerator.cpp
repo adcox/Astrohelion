@@ -864,7 +864,7 @@ void FamGenerator::cr3bp_natParamCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess,
 
 	// Create a dummy nodeset and create an iteration data object on the stack
 	// The cr3bp_getPeriodic() function will only pass an iteration data pointer back
-	// if the one passed in is not NULL, hence we create a valid object and delete it
+	// if the one passed in is not nullptr, hence we create a valid object and delete it
 	// before exiting the function
 	Arcset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 	MultShootData *pItData = new MultShootData(&tempNodes);
@@ -1100,7 +1100,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 	 *	* Apply a periodicity constraint that forces the first and final node to be collocated,
 	 *	  	ignoring one to avoid numerical troubles. It is best to ignore one of the planar 
 	 *		position components, especially for planar families - ignoring z or z-dot can shift the
-	 *		null vector to have non-zero elements in the z and z-dot spots, effectively stepping 
+	 *		nullptr vector to have non-zero elements in the z and z-dot spots, effectively stepping 
 	 *		out of the plane, which is not desireable for a planar family...
 	 *	* Constrain one extra state to be zero; I used something that makes sense for a perpendicular
 	 *		plane crossing here (avoid constraining z or z-dot to be zero for planar families)
@@ -1219,36 +1219,36 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		/* 
 		 *	The first iteration should have a DF matrix that is (n-1) x n, but all further iterations will
 		 * 	have an extra row for the pseudo-arc-length constraint; we want to remove that row and take the
-		 * 	nullspace of the submatrix
+		 * 	nullptrspace of the submatrix
 		 */
 		if(familyItData.totalCons == familyItData.totalFree){
 			DF = DF.block(0, 0, familyItData.totalCons-1, familyItData.totalFree);
 		}
 
-		// Compute null space of previously computed member's Jacobian Matrix
+		// Compute nullptr space of previously computed member's Jacobian Matrix
 		Eigen::FullPivLU<MatrixXRd> lu(DF);
 		lu.setThreshold(1e-14);
 		MatrixXRd N = lu.kernel();
 
 		printf("DF has dimensions %ld x %ld\n", DF.rows(), DF.cols());
-		// Check to make sure the IS a nullspace
+		// Check to make sure the IS a nullptrspace
 		if(N.rows() == 1){
-			astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: Nullspace is zero-dimensional; cannot proceed...\n");
+			astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: nullptrspace is zero-dimensional; cannot proceed...\n");
 			return;
 		}		
 
-		// // For debugging, save nullspace vectors to file
+		// // For debugging, save nullptrspace vectors to file
 		// char filename[16];
 		// sprintf(filename, "N%02d.csv", orbitCount);
 		// N.astrohelion::toCSV(filename);
 
 		/**
-		 *	Choose the nullspace vector that is closest to the previous one (which converged)
+		 *	Choose the nullptrspace vector that is closest to the previous one (which converged)
 		 */
-		printf("Choosing Nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
+		printf("Choosing nullptrspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
 		if(orbitCount == 0){
 			if(N.cols() > 1){
-				astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: Nullspace is multidimensional on first iteration; unsure how to proceed...\n");
+				astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: nullptrspace is multidimensional on first iteration; unsure how to proceed...\n");
 				return;
 			}
 
@@ -1264,13 +1264,13 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 				}
 			}
 
-			// Reverse direction of nullspace
+			// Reverse direction of nullptrspace
 			if(!sameDir)
 				N *= -1;
 
 		}else{
-			/* Make sure nullspace direction stays consistent by choosing the 
-			 * null vector that is closest to the same direction as the previous one
+			/* Make sure nullptrspace direction stays consistent by choosing the 
+			 * nullptr vector that is closest to the same direction as the previous one
 			 */
 			int best_ix = 0;	// index of the column of the best vector option
 			int best_sign = 1;	// sign associated with best vector
@@ -1424,8 +1424,8 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
  *
  *	\param convergedFreeVarVec a matrix containing the free variable vector of the previous
  *	(nearest) converged family member
- *	\param N a 1D nullspace vector that lies tangent to the family
- *	\param stepSize scales the size of the step by scaling the nullspace vector
+ *	\param N a 1D nullptrspace vector that lies tangent to the family
+ *	\param stepSize scales the size of the step by scaling the nullptrspace vector
  *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
  */
@@ -1459,7 +1459,7 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(const Eigen::VectorXd &converge
 	 *	Form the Pseudo-Arclength Continuation constraint
 	 */
 	std::vector<double> pacCon_data = pFamilyItData->X;
-	// Append the null vector (i.e. step direction)
+	// Append the nullptr vector (i.e. step direction)
 	pacCon_data.insert(pacCon_data.end(), N.data(), N.data()+N.rows());
 	// Append the step size
 	pacCon_data.insert(pacCon_data.end(), stepSize);

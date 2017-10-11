@@ -67,7 +67,7 @@ SysData_2bp::SysData_2bp(std::string P1){
 void SysData_2bp::initFromFile(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
-	if(NULL == matfp){
+	if(nullptr == matfp){
 		throw Exception("SysData_2bp: Could not load data from file");
 	}
 	readFromMat(matfp);

@@ -30,6 +30,7 @@
 
 #include "Exceptions.hpp"
 #include "SysData_cr3bp.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
@@ -241,10 +242,11 @@ void Arcset_cr3bp::setJacobiByIx(int ix, double val){
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_cr3bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
-	Arcset::saveCmds(pMatFile, saveTp);
+void Arcset_cr3bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
+	Arcset::saveCmds_toFile(pMatFile, saveTp);
 
-	saveNodeExtraParam(pMatFile, PARAMKEY_JACOBI, saveTp, VARNAME_JACOBI);
+	matvar_t *pJacobi = createVar_NodeExtraParam(PARAMKEY_JACOBI, saveTp, VARNAME_JACOBI);
+	saveVar(pMatFile, pJacobi, VARNAME_JACOBI, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**
@@ -254,9 +256,11 @@ void Arcset_cr3bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
-void Arcset_cr3bp::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
-	Arcset::readCmds(pMatFile, refLaws);
-	readNodeExtraParamFromMat(pMatFile, PARAMKEY_JACOBI, VARNAME_JACOBI);
+void Arcset_cr3bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds_fromFile(pMatFile, refLaws);
+
+	matvar_t *pJacobi = Mat_VarRead(pMatFile, VARNAME_JACOBI);
+	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){ Mat_VarFree(pJacobi); }
 }//====================================================
 
 }// End of astrohelion namespace

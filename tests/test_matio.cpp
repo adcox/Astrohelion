@@ -36,8 +36,8 @@ int main(){
 	// ----------------- //
 	// Create variables  //
 	// ----------------- //
-	mat_t *matfp = Mat_CreateVer("data/matioTest.mat", NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
+	mat_t *matfp = Mat_CreateVer("data/matioTest.mat", nullptr, MAT_FT_DEFAULT);
+	if(nullptr == matfp){
 		astrohelion::printErr("Could not create mat file... exiting\n");
 	}else{
 		size_t dims[2] {1,1};
@@ -76,51 +76,51 @@ int main(){
 	// Read & Test variables  //
 	// ---------------------- //
 	mat_t *matReadFile = Mat_Open("data/matioTest.mat", MAT_ACC_RDONLY);
-	if(NULL == matReadFile){
+	if(nullptr == matReadFile){
 		astrohelion::printErr("Could not open mat file... exiting\n");
 	}else{
 
 		printf("Signed Integers:\n");
 
 		matvar_t *matvar = Mat_VarRead(matReadFile, "Int8Test");
-		if(matvar == NULL){ cout << "Int 8 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "Int 8 Test: " << FAIL << endl; }
 		int *i_data = static_cast<int *>(matvar->data);
 		cout << "Int 8 Test: " << (int8Test == *i_data ? PASS : FAIL) << endl;
 
 		matvar = Mat_VarRead(matReadFile, "Int16Test");
-		if(matvar == NULL){ cout << "Int 16 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "Int 16 Test: " << FAIL << endl; }
 		i_data = static_cast<int *>(matvar->data);
 		cout << "Int 16 Test: " << (int16Test == *i_data ? PASS : FAIL) << endl;
 
 		matvar = Mat_VarRead(matReadFile, "Int32Test");
-		if(matvar == NULL){ cout << "Int 32 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "Int 32 Test: " << FAIL << endl; }
 		i_data = static_cast<int *>(matvar->data);
 		cout << "Int 32 Test: " << (int32Test == *i_data ? PASS : FAIL) << endl;
 
 		matvar = Mat_VarRead(matReadFile, "Int64Test");
-		if(matvar == NULL){ cout << "Int 64 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "Int 64 Test: " << FAIL << endl; }
 		i_data = static_cast<int *>(matvar->data);
 		cout << "Int 64 Test: " << (int64Test == *i_data ? PASS : FAIL) << endl;
 
 		printf("\nUnsigned Integers:\n");
 
 		matvar = Mat_VarRead(matReadFile, "UInt8Test");
-		if(matvar == NULL){ cout << "UInt 8 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "UInt 8 Test: " << FAIL << endl; }
 		unsigned int *ui_data = static_cast<unsigned int *>(matvar->data);
 		cout << "UInt 8 Test: " << (uint8Test == *ui_data ? PASS : FAIL) << endl;
 
 		matvar = Mat_VarRead(matReadFile, "UInt16Test");
-		if(matvar == NULL){ cout << "UInt 16 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "UInt 16 Test: " << FAIL << endl; }
 		ui_data = static_cast<unsigned int *>(matvar->data);
 		cout << "UInt 16 Test: " << (uint16Test == *ui_data ? PASS : FAIL) << endl;
 
 		matvar = Mat_VarRead(matReadFile, "UInt32Test");
-		if(matvar == NULL){ cout << "UInt 32 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "UInt 32 Test: " << FAIL << endl; }
 		ui_data = static_cast<unsigned int *>(matvar->data);
 		cout << "UInt 32 Test: " << (uint32Test == *ui_data ? PASS : FAIL) << endl;
 
 		matvar = Mat_VarRead(matReadFile, "UInt64Test");
-		if(matvar == NULL){ cout << "UInt 64 Test: " << FAIL << endl; }
+		if(matvar == nullptr){ cout << "UInt 64 Test: " << FAIL << endl; }
 		ui_data = static_cast<unsigned int *>(matvar->data);
 		cout << "UInt 64 Test: " << (uint64Test == *ui_data ? PASS : FAIL) << endl;
 

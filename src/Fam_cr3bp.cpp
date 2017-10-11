@@ -64,7 +64,7 @@ Fam_cr3bp::Fam_cr3bp(SysData_cr3bp data){
 Fam_cr3bp::Fam_cr3bp(const char* filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
-	if(NULL == matfp){
+	if(nullptr == matfp){
 		throw Exception("Fam_cr3bp: Could not load family from file");
 	}
 
@@ -584,7 +584,7 @@ std::vector<int> Fam_cr3bp::findBifurcations(){
  */	
 void Fam_cr3bp::loadMemberData(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, DATA_VAR_NAME);
-	if(matvar == NULL){
+	if(matvar == nullptr){
 		throw Exception("Could not read member data into family");
 	}else{
 		int numMembers = matvar->dims[0];
@@ -595,7 +595,7 @@ void Fam_cr3bp::loadMemberData(mat_t *matFile){
 		if(matvar->class_type == MAT_C_DOUBLE && matvar->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(matvar->data);
 
-			if(data != NULL){
+			if(data != nullptr){
 				for(int i = 0; i < numMembers; i++){
 					double state[] = {0,0,0,0,0,0};
 					state[0] = data[0*numMembers + i];
@@ -628,7 +628,7 @@ void Fam_cr3bp::loadMemberData(mat_t *matFile){
  */
 void Fam_cr3bp::loadEigVals(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, EIG_VAR_NAME);
-	if(matvar == NULL){
+	if(matvar == nullptr){
 		throw Exception("Could not read eigenvalues into family");
 	}else{
 		unsigned int numMembers = matvar->dims[0];
@@ -644,7 +644,7 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
 			// First cast the data to a special variable matio uses to store complex values
 			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(matvar->data);
 
-			if(splitVals != NULL){
+			if(splitVals != nullptr){
 				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
 				double *realParts = static_cast<double *>(splitVals->Re);
 				double *imagParts = static_cast<double *>(splitVals->Im);
@@ -676,7 +676,7 @@ void Fam_cr3bp::loadEigVals(mat_t *matFile){
  */
 void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
 	matvar_t *pMatvar = Mat_VarRead(pMatFile, EIGVEC_VAR_NAME);
-	if(pMatvar == NULL){
+	if(pMatvar == nullptr){
 		throw Exception("Fam_cr3bp::loadEigVecs: Could not read data vector");
 	}else{
 		unsigned int numSteps = pMatvar->dims[2];
@@ -697,7 +697,7 @@ void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
 			// First cast the data to a special variable matio uses to store complex values
 			mat_complex_split_t *splitVals = static_cast<mat_complex_split_t *>(pMatvar->data);
 
-			if(splitVals != NULL){
+			if(splitVals != nullptr){
 				// splitVals holds two void pointers to the real and imaginary parts; cast them to doubles
 				double *realParts = static_cast<double *>(splitVals->Re);
 				double *imagParts = static_cast<double *>(splitVals->Im);
@@ -727,7 +727,7 @@ void Fam_cr3bp::loadEigVecs(mat_t* pMatFile){
  */
 void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
 	matvar_t *pAllSTM = Mat_VarRead(pMatFile, VARNAME_STM);
-	if(pAllSTM == NULL){
+	if(pAllSTM == nullptr){
 		throw Exception("Fam_cr3bp::loadSTMs: Could not read data vector");
 	}else{
 		unsigned int numSteps = pAllSTM->dims[2];
@@ -747,7 +747,7 @@ void Fam_cr3bp::loadSTMs(mat_t* pMatFile){
 		if(pAllSTM->class_type == MAT_C_DOUBLE && pAllSTM->data_type == MAT_T_DOUBLE){
 			double *data = static_cast<double *>(pAllSTM->data);
 
-			if(data != NULL){
+			if(data != nullptr){
 				for(unsigned int i = 0; i < numSteps; i++){
 					double stmEl[36];
 					for(unsigned int j = 0; j < 36; j++){
@@ -879,8 +879,8 @@ void Fam_cr3bp::saveToMat(const char *filename){
 	 *	const char *hdr_str 	- 	the 116 byte header string
 	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
-	mat_t *matfp = Mat_CreateVer(filename, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
+	mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
+	if(nullptr == matfp){
 		astrohelion::printErr("Fam_cr3bp::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things

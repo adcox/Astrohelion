@@ -126,14 +126,14 @@ int SysData::getNumPrimaries() const { return primaries.size(); }
  *	\brief Retrieve the name of one of the system primaries
  *	\param n the "index" of the primary, starts at 0
  *	\return the name of the n'th primary. If the index valueis invalid, an error
- *	is printed to the standard output and a value of "NULL" is returned.
+ *	is printed to the standard output and a value of "nullptr" is returned.
  */
 std::string SysData::getPrimary(int n) const{ 
 	try{
 		return primaries.at(n);
 	}catch(std::out_of_range &err){
 		astrohelion::printErr("Could not find primary at index %d; out of range\n", n);
-		return "NULL";
+		return "nullptr";
 	}
 }//=============================
 
@@ -199,8 +199,8 @@ void SysData::saveToMat(const char *filepath) const{
 	 *	const char *hdr_str 	- 	the 116 byte header string
 	 *	enum mat_ft 			- 	matlab file version MAT_FT_MAT5 or MAT_FT_MAT4
 	 */
-	mat_t *matfp = Mat_CreateVer(filepath, NULL, MAT_FT_DEFAULT);
-	if(NULL == matfp){
+	mat_t *matfp = Mat_CreateVer(filepath, nullptr, MAT_FT_DEFAULT);
+	if(nullptr == matfp){
 		astrohelion::printErr("SysData::saveToMat: Error creating MAT file\n");
 	}else{
 		// save things

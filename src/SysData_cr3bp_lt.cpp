@@ -76,7 +76,7 @@ SysData_cr3bp_lt::SysData_cr3bp_lt(std::string P1, std::string P2, double refMas
 SysData_cr3bp_lt::SysData_cr3bp_lt(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
-	if(NULL == matfp){
+	if(nullptr == matfp){
 		throw Exception("SysData_cr3bp_lt: Could not load data from file");
 	}
 	readFromMat(matfp);
@@ -156,18 +156,18 @@ void SysData_cr3bp_lt::saveToMat(mat_t *matFile) const{
 	std::strcpy(p1_str, primaries.at(0).c_str());
 	dims[1] = primaries.at(0).length();
 	matvar_t *p1_var = Mat_VarCreate("P1", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p1_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
+	saveVar(matFile, p1_var, "P1", MAT_COMPRESSION_NONE);
 
 	char p2_str[64];
 	std::strcpy(p2_str, primaries.at(1).c_str());
 	dims[1] = primaries.at(1).length();
 	matvar_t *p2_var = Mat_VarCreate("P2", MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(p2_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
+	saveVar(matFile, p2_var, "P2", MAT_COMPRESSION_NONE);
 
 	dims[1] = 1;	
 	double mu = otherParams[0];
 	matvar_t *mu_var = Mat_VarCreate("Mu", MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &mu, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
+	saveVar(matFile, mu_var, "Mu", MAT_COMPRESSION_NONE);
 
 	// Save mass in dimensional units
 	double m = getRefMass();

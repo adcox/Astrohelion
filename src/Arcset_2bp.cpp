@@ -29,6 +29,7 @@
 #include "Arcset_2bp.hpp"
 
 #include "SysData_2bp.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
@@ -101,13 +102,20 @@ baseArcsetPtr Arcset_2bp::clone() const{
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_2bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
-	Arcset::saveCmds(pMatFile, saveTp);
+void Arcset_2bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
+	Arcset::saveCmds_toFile(pMatFile, saveTp);
 
-	saveNodeExtraParam(pMatFile, PARAMKEY_SMA, saveTp, VARNAME_SMA);
-	saveNodeExtraParam(pMatFile, PARAMKEY_ECC, saveTp, VARNAME_ECC);
-	saveNodeExtraParam(pMatFile, PARAMKEY_ANGMOM, saveTp, VARNAME_ANGMOM);
-	saveNodeExtraParam(pMatFile, PARAMKEY_2BP_ENERGY, saveTp, VARNAME_2BP_ENERGY);
+	matvar_t *pSMA = createVar_NodeExtraParam(PARAMKEY_SMA, saveTp, VARNAME_SMA);
+	saveVar(pMatFile, pSMA, VARNAME_SMA, MAT_COMPRESSION_NONE);
+
+	matvar_t *pEcc = createVar_NodeExtraParam(PARAMKEY_ECC, saveTp, VARNAME_ECC);
+	saveVar(pMatFile, pEcc, VARNAME_ECC, MAT_COMPRESSION_NONE);
+
+	matvar_t *pAngMom = createVar_NodeExtraParam(PARAMKEY_ANGMOM, saveTp, VARNAME_ANGMOM);
+	saveVar(pMatFile, pAngMom, VARNAME_ANGMOM, MAT_COMPRESSION_NONE);
+
+	matvar_t *pEnergy = createVar_NodeExtraParam(PARAMKEY_2BP_ENERGY, saveTp, VARNAME_2BP_ENERGY);
+	saveVar(pMatFile, pEnergy, VARNAME_2BP_ENERGY, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**
@@ -117,12 +125,18 @@ void Arcset_2bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
-void Arcset_2bp::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
-	Arcset::readCmds(pMatFile, refLaws);
+void Arcset_2bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds_fromFile(pMatFile, refLaws);
 
-	readNodeExtraParamFromMat(pMatFile, PARAMKEY_SMA, VARNAME_SMA);
-	readNodeExtraParamFromMat(pMatFile, PARAMKEY_ECC, VARNAME_ECC);
-	readNodeExtraParamFromMat(pMatFile, PARAMKEY_ANGMOM, VARNAME_ANGMOM);
-	readNodeExtraParamFromMat(pMatFile, PARAMKEY_2BP_ENERGY, VARNAME_2BP_ENERGY);
+	Save_tp saveTp = Save_tp::SAVE_ALL;	// not used in these functions, but provided for forward compatibility
+	matvar_t *pSMA = Mat_VarRead(pMatFile, VARNAME_SMA);
+	matvar_t *pEcc = Mat_VarRead(pMatFile, VARNAME_ECC);
+	matvar_t *pAngMom = Mat_VarRead(pMatFile, VARNAME_ANGMOM);
+	matvar_t *pEnergy = Mat_VarRead(pMatFile, VARNAME_2BP_ENERGY);
+
+	if(readVar_NodeExtraParam(pSMA, PARAMKEY_SMA, saveTp)){ Mat_VarFree(pSMA); }
+	if(readVar_NodeExtraParam(pEcc, PARAMKEY_ECC, saveTp)){ Mat_VarFree(pEcc); }
+	if(readVar_NodeExtraParam(pAngMom, PARAMKEY_ANGMOM, saveTp)){ Mat_VarFree(pAngMom); }
+	if(readVar_NodeExtraParam(pEnergy, PARAMKEY_2BP_ENERGY, saveTp)){ Mat_VarFree(pEnergy); }
 }//====================================================
 }// End of astrohelion namespace

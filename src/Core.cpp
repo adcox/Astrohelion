@@ -152,7 +152,7 @@ void Core_Initializer::runInit(){
 	uid_t uid = getuid();
 	struct passwd *pw = getpwuid(uid);
 
-	if(pw == NULL){
+	if(pw == nullptr){
 		std::cout << "Error in Core_Initializer: Could not get system user database\n";
 		throw std::exception();
 	}

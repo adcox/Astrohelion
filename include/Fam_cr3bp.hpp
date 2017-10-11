@@ -117,7 +117,7 @@ class Fam_cr3bp : public Core{
 		void sortMembers();
 
 	protected:
-		std::string name = "NULL";								//!< Descriptive name of the family
+		std::string name = "nullptr";								//!< Descriptive name of the family
 		std::vector<FamMember_cr3bp> members {};				//!< Contains all family members
 		SysData_cr3bp sysData = SysData_cr3bp();				//!< Describes the system this family exists in
 		FamSort_tp sortType = FamSort_tp::SORT_NONE;			//!< Describes the most natural variable to sort family members by

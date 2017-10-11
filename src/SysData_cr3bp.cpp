@@ -68,7 +68,7 @@ SysData_cr3bp::SysData_cr3bp(std::string P1, std::string P2){
 SysData_cr3bp::SysData_cr3bp(const char *filepath){
 	// Load the matlab file
 	mat_t *matfp = Mat_Open(filepath, MAT_ACC_RDONLY);
-	if(NULL == matfp){
+	if(nullptr == matfp){
 		throw Exception("SysData_cr3bp: Could not load data from file");
 	}
 	readFromMat(matfp);

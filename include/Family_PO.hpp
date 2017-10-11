@@ -82,8 +82,9 @@ class Family_PO : public Family{
 		std::vector<cdouble> memberEigVals {};			//!< Vector of eigenvalues (row-major order)
 		std::vector<MatrixXRcd> memberEigVecs {};		//!< Vector of eigenvectors matrices
 
-		const char* EIG_VAR_NAME = "Eigenvalues";		//!< Variable name for the eigenvalues
-		const char* EIGVEC_VAR_NAME = "Eigenvectors";	//!< Variable name for the eigenvectors
+		const char* VARNAME_FAM_MEMBER = "Members";			//!< Variable name for the family members
+		const char* VARNAME_FAM_EIGVAL = "Eigenvalues";		//!< Variable name for the eigenvalues
+		const char* VARNAME_FAM_EIGVEC = "Eigenvectors";	//!< Variable name for the eigenvectors
 
 		/**
 		 *  \name Analysis Functions
@@ -101,7 +102,7 @@ class Family_PO : public Family{
 		void loadEigVals(mat_t*);
 		void loadEigVecs(mat_t*);
 		
-		// void saveMembers(mat_t*);
+		void saveMembers(mat_t*);
 		void saveMiscData(mat_t*);
 		void saveEigVals(mat_t*);
 		void saveEigVecs(mat_t*);

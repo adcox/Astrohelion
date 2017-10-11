@@ -339,7 +339,7 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, Contr
 void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     // Checks
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -375,7 +375,7 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
  */
 void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -417,7 +417,7 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
  */
 void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -469,7 +469,7 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
 void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, const MatrixXRd &stm0, double t0, double tof, Arcset *arcset, ControlLaw *pLaw){
     // Checks
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -557,7 +557,7 @@ void SimEngine::runSim(const double* ic, const double* ctrl0, const double* stm0
  */
 void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0, std::vector<double> t_span, Arcset *arcset, ControlLaw *pLaw){
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -637,7 +637,7 @@ void SimEngine::runSim_manyNodes(const double *ic, double tof, int numNodes, Arc
 void SimEngine::runSim_manyNodes(std::vector<double> ic, double t0, double tof, int numNodes, Arcset *arcset, ControlLaw *pLaw){
     // Checks
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::runSim: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -777,7 +777,7 @@ void SimEngine::runSim_manyNodes(std::vector<double> ic, std::vector<double> ctr
  */
 void SimEngine::integrate(const double *ic, const double *ctrl0, const double *stm0, const double *t, unsigned int t_dim, Arcset *arcset){
     if(arcset == nullptr){
-        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::integrate: Arcset pointer is NULL; exiting to avoid memory leaks\n");
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "SimEngine::integrate: Arcset pointer is nullptr; exiting to avoid memory leaks\n");
         return;
     }
 
@@ -893,19 +893,19 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     //     return; // Skip the rest of the function and exit
     // }// END OF BOOST INTEGRATORS
 
-    /* Create a system to integrate; we don't include a Jacobin (NULL)
+    /* Create a system to integrate; we don't include a Jacobin (nullptr)
      *  The parameter set eomParams can be modified 
      *  between integration steps (i.e., change model parameters), but the ode functions must be reset
      *  via <code>gsl_odeiv2_driver_reset</code>, <code>gsl_odeiv2_evolve_reset</code>, or
      *  <code>gsl_odeiv2_step_reset</code> before continuing with an updated parameter set
      */
-    gsl_odeiv2_system odeSys = {eomFcn, NULL, static_cast<size_t>(ic_dim), eomParams};
+    gsl_odeiv2_system odeSys = {eomFcn, nullptr, static_cast<size_t>(ic_dim), eomParams};
     
     // Define ODE objects, define them conditionaly based on bVarStepSize
-    gsl_odeiv2_step *s = NULL;
-    gsl_odeiv2_control *c = NULL;
-    gsl_odeiv2_evolve *e = NULL;
-    gsl_odeiv2_driver *d = NULL;
+    gsl_odeiv2_step *s = nullptr;
+    gsl_odeiv2_control *c = nullptr;
+    gsl_odeiv2_evolve *e = nullptr;
+    gsl_odeiv2_driver *d = nullptr;
 
     if(bVarStepSize){
         // Allocate space for the stepping object
@@ -1444,7 +1444,7 @@ void SimEngine::cleanEngine(){
     
     if(eomParams)
         delete eomParams;
-    eomParams = nullptr;  // set pointer to 0 (null pointer)
+    eomParams = nullptr;  // set pointer to 0 (nullptr pointer)
 
     for(unsigned int e = 0; e < events.size(); e++){
         events[e].reset();

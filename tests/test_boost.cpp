@@ -11,7 +11,7 @@ int main(int argc, char *argv[]){
 	uid_t uid = getuid();
 	struct passwd *pw = getpwuid(uid);
 
-	if(pw == NULL){
+	if(pw == nullptr){
 		std::cout << "FAILED\n";
 		exit(EXIT_FAILURE);
 	}

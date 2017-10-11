@@ -30,6 +30,7 @@
 
 #include "Exceptions.hpp"
 #include "SysData_bc4bp.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
@@ -177,10 +178,11 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
  */
-void Arcset_bc4bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
-	Arcset::saveCmds(pMatFile, saveTp);
+void Arcset_bc4bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
+	Arcset::saveCmds_toFile(pMatFile, saveTp);
 
-	saveNodeExtraParamVec(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, saveTp, VARNAME_STATE_EPOCH_DERIV);
+	matvar_t *pEpochDeriv = createVar_NodeExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, 6, saveTp, VARNAME_STATE_EPOCH_DERIV);
+	saveVar(pMatFile, pEpochDeriv, VARNAME_STATE_EPOCH_DERIV, MAT_COMPRESSION_NONE);
 }//====================================================
 
 /**
@@ -190,8 +192,12 @@ void Arcset_bc4bp::saveCmds(mat_t* pMatFile, Save_tp saveTp) const{
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
-void Arcset_bc4bp::readCmds(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
-	Arcset::readCmds(pMatFile, refLaws);
-	readNodeExtraParamVecFromMat(pMatFile, PARAMKEY_STATE_EPOCH_DERIV, 6, VARNAME_STATE_EPOCH_DERIV);
+void Arcset_bc4bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds_fromFile(pMatFile, refLaws);
+
+	matvar_t *pEpochDeriv = Mat_VarRead(pMatFile, VARNAME_STATE_EPOCH_DERIV);
+	if(readVar_NodeExtraParamVec(pEpochDeriv, PARAMKEY_STATE_EPOCH_DERIV, 6, Save_tp::SAVE_ALL)){
+		Mat_VarFree(pEpochDeriv);
+	}
 }//====================================================
 }// End of astrohelion namespace

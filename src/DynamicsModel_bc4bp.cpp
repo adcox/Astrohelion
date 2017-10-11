@@ -378,7 +378,7 @@ int DynamicsModel_bc4bp::sim_addNode(Node &node, const double *y, double t, Arcs
 
     node.setTriggerEvent(tp);
 
-    // Update the dqdT variable if the state array is not NULL
+    // Update the dqdT variable if the state array is not nullptr
     if(y){
         unsigned int ctrlDim = 0;
         unsigned int stmDim = coreDim*coreDim;

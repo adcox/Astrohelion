@@ -918,10 +918,10 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
     double tol, MultShootData *pItData){
 
     if(halfPerGuess == nullptr)
-        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a null input pointer for halfPerGuess");
+        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a nullptr input pointer for halfPerGuess");
 
     if(halfPerCorrected == nullptr)
-        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a null input pointer for halfPerCorrected");
+        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a nullptr input pointer for halfPerCorrected");
 
     if(halfPerCorrected->getSysData() != halfPerGuess->getSysData())
         throw Exception("Calculations::cr3bp_getSymPO: input arcsets have different system data objects");
@@ -933,7 +933,7 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
     corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);
     // corrector.setVerbosity(Verbosity_tp::ALL_MSG);
 
-    // If the user passed in a null pointer, create a temporory data object
+    // If the user passed in a nullptr pointer, create a temporory data object
     // on the stack to avoid seg faults, then delete it before exiting to 
     // avoid memory leaks
     bool createdTempMSData = false;
@@ -1007,11 +1007,36 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
         // fprintf("Adding segment with tof = %.6f\n", po.getEpoch(id) - po.getEpoch(prevID))
         Segment seg(prevID, id, po.getEpoch(id) - po.getEpoch(prevID));
         seg.setStateWidth(po.getSegRefByIx(0).getStateWidth());
-        prevID = id;
-        po.addSeg(seg);
+
+        Segment &mirrorSeg = po.getSegRefByIx(i);   // Assumes segments all move linearly in time (simple arcset)
+        
+        // Get first and last state vectors on the segment (minimum required to save family members)
+        std::vector<double> q0 = mirrorSeg.getStateByRow(0);
+        std::vector<double> qf = mirrorSeg.getStateByRow(-1);
+
+        // Map to Eigen vector objects and rotate via mirror matrix
+        Eigen::RowVectorXd v0 = Eigen::Map<Eigen::RowVectorXd>(&(q0[0]), 1, 6);
+        Eigen::RowVectorXd vf = Eigen::Map<Eigen::RowVectorXd>(&(qf[0]), 1, 6);
+        Eigen::RowVectorXd v0_m = v0*mirrorMat;
+        Eigen::RowVectorXd vf_m = vf*mirrorMat;
+
+        // Create state "filler" to take up extra space (any states not included in the core 6)
+        std::vector<double> filler(seg.getStateWidth() - v0.cols(), NAN);
+
+        // Save states to the segment
+        seg.appendState(v0_m.data(), v0_m.cols());
+        seg.appendState(filler);
+        seg.appendState(vf_m.data(), vf_m.cols());
+        seg.appendState(filler);
+
+        // Save times
+        seg.appendTime(po.getNodeRef(prevID).getEpoch());
+        seg.appendTime(node.getEpoch());
+
+        prevID = id;    // Update variable
+        po.addSeg(seg); // Add the segment
     }
 
-    // waitForUser();
     // Compute the monodromy matrix from the half-period STM
     double M_data[] = { 0, 0, 0, -1, 0, 0,
                         0, 0, 0, 0, -1, 0,
@@ -1243,7 +1268,7 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
 
     Arcset_periodic correctedHalfPer(pSys);
 
-    // If the user passed in a null pointer, create a temporory data object
+    // If the user passed in a nullptr pointer, create a temporory data object
     // on the stack to avoid seg faults, then delete it before exiting to 
     // avoid memory leaks
     bool createdTempMSData = false;

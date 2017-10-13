@@ -324,14 +324,29 @@ void Arcset::setTimeByIx(int ix, double t){
  *  numbers of control states)
  */
 void Arcset::setSTMs_cumulative(){
-	putInChronoOrder();	// returns immediately if already in chrono order
+	if(segs.size() == 0)
+		return;
 
-	MatrixXRd stmPrev, stmSeg;
+	putInChronoOrder();	// returns immediately if already in chrono order
+	const unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+
+	MatrixXRd stmTotal;
 	for(unsigned int s = 1; s < segs.size(); s++){
 		if(segs[s].getCtrlLaw() != segs[s-1].getCtrlLaw())
 			printWarn("Arcset::setSTMs_cumulative: Segments leverage different control laws; multiplying STMs may yield non-useful / non-physical values\n");
 		try{
-			segs[s].setSTM(segs[s].getSTM() * segs[s-1].getSTM());
+			if(s == 1){
+				unsigned int ctrl_dim_prev = segs[0].getCtrlLaw() ? segs[0].getCtrlLaw()->getNumStates() : 0;
+				stmTotal = segs[0].getSTM_fromStates(core_dim, ctrl_dim_prev);
+			}
+
+			unsigned int ctrl_dim_now = segs[s].getCtrlLaw() ? segs[s].getCtrlLaw()->getNumStates() : 0;
+			
+			// Pull the STMs from the Segment state storage vector to guarantee the STM describes only the individual segment
+			MatrixXRd now = segs[s].getSTM_fromStates(core_dim, ctrl_dim_now);
+			stmTotal = now * stmTotal;	// update the cumulative STM
+
+			segs[s].setSTM(stmTotal);
 		}catch(std::exception &e){
 			printErr(e.what());
 			throw Exception("Arcset::setSTMs_cumulative: Eigen error, cannot multiply two STMs; likely have a different size because of control laws");
@@ -348,9 +363,7 @@ void Arcset::setSTMs_cumulative(){
  */
 void Arcset::setSTMs_sequence(){
 	const unsigned int coreDim = pSysData->getDynamicsModel()->getCoreStateSize();
-
 	unsigned int ctrlDim = 0;
-	unsigned int stmDim = 0;
 	ControlLaw *pLaw = nullptr;
 
 	for(unsigned int s = 0; s < segs.size(); s++){
@@ -361,10 +374,7 @@ void Arcset::setSTMs_sequence(){
 		else
 			ctrlDim = 0;
 
-		stmDim = (ctrlDim + coreDim)*(ctrlDim + coreDim);
-		std::vector<double> statef = segs[s].getStateByRow(-1);
-		std::vector<double> stm(statef.begin() + coreDim + ctrlDim, statef.begin() + coreDim + ctrlDim + stmDim);
-		segs[s].setSTM(stm);
+		segs[s].setSTM(segs[s].getSTM_fromStates(coreDim, ctrlDim));
 	}
 }//====================================================
 

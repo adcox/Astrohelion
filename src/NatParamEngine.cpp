@@ -251,7 +251,7 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 			}
 
 			// Compute eigenvalues
-			MatrixXRd mono = perOrbit.getSTMByIx(-1);
+			MatrixXRd mono = perOrbit.getMonodromy();
 
 			double monoErr = std::abs(1.0 - mono.determinant());
 			if(monoErr > 1e-5)

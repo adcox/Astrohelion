@@ -317,6 +317,31 @@ double Segment::getTOF() const { return tof; }
 MatrixXRd Segment::getSTM() const{ return stm; }
 
 /**
+ *  \brief Retrieve the STM associated with this segment from the state storage vector
+ *  \details Constructs the STM from the state elements stored in the state vector.
+ *  This STM *always* represents the evolution from the beginning of this specific
+ *  segment to the end of the segment, i.e., it is independent of all other segments.
+ * 
+ *  \param core_dim the number of propagated core states (see DynamicsModel::getCoreStateSize())
+ *  \param ctrl_dim the number of propagated control states (see ControlLaw::getNumStates())
+ * 
+ *  \return a matrix representation of the STM
+ */
+MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const { 
+	unsigned int el0 = core_dim + ctrl_dim;		// Index of first stm element
+	unsigned int side = core_dim + ctrl_dim;	// side length of the STM
+	unsigned int elf = el0 + side*side;			// Index of final stm element
+	unsigned int row = states.size()/stateWidth - 1;	// The row number of the final state vector
+
+	if(stateWidth >= elf && states.size() >= row*stateWidth + elf){
+		std::vector<double> stmData(states.begin() + row*stateWidth + el0, states.begin() + row*stateWidth + elf);
+		return Eigen::Map<MatrixXRd>(&(stmData.front()), side, side);
+	}else{
+		throw Exception("Segment::getSTM_fromStates: stateWidth is not large enough to facilitate STM extraction with the specified state dimensions");
+	}
+}//====================================================
+
+/**
  *	\brief Retrieve a vector describing which of the velocity states
  *	should be made continuous with the segment before this one in a nodeset.
  *

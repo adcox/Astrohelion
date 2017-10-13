@@ -236,14 +236,14 @@ void Family_PO::sortEigs(){
 	std::vector<unsigned int> sortedIxs = sortEig(memberEigVals, memberEigVecs);
 
 	// Update all eigendata in the storage vectors
-	std::vector<cdouble> sortedVals;
+	std::vector<cdouble> sortedVals(nE, 0);
 	MatrixXRcd sortedVecs = MatrixXRcd::Zero(nE, nE);
 	unsigned int ix = 0, m = 0, c = 0;
 	for(m = 0; m < members.size(); m++){
 		// Construct new eigenvalue and eigenvector objects with the new index order
 		for(c = 0; c < nE; c++){
 			ix = sortedIxs[m*nE+c];
-			sortedVals.push_back(memberEigVals[m*nE+ix]);
+			sortedVals[c] = memberEigVals[m*nE+ix];
 
 			sortedVecs.col(c) = memberEigVecs[m].col(ix);
 		}
@@ -251,11 +251,11 @@ void Family_PO::sortEigs(){
 		// Update member with sorted vectors and values
 		memberEigVecs[m] = sortedVecs;
 		for(c = 0; c < nE; c++){
-			memberEigVals[c] = sortedVals[c];
+			memberEigVals[m*nE + c] = sortedVals[c];
 		}
 
 		// Reset storage variables
-		sortedVals.clear();
+		sortedVals.assign(nE, 0);
 		sortedVecs = MatrixXRcd::Zero(nE,nE);
 	}
 }//====================================================
@@ -559,7 +559,6 @@ void Family_PO::saveMembers(mat_t *pMatFile){
 	}
 
 	for(unsigned int m = 0; m < numMembers; m++){
-		members[m].print();
 		members[m].saveToStruct(pStruct, m, Save_tp::SAVE_FRAME);
 	}
 

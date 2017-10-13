@@ -402,15 +402,18 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
                 //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[6*p + i]));
 
                 // Assign cost based on the distance from the previous sorted eigenvalues
-                // Scale by 50 to give it more weight that some of the others
-                cost[p] += 50*std::abs((eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i]);
+                // Scale to give it more weight than some of the others
+                cost[p] += 50*std::abs( (eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i] );
                 // if(printOut)
                 //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i]));
 
                 // Assign cost based on the reciprocal nature of the eigenvalues
                 // This test could be removed to sort eigenvalues that don't occur in pairs
                 if(i%2 == 1){
-                    cost[p] += sqrt(std::abs(1.0 - std::abs(eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]])));
+                    cdouble v1 = eigVals[s*6 + ixPerms[p*6 + i-1]];
+                    cdouble v2 = eigVals[s*6 + ixPerms[p*6 + i]];
+                    double minVal = std::abs(v1) < std::abs(v2) ? std::abs(v1) : std::abs(v2);
+                    cost[p] += std::abs(1.0 - std::abs(v1 * v2) ) / minVal;
                     // if(printOut)
                     //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]]))));
                 }
@@ -425,7 +428,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
         for(unsigned int i = 0; i < 6; i++){
             sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
             prevSortVal[i] = eigVals[s*6 + sortedIxs[s*6 + i]];
-            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*6 + i]);
+            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*6 + i]).normalized();
         }
     }
 
@@ -839,7 +842,7 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
  *  \brief Generate an arcset that is a suitable guess for a symmetric periodic orbit
  *  in the CR3BP
  *  
- *  \details The output half-period arcset can be passed to <FUNCTION_NAME> for corrections.
+ *  \details The output half-period arcset can be passed to cr3bp_getSymPO for corrections.
  *  
  *  Note: This method ignores all crash events, so it is possible to compute a
  *  periodic orbit that passes through a primary. 
@@ -976,9 +979,6 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
     // Make a copy for the final output periodic orbit
     Arcset_periodic po(*halfPerCorrected);
 
-    // Make sure the final STM represents the entire evolution of the trajectory
-    po.setSTMs_cumulative();
-
     // printf("\n************************************\nHalf Period Corrected:\n************************************\n");
     // halfPerCorrected->print();
     // halfPerCorrected->saveToMat("data/temp_halfPerCorrected.mat");
@@ -986,25 +986,49 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
 
     double halfTOF = po.getTimeByIx(-1);
     int halfPerTraj_len = static_cast<int>(po.getNumNodes());
-    MatrixXRd halfPerSTM = po.getSTMByIx(-1);
     
     // Use Mirror theorem to create the second half of the orbit
-    MatrixXRd mirrorMat = getMirrorMat(mirrorType);
+    double I[] = {  1, 0, 0, 0, 0, 0,
+                    0, 1, 0, 0, 0, 0,
+                    0, 0, 1, 0, 0, 0,
+                    0, 0, 0, 1, 0, 0,
+                    0, 0, 0, 0, 1, 0,
+                    0, 0, 0, 0, 0, 1};
+    // Symplecticity matrix
+    double S_data[] = {0, -2, 0, 1, 0, 0,
+                        2, 0, 0, 0, 1, 0,
+                        0, 0, 0, 0, 0, 1,
+                        -1, 0, 0, 0, 0, 0,
+                        0, -1, 0, 0, 0, 0,
+                        0, 0, -1, 0, 0, 0};
+    MatrixXRd S = Eigen::Map<MatrixXRd>(S_data, 6, 6);
+
+    // Inverse of Symplecticity matrix
+    double SI_data[] = { 0, 0, 0, -1, 0, 0,
+                        0, 0, 0, 0, -1, 0,
+                        0, 0, 0, 0, 0, -1,
+                        1, 0, 0, 0, -2, 0,
+                        0, 1, 0, 2, 0, 0,
+                        0, 0, 1, 0, 0, 0};
+    MatrixXRd SI = Eigen::Map<MatrixXRd>(SI_data, 6, 6);
+    MatrixXRd G = getMirrorMat(mirrorType);
+
+    MatrixXRd Phi_total_mirror = MatrixXRd::Identity(6,6);    // cumulative STM from the halfway point forward on the mirrored side
+    MatrixXRd Phi_total_prop = MatrixXRd::Identity(6,6);      // cumulative STM to the halfway point on the propagated side
+
     int prevID = po.getNodeByIx(halfPerTraj_len-1).getID();
-    // po.saveToMat("temp_halfPerTraj.mat");
     for(int i = halfPerTraj_len-2; i >= 0; i--){
         // Use mirroring to populate second half of the orbit
         std::vector<double> state = po.getStateByIx(i);
         Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
-        Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
+        Eigen::RowVectorXd newStateVec = stateVec*G;
 
+        // Create a node with the mirrored state and appropriate epoch
         Node node;
         node.setState(newStateVec.data(), newStateVec.cols());
         node.setEpoch(2*halfTOF - po.getTimeByIx(i));
-
         int id = po.addNode(node);
-        // printf("Added node at epoch %.6f\n", node.getEpoch());
-        // fprintf("Adding segment with tof = %.6f\n", po.getEpoch(id) - po.getEpoch(prevID))
+
         Segment seg(prevID, id, po.getEpoch(id) - po.getEpoch(prevID));
         seg.setStateWidth(po.getSegRefByIx(0).getStateWidth());
 
@@ -1017,56 +1041,81 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
         // Map to Eigen vector objects and rotate via mirror matrix
         Eigen::RowVectorXd v0 = Eigen::Map<Eigen::RowVectorXd>(&(q0[0]), 1, 6);
         Eigen::RowVectorXd vf = Eigen::Map<Eigen::RowVectorXd>(&(qf[0]), 1, 6);
-        Eigen::RowVectorXd v0_m = v0*mirrorMat;
-        Eigen::RowVectorXd vf_m = vf*mirrorMat;
+        Eigen::RowVectorXd v0_m = v0*G;
+        Eigen::RowVectorXd vf_m = vf*G;
+
+        // Update the cumulative STM on the propagated half
+        Phi_total_prop = Phi_total_prop * po.getSTMByIx(i);
+        // Compute the STM on the mirrored side
+        MatrixXRd stm = SI * G * Phi_total_prop.transpose() * G * Phi_total_mirror.transpose() * S;
+        // Update the cumulate STM on the mirrored half
+        Phi_total_mirror = stm*Phi_total_mirror;
+
+        unsigned int ctrl_dim = mirrorSeg.getCtrlLaw() ? mirrorSeg.getCtrlLaw()->getNumStates() : 0;
+        unsigned int extra_dim = po.getSysData()->getDynamicsModel()->getExtraStateSize();
 
         // Create state "filler" to take up extra space (any states not included in the core 6)
-        std::vector<double> filler(seg.getStateWidth() - v0.cols(), NAN);
+        std::vector<double> filler;
+        if(ctrl_dim > 0){
+            std::vector<double> ctrl(q0.begin()+6, q0.begin()+6+ctrl_dim);
+            filler.insert(filler.end(), ctrl.begin(), ctrl.end());
+        }
+        filler.insert(filler.end(), I, I+36);    // Add initial STM data
+        if(extra_dim > 0){
+            for(unsigned int k = 0; k < extra_dim; k++){
+                filler.push_back(0);    // add a zero for the extra state
+            }
+        }
 
         // Save states to the segment
         seg.appendState(v0_m.data(), v0_m.cols());
         seg.appendState(filler);
+
+        // Repeat for final state
+        filler.clear();
+        if(ctrl_dim > 0){
+            std::vector<double> ctrl(qf.begin()+6, qf.begin()+6+ctrl_dim);
+            filler.insert(filler.end(), ctrl.begin(), ctrl.end());
+        }
+        filler.insert(filler.end(), stm.data(), stm.data() + stm.rows()*stm.cols());    // Add STM data
+        if(extra_dim > 0){
+            for(unsigned int k = 0; k < extra_dim; k++){
+                filler.push_back(0);    // add a zero for the extra state
+            }
+        }
+
         seg.appendState(vf_m.data(), vf_m.cols());
         seg.appendState(filler);
+        seg.setSTM(stm);
 
         // Save times
         seg.appendTime(po.getNodeRef(prevID).getEpoch());
         seg.appendTime(node.getEpoch());
+        seg.updateTOF();
 
         prevID = id;    // Update variable
         po.addSeg(seg); // Add the segment
     }
-
-    // Compute the monodromy matrix from the half-period STM
-    double M_data[] = { 0, 0, 0, -1, 0, 0,
-                        0, 0, 0, 0, -1, 0,
-                        0, 0, 0, 0, 0, -1,
-                        1, 0, 0, 0, -2, 0,
-                        0, 1, 0, 2, 0, 0,
-                        0, 0, 1, 0, 0, 0};
-    // Inverse of M
-    double MI_data[] = {0, -2, 0, 1, 0, 0,
-                        2, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1,
-                        -1, 0, 0, 0, 0, 0,
-                        0, -1, 0, 0, 0, 0,
-                        0, 0, -1, 0, 0, 0};
-    MatrixXRd M = Eigen::Map<MatrixXRd>(M_data, 6, 6);
-    MatrixXRd MI = Eigen::Map<MatrixXRd>(MI_data, 6, 6);
-    
-    MatrixXRd monoMat(6,6);
-    monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
-
-    // Set final STM of mirrored trajectory to the one computed here
-    po.setSTMByIx(-1, monoMat);
     
     if(createdTempMSData){
         delete pItData;
         pItData = nullptr;
     }
+
     return po;     // Now contains entire trajectory
 }//====================================================
 
+/**
+ *  \brief Add mirror and state constraints to the first and last nodes on an arcset
+ *  \details A mirror constraint is constructed based on the mirrorType specified in the
+ *  input arguments. Additionally, a state constraint is constructed and applied to only 
+ *  the first node based on the fixedStates specified in the input arguments.
+ * 
+ *  \param pArc pointer to the arcset
+ *  \param mirrorType Describes how the trajectory is mirrored at both the initial and 
+ *  final nodes.
+ *  \param fixedStates The indices of any states at the initial node that should be fixed
+ */
 void cr3bp_addMirrorCons(Arcset_cr3bp *pArc, Mirror_tp mirrorType, std::vector<unsigned int> fixedStates){
     // Determine which states must be zero for mirroring
     std::vector<double> conData0(6, NAN);
@@ -1311,51 +1360,30 @@ Arcset_periodic cr3bp_getPeriodic(const SysData_cr3bp *pSys, std::vector<double>
     MatrixXRd halfPerSTM = correctedHalfPer.getSTMByIx(-1);
     
     // Use Mirror theorem to create the second half of the orbit
-    MatrixXRd mirrorMat = getMirrorMat(mirrorType);
+    MatrixXRd G = getMirrorMat(mirrorType);
+
     int prevID = correctedHalfPer.getNodeByIx(halfPerTraj_len-1).getID();
-    // correctedHalfPer.saveToMat("temp_halfPerTraj.mat");
     for(int i = halfPerTraj_len-2; i >= 0; i--){
         // Use mirroring to populate second half of the orbit
         std::vector<double> state = correctedHalfPer.getStateByIx(i);
         Eigen::RowVectorXd stateVec = Eigen::Map<Eigen::RowVectorXd>(&(state[0]), 1, 6);
-        Eigen::RowVectorXd newStateVec = stateVec*mirrorMat;
+        Eigen::RowVectorXd newStateVec = stateVec*G;
 
+        // Create a node with the mirrored state and the appropriate epoch time
         Node node;
         node.setState(newStateVec.data(), newStateVec.cols());
         node.setEpoch(2*halfTOF - correctedHalfPer.getTimeByIx(i));
-
         int id = correctedHalfPer.addNode(node);
-        // printf("Added node at epoch %.6f\n", node.getEpoch());
-        // fprintf("Adding segment with tof = %.6f\n", correctedHalfPer.getEpoch(id) - correctedHalfPer.getEpoch(prevID))
+        
         Segment seg(prevID, id, correctedHalfPer.getEpoch(id) - correctedHalfPer.getEpoch(prevID));
         seg.setStateWidth(correctedHalfPer.getSegRefByIx(0).getStateWidth());
+
         prevID = id;
         correctedHalfPer.addSeg(seg);
     }
 
-    // waitForUser();
-    // Compute the monodromy matrix from the half-period STM
-    double M_data[] = { 0, 0, 0, -1, 0, 0,
-                        0, 0, 0, 0, -1, 0,
-                        0, 0, 0, 0, 0, -1,
-                        1, 0, 0, 0, -2, 0,
-                        0, 1, 0, 2, 0, 0,
-                        0, 0, 1, 0, 0, 0};
-    // Inverse of M
-    double MI_data[] = {0, -2, 0, 1, 0, 0,
-                        2, 0, 0, 0, 1, 0,
-                        0, 0, 0, 0, 0, 1,
-                        -1, 0, 0, 0, 0, 0,
-                        0, -1, 0, 0, 0, 0,
-                        0, 0, -1, 0, 0, 0};
-    MatrixXRd M = Eigen::Map<MatrixXRd>(M_data, 6, 6);
-    MatrixXRd MI = Eigen::Map<MatrixXRd>(MI_data, 6, 6);
-    
-    MatrixXRd monoMat(6,6);
-    monoMat.noalias() = mirrorMat*M*halfPerSTM.transpose()*MI*mirrorMat*halfPerSTM;
-
     // Set final STM of mirrored trajectory to the one computed here
-    correctedHalfPer.setSTMByIx(-1, monoMat);
+    // correctedHalfPer.setSTMByIx(-1, monoMat);
     
     if(createdTempMSData){
         delete pItData;

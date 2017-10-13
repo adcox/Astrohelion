@@ -63,7 +63,7 @@ void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs)
 	MatrixXRd mono = getMonodromy();
 	Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
     if(eigensolver.info() != Eigen::Success)
-        throw Exception("FamGenerator::cr3bp_pseudoArcCont: Could not compute eigenvalues of monodromy matrix");
+        throw Exception("Arcset_periodic::getEigData: Could not compute eigenvalues of monodromy matrix");
 
     // Extract the eigen data to return to the user
     if(pVals){

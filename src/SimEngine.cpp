@@ -808,8 +808,8 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
      *      core_state      -   a (core_dim x 1) vector that contains the "core state," e.g.,
      *                          the position, velocity, mass of the spacecraft
      *      control_state   -   a (ctrl_dim x 1) vector that contains control state information
-     *      stm_elements    -   represents a (core_dim x core_dim) state transition matrix in
-     *                          row-major order
+     *      stm_elements    -   represents a (core_dim + ctrl_dim x core_dim + ctrl_dim) state 
+     *                          transition matrix in row-major order
      *      extra_state     -   a (extra_dim x 1) vector that contains "extra states," e.g.,
      *  
      *  If simpleIntegration is enabled, the STM and extra states are not included in the

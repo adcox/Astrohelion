@@ -45,6 +45,20 @@ namespace astrohelion{
  *	\ingroup traj
  *	\brief Links nodes together to describe the flow of a trajectory
  *
+ *	Each row of the state vector stores the following information
+ *  
+ *  q = [core_state; ctrl_state; stm_elements; extra_state]
+ *  
+ *      core_state      -   a (core_dim x 1) vector that contains the "core state," e.g.,
+ *                          the position, velocity, mass of the spacecraft
+ *      ctrl_state   	-   a (ctrl_dim x 1) vector that contains control state information
+ *      stm_elements    -   represents a (core_dim + ctrl_dim x core_dim + ctrl_dim) state 
+ *                          transition matrix in row-major order
+ *      extra_state     -   a (extra_dim x 1) vector that contains "extra states," e.g.,
+ *  
+ *  If simpleIntegration is enabled, the STM and extra states are not included in the
+ *  integration and their values in the Segment state array are filled by zeros 
+     
  *	\author Andrew Cox
  *	\version May 1, 2016
  *	\copyright GNU GPL v3.0
@@ -86,6 +100,7 @@ public:
 	unsigned int getNumTimes() const;
 	int getOrigin() const;
 	MatrixXRd getSTM() const;
+	MatrixXRd getSTM_fromStates(unsigned int, unsigned int) const;
 	std::vector<double> getStateVector() const;
 	unsigned int getStateWidth() const;
 	std::vector<double> getStateByRow(int) const;

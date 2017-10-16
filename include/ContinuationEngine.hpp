@@ -93,16 +93,6 @@ class ContinuationEngine : public Core, public Engine{
 		void setMinStepSize(double step){ minStepSize = step; }
 
 		/**
-		 *  \brief Set the number of nodes to use when correcting a family member
-		 *  \details Multiple shooting is leveraged to apply constraints; adjusting
-		 *  the number of nodes in this process affects the "stiffness" of the problem
-		 *  and can be the difference between convergence and divergence.
-		 * 
-		 *  \param num number of nodes to use in multiple shooting corrections
-		 */
-		void setNumNodes(unsigned int num){ numNodes = num; }
-
-		/**
 		 *  \brief Set the number of orbits to generate
 		 *  \details This is the maximum number of orbits that my be generated via
 		 *  continuation. If the continuation algorithm does not locate the end of
@@ -130,12 +120,11 @@ class ContinuationEngine : public Core, public Engine{
 		/**
 		 *  \brief Reset all continuation parameters to their default values
 		 */
-		void reset(){
+		virtual void reset(){
 			tol = 1e-12;
 			minStepSize = 1e-6;
 			maxStepSize = 0.05;
 			numOrbits = 500;
-			numNodes = 3;
 		}//============================================
 		//\}
 
@@ -144,7 +133,6 @@ class ContinuationEngine : public Core, public Engine{
 		double minStepSize = 1e-6;		//!< Minimum allowable step size
 		double maxStepSize = 0.05;		//!< Maximum allowable step size
 		unsigned int numOrbits = 500;	//!< Maximum number of orbits in the continuation
-		unsigned int numNodes = 3;		//!< Number of nodes to use on each trajectory
 		double tol = 1e-12;				//!< Tolerance for corrections
 
 		/**
@@ -163,7 +151,6 @@ class ContinuationEngine : public Core, public Engine{
 			minStepSize = engine.minStepSize;
 			maxStepSize = engine.maxStepSize;
 			numOrbits = engine.numOrbits;
-			numNodes = engine.numNodes;
 		}//============================================
 
 		/**

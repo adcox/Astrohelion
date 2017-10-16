@@ -247,7 +247,7 @@ void FamGenerator::cr3bp_generateLyap(int LPt, double x0, Fam_cr3bp *pFam){
 		int order = 1;
 		Arcset_cr3bp perOrbit = cr3bp_getPeriodic(pFam->getSysDataPtr(), IC, tof, numNodes, order, Mirror_tp::MIRROR_XZ, fixStates, tol);
 
-		// Turn trajectory object into nodeset; double number of nodes
+		// Turn trajectory object into arcset; double number of nodes
 		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		// Apply Pseudo Arclength Continuation: Ignore y (ix = 0) for periodicity, force y to equal 0 at node 0
@@ -314,7 +314,7 @@ void FamGenerator::cr3bp_generateHalo(const char* lyapFamFile, double initStepSi
 		cr3bp_natParamCont(pHaloFam, firstHalo, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
 
-		// Turn trajectory object into nodeset; double number of nodes
+		// Turn trajectory object into arcset; double number of nodes
 		// Arcset_cr3bp initGuess(firstHalo, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
@@ -377,7 +377,7 @@ void FamGenerator::cr3bp_generateAxial(const char* lyapFamFile, double initStepS
 
 		cr3bp_natParamCont(pAxialFam, firstAxial, mirrorTypes, indVars, depVars, 1);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-		// Turn trajectory object into nodeset; double number of nodes
+		// Turn trajectory object into arcset; double number of nodes
 		// Arcset_cr3bp initGuess(firstAxial, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
@@ -450,7 +450,7 @@ void FamGenerator::cr3bp_generateVertical(const char* axialFamFile, double initS
 
 		cr3bp_natParamCont(pVertFam, firstVertical, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-		// Turn trajectory object into nodeset; double number of nodes
+		// Turn trajectory object into arcset; double number of nodes
 		// Arcset_cr3bp initGuess(firstVertical, 2*numNodes-1);
 
 		int sign = initStepSize < 0 ? -1 : 1;
@@ -501,7 +501,7 @@ void FamGenerator::cr3bp_generateButterfly(int LPt, Fam_cr3bp *pFam){
 		printf("Using natural parameter continuation...\n");
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, 2);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-		// Turn trajectory object into nodeset; double number of nodes
+		// Turn trajectory object into arcset; double number of nodes
 		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
@@ -772,7 +772,7 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 		step_simple *= -1;
 		cr3bp_natParamCont(pFam, perOrbit, mirrorTypes, indVars, depVars, order);
 	}else if(contType == Continuation_tp::PSEUDO_ARC){
-		// Turn trajectory object into nodeset; double number of nodes
+		// Turn trajectory object into arcset; double number of nodes
 		// Arcset_cr3bp initGuess(perOrbit, 2*numNodes-1);
 
 		std::vector<int> initDir {1, 0, 0, 0, 0, 0};
@@ -787,7 +787,7 @@ void FamGenerator::cr3bp_generateRes(int p, int q, Fam_cr3bp *pFam){
 
 /**
  *  \brief Compute a family of periodic orbits using pseudo arclength continuation
- *  from a nodeset
+ *  from a arcset
  * 
  *  \param arcset An initial guess for a periodic orbit
  *  \param mirrorType Condition describing the mirror symmetry exhibited by this family of periodic orbits
@@ -1177,7 +1177,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 
 	std::vector<Constraint> constraints {perpCross1_Con, perpCross2_Con};
 
-	// Correct the nodeset to retrieve a free-variable vector for a family member
+	// Correct the arcset to retrieve a free-variable vector for a family member
 	MultShootEngine corrector;
 	corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
@@ -1186,9 +1186,9 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 	MultShootData familyItData(&familyMember);
 	Arcset_cr3bp tempNodes(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
-	// Initialize this nodeset outside the loop because the familyItData will end up with a pointer
-	// to this nodeset after the multiple shooting processs; if the declaration is in the loop,
-	// the nodeset is destroyed each iteration and the pointer ceases to be useful.
+	// Initialize this arcset outside the loop because the familyItData will end up with a pointer
+	// to this arcset after the multiple shooting processs; if the declaration is in the loop,
+	// the arcset is destroyed each iteration and the pointer ceases to be useful.
 	Arcset_cr3bp perOrbit(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
 
 	Arcset_cr3bp newMember(static_cast<const SysData_cr3bp *>(initialGuess.getSysData()));
@@ -1219,7 +1219,7 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		/* 
 		 *	The first iteration should have a DF matrix that is (n-1) x n, but all further iterations will
 		 * 	have an extra row for the pseudo-arc-length constraint; we want to remove that row and take the
-		 * 	nullptrspace of the submatrix
+		 * 	nullspace of the submatrix
 		 */
 		if(familyItData.totalCons == familyItData.totalFree){
 			DF = DF.block(0, 0, familyItData.totalCons-1, familyItData.totalFree);
@@ -1231,24 +1231,24 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 		MatrixXRd N = lu.kernel();
 
 		printf("DF has dimensions %ld x %ld\n", DF.rows(), DF.cols());
-		// Check to make sure the IS a nullptrspace
+		// Check to make sure the IS a nullspace
 		if(N.rows() == 1){
-			astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: nullptrspace is zero-dimensional; cannot proceed...\n");
+			astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: nullspace is zero-dimensional; cannot proceed...\n");
 			return;
 		}		
 
-		// // For debugging, save nullptrspace vectors to file
+		// // For debugging, save nullspace vectors to file
 		// char filename[16];
 		// sprintf(filename, "N%02d.csv", orbitCount);
 		// N.astrohelion::toCSV(filename);
 
 		/**
-		 *	Choose the nullptrspace vector that is closest to the previous one (which converged)
+		 *	Choose the nullspace vector that is closest to the previous one (which converged)
 		 */
-		printf("Choosing nullptrspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
+		printf("Choosing nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
 		if(orbitCount == 0){
 			if(N.cols() > 1){
-				astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: nullptrspace is multidimensional on first iteration; unsure how to proceed...\n");
+				astrohelion::printErr("FamGenerator::cr3bp_pseudoArcCont: nullspace is multidimensional on first iteration; unsure how to proceed...\n");
 				return;
 			}
 
@@ -1264,12 +1264,12 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 				}
 			}
 
-			// Reverse direction of nullptrspace
+			// Reverse direction of nullspace
 			if(!sameDir)
 				N *= -1;
 
 		}else{
-			/* Make sure nullptrspace direction stays consistent by choosing the 
+			/* Make sure nullspace direction stays consistent by choosing the 
 			 * nullptr vector that is closest to the same direction as the previous one
 			 */
 			int best_ix = 0;	// index of the column of the best vector option
@@ -1419,13 +1419,13 @@ void FamGenerator::cr3bp_pseudoArcCont(Fam_cr3bp *fam, Arcset_cr3bp initialGuess
 }//==================================================
 
 /**
- *	\brief Create a nodeset that contains an initial guess for a family member
+ *	\brief Create a arcset that contains an initial guess for a family member
  *	using pseudo arclength continuation
  *
  *	\param convergedFreeVarVec a matrix containing the free variable vector of the previous
  *	(nearest) converged family member
- *	\param N a 1D nullptrspace vector that lies tangent to the family
- *	\param stepSize scales the size of the step by scaling the nullptrspace vector
+ *	\param N a 1D nullspace vector that lies tangent to the family
+ *	\param stepSize scales the size of the step by scaling the nullspace vector
  *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
  */
@@ -1440,7 +1440,7 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(const Eigen::VectorXd &converge
 	double *X = newFreeVarVec.data();
 	pFamilyItData->X = std::vector<double>(X, X + newFreeVarVec.rows());
 
-	// Convert into a new nodeset (TODO: Make this more flexible by putting conversion code in a model?)
+	// Convert into a new arcset (TODO: Make this more flexible by putting conversion code in a model?)
 	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData->nodesIn->getSysData());
 	Arcset_cr3bp newMember(sys);
 	pFamilyItData->nodesOut = &newMember;

@@ -919,15 +919,23 @@ Arcset_cr3bp cr3bp_propSymPO(const SysData_cr3bp *pSys, std::vector<double> ic, 
 
 Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *halfPerCorrected, Mirror_tp mirrorType,
     double tol, MultShootData *pItData){
-
+    // TODO - allow halfPerCorrected to be a nullptr and just create a temporary object on the stack; delete before exiting
+    
     if(halfPerGuess == nullptr)
         throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a nullptr input pointer for halfPerGuess");
 
-    if(halfPerCorrected == nullptr)
-        throw Exception("Calculations::cr3bp_getSymPO: Cannot proceed with a nullptr input pointer for halfPerCorrected");
+    bool createCorrectedArcset = halfPerCorrected == nullptr;
+    if(createCorrectedArcset){
+        halfPerCorrected = new Arcset_cr3bp(static_cast<const SysData_cr3bp*>(halfPerGuess->getSysData()));
+    }
 
-    if(halfPerCorrected->getSysData() != halfPerGuess->getSysData())
+    if(halfPerCorrected->getSysData() != halfPerGuess->getSysData()){
+        if(createCorrectedArcset){
+            delete halfPerCorrected;
+            halfPerCorrected = nullptr;
+        }
         throw Exception("Calculations::cr3bp_getSymPO: input arcsets have different system data objects");
+    }
 
     // Use differential corrections to enforce the mirror conditions
     MultShootEngine corrector;
@@ -972,6 +980,10 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
             
             // halfPerCorrected->print();
         }catch(DivergeException &ee){
+            if(createCorrectedArcset){
+                delete halfPerCorrected;
+                halfPerCorrected = nullptr;
+            }
             throw DivergeException("Calculations::cr3bp_getPeriodic: Could not converge half-period arc with mirroring condition");
         }
     }
@@ -1100,6 +1112,11 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
     if(createdTempMSData){
         delete pItData;
         pItData = nullptr;
+    }
+
+    if(createCorrectedArcset){
+        delete halfPerCorrected;
+        halfPerCorrected = nullptr;
     }
 
     return po;     // Now contains entire trajectory

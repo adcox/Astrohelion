@@ -42,10 +42,31 @@
 
 namespace astrohelion{
 
+//-----------------------------------------------------------------------------
+//      *structors
+//-----------------------------------------------------------------------------
+
 /**
  *  \brief Default constructor
  */
 NatParamEngine::NatParamEngine() : ContinuationEngine() {}
+
+NatParamEngine::NatParamEngine(const NatParamEngine &e) : ContinuationEngine(e) {
+	copyMe(e);
+}//====================================================
+
+//-----------------------------------------------------------------------------
+//      Operators
+//-----------------------------------------------------------------------------
+
+NatParamEngine& NatParamEngine::operator=(const NatParamEngine &e){
+	copyMe(e);
+	return *this;
+}//====================================================
+
+//-----------------------------------------------------------------------------
+//      Set and Get Functions
+//-----------------------------------------------------------------------------
 
 /**
  *  \brief Set the number of solutions to store in the "curve fit memory"
@@ -97,6 +118,10 @@ void NatParamEngine::setStep_fitted_1(double step){ step_fitted_1 = step; }
  */
 void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
 
+//-----------------------------------------------------------------------------
+//      Analysis Functions
+//-----------------------------------------------------------------------------
+
 /**
  *	\brief Continue a family of periodic orbits via natural parameter continuation
  *	
@@ -112,9 +137,7 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
- *	\param order the multiplicity or order of the family; i.e. the number of revs around the primary
- *	or system before the orbit repeats itself. For example, a Period-3 DRO has order 3, and a butterfly
- *	has order 2
+ *
  *	\throws Exception if <tt>indVarIx</tt> has fewer than two elements
  *	\throws Exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
  *	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
@@ -122,7 +145,7 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	out of range
  */
 void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
-	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx, int order){
+	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
 
 	// Assume family is CR3BP
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(fam->getSysData());
@@ -176,7 +199,6 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 			cr3bp_addMirrorCons(&halfPerGuess, mirrorType, fixStates);
 			// Correct using multiple shooting, save the corrected half-period arc for next time
 			perOrbit = cr3bp_getSymPO(&halfPerGuess, &tempCorrected, mirrorType, tol, pItData);
-			// perOrbit = cr3bp_getPeriodic(pSys, IC, tof, numNodes, order, mirrorType, fixStates, tol, pItData);
 
 			diverged = false;
 			halfPerCorrected = tempCorrected;
@@ -367,6 +389,10 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	}
 }//==================================================
 
+//-----------------------------------------------------------------------------
+//      Utility Functions
+//-----------------------------------------------------------------------------
+
 /**
  *  \brief Make a copy of the natural parameter engine
  * 
@@ -398,7 +424,9 @@ void NatParamEngine::reset(){
 /**
  *  \brief Reset any variables specific to an individual continuation process
  */
-void NatParamEngine::cleanEngine(){}
+void NatParamEngine::cleanEngine(){
+	ContinuationEngine::cleanEngine();
+}//====================================================
 
 }// End of astrohelion namespace
 

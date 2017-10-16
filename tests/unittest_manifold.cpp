@@ -4,11 +4,12 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "Arcset_cr3bp.hpp"
+#include "Arcset_periodic.hpp"
 #include "Calculations.hpp"
 #include "ManifoldEngine.hpp"
 #include "SimEngine.hpp"
 #include "SysData_cr3bp.hpp"
-#include "Arcset_cr3bp.hpp"
 #include "Utilities.hpp"
 
 using namespace astrohelion;
@@ -22,8 +23,12 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	// Small Lyapunov
 	std::vector<double> ic {0.839367079288131, 0, 0, 0, -0.0201563145344225, 0};
 	double period = 2.7;
-	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
-	
+	std::vector<unsigned int> fixedStates {0}; // only fix x
+
+	Arcset_cr3bp guess = cr3bp_propSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_getSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
+
 	ManifoldEngine engine;
 	engine.setVerbosity(Verbosity_tp::NO_MSG);
 	std::vector<cdouble> eigVals;
@@ -91,8 +96,12 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	// Small Lyapunov
 	std::vector<double> ic {0.839367079288131, 0, 0, 0, -0.0201563145344225, 0};
 	double period = 2.7;
-	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
-	perOrbit.saveToMat("data/lyap.mat");
+	std::vector<unsigned int> fixedStates {0}; // only fix x
+
+	Arcset_cr3bp guess = cr3bp_propSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_getSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
+	
 	ManifoldEngine engine;
 	engine.setVerbosity(Verbosity_tp::NO_MSG);
 
@@ -156,7 +165,11 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	// Small Lyapunov
 	std::vector<double> ic {0.839367079288131, 0, 0, 0, -0.0201563145344225, 0};
 	double period = 2.7;
-	Arcset_cr3bp perOrbit = cr3bp_getPeriodic(&emSys, ic, period, Mirror_tp::MIRROR_XZ);
+	std::vector<unsigned int> fixedStates {0}; // only fix x
+
+	Arcset_cr3bp guess = cr3bp_propSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_getSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 	unsigned int numPts = 100;
 	
 	Arcset_cr3bp discretizedOrbit(&emSys);

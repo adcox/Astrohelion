@@ -31,6 +31,9 @@
 
 namespace astrohelion{
 
+// Forward Declarations
+class ControlLaw;
+
 /**
  *	\brief How to sort members of this family
  *	
@@ -104,7 +107,8 @@ class Family : public Core{
 		 *  \name File I/O
 		 *  \{
 		 */
-		virtual void saveToMat(const char*) = 0;
+		virtual void readFromMat(const char*, std::vector<ControlLaw*>&) = 0;
+		virtual void saveToMat(const char*) const = 0;
 		//\}
 
 		/**
@@ -123,8 +127,8 @@ class Family : public Core{
 
 		double matchTol = 1e-8;								//!< Acceptable tolerance (non-dim units) when locating a member by a specific attribute
 
-		const char* SORT_TYPE_VAR_NAME = "SortType";		//!< Variable name for the sort type
-		const char* NAME_VAR_NAME = "Name";					//!< Variable name for the name of the family
+		const char* VARNAME_SORTTYPE = "SortType";		//!< Variable name for the sort type
+		const char* VARNAME_NAME = "Name";					//!< Variable name for the name of the family
 
 		/**
 		 *  \name Utility Functions

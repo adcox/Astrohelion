@@ -301,6 +301,8 @@ class Constraint : public Core{
 		 *  \{
 		 */
 		Constraint& operator =(const Constraint&);
+		friend bool operator ==(const Constraint&, const Constraint&);
+		friend bool operator !=(const Constraint&, const Constraint&);
 		//\}
 
 		/**

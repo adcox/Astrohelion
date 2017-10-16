@@ -101,6 +101,7 @@ baseArcsetPtr Arcset_2bp::clone() const{
 /**
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
+ *  \param saveTp describes how much data to save
  */
 void Arcset_2bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds_toFile(pMatFile, saveTp);
@@ -116,6 +117,29 @@ void Arcset_2bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 
 	matvar_t *pEnergy = createVar_NodeExtraParam(PARAMKEY_2BP_ENERGY, saveTp, VARNAME_2BP_ENERGY);
 	saveVar(pMatFile, pEnergy, VARNAME_2BP_ENERGY, MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
+ *  \brief Execute commands to save data to a structure array
+ * 
+ *  \param pStruct pointer to a structure array
+ *  \param ix index of this arcset within the structure array
+ *  \param saveTp Describes how much data to save
+ */
+void Arcset_2bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
+	Arcset::saveCmds_toStruct(pStruct, ix, saveTp);
+
+	if(matvar_t *pSMA = createVar_NodeExtraParam(PARAMKEY_SMA, saveTp, nullptr))
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_SMA, ix, pSMA);
+
+	if(matvar_t *pEcc = createVar_NodeExtraParam(PARAMKEY_ECC, saveTp, nullptr))
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_ECC, ix, pEcc);
+
+	if(matvar_t *pAngMom = createVar_NodeExtraParam(PARAMKEY_ANGMOM, saveTp, nullptr))
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_ANGMOM, ix, pAngMom);
+
+	if(matvar_t *pEnergy = createVar_NodeExtraParam(PARAMKEY_2BP_ENERGY, saveTp, nullptr))
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_2BP_ENERGY, ix, pEnergy);
 }//====================================================
 
 /**
@@ -139,4 +163,29 @@ void Arcset_2bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &re
 	if(readVar_NodeExtraParam(pAngMom, PARAMKEY_ANGMOM, saveTp)){ Mat_VarFree(pAngMom); }
 	if(readVar_NodeExtraParam(pEnergy, PARAMKEY_2BP_ENERGY, saveTp)){ Mat_VarFree(pEnergy); }
 }//====================================================
+
+/**
+ *  \brief Execute commands to read from data from a structure array
+ * 
+ *  \param pStruct Pointer to the structure array variable
+ *  \param ix index of this arcset within the structure array
+ * 	\param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ */
+void Arcset_2bp::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds_fromStruct(pStruct, ix, refLaws);
+
+	Save_tp saveTp = Save_tp::SAVE_ALL;	// not used in these functions, but provided for forward compatibility
+	matvar_t *pSMA = Mat_VarGetStructFieldByName(pStruct, VARNAME_SMA, ix);
+	matvar_t *pEcc = Mat_VarGetStructFieldByName(pStruct, VARNAME_ECC, ix);
+	matvar_t *pAngMom = Mat_VarGetStructFieldByName(pStruct, VARNAME_ANGMOM, ix);
+	matvar_t *pEnergy = Mat_VarGetStructFieldByName(pStruct, VARNAME_2BP_ENERGY, ix);
+
+	if(readVar_NodeExtraParam(pSMA, PARAMKEY_SMA, saveTp)){ Mat_VarFree(pSMA); }
+	if(readVar_NodeExtraParam(pEcc, PARAMKEY_ECC, saveTp)){ Mat_VarFree(pEcc); }
+	if(readVar_NodeExtraParam(pAngMom, PARAMKEY_ANGMOM, saveTp)){ Mat_VarFree(pAngMom); }
+	if(readVar_NodeExtraParam(pEnergy, PARAMKEY_2BP_ENERGY, saveTp)){ Mat_VarFree(pEnergy); }
+}//====================================================
+
 }// End of astrohelion namespace

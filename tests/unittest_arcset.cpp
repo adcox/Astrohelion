@@ -226,7 +226,15 @@ BOOST_AUTO_TEST_CASE(CR3BP_Arcset_Save_Load){
 
 	// crSet.print();
 
+	// Add a constraint
+	std::vector<double> conData {1, 2, 3, 4, 5, 6};
+	Constraint con(Constraint_tp::STATE, 0, conData);
+	crSet.addConstraint(con);
+
+	// Save the arcset
 	crSet.saveToMat("data/crSet.mat");
+	
+	// Load the same arcset from the file
 	Arcset_cr3bp crTemp(&emData);
 	std::vector<ControlLaw*> loadedLaws;
 	crTemp.readFromMat("data/crSet.mat", loadedLaws);
@@ -278,6 +286,12 @@ BOOST_AUTO_TEST_CASE(CR3BP_Arcset_Save_Load){
 
 		BOOST_CHECK_EQUAL(crSet.getCtrlLawByIx(s), crTemp.getCtrlLawByIx(s));
 	}
+
+	// Check to make sure that the constraint is saved/loaded properly
+	BOOST_CHECK_EQUAL(crTemp.getNumCons(), 1);
+	std::vector<Constraint> cons = crTemp.getNodeRefByIx(0).getConstraints();
+	BOOST_CHECK_EQUAL(cons.size(), 1);
+	BOOST_CHECK(cons[0] == con);
 
 	if(loadedLaws.size() > 0){
 		for(auto law : loadedLaws)
@@ -455,7 +469,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_Save_Load){
 	// ltSet.print();
 	ltSet.saveToMat("data/ltSet.mat");
 	Arcset_cr3bp_lt temp(&ltData);
-	std::vector<ControlLaw*> loadedLaws;
+	std::vector<ControlLaw*> loadedLaws {};
 	temp.readFromMat("data/ltSet.mat", loadedLaws);
 
 	BOOST_CHECK_EQUAL(loadedLaws.size(), 1);

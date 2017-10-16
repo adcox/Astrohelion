@@ -75,7 +75,9 @@ protected:
 	 *  \{
 	 */
 		void saveCmds_toFile(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const override;
+		void saveCmds_toStruct(matvar_t*, unsigned int, Save_tp saveTp = Save_tp::SAVE_ALL) const override;
 		void readCmds_fromFile(mat_t*, std::vector<ControlLaw*>&) override;
+		void readCmds_fromStruct(matvar_t*, unsigned int, std::vector<ControlLaw*>&) override;
 	//\}
 };
 

@@ -241,12 +241,27 @@ void Arcset_cr3bp::setJacobiByIx(int ix, double val){
 /**
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
+ *  \param saveTp describes how much data to save
  */
 void Arcset_cr3bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds_toFile(pMatFile, saveTp);
 
 	matvar_t *pJacobi = createVar_NodeExtraParam(PARAMKEY_JACOBI, saveTp, VARNAME_JACOBI);
 	saveVar(pMatFile, pJacobi, VARNAME_JACOBI, MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
+ *  \brief Execute commands to save data to a structure array
+ * 
+ *  \param pStruct pointer to a structure array
+ *  \param ix index of this arcset within the structure array
+ *  \param saveTp Describes how much data to save
+ */
+void Arcset_cr3bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
+	Arcset::saveCmds_toStruct(pStruct, ix, saveTp);
+
+	if(matvar_t *pJacobi = createVar_NodeExtraParam(PARAMKEY_JACOBI, saveTp, nullptr))
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_JACOBI, ix, pJacobi);
 }//====================================================
 
 /**
@@ -262,5 +277,22 @@ void Arcset_cr3bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &
 	matvar_t *pJacobi = Mat_VarRead(pMatFile, VARNAME_JACOBI);
 	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){ Mat_VarFree(pJacobi); }
 }//====================================================
+
+/**
+ *  \brief Execute commands to read from data from a structure array
+ * 
+ *  \param pStruct Pointer to the structure array variable
+ *  \param ix index of this arcset within the structure array
+ * 	\param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ */
+void Arcset_cr3bp::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds_fromStruct(pStruct, ix, refLaws);
+
+	matvar_t *pJacobi = Mat_VarGetStructFieldByName(pStruct, VARNAME_JACOBI, ix);
+	if(readVar_NodeExtraParam(pJacobi, PARAMKEY_JACOBI, Save_tp::SAVE_ALL)){ Mat_VarFree(pJacobi); }
+}//====================================================
+
 
 }// End of astrohelion namespace

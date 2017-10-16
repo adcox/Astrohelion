@@ -28,6 +28,8 @@
 #include "Family.hpp"
 
 #include "Arcset_periodic.hpp"
+#include "Common.hpp"
+#include "EigenDefs.hpp"
 
 namespace astrohelion{
 
@@ -62,7 +64,6 @@ class Family_PO : public Family{
 		 */
 		void addMember(const Arcset_periodic&);
 		std::vector<unsigned int> findBifurcations();
-		void saveToMat(const char*);
 		void sortEigs();
 		void sortMembers();
 		//\}
@@ -77,6 +78,15 @@ class Family_PO : public Family{
 		std::vector<Arcset_periodic> getMemberByTOF(double) const;
 		unsigned int getNumMembers() const;
 		//\}
+
+		/**
+		 *  \name File I/O
+		 *  \{
+		 */
+		void readFromMat(const char*, std::vector<ControlLaw*>&);
+		void saveToMat(const char*) const;
+		//\}
+
 	protected:
 		std::vector<Arcset_periodic> members {};		//!< Vector of periodic orbits
 		std::vector<cdouble> memberEigVals {};			//!< Vector of eigenvalues (row-major order)
@@ -99,17 +109,19 @@ class Family_PO : public Family{
 		 *  \{
 		 */
 		// void loadMemberData(mat_t*);
+		void loadMembers(mat_t*, std::vector<ControlLaw*>&);
+		void loadMiscData(mat_t*);
 		void loadEigVals(mat_t*);
 		void loadEigVecs(mat_t*);
 		
-		void saveMembers(mat_t*);
-		void saveMiscData(mat_t*);
-		void saveEigVals(mat_t*);
-		void saveEigVecs(mat_t*);
+		void saveMembers(mat_t*) const;
+		void saveMiscData(mat_t*) const;
+		void saveEigVals(mat_t*) const;
+		void saveEigVecs(mat_t*) const;
 		//\}
 
 		/**
-		 *  \name File I/O
+		 *  \name Utility Functions
 		 *  \{
 		 */
 		void copyMe(const Family_PO&);

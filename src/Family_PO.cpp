@@ -30,6 +30,7 @@
 
 #include "AsciiOutput.hpp"
 #include "Calculations.hpp"
+#include "ControlLaw.hpp"
 #include "DynamicsModel.hpp"
 #include "Exceptions.hpp"
 #include "MultShootEngine.hpp"
@@ -417,10 +418,35 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Save the family to a file
+ *  \brief Read family data from a Matlab file
+ * 
+ *  \param filename path to the file
+ *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ */
+void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refLaws){
+	mat_t *pMatFile = Mat_Open(filename, MAT_ACC_RDONLY);
+	if(pMatFile == nullptr){
+		throw Exception("Family_PO::readFromMat: Could not load family from file");
+	}
+
+
+	loadMembers(pMatFile, refLaws);
+	loadEigVals(pMatFile);
+	loadMiscData(pMatFile);
+	try{
+		loadEigVecs(pMatFile);
+	}catch(Exception &e){
+		printWarn("Family_PO::readFromMat: Could not load eigenvectors from file\n");
+	}
+}//====================================================
+
+/**
+ *  \brief Save the family to a Matlab file
  *  \param filename file name (or path)
  */
-void Family_PO::saveToMat(const char *filename){
+void Family_PO::saveToMat(const char *filename) const{
 	/*	Create a new Matlab MAT file with the given name and optional
 	 *	header string. If no header string is given, the default string 
 	 *	used containing the software, version, and date in it. If a header
@@ -542,7 +568,51 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 	Mat_VarFree(pMatvar);
 }//====================================================
 
-void Family_PO::saveMembers(mat_t *pMatFile){
+/**
+ *  \brief Load family members from a Matlab file
+ * 
+ *  \param pMatFile pointer to the open Matlab file
+ *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ */
+void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+	matvar_t *pStruct = Mat_VarRead(pMatFile, VARNAME_FAM_MEMBER);
+	if(pStruct == nullptr){
+		throw Exception("Family_PO::loadMembers: Could not read variable from file");
+	}else{
+		if(pStruct->class_type == MAT_C_STRUCT && pStruct->data_type == MAT_T_STRUCT){
+			unsigned int numStructs = (pStruct->dims[0])*(pStruct->dims[1]);
+			for(unsigned int s = 0; s < numStructs; s++){
+				Arcset_periodic arc(pSysData);
+				arc.readFromStruct(pStruct, s, refLaws);
+
+				members.push_back(arc);
+			}
+		}else{
+			throw Exception("Family_PO::loadMembers: Family member variable does not have structure type/class");
+		}
+	}
+}//====================================================
+
+/**
+ *  \brief Load miscellaneous family data from a Matlab file
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
+void Family_PO::loadMiscData(mat_t *pMatFile){
+	name = readStringFromMat(pMatFile, VARNAME_NAME, MAT_T_UINT8, MAT_C_CHAR);
+	int type = static_cast<int>(readDoubleFromMat(pMatFile, VARNAME_SORTTYPE));
+	sortType = static_cast<FamSort_tp>(type);
+}//====================================================
+
+/**
+ *  \brief Save family members to a matlab file
+ *  \details Each family member is saved as an entry in a structure array
+ * 
+ *  \param pMatFile pointer to an open Matlab file
+ */
+void Family_PO::saveMembers(mat_t *pMatFile) const{
 	if(members.size() == 0)
 		return;
 
@@ -570,7 +640,7 @@ void Family_PO::saveMembers(mat_t *pMatFile){
  *	\param pMatFile a pointer to the mat file in question
  *	\throws Exception if a family member does not have six eigenvalues
  */
-void Family_PO::saveEigVals(mat_t *pMatFile){
+void Family_PO::saveEigVals(mat_t *pMatFile) const{
 	if(members.size() > 0){
 		const unsigned int nE = memberEigVecs[0].rows();
 
@@ -601,7 +671,7 @@ void Family_PO::saveEigVals(mat_t *pMatFile){
  *	\brief Save eigenvector data to a mat file
  *	\param pMatFile a pointer to the mat file in question
  */
-void Family_PO::saveEigVecs(mat_t *pMatFile){
+void Family_PO::saveEigVecs(mat_t *pMatFile) const{
 	if(members.size() > 0){
 		
 		if(members.size() != memberEigVecs.size())
@@ -637,25 +707,29 @@ void Family_PO::saveEigVecs(mat_t *pMatFile){
  *	\brief Save other useful information to a matlab file
  *	\param pMatFile the destination matlab file
  */
-void Family_PO::saveMiscData(mat_t *pMatFile){
+void Family_PO::saveMiscData(mat_t *pMatFile) const{
 	// sortType
 	int type = static_cast<int>(sortType);
 	size_t dims[2] = {1,1};
-	matvar_t *typeVar = Mat_VarCreate(SORT_TYPE_VAR_NAME, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, typeVar, SORT_TYPE_VAR_NAME, MAT_COMPRESSION_NONE);
+	matvar_t *typeVar = Mat_VarCreate(VARNAME_SORTTYPE, MAT_C_INT32, MAT_T_INT32, 2, dims, &type, MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, typeVar, VARNAME_SORTTYPE, MAT_COMPRESSION_NONE);
 
 	// name
 	char name_str[128];
 	std::strcpy(name_str, name.c_str());
 	dims[1] = name.length();
-	matvar_t *nameVar = Mat_VarCreate(NAME_VAR_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
-	astrohelion::saveVar(pMatFile, nameVar, NAME_VAR_NAME, MAT_COMPRESSION_NONE);
+	matvar_t *nameVar = Mat_VarCreate(VARNAME_NAME, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(name_str[0]), MAT_F_DONT_COPY_DATA);
+	astrohelion::saveVar(pMatFile, nameVar, VARNAME_NAME, MAT_COMPRESSION_NONE);
 }//====================================================
 
 //-----------------------------------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------------------------------
 
+/**
+ *  \brief Make a copy of the family
+ *  \param f reference to the source family
+ */
 void Family_PO::copyMe(const Family_PO &f){
 	Family::copyMe(f);
 	members = f.members;

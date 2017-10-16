@@ -1965,6 +1965,7 @@ matvar_t* BaseArcset::createVar_Constraints(Save_tp saveTp, const char *pVarName
 			return pMatVar; 	// Can't save any data... exit
 		}
 
+		dims[0] = 1;
 		for(unsigned int c = 0; c < allCons.size(); c++){
 			// Get the constraint data
 			std::vector<double> conData = allCons[c].getData();
@@ -2528,9 +2529,9 @@ bool BaseArcset::readVar_Constraints(matvar_t *pVar, Save_tp saveTp){
 			if(cell_elements[c] != nullptr && 
 				cell_elements[c]->class_type == MAT_C_DOUBLE && cell_elements[c]->data_type == MAT_T_DOUBLE){
 
-				unsigned int width = cell_elements[c]->dims[0];
+				unsigned int width = cell_elements[c]->dims[1];
 				
-				if(width < 2 || cell_elements[c]->dims[1] == 0){
+				if(width < 2 || cell_elements[c]->dims[0] == 0){
 					Mat_VarFree(pVar);
 					throw Exception("BaseArcset::readVar_Constraints: Constraint data has less than 2 (the minimum) data values");
 				}
@@ -2725,6 +2726,11 @@ bool BaseArcset::readVar_NodeCtrl(matvar_t *pVar, Save_tp saveTp){
 		printErr("BaseArcset::readVar_NodeCtrl: Could not read state data vector");
 		return false;
 	}else{
+		if(pVar->class_type == MAT_C_CELL && pVar->data_type == MAT_T_DOUBLE){
+			Mat_VarFree(pVar);
+			throw Exception("BaseArcset::readVar_NodeCtrl: Node control variable is not a cell array.");
+		}
+
 		unsigned int numNodes = pVar->dims[0];
 		
 		if(nodes.size() != numNodes){
@@ -2732,24 +2738,21 @@ bool BaseArcset::readVar_NodeCtrl(matvar_t *pVar, Save_tp saveTp){
 			throw Exception("BaseArcset::readVar_NodeCtrl: Node vector has been initialized to a different size than the file has data for");
 		}
 
-		if(pVar->class_type == MAT_C_CELL && pVar->data_type == MAT_T_DOUBLE){
-			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_NodeCtrl: Node control variable is not a cell array.");
-		}
-
 		matvar_t **cell_elements = static_cast<matvar_t **>(pVar->data);
 
 		for(unsigned int n = 0; n < numNodes; n++){
-			if(cell_elements[n]->class_type == MAT_C_DOUBLE && cell_elements[n]->data_type == MAT_T_DOUBLE){
-				unsigned int numSteps = cell_elements[n]->dims[0];	
-				if(numSteps > 0){
-					double *data = static_cast<double *>(cell_elements[n]->data);
-					std::vector<double> ctrl(data, data+numSteps);
-					nodes[n].setExtraParamVec(PARAMKEY_CTRL, ctrl);
+			if(cell_elements[n]){
+				if(cell_elements[n]->class_type == MAT_C_DOUBLE && cell_elements[n]->data_type == MAT_T_DOUBLE){
+					unsigned int numSteps = cell_elements[n]->dims[0];	
+					if(numSteps > 0){
+						double *data = static_cast<double *>(cell_elements[n]->data);
+						std::vector<double> ctrl(data, data+numSteps);
+						nodes[n].setExtraParamVec(PARAMKEY_CTRL, ctrl);
+					}
+				}else{
+					Mat_VarFree(pVar);
+					throw Exception("BaseArcset::readVar_NodeCtrl: Cell element is not a double array.");
 				}
-			}else{
-				Mat_VarFree(pVar);
-				throw Exception("BaseArcset::readVar_NodeCtrl: Cell element is not a double array.");
 			}
 		}
 

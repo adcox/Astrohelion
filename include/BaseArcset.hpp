@@ -305,7 +305,6 @@ protected:
 	matvar_t* createVar_SegSTM(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_STM) const;
 	matvar_t* createVar_SegTime(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_SEGTIME) const;
 	matvar_t* createVar_SegTOF(Save_tp saveTp = Save_tp::SAVE_ALL, const char *pVarName = VARNAME_TOF) const;
-
 	//\}
 
 	/**

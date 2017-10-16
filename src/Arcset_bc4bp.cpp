@@ -177,12 +177,28 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 /**
  *  \brief Execute commands to save data to a Matlab file
  *  \param pMatFile pointer to an open Matlab file
+ *  \param saveTp describes how much data to save
  */
 void Arcset_bc4bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds_toFile(pMatFile, saveTp);
 
 	matvar_t *pEpochDeriv = createVar_NodeExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, 6, saveTp, VARNAME_STATE_EPOCH_DERIV);
 	saveVar(pMatFile, pEpochDeriv, VARNAME_STATE_EPOCH_DERIV, MAT_COMPRESSION_NONE);
+}//====================================================
+
+/**
+ *  \brief Execute commands to save data to a structure array
+ * 
+ *  \param pStruct pointer to a structure array
+ *  \param ix index of this arcset within the structure array
+ *  \param saveTp Describes how much data to save
+ */
+void Arcset_bc4bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
+	Arcset::saveCmds_toStruct(pStruct, ix, saveTp);
+
+	if(matvar_t *pEpochDeriv = createVar_NodeExtraParamVec(PARAMKEY_STATE_EPOCH_DERIV, 6,saveTp, nullptr)){
+		Mat_VarSetStructFieldByName(pStruct, VARNAME_STATE_EPOCH_DERIV, ix, pEpochDeriv);
+	}
 }//====================================================
 
 /**
@@ -200,4 +216,23 @@ void Arcset_bc4bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &
 		Mat_VarFree(pEpochDeriv);
 	}
 }//====================================================
+
+/**
+ *  \brief Execute commands to read from data from a structure array
+ * 
+ *  \param pStruct Pointer to the structure array variable
+ *  \param ix index of this arcset within the structure array
+ * 	\param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  from the Matlab file, unique control laws are constructed and allocated on the stack.
+ *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ */
+void Arcset_bc4bp::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+	Arcset::readCmds_fromStruct(pStruct, ix, refLaws);
+
+	matvar_t *pEpochDeriv = Mat_VarGetStructFieldByName(pStruct, VARNAME_STATE_EPOCH_DERIV, ix);
+	if(readVar_NodeExtraParamVec(pEpochDeriv, PARAMKEY_STATE_EPOCH_DERIV, 6, Save_tp::SAVE_ALL)){
+		Mat_VarFree(pEpochDeriv);
+	}
+}//====================================================
+
 }// End of astrohelion namespace

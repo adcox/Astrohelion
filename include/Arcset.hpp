@@ -121,7 +121,8 @@ public:
 	 *  \name File I/O
 	 *  \{
 	 */
-	void readFromMat(const char*, std::vector<ControlLaw*> &refLaws);
+	void readFromMat(const char*, std::vector<ControlLaw*>&);
+	void readFromStruct(matvar_t*, unsigned int, std::vector<ControlLaw*>&);
 	void saveToMat(const char*, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	void saveToStruct(matvar_t*, unsigned int, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	//\}
@@ -132,7 +133,9 @@ protected:
 	 *  \{
 	 */
 	virtual void saveCmds_toFile(mat_t*, Save_tp saveTp = Save_tp::SAVE_ALL) const;
+	virtual void saveCmds_toStruct(matvar_t*, unsigned int, Save_tp saveTp = Save_tp::SAVE_ALL) const;
 	virtual void readCmds_fromFile(mat_t*, std::vector<ControlLaw*>&);
+	virtual void readCmds_fromStruct(matvar_t*, unsigned int, std::vector<ControlLaw*>&);
 	//\}
 };
 

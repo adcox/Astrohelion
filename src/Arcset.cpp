@@ -496,6 +496,10 @@ void Arcset::print() const {
 		printf("\n");
 }//====================================================
 
+//-----------------------------------------------------------------------------
+//      File I/O
+//-----------------------------------------------------------------------------
+
 /**
  *	\brief Save the arcset to a file
  *	\param filename the name of the .mat file
@@ -526,6 +530,13 @@ void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 	}
 
 	Mat_Close(matfp);
+}//====================================================
+
+void Arcset::saveToStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
+	if(pStruct == nullptr)
+		throw Exception("Arcset::saveToStruct: Structure variable is null");
+
+	saveCmds_toStruct(pStruct, ix, saveTp);
 }//====================================================
 
 /**
@@ -573,7 +584,15 @@ void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	pSysData->saveToMat(pMatFile);
 }//====================================================
 
-void Arcset::saveToStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
+/**
+ *  \brief Save the arcset as a structure in an array of structures
+ *  \details [long description]
+ * 
+ *  \param pStruct pointer to the structure variable (generally, an array of structures)
+ *  \param ix index of this arcset within the structure array
+ *  \param saveTp Describes how much detail to save
+ */
+void Arcset::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
 	
 	// Don't need to use variable name since each variable is saved as a field in the structure
 	if(matvar_t *pLinkTable = createVar_LinkTable(nullptr)){
@@ -648,6 +667,15 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
 	}
 
 	Mat_Close(matfp);
+}//====================================================
+
+void Arcset::readFromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+	if(pStruct == nullptr){
+		Mat_VarFree(pStruct);
+		throw Exception("Arcset::readFromStruct: Could not read contents of pStruct; nullptr");
+	}else{
+		readCmds_fromStruct(pStruct, ix, refLaws);
+	}
 }//====================================================
 
 /**
@@ -732,6 +760,42 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 		// readSegSTMFromMat(pMatFile, Save_tp::SAVE_ALL);
 		// readSegTOFFromMat(pMatFile, Save_tp::SAVE_ALL);
 	}
-}
+}//====================================================
+
+void Arcset::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+
+	matvar_t *pLinkTable = Mat_VarGetStructFieldByName(pStruct, VARNAME_LINKTABLE, ix);
+	if(readVar_LinkTable(pLinkTable)){ Mat_VarFree(pLinkTable); }
+
+	Save_tp saveTp = Save_tp::SAVE_ALL;
+
+	// Read Node Information
+	matvar_t *pNodeState = Mat_VarGetStructFieldByName(pStruct, VARNAME_NODESTATE, ix);
+	matvar_t *pNodeStateDeriv = Mat_VarGetStructFieldByName(pStruct, VARNAME_STATE_DERIV, ix);
+	matvar_t *pNodeEpoch = Mat_VarGetStructFieldByName(pStruct, VARNAME_NODETIME, ix);
+	matvar_t *pNodeCtrl = Mat_VarGetStructFieldByName(pStruct, VARNAME_NODECTRL, ix);
+
+	if(readVar_NodeState(pNodeState, saveTp)){ Mat_VarFree(pNodeState); }
+	if(readVar_NodeStateDeriv(pNodeStateDeriv, saveTp)){ Mat_VarFree(pNodeStateDeriv); }
+	if(readVar_NodeEpoch(pNodeEpoch, saveTp)){ Mat_VarFree(pNodeEpoch); }
+	if(readVar_NodeCtrl(pNodeCtrl, saveTp)){ Mat_VarFree(pNodeCtrl); }
+
+	// Read Segment information
+	matvar_t *pSegState = Mat_VarGetStructFieldByName(pStruct, VARNAME_SEGSTATE, ix);
+	matvar_t *pSegTime = Mat_VarGetStructFieldByName(pStruct, VARNAME_SEGTIME, ix);
+	matvar_t *pSegTOF = Mat_VarGetStructFieldByName(pStruct, VARNAME_TOF, ix);
+	matvar_t *pSegSTM = Mat_VarGetStructFieldByName(pStruct, VARNAME_STM, ix);
+	matvar_t *pSegCtrl = Mat_VarGetStructFieldByName(pStruct, VARNAME_SEGCTRL, ix);
+
+	if(readVar_SegState(pSegState, saveTp)){ Mat_VarFree(pSegState); }
+	if(readVar_SegTime(pSegTime, saveTp)){ Mat_VarFree(pSegTime); }
+	if(readVar_SegTOF(pSegTOF, saveTp)){ Mat_VarFree(pSegTOF); }
+	if(readVar_SegSTM(pSegSTM, saveTp)){ Mat_VarFree(pSegSTM); }
+	if(readVar_SegCtrlLaw(pSegCtrl, refLaws, saveTp)){ Mat_VarFree(pSegCtrl); }
+
+	// Read constraint information
+	matvar_t *pCons = Mat_VarGetStructFieldByName(pStruct, VARNAME_CONSTRAINTS, ix);
+	if(readVar_Constraints(pCons, saveTp)){ Mat_VarFree(pCons); }
+}//====================================================
 
 }// End of astrohelion namespace

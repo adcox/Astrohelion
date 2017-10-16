@@ -107,6 +107,45 @@ Constraint& Constraint::operator =(const Constraint& c){
 	return *this;
 }//====================================================
 
+/**
+ *  \brief Compare two constraint objects
+ * 
+ *  \param lhs a constraint object
+ *  \param rhs a constraint object
+ * 
+ *  \return True if the paramters are identical and the data vector
+ *  elements match to within a tolerance of 1e-14
+ */
+bool operator ==(const Constraint &lhs, const Constraint &rhs){
+	bool sameParams = rhs.type == lhs.type &&
+		rhs.appType == lhs.appType &&
+		rhs.id == lhs.id &&
+		rhs.data.size() == lhs.data.size();
+
+	if(sameParams){
+		for(unsigned int i = 0; i < rhs.data.size(); i++){
+			if(std::abs(rhs.data[i] - lhs.data[i]) > 1e-14)
+				return false;
+		}
+
+		return true;
+	}else{
+		return false;
+	}
+}//====================================================
+
+/**
+ *  \brief Compare to constraint objects
+ * 
+ *  \param lhs a constraint object
+ *  \param rhs a constraint object
+ * 
+ *  \return whether or not lhs and rhs are not equatl
+ */
+bool operator !=(const Constraint &lhs, const Constraint &rhs){
+	return !(lhs == rhs);
+}//====================================================
+
 //-----------------------------------------------------
 // 		Set and Get Functions
 //-----------------------------------------------------
@@ -291,12 +330,12 @@ const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
  *	\brief Print this constraint and its data to the standard output.
  */
 void Constraint::print() const {
-	printf("Constraint:\n  Type: %s\n  Applies to: %s (ID %d)\n  Data: ",
+	printf("Constraint:\n  Type: %s\n  Applies to: %s (ID %d)\n  Data: {",
 		getConTypeStr(type), getAppTypeStr(appType), id);
 	for(unsigned int n = 0; n < data.size(); n++){
 		printf("%12.5f ", data[n]);
 	}
-	printf("\n");
+	printf("}\n");
 }//====================================================
 
 /**

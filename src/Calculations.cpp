@@ -1123,6 +1123,7 @@ Arcset_periodic cr3bp_getSymPO(const Arcset_cr3bp *halfPerGuess, Arcset_cr3bp *h
 }//====================================================
 
 /**
+ *  \ingroup cr3bp
  *  \brief Add mirror and state constraints to the first and last nodes on an arcset
  *  \details A mirror constraint is constructed based on the mirrorType specified in the
  *  input arguments. Additionally, a state constraint is constructed and applied to only 

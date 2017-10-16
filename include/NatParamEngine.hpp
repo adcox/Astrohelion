@@ -78,7 +78,7 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void generateSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<unsigned int>, std::vector<unsigned int>);
+	void continueSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<unsigned int>, std::vector<unsigned int>);
 	//\}
 
 	/**

@@ -70,8 +70,8 @@ public:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	void generatePO_cr3bp(Family_PO*, const Arcset_cr3bp*, Mirror_tp, std::vector<int>);
-	void getNextPACGuess_cr3bp(Arcset_cr3bp*, const Eigen::VectorXd&, const Eigen::VectorXd&, double, MultShootData*);
+	void continueSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, Mirror_tp, std::vector<int>);
+	Arcset_cr3bp getNextPACGuess_cr3bp(const Eigen::VectorXd&, const Eigen::VectorXd&, double, MultShootData*);
 	bool checkPACSolution_cr3bp(const Arcset_periodic*, const MultShootData*, const Eigen::VectorXd&, double, bool*);
 	//\}
 

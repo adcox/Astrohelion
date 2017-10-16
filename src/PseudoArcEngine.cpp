@@ -48,9 +48,9 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------------------------------
 
-PseudoArcEngine::PseudoArcEngine(){}
+PseudoArcEngine::PseudoArcEngine() : ContinuationEngine(){}
 
-PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e){
+PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(e){
 	copyMe(e);
 }//====================================================
 
@@ -67,7 +67,7 @@ PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 //      Analysis Functions
 //-----------------------------------------------------------------------------
 
-void PseudoArcEngine::generatePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pInitGuess, Mirror_tp mirrorType, std::vector<int> initDir){
+void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pInitGuess, Mirror_tp mirrorType, std::vector<int> initDir){
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(pInitGuess->getSysData());
 
 	Arcset_cr3bp familyMember(*pInitGuess);	// Copy the input initial guess
@@ -257,7 +257,7 @@ void PseudoArcEngine::generatePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pIni
 		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));
 
-		getNextPACGuess_cr3bp(&newMember, convergedFreeVarVec, N, stepSize, &familyItData);
+		newMember = getNextPACGuess_cr3bp(convergedFreeVarVec, N, stepSize, &familyItData);
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
@@ -268,7 +268,7 @@ void PseudoArcEngine::generatePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pIni
 				try{
 
 					// Reset perOrbit
-					perOrbit = Arcset_periodic(static_cast<const SysData_cr3bp *>(pInitGuess->getSysData()));
+					perOrbit = Arcset_periodic(pSys);
 
 					familyItData = corrector.multShoot(&newMember, &perOrbit);
 
@@ -279,7 +279,7 @@ void PseudoArcEngine::generatePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pIni
 							printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 							// Re-Create the initial guess using the new step size
-							getNextPACGuess_cr3bp(&newMember, convergedFreeVarVec, N, stepSize, &familyItData);
+							newMember = getNextPACGuess_cr3bp(convergedFreeVarVec, N, stepSize, &familyItData);
 							continue;	// Go to next iteration
 						}else{
 							astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: Could not converge new family member!\n");
@@ -310,7 +310,7 @@ void PseudoArcEngine::generatePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pIni
 						printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 						// Re-Create the initial guess using the new step size
-						getNextPACGuess_cr3bp(&newMember, convergedFreeVarVec, N, stepSize, &familyItData);
+						newMember = getNextPACGuess_cr3bp(convergedFreeVarVec, N, stepSize, &familyItData);
 					}else{
 						astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: Could not converge new family member!\n");
 						killLoop = true;
@@ -361,11 +361,11 @@ void PseudoArcEngine::generatePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pIni
  *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member
  */
-void PseudoArcEngine::getNextPACGuess_cr3bp(Arcset_cr3bp *pNewMember, const Eigen::VectorXd &convergedFreeVarVec,
+Arcset_cr3bp PseudoArcEngine::getNextPACGuess_cr3bp(const Eigen::VectorXd &convergedFreeVarVec,
 	const Eigen::VectorXd &N, double stepSize, MultShootData *pFamilyItData){
 
 	/**
-	 *	Step forwards away from previously converged solution
+	 *	Step away from previously converged solution
 	 */
 
 	Eigen::VectorXd newFreeVarVec = convergedFreeVarVec + stepSize*N;
@@ -373,18 +373,18 @@ void PseudoArcEngine::getNextPACGuess_cr3bp(Arcset_cr3bp *pNewMember, const Eige
 	pFamilyItData->X = std::vector<double>(X, X + newFreeVarVec.rows());
 
 	// Convert into a new arcset (TODO: Make this more flexible by putting conversion code in a model?)
-	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(pFamilyItData->nodesIn->getSysData());
-	*pNewMember = Arcset_cr3bp(pSys);
-	pFamilyItData->nodesOut = pNewMember;
+	const SysData_cr3bp *sys = static_cast<const SysData_cr3bp *>(pFamilyItData->nodesIn->getSysData());
+	Arcset_cr3bp newMember(sys);
+	pFamilyItData->nodesOut = &newMember;
 
-	pSys->getDynamicsModel()->multShoot_createOutput(pFamilyItData);
+	sys->getDynamicsModel()->multShoot_createOutput(pFamilyItData);
 
 	// Get rid of any pre-existing pseudo arclength constraints from previous corrections
-	std::vector<Constraint> arcCons = pNewMember->getArcConstraints();
-	pNewMember->clearArcConstraints();
+	std::vector<Constraint> arcCons = newMember.getArcConstraints();
+	newMember.clearArcConstraints();
 	for(Constraint &con : arcCons){
 		if(con.getType() != Constraint_tp::PSEUDOARC)
-			pNewMember->addConstraint(con);
+			newMember.addConstraint(con);
 	}
 
 	/* 
@@ -397,11 +397,13 @@ void PseudoArcEngine::getNextPACGuess_cr3bp(Arcset_cr3bp *pNewMember, const Eige
 	pacCon_data.insert(pacCon_data.end(), stepSize);
 	// Create the actual constraint
 	Constraint pacCon(Constraint_tp::PSEUDOARC, pFamilyItData->numNodes-1, pacCon_data);
-	pNewMember->addConstraint(pacCon);
+	newMember.addConstraint(pacCon);
 
 	// Outputs for debugging and sanity checks
 	printf("New IC = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...] tof = %.4f\n",
 		X[0], X[1], X[2], X[3], X[4], X[5], X[newFreeVarVec.rows()-1]);
+
+	return newMember;
 }//====================================================
 
 /**

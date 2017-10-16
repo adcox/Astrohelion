@@ -144,7 +144,7 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
-void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
+void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
 	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
 
 	// Assume family is CR3BP
@@ -380,7 +380,7 @@ void NatParamEngine::generateSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 		halfPerGuess.getSegRefByIx(-1).setTOF(halfPerGuess.getTOFByIx(-1) + dt);
 		
 		if(halfPerGuess.getTOFByIx(-1)*halfPerCorrected.getTOFByIx(-1) < 0)
-			printWarn("NatParamEngine::generateSymmetricPO_cr3bp: updated TOF has changed sign\n");
+			printWarn("NatParamEngine::continueSymmetricPO_cr3bp: updated TOF has changed sign\n");
 	}// end of while loop
 
 	if(pItData){

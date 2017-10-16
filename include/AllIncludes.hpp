@@ -29,6 +29,7 @@
 #include "MultShootData.hpp"
 #include "NatParamEngine.hpp"
 #include "Node.hpp"
+#include "PseudoArcEngine.hpp"
 #include "Segment.hpp"
 #include "SimEngine.hpp"
 #include "SysData.hpp"

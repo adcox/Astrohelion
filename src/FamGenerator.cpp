@@ -1433,7 +1433,7 @@ Arcset_cr3bp FamGenerator::cr3bp_getNextPACGuess(const Eigen::VectorXd &converge
 	const Eigen::VectorXd &N, double stepSize, MultShootData *pFamilyItData){
 
 	/**
-	 *	Step forwards away from previously converged solution
+	 *	Step away from previously converged solution
 	 */
 
 	Eigen::VectorXd newFreeVarVec = convergedFreeVarVec + stepSize*N;

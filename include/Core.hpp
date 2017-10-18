@@ -41,6 +41,10 @@
  * Contains objects that represent trajectories in one way or another
  */
 
+/** \defgroup fam Trajectory Families
+ * Contains objects the create, store, or operate on families
+ */
+
 /** \defgroup model Model
  * Contains objects that represent models of physical objects and systems
  */

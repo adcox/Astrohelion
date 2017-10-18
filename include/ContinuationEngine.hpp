@@ -24,6 +24,7 @@ enum class Continuation_tp{
 };
 
 /**
+ *  \ingroup engine fam
  *  \brief An engine object that runs continuation processes
  *  \details This class contains the template to specify tolerances, 
  *  min and max step sizes, and common behaviors like reset() and 

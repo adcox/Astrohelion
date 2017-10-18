@@ -25,8 +25,8 @@ BOOST_AUTO_TEST_CASE(EIG_VEC_VAL){
 	double period = 2.7;
 	std::vector<unsigned int> fixedStates {0}; // only fix x
 
-	Arcset_cr3bp guess = cr3bp_propSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
-	Arcset_periodic temp = cr3bp_getSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
 	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 
 	ManifoldEngine engine;
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE(Single_Manifold){
 	double period = 2.7;
 	std::vector<unsigned int> fixedStates {0}; // only fix x
 
-	Arcset_cr3bp guess = cr3bp_propSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
-	Arcset_periodic temp = cr3bp_getSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
 	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 	
 	ManifoldEngine engine;
@@ -167,8 +167,8 @@ BOOST_AUTO_TEST_CASE(Many_Manifold){
 	double period = 2.7;
 	std::vector<unsigned int> fixedStates {0}; // only fix x
 
-	Arcset_cr3bp guess = cr3bp_propSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
-	Arcset_periodic temp = cr3bp_getSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
+	Arcset_cr3bp guess = cr3bp_propHalfPerSymPO(&emSys, ic, period, 3, 1, Mirror_tp::MIRROR_XZ, fixedStates);
+	Arcset_periodic temp = cr3bp_correctHalfPerSymPO(&guess, nullptr, Mirror_tp::MIRROR_XZ, 1e-12, nullptr);
 	Arcset_cr3bp perOrbit = static_cast<Arcset_cr3bp>(temp);
 	unsigned int numPts = 100;
 	

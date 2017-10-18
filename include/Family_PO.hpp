@@ -34,7 +34,7 @@
 namespace astrohelion{
 
 /**
- *  \ingroup traj
+ *  \ingroup fam
  *  \brief [brief description]
  *  \details [long description]
  * 

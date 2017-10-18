@@ -26,8 +26,24 @@
 
 namespace astrohelion{
 
+// Forward Declarations
+class SysData_cr3bp;
+
+/**
+ *  \ingroup fam cr3bp
+ *  \brief Families of orbits specifically in the CR3BP
+ *  \details Adds functionality to retrieve orbits using CR3BP-specific
+ *  metrics like the Jacobi constant
+ */
 class Family_PO_cr3bp : public Family_PO{
 public:
+	/**
+	 *  \name *structors
+	 *  \{
+	 */
+	Family_PO_cr3bp(const SysData_cr3bp*);
+	//\}
+
 	/**
 	 *  \name Analysis Functions
 	 *  \{

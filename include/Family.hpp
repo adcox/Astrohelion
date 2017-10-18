@@ -35,6 +35,7 @@ namespace astrohelion{
 class ControlLaw;
 
 /**
+ *	\ingroup fam
  *	\brief How to sort members of this family
  *	
  *	Families typically evolve naturally through one variable, and
@@ -57,7 +58,7 @@ enum class FamSort_tp : int{
 };
 
 /**
- *  \ingroup traj
+ *  \ingroup fam
  *  \brief [brief description]
  *  \details [long description]
  *  \return [description]

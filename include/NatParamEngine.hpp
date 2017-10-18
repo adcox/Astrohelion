@@ -41,7 +41,7 @@ class Arcset_periodic;
 enum class Mirror_tp;
 
 /**
- *  \ingroup engine
+ *  \ingroup engine fam
  *  \brief Perform natural parameter continuation on various types of structures
  *  in different models
  */

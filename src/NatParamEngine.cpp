@@ -127,7 +127,8 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	
  * 	\param fam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
- *	\param initialGuess a trajectory that is a good initial guess for the "first" member of the family
+ *	\param init_halfPerGuess a trajectory that is a good initial guess for half of 
+ *	the first family member
  *	\param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
  *	reference frame. Each entry corresponds to an independent variable in <tt>indVarIx</tt>
  *	\param indVarIx a vector containing the indices of the independent variables to be used. You MUST
@@ -144,7 +145,7 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
-void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *initialGuess,
+void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *init_halfPerGuess,
 	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
 
 	// Assume family is CR3BP
@@ -165,8 +166,8 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	fixStates.push_back(indVar1);
 
 	// Get info from the initial guess trajectory
-	std::vector<double> IC = initialGuess->getStateByIx(0);
-	double tof = initialGuess->getTotalTOF();
+	std::vector<double> IC = init_halfPerGuess->getStateByIx(0);
+	double tof = init_halfPerGuess->getTotalTOF();
 	double tof0 = tof;
 
 	// Initialize counters and storage containers
@@ -180,9 +181,9 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	// The cr3bp_getPeriodic() function will only pass an iteration data pointer back
 	// if the one passed in is not nullptr, hence we create a valid object and delete it
 	// before exiting the function
-	Arcset_cr3bp halfPerGuess(*initialGuess);
-	Arcset_cr3bp tempCorrected(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));
-	Arcset_cr3bp halfPerCorrected(static_cast<const SysData_cr3bp *>(initialGuess->getSysData()));
+	Arcset_cr3bp halfPerGuess(*init_halfPerGuess);
+	Arcset_cr3bp tempCorrected(static_cast<const SysData_cr3bp *>(init_halfPerGuess->getSysData()));
+	Arcset_cr3bp halfPerCorrected(static_cast<const SysData_cr3bp *>(init_halfPerGuess->getSysData()));
 	MultShootData *pItData = new MultShootData(&halfPerGuess);
 
 	while(orbitCount < numOrbits){
@@ -198,7 +199,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 			// Add constraints to the guess to enforce the mirror conition and fix the specified states
 			cr3bp_addMirrorCons(&halfPerGuess, mirrorType, fixStates);
 			// Correct using multiple shooting, save the corrected half-period arc for next time
-			perOrbit = cr3bp_getSymPO(&halfPerGuess, &tempCorrected, mirrorType, tol, pItData);
+			perOrbit = cr3bp_correctHalfPerSymPO(&halfPerGuess, &tempCorrected, mirrorType, tol, pItData);
 
 			diverged = false;
 			halfPerCorrected = tempCorrected;

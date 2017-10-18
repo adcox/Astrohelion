@@ -67,16 +67,16 @@ PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 //      Analysis Functions
 //-----------------------------------------------------------------------------
 
-void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pInitGuess, Mirror_tp mirrorType, std::vector<int> initDir){
-	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(pInitGuess->getSysData());
+void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pInitHalfPerGuess, Mirror_tp mirrorType, std::vector<int> initDir){
+	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(pInitHalfPerGuess->getSysData());
 
-	Arcset_cr3bp familyMember(*pInitGuess);	// Copy the input initial guess
-	double tof0 = pInitGuess->getTotalTOF();
+	Arcset_cr3bp temp_halfPer(*pInitHalfPerGuess);	// Copy the input initial guess
+	double tof0 = pInitHalfPerGuess->getTotalTOF();
 
 	printf("Correcting Initial Guess...\n");
 	
 	// Clear constraints and add new ones
-	familyMember.clearAllConstraints();
+	temp_halfPer.clearAllConstraints();
 
 	/*	Constraint Method 1:
 	 *	* Apply a periodicity constraint that forces the first and final node to be collocated,
@@ -100,7 +100,7 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 	// Create a periodicity constraint
 	double periodicConData[] = {0,0,0,0,0,0};
 	periodicConData[periodicityIgnoreIx] = NAN;
-	Constraint periodicCon(Constraint_tp::MATCH_CUST, familyMember.getNumNodes()-1, periodicConData, 6);
+	Constraint periodicCon(Constraint_tp::MATCH_CUST, temp_halfPer.getNumNodes()-1, periodicConData, 6);
 
 	Constraint extraCon;
 	if(fixToVal_ix < 6){
@@ -115,8 +115,8 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 		extraCon = Constraint(Constraint_tp::JC, 0, &val, 1);
 	}
 
-	familyMember.addConstraint(periodicCon);
-	familyMember.addConstraint(extraCon);
+	temp_halfPer.addConstraint(periodicCon);
+	temp_halfPer.addConstraint(extraCon);
 	*/
 
 	/* Constraint Method 2:
@@ -125,16 +125,17 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 	 *	This gives MUCH better performance for the Lyapunov families
 	 */
 	std::vector<unsigned int> fixedStates {};	// No fixed states
-	cr3bp_addMirrorCons(&familyMember, mirrorType, fixedStates);
+	cr3bp_addMirrorCons(&temp_halfPer, mirrorType, fixedStates);
 
 	// Correct the arcset to retrieve a free-variable vector for a family member
 	MultShootEngine corrector;
 	corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);		// Ignore crashes into primary
+	corrector.setFullFinalProp(false);	// Accept minimal information from the corrector
 	corrector.setVerbosity(Verbosity_tp::SOME_MSG);
-	MultShootData familyItData(&familyMember);
-	Arcset_cr3bp tempNodes(pSys);
+	MultShootData familyItData(&temp_halfPer);
+	Arcset_cr3bp halfPer_corrected(pSys);
 
 	// Initialize this arcset outside the loop because the familyItData will end up with a pointer
 	// to this arcset after the multiple shooting processs; if the declaration is in the loop,
@@ -143,7 +144,7 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 	Arcset_cr3bp newMember(pSys);
 
 	try{
-		familyItData = corrector.multShoot(&familyMember, &tempNodes);
+		familyItData = corrector.multShoot(&temp_halfPer, &halfPer_corrected);
 	}catch(DivergeException &e){
 		astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: Could not converge initial guess!\n");
 	}catch(LinAlgException &e){
@@ -269,8 +270,10 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 
 					// Reset perOrbit
 					perOrbit = Arcset_periodic(pSys);
+					Arcset_cr3bp temp_converged(pSys);
 
-					familyItData = corrector.multShoot(&newMember, &perOrbit);
+					familyItData = corrector.multShoot(&newMember, &temp_converged);
+					cr3bp_halfPO2fullPO(&temp_converged, &perOrbit, mirrorType);
 
 					if(!checkPACSolution_cr3bp(&perOrbit, &familyItData, convergedFreeVarVec, stepSize, &killLoop)){
 

@@ -371,11 +371,25 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 			matchMembers.push_back(members[idx]);
 			printf("  Candidate %d is close enough; no corrections required\n", n);
 		}else{	// If not, employ corrections
-			printf("  Correcting candidate %d...\n", n);
+			printf("  Correcting candidate %d...\n", idx);
 
 			MultShootEngine corrector;
 			corrector.setTol(1e-11);
 			Arcset_periodic copyOrbit = members[idx];
+
+			// Delete any constraints that might directly conflict with matchCon
+			// There may still be indirect conflicts... ammend as necessary if those cases emerge
+			switch(matchCon.getAppType()){
+				case ConstraintApp_tp::APP_TO_NODE:
+					copyOrbit.getNodeRef(matchCon.getID()).clearConstraints();
+					break;
+				case ConstraintApp_tp::APP_TO_SEG:
+					copyOrbit.getSegRef(matchCon.getID()).clearConstraints();
+					break;
+				case ConstraintApp_tp::APP_TO_ARC:
+					copyOrbit.clearArcConstraints();
+					break;
+			}
 			copyOrbit.addConstraint(matchCon);
 
 			Arcset_periodic newOrbit(pSysData);

@@ -172,7 +172,9 @@ void MultShootEngine::setDoLineSearch(bool b){ bLineSearchStepSize = b; }
  *  \brief Set whether or not the engine will use a full, variable-step
  *  propagation for the final propagation
  *  \details By default, this setting is TRUE. For lower computation time, 
- *  set to false.
+ *  set to false. When set to false, only two points per segment are stored
+ *  (the initial and final states), i.e., no intermediate points between nodes
+ *  are computed
  * 
  *  \param b whether or not the engine will use a full, variable-step
  *  propagation for the final propagation

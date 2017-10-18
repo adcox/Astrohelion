@@ -26,6 +26,14 @@
 
 namespace astrohelion{
 
+/**
+ *  \ingroup fam cr3bp_lt
+ *  \brief [brief description]
+ *  \details [long description]
+ * 
+ *  \param  [description]
+ *  \return [description]
+ */
 class Family_PO_cr3bp_lt : public Family_PO_cr3bp{
 	public:
 		/**

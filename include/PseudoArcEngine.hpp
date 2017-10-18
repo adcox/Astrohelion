@@ -40,6 +40,10 @@ class Family_PO;
 enum class Mirror_tp;
 class MultShootData;
 
+/**
+ *  \ingroup engine fam
+ *  \brief Pseudo-Arclength Continuation Engine
+ */
 class PseudoArcEngine : public ContinuationEngine{
 public:
 	/**

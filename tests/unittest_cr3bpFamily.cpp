@@ -5,17 +5,22 @@
 /**
  *	Test out CR3BP Families of Orbits
  */
-#include "Fam_cr3bp.hpp"
+#include "Family_PO_cr3bp.hpp"
 #include "Arcset_cr3bp.hpp"
+#include "Arcset_periodic.hpp"
+#include "SysData_cr3bp.hpp"
 
 using namespace astrohelion;
 
 BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	// Load the family
-	Fam_cr3bp fam("../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
-	// Fam_cr3bp fam("../share/families/EM_L2_NButterfly.mat");
+	SysData_cr3bp sys("../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
+	Family_PO_cr3bp fam(&sys);
+	std::vector<ControlLaw*> laws;
+	fam.readFromMat("../../data/families/cr3bp_earth-moon/L1_Lyap.mat", laws);
+
 	fam.sortEigs();
-	std::vector<int> bifs = fam.findBifurcations();
+	std::vector<unsigned int> bifs = fam.findBifurcations();
 	// if(bifs.size() > 0){
 	// 	printf("Found bifurcations at:\n");
 	// 	for(unsigned int i = 0; i < bifs.size(); i++){
@@ -26,12 +31,12 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 
 	printf("Checing Match State: X\n");
 	double matchX = 0.9;
-	std::vector<FamMember_cr3bp> matches = fam.getMemberByStateVar(matchX, 0);
+	std::vector<Arcset_periodic> matches = fam.getMemberByState(matchX, 0);
 	// printf("  Found %zu Potential members\n", matches.size());
 	for(unsigned int i = 0; i < matches.size(); i++){
 		// printf("   %03u: x = %f ", i, matches[i].getIC()[0]);
 		// std::cout << (std::abs(matches[i].getIC()[0] - matchX) < 1e-9 ? PASS : FAIL) << std::endl;
-		BOOST_CHECK(std::abs(matches[i].getIC()[0] - matchX) < 1e-9);
+		BOOST_CHECK(std::abs(matches[i].getStateByIx(0)[0] - matchX) < 1e-9);
 	}
 
 	printf("Checking Match Jacobi:\n");
@@ -42,7 +47,8 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	for(unsigned int i = 0; i < matches.size(); i++){
 		// printf("   %03u: JC = %f ", i, matches[i].getJacobi());
 		// std::cout << (std::abs(matches[i].getJacobi() - matchJC) < 1e-9 ? PASS : FAIL) << std::endl;
-		BOOST_CHECK(std::abs(matches[i].getJacobi() - matchJC) < 1e-9);
+		Arcset_cr3bp temp(matches[i]);
+		BOOST_CHECK(std::abs(temp.getJacobiByIx(0) - matchJC) < 1e-9);
 	}
 
 	printf("Checking Match TOF:\n");
@@ -53,6 +59,13 @@ BOOST_AUTO_TEST_CASE(FAMILY_OPERATIONS){
 	for(unsigned int i = 0; i < matches.size(); i++){
 		// printf("   %03u: TOF = %f ", i, matches[i].getTOF());
 		// std::cout << (std::abs(matches[i].getTOF() - matchTOF) < 1e-9 ? PASS : FAIL) << std::endl;
-		BOOST_CHECK(std::abs(matches[i].getTOF() - matchTOF) < 1e-9);
+		BOOST_CHECK(std::abs(matches[i].getTotalTOF() - matchTOF) < 1e-9);
+	}
+
+	for(unsigned int i = 0; i < laws.size(); i++){
+		if(laws[i]){
+			delete laws[i];
+			laws[i] = nullptr;
+		}
 	}
 }

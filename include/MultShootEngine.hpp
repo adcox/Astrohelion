@@ -95,6 +95,7 @@ class MultShootEngine : public Core, public Engine{
 		 *  \name Set and Get Functions
 		 *  \{
 		 */
+		double getMaxErr() const;
 		int getMaxIts() const;
 		double getTol() const;
 		bool doesFullFinalProp() const;
@@ -108,6 +109,7 @@ class MultShootEngine : public Core, public Engine{
 		void setIgnoreCrash(bool);
 		void setIgnoreDiverge(bool);
 		void setFindEvent(bool);
+		void setMaxErr(double);
 		void setMaxIts(int);
 		void setTol(double);
 		void setTOFType(MSTOF_tp);
@@ -147,6 +149,9 @@ class MultShootEngine : public Core, public Engine{
 
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;
+
+		/** Maximum error value permitted; if the error rises above this value, the corrections are considered diverged */
+		double maxErr = 1e3;
 
 		/** Scale step size by this value */
 		double attenuation = 1;

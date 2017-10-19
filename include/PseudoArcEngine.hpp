@@ -87,6 +87,14 @@ public:
 	//\}
 
 private:
+
+	/**
+	 *  \name Analysis Functions
+	 *  \{
+	 */
+	bool chooseNullVec(MatrixXRd&, std::vector<int>, const MatrixXRd&);
+	//\}
+
 	/**
 	 *  \name Utility Functions
 	 *  \{
@@ -95,6 +103,7 @@ private:
 	void cleanEngine() override;
 	//\}
 
+	unsigned int orbitCount = 0;
 	double stepSize = 0.001;
 };
 

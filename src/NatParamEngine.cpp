@@ -37,6 +37,7 @@
 #include "Exceptions.hpp"
 #include "Family_PO.hpp"
 #include "MultShootData.hpp"
+#include "MultShootEngine.hpp"
 #include "SysData_cr3bp.hpp"
 #include "Utilities.hpp"
 
@@ -152,38 +153,30 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(fam->getSysData());
 
 	if(indVarIx.size() < 2)
-		throw Exception("FamGenerator::cr3bp_natParamCont: Must specify two independent variables");
+		throw Exception("NatParamEngine::cr3bp_natParamCont: Must specify two independent variables");
 
 	if(mirrorTypes.size() != indVarIx.size())
-		throw Exception("FamGenerator::cr3bp_natParamCont: there must be an equal number of ind. vars and mirror types");
+		throw Exception("NatParamEngine::cr3bp_natParamCont: there must be an equal number of ind. vars and mirror types");
 
-	int indVar1 = indVarIx[0];
-	int indVar2 = indVarIx[1];
+	// Reset counters and storage containers
+	cleanEngine();
+	bool diverged = false;
+
 	Mirror_tp mirrorType = mirrorTypes[0];
-
-	// Initially assume that we're fixing indVar1
-	std::vector<unsigned int> fixStates;
-	fixStates.push_back(indVar1);
 
 	// Get info from the initial guess trajectory
 	std::vector<double> IC = init_halfPerGuess->getStateByIx(0);
 	double tof = init_halfPerGuess->getTotalTOF();
 	double tof0 = tof;
 
-	// Initialize counters and storage containers
-	unsigned int orbitCount = 0;
-	double indVarSlope = NAN, deltaVar1 = 1, deltaVar2 = 1;
-
-	std::vector<Arcset_periodic> members;
-	bool diverged = false;
+	// Initially assume that we're fixing indVar1
+	fixStates.push_back(indVarIx[0]);
 
 	// Create a dummy arcset and create an iteration data object on the stack
-	// The cr3bp_getPeriodic() function will only pass an iteration data pointer back
+	// The cr3bp_correctHalfPerSymPO() function will only pass an iteration data pointer back
 	// if the one passed in is not nullptr, hence we create a valid object and delete it
 	// before exiting the function
-	Arcset_cr3bp halfPerGuess(*init_halfPerGuess);
-	Arcset_cr3bp tempCorrected(static_cast<const SysData_cr3bp *>(init_halfPerGuess->getSysData()));
-	Arcset_cr3bp halfPerCorrected(static_cast<const SysData_cr3bp *>(init_halfPerGuess->getSysData()));
+	Arcset_cr3bp halfPerGuess(*init_halfPerGuess), tempCorrected(pSys), halfPerCorrected(pSys);
 	MultShootData *pItData = new MultShootData(&halfPerGuess);
 
 	while(orbitCount < numOrbits){
@@ -207,7 +200,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 		}catch(DivergeException &e){
 			diverged = true;
 		}catch(LinAlgException &e){
-			astrohelion::printErr("There was a linear algebra error during family continuation...\n");
+			printErr("There was a linear algebra error during family continuation...\n");
 			break;
 		}
 
@@ -224,54 +217,21 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 		}
 
 		if(diverged && orbitCount == 0){
-			astrohelion::printErr("Could not converge on the first family member; try a smaller step size\n");
+			printErr("Could not converge on the first family member; try a smaller step size\n");
 			break;
 		}else if(diverged && orbitCount > 0){
 			perOrbit = members.back();	// Use previous solution as the converged solution to get correct next guess
 
-			if(orbitCount <= numSimple){
-				if(step_simple > minStepSize){
-					step_simple = step_simple/2 > minStepSize ? step_simple/2 : minStepSize;
-					printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", step_simple, minStepSize);
-				}else{
-					printErr("Minimum step size reached, could not converge... exiting\n");
-					break;
-				}
-			}else{
-				double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
+			if(!decreaseStepSize())
+				break;
 
-				if(dq > minStepSize){
-					dq = dq/2 > minStepSize ? dq/2 : minStepSize;
-					printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", dq, minStepSize);
-
-					if(std::abs(indVarSlope) > slopeThresh)
-						step_fitted_1 = dq;
-					else
-						step_fitted_2 = dq;
-				}else{
-					printErr("Minimum step size reached, could not converge... exiting\n");
-					break;
-				}
-			}
 		}else{	// Did not diverge
 
 			// Save the computed orbit
 			members.push_back(perOrbit);
 			orbitCount++;
 
-			// Check to see if we should update the step size
-			if(pItData->count < 4 && orbitCount > numSimple){
-				double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
-
-				if(dq < maxStepSize){
-					dq = 2*dq < maxStepSize ? 2*dq : maxStepSize;
-					printColor(MAGENTA, "  Increased step size to %0.4e (max = %.4e)\n", dq, maxStepSize);
-					if(std::abs(indVarSlope) > slopeThresh)
-						step_fitted_1 = dq;
-					else
-						step_fitted_2 = dq;
-				}
-			}
+			increaseStepSize(pItData->count);
 
 			// Compute eigenvalues
 			MatrixXRd mono = perOrbit.getMonodromy();
@@ -292,84 +252,8 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 			break;
 		}
 
-		if(orbitCount < numSimple){
-			// Use simple continuation; copy the converged IC, step forward in the independent variable
-			IC = perOrbit.getStateByIx(0);
-			IC.at(indVar1) += step_simple;
-		}else{
-
-			// Compute the slope for the first time
-			if(orbitCount == numSimple){
-				deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVar1] - members[orbitCount-2].getStateByIx(0)[indVar1];
-				deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
-				indVarSlope = deltaVar1/deltaVar2;
-			}
-
-			// Use least-squares fitting to predict the value for the independent and dependent variables
-			std::vector<double> prevStates;
-			int first = static_cast<int>(members.size()) - static_cast<int>(curveFitMem) < 0 ? 0 : members.size() - curveFitMem;
-
-			for(unsigned int n = first; n < members.size(); n++){
-				std::vector<double> ic = members[n].getStateByIx(0);
-				prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
-				prevStates.push_back(members[n].getTimeByIx(-1));
-
-				Arcset_cr3bp temp = static_cast<Arcset_cr3bp>(members[n]);
-				prevStates.push_back(temp.getJacobiByIx(0));
-			}
-
-			// This will hold the input depVars plus the unused independent variable
-			std::vector<unsigned int> allDepVars;
-			std::vector<double> predictedIC;
-			if(std::abs(indVarSlope) > slopeThresh){
-				mirrorType = mirrorTypes[0];
-				// Use continuation in indVar1
-				IC.at(indVar1) = perOrbit.getStateByIx(0).at(indVar1) + astrohelion::sign(deltaVar1)*step_fitted_1;
-				fixStates.clear();
-				fixStates.push_back(indVar1);
-
-				// Use Least Squares to predict dependent vars and unusued ind. vars
-				allDepVars = depVarIx;
-				if(std::find(depVarIx.begin(), depVarIx.end(), indVar2) == depVarIx.end()){
-					allDepVars.push_back(indVar2);	// only add if it isn't already part of depVarIx
-				}
-				predictedIC = familyCont_LS(indVar1, IC.at(indVar1), allDepVars, prevStates);
-			}else{
-				mirrorType = mirrorTypes[1];
-				// Use continuation in indVar2
-				IC.at(indVar2) = perOrbit.getStateByIx(0).at(indVar2) + astrohelion::sign(deltaVar2)*step_fitted_2;
-				fixStates.clear();
-				fixStates.push_back(indVar2);
-
-				// Use Least Squares to predict dependent vars and unusued ind. vars
-				allDepVars = depVarIx;
-				if(std::find(depVarIx.begin(), depVarIx.end(), indVar1) == depVarIx.end()){
-					allDepVars.push_back(indVar1);	// only add if it isn't already part of depVarIx
-				}
-				predictedIC = familyCont_LS(indVar2, IC.at(indVar2), allDepVars, prevStates);
-			}
-
-			// Update IC with predicted variables
-			for(unsigned int n = 0; n < allDepVars.size(); n++){
-				unsigned int ix = allDepVars[n];
-				if(ix < 6)
-					IC[ix] = predictedIC[ix];
-				else if(ix == 6)
-					tof = predictedIC[ix];
-				else{
-					if(pItData){
-						delete(pItData);
-						pItData = nullptr;
-					}
-					throw Exception("FamGenerator::cr3bp_natParamCont: Cannot update independent variable; index out of range");
-				}
-			}
-
-			// Update slope
-			deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVar1] - members[orbitCount-2].getStateByIx(0)[indVar1];
-			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVar2] - members[orbitCount-2].getStateByIx(0)[indVar2];
-			indVarSlope = deltaVar1/deltaVar2;
-		}
+		if(!updateIC(perOrbit, &IC, &tof, indVarIx, depVarIx))
+			break;
 
 		// Update the initial guess
 		halfPerGuess = halfPerCorrected;
@@ -390,6 +274,442 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	}
 }//==================================================
 
+void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initGuess, std::vector<double> alwaysFixStateVals,
+	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
+
+	// Assume family is CR3BP
+	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(pFam->getSysData());
+
+	if(indVarIx.size() < 2)
+		throw Exception("NatParamEngine::continuePO_cr3bp: Must specify two independent variables");
+
+	if(alwaysFixStateVals.size() > 6)
+		throw Exception("NatParamEngine::continuePO_cr3bp: alwaysFixStateVals vector cannot be longer than 6");
+	// Reset counters and storage containers
+	cleanEngine();
+	bool diverged = false;
+
+	// Initially assume that we're fixing indVar1
+	fixStates.push_back(indVarIx[0]);
+
+	// Get info from the initial guess trajectory
+	std::vector<double> IC = initGuess->getStateByIx(0);
+	double tof = initGuess->getTotalTOF();
+	double tof0 = tof;
+
+	Arcset_cr3bp guess(*initGuess);	// Make a copy and use for future iterations
+	MultShootData *pItData = new MultShootData(&guess);
+
+	// Create the multiple shooting engine object
+	MultShootEngine msEngine;
+	msEngine.setTol(tol);
+	msEngine.setIgnoreCrash(true);		// Ignore crashes into primary
+	msEngine.setFullFinalProp(false);	// Accept minimal information from msEngine
+	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
+	msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	msEngine.setMaxErr(1e2);
+	
+	while(orbitCount < numOrbits){
+		Arcset_periodic perOrbit(pSys);
+
+		// Periodicity constraint
+		std::vector<double> perConData {0, 0, 0, 0, 0, NAN};
+		Constraint perCon(Constraint_tp::MATCH_CUST, guess.getNodeRefByIx(-1).getID(), perConData);
+
+		// Fix specific initial states
+		std::vector<double> initConData(6, NAN);
+		for(unsigned int i = 0; i < fixStates.size(); i++){
+			if(std::isnan(alwaysFixStateVals[fixStates[i]]))
+				initConData.at(fixStates[i]) = IC.at(fixStates[i]);
+			else
+				printWarn("Cannot fix state %u; it is permenantly constrained to be %f\n", fixStates[i], alwaysFixStateVals[fixStates[i]]);
+		}
+
+		for(unsigned int i = 0; i < alwaysFixStateVals.size(); i++){
+			if(!std::isnan(alwaysFixStateVals[i]))
+				initConData[i] = alwaysFixStateVals[i];
+		}
+
+		Constraint initCon(Constraint_tp::STATE, guess.getNodeRefByIx(0).getID(), initConData);
+
+		guess.clearAllConstraints();
+		guess.addConstraint(perCon);
+		guess.addConstraint(initCon);
+
+		try{
+			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
+				IC[4], IC[5], tof);
+			printf("Fix States: ");
+			for(unsigned int i = 0; i < fixStates.size(); i++){ printf("%d, ", fixStates[i]); }
+			printf("\n");
+			printf("Slope = %.3f\n", indVarSlope);
+
+			Arcset_cr3bp tempCorrected(pSys);
+			msEngine.setDoLineSearch(false);
+			msEngine.setMaxIts(20);
+			*pItData = msEngine.multShoot(&guess, &tempCorrected);
+			
+			diverged = false;
+			perOrbit = Arcset_periodic(tempCorrected);
+			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
+		}catch(DivergeException &de){
+			try{
+				Arcset_cr3bp tempCorrected(pSys);
+				msEngine.setDoLineSearch(true);
+				msEngine.setMaxIts(250);
+
+				*pItData = msEngine.multShoot(&guess, &tempCorrected);
+				diverged = false;
+				perOrbit = Arcset_periodic(tempCorrected);
+				printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
+			}catch(DivergeException &de2){
+				diverged = true;	
+			}catch(LinAlgException &lae2){
+				printErr("There was a linear algebra error during family continuation...\n");
+				break;
+			}
+		}catch(LinAlgException &lae){
+			printErr("There was a linear algebra error during family continuation...\n");
+			break;
+		}
+
+		// Check for large changes in period to detect leaving family
+		if(!diverged && orbitCount > 2){
+			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
+			double dTOF = std::abs(perOrbit.getTotalTOF()) - std::abs(members[members.size()-1].getTotalTOF());
+			double percChange = std::abs(dTOF/perOrbit.getTotalTOF());
+			if(percChange > 0.25){
+				printWarn("percChange = %.4f\n", percChange);
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTotalTOF());
+				diverged = true;
+			}
+		}
+
+		if(diverged && orbitCount == 0){
+			printErr("Could not converge on the first family member; try a smaller step size\n");
+			break;
+		}else if(diverged && orbitCount > 0){
+			perOrbit = members.back();	// Use previous solution as the converged solution to get correct next guess
+
+			if(!decreaseStepSize())
+				break;
+
+		}else{	// Converged (did not diverge)
+			members.push_back(perOrbit);	// save the computed orbit
+			orbitCount++;
+
+			increaseStepSize(pItData->count);
+
+			// Compute eigenvalues
+			MatrixXRd mono = perOrbit.getMonodromy();
+
+			double monoErr = std::abs(1.0 - mono.determinant());
+			if(monoErr > 1e-5)
+				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+
+			// Add orbit to family
+			pFam->addMember(perOrbit);
+		}
+
+		// Create the next guess
+		tof = perOrbit.getTimeByIx(-1);
+
+		if(tof*tof0 < 0){
+			printErr("Time-of-Flight changed sign: ending continuation process\n");
+			break;
+		}
+
+		if(!updateIC(perOrbit, &IC, &tof, indVarIx, depVarIx))
+			break;
+
+		// Update the initial guess
+		guess = Arcset_cr3bp(perOrbit);
+		guess.setStateByIx(0, IC);
+
+		// Change the TOF on the final segment
+		// WARNING - might cause issues of TOF goes negative
+		double dt = tof - guess.getTotalTOF();
+		guess.getSegRefByIx(-1).setTOF(guess.getTOFByIx(-1) + dt);
+
+		if(guess.getTOFByIx(-1)*perOrbit.getTOFByIx(-1) < 0)
+			printWarn("NatParamEngine::continuePO_cr3bp: updated TOF has changed sign\n");
+	}// End of while loop
+
+	if(pItData){
+		delete(pItData);
+		pItData = nullptr;
+	}
+}//====================================================
+
+/**
+ *  \brief Decrease the step size
+ *  \details The step size is decreased by a factor of <code>stepScaleFactor</code> if
+ *  possible (without going lower than the minimum step size)
+ *  
+ *  \return Whether or not the step size was decreased. A return value of FALSE indicates that the step
+ *  size is already at the minimum value.
+ */
+bool NatParamEngine::decreaseStepSize(){
+	if(orbitCount <= numSimple){
+		if(step_simple > minStepSize){
+			step_simple = step_simple/stepScaleFactor > minStepSize ? step_simple/stepScaleFactor : minStepSize;
+			printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", step_simple, minStepSize);
+		}else{
+			printErr("Minimum step size reached, could not converge... exiting\n");
+			return false;
+		}
+	}else{
+		double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
+
+		if(dq > minStepSize){
+			dq = dq/stepScaleFactor > minStepSize ? dq/stepScaleFactor : minStepSize;
+			printColor(MAGENTA, "  Decreased step size to %0.4e (min = %.4e)\n", dq, minStepSize);
+
+			if(std::abs(indVarSlope) > slopeThresh)
+				step_fitted_1 = dq;
+			else
+				step_fitted_2 = dq;
+		}else{
+			printErr("Minimum step size reached, could not converge... exiting\n");
+			return false;
+		}
+	}
+
+	return true;
+}//====================================================
+
+/**
+ *  \brief Increase the step size based on how quickly the previous solution converged
+ *  \details the step size is increased by the <code>stepScaleFactor</code> factor.
+ * 
+ *  \param its the number of iterations the shooting algorithm used to converge
+ *  the previous solution.
+ */
+void NatParamEngine::increaseStepSize(unsigned int its){
+	// Check to see if we should update the step size
+	if(its < 4 && orbitCount > numSimple){
+		double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
+
+		if(dq < maxStepSize){
+			dq = stepScaleFactor*dq < maxStepSize ? stepScaleFactor*dq : maxStepSize;
+			printColor(MAGENTA, "  Increased step size to %0.4e (max = %.4e)\n", dq, maxStepSize);
+			if(std::abs(indVarSlope) > slopeThresh)
+				step_fitted_1 = dq;
+			else
+				step_fitted_2 = dq;
+		}
+	}
+}//====================================================
+
+/**
+ *  \brief Update the initial condition vector and time-of-flight using vanilla natural parameter continuation
+ *  or fitted natural parameter continuation
+ *  \details [long description]
+ * 
+ *  \param convSoln the previous converged solution
+ *  \param pIC pointer to the initial condition vector
+ *  \param pTOF pointer to the time-of-flight value
+ *  \param indVarIx vector of the independent variable indices
+ *  \param depVarIx vector of the dependent variable indices
+ *  
+ *  \return whether or not the update was successful.
+ */
+bool NatParamEngine::updateIC(const Arcset_periodic &convSoln, std::vector<double>* pIC, 
+	double *pTOF, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx){
+
+	if(orbitCount < numSimple){
+		// Use simple continuation; copy the converged IC, step forward in the independent variable
+		*pIC = convSoln.getStateByIx(0);
+		pIC->at(indVarIx[0]) += step_simple;
+	}else{
+		// Compute the slope for the first time
+		if(orbitCount == numSimple){
+			deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
+			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
+			indVarSlope = deltaVar1/deltaVar2;
+		}
+
+		// Use least-squares fitting to predict the value for the independent and dependent variables
+		std::vector<double> prevStates;
+		int first = static_cast<int>(members.size()) - static_cast<int>(curveFitMem) < 0 ? 0 : members.size() - curveFitMem;
+
+		for(unsigned int n = first; n < members.size(); n++){
+			std::vector<double> ic = members[n].getStateByIx(0);
+			prevStates.insert(prevStates.end(), ic.begin(), ic.begin()+6);
+			prevStates.push_back(members[n].getTimeByIx(-1));
+
+			Arcset_cr3bp temp = static_cast<Arcset_cr3bp>(members[n]);
+			prevStates.push_back(temp.getJacobiByIx(0));
+		}
+
+		// This will hold the input depVars plus the unused independent variable
+		std::vector<unsigned int> allDepVars;
+		std::vector<double> predictedIC;
+
+		if(std::abs(indVarSlope) > slopeThresh){
+			// Use continuation in indVarIx[0]
+			pIC->at(indVarIx[0]) = convSoln.getStateByIx(0).at(indVarIx[0]) + astrohelion::sign(deltaVar1)*step_fitted_1;
+			fixStates.clear();
+			fixStates.push_back(indVarIx[0]);
+
+			// Use Least Squares to predict dependent vars and unusued ind. vars
+			allDepVars = depVarIx;
+			if(std::find(depVarIx.begin(), depVarIx.end(), indVarIx[1]) == depVarIx.end()){
+				allDepVars.push_back(indVarIx[1]);	// only add if it isn't already part of depVarIx
+			}
+			predictedIC = familyCont_LS(indVarIx[0], pIC->at(indVarIx[0]), allDepVars, prevStates);
+		}else{
+			// Use continuation in indVarIx[1]
+			pIC->at(indVarIx[1]) = convSoln.getStateByIx(0).at(indVarIx[1]) + astrohelion::sign(deltaVar2)*step_fitted_2;
+			fixStates.clear();
+			fixStates.push_back(indVarIx[1]);
+
+			// Use Least Squares to predict dependent vars and unusued ind. vars
+			allDepVars = depVarIx;
+			if(std::find(depVarIx.begin(), depVarIx.end(), indVarIx[0]) == depVarIx.end()){
+				allDepVars.push_back(indVarIx[0]);	// only add if it isn't already part of depVarIx
+			}
+			predictedIC = familyCont_LS(indVarIx[1], pIC->at(indVarIx[1]), allDepVars, prevStates);
+		}
+
+		// Update pIC with predicted variables
+		for(unsigned int n = 0; n < allDepVars.size(); n++){
+			unsigned int ix = allDepVars[n];
+			if(ix < 6)
+				pIC->at(ix) = predictedIC[ix];
+			else if(ix == 6)
+				*pTOF = predictedIC[ix];
+			else{
+				printErr("NatParamEngine::updateIC: Cannot update independent variable; index out of range");
+				return false;
+			}
+		}
+
+		// Update slope
+		deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
+		deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
+		indVarSlope = deltaVar1/deltaVar2;
+	}
+
+	return true;
+}//====================================================
+
+/**
+ *  \brief use least squares to predict new values of variables in a continuation process
+ *
+ *  This function uses a 2nd-order polynomial fit to predict a set of
+ *  dependent variables using past relationships between an independent
+ *  variable and the dependent variables. The number of points considered
+ *  in those past relationships can be adjusted to vary the "stiffness"
+ *  of the fit.
+ *
+ *  Ocasionally the 2nd-order fit does not work well and we encounter a 
+ *  singular (or very near singular) matrix. In this case, the algorithm
+ *  will apply linear regression, which generally solves the problem and
+ *  results in a safe inversion.
+ *
+ *  For all these inputs, the "state vector" must take the following form:
+ *      [x, y, z, xdot, ydot, zdot, Period, Jacobi Constant]
+ *
+ *  \param indVarIx the index of the state variable to use as the indpendent variable
+ *  \param nextInd The next value of the independent variable
+ *  \param depVars a vector specifying the indices of the states that will be
+ *  dependent variables. The algorithm will predict fugure values for these
+ *  variables based on how they have changed with the independent variable.
+ *  \param varHistory a vector representing an n x 8 matrix which contains
+ *  information about previous states, period, and JC. n should be at least 
+ *  3. If it is larger than MemSize, only the first set of MemSize rows will
+ *  be used.
+ *
+ *  \return an 8-element vector with predictions for the dependent variables.
+ *  If a particular variable has not been predicted, its place will be kept with
+ *  a NAN value.
+ *
+ *  An example may make things more clear:
+ *
+ *  Say I am continuing a family and am using x as the natural parameter in the
+ *  continuation. indVarIx would be 0 to represent x. We input the value of x
+ *  for the next orbit in the family (nextInd) and specify which variables (from
+ *  the 8-element "state") we would like to have predicted by least-squares.
+ *  \throws Exception if the <tt>varHistory</tt> vector contains fewer than 
+ *  8 elements or if the <tt>depVars</tt> vector has no data
+ */
+std::vector<double> NatParamEngine::familyCont_LS(unsigned int indVarIx, double nextInd, std::vector<unsigned int> depVars, std::vector<double> varHistory){
+    const unsigned int STATE_SIZE = 8;
+    const double EPS = 1e-14;
+
+    if(varHistory.size() < STATE_SIZE)
+        throw Exception("Calculations::familyCont_LS: Not enough data to create A matrix\n");
+
+    if(depVars.size() == 0)
+        throw Exception("Calculations::familyCont_LS: Not enough data to create B matrix\n");
+
+    // Form A and B matrices
+    std::vector<double> A_data;
+    std::vector<double> B_data;
+
+    for(unsigned int n = 0; n < varHistory.size()/STATE_SIZE; n++){
+        double d = varHistory[n*STATE_SIZE + indVarIx];
+        A_data.push_back(d*d);  // ind. var^2
+        A_data.push_back(d);    // ind. var^1
+        A_data.push_back(1);    // ind. var^0
+
+        for(unsigned int p = 0; p < depVars.size(); p++){
+            // vector of dependent variables
+            B_data.push_back(varHistory[n*STATE_SIZE + depVars[p]]);
+        }
+    }
+
+    MatrixXRd A = Eigen::Map<MatrixXRd>(&(A_data[0]), varHistory.size()/STATE_SIZE, 3);
+    MatrixXRd B = Eigen::Map<MatrixXRd>(&(B_data[0]), varHistory.size()/STATE_SIZE, depVars.size());
+
+    // Generate coefficient matrix; these are coefficients for second-order
+    // polynomials in the new independent variable
+    MatrixXRd G(A.cols(), A.cols());
+    G.noalias() = A.transpose()*A;
+    
+    Eigen::JacobiSVD<MatrixXRd> svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    svd.setThreshold(1e-14);
+    Eigen::VectorXd S = svd.singularValues();
+    double smallestVal = S.minCoeff();
+    
+    Eigen::RowVectorXd P(depVars.size());
+
+    if(smallestVal > EPS){
+        // Use 2nd-order polynomial fit; solve GC = A.transpose()*B for C
+        MatrixXRd C = G.fullPivLu().solve(A.transpose()*B);
+        
+        double indMatData[] = {nextInd*nextInd, nextInd, 1};
+        Eigen::RowVector3d indMat = Eigen::Map<Eigen::RowVector3d>(indMatData, 1, 3);
+
+        P.noalias() = indMat*C;
+    }else{
+        // User 1st-order polynomial fit
+        std::vector<double> A_lin_data;
+        for(unsigned int n = 0; n < varHistory.size()/STATE_SIZE; n++){
+            A_lin_data.push_back(varHistory[n*STATE_SIZE + indVarIx]);
+            A_lin_data.push_back(1);
+        }
+
+        MatrixXRd A_lin = Eigen::Map<MatrixXRd>(&(A_lin_data[0]), varHistory.size()/STATE_SIZE, 2);
+        Eigen::Matrix2d G;
+        G.noalias() = A_lin.transpose()*A_lin;
+
+        MatrixXRd C = G.fullPivLu().solve(A_lin.transpose()*B);
+
+        Eigen::RowVector2d indMat(nextInd, 1);
+
+        P.noalias() = indMat*C;
+    }
+
+    // Insert NAN for states that have not been predicted
+    std::vector<double> predicted;
+    predicted.assign(STATE_SIZE, NAN);
+    for(unsigned int i = 0; i < depVars.size(); i++)
+        predicted[depVars[i]] = P(i);
+
+    return predicted;
+}//====================================================
 //-----------------------------------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------------------------------
@@ -407,6 +727,14 @@ void NatParamEngine::copyMe(const NatParamEngine &engine){
 	step_simple = engine.step_simple;
 	step_fitted_1 = engine.step_fitted_1;
 	step_fitted_2 = engine.step_fitted_2;
+
+	orbitCount = engine.orbitCount;
+	indVarSlope = engine.indVarSlope;
+	deltaVar1 = engine.deltaVar1;
+	deltaVar2 = engine.deltaVar2;
+
+	members = engine.members;
+	fixStates = engine.fixStates;
 }//====================================================
 
 /**
@@ -427,6 +755,14 @@ void NatParamEngine::reset(){
  */
 void NatParamEngine::cleanEngine(){
 	ContinuationEngine::cleanEngine();
+
+	orbitCount = 0;
+	indVarSlope = NAN;
+	deltaVar1 = 1;
+	deltaVar2 = 1;
+
+	members.clear();
+	fixStates.clear();
 }//====================================================
 
 }// End of astrohelion namespace

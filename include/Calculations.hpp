@@ -86,7 +86,6 @@ enum class EigValSet_tp{
 double dateToEphemerisTime(const char*);
 double dateToGST(double, double, double, double, double, double);
 double gregorianToJulian(double, double, double, double, double, double);
-std::vector<double> familyCont_LS(unsigned int, double, std::vector<unsigned int>, std::vector<double>);
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);

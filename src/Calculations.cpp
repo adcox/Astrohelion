@@ -149,123 +149,6 @@ double dateToGST(double yr, double mo, double d, double h, double m, double s){
 }//==========================================
 
 /**
- *  \brief use least squares to predict new values of variables in a continuation process
- *
- *  This function uses a 2nd-order polynomial fit to predict a set of
- *  dependent variables using past relationships between an independent
- *  variable and the dependent variables. The number of points considered
- *  in those past relationships can be adjusted to vary the "stiffness"
- *  of the fit.
- *
- *  Ocasionally the 2nd-order fit does not work well and we encounter a 
- *  singular (or very near singular) matrix. In this case, the algorithm
- *  will apply linear regression, which generally solves the problem and
- *  results in a safe inversion.
- *
- *  For all these inputs, the "state vector" must take the following form:
- *      [x, y, z, xdot, ydot, zdot, Period, Jacobi Constant]
- *
- *  \param indVarIx the index of the state variable to use as the indpendent variable
- *  \param nextInd The next value of the independent variable
- *  \param depVars a vector specifying the indices of the states that will be
- *  dependent variables. The algorithm will predict fugure values for these
- *  variables based on how they have changed with the independent variable.
- *  \param varHistory a vector representing an n x 8 matrix which contains
- *  information about previous states, period, and JC. n should be at least 
- *  3. If it is larger than MemSize, only the first set of MemSize rows will
- *  be used.
- *
- *  \return an 8-element vector with predictions for the dependent variables.
- *  If a particular variable has not been predicted, its place will be kept with
- *  a NAN value.
- *
- *  An example may make things more clear:
- *
- *  Say I am continuing a family and am using x as the natural parameter in the
- *  continuation. indVarIx would be 0 to represent x. We input the value of x
- *  for the next orbit in the family (nextInd) and specify which variables (from
- *  the 8-element "state") we would like to have predicted by least-squares.
- *  \throws Exception if the <tt>varHistory</tt> vector contains fewer than 
- *  8 elements or if the <tt>depVars</tt> vector has no data
- */
-std::vector<double> familyCont_LS(unsigned int indVarIx, double nextInd, std::vector<unsigned int> depVars, std::vector<double> varHistory){
-    const unsigned int STATE_SIZE = 8;
-    const double EPS = 1e-14;
-
-    if(varHistory.size() < STATE_SIZE)
-        throw Exception("Calculations::familyCont_LS: Not enough data to create A matrix\n");
-
-    if(depVars.size() == 0)
-        throw Exception("Calculations::familyCont_LS: Not enough data to create B matrix\n");
-
-    // Form A and B matrices
-    std::vector<double> A_data;
-    std::vector<double> B_data;
-
-    for(unsigned int n = 0; n < varHistory.size()/STATE_SIZE; n++){
-        double d = varHistory[n*STATE_SIZE + indVarIx];
-        A_data.push_back(d*d);  // ind. var^2
-        A_data.push_back(d);    // ind. var^1
-        A_data.push_back(1);    // ind. var^0
-
-        for(unsigned int p = 0; p < depVars.size(); p++){
-            // vector of dependent variables
-            B_data.push_back(varHistory[n*STATE_SIZE + depVars[p]]);
-        }
-    }
-
-    MatrixXRd A = Eigen::Map<MatrixXRd>(&(A_data[0]), varHistory.size()/STATE_SIZE, 3);
-    MatrixXRd B = Eigen::Map<MatrixXRd>(&(B_data[0]), varHistory.size()/STATE_SIZE, depVars.size());
-
-    // Generate coefficient matrix; these are coefficients for second-order
-    // polynomials in the new independent variable
-    MatrixXRd G(A.cols(), A.cols());
-    G.noalias() = A.transpose()*A;
-    
-    Eigen::JacobiSVD<MatrixXRd> svd(G, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    svd.setThreshold(1e-14);
-    Eigen::VectorXd S = svd.singularValues();
-    double smallestVal = S.minCoeff();
-    
-    Eigen::RowVectorXd P(depVars.size());
-
-    if(smallestVal > EPS){
-        // Use 2nd-order polynomial fit; solve GC = A.transpose()*B for C
-        MatrixXRd C = G.fullPivLu().solve(A.transpose()*B);
-        
-        double indMatData[] = {nextInd*nextInd, nextInd, 1};
-        Eigen::RowVector3d indMat = Eigen::Map<Eigen::RowVector3d>(indMatData, 1, 3);
-
-        P.noalias() = indMat*C;
-    }else{
-        // User 1st-order polynomial fit
-        std::vector<double> A_lin_data;
-        for(unsigned int n = 0; n < varHistory.size()/STATE_SIZE; n++){
-            A_lin_data.push_back(varHistory[n*STATE_SIZE + indVarIx]);
-            A_lin_data.push_back(1);
-        }
-
-        MatrixXRd A_lin = Eigen::Map<MatrixXRd>(&(A_lin_data[0]), varHistory.size()/STATE_SIZE, 2);
-        Eigen::Matrix2d G;
-        G.noalias() = A_lin.transpose()*A_lin;
-
-        MatrixXRd C = G.fullPivLu().solve(A_lin.transpose()*B);
-
-        Eigen::RowVector2d indMat(nextInd, 1);
-
-        P.noalias() = indMat*C;
-    }
-
-    // Insert NAN for states that have not been predicted
-    std::vector<double> predicted;
-    predicted.assign(STATE_SIZE, NAN);
-    for(unsigned int i = 0; i < depVars.size(); i++)
-        predicted[depVars[i]] = P(i);
-
-    return predicted;
-}//====================================================
-
-/**
  *  \brief construct a matrix to mirror a 6-d state over the specified plane or axis
  *  \param mirrorType describes how to mirror a 6-d state
  *  \return a 6x6 matrix that will mirror a 6-d state over the specified plane or axis
@@ -1142,7 +1025,8 @@ void cr3bp_halfPO2fullPO(const Arcset_cr3bp *halfPerArc, Arcset_periodic *pFullP
  *  \brief Add mirror and state constraints to the first and last nodes on an arcset
  *  \details A mirror constraint is constructed based on the mirrorType specified in the
  *  input arguments. Additionally, a state constraint is constructed and applied to only 
- *  the first node based on the fixedStates specified in the input arguments.
+ *  the first node based on the fixedStates specified in the input arguments. Any pre-existing
+ *  constraints on the initial and final nodes are deleted
  * 
  *  \param pArc pointer to the arcset
  *  \param mirrorType Describes how the trajectory is mirrored at both the initial and 

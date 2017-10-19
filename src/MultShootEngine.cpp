@@ -134,6 +134,14 @@ bool MultShootEngine::doesFullFinalProp() const { return bFullFinalProp; }
 bool MultShootEngine::doesLineSearch() const { return bLineSearchStepSize; }
 
 /**
+ *  \brief Retrieve the maximum permitted error magnitude
+ *  \details If the error rises above this value, the corrections processes
+ *  is deemed diverged and the process will quit.
+ *  \return the maximum permitted error magnitude
+ */
+double MultShootEngine::getMaxErr() const{ return maxErr; }
+
+/**
  *  \brief Retrieve the maximum number of iterations to attempt
  *	\return the maximum number of iterations to attempt before giving up
  */
@@ -199,6 +207,15 @@ void MultShootEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
  *  \param b Whether or not to ignore divergance
  */
 void MultShootEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
+
+/**
+ *  \brief Set the maximum permitted error magnitude
+ *  \details If the error rises above this value, the corrections processes
+ *  is deemed diverged and the process will quit.
+ *  
+ *  \param e the maximum permitted error magnitude
+ */
+void MultShootEngine::setMaxErr(double e){ maxErr = e; }
 
 /**
  *	\brief Set maximum iterations
@@ -490,7 +507,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), FX(it.totalCons, 1);
 
-	while( err > tol && it.count < maxIts){
+	while( err < maxErr && err > tol && it.count < maxIts){
 		if(it.count > 0){
 			// Solve for newX and copy into working vector X
 			oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
@@ -544,7 +561,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			it.count, err, errType.c_str());
 	}// end of corrections loop
 
-	if(err > tol && !bIgnoreDiverge){
+	if((err > maxErr || err > tol) && !bIgnoreDiverge){
 		throw DivergeException();
 	}
 

@@ -70,6 +70,8 @@ PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *pInitHalfPerGuess, Mirror_tp mirrorType, std::vector<int> initDir){
 	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp *>(pInitHalfPerGuess->getSysData());
 
+	cleanEngine();
+
 	Arcset_cr3bp temp_halfPer(*pInitHalfPerGuess);	// Copy the input initial guess
 	double tof0 = pInitHalfPerGuess->getTotalTOF();
 
@@ -84,7 +86,7 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 	 *		position components, especially for planar families - ignoring z or z-dot can shift the
 	 *		nullptr vector to have non-zero elements in the z and z-dot spots, effectively stepping 
 	 *		out of the plane, which is not desireable for a planar family...
-	 *	* Constrain one extra state to be zero; I used something that makes sense for a perpendicular
+	 *	* Constrain one extra state to be fixed; I used something that makes sense for a perpendicular
 	 *		plane crossing here (avoid constraining z or z-dot to be zero for planar families)
 	 *
 	 *	These were the descriptions for three input ints for this method:
@@ -146,15 +148,14 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 	try{
 		familyItData = corrector.multShoot(&temp_halfPer, &halfPer_corrected);
 	}catch(DivergeException &e){
-		astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: Could not converge initial guess!\n");
+		printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: Could not converge initial guess!\n");
 	}catch(LinAlgException &e){
-		astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: There was a linear algebra error...\n");
+		printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: There was a linear algebra error...\n");
 	}
 
 	printf("Applying continuation to compute family...\n");
 	
-	// Initialize counters and storage containers
-	unsigned int orbitCount = 0;
+	// Initialize storage containers
 	Eigen::VectorXd convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 	Eigen::VectorXd prevN(familyItData.totalFree, 1);
 	
@@ -181,82 +182,11 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 		MatrixXRd N = lu.kernel();
 
 		printf("DF has dimensions %ld x %ld\n", DF.rows(), DF.cols());
-		// Check to make sure the IS a nullspace
-		if(N.rows() == 1){
-			astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: nullspace is zero-dimensional; cannot proceed...\n");
-			return;
-		}		
-
-		// // For debugging, save nullspace vectors to file
-		// char filename[16];
-		// sprintf(filename, "N%02d.csv", orbitCount);
-		// N.astrohelion::toCSV(filename);
-
-		/**
-		 *	Choose the nullspace vector that is closest to the previous one (which converged)
-		 */
-		printf("Choosing nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
-		if(orbitCount == 0){
-			if(N.cols() > 1){
-				astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: nullspace is multidimensional on first iteration; unsure how to proceed...\n");
-				return;
-			}
-
-			bool sameDir = true;
-			for(unsigned int i = 0; i < initDir.size(); i++){
-				// Find a non-zero element
-				if(initDir[i] != 0 && i < static_cast<unsigned int>(N.rows())){
-					// If signs are different, assume direction is different
-					if(N(i,0)*initDir[i] < 0){
-						sameDir = false;
-						break;
-					}
-				}
-			}
-
-			// Reverse direction of nullspace
-			if(!sameDir)
-				N *= -1;
-
-		}else{
-			/* Make sure nullspace direction stays consistent by choosing the 
-			 * nullptr vector that is closest to the same direction as the previous one
-			 */
-			int best_ix = 0;	// index of the column of the best vector option
-			int best_sign = 1;	// sign associated with best vector
-			double best_angle = 181;	// the best (smallest) angle found
-			for(int i = 0; i < N.cols(); i++){
-				// Compute angle from dot product
-				Eigen::VectorXd col_i = N.cols() > 1 ? N.col(i) : N;
-				Eigen::VectorXd dotProd = prevN.transpose()*col_i / (prevN.norm()*N.norm());
-				double angle = std::acos(dotProd(0));
-				int sign = 1;
-
-				// Flip the sign if the angle is greater than 90 and change the value to 180 - angle
-				printf("dot product = %.4f\n", dotProd(0));
-				printf("Angle = %.4f deg\n", angle*180/PI);
-				if(angle > PI/2.0){
-					printColor(CYAN, "Angle is %.4f > pi/2; changing sign and angle\n", angle);
-					angle = PI - angle;
-					sign = -1;
-				}
-
-				// Keep track of the best option
-				if(angle < best_angle){
-					best_angle = angle;
-					best_sign = sign;
-					best_ix = i;
-				}
-			}
-
-			printf("best ix = %d, sign = %d\n", best_ix, best_sign);
-			Eigen::VectorXd temp = N.cols() > 1 ? N.col(best_ix) : N;
-			N = best_sign*temp;	// Apply sign change, if needed
-		}
+		
+		if(!chooseNullVec(N, initDir, prevN))
+			break;
 
 		prevN = N;	// Update memory
-		printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
-			N(0), N(1), N(2), N(3), N(4), N(5));
 
 		newMember = getNextPACGuess_cr3bp(convergedFreeVarVec, N, stepSize, &familyItData);
 
@@ -285,7 +215,7 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 							newMember = getNextPACGuess_cr3bp(convergedFreeVarVec, N, stepSize, &familyItData);
 							continue;	// Go to next iteration
 						}else{
-							astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: Could not converge new family member!\n");
+							printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: Could not converge new family member!\n");
 							killLoop = true;
 							break;
 						}
@@ -306,7 +236,7 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 					}
 				}catch(DivergeException &e){
 					if(stepSize > minStepSize){
-						astrohelion::printWarn("PseudoArcEngine::generatePO_cr3bp: Corrector diverged... trying smaller step size\n");
+						astrohelion::printWarn("PseudoArcEngine::continueSymmetricPO_cr3bp: Corrector diverged... trying smaller step size\n");
 
 						// Decrease step size and try again
 						stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
@@ -315,14 +245,14 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 						// Re-Create the initial guess using the new step size
 						newMember = getNextPACGuess_cr3bp(convergedFreeVarVec, N, stepSize, &familyItData);
 					}else{
-						astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: Could not converge new family member!\n");
+						printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: Could not converge new family member!\n");
 						killLoop = true;
 						break;
 					}
 				}
 			}
 		}catch(LinAlgException &e){
-			astrohelion::printErr("PseudoArcEngine::generatePO_cr3bp: There was a linear algebra error...\n");
+			printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: There was a linear algebra error...\n");
 			killLoop = true;
 		}
 
@@ -470,6 +400,94 @@ bool PseudoArcEngine::checkPACSolution_cr3bp(const Arcset_periodic *pSol, const 
 	return true;
 }//====================================================
 
+/**
+ *  \brief Choose the nullspace vector as well as the correct sign
+ *  \details [long description]
+ * 
+ *  \param N A matrix that stores each nullspace vector as a column
+ *  \return whether or not the selection process was successful. A return value of FALSe
+ *  indicates that the continuation should end
+ */
+bool PseudoArcEngine::chooseNullVec(MatrixXRd &N, std::vector<int> initDir, const MatrixXRd &prevN){
+	// Check to make sure the IS a nullspace
+	if(N.rows() == 1){
+		printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: nullspace is zero-dimensional; cannot proceed...\n");
+		return false;
+	}		
+
+	// // For debugging, save nullspace vectors to file
+	// char filename[16];
+	// sprintf(filename, "N%02d.csv", orbitCount);
+	// N.astrohelion::toCSV(filename);
+
+	/**
+	 *	Choose the nullspace vector that is closest to the previous one (which converged)
+	 */
+	printf("Choosing nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
+	if(orbitCount == 0){
+		if(N.cols() > 1){
+			printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: nullspace is multidimensional on first iteration; unsure how to proceed...\n");
+			return false;
+		}
+
+		bool sameDir = true;
+		for(unsigned int i = 0; i < initDir.size(); i++){
+			// Find a non-zero element
+			if(initDir[i] != 0 && i < static_cast<unsigned int>(N.rows())){
+				// If signs are different, assume direction is different
+				if(N(i,0)*initDir[i] < 0){
+					sameDir = false;
+					break;
+				}
+			}
+		}
+
+		// Reverse direction of nullspace
+		if(!sameDir)
+			N *= -1;
+
+	}else{
+		/* Make sure nullspace direction stays consistent by choosing the 
+		 * nullptr vector that is closest to the same direction as the previous one
+		 */
+		int best_ix = 0;	// index of the column of the best vector option
+		int best_sign = 1;	// sign associated with best vector
+		double best_angle = 181;	// the best (smallest) angle found
+		for(int i = 0; i < N.cols(); i++){
+			// Compute angle from dot product
+			Eigen::VectorXd col_i = N.cols() > 1 ? N.col(i) : N;
+			Eigen::VectorXd dotProd = prevN.transpose()*col_i / (prevN.norm()*N.norm());
+			double angle = std::acos(dotProd(0));
+			int sign = 1;
+
+			// Flip the sign if the angle is greater than 90 and change the value to 180 - angle
+			printf("dot product = %.4f\n", dotProd(0));
+			printf("Angle = %.4f deg\n", angle*180/PI);
+			if(angle > PI/2.0){
+				printColor(CYAN, "Angle is %.4f > pi/2; changing sign and angle\n", angle);
+				angle = PI - angle;
+				sign = -1;
+			}
+
+			// Keep track of the best option
+			if(angle < best_angle){
+				best_angle = angle;
+				best_sign = sign;
+				best_ix = i;
+			}
+		}
+
+		printf("best ix = %d, sign = %d\n", best_ix, best_sign);
+		Eigen::VectorXd temp = N.cols() > 1 ? N.col(best_ix) : N;
+		N = best_sign*temp;	// Apply sign change, if needed
+	}
+
+	printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
+			N(0), N(1), N(2), N(3), N(4), N(5));
+
+	return true;
+}//====================================================
+
 //-----------------------------------------------------------------------------
 //      Utility Functions
 //-----------------------------------------------------------------------------
@@ -477,6 +495,7 @@ bool PseudoArcEngine::checkPACSolution_cr3bp(const Arcset_periodic *pSol, const 
 void PseudoArcEngine::copyMe(const PseudoArcEngine &e){
 	ContinuationEngine::copyMe(e);
 	stepSize = e.stepSize;
+	orbitCount = e.orbitCount;
 }//====================================================
 
 void PseudoArcEngine::reset(){
@@ -486,6 +505,8 @@ void PseudoArcEngine::reset(){
 
 void PseudoArcEngine::cleanEngine(){
 	ContinuationEngine::cleanEngine();
+
+	orbitCount = 0;
 }//====================================================
 
 }// End of astrohelion namespace

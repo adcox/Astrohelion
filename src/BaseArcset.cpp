@@ -766,6 +766,28 @@ std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 std::vector<Constraint> BaseArcset::getArcConstraints() const { return cons; }
 
 /**
+ *  \brief Retrieve a vector containing all the constraints applied to the arcset,
+ *  nodes, and segments
+ *  \details This vector DOES include constraints placed on individual nodes and segments
+ *  \return a vector containing all the constraints applied to the arcset,
+ *  nodes, and segments
+ */
+std::vector<Constraint> BaseArcset::getAllConstraints() const{
+	std::vector<Constraint> allCons = cons;
+
+	for(unsigned int n = 0; n < nodes.size(); n++){
+		std::vector<Constraint> c = nodes[n].getConstraints();
+		allCons.insert(allCons.end(), c.begin(), c.end());
+	}
+	for(unsigned int s = 0; s < segs.size(); s++){
+		std::vector<Constraint> c = segs[s].getConstraints();
+		allCons.insert(allCons.end(), c.begin(), c.end());
+	}
+
+	return allCons;
+}//====================================================
+
+/**
  *  \brief Determine what order to place the nodes and segments of this object
  *  into to achieve a chronological progression in forward time.
  * 

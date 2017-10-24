@@ -396,6 +396,7 @@ namespace astrohelion{
 	double boundValue(double, double, double);
 	void checkAndReThrowSpiceErr(const char*);
 	std::string complexToStr(std::complex<double>);
+	std::string eigenCompInfo2Str(Eigen::ComputationInfo);
 	std::string getNameFromSpiceID(int);
 	SpiceInt getSpiceIDFromName(const char*);
 

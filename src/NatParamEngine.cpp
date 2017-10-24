@@ -31,6 +31,7 @@
 #include <Eigen/Dense>
 
 #include "AsciiOutput.hpp"
+#include "Arcset.hpp"
 #include "Arcset_cr3bp.hpp"
 #include "Arcset_periodic.hpp"
 #include "Calculations.hpp"
@@ -123,10 +124,31 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
 //      Analysis Functions
 //-----------------------------------------------------------------------------
 
+void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initGuess, std::vector<double> alwaysFixStateVals,
+	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
+
+
+	// Assume family is CR3BP
+	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(pFam->getSysData());
+
+	Arcset_cr3bp guess(*initGuess), a1(pSys), a2(pSys);
+
+	std::vector<double> perConData {0, 0, 0, 0, 0, NAN};
+	Constraint perCon(Constraint_tp::MATCH_CUST, guess.getNodeRefByIx(-1).getID(), perConData);
+
+	guess.addConstraint(perCon);
+	std::vector<Arcset> allArcs {};
+	continuePO(&guess, &a1, &a2, allArcs, alwaysFixStateVals, indVarIx, depVarIx);
+
+	for(unsigned int i = 0; i < allArcs.size(); i++){
+		pFam->addMember(allArcs[i]);
+	}
+}//====================================================
+
 /**
  *	\brief Continue a family of periodic orbits via natural parameter continuation
  *	
- * 	\param fam a pointer to a family object to store family members in; the family MUST have
+ * 	\param pFam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
  *	\param init_halfPerGuess a trajectory that is a good initial guess for half of 
  *	the first family member
@@ -146,11 +168,16 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
  *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
  *	out of range
  */
-void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3bp *init_halfPerGuess,
+void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *init_halfPerGuess,
 	std::vector<Mirror_tp> mirrorTypes, std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
 
-	// Assume family is CR3BP
-	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(fam->getSysData());
+	// This function makes some shortcuts for the symmetric periodic orbits and, thus, does not leverage
+	// the more general continuePO() function
+
+	if(pFam == nullptr)
+		throw Exception("NatParamEngine::continueSymmetricPO_cr3bp: Cannot proceed with null family");
+
+	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(pFam->getSysData());
 
 	if(indVarIx.size() < 2)
 		throw Exception("NatParamEngine::cr3bp_natParamCont: Must specify two independent variables");
@@ -178,6 +205,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	// before exiting the function
 	Arcset_cr3bp halfPerGuess(*init_halfPerGuess), tempCorrected(pSys), halfPerCorrected(pSys);
 	MultShootData *pItData = new MultShootData(&halfPerGuess);
+	std::vector<Arcset> members {};
 
 	while(orbitCount < numOrbits){
 		Arcset_periodic perOrbit(pSys);
@@ -241,7 +269,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 
 			// Add orbit to family
-			fam->addMember(perOrbit);
+			pFam->addMember(perOrbit);
 		}
 
 		// Create next initial guess
@@ -252,8 +280,21 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 			break;
 		}
 
-		if(!updateIC(perOrbit, &IC, &tof, indVarIx, depVarIx))
+		if(!updateIC(perOrbit, &IC, &tof, indVarIx, depVarIx, members))
 			break;
+
+		// Update the mirror type (not done in the general updateIC function)
+		// *** Specific to symmetric continuation
+		bool foundMatch = false;
+		for(unsigned int v = 0; v < indVarIx.size(); v++){
+			if(fixStates[0] == indVarIx[v]){
+				mirrorType = mirrorTypes[v];
+				foundMatch = true;
+				break;
+			}
+		}
+		if(!foundMatch)
+			throw Exception("NatParamEngine::continueSymmetricPO_cr3bp: fixStates[0] is set to an unknown index");
 
 		// Update the initial guess
 		halfPerGuess = halfPerCorrected;
@@ -274,17 +315,58 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *fam, const Arcset_cr3b
 	}
 }//==================================================
 
-void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initGuess, std::vector<double> alwaysFixStateVals,
+/**
+ *  \brief A general natural parameter continuation algorithm
+ * 
+ *  \param pInitGuess pointer to the initial guess. Any constraints applied to this initial arc will 
+ *  be copied to all future family members and enforced during continuation
+ *  \param pInput pointer to an arbitrary arcset object of the same model/system as the initial guess
+ *  \param pConverged pointer to an arbitrary arcset object of the same model/system as the initial guess
+ *  \param allArcs Storage vector for all converged family members
+ *  \param alwaysFixStateVals a vector of state values that should always be fixed; a value of NAN indicates
+ *  that the specified state should not be fixed.
+ *  \param indVarIx a vector containing the indices of the independent variables to be used. You MUST
+ *	specify at least two; currently only two can be used. The first index in the vector will be used
+ *	first in the continuation (using stupid-simple continuation), and the second will be toggled
+ *	on later if the slope favors it.
+ *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
+ *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
+ *	simple techniques that don't perform very well.
+ */
+void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset *pConverged, 
+	std::vector<Arcset>& allArcs, std::vector<double> alwaysFixStateVals,
 	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
 
-	// Assume family is CR3BP
-	const SysData_cr3bp *pSys = static_cast<const SysData_cr3bp*>(pFam->getSysData());
+	if(pInitGuess == nullptr || pInput == nullptr || pConverged == nullptr)
+		throw Exception("NatParamEngine::continuePO: cannot function with null input arcset pointers");
+
+	const unsigned int core_dim = pInitGuess->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	if(indVarIx.size() < 2)
-		throw Exception("NatParamEngine::continuePO_cr3bp: Must specify two independent variables");
+		throw Exception("NatParamEngine::continuePO: Must specify two independent variables");
 
-	if(alwaysFixStateVals.size() > 6)
-		throw Exception("NatParamEngine::continuePO_cr3bp: alwaysFixStateVals vector cannot be longer than 6");
+	if(alwaysFixStateVals.size() > core_dim)
+		throw Exception("NatParamEngine::continuePO: alwaysFixStateVals vector cannot be longer than core state dimension");
+
+	// Add extra entries to fill out the full core dimension, if not already accomplished
+	std::vector<double> extraFill(core_dim - alwaysFixStateVals.size(), NAN);
+	alwaysFixStateVals.insert(alwaysFixStateVals.end(), extraFill.begin(), extraFill.end());
+
+	// Check to make sure the independent and dependent state indices are in bounds
+	char msg[128];
+	for(unsigned int i = 0; i < indVarIx.size(); i++){
+		if(indVarIx[i] >= core_dim){
+			sprintf(msg, "NatParamEngine::continuePO: indVarIx[%u] = %u is outside the core state dimension", i, indVarIx[i]);
+			throw Exception(msg);
+		}
+	}
+	for(unsigned int i = 0; i < depVarIx.size(); i++){
+		if(depVarIx[i] >= core_dim){
+			sprintf(msg, "NatParamEngine::continuePO: depVarIx[%u] = %u is outside the core state dimension", i, depVarIx[i]);
+			throw Exception(msg);
+		}
+	}
+
 	// Reset counters and storage containers
 	cleanEngine();
 	bool diverged = false;
@@ -293,12 +375,12 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 	fixStates.push_back(indVarIx[0]);
 
 	// Get info from the initial guess trajectory
-	std::vector<double> IC = initGuess->getStateByIx(0);
-	double tof = initGuess->getTotalTOF();
+	std::vector<double> IC = pInitGuess->getStateByIx(0);
+	double tof = pInitGuess->getTotalTOF();
 	double tof0 = tof;
 
-	Arcset_cr3bp guess(*initGuess);	// Make a copy and use for future iterations
-	MultShootData *pItData = new MultShootData(&guess);
+	MultShootData *pItData = new MultShootData(pInput);
+	*pInput = *pInitGuess;	// Copy the initial guess
 
 	// Create the multiple shooting engine object
 	MultShootEngine msEngine;
@@ -308,16 +390,20 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
 	msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
 	msEngine.setMaxErr(1e2);
-	
-	while(orbitCount < numOrbits){
-		Arcset_periodic perOrbit(pSys);
 
-		// Periodicity constraint
-		std::vector<double> perConData {0, 0, 0, 0, 0, NAN};
-		Constraint perCon(Constraint_tp::MATCH_CUST, guess.getNodeRefByIx(-1).getID(), perConData);
+	// Periodicity constraint(s)
+	std::vector<Constraint> perCons = pInitGuess->getAllConstraints();
+
+	while(orbitCount < numOrbits){
+		pConverged->reset();	// Reset storage arcset for converged solution
+
+		pInput->clearAllConstraints();		// Remove all constraints
+
+		// Re-apply the periodicity constraints
+		for(unsigned int c = 0; c < perCons.size(); c++){ pInput->addConstraint(perCons[c]); }
 
 		// Fix specific initial states
-		std::vector<double> initConData(6, NAN);
+		std::vector<double> initConData(core_dim, NAN);
 		for(unsigned int i = 0; i < fixStates.size(); i++){
 			if(std::isnan(alwaysFixStateVals[fixStates[i]]))
 				initConData.at(fixStates[i]) = IC.at(fixStates[i]);
@@ -328,13 +414,10 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 		for(unsigned int i = 0; i < alwaysFixStateVals.size(); i++){
 			if(!std::isnan(alwaysFixStateVals[i]))
 				initConData[i] = alwaysFixStateVals[i];
-		}
+		}		
 
-		Constraint initCon(Constraint_tp::STATE, guess.getNodeRefByIx(0).getID(), initConData);
-
-		guess.clearAllConstraints();
-		guess.addConstraint(perCon);
-		guess.addConstraint(initCon);
+		Constraint initCon(Constraint_tp::STATE, pInput->getNodeRefByIx(0).getID(), initConData);
+		pInput->addConstraint(initCon);
 
 		try{
 			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
@@ -344,24 +427,21 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 			printf("\n");
 			printf("Slope = %.3f\n", indVarSlope);
 
-			Arcset_cr3bp tempCorrected(pSys);
 			msEngine.setDoLineSearch(false);
 			msEngine.setMaxIts(20);
-			*pItData = msEngine.multShoot(&guess, &tempCorrected);
+			*pItData = msEngine.multShoot(pInput, pConverged);
 			
 			diverged = false;
-			perOrbit = Arcset_periodic(tempCorrected);
-			printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
+			printf("Orbit %03d converged!\n", static_cast<int>(allArcs.size()));
 		}catch(DivergeException &de){
 			try{
-				Arcset_cr3bp tempCorrected(pSys);
+				pConverged->reset();
 				msEngine.setDoLineSearch(true);
 				msEngine.setMaxIts(250);
 
-				*pItData = msEngine.multShoot(&guess, &tempCorrected);
+				*pItData = msEngine.multShoot(pInput, pConverged);
 				diverged = false;
-				perOrbit = Arcset_periodic(tempCorrected);
-				printf("Orbit %03d converged!\n", static_cast<int>(members.size()));
+				printf("Orbit %03d converged!\n", static_cast<int>(allArcs.size()));
 			}catch(DivergeException &de2){
 				diverged = true;	
 			}catch(LinAlgException &lae2){
@@ -376,11 +456,11 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 		// Check for large changes in period to detect leaving family
 		if(!diverged && orbitCount > 2){
 			// difference in TOF; use abs() because corrector may employ reverse time and switch to forward time
-			double dTOF = std::abs(perOrbit.getTotalTOF()) - std::abs(members[members.size()-1].getTotalTOF());
-			double percChange = std::abs(dTOF/perOrbit.getTotalTOF());
+			double dTOF = std::abs(pInput->getTotalTOF()) - std::abs(allArcs[allArcs.size()-1].getTotalTOF());
+			double percChange = std::abs(dTOF/pInput->getTotalTOF());
 			if(percChange > 0.25){
 				printWarn("percChange = %.4f\n", percChange);
-				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", perOrbit.getTotalTOF());
+				printWarn("Period jumped (now = %.5f)! Left the family! Trying smaller step size...\n", pInput->getTotalTOF());
 				diverged = true;
 			}
 		}
@@ -389,51 +469,51 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 			printErr("Could not converge on the first family member; try a smaller step size\n");
 			break;
 		}else if(diverged && orbitCount > 0){
-			perOrbit = members.back();	// Use previous solution as the converged solution to get correct next guess
+			*pConverged = allArcs.back();	// Use previous solution as the converged solution to get correct next guess
 
 			if(!decreaseStepSize())
 				break;
 
 		}else{	// Converged (did not diverge)
-			members.push_back(perOrbit);	// save the computed orbit
+			allArcs.push_back(*pConverged);	// save the computed orbit
 			orbitCount++;
 
 			increaseStepSize(pItData->count);
 
-			// Compute eigenvalues
-			MatrixXRd mono = perOrbit.getMonodromy();
+			// // Compute eigenvalues
+			// MatrixXRd mono = perOrbit.getMonodromy();
 
-			double monoErr = std::abs(1.0 - mono.determinant());
-			if(monoErr > 1e-5)
-				printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
+			// double monoErr = std::abs(1.0 - mono.determinant());
+			// if(monoErr > 1e-5)
+			// 	printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
 
-			// Add orbit to family
-			pFam->addMember(perOrbit);
+			// // Add orbit to family
+			// pFam->addMember(perOrbit);
 		}
 
 		// Create the next guess
-		tof = perOrbit.getTimeByIx(-1);
+		tof = pInput->getTotalTOF();
 
 		if(tof*tof0 < 0){
 			printErr("Time-of-Flight changed sign: ending continuation process\n");
 			break;
 		}
 
-		if(!updateIC(perOrbit, &IC, &tof, indVarIx, depVarIx))
+		if(!updateIC(*pConverged, &IC, &tof, indVarIx, depVarIx, allArcs))
 			break;
 
 		// Update the initial guess
-		guess = Arcset_cr3bp(perOrbit);
-		guess.setStateByIx(0, IC);
+		*pInput = *pConverged;
+		pInput->setStateByIx(0, IC);
 
 		// Change the TOF on the final segment
 		// WARNING - might cause issues of TOF goes negative
-		double dt = tof - guess.getTotalTOF();
-		guess.getSegRefByIx(-1).setTOF(guess.getTOFByIx(-1) + dt);
+		double dt = tof - pInput->getTotalTOF();
+		pInput->getSegRefByIx(-1).setTOF(pInput->getTOFByIx(-1) + dt);
 
-		if(guess.getTOFByIx(-1)*perOrbit.getTOFByIx(-1) < 0)
-			printWarn("NatParamEngine::continuePO_cr3bp: updated TOF has changed sign\n");
-	}// End of while loop
+		if(pInput->getTOFByIx(-1)*pConverged->getTOFByIx(-1) < 0)
+			printWarn("NatParamEngine::continuePO: updated TOF has changed sign\n");
+	}
 
 	if(pItData){
 		delete(pItData);
@@ -514,8 +594,9 @@ void NatParamEngine::increaseStepSize(unsigned int its){
  *  
  *  \return whether or not the update was successful.
  */
-bool NatParamEngine::updateIC(const Arcset_periodic &convSoln, std::vector<double>* pIC, 
-	double *pTOF, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx){
+bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>* pIC, 
+	double *pTOF, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx,
+	const std::vector<Arcset>& members){
 
 	if(orbitCount < numSimple){
 		// Use simple continuation; copy the converged IC, step forward in the independent variable
@@ -733,7 +814,6 @@ void NatParamEngine::copyMe(const NatParamEngine &engine){
 	deltaVar1 = engine.deltaVar1;
 	deltaVar2 = engine.deltaVar2;
 
-	members = engine.members;
 	fixStates = engine.fixStates;
 }//====================================================
 
@@ -761,7 +841,6 @@ void NatParamEngine::cleanEngine(){
 	deltaVar1 = 1;
 	deltaVar2 = 1;
 
-	members.clear();
 	fixStates.clear();
 }//====================================================
 

@@ -35,9 +35,10 @@
 namespace astrohelion{
 
 // Forward Declarations
-class Family_PO;
+class Arcset;
 class Arcset_cr3bp;
 class Arcset_periodic;
+class Family_PO;
 enum class Mirror_tp;
 
 /**
@@ -80,6 +81,7 @@ public:
 	 */
 	void continueSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<unsigned int>, std::vector<unsigned int>);
 	void continuePO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<double>, std::vector<unsigned int>, std::vector<unsigned int>);
+	void continuePO(const Arcset*, Arcset*, Arcset*, std::vector<Arcset>&, std::vector<double>, std::vector<unsigned int>, std::vector<unsigned int>);
 	//\}
 
 	/**
@@ -105,7 +107,8 @@ private:
 	bool decreaseStepSize();
 	std::vector<double> familyCont_LS(unsigned int, double, std::vector<unsigned int>, std::vector<double>);
 	void increaseStepSize(unsigned int);
-	bool updateIC(const Arcset_periodic&, std::vector<double>*, double*, const std::vector<unsigned int>&, const std::vector<unsigned int>&);
+	bool updateIC(const Arcset&, std::vector<double>*, double*, const std::vector<unsigned int>&,
+		const std::vector<unsigned int>&, const std::vector<Arcset>&);
 	//\}
 
 
@@ -114,7 +117,6 @@ private:
 	double deltaVar2 = 1;					//!< Change in independent variable #2 during continuation
 	double indVarSlope = 1;					//!< Slope of the indVar1 vs indVar2 line
 	std::vector<unsigned int> fixStates {};	//!< A list of indices that represent the states that are constrained (i.e., fixed) during the current continuation step
-	std::vector<Arcset_periodic> members {};//!< A list of currently computed family members; leveraged in the least-squares process to predict future states
 	unsigned int numSimple = 3;				//!< Number of simply-continued family members
 	unsigned int orbitCount = 0;			//!< Count of how many orbits have been computed
 	double stepScaleFactor = 2;				//!< A multiplying factor to scale the step size up/down during adaptive step sizing

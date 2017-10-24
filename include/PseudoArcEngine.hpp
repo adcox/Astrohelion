@@ -34,6 +34,7 @@
 namespace astrohelion{
 
 // Forward declarations
+class Arcset;
 class Arcset_cr3bp;
 class Arcset_periodic;
 class Family_PO;
@@ -75,8 +76,7 @@ public:
 	 *  \{
 	 */
 	void continueSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, Mirror_tp, std::vector<int>);
-	Arcset_cr3bp getNextPACGuess_cr3bp(const Eigen::VectorXd&, const Eigen::VectorXd&, double, MultShootData*);
-	bool checkPACSolution_cr3bp(const Arcset_periodic*, const MultShootData*, const Eigen::VectorXd&, double, bool*);
+	void pac(const Arcset*, Arcset*, Arcset*, std::vector<Arcset>&, const std::vector<int>&);
 	//\}
 
 	/**
@@ -92,7 +92,11 @@ private:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
+	bool checkPACSoln(const MultShootData*, const Eigen::VectorXd&, bool*);
+	bool checkPACSoln_periodic(const Arcset_periodic*, bool*);
 	bool chooseNullVec(MatrixXRd&, std::vector<int>, const MatrixXRd&);
+	bool decreaseStepSize();
+	void getNextPACGuess(Arcset*, Arcset*, const Eigen::VectorXd&, const Eigen::VectorXd&, MultShootData*);
 	//\}
 
 	/**

@@ -724,7 +724,11 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 			luSolver.factorize(J);
 			if(luSolver.info() != Eigen::Success){
 				checkDFSingularities(J);
-				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix");
+				std::string err = eigenCompInfo2Str(luSolver.info());
+				char msg[128];
+				sprintf("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix\nluSolver -> %s\n", 
+					err.c_str());
+				throw LinAlgException(msg);
 			}
 
 			fullStep = luSolver.solve(-(*pFX));
@@ -960,19 +964,28 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::Vec
  *  \param DF Jacobian matrix employed in the correction process
  */
 void MultShootEngine::checkDFSingularities(MatrixXRd DF){
+	if(verbosity == Verbosity_tp::NO_MSG)
+		return;
+
+	bool foundSingularity = false;
 	if(verbosity >= Verbosity_tp::SOME_MSG){
 		for(unsigned int r = 0; r < DF.rows(); r++){
 			if(DF.row(r).norm() == 0){
 				printErr("Singular Jacobian! Row %u is all zeros\n", r);
+				foundSingularity = true;
 			}
 		}
 
 		for(unsigned int c = 0; c < DF.cols(); c++){
 			if(DF.col(c).norm() == 0){
 				printErr("Singular Jacobian! Column %u is all zeros\n", c);
+				foundSingularity = true;
 			}
 		}
 	}
+
+	if(!foundSingularity)
+		printColor(BLUE, "No singularity found in Jacobian\n");
 }//====================================================
 
 /**

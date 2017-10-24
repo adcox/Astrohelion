@@ -545,5 +545,21 @@ double wrapToPi(double val){
         val -= astrohelion::sign(val)*2*PI;
 }//====================================================
 
+/**
+ *  \brief Convert an Eigen::ComputationInfo enumerated type into a human-readable string
+ * 
+ *  \param ci enumerated type
+ *  \return a human-readable string representation of the enumerated type
+ */
+std::string eigenCompInfo2Str(Eigen::ComputationInfo ci){
+    switch(ci){
+        case Eigen::Success: return std::string("Computation was successful");
+        case Eigen::NumericalIssue: return std::string("the provided data did not satisfy the prerequisites");
+        case Eigen::NoConvergence: return std::string("Iterative procedure did not converge");
+        case Eigen::InvalidInput: return std::string("The inputs are invalid, or the algorithm has been improperly called");
+        default: return std::string("Unknown ComputationInfo enumerator");
+    }
+}//====================================================
+
 /** \} */ // END of util group
 } // End of astrohelion namespace

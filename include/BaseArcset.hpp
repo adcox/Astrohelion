@@ -121,6 +121,7 @@ public:
 	 *  \{
 	 */
 	std::vector<Constraint> getArcConstraints() const;
+	std::vector<Constraint> getAllConstraints() const;
 	std::vector<ArcPiece> getChronoOrder() const;
 	std::vector<double> getCoord(unsigned int) const;
 	const ControlLaw* getCtrlLawByIx(int) const;

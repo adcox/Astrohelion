@@ -77,7 +77,7 @@ public:
 	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
-	void multShoot_initIterData(MultShootData *it) const;
+	void multShoot_initIterData(MultShootData& it) const;
 	//\}
 	
 	/**

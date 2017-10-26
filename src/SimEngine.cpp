@@ -213,7 +213,7 @@ void SimEngine::setMakeDefaultEvents(bool b){ bMakeDefaultEvents = b; }
  * 
  *  \param t maximum allowable seconds for the numerical integration.
  */
-void SimEngine::setMaxCompTime(int t){ maxCompTime = t; }
+void SimEngine::setMaxCompTime(double t){ maxCompTime = t; }
 
 /**
  *  \brief Specify the number of steps the integrator must take during the 
@@ -789,7 +789,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         }
     }
 
-    startTimestamp = time(nullptr);
+    time(&startTimestamp);  // Get the starting time
 
     // Save tolerance for trajectory
     arcset->setTol(absTol > relTol ? absTol : relTol);
@@ -1121,7 +1121,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         lastSeg.setTerminus(nodeID_f);  // Just update the terminus: final state and time should have already been appended
         lastSeg.updateTOF();
         lastSeg.setSTM(y+core_dim+ctrl_dim, stm_dim);
-    }else if(maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime){
+    }else if(maxCompTime > 0 && difftime(time(nullptr), startTimestamp) > maxCompTime){
         // Ended at the time-out
         // Create a final node and update the final segment
         Node nodeF(y, core_dim, t_int);

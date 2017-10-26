@@ -78,15 +78,19 @@ MultShootEngine::~MultShootEngine(){}
  */
 void MultShootEngine::copyMe(const MultShootEngine &e){
 	Engine::copyBaseEngine(e);
-	verbosity = e.verbosity;//
-	maxIts = e.maxIts;//
-	tol = e.tol;//
-	bFindEvent = e.bFindEvent;//
-	bIgnoreCrash = e.bIgnoreCrash;//
+	verbosity = e.verbosity;
+	maxIts = e.maxIts;
+	tolF = e.tolF;
+	tolX = e.tolX;
+	tolA = e.tolA;
+	bFindEvent = e.bFindEvent;
+	bIgnoreCrash = e.bIgnoreCrash;
 	bIgnoreDiverge = e.bIgnoreDiverge;
 	bFullFinalProp = e.bFullFinalProp;
 	tofTp = e.tofTp;
-	bLineSearchStepSize = e.bLineSearchStepSize;
+	bLineSearchAttenFactor = e.bLineSearchAttenFactor;
+	ls_alpha = e.ls_alpha;
+	ls_maxStepSize = e.ls_maxStepSize;
 }//====================================================
 
 //-----------------------------------------------------
@@ -131,7 +135,7 @@ bool MultShootEngine::doesFullFinalProp() const { return bFullFinalProp; }
  *  \return whether or not the engine conducts a line search to choose
  *  the Newton step size.
  */
-bool MultShootEngine::doesLineSearch() const { return bLineSearchStepSize; }
+bool MultShootEngine::doesLineSearch() const { return bLineSearchAttenFactor; }
 
 /**
  *  \brief Retrieve the maximum permitted error magnitude
@@ -160,7 +164,7 @@ MSTOF_tp MultShootEngine::getTOFType() const{ return tofTp; }
  *	\return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
  */
-double MultShootEngine::getTol() const { return tol; }
+double MultShootEngine::getTol() const { return tolF; }
 
 /**
  *  \brief Set whether or not the engine conducts a line search to choose 
@@ -174,7 +178,7 @@ double MultShootEngine::getTol() const { return tol; }
  * 
  *  \param b 
  */
-void MultShootEngine::setDoLineSearch(bool b){ bLineSearchStepSize = b; }
+void MultShootEngine::setDoLineSearch(bool b){ bLineSearchAttenFactor = b; }
 
 /**
  *  \brief Set whether or not the engine will use a full, variable-step
@@ -224,15 +228,13 @@ void MultShootEngine::setMaxErr(double e){ maxErr = e; }
 void MultShootEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
- *  \brief Set the attenuation scalar and the limiting tolerance
+ *  \brief Set the maximum allowable propagation time for an individual arc
+ *  \details This is the length of time, in seconds, that the simulation engine
+ *  is allowed to work on a single propagated arc
  * 
- *  \param scale Scale the multiple shooting step by this value (multiply)
- *  \param limit Do not scale step if corrector error is below this value
+ *  \param t maximum simulation time for a single propagated arc, in seconds
  */
-void MultShootEngine::setAttenuation(double scale, double limit){
-	attenuation = scale;
-	attenuationLimitTol = limit;
-}//====================================================
+void MultShootEngine::setMaxPropTime(double t){ maxSimTime = t; }
 
 /**
  *  \brief Set the way times-of-flight are encoded (if at all) in the
@@ -248,9 +250,9 @@ void MultShootEngine::setTOFType(MSTOF_tp tp){ tofTp = tp; }
  *	\param d errors below this value will be considered negligible
  */
 void MultShootEngine::setTol(double d){
-	tol = d;
+	tolF = d;
 
-	if(tol > 1)
+	if(tolF > 1)
 		astrohelion::printWarn("MultShootEngine::setTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
@@ -309,12 +311,12 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 
 	// Get the model associated with the nodeset
 	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
-	pModel->multShoot_initDesignVec(&it);
+	pModel->multShoot_initDesignVec(it);
 
 	// Create constraints that enforce continuity between nodes; this process
 	// does account for velocity discontinuities specified in the nodeset
 	it.allCons.clear();
-	pModel->multShoot_createContCons(&it);
+	pModel->multShoot_createContCons(it);
 
 	// Add all node constraints
 	for(unsigned int n = 0; n < set->getNumNodes(); n++){
@@ -366,12 +368,12 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 				break;
 			case Constraint_tp::SP_RANGE:
 				addToRows = 1;
-				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
+				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
 				it.slackAssignCon.push_back(c);
 				it.numSlack++;
 				break;
 			case Constraint_tp::SP_MAX_DIST:
-				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
+				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
 				it.slackAssignCon.push_back(c);
 				it.numSlack++;
 			case Constraint_tp::SP_DIST:
@@ -381,7 +383,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 			case Constraint_tp::MIN_DIST:
 			case Constraint_tp::ENDSEG_MAX_DIST:
 			case Constraint_tp::ENDSEG_MIN_DIST:
-				it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
+				it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
 				it.slackAssignCon.push_back(c);	// remember where this slack variable is hiding
 				it.numSlack++;
 				// do NOT break here, continue on to do stuff for Constraint_tp::DIST as well
@@ -400,7 +402,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 						 * of which constraint it is assigned to; value of slack
 						 * variable will be recomputed later
 						 */
-						it.X.push_back(pModel->multShoot_getSlackVarVal(&it, con));
+						it.X.push_back(pModel->multShoot_getSlackVarVal(it, con));
 						it.numSlack++;
 						it.slackAssignCon.push_back(c);
 					}
@@ -484,10 +486,13 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	// create a simulation engine
 	SimEngine simEngine;
-	simEngine.setVerbosity(static_cast<Verbosity_tp>(static_cast<int>(verbosity) - 1));
+	if(verbosity >= Verbosity_tp::DEBUG)
+		simEngine.setVerbosity(static_cast<Verbosity_tp>(static_cast<int>(verbosity) - 1));
+	else
+		simEngine.setVerbosity(Verbosity_tp::NO_MSG);
 	
 	// Set both tolerances of simulation engine to be three orders of magnitude less corrector
-	double simTol = tol/1000 < 1e-15 ? 1e-15 : tol/1000;
+	double simTol = tolF/1000 < 1e-15 ? 1e-15 : tolF/1000;
 	simEngine.setAbsTol(simTol);
 	simEngine.setRelTol(simTol);
 
@@ -497,23 +502,27 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	simEngine.setVarStepSize(false);
 	simEngine.setNumSteps(2);
 
+	if(maxSimTime > 0)
+		simEngine.setMaxCompTime(maxSimTime);
+
 	if(bFindEvent || bIgnoreCrash){
 		simEngine.setMakeDefaultEvents(false);	// don't use crash events when searching for an event
 	}
 
 	// Define values for use in corrections loop
-	double err = 10*tol;
+	double errF = 10*tolF, errX = 10*tolX;
 	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), FX(it.totalCons, 1);
 
-	while( err < maxErr && err > tol && it.count < maxIts){
+	// Loop through iterations; error checking is done inside the loop
+	while(it.count < maxIts){
 		if(it.count > 0){
 			// Solve for newX and copy into working vector X
 			oldX = Eigen::Map<Eigen::VectorXd>(&(it.X[0]), it.totalFree, 1);
 			
 			try{
-				solveUpdateEq(&it, &oldX, &FX, &newX);
+				solveUpdateEq(it, oldX, FX, newX);
 			}catch(LinAlgException &e){
 				throw e;	// Rethrow error
 			}
@@ -529,40 +538,50 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		it.DF_elements.reserve(it.totalCons * coreStateSize);
 
 		// Fill each trajectory object with a propagated arc
-		propSegsFromFreeVars(&it, &simEngine);
+		propSegsFromFreeVars(it, simEngine);
 		// waitForUser();
 
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
 		for(unsigned int c = 0; c < it.allCons.size(); c++){
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(&it, it.allCons[c], c);
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(it, it.allCons[c], c);
 			printVerb(verbosity >= Verbosity_tp::DEBUG, "* Applying %s constraint\n", it.allCons[c].getTypeStr());
 		}
 
 		// Check to see what the error is; if it's too high, update X and continue another iteration
 		FX = Eigen::Map<Eigen::VectorXd>(&(it.FX[0]), it.totalCons, 1);
-		double err_cons = FX.norm();
+		errF = FX.norm();
 
-		if(verbosity >= Verbosity_tp::ALL_MSG)
-			reportConMags(&it);
+		if(verbosity >= Verbosity_tp::DEBUG)
+			reportConMags(it);
 
 		// Compute error: difference between subsequent free variable vectors
-		// Eigen::VectorXd diff = newX - oldX;
-		// double err_it = diff.norm();
-
-		// Choose the lower of the two?
-		// err = err_cons < err_it ? err_cons : err_it;
-		// std::string errType = err_cons < err_it ? "||F||" : "||X - X_old||";
-		err = err_cons;
-		std::string errType = "||F||";
+		if(it.count > 0){
+			Eigen::VectorXd diff = newX - oldX;
+			errX = diff.norm();
+		}
 
 		it.count++;
-		astrohelion::printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG), YELLOW, "Iteration %02d: err = %.8e (%s)\n",
-			it.count, err, errType.c_str());
+		astrohelion::printVerbColor((bFindEvent && verbosity >= Verbosity_tp::ALL_MSG) || (!bFindEvent && verbosity > Verbosity_tp::NO_MSG),
+			YELLOW, "It %02d : ||F(X)|| = %6.4e / %4.2e : ||dX|| = %6.4e / %4.2e\n", it.count, errF, tolF, errX, tolX);
+
+		// End the iterations if the constraint error grows too large or if
+		// the constraint error or step size reaches the desired precision
+		if(errF > maxErr || errF < tolF || errX < tolX)
+			break;
 	}// end of corrections loop
 
-	if((err > maxErr || err > tol) && !bIgnoreDiverge){
-		throw DivergeException();
+	if(!bIgnoreDiverge){
+		if( (errF > maxErr) || (errF > tolF && errX > tolX)){
+			char msg[256];
+			if(errF > maxErr){
+				sprintf(msg, "MultShootEngine: Diverged! Constraint Error = %e > maxErr = %e", errF, maxErr);
+			}else{
+				sprintf(msg, "MultShootEngine: Diverged! Constraint Error = %e > tolF = %e", errF, tolF);
+			}
+
+			throw DivergeException(msg);
+		}
 	}
 
 	if(it.nodesOut){
@@ -570,11 +589,11 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 			// Save propagated data and free variable vector values to the output arcset
 			if(bFullFinalProp){
 				simEngine.setVarStepSize(true);
-				propSegsFromFreeVars(&it, &simEngine);
+				propSegsFromFreeVars(it, simEngine);
 			}
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(&it);
+			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
 		}catch(Exception &e){
-			astrohelion::printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
+			printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
 			throw e;
 		}
 	}
@@ -587,41 +606,41 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
  *  \details Initial conditions and other parameters for each integrated
  *  arc are obtained from the free variable vector or the input nodeset
  * 
- *  \param pIt Pointer to the multiple shooting data structure
- *  \param pSim Pointer to a simulalation engine initialized for multiple
+ *  \param it reference to the multiple shooting data structure
+ *  \param sim reference to a simulalation engine initialized for multiple
  *  shooting propagations
  */
-void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
-	unsigned int coreStateSize = pIt->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim){
+	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
-	pIt->deltaVs.clear();
-	pIt->deltaVs.assign(3*pIt->numNodes, 0);
+	it.deltaVs.clear();
+	it.deltaVs.assign(3*it.numNodes, 0);
 
 	// initialize a vector of trajectory objects to store each propagated segment
-	pIt->propSegs.clear();
-	pIt->nodesIn->getSysData()->getDynamicsModel()->multShoot_initIterData(pIt);
+	it.propSegs.clear();
+	it.nodesIn->getSysData()->getDynamicsModel()->multShoot_initIterData(it);
 
-	for(unsigned int s = 0; s < pIt->nodesIn->getNumSegs(); s++){
+	for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
 		// printf("Retrieving ICs for segment (ix %02d):\n", s);
 		// Get simulation conditions from design vector via dynamic model implementation
 		double t0 = 0, tof = 0;
 		std::vector<double> ic(coreStateSize, 0);
 
-		ControlLaw *pLaw = pIt->nodesIn->getSegRefByIx_const(s).getCtrlLaw();
+		ControlLaw *pLaw = it.nodesIn->getSegRefByIx_const(s).getCtrlLaw();
 		std::vector<double> ctrl0;
 		if(pLaw){
 			ctrl0.assign(pLaw->getNumStates(), 0);
 		}
 
-		pIt->nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(pIt, pIt->nodesIn->getSegRefByIx_const(s).getID(),
+		it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(it, it.nodesIn->getSegRefByIx_const(s).getID(),
 			&(ic.front()), &(ctrl0.front()), &t0, &tof);
 
-		pSim->setRevTime(tof < 0);
+		sim.setRevTime(tof < 0);
 		
-		printVerb(verbosity >= Verbosity_tp::DEBUG, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
+		printVerbColor(verbosity >= Verbosity_tp::DEBUG, MAGENTA, "Simulating segment %d:\n  t0 = %.4f\n  tof = %.4f\n", s, t0, tof);
 
 		try{
-			pSim->runSim(ic, ctrl0, t0, tof, &(pIt->propSegs[s]), pLaw);
+			sim.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), pLaw);
 		}catch(DivergeException &e){
 			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
 		}catch(Exception &e){
@@ -629,29 +648,29 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
 		}
 
 		// if(verbosity >= Verbosity_tp::DEBUG){
-		// 	pIt->propSegs[s].print();
+		// 	it.propSegs[s].print();
 		// }
 
-		std::vector<double> lastState = pIt->propSegs[s].getStateByIx(-1);
-		int termID = pIt->nodesIn->getSegRefByIx_const(s).getTerminus();
+		std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
+		int termID = it.nodesIn->getSegRefByIx_const(s).getTerminus();
 		if(termID != Linkable::INVALID_ID){
 
 			// Get the state of the terminal node
-			MSVarMap_Obj stateVar = pIt->getVarMap_obj(MSVar_tp::STATE, termID);
+			MSVarMap_Obj stateVar = it.getVarMap_obj(MSVar_tp::STATE, termID);
 			std::vector<double> state;
 			if(stateVar.row0 == -1)
-				state = pIt->nodesIn->getState(termID);
+				state = it.nodesIn->getState(termID);
 			else
-				state = std::vector<double>(pIt->X.begin() + stateVar.row0, pIt->X.begin() + stateVar.row0 + stateVar.nRows);
+				state = std::vector<double>(it.X.begin() + stateVar.row0, it.X.begin() + stateVar.row0 + stateVar.nRows);
 
 			// velCon has false for a velocity state if there is a discontinuity between
 			// the terminus of the segment and the terminal node
-			std::vector<bool> velCon = pIt->nodesIn->getSegRefByIx_const(s).getVelCon();
+			std::vector<bool> velCon = it.nodesIn->getSegRefByIx_const(s).getVelCon();
 			for(int i = 3; i < 6; i++){
 				// Compute difference in velocity; if velCon[i-3] is true, then velocity
 				// should be continuous and any difference is numerical error, so set to
 				// zero by multiplying by not-true
-				pIt->deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - state[i]);
+				it.deltaVs[s*3+i-3] = !velCon[i-3]*(lastState[i] - state[i]);
 			}
 		}
 	}
@@ -686,27 +705,29 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData *pIt, SimEngine *pSim){
  *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
- *	\param pIt pointer to the MultShootData object associated with the corrections process
- *	\param pOldX constant pointer to the current (previous) design vector
- *	\param pFX constant pointer to the current constraint vector
- *	\param pNewX pointer to a vector in which to store the updated design variable vector
+ *	\param it reference to the MultShootData object associated with the corrections process
+ *	\param oldX constant reference to the current (previous) design vector
+ *	\param FX constant reference to the current constraint vector
+ *	\param newX reference to a vector in which to store the updated design variable vector
  *	
  *	\throws LinAlgException if the problem is over constrained (i.e. Jacobian has more rows than columns);
- *	This can be updated to use a least-squares solution (TODO)
+ *	\todo This can be updated to use a least-squares solution
  */
-void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* pOldX, const Eigen::VectorXd *pFX, Eigen::VectorXd *pNewX){
-	Eigen::VectorXd fullStep(pIt->totalFree, 1);	// Create a vector to put the solution in
-
-	if(pIt->totalCons == 1 && pIt->totalFree == 1){
+void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& oldX, const Eigen::VectorXd& FX, Eigen::VectorXd& newX){
+	if(it.totalCons == 1 && it.totalFree == 1){
 		// If Jacobian is 1x1, skip all that linear algebra and just solve the equation
-		fullStep = -(*pFX)/(pIt->DF_elements[0].value());
+		newX = oldX - FX/(it.DF_elements[0].value());	// Update the design variable vector
 	}else{
 		// Jacobian is not scalar; use linear algebra to solve update equation
-		SparseMatXCd J(pIt->totalCons, pIt->totalFree);
-		J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
+
+		Eigen::VectorXd fullStep(it.totalFree, 1);	// Create a vector to put the solution in
+		
+		// Construct the sparse Jacobian matrix
+		SparseMatXCd J(it.totalCons, it.totalFree);
+		J.setFromTriplets(it.DF_elements.begin(), it.DF_elements.end());
 		J.makeCompressed();
 		
-		if(pIt->totalCons == pIt->totalFree){	// J is square, use regular inverse
+		if(it.totalCons == it.totalFree){	// J is square, use regular inverse
 
 			/* Use LU decomposition to invert the Jacobian matrix and find a vector
 			w. Multiplying J^T by w yields the minimum-norm solution x, where x 
@@ -719,25 +740,10 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 			// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
 
 			// Solve the system Jw = b (In this case, w = fullStep)
-			Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
-			luSolver.analyzePattern(J);
-			luSolver.factorize(J);
-			if(luSolver.info() != Eigen::Success){
-				checkDFSingularities(J);
-				std::string err = eigenCompInfo2Str(luSolver.info());
-				char msg[128];
-				sprintf("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix\nluSolver -> %s\n", 
-					err.c_str());
-				throw LinAlgException(msg);
-			}
+			factorizeJacobian(J, FX, fullStep);
 
-			fullStep = luSolver.solve(-(*pFX));
-			if(luSolver.info() != Eigen::Success){
-				checkDFSingularities(J);
-				throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation");
-			}
 		}else{
-			if(pIt->totalCons < pIt->totalFree){	// Under-constrained
+			if(it.totalCons < it.totalFree){	// Under-constrained
 
 				/* Use LU decomposition to invert the Gramm matrix and find a vector
 				w. Multiplying J^T by w yields the minimum-norm solution x, where x 
@@ -750,45 +756,19 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 				SparseMatXCd JT = J.transpose();
 				SparseMatXCd G = J*JT;		// G will always be symmetric
 
-				// astrohelion::toCSV(J, "DF_cpp.csv");
-				// astrohelion::toCSV(FX, "FX_cpp.csv");
-				// astrohelion::toCSV(oldX, "X_cpp.csv");
+				// toCSV(J, "DF_cpp.csv");
+				// toCSV(FX, "FX_cpp.csv");
+				// toCSV(oldX, "X_cpp.csv");
 
 				// Solve the system Gw = b
-				// LU-Factorization is faster and works most of the time
-				Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
-				luSolver.compute(G);	
-				if(luSolver.info() != Eigen::Success){
-					// If LU factorization fails, try QR factorization - it tends to be more robust
-					printVerb(verbosity >= Verbosity_tp::ALL_MSG, "LU Factorization failed, trying QR factorization to solve update equation.\n");
-					Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
-					qrSolver.compute(G);
-					if(qrSolver.info() != Eigen::Success){
-						checkDFSingularities(J);
-						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not factorize Gramm matrix.");
-					}
-
-					Eigen::VectorXd w = qrSolver.solve(-(*pFX));
-					if(qrSolver.info() != Eigen::Success){
-						checkDFSingularities(J);
-						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
-					}
-
-					fullStep = JT*w;	// Compute optimal step from w
-				}else{
-
-					Eigen::VectorXd w = luSolver.solve(-(*pFX));
-					if(luSolver.info() != Eigen::Success){
-						checkDFSingularities(J);
-						throw LinAlgException("MultShootEngine::solveUpdateEq: Could not solve update equation (Gramm)");
-					}
-					fullStep = JT*w;	// Compute optimal step from w
-				}
+				Eigen::VectorXd w(G.cols(), 1);
+				factorizeJacobian(G, FX, w);
+				fullStep = JT*w;
 
 				// Alternative Method: SVD
 				// NOTE: This takes approximately five times as much computation time
 				// JacobiSVD<MatrixXd> svd(JT, Eigen::ComputeFullV | Eigen::ComputeFullU);
-				// svd.setThreshold(tol/100.f);
+				// svd.setThreshold(tolF/100.f);
 
 				// MatrixXd singVals = svd.singularValues();
 				// double svdTol = (1e-12)*singVals(0);	// First singular value is the biggest one
@@ -802,97 +782,193 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 
 			}else{	// Over-constrained
 				throw LinAlgException("MultShootEngine::solveUpdateEq: System is over constrained... No solution implemented");
-			}
+			}			
 		}
-	}
 
-	if(bLineSearchStepSize){
-		chooseStep_LineSearch(pIt, pOldX, pFX, &fullStep, pNewX);
-	}else{
-		double scale = pFX->norm() < attenuationLimitTol ? 1.0 : attenuation;
-		*pNewX = *pOldX + scale*fullStep;	// newX = oldX + fullStep
+		if(bLineSearchAttenFactor){
+			bool checkLocalMin = false;
+			chooseStep_LineSearch(it, oldX, FX, J, fullStep, newX, checkLocalMin);
+
+			// This algorithm to check for the local min is lifted directly from the NumericalRecipes book,
+			// section 9.7 in the `newt` function example
+			if(checkLocalMin){
+				double f = 0.5*FX.transpose()*FX;	// half the magnitude of the constraint vector
+				double test = 0, temp = 0, denom = std::max(f, 0.5*FX.rows());
+				Eigen::RowVectorXd grad_f = FX.transpose() * J;
+				for(unsigned int i = 0; i < FX.rows(); i++){
+					temp = std::abs(grad_f(i)) * std::max(newX(i), 1.0) / denom;
+					if(temp > test)
+						test = temp;
+				}
+
+				if(test < tolA){
+					throw LinAlgException("MultShootEngine:solveUpdateEq: The line search has converged to a local minimum of f = (1/2) FX * FX. Try another initial guess for the design vector");
+				}
+			}
+		}else{
+			newX = oldX + fullStep;	// Update the design variable vector
+		}
 	}
 }// End of solveUpdateEq() ============================
 
-void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::VectorXd* pOldX, const Eigen::VectorXd *pOldFX,
-	const Eigen::VectorXd *pFullStep, Eigen::VectorXd *pNewX){
+/**
+ *  \brief Apply LU and/or QR factorization to solve the update equation
+ *  \details LU factorization is attempted first; if this fails, QR factorization
+ *  is attempted as it can be more robust
+ * 
+ *  \param J the Jacobian (or Gramm) matrix that needs to be factorized to solve the update equation
+ *  \param FX constant reference to the current constraint vector
+ *  \param out the solution to the equation J*out = FX
+ */
+void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::VectorXd& FX, Eigen::VectorXd &out){
+	// Construct an LU Solver
+	Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
+	luSolver.compute(J);
+	if(luSolver.info() != Eigen::Success){
+		// If LU factorization fails, try QR factorization - it tends to be more robust, though slower
+		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "LU Factorization failed, trying QR factorization to solve update equation.\n");
+		Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
+		
+		qrSolver.compute(J);
+		if(qrSolver.info() != Eigen::Success){
+			checkDFSingularities(J);
+			std::string err = eigenCompInfo2Str(qrSolver.info());
+			char msg[256];
+			sprintf(msg, "MultShootEngine::factorizeJacobian: Could not factorize Jacobian matrix.\nEigen error: %s\n", err.c_str());
+			throw LinAlgException(msg);
+		}else{
+			// If the QR decomposition was successful, solve the equation
+			out = qrSolver.solve(-FX);
+			if(qrSolver.info() != Eigen::Success){
+				checkDFSingularities(J);
+					std::string err = eigenCompInfo2Str(qrSolver.info());
+					char msg[256];
+					sprintf(msg, "MultShootEngine::factorizeJacobian: Could not solve update equation (Jacobian)\nEigen error: %s\n", err.c_str());
+					throw LinAlgException(msg);
+			}
+		}
+	}else{
+		// If the LU decomposition was successful, solve the equation
+		out = luSolver.solve(-FX);
+		if(luSolver.info() != Eigen::Success){
+			checkDFSingularities(J);
+			std::string err = eigenCompInfo2Str(luSolver.info());
+			char msg[256];
+			sprintf(msg, "MultShootEngine::factorizeJacobian: Could not solve update equation (Gramm)\nEigen error: %s\n", err.c_str());
+			throw LinAlgException(msg);
+		}
+	}
+}//====================================================
 
-	// Fixed parameters
-	double maxStepSize = 100;
-	double alpha = 1e-4;
+/**
+ *  \brief Use a line search to scale the Newton step to ensure convergence
+ *  \details Leveraging this method vastly improves the convergence behavior
+ *  of the standard Newton-Raphson solver by scaling the default Newton step
+ *  to ensure that each iteration is closer to the solution than the last. 
+ *  
+ *  This method uses the line search and backtracking algorithm detailed in 
+ *  section 9.7, "Globally Convergent Methods for Nonlinear Systems of Equations"
+ *  in the book, Numerical Recipes in C: The Art of Scientific Computing. The 
+ *  implementation details are included in my MathSpec document.
+ *  
+ *  The algorithm uses information from the current and previous iteration to scale 
+ *  the full Newton step and compute a new design vector, which is stored in
+ *  the vector that newX references
+ * 
+ *  \param it reference to the current iteration data object. This stores the current
+ *  constraint vector elements, Jacobian matrix elements, and design vector elements, 
+ *  among other variables.
+ *  \param oldX reference to the previous iteration's design vector
+ *  \param oldFX reference to the previous iteration's constraint vector
+ *  \param J reference to the Jacobian matrix, in compressed form
+ *  \param fullStep reference to the full Newton step computed in solveUpdateEq()
+ *  \param newX pointer to a vector to store the new design vector in. 
+ *  \param checkLocalMin pointer to a boolean that is set to true if 
+ *  X_old and X_new are too close to one another. In a minimization algorithm this usually 
+ *  signals convergence and can be ignored. In a root-finding algorithm, this should trigger
+ *  additional checks.
+ */
+void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::VectorXd& oldX, const Eigen::VectorXd& oldFX,
+	const SparseMatXCd &J, const Eigen::VectorXd& fullStep, Eigen::VectorXd& newX, bool& checkLocalMin){
 
-	double f_old = 0.5*pOldFX->norm();
+	double f_old = 0.5*oldFX.norm();
+	checkLocalMin = false;
 
 	// Initialize full step
-	Eigen::VectorXd fullStep = *pFullStep;
+	Eigen::VectorXd fullStep_scaled = fullStep;
 	
 	// Scale if attempted step is too big (i.e., if there is some unbounded thing going on)
-	if(fullStep.norm() > maxStepSize){
-		fullStep *= maxStepSize/fullStep.norm();
+	if(fullStep_scaled.norm() > ls_maxStepSize){
+		fullStep_scaled *= ls_maxStepSize/fullStep_scaled.norm();
 	}
 
-	SparseMatXCd J(pIt->totalCons, pIt->totalFree);
-	J.setFromTriplets(pIt->DF_elements.begin(), pIt->DF_elements.end());
-	J.makeCompressed();
-
-	Eigen::VectorXd slopeProd = J.transpose() * (*pOldFX);
-	slopeProd = slopeProd.transpose() * (*pFullStep);
+	// Compute the gradient of the constraint vector magnitude; this is the initial rate of decrease
+	Eigen::RowVectorXd slopeProd = oldFX.transpose() * J;
+	slopeProd = slopeProd * fullStep_scaled;
 	assert(slopeProd.rows() == 1 && slopeProd.cols() == 1);
-	double slope = slopeProd(0);
+	double initROD = slopeProd(0);	// initial rate of decrease
 
-	if(slope >= 0.0){
-		throw DivergeException("MultShootEngine::updateFreeVarVec: Slope is positive... roundoff error in line search.\n");
+	if(initROD >= 0.0){
+		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "  Line search: initROD = %e >= 0... roundoff error in update\n", initROD);
+		
+		// Use the analytical initial rate of descent by bypassing the update equation
+		initROD = -1 * oldFX.transpose() * oldFX;
+		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BLUE, "  Line Search: Using analytical solution for initROD = %e\n", initROD);
+		// throw DivergeException(msg);
 	}
 
 	// Compute min step size
 	double big = 0, temp = 0;
-	for(unsigned int i = 0; i < fullStep.rows(); i++){
-		temp = std::abs(fullStep(i))/std::max(std::abs((*pOldX)(i)), 1.0);
+	for(unsigned int i = 0; i < fullStep_scaled.rows(); i++){
+		temp = std::abs(fullStep_scaled(i))/std::max(std::abs(oldX(i)), 1.0);
 		if(temp > big)
 			big = temp;
 	}
-	double minStep = 1e-7/big;
-	double step = 1;
+	double minLambda = tolX/big;	// smallest permissible attenuation factor
+	double lambda = 1;				// attenuation factor begins at 1
 
-	printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Line Search: Minimum Step Size = %.4e\n", minStep);
+	printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, "  Line Search: Minimum attenuation factor = %.4e\n", minLambda);
 
 	// Set up a simulation engine to propagate segments
 	SimEngine sim;
-	double simTol = tol/1000 < 1e-15 ? 1e-15 : tol/1000;
+	double simTol = tolF/1000 < 1e-15 ? 1e-15 : tolF/1000;
 	sim.setAbsTol(simTol);
 	sim.setRelTol(simTol);
 	sim.setVarStepSize(false);
 	sim.setNumSteps(2);
 	sim.setMakeDefaultEvents(false);
-	sim.setVerbosity(static_cast<Verbosity_tp>(to_underlying(verbosity)-1));
+	if(verbosity >= Verbosity_tp::DEBUG)
+		sim.setVerbosity(static_cast<Verbosity_tp>(static_cast<int>(verbosity) - 1));
+	else
+		sim.setVerbosity(Verbosity_tp::NO_MSG);
 	
 	unsigned int maxCount = 10;		// Max number of line search iterations
-	double tempStep = 1;			// Storage for the next step size
-	double step2 = 1;				// Step size from the previous iteration of the line search
+	double lambda_next = 1;			// Storage for the next step size
+	double lambda_prev = 1;			// Step size from the previous iteration of the line search
 	double f = 1;					// Error term for the current iteration
-	double f2 = 1;;					// Error term from the previous iteration of the line search
+	double f2 = 1;					// Error term from the previous iteration of the line search
 
-	unsigned int coreDim = pIt->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreDim = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	for(unsigned int count = 0; count < maxCount; count++){
-		// Compute next free variable vector give the current step size
-		*pNewX = *pOldX + step * fullStep;
+		// Compute next free variable vector give the current attenuation factor
+		newX = oldX + lambda * fullStep_scaled;
 
 		// Compute an updated constraint vector
-		MultShootData tempData = *pIt;
+		MultShootData tempData(it);
 		tempData.FX.clear();
 		tempData.FX.assign(tempData.totalCons, 0);
 		tempData.DF_elements.clear();
 		tempData.DF_elements.reserve(tempData.totalCons * coreDim);
 
 		// Update free variable vector in the temporary data object
-		assert(pNewX->rows() > 1 && pNewX->cols() == 1);
-		tempData.X = std::vector<double>(pNewX->data(), pNewX->data() + pNewX->rows());
+		assert(newX.rows() > 1 && newX.cols() == 1);
+		tempData.X = std::vector<double>(newX.data(), newX.data() + newX.rows());
 		
 		// Do all those expensive function evaluations
-		propSegsFromFreeVars(&tempData, &sim);
+		propSegsFromFreeVars(tempData, sim);
 		for(unsigned int c = 0; c < tempData.allCons.size(); c++){
-			tempData.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(&tempData, tempData.allCons[c], c);
+			tempData.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(tempData, tempData.allCons[c], c);
 		}
 
 		// Compute magnitude of new FX vector
@@ -901,60 +977,64 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData* pIt, const Eigen::Vec
 			temp += tempData.FX[i]*tempData.FX[i];
 		}
 		// Scaled norm of the constraint vector (an error metric)
-		f = 0.5*sqrt(temp);
+		f = 0.5*temp;
 
-		if(step < minStep){
+		if(lambda < minLambda){
+			// Apparently, the "optimal" attenuation factor is approaching zero
+			// Thus, the update delta X is zero, i.e., we've converged on X_old
 			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, RED, "  Line search decreased past minimum bound.\n");
+			newX = oldX;
+			checkLocalMin = true;
 			return;
 		}
 
 
-		if(f <= f_old + alpha*step*slope){
-			printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Line Search: Step Size = %.4e (%u its)\n", step, count);
+		if(f <= f_old + ls_alpha*lambda*initROD){
+			printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, BLUE, "  Line Search: attenuation factor = %.4e (%u its)\n", lambda, count);
 			return;	// We're all set, so return!
 		}else{	// Need to backtrack
 			if(count == 0){
-				// Approximate step-size as a quadratic, find step size that yields better guess
-				tempStep = -slope/(2.0*(f - f_old - slope));
+				// Approximate step-size as a quadratic, find attenuation factor that yields better guess
+				lambda_next = -initROD/(2.0*(f - f_old - initROD));
 			}else{
 				// Approximate step-size as a cubic
-				double term1 = f - f_old - step*slope;
-				double term2 = f2 - f_old - step2*slope;
-				double a = (term1/(step*step) - term2/(step2*step2))/(step - step2);
-				double b = (-step2*term1/(step*step) + step*term2/(step2*step2))/(step - step2);
+				double term1 = f - f_old - lambda*initROD;
+				double term2 = f2 - f_old - lambda_prev*initROD;
+				double a = (term1/(lambda*lambda) - term2/(lambda_prev*lambda_prev))/(lambda - lambda_prev);
+				double b = (-lambda_prev*term1/(lambda*lambda) + lambda*term2/(lambda_prev*lambda_prev))/(lambda - lambda_prev);
 
 				if(a == 0){
-					tempStep = -slope/(2.0*b);
+					lambda_next = -initROD/(2.0*b);
 				}else{
-					double disc = b*b - 3*a*slope;
+					double disc = b*b - 3*a*initROD;
 					if(disc < 0){
-						tempStep = 0.5*step;
+						lambda_next = 0.5*lambda;
 					}else if(b <= 0){
-						tempStep = (-b + sqrt(disc))/(3.0*a);
+						lambda_next = (-b + sqrt(disc))/(3.0*a);
 					}else{
-						tempStep = -slope/(b + sqrt(disc));
+						lambda_next = -initROD/(b + sqrt(disc));
 					}
 
-					// Ensure that step size decreases by at least a factor of 2
-					if(tempStep > 0.5*step){
-						tempStep = 0.5*step;
+					// Ensure that attenuation factor decreases by at least a factor of 2
+					if(lambda_next > 0.5*lambda){
+						lambda_next = 0.5*lambda;
 					}
 				}
 			}
 
 			// Update storage for next iteration
-			step2 = step;
+			lambda_prev = lambda;
 			f2 = f;
 
-			// Ensure that step size decreases by no more than 90%
-			step = std::max(tempStep, 0.1*step);
+			// Ensure that attenuation factor decreases by no more than 90%
+			lambda = std::max(lambda_next, 0.1*lambda);
 		}
 	}
 
-	if(f <= f_old + alpha*step*slope)
-		throw DivergeException("MultShootEngine::updateFreeVarVec: Line search for step size diverged.");
+	if(f <= f_old + ls_alpha*lambda*initROD)
+		throw DivergeException("MultShootEngine::updateFreeVarVec: Line search for attenuation factor diverged.");
 
-	printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  Line Search: Step Size = %.4e (%d its)\n", step, maxCount);
+	printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BLUE, "  Line Search: attenuation factor = %.4e (%d its)\n", lambda, maxCount);
 }//====================================================
 
 /**
@@ -992,18 +1072,18 @@ void MultShootEngine::checkDFSingularities(MatrixXRd DF){
  *  \brief Print out the magnitude of each constraint.
  *  \details This can be useful when debugging to highlight which constraints are unsatisfied
  * 
- *  \param pIt pointer to an MultShootData object associated with a corrections process
+ *  \param it reference to an MultShootData object associated with a corrections process
  */
-void MultShootEngine::reportConMags(const MultShootData *pIt){
+void MultShootEngine::reportConMags(const MultShootData& it){
 	unsigned int conCount = 0;
-	for(unsigned int r = 0; r < (pIt->FX.size()); r++){
-        if(r == 0 && pIt->totalCons > 0){
-            printf("Node %d %s Constraint:\n", pIt->allCons[conCount].getID(), pIt->allCons[conCount].getTypeStr());
-        }else if(conCount < pIt->allCons.size() && r >= static_cast<unsigned int>(pIt->conRows[conCount+1])){
+	for(unsigned int r = 0; r < (it.FX.size()); r++){
+        if(r == 0 && it.totalCons > 0){
+            printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
+        }else if(conCount < it.allCons.size() && r >= static_cast<unsigned int>(it.conRows[conCount+1])){
             conCount++;
-            printf("Node %d %s Constraint:\n", pIt->allCons[conCount].getID(), pIt->allCons[conCount].getTypeStr());
+            printf("Node %d %s Constraint:\n", it.allCons[conCount].getID(), it.allCons[conCount].getTypeStr());
         }
-        printf("  ||row %03u||: %.6e\n", r, std::abs(pIt->FX[r]));
+        printf("  ||row %03u||: %.6e\n", r, std::abs(it.FX[r]));
     }
 }//===============================================================
 
@@ -1022,17 +1102,18 @@ void MultShootEngine::reset(){
 	if(!bIsClean)
 		cleanEngine();
 
-	// bVarTime = true;
-	// bEqualArcTime = false;
 	tofTp = MSTOF_tp::VAR_FREE;
 	maxIts = 20;
-	tol = 1e-12;
+	maxSimTime = -1;
+	tolF = 1e-12;
+	tolX = 1e-14;
+	tolA = 1e-12;
 	bFindEvent = false;
 	bIgnoreCrash = false;
 	bIgnoreDiverge = false;
 	bFullFinalProp = true;
-	attenuation = 1;
-	attenuationLimitTol = 1e-8;
+	ls_alpha = 1e-4;
+	ls_maxStepSize = 100;
 }//====================================================
 
 /**
@@ -1267,15 +1348,15 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
 /**
  *  \brief Compute the total delta-V along a corrected nodeset
  * 
- *  \param pIt pointer to an MultShootData object associated with a corrections process
+ *  \param it reference to an MultShootData object associated with a corrections process
  *  \return the total delta-V, units consistent with the nodeset's stored velocity states
  */
-double MultShootEngine::getTotalDV(const MultShootData *pIt){
+double MultShootEngine::getTotalDV(const MultShootData& it){
     double total = 0;
-    for(unsigned int n = 0; n < pIt->deltaVs.size()/3; n++){
-        total += sqrt(pIt->deltaVs[3*n + 0]*pIt->deltaVs[3*n + 0] +
-            pIt->deltaVs[3*n + 1]*pIt->deltaVs[3*n + 1] + 
-            pIt->deltaVs[3*n + 2]*pIt->deltaVs[3*n + 2]);
+    for(unsigned int n = 0; n < it.deltaVs.size()/3; n++){
+        total += sqrt(it.deltaVs[3*n + 0]*it.deltaVs[3*n + 0] +
+            it.deltaVs[3*n + 1]*it.deltaVs[3*n + 1] + 
+            it.deltaVs[3*n + 2]*it.deltaVs[3*n + 2]);
     }
     return total;
 }//=====================================================

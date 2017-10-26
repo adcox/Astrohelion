@@ -235,7 +235,7 @@ class SimEngine : public Core, public Engine{
 		void setAbsTol(double);
 		void setFixStepInteg(Integ_tp);
 		void setMakeDefaultEvents(bool);
-		void setMaxCompTime(int);
+		void setMaxCompTime(double);
 		void setNumSteps(int);
 		void setSimpleInt(bool);
 		void setRelTol(double);
@@ -324,10 +324,10 @@ class SimEngine : public Core, public Engine{
 		double numSteps = 1000;
 
 		/** Number of seconds allowed for integration; set to -1 to allow unlimitted computation time */
-		int maxCompTime = -1;
+		double maxCompTime = -1;
 
 		/** Timestamp at integration start */
-		int startTimestamp = 0;
+		time_t startTimestamp = 0;
 
 		/** Integrator to use for variable step-size propagations; Default is RK8PD */
 		Integ_tp varStep_integ = Integ_tp::RK8PD;

@@ -135,11 +135,11 @@ std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *
 
 /**
  *  \brief Perform model-specific initializations on the MultShootData object
- *  \param it pointer to the object to be initialized
+ *  \param it a reference to the object to be initialized
  */
-void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData *it) const{
-    Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it->nodesIn->getSysData()));
-    it->propSegs.assign(it->nodesIn->getNumSegs(), traj);
+void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData& it) const{
+    Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it.nodesIn->getSysData()));
+    it.propSegs.assign(it.nodesIn->getNumSegs(), traj);
 }//====================================================
 
 //------------------------------------------------------------------------------------------------------

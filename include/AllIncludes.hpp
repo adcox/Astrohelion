@@ -21,6 +21,7 @@
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "Family_PO.hpp"
+#include "Family_PO_cr3bp.hpp"
 #include "LinMotionEngine_cr3bp.hpp"
 #include "LinMotionEngine_cr3bp_lt.hpp"
 #include "MultShootData.hpp"

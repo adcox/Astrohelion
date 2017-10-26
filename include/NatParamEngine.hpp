@@ -69,6 +69,8 @@ public:
 	 */
 	void setCurveFitMem(unsigned int);
 	void setNumSimple(unsigned int);
+	void setNoSearchMaxIts(unsigned int);
+	void setLineSearchMaxIts(unsigned int);
 	void setSlopeThresh(double);
 	void setStep_simple(double);
 	void setStep_fitted_1(double);
@@ -107,7 +109,7 @@ private:
 	bool decreaseStepSize();
 	std::vector<double> familyCont_LS(unsigned int, double, std::vector<unsigned int>, std::vector<double>);
 	void increaseStepSize(unsigned int);
-	bool updateIC(const Arcset&, std::vector<double>*, double*, const std::vector<unsigned int>&,
+	bool updateIC(const Arcset&, std::vector<double>&, double&, const std::vector<unsigned int>&,
 		const std::vector<unsigned int>&, const std::vector<Arcset>&);
 	//\}
 
@@ -117,9 +119,10 @@ private:
 	double deltaVar2 = 1;					//!< Change in independent variable #2 during continuation
 	double indVarSlope = 1;					//!< Slope of the indVar1 vs indVar2 line
 	std::vector<unsigned int> fixStates {};	//!< A list of indices that represent the states that are constrained (i.e., fixed) during the current continuation step
+	unsigned int lineSearchMaxIts = 100;	//!< Number of iterations the corrector can use in a line search
+	unsigned int noSearchMaxIts = 20;		//!< Number of iterations the corrector can use when a line search is not employed
 	unsigned int numSimple = 3;				//!< Number of simply-continued family members
 	unsigned int orbitCount = 0;			//!< Count of how many orbits have been computed
-	double stepScaleFactor = 2;				//!< A multiplying factor to scale the step size up/down during adaptive step sizing
 	double slopeThresh = 1;			//!< Minimum slope for stepping in indVar1; else step in indVar2
 	double step_simple = 5e-4;		//!< Step size in the independent variable when using simple continuation
 	double step_fitted_1 = 5e-3;	//!< Step size in first ind. var. when using advanced continuation

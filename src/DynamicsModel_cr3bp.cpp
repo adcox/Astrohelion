@@ -207,18 +207,18 @@ std::vector<double> DynamicsModel_cr3bp::getStateDeriv(double t, std::vector<dou
  *  This function calls its relative in the DynamicsModel base class and appends additional
  *  instructions specific to the CR3BP
  *
- *  \param it a pointer to the corrector's iteration data structure
+ *  \param it a reference to the corrector's iteration data structure
  *  \param con the constraint being applied
  *  \param c the index of the constraint within the total constraint vector (which is, in
  *  turn, stored in the iteration data)
  */ 
-void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, const Constraint& con, int c) const{
+void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData& it, const Constraint& con, int c) const{
 
     // Let the base class do its thing first
     DynamicsModel::multShoot_applyConstraint(it, con, c);
 
     // Handle constraints specific to the CR3BP
-    int row0 = it->conRows[c];
+    int row0 = it.conRows[c];
 
     switch(con.getType()){
         case Constraint_tp::JC:
@@ -236,24 +236,24 @@ void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData *it, const Con
 
 /**
  *  \brief Perform model-specific initializations on the MultShootData object
- *  \param it pointer to the object to be initialized
+ *  \param it a reference to the object to be initialized
  */
-void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData *it) const{
-    Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(it->nodesIn->getSysData()));
-    it->propSegs.assign(it->nodesIn->getNumSegs(), traj);
+void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData& it) const{
+    Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(it.nodesIn->getSysData()));
+    it.propSegs.assign(it.nodesIn->getNumSegs(), traj);
 }//====================================================
 
 /**
  *  \brief Compute constraint function and partial derivative values for a Jacobi Constraint
  *
- *  \param it a pointer to the corrector's iteration data structure
+ *  \param it a reference to the corrector's iteration data structure
  *  \param con the constraint being applied
  *  \param row0 the row this constraint begins on
  */
-void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, const Constraint& con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
-    MSVarMap_Obj state_var = it->getVarMap_obj(MSVar_tp::STATE, con.getID());
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it->nodesIn->getSysData());
+    MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.nodesIn->getSysData());
 
     if(state_var.row0 == -1)
         throw Exception("DynamicsModel_cr3bp::multShoot_targetJC: Cannot constrain state that is not in the free variable vector.");
@@ -261,7 +261,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, const Constraint
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
     double nodeState[6];
-    std::copy(&(it->X[state_var.row0]), &(it->X[state_var.row0])+6, nodeState); 
+    std::copy(&(it.X[state_var.row0]), &(it.X[state_var.row0])+6, nodeState); 
 
     // printf("Node State = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f]\n", nodeState[0],
     //     nodeState[1], nodeState[2], nodeState[3], nodeState[4], nodeState[5]);
@@ -278,45 +278,45 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData* it, const Constraint
     double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
     double r = sqrt((x - 1 + mu)*(x - 1 + mu) + y*y + z*z);
 
-    it->FX[row0] = nodeJC - conData[0];
+    it.FX[row0] = nodeJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], nodeJC);
 
-    it->DF_elements.push_back(Tripletd(row0, state_var.row0+0, (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x) ));
-    it->DF_elements.push_back(Tripletd(row0, state_var.row0+1, (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y) ));
-    it->DF_elements.push_back(Tripletd(row0, state_var.row0+2, (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)) ));
-    it->DF_elements.push_back(Tripletd(row0, state_var.row0+3, -2*vx));
-    it->DF_elements.push_back(Tripletd(row0, state_var.row0+4, -2*vy));
-    it->DF_elements.push_back(Tripletd(row0, state_var.row0+5, -2*vz));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+0, (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x) ));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+1, (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y) ));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+2, (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)) ));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+3, -2*vx));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+4, -2*vy));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+5, -2*vz));
 }//=============================================
 
 /**
  *  \brief Compute constraint function and partial derivative values for a Jacobi Constraint on a Segment propagated state
  *
- *  \param pIt a pointer to the corrector's iteration data structure
+ *  \param it a reference to the corrector's iteration data structure
  *  \param con the constraint being applied
  *  \param row0 the row this constraint begins on
  */
-void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData* pIt, const Constraint& con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
-    int segIx = pIt->nodesIn->getSegIx(con.getID());
+    int segIx = it.nodesIn->getSegIx(con.getID());
 
     // Get object representing origin of segment
-    MSVarMap_Obj prevNode_var = pIt->getVarMap_obj(MSVar_tp::STATE, pIt->nodesIn->getSegRef_const(con.getID()).getOrigin());
+    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.nodesIn->getSegRef_const(con.getID()).getOrigin());
 
     MSVarMap_Obj tof_var;
     double timeCoeff = 1;
-    if(to_underlying(pIt->tofTp) > 0){
-        switch(pIt->tofTp){
+    if(to_underlying(it.tofTp) > 0){
+        switch(it.tofTp){
             case MSTOF_tp::VAR_FREE:
-                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
+                tof_var = it.getVarMap_obj(MSVar_tp::TOF, con.getID());
                 break;
             case MSTOF_tp::VAR_FIXSIGN:
-                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF, con.getID());
-                timeCoeff = astrohelion::sign(pIt->nodesIn->getTOF(con.getID()))*2*pIt->X[tof_var.row0];
+                tof_var = it.getVarMap_obj(MSVar_tp::TOF, con.getID());
+                timeCoeff = astrohelion::sign(it.nodesIn->getTOF(con.getID()))*2*it.X[tof_var.row0];
                 break;
             case MSTOF_tp::VAR_EQUALARC:
-                tof_var = pIt->getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
-                timeCoeff = 1.0/(pIt->nodesIn->getNumSegs());
+                tof_var = it.getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                timeCoeff = 1.0/(it.nodesIn->getNumSegs());
                 break;
             default:
                 throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
@@ -324,14 +324,14 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData* pIt, const Co
     }   
 
     // Data associated with the previous node and the propagated segment
-    std::vector<double> lastState = pIt->propSegs[segIx].getStateByIx(-1);
+    std::vector<double> lastState = it.propSegs[segIx].getStateByIx(-1);
 
     // Compute the value of Jacobi at this node
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (pIt->nodesIn->getSysData());
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.nodesIn->getSysData());
     double mu = crSys->getMu();
     double segJC = getJacobi(&(lastState.front()), mu);
     
-    pIt->FX[row0] = segJC - conData[0];
+    it.FX[row0] = segJC - conData[0];
     // printf("Targeting JC = %.4f, value is %.4f\n", conData[0], segJC);
 
     // temp variables to make equations more readable; compute partials w.r.t. node state
@@ -356,7 +356,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData* pIt, const Co
     };
 
     if(prevNode_var.row0 != -1){
-        MatrixXRd stm = pIt->propSegs[segIx].getSTMByIx(-1);
+        MatrixXRd stm = it.propSegs[segIx].getSTMByIx(-1);
         // Do the matrix multiplication with loops to avoid expensive vector allocation
         double sum;
         for(unsigned int c = 0; c < 6; c++){
@@ -364,20 +364,20 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData* pIt, const Co
             for(unsigned int r = 0; r < 6; r++){
                 sum += dFdq_nf[r]*stm(r,c);
             }
-            pIt->DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+            it.DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
         }
     }
 
     // Partials of F w.r.t. time-of-flight
-    if(to_underlying(pIt->tofTp) > 0){
-        std::vector<double> lastDeriv = pIt->propSegs[segIx].getStateDerivByIx(-1);
+    if(to_underlying(it.tofTp) > 0){
+        std::vector<double> lastDeriv = it.propSegs[segIx].getStateDerivByIx(-1);
 
         // Compute dot product between dFdq_nf and final state derivative vector
         double dp = 0;
         for(unsigned int r = 0; r < 6; r++){
             dp += dFdq_nf[r]*lastDeriv[r];
         }
-        pIt->DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
+        it.DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
     }
 }//=============================================
 
@@ -390,33 +390,33 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData* pIt, const Co
  *  @throw Exception if the pseudo arclength constraint is not listed as the final constraint
  *  @throw Exception if the Jacobian matrix (w/o the PAL constraint) is nonsquare.
  */
-void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData *it, const Constraint& con, int row0) const{
+void DynamicsModel_cr3bp::multShoot_targetPseudoArc(MultShootData& it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
 
-    if(row0 != it->totalCons-1)
+    if(row0 != it.totalCons-1)
         throw Exception("DynamicsModel_cr3bp::multShoot_targetPseudoArc: Pseudo Arc-Length constraint must be the final constraint; please re-create the nodeset accordingly");
 
-    if(it->totalCons != it->totalFree)
+    if(it.totalCons != it.totalFree)
         throw Exception("DynamicsModel_cr3bp::multShoot_targetPseudoArc: Jacobian matrix is not square; cannot apply pseudo arc-length");
 
     // All elements except the last are the free-variable vector for a converged family member
-    std::vector<double> famFreeVec(conData.begin(), conData.begin()+it->totalFree);
-    std::vector<double> nullptrspace(conData.begin()+it->totalFree, conData.end()-1);
+    std::vector<double> famFreeVec(conData.begin(), conData.begin()+it.totalFree);
+    std::vector<double> nullspace(conData.begin()+it.totalFree, conData.end()-1);
     double stepSize = conData.back();   // The last element is the step size
 
-    Eigen::RowVectorXd X = Eigen::Map<Eigen::RowVectorXd>(&(it->X[0]), 1, it->totalFree);
+    Eigen::RowVectorXd X = Eigen::Map<Eigen::RowVectorXd>(&(it.X[0]), 1, it.totalFree);
     Eigen::RowVectorXd X_fam = Eigen::Map<Eigen::RowVectorXd>(&(famFreeVec[0]), 1, famFreeVec.size());
-    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullptrspace[0]), nullptrspace.size(), 1);
+    Eigen::VectorXd N = Eigen::Map<Eigen::VectorXd>(&(nullspace[0]), nullspace.size(), 1);
     
     MatrixXRd dotProd;
     dotProd.noalias() = (X - X_fam)*N;
 
-    it->FX[row0] = dotProd(0) - stepSize;
+    it.FX[row0] = dotProd(0) - stepSize;
 
-    for(int i = 0; i < it->totalFree; i++){
-        it->DF_elements.push_back(Tripletd(row0, i, N(i)));
+    for(int i = 0; i < it.totalFree; i++){
+        it.DF_elements.push_back(Tripletd(row0, i, N(i)));
     }
-}//=============================================
+}//====================================================
 
 //------------------------------------------------------------------------------------------------------
 //      Static Calculation Functions

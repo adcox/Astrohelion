@@ -161,6 +161,8 @@ unsigned int Family_PO::getNumMembers() const { return members.size(); }
  *	eigenvalues
  *	\details Eigenvalues MUST be sorted, or this will yield completely bogus
  *	results
+ *	
+ *	\return the indices of the family members located close to bifurcations
  */
 std::vector<unsigned int> Family_PO::findBifurcations(){
 	// Find the eigenvalues that are exactly (in theory) equal to one
@@ -497,10 +499,7 @@ void Family_PO::loadEigVals(mat_t *matFile){
 	if(matvar == nullptr){
 		throw Exception("Could not read eigenvalues into family");
 	}else{
-		unsigned int numMembers = matvar->dims[0];
-		if(matvar->dims[1] != 6){
-			throw Exception("Incompatible data file: Data widths are different.");
-		}
+		unsigned int numMembers = matvar->dims[0], numVals = matvar->dims[1];
 
 		if(members.size() != numMembers){
 			throw Exception("Family_PO::loadEigVals: # eigenvalues is not same as number of members");
@@ -517,7 +516,7 @@ void Family_PO::loadEigVals(mat_t *matFile){
 
 				// Read data from column-major order matrix, store in row-major order vector
 				for(unsigned int i = 0; i < numMembers; i++){
-					for(int j = 0; j < 6; j++){
+					for(unsigned int j = 0; j < numVals; j++){
 						cdouble temp(realParts[j*numMembers + i], imagParts[j*numMembers + i]);
 						memberEigVals.push_back(temp);
 					}
@@ -675,7 +674,7 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 		// create a special variable for them
 		mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
 
-		size_t dims[2] = {members.size(), 6};
+		size_t dims[2] = {members.size(), nE};
 		matvar_t *matvar = Mat_VarCreate(VARNAME_FAM_EIGVAL, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
 		astrohelion::saveVar(pMatFile, matvar, VARNAME_FAM_EIGVAL, MAT_COMPRESSION_NONE);
 	}

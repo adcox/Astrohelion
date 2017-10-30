@@ -40,6 +40,7 @@ class Arcset_cr3bp;
 class Arcset_periodic;
 class Family_PO;
 enum class Mirror_tp;
+class MultShootEngine;
 
 /**
  *  \ingroup engine fam
@@ -83,7 +84,8 @@ public:
 	 */
 	void continueSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<Mirror_tp>, std::vector<unsigned int>, std::vector<unsigned int>);
 	void continuePO_cr3bp(Family_PO*, const Arcset_cr3bp*, std::vector<double>, std::vector<unsigned int>, std::vector<unsigned int>);
-	void continuePO(const Arcset*, Arcset*, Arcset*, std::vector<Arcset>&, std::vector<double>, std::vector<unsigned int>, std::vector<unsigned int>);
+	void continuePO(const Arcset*, Arcset*, Arcset*, std::vector<Arcset>&, std::vector<double>, std::vector<unsigned int>,
+		std::vector<unsigned int>, MultShootEngine *pEngineTemplate = nullptr);
 	//\}
 
 	/**

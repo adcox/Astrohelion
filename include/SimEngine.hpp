@@ -326,6 +326,12 @@ class SimEngine : public Core, public Engine{
 		/** Number of seconds allowed for integration; set to -1 to allow unlimitted computation time */
 		double maxCompTime = -1;
 
+		/** 
+		 * Maximum number of steps the fixed-step integration driver can take. This cap only limits
+		 * integrations performed when bVarStepSize = false
+		 */
+		unsigned long int maxDriverSteps = 1000000;
+
 		/** Timestamp at integration start */
 		time_t startTimestamp = 0;
 
@@ -342,6 +348,7 @@ class SimEngine : public Core, public Engine{
 		void cleanEngine();
 		void copyMe(const SimEngine&);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
+		void reportPropErrs(int, double);
 		//\}
 
 		/**

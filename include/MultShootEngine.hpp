@@ -110,7 +110,6 @@ class MultShootEngine : public Core, public Engine{
 		void setFindEvent(bool);
 		void setMaxErr(double);
 		void setMaxIts(int);
-		void setMaxPropTime(double);
 		void setTol(double);
 		void setTOFType(MSTOF_tp);
 		
@@ -152,9 +151,6 @@ class MultShootEngine : public Core, public Engine{
 
 		/** Maximum error value permitted; if the error rises above this value, the corrections are considered diverged */
 		double maxErr = 1e3;
-
-		/** Maximum allowable simulation run time, seconds. If set to zero (or a negative number), no limit is imposed */
-		double maxSimTime = -1;
 
 		/** 
 		 * 	Maximum permissible constraint vector magnitude for convergence. 

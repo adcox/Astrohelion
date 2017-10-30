@@ -586,6 +586,7 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 	std::vector<int> convertedNodes;	// Store IDs of nodes that have been converted
 	Eigen::Vector3d lawOutput;			// Vector for law outputs
 	const unsigned int coreDim = pArcset->getSysData()->getDynamicsModel()->getCoreStateSize();
+	// const unsigned int extraDim = pArcset->getSysData()->getDynamicsModel()->getExtraStateSize();
 	const unsigned int newCtrlDim = pNewLaw->getNumStates();
 
 	for(unsigned int s = 0; s < pArcset->getNumSegs(); s++){
@@ -593,7 +594,7 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 		Segment &refSeg = pArcset->getSegRefByIx(s);
 		Node &refOrigin = pArcset->getNodeRef(refSeg.getOrigin());
 
-		ControlLaw *pOldLaw = refSeg.getCtrlLaw();
+		const ControlLaw *pOldLaw = refSeg.getCtrlLaw();
 		unsigned int oldLawType = pOldLaw ? pOldLaw->getLawType() : NO_CTRL;
 
 		// Make sure we know how to convert
@@ -635,7 +636,9 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 		const unsigned int numStates = oldSegStates.size() / oldStateWidth;
 		const unsigned int oldCtrlDim = pOldLaw ? pOldLaw->getNumStates() : 0;
 
-		const unsigned int newStateWidth = oldStateWidth - oldCtrlDim + newCtrlDim;
+		// state width is the sum of coreDim + ctrlDim + (coreDim + ctrlDim)^2 + extraDim
+		// The squared term is the number of elements in the STM
+		const unsigned int newStateWidth = oldStateWidth - oldCtrlDim - pow(coreDim + oldCtrlDim, 2) + newCtrlDim + pow(coreDim + newCtrlDim, 2);
 		std::vector<double> newSegStates;
 		newSegStates.reserve(numStates*newStateWidth);
 
@@ -650,14 +653,26 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 			}
 			// Add the new control states
 			newSegStates.insert(newSegStates.end(), angles.begin(), angles.end());
-			// Add all the other states
-			newSegStates.insert(newSegStates.end(), oldSegStates.begin() + i*oldStateWidth + coreDim + oldCtrlDim, oldSegStates.begin() + (i+1)*oldStateWidth);
+			
+			// Update the STM; new entries related to the control are left as zeros
+			MatrixXRd oldSTM = Eigen::Map<MatrixXRd>(&(oldSegStates[0]) + i*oldStateWidth + coreDim + oldCtrlDim, coreDim + oldCtrlDim, coreDim + oldCtrlDim);
+			MatrixXRd newSTM = MatrixXRd::Zero(coreDim + newCtrlDim, coreDim + newCtrlDim);
+			newSTM.block(0, 0, coreDim, coreDim) = oldSTM.block(0, 0, coreDim, coreDim);	// Copy Core STM
+
+			// Add STM states
+			newSegStates.insert(newSegStates.end(), newSTM.data(), newSTM.data()+newSTM.size());
+
+			// Add any remaining extra states
+			newSegStates.insert(newSegStates.end(), oldSegStates.begin()+ i*oldStateWidth + coreDim + oldCtrlDim + oldSTM.size(), oldSegStates.begin() + (i+1)*oldStateWidth);
 		}
 
 		refSeg.setStateVector(newSegStates);
 		refSeg.setStateWidth(newStateWidth);
 		refSeg.setCtrlLaw(pNewLaw);
 	}
+
+	// Update all STMs
+	pArcset->setSTMs_sequence();
 
 	// Check to make sure all nodes have been converted
 	for(unsigned int n = 0; n < pArcset->getNumNodes(); n++){

@@ -61,7 +61,7 @@ namespace astrohelion{
  *  \brief Construct a simulation engine for a specific dynamical system
  */
 SimEngine::SimEngine(){
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Created Simulation Engine\n");
 }//===========================================
 
 /**
@@ -76,7 +76,7 @@ SimEngine::SimEngine(const SimEngine& s){
  *  \brief Default destructor
  */
 SimEngine::~SimEngine(){
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Destroying simulation engine...\n");
     if(eomParams)
         delete(eomParams);
 }//===========================================
@@ -184,7 +184,7 @@ void SimEngine::setVarStepSize(bool b){ bVarStepSize = b; }
 void SimEngine::setAbsTol(double t){
     absTol = t;
     if(absTol > 1)
-        astrohelion::printWarn("SimEngine::setAbsTol: tolerance is greater than 1... just FYI\n");
+        printWarn("SimEngine::setAbsTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
@@ -195,7 +195,7 @@ void SimEngine::setAbsTol(double t){
 void SimEngine::setRelTol(double t){
     relTol = t;
     if(relTol > 1)
-        astrohelion::printWarn("SimEngine::setRelTol: tolerance is greater than 1... just FYI\n");
+        printWarn("SimEngine::setRelTol: tolerance is greater than 1... just FYI\n");
 }//====================================================
 
 /**
@@ -566,7 +566,7 @@ void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0
         return;
     }
 
-    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
+    printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
     }
@@ -827,7 +827,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     // dummy extra state variables to save if not all the states are propagated
     const std::vector<double> extraStates(full_dim - ic_dim, 0);
 
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  IC has %u initial states\n", ic_dim);
 
     // Construct the full IC from the state ICs plus the STM ICs and any other ICs for more complex systems
     std::vector<double> fullIC(ic_dim, 0);
@@ -844,11 +844,11 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
 
     // Choose EOM function based on system type and simplicity
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  using %s integration\n", bSimpleIntegration ? "simple (no STM)" : "full (+ STM)");
     int (*eomFcn)(double, const double[], double[], void*) = 
         bSimpleIntegration ? model->getSimpleEOM_fcn() : model->getFullEOM_fcn();     // Pointer for the EOM function
 
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, 
         "  using control law: %s\n", eomParams->pCtrlLaw ? eomParams->pCtrlLaw->getLawTypeString().c_str() : "NONE");
 
     /*
@@ -912,11 +912,11 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         switch(varStep_integ){
             case Integ_tp::RK8PD:
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rk8pd, ic_dim);
-                astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Dormand-Prince 8-9 method\n");
+                printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Dormand-Prince 8-9 method\n");
                 break;
             case Integ_tp::RKCK:
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_rkck, ic_dim);
-                astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
+                printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  variable step size, using Runge-Kutta Cash-Karp 4-5 method\n");
                 break;
             default:
                 free_odeiv2(s, c, e, d);
@@ -928,7 +928,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
         // Allocate space for the integrated solution to evolve in
         e = gsl_odeiv2_evolve_alloc(ic_dim);
     }else{
-        astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
+        printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  fixed step size, using Adams-Bashforth, Adams-Moulton method\n");
         
         double signed_dt = bRevTime ? -1*dtGuess : dtGuess;
 
@@ -936,6 +936,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
             case Integ_tp::MSADAMS:
                 // Allocate space for a driver; the msadams algorithm requires access to the driver
                 d = gsl_odeiv2_driver_alloc_y_new(&odeSys, gsl_odeiv2_step_msadams, signed_dt, absTol, relTol);
+                gsl_odeiv2_driver_set_nmax(d, maxDriverSteps);
                 // Allocate space for the stepping object
                 s = gsl_odeiv2_step_alloc(gsl_odeiv2_step_msadams, ic_dim);
                 gsl_odeiv2_step_set_driver(s, d);
@@ -947,9 +948,9 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     }
 
     // Update all event functions with IC
-    astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
+    printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  sim will use %d event functions:\n", static_cast<int>(events.size()));
     for(unsigned int ev = 0; ev < events.size(); ev++){
-        astrohelion::printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  [%02u] - %s\n", ev, events.at(ev).getTypeStr());
+        printVerb(verbosity >= Verbosity_tp::SOME_MSG, "  [%02u] - %s\n", ev, events.at(ev).getTypeStr());
         events.at(ev).updateDist(y, core_dim, t[0]);
     }
 
@@ -981,13 +982,11 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 status = gsl_odeiv2_evolve_apply(e, c, s, &odeSys, &t_int, tf, &dt, y);
             }else{
                 status = gsl_odeiv2_driver_apply(d, &t_int, tf, y);
+                // printColor(GREEN, "Driver took %d steps for %.2f nd time\n", d->n, t_int);
             }
 
             if(status != GSL_SUCCESS){
-                if(verbosity >= Verbosity_tp::SOME_MSG){
-                    astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(status));
-                }
-
+                reportPropErrs(status, t_int);
                 free_odeiv2(s, c, e, d);
 
                 // Save the last successful step the integrator was able to take
@@ -1061,10 +1060,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 }
 
                 if(status != GSL_SUCCESS){
-                    if(verbosity >= Verbosity_tp::SOME_MSG){
-                        astrohelion::printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(status));
-                    }
-                    
+                    reportPropErrs(status, t_int);
                     free_odeiv2(s, c, e, d);
 
                     // Save the last successful step the integrator was able to take
@@ -1088,7 +1084,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
                 killSim = locateEvents(y, t_int, arcset, propStepCount);
 
                 // Stop the simulation if the maximum computation time has passed
-                killSim = killSim || (maxCompTime > 0 && (time(nullptr) - startTimestamp) > maxCompTime);
+                killSim = killSim || (maxCompTime > 0 && difftime(time(nullptr), startTimestamp) > maxCompTime);
 
                 propStepCount++;
 
@@ -1141,7 +1137,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     }
 
     // Check lengths of vectors and set the numPoints value in arcset
-    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Integration complete**\n");
+    printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Integration complete**\n");
     if(verbosity >= Verbosity_tp::ALL_MSG){
         arcset->print();
         arcset->printInChrono();
@@ -1213,7 +1209,7 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
         if(propStepCount > 1 && to_underlying(events[ev].getType()) > 0 && 
             events[ev].crossedEvent(y, core_dim, t, bRevTime ? -1 : 1)){
 
-            astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG,
+            printVerb(verbosity >= Verbosity_tp::ALL_MSG,
                 "  Event %d detected on segment %d; searching for exact crossing\n", ev, pArcset->getNumSegs());
             events[ev].incrementCount();  // Update the counter for the event
 
@@ -1224,12 +1220,12 @@ bool SimEngine::locateEvents(const double *y, double t, Arcset *pArcset, int pro
                 // This condition is also checked in model->sim_locateEvent(): that function adds a new
                 // segment if the simulation is continuing
                 if(events[ev].stopOnEvent() && events[ev].getTriggerCount() >= events[ev].getStopCount()){
-                    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
+                    printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, ending integration**\n");
                     // No need to remember the most recent point; it will be discarded, leaving
                     // the point from mult. shooting as the last
                     continueSim = continueSim && false;    // Tell the simulation to stop
                 }else{
-                    astrohelion::printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
+                    printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "**Completed Event Location, continuing integration**\n");
                     // Save the most recent point (the one after the event that triggered the direction change in events[ev])
                     events[ev].updateDist(y, core_dim, t);
                     continueSim = continueSim && true;  // Simulation will continue unless another event has occurred
@@ -1291,19 +1287,19 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     }
 
     if(verbosity >= Verbosity_tp::ALL_MSG){
-        // astrohelion::printColor(BLUE, "Step index = %d\n", propStepCount-1);
-        astrohelion::printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, ti, t0);
-        astrohelion::printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
+        // printColor(BLUE, "Step index = %d\n", propStepCount-1);
+        printColor(BLUE, "t(now) = %f\nt(prev) = %f\nt(prev-1) = %f\n", t, ti, t0);
+        printColor(BLUE, "State(now) = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", y[0],
             y[1], y[2], y[3], y[4], y[5]);
-        astrohelion::printColor(BLUE, "tof = %f\n", tof);
-        astrohelion::printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", arcIC[0],
+        printColor(BLUE, "tof = %f\n", tof);
+        printColor(BLUE, "ic = [%9.4e %9.4e %9.4e %9.4e %9.4e %9.4e]\n", arcIC[0],
             arcIC[1], arcIC[2], arcIC[3], arcIC[4], arcIC[5]);
     }   
 
     // **************************************************
     // Use correction to locate the event very accurately
     // **************************************************
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Creating arcset for event location\n");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Creating arcset for event location\n");
     
     Arcset eventArcset(pArcset->getSysData()), correctedSet(pArcset->getSysData());
 
@@ -1367,7 +1363,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
 
     if(verbosity >= Verbosity_tp::ALL_MSG){ eventArcset.print(); }
 
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  Applying corrections process to locate event\n");
     MultShootEngine corrector;
     corrector.setTOFType(MSTOF_tp::VAR_FREE);
     corrector.setTol(pArcset->getTol());
@@ -1381,11 +1377,11 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
         corrector.multShoot(&eventArcset, &correctedSet);
     }catch(DivergeException &e){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            astrohelion::printErr("Unable to locate event; corrector diverged\n");
+            printErr("Unable to locate event; corrector diverged\n");
         return false;
     }catch(LinAlgException &e){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            astrohelion::printErr("LinAlg Err while locating event; bug in corrector!\n");
+            printErr("LinAlg Err while locating event; bug in corrector!\n");
         return false;
     }
 
@@ -1440,7 +1436,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
  *  \details This function does not reset any parameters the user has set
  */
 void SimEngine::cleanEngine(){
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
     
     if(eomParams)
         delete eomParams;
@@ -1468,6 +1464,25 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
     }
 }//====================================================
 
+void SimEngine::reportPropErrs(int gsl_status, double t_int){
+    if(verbosity >= Verbosity_tp::SOME_MSG){
+        printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(gsl_status));
+
+        switch(gsl_status){
+            case GSL_EMAXITER:
+                printErr("  Details: maximum number of driver steps have occurred\n");
+                break;
+            case GSL_ENOPROG:
+                printErr("  Details: driver step size has dropped below the minimum value; no progress to be made\n");
+                break;
+            case GSL_EBADFUNC:
+                printErr("  Details: bad function error thrown\n");
+                break;  // Driver must be reset before using again, but current behavior ends the integration and frees driver, so not necessary
+            default: 
+                break; // Nothing to do!
+        }
+    }
+}//====================================================
 /**
  *  \brief Reset all variables and options
  *
@@ -1495,7 +1510,7 @@ void SimEngine::reset(){
  *  Clear all events from the simulation, including any created by default.
  */
 void SimEngine::clearEvents(){
-    astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Clearing all events...\n");
+    printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Clearing all events...\n");
     events.clear();
     bMadeDefaultEvents = false;
 }//====================================================

@@ -33,6 +33,14 @@
 
 #include "Calculations.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <cstring>
+#include <numeric>
+#include <string>
+#include <typeinfo>
+
 #include "AsciiOutput.hpp"
 #include "Arcset.hpp"
 #include "Arcset_2bp.hpp"
@@ -57,14 +65,6 @@
 #include <Eigen/Dense>
 #include <Eigen/LU>
 #include <Eigen/SVD>
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <typeinfo>
-
 
 namespace astrohelion{
 
@@ -210,27 +210,30 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
 std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs){
     std::vector<unsigned int> sortedIxs(eigVals.size(), 0);
 
-    if(eigVals.size() == 0){
-        astrohelion::printErr("Calculations::sortEig: No eigenvalues - easy to sort! :P\n");
+    if(eigVals.size() == 0 || eigVecs.size() == 0){
+        astrohelion::printErr("Calculations::sortEig: No eigenvalues and/or eigenvectors - easy to sort! :P\n");
         return sortedIxs;
     }
 
-    if(eigVals.size() % 6 != 0){
-        astrohelion::printErr("Calculations::sortEig: Must have 6n eigenvalues!\n");
+    const unsigned int nE = eigVecs[0].rows();
+
+    if(eigVals.size() % nE != 0){
+        printErr("Calculations::sortEig: Must have %un eigenvalues!\n", nE);
         return sortedIxs;
     }
 
     // Generate all permutations of the indices 0 through 5
-    std::vector<unsigned int> vals {0,1,2,3,4,5};
+    std::vector<unsigned int> vals(nE);
+    std::iota(std::begin(vals), std::end(vals), 0); // Fill with 0, 1, ..., nE
     std::vector<unsigned int> ixPerms = generatePerms<unsigned int>(vals);
-    std::vector<float> cost(ixPerms.size()/6, 0);
+    std::vector<float> cost(ixPerms.size()/nE, 0);
 
     // Sort the first set of eigenvalues so that reciprocal pairs occur near one another
     unsigned int s = 0;
-    for(unsigned int p = 0; p < ixPerms.size()/6; p++){
-        for(unsigned int i = 0; i < 3; i++){
+    for(unsigned int p = 0; p < ixPerms.size()/nE; p++){
+        for(unsigned int i = 0; i < nE/2; i++){
             // Penalize configurations with pairs that are not reciprocal
-            cost[p] += std::abs(1.0 - eigVals[s*6 + ixPerms[p*6 + 2*i]] * eigVals[s*6 + ixPerms[p*6 + 2*i + 1]]);
+            cost[p] += std::abs(1.0 - eigVals[s*nE + ixPerms[p*nE + 2*i]] * eigVals[s*nE + ixPerms[p*nE + 2*i + 1]]);
         }
     }
 
@@ -240,65 +243,65 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
 
     // Sort the eigenvectors and eigenvalues according to the minimum cost permutation
     // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
-    std::vector<cdouble> prevSortVal(6,0);
-    MatrixXRcd prevSortVec = MatrixXRcd::Zero(6,6);
-    for(unsigned int i = 0; i < 6; i++){
-        sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
-        prevSortVal[i] = eigVals[s*6 + ixPerms[minCostIx*6 + i]];
-        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*6+i]).normalized();
+    std::vector<cdouble> prevSortVal(nE,0);
+    MatrixXRcd prevSortVec = MatrixXRcd::Zero(nE,nE);
+    for(unsigned int i = 0; i < nE; i++){
+        sortedIxs[s*nE + i] = ixPerms[minCostIx*nE + i];
+        prevSortVal[i] = eigVals[s*nE + ixPerms[minCostIx*nE + i]];
+        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*nE+i]).normalized();
     }
 
     // printf("[%f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi]\n",
-    //     std::real(eigVals[sortedIxs[s*6+0]]), std::imag(eigVals[sortedIxs[s*6+0]]),
-    //     std::real(eigVals[sortedIxs[s*6+1]]), std::imag(eigVals[sortedIxs[s*6+1]]),
-    //     std::real(eigVals[sortedIxs[s*6+2]]), std::imag(eigVals[sortedIxs[s*6+2]]),
-    //     std::real(eigVals[sortedIxs[s*6+3]]), std::imag(eigVals[sortedIxs[s*6+3]]),
-    //     std::real(eigVals[sortedIxs[s*6+4]]), std::imag(eigVals[sortedIxs[s*6+4]]),
-    //     std::real(eigVals[sortedIxs[s*6+5]]), std::imag(eigVals[sortedIxs[s*6+5]]));
+    //     std::real(eigVals[sortedIxs[s*nE+0]]), std::imag(eigVals[sortedIxs[s*nE+0]]),
+    //     std::real(eigVals[sortedIxs[s*nE+1]]), std::imag(eigVals[sortedIxs[s*nE+1]]),
+    //     std::real(eigVals[sortedIxs[s*nE+2]]), std::imag(eigVals[sortedIxs[s*nE+2]]),
+    //     std::real(eigVals[sortedIxs[s*nE+3]]), std::imag(eigVals[sortedIxs[s*nE+3]]),
+    //     std::real(eigVals[sortedIxs[s*nE+4]]), std::imag(eigVals[sortedIxs[s*nE+4]]),
+    //     std::real(eigVals[sortedIxs[s*nE+5]]), std::imag(eigVals[sortedIxs[s*nE+5]]));
 
     // Analyze all other eigenvalue sets using axioms while maintaining order of the
     // first set of eigenvalues/vectors
-    for(s = 1; s < eigVals.size()/6; s++){
-        MatrixXRd dp_err = MatrixXRd::Zero(6,6);
-        for(unsigned int i = 0; i < 6; i++){
-            for(unsigned int j = i; j < 6; j++){
+    for(s = 1; s < eigVals.size()/nE; s++){
+        MatrixXRd dp_err = MatrixXRd::Zero(nE,nE);
+        for(unsigned int i = 0; i < nE; i++){
+            for(unsigned int j = i; j < nE; j++){
                 dp_err(i,j) = std::abs(1.0 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j).normalized())));
                 dp_err(j,i) = dp_err(i,j);  // symmetric
             }
         }
 
         cost.clear();
-        cost.assign(ixPerms.size()/6, 0);
-        for(unsigned int p = 0; p < ixPerms.size()/6; p++){
-            // bool printOut = s < 5 && (ixPerms[6*p+0] == 0 && ixPerms[6*p+1] == 1 && ixPerms[6*p+2] == 2 && ixPerms[6*p+3] == 3 &&
-            //     ixPerms[6*p+4] == 4 && ixPerms[6*p+5] == 5);
+        cost.assign(ixPerms.size()/nE, 0);
+        for(unsigned int p = 0; p < ixPerms.size()/nE; p++){
+            // bool printOut = s < 5 && (ixPerms[nE*p+0] == 0 && ixPerms[nE*p+1] == 1 && ixPerms[nE*p+2] == 2 && ixPerms[nE*p+3] == 3 &&
+            //     ixPerms[nE*p+4] == 4 && ixPerms[nE*p+5] == 5);
 
             // if(printOut)
             //     printf("Eigenvalue set %u:\n", s);
 
-            for(unsigned int i = 0; i < 6; i++){
+            for(unsigned int i = 0; i < nE; i++){
                 // Assign cost based on the dot product between this new arrangement
                 // of eigenvectors and the previous arrangement
                 // Ranges from 0 to 1
-                cost[p] += dp_err(i, ixPerms[6*p + i]);
+                cost[p] += dp_err(i, ixPerms[nE*p + i]);
                 // if(printOut)
-                //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[6*p + i]));
+                //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[nE*p + i]));
 
                 // Assign cost based on the distance from the previous sorted eigenvalues
                 // Scale to give it more weight than some of the others
-                cost[p] += 50*std::abs( (eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i] );
+                cost[p] += 50*std::abs( (eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i] );
                 // if(printOut)
-                //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i]));
+                //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i]));
 
                 // Assign cost based on the reciprocal nature of the eigenvalues
                 // This test could be removed to sort eigenvalues that don't occur in pairs
                 if(i%2 == 1){
-                    cdouble v1 = eigVals[s*6 + ixPerms[p*6 + i-1]];
-                    cdouble v2 = eigVals[s*6 + ixPerms[p*6 + i]];
+                    cdouble v1 = eigVals[s*nE + ixPerms[p*nE + i-1]];
+                    cdouble v2 = eigVals[s*nE + ixPerms[p*nE + i]];
                     double minVal = std::abs(v1) < std::abs(v2) ? std::abs(v1) : std::abs(v2);
                     cost[p] += std::abs(1.0 - std::abs(v1 * v2) ) / minVal;
                     // if(printOut)
-                    //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]]))));
+                    //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*nE + ixPerms[p*nE + i-1]] * eigVals[s*nE + ixPerms[p*nE + i]]))));
                 }
             }
         }
@@ -308,10 +311,10 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
         minCostIx = minCostIt - cost.begin();
 
         // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
-        for(unsigned int i = 0; i < 6; i++){
-            sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
-            prevSortVal[i] = eigVals[s*6 + sortedIxs[s*6 + i]];
-            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*6 + i]).normalized();
+        for(unsigned int i = 0; i < nE; i++){
+            sortedIxs[s*nE + i] = ixPerms[minCostIx*nE + i];
+            prevSortVal[i] = eigVals[s*nE + sortedIxs[s*nE + i]];
+            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*nE + i]).normalized();
         }
     }
 

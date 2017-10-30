@@ -49,8 +49,15 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------------------------------
 
+/**
+ *  \brief Construct a default pseudo-arclength engine object
+ */
 PseudoArcEngine::PseudoArcEngine() : ContinuationEngine(){}
 
+/**
+ *  \brief Copy a pseudo-arclength object into this one
+ *  \param e reference to another pseudo-arclength engine
+ */
 PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(e){
 	copyMe(e);
 }//====================================================
@@ -58,7 +65,12 @@ PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(
 //-----------------------------------------------------------------------------
 //      Operators
 //-----------------------------------------------------------------------------
-
+/**
+ *  \brief Set this object equal to another
+ * 
+ *  \param e reference to another PAC engine
+ *  \return a reference to this engine after the copy/assignment
+ */
 PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 	copyMe(e);
 	return *this;
@@ -68,6 +80,17 @@ PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
 
+/**
+ *  \brief Tell the algorithm which nullspace vector to choose in the first
+ *  iteration if the nullspace is multidimensional.
+ *  \details While rare for properly formatted families, a multidimensional
+ *  nullspace may occur if the initial guess is precisely a bifurcation between
+ *  families. Multidimensional nullspaces may also occur if the constraints are 
+ *  not independent or if the Jacobian matrix is poorly scaled.
+ * 
+ *  \param c which column (index begins at 0) of the nullspace to choose for
+ *  the initial step
+ */
 void PseudoArcEngine::setNullspaceCol(unsigned int c){ nullspaceCol = c; }
 
 //-----------------------------------------------------------------------------
@@ -146,6 +169,7 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 	if(pInitGuess == nullptr || pMember == nullptr || pTemp == nullptr)
 		throw Exception("PseudoArcEngine::pac: input arcset pointers cannot be null");
 	
+	printf("Beginning Pseudo Arclength Continuation\n");
 	cleanEngine();	// Reset all run-dependent parameters for the new continuation process
 	double tof0 = pInitGuess->getTotalTOF();
 
@@ -371,7 +395,7 @@ bool PseudoArcEngine::decreaseStepSize(){
 
 		return true;	// success!
 	}else{
-		printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: Could not converge new family member!\n");
+		printColor(MAGENTA, "Reached minimum step size!\n");
 		return false;	// Can't go any smaller...
 	}
 }//====================================================
@@ -536,6 +560,9 @@ bool PseudoArcEngine::chooseNullVec(MatrixXRd &N, std::vector<int> initDir, cons
 		Eigen::VectorXd tempVec = N.cols() > 1 ? N.col(best_ix) : N;
 		N = best_sign*tempVec;	// Apply sign change, if needed
 	}
+
+	// Turn N into a unit vector
+	N = N/N.norm();
 
 	printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));

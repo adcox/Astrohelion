@@ -228,15 +228,6 @@ void MultShootEngine::setMaxErr(double e){ maxErr = e; }
 void MultShootEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
- *  \brief Set the maximum allowable propagation time for an individual arc
- *  \details This is the length of time, in seconds, that the simulation engine
- *  is allowed to work on a single propagated arc
- * 
- *  \param t maximum simulation time for a single propagated arc, in seconds
- */
-void MultShootEngine::setMaxPropTime(double t){ maxSimTime = t; }
-
-/**
  *  \brief Set the way times-of-flight are encoded (if at all) in the
  *  free variable vector
  * 
@@ -502,9 +493,6 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 	simEngine.setVarStepSize(false);
 	simEngine.setNumSteps(2);
 
-	if(maxSimTime > 0)
-		simEngine.setMaxCompTime(maxSimTime);
-
 	if(bFindEvent || bIgnoreCrash){
 		simEngine.setMakeDefaultEvents(false);	// don't use crash events when searching for an event
 	}
@@ -642,9 +630,15 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim){
 		try{
 			sim.runSim(ic, ctrl0, t0, tof, &(it.propSegs[s]), pLaw);
 		}catch(DivergeException &e){
-			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine integration diverged...\n");
+			if(verbosity >= Verbosity_tp::SOME_MSG){
+				printf("%s", RED);
+				printf("SimEngine integration diverged on segment %u...\n", s);
+				printf("  > ic = [");
+				for(unsigned int i = 0; i < ic.size(); i++){ printf(" %.4f ", ic[i]); }
+				printf("]\n  > t0 = %.4f\n  > tof = %.4f\n", t0, tof);
+			}
 		}catch(Exception &e){
-			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error:\n%s\nEnding corrections.\n", e.what());
+			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "SimEngine Error on segment %u:\n%s\nEnding corrections.\n", s, e.what());
 		}
 
 		// if(verbosity >= Verbosity_tp::DEBUG){
@@ -1104,7 +1098,6 @@ void MultShootEngine::reset(){
 
 	tofTp = MSTOF_tp::VAR_FREE;
 	maxIts = 20;
-	maxSimTime = -1;
 	tolF = 1e-12;
 	tolX = 1e-14;
 	tolA = 1e-12;

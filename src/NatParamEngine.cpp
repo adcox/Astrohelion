@@ -364,10 +364,14 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
  *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
+ *	\param pEngineTemplate pointer to a multiple shooter engine that will be used, with
+ *	some modifications, to correct orbits. You might want to control how times-of-flight
+ *	are parameterized, whether or not to ignore crashes into the primaries, etc.
  */
 void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset *pConverged, 
 	std::vector<Arcset>& allArcs, std::vector<double> alwaysFixStateVals,
-	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
+	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx,
+	MultShootEngine *pEngineTemplate){
 
 	if(pInitGuess == nullptr || pInput == nullptr || pConverged == nullptr)
 		throw Exception("NatParamEngine::continuePO: cannot function with null input arcset pointers");
@@ -417,13 +421,19 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 
 	// Create the multiple shooting engine object
 	MultShootEngine msEngine;
+
+	if(pEngineTemplate){
+		// Use parameters from input engine
+		msEngine = *pEngineTemplate;
+	}else{
+		// Set some default parameters
+		msEngine.setIgnoreCrash(true);	// Ignore crashes into primary
+		msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	}
+
+	// Always apply these 
 	msEngine.setTol(tol);
-	msEngine.setIgnoreCrash(true);		// Ignore crashes into primary
 	msEngine.setFullFinalProp(false);	// Accept minimal information from msEngine
-	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
-	msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
-	msEngine.setMaxErr(1e2);
-	msEngine.setMaxPropTime(2);
 
 	// Periodicity constraint(s)
 	std::vector<Constraint> perCons = pInitGuess->getAllConstraints();
@@ -642,17 +652,18 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic,
 	double& tof, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx,
 	const std::vector<Arcset>& members){
 
+	// Compute the slope
+	if(orbitCount >= 2){
+		deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
+		deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
+		indVarSlope = deltaVar1/deltaVar2;
+	}
+
 	if(orbitCount < numSimple){
 		// Use simple continuation; copy the converged IC, step forward in the independent variable
 		ic = convSoln.getStateByIx(0);
 		ic.at(indVarIx[0]) += step_simple;
 	}else{
-		// Compute the slope for the first time
-		if(orbitCount == numSimple){
-			deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
-			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
-			indVarSlope = deltaVar1/deltaVar2;
-		}
 
 		// Use least-squares fitting to predict the value for the independent and dependent variables
 		std::vector<double> prevStates;
@@ -709,11 +720,6 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic,
 				return false;
 			}
 		}
-
-		// Update slope
-		deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
-		deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
-		indVarSlope = deltaVar1/deltaVar2;
 	}
 
 	return true;

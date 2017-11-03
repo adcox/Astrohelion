@@ -391,7 +391,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 
 			// The node to be appended is now otherNode
 			localNodeID = otherNodeID;
-			const Node &otherNode = nodes[localNodeID];
+			const Node &otherNode = nodes[nodeIDMap[localNodeID]];
 
 			// The seg to be appended is now the segment attached to otherNode
 			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
@@ -403,7 +403,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 				 
 				bLocalNodeIsOrigin = linkTOF < 0;
 			}else{
-				localSeg = segs[otherSegID];
+				localSeg = segs[segIDMap[otherSegID]];
 				bLocalNodeIsOrigin = localSeg.getOrigin() == otherNode.getID();
 			}
 		}

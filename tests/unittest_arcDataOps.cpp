@@ -42,18 +42,18 @@ void initForwardSet(){
 	forwardSet = Arcset(&sys);
 	forwardSet.addNode(Node(state1, 6, 0));
 	forwardSet.addNode(Node(state2, 6, 1.1));
-	forwardSet.addNode(Node(state3, 6, 2.2));
+	forwardSet.addNode(Node(state3, 6, 3.3));
 	forwardSet.addSeg(Segment(0, 1, 1.1));
-	forwardSet.addSeg(Segment(1, 2, 1.1));
+	forwardSet.addSeg(Segment(1, 2, 2.2));
 }//====================================================
 
 void initRevSet(){
 	revSet = Arcset(&sys);
 	revSet.addNode(Node(state1, 6, 0));
 	revSet.addNode(Node(state2, 6, -1.1));
-	revSet.addNode(Node(state3, 6, -2.2));
+	revSet.addNode(Node(state3, 6, -3.3));
 	revSet.addSeg(Segment(0, 1, -1.1));
-	revSet.addSeg(Segment(1, 2, -1.1));
+	revSet.addSeg(Segment(1, 2, -2.2));
 }//====================================================
 
 //************************************************************
@@ -704,7 +704,9 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append end of forSet2 to beginning of forSet1 with tof = 1.3
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 1.3);
+
 	// forSet1.print();
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -727,11 +729,11 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
-	// Append (+) time set to end of (+) time set
 	initForwardSet();
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append beginning of forSet2 to end of forSet1 with tof = 1.3
 	int segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 1.3);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -750,15 +752,15 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
-	// Append (+) time set to beginning of (+) time set, TOF = 0
 	initForwardSet();
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append end of forSet2 to beginning of forSet1 with tof = 0
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 0);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -775,7 +777,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.1);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 2.2);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
@@ -784,6 +786,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append beginning of forSet2 to end of forSet1 with tof = 0
 	int segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 0);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -792,15 +795,15 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.1);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 2.2);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
@@ -809,6 +812,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// Append beginning of revSet2 to the end of revSet1 with tof = -1.3
 	int segID = revSet1.appendSetAtNode(&revSet2, 2, 0, -1.3);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
@@ -827,7 +831,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.3);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -1.3);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
@@ -836,6 +840,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// Append end of revSet2 to beginning of revSet1 with tof = -1.3
 	int segID = revSet1.appendSetAtNode(&revSet2, 0, 2, -1.3);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
@@ -854,7 +859,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.3);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -1.3);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
@@ -863,23 +868,24 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// append beginning of revSet2 to end of revSet1 with tof = 0
 	int segID = revSet1.appendSetAtNode(&revSet2, 2, 0, 0);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
 
 	std::vector<ArcPiece> chrono_ans;
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.1);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -2.2);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
@@ -888,6 +894,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// Append the end of revSet2 to the beginning of revSet1
 	int segID = revSet1.appendSetAtNode(&revSet2, 0, 2, 0);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
@@ -904,7 +911,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.1);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -2.2);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
@@ -914,6 +921,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset revSet1 = revSet;
 
+	// Append beginning of revSet1 to beginning of forSet1 with TOF = 1.3
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 1.3);
 
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -933,7 +941,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
@@ -943,6 +951,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset revSet1 = revSet;
 
+	// Append beginning of revSet1 to beginning of forSet1 with tof = -1.3
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, -1.3);
 
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -962,7 +971,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == -1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), -1.3);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
@@ -972,8 +981,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset revSet1 = revSet;
 
+	// Append beginning of revSet1 to beginning of forSet1 with tof = 0
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 0);
-
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
 
@@ -981,7 +990,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
@@ -989,7 +998,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(1).getTOF());
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), revSet1.getSegByIx(0).getTOF());
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){

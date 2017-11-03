@@ -249,62 +249,75 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
 		 */
-		bool killLoop = false;
-		try{
-			while(stepSize >= minStepSize){
+		bool endPAC = false, converged = false;
+
+		// Initially, try without line search
+		corrector.setDoLineSearch(false);
+		corrector.setMaxIts(20);
+
+		while(!converged){
+			try{
+				pTemp->reset();	// Reset arcset to store converged solution
+
+				// Attempt to correct the new member; pTemp stores the corrected result
+				familyItData = corrector.multShoot(pMember, pTemp);
+				converged = true;
+			}catch(DivergeException &de){
+				// Nothing to do here; continue down the code
+			}catch(LinAlgException &lae){
+				printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
+				printErr("%s\n", lae.what());
+				endPAC = true;
+				break;
+			}
+
+			// If the solution converged, check it to make sure we haven't jumped branches
+			if(converged){
+				converged = checkPACSoln(familyItData, convergedFreeVarVec, endPAC);
+			}
+			
+			if(converged)
+				break; // exit the loop
+
+			if(decreaseStepSize()){
+				getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, familyItData);
+			}else{
+				// No longer able to decrease step size; try a line search
+				corrector.setDoLineSearch(true);
+				corrector.setMaxIts(100);
+
+				pTemp->reset();	// Reset arcset to store converged solution
+
 				try{
-					pTemp->reset();	// Reset arcset to store converged solution
-
-					// Attempt to correct the new member; pTemp stores the corrected result
-					familyItData = corrector.multShoot(pMember, pTemp);
-
-					// If we reach this point, the corrector CONVERGED
-					// Check to see if the solution is valid (i.e., hasn't jumped to another family)
-					if(!checkPACSoln(familyItData, convergedFreeVarVec, killLoop)){
-
-						// Solution is not valid; decrease the step size if possible
-						if(decreaseStepSize()){
-							// Re-Create the initial guess using the new step size; pTemp is overwritten
-							getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, familyItData);
-						}else{
-							killLoop = true;
-							break;
-						}
-					}else{
-						// ------ SOLUTION IS VALID -------
-
-						// If convergence was fast, take bigger steps
-						if(familyItData.count < static_cast<int>(stepCount_increase)){
-							stepSize = stepSize*stepScaleFactor < maxStepSize ? stepSize*stepScaleFactor : maxStepSize;
-							printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
-						}
-
-						// Save new converged family vector
-						convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
-
-						// Exit this loop; we converged!
-						break;
-					}
-				}catch(DivergeException &e){	// The corrector did not converge
-					printWarn("Corrector diverged...\n");
-
-					if(decreaseStepSize()){
-						// Re-Create the initial guess using the new step size; pTemp is overwritten
-						getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, familyItData);
-					}else{
-						killLoop = true;
-						break;
-					}
+					corrector.multShoot(pMember, pTemp);
+					converged = true;
+				}catch(DivergeException &de2){
+					// Could not converge with the line search... giving up  now
+					endPAC = true;
+					break;	// exit the while not converged loop
+				}catch(LinAlgException &lae){
+					printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
+					printErr("%s\n", lae.what());
+					endPAC = true;
+					break;
 				}
 			}
-		}catch(LinAlgException &e){
-			printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
-			printErr("%s\n", e.what());
-			killLoop = true;
 		}
 
-		if(killLoop)
+		// At this point, either the orbit has converged or the continuation should end
+		if(endPAC)
 			break;
+
+		// So the orbit converged
+
+		// If convergence was fast, take bigger steps
+		if(familyItData.count < static_cast<int>(stepCount_increase)){
+			stepSize = stepSize*stepScaleFactor < maxStepSize ? stepSize*stepScaleFactor : maxStepSize;
+			printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
+		}
+
+		// Save new converged family vector
+		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		printf("Orbit %03d converged!\n", orbitCount);
 

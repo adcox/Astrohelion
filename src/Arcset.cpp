@@ -99,9 +99,7 @@ baseArcsetPtr Arcset::clone() const{
 /**
  *  \brief Combine two arcsets.
  *  \details This function concatenates two arcset objects. It is assumed
- *  that the first state on <tt>rhs</tt> is identical to the final state on
- *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
- *  (chronologically) <tt>lhs</tt>
+ *  that the <tt>rhs</tt> object occurs after (chronologically) <tt>lhs</tt>
  * 
  *  \param lhs reference to a arcset object
  *  \param rhs reference to a arcset object

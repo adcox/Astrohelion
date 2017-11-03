@@ -330,7 +330,7 @@ class SimEngine : public Core, public Engine{
 		 * Maximum number of steps the fixed-step integration driver can take. This cap only limits
 		 * integrations performed when bVarStepSize = false
 		 */
-		unsigned long int maxDriverSteps = 1000000;
+		unsigned long int maxDriverSteps = 250000;
 
 		/** Timestamp at integration start */
 		time_t startTimestamp = 0;

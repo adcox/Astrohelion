@@ -8,48 +8,42 @@
 using namespace astrohelion;
 
 int main() {
-	double C0 = 1.6;
-	double M0 = 1000;
-	double F = 0, f = 1e-2;
-	double Isp = 1500;
-	double xStep = 5e-3;
-	bool bDoNewMethod = true;
+	std::vector<double> emL1Lyap_ic {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
+	std::vector<double> emL3Lyap_ic {-0.628097117249632, 0, 0, 0, -0.87229410151913, 0, 1};	// EM L3
+	double emL1Lyap_T = 3.02797;	// EM L1 Period
+	double emL3Lyap_T = 6.2238;
+	double alpha = 1.343, beta = 0.0955296;
 
-	SysData_cr3bp cr3bpSys("earth", "moon");
-	SysData_cr3bp_lt ltSys("earth", "moon", M0);
-
-	Family_PO_cr3bp lyapFam(&cr3bpSys);
-	std::vector<ControlLaw*> loadedLaws {};
-	lyapFam.readFromMat("../../data/families/cr3bp_earth-moon/L3_Lyap.mat", loadedLaws);
-
-	std::vector<Arcset_periodic> matches = lyapFam.getMemberByJacobi(C0);
-
-	if(matches.size() == 0){
-		printErr("Could not find/correct any orbits!\n");
-		return 0;
-	}
-
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_C_2D_RIGHT, F, Isp);
-
-	// Generate the natural Lyapunov orbit
+	SysData_cr3bp_lt sys("earth", "moon", 500);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 9e-3, 1500);
+	std::vector<double> thrustAngles {alpha, beta};
+	
+	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
-	sim.setVarStepSize(false);
-	sim.setNumSteps(2);
-	sim.setMakeDefaultEvents(false);
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(emL1Lyap_ic, thrustAngles, 0, emL1Lyap_T/2, 2, &halfLyapNodeset, &law);
 
-	Arcset_cr3bp_lt natPO(&ltSys);
-	std::vector<double> ic = matches[0].getStateByIx(0);
-	ic.push_back(1);
+	halfLyapNodeset.saveToMat("data/temp.mat");
 
-	for(double tof = 1; tof < 1000; tof += 50){
-		natPO.reset();
-		try{
-			sim.runSim(ic, tof, &natPO, &law);		
-		}catch(Exception &e){
-			printWarn("Exception: %s\n", e.what());
-		}
-	}
+	// Add control continuity constraint for full-rank Jacobian (check ALL the available partials)
+	std::vector<double> conData(law.getNumStates(), 1);
+	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
+
+	std::vector<double> stateConData {0.78, 0, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 1, stateConData);
+
+	halfLyapNodeset.addConstraint(ctrlCon);
+	halfLyapNodeset.addConstraint(stateCon);
+
+	MultShootEngine corrector;
+	// corrector.setVerbosity(Verbosity_tp::NO_MSG);
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+	corrector.setTOFType(MSTOF_tp::VAR_FREE);
+	corrector.setTol(1e-10);
+	
+	MultShootEngine::finiteDiff_checkMultShoot(&halfLyapNodeset, corrector, Verbosity_tp::SOME_MSG);
+	corrector.multShoot(&halfLyapNodeset, &correctedSet);
+
 	// sim.runSim_manyNodes(ic, matches[0].getTotalTOF(), 7, &natPO, &law);
 
 	// // Form constraints for periodicity

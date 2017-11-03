@@ -527,16 +527,6 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 			orbitCount++;
 
 			increaseStepSize(pItData->count);
-
-			// // Compute eigenvalues
-			// MatrixXRd mono = perOrbit.getMonodromy();
-
-			// double monoErr = std::abs(1.0 - mono.determinant());
-			// if(monoErr > 1e-5)
-			// 	printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
-
-			// // Add orbit to family
-			// pFam->addMember(perOrbit);
 		}
 
 		// Create the next guess

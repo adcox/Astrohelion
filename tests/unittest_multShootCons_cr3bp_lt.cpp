@@ -78,11 +78,10 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes
 	sim.runSim_manyNodes(emL3Lyap_ic, emL3Lyap_T, 2, &halfLyapArcset, &law);
 
 	MultShootEngine corrector;
-	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+	corrector.setVerbosity(Verbosity_tp::NO_MSG);
 	corrector.setTOFType(tofType);
 
 	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::NO_MSG, false));
-	// BOOST_CHECK_NO_THROW(corrector.multShoot(&halfLyapArcset, &correctedSet));
 
 	try{
 		corrector.multShoot(&halfLyapArcset, &correctedSet);
@@ -248,7 +247,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	std::vector<double> conData(law.getNumStates(), 1);
 	Constraint ctrlCon(Constraint_tp::CONT_CTRL, 0, conData);
 
-	std::vector<double> stateConData {0, 0.78, NAN, NAN, NAN, NAN, NAN};
+	std::vector<double> stateConData {0.78, 0, NAN, NAN, NAN, NAN, NAN};
 	Constraint stateCon(Constraint_tp::STATE, 1, stateConData);
 
 	halfLyapNodeset.addConstraint(ctrlCon);

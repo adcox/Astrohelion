@@ -88,9 +88,8 @@ BaseArcset& BaseArcset::operator =(const BaseArcset &d){
  *  Both <tt>lhs</tt> and <tt>rhs</tt> are copied and sorted into chronological 
  *  order. The <tt>rhs</tt> is then appended to the end of <tt>lhs</tt> with no
  *  time-of-flight between the end of <tt>lhs</tt> and the beginning of <tt>rhs</tt>.
- *  This will result in the deletion of the first node of <tt>rhs</tt> in the 
- *  concatenated set. To avoid losing data, make sure the first node of <tt>rhs</tt>
- *  is equivalent to the final node (chronologically) of <tt>lhs</tt>.
+ *  The first node of <tt>rhs</tt> is deleted if the final node on <tt>lhs</tt> is 
+ *  an origin node, i.e., if the two progress in different time directions.
  * 
  *  \param lhs pointer to an arcset object
  *  \param rhs pointer to an arcset object
@@ -240,7 +239,7 @@ int BaseArcset::addSeg(Segment s){
 							}else if(!sameLinkType && !sameTimeDir){
 								// parallel structure
 								printErr("Parallel structure!\n");
-								print();
+								// print();
 								printErr("Adding segment (ID %d) O: %d, T: %d, tof = %.4f\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
 								printErr("Conflict at node (ID %d): seg (ID %d) has O: %d, T:%d, tof = %.4f\n", linkedNodeID, nearSeg->getID(),
 									nearSeg->getOrigin(), nearSeg->getTerminus(), nearSeg->getTOF());
@@ -280,12 +279,14 @@ int BaseArcset::addSeg(Segment s){
 /**
  *  \brief Append an arcset object (i.e., a set of nodes and segments) to this one
  * 
- *  \param pArcsetIn a pointer to the arcset derivative object to append
- *  \param linkTo_ID the ID of the node in *this* arcset object to link to
- *  \param linkFrom_ID the ID of the node in <tt>set</tt> to link from
- *  \param tof time-of-flight between linkFrom_ID to linkTo_ID; if set to zero, 
- *  it is assumed that the two nodes are identical, and the original (the one in *this* object)
- *  will be retained, the other deleted, and segments rerouted accordingly.
+ *  \param pArcsetIn a pointer to the arcset object that will be appended to this object
+ *  \param localNodeID the ID of the node in *this* arcset object that <tt>pArcsetIn</tt> will be linked to
+ *  \param appendNodeID the ID of the node in <tt>pArcsetIn</tt> to link from
+ *  \param tof time-of-flight between appendNodeID to localNodeID; when this value is nonzero, an artificial
+ *  segment is constructed two link the two arcsets. If <tt>tof</tt> is zero, then one of the nodes is deleted.
+ *  If the node at <tt>localNodeID</tt> is an origin node, then the node at <tt>appendNodeID</tt> is deleted. If
+ *  the local node is not an origin, then it is deleted instead. The segment left without a terminus is then 
+ *  connected to the remaining node.
  *  
  *  \return the ID of a new segment that links the old and new arcset objects
  *	\throws Exception if the two arcset objects have different system data objects
@@ -293,34 +294,34 @@ int BaseArcset::addSeg(Segment s){
  *  \throws Exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
-int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int linkFrom_ID, double tof){
+int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, int appendNodeID, double tof){
 	if(pArcsetIn->pSysData != pSysData)
 		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
-	if(nodeIDMap.count(linkTo_ID) == 0)
-		throw Exception("BaseArcset::appendSetAtNode: linkTo_ID is out of bounds");
+	if(nodeIDMap.count(localNodeID) == 0)
+		throw Exception("BaseArcset::appendSetAtNode: localNodeID is out of bounds");
 
 	// Create a copy so we don't affect the original
-	baseArcsetPtr pSetCpy = pArcsetIn->clone();
+	baseArcsetPtr pAppendArc = pArcsetIn->clone();
 
-	const Node &linkTo_node = nodes[nodeIDMap[linkTo_ID]];
-	const Node linkFrom_node = pSetCpy->getNodeRef_const(linkFrom_ID);		// Will do its own index checks
+	const Node &localNode = nodes[nodeIDMap[localNodeID]];
+	const Node &appendNode = pAppendArc->getNodeRef_const(appendNodeID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
-	if(!linkTo_node.isLinkedTo(Linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(Linkable::INVALID_ID))
+	if(!localNode.isLinkedTo(Linkable::INVALID_ID) || !appendNode.isLinkedTo(Linkable::INVALID_ID))
 		throw Exception("BaseArcset::appendSetAtNode: specified nodes are not both open to a new link");
 
-	// Determine if linkTo_node is the origin or terminus of a segment
-	// printf("linkToNode has links [%d, %d]\n", linkTo_node.getLink(0), linkTo_node.getLink(1));
-	// printf("Choosing segment (ID %d)\n", linkTo_node.getLink(0) == Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
-	Segment linkTo_seg = getSeg(linkTo_node.getLink(0) == Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
-	bool linkTo_isOrigin = linkTo_seg.getOrigin() == linkTo_node.getID();
-	Segment linkFrom_seg = pSetCpy->getSeg(linkFrom_node.getLink(0) == Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
-	bool linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
+	// Determine if localNode is the origin or terminus of a segment
+	// printf("linkToNode has links [%d, %d]\n", localNode.getLink(0), localNode.getLink(1));
+	// printf("Choosing segment (ID %d)\n", localNode.getLink(0) == Linkable::INVALID_ID ? localNode.getLink(1) : localNode.getLink(0));
+	Segment localSeg = getSeg(localNode.getLink(0) == Linkable::INVALID_ID ? localNode.getLink(1) : localNode.getLink(0));
+	bool bLocalNodeIsOrigin = localSeg.getOrigin() == localNode.getID();
+	Segment appendSeg = pAppendArc->getSeg(appendNode.getLink(0) == Linkable::INVALID_ID ? appendNode.getLink(1) : appendNode.getLink(0));
+	bool bAppendNodeIsOrigin = appendSeg.getOrigin() == appendNode.getID();
 
-	if(!linkTo_isOrigin && !linkFrom_isOrigin)
-		throw Exception("BaseArcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
+	if(!bLocalNodeIsOrigin && !bAppendNodeIsOrigin)
+		throw Exception("BaseArcset::appendSetAtNode: neither node is an origin; cannot create segment between them");
 
 	// Store STM between two data sets; if tof != 0, we don't know the path between
 	// the two, so linkSTM is initialized to the identity matrix. If tof = 0,
@@ -330,76 +331,128 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	std::vector<double> linkSegStates, linkSegTimes;
 	double linkTOF = tof;
 	ControlLaw *pLinkCtrlLaw = nullptr;
-	unsigned int linkStateWidth = linkFrom_seg.getStateWidth();
+	unsigned int linkStateWidth = 0;
 
-	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
-	// To avoid having a segment with a TOF of zero, we delete one and update the
-	// TOF and linkFrom_ID
+	/* If TOF is zero, we need to connect the two arcsets. If localNode is an origin,
+	 * we keep it, delete appendNode and copy appendSeg. However, if localNode is a terminus,
+	 * then it makes more sense to keep appendNode (an origin), delete localNode, and copy
+	 * localSeg
+	 */
 	if(tof == 0){
-		linkTOF = linkFrom_seg.getTOF();					// Update tof
-		linkSTM = linkFrom_seg.getSTM();					// Save STM
-		linkSegStates = linkFrom_seg.getStateVector();
-		linkSegTimes = linkFrom_seg.getTimeVector();
-		pLinkCtrlLaw = linkFrom_seg.getCtrlLaw();
+		if(bLocalNodeIsOrigin){
+			// Keep the local node, delete appendNode, copy appendSegment
+			linkTOF = appendSeg.getTOF();
+			linkSTM = appendSeg.getSTM();
+			linkSegStates = appendSeg.getStateVector();
+			linkSegTimes = appendSeg.getTimeVector();
+			pLinkCtrlLaw = appendSeg.getCtrlLaw();
+			linkStateWidth = appendSeg.getStateWidth();
 
-		// Get the next node down the line
-		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
+			// Get the ID of the other node attached to appendSeg before deleting appendSeg
+			int otherNodeID = bAppendNodeIsOrigin ? appendSeg.getTerminus() : appendSeg.getOrigin();
 
-		// Delete the end node and the segment that connects to it
-		pSetCpy->deleteSeg(linkFrom_seg.getID());
-		pSetCpy->deleteNode(linkFrom_ID);
-		
-		// Update objects and variables that depend on linkFrom_ID
-		linkFrom_ID = new_linkFrom_ID;
-		const Node &newLinkFrom_node = pSetCpy->getNodeRef_const(linkFrom_ID);
-		int new_linkFrom_segIx = newLinkFrom_node.getLink(0) == Linkable::INVALID_ID ? newLinkFrom_node.getLink(1) : newLinkFrom_node.getLink(0);
-		
-		if(new_linkFrom_segIx != Linkable::INVALID_ID){
-			linkFrom_seg = pSetCpy->getSeg(new_linkFrom_segIx);
-			linkFrom_isOrigin = linkFrom_seg.getOrigin() == newLinkFrom_node.getID();
-		}else{
-			// No segments left, just a node
-			// Leave linkFrom_seg the same; this is used later to determine the direction of time
-			// make linkFrom_isOrigin = true if the TOF is negative, false if TOF is positive
-			// to avoid parallel structure problems
-			linkFrom_isOrigin = linkTOF < 0;
+			// Delete appendSeg and appendNode
+			pAppendArc->deleteSeg(appendSeg.getID());
+			pAppendArc->deleteNode(appendNodeID);
+
+			// The node to be appended is now otherNode
+			appendNodeID = otherNodeID;
+			const Node &otherNode = pAppendArc->getNodeRef_const(appendNodeID);
+
+			// The seg to be appended is now the segment attached to otherNode
+			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
+
+			if(otherSegID == Linkable::INVALID_ID){
+				// No segments left, just a node.
+				// Leave appendSeg untouched; it is used later to determine the direction of time
+				// Make bAppendNodeIsOrigin = true if the TOF is negative, false if TOF is positive
+				// to avoid parallel structure problems
+				 
+				bAppendNodeIsOrigin = linkTOF < 0;
+			}else{
+				appendSeg = pAppendArc->getSeg(otherSegID);
+				bAppendNodeIsOrigin = appendSeg.getOrigin() == otherNode.getID();
+			}
+		}else{	// appendNode is the origin, local node is terminus
+			// Keep appendNode, delete localNode, copy localSeg
+			linkTOF = localSeg.getTOF();
+			linkSTM = localSeg.getSTM();
+			linkSegStates = localSeg.getStateVector();
+			linkSegTimes = localSeg.getTimeVector();
+			pLinkCtrlLaw = localSeg.getCtrlLaw();
+			linkStateWidth = localSeg.getStateWidth();
+
+			// Get the ID of the other node attached to localSeg before deleting localSeg
+			int otherNodeID = localSeg.getOrigin();
+
+			// Delete localSeg and localNode
+			deleteSeg(localSeg.getID());
+			deleteNode(localNodeID);
+
+			// The node to be appended is now otherNode
+			localNodeID = otherNodeID;
+			const Node &otherNode = nodes[localNodeID];
+
+			// The seg to be appended is now the segment attached to otherNode
+			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
+
+			if(otherSegID == Linkable::INVALID_ID){
+				// No segments left, just a node.
+				// Leave localSeg untouched; it is used later to determine the direction of time
+				// Make bLocalNodeIsOrigin = true if the TOF is negative, false if TOF is positive
+				 
+				bLocalNodeIsOrigin = linkTOF < 0;
+			}else{
+				localSeg = segs[otherSegID];
+				bLocalNodeIsOrigin = localSeg.getOrigin() == otherNode.getID();
+			}
 		}
 	}
 
-	// A mapping vector: index is the old node ID, value is the new node ID
-	// All new IDs are initialized to the default pSetCpy value
-	std::vector<int> map_oldID_to_newID = concatArcset(pSetCpy.get());
+	/*	Concatenate the two arcsets without connecting anything.
+	 *	The mapping vector: index is the old node ID, value is the new node ID
+	 *	All new IDs are initialized to the default pAppendArc value
+	 */
+	std::vector<int> map_oldID_to_newID = concatArcset(pAppendArc.get());
 
-	// Add a new segment to link the nodes from [pSetCpy] to [this object]
-	int origin = Linkable::INVALID_ID, terminus = Linkable::INVALID_ID;
-	if(!linkTo_isOrigin){
-		origin = linkTo_ID;
-		terminus = map_oldID_to_newID[linkFrom_ID];
-	}else if(!linkFrom_isOrigin){
-		origin = map_oldID_to_newID[linkFrom_ID];
-		terminus = linkTo_ID;
+	// ------------------------------------------------------------------------
+	// Add a new segment to link the nodes from [pAppendArc] to [this object]
+	// ------------------------------------------------------------------------
+
+	int linkOrigin = Linkable::INVALID_ID, linkTerminus = Linkable::INVALID_ID;
+
+	if(!bLocalNodeIsOrigin){
+		linkOrigin = localNodeID;
+		linkTerminus = map_oldID_to_newID[appendNodeID];
+	}else if(!bAppendNodeIsOrigin){
+		linkOrigin = map_oldID_to_newID[appendNodeID];
+		linkTerminus = localNodeID;
 	}else{
-		// Both are origins; the only double-origin node posibility is one where
+		// Both are origins; the only double-linkOrigin node posibility is one where
 		// each segment that originates from the node has a different time direction
-		if(linkTo_seg.getTOF() < 0){
-			origin = tof > 0 ? linkTo_ID : map_oldID_to_newID[linkFrom_ID];
-			terminus = tof > 0 ? map_oldID_to_newID[linkFrom_ID] : linkTo_ID;
-		}else if(linkFrom_seg.getTOF() < 0){
-			origin = tof > 0 ? map_oldID_to_newID[linkFrom_ID] : linkTo_ID;
-			terminus = tof > 0 ? linkTo_ID : map_oldID_to_newID[linkFrom_ID];
+		
+		// localSeg and appendSeg have been updated to be the closest segments to the concatenation interface
+		if(localSeg.getTOF() < 0){
+			// If the closest segment on the local side is/was reverse time
+			linkOrigin = tof > 0 ? localNodeID : map_oldID_to_newID[appendNodeID];
+			linkTerminus = tof > 0 ? map_oldID_to_newID[appendNodeID] : localNodeID;
+		}else if(appendSeg.getTOF() < 0){
+			// If the closest segment on the local side is/was reverse time
+			linkOrigin = tof > 0 ? map_oldID_to_newID[appendNodeID] : localNodeID;
+			linkTerminus = tof > 0 ? localNodeID : map_oldID_to_newID[appendNodeID];
 		}
 	}
 
 	if(tof != 0){
 		// Put minimum amount of data in the linkSeg state and time vectors
-		linkSegTimes.push_back(getEpoch(origin));
-		linkSegTimes.push_back(getEpoch(terminus));
+		linkSegTimes.push_back(getEpoch(linkOrigin));
+		linkSegTimes.push_back(getEpoch(linkTerminus));
 
-		std::vector<double> q0 = getState(origin);
-		std::vector<double> qf = getState(terminus);
+		std::vector<double> q0 = getState(linkOrigin);
+		std::vector<double> qf = getState(linkTerminus);
 		std::vector<double> extra(pSysData->getDynamicsModel()->getExtraStateSize(), 0);
 
-		// Append state, STM, and extra states for the origin and terimal nodes that the link segment connects to
+		// Append state, STM, and extra states for the linkOrigin and terimal nodes that the link segment connects to
 		// Do not add any control information; the default control law is set to nullptr
 		linkSegStates.insert(linkSegStates.end(), q0.begin(), q0.end());
 		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
@@ -413,7 +466,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	}
 	// print();
 	bInChronoOrder = false;
-	Segment linkSeg = Segment(origin, terminus, linkTOF);
+	Segment linkSeg = Segment(linkOrigin, linkTerminus, linkTOF);
 	linkSeg.setSTM(linkSTM);
 	linkSeg.setCtrlLaw(pLinkCtrlLaw);
 	linkSeg.setStateVector(linkSegStates);
@@ -449,7 +502,7 @@ void BaseArcset::clearAllConstraints(){
  *  include two independent "flows" without a segment to connect them
  * 
  *  \param pSet pointer to an arcset object
- *  \return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
+ *  \return a map relating the nodeIDs in <tt>pSet</tt> to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
  *  equivalent to <tt>Linkable::INVALID_ID</tt> is stored in the associated 

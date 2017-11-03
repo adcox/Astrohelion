@@ -47,25 +47,25 @@ BOOST_AUTO_TEST_CASE(Concat_CR3BP){
 	set2.addNode(Node(state4, 6, 2.2));
 	set2.addSeg(Segment(0, 1, 2.2));
 
-	set3.addNode(Node(state2, 6, 3.3));
+	set3.addNode(Node(state4, 6, 3.3));
 	set3.addNode(Node(state3, 6, 4.4));
-	set3.addNode(Node(state4, 6, 5.5));
+	set3.addNode(Node(state2, 6, 5.5));
 	set3.addSeg(Segment(0, 1, 1.1));
 	set3.addSeg(Segment(1, 2, 1.1));
 
 	set4.addNode(Node(state4, 6, 0));
 
 	Arcset_cr3bp sum1 = set1 + set2;
-	BOOST_CHECK(sum1.getStateByIx(0)[0] == 1);
-	BOOST_CHECK(sum1.getStateByIx(1)[0] == 2);
-	BOOST_CHECK(sum1.getStateByIx(2)[0] == 4);
+	BOOST_CHECK_EQUAL(sum1.getStateByIx(0)[0], 1);
+	BOOST_CHECK_EQUAL(sum1.getStateByIx(1)[0], 3);
+	BOOST_CHECK_EQUAL(sum1.getStateByIx(2)[0], 4);
 
 	Arcset_cr3bp sum2 = set1;
 	sum2 += set3;
-	BOOST_CHECK(sum2.getStateByIx(0)[0] == 1);
-	BOOST_CHECK(sum2.getStateByIx(1)[0] == 2);
-	BOOST_CHECK(sum2.getStateByIx(2)[0] == 3);
-	BOOST_CHECK(sum2.getStateByIx(3)[0] == 4);
+	BOOST_CHECK_EQUAL(sum2.getStateByIx(0)[0], 1);
+	BOOST_CHECK_EQUAL(sum2.getStateByIx(1)[0], 4);
+	BOOST_CHECK_EQUAL(sum2.getStateByIx(2)[0], 3);
+	BOOST_CHECK_EQUAL(sum2.getStateByIx(3)[0], 2);
 
 	// Sum of different systems
 	Arcset_cr3bp sum3 = set1;

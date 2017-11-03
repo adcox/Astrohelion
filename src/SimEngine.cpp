@@ -1465,22 +1465,24 @@ void SimEngine::createDefaultEvents(const SysData *sysData){
 }//====================================================
 
 void SimEngine::reportPropErrs(int gsl_status, double t_int){
-    if(verbosity >= Verbosity_tp::SOME_MSG){
-        printErr("SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(gsl_status));
+    printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED,
+        "SimEngine::integrate: t = %.4e, GSL ERR: %s\n", t_int, gsl_strerror(gsl_status));
 
-        switch(gsl_status){
-            case GSL_EMAXITER:
-                printErr("  Details: maximum number of driver steps have occurred\n");
-                break;
-            case GSL_ENOPROG:
-                printErr("  Details: driver step size has dropped below the minimum value; no progress to be made\n");
-                break;
-            case GSL_EBADFUNC:
-                printErr("  Details: bad function error thrown\n");
-                break;  // Driver must be reset before using again, but current behavior ends the integration and frees driver, so not necessary
-            default: 
-                break; // Nothing to do!
-        }
+    switch(gsl_status){
+        case GSL_EMAXITER:
+            printVerbColor(verbosity >= Verbosity_tp::NO_MSG, RED,
+                "  Details: SimEngine::integrate: maximum number of driver steps have occurred\n");
+            break;
+        case GSL_ENOPROG:
+            printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED,
+                "  Details: SimEngine::integrate: driver step size has dropped below the minimum value; no progress to be made\n");
+            break;
+        case GSL_EBADFUNC:
+            printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED,
+                "  Details: SimEngine::integrate: 'bad function' error thrown\n");
+            break;  // Driver must be reset before using again, but current behavior ends the integration and frees driver, so not necessary
+        default: 
+            break; // Nothing to do!
     }
 }//====================================================
 /**

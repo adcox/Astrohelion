@@ -340,7 +340,17 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 	 */
 	if(tof == 0){
 		if(bLocalNodeIsOrigin){
-			// Keep the local node, delete appendNode, copy appendSegment
+			/* 	Cases:
+			 * 	
+			 * 				vv Local Node
+			 * 	[]<--Local--[] . []<--Append--[]
+			 *	[]>--Local--[] . []--Append-->[]
+			 *	[]<--Local--[] . []--Append--<[]
+			 *					 ^^ Append Node
+			 *					 
+			 * 	In all these cases, the local node is an origin, so delete 
+			 * 	appendNode and copy appendSeg
+			 */
 			linkTOF = appendSeg.getTOF();
 			linkSTM = appendSeg.getSTM();
 			linkSegStates = appendSeg.getStateVector();
@@ -357,7 +367,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 
 			// The node to be appended is now otherNode
 			appendNodeID = otherNodeID;
-			const Node &otherNode = pAppendArc->getNodeRef_const(appendNodeID);
+			const Node &otherNode = pAppendArc->getNodeRef_const(otherNodeID);
 
 			// The seg to be appended is now the segment attached to otherNode
 			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
@@ -374,7 +384,17 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 				bAppendNodeIsOrigin = appendSeg.getOrigin() == otherNode.getID();
 			}
 		}else{	// appendNode is the origin, local node is terminus
-			// Keep appendNode, delete localNode, copy localSeg
+			/*	Cases:
+			 *	
+			 *				vv Local Node
+			 *	[]--Local-->[] . []--Append-->[]
+			 *	[]--Local-->[] . []>--Append--[]	(NOT ALLOWED; both localNode and appendNode are terminus nodes)
+			 *	[]--Local--<[] . []<--Append--[]	(NOT ALLOWED; both localNode and appendNode are terminus nodes)
+			 *					 ^^ Append Node
+			 *	
+			 *	In this case, appendNode is an origin, so delete localNode
+			 *	and copy over localSeg
+			 */
 			linkTOF = localSeg.getTOF();
 			linkSTM = localSeg.getSTM();
 			linkSegStates = localSeg.getStateVector();
@@ -474,7 +494,12 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, in
 	linkSeg.setTimeVector(linkSegTimes);
 	
 	// linkSeg.print();
-	return addSeg(linkSeg);
+	int newSegID = addSeg(linkSeg);
+
+	// Update all epochs
+	updateEpochs(nodeIDMap[0], getEpoch(0));
+
+	return newSegID;
 }//====================================================
 
 /**

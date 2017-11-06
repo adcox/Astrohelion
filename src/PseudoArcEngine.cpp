@@ -169,6 +169,9 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 	if(pInitGuess == nullptr || pMember == nullptr || pTemp == nullptr)
 		throw Exception("PseudoArcEngine::pac: input arcset pointers cannot be null");
 	
+	pMember->reset();
+	pTemp->reset();
+	
 	printf("Beginning Pseudo Arclength Continuation\n");
 	cleanEngine();	// Reset all run-dependent parameters for the new continuation process
 	double tof0 = pInitGuess->getTotalTOF();

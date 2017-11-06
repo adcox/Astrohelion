@@ -1660,6 +1660,7 @@ void BaseArcset::putInChronoOrder(bool force){
 
 	if(pieces.size() != nodes.size() + segs.size()){
 		astrohelion::printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
+		saveToMat("ChronoOrderErr.mat");
 		throw Exception("BaseArcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
 	}
 

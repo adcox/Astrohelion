@@ -308,7 +308,8 @@ BOOST_AUTO_TEST_CASE(BC4BP_Event_Stop){
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT, ltParams);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 	double T = 3.02796323553149;	// EM L1 Period
 
@@ -347,7 +348,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
  */
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, ltParams);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 
 	SimEngine engine;
@@ -393,7 +395,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_NoStop){
 
 BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_ManyRevs){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT, ltParams);
 	double ic[] = {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
 
 	SimEngine engine;

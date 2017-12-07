@@ -51,20 +51,20 @@ public:
 	 *  \{
 	 */
 	ControlLaw_cr3bp_lt(unsigned int id = NO_CTRL, std::vector<double> params = {});
-	ControlLaw_cr3bp_lt(unsigned int, double, double);
+	// ControlLaw_cr3bp_lt(unsigned int, double, double);
 
 	/**
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
 	std::string getLawTypeString() const override;
-	double getThrust() const;
-	double getThrust_dim(const SysData_cr3bp_lt*) const;
-	double getIsp() const;
+	// double getThrust() const;
+	// double getThrust_dim(const SysData_cr3bp_lt*) const;
+	// double getIsp() const;
 
-	void setThrust(double);
-	void setThrust_dim(double, const SysData_cr3bp_lt*);
-	void setIsp(double);
+	// void setThrust(double);
+	// void setThrust_dim(double, const SysData_cr3bp_lt*);
+	// void setIsp(double);
 	//\}
 
 	/**
@@ -74,6 +74,7 @@ public:
 	void getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
 	void getLaw_Output(double t, const double *s, const SysData *sysData, double *law, unsigned int len) const override;
 	void getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const override;
+	double get_dmdt(double t, const double *s, const SysData *pSys) const;
 	//\}
 
 	/**
@@ -82,6 +83,9 @@ public:
 	 */
 	static std::string lawTypeToString(unsigned int);
 	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
+	static double thrust_dim2nondim(double, SysData_cr3bp_lt*);
+	static double thrust_nondim2dim(double, SysData_cr3bp_lt*);
+	void print() const;
 	//\}
 
 	/**
@@ -92,25 +96,31 @@ public:
 									 * thrust left w.r.t. velocity direction. Thrust magnitude is constant.
 									 * - getLaw() returns 3 thrust directions
 									 * - getPartials_State() returns 21 derivatives
-									 * - params contains: { thrust (Newtons), Isp (seconds) }
+									 * - params contains: { thrust (nondim), Isp (seconds) }
+									 * - No additional states required for integration
 									 */
 		CONST_C_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, 
 									 * thrust right w.r.t. velocity direction. Thrust magnitude is constant.
 									 * - getLaw() returns 3 thrust directions
 									 * - getPartials_State() returns 21 derivatives
-									 * * - params contains: { thrust (Newtons), Isp (seconds) }
+									 * - params contains: { thrust (nondim), Isp (seconds) }
+									 * - No additional states required for integration
 									 */
-		PRO_VEL = 3,				/*!< Thrust along velocity vector (maximum energy increase)
-									 * - params contains: { thrust (Newtons), Isp (seconds) }
+		PRO_VEL = 3,				/*!< Thrust along velocity vector (maximum energy increase). Thrust
+									 * 	magnitude is constant.
+									 * - params contains: { thrust (nondim), Isp (seconds) }
+									 * - No additional states required for integration
 									 */
-		ANTI_VEL = 4,				/*!< Thrust along anti-velocity vector (maximum energy decrease)
-									 * - params contains: { thrust (Newtons), Isp (seconds) }
+		ANTI_VEL = 4,				/*!< Thrust along anti-velocity vector (maximum energy decrease). Thrust
+									 * 	magnitude is constant.
+									 * - params contains: { thrust (nondim), Isp (seconds) }
+									 * - No additional states required for integration
 									 */
 		GENERAL_CONST_F = 5			/*!< Thrust in an arbitrary direction. Thrust magnitude is constant.
 									 * - getLaw() returns 3 thrust directions
 									 * - getPartials_State() returns 21 derivatives
-									 * - params contains: { thrust (Newtons), Isp (seconds) }
-									 * - requires two additional states {alpha, beta} for numerical integration
+									 * - params contains: { thrust (nondim), Isp (seconds) }
+									 * - Requires two additional states {alpha, beta} for numerical integration
 									 */
 	};
 protected:

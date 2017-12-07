@@ -70,7 +70,8 @@ BOOST_AUTO_TEST_SUITE(CR3BP_LT_CONST_C)
 
 BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(lawType, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -101,7 +102,8 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(lawTypes) * data::make(tofTypes
 
 BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	ControlLaw_cr3bp_lt law(lawType, 9e-3, 1500);
+	std::vector<double> ltParams {9e-3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -126,7 +128,8 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(lawTypes) * data::make(tof
 
 BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	ControlLaw_cr3bp_lt law(lawType, 9e-3, 1500);
+	std::vector<double> ltParams {9e-3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -153,7 +156,8 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(lawTypes) * data::make(tofTypes)
 
 BOOST_DATA_TEST_CASE(test_rmState, data::make(lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(lawType, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
 	SimEngine sim;
@@ -196,7 +200,8 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 	(void) index;
 
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
 	std::vector<double> thrustAngles {alpha, beta};
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
@@ -235,7 +240,8 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	(void) index;
 
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 9e-3, 1500);
+	std::vector<double> ltParams {9e-3, 1500};
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
 	std::vector<double> thrustAngles {alpha, beta};
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);

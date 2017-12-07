@@ -1,6 +1,6 @@
 /**
  *	\file MultShootEngine.cpp
- *	\brief Engine object that applies differential corrections to nodesets
+ *	\brief Engine object that applies differential corrections to arcsets
  *	
  *	\author Andrew Cox
  *	\version May 25, 2016
@@ -258,31 +258,31 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
 //-----------------------------------------------------
 
 /**
- *	\brief Correct a generic nodeset using multiple shooting
+ *	\brief Correct a generic arcset using multiple shooting
  *	\details This algorithm employs multiple shooting to correct a set of nodes
  *	subject to a set of constraints. The nodes and constraints are all stored in the 
- *	input nodeset object. 
+ *	input arcset object. 
  *	
  *	Numerical integration is used to generate state transition matrices between
  *	nodes. In order to optimize performance and accuracy, only two steps are computed
  *	by the simulation engine, and the step size is fixed to force the usage of the 
  *	Adams-Bashforth Adams-Moulton method.
  *	
- *	\param set pointer to the nodeset that needs to be corrected
- *	\param pNodesOut pointer to the nodeset object that will contain the results of
+ *	\param pArcIn pointer to the arcset that needs to be corrected
+ *	\param pArcOut pointer to the arcset object that will contain the results of
  *	the shooting process
  *	\return the iteration data object for this corrections process
  *	\throws DivergeException if the corrections process does not converge
  *	\throws Exception
- *	* if the input and output nodesets contain different system data objects
+ *	* if the input and output arcsets contain different system data objects
  *	* if the dynamic model associated with the input
- *	nodeset does not support one or more of the nodeset's constraints
- *	* if the input nodeset contains more than one delta-v constraint
- *	* if the input nodeset contains more than one TOF constraint
+ *	arcset does not support one or more of the arcset's constraints
+ *	* if the input arcset contains more than one delta-v constraint
+ *	* if the input arcset contains more than one TOF constraint
  */
-MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
-	if(pNodesOut != nullptr && *(set->getSysData()) != *(pNodesOut->getSysData()))
-		throw Exception("MultShootEngine::multShoot: Input and Output nodesets must use the same system data object");
+MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
+	if(pArcOut != nullptr && *(pArcIn->getSysData()) != *(pArcOut->getSysData()))
+		throw Exception("MultShootEngine::multShoot: Input and Output arcsets must use the same system data object");
 
 	if(!bIsClean)
 		cleanEngine();
@@ -290,39 +290,37 @@ MultShootData MultShootEngine::multShoot(const Arcset *set, Arcset *pNodesOut){
 	bIsClean = false;
 
 	// Create structure to store iteration data for easy sharing
-	MultShootData it(set);
-	it.nodesOut = pNodesOut;
+	MultShootData it(pArcIn);
+	it.pArcOut = pArcOut;
 	it.tofTp = tofTp;
-	// it.bVarTime = bVarTime;	// Save in structure to pass easily to other functions
-	// it.bEqualArcTime = bEqualArcTime;
 	
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  sysType = %s\n", set->getSysData()->getTypeStr().c_str());
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
 
-	// Get the model associated with the nodeset
-	const DynamicsModel *pModel = set->getSysData()->getDynamicsModel();
+	// Get the model associated with the arcset
+	const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
 	pModel->multShoot_initDesignVec(it);
 
 	// Create constraints that enforce continuity between nodes; this process
-	// does account for velocity discontinuities specified in the nodeset
+	// does account for velocity discontinuities specified in the arcset
 	it.allCons.clear();
 	pModel->multShoot_createContCons(it);
 
 	// Add all node constraints
-	for(unsigned int n = 0; n < set->getNumNodes(); n++){
-		std::vector<Constraint> nodeCons = set->getNodeRefByIx_const(n).getConstraints();
+	for(unsigned int n = 0; n < pArcIn->getNumNodes(); n++){
+		std::vector<Constraint> nodeCons = pArcIn->getNodeRefByIx_const(n).getConstraints();
 		it.allCons.insert(it.allCons.end(), nodeCons.begin(), nodeCons.end());
 	}
 
 	// Add all segment constraints
-	for(unsigned int s = 0; s < set->getNumSegs(); s++){
-		std::vector<Constraint> segCons = set->getSegRefByIx_const(s).getConstraints();
+	for(unsigned int s = 0; s < pArcIn->getNumSegs(); s++){
+		std::vector<Constraint> segCons = pArcIn->getSegRefByIx_const(s).getConstraints();
 		it.allCons.insert(it.allCons.end(), segCons.begin(), segCons.end());
 	}
 
 	// Add all arcset constraints
-	std::vector<Constraint> arcCons = set->getArcConstraints();
+	std::vector<Constraint> arcCons = pArcIn->getArcConstraints();
 	it.allCons.insert(it.allCons.end(), arcCons.begin(), arcCons.end());
 
 	// Compute number of extra consraint functions to add
@@ -499,7 +497,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 	// Define values for use in corrections loop
 	double errF = 10*tolF, errX = 10*tolX;
-	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreStateSize = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	Eigen::VectorXd oldX(it.totalFree, 1), newX(it.totalFree, 1), FX(it.totalCons, 1);
 
@@ -532,7 +530,7 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		// Loop through all constraints and compute the constraint values, partials, and
 		// apply them to the FX and DF matrices
 		for(unsigned int c = 0; c < it.allCons.size(); c++){
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(it, it.allCons[c], c);
+			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(it, it.allCons[c], c);
 			printVerb(verbosity >= Verbosity_tp::DEBUG, "* Applying %s constraint\n", it.allCons[c].getTypeStr());
 		}
 
@@ -572,16 +570,16 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 		}
 	}
 
-	if(it.nodesOut){
+	if(it.pArcOut){
 		try{
 			// Save propagated data and free variable vector values to the output arcset
 			if(bFullFinalProp){
 				simEngine.setVarStepSize(true);
-				propSegsFromFreeVars(it, simEngine);
+				propSegsFromFreeVars(it, simEngine, verbosity);
 			}
-			it.nodesIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
+			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
 		}catch(Exception &e){
-			printErr("MultShootEngine::multShoot: Unable to create output nodeset\n  Err: %s\n", e.what());
+			printErr("MultShootEngine::multShoot: Unable to create output arcset\n  Err: %s\n", e.what());
 			throw e;
 		}
 	}
@@ -592,35 +590,38 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 /**
  *  \brief Propagate all segments along the arcset
  *  \details Initial conditions and other parameters for each integrated
- *  arc are obtained from the free variable vector or the input nodeset
+ *  arc are obtained from the free variable vector or the input arcset
  * 
  *  \param it reference to the multiple shooting data structure
  *  \param sim reference to a simulalation engine initialized for multiple
  *  shooting propagations
+ *  \param verbosity how verbose the output should be; the verbosity of the input
+ *  SimEngine object is set separately (i.e., via sim.setVerbosity()) and is not affected
+ *  by this input
  */
-void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim){
-	unsigned int coreStateSize = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Verbosity_tp verbosity){
+	unsigned int coreStateSize = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	it.deltaVs.clear();
 	it.deltaVs.assign(3*it.numNodes, 0);
 
 	// initialize a vector of trajectory objects to store each propagated segment
 	it.propSegs.clear();
-	it.nodesIn->getSysData()->getDynamicsModel()->multShoot_initIterData(it);
+	it.pArcIn->getSysData()->getDynamicsModel()->multShoot_initIterData(it);
 
-	for(unsigned int s = 0; s < it.nodesIn->getNumSegs(); s++){
+	for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
 		// printf("Retrieving ICs for segment (ix %02d):\n", s);
 		// Get simulation conditions from design vector via dynamic model implementation
 		double t0 = 0, tof = 0;
 		std::vector<double> ic(coreStateSize, 0);
 
-		ControlLaw *pLaw = it.nodesIn->getSegRefByIx_const(s).getCtrlLaw();
+		ControlLaw *pLaw = it.pArcIn->getSegRefByIx_const(s).getCtrlLaw();
 		std::vector<double> ctrl0;
 		if(pLaw){
 			ctrl0.assign(pLaw->getNumStates(), 0);
 		}
 
-		it.nodesIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(it, it.nodesIn->getSegRefByIx_const(s).getID(),
+		it.pArcIn->getSysData()->getDynamicsModel()->multShoot_getSimICs(it, it.pArcIn->getSegRefByIx_const(s).getID(),
 			&(ic.front()), &(ctrl0.front()), &t0, &tof);
 
 		sim.setRevTime(tof < 0);
@@ -646,20 +647,20 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim){
 		// }
 
 		std::vector<double> lastState = it.propSegs[s].getStateByIx(-1);
-		int termID = it.nodesIn->getSegRefByIx_const(s).getTerminus();
+		int termID = it.pArcIn->getSegRefByIx_const(s).getTerminus();
 		if(termID != Linkable::INVALID_ID){
 
 			// Get the state of the terminal node
 			MSVarMap_Obj stateVar = it.getVarMap_obj(MSVar_tp::STATE, termID);
 			std::vector<double> state;
 			if(stateVar.row0 == -1)
-				state = it.nodesIn->getState(termID);
+				state = it.pArcIn->getState(termID);
 			else
 				state = std::vector<double>(it.X.begin() + stateVar.row0, it.X.begin() + stateVar.row0 + stateVar.nRows);
 
 			// velCon has false for a velocity state if there is a discontinuity between
 			// the terminus of the segment and the terminal node
-			std::vector<bool> velCon = it.nodesIn->getSegRefByIx_const(s).getVelCon();
+			std::vector<bool> velCon = it.pArcIn->getSegRefByIx_const(s).getVelCon();
 			for(int i = 3; i < 6; i++){
 				// Compute difference in velocity; if velCon[i-3] is true, then velocity
 				// should be continuous and any difference is numerical error, so set to
@@ -942,7 +943,7 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 	double f = 1;					// Error term for the current iteration
 	double f2 = 1;					// Error term from the previous iteration of the line search
 
-	unsigned int coreDim = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int coreDim = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 
 	for(unsigned int count = 0; count < maxCount; count++){
 		// Compute next free variable vector give the current attenuation factor
@@ -960,9 +961,9 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 		tempData.X = std::vector<double>(newX.data(), newX.data() + newX.rows());
 		
 		// Do all those expensive function evaluations
-		propSegsFromFreeVars(tempData, sim);
+		propSegsFromFreeVars(tempData, sim, verbosity);
 		for(unsigned int c = 0; c < tempData.allCons.size(); c++){
-			tempData.nodesIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(tempData, tempData.allCons[c], c);
+			tempData.pArcIn->getSysData()->getDynamicsModel()->multShoot_applyConstraint(tempData, tempData.allCons[c], c);
 		}
 
 		// Compute magnitude of new FX vector
@@ -1114,7 +1115,7 @@ void MultShootEngine::reset(){
  *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  \param pNodeset A nodeset with some constraints
+ *  \param pNodeset A arcset with some constraints
  *  \param verbosity Specify how verbose the output is
  *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
  */
@@ -1128,7 +1129,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosit
  *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  \param pNodeset A nodeset with some constraints
+ *  \param pNodeset A arcset with some constraints
  *  \param engine correction engine object configured with the appropriate settings (i.e.,
  *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
@@ -1339,10 +1340,10 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
 }//====================================================
 
 /**
- *  \brief Compute the total delta-V along a corrected nodeset
+ *  \brief Compute the total delta-V along a corrected arcset
  * 
  *  \param it reference to an MultShootData object associated with a corrections process
- *  \return the total delta-V, units consistent with the nodeset's stored velocity states
+ *  \return the total delta-V, units consistent with the arcset's stored velocity states
  */
 double MultShootEngine::getTotalDV(const MultShootData& it){
     double total = 0;

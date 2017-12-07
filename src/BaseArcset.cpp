@@ -2448,7 +2448,12 @@ matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) con
 
 /**
  *  \brief Create a matio variable for the segment STMs
- *  \details The data is copied into a matvar_t pointer, which is
+ *  \details The STM is copied from each segment state vector, thus,
+ *  the STM represents the evolution of each individual segment 
+ *  regardless of whether or not the arcset has been set to store
+ *  cumulative STMs via setSTM_cumulative().
+ *  
+ *  The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
  * 	\param saveTp describes how much data to save
@@ -2466,8 +2471,11 @@ matvar_t* BaseArcset::createVar_SegSTM(Save_tp saveTp, const char *pVarName) con
 	}
 
 	unsigned int count = 0;
+	unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize(), ctrl_dim = 0;
 	for(const Segment &seg : segs){
-		MatrixXRd P = seg.getSTM().transpose();
+		ctrl_dim = seg.getCtrlLaw() ? seg.getCtrlLaw()->getNumStates() : 0;
+
+		MatrixXRd P = seg.getSTM_fromStates(core_dim, ctrl_dim).transpose();
 		dims[0] = P.cols();
 		dims[1] = P.rows();
 

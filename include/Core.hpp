@@ -71,7 +71,15 @@
 
 #pragma once
 
-#define NDEBUG	// Dissable all asserts and other debugging features
+#define NDEBUG		// Dissable all asserts and other debugging features
+
+/* base radix of the computer architecture; almost always 2 (binary),
+ * but may be different for some unique systems.
+ *
+ *	Used in:
+ *	- Calculations:balanceMat()
+ */
+#define RADIX 2	
 
 #include <string>
 #include <map>

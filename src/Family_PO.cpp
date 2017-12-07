@@ -57,6 +57,32 @@ Family_PO& Family_PO::operator= (const Family_PO &f){
 	return *this;
 }//====================================================
 
+/**
+ *  \brief Concatenates two Family_PO objects
+ *  \details Performs the operation <tt>combo = lhs + rhs</tt>. The data from 
+ *  <tt>lhs</tt> is copied directly into <tt>combo</tt>, thus, the name, sort type,
+ *  and match tolerance of <tt>combo</tt> are identical to those of <tt>lhs</tt>
+ *  regardless of the values of these parameters in <tt>rhs</tt>. The members,
+ *  eigenvalues, and eigenvectors from <tt>rhs</tt> are appended to those of 
+ *  <tt>lhs</tt>.
+ * 
+ *  \param lhs a Family_PO object reference
+ *  \param rhs a Family_PO object reference
+ */
+Family_PO operator+ (const Family_PO &lhs, const Family_PO &rhs){
+	if(*(lhs.pSysData) != *(rhs.pSysData))
+		throw Exception("Family_PO, operator+ : lhs and rhs use different system data structures");
+
+	Family_PO combo(lhs);	// Copy contents of lhs
+
+	// Append contents of rhs to lhs
+	combo.members.insert(combo.members.end(), rhs.members.begin(), rhs.members.end());
+	combo.memberEigVals.insert(combo.memberEigVals.end(), rhs.memberEigVals.begin(), rhs.memberEigVals.end());
+	combo.memberEigVecs.insert(combo.memberEigVecs.end(), rhs.memberEigVecs.begin(), rhs.memberEigVecs.end());
+
+	return combo;
+}//====================================================
+
 //-----------------------------------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
@@ -429,6 +455,35 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 	}
 }//====================================================
 
+/**
+ *  \brief Reverse the order of the family members.
+ *  \details Family member data objects, their eigenvalues, and their
+ *  eigenvectors are swapped in-place to reverse the order.
+ */
+void Family_PO::reverseOrder(){
+	if(members.size() == 0)
+		return;
+
+	std::reverse(std::begin(members), std::end(members));
+	std::reverse(std::begin(memberEigVecs), std::end(memberEigVecs));
+
+	if(memberEigVecs.size() != members.size())
+		throw Exception("Family_PO::reverseOrder: sizes of members and memberEigVecs are not consistent");
+
+	unsigned int nE = memberEigVecs[0].rows();
+	unsigned int nM = memberEigVals.size()/nE;
+
+	if(nM != members.size())
+		throw Exception("Family_PO::reverseOrder: sizes of members and memberEigVals are not consistent");
+
+	// Swap groups of eigenvalues without changing order within each group
+	for(unsigned int m = 0; m < nM/2; m++){
+		for(unsigned int i = 0; i < nE; i++){
+			std::iter_swap(memberEigVals.begin() + nE*m + i, memberEigVals.end() - nE*(m+1) + i);
+		}
+	}
+}//====================================================
+
 //-----------------------------------------------------------------------------
 //      File I/O
 //-----------------------------------------------------------------------------
@@ -440,15 +495,18 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
  *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  \param bReconstruct whether or not to reconstruct each arc as it is read from memory.
+ *  "Reconstruction" is the process of propagating each segment to populate the full segment
+ *  state history.
  */
-void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refLaws){
+void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refLaws, bool bReconstruct){
 	mat_t *pMatFile = Mat_Open(filename, MAT_ACC_RDONLY);
 	if(pMatFile == nullptr){
 		throw Exception("Family_PO::readFromMat: Could not load family from file");
 	}
 
 
-	loadMembers(pMatFile, refLaws);
+	loadMembers(pMatFile, refLaws, bReconstruct);
 	loadEigVals(pMatFile);
 	loadMiscData(pMatFile);
 	try{
@@ -568,10 +626,10 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 
 				for(unsigned int i = 0; i < numSteps; i++){
 					std::vector<cdouble> vecData(nE*nE, 0);
-					for(unsigned int j = 0; j < 36; j++){
+					for(unsigned int j = 0; j < nE*nE; j++){
 						vecData[j] = cdouble(realParts[j*numSteps + i], imagParts[j*numSteps + i]);
 					}
-					memberEigVecs.push_back(Eigen::Map<MatrixXRcd>(&(vecData.front()), 6, 6));
+					memberEigVecs.push_back(Eigen::Map<MatrixXRcd>(&(vecData.front()), nE, nE));
 				}
 			}
 		}else{
@@ -588,8 +646,11 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
  *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  \param bReconstruct whether or not to reconstruct each arc as it is read from memory.
+ *  "Reconstruction" is the process of propagating each segment to populate the full segment
+ *  state history.
  */
-void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, bool bReconstruct){
 	matvar_t *pStruct = Mat_VarRead(pMatFile, VARNAME_FAM_MEMBER);
 	if(pStruct == nullptr){
 		throw Exception("Family_PO::loadMembers: Could not read variable from file");
@@ -600,7 +661,12 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 				Arcset_periodic arc(pSysData);
 				arc.readFromStruct(pStruct, s, refLaws);
 
-				members.push_back(arc);
+				if(bReconstruct){
+					Arcset_periodic fullArc(pSysData);
+					reconstructArc(&arc, &fullArc);
+					members.push_back(fullArc);
+				}else
+					members.push_back(arc);
 			}
 		}else{
 			throw Exception("Family_PO::loadMembers: Family member variable does not have structure type/class");
@@ -657,8 +723,11 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 	if(members.size() > 0){
 		const unsigned int nE = memberEigVecs[0].rows();
 
-		if(members.size() * nE != memberEigVals.size())
-			throw Exception("Family_PO::saveEigVals: eigenvalue storage vector does not contain the appropriate number of elements!");
+		if(members.size() * nE != memberEigVals.size()){
+			char msg[128];
+			sprintf(msg, "Family_PO::saveEigVals: eigenvalue storage vector has %zu elements; expects %u*%zu", memberEigVals.size(), nE, members.size());
+			throw Exception(msg);
+		}
 
 		// Separate all eigenvalues into real and complex parts
 		std::vector<double> realParts(memberEigVals.size());

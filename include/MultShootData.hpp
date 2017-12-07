@@ -220,8 +220,8 @@ class MultShootData{
 		// Utilities
 
 		// Variables
-		const Arcset *nodesIn;						//!< A pointer to the arcset input for this corrections process
-		Arcset *nodesOut = nullptr;					//!< A pointer to arcset that will be output
+		const Arcset *pArcIn;						//!< A pointer to the arcset input for this corrections process
+		Arcset *pArcOut = nullptr;					//!< A pointer to arcset that will be output
 		std::vector<Arcset> propSegs {};			//!< A collection of all propagated segments; index here matches index within the input arcset
 		std::vector<double> X0 {};					//!< Initial, uncorrected free-variable vector
 		std::vector<double> X {};					//!< Free-Variable Vector
@@ -233,12 +233,12 @@ class MultShootData{
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
 
-		int numNodes = 0;			//!< Number of nodes in the entire arcset
-		int count = 0;				//!< Count of number of iterations through corrections process
+		int numNodes = 0;							//!< Number of nodes in the entire arcset
+		int count = 0;								//!< Count of number of iterations through corrections process
 
-		int numSlack = 0;			//!< number of slack variables
-		int totalCons = 0;			//!< Total # constraints -> # rows of DF
-		int totalFree = 0;			//!< Total # free var. -> # cols of DF
+		int numSlack = 0;							//!< number of slack variables
+		int totalCons = 0;							//!< Total # constraints -> # rows of DF
+		int totalFree = 0;							//!< Total # free var. -> # cols of DF
 
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;		//!< Describes how times-of-flight are stored in the free-variable vector
 	protected:

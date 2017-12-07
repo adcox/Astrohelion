@@ -71,10 +71,12 @@ public:
 	virtual std::string getLawTypeString() const;
 	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;
+	double getParam(int) const;
 	std::vector<double> getParams() const;
 	const std::vector<double>& getParamsRef_const() const;
 
 	void setLawType(unsigned int);
+	void setParam(int, double);
 	void setParams(double*, unsigned int);
 	void setParams(std::vector<double>);
 	//\}

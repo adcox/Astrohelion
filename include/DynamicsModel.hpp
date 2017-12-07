@@ -336,6 +336,7 @@ protected:
 		Event_tp::XY_PLANE,
 		Event_tp::XZ_PLANE,
 		Event_tp::YZ_PLANE,
+		Event_tp::STATE_PLANE,
 		Event_tp::CRASH,
 		Event_tp::APSE,
 		Event_tp::DIST};

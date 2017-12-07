@@ -132,6 +132,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 			initEvent(t, dir, willStop, params);
 			break;
 		}
+		case Event_tp::STATE_PLANE:
 		case Event_tp::JC:
 		case Event_tp::APSE:
 		case Event_tp::DIST:
@@ -179,6 +180,7 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 		case Event_tp::YZ_PLANE:
 		case Event_tp::XZ_PLANE:
 		case Event_tp::XY_PLANE:
+		case Event_tp::STATE_PLANE:
 		case Event_tp::MASS:
 			conType = Constraint_tp::ENDSEG_STATE;
 			break;
@@ -216,12 +218,31 @@ void Event::initialize(const SysData* pSys){
 		throw Exception("Event::initialize: The current dynamic model does not support this event type");
 	}
 
-	// double data[] = {NAN, NAN, NAN, NAN, NAN, NAN};	// six empty elements
-	std::vector<double> data(pSysData->getDynamicsModel()->getCoreStateSize(), NAN);
+	if(paramsIn.size() == 0)
+		throw Exception("Event::initialize: Parameter vector is empty; cannot proceed");
+
+	unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+	std::vector<double> data(core_dim, NAN);
 	switch(type){
 		case Event_tp::YZ_PLANE: data[0] = paramsIn[0]; break;	// x = specified value
 		case Event_tp::XZ_PLANE: data[1] = paramsIn[0];	break;	// y = specified value
 		case Event_tp::XY_PLANE: data[2] = paramsIn[0]; break;	// z = specified value
+		case Event_tp::STATE_PLANE:
+		{
+			if(paramsIn.size() < 2)
+				throw Exception("Event::initialize: Parameter vector for STATE_PLANE event has fewer than 2 elements; cannot proceed");
+
+			int ix = static_cast<int>(paramsIn[0]);
+			if(ix < 0 || ix >= core_dim){
+				char msg[128];
+				sprintf(msg, "Event::initialize: ix = %d is out of bounds (min = 0, max = %u)", ix, core_dim);
+				throw Exception(msg);
+			}
+
+			// The specified variable equals the specified amount
+			data[ix] = paramsIn[1];
+			break;
+		}	
 		case Event_tp::CRASH:
 		{
 			data[0] = paramsIn[0];	// Index of primary
@@ -230,13 +251,15 @@ void Event::initialize(const SysData* pSys){
 			    BodyData primData(pSysData->getPrimID(static_cast<int>(data[0])));
 			    data[1] = (primData.getBodyRad() + primData.getMinFlyBy())/pSysData->getCharL();
 			}else{
-				throw Exception("Cannot access primary for crash event");
+				throw Exception("Event::initialize Cannot access primary for CRASH event");
 			}
 			break;
 		}
 		case Event_tp::JC: data[0] = paramsIn[0]; break;	// JC = specified value
 		case Event_tp::APSE: data[0] = paramsIn[0]; break; 	// primary index = specified value
 		case Event_tp::DIST:
+			if(paramsIn.size() < 2)
+				throw Exception("Event::initialize: Parameter vector for DIST event has fewer than 2 elements; cannot proceed");
 			data[0] = paramsIn[0];
 			data[1] = paramsIn[1];
 			break;
@@ -454,6 +477,17 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 		case Event_tp::XY_PLANE:
 			d = y[2] - conData[2];
 			break;
+		case Event_tp::STATE_PLANE:
+		{			
+			// Assume that paramsIn[0] has already been checked and validated in initialize()
+			int ix = static_cast<int>(paramsIn[0]);
+			if(len >= ix - 1){
+				d = y[ix] - conData[ix];
+			}else{
+				throw Exception("Event:getDist: input state is too short for STATE_PLANE event!");
+			}
+			break;
+		}
 		case Event_tp::CRASH:
 		{
 			if(len > 2){
@@ -465,7 +499,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 				double dz = y[2] - pos[2];
 				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			}else{
-				throw Exception("Event::getDist: input state is too short!");
+				throw Exception("Event::getDist: input state is too short for CRASH event!");
 			}
 			break;
 		}
@@ -475,7 +509,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 				const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(pSysData);
 				d = DynamicsModel_cr3bp::getJacobi(y, crSys->getMu()) - conData[0];
 			}else{
-				throw Exception("Event::getDist: input state is too short!");
+				throw Exception("Event::getDist: input state is too short for JC event!");
 			}
 			break;
 		}
@@ -485,7 +519,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 				int Pix = static_cast<int>(conData[0]);
 				d = pSysData->getDynamicsModel()->getRDot(Pix, t, y, pSysData);
 			}else{
-				throw Exception("Event::getDist: input state is too short!");
+				throw Exception("Event::getDist: input state is too short for APSE event!");
 			}
 			break;
 		}
@@ -500,7 +534,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 				double dz = y[2] - pos[2];
 				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			}else{
-				throw Exception("Event::getDist: input state is too short!");
+				throw Exception("Event::getDist: input state is too short DIST event!");
 			}
 			break;
 		}
@@ -508,7 +542,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 			if(len > 6){
 				d = y[6] - conData[6];
 			}else{
-				throw Exception("Event::getDist: input state is too short!");
+				throw Exception("Event::getDist: input state is too short MASS event!");
 			}
 
 			break;
@@ -568,6 +602,7 @@ const char* Event::getEventTpStr(Event_tp t){
 		case Event_tp::YZ_PLANE: return "yz-plane"; break;
 		case Event_tp::XZ_PLANE: return "xz-plane"; break;
 		case Event_tp::XY_PLANE: return "xy-plane"; break;
+		case Event_tp::STATE_PLANE: return "state-plane"; break;
 		case Event_tp::CRASH: return "crash"; break;
 		case Event_tp::JC: return "jacobi constant"; break;
 		case Event_tp::APSE: return "apse"; break;

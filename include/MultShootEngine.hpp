@@ -131,6 +131,7 @@ class MultShootEngine : public Core, public Engine{
 		static double getTotalDV(const MultShootData&);
 		static bool finiteDiff_checkMultShoot(const Arcset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
 		static bool finiteDiff_checkMultShoot(const Arcset*, MultShootEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
+		static void propSegsFromFreeVars(MultShootData&, SimEngine&, Verbosity_tp verbosity = Verbosity_tp::NO_MSG);
 		//\}
 		
 	private:
@@ -204,7 +205,6 @@ class MultShootEngine : public Core, public Engine{
 		void checkDFSingularities(MatrixXRd);
 		void chooseStep_LineSearch(MultShootData&, const Eigen::VectorXd&, const Eigen::VectorXd&, const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&, bool&);
 		void factorizeJacobian(const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&);
-		void propSegsFromFreeVars(MultShootData&, SimEngine&);
 		void reportConMags(const MultShootData&);
 		void solveUpdateEq(MultShootData&, const Eigen::VectorXd&, const Eigen::VectorXd&, Eigen::VectorXd&);
 		//\}

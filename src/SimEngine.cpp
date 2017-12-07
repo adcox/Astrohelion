@@ -566,7 +566,7 @@ void SimEngine::runSim(const double *ic, const double *ctrl0, const double *stm0
         return;
     }
 
-    printVerbColor(verbosity >= Verbosity_tp::ALL_MSG, GREEN, "Running simulation...\n");
+    printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, GREEN, "Running simulation...\n");
     if(!bIsClean){
         cleanEngine();
     }

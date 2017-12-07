@@ -327,7 +327,10 @@ MatrixXRd Segment::getSTM() const{ return stm; }
  * 
  *  \return a matrix representation of the STM
  */
-MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const { 
+MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const {
+	if(stateWidth == 0)
+		throw Exception("Segment::getSTM_fromStates: stateWidth = 0; cannot proceed");
+
 	unsigned int el0 = core_dim + ctrl_dim;		// Index of first stm element
 	unsigned int side = core_dim + ctrl_dim;	// side length of the STM
 	unsigned int elf = el0 + side*side;			// Index of final stm element

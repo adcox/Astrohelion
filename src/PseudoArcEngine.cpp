@@ -364,7 +364,7 @@ void PseudoArcEngine::getNextPACGuess(Arcset *pNewMember, Arcset *pTemp, const E
 	it.X = std::vector<double>(X, X + newFreeVarVec.rows());
 
 	pTemp->reset();	// clean everything out
-	it.nodesOut = pTemp;
+	it.pArcOut = pTemp;
 
 	pNewMember->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
 
@@ -436,7 +436,7 @@ bool PseudoArcEngine::checkPACSoln(const MultShootData &it, const Eigen::VectorX
 	// Note that only the core states (the IC for the trajectory) is checked; differences in other nodes 
 	// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
 	double sumSquared = 0;
-	unsigned int core_dim = it.nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int core_dim = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 	for(unsigned int i = 0; i < core_dim; i++){
 		sumSquared += (it.X[i] - convergedFreeVarVec[i])*(it.X[i] - convergedFreeVarVec[i]);
 	}

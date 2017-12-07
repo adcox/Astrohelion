@@ -183,6 +183,319 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
 }//====================================================
 
 /**
+ *  \brief Compute the eigendata (values and, optionally, vectors) of the matrix A
+ *  \details This method leverages matrix balancing to reduce round-off errors in
+ *  the eigendata computation
+ * 
+ *  \param A a real matrix (passed by value because it will be manipulated in-place)
+ *  \param pVecs pointer to a matrix of complex doubles; eigenvectors are stored here as columns,
+ *  each column is associated with the eigenvalue of the same index
+ * 
+ *  \return A vector of complex doubles that contains the eigenvalues
+ */
+std::vector<cdouble> getBalancedEigData(MatrixXRd A, MatrixXRcd *pVecs){
+    bool compVecs = !(pVecs == nullptr);
+
+    // Balance the matrix
+    unsigned int low = 0, hi = 0;
+    std::vector<double> perms {};
+    balanceMat(A, low, hi, perms);
+
+    // Compute the eigenvalues of the balanced matrix (and maybe eigenvectors)
+    Eigen::EigenSolver<MatrixXRd> eigensolver(A, compVecs);
+    if(eigensolver.info() != Eigen::Success)
+        throw Exception("Calculations:getEigData: Could not compute eigenvalues of A matrix");
+
+    // Extract the eigen data to return to the user
+    std::vector<cdouble> eigVals {};
+    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+    eigVals.insert(eigVals.begin(), vals.data(), vals.data() + vals.size());
+
+    if(pVecs != nullptr){
+        // Compute the eigenvectors of the balanced matrix
+        *pVecs = eigensolver.eigenvectors();
+
+        // backtransform the eigenvectors
+        eigVec_backTrans(low, hi, perms, *pVecs);
+
+    }
+
+    return eigVals;
+}//====================================================
+
+/**
+ *  \brief Balance a matrix, <tt>A</tt>, to decrease rounding errors when computing eigenvalues
+ *  
+ *  \details The eigenvalues of the balanced matrix are equivalent to the
+ *  eigenvalues of the un-balanced matrix if no rounding errors are present. However,
+ *  the eigenvectors of the balanced matrix may be very different. Use the <tt>eigVec_backTrans</tt>
+ *  function to retrieve the eigenvectors of the original matrix from the eigenvectors of the
+ *  balanced matrix.
+ *  
+ *  The balancing algorithm may time-out in some cases, thus, a maximum of 500 iterations are
+ *  allowed to balance the STM. If this limit is reached, the function returns as usual but the
+ *  balanced A matrix may not be balanced as well as it could be. (Reason for infinite loop is
+ *  unknown; could be a coding error, though unlikely)
+ * 
+ *  \param A The matrix to balance. This matrix is manipulated in place, i.e., the original
+ *  values are not preserved.
+ *  \param low An integer that describes the form of the balanced (and permuted) matrix.
+ *  The value passed in will be overwritten and filled with the value for the balanced matrix.
+ *  \param hi An integer that describes the form of the balanced (and permuted) matrix.
+ *  The value passed in will be overwritten and filled with the value for the balanced matrix.
+ *  The values <tt>hi</tt> and <tt>low</tt> are defined such that A(i,j) = 0 if i > j AND
+ *  j = 1, ... , (low-1) or i = (hi+1), ... , n
+ *  
+ *  \param perms A vector that stores the scaling and permutation information for the balanced
+ *  matrix. The vector passed in will be overwritten with the data for the balanced matrix.
+ */
+void balanceMat(MatrixXRd& A, unsigned int& low, unsigned int& hi, std::vector<double>& perms){
+    unsigned int n = A.rows();
+    low = 0;
+    hi = n-1;
+
+    double radix = static_cast<double>(RADIX);
+    double radix2 = radix*radix;        // Radix squared
+    perms.clear();
+    perms.assign(n, 0);
+
+    // -------------------------------------------
+    //    Step 1: Preliminary Permutations
+    // -------------------------------------------
+    /*
+     *   After the operations below, the matrix is in this form:
+     *       ________________________
+     *   1   | x x x :       :       |
+     *       | 0 x x :   X   :   Y   |
+     *       | 0 0 x :       :       |
+     *       |.......................|
+     *   low |       :       :       |    
+     *       |   0   :   Z   :   W   |
+     *   hi  |       :       :       |
+     *       |.......................|
+     *       |       :       : x x x |
+     *       |   0   :   0   : 0 x x |
+     *   n   |       :       : 0 0 x |
+     *       -------------------------
+     *
+     *   "x" indicates elements which are not necessarily zero
+     *   low =/= hi
+     */
+
+    // Search for rows isolating an eigenvalue and push them down
+    bool doLoop = true;
+    while(doLoop){
+        doLoop = false;
+        for(int r = hi; r >= 0; r--){
+            // Sum non-diagonal elements
+            double rowSum = 0;
+            for(int c = 0; c <= static_cast<int>(hi); c++){   // Only look at columns between 1 and hi
+                if(c != r)
+                    rowSum += std::abs(A(r,c));
+            }
+
+            // If all the non-diagonal elements sum to zero, the element on the
+            // diagonal is an eigenvalue
+            if(std::abs(rowSum) < 1e-12){
+                exchange(r, hi, perms, hi, low, A);
+                if(hi > 0){
+                    doLoop = true;
+                    hi--;
+                }
+                break;
+            }
+        }
+    }
+
+    // Search for columns isolating an eigenvalue and push them left
+    doLoop = true;
+    while(doLoop){
+        doLoop = false;
+        for(unsigned int c = low; c <= hi; c++){
+            // Sum non-diagonal elements
+            double colSum = 0;
+            for(unsigned int r = low; r <= hi; r++){
+                if(r != c)
+                    colSum += std::abs(A(r,c));
+            }
+
+            // If all the non-diagonal elements sum to zero, the element on the
+            // diagonal is an eigenvalue
+            if(std::abs(colSum) < 1e-12){
+                exchange(c, low, perms, hi, low, A);
+                low++;
+                // doLoop = true;
+                doLoop = low < A.rows();
+                break;
+            }
+        }
+    }
+
+    // These elements have not been permuted
+    for(unsigned int i = low; i <= hi; i++){
+        perms[i] = 1;
+    }
+
+    bool noConv = false;
+    unsigned int count = 0, maxCount = 500;
+    while(!noConv && count < maxCount){
+        for(unsigned int i = low; i <= hi; i++){
+            double c = 0, r = 0;
+            for(unsigned int j = low; j <= hi; j++){
+                if(i != j){
+                    c += std::abs(A(j,i));
+                    r += std::abs(A(i,j));
+                }
+            }
+
+            double g = r/radix;
+            double f = 1.0, s = c + r;
+
+            while(c < g){
+                f *= radix;
+                c *= radix2;
+            }
+
+            g = r*radix;
+
+            while( c >= g){
+                f /= radix;
+                c /= radix2;
+            }
+
+            if( (c+r)/f < 0.95*s ){
+                g = 1.0/f;
+                perms[i] *= f;
+                noConv = true;
+
+                for(unsigned int j = low; j < n; j++){
+                    A(i,j) *= g;
+                }
+                for(unsigned int j = 0; j <= hi; j++){
+                    A(j,i) *= f;
+                }
+            }
+        }
+        count++;
+    }
+    // printf("  Count = %u\n", count);
+}//====================================================
+
+/**
+ *  \brief Exchange rows and columns to reach the appropriate matrix structure
+ *  \details This sub-routine is leveraged in the <tt>balanceMat()</tt> algorithm
+ *  to arrange the matrix, A, which is being balanced, in a way that isolates trivial
+ *  rows and columns to simplify the computations.
+ *  
+ *  Source: Wilkinson, Reinsch: Handbook for Automatic Computation, pp. 315-326
+ * 
+ *  \param ix index of a row/column of A
+ *  \param ix_move index of a row/column of A 
+ *  \param perms vector containing permutation and scaling information
+ *  \param hi the current value of <tt>hi</tt> from the <tt>balanceMat()</tt> algorithm
+ *  \param low the current value of <tt>low</tt> from the <tt>balanceMat()</tt> algorithm
+ *  \param A The matrix that is being balanced
+ */
+void exchange(unsigned int ix, unsigned int ix_move, std::vector<double>& perms, unsigned int hi,
+    unsigned int low, MatrixXRd& A){
+
+    unsigned int n = A.rows();
+
+    char msg[128];
+    if(ix >= A.cols() || ix >= n){
+        sprintf(msg, "Calculations:exchange: ix = %u is out of range for A (%ux%ld)", ix, n, A.cols());
+        throw Exception(msg);
+    }
+
+    if(ix_move >= A.cols() || ix_move >= n){
+        sprintf(msg, "Calculations:exchange: ix_move = %u is out of range for A (%ux%ld)", ix_move, n, A.cols());
+        throw Exception (msg);
+    }
+
+    // Remember this exchange
+    perms[ix_move] = ix;
+    double temp = 0;
+
+    if(ix != ix_move){
+        // Exchange entries between columns ix and ix_move over rows 1:hi
+        for(unsigned int i = 0; i <= hi; i++){
+            temp = A(i, ix);
+            A(i, ix) = A(i, ix_move);
+            A(i, ix_move) = temp;
+        }
+
+        // Exchange entries between rows ix and ix_move over columns low:n
+        for(unsigned int i = low; i < n; i++){
+            temp = A(ix, i);
+            A(ix, i) = A(ix_move, i);
+            A(ix_move, i) = temp;
+        }
+    }
+}//====================================================
+
+/**
+ *  \brief Backtransform right-hand eigenvectors of a balanced matrix to
+ *  retrieve the original eigenvectors
+ *  \details When a matrix is balanced via <tt>balanceMat()</tt>, the eigenvalues are
+ *  preserved but the eigenvectors are not due to permutations and scaling. This method
+ *  transforms the right-hand eigenvectors of the balanced matrix, <tt>vecs</tt>, to 
+ *  the eigenvectors associated with the original, un-balanced matrix
+ * 
+ *  \param low value output from <tt>balanceMat()</tt>
+ *  \param hi value output from <tt>balanceMat()</tt>
+ *  \param perms vector containing permutation and scaling information; this data is used to 
+ *  transform the eigenvectors back to the original set.
+ *  \param vecs matrix of eigenvectors (stored as columns) associated with a balanced matrix.
+ *  These vectors are manipulated in place during the backtransformation
+ */
+void eigVec_backTrans(unsigned int low, unsigned int hi, const std::vector<double>& perms, MatrixXRcd& vecs){
+
+    unsigned int n = vecs.rows(), m = vecs.cols();
+
+    // For debugging:
+    // printf("eigVec_backTrans:\n  low = %u\n  hi = %u\n  perms = [", low, hi);
+    // for(unsigned int i = 0; i < perms.size(); i++){
+    //     printf("%.4f%s", perms[i], i < perms.size() - 1 ? ", " : "]\n");
+    // }
+    // printf("  vecs: %ux%u matrix\n", n, m);
+
+    double s = 0;
+    for(unsigned int r = low; r <= hi; r++){
+        s = perms[r];   // for left-hand eigenvectors, scaling factor is s = 1/perms[r]
+
+        // Scale these elements by the value in perms for the row
+        for(unsigned int c = 0; c < m; c++){
+            vecs(r, c) *= s;
+        }
+    }
+
+    // Swap elements in the opposite order as they were originally permuted
+    int k = 0;
+    for(int i = low-1; i >= 0; i--){
+        k = static_cast<int>(perms[i]);
+
+        if(k != i){
+            for(unsigned int j = 0; j < m; j++){
+                cdouble temp = vecs(i,j);  // store value temporarily
+                vecs(i,j) = vecs(k,j);
+                vecs(k,j) = temp;
+            }
+        }
+    }
+    for(int i = hi+1; i < static_cast<int>(n); i++){
+        k = static_cast<int>(perms[i]);
+
+        if(k != i){
+            for(unsigned int j = 0; j < m; j++){
+                cdouble temp = vecs(i,j);  // store value temporarily
+                vecs(i,j) = vecs(k,j);
+                vecs(k,j) = temp;
+            }
+        }
+    }
+}//====================================================
+
+/**
  *  \brief Sort eigenvalues
  *  \details This algorithm leverages three simple axioms to determine if the eigenvalues
  *  are in a consistent order.
@@ -384,7 +697,7 @@ Node interpPointAtTime(const Arcset *traj, double t){
 
     Arcset *temp = new Arcset(traj->getSysData());
     SimEngine sim;
-    // sim.setVerbosity(Verbosity_tp::ALL_MSG);
+    sim.setVerbosity(Verbosity_tp::NO_MSG);
     sim.setNumSteps(2);
     sim.setVarStepSize(false);
     sim.setRevTime(t - node.getEpoch() < 0);
@@ -393,6 +706,28 @@ Node interpPointAtTime(const Arcset *traj, double t){
     Node node2 = temp->getNodeByIx(-1);
     delete(temp);
     return node2;
+}//====================================================
+
+void reconstructArc(const Arcset *pArcIn, Arcset *pArcOut){
+    if(pArcIn == nullptr || pArcOut == nullptr)
+        throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are nullptrs; cannot proceed");
+
+    const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
+
+    // Construct a MultShootData from the input arcset
+    MultShootData it(pArcIn);
+    it.pArcOut = pArcOut;
+    it.allCons = pArcIn->getAllConstraints();   // Copy for output
+    pModel->multShoot_initDesignVec(it);
+    
+    // Propagate all segments from the design vector
+    SimEngine sim;
+    sim.setVerbosity(Verbosity_tp::NO_MSG);
+    sim.setMakeDefaultEvents(false);    // No events - just propagate
+    MultShootEngine::propSegsFromFreeVars(it, sim);
+
+    // Create a full arcset from the propagated segments
+    pModel->multShoot_createOutput(it);
 }//====================================================
 
 //-----------------------------------------------------

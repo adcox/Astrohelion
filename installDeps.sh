@@ -20,7 +20,7 @@ mkdir -p deps
 cd deps
 
 ## Boost
-wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.gz
+wget https://sourceforge.net/projects/boost/files/boost/1.65.1/boost_1_65_1.tar.gz
 tar -xvzf boost_1_62_0.tar.gz >> $LOG
 cd boost_1_62_0
 echo "Installing BOOST"
@@ -52,7 +52,7 @@ cd ..
 rm cspice.tar.Z
 
 ## MatIO
-wget https://sourceforge.net/projects/matio/files/matio-1.5.10.tar.gz
+wget https://sourceforge.net/projects/matio/files/matio-1.5.11.tar.gz
 tar -xvzf matio-* >> $LOG
 cd matio-*
 echo "Installing MATIO"

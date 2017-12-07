@@ -56,6 +56,7 @@ class Family_PO : public Family{
 		 *  \{
 		 */
 		Family_PO& operator= (const Family_PO&);
+		friend Family_PO operator+ (const Family_PO&, const Family_PO&);
 		//\}
 
 		/**
@@ -66,6 +67,7 @@ class Family_PO : public Family{
 		std::vector<unsigned int> findBifurcations();
 		void sortEigs();
 		void sortMembers();
+		void reverseOrder();
 		//\}
 
 		/**
@@ -83,7 +85,7 @@ class Family_PO : public Family{
 		 *  \name File I/O
 		 *  \{
 		 */
-		void readFromMat(const char*, std::vector<ControlLaw*>&);
+		void readFromMat(const char*, std::vector<ControlLaw*>&, bool bReconstruct = false);
 		void saveToMat(const char*) const;
 		//\}
 
@@ -109,7 +111,7 @@ class Family_PO : public Family{
 		 *  \{
 		 */
 		// void loadMemberData(mat_t*);
-		void loadMembers(mat_t*, std::vector<ControlLaw*>&);
+		void loadMembers(mat_t*, std::vector<ControlLaw*>&, bool bReconstruct);
 		void loadMiscData(mat_t*);
 		void loadEigVals(mat_t*);
 		void loadEigVecs(mat_t*);

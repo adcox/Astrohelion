@@ -120,6 +120,28 @@ unsigned int ControlLaw::getNumStates() const {return numStates; }
 unsigned int ControlLaw::getNumOutputs() const {return numOutputs; }
 
 /**
+ *  \brief Retrieve the value of a parameter at the specified index.
+ * 
+ *  \param ix Index of the parameter. If negative, the index counts
+ *  backwards from the end of the parameter vector, e.g., ix = -2
+ *  returns the second-to-last element in params.
+ *  \return the value stored in the parameter vector at the specified index.
+ *  \throws Exception if the index is out of bounds
+ */
+double ControlLaw::getParam(int ix) const{
+	int n = static_cast<int>(params.size());
+	while(ix < n){ ix += n; }
+
+	if(ix >= n){
+		char msg[128];
+		sprintf(msg, "ControlLaw::getParam: Index ix = %d is larger than params vector (size %d)", ix, n);
+		throw Exception(msg);
+	}
+
+	return params[ix];
+}//====================================================
+
+/**
  *  \brief Retrieve the parameter vector
  *  \return the parameter vector
  */
@@ -140,6 +162,28 @@ const std::vector<double>& ControlLaw::getParamsRef_const() const { return param
 void ControlLaw::setLawType(unsigned int id){
 	lawType = id;
 	init();
+}//====================================================
+
+/**
+ *  \brief Set the value of a parameter at the specified index.
+ * 
+ *  \param ix Index of the parameter. If negative, the index counts
+ *  backwards from the end of the parameter vector, e.g., ix = -2
+ *  returns the second-to-last element in params.
+ *  \param val the value to store in the parameter vector at the specified index
+ *  \throws Exception if the index is out of bounds
+ */
+void ControlLaw::setParam(int ix, double val){
+	int n = static_cast<int>(params.size());
+	while(ix < n){ ix += n; }
+
+	if(ix >= n){
+		char msg[128];
+		sprintf(msg, "ControlLaw::getParam: Index ix = %d is larger than params vector (size %d)", ix, n);
+		throw Exception(msg);
+	}
+
+	params[ix] = val;
 }//====================================================
 
 /**

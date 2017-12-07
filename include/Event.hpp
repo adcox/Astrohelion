@@ -42,12 +42,6 @@ namespace astrohelion{
  *
  *	This tells the simulation and correction engines how to interpret the
  *	data stored in this object.
- *
- *	For the _PLANE crossing events, pass a single double into the <tt>params</tt>
- *	field to specify the location of the plane. For example, choosing an event
- *	with type YZ_PLANE and passing a <tt>param</tt> of 0.5 will create an event
- *	that fires when the trajectory passes through the <tt>x=0.5</tt> plane. By 
- * 	default, 0 is used, so the planes include the axes.
  */
 enum class Event_tp : int{
 	NONE 			= 0,	/*!< No type has been specified; cannot be used in integration */
@@ -64,46 +58,53 @@ enum class Event_tp : int{
 	YZ_PLANE 		= 1,	/*!< occurs when trajectory crosses an YZ-plane. By default, 
 							 *	this plane occurs at x = 0, but a custom x-coordinate may be 
 							 *	specified by placing the value of that coordinate in the 
-							 *	<tt>param</tt> array.
+							 *	first <tt>param</tt> array entry.
 							 */
 	XZ_PLANE		= 2,	/*!< occurs when trajectory crosses an XZ-plane. By default, 
 							 *	this plane occurs at y = 0, but a custom y-coordinate may be 
 							 *	specified by placing the value of that coordinate in the 
-							 *	<tt>param</tt> array.
+							 *	first <tt>param</tt> array entry.
 							 */
 	XY_PLANE		= 3,	/*!< Event occurs when trajectory crosses an XY-plane. By default, 
 							 *	this plane occurs at z = 0, but a custom z-coordinate may be 
 							 *	specified by placing the value of that coordinate in the 
-							 *	<tt>param</tt> array.
+							 *	first <tt>param</tt> array entry.
 							 */
-	CRASH			= 4,	/*!< occurs when trajectory falls below minimum acceptable
+	STATE_PLANE 	= 4,	/*!< occurs when a trajectory crosses a specific state value.
+							 * 	To specify the stopping condition, place the index of the variable
+							 * 	in the first <tt>param</tt> entry and the value of the variable in the
+							 * 	second <tt>param</tt> entry. For example, if <tt>param</tt> = [3, -0.1],
+							 * 	the event will fire when the trajectory passes a state(3) (usually dx/dt)
+							 * 	value of -0.1.
+							 */
+	CRASH			= 5,	/*!< occurs when trajectory falls below minimum acceptable
 		 					 * 	altitude or the surface of one of the system primaries.
 		 					 *	The <tt>param</tt> array should have the first element specifying the 
 							 *	primary index (0 for P1, 1 for P2, etc.) The minimum acceptable radius
 							 *	will be the radius of the primary plus the minimum acceptable fly-by distance
 							 *	specified in the BodyData class.
 		 					 */
- 	JC 				= 5, 	/*!< occurs when the Jacobi value reaches the specified value
+ 	JC 				= 6, 	/*!< occurs when the Jacobi value reaches the specified value
 		 					 * 	of Jacobi Constant. Place this JC value in the first element of
 		 					 * 	the <tt>params</tt> vector present in the 
 		 					 * 	Event(SysData*, Event_tp, int, bool, double*) constructor.
 		 					 * 	This event can only be supported by dynamic models that have associated
 		 					 * 	system data objects that can be cast to cr3bp system data objects.
 		 					 */
- 	APSE 			= 6,	/*!< occurs when an apse is reached. The <tt>param</tt> array should have
+ 	APSE 			= 7,	/*!< occurs when an apse is reached. The <tt>param</tt> array should have
 		 					 * 	the first element specifiying the primary index (0 for P1, 1 for P2, etc.).
 		 					 * 	The <tt>direction</tt> of the event identifies what type of apse, i.e.
 		 					 *	0 will catch all apsides, -1 will catch only apopases, and +1 will catch 
 		 					 *	only periapses
 		 					 */
- 	DIST 			= 7, 	/*!< occurs when a distance from a primary is reached. The <tt>param</tt>
+ 	DIST 			= 8, 	/*!< occurs when a distance from a primary is reached. The <tt>param</tt>
 		 					 * 	array should have two elements: element 0 specifies the primary index, and
 		 					 * 	element 1 specifies the distance from the center of the primary in
 		 					 *	non-dimensional units. The <tt>direction</tt> of the event identifies the
 		 					 *	direction of travel relative to the primary; +1 is away from the primary,
 		 					 *	-1 is towards the primary, and 0 triggers for either.
 		 					 */
-	MASS 			= 8		/*!< occurs when the s/c mass reaches a minimum or maximum amount. The <tt>param</tt>
+	MASS 			= 9		/*!< occurs when the s/c mass reaches a minimum or maximum amount. The <tt>param</tt>
 						 	*	array should have one element: the nondimensional mass limit (between 0 and 1).
 						 	*/
 };

@@ -239,8 +239,8 @@ void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData& it, const Con
  *  \param it a reference to the object to be initialized
  */
 void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData& it) const{
-    Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(it.nodesIn->getSysData()));
-    it.propSegs.assign(it.nodesIn->getNumSegs(), traj);
+    Arcset_cr3bp traj(static_cast<const SysData_cr3bp *>(it.pArcIn->getSysData()));
+    it.propSegs.assign(it.pArcIn->getNumSegs(), traj);
 }//====================================================
 
 /**
@@ -253,7 +253,7 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData& it) const{
 void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
     MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.nodesIn->getSysData());
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.pArcIn->getSysData());
 
     if(state_var.row0 == -1)
         throw Exception("DynamicsModel_cr3bp::multShoot_targetJC: Cannot constrain state that is not in the free variable vector.");
@@ -298,10 +298,10 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint
  */
 void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Constraint& con, int row0) const{
     std::vector<double> conData = con.getData();
-    int segIx = it.nodesIn->getSegIx(con.getID());
+    int segIx = it.pArcIn->getSegIx(con.getID());
 
     // Get object representing origin of segment
-    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.nodesIn->getSegRef_const(con.getID()).getOrigin());
+    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
 
     MSVarMap_Obj tof_var;
     double timeCoeff = 1;
@@ -312,11 +312,11 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
                 break;
             case MSTOF_tp::VAR_FIXSIGN:
                 tof_var = it.getVarMap_obj(MSVar_tp::TOF, con.getID());
-                timeCoeff = astrohelion::sign(it.nodesIn->getTOF(con.getID()))*2*it.X[tof_var.row0];
+                timeCoeff = astrohelion::sign(it.pArcIn->getTOF(con.getID()))*2*it.X[tof_var.row0];
                 break;
             case MSTOF_tp::VAR_EQUALARC:
                 tof_var = it.getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
-                timeCoeff = 1.0/(it.nodesIn->getNumSegs());
+                timeCoeff = 1.0/(it.pArcIn->getNumSegs());
                 break;
             default:
                 throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
@@ -327,7 +327,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
     std::vector<double> lastState = it.propSegs[segIx].getStateByIx(-1);
 
     // Compute the value of Jacobi at this node
-    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.nodesIn->getSysData());
+    const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.pArcIn->getSysData());
     double mu = crSys->getMu();
     double segJC = getJacobi(&(lastState.front()), mu);
     

@@ -405,6 +405,10 @@ void Arcset::print() const {
 	printf("%s Arcset:\n Nodes: %zu\n Segments: %zu\n", pSysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
+
+	unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int extra_dim = pSysData->getDynamicsModel()->getExtraStateSize();
+
 	for(const auto &index : nodeIDMap){
 		printf("  %02d (ix %02d):", index.first, index.second);
 		if(index.second != Linkable::INVALID_ID){
@@ -449,10 +453,15 @@ void Arcset::print() const {
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
 				segs[index.second].getTerminus(), segs[index.second].getTOF());
 
-			if(segs[index.second].getCtrlLaw())
+			unsigned int ctrl_dim = 0;
+			if(segs[index.second].getCtrlLaw()){
 				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawTypeString().c_str());
-			else
+				ctrl_dim = segs[index.second].getCtrlLaw()->getNumStates();
+			}else
 				printf("\t> Ctrl Law: None\n");
+
+			printf("\t> State Width = %d (core: %d, ctrl: %d, extra: %d)\n", segs[index.second].getStateWidth(),
+				core_dim, ctrl_dim, extra_dim);
 			
 		}else{
 			printf(" [N/A]\n");

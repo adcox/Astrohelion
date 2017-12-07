@@ -68,6 +68,15 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
+	unsigned int getCurveFitMem() const;
+	unsigned int getNumSimple() const;
+	unsigned int getNoSearchMaxIts() const;
+	unsigned int getLineSearchMaxIts() const;
+	double getSlopeThresh() const;
+	double getStep_simple() const;
+	double getStep_fitted_1() const;
+	double getStep_fitted_2() const;
+
 	void setCurveFitMem(unsigned int);
 	void setNumSimple(unsigned int);
 	void setNoSearchMaxIts(unsigned int);

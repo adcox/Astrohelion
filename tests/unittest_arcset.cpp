@@ -141,19 +141,55 @@ BOOST_AUTO_TEST_CASE(BC4BP_NodesAtEvent){
 
 BOOST_AUTO_TEST_CASE(Arcset_MixedTime_Save_Load){
 	SysData_cr3bp sys("earth", "moon");
-	double state[] = {1, 2, 3, 4, 5, 6};
+	double state[42] = {0};
+	for(unsigned int i = 0; i < 42; i++){
+		if(i < 6)
+			state[i] = i+1;	// state = [1, 2, 3, 4, 5, 6]
+		else{
+			if((i+1) % 7 == 0)
+				state[i] = 1;	// Identity matrix for STM
+		}
+	}
 	double errTol = 1e-14;
 
+	const DynamicsModel *model = sys.getDynamicsModel();
+	EOM_ParamStruct params(&sys, nullptr);
 	Arcset_cr3bp set(&sys);
-	set.addNode(Node(state, 6, 2.2));
-	set.addNode(Node(state, 6, 0));
-	set.addNode(Node(state, 6, 1.1));
-	set.addNode(Node(state, 6, -2.2));
-	set.addNode(Node(state, 6, -1.1));
-	set.addSeg(Segment(4, 3, -1.1));
-	set.addSeg(Segment(1, 2, 1.1));
-	set.addSeg(Segment(1, 4, -1.1));
-	set.addSeg(Segment(2, 0, 1.1));
+
+	Node node1(state, 6, 2.2), node2(state, 6, 0), node3(state, 6, 1.1), node4(state, 6, -2.2), node5(state, 6, -1.1);
+
+	model->sim_addNode(node1, state, node1.getEpoch(), &set, &params, Event_tp::SIM_TOF);
+	model->sim_addNode(node2, state, node2.getEpoch(), &set, &params, Event_tp::SIM_TOF);
+	model->sim_addNode(node3, state, node3.getEpoch(), &set, &params, Event_tp::SIM_TOF);
+	model->sim_addNode(node4, state, node4.getEpoch(), &set, &params, Event_tp::SIM_TOF);
+	model->sim_addNode(node5, state, node5.getEpoch(), &set, &params, Event_tp::SIM_TOF);
+
+	// set.addNode(Node(state, 6, 2.2));
+	// set.addNode(Node(state, 6, 0));
+	// set.addNode(Node(state, 6, 1.1));
+	// set.addNode(Node(state, 6, -2.2));
+	// set.addNode(Node(state, 6, -1.1));
+
+	Segment seg1(4, 3, -1.1), seg2(1, 2, 1.1), seg3(1, 4, -1.1), seg4(2, 0, 1.1);
+	seg1.setStateWidth(42);
+	for(unsigned int i = 0; i < 2; i++){
+		seg1.appendState(state, 42);
+		seg2.appendState(state, 42);
+		seg3.appendState(state, 42);
+		seg4.appendState(state, 42);
+	}
+	seg2.setStateWidth(42);
+	seg3.setStateWidth(42);
+	seg4.setStateWidth(42);
+	model->sim_addSeg(seg1, state, 0, &set, &params);
+	model->sim_addSeg(seg2, state, 0, &set, &params);
+	model->sim_addSeg(seg3, state, 0, &set, &params);
+	model->sim_addSeg(seg4, state, 0, &set, &params);
+
+	// set.addSeg(Segment(4, 3, -1.1));
+	// set.addSeg(Segment(1, 2, 1.1));
+	// set.addSeg(Segment(1, 4, -1.1));
+	// set.addSeg(Segment(2, 0, 1.1));
 
 	set.saveToMat("data/mixedTimeSet.mat");
 
@@ -161,7 +197,7 @@ BOOST_AUTO_TEST_CASE(Arcset_MixedTime_Save_Load){
 	std::vector<ControlLaw*> loadedLaws;
 	tempSet.readFromMat("data/mixedTimeSet.mat", loadedLaws);
 
-	BOOST_CHECK_EQUAL(set.getNumNodes(), tempSet.getNumNodes());
+	BOOST_REQUIRE_EQUAL(set.getNumNodes(), tempSet.getNumNodes());
 	for(unsigned int n = 0; n < set.getNumNodes(); n++){
 		std::vector<double> state1 = set.getStateByIx(n);
 		std::vector<double> state2 = tempSet.getStateByIx(n);
@@ -174,7 +210,7 @@ BOOST_AUTO_TEST_CASE(Arcset_MixedTime_Save_Load){
 		BOOST_CHECK_SMALL(set.getEpochByIx(n) - tempSet.getEpochByIx(n), errTol);
 	}
 
-	BOOST_CHECK_EQUAL(set.getNumSegs(), tempSet.getNumSegs());
+	BOOST_REQUIRE_EQUAL(set.getNumSegs(), tempSet.getNumSegs());
 	for(unsigned int s = 0; s < set.getNumSegs(); s++){
 		BOOST_CHECK_EQUAL(set.getSegRefByIx(s).getOrigin(), tempSet.getSegRefByIx(s).getOrigin());
 		BOOST_CHECK_EQUAL(set.getSegRefByIx(s).getTerminus(), tempSet.getSegRefByIx(s).getTerminus());
@@ -459,7 +495,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_Save_Load){
 	std::vector<double> ctrl0 {1.25, 0.1};
 
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
 
 	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
@@ -533,7 +570,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_SaveCurve_Load){
 	std::vector<double> ctrl0 {1.25, 0.1};
 
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
 
 	unsigned int coreDim = ltData.getDynamicsModel()->getCoreStateSize();
 
@@ -616,7 +654,8 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Arcset_SaveFrame_Load){
 	std::vector<double> ctrl0 {1.25, 0.1};
 
 	SysData_cr3bp_lt ltData("earth", "moon", 14);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, 0.3, 1500);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
 
 	unsigned int coreDim = ltData.getDynamicsModel()->getCoreStateSize();
 

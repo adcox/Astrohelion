@@ -69,6 +69,71 @@ NatParamEngine& NatParamEngine::operator=(const NatParamEngine &e){
 //-----------------------------------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
+/**
+ *  \brief Get the number of solutions to store in the "curve fit memory"
+ *  \details The number of solutions saved informs the least-squares
+ *  curve-fitting algorithm that improves the performance of the natural 
+ *  parameter continuation.
+ * 
+ *  \return the number of solutions to use when fitting a curve to predict
+ *  the continuation variables
+ */
+unsigned int NatParamEngine::getCurveFitMem() const { return curveFitMem; }
+
+/**
+ *  \brief Get the number of simple continuation (i.e., no curve fitting)
+ *  iterations to perform before switching to curve-fitted solutions
+ * 
+ *  \return the number of simple continuation iterations to perform
+ */
+unsigned int NatParamEngine::getNumSimple() const { return numSimple; }
+
+/**
+ *  \brief Get the number of iterations the corrector can take when a
+ *  line search is NOT employed
+ * 
+ *  \return max number of iterations for the corrector
+ */
+unsigned int NatParamEngine::getNoSearchMaxIts() const { return noSearchMaxIts; }
+
+/**
+ *  \brief Get the number of iterations the corrector can take when a 
+ *  line search IS employed
+ * 
+ *  \return max number of iterations for the corrector
+ */
+unsigned int NatParamEngine::getLineSearchMaxIts() const { return lineSearchMaxIts; }
+
+/**
+ *  \brief Get the slope threshold that is the limit between
+ *  two step directions
+ *  \details The natural parameter continuation typically leverages 
+ *  several "independent" stepping variables to facilitate continuation 
+ *  along a nonlinear contour. When a step in one variable results in
+ *  large changes in the other, the stepping variable is changed to 
+ *  limit the sensitivity.
+ * 
+ *  \return slope threshold between stepping strategies
+ */
+double NatParamEngine::getSlopeThresh() const { return slopeThresh; }
+
+/**
+ *  \brief Get the step size for simple (no curve-fitting) continuation
+ *  \return the step size for simple (no curve-fitting) continuation
+ */
+double NatParamEngine::getStep_simple() const { return step_simple; }
+
+/**
+ *  \brief Get the step size for fitted continuation: variable 1
+ *  \return the step size for fitted continuation: variable 1
+ */
+double NatParamEngine::getStep_fitted_1() const { return step_fitted_1; }
+
+/**
+ *  \brief Get the step size for fitted continuation: variable 2
+ *  \return the step size for fitted continuation: variable 2
+ */
+double NatParamEngine::getStep_fitted_2() const { return step_fitted_2; }
 
 /**
  *  \brief Set the number of solutions to store in the "curve fit memory"

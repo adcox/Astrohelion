@@ -54,90 +54,15 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
 	init();
 }//====================================================
 
-/**
- *  \brief Construct a control law
- * 
- *  \param id Control law ID
- *  \param f Thrust magnitude, nondimensional
- *	\param Isp Specific Impulse (Isp), seconds
- */
-// ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, double f, double Isp){
-// 	lawType = id;
-// 	params.assign(2,0);
-// 	params[0] = f;
-// 	params[1] = Isp;
-
-// 	init();
-// }//====================================================
-
 //------------------------------------------------------------------------------------------------------
 //      Set and Get Functions
 //------------------------------------------------------------------------------------------------------
-
-/**
- *	\brief Get the spacecraft thrust in nondimensional units
- *	\return the thrust in nondimensional units
- */
-// double ControlLaw_cr3bp_lt::getThrust() const { return params[0]; }
-
-/**
- *  \brief Retreive the dimensional thrust magnitude in Newtons
- *  \details The nondimsionalization of the thrust magnitude relies
- *  on the spacecraft reference mass as well as the 
- *  characteristic quantities associated with the 3BP. Hence,
- *  the System Data object is required to perform this computation.
- * 
- *  \param pSys A pointer to the system data object
- *  \return the thrust magnitude in Newtons
- */
-// double ControlLaw_cr3bp_lt::getThrust_dim(const SysData_cr3bp_lt *pSys) const{
-// 	return params[0]*1000*pSys->getCharL()*pSys->getRefMass() / (pSys->getCharT()*pSys->getCharT());
-// }//====================================================
-
-/**
- *	\brief Get the specific impulse for the spacecraft
- *	\return the specific impulse, seconds
- */
-// double ControlLaw_cr3bp_lt::getIsp() const { return params[1]; }
 
 /**
  *  \brief Retrieve the name of the law type as a string
  *  \return the name of the law type as a string
  */
 std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3bp_lt::lawTypeToString(lawType); }
-
-/**
- *	\brief Set the spacecraft thrust
- *	\param f the thrust, in nondimensional units
- */
-// void ControlLaw_cr3bp_lt::setThrust(double f){ params[0] = f;}
-
-/**
- *  \brief Set the thrust in Newtons
- *  \details Thrust is nondimensionalized in the EOMs by the spacecraft
- *  reference mass, and the characteristic quantities associated with
- *  the system. Hence, the system data object is required. The dimensional
- *  input is converted to nondimensional by leveraging those quantities. 
- *  Note that a change in the s/c reference mass after calling this function
- *  will effectively change the nondimensional thrust magnitude leveraged
- *  in this control law.
- *  
- *  Nondimensional thrust values supply a flexible inter-system metric
- *  to quantify the strength of the low-thrust perturbation relative
- *  to the natural system dynamics.
- * 
- *  \param F thrust value, Newtons
- *  \param pSys A pointer to the system data object
- */
-// void ControlLaw_cr3bp_lt::setThrust_dim(double F, const SysData_cr3bp_lt *pSys){
-// 	params[0] = F*pSys->getCharT()*pSys->getCharT() / (1000*pSys->getCharL()*pSys->getRefMass());
-// }//====================================================
-
-/**
- *	\brief Set the specific impulse for the spacecraft
- *	\param Isp the specific impulse, seconds
- */
-// void ControlLaw_cr3bp_lt::setIsp(double Isp){ params[1] = Isp; }
 
 //------------------------------------------------------------------------------------------------------
 //      Analysis Functions
@@ -183,16 +108,16 @@ void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData
 
 	switch(lawType){
 		case Law_tp::CONST_C_2D_LEFT:
-			getAccel_ConstC_2D(t, s, pSysData_lt, law, len, -1);
+			getAccel_ConstC_2D(t, s, pSysData_lt, law, len);
 			break;
 		case Law_tp::CONST_C_2D_RIGHT:
-			getAccel_ConstC_2D(t, s, pSysData_lt, law, len, 1);
+			getAccel_ConstC_2D(t, s, pSysData_lt, law, len);
 			break;
 		case Law_tp::PRO_VEL:
-			getAccel_AlongVel(t, s, pSysData_lt, law, len, 1);
+			getAccel_AlongVel(t, s, pSysData_lt, law, len);
 			break;
 		case Law_tp::ANTI_VEL:
-			getAccel_AlongVel(t, s, pSysData_lt, law, len, -1);
+			getAccel_AlongVel(t, s, pSysData_lt, law, len);
 			break;
 		case Law_tp::GENERAL_CONST_F:
 			getAccel_GeneralDir(t, s, pSysData_lt, law, len);
@@ -219,19 +144,19 @@ void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
 	switch(lawType){
 		case Law_tp::CONST_C_2D_LEFT:
-			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len, -1);
+			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len);
 			break;
 		case Law_tp::CONST_C_2D_RIGHT:
-			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len, 1);
+			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len);
 			break;
 		case Law_tp::GENERAL_CONST_F:
 			getAccelPartials_GeneralDir(t, s, pSysData_lt, partials, len);
 			break;
 		case Law_tp::PRO_VEL:
-			getAccelPartials_AlongVel(t, s, pSysData_lt, partials, len, 1);
+			getAccelPartials_AlongVel(t, s, pSysData_lt, partials, len);
 			break;
 		case Law_tp::ANTI_VEL:
-			getAccelPartials_AlongVel(t, s, pSysData_lt, partials, len, -1);
+			getAccelPartials_AlongVel(t, s, pSysData_lt, partials, len);
 			break;
 		
 		default:
@@ -278,13 +203,15 @@ void ControlLaw_cr3bp_lt::getLaw_EOMPartials(double t, const double *s, const Sy
  *  \param pSys system data object
  *  \param law empty, initialized array to store the control law output in
  *  \param len number of elements in the <tt>law</tt> array
- *  \param sign specifies which of the ConstC_2D control laws to evaluate: +1 for RIGHT, -1 for LEFT
  */
 void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *law, unsigned int len, int sign) const{
+	double *law, unsigned int len) const{
 
-	if(std::abs(sign) != 1)
-		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
+	if(lawType != Law_tp::CONST_C_2D_LEFT && lawType != Law_tp::CONST_C_2D_RIGHT)
+		printWarn("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Law type is not one of the Const-C types");
+
+	// +1 for RIGHT, -1 for LEFT
+	int sign = lawType == CONST_C_2D_RIGHT ? 1 : -1;
 
 	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
@@ -309,13 +236,15 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
  *  \param pSys system data object
  *  \param law empty, initialized array to store the control law output in
  *  \param len number of elements in the <tt>law</tt> array
- *  \param sign specifies which of the control laws to evaluate: +1 for with-velocity, -1 for anti-velocity
  */
 void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *law, unsigned int len, int sign) const{
+	double *law, unsigned int len) const{
 
-	if(std::abs(sign) != 1)
-		sign = sign/std::abs(sign);	// +1 for With-Velocity, -1 for Anti-Velocity
+	if(lawType != Law_tp::PRO_VEL && lawType != Law_tp::ANTI_VEL)
+		printWarn("ControlLaw_cr3bp_lt::getAccelPartials_AlongVel: Law type is not one of the parallel-to-velocity types");
+
+	// +1 for PRO, -1 for ANTI
+	int sign = lawType == Law_tp::PRO_VEL ? 1 : -1;
 
 	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_Pro_Vel: law data length must be at least 3!");
@@ -343,6 +272,9 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
  */
 void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
+
+	if(lawType != Law_tp::GENERAL_CONST_F)
+		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: Law type is not general direction");
 
 	if(len < numOutputs)
 		throw Exception("ControlLaw_cr3bp_lt::getLaw_GeneralDir: law data length must be at least 3!");
@@ -375,13 +307,15 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const S
  *  \param pSys system data object
  *  \param partials empty, initialized array to store the control law derivatives in
  *  \param len number of elements in the <tt>law</tt> array
- *  \param sign specifies which of the ConstC_2D control laws to evaluate: +1 for RIGHT, -1 for LEFT
  */
 void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *partials, unsigned int len, int sign) const{
+	double *partials, unsigned int len) const{
 
-	if(std::abs(sign) != 1)
-		sign = sign/std::abs(sign);	// +1 for RIGHT, -1 for LEFT
+	if(lawType != Law_tp::CONST_C_2D_LEFT && lawType != Law_tp::CONST_C_2D_RIGHT)
+		printWarn("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Law type is not one of the Const-C types");
+
+	// +1 for RIGHT, -1 for LEFT
+	int sign = lawType == CONST_C_2D_RIGHT ? 1 : -1;
 
 	if(len != numOutputs*7)
 		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Expects len = 21");
@@ -394,10 +328,10 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 	double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
 
 	partials[7*0 + 3] = -sign*params[0]*s[3]*s[4]/(s[6]*pow(v,3));							// dax/dvx
-	partials[7*0 + 4] = sign*(params[0]/(s[6]*v) - params[0]*s[4]*s[4]/(s[6]*pow(v,3)));			// dax/dvy
+	partials[7*0 + 4] = sign*(params[0]/(s[6]*v) - params[0]*s[4]*s[4]/(s[6]*pow(v,3)));	// dax/dvy
 	partials[7*0 + 6] = -sign*params[0]*s[4]/(s[6]*s[6]*v);									// dax/dm
 
-	partials[7*1 + 3] = -sign*(params[0]/(s[6]*v) - params[0]*s[3]*s[3]/(s[6]*pow(v,3)));			// day/dvx
+	partials[7*1 + 3] = -sign*(params[0]/(s[6]*v) - params[0]*s[3]*s[3]/(s[6]*pow(v,3)));	// day/dvx
 	partials[7*1 + 4] = sign*params[0]*s[3]*s[4]/(s[6]*pow(v,3));							// day/dvy
 	partials[7*1 + 6] = sign*params[0]*s[3]/(s[6]*s[6]*v);									// day/dm
 
@@ -415,13 +349,15 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
  *  \param pSys system data object
  *  \param partials empty, initialized array to store the control law derivatives in
  *  \param len number of elements in the <tt>law</tt> array
- *  \param sign specifies which of the Pro_Vel and Anti_Vel control laws to evaluate: +1 for PRO, -1 for ANTI
  */
 void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, const SysData_cr3bp_lt *pSys,
-	double *partials, unsigned int len, int sign) const{
+	double *partials, unsigned int len) const{
 
-	if(std::abs(sign) != 1)
-		sign = sign/std::abs(sign);	// +1 for PRO, -1 for ANTI
+	if(lawType != Law_tp::PRO_VEL && lawType != Law_tp::ANTI_VEL)
+		printWarn("ControlLaw_cr3bp_lt::getAccelPartials_AlongVel: Law type is not one of the parallel-to-velocity types");
+
+	// +1 for PRO, -1 for ANTI
+	int sign = lawType == Law_tp::PRO_VEL ? 1 : -1;
 
 	if(len != numOutputs*7)
 		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_AlongVel: Expects len = 21");
@@ -466,6 +402,9 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
 	
+	if(lawType != Law_tp::GENERAL_CONST_F)
+		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: Law type is not general direction");
+
 	if(len != numOutputs*7)	// 7 core states
 		throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir: unexpected array length");
 
@@ -496,6 +435,9 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
  */
 void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
+
+	if(lawType != Law_tp::GENERAL_CONST_F)
+		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: Law type is not general direction");
 
 	if(len != numStates*7)	// 7 core states
 		throw Exception("ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir: unexpected array length");

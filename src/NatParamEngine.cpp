@@ -249,7 +249,7 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
  *	\param init_halfPerGuess a trajectory that is a good initial guess for half of 
  *	the first family member
  *	\param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
- *	reference frame. Each entry corresponds to an independent variable in <tt>indVarIx</tt>
+ *	reference frame. Each entry corresponds to an independent variable in `indVarIx`
  *	\param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
  *	first in the continuation (using stupid-simple continuation), and the second will be toggled
@@ -258,10 +258,10 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
  *
- *	\throws Exception if <tt>indVarIx</tt> has fewer than two elements
- *	\throws Exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
+ *	\throws Exception if `indVarIx` has fewer than two elements
+ *	\throws Exception if `mirrorTypes` does not have the same size as `indVarIx`
  *	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
- *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
+ *	\throws Exception if one of the indices stored in `indVarIx` or `depVarIx` is
  *	out of range
  */
 void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *init_halfPerGuess,
@@ -817,8 +817,8 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic,
  *  continuation. indVarIx would be 0 to represent x. We input the value of x
  *  for the next orbit in the family (nextInd) and specify which variables (from
  *  the 8-element "state") we would like to have predicted by least-squares.
- *  \throws Exception if the <tt>varHistory</tt> vector contains fewer than 
- *  8 elements or if the <tt>depVars</tt> vector has no data
+ *  \throws Exception if the `varHistory` vector contains fewer than 
+ *  8 elements or if the `depVars` vector has no data
  */
 std::vector<double> NatParamEngine::familyCont_LS(unsigned int indVarIx, double nextInd, std::vector<unsigned int> depVars, std::vector<double> varHistory){
     const unsigned int STATE_SIZE = 8;

@@ -68,7 +68,7 @@ Arcset::~Arcset(){}
 
 /**
  *  \brief Create a new arcset object on the stack
- *  \details The <tt>delete</tt> function must be called to 
+ *  \details The `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -82,7 +82,7 @@ baseArcsetPtr Arcset::create( const SysData *sys) const{
 /**
  *  \brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details The <tt>delete</tt> function must be called to 
+ *  \details The `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -99,7 +99,7 @@ baseArcsetPtr Arcset::clone() const{
 /**
  *  \brief Combine two arcsets.
  *  \details This function concatenates two arcset objects. It is assumed
- *  that the <tt>rhs</tt> object occurs after (chronologically) <tt>lhs</tt>
+ *  that the `rhs` object occurs after (chronologically) `lhs`
  * 
  *  \param lhs reference to a arcset object
  *  \param rhs reference to a arcset object
@@ -120,7 +120,7 @@ Arcset operator +(const Arcset &lhs, const Arcset &rhs){
  *  \brief Concatenate this object with another arcset
  * 
  *  \param rhs reference to a arcset object
- *  \return the concatenation of this and <tt>rhs</tt>
+ *  \return the concatenation of this and `rhs`
  *  @see operator +()
  */
 Arcset& Arcset::operator +=(const Arcset &rhs){
@@ -211,7 +211,7 @@ int Arcset::createNodesAtEvent(int segID, Event evt, double minTimeDiff){
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  *  
  *  \return the number of nodes created and inserted into the nodeset.
- *  \throws Exception if <tt>segID</tt> is out of bounds
+ *  \throws Exception if `segID` is out of bounds
  */
 int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
 	if(segIDMap.count(segID) == 0)
@@ -285,7 +285,7 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
  *	\brief Retrieve the time along the arcset at a specific step
  *	\param ix node index; if < 0, it will count backwards from end of arcset
  *	\return the non-dimensional time along the arcset at the specified step
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 double Arcset::getTimeByIx(int ix) const {
 	return getEpochByIx(ix);
@@ -297,7 +297,7 @@ double Arcset::getTimeByIx(int ix) const {
  * 
  *	\param ix node index; if < 0, it will count backwards from end of arcset
  *  \param t time associated with the node
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 void Arcset::setTimeByIx(int ix, double t){
 	setEpochByIx(ix, t);

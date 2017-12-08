@@ -242,7 +242,7 @@ void Constraint::setData(std::vector<double> d){ data = d; }
  *  \brief Set the data for this constraint
  * 
  *  \param dat an array of data values
- *  \param len number of elements in <tt>dat</tt>
+ *  \param len number of elements in `dat`
  */
 void Constraint::setData(const double *dat, int len){
 	data.clear();

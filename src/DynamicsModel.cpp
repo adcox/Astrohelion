@@ -883,7 +883,7 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData& it, const Cons
 }//====================================================
 
 /**
- *	\brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
+ *	\brief Computes continuity constraints for constraints with the `CONT_EX` type.
  *
  *	In this base model, no behavior is defined for extra constraints. It is intended to enforce
  *	continuity constraints like epoch (time) continuity, mass continuity, etc.
@@ -900,7 +900,7 @@ void DynamicsModel::multShoot_targetCont_Ex(MultShootData& it, const Constraint&
 }//======================================================
 
 /**
- *	\brief Computes continuity constraints for constraints with the <tt>Constraint_tp::SEG_CONT_EX</tt> type.
+ *	\brief Computes continuity constraints for constraints with the `Constraint_tp::SEG_CONT_EX` type.
  *
  *	In this base model, no behavior is defined for extra constraints. It is intended to enforce
  *	continuity constraints like epoch (time) continuity, mass continuity, etc.
@@ -916,7 +916,7 @@ void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData& it, const Constra
 	(void)row0;
 }//======================================================
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::STATE</tt>.
+ *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::STATE`.
  *
  *	This method *should* provide full state constraining for any model; the STM and identity 
  *	matrices are used to relate node states and integrated states.
@@ -1018,7 +1018,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 }//=================================================
 
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::MATCH_ALL</tt>
+ *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_ALL`
  *
  *	This method *should* provide full functionality for any model; only 1's and 0's are applied
  *	to the Jacobian matrix.
@@ -1059,7 +1059,7 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData& it, const Constraint
 }//=============================================
 
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::MATCH_CUST</tt>
+ *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_CUST`
  *
  *	This method *should* provide full functionality for any model; Only 1's and 0's are applied
  *	to the Jacobian matrix.
@@ -1103,8 +1103,8 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, const Constrain
 }//===============================================
 
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 
- *	<tt>Constraint_tp::MIN_DIST</tt>, or <tt>Constraint_tp::MAX_DIST</tt>
+ *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::DIST`, 
+ *	`Constraint_tp::MIN_DIST`, or `Constraint_tp::MAX_DIST`
  *
  *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
  *	functions, which all models define and uses dynamic-independent computations to populate
@@ -1165,8 +1165,8 @@ void DynamicsModel::multShoot_targetDist(MultShootData& it, const Constraint& co
 }// End of targetDist() =========================================
 
 /**
- *	\brief Compute partials and constraint functions for segments constrained with <tt>Constraint_tp::ENDSEG_DIST</tt>, 
- *	<tt>Constraint_tp::ENDSEG_MIN_DIST</tt>, or <tt>Constraint_tp::ENDSEG_MAX_DIST</tt>
+ *	\brief Compute partials and constraint functions for segments constrained with `Constraint_tp::ENDSEG_DIST`, 
+ *	`Constraint_tp::ENDSEG_MIN_DIST`, or `Constraint_tp::ENDSEG_MAX_DIST`
  *
  *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
  *	functions, which all models define and uses dynamic-independent computations to populate
@@ -1358,8 +1358,8 @@ double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootDa
 }//==========================================================
 
 /**
- *	\brief Compute partials and constraints for all nodes constrained with <tt>Constraint_tp::DELTA_V</tt> or
- *	<tt>MIN_DELTA_V</tt>
+ *	\brief Compute partials and constraints for all nodes constrained with `Constraint_tp::DELTA_V` or
+ *	`MIN_DELTA_V`
  *
  *	Because the delta-V constraint applies to the entire trajectory, the constraint function values
  *	and partial derivatives must be computed for each node along the trajectory. This function
@@ -1684,7 +1684,7 @@ void DynamicsModel::multShoot_targetApse_endSeg(MultShootData& it, const Constra
 }//====================================================
 
 /**
- *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  \brief Take the final, corrected free variable vector `X` and create an output 
  *  nodeset
  *
  *  \param it an iteration data object containing all info from the corrections process

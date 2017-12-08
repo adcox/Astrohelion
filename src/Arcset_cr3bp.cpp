@@ -61,7 +61,7 @@ Arcset_cr3bp::Arcset_cr3bp(const BaseArcset &a) : Arcset(a) {}
 
 /**
  *  \brief Create a new arcset object on the stack
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -77,7 +77,7 @@ baseArcsetPtr Arcset_cr3bp::create( const SysData *pSys) const{
 /**
  *  \brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -102,7 +102,7 @@ baseArcsetPtr Arcset_cr3bp::clone() const{
  * 
  *  \param id the ID of a node
  *  \return the Jacobi constant value
- *  @throw Exception if <tt>id</tt> is out of bounds
+ *  @throw Exception if `id` is out of bounds
  */
 double Arcset_cr3bp::getJacobi(int id){
 	if(nodeIDMap.count(id) == 0)
@@ -125,7 +125,7 @@ double Arcset_cr3bp::getJacobi(int id){
  * 
  *  \param id the ID of a node
  *  \return the Jacobi constant value
- *  @throw Exception if <tt>id</tt> is out of bounds
+ *  @throw Exception if `id` is out of bounds
  */
 double Arcset_cr3bp::getJacobi_const(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -147,7 +147,7 @@ double Arcset_cr3bp::getJacobi_const(int id) const{
  *	
  *	\param ix step index; if < 0, counts backwards from end of trajectory
  *	\return Jacobi at the specified step
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 double Arcset_cr3bp::getJacobiByIx(int ix){
 	if(ix < 0)
@@ -180,7 +180,7 @@ double Arcset_cr3bp::getJacobiByIx(int ix){
  *	
  *	\param ix step index; if < 0, counts backwards from end of trajectory
  *	\return Jacobi at the specified step
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 double Arcset_cr3bp::getJacobiByIx_const(int ix) const{
 	if(ix < 0)
@@ -209,7 +209,7 @@ double Arcset_cr3bp::getJacobiByIx_const(int ix) const{
  * 
  *  \param id the ID of a node
  *  \param jacobi Jacobi constant value
- *  @throw Exception if <tt>id</tt> is out of bounds
+ *  @throw Exception if `id` is out of bounds
  */
 void Arcset_cr3bp::setJacobi(int id, double jacobi){
 	if(nodeIDMap.count(id) == 0)
@@ -222,7 +222,7 @@ void Arcset_cr3bp::setJacobi(int id, double jacobi){
  *	\brief Set Jacobi at the specified step
  *	\param ix step index; if < 0, counts backwards from end of trajectory
  *	\param val value of Jacobi
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 void Arcset_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)

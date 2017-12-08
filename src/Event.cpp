@@ -409,8 +409,8 @@ void Event::setStopOnEvent(bool s){ bStop = s; }
  *	previous trajectory state and the current one.
  *
  *	\param y the current integrated state (6 elements)
- *	\param len number of elements in <tt>y</tt>
- *	\param t non-dimensional time associated with state <tt>y</tt>
+ *	\param len number of elements in `y`
+ *	\param t non-dimensional time associated with state `y`
  *	\param tDir direction that time is being propagated: +1 for forward, -1 for negative
  *	\return whether or not the trajectory has passed through this event
  */
@@ -430,12 +430,12 @@ bool Event::crossedEvent(const double* y, unsigned int len, double t, int tDir) 
 
 /**
  *	\brief Update the distance variable, which will later be compared in 
- *	the <tt>crossedEvent()</tt> function to determine whether or not 
+ *	the `crossedEvent()` function to determine whether or not 
  *	the integration has crossed the event
  *
  *	\param y the state vector; must have at least the core states
  *	\param len number of elements stored in y
- *	\param t non-dimensional time associated with state <tt>y</tt>
+ *	\param t non-dimensional time associated with state `y`
  */
 void Event::updateDist(const double* y, unsigned int len, double t){	
 	// update the dist variable using information from y
@@ -447,7 +447,7 @@ void Event::updateDist(const double* y, unsigned int len, double t){
  *	\brief Compute the distance from the input state to the event
  *	\param y a state vector representing the current integration state
  *	\param len number of elements in y
- *	\param t non-dimensional time associated with state <tt>y</tt>
+ *	\param t non-dimensional time associated with state `y`
  *	
  *	\return the distance
  *	

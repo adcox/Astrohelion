@@ -614,7 +614,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_State(MultShootData& it, const Co
 }//=========================================================
 
 /**
- *  \brief Computes continuity constraints for constraints with the <tt>CONT_EX</tt> type.
+ *  \brief Computes continuity constraints for constraints with the `CONT_EX` type.
  *
  *  This function overrides the base model function
  *
@@ -668,7 +668,7 @@ void DynamicsModel_bc4bp::multShoot_targetCont_Ex(MultShootData& it, const Const
 }//=========================================================
 
 /**
- *  \brief Computes continuity constraints for constraints with the <tt>Constraint_tp::SEG_CONT_EX</tt> type.
+ *  \brief Computes continuity constraints for constraints with the `Constraint_tp::SEG_CONT_EX` type.
  *
  *  This function overrides the base model function
  *
@@ -768,7 +768,7 @@ void DynamicsModel_bc4bp::multShoot_targetState_endSeg(MultShootData& it, const 
 }//=========================================================
 
 /**
- *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::EPOCH</tt>.
+ *  \brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::EPOCH`.
  * 
  *  \param it a reference to the class containing all the data relevant to the corrections process
  *  \param con the constraint being applied
@@ -791,8 +791,8 @@ void DynamicsModel_bc4bp::multShoot_targetEpoch(MultShootData& it, const Constra
 }//====================================================
 
 /**
- *  \brief Compute partials and constraint functions for nodes constrained with <tt>Constraint_tp::DIST</tt>, 
- *  <tt>Constraint_tp::MIN_DIST</tt>, or <tt>Constraint_tp::MAX_DIST</tt>
+ *  \brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::DIST`, 
+ *  `Constraint_tp::MIN_DIST`, or `Constraint_tp::MAX_DIST`
  *
  *  This method overrides the base class function to add functionality for epoch-time dependencies
  *
@@ -874,8 +874,8 @@ void DynamicsModel_bc4bp::multShoot_targetDist(MultShootData& it, const Constrai
 }// End of targetDist() =========================================
 
 /**
- *  \brief Compute partials and constraint functions for segments constrained with <tt>Constraint_tp::ENDSEG_DIST</tt>, 
- *  <tt>Constraint_tp::ENDSEG_MIN_DIST</tt>, or <tt>Constraint_tp::ENDSEG_MAX_DIST</tt>
+ *  \brief Compute partials and constraint functions for segments constrained with `Constraint_tp::ENDSEG_DIST`, 
+ *  `Constraint_tp::ENDSEG_MIN_DIST`, or `Constraint_tp::ENDSEG_MAX_DIST`
  *
  *  This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
  *  functions, which all models define and uses dynamic-independent computations to populate
@@ -1137,8 +1137,8 @@ double DynamicsModel_bc4bp::multShoot_targetDist_endSeg_compSlackVar(const MultS
 }//==========================================================
 
 /**
- *  \brief Compute partials and constraints for all nodes constrained with <tt>Constraint_tp::DELTA_V</tt> or
- *  <tt>MIN_DELTA_V</tt>
+ *  \brief Compute partials and constraints for all nodes constrained with `Constraint_tp::DELTA_V` or
+ *  `MIN_DELTA_V`
  *
  *  Because the delta-V constraint applies to the entire trajectory, the constraint function values
  *  and partial derivatives must be computed for each node along the trajectory. This function
@@ -1357,11 +1357,11 @@ void DynamicsModel_bc4bp::multShoot_targetApse_endSeg(MultShootData& it, const C
 }//====================================================
 
 /**
- *  \brief Compute partials and constraint values for nodes constrained with <tt>SP</tt>
+ *  \brief Compute partials and constraint values for nodes constrained with `SP`
  *
  *  This function computes three constraint values and three rows of partials for the Jacobian.
  *  Each row/function corresponds to one position state. The FX and DF matrices are updated
- *  in place by editing their values stored in <tt>it</tt>
+ *  in place by editing their values stored in `it`
  *
  *  \param it the MultShootData object holding the current data for the corrections process
  *  \param con the constraint being applied
@@ -1507,11 +1507,11 @@ void DynamicsModel_bc4bp::multShoot_targetSP(MultShootData& it, const Constraint
 }// End of SP Targeting ==============================
 
 /**
- *  \brief Compute partials and constraint values for nodes constrained with <tt>SP_RANGE</tt>
+ *  \brief Compute partials and constraint values for nodes constrained with `SP_RANGE`
  *  \details This function computes one constraint value and one row of partials for the Jacobian
  *  because the total acceleration magnitude is targeted rather than individual acceleration 
  *  vector components. The FX and DF matrices are update in place by editing their values 
- *  stored in <tt>it</tt>
+ *  stored in `it`
  * 
  *  \param it the MultShootData object holding the current data for the corrections process
  *  \param con the constraint being applied
@@ -1910,8 +1910,8 @@ double DynamicsModel_bc4bp::multShoot_targetSP_maxDist_compSlackVar(const MultSh
 }//===================================================
 
 /**
- *  \brief Compute partials and constraint values for node constrained with <tt>SP_DIST</tt>
- *  and <tt>SP_MAX_DIST</tt>. 
+ *  \brief Compute partials and constraint values for node constrained with `SP_DIST`
+ *  and `SP_MAX_DIST`. 
  *  \details One constraint value and one row of partials are computed. This constraint uses
  *  2nd-order polynomials to approximate the saddle point's location as a function of epoch 
  *  and then targets a node to be at or within a set radius of the saddle point.
@@ -1981,7 +1981,7 @@ void DynamicsModel_bc4bp::multShoot_targetSP_dist(MultShootData& it, const Const
 }//===================================================
 
 /**
- *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+ *  \brief Take the final, corrected free variable vector `X` and create an output 
  *  nodeset
  *
  *  \param it an iteration data object containing all info from the corrections process

@@ -59,12 +59,12 @@ Family_PO& Family_PO::operator= (const Family_PO &f){
 
 /**
  *  \brief Concatenates two Family_PO objects
- *  \details Performs the operation <tt>combo = lhs + rhs</tt>. The data from 
- *  <tt>lhs</tt> is copied directly into <tt>combo</tt>, thus, the name, sort type,
- *  and match tolerance of <tt>combo</tt> are identical to those of <tt>lhs</tt>
- *  regardless of the values of these parameters in <tt>rhs</tt>. The members,
- *  eigenvalues, and eigenvectors from <tt>rhs</tt> are appended to those of 
- *  <tt>lhs</tt>.
+ *  \details Performs the operation `combo = lhs + rhs`. The data from 
+ *  `lhs` is copied directly into `combo`, thus, the name, sort type,
+ *  and match tolerance of `combo` are identical to those of `lhs`
+ *  regardless of the values of these parameters in `rhs`. The members,
+ *  eigenvalues, and eigenvectors from `rhs` are appended to those of 
+ *  `lhs`.
  * 
  *  \param lhs a Family_PO object reference
  *  \param rhs a Family_PO object reference
@@ -291,7 +291,7 @@ void Family_PO::sortEigs(){
 
 /**
  *	\brief Sort the family members by the specified sort variable (in ascending order)
- *	\details The sorting variable is specified by <tt>sortType</tt>; this is the variable
+ *	\details The sorting variable is specified by `sortType`; this is the variable
  *	that best describes the natural progression of the family. For example,
  *	Lyapunov orbits can be evolved naturally by varying the x-coordinate of the IC.
  *
@@ -369,9 +369,9 @@ void Family_PO::sortMembers(){
  *
  *	\param val the value the family member should have
  *	\param data a pointer to a vector containing the set of values to search for matches
- *	in. For example, if the <tt>val</tt> I pass in contains a specific TOF, then 
- *	<tt>data</tt> points to a vector containing the TOFs for the entire family, sorted
- *	according to this family's <tt>sortType</tt>.
+ *	in. For example, if the `val` I pass in contains a specific TOF, then 
+ *	`data` points to a vector containing the TOFs for the entire family, sorted
+ *	according to this family's `sortType`.
  *	\param matchCon a constraint that can be applied in a corrections scheme that will
  *	ensure the corrected trajectory has the desired value for the variable of interest.
  *

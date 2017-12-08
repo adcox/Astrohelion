@@ -69,7 +69,7 @@ std::string complexToStr(std::complex<double> num){
 /**
  *  \brief A wrapper function to print a message
  *	\param verbose whether or not to be verbose; message is not printed if verbose is false
- *	\param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\param format a standard format string literal to pass to `vprintf`
  */
 void printVerb(bool verbose, const char * format, ...){
     if(verbose){
@@ -82,7 +82,7 @@ void printVerb(bool verbose, const char * format, ...){
 
 /**
  *	\brief Print an error message to the standard output in red
- *	\param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\param format a standard format string literal to pass to `vprintf`
  */
 void printErr(const char * format, ...){
 	printf(RED);
@@ -95,7 +95,7 @@ void printErr(const char * format, ...){
 
 /**
  *	\brief Print a warning messate to the standard output in yellow
- *	\param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\param format a standard format string literal to pass to `vprintf`
  */
 void printWarn(const char * format, ...){
     printf(YELLOW);
@@ -109,7 +109,7 @@ void printWarn(const char * format, ...){
 /**
  *	\brief Print a message to the standard output using an ASCII escape-type color
  *	\param color one of the constant color values stored in the ascii-output header
- *	\param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\param format a standard format string literal to pass to `vprintf`
  */
 void printColor(const char* color, const char * format, ...){
     printf("%s", color);
@@ -124,7 +124,7 @@ void printColor(const char* color, const char * format, ...){
  *	\brief Print a message to the standard output using an ASCII escape-type color
  *	\param verbose whether or not to print the string
  *	\param color one of the constant color values stored in the ascii-output header
- *	\param format a standard format string literal to pass to <tt>vprintf</tt>
+ *	\param format a standard format string literal to pass to `vprintf`
  */
 void printVerbColor(bool verbose, const char* color, const char * format, ...){
 	if(verbose){
@@ -177,7 +177,7 @@ void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
 
 /**
  * \brief Save a matrix of data to a Matlab .mat file
- * \details The data passed in the <tt>data</tt> vector is transposed 
+ * \details The data passed in the `data` vector is transposed 
  *  and saved to the specified Matlab file
  * 
  * \param filename name/path of the file
@@ -194,7 +194,7 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
 
 /**
  *  \brief Save a matrix of data to an open matlab .mat file
- *  \details The data passed in the <tt>data</tt> vector is transposed 
+ *  \details The data passed in the `data` vector is transposed 
  *  and saved to the specified Matlab file 
  * 
  *  \param matfp An open Matlab .mat file
@@ -202,7 +202,7 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
  *  \param data a vector of data in row-major order
  *  \param rows number of rows in the matrix
  *  \param cols number of columns in the matrix
- *  \throws Exception if <tt>data</tt> does not have enough elements
+ *  \throws Exception if `data` does not have enough elements
  *  to construct a matrix with the specified number of rows and columns
  */
 void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> data, size_t rows, size_t cols){
@@ -233,7 +233,7 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
  *  \param matfp pointer to Matlab file
  *  \param varName name of the variable within the Matlab file
  *  \param text value of the variable within the Matlab file
- *  \param strlen number of characters (including the final nullptr char) in <tt>text</tt>
+ *  \param strlen number of characters (including the final nullptr char) in `text`
  */
 void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const int strlen){
     char text_chars[strlen];

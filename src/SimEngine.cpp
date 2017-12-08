@@ -128,7 +128,7 @@ double SimEngine::getRelTol() const {return relTol;}
 /**
  *  \return the number of steps the integrator will be forced to take.
  *  The integrator may take intermediate steps between those enforced
- *  by the algorithm, but only <tt>numSteps</tt> data points will be output.
+ *  by the algorithm, but only `numSteps` data points will be output.
  */
 int SimEngine::getNumSteps() const { return numSteps; }
 
@@ -330,7 +330,7 @@ void SimEngine::runSim(std::vector<double> ic, double tof, Arcset *arcset, Contr
  *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \param pLaw pointer to a control law (nullptr by default)
  *  
- *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  \throws Exception if `ic` has fewer than 6 elements
  *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
  *    data generated up to the integrator failure is saved in the Arcset object passed to
@@ -367,7 +367,7 @@ void SimEngine::runSim(std::vector<double> ic, double t0, double tof, Arcset *ar
  *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \param pLaw pointer to a control law (nullptr by default)
  *  
- *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  \throws Exception if `ic` has fewer than 6 elements
  *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
  *    data generated up to the integrator failure is saved in the Arcset object passed to
@@ -409,7 +409,7 @@ void SimEngine::runSim(const double* ic, double t0, double tof, Arcset *arcset, 
  *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \param pLaw pointer to a control law
  *  
- *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  \throws Exception if `ic` has fewer than 6 elements
  *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
  *    data generated up to the integrator failure is saved in the Arcset object passed to
@@ -460,7 +460,7 @@ void SimEngine::runSim(std::vector<double> ic, std::vector<double> ctrl0, double
  *  \param arcset pointer to a trajectory object to store the output trajectory
  *  \param pLaw pointer to a control law
  *  
- *  \throws Exception if <tt>ic</tt> has fewer than 6 elements
+ *  \throws Exception if `ic` has fewer than 6 elements
  *  \throws DivergeException if the GSL integrators are make steps with acceptable error values.
  *    This usually occurs if a trajectory passes very near (or through) a primary. Note that all the
  *    data generated up to the integrator failure is saved in the Arcset object passed to
@@ -1175,10 +1175,10 @@ void SimEngine::free_odeiv2(gsl_odeiv2_step *s, gsl_odeiv2_control *c, gsl_odeiv
  *  initial check is not highly accurate, but if an event is determined to have occured,
  *  a Newton-Raphson process is begun to locate the exact state and time of the event.
  *
- *  The initial check compares the current integrated state (passed in as <tt>y</tt>) with
+ *  The initial check compares the current integrated state (passed in as `y`) with
  *  the previous integrated state (stored in the event object). If the sign (+/-) of the 
  *  distance to the event function changes, the the trajectory has triggered the event. This
- *  check is performed in the event objects <tt>crossedEvent()</tt> function.
+ *  check is performed in the event objects `crossedEvent()` function.
  *
  *  Once an event has triggered the initial check, we create a 2-node nodeset beginning
  *  with the previous state and integrating for a time interval that should end near the 
@@ -1520,7 +1520,7 @@ void SimEngine::clearEvents(){
 /**
  *  Copy data from an input engine to this one
  *  \param s an input simulation engine
- *  @throw Exception if <tt>s</tt> has an unknown system data type
+ *  @throw Exception if `s` has an unknown system data type
  */
 void SimEngine::copyMe(const SimEngine &s){
     Engine::copyBaseEngine(s);

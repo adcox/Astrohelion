@@ -61,7 +61,7 @@ Arcset_bc4bp::Arcset_bc4bp(const BaseArcset &a) : Arcset(a) {}
 
 /**
  *  \brief Create a new arcset object on the stack
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -77,7 +77,7 @@ baseArcsetPtr Arcset_bc4bp::create( const SysData *pSys) const{
 /**
  *  \brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -127,7 +127,7 @@ double Arcset_bc4bp::getGamma(){
  *	\return the i'th 6-element dqdT vector. If ix is negative, the count
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> Arcset_bc4bp::get_dqdTByIx(int ix){
 	if(ix < 0)
@@ -144,7 +144,7 @@ std::vector<double> Arcset_bc4bp::get_dqdTByIx(int ix){
  *	\param ix the index of the step; if < 0, it will count backwards from the end
  *	\param dqdT a pointer to the dqdT vector; this MUST have at least 6 elements,
  *	or the function will read unallocated memory.
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 void Arcset_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
 	if(ix < 0)
@@ -161,7 +161,7 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
  *	\brief Set the value of the dqdT vector for the specified step
  *	\param ix the index of the step; if < 0, it will count backwards from the end
  *	\param dqdT a vector (6 elements) representing the dqdT vector
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 	if(dqdT.size() != 6)

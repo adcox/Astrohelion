@@ -84,11 +84,11 @@ BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 
 /**
  *  \brief Sum two arcset objects.
- *  \details This function returns <tt>result</tt> = <tt>lhs</tt> + <tt>rhs</tt>; 
- *  Both <tt>lhs</tt> and <tt>rhs</tt> are copied and sorted into chronological 
- *  order. The <tt>rhs</tt> is then appended to the end of <tt>lhs</tt> with no
- *  time-of-flight between the end of <tt>lhs</tt> and the beginning of <tt>rhs</tt>.
- *  The first node of <tt>rhs</tt> is deleted if the final node on <tt>lhs</tt> is 
+ *  \details This function returns `result` = `lhs` + `rhs`; 
+ *  Both `lhs` and `rhs` are copied and sorted into chronological 
+ *  order. The `rhs` is then appended to the end of `lhs` with no
+ *  time-of-flight between the end of `lhs` and the beginning of `rhs`.
+ *  The first node of `rhs` is deleted if the final node on `lhs` is 
  *  an origin node, i.e., if the two progress in different time directions.
  * 
  *  \param lhs pointer to an arcset object
@@ -280,11 +280,11 @@ int BaseArcset::addSeg(Segment s){
  *  \brief Append an arcset object (i.e., a set of nodes and segments) to this one
  * 
  *  \param pArcsetIn a pointer to the arcset object that will be appended to this object
- *  \param localNodeID the ID of the node in *this* arcset object that <tt>pArcsetIn</tt> will be linked to
- *  \param appendNodeID the ID of the node in <tt>pArcsetIn</tt> to link from
+ *  \param localNodeID the ID of the node in *this* arcset object that `pArcsetIn` will be linked to
+ *  \param appendNodeID the ID of the node in `pArcsetIn` to link from
  *  \param tof time-of-flight between appendNodeID to localNodeID; when this value is nonzero, an artificial
- *  segment is constructed two link the two arcsets. If <tt>tof</tt> is zero, then one of the nodes is deleted.
- *  If the node at <tt>localNodeID</tt> is an origin node, then the node at <tt>appendNodeID</tt> is deleted. If
+ *  segment is constructed two link the two arcsets. If `tof` is zero, then one of the nodes is deleted.
+ *  If the node at `localNodeID` is an origin node, then the node at `appendNodeID` is deleted. If
  *  the local node is not an origin, then it is deleted instead. The segment left without a terminus is then 
  *  connected to the remaining node.
  *  
@@ -527,10 +527,10 @@ void BaseArcset::clearAllConstraints(){
  *  include two independent "flows" without a segment to connect them
  * 
  *  \param pSet pointer to an arcset object
- *  \return a map relating the nodeIDs in <tt>pSet</tt> to the new IDs of the same nodes
+ *  \return a map relating the nodeIDs in `pSet` to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
- *  equivalent to <tt>Linkable::INVALID_ID</tt> is stored in the associated 
+ *  equivalent to `Linkable::INVALID_ID` is stored in the associated 
  *  vector element.
  *  
  *  \throws Exception if the input arcset does not have the same system data object as this one
@@ -745,7 +745,7 @@ void BaseArcset::deleteNode(int id){
  *  \param id The ID of the segment to delete. If the ID is out of range, an exception
  *  is thrown. If the ID is in range but doesn't represent an existing segment,
  *  no deletion is made
- * 	\throws Exception if <tt>id</tt> is out of bounds
+ * 	\throws Exception if `id` is out of bounds
  */
 void BaseArcset::deleteSeg(int id){
 	if(segIDMap.count(id) == 0)
@@ -791,7 +791,7 @@ void BaseArcset::deleteSeg(int id){
  * 
  *  \param id the ID of a node
  *  \return the acceleration vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getStateDeriv(int id){
@@ -806,7 +806,7 @@ std::vector<double> BaseArcset::getStateDeriv(int id){
  *	\param ix the step index. If it is negative, the index will count backwards
  *	from the end of the arc (e.g. ix = -1 will return the last acceleration)
  *	\return the acceleration associated with the specified index
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 	if(ix < 0)
@@ -1041,7 +1041,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
  *	\param ix the index of the state coordinate
  *	\return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
 	if(nodes.size() > 0 && ix >= nodes[0].getState().size())
@@ -1081,7 +1081,7 @@ const ControlLaw* BaseArcset::getCtrlLawByIx(int ix) const{
  * 
  *  \param id the ID of a node
  *  \return the epoch
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 double BaseArcset::getEpoch(int id) const{
@@ -1099,13 +1099,13 @@ double BaseArcset::getEpoch(int id) const{
 /**
  *  \brief Retrieve the epoch of a specific node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \return The epoch associated with the specified node
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 double BaseArcset::getEpochByIx(int ix) const{
 	if(ix < 0)
@@ -1135,14 +1135,14 @@ std::vector<double> BaseArcset::getEpochs() const{
 
 /**
  *	\brief Retrieve a set of extra parameters for the specified node
- *	\param n the node index within the <tt>nodes</tt> storage array; This value
+ *	\param n the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *	\param key string that identifies the extra parameter
  *	\return a vector containing the extra parameter at the specified step and index
- *	\throws Exception if <tt>n</tt> is out of bounds
+ *	\throws Exception if `n` is out of bounds
  */
 double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 	if(n < 0)
@@ -1157,9 +1157,9 @@ double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 /**
  *  \brief Retrieve a set of extra parameters for the specified node
  * 
- *  \param n node index within the <tt>nodes</tt> storage array; This value
+ *  \param n node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *  \param key string that identifies the extra parameter
  * 
@@ -1220,7 +1220,7 @@ unsigned int BaseArcset::getNumCons() const {
  *  \param id the ID of the desired node.
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
 Node BaseArcset::getNode(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1237,10 +1237,10 @@ Node BaseArcset::getNode(int id) const{
 /**
  *  \brief Retrieve a node based on its index in the storage array
  * 
- *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a node at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Node BaseArcset::getNodeByIx(int ix) const{
 	if(ix < 0)
@@ -1260,7 +1260,7 @@ Node BaseArcset::getNodeByIx(int ix) const{
  *  \param id the ID of the desired node.
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
 Node& BaseArcset::getNodeRef(int id){
 	if(nodeIDMap.count(id) == 0)
@@ -1278,10 +1278,10 @@ Node& BaseArcset::getNodeRef(int id){
 /**
  *  \brief Retrieve a reference to a node based on its index in the storage array
  * 
- *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a node at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
 	if(ix < 0)
@@ -1299,7 +1299,7 @@ const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
  *  \param id the ID of the desired node.
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
 const Node& BaseArcset::getNodeRef_const(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1316,10 +1316,10 @@ const Node& BaseArcset::getNodeRef_const(int id) const{
 /**
  *  \brief Retrieve a reference to a node based on its index in the storage array
  * 
- *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a node at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Node& BaseArcset::getNodeRefByIx(int ix){
 	if(ix < 0)
@@ -1337,7 +1337,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
  * 
  *  \param id node ID
  *  \return the index of the node with the specified ID within the storage vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1352,7 +1352,7 @@ int BaseArcset::getNodeIx(int id) const{
  *  \param id the ID of the desired node
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
 Segment BaseArcset::getSeg(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1369,10 +1369,10 @@ Segment BaseArcset::getSeg(int id) const{
 /**
  *  \brief Retrieve a segment based on its index in the storage array
  * 
- *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a segment at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Segment BaseArcset::getSegByIx(int ix) const{
 	if(ix < 0)
@@ -1390,7 +1390,7 @@ Segment BaseArcset::getSegByIx(int ix) const{
  *  \param id the ID of the desired segment.
  *	
  *  \return the segment located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
 Segment& BaseArcset::getSegRef(int id){
 	if(segIDMap.count(id) == 0)
@@ -1408,10 +1408,10 @@ Segment& BaseArcset::getSegRef(int id){
 /**
  *  \brief Retrieve a reference to a segment based on its index in the storage array
  * 
- *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a segment at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Segment& BaseArcset::getSegRefByIx(int ix){
 	if(ix < 0)
@@ -1430,7 +1430,7 @@ Segment& BaseArcset::getSegRefByIx(int ix){
  *  \param id the ID of the desired segment.
  *	
  *  \return the segment located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
 const Segment& BaseArcset::getSegRef_const(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1447,10 +1447,10 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
 /**
  *  \brief Retrieve a reference to a segment based on its index in the storage array
  * 
- *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a segment at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
 	if(ix < 0)
@@ -1467,7 +1467,7 @@ const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
  * 
  *  \param id node ID
  *  \return the index of the node with the specified ID within the storage vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1482,7 +1482,7 @@ int BaseArcset::getSegIx(int id) const{
  * 
  *  \param id the ID of a node
  *  \return the state vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getState(int id) const{
@@ -1499,13 +1499,13 @@ std::vector<double> BaseArcset::getState(int id) const{
 
 /**
  *	\brief Retrieve a position-velocity state on the arc
- *	\param ix the node index within the <tt>nodes</tt> storage array; This value
+ *	\param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *	\return the state associated with the specified index
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getStateByIx(int ix) const{
 	if(ix < 0)
@@ -1523,7 +1523,7 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
  * 
  *  \param id the ID of a segment
  *  \return the STM
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 MatrixXRd BaseArcset::getSTM(int id) const{
@@ -1541,10 +1541,10 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 /**
  *	\brief Retrieve an STM on the arc
  *	\param ix the segment index. If it is negative, the index will count backwards
- *	from the end of the <tt>segs</tt> storage array
+ *	from the end of the `segs` storage array
  *	
  *	\return the STM associated with the specified index
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 	if(ix < 0)
@@ -1571,7 +1571,7 @@ const SysData* BaseArcset::getSysData() const { return pSysData; }
  * 
  *  \param id the ID of a segment
  *  \return the time-of-flight
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 double BaseArcset::getTOF(int id) const{
@@ -1590,7 +1590,7 @@ double BaseArcset::getTOF(int id) const{
  *	\param ix node index (NOT the ID); if less than 0, the index counts
  *	backwards from the end of the nodeset
  *	\return non-dimensional time-of-flight along the specified segment
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 double BaseArcset::getTOFByIx(int ix) const {
 	if(ix < 0)
@@ -1714,7 +1714,7 @@ void BaseArcset::putInChronoOrder(bool force){
  * 
  *  \param id the ID of a node
  *  \param epoch the epoch time
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 void BaseArcset::setEpoch(int id, double epoch){
 	if(nodeIDMap.count(id) == 0)
@@ -1726,13 +1726,13 @@ void BaseArcset::setEpoch(int id, double epoch){
 /**
  *  \brief Set the epoch time for a specific node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>ix</tt> is negative, this index will
+ *	was added to the arcset object. If `ix` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param epoch the epoch time
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 void BaseArcset::setEpochByIx(int ix, double epoch){
 	if(ix < 0)
@@ -1750,8 +1750,8 @@ void BaseArcset::setEpochByIx(int ix, double epoch){
  * 
  *  \param id the ID of a node
  *  \param qdot the acceleration vector
- *  \throws Exception if <tt>id</tt> is out of bounds
- *  \throws Exception if <tt>qdot</tt> does not have the same size as the 
+ *  \throws Exception if `id` is out of bounds
+ *  \throws Exception if `qdot` does not have the same size as the 
  *  state vector
  */
 void BaseArcset::setStateDeriv(int id, std::vector<double> qdot){
@@ -1767,14 +1767,14 @@ void BaseArcset::setStateDeriv(int id, std::vector<double> qdot){
 /**
  *  \brief Set the state derivative vector for a specific step/node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param derivVec state derivative vector
- *  \throws Exception if <tt>ix</tt> is out of bounds
- *  \throws Exception if <tt>qdot</tt> does not have the same size as the 
+ *  \throws Exception if `ix` is out of bounds
+ *  \throws Exception if `qdot` does not have the same size as the 
  *  state vector
  */
 void BaseArcset::setStateDerivByIx(int ix, std::vector<double> derivVec){
@@ -1796,7 +1796,7 @@ void BaseArcset::setStateDerivByIx(int ix, std::vector<double> derivVec){
  * 
  *  \param id the ID of a node
  *  \param state the state vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 void BaseArcset::setState(int id, std::vector<double> state){
 	if(nodeIDMap.count(id) == 0)
@@ -1808,13 +1808,13 @@ void BaseArcset::setState(int id, std::vector<double> state){
 /**
  *  \brief Set the state vector for a specific node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>ix</tt> is negative, this index will
+ *	was added to the arcset object. If `ix` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param stateVec vector of non-dimensional state values
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
 	if(ix < 0)
@@ -1832,7 +1832,7 @@ void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
  * 
  *  \param id the ID of a segment
  *  \param stm the STM
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTM(int id, MatrixXRd stm){
@@ -1849,11 +1849,11 @@ void BaseArcset::setSTM(int id, MatrixXRd stm){
 /**
  *  \brief Set the STM for a specific step/node
  * 
- *  \param ix index of the segment with the <tt>segs</tt> storage array; if it is negative,
+ *  \param ix index of the segment with the `segs` storage array; if it is negative,
  *  it will count backwards from the end of the array.
  *  
  *  \param stm a matrix containing the STM
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  *  \throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){

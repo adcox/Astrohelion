@@ -6,7 +6,7 @@
  *	Note to end user: You do NOT need to include this header
  *
  *	For developers: This header should be included on ALL library .cpp files to ensure that the library
- *	is fully initialized no matter how the user uses the library. A static <tt>initializer</tt>
+ *	is fully initialized no matter how the user uses the library. A static `initializer`
  *	object is instantiated as a global variable so that it will be constructed when the 
  *	application starts and deconstructed when the application is finished. The include
  *	guard keeps the initializion from happening more than once.

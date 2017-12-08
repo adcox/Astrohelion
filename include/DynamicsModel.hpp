@@ -255,10 +255,10 @@ public:
 	virtual double multShoot_getSlackVarVal(const MultShootData&, const Constraint&)const ;
 
 	/**
-	 *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+	 *  \brief Take the final, corrected free variable vector `X` and create an output 
 	 *  nodeset
 	 *
-	 *  If <tt>findEvent</tt> is set to true, the
+	 *  If `findEvent` is set to true, the
 	 *  output nodeset will contain extra information for the simulation engine to use. Rather than
 	 *  returning only the position and velocity states, the output nodeset will contain the STM 
 	 *  and other values for the final node; this information will be appended to the extraParameter

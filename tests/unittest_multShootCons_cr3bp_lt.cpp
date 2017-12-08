@@ -30,9 +30,9 @@ double emL1Lyap_T = 3.02797;	// EM L1 Period
 double emL3Lyap_T = 6.2238;
 
 // All the different control laws to test
-std::vector<ControlLaw_cr3bp_lt::Law_tp> lawTypes = {ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_LEFT,
-	ControlLaw_cr3bp_lt::Law_tp::CONST_C_2D_RIGHT, ControlLaw_cr3bp_lt::Law_tp::PRO_VEL, 
-	ControlLaw_cr3bp_lt::Law_tp::ANTI_VEL};
+std::vector<ControlLaw_cr3bp_lt::Law_tp> lawTypes = {ControlLaw_cr3bp_lt::Law_tp::CONST_F_C_2D_LEFT,
+	ControlLaw_cr3bp_lt::Law_tp::CONST_F_C_2D_RIGHT, ControlLaw_cr3bp_lt::Law_tp::CONST_F_PRO_VEL, 
+	ControlLaw_cr3bp_lt::Law_tp::CONST_F_ANTI_VEL};
 
 // All the different ways to parameterize time in the multiple shooting algorithm
 std::vector<MSTOF_tp> tofTypes {MSTOF_tp::VAR_FREE, MSTOF_tp::VAR_FIXSIGN, MSTOF_tp::VAR_EQUALARC};
@@ -47,7 +47,7 @@ bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);
  *  \param data vector of state values from the corrections process
  *  \param correct array of state values from the constraint
  *  \param tol desired numerical tolerance
- *  \return whether or not <tt>data</tt> and <tt>correct</tt> are equal
+ *  \return whether or not `data` and `correct` are equal
  *  within the desired tolerance
  */
 bool stateDiffBelowTol(std::vector<double> data, double *correct, double tol){
@@ -201,7 +201,7 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 
 	SysData_cr3bp_lt sys("earth", "moon", 14);
 	std::vector<double> ltParams {0.3, 1500};
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
 	std::vector<double> thrustAngles {alpha, beta};
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);
@@ -241,7 +241,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 
 	SysData_cr3bp_lt sys("earth", "moon", 500);
 	std::vector<double> ltParams {9e-3, 1500};
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, ltParams);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
 	std::vector<double> thrustAngles {alpha, beta};
 	
 	Arcset_cr3bp_lt halfLyapNodeset(&sys), correctedSet(&sys);

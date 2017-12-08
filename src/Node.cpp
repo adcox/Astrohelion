@@ -166,7 +166,7 @@ void Node::clearConstraints(){ cons.clear(); }
 /**
  *	\brief Remove the specified constraint
  *	\param ix the index of the constraint.
- *	@throw Exception if <tt>ix</tt> is out of bounds
+ *	@throw Exception if `ix` is out of bounds
  */
 void Node::removeConstraint(int ix){
 	if(ix < 0 || ix >= static_cast<int>(cons.size()))

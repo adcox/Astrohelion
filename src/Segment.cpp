@@ -501,7 +501,7 @@ void Segment::setVelCon(const bool data[3]){
  *	\param data a three-element boolean vector. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
- *	@throw Exception if <tt>data</tt> has fewer than three elements
+ *	@throw Exception if `data` has fewer than three elements
  */
 void Segment::setVelCon(std::vector<bool> data){
 	if(data.size() < 3){

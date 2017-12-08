@@ -218,9 +218,9 @@ void ControlLaw::setParams(std::vector<double> params){
  *  \param s state vector
  *  \param pSys system data object
  *  \param output initialized array of zeros in which to store the control law outputs
- *  \param len number of elements in the <tt>law</tt> array
+ *  \param len number of elements in the `law` array
  *  
- *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
+ *  \throws Exception if the control law ID, `lawType`, is not recognized
  */
 void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const{
 	switch(lawType){
@@ -275,7 +275,7 @@ void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSy
  *  \param pSys system data object
  *  \param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the <tt>partials</tt> array
+ *  \param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -303,7 +303,7 @@ void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysD
  *  \param pSys system data object
  *  \param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the <tt>partials</tt> array
+ *  \param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -329,7 +329,7 @@ void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pS
  *  \param pSys system data object
  *  \param partials initialized array of zeros in which to store the partial derivatives
  *  of the control outputs
- *  \param len number of elements in the <tt>partials</tt> array
+ *  \param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){

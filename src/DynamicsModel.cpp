@@ -729,7 +729,7 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constrain
 			if(to_underlying(it.tofTp) > 0){
 				// * For now, all time-derivatives of control laws are zero
 				//
-				// TODO - Will need to retreive constrol state time derivatives from propagated segment
+				// TODO - Will need to retrieve constrol state time derivatives from propagated segment
 				// * Instantaneous time derivatives are available via ControlLaw.getLaw_StateDeriv()
 
 				// std::vector<double> lastDeriv = propSeg.getStateDerivByIx(-1);
@@ -954,7 +954,8 @@ void DynamicsModel::multShoot_targetState(MultShootData& it, const Constraint& c
  */
 void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
-	int segIx = it.pArcIn->getSegIx(con.getID());
+	int segID = con.getID();
+	int segIx = it.pArcIn->getSegIx(segID);
 	
 	// Get object representing origin of segment
 	MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
@@ -983,7 +984,7 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 		throw Exception("DynamicsModel::multShoot_targetState_endSeg: ConData has too many states");
 
 	int count = 0; 	// Count # rows since some may be skipped (NAN)
-	for(unsigned int s = 0; s < con.getData().size(); s++){
+	for(unsigned int s = 0; s < conData.size(); s++){
 		if(!std::isnan(conData[s])){
 			it.FX[row0+count] = lastState[s] - conData[s];
 
@@ -1013,6 +1014,24 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 				it.DF_elements.push_back(Tripletd(row0+count, tof_var.row0, timeCoeff*lastDeriv[s]));
 			}
 			count++;
+		}
+	}
+
+	// Partials w.r.t. control states
+	if(ControlLaw *pLaw = it.pArcIn->getSegRef_const(segID).getCtrlLaw()){
+		if(pLaw->getNumStates() > 0){
+			MSVarMap_Obj ctrl_var = it.getVarMap_obj(MSVar_tp::CTRL, it.pArcIn->getSegRef_const(segID).getOrigin());
+
+			if(ctrl_var.row0 != -1){
+				for(unsigned int s = 0; s < conData.size(); s++){
+					if(!std::isnan(conData[s])){
+						for(unsigned int c = 0; c < pLaw->getNumStates(); c++){
+							// put STM elements into DF matrix
+							it.DF_elements.push_back(Tripletd(row0+s, ctrl_var.row0+c, stm(s, coreDim + c)));
+						}
+					}
+				}
+			}
 		}
 	}
 }//=================================================

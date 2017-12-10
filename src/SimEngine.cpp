@@ -1377,11 +1377,11 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
         corrector.multShoot(&eventArcset, &correctedSet);
     }catch(DivergeException &e){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            printErr("Unable to locate event; corrector diverged\n");
+            printErr("Unable to locate %s event; corrector diverged\n", events[evtIx].getTypeStr());
         return false;
     }catch(LinAlgException &e){
         if(verbosity >= Verbosity_tp::SOME_MSG)
-            printErr("LinAlg Err while locating event; bug in corrector!\n");
+            printErr("LinAlg Err while locating %s event; bug in corrector!\n", events[evtIx].getTypeStr());
         return false;
     }
 

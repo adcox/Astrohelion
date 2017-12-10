@@ -78,6 +78,8 @@ std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3
  *  \return the time derivative of spacecraft mass
  */
 double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *pSys) const{
+	(void) t;
+	
 	switch(lawType){
 		case Law_tp::CONST_F_C_2D_LEFT:
 		case Law_tp::CONST_F_C_2D_RIGHT:
@@ -502,7 +504,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 		 */
 		partials[7*0 + 6] = -f*cos(beta)*cos(alpha)/(s[6]*s[6]);	// dax/dm
 		partials[7*1 + 6] = -f*cos(beta)*sin(alpha)/(s[6]*s[6]);	// day/dm
-		partials[7*2 + 6] = -f*sin(beta)/(s[6]*s[6]);	// daz/dm
+		partials[7*2 + 6] = -f*sin(beta)/(s[6]*s[6]);				// daz/dm
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: Law type is not general direction");
 	}
@@ -551,13 +553,15 @@ void ControlLaw_cr3bp_lt::getEOMPartials_VarF(double t, const double *s, const S
 		 *		row 0 = partials of v_x w.r.t. ctrl
 		 *		row 1 = partials of v_y w.r.t. ctrl
 		 *		row 2 = partials of v_z w.r.t. ctrl
-		 *		row 3 = partials of a_x w.r.t. ctrl
-		 *		row 4 = partials of a_y w.r.t. ctrl
-		 *		row 5 = partials of a_z w.r.t. ctrl
+		 *		row 3 = partials of xddot w.r.t. ctrl
+		 *		row 4 = partials of yddot w.r.t. ctrl
+		 *		row 5 = partials of zddot w.r.t. ctrl
+		 *		row 6 = partials of mdot w.r.t. ctrl
 		 */
 		partials[numStates*3 + 0] = a_lt[0]/s[7];	// partial of xddot w.r.t. f
 		partials[numStates*4 + 0] = a_lt[1]/s[7];	// partial of yddot w.r.t. f
 		partials[numStates*5 + 0] = a_lt[2]/s[7];	// partial of zddot w.r.t. f
+		partials[numStates*6 + 0] = -pSys->getCharL()/(params[0]*G_GRAV_0*pSys->getCharT());	// partial of mdot .w.r.t. f (params[0] is Isp)
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getEOMPartials_VarF: Law type does not match this function");
 	}
@@ -602,18 +606,20 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 		 *		row 3 = partials of a_x w.r.t. ctrl
 		 *		row 4 = partials of a_y w.r.t. ctrl
 		 *		row 5 = partials of a_z w.r.t. ctrl
+		 *		row 6 = partialx of mdot w.r.t. ctrl
 		 */
 		unsigned int ix_shift = lawType < 100 ? 0 : 1;	// Shift partials over one slot if f is the first control state
-		partials[numStates*3 + ix_shift + 0] = -params[0]/s[6] * cos(beta)*sin(alpha);		// partial of xddot w.r.t. alpha
-		partials[numStates*3 + ix_shift + 1] = -params[0]/s[6] * sin(beta)*cos(alpha);		// partial of xddot w.r.t. beta
-		partials[numStates*4 + ix_shift + 0] = params[0]/s[6] * cos(beta) * cos(alpha);		// partial of yddot w.r.t. alpha
-		partials[numStates*4 + ix_shift + 1] = -params[0]/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
-		partials[numStates*5 + ix_shift + 1] = params[0]/s[6] * cos(beta);					// partial of zddot w.r.t. beta
+		partials[numStates*3 + ix_shift + 0] = -f/s[6] * cos(beta)*sin(alpha);		// partial of xddot w.r.t. alpha
+		partials[numStates*3 + ix_shift + 1] = -f/s[6] * sin(beta)*cos(alpha);		// partial of xddot w.r.t. beta
+		partials[numStates*4 + ix_shift + 0] = f/s[6] * cos(beta) * cos(alpha);		// partial of yddot w.r.t. alpha
+		partials[numStates*4 + ix_shift + 1] = -f/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
+		partials[numStates*5 + ix_shift + 1] = f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
 
 		if(lawType == Law_tp::VAR_F_GENERAL){
 			partials[numStates*3 + 0] = cos(beta)*cos(alpha)/s[6];		// partial of xddot w.r.t. f
 			partials[numStates*4 + 0] = cos(beta)*sin(alpha)/s[6];		// partial of yddot w.r.t. f
 			partials[numStates*5 + 0] = sin(beta)/s[6];					// partial of zddot w.r.t. f
+			partials[numStates*6 + 0] = -pSys->getCharL()/(params[0]*G_GRAV_0*pSys->getCharT());	// partial of mdot w.r.t. f (params[0] is Isp)
 		}
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: Law type is not general direction");

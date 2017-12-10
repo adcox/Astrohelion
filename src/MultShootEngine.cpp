@@ -1118,6 +1118,10 @@ void MultShootEngine::reset(){
  *  \param pNodeset A arcset with some constraints
  *  \param verbosity Specify how verbose the output is
  *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
+ *  
+ *  \return whether or not the Jacobian matrix is "correct". Issues that result in a return 
+ *  value of FALSE are: The Jacobian is singular (row or column of all zeros), or the differences
+ *  between the numerically computed Jacobian and analytical Jacobian are large.
  */
 bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosity_tp verbosity, bool writeToFile){
     MultShootEngine engine;  // Create engine with default settings
@@ -1135,6 +1139,10 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosit
  *  attributes of the engine will be overridden by this function.
  *  \param verbosity Specify how verbose the output is
  *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
+ *  
+ *  \return whether or not the Jacobian matrix is "correct". Issues that result in a return 
+ *  value of FALSE are: The Jacobian is singular (row or column of all zeros), or the differences
+ *  between the numerically computed Jacobian and analytical Jacobian are large.
  */
 bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShootEngine engine, Verbosity_tp verbosity, bool writeToFile){
     printVerb(verbosity >= Verbosity_tp::SOME_MSG, "Finite Diff: Checking DF matrix...\n");

@@ -60,7 +60,7 @@ Arcset_2bp::Arcset_2bp(const BaseArcset &a) : Arcset(a) {}
 
 /**
  *  \brief Create a new arcset object on the stack
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -76,7 +76,7 @@ baseArcsetPtr Arcset_2bp::create( const SysData *pSys) const{
 /**
  *  \brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 

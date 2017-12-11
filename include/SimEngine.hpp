@@ -146,28 +146,28 @@ enum class Integ_tp{
  *
  *	The simulation engine is the workhorse object for the Core. It
  *	holds functions to integrate equations of motion and is called by the 
- *	<tt>MultShootEngine</tt> to compute arcs between nodes.
+ *	`MultShootEngine` to compute arcs between nodes.
  *
  *	Creating a simulation engine is simple; it can either be instantiated with no
  *	arguments, or by specifying a system data object. Further settings can be applied
- *	via the "set and get" methods, and the <tt>runSim()</tt> method can be called to 
+ *	via the "set and get" methods, and the `runSim()` method can be called to 
  *	integrate a trajectory for a specific amount of time. The integration will most likely
  *	run for the specified interval, but crash-detecting event functions are included by default
  *	and will end the integration if triggered. To run a simulation without these events,
- *	use the <tt>setMakesCrashEvents()</tt> to tell the engine to skip creating these events. Alternatively, 
+ *	use the `setMakesCrashEvents()` to tell the engine to skip creating these events. Alternatively, 
  *	more event functions can be added to the simulation to end (or simply flag) the simulation
  *	at different event occurrences.
  *
  * 	Once the integration has completed, a trajectory object can be obtained by calling one of the
- *	<tt>get_*Arcset()</tt> functions. To reuse the simulation engine, call the <tt>reset()</tt>
+ *	`get_*Arcset()` functions. To reuse the simulation engine, call the `reset()`
  *  function and re-run the simulation with different initial conditions and time-of-flight.
  *
  *	<b>Events</b>
  *
  *	The user can tell the simulation to watch for certain types of events during the simulation; 
  *	if such an event occurs, the simulation can be made to end immediately, or record the 
- *	occurence and continue. The <tt>addEvent()</tt> function adds events to the simulation and
- *	the <tt>clearEvents()</tt> function removes all events from the simulation. In order for 
+ *	occurence and continue. The `addEvent()` function adds events to the simulation and
+ *	the `clearEvents()` function removes all events from the simulation. In order for 
  *	the engine to locate events, the simulation must be run with a sufficient number of points.
  *	The engine compares points along the integrated path to the location of the event and flags
  *	an event occurence when the direction to the event changes. If too few points are used,
@@ -235,7 +235,7 @@ class SimEngine : public Core, public Engine{
 		void setAbsTol(double);
 		void setFixStepInteg(Integ_tp);
 		void setMakeDefaultEvents(bool);
-		void setMaxCompTime(int);
+		void setMaxCompTime(double);
 		void setNumSteps(int);
 		void setSimpleInt(bool);
 		void setRelTol(double);
@@ -324,10 +324,16 @@ class SimEngine : public Core, public Engine{
 		double numSteps = 1000;
 
 		/** Number of seconds allowed for integration; set to -1 to allow unlimitted computation time */
-		int maxCompTime = -1;
+		double maxCompTime = -1;
+
+		/** 
+		 * Maximum number of steps the fixed-step integration driver can take. This cap only limits
+		 * integrations performed when bVarStepSize = false
+		 */
+		unsigned long int maxDriverSteps = 250000;
 
 		/** Timestamp at integration start */
-		int startTimestamp = 0;
+		time_t startTimestamp = 0;
 
 		/** Integrator to use for variable step-size propagations; Default is RK8PD */
 		Integ_tp varStep_integ = Integ_tp::RK8PD;
@@ -342,6 +348,7 @@ class SimEngine : public Core, public Engine{
 		void cleanEngine();
 		void copyMe(const SimEngine&);
 		void free_odeiv2(gsl_odeiv2_step*, gsl_odeiv2_control*, gsl_odeiv2_evolve*, gsl_odeiv2_driver*);
+		void reportPropErrs(int, double);
 		//\}
 
 		/**

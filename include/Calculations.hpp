@@ -83,14 +83,18 @@ enum class EigValSet_tp{
  *  \name General Analysis Functions
  *  \{
  */
+void balanceMat(MatrixXRd&, unsigned int&, unsigned int&, std::vector<double>&);
 double dateToEphemerisTime(const char*);
 double dateToGST(double, double, double, double, double, double);
+void eigVec_backTrans(unsigned int, unsigned int, const std::vector<double>&, MatrixXRcd&);
+void exchange(unsigned int, unsigned int, std::vector<double>&, unsigned int, unsigned int, MatrixXRd&);
+std::vector<cdouble> getBalancedEigData(MatrixXRd, MatrixXRcd *pVecs = nullptr);
 double gregorianToJulian(double, double, double, double, double, double);
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
-MatrixXRd solveAX_eq_B(MatrixXRd, MatrixXRd);
-std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
 Node interpPointAtTime(const Arcset*, double);
+std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
+void reconstructArc(const Arcset*, Arcset*);
 /** \} */
 
 /**

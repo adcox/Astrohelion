@@ -33,6 +33,14 @@
 
 #include "Calculations.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <cstring>
+#include <numeric>
+#include <string>
+#include <typeinfo>
+
 #include "AsciiOutput.hpp"
 #include "Arcset.hpp"
 #include "Arcset_2bp.hpp"
@@ -57,14 +65,6 @@
 #include <Eigen/Dense>
 #include <Eigen/LU>
 #include <Eigen/SVD>
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <cstring>
-#include <string>
-#include <typeinfo>
-
 
 namespace astrohelion{
 
@@ -183,6 +183,319 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
 }//====================================================
 
 /**
+ *  \brief Compute the eigendata (values and, optionally, vectors) of the matrix A
+ *  \details This method leverages matrix balancing to reduce round-off errors in
+ *  the eigendata computation
+ * 
+ *  \param A a real matrix (passed by value because it will be manipulated in-place)
+ *  \param pVecs pointer to a matrix of complex doubles; eigenvectors are stored here as columns,
+ *  each column is associated with the eigenvalue of the same index
+ * 
+ *  \return A vector of complex doubles that contains the eigenvalues
+ */
+std::vector<cdouble> getBalancedEigData(MatrixXRd A, MatrixXRcd *pVecs){
+    bool compVecs = !(pVecs == nullptr);
+
+    // Balance the matrix
+    unsigned int low = 0, hi = 0;
+    std::vector<double> perms {};
+    balanceMat(A, low, hi, perms);
+
+    // Compute the eigenvalues of the balanced matrix (and maybe eigenvectors)
+    Eigen::EigenSolver<MatrixXRd> eigensolver(A, compVecs);
+    if(eigensolver.info() != Eigen::Success)
+        throw Exception("Calculations:getEigData: Could not compute eigenvalues of A matrix");
+
+    // Extract the eigen data to return to the user
+    std::vector<cdouble> eigVals {};
+    Eigen::VectorXcd vals = eigensolver.eigenvalues();
+    eigVals.insert(eigVals.begin(), vals.data(), vals.data() + vals.size());
+
+    if(pVecs != nullptr){
+        // Compute the eigenvectors of the balanced matrix
+        *pVecs = eigensolver.eigenvectors();
+
+        // backtransform the eigenvectors
+        eigVec_backTrans(low, hi, perms, *pVecs);
+
+    }
+
+    return eigVals;
+}//====================================================
+
+/**
+ *  \brief Balance a matrix, `A`, to decrease rounding errors when computing eigenvalues
+ *  
+ *  \details The eigenvalues of the balanced matrix are equivalent to the
+ *  eigenvalues of the un-balanced matrix if no rounding errors are present. However,
+ *  the eigenvectors of the balanced matrix may be very different. Use the `eigVec_backTrans`
+ *  function to retrieve the eigenvectors of the original matrix from the eigenvectors of the
+ *  balanced matrix.
+ *  
+ *  The balancing algorithm may time-out in some cases, thus, a maximum of 500 iterations are
+ *  allowed to balance the STM. If this limit is reached, the function returns as usual but the
+ *  balanced A matrix may not be balanced as well as it could be. (Reason for infinite loop is
+ *  unknown; could be a coding error, though unlikely)
+ * 
+ *  \param A The matrix to balance. This matrix is manipulated in place, i.e., the original
+ *  values are not preserved.
+ *  \param low An integer that describes the form of the balanced (and permuted) matrix.
+ *  The value passed in will be overwritten and filled with the value for the balanced matrix.
+ *  \param hi An integer that describes the form of the balanced (and permuted) matrix.
+ *  The value passed in will be overwritten and filled with the value for the balanced matrix.
+ *  The values `hi` and `low` are defined such that A(i,j) = 0 if i > j AND
+ *  j = 1, ... , (low-1) or i = (hi+1), ... , n
+ *  
+ *  \param perms A vector that stores the scaling and permutation information for the balanced
+ *  matrix. The vector passed in will be overwritten with the data for the balanced matrix.
+ */
+void balanceMat(MatrixXRd& A, unsigned int& low, unsigned int& hi, std::vector<double>& perms){
+    unsigned int n = A.rows();
+    low = 0;
+    hi = n-1;
+
+    double radix = static_cast<double>(RADIX);
+    double radix2 = radix*radix;        // Radix squared
+    perms.clear();
+    perms.assign(n, 0);
+
+    // -------------------------------------------
+    //    Step 1: Preliminary Permutations
+    // -------------------------------------------
+    /*
+     *   After the operations below, the matrix is in this form:
+     *       ________________________
+     *   1   | x x x :       :       |
+     *       | 0 x x :   X   :   Y   |
+     *       | 0 0 x :       :       |
+     *       |.......................|
+     *   low |       :       :       |    
+     *       |   0   :   Z   :   W   |
+     *   hi  |       :       :       |
+     *       |.......................|
+     *       |       :       : x x x |
+     *       |   0   :   0   : 0 x x |
+     *   n   |       :       : 0 0 x |
+     *       -------------------------
+     *
+     *   "x" indicates elements which are not necessarily zero
+     *   low =/= hi
+     */
+
+    // Search for rows isolating an eigenvalue and push them down
+    bool doLoop = true;
+    while(doLoop){
+        doLoop = false;
+        for(int r = hi; r >= 0; r--){
+            // Sum non-diagonal elements
+            double rowSum = 0;
+            for(int c = 0; c <= static_cast<int>(hi); c++){   // Only look at columns between 1 and hi
+                if(c != r)
+                    rowSum += std::abs(A(r,c));
+            }
+
+            // If all the non-diagonal elements sum to zero, the element on the
+            // diagonal is an eigenvalue
+            if(std::abs(rowSum) < 1e-12){
+                exchange(r, hi, perms, hi, low, A);
+                if(hi > 0){
+                    doLoop = true;
+                    hi--;
+                }
+                break;
+            }
+        }
+    }
+
+    // Search for columns isolating an eigenvalue and push them left
+    doLoop = true;
+    while(doLoop){
+        doLoop = false;
+        for(unsigned int c = low; c <= hi; c++){
+            // Sum non-diagonal elements
+            double colSum = 0;
+            for(unsigned int r = low; r <= hi; r++){
+                if(r != c)
+                    colSum += std::abs(A(r,c));
+            }
+
+            // If all the non-diagonal elements sum to zero, the element on the
+            // diagonal is an eigenvalue
+            if(std::abs(colSum) < 1e-12){
+                exchange(c, low, perms, hi, low, A);
+                low++;
+                // doLoop = true;
+                doLoop = low < A.rows();
+                break;
+            }
+        }
+    }
+
+    // These elements have not been permuted
+    for(unsigned int i = low; i <= hi; i++){
+        perms[i] = 1;
+    }
+
+    bool noConv = false;
+    unsigned int count = 0, maxCount = 500;
+    while(!noConv && count < maxCount){
+        for(unsigned int i = low; i <= hi; i++){
+            double c = 0, r = 0;
+            for(unsigned int j = low; j <= hi; j++){
+                if(i != j){
+                    c += std::abs(A(j,i));
+                    r += std::abs(A(i,j));
+                }
+            }
+
+            double g = r/radix;
+            double f = 1.0, s = c + r;
+
+            while(c < g){
+                f *= radix;
+                c *= radix2;
+            }
+
+            g = r*radix;
+
+            while( c >= g){
+                f /= radix;
+                c /= radix2;
+            }
+
+            if( (c+r)/f < 0.95*s ){
+                g = 1.0/f;
+                perms[i] *= f;
+                noConv = true;
+
+                for(unsigned int j = low; j < n; j++){
+                    A(i,j) *= g;
+                }
+                for(unsigned int j = 0; j <= hi; j++){
+                    A(j,i) *= f;
+                }
+            }
+        }
+        count++;
+    }
+    // printf("  Count = %u\n", count);
+}//====================================================
+
+/**
+ *  \brief Exchange rows and columns to reach the appropriate matrix structure
+ *  \details This sub-routine is leveraged in the `balanceMat()` algorithm
+ *  to arrange the matrix, A, which is being balanced, in a way that isolates trivial
+ *  rows and columns to simplify the computations.
+ *  
+ *  Source: Wilkinson, Reinsch: Handbook for Automatic Computation, pp. 315-326
+ * 
+ *  \param ix index of a row/column of A
+ *  \param ix_move index of a row/column of A 
+ *  \param perms vector containing permutation and scaling information
+ *  \param hi the current value of `hi` from the `balanceMat()` algorithm
+ *  \param low the current value of `low` from the `balanceMat()` algorithm
+ *  \param A The matrix that is being balanced
+ */
+void exchange(unsigned int ix, unsigned int ix_move, std::vector<double>& perms, unsigned int hi,
+    unsigned int low, MatrixXRd& A){
+
+    unsigned int n = A.rows();
+
+    char msg[128];
+    if(ix >= A.cols() || ix >= n){
+        sprintf(msg, "Calculations:exchange: ix = %u is out of range for A (%ux%ld)", ix, n, A.cols());
+        throw Exception(msg);
+    }
+
+    if(ix_move >= A.cols() || ix_move >= n){
+        sprintf(msg, "Calculations:exchange: ix_move = %u is out of range for A (%ux%ld)", ix_move, n, A.cols());
+        throw Exception (msg);
+    }
+
+    // Remember this exchange
+    perms[ix_move] = ix;
+    double temp = 0;
+
+    if(ix != ix_move){
+        // Exchange entries between columns ix and ix_move over rows 1:hi
+        for(unsigned int i = 0; i <= hi; i++){
+            temp = A(i, ix);
+            A(i, ix) = A(i, ix_move);
+            A(i, ix_move) = temp;
+        }
+
+        // Exchange entries between rows ix and ix_move over columns low:n
+        for(unsigned int i = low; i < n; i++){
+            temp = A(ix, i);
+            A(ix, i) = A(ix_move, i);
+            A(ix_move, i) = temp;
+        }
+    }
+}//====================================================
+
+/**
+ *  \brief Backtransform right-hand eigenvectors of a balanced matrix to
+ *  retrieve the original eigenvectors
+ *  \details When a matrix is balanced via `balanceMat()`, the eigenvalues are
+ *  preserved but the eigenvectors are not due to permutations and scaling. This method
+ *  transforms the right-hand eigenvectors of the balanced matrix, `vecs`, to 
+ *  the eigenvectors associated with the original, un-balanced matrix
+ * 
+ *  \param low value output from `balanceMat()`
+ *  \param hi value output from `balanceMat()`
+ *  \param perms vector containing permutation and scaling information; this data is used to 
+ *  transform the eigenvectors back to the original set.
+ *  \param vecs matrix of eigenvectors (stored as columns) associated with a balanced matrix.
+ *  These vectors are manipulated in place during the backtransformation
+ */
+void eigVec_backTrans(unsigned int low, unsigned int hi, const std::vector<double>& perms, MatrixXRcd& vecs){
+
+    unsigned int n = vecs.rows(), m = vecs.cols();
+
+    // For debugging:
+    // printf("eigVec_backTrans:\n  low = %u\n  hi = %u\n  perms = [", low, hi);
+    // for(unsigned int i = 0; i < perms.size(); i++){
+    //     printf("%.4f%s", perms[i], i < perms.size() - 1 ? ", " : "]\n");
+    // }
+    // printf("  vecs: %ux%u matrix\n", n, m);
+
+    double s = 0;
+    for(unsigned int r = low; r <= hi; r++){
+        s = perms[r];   // for left-hand eigenvectors, scaling factor is s = 1/perms[r]
+
+        // Scale these elements by the value in perms for the row
+        for(unsigned int c = 0; c < m; c++){
+            vecs(r, c) *= s;
+        }
+    }
+
+    // Swap elements in the opposite order as they were originally permuted
+    int k = 0;
+    for(int i = low-1; i >= 0; i--){
+        k = static_cast<int>(perms[i]);
+
+        if(k != i){
+            for(unsigned int j = 0; j < m; j++){
+                cdouble temp = vecs(i,j);  // store value temporarily
+                vecs(i,j) = vecs(k,j);
+                vecs(k,j) = temp;
+            }
+        }
+    }
+    for(int i = hi+1; i < static_cast<int>(n); i++){
+        k = static_cast<int>(perms[i]);
+
+        if(k != i){
+            for(unsigned int j = 0; j < m; j++){
+                cdouble temp = vecs(i,j);  // store value temporarily
+                vecs(i,j) = vecs(k,j);
+                vecs(k,j) = temp;
+            }
+        }
+    }
+}//====================================================
+
+/**
  *  \brief Sort eigenvalues
  *  \details This algorithm leverages three simple axioms to determine if the eigenvalues
  *  are in a consistent order.
@@ -210,27 +523,30 @@ MatrixXRd getMirrorMat(Mirror_tp mirrorType){
 std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs){
     std::vector<unsigned int> sortedIxs(eigVals.size(), 0);
 
-    if(eigVals.size() == 0){
-        astrohelion::printErr("Calculations::sortEig: No eigenvalues - easy to sort! :P\n");
+    if(eigVals.size() == 0 || eigVecs.size() == 0){
+        astrohelion::printErr("Calculations::sortEig: No eigenvalues and/or eigenvectors - easy to sort! :P\n");
         return sortedIxs;
     }
 
-    if(eigVals.size() % 6 != 0){
-        astrohelion::printErr("Calculations::sortEig: Must have 6n eigenvalues!\n");
+    const unsigned int nE = eigVecs[0].rows();
+
+    if(eigVals.size() % nE != 0){
+        printErr("Calculations::sortEig: Must have %un eigenvalues!\n", nE);
         return sortedIxs;
     }
 
     // Generate all permutations of the indices 0 through 5
-    std::vector<unsigned int> vals {0,1,2,3,4,5};
+    std::vector<unsigned int> vals(nE);
+    std::iota(std::begin(vals), std::end(vals), 0); // Fill with 0, 1, ..., nE
     std::vector<unsigned int> ixPerms = generatePerms<unsigned int>(vals);
-    std::vector<float> cost(ixPerms.size()/6, 0);
+    std::vector<float> cost(ixPerms.size()/nE, 0);
 
     // Sort the first set of eigenvalues so that reciprocal pairs occur near one another
     unsigned int s = 0;
-    for(unsigned int p = 0; p < ixPerms.size()/6; p++){
-        for(unsigned int i = 0; i < 3; i++){
+    for(unsigned int p = 0; p < ixPerms.size()/nE; p++){
+        for(unsigned int i = 0; i < nE/2; i++){
             // Penalize configurations with pairs that are not reciprocal
-            cost[p] += std::abs(1.0 - eigVals[s*6 + ixPerms[p*6 + 2*i]] * eigVals[s*6 + ixPerms[p*6 + 2*i + 1]]);
+            cost[p] += std::abs(1.0 - eigVals[s*nE + ixPerms[p*nE + 2*i]] * eigVals[s*nE + ixPerms[p*nE + 2*i + 1]]);
         }
     }
 
@@ -240,65 +556,65 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
 
     // Sort the eigenvectors and eigenvalues according to the minimum cost permutation
     // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
-    std::vector<cdouble> prevSortVal(6,0);
-    MatrixXRcd prevSortVec = MatrixXRcd::Zero(6,6);
-    for(unsigned int i = 0; i < 6; i++){
-        sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
-        prevSortVal[i] = eigVals[s*6 + ixPerms[minCostIx*6 + i]];
-        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*6+i]).normalized();
+    std::vector<cdouble> prevSortVal(nE,0);
+    MatrixXRcd prevSortVec = MatrixXRcd::Zero(nE,nE);
+    for(unsigned int i = 0; i < nE; i++){
+        sortedIxs[s*nE + i] = ixPerms[minCostIx*nE + i];
+        prevSortVal[i] = eigVals[s*nE + ixPerms[minCostIx*nE + i]];
+        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*nE+i]).normalized();
     }
 
     // printf("[%f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi]\n",
-    //     std::real(eigVals[sortedIxs[s*6+0]]), std::imag(eigVals[sortedIxs[s*6+0]]),
-    //     std::real(eigVals[sortedIxs[s*6+1]]), std::imag(eigVals[sortedIxs[s*6+1]]),
-    //     std::real(eigVals[sortedIxs[s*6+2]]), std::imag(eigVals[sortedIxs[s*6+2]]),
-    //     std::real(eigVals[sortedIxs[s*6+3]]), std::imag(eigVals[sortedIxs[s*6+3]]),
-    //     std::real(eigVals[sortedIxs[s*6+4]]), std::imag(eigVals[sortedIxs[s*6+4]]),
-    //     std::real(eigVals[sortedIxs[s*6+5]]), std::imag(eigVals[sortedIxs[s*6+5]]));
+    //     std::real(eigVals[sortedIxs[s*nE+0]]), std::imag(eigVals[sortedIxs[s*nE+0]]),
+    //     std::real(eigVals[sortedIxs[s*nE+1]]), std::imag(eigVals[sortedIxs[s*nE+1]]),
+    //     std::real(eigVals[sortedIxs[s*nE+2]]), std::imag(eigVals[sortedIxs[s*nE+2]]),
+    //     std::real(eigVals[sortedIxs[s*nE+3]]), std::imag(eigVals[sortedIxs[s*nE+3]]),
+    //     std::real(eigVals[sortedIxs[s*nE+4]]), std::imag(eigVals[sortedIxs[s*nE+4]]),
+    //     std::real(eigVals[sortedIxs[s*nE+5]]), std::imag(eigVals[sortedIxs[s*nE+5]]));
 
     // Analyze all other eigenvalue sets using axioms while maintaining order of the
     // first set of eigenvalues/vectors
-    for(s = 1; s < eigVals.size()/6; s++){
-        MatrixXRd dp_err = MatrixXRd::Zero(6,6);
-        for(unsigned int i = 0; i < 6; i++){
-            for(unsigned int j = i; j < 6; j++){
+    for(s = 1; s < eigVals.size()/nE; s++){
+        MatrixXRd dp_err = MatrixXRd::Zero(nE,nE);
+        for(unsigned int i = 0; i < nE; i++){
+            for(unsigned int j = i; j < nE; j++){
                 dp_err(i,j) = std::abs(1.0 - std::abs(prevSortVec.col(i).dot(eigVecs[s].col(j).normalized())));
                 dp_err(j,i) = dp_err(i,j);  // symmetric
             }
         }
 
         cost.clear();
-        cost.assign(ixPerms.size()/6, 0);
-        for(unsigned int p = 0; p < ixPerms.size()/6; p++){
-            // bool printOut = s < 5 && (ixPerms[6*p+0] == 0 && ixPerms[6*p+1] == 1 && ixPerms[6*p+2] == 2 && ixPerms[6*p+3] == 3 &&
-            //     ixPerms[6*p+4] == 4 && ixPerms[6*p+5] == 5);
+        cost.assign(ixPerms.size()/nE, 0);
+        for(unsigned int p = 0; p < ixPerms.size()/nE; p++){
+            // bool printOut = s < 5 && (ixPerms[nE*p+0] == 0 && ixPerms[nE*p+1] == 1 && ixPerms[nE*p+2] == 2 && ixPerms[nE*p+3] == 3 &&
+            //     ixPerms[nE*p+4] == 4 && ixPerms[nE*p+5] == 5);
 
             // if(printOut)
             //     printf("Eigenvalue set %u:\n", s);
 
-            for(unsigned int i = 0; i < 6; i++){
+            for(unsigned int i = 0; i < nE; i++){
                 // Assign cost based on the dot product between this new arrangement
                 // of eigenvectors and the previous arrangement
                 // Ranges from 0 to 1
-                cost[p] += dp_err(i, ixPerms[6*p + i]);
+                cost[p] += dp_err(i, ixPerms[nE*p + i]);
                 // if(printOut)
-                //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[6*p + i]));
+                //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[nE*p + i]));
 
                 // Assign cost based on the distance from the previous sorted eigenvalues
                 // Scale to give it more weight than some of the others
-                cost[p] += 50*std::abs( (eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i] );
+                cost[p] += 50*std::abs( (eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i] );
                 // if(printOut)
-                //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[6*s + ixPerms[6*p + i]] - prevSortVal[i])/prevSortVal[i]));
+                //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i]));
 
                 // Assign cost based on the reciprocal nature of the eigenvalues
                 // This test could be removed to sort eigenvalues that don't occur in pairs
                 if(i%2 == 1){
-                    cdouble v1 = eigVals[s*6 + ixPerms[p*6 + i-1]];
-                    cdouble v2 = eigVals[s*6 + ixPerms[p*6 + i]];
+                    cdouble v1 = eigVals[s*nE + ixPerms[p*nE + i-1]];
+                    cdouble v2 = eigVals[s*nE + ixPerms[p*nE + i]];
                     double minVal = std::abs(v1) < std::abs(v2) ? std::abs(v1) : std::abs(v2);
                     cost[p] += std::abs(1.0 - std::abs(v1 * v2) ) / minVal;
                     // if(printOut)
-                    //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*6 + ixPerms[p*6 + i-1]] * eigVals[s*6 + ixPerms[p*6 + i]]))));
+                    //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*nE + ixPerms[p*nE + i-1]] * eigVals[s*nE + ixPerms[p*nE + i]]))));
                 }
             }
         }
@@ -308,10 +624,10 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
         minCostIx = minCostIt - cost.begin();
 
         // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
-        for(unsigned int i = 0; i < 6; i++){
-            sortedIxs[s*6 + i] = ixPerms[minCostIx*6 + i];
-            prevSortVal[i] = eigVals[s*6 + sortedIxs[s*6 + i]];
-            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*6 + i]).normalized();
+        for(unsigned int i = 0; i < nE; i++){
+            sortedIxs[s*nE + i] = ixPerms[minCostIx*nE + i];
+            prevSortVal[i] = eigVals[s*nE + sortedIxs[s*nE + i]];
+            prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*nE + i]).normalized();
         }
     }
 
@@ -325,7 +641,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
  * 
  *  \param eigs A 6-element vector of eigenvalues associated with a periodic orbit
  *  \return the stability index, or NAN if no real, reciprocal eigenvalue pair is found
- *  \throws Exception if <tt>eigs</tt> does not have six elements
+ *  \throws Exception if `eigs` does not have six elements
  */
 double getStabilityIndex(std::vector<cdouble> eigs){
     if(eigs.size() != 6)
@@ -363,7 +679,7 @@ double getStabilityIndex(std::vector<cdouble> eigs){
  *  \param traj An arcset 
  *  \param t The time at which the node is located
  * 
- *  \return A node on the specified trajectory at time <tt>t</tt>
+ *  \return A node on the specified trajectory at time `t`
  */
 Node interpPointAtTime(const Arcset *traj, double t){
     // Find the time that is closest to t and before it (assuming allTimes progresses smoothly forwards in time)
@@ -381,7 +697,7 @@ Node interpPointAtTime(const Arcset *traj, double t){
 
     Arcset *temp = new Arcset(traj->getSysData());
     SimEngine sim;
-    // sim.setVerbosity(Verbosity_tp::ALL_MSG);
+    sim.setVerbosity(Verbosity_tp::NO_MSG);
     sim.setNumSteps(2);
     sim.setVarStepSize(false);
     sim.setRevTime(t - node.getEpoch() < 0);
@@ -390,6 +706,28 @@ Node interpPointAtTime(const Arcset *traj, double t){
     Node node2 = temp->getNodeByIx(-1);
     delete(temp);
     return node2;
+}//====================================================
+
+void reconstructArc(const Arcset *pArcIn, Arcset *pArcOut){
+    if(pArcIn == nullptr || pArcOut == nullptr)
+        throw Exception("Calculations:reconstructArc: pArcIn or pArcOut are nullptrs; cannot proceed");
+
+    const DynamicsModel *pModel = pArcIn->getSysData()->getDynamicsModel();
+
+    // Construct a MultShootData from the input arcset
+    MultShootData it(pArcIn);
+    it.pArcOut = pArcOut;
+    it.allCons = pArcIn->getAllConstraints();   // Copy for output
+    pModel->multShoot_initDesignVec(it);
+    
+    // Propagate all segments from the design vector
+    SimEngine sim;
+    sim.setVerbosity(Verbosity_tp::NO_MSG);
+    sim.setMakeDefaultEvents(false);    // No events - just propagate
+    MultShootEngine::propSegsFromFreeVars(it, sim);
+
+    // Create a full arcset from the propagated segments
+    pModel->multShoot_createOutput(it);
 }//====================================================
 
 //-----------------------------------------------------
@@ -671,7 +1009,7 @@ std::vector<double> r2bp_stateFromKepler(const SysData_2bp *pSys, double a, doub
  *  \param C Jacobi constant value
  *  \param velIxToFind index of the velocity component to compute (i.e. 3, 4, or 5)
  *  \return the magnitude of vx (3), vy (4), or vz (5).
- *  \throws Exception if <tt>velIxToFind</tt> is out of bounds
+ *  \throws Exception if `velIxToFind` is out of bounds
  */
 double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind){
     double v_squared = 0;
@@ -716,7 +1054,7 @@ double cr3bp_getVel_withC(const double s[], double mu, double C, int velIxToFind
  *  \return An arcset that represents half of the desired periodic orbit and is constrained
  *  according to the specified mirror conditions
  *  
- *  \throws Exception if <tt>mirrorType</tt> is invalid
+ *  \throws Exception if `mirrorType` is invalid
  *  \throws DivergeException if the multiple shooting algorithm cannot converge on a 
  *  mirrored solution.
  */
@@ -1097,7 +1435,7 @@ void cr3bp_addMirrorCons(Arcset_cr3bp *pArc, Mirror_tp mirrorType, std::vector<u
  *  \brief Transition a arcset from the EM system to the SE system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
- *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the EM arcset
+ *  `thetaE0`, `thetaM0`, and `gamma`. Accordingly, the EM arcset
  *  should have node epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
@@ -1182,7 +1520,7 @@ Arcset_cr3bp cr3bp_EM2SE(Arcset_cr3bp EMNodes, const SysData_cr3bp *pSESys, doub
  *  \brief Transition a arcset from the SE system to the EM system
  *  
  *  The relative orientation between the two systems at time t = 0 is described by the three angles
- *  <tt>thetaE0</tt>, <tt>thetaM0</tt>, and <tt>gamma</tt>. Accordingly, the SE arcset
+ *  `thetaE0`, `thetaM0`, and `gamma`. Accordingly, the SE arcset
  *  should have node epochs such that t = 0 corresponds to the desired geometry; adjusting
  *  the epoch for the entire set may be accomplished via the updateEpochs() function.
  *
@@ -1411,9 +1749,9 @@ std::vector<double> cr3bp_SE2EM_state(std::vector<double> state_SE, double t, do
  *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  \param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
- *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
- *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
- *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
+ *  `centerIx = 1` will produce Earth-centered inertial coordinates and selecting
+ *  `centerIx = 2` will produce Moon-centered inertial coordinates. A choice of
+ *  `centerIx = 0` produces system barycenter-centered inertial coordinates.
  * 
  *  \return A arcset centered around the specified index in inertial, dimensional coordinates
  */
@@ -1483,12 +1821,12 @@ Arcset_cr3bp cr3bp_rot2inert(Arcset_cr3bp arcset, double epoch0, int centerIx){
  *  \param epoch0 Epoch associated with t = 0 in the CR3BP; epoch in seconds past J2000 (i.e., ephemeris time)
  *  \param centerIx The index of the primary that will be the center of the inertial
  *  frame. For example, if an Earth-Moon CR3BP trajectory is input, selecting 
- *  <tt>centerIx = 1</tt> will produce Earth-centered inertial coordinates and selecting
- *  <tt>centerIx = 2</tt> will produce Moon-centered inertial coordinates. A choice of
- *  <tt>centerIx = 0</tt> produces system barycenter-centered inertial coordinates.
+ *  `centerIx = 1` will produce Earth-centered inertial coordinates and selecting
+ *  `centerIx = 2` will produce Moon-centered inertial coordinates. A choice of
+ *  `centerIx = 0` produces system barycenter-centered inertial coordinates.
  * 
  *  \return A state centered around the specified point in inertial, ecliptic J2000, dimensional coordinates
- *  @throw Exception if <tt>centerIx</tt> is out of bounds
+ *  @throw Exception if `centerIx` is out of bounds
  */
 std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const SysData_cr3bp *pSys, 
     double t, double epoch0, int centerIx){
@@ -1623,7 +1961,7 @@ std::vector<double> cr3bp_rot2inert_state(std::vector<double> stateRot, const Sy
  *  \param t0 the epoch at the specified node in BCR4BPR non-dimensional time units
  *
  *  \return a BCR4BPR arcset
- *  @throw Exception if <tt>crNodes</tt> is not a Sun-Earth trajectory or if <tt>pBCSys</tt> is
+ *  @throw Exception if `crNodes` is not a Sun-Earth trajectory or if `pBCSys` is
  *  not the Sun-Earth-Moon system.
  */
 Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, int nodeID, double t0){
@@ -1720,7 +2058,7 @@ Arcset_bc4bp bcr4bpr_SE2SEM(Arcset_cr3bp crNodes, const SysData_bc4bp *pBCSys, i
  *  scaling
  *
  *  \return a CR3BP arcset object
- *  @throw Exception if <tt>pCRSys</tt> is not a Sun-Earth system or if <tt>bcNodes</tt> is
+ *  @throw Exception if `pCRSys` is not a Sun-Earth system or if `bcNodes` is
  *  not in the Sun-Earth-Moon system.
  */
 Arcset_cr3bp bcr4bpr_SEM2SE(Arcset_bc4bp bcNodes, const SysData_cr3bp *pCRSys){

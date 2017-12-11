@@ -85,7 +85,7 @@ public:
 	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
-	void multShoot_initIterData(MultShootData *it) const override;
+	void multShoot_initIterData(MultShootData& it) const override;
 	//\}
 
 	/**

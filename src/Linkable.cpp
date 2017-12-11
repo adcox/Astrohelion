@@ -164,7 +164,7 @@ int Linkable::getLinkIx(int id) const{
  *  \param ix The index of the link, must be in the integer set [0, linkable::NUM_LINKS)
  *  \return the ID stored at the specified index. If the index is out of 
  *  range, an exception is thrown
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 int Linkable::getLink(int ix) const {
 	if(ix >= 0 && ix < NUM_LINKS){
@@ -215,8 +215,8 @@ void Linkable::setID(int id){ ID = id; }
  *  result in an exception
  *  \param id the ID to store; you cannot store the same ID twice; an exception
  *  will be thrown if you try
- *  \throws Exception if <tt>ix</tt> is out of bounds
- *  \throws Exception if a link already exists to <tt>id</tt>
+ *  \throws Exception if `ix` is out of bounds
+ *  \throws Exception if a link already exists to `id`
  */
 void Linkable::setLink(int ix, int id) {
 	if(ix >= 0 && ix < NUM_LINKS){

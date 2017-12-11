@@ -103,7 +103,6 @@ class MultShootEngine : public Core, public Engine{
 		bool isFindingEvent() const;
 		MSTOF_tp getTOFType() const;
 
-		void setAttenuation(double, double limit = 1e-8);
 		void setDoLineSearch(bool);
 		void setFullFinalProp(bool);
 		void setIgnoreCrash(bool);
@@ -129,9 +128,10 @@ class MultShootEngine : public Core, public Engine{
 		 *  \{
 		 */
 		void reset();
-		static double getTotalDV(const MultShootData*);
+		static double getTotalDV(const MultShootData&);
 		static bool finiteDiff_checkMultShoot(const Arcset*, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
 		static bool finiteDiff_checkMultShoot(const Arcset*, MultShootEngine, Verbosity_tp verbosity = Verbosity_tp::SOME_MSG, bool writeToFile = false);
+		static void propSegsFromFreeVars(MultShootData&, SimEngine&, Verbosity_tp verbosity = Verbosity_tp::NO_MSG);
 		//\}
 		
 	private:
@@ -153,16 +153,38 @@ class MultShootEngine : public Core, public Engine{
 		/** Maximum error value permitted; if the error rises above this value, the corrections are considered diverged */
 		double maxErr = 1e3;
 
-		/** Scale step size by this value */
-		double attenuation = 1;
-
-		/** Do not scale steps size if error is below this tolerance */
-		double attenuationLimitTol = 1e-8;
-
-		/** Maximum acceptable error value, non-dimensional units.
-			This tolerance also influences the simulation tolerance.
+		/** 
+		 * 	Maximum permissible constraint vector magnitude for convergence. 
+		 *	This tolerance also influences the simulation tolerance.
 		 */
-		double tol = 1e-12;
+		double tolF = 1e-12;
+
+		/**
+		 * Maximum permissible newton step (\f$ \delta \vec{X} \f$) magnitude for convergence. I.e.,
+		 * if the design variable changes by less than this amount, consider the process converged
+		 */
+		double tolX = 1e-14;
+
+		/**
+		 * Tolerance that sets the criterion to decide whether a spurious convergence has occured during the line search
+		 */
+		double tolA = 1e-12;
+
+		/**
+		 * 	Line Search: Determines how large the average rate of decrease of the constraint vector, F, can be realtive to
+		 * 	the initial rate of decrease, i.e.,
+		 * 	\f[
+		 * 		f(\vec{X}_{n+1}) \leq f(\vec{X}_n) + \alpha \vec{\nabla} f(\vec{X}_n) \cdot (\vec{X}_{n+1} - \vec{X}_n)\,,
+		 * 	\f]
+		 * 	where \f$ f = \frac{1}{2} \vec{F}^T \vec{F} \f$. For more details, see my MathSpec document.
+		 */
+		double ls_alpha = 1e-4;
+
+		/** 
+		 * Line Search: Maximum permissible magnitude of the Newton update. Any \f$ \vec{X} \f$ 
+		 * vectors with magnitudes larger than this are scaled down
+		 */
+		double ls_maxStepSize = 1e2;
 
 		/** Flag to turn on when this algorithm is being used to locate an event */
 		bool bFindEvent = false;
@@ -174,17 +196,17 @@ class MultShootEngine : public Core, public Engine{
 		bool bIgnoreDiverge = false;
 
 		/** Whether or not to use a rough line search to choose the size of the Newton step. Default is false*/
-		bool bLineSearchStepSize = false;
+		bool bLineSearchAttenFactor = false;
 
 		/**
 		 * \name Analysis Functions
 		 * \{
 		 */
 		void checkDFSingularities(MatrixXRd);
-		void chooseStep_LineSearch(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
-		void propSegsFromFreeVars(MultShootData*, SimEngine*);
-		void reportConMags(const MultShootData*);
-		void solveUpdateEq(MultShootData*, const Eigen::VectorXd*, const Eigen::VectorXd*, Eigen::VectorXd*);
+		void chooseStep_LineSearch(MultShootData&, const Eigen::VectorXd&, const Eigen::VectorXd&, const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&, bool&);
+		void factorizeJacobian(const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&);
+		void reportConMags(const MultShootData&);
+		void solveUpdateEq(MultShootData&, const Eigen::VectorXd&, const Eigen::VectorXd&, Eigen::VectorXd&);
 		//\}
 
 		/**

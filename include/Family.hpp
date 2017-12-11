@@ -108,7 +108,7 @@ class Family : public Core{
 		 *  \name File I/O
 		 *  \{
 		 */
-		virtual void readFromMat(const char*, std::vector<ControlLaw*>&) = 0;
+		virtual void readFromMat(const char*, std::vector<ControlLaw*>&, bool bReconstruct = false) = 0;
 		virtual void saveToMat(const char*) const = 0;
 		//\}
 
@@ -117,6 +117,7 @@ class Family : public Core{
 		 *  \{
 		 */
 		virtual void sortMembers() = 0;
+		virtual void reverseOrder() = 0;
 		//\}
 
 	protected:

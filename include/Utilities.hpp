@@ -216,7 +216,7 @@ namespace astrohelion{
 	 *	\brief Generate all permutations of a set of values without repeating the values
 	 *	\param values the set of values
 	 *	\return a vector containing all permutations, in row-major order where each row
-	 *	is a seperate permutation of <tt>values</tt>
+	 *	is a seperate permutation of `values`
 	 */	
 	template <typename T>
 	std::vector<T> generatePerms(std::vector<T> values){

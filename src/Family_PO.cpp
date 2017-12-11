@@ -57,6 +57,32 @@ Family_PO& Family_PO::operator= (const Family_PO &f){
 	return *this;
 }//====================================================
 
+/**
+ *  \brief Concatenates two Family_PO objects
+ *  \details Performs the operation `combo = lhs + rhs`. The data from 
+ *  `lhs` is copied directly into `combo`, thus, the name, sort type,
+ *  and match tolerance of `combo` are identical to those of `lhs`
+ *  regardless of the values of these parameters in `rhs`. The members,
+ *  eigenvalues, and eigenvectors from `rhs` are appended to those of 
+ *  `lhs`.
+ * 
+ *  \param lhs a Family_PO object reference
+ *  \param rhs a Family_PO object reference
+ */
+Family_PO operator+ (const Family_PO &lhs, const Family_PO &rhs){
+	if(*(lhs.pSysData) != *(rhs.pSysData))
+		throw Exception("Family_PO, operator+ : lhs and rhs use different system data structures");
+
+	Family_PO combo(lhs);	// Copy contents of lhs
+
+	// Append contents of rhs to lhs
+	combo.members.insert(combo.members.end(), rhs.members.begin(), rhs.members.end());
+	combo.memberEigVals.insert(combo.memberEigVals.end(), rhs.memberEigVals.begin(), rhs.memberEigVals.end());
+	combo.memberEigVecs.insert(combo.memberEigVecs.end(), rhs.memberEigVecs.begin(), rhs.memberEigVecs.end());
+
+	return combo;
+}//====================================================
+
 //-----------------------------------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
@@ -161,6 +187,8 @@ unsigned int Family_PO::getNumMembers() const { return members.size(); }
  *	eigenvalues
  *	\details Eigenvalues MUST be sorted, or this will yield completely bogus
  *	results
+ *	
+ *	\return the indices of the family members located close to bifurcations
  */
 std::vector<unsigned int> Family_PO::findBifurcations(){
 	// Find the eigenvalues that are exactly (in theory) equal to one
@@ -263,7 +291,7 @@ void Family_PO::sortEigs(){
 
 /**
  *	\brief Sort the family members by the specified sort variable (in ascending order)
- *	\details The sorting variable is specified by <tt>sortType</tt>; this is the variable
+ *	\details The sorting variable is specified by `sortType`; this is the variable
  *	that best describes the natural progression of the family. For example,
  *	Lyapunov orbits can be evolved naturally by varying the x-coordinate of the IC.
  *
@@ -341,9 +369,9 @@ void Family_PO::sortMembers(){
  *
  *	\param val the value the family member should have
  *	\param data a pointer to a vector containing the set of values to search for matches
- *	in. For example, if the <tt>val</tt> I pass in contains a specific TOF, then 
- *	<tt>data</tt> points to a vector containing the TOFs for the entire family, sorted
- *	according to this family's <tt>sortType</tt>.
+ *	in. For example, if the `val` I pass in contains a specific TOF, then 
+ *	`data` points to a vector containing the TOFs for the entire family, sorted
+ *	according to this family's `sortType`.
  *	\param matchCon a constraint that can be applied in a corrections scheme that will
  *	ensure the corrected trajectory has the desired value for the variable of interest.
  *
@@ -427,6 +455,35 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 	}
 }//====================================================
 
+/**
+ *  \brief Reverse the order of the family members.
+ *  \details Family member data objects, their eigenvalues, and their
+ *  eigenvectors are swapped in-place to reverse the order.
+ */
+void Family_PO::reverseOrder(){
+	if(members.size() == 0)
+		return;
+
+	std::reverse(std::begin(members), std::end(members));
+	std::reverse(std::begin(memberEigVecs), std::end(memberEigVecs));
+
+	if(memberEigVecs.size() != members.size())
+		throw Exception("Family_PO::reverseOrder: sizes of members and memberEigVecs are not consistent");
+
+	unsigned int nE = memberEigVecs[0].rows();
+	unsigned int nM = memberEigVals.size()/nE;
+
+	if(nM != members.size())
+		throw Exception("Family_PO::reverseOrder: sizes of members and memberEigVals are not consistent");
+
+	// Swap groups of eigenvalues without changing order within each group
+	for(unsigned int m = 0; m < nM/2; m++){
+		for(unsigned int i = 0; i < nE; i++){
+			std::iter_swap(memberEigVals.begin() + nE*m + i, memberEigVals.end() - nE*(m+1) + i);
+		}
+	}
+}//====================================================
+
 //-----------------------------------------------------------------------------
 //      File I/O
 //-----------------------------------------------------------------------------
@@ -438,15 +495,18 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
  *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  \param bReconstruct whether or not to reconstruct each arc as it is read from memory.
+ *  "Reconstruction" is the process of propagating each segment to populate the full segment
+ *  state history.
  */
-void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refLaws){
+void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refLaws, bool bReconstruct){
 	mat_t *pMatFile = Mat_Open(filename, MAT_ACC_RDONLY);
 	if(pMatFile == nullptr){
 		throw Exception("Family_PO::readFromMat: Could not load family from file");
 	}
 
 
-	loadMembers(pMatFile, refLaws);
+	loadMembers(pMatFile, refLaws, bReconstruct);
 	loadEigVals(pMatFile);
 	loadMiscData(pMatFile);
 	try{
@@ -497,10 +557,7 @@ void Family_PO::loadEigVals(mat_t *matFile){
 	if(matvar == nullptr){
 		throw Exception("Could not read eigenvalues into family");
 	}else{
-		unsigned int numMembers = matvar->dims[0];
-		if(matvar->dims[1] != 6){
-			throw Exception("Incompatible data file: Data widths are different.");
-		}
+		unsigned int numMembers = matvar->dims[0], numVals = matvar->dims[1];
 
 		if(members.size() != numMembers){
 			throw Exception("Family_PO::loadEigVals: # eigenvalues is not same as number of members");
@@ -517,7 +574,7 @@ void Family_PO::loadEigVals(mat_t *matFile){
 
 				// Read data from column-major order matrix, store in row-major order vector
 				for(unsigned int i = 0; i < numMembers; i++){
-					for(int j = 0; j < 6; j++){
+					for(unsigned int j = 0; j < numVals; j++){
 						cdouble temp(realParts[j*numMembers + i], imagParts[j*numMembers + i]);
 						memberEigVals.push_back(temp);
 					}
@@ -569,10 +626,10 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 
 				for(unsigned int i = 0; i < numSteps; i++){
 					std::vector<cdouble> vecData(nE*nE, 0);
-					for(unsigned int j = 0; j < 36; j++){
+					for(unsigned int j = 0; j < nE*nE; j++){
 						vecData[j] = cdouble(realParts[j*numSteps + i], imagParts[j*numSteps + i]);
 					}
-					memberEigVecs.push_back(Eigen::Map<MatrixXRcd>(&(vecData.front()), 6, 6));
+					memberEigVecs.push_back(Eigen::Map<MatrixXRcd>(&(vecData.front()), nE, nE));
 				}
 			}
 		}else{
@@ -589,8 +646,11 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
  *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
+ *  \param bReconstruct whether or not to reconstruct each arc as it is read from memory.
+ *  "Reconstruction" is the process of propagating each segment to populate the full segment
+ *  state history.
  */
-void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
+void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, bool bReconstruct){
 	matvar_t *pStruct = Mat_VarRead(pMatFile, VARNAME_FAM_MEMBER);
 	if(pStruct == nullptr){
 		throw Exception("Family_PO::loadMembers: Could not read variable from file");
@@ -601,7 +661,12 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws){
 				Arcset_periodic arc(pSysData);
 				arc.readFromStruct(pStruct, s, refLaws);
 
-				members.push_back(arc);
+				if(bReconstruct){
+					Arcset_periodic fullArc(pSysData);
+					reconstructArc(&arc, &fullArc);
+					members.push_back(fullArc);
+				}else
+					members.push_back(arc);
 			}
 		}else{
 			throw Exception("Family_PO::loadMembers: Family member variable does not have structure type/class");
@@ -658,8 +723,11 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 	if(members.size() > 0){
 		const unsigned int nE = memberEigVecs[0].rows();
 
-		if(members.size() * nE != memberEigVals.size())
-			throw Exception("Family_PO::saveEigVals: eigenvalue storage vector does not contain the appropriate number of elements!");
+		if(members.size() * nE != memberEigVals.size()){
+			char msg[128];
+			sprintf(msg, "Family_PO::saveEigVals: eigenvalue storage vector has %zu elements; expects %u*%zu", memberEigVals.size(), nE, members.size());
+			throw Exception(msg);
+		}
 
 		// Separate all eigenvalues into real and complex parts
 		std::vector<double> realParts(memberEigVals.size());
@@ -675,7 +743,7 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 		// create a special variable for them
 		mat_complex_split_t splitVals = {&(realParts[0]), &(imagParts[0])};
 
-		size_t dims[2] = {members.size(), 6};
+		size_t dims[2] = {members.size(), nE};
 		matvar_t *matvar = Mat_VarCreate(VARNAME_FAM_EIGVAL, MAT_C_DOUBLE, MAT_T_DOUBLE, 2, dims, &splitVals, MAT_F_COMPLEX);
 		astrohelion::saveVar(pMatFile, matvar, VARNAME_FAM_EIGVAL, MAT_COMPRESSION_NONE);
 	}

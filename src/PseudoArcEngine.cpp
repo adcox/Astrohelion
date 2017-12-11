@@ -49,8 +49,15 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------------------------------
 
+/**
+ *  \brief Construct a default pseudo-arclength engine object
+ */
 PseudoArcEngine::PseudoArcEngine() : ContinuationEngine(){}
 
+/**
+ *  \brief Copy a pseudo-arclength object into this one
+ *  \param e reference to another pseudo-arclength engine
+ */
 PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(e){
 	copyMe(e);
 }//====================================================
@@ -58,11 +65,33 @@ PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(
 //-----------------------------------------------------------------------------
 //      Operators
 //-----------------------------------------------------------------------------
-
+/**
+ *  \brief Set this object equal to another
+ * 
+ *  \param e reference to another PAC engine
+ *  \return a reference to this engine after the copy/assignment
+ */
 PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 	copyMe(e);
 	return *this;
 }//====================================================
+
+//-----------------------------------------------------------------------------
+//      Set and Get Functions
+//-----------------------------------------------------------------------------
+
+/**
+ *  \brief Tell the algorithm which nullspace vector to choose in the first
+ *  iteration if the nullspace is multidimensional.
+ *  \details While rare for properly formatted families, a multidimensional
+ *  nullspace may occur if the initial guess is precisely a bifurcation between
+ *  families. Multidimensional nullspaces may also occur if the constraints are 
+ *  not independent or if the Jacobian matrix is poorly scaled.
+ * 
+ *  \param c which column (index begins at 0) of the nullspace to choose for
+ *  the initial step
+ */
+void PseudoArcEngine::setNullspaceCol(unsigned int c){ nullspaceCol = c; }
 
 //-----------------------------------------------------------------------------
 //      Analysis Functions
@@ -129,25 +158,39 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
  *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
  * 	a step on any of the free variables, but only one step direction will be considered (the first one
  * 	as the algorithm reads through the vector) 
+ * 	\param pEngine a pointer to a multiple shooting engine that will be used as a template for the 
+ * 	pseudo-arclength continuation. Note that parameters required for this continuation, i.e. 
+ * 	TOFType, will not be overwritten by the input engine. If left as a nullptr, no parameters
+ * 	are copied.
  */
 void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTemp,
-	std::vector<Arcset>& allArcs, const std::vector<int> &initDir){
+	std::vector<Arcset>& allArcs, const std::vector<int> &initDir, const MultShootEngine *pEngine){
 
 	if(pInitGuess == nullptr || pMember == nullptr || pTemp == nullptr)
 		throw Exception("PseudoArcEngine::pac: input arcset pointers cannot be null");
 	
+	pMember->reset();
+	pTemp->reset();
+	
+	printf("Beginning Pseudo Arclength Continuation\n");
 	cleanEngine();	// Reset all run-dependent parameters for the new continuation process
 	double tof0 = pInitGuess->getTotalTOF();
 
 	// Set up the multiple shooter
 	MultShootEngine corrector;
+
+	// Copy all settings from the input engine
+	if(pEngine){
+		corrector = *pEngine;
+	}
+
+	// Override these settings that are required for the pseudo-arclength continuation or set
+	// by the PAC engine itself
 	corrector.setTOFType(MSTOF_tp::VAR_EQUALARC);	// MUST use equal arc time to get propper # of constraints
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);					// Ignore crashes into primary
 	corrector.setFullFinalProp(false);				// Accept minimal information from the corrector
-
-	if(verbosity >= Verbosity_tp::SOME_MSG)
-		corrector.setVerbosity(Verbosity_tp::SOME_MSG);	// Print out convergence details
+	corrector.setVerbosity(verbosity);	// Print out convergence details
 
 	MultShootData familyItData(pInitGuess);		// Initialize data structure to store corrections details
 
@@ -204,71 +247,80 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 		prevN = N;	// Save the valid nullspace vector for the next iteration
 
 		// Create new initial guess in pMember; pTemp is overwritten
-		getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, &familyItData);
+		getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, familyItData);
 
 		/*
 		 *	Apply multiple shooting to converge the new guess to be a member of the family
 		 */
-		bool killLoop = false;
-		try{
-			while(stepSize >= minStepSize){
+		bool endPAC = false, converged = false;
+
+		// Initially, try without line search
+		corrector.setDoLineSearch(false);
+		corrector.setMaxIts(20);
+
+		while(!converged){
+			try{
+				pTemp->reset();	// Reset arcset to store converged solution
+
+				// Attempt to correct the new member; pTemp stores the corrected result
+				familyItData = corrector.multShoot(pMember, pTemp);
+				converged = true;
+			}catch(DivergeException &de){
+				// Nothing to do here; continue down the code
+			}catch(LinAlgException &lae){
+				printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
+				printErr("%s\n", lae.what());
+				endPAC = true;
+				break;
+			}
+
+			// If the solution converged, check it to make sure we haven't jumped branches
+			if(converged){
+				converged = checkPACSoln(familyItData, convergedFreeVarVec, endPAC);
+			}
+			
+			if(converged)
+				break; // exit the loop
+
+			if(decreaseStepSize()){
+				getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, familyItData);
+			}else{
+				// No longer able to decrease step size; try a line search
+				corrector.setDoLineSearch(true);
+				corrector.setMaxIts(100);
+
+				pTemp->reset();	// Reset arcset to store converged solution
+
 				try{
-					pTemp->reset();	// Reset arcset to store converged solution
-
-					// Attempt to correct the new member; pTemp stores the corrected result
-					familyItData = corrector.multShoot(pMember, pTemp);
-
-					// If we reach this point, the corrector CONVERGED
-					// Check to see if the solution is valid (i.e., hasn't jumped to another family)
-					if(!checkPACSoln(&familyItData, convergedFreeVarVec, &killLoop)){
-
-						// Solution is not valid; decrease the step size if possible
-						if(decreaseStepSize()){
-							// Re-Create the initial guess using the new step size; pTemp is overwritten
-							getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, &familyItData);
-						}else{
-							killLoop = true;
-							break;
-						}
-					}else{
-						// ------ SOLUTION IS VALID -------
-
-						// If convergence was fast, take bigger steps
-						if(familyItData.count < 5){
-							stepSize = stepSize*2 < maxStepSize ? stepSize*2 : maxStepSize;
-							printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
-						}else if(familyItData.count > 10){
-							// If convergence was slow, take smaller steps
-							stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
-							printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
-						}
-
-						// Save new converged family vector
-						convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
-
-						// Exit this loop; we converged!
-						break;
-					}
-				}catch(DivergeException &e){	// The corrector did not converge
-					printWarn("Corrector diverged...\n");
-
-					if(decreaseStepSize()){
-						// Re-Create the initial guess using the new step size; pTemp is overwritten
-						getNextPACGuess(pMember, pTemp, convergedFreeVarVec, N, &familyItData);
-					}else{
-						killLoop = true;
-						break;
-					}
+					corrector.multShoot(pMember, pTemp);
+					converged = true;
+				}catch(DivergeException &de2){
+					// Could not converge with the line search... giving up  now
+					endPAC = true;
+					break;	// exit the while not converged loop
+				}catch(LinAlgException &lae){
+					printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
+					printErr("%s\n", lae.what());
+					endPAC = true;
+					break;
 				}
 			}
-		}catch(LinAlgException &e){
-			printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
-			printErr("%s\n", e.what());
-			killLoop = true;
 		}
 
-		if(killLoop)
+		// At this point, either the orbit has converged or the continuation should end
+		if(endPAC)
 			break;
+
+		// So the orbit converged
+
+		// If convergence was fast, take bigger steps
+		if(familyItData.count < static_cast<int>(stepCount_increase)){
+			stepSize = stepSize*stepScaleFactor < maxStepSize ? stepSize*stepScaleFactor : maxStepSize;
+			printColor(MAGENTA, "Increased Step Size to %.4e (max %.4e)!\n", stepSize, maxStepSize);
+		}
+
+		// Save new converged family vector
+		convergedFreeVarVec = Eigen::Map<Eigen::VectorXd>(&(familyItData.X[0]), familyItData.totalFree, 1);
 
 		printf("Orbit %03d converged!\n", orbitCount);
 
@@ -298,9 +350,10 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
  *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member. This data, combined with the converged freeVarVec, is leveraged
  *	to construct the new solution
+ *	\param it reference to the iteration data that describes the converged solution
  */
 void PseudoArcEngine::getNextPACGuess(Arcset *pNewMember, Arcset *pTemp, const Eigen::VectorXd &convergedFreeVarVec,
-	const Eigen::VectorXd &N, MultShootData *pIt){
+	const Eigen::VectorXd &N, MultShootData& it){
 
 	/**
 	 *	Step away from previously converged solution
@@ -308,13 +361,12 @@ void PseudoArcEngine::getNextPACGuess(Arcset *pNewMember, Arcset *pTemp, const E
 
 	Eigen::VectorXd newFreeVarVec = convergedFreeVarVec + stepSize*N;
 	double *X = newFreeVarVec.data();
-	pIt->X = std::vector<double>(X, X + newFreeVarVec.rows());
+	it.X = std::vector<double>(X, X + newFreeVarVec.rows());
 
 	pTemp->reset();	// clean everything out
-	pIt->nodesOut = pTemp;
+	it.pArcOut = pTemp;
 
-	// sys->getDynamicsModel()->multShoot_createOutput(pIt);
-	pNewMember->getSysData()->getDynamicsModel()->multShoot_createOutput(pIt);
+	pNewMember->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
 
 	// Get rid of any pre-existing pseudo arclength constraints from previous corrections
 	std::vector<Constraint> arcCons = pTemp->getArcConstraints();
@@ -327,13 +379,13 @@ void PseudoArcEngine::getNextPACGuess(Arcset *pNewMember, Arcset *pTemp, const E
 	/* 
 	 *	Form the Pseudo-Arclength Continuation constraint
 	 */
-	std::vector<double> pacCon_data = pIt->X;
+	std::vector<double> pacCon_data = it.X;
 	// Append the nullptr vector (i.e. step direction)
 	pacCon_data.insert(pacCon_data.end(), N.data(), N.data()+N.rows());
 	// Append the step size
 	pacCon_data.insert(pacCon_data.end(), stepSize);
 	// Create the actual constraint
-	Constraint pacCon(Constraint_tp::PSEUDOARC, pIt->numNodes-1, pacCon_data);
+	Constraint pacCon(Constraint_tp::PSEUDOARC, it.numNodes-1, pacCon_data);
 	pTemp->addConstraint(pacCon);
 
 	// Outputs for debugging and sanity checks
@@ -354,12 +406,12 @@ bool PseudoArcEngine::decreaseStepSize(){
 		printWarn("trying smaller step size\n");
 
 		// Decrease step size and try again
-		stepSize = stepSize/2 > minStepSize ? stepSize/2 : minStepSize;
+		stepSize = stepSize/stepScaleFactor > minStepSize ? stepSize/stepScaleFactor : minStepSize;
 		printColor(MAGENTA, "Decreased Step Size to %.4e (min %.4e)!\n", stepSize, minStepSize);
 
 		return true;	// success!
 	}else{
-		printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: Could not converge new family member!\n");
+		printColor(MAGENTA, "Reached minimum step size!\n");
 		return false;	// Can't go any smaller...
 	}
 }//====================================================
@@ -367,7 +419,7 @@ bool PseudoArcEngine::decreaseStepSize(){
 /**
  *  \brief Check to see if the converged solution is valid
  * 
- *  \param pIt Iteration data from the most recent multiple shooting process
+ *  \param it Iteration data from the most recent multiple shooting process
  *  \param convergedFreeVarVec Free variable vector describing the previous 
  *  converged and accepted solution
  *  \param killLoop Whether or not to end the continuation. For example,
@@ -375,25 +427,25 @@ bool PseudoArcEngine::decreaseStepSize(){
  *  to true.
  *  \return whether or not the converged solution is valid
  */
-bool PseudoArcEngine::checkPACSoln(const MultShootData *pIt, const Eigen::VectorXd &convergedFreeVarVec,
-	bool *killLoop){
+bool PseudoArcEngine::checkPACSoln(const MultShootData &it, const Eigen::VectorXd &convergedFreeVarVec,
+	bool& killLoop){
 
-	*killLoop = false;
+	killLoop = false;
 
 	// Check to see if the converged family vector is significantly different from previously computed family member
 	// Note that only the core states (the IC for the trajectory) is checked; differences in other nodes 
 	// are assumed to be insignificant (if IC is the same, only possible change is change in TOF)
 	double sumSquared = 0;
-	unsigned int core_dim = pIt->nodesIn->getSysData()->getDynamicsModel()->getCoreStateSize();
+	unsigned int core_dim = it.pArcIn->getSysData()->getDynamicsModel()->getCoreStateSize();
 	for(unsigned int i = 0; i < core_dim; i++){
-		sumSquared += (pIt->X[i] - convergedFreeVarVec[i])*(pIt->X[i] - convergedFreeVarVec[i]);
+		sumSquared += (it.X[i] - convergedFreeVarVec[i])*(it.X[i] - convergedFreeVarVec[i]);
 	}
 	double diffX = sqrt(sumSquared);
-	printErr("||diff in X(1:%u)|| = %.4e\n", core_dim, diffX);
+	printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, BOLDYELLOW, "||diff in X(1:%u)|| = %.4e\n", core_dim, diffX);
 
 	if(diffX < tol){
 		printErr("Solutions from pseudo-arc-length have ceased changing; ending continuation\n");
-		*killLoop = true;	// End continuation
+		killLoop = true;	// End continuation
 		return true;		// The solution is fine
 	}
 
@@ -414,9 +466,9 @@ bool PseudoArcEngine::checkPACSoln(const MultShootData *pIt, const Eigen::Vector
  *  to true.
  *  \return whether or not the converged solution is periodic
  */
-bool PseudoArcEngine::checkPACSoln_periodic(const Arcset_periodic *pSol, bool *killLoop){
+bool PseudoArcEngine::checkPACSoln_periodic(const Arcset_periodic *pSol, bool& killLoop){
 
-	*killLoop = false;
+	killLoop = false;
 	
 	// Check periodicity
 	std::vector<double> state0 = pSol->getStateByIx(0);
@@ -463,8 +515,14 @@ bool PseudoArcEngine::chooseNullVec(MatrixXRd &N, std::vector<int> initDir, cons
 	printf("Choosing nullspace Vector (%ldD, %ld elements)\n", N.cols(), N.rows());
 	if(orbitCount == 0){
 		if(N.cols() > 1){
-			printErr("PseudoArcEngine::continueSymmetricPO_cr3bp: nullspace is multidimensional on first iteration; unsure how to proceed...\n");
-			return false;
+			printErr("Nullspace is multidimensional on first iteration; choosing column %u\n", nullspaceCol);
+			if(nullspaceCol < N.cols()){
+				Eigen::VectorXd tempVec = N.col(nullspaceCol);
+				N = tempVec;
+			}else{
+				printErr("Nullspace column = %u is out of bounds (N has %d cols)\n", nullspaceCol, N.cols());
+				return false;
+			}
 		}
 
 		bool sameDir = true;
@@ -518,6 +576,9 @@ bool PseudoArcEngine::chooseNullVec(MatrixXRd &N, std::vector<int> initDir, cons
 		Eigen::VectorXd tempVec = N.cols() > 1 ? N.col(best_ix) : N;
 		N = best_sign*tempVec;	// Apply sign change, if needed
 	}
+
+	// Turn N into a unit vector
+	N = N/N.norm();
 
 	printf("Chose N with first elements = [%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, ...]\n",
 			N(0), N(1), N(2), N(3), N(4), N(5));

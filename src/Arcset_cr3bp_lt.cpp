@@ -59,7 +59,7 @@ Arcset_cr3bp_lt::Arcset_cr3bp_lt(const BaseArcset &a) : Arcset_cr3bp(a) {}
 
 /**
  *  \brief Create a new arcset object on the stack
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -75,7 +75,7 @@ baseArcsetPtr Arcset_cr3bp_lt::create( const SysData *pSys) const{
 /**
  *  \brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the <tt>delete</tt> function must be called to 
+ *  \details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 

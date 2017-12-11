@@ -144,7 +144,7 @@ void LinMotionEngine_cr3bp::storeData(const DynamicsModel *model, Arcset_cr3bp *
  *	\param numNodes the number of nodes to place around the linear trajectory; 
  *	this is nodes for the entire propagation (period * num revs)
  *	
- *	\throws Exception if <tt>L</tt> is not 1, 2, or 3
+ *	\throws Exception if `L` is not 1, 2, or 3
  */
 void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi, Arcset_cr3bp* pArc,
 	unsigned int numNodes){
@@ -271,8 +271,8 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], unsigned int type, Ar
  *	\return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
- *	\throws Exception if the <tt>type</tt> does not correspond with the specified Lagrange
- *	point <tt>L</tt>
+ *	\throws Exception if the `type` does not correspond with the specified Lagrange
+ *	point `L`
  */
 void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi, unsigned int type, Arcset_cr3bp* pArc,
 	unsigned int numNodes){

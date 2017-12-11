@@ -50,14 +50,11 @@ BOOST_AUTO_TEST_CASE(L1_Elliptical_Linear){
 	engine.getLinear(1, r, LinMotion_cr3bp_tp::OSC, &traj);
 	
 	for(int i = 0; i < 6; i++){
-		BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(0)[i], q0[i], tol);
-		// cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(0)[i] - q0[i], tol);
 	}
 
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[0], q9[0], tol);
-	BOOST_CHECK(abs(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1]) < tol);
-	// cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	// cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[0] - q9[0], tol);
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1], tol);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(L2_Hyperbolic_Linear){
@@ -75,10 +72,8 @@ BOOST_AUTO_TEST_CASE(L2_Hyperbolic_Linear){
 		// cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
 	}
 
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[0], q9[0], tol);
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[1], q9[1], tol);
-	// cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	// cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[0] - q9[0], tol);
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1], tol);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(L4_SPO_Linear){
@@ -92,14 +87,11 @@ BOOST_AUTO_TEST_CASE(L4_SPO_Linear){
 	engine.getLinear(4, r, LinMotion_cr3bp_tp::SPO, &traj);
 
 	for(int i = 0; i < 6; i++){
-		BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(0)[i], q0[i], tol);
-		// cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(0)[i] - q0[i], tol);
 	}
 
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[0], q9[0], tol);
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[1], q9[1], tol);
-	// cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	// cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[0] - q9[0], tol);
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1], tol);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(L5_LPO_Linear){
@@ -113,14 +105,11 @@ BOOST_AUTO_TEST_CASE(L5_LPO_Linear){
 	engine.getLinear(5, r, LinMotion_cr3bp_tp::LPO, &traj);
 	
 	for(int i = 0; i < 6; i++){
-		BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(0)[i], q0[i], tol);
-		// cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(0)[i] - q0[i], tol);
 	}
 
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[0], q9[0], tol);
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[1], q9[1], tol);
-	// cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	// cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[0] - q9[0], tol);
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1], tol);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(L5_MPO_Linear){
@@ -134,14 +123,11 @@ BOOST_AUTO_TEST_CASE(L5_MPO_Linear){
 	engine.getLinear(5, r, LinMotion_cr3bp_tp::MPO, &traj);
 	
 	for(int i = 0; i < 6; i++){
-		BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(0)[i], q0[i], tol);
-		// cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(0)[i] - q0[i], tol);
 	}
 
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[0], q9[0], tol);
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[1], q9[1], tol);
-	// cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	// cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[0] - q9[0], tol);
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1], tol);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(L4_Convergent_Linear){
@@ -156,14 +142,11 @@ BOOST_AUTO_TEST_CASE(L4_Convergent_Linear){
 	engine.getLinear(4, r, LinMotion_cr3bp_tp::STAB_OSC, &traj);
 	
 	for(int i = 0; i < 6; i++){
-		BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(0)[i], q0[i], tol);
-		// cout << "  state(0, " << i << "): " << ( abs(traj.getStateByIx(0)[i] - q0[i]) < tol ? PASS : FAIL) << endl;
+		BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(0)[i] - q0[i], tol);
 	}
 
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[0], q9[0], tol);
-	BOOST_CHECK_CLOSE(traj.getSegRefByIx(0).getStateByRow(9)[1], q9[1], tol);
-	// cout << "  state(9, " << 0 << "): " << ( abs(traj.getStateByIx(9)[0] - q9[0]) < tol ? PASS : FAIL) << endl;
-	// cout << "  state(9, " << 1 << "): " << ( abs(traj.getStateByIx(9)[1] - q9[1]) < tol ? PASS : FAIL) << endl;
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[0] - q9[0], tol);
+	BOOST_CHECK_SMALL(traj.getSegRefByIx(0).getStateByRow(9)[1] - q9[1], tol);
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()

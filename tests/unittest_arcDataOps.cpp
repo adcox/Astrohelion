@@ -42,18 +42,18 @@ void initForwardSet(){
 	forwardSet = Arcset(&sys);
 	forwardSet.addNode(Node(state1, 6, 0));
 	forwardSet.addNode(Node(state2, 6, 1.1));
-	forwardSet.addNode(Node(state3, 6, 2.2));
+	forwardSet.addNode(Node(state3, 6, 3.3));
 	forwardSet.addSeg(Segment(0, 1, 1.1));
-	forwardSet.addSeg(Segment(1, 2, 1.1));
+	forwardSet.addSeg(Segment(1, 2, 2.2));
 }//====================================================
 
 void initRevSet(){
 	revSet = Arcset(&sys);
 	revSet.addNode(Node(state1, 6, 0));
 	revSet.addNode(Node(state2, 6, -1.1));
-	revSet.addNode(Node(state3, 6, -2.2));
+	revSet.addNode(Node(state3, 6, -3.3));
 	revSet.addSeg(Segment(0, 1, -1.1));
-	revSet.addSeg(Segment(1, 2, -1.1));
+	revSet.addSeg(Segment(1, 2, -2.2));
 }//====================================================
 
 //************************************************************
@@ -190,9 +190,9 @@ BOOST_AUTO_TEST_CASE(deleteSeg){
 	int sID = set.addSeg(s);
 	set.deleteSeg(sID);
 
-	BOOST_CHECK(set.getNumSegs() == 0);
-	BOOST_CHECK(set.getNode(n1ID).getLink(0) == ivID);
-	BOOST_CHECK(set.getNode(n2ID).getLink(0) == ivID);
+	BOOST_CHECK_EQUAL(set.getNumSegs(), 0);
+	BOOST_CHECK_EQUAL(set.getNode(n1ID).getLink(0), ivID);
+	BOOST_CHECK_EQUAL(set.getNode(n2ID).getLink(0), ivID);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteFirstNode){
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(deleteFirstNode){
 	BOOST_CHECK_NO_THROW(set.deleteNode(n1ID));
 
 	// Check to make sure segments linking to this node were updated
-	BOOST_CHECK(set.getSeg(s1ID).getOrigin() == ivID);
-	BOOST_CHECK(set.getSeg(s1ID).getTerminus() == n2ID);
+	BOOST_CHECK_EQUAL(set.getSeg(s1ID).getOrigin(), ivID);
+	BOOST_CHECK_EQUAL(set.getSeg(s1ID).getTerminus(), n2ID);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteLastNode){
@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(deleteLastNode){
 	BOOST_CHECK_NO_THROW(set.deleteNode(n4ID));
 
 	// Check to make sure segments linking to this node were updated
-	BOOST_CHECK(set.getSeg(s3ID).getOrigin() == n3ID);
-	BOOST_CHECK(set.getSeg(s3ID).getTerminus() == ivID);
+	BOOST_CHECK_EQUAL(set.getSeg(s3ID).getOrigin(), n3ID);
+	BOOST_CHECK_EQUAL(set.getSeg(s3ID).getTerminus(), ivID);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
@@ -251,22 +251,22 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
 	// Delete middle node (LINEAR, FORWARD TIME)
 	set.deleteNode(1);
 	Segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
-	BOOST_CHECK(seg.getOrigin() == 0);
-	BOOST_CHECK(seg.getTerminus() == 2);
-	BOOST_CHECK(std::abs(seg.getTOF() - 2.2) < 1e-4);
+	BOOST_CHECK_EQUAL(seg.getOrigin(), 0);
+	BOOST_CHECK_EQUAL(seg.getTerminus(), 2);
+	BOOST_CHECK_CLOSE(seg.getTOF(), 2.2, 1e-4);
 
 	// Checking updated nodeIDMap
-	BOOST_CHECK(set.getNodeIx(0) == 0);
-	BOOST_CHECK(set.getNodeIx(2) == 1);
-	BOOST_CHECK(set.getNodeIx(3) == 2);
-	BOOST_CHECK(set.getNodeIx(4) == 3);
+	BOOST_CHECK_EQUAL(set.getNodeIx(0), 0);
+	BOOST_CHECK_EQUAL(set.getNodeIx(2), 1);
+	BOOST_CHECK_EQUAL(set.getNodeIx(3), 2);
+	BOOST_CHECK_EQUAL(set.getNodeIx(4), 3);
 
 	// Checking deleted node
 	BOOST_CHECK_THROW(set.getNodeIx(1), Exception);
 
 	// Checking updated segIDMap
-	BOOST_CHECK(set.getSegIx(2) == 0);
-	BOOST_CHECK(set.getSegIx(3) == 1);
+	BOOST_CHECK_EQUAL(set.getSegIx(2), 0);
+	BOOST_CHECK_EQUAL(set.getSegIx(3), 1);
 
 	// Checking deleted segments
 	BOOST_CHECK_THROW(set.getSegIx(0), Exception);
@@ -275,22 +275,22 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_LinearForwardTime){
 	// Delete another middle node
 	set.deleteNode(2);
 	Segment seg2 = set.getSeg(sID_last+2);
-	BOOST_CHECK(seg2.getOrigin() == 0);
-	BOOST_CHECK(seg2.getTerminus() == 3);
-	BOOST_CHECK(std::abs(seg2.getTOF() - 3.3) < 1e-4);
+	BOOST_CHECK_EQUAL(seg2.getOrigin(), 0);
+	BOOST_CHECK_EQUAL(seg2.getTerminus(), 3);
+	BOOST_CHECK_CLOSE(seg2.getTOF(), 3.3, 1e-4);
 
 	// Checking updated nodeIDMap
-	BOOST_CHECK(set.getNodeIx(0) == 0);
-	BOOST_CHECK(set.getNodeIx(3) == 1);
-	BOOST_CHECK(set.getNodeIx(4) == 2);
+	BOOST_CHECK_EQUAL(set.getNodeIx(0), 0);
+	BOOST_CHECK_EQUAL(set.getNodeIx(3), 1);
+	BOOST_CHECK_EQUAL(set.getNodeIx(4), 2);
 
 	// Checking deleted node
 	BOOST_CHECK_THROW(set.getNodeIx(1), Exception);
 	BOOST_CHECK_THROW(set.getNodeIx(2), Exception);
 
 	// Checking updated segIDMap
-	BOOST_CHECK(set.getSegIx(3) == 0);
-	BOOST_CHECK(set.getSegIx(5) == 1);
+	BOOST_CHECK_EQUAL(set.getSegIx(3), 0);
+	BOOST_CHECK_EQUAL(set.getSegIx(5), 1);
 
 	// Checking deleted segments
 	BOOST_CHECK_THROW(set.getSegIx(0), Exception);
@@ -314,15 +314,15 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_revTime){
 	// Delete the middle node
 	set.deleteNode(1);
 	Segment seg = set.getSeg(sID_last+1);	// should retrieve the new segment
-	BOOST_CHECK(seg.getOrigin() == 0);
-	BOOST_CHECK(seg.getTerminus() == 2);
-	BOOST_CHECK(std::abs(seg.getTOF() + 2.2) < 1e-4);
+	BOOST_CHECK_EQUAL(seg.getOrigin(), 0);
+	BOOST_CHECK_EQUAL(seg.getTerminus(), 2);
+	BOOST_CHECK_CLOSE(seg.getTOF(), -2.2, 1e-4);
 
 	// Check updated nodeIDMap
-	BOOST_CHECK(set.getNodeIx(0) == 0);
-	BOOST_CHECK(set.getNodeIx(2) == 1);
-	BOOST_CHECK(set.getNodeIx(3) == 2);
-	BOOST_CHECK(set.getNodeIx(4) == 3);
+	BOOST_CHECK_EQUAL(set.getNodeIx(0), 0);
+	BOOST_CHECK_EQUAL(set.getNodeIx(2), 1);
+	BOOST_CHECK_EQUAL(set.getNodeIx(3), 2);
+	BOOST_CHECK_EQUAL(set.getNodeIx(4), 3);
 
 	// Check deleted node
 	BOOST_CHECK_THROW(set.getNodeIx(1), Exception);
@@ -343,23 +343,23 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource1){
 	// Deleting the node has the correct behavior
 	set.deleteNode(0);
 	Segment seg = set.getSeg(sID_last+1);
-	BOOST_CHECK(seg.getOrigin() == 1);
-	BOOST_CHECK(seg.getTerminus() == 3);
-	BOOST_CHECK(std::abs(seg.getTOF() - 2.2) < 1e-4);
+	BOOST_CHECK_EQUAL(seg.getOrigin(), 1);
+	BOOST_CHECK_EQUAL(seg.getTerminus(), 3);
+	BOOST_CHECK_CLOSE(seg.getTOF(), 2.2, 1e-4);
 
 	// Correct, updated nodeIDMap
-	BOOST_CHECK(set.getNodeIx(1) == 0);
-	BOOST_CHECK(set.getNodeIx(2) == 1);
-	BOOST_CHECK(set.getNodeIx(3) == 2);
-	BOOST_CHECK(set.getNodeIx(4) == 3);
+	BOOST_CHECK_EQUAL(set.getNodeIx(1), 0);
+	BOOST_CHECK_EQUAL(set.getNodeIx(2), 1);
+	BOOST_CHECK_EQUAL(set.getNodeIx(3), 2);
+	BOOST_CHECK_EQUAL(set.getNodeIx(4), 3);
 
 	// Make sure the deleted node is, in fact, deleted
 	BOOST_CHECK_THROW(set.getNodeIx(0), Exception);
 
 	// Correct, updated segIDMap
-	BOOST_CHECK(set.getSegIx(1) == 0);
-	BOOST_CHECK(set.getSegIx(3) == 1);
-	BOOST_CHECK(set.getSegIx(4) == 2);
+	BOOST_CHECK_EQUAL(set.getSegIx(1), 0);
+	BOOST_CHECK_EQUAL(set.getSegIx(3), 1);
+	BOOST_CHECK_EQUAL(set.getSegIx(4), 2);
 
 	// Check deleted segments
 	BOOST_CHECK_THROW(set.getSegIx(0), Exception);
@@ -383,9 +383,9 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource2){
 	set.deleteNode(0);
 	Segment seg = set.getSeg(sID_last+1);
 
-	BOOST_CHECK(seg.getOrigin() == 1);
-	BOOST_CHECK(seg.getTerminus() == ivID);
-	BOOST_CHECK(std::abs(seg.getTOF() - 2.2) < 1e-4);
+	BOOST_CHECK_EQUAL(seg.getOrigin(), 1);
+	BOOST_CHECK_EQUAL(seg.getTerminus(), ivID);
+	BOOST_CHECK_CLOSE(seg.getTOF(), 2.2, 1e-4);
 }//==================================================
 
 /**
@@ -404,9 +404,9 @@ BOOST_AUTO_TEST_CASE(deleteMiddleNode_doubleSource3){
 	set.deleteNode(0);
 	Segment seg = set.getSeg(sID_last+1);
 
-	BOOST_CHECK(seg.getOrigin() == 1);
-	BOOST_CHECK(seg.getTerminus() == ivID);
-	BOOST_CHECK(std::abs(seg.getTOF() + 2.2) < 1e-4);
+	BOOST_CHECK_EQUAL(seg.getOrigin(), 1);
+	BOOST_CHECK_EQUAL(seg.getTerminus(), ivID);
+	BOOST_CHECK_CLOSE(seg.getTOF(), -2.2, 1e-4);
 }//==================================================
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -604,13 +604,13 @@ BOOST_AUTO_TEST_CASE(ForwardTime){
 	set1.putInChronoOrder();
 	
 	// Node Order
-	BOOST_CHECK(set1.getNodeByIx(0).getID() == 0); 
-	BOOST_CHECK(set1.getNodeByIx(1).getID() == 1); 
-	BOOST_CHECK(set1.getNodeByIx(2).getID() == 2);
+	BOOST_CHECK_EQUAL(set1.getNodeByIx(0).getID(), 0); 
+	BOOST_CHECK_EQUAL(set1.getNodeByIx(1).getID(), 1); 
+	BOOST_CHECK_EQUAL(set1.getNodeByIx(2).getID(), 2);
 
 	// Segment Order
-	BOOST_CHECK(set1.getSegByIx(0).getID() == 0);
-	BOOST_CHECK(set1.getSegByIx(1).getID() == 1);
+	BOOST_CHECK_EQUAL(set1.getSegByIx(0).getID(), 0);
+	BOOST_CHECK_EQUAL(set1.getSegByIx(1).getID(), 1);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ReverseTime){
@@ -622,12 +622,12 @@ BOOST_AUTO_TEST_CASE(ReverseTime){
 	set2.addSeg(Segment(1, 2, -1.1));
 
 	set2.putInChronoOrder();
-	BOOST_CHECK(set2.getNodeByIx(0).getID() == 2); 
-	BOOST_CHECK(set2.getNodeByIx(1).getID() == 1);
-	BOOST_CHECK(set2.getNodeByIx(2).getID() == 0);
+	BOOST_CHECK_EQUAL(set2.getNodeByIx(0).getID(), 2);
+	BOOST_CHECK_EQUAL(set2.getNodeByIx(1).getID(), 1);
+	BOOST_CHECK_EQUAL(set2.getNodeByIx(2).getID(), 0);
 	
-	BOOST_CHECK(set2.getSegByIx(0).getID() == 1);
-	BOOST_CHECK(set2.getSegByIx(1).getID() == 0);
+	BOOST_CHECK_EQUAL(set2.getSegByIx(0).getID(), 1);
+	BOOST_CHECK_EQUAL(set2.getSegByIx(1).getID(), 0);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
@@ -640,12 +640,12 @@ BOOST_AUTO_TEST_CASE(ShuffledForwardTime){
 	
 	set3.putInChronoOrder();
 	
-	BOOST_CHECK(set3.getNodeByIx(0).getID() == 1);
-	BOOST_CHECK(set3.getNodeByIx(1).getID() == 0);
-	BOOST_CHECK(set3.getNodeByIx(2).getID() == 2);
+	BOOST_CHECK_EQUAL(set3.getNodeByIx(0).getID(), 1);
+	BOOST_CHECK_EQUAL(set3.getNodeByIx(1).getID(), 0);
+	BOOST_CHECK_EQUAL(set3.getNodeByIx(2).getID(), 2);
 	
-	BOOST_CHECK(set3.getSegByIx(0).getID() == 0);
-	BOOST_CHECK(set3.getSegByIx(1).getID() == 1);
+	BOOST_CHECK_EQUAL(set3.getSegByIx(0).getID(), 0);
+	BOOST_CHECK_EQUAL(set3.getSegByIx(1).getID(), 1);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
@@ -658,12 +658,12 @@ BOOST_AUTO_TEST_CASE(ShuffledReverseTime){
 	
 	set4.putInChronoOrder();
 	
-	BOOST_CHECK(set4.getNodeByIx(0).getID() == 2);
-	BOOST_CHECK(set4.getNodeByIx(1).getID() == 0);
-	BOOST_CHECK(set4.getNodeByIx(2).getID() == 1);
+	BOOST_CHECK_EQUAL(set4.getNodeByIx(0).getID(), 2);
+	BOOST_CHECK_EQUAL(set4.getNodeByIx(1).getID(), 0);
+	BOOST_CHECK_EQUAL(set4.getNodeByIx(2).getID(), 1);
 	
-	BOOST_CHECK(set4.getSegByIx(0).getID() == 1);
-	BOOST_CHECK(set4.getSegByIx(1).getID() == 0);
+	BOOST_CHECK_EQUAL(set4.getSegByIx(0).getID(), 1);
+	BOOST_CHECK_EQUAL(set4.getSegByIx(1).getID(), 0);
 }//====================================================
 
 BOOST_AUTO_TEST_CASE(MixedTime){
@@ -679,16 +679,16 @@ BOOST_AUTO_TEST_CASE(MixedTime){
 	set5.addSeg(Segment(2, 0, 1.1));
 	
 	set5.putInChronoOrder();
-	BOOST_CHECK(set5.getNodeByIx(0).getID() == 3);
-	BOOST_CHECK(set5.getNodeByIx(1).getID() == 4);
-	BOOST_CHECK(set5.getNodeByIx(2).getID() == 1);
-	BOOST_CHECK(set5.getNodeByIx(3).getID() == 2);
-	BOOST_CHECK(set5.getNodeByIx(4).getID() == 0);
+	BOOST_CHECK_EQUAL(set5.getNodeByIx(0).getID(), 3);
+	BOOST_CHECK_EQUAL(set5.getNodeByIx(1).getID(), 4);
+	BOOST_CHECK_EQUAL(set5.getNodeByIx(2).getID(), 1);
+	BOOST_CHECK_EQUAL(set5.getNodeByIx(3).getID(), 2);
+	BOOST_CHECK_EQUAL(set5.getNodeByIx(4).getID(), 0);
 	
-	BOOST_CHECK(set5.getSegByIx(0).getID() == 0);
-	BOOST_CHECK(set5.getSegByIx(1).getID() == 2);
-	BOOST_CHECK(set5.getSegByIx(2).getID() == 1);
-	BOOST_CHECK(set5.getSegByIx(3).getID() == 3);
+	BOOST_CHECK_EQUAL(set5.getSegByIx(0).getID(), 0);
+	BOOST_CHECK_EQUAL(set5.getSegByIx(1).getID(), 2);
+	BOOST_CHECK_EQUAL(set5.getSegByIx(2).getID(), 1);
+	BOOST_CHECK_EQUAL(set5.getSegByIx(3).getID(), 3);
 }//====================================================
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -704,7 +704,9 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append end of forSet2 to beginning of forSet1 with tof = 1.3
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 1.3);
+
 	// forSet1.print();
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -723,15 +725,16 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
+	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(3).getEpoch(), 4.6, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
-	// Append (+) time set to end of (+) time set
 	initForwardSet();
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append beginning of forSet2 to end of forSet1 with tof = 1.3
 	int segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 1.3);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -750,15 +753,16 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
+	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(3).getEpoch(), 4.6, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
-	// Append (+) time set to beginning of (+) time set, TOF = 0
 	initForwardSet();
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append end of forSet2 to beginning of forSet1 with tof = 0
 	int segID = forSet1.appendSetAtNode(&forSet2, 0, 2, 0);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -775,7 +779,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForBegin_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.1);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 2.2);
+	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(2).getEpoch(), 3.3, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
@@ -784,6 +789,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset forSet2 = forwardSet;
 
+	// Append beginning of forSet2 to end of forSet1 with tof = 0
 	int segID = forSet1.appendSetAtNode(&forSet2, 2, 0, 0);
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
@@ -792,15 +798,16 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_ForForEnd_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.1);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 2.2);
+	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(2).getEpoch(), 3.3, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
@@ -809,6 +816,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// Append beginning of revSet2 to the end of revSet1 with tof = -1.3
 	int segID = revSet1.appendSetAtNode(&revSet2, 2, 0, -1.3);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
@@ -827,7 +835,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.3);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -1.3);
+	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(3).getEpoch(), -4.6, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
@@ -836,6 +845,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// Append end of revSet2 to beginning of revSet1 with tof = -1.3
 	int segID = revSet1.appendSetAtNode(&revSet2, 0, 2, -1.3);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
@@ -854,7 +864,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.3);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -1.3);
+	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(3).getEpoch(), -4.6, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
@@ -863,23 +874,25 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegBegin_ZeroTOF){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// append beginning of revSet2 to end of revSet1 with tof = 0
 	int segID = revSet1.appendSetAtNode(&revSet2, 2, 0, 0);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
 
 	std::vector<ArcPiece> chrono_ans;
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 5));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 1));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.1);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -2.2);
+	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(2).getEpoch(), -3.3, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
@@ -888,6 +901,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 	Arcset revSet1 = revSet;
 	Arcset revSet2 = revSet;
 
+	// Append the end of revSet2 to the beginning of revSet1
 	int segID = revSet1.appendSetAtNode(&revSet2, 0, 2, 0);
 	std::vector<ArcPiece> chrono = revSet1.getChronoOrder();
 	// revSet1.printInChrono();
@@ -904,7 +918,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegNegEnd_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(revSet1.getSeg(segID).getTOF() == -1.1);
+	BOOST_CHECK_EQUAL(revSet1.getSeg(segID).getTOF(), -2.2);
+	BOOST_CHECK_CLOSE(revSet1.getNodeByIx(2).getEpoch(), -3.3, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
@@ -914,6 +929,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset revSet1 = revSet;
 
+	// Append beginning of revSet1 to beginning of forSet1 with TOF = 1.3
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 1.3);
 
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -933,7 +949,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_PosTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == 1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), 1.3);
+	BOOST_CHECK_CLOSE(forSet1.getNodeByIx(3).getEpoch(), 1.3, 1e-4);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
@@ -943,6 +960,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset revSet1 = revSet;
 
+	// Append beginning of revSet1 to beginning of forSet1 with tof = -1.3
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, -1.3);
 
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
@@ -962,7 +980,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_NegTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == -1.3);
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), -1.3);
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
@@ -972,8 +990,8 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	Arcset forSet1 = forwardSet;
 	Arcset revSet1 = revSet;
 
+	// Append beginning of revSet1 to beginning of forSet1 with tof = 0
 	int segID = forSet1.appendSetAtNode(&revSet1, 0, 0, 0);
-
 	std::vector<ArcPiece> chrono = forSet1.getChronoOrder();
 	// forSet1.printInChrono();
 
@@ -981,7 +999,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 4));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 2));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 3));
-	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 3));
+	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, segID));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::SEG, 0));
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 1));
@@ -989,7 +1007,7 @@ BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF){
 	chrono_ans.push_back(ArcPiece(ArcPiece::Piece_tp::NODE, 2));
 
 	BOOST_CHECK(pieceVecsAreEqual(chrono, chrono_ans));
-	BOOST_CHECK(forSet1.getSeg(segID).getTOF() == revSet1.getSegByIx(1).getTOF());
+	BOOST_CHECK_EQUAL(forSet1.getSeg(segID).getTOF(), revSet1.getSegByIx(0).getTOF());
 }//=================================================
 
 BOOST_AUTO_TEST_CASE(Arcset_Append_NegForBegin_ZeroTOF_Short){

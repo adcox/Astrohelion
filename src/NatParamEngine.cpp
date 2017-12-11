@@ -69,6 +69,71 @@ NatParamEngine& NatParamEngine::operator=(const NatParamEngine &e){
 //-----------------------------------------------------------------------------
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
+/**
+ *  \brief Get the number of solutions to store in the "curve fit memory"
+ *  \details The number of solutions saved informs the least-squares
+ *  curve-fitting algorithm that improves the performance of the natural 
+ *  parameter continuation.
+ * 
+ *  \return the number of solutions to use when fitting a curve to predict
+ *  the continuation variables
+ */
+unsigned int NatParamEngine::getCurveFitMem() const { return curveFitMem; }
+
+/**
+ *  \brief Get the number of simple continuation (i.e., no curve fitting)
+ *  iterations to perform before switching to curve-fitted solutions
+ * 
+ *  \return the number of simple continuation iterations to perform
+ */
+unsigned int NatParamEngine::getNumSimple() const { return numSimple; }
+
+/**
+ *  \brief Get the number of iterations the corrector can take when a
+ *  line search is NOT employed
+ * 
+ *  \return max number of iterations for the corrector
+ */
+unsigned int NatParamEngine::getNoSearchMaxIts() const { return noSearchMaxIts; }
+
+/**
+ *  \brief Get the number of iterations the corrector can take when a 
+ *  line search IS employed
+ * 
+ *  \return max number of iterations for the corrector
+ */
+unsigned int NatParamEngine::getLineSearchMaxIts() const { return lineSearchMaxIts; }
+
+/**
+ *  \brief Get the slope threshold that is the limit between
+ *  two step directions
+ *  \details The natural parameter continuation typically leverages 
+ *  several "independent" stepping variables to facilitate continuation 
+ *  along a nonlinear contour. When a step in one variable results in
+ *  large changes in the other, the stepping variable is changed to 
+ *  limit the sensitivity.
+ * 
+ *  \return slope threshold between stepping strategies
+ */
+double NatParamEngine::getSlopeThresh() const { return slopeThresh; }
+
+/**
+ *  \brief Get the step size for simple (no curve-fitting) continuation
+ *  \return the step size for simple (no curve-fitting) continuation
+ */
+double NatParamEngine::getStep_simple() const { return step_simple; }
+
+/**
+ *  \brief Get the step size for fitted continuation: variable 1
+ *  \return the step size for fitted continuation: variable 1
+ */
+double NatParamEngine::getStep_fitted_1() const { return step_fitted_1; }
+
+/**
+ *  \brief Get the step size for fitted continuation: variable 2
+ *  \return the step size for fitted continuation: variable 2
+ */
+double NatParamEngine::getStep_fitted_2() const { return step_fitted_2; }
 
 /**
  *  \brief Set the number of solutions to store in the "curve fit memory"
@@ -88,6 +153,22 @@ void NatParamEngine::setCurveFitMem(unsigned int mem){ curveFitMem = mem; }
  *  \param num the number of simple continuation iterations to perform
  */
 void NatParamEngine::setNumSimple(unsigned int num){ numSimple = num; }
+
+/**
+ *  \brief Set the number of iterations the corrector can take when a
+ *  line search is NOT employed
+ * 
+ *  \param num max number of iterations for the corrector
+ */
+void NatParamEngine::setNoSearchMaxIts(unsigned int num){ noSearchMaxIts = num; }
+
+/**
+ *  \brief Set the number of iterations the corrector can take when a 
+ *  line search IS employed
+ * 
+ *  \param num max number of iterations for the corrector
+ */
+void NatParamEngine::setLineSearchMaxIts(unsigned int num){ lineSearchMaxIts = num; }
 
 /**
  *  \brief Set the slope threshold that is the limit between
@@ -124,6 +205,21 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
 //      Analysis Functions
 //-----------------------------------------------------------------------------
 
+/**
+ *  \brief Use natural parameter continuation to generate a family of periodic orbits in the CR3BP
+ *  \details [long description]
+ * 
+ *  \param pFam pointer to a family in which the results are stored
+ *  \param initGuess An initial guess for the first periodic orbit in the family
+ *  \param alwaysFixStateVals A vector of initial state values that are always fixed
+ *  \param indVarIx a vector containing the indices of the independent variables to be used. You MUST
+ *	specify at least two; currently only two can be used. The first index in the vector will be used
+ *	first in the continuation (using stupid-simple continuation), and the second will be toggled
+ *	on later if the slope favors it.
+ *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
+ *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
+ *	simple techniques that don't perform very well.
+ */
 void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initGuess, std::vector<double> alwaysFixStateVals,
 	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
 
@@ -153,7 +249,7 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
  *	\param init_halfPerGuess a trajectory that is a good initial guess for half of 
  *	the first family member
  *	\param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
- *	reference frame. Each entry corresponds to an independent variable in <tt>indVarIx</tt>
+ *	reference frame. Each entry corresponds to an independent variable in `indVarIx`
  *	\param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
  *	first in the continuation (using stupid-simple continuation), and the second will be toggled
@@ -162,10 +258,10 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
  *
- *	\throws Exception if <tt>indVarIx</tt> has fewer than two elements
- *	\throws Exception if <tt>mirrorTypes</tt> does not have the same size as <tt>indVarIx</tt>
+ *	\throws Exception if `indVarIx` has fewer than two elements
+ *	\throws Exception if `mirrorTypes` does not have the same size as `indVarIx`
  *	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
- *	\throws Exception if one of the indices stored in <tt>indVarIx</tt> or <tt>depVarIx</tt> is
+ *	\throws Exception if one of the indices stored in `indVarIx` or `depVarIx` is
  *	out of range
  */
 void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *init_halfPerGuess,
@@ -186,6 +282,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
 		throw Exception("NatParamEngine::cr3bp_natParamCont: there must be an equal number of ind. vars and mirror types");
 
 	// Reset counters and storage containers
+	printf("Beginning Natural Parameter Continuation\n");
 	cleanEngine();
 	bool diverged = false;
 
@@ -280,7 +377,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
 			break;
 		}
 
-		if(!updateIC(perOrbit, &IC, &tof, indVarIx, depVarIx, members))
+		if(!updateIC(perOrbit, IC, tof, indVarIx, depVarIx, members))
 			break;
 
 		// Update the mirror type (not done in the general updateIC function)
@@ -323,7 +420,7 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
  *  \param pInput pointer to an arbitrary arcset object of the same model/system as the initial guess
  *  \param pConverged pointer to an arbitrary arcset object of the same model/system as the initial guess
  *  \param allArcs Storage vector for all converged family members
- *  \param alwaysFixStateVals a vector of state values that should always be fixed; a value of NAN indicates
+ *  \param alwaysFixStateVals a vector of initial state values that should always be fixed; a value of NAN indicates
  *  that the specified state should not be fixed.
  *  \param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
@@ -332,10 +429,14 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
  *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
+ *	\param pEngineTemplate pointer to a multiple shooter engine that will be used, with
+ *	some modifications, to correct orbits. You might want to control how times-of-flight
+ *	are parameterized, whether or not to ignore crashes into the primaries, etc.
  */
 void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset *pConverged, 
 	std::vector<Arcset>& allArcs, std::vector<double> alwaysFixStateVals,
-	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx){
+	std::vector<unsigned int> indVarIx, std::vector<unsigned int> depVarIx,
+	MultShootEngine *pEngineTemplate){
 
 	if(pInitGuess == nullptr || pInput == nullptr || pConverged == nullptr)
 		throw Exception("NatParamEngine::continuePO: cannot function with null input arcset pointers");
@@ -368,6 +469,7 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 	}
 
 	// Reset counters and storage containers
+	printf("Beginning Natural Parameter Continuation\n");
 	cleanEngine();
 	bool diverged = false;
 
@@ -384,12 +486,19 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 
 	// Create the multiple shooting engine object
 	MultShootEngine msEngine;
+
+	if(pEngineTemplate){
+		// Use parameters from input engine
+		msEngine = *pEngineTemplate;
+	}else{
+		// Set some default parameters
+		msEngine.setIgnoreCrash(true);	// Ignore crashes into primary
+		msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
+	}
+
+	// Always apply these 
 	msEngine.setTol(tol);
-	msEngine.setIgnoreCrash(true);		// Ignore crashes into primary
 	msEngine.setFullFinalProp(false);	// Accept minimal information from msEngine
-	msEngine.setVerbosity(Verbosity_tp::SOME_MSG);
-	msEngine.setTOFType(MSTOF_tp::VAR_FIXSIGN);
-	msEngine.setMaxErr(1e2);
 
 	// Periodicity constraint(s)
 	std::vector<Constraint> perCons = pInitGuess->getAllConstraints();
@@ -420,36 +529,40 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 		pInput->addConstraint(initCon);
 
 		try{
-			printf("Guess for IC: [%7.4f %7.4f %7.4f %7.4f %7.4f %7.4f] %.4f\n", IC[0], IC[1], IC[2], IC[3],
-				IC[4], IC[5], tof);
+			printf("Guess for IC: [");
+			for(unsigned int i = 0; i < core_dim; i++){ printf(" %7.4f", IC[i]); }
+			printf("] tof = %.4f\n", tof);
 			printf("Fix States: ");
 			for(unsigned int i = 0; i < fixStates.size(); i++){ printf("%d, ", fixStates[i]); }
 			printf("\n");
 			printf("Slope = %.3f\n", indVarSlope);
 
 			msEngine.setDoLineSearch(false);
-			msEngine.setMaxIts(20);
+			msEngine.setMaxIts(noSearchMaxIts);
 			*pItData = msEngine.multShoot(pInput, pConverged);
 			
 			diverged = false;
 			printf("Orbit %03d converged!\n", static_cast<int>(allArcs.size()));
 		}catch(DivergeException &de){
 			try{
+				printErr("Corrector diverged: %s\n", de.what());
+				printf("Attempting to converge orbit %03d again with a line search for the step size\n", static_cast<int>(allArcs.size()));
 				pConverged->reset();
 				msEngine.setDoLineSearch(true);
-				msEngine.setMaxIts(250);
+				msEngine.setMaxIts(lineSearchMaxIts);
 
 				*pItData = msEngine.multShoot(pInput, pConverged);
 				diverged = false;
 				printf("Orbit %03d converged!\n", static_cast<int>(allArcs.size()));
 			}catch(DivergeException &de2){
+				printErr("Corrector diverged: %s\n", de2.what());
 				diverged = true;	
 			}catch(LinAlgException &lae2){
-				printErr("There was a linear algebra error during family continuation...\n");
+				printErr("There was a linear algebra error during family continuation: %s\n", lae2.what());
 				break;
 			}
 		}catch(LinAlgException &lae){
-			printErr("There was a linear algebra error during family continuation...\n");
+			printErr("There was a linear algebra error during family continuation: %s\n", lae.what());
 			break;
 		}
 
@@ -479,16 +592,6 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 			orbitCount++;
 
 			increaseStepSize(pItData->count);
-
-			// // Compute eigenvalues
-			// MatrixXRd mono = perOrbit.getMonodromy();
-
-			// double monoErr = std::abs(1.0 - mono.determinant());
-			// if(monoErr > 1e-5)
-			// 	printColor(BOLDRED, "Monodromy Matrix error = %.4e; This will affect eigenvalue accuracy!\n", monoErr);
-
-			// // Add orbit to family
-			// pFam->addMember(perOrbit);
 		}
 
 		// Create the next guess
@@ -499,7 +602,7 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 			break;
 		}
 
-		if(!updateIC(*pConverged, &IC, &tof, indVarIx, depVarIx, allArcs))
+		if(!updateIC(*pConverged, IC, tof, indVarIx, depVarIx, allArcs))
 			break;
 
 		// Update the initial guess
@@ -508,11 +611,17 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 
 		// Change the TOF on the final segment
 		// WARNING - might cause issues of TOF goes negative
-		double dt = tof - pInput->getTotalTOF();
-		pInput->getSegRefByIx(-1).setTOF(pInput->getTOFByIx(-1) + dt);
+		double dt = (tof - pInput->getTotalTOF())/(pInput->getNumSegs());
+		double newTOF = 0;
+		for(unsigned int s = 0; s < pInput->getNumSegs(); s++){
+			newTOF = pInput->getTOFByIx(s) + dt;
 
-		if(pInput->getTOFByIx(-1)*pConverged->getTOFByIx(-1) < 0)
-			printWarn("NatParamEngine::continuePO: updated TOF has changed sign\n");
+			if(newTOF * pConverged->getTOFByIx(s) > 0){
+				pInput->getSegRefByIx(s).setTOF(newTOF);
+			}else{
+				printErr("Did not update TOF on segment %u because it would change sign\n", s);
+			}
+		}
 	}
 
 	if(pItData){
@@ -567,7 +676,7 @@ bool NatParamEngine::decreaseStepSize(){
  */
 void NatParamEngine::increaseStepSize(unsigned int its){
 	// Check to see if we should update the step size
-	if(its < 4 && orbitCount > numSimple){
+	if(its < stepCount_increase && orbitCount > numSimple){
 		double dq = std::abs(indVarSlope) > slopeThresh ? step_fitted_1 : step_fitted_2;
 
 		if(dq < maxStepSize){
@@ -587,28 +696,29 @@ void NatParamEngine::increaseStepSize(unsigned int its){
  *  \details [long description]
  * 
  *  \param convSoln the previous converged solution
- *  \param pIC pointer to the initial condition vector
- *  \param pTOF pointer to the time-of-flight value
+ *  \param ic reference to the initial condition vector
+ *  \param tof reference to the time-of-flight value
  *  \param indVarIx vector of the independent variable indices
  *  \param depVarIx vector of the dependent variable indices
  *  
  *  \return whether or not the update was successful.
  */
-bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>* pIC, 
-	double *pTOF, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx,
+bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic, 
+	double& tof, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx,
 	const std::vector<Arcset>& members){
+
+	// Compute the slope
+	if(orbitCount >= 2){
+		deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
+		deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
+		indVarSlope = deltaVar1/deltaVar2;
+	}
 
 	if(orbitCount < numSimple){
 		// Use simple continuation; copy the converged IC, step forward in the independent variable
-		*pIC = convSoln.getStateByIx(0);
-		pIC->at(indVarIx[0]) += step_simple;
+		ic = convSoln.getStateByIx(0);
+		ic.at(indVarIx[0]) += step_simple;
 	}else{
-		// Compute the slope for the first time
-		if(orbitCount == numSimple){
-			deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
-			deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
-			indVarSlope = deltaVar1/deltaVar2;
-		}
 
 		// Use least-squares fitting to predict the value for the independent and dependent variables
 		std::vector<double> prevStates;
@@ -629,7 +739,7 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>* pIC,
 
 		if(std::abs(indVarSlope) > slopeThresh){
 			// Use continuation in indVarIx[0]
-			pIC->at(indVarIx[0]) = convSoln.getStateByIx(0).at(indVarIx[0]) + astrohelion::sign(deltaVar1)*step_fitted_1;
+			ic.at(indVarIx[0]) = convSoln.getStateByIx(0).at(indVarIx[0]) + astrohelion::sign(deltaVar1)*step_fitted_1;
 			fixStates.clear();
 			fixStates.push_back(indVarIx[0]);
 
@@ -638,10 +748,10 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>* pIC,
 			if(std::find(depVarIx.begin(), depVarIx.end(), indVarIx[1]) == depVarIx.end()){
 				allDepVars.push_back(indVarIx[1]);	// only add if it isn't already part of depVarIx
 			}
-			predictedIC = familyCont_LS(indVarIx[0], pIC->at(indVarIx[0]), allDepVars, prevStates);
+			predictedIC = familyCont_LS(indVarIx[0], ic.at(indVarIx[0]), allDepVars, prevStates);
 		}else{
 			// Use continuation in indVarIx[1]
-			pIC->at(indVarIx[1]) = convSoln.getStateByIx(0).at(indVarIx[1]) + astrohelion::sign(deltaVar2)*step_fitted_2;
+			ic.at(indVarIx[1]) = convSoln.getStateByIx(0).at(indVarIx[1]) + astrohelion::sign(deltaVar2)*step_fitted_2;
 			fixStates.clear();
 			fixStates.push_back(indVarIx[1]);
 
@@ -650,26 +760,21 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>* pIC,
 			if(std::find(depVarIx.begin(), depVarIx.end(), indVarIx[0]) == depVarIx.end()){
 				allDepVars.push_back(indVarIx[0]);	// only add if it isn't already part of depVarIx
 			}
-			predictedIC = familyCont_LS(indVarIx[1], pIC->at(indVarIx[1]), allDepVars, prevStates);
+			predictedIC = familyCont_LS(indVarIx[1], ic.at(indVarIx[1]), allDepVars, prevStates);
 		}
 
-		// Update pIC with predicted variables
+		// Update ic with predicted variables
 		for(unsigned int n = 0; n < allDepVars.size(); n++){
 			unsigned int ix = allDepVars[n];
 			if(ix < 6)
-				pIC->at(ix) = predictedIC[ix];
+				ic[ix] = predictedIC[ix];
 			else if(ix == 6)
-				*pTOF = predictedIC[ix];
+				tof = predictedIC[ix];
 			else{
 				printErr("NatParamEngine::updateIC: Cannot update independent variable; index out of range");
 				return false;
 			}
 		}
-
-		// Update slope
-		deltaVar1 = members[orbitCount-1].getStateByIx(0)[indVarIx[0]] - members[orbitCount-2].getStateByIx(0)[indVarIx[0]];
-		deltaVar2 = members[orbitCount-1].getStateByIx(0)[indVarIx[1]] - members[orbitCount-2].getStateByIx(0)[indVarIx[1]];
-		indVarSlope = deltaVar1/deltaVar2;
 	}
 
 	return true;
@@ -712,8 +817,8 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>* pIC,
  *  continuation. indVarIx would be 0 to represent x. We input the value of x
  *  for the next orbit in the family (nextInd) and specify which variables (from
  *  the 8-element "state") we would like to have predicted by least-squares.
- *  \throws Exception if the <tt>varHistory</tt> vector contains fewer than 
- *  8 elements or if the <tt>depVars</tt> vector has no data
+ *  \throws Exception if the `varHistory` vector contains fewer than 
+ *  8 elements or if the `depVars` vector has no data
  */
 std::vector<double> NatParamEngine::familyCont_LS(unsigned int indVarIx, double nextInd, std::vector<unsigned int> depVars, std::vector<double> varHistory){
     const unsigned int STATE_SIZE = 8;
@@ -828,6 +933,8 @@ void NatParamEngine::reset(){
 	step_simple = 5e-4;
 	step_fitted_1 = 5e-3;
 	step_fitted_2 = 5e-3;
+	lineSearchMaxIts = 100;
+	noSearchMaxIts = 20;
 }//====================================================
 
 /**

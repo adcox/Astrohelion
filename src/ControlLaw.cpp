@@ -120,6 +120,28 @@ unsigned int ControlLaw::getNumStates() const {return numStates; }
 unsigned int ControlLaw::getNumOutputs() const {return numOutputs; }
 
 /**
+ *  \brief Retrieve the value of a parameter at the specified index.
+ * 
+ *  \param ix Index of the parameter. If negative, the index counts
+ *  backwards from the end of the parameter vector, e.g., ix = -2
+ *  returns the second-to-last element in params.
+ *  \return the value stored in the parameter vector at the specified index.
+ *  \throws Exception if the index is out of bounds
+ */
+double ControlLaw::getParam(int ix) const{
+	int n = static_cast<int>(params.size());
+	while(ix < n){ ix += n; }
+
+	if(ix >= n){
+		char msg[128];
+		sprintf(msg, "ControlLaw::getParam: Index ix = %d is larger than params vector (size %d)", ix, n);
+		throw Exception(msg);
+	}
+
+	return params[ix];
+}//====================================================
+
+/**
  *  \brief Retrieve the parameter vector
  *  \return the parameter vector
  */
@@ -140,6 +162,28 @@ const std::vector<double>& ControlLaw::getParamsRef_const() const { return param
 void ControlLaw::setLawType(unsigned int id){
 	lawType = id;
 	init();
+}//====================================================
+
+/**
+ *  \brief Set the value of a parameter at the specified index.
+ * 
+ *  \param ix Index of the parameter. If negative, the index counts
+ *  backwards from the end of the parameter vector, e.g., ix = -2
+ *  returns the second-to-last element in params.
+ *  \param val the value to store in the parameter vector at the specified index
+ *  \throws Exception if the index is out of bounds
+ */
+void ControlLaw::setParam(int ix, double val){
+	int n = static_cast<int>(params.size());
+	while(ix < n){ ix += n; }
+
+	if(ix >= n){
+		char msg[128];
+		sprintf(msg, "ControlLaw::getParam: Index ix = %d is larger than params vector (size %d)", ix, n);
+		throw Exception(msg);
+	}
+
+	params[ix] = val;
 }//====================================================
 
 /**
@@ -174,9 +218,9 @@ void ControlLaw::setParams(std::vector<double> params){
  *  \param s state vector
  *  \param pSys system data object
  *  \param output initialized array of zeros in which to store the control law outputs
- *  \param len number of elements in the <tt>law</tt> array
+ *  \param len number of elements in the `law` array
  *  
- *  \throws Exception if the control law ID, <tt>lawType</tt>, is not recognized
+ *  \throws Exception if the control law ID, `lawType`, is not recognized
  */
 void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const{
 	switch(lawType){
@@ -231,7 +275,7 @@ void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSy
  *  \param pSys system data object
  *  \param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the <tt>partials</tt> array
+ *  \param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -259,7 +303,7 @@ void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysD
  *  \param pSys system data object
  *  \param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the <tt>partials</tt> array
+ *  \param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -285,7 +329,7 @@ void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pS
  *  \param pSys system data object
  *  \param partials initialized array of zeros in which to store the partial derivatives
  *  of the control outputs
- *  \param len number of elements in the <tt>partials</tt> array
+ *  \param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){

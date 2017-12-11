@@ -30,7 +30,9 @@
 
 #include "Arcset_periodic.hpp"
 
+#include "Calculations.hpp"
 #include "Exceptions.hpp"
+#include "Utilities.hpp"
 
 namespace astrohelion{
 
@@ -61,24 +63,32 @@ void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs)
 
 	// Compute the eigen data
 	MatrixXRd mono = getMonodromy();
-	Eigen::EigenSolver<MatrixXRd> eigensolver(mono);
-    if(eigensolver.info() != Eigen::Success)
-        throw Exception("Arcset_periodic::getEigData: Could not compute eigenvalues of monodromy matrix");
 
-    // Extract the eigen data to return to the user
-    if(pVals){
-    	pVals->clear();		// Delete any existing data
-    	Eigen::VectorXcd vals = eigensolver.eigenvalues();
-    	pVals->insert(pVals->begin(), vals.data(), vals.data() + vals.size());
-    }
+	// If the data is loaded from a family (i.e., a minimum frame-save data object)
+	// the result of getMonodromy() will pull zeros from the segment state vector,
+	// thus, the eigenvalues will be incorrect
+	double maxval = 0;
+	for(unsigned int r = 0; r < mono.rows(); r++){
+		for(unsigned int c = 0; c < mono.cols(); c++){
+			if(std::abs(mono(r,c)) > maxval){
+				maxval = mono(r,c);
+			}
+		}
+	}
+	if(maxval < 1e-10)
+		printWarn("Arcset_periodic::getEigData: Monodromy matrix appears to be all zeros;\n\tthe arcset probably needs to be reconstructed from a minimal frame representation\n");
 
-    if(pVecs){
-    	*pVecs = eigensolver.eigenvectors();
-    }
+	std::vector<cdouble> vals {};
+	vals = getBalancedEigData(mono, pVecs);
+
+	if(pVals)
+		*pVals = vals;
 }//====================================================
 
 /**
  *  \brief Retrieve the monodromy matrix for this periodic orbit
+ *  \details This sets the STMs stored in the Segment STM matrix to
+ *  be the cumulative STMs rather than sequential.
  *  \return the monodromy matrix
  */
 MatrixXRd Arcset_periodic::getMonodromy(){

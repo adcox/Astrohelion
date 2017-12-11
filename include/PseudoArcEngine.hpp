@@ -30,6 +30,7 @@
 
 #include "ContinuationEngine.hpp"
 #include "EigenDefs.hpp"
+#include "MultShootEngine.hpp"
 
 namespace astrohelion{
 
@@ -40,6 +41,7 @@ class Arcset_periodic;
 class Family_PO;
 enum class Mirror_tp;
 class MultShootData;
+// class MultShootEngine;
 
 /**
  *  \ingroup engine fam
@@ -66,9 +68,7 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	double getStepSize();
-
-	void setStepSize(double);
+	void setNullspaceCol(unsigned int);
 	//\}
 
 	/**
@@ -76,7 +76,7 @@ public:
 	 *  \{
 	 */
 	void continueSymmetricPO_cr3bp(Family_PO*, const Arcset_cr3bp*, Mirror_tp, std::vector<int>);
-	void pac(const Arcset*, Arcset*, Arcset*, std::vector<Arcset>&, const std::vector<int>&);
+	void pac(const Arcset*, Arcset*, Arcset*, std::vector<Arcset>&, const std::vector<int>&, const MultShootEngine* pEngine = nullptr);
 	//\}
 
 	/**
@@ -92,11 +92,11 @@ private:
 	 *  \name Analysis Functions
 	 *  \{
 	 */
-	bool checkPACSoln(const MultShootData*, const Eigen::VectorXd&, bool*);
-	bool checkPACSoln_periodic(const Arcset_periodic*, bool*);
+	bool checkPACSoln(const MultShootData&, const Eigen::VectorXd&, bool&);
+	bool checkPACSoln_periodic(const Arcset_periodic*, bool&);
 	bool chooseNullVec(MatrixXRd&, std::vector<int>, const MatrixXRd&);
 	bool decreaseStepSize();
-	void getNextPACGuess(Arcset*, Arcset*, const Eigen::VectorXd&, const Eigen::VectorXd&, MultShootData*);
+	void getNextPACGuess(Arcset*, Arcset*, const Eigen::VectorXd&, const Eigen::VectorXd&, MultShootData&);
 	//\}
 
 	/**
@@ -107,8 +107,9 @@ private:
 	void cleanEngine() override;
 	//\}
 
-	unsigned int orbitCount = 0;
-	double stepSize = 0.001;
+	unsigned int nullspaceCol = 0;		//!< The index of the nullspace column to choose if there are multiple options
+	unsigned int orbitCount = 0;		//!< Running tally of the number of orbits in the family
+	double stepSize = 0.001;			//!< Step size between family members; adjusted dynamically by the algorithm
 };
 
 }// End of astrohelion namespace

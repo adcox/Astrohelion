@@ -84,13 +84,12 @@ BaseArcset& BaseArcset::operator =(const BaseArcset &d){
 
 /**
  *  \brief Sum two arcset objects.
- *  \details This function returns <tt>result</tt> = <tt>lhs</tt> + <tt>rhs</tt>; 
- *  Both <tt>lhs</tt> and <tt>rhs</tt> are copied and sorted into chronological 
- *  order. The <tt>rhs</tt> is then appended to the end of <tt>lhs</tt> with no
- *  time-of-flight between the end of <tt>lhs</tt> and the beginning of <tt>rhs</tt>.
- *  This will result in the deletion of the first node of <tt>rhs</tt> in the 
- *  concatenated set. To avoid losing data, make sure the first node of <tt>rhs</tt>
- *  is equivalent to the final node (chronologically) of <tt>lhs</tt>.
+ *  \details This function returns `result` = `lhs` + `rhs`; 
+ *  Both `lhs` and `rhs` are copied and sorted into chronological 
+ *  order. The `rhs` is then appended to the end of `lhs` with no
+ *  time-of-flight between the end of `lhs` and the beginning of `rhs`.
+ *  The first node of `rhs` is deleted if the final node on `lhs` is 
+ *  an origin node, i.e., if the two progress in different time directions.
  * 
  *  \param lhs pointer to an arcset object
  *  \param rhs pointer to an arcset object
@@ -240,7 +239,7 @@ int BaseArcset::addSeg(Segment s){
 							}else if(!sameLinkType && !sameTimeDir){
 								// parallel structure
 								printErr("Parallel structure!\n");
-								print();
+								// print();
 								printErr("Adding segment (ID %d) O: %d, T: %d, tof = %.4f\n", s.getID(), s.getOrigin(), s.getTerminus(), s.getTOF());
 								printErr("Conflict at node (ID %d): seg (ID %d) has O: %d, T:%d, tof = %.4f\n", linkedNodeID, nearSeg->getID(),
 									nearSeg->getOrigin(), nearSeg->getTerminus(), nearSeg->getTOF());
@@ -280,12 +279,14 @@ int BaseArcset::addSeg(Segment s){
 /**
  *  \brief Append an arcset object (i.e., a set of nodes and segments) to this one
  * 
- *  \param pArcsetIn a pointer to the arcset derivative object to append
- *  \param linkTo_ID the ID of the node in *this* arcset object to link to
- *  \param linkFrom_ID the ID of the node in <tt>set</tt> to link from
- *  \param tof time-of-flight between linkFrom_ID to linkTo_ID; if set to zero, 
- *  it is assumed that the two nodes are identical, and the original (the one in *this* object)
- *  will be retained, the other deleted, and segments rerouted accordingly.
+ *  \param pArcsetIn a pointer to the arcset object that will be appended to this object
+ *  \param localNodeID the ID of the node in *this* arcset object that `pArcsetIn` will be linked to
+ *  \param appendNodeID the ID of the node in `pArcsetIn` to link from
+ *  \param tof time-of-flight between appendNodeID to localNodeID; when this value is nonzero, an artificial
+ *  segment is constructed two link the two arcsets. If `tof` is zero, then one of the nodes is deleted.
+ *  If the node at `localNodeID` is an origin node, then the node at `appendNodeID` is deleted. If
+ *  the local node is not an origin, then it is deleted instead. The segment left without a terminus is then 
+ *  connected to the remaining node.
  *  
  *  \return the ID of a new segment that links the old and new arcset objects
  *	\throws Exception if the two arcset objects have different system data objects
@@ -293,34 +294,34 @@ int BaseArcset::addSeg(Segment s){
  *  \throws Exception if one or both of the identifies nodes does not have
  *  a free link slot
  */
-int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int linkFrom_ID, double tof){
+int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int localNodeID, int appendNodeID, double tof){
 	if(pArcsetIn->pSysData != pSysData)
 		throw Exception("BaseArcset::appendSetAtNode: Cannot concatenate two arcsets with different system data objects");
 
 	// First, check to make sure the specified nodes are valid
-	if(nodeIDMap.count(linkTo_ID) == 0)
-		throw Exception("BaseArcset::appendSetAtNode: linkTo_ID is out of bounds");
+	if(nodeIDMap.count(localNodeID) == 0)
+		throw Exception("BaseArcset::appendSetAtNode: localNodeID is out of bounds");
 
 	// Create a copy so we don't affect the original
-	baseArcsetPtr pSetCpy = pArcsetIn->clone();
+	baseArcsetPtr pAppendArc = pArcsetIn->clone();
 
-	const Node &linkTo_node = nodes[nodeIDMap[linkTo_ID]];
-	const Node linkFrom_node = pSetCpy->getNodeRef_const(linkFrom_ID);		// Will do its own index checks
+	const Node &localNode = nodes[nodeIDMap[localNodeID]];
+	const Node &appendNode = pAppendArc->getNodeRef_const(appendNodeID);		// Will do its own index checks
 
 	// Both nodes must have one "open port"
-	if(!linkTo_node.isLinkedTo(Linkable::INVALID_ID) || !linkFrom_node.isLinkedTo(Linkable::INVALID_ID))
+	if(!localNode.isLinkedTo(Linkable::INVALID_ID) || !appendNode.isLinkedTo(Linkable::INVALID_ID))
 		throw Exception("BaseArcset::appendSetAtNode: specified nodes are not both open to a new link");
 
-	// Determine if linkTo_node is the origin or terminus of a segment
-	// printf("linkToNode has links [%d, %d]\n", linkTo_node.getLink(0), linkTo_node.getLink(1));
-	// printf("Choosing segment (ID %d)\n", linkTo_node.getLink(0) == Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
-	Segment linkTo_seg = getSeg(linkTo_node.getLink(0) == Linkable::INVALID_ID ? linkTo_node.getLink(1) : linkTo_node.getLink(0));
-	bool linkTo_isOrigin = linkTo_seg.getOrigin() == linkTo_node.getID();
-	Segment linkFrom_seg = pSetCpy->getSeg(linkFrom_node.getLink(0) == Linkable::INVALID_ID ? linkFrom_node.getLink(1) : linkFrom_node.getLink(0));
-	bool linkFrom_isOrigin = linkFrom_seg.getOrigin() == linkFrom_node.getID();
+	// Determine if localNode is the origin or terminus of a segment
+	// printf("linkToNode has links [%d, %d]\n", localNode.getLink(0), localNode.getLink(1));
+	// printf("Choosing segment (ID %d)\n", localNode.getLink(0) == Linkable::INVALID_ID ? localNode.getLink(1) : localNode.getLink(0));
+	Segment localSeg = getSeg(localNode.getLink(0) == Linkable::INVALID_ID ? localNode.getLink(1) : localNode.getLink(0));
+	bool bLocalNodeIsOrigin = localSeg.getOrigin() == localNode.getID();
+	Segment appendSeg = pAppendArc->getSeg(appendNode.getLink(0) == Linkable::INVALID_ID ? appendNode.getLink(1) : appendNode.getLink(0));
+	bool bAppendNodeIsOrigin = appendSeg.getOrigin() == appendNode.getID();
 
-	if(!linkTo_isOrigin && !linkFrom_isOrigin)
-		throw Exception("BaseArcset::appendSetAtNode: neither node is an origin; cannot create segment between them\n");
+	if(!bLocalNodeIsOrigin && !bAppendNodeIsOrigin)
+		throw Exception("BaseArcset::appendSetAtNode: neither node is an origin; cannot create segment between them");
 
 	// Store STM between two data sets; if tof != 0, we don't know the path between
 	// the two, so linkSTM is initialized to the identity matrix. If tof = 0,
@@ -330,76 +331,148 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	std::vector<double> linkSegStates, linkSegTimes;
 	double linkTOF = tof;
 	ControlLaw *pLinkCtrlLaw = nullptr;
-	unsigned int linkStateWidth = linkFrom_seg.getStateWidth();
+	unsigned int linkStateWidth = 0;
 
-	// if TOF is zero, then linkFrom_node is assumed to be the same as linkTo_node
-	// To avoid having a segment with a TOF of zero, we delete one and update the
-	// TOF and linkFrom_ID
+	/* If TOF is zero, we need to connect the two arcsets. If localNode is an origin,
+	 * we keep it, delete appendNode and copy appendSeg. However, if localNode is a terminus,
+	 * then it makes more sense to keep appendNode (an origin), delete localNode, and copy
+	 * localSeg
+	 */
 	if(tof == 0){
-		linkTOF = linkFrom_seg.getTOF();					// Update tof
-		linkSTM = linkFrom_seg.getSTM();					// Save STM
-		linkSegStates = linkFrom_seg.getStateVector();
-		linkSegTimes = linkFrom_seg.getTimeVector();
-		pLinkCtrlLaw = linkFrom_seg.getCtrlLaw();
+		if(bLocalNodeIsOrigin){
+			/* 	Cases:
+			 * 	
+			 * 				vv Local Node
+			 * 	[]<--Local--[] . []<--Append--[]
+			 *	[]>--Local--[] . []--Append-->[]
+			 *	[]<--Local--[] . []--Append--<[]
+			 *					 ^^ Append Node
+			 *					 
+			 * 	In all these cases, the local node is an origin, so delete 
+			 * 	appendNode and copy appendSeg
+			 */
+			linkTOF = appendSeg.getTOF();
+			linkSTM = appendSeg.getSTM();
+			linkSegStates = appendSeg.getStateVector();
+			linkSegTimes = appendSeg.getTimeVector();
+			pLinkCtrlLaw = appendSeg.getCtrlLaw();
+			linkStateWidth = appendSeg.getStateWidth();
 
-		// Get the next node down the line
-		int new_linkFrom_ID = linkFrom_isOrigin ? linkFrom_seg.getTerminus() : linkFrom_seg.getOrigin();
+			// Get the ID of the other node attached to appendSeg before deleting appendSeg
+			int otherNodeID = bAppendNodeIsOrigin ? appendSeg.getTerminus() : appendSeg.getOrigin();
 
-		// Delete the end node and the segment that connects to it
-		pSetCpy->deleteSeg(linkFrom_seg.getID());
-		pSetCpy->deleteNode(linkFrom_ID);
-		
-		// Update objects and variables that depend on linkFrom_ID
-		linkFrom_ID = new_linkFrom_ID;
-		const Node &newLinkFrom_node = pSetCpy->getNodeRef_const(linkFrom_ID);
-		int new_linkFrom_segIx = newLinkFrom_node.getLink(0) == Linkable::INVALID_ID ? newLinkFrom_node.getLink(1) : newLinkFrom_node.getLink(0);
-		
-		if(new_linkFrom_segIx != Linkable::INVALID_ID){
-			linkFrom_seg = pSetCpy->getSeg(new_linkFrom_segIx);
-			linkFrom_isOrigin = linkFrom_seg.getOrigin() == newLinkFrom_node.getID();
-		}else{
-			// No segments left, just a node
-			// Leave linkFrom_seg the same; this is used later to determine the direction of time
-			// make linkFrom_isOrigin = true if the TOF is negative, false if TOF is positive
-			// to avoid parallel structure problems
-			linkFrom_isOrigin = linkTOF < 0;
+			// Delete appendSeg and appendNode
+			pAppendArc->deleteSeg(appendSeg.getID());
+			pAppendArc->deleteNode(appendNodeID);
+
+			// The node to be appended is now otherNode
+			appendNodeID = otherNodeID;
+			const Node &otherNode = pAppendArc->getNodeRef_const(otherNodeID);
+
+			// The seg to be appended is now the segment attached to otherNode
+			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
+
+			if(otherSegID == Linkable::INVALID_ID){
+				// No segments left, just a node.
+				// Leave appendSeg untouched; it is used later to determine the direction of time
+				// Make bAppendNodeIsOrigin = true if the TOF is negative, false if TOF is positive
+				// to avoid parallel structure problems
+				 
+				bAppendNodeIsOrigin = linkTOF < 0;
+			}else{
+				appendSeg = pAppendArc->getSeg(otherSegID);
+				bAppendNodeIsOrigin = appendSeg.getOrigin() == otherNode.getID();
+			}
+		}else{	// appendNode is the origin, local node is terminus
+			/*	Cases:
+			 *	
+			 *				vv Local Node
+			 *	[]--Local-->[] . []--Append-->[]
+			 *	[]--Local-->[] . []>--Append--[]	(NOT ALLOWED; both localNode and appendNode are terminus nodes)
+			 *	[]--Local--<[] . []<--Append--[]	(NOT ALLOWED; both localNode and appendNode are terminus nodes)
+			 *					 ^^ Append Node
+			 *	
+			 *	In this case, appendNode is an origin, so delete localNode
+			 *	and copy over localSeg
+			 */
+			linkTOF = localSeg.getTOF();
+			linkSTM = localSeg.getSTM();
+			linkSegStates = localSeg.getStateVector();
+			linkSegTimes = localSeg.getTimeVector();
+			pLinkCtrlLaw = localSeg.getCtrlLaw();
+			linkStateWidth = localSeg.getStateWidth();
+
+			// Get the ID of the other node attached to localSeg before deleting localSeg
+			int otherNodeID = localSeg.getOrigin();
+
+			// Delete localSeg and localNode
+			deleteSeg(localSeg.getID());
+			deleteNode(localNodeID);
+
+			// The node to be appended is now otherNode
+			localNodeID = otherNodeID;
+			const Node &otherNode = nodes[nodeIDMap[localNodeID]];
+
+			// The seg to be appended is now the segment attached to otherNode
+			int otherSegID = otherNode.getLink(0) == Linkable::INVALID_ID ? otherNode.getLink(1) : otherNode.getLink(0);
+
+			if(otherSegID == Linkable::INVALID_ID){
+				// No segments left, just a node.
+				// Leave localSeg untouched; it is used later to determine the direction of time
+				// Make bLocalNodeIsOrigin = true if the TOF is negative, false if TOF is positive
+				 
+				bLocalNodeIsOrigin = linkTOF < 0;
+			}else{
+				localSeg = segs[segIDMap[otherSegID]];
+				bLocalNodeIsOrigin = localSeg.getOrigin() == otherNode.getID();
+			}
 		}
 	}
 
-	// A mapping vector: index is the old node ID, value is the new node ID
-	// All new IDs are initialized to the default pSetCpy value
-	std::vector<int> map_oldID_to_newID = concatArcset(pSetCpy.get());
+	/*	Concatenate the two arcsets without connecting anything.
+	 *	The mapping vector: index is the old node ID, value is the new node ID
+	 *	All new IDs are initialized to the default pAppendArc value
+	 */
+	std::vector<int> map_oldID_to_newID = concatArcset(pAppendArc.get());
 
-	// Add a new segment to link the nodes from [pSetCpy] to [this object]
-	int origin = Linkable::INVALID_ID, terminus = Linkable::INVALID_ID;
-	if(!linkTo_isOrigin){
-		origin = linkTo_ID;
-		terminus = map_oldID_to_newID[linkFrom_ID];
-	}else if(!linkFrom_isOrigin){
-		origin = map_oldID_to_newID[linkFrom_ID];
-		terminus = linkTo_ID;
+	// ------------------------------------------------------------------------
+	// Add a new segment to link the nodes from [pAppendArc] to [this object]
+	// ------------------------------------------------------------------------
+
+	int linkOrigin = Linkable::INVALID_ID, linkTerminus = Linkable::INVALID_ID;
+
+	if(!bLocalNodeIsOrigin){
+		linkOrigin = localNodeID;
+		linkTerminus = map_oldID_to_newID[appendNodeID];
+	}else if(!bAppendNodeIsOrigin){
+		linkOrigin = map_oldID_to_newID[appendNodeID];
+		linkTerminus = localNodeID;
 	}else{
-		// Both are origins; the only double-origin node posibility is one where
+		// Both are origins; the only double-linkOrigin node posibility is one where
 		// each segment that originates from the node has a different time direction
-		if(linkTo_seg.getTOF() < 0){
-			origin = tof > 0 ? linkTo_ID : map_oldID_to_newID[linkFrom_ID];
-			terminus = tof > 0 ? map_oldID_to_newID[linkFrom_ID] : linkTo_ID;
-		}else if(linkFrom_seg.getTOF() < 0){
-			origin = tof > 0 ? map_oldID_to_newID[linkFrom_ID] : linkTo_ID;
-			terminus = tof > 0 ? linkTo_ID : map_oldID_to_newID[linkFrom_ID];
+		
+		// localSeg and appendSeg have been updated to be the closest segments to the concatenation interface
+		if(localSeg.getTOF() < 0){
+			// If the closest segment on the local side is/was reverse time
+			linkOrigin = tof > 0 ? localNodeID : map_oldID_to_newID[appendNodeID];
+			linkTerminus = tof > 0 ? map_oldID_to_newID[appendNodeID] : localNodeID;
+		}else if(appendSeg.getTOF() < 0){
+			// If the closest segment on the local side is/was reverse time
+			linkOrigin = tof > 0 ? map_oldID_to_newID[appendNodeID] : localNodeID;
+			linkTerminus = tof > 0 ? localNodeID : map_oldID_to_newID[appendNodeID];
 		}
 	}
 
 	if(tof != 0){
 		// Put minimum amount of data in the linkSeg state and time vectors
-		linkSegTimes.push_back(getEpoch(origin));
-		linkSegTimes.push_back(getEpoch(terminus));
+		linkSegTimes.push_back(getEpoch(linkOrigin));
+		linkSegTimes.push_back(getEpoch(linkTerminus));
 
-		std::vector<double> q0 = getState(origin);
-		std::vector<double> qf = getState(terminus);
+		std::vector<double> q0 = getState(linkOrigin);
+		std::vector<double> qf = getState(linkTerminus);
 		std::vector<double> extra(pSysData->getDynamicsModel()->getExtraStateSize(), 0);
 
-		// Append state, STM, and extra states for the origin and terimal nodes that the link segment connects to
+		// Append state, STM, and extra states for the linkOrigin and terimal nodes that the link segment connects to
 		// Do not add any control information; the default control law is set to nullptr
 		linkSegStates.insert(linkSegStates.end(), q0.begin(), q0.end());
 		linkSegStates.insert(linkSegStates.end(), linkSTM.data(), linkSTM.data() + coreSize*coreSize);
@@ -413,7 +486,7 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	}
 	// print();
 	bInChronoOrder = false;
-	Segment linkSeg = Segment(origin, terminus, linkTOF);
+	Segment linkSeg = Segment(linkOrigin, linkTerminus, linkTOF);
 	linkSeg.setSTM(linkSTM);
 	linkSeg.setCtrlLaw(pLinkCtrlLaw);
 	linkSeg.setStateVector(linkSegStates);
@@ -421,7 +494,12 @@ int BaseArcset::appendSetAtNode(const BaseArcset *pArcsetIn, int linkTo_ID, int 
 	linkSeg.setTimeVector(linkSegTimes);
 	
 	// linkSeg.print();
-	return addSeg(linkSeg);
+	int newSegID = addSeg(linkSeg);
+
+	// Update all epochs
+	updateEpochs(nodeIDMap[0], getEpoch(0));
+
+	return newSegID;
 }//====================================================
 
 /**
@@ -449,10 +527,10 @@ void BaseArcset::clearAllConstraints(){
  *  include two independent "flows" without a segment to connect them
  * 
  *  \param pSet pointer to an arcset object
- *  \return a map relating the nodeIDs in <tt>set</tt> to the new IDs of the same nodes
+ *  \return a map relating the nodeIDs in `pSet` to the new IDs of the same nodes
  *  in this object; the index of the vector is the old node ID and the value is the 
  *  new node ID. If a node does not exist for one of the old ID values, a new value 
- *  equivalent to <tt>Linkable::INVALID_ID</tt> is stored in the associated 
+ *  equivalent to `Linkable::INVALID_ID` is stored in the associated 
  *  vector element.
  *  
  *  \throws Exception if the input arcset does not have the same system data object as this one
@@ -667,7 +745,7 @@ void BaseArcset::deleteNode(int id){
  *  \param id The ID of the segment to delete. If the ID is out of range, an exception
  *  is thrown. If the ID is in range but doesn't represent an existing segment,
  *  no deletion is made
- * 	\throws Exception if <tt>id</tt> is out of bounds
+ * 	\throws Exception if `id` is out of bounds
  */
 void BaseArcset::deleteSeg(int id){
 	if(segIDMap.count(id) == 0)
@@ -713,7 +791,7 @@ void BaseArcset::deleteSeg(int id){
  * 
  *  \param id the ID of a node
  *  \return the acceleration vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getStateDeriv(int id){
@@ -728,7 +806,7 @@ std::vector<double> BaseArcset::getStateDeriv(int id){
  *	\param ix the step index. If it is negative, the index will count backwards
  *	from the end of the arc (e.g. ix = -1 will return the last acceleration)
  *	\return the acceleration associated with the specified index
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getStateDerivByIx(int ix){
 	if(ix < 0)
@@ -963,7 +1041,7 @@ std::vector<ArcPiece> BaseArcset::sortArcset(int ID, std::vector<ArcPiece> prevP
  *	\param ix the index of the state coordinate
  *	\return a vector containing the specified coordinate for all
  *	nodes (not necessarily in chronological order)
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getCoord(unsigned int ix) const{
 	if(nodes.size() > 0 && ix >= nodes[0].getState().size())
@@ -1003,7 +1081,7 @@ const ControlLaw* BaseArcset::getCtrlLawByIx(int ix) const{
  * 
  *  \param id the ID of a node
  *  \return the epoch
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 double BaseArcset::getEpoch(int id) const{
@@ -1021,13 +1099,13 @@ double BaseArcset::getEpoch(int id) const{
 /**
  *  \brief Retrieve the epoch of a specific node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \return The epoch associated with the specified node
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 double BaseArcset::getEpochByIx(int ix) const{
 	if(ix < 0)
@@ -1057,14 +1135,14 @@ std::vector<double> BaseArcset::getEpochs() const{
 
 /**
  *	\brief Retrieve a set of extra parameters for the specified node
- *	\param n the node index within the <tt>nodes</tt> storage array; This value
+ *	\param n the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *	\param key string that identifies the extra parameter
  *	\return a vector containing the extra parameter at the specified step and index
- *	\throws Exception if <tt>n</tt> is out of bounds
+ *	\throws Exception if `n` is out of bounds
  */
 double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 	if(n < 0)
@@ -1079,9 +1157,9 @@ double BaseArcset::getExtraParamByIx(int n, std::string key) const{
 /**
  *  \brief Retrieve a set of extra parameters for the specified node
  * 
- *  \param n node index within the <tt>nodes</tt> storage array; This value
+ *  \param n node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *  \param key string that identifies the extra parameter
  * 
@@ -1142,7 +1220,7 @@ unsigned int BaseArcset::getNumCons() const {
  *  \param id the ID of the desired node.
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
 Node BaseArcset::getNode(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1159,10 +1237,10 @@ Node BaseArcset::getNode(int id) const{
 /**
  *  \brief Retrieve a node based on its index in the storage array
  * 
- *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a node at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Node BaseArcset::getNodeByIx(int ix) const{
 	if(ix < 0)
@@ -1182,7 +1260,7 @@ Node BaseArcset::getNodeByIx(int ix) const{
  *  \param id the ID of the desired node.
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
 Node& BaseArcset::getNodeRef(int id){
 	if(nodeIDMap.count(id) == 0)
@@ -1200,10 +1278,10 @@ Node& BaseArcset::getNodeRef(int id){
 /**
  *  \brief Retrieve a reference to a node based on its index in the storage array
  * 
- *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a node at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
 	if(ix < 0)
@@ -1221,7 +1299,7 @@ const Node& BaseArcset::getNodeRefByIx_const(int ix) const{
  *  \param id the ID of the desired node.
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no node exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no node exists with the specified ID
  */
 const Node& BaseArcset::getNodeRef_const(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1238,10 +1316,10 @@ const Node& BaseArcset::getNodeRef_const(int id) const{
 /**
  *  \brief Retrieve a reference to a node based on its index in the storage array
  * 
- *  \param ix The index of the node; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the node; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a node at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Node& BaseArcset::getNodeRefByIx(int ix){
 	if(ix < 0)
@@ -1259,7 +1337,7 @@ Node& BaseArcset::getNodeRefByIx(int ix){
  * 
  *  \param id node ID
  *  \return the index of the node with the specified ID within the storage vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 int BaseArcset::getNodeIx(int id) const{
 	if(nodeIDMap.count(id) == 0)
@@ -1274,7 +1352,7 @@ int BaseArcset::getNodeIx(int id) const{
  *  \param id the ID of the desired node
  *	
  *  \return the node located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
 Segment BaseArcset::getSeg(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1291,10 +1369,10 @@ Segment BaseArcset::getSeg(int id) const{
 /**
  *  \brief Retrieve a segment based on its index in the storage array
  * 
- *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a segment at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Segment BaseArcset::getSegByIx(int ix) const{
 	if(ix < 0)
@@ -1312,7 +1390,7 @@ Segment BaseArcset::getSegByIx(int ix) const{
  *  \param id the ID of the desired segment.
  *	
  *  \return the segment located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
 Segment& BaseArcset::getSegRef(int id){
 	if(segIDMap.count(id) == 0)
@@ -1330,10 +1408,10 @@ Segment& BaseArcset::getSegRef(int id){
 /**
  *  \brief Retrieve a reference to a segment based on its index in the storage array
  * 
- *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a segment at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 Segment& BaseArcset::getSegRefByIx(int ix){
 	if(ix < 0)
@@ -1352,7 +1430,7 @@ Segment& BaseArcset::getSegRefByIx(int ix){
  *  \param id the ID of the desired segment.
  *	
  *  \return the segment located with the specified ID
- *  \throws Exception if <tt>id</tt> is out of bounds or if no segment exists with the specified ID
+ *  \throws Exception if `id` is out of bounds or if no segment exists with the specified ID
  */
 const Segment& BaseArcset::getSegRef_const(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1369,10 +1447,10 @@ const Segment& BaseArcset::getSegRef_const(int id) const{
 /**
  *  \brief Retrieve a reference to a segment based on its index in the storage array
  * 
- *  \param ix The index of the segment; if <tt>ix</tt> is negative, the index will
+ *  \param ix The index of the segment; if `ix` is negative, the index will
  *  count backwards from the end of the storage array.
  *  \return a reference to a segment at the specified index
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
 	if(ix < 0)
@@ -1389,7 +1467,7 @@ const Segment& BaseArcset::getSegRefByIx_const(int ix) const{
  * 
  *  \param id node ID
  *  \return the index of the node with the specified ID within the storage vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 int BaseArcset::getSegIx(int id) const{
 	if(segIDMap.count(id) == 0)
@@ -1404,7 +1482,7 @@ int BaseArcset::getSegIx(int id) const{
  * 
  *  \param id the ID of a node
  *  \return the state vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the node with the specified ID is not located in the nodeIDMap
  */
 std::vector<double> BaseArcset::getState(int id) const{
@@ -1421,13 +1499,13 @@ std::vector<double> BaseArcset::getState(int id) const{
 
 /**
  *	\brief Retrieve a position-velocity state on the arc
- *	\param ix the node index within the <tt>nodes</tt> storage array; This value
+ *	\param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *	\return the state associated with the specified index
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 std::vector<double> BaseArcset::getStateByIx(int ix) const{
 	if(ix < 0)
@@ -1445,7 +1523,7 @@ std::vector<double> BaseArcset::getStateByIx(int ix) const{
  * 
  *  \param id the ID of a segment
  *  \return the STM
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 MatrixXRd BaseArcset::getSTM(int id) const{
@@ -1463,10 +1541,10 @@ MatrixXRd BaseArcset::getSTM(int id) const{
 /**
  *	\brief Retrieve an STM on the arc
  *	\param ix the segment index. If it is negative, the index will count backwards
- *	from the end of the <tt>segs</tt> storage array
+ *	from the end of the `segs` storage array
  *	
  *	\return the STM associated with the specified index
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 MatrixXRd BaseArcset::getSTMByIx(int ix) const{
 	if(ix < 0)
@@ -1493,7 +1571,7 @@ const SysData* BaseArcset::getSysData() const { return pSysData; }
  * 
  *  \param id the ID of a segment
  *  \return the time-of-flight
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the segment with the specified ID is not located in the segIDMap
  */
 double BaseArcset::getTOF(int id) const{
@@ -1512,7 +1590,7 @@ double BaseArcset::getTOF(int id) const{
  *	\param ix node index (NOT the ID); if less than 0, the index counts
  *	backwards from the end of the nodeset
  *	\return non-dimensional time-of-flight along the specified segment
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 double BaseArcset::getTOFByIx(int ix) const {
 	if(ix < 0)
@@ -1582,6 +1660,7 @@ void BaseArcset::putInChronoOrder(bool force){
 
 	if(pieces.size() != nodes.size() + segs.size()){
 		astrohelion::printErr("Pieces has %zu elements, but there are %zu nodes and %zu segs\n", pieces.size(), nodes.size(), segs.size());
+		saveToMat("ChronoOrderErr.mat");
 		throw Exception("BaseArcset::putInChronoOrder: The sorted vector does not include all nodes and segments; aborting to avoid losing data\n");
 	}
 
@@ -1635,7 +1714,7 @@ void BaseArcset::putInChronoOrder(bool force){
  * 
  *  \param id the ID of a node
  *  \param epoch the epoch time
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 void BaseArcset::setEpoch(int id, double epoch){
 	if(nodeIDMap.count(id) == 0)
@@ -1647,13 +1726,13 @@ void BaseArcset::setEpoch(int id, double epoch){
 /**
  *  \brief Set the epoch time for a specific node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>ix</tt> is negative, this index will
+ *	was added to the arcset object. If `ix` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param epoch the epoch time
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 void BaseArcset::setEpochByIx(int ix, double epoch){
 	if(ix < 0)
@@ -1671,8 +1750,8 @@ void BaseArcset::setEpochByIx(int ix, double epoch){
  * 
  *  \param id the ID of a node
  *  \param qdot the acceleration vector
- *  \throws Exception if <tt>id</tt> is out of bounds
- *  \throws Exception if <tt>qdot</tt> does not have the same size as the 
+ *  \throws Exception if `id` is out of bounds
+ *  \throws Exception if `qdot` does not have the same size as the 
  *  state vector
  */
 void BaseArcset::setStateDeriv(int id, std::vector<double> qdot){
@@ -1688,14 +1767,14 @@ void BaseArcset::setStateDeriv(int id, std::vector<double> qdot){
 /**
  *  \brief Set the state derivative vector for a specific step/node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>n</tt> is negative, this index will
+ *	was added to the arcset object. If `n` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param derivVec state derivative vector
- *  \throws Exception if <tt>ix</tt> is out of bounds
- *  \throws Exception if <tt>qdot</tt> does not have the same size as the 
+ *  \throws Exception if `ix` is out of bounds
+ *  \throws Exception if `qdot` does not have the same size as the 
  *  state vector
  */
 void BaseArcset::setStateDerivByIx(int ix, std::vector<double> derivVec){
@@ -1717,7 +1796,7 @@ void BaseArcset::setStateDerivByIx(int ix, std::vector<double> derivVec){
  * 
  *  \param id the ID of a node
  *  \param state the state vector
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  */
 void BaseArcset::setState(int id, std::vector<double> state){
 	if(nodeIDMap.count(id) == 0)
@@ -1729,13 +1808,13 @@ void BaseArcset::setState(int id, std::vector<double> state){
 /**
  *  \brief Set the state vector for a specific node
  * 
- *  \param ix the node index within the <tt>nodes</tt> storage array; This value
+ *  \param ix the node index within the `nodes` storage array; This value
  *	is not necessarily the same as the unique ID assigned to the node when it 
- *	was added to the arcset object. If <tt>ix</tt> is negative, this index will
+ *	was added to the arcset object. If `ix` is negative, this index will
  *	cound backwards from the end of the array.
  *	
  *  \param stateVec vector of non-dimensional state values
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
 	if(ix < 0)
@@ -1753,7 +1832,7 @@ void BaseArcset::setStateByIx(int ix, std::vector<double> stateVec){
  * 
  *  \param id the ID of a segment
  *  \param stm the STM
- *  \throws Exception if <tt>id</tt> is out of bounds
+ *  \throws Exception if `id` is out of bounds
  *  \throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTM(int id, MatrixXRd stm){
@@ -1770,11 +1849,11 @@ void BaseArcset::setSTM(int id, MatrixXRd stm){
 /**
  *  \brief Set the STM for a specific step/node
  * 
- *  \param ix index of the segment with the <tt>segs</tt> storage array; if it is negative,
+ *  \param ix index of the segment with the `segs` storage array; if it is negative,
  *  it will count backwards from the end of the array.
  *  
  *  \param stm a matrix containing the STM
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  *  \throws Exception if the STM is not the size specified by the DynamicalModel
  */
 void BaseArcset::setSTMByIx(int ix, MatrixXRd stm){
@@ -2369,7 +2448,12 @@ matvar_t* BaseArcset::createVar_SegTOF(Save_tp saveTp, const char *pVarName) con
 
 /**
  *  \brief Create a matio variable for the segment STMs
- *  \details The data is copied into a matvar_t pointer, which is
+ *  \details The STM is copied from each segment state vector, thus,
+ *  the STM represents the evolution of each individual segment 
+ *  regardless of whether or not the arcset has been set to store
+ *  cumulative STMs via setSTM_cumulative().
+ *  
+ *  The data is copied into a matvar_t pointer, which is
  *  allocated on the stack
  * 
  * 	\param saveTp describes how much data to save
@@ -2387,8 +2471,11 @@ matvar_t* BaseArcset::createVar_SegSTM(Save_tp saveTp, const char *pVarName) con
 	}
 
 	unsigned int count = 0;
+	unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize(), ctrl_dim = 0;
 	for(const Segment &seg : segs){
-		MatrixXRd P = seg.getSTM().transpose();
+		ctrl_dim = seg.getCtrlLaw() ? seg.getCtrlLaw()->getNumStates() : 0;
+
+		MatrixXRd P = seg.getSTM_fromStates(core_dim, ctrl_dim).transpose();
 		dims[0] = P.cols();
 		dims[1] = P.rows();
 

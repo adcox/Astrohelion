@@ -246,19 +246,19 @@ public:
 	 *  \brief Do any model-specific initializations for the MultShootData object
 	 *  \param it a pointer to the MultShootData object for the multiple shooting process
 	 */
-	virtual void multShoot_initIterData(MultShootData *it) const = 0;
+	virtual void multShoot_initIterData(MultShootData &it) const = 0;
 
-	virtual void multShoot_initDesignVec(MultShootData*) const;
-	virtual void multShoot_createContCons(MultShootData*) const;
-	virtual void multShoot_getSimICs(const MultShootData*, int, double*, double*, double*, double*) const;
-	virtual void multShoot_applyConstraint(MultShootData*, const Constraint&, int) const;
-	virtual double multShoot_getSlackVarVal(const MultShootData*, const Constraint&)const ;
+	virtual void multShoot_initDesignVec(MultShootData&) const;
+	virtual void multShoot_createContCons(MultShootData&) const;
+	virtual void multShoot_getSimICs(const MultShootData&, int, double*, double*, double*, double*) const;
+	virtual void multShoot_applyConstraint(MultShootData&, const Constraint&, int) const;
+	virtual double multShoot_getSlackVarVal(const MultShootData&, const Constraint&)const ;
 
 	/**
-	 *  \brief Take the final, corrected free variable vector <tt>X</tt> and create an output 
+	 *  \brief Take the final, corrected free variable vector `X` and create an output 
 	 *  nodeset
 	 *
-	 *  If <tt>findEvent</tt> is set to true, the
+	 *  If `findEvent` is set to true, the
 	 *  output nodeset will contain extra information for the simulation engine to use. Rather than
 	 *  returning only the position and velocity states, the output nodeset will contain the STM 
 	 *  and other values for the final node; this information will be appended to the extraParameter
@@ -268,7 +268,7 @@ public:
 	 *  
 	 *  \return a pointer to a nodeset containing the corrected nodes
 	 */
-	virtual void multShoot_createOutput(const MultShootData* it) const;
+	virtual void multShoot_createOutput(const MultShootData& it) const;
 	//\}
 
 	/**
@@ -336,6 +336,7 @@ protected:
 		Event_tp::XY_PLANE,
 		Event_tp::XZ_PLANE,
 		Event_tp::YZ_PLANE,
+		Event_tp::STATE_PLANE,
 		Event_tp::CRASH,
 		Event_tp::APSE,
 		Event_tp::DIST};
@@ -346,24 +347,24 @@ protected:
 	 *  \name Multiple Shooting Analysis Functions
 	 *  \{
 	 */
-	virtual void multShoot_targetApse(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetApse_endSeg(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetDeltaV(MultShootData*, const Constraint&, int) const;
-	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData*, const Constraint&) const;
-	virtual void multShoot_targetDist(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetDist_endSeg(MultShootData*, const Constraint&, int) const;
-	virtual double multShoot_targetDist_compSlackVar(const MultShootData*, const Constraint&) const;
-	virtual double multShoot_targetDist_endSeg_compSlackVar(const MultShootData*, const Constraint&) const;
-	virtual void multShoot_targetCont_Ctrl(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetCont_Ex(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetCont_Ex_Seg(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetMatchAll(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetMatchCust(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetCont_State(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetCont_State_Seg(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetState(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetState_endSeg(MultShootData*, const Constraint&, int) const;
-	virtual void multShoot_targetTOF(MultShootData*, const Constraint&, int) const;
+	virtual void multShoot_targetApse(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetApse_endSeg(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetDeltaV(MultShootData&, const Constraint&, int) const;
+	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData&, const Constraint&) const;
+	virtual void multShoot_targetDist(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetDist_endSeg(MultShootData&, const Constraint&, int) const;
+	virtual double multShoot_targetDist_compSlackVar(const MultShootData&, const Constraint&) const;
+	virtual double multShoot_targetDist_endSeg_compSlackVar(const MultShootData&, const Constraint&) const;
+	virtual void multShoot_targetCont_Ctrl(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetCont_Ex(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetCont_Ex_Seg(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetMatchAll(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetMatchCust(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetCont_State(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetCont_State_Seg(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetState(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetState_endSeg(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetTOF(MultShootData&, const Constraint&, int) const;
 	//\}
 };
 

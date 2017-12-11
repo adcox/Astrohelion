@@ -68,7 +68,7 @@ Arcset::~Arcset(){}
 
 /**
  *  \brief Create a new arcset object on the stack
- *  \details The <tt>delete</tt> function must be called to 
+ *  \details The `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -82,7 +82,7 @@ baseArcsetPtr Arcset::create( const SysData *sys) const{
 /**
  *  \brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details The <tt>delete</tt> function must be called to 
+ *  \details The `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
@@ -99,9 +99,7 @@ baseArcsetPtr Arcset::clone() const{
 /**
  *  \brief Combine two arcsets.
  *  \details This function concatenates two arcset objects. It is assumed
- *  that the first state on <tt>rhs</tt> is identical to the final state on
- *  <tt>rhs</tt>. The <tt>rhs</tt> object is also assumed to occur after
- *  (chronologically) <tt>lhs</tt>
+ *  that the `rhs` object occurs after (chronologically) `lhs`
  * 
  *  \param lhs reference to a arcset object
  *  \param rhs reference to a arcset object
@@ -122,7 +120,7 @@ Arcset operator +(const Arcset &lhs, const Arcset &rhs){
  *  \brief Concatenate this object with another arcset
  * 
  *  \param rhs reference to a arcset object
- *  \return the concatenation of this and <tt>rhs</tt>
+ *  \return the concatenation of this and `rhs`
  *  @see operator +()
  */
 Arcset& Arcset::operator +=(const Arcset &rhs){
@@ -213,7 +211,7 @@ int Arcset::createNodesAtEvent(int segID, Event evt, double minTimeDiff){
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  *  
  *  \return the number of nodes created and inserted into the nodeset.
- *  \throws Exception if <tt>segID</tt> is out of bounds
+ *  \throws Exception if `segID` is out of bounds
  */
 int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
 	if(segIDMap.count(segID) == 0)
@@ -287,7 +285,7 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
  *	\brief Retrieve the time along the arcset at a specific step
  *	\param ix node index; if < 0, it will count backwards from end of arcset
  *	\return the non-dimensional time along the arcset at the specified step
- *	\throws Exception if <tt>ix</tt> is out of bounds
+ *	\throws Exception if `ix` is out of bounds
  */
 double Arcset::getTimeByIx(int ix) const {
 	return getEpochByIx(ix);
@@ -299,7 +297,7 @@ double Arcset::getTimeByIx(int ix) const {
  * 
  *	\param ix node index; if < 0, it will count backwards from end of arcset
  *  \param t time associated with the node
- *  \throws Exception if <tt>ix</tt> is out of bounds
+ *  \throws Exception if `ix` is out of bounds
  */
 void Arcset::setTimeByIx(int ix, double t){
 	setEpochByIx(ix, t);
@@ -407,6 +405,10 @@ void Arcset::print() const {
 	printf("%s Arcset:\n Nodes: %zu\n Segments: %zu\n", pSysData->getTypeStr().c_str(),
 		nodes.size(), segs.size());
 	printf("List of Nodes:\n");
+
+	unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
+	unsigned int extra_dim = pSysData->getDynamicsModel()->getExtraStateSize();
+
 	for(const auto &index : nodeIDMap){
 		printf("  %02d (ix %02d):", index.first, index.second);
 		if(index.second != Linkable::INVALID_ID){
@@ -451,10 +453,15 @@ void Arcset::print() const {
 			printf(" origin @ %02d, terminus @ %02d, TOF = %13.8f\n", segs[index.second].getOrigin(),
 				segs[index.second].getTerminus(), segs[index.second].getTOF());
 
-			if(segs[index.second].getCtrlLaw())
+			unsigned int ctrl_dim = 0;
+			if(segs[index.second].getCtrlLaw()){
 				printf("\t> Ctrl Law: %s\n", segs[index.second].getCtrlLaw()->getLawTypeString().c_str());
-			else
+				ctrl_dim = segs[index.second].getCtrlLaw()->getNumStates();
+			}else
 				printf("\t> Ctrl Law: None\n");
+
+			printf("\t> State Width = %d (core: %d, ctrl: %d, extra: %d)\n", segs[index.second].getStateWidth(),
+				core_dim, ctrl_dim, extra_dim);
 			
 		}else{
 			printf(" [N/A]\n");

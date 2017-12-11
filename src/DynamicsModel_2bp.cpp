@@ -184,9 +184,9 @@ std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<doubl
  *  \brief Perform model-specific initializations on the MultShootData object
  *  \details NOT YET IMPLEMENTED
  *  
- *  \param it pointer to the object to be initialized
+ *  \param it reference to the object to be initialized
  */
-void DynamicsModel_2bp::multShoot_initIterData(MultShootData *it) const{
+void DynamicsModel_2bp::multShoot_initIterData(MultShootData& it) const{
 	(void)it;
 }//====================================================
 

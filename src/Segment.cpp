@@ -327,7 +327,10 @@ MatrixXRd Segment::getSTM() const{ return stm; }
  * 
  *  \return a matrix representation of the STM
  */
-MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const { 
+MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const {
+	if(stateWidth == 0)
+		throw Exception("Segment::getSTM_fromStates: stateWidth = 0; cannot proceed");
+
 	unsigned int el0 = core_dim + ctrl_dim;		// Index of first stm element
 	unsigned int side = core_dim + ctrl_dim;	// side length of the STM
 	unsigned int elf = el0 + side*side;			// Index of final stm element
@@ -498,7 +501,7 @@ void Segment::setVelCon(const bool data[3]){
  *	\param data a three-element boolean vector. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
- *	@throw Exception if <tt>data</tt> has fewer than three elements
+ *	@throw Exception if `data` has fewer than three elements
  */
 void Segment::setVelCon(std::vector<bool> data){
 	if(data.size() < 3){

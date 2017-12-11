@@ -60,10 +60,10 @@ BOOST_AUTO_TEST_CASE(CR3BP_EM_IntermediateSolution){
 		std::vector<double> segState = refSeg.getStateByRow(0);
 
 		for(unsigned int i = 0; i < 6; i++){
-			BOOST_CHECK_CLOSE(originState[i], segState[i], 1e-12);
+			BOOST_CHECK_SMALL(originState[i] - segState[i], 1e-12);
 		}
 
-		BOOST_CHECK_CLOSE(correctedNodeset.getNodeRef(refSeg.getOrigin()).getEpoch(), refSeg.getTimeByIx(0), 1e-12);
+		BOOST_CHECK_SMALL(correctedNodeset.getNodeRef(refSeg.getOrigin()).getEpoch() - refSeg.getTimeByIx(0), 1e-12);
 	}
 }//====================================================
 

@@ -120,7 +120,7 @@ void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha,
 
 	// Create the control law object that describes the constant thrust vector with a very high Isp
 	std::vector<double> params {f, 10000};
-	*pLaw = ControlLaw_cr3bp_lt(ControlLaw_cr3bp_lt::Law_tp::GENERAL_CONST_F, params);
+	*pLaw = ControlLaw_cr3bp_lt(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, params);
 	EOM_ParamStruct eomParams(pSys, pLaw);
 
 	// Get state size

@@ -38,7 +38,7 @@ bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);
  *  \param data vector of state values from the corrections process
  *  \param correct array of state values from the constraint
  *  \param tol desired numerical tolerance
- *  \return whether or not <tt>data</tt> and <tt>correct</tt> are equal
+ *  \return whether or not `data` and `correct` are equal
  *  within the desired tolerance
  */
 bool stateDiffBelowTol(std::vector<double> data, double *correct, double tol){
@@ -376,7 +376,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_MaxDeltaV, data::make(tofTypes)
 	MultShootData itData(correctedSet);
 	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
-	double totalDV = MultShootEngine::getTotalDV(&itData);
+	double totalDV = MultShootEngine::getTotalDV(itData);
 	BOOST_CHECK_LE(totalDV, maxDVConData);
 }//====================================================
 
@@ -401,7 +401,7 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_DeltaV, data::make(tofTypes), t
 	MultShootData itData(correctedSet);
 	BOOST_CHECK_NO_THROW(itData = corrector->multShoot(halfLyapSet, correctedSet));
 
-	double totalDV = MultShootEngine::getTotalDV(&itData);
+	double totalDV = MultShootEngine::getTotalDV(itData);
 	BOOST_CHECK_SMALL(totalDV - maxDVConData, 1e-10);
 }//====================================================
 

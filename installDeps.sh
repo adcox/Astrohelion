@@ -30,78 +30,78 @@ fi
 mkdir -p deps
 cd deps
 
-## Boost
-wget https://sourceforge.net/projects/boost/files/boost/1.65.1/boost_1_65_1.tar.gz
-tar -xzf boost*.tar.gz >> $LOG
-cd boost*
-echo "Installing BOOST"
-./bootstrap.sh --prefix=$INSTALL_DIR
-if [[ "$OS" == "darwin" ]]; then
-	./b2 toolset=gcc-6 -d0 install --with-filesystem --with-system --with-test
-else
-	./b2 -d0 install --with-filesystem --with-system --with-test
-fi
-cd ..
-rm boost*.tar.gz
+# ## Boost
+# wget https://sourceforge.net/projects/boost/files/boost/1.65.1/boost_1_65_1.tar.gz
+# tar -xzf boost*.tar.gz >> $LOG
+# cd boost*
+# echo "Installing BOOST"
+# ./bootstrap.sh --prefix=$INSTALL_DIR
+# if [[ "$OS" == "darwin" ]]; then
+# 	./b2 toolset=gcc-6 -d0 install --with-filesystem --with-system --with-test
+# else
+# 	./b2 -d0 install --with-filesystem --with-system --with-test
+# fi
+# cd ..
+# rm boost*.tar.gz
 
-## CSpice
-if [[ "$OS" == "darwin" ]]; then
-	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/MacIntel_OSX_AppleC_64bit/packages/cspice.tar.Z
-else 
-	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
-fi
-tar -xzf cspice.tar.Z >> $LOG
-cd cspice
-echo "Installing CSPICE"
-mkdir -p $INSTALL_DIR/include/cspice
-mkdir -p $INSTALL_DIR/bin/cspice
-cp -R include/* $INSTALL_DIR/include/cspice/
-mv lib/cspice.a $INSTALL_DIR/lib/libcspice.a
-mv lib/csupport.a $INSTALL_DIR/lib/libcsupport.a
-mv exe/* $INSTALL_DIR/bin/cspice/
-cd ..
-rm cspice.tar.Z
+# ## CSpice
+# if [[ "$OS" == "darwin" ]]; then
+# 	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/MacIntel_OSX_AppleC_64bit/packages/cspice.tar.Z
+# else 
+# 	wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
+# fi
+# tar -xzf cspice.tar.Z >> $LOG
+# cd cspice
+# echo "Installing CSPICE"
+# mkdir -p $INSTALL_DIR/include/cspice
+# mkdir -p $INSTALL_DIR/bin/cspice
+# cp -R include/* $INSTALL_DIR/include/cspice/
+# mv lib/cspice.a $INSTALL_DIR/lib/libcspice.a
+# mv lib/csupport.a $INSTALL_DIR/lib/libcsupport.a
+# mv exe/* $INSTALL_DIR/bin/cspice/
+# cd ..
+# rm cspice.tar.Z
 
-## MatIO
-wget https://sourceforge.net/projects/matio/files/matio/1.5.11/matio-1.5.11.tar.gz
-tar -xzf matio-* >> $LOG
-cd matio-*
-echo "Installing MATIO"
-./configure --prefix=$INSTALL_DIR
-make >> $LOG
-make install >> $LOG
-cd ..
-rm matio-1.5.11.tar.gz
+# ## MatIO
+# wget https://sourceforge.net/projects/matio/files/matio/1.5.11/matio-1.5.11.tar.gz
+# tar -xzf matio-* >> $LOG
+# cd matio-*
+# echo "Installing MATIO"
+# ./configure --prefix=$INSTALL_DIR
+# make >> $LOG
+# make install >> $LOG
+# cd ..
+# rm matio-1.5.11.tar.gz
 
-## GSL
-wget http://mirror.nexcess.net/gnu/gsl/gsl-2.4.tar.gz
-tar -xzf gsl-*.tar.gz >> $LOG
-cd gsl-*
-echo "Installing GSL"
-./configure --prefix=$INSTALL_DIR
-make >> $LOG
-make install >> $LOG
-cd ..
-rm gsl-*.tar.gz
+# ## GSL
+# wget http://mirror.nexcess.net/gnu/gsl/gsl-2.4.tar.gz
+# tar -xzf gsl-*.tar.gz >> $LOG
+# cd gsl-*
+# echo "Installing GSL"
+# ./configure --prefix=$INSTALL_DIR
+# make >> $LOG
+# make install >> $LOG
+# cd ..
+# rm gsl-*.tar.gz
 
-if [[ "$OS" == "linux" ]]; then
-	libtool --finish $INSTALL_DIR/lib/
-fi
+# if [[ "$OS" == "linux" ]]; then
+# 	libtool --finish $INSTALL_DIR/lib/
+# fi
 
-## Download and move SPICE data
-wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/$SPK
-wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/$TLS
-mkdir -p $SPICE_DIR
-mv $SPK $SPICE_DIR/
-mv $TLS $SPICE_DIR/
+# ## Download and move SPICE data
+# wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/$SPK
+# wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/$TLS
+# mkdir -p $SPICE_DIR
+# mv $SPK $SPICE_DIR/
+# mv $TLS $SPICE_DIR/
 
-## Eigen - Header only
-wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz
-tar -xzf 3.3.3.tar.gz
-mv eigen* eigen
-mv eigen/Eigen $INSTALL_DIR/include/Eigen
-mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
-rm 3.3.3.tar.gz
+# ## Eigen - Header only
+# wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz
+# tar -xzf 3.3.3.tar.gz
+# mv eigen* eigen
+# mv eigen/Eigen $INSTALL_DIR/include/Eigen
+# mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
+# rm 3.3.3.tar.gz
 
 ## Configuration Files
 cd ..
@@ -114,4 +114,6 @@ echo "    <data_filepath>$SPICE_DIR/</data_filepath>" >> $SETTINGS # End with <f
 echo "    <time_kernel>$TLS</time_kernel>" >> $SETTINGS
 echo "    <spk_kernel>$SPK</spk_kernel>" >> $SETTINGS
 echo "  </spice>" >> $SETTINGS
-echo "</astrohelion" >> $SETTINGS
+echo "</astrohelion>" >> $SETTINGS
+
+cp $SETTINGS $CONFIG_DIR/default_settings.xml

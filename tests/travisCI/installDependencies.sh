@@ -105,7 +105,7 @@ rm 3.3.3.tar.gz
 
 ## Configuration Files
 cd ..
-cp misc/body_data.xml $CONFIG_DIR/body_data.xml
+cp ../../misc/body_data.xml $CONFIG_DIR/body_data.xml
 SETTINGS="$CONFIG_DIR/user_settings.xml"
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > $SETTINGS
 echo "<astrohelion>" >> $SETTINGS
@@ -114,7 +114,9 @@ echo "    <data_filepath>$SPICE_DIR/</data_filepath>" >> $SETTINGS # End with <f
 echo "    <time_kernel>$TLS</time_kernel>" >> $SETTINGS
 echo "    <spk_kernel>$SPK</spk_kernel>" >> $SETTINGS
 echo "  </spice>" >> $SETTINGS
-echo "</astrohelion" >> $SETTINGS
+echo "</astrohelion>" >> $SETTINGS
+
+cp $SETTINGS $CONFIG_DIR/default_settings.xml
 
 ## Extras for the Travis-CI system
 echo "Adding $INSTALL_DIR/lib to LD_LIBRARY_PATH"

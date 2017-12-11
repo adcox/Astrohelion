@@ -133,10 +133,10 @@ public:
 	void save(const std::string&);
 
 	/** Absolute path to a directory containing SPICE kernels used by this software */
-	std::string spice_data_filepath = "~/SPICE/data/";
+	std::string spice_data_filepath = "~/.config/spice/";
 
 	/** Time kernel to use */
-	std::string spice_time_kernel = "naif0010.tls.pc";
+	std::string spice_time_kernel = "naif0012.tls.pc";
 
 	/** SPK Kernel to use */
 	std::string spice_spk_kernel = "de430.bsp";

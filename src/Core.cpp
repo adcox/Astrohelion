@@ -90,7 +90,8 @@ void Core_Settings::load(const std::string &filename){
 		// Load XML file and put its contents in the property tree; if file isn't found, exception is thrown
 		read_xml(filename, pt);
 	}catch(std::exception &e){
-		std::cout << "Error: Could not load the settings file\n";
+		std::cout << "Error: Could not load the settings file:\n";
+		std::cout << e.what() << std::endl;
 		throw e;
 	}
 
@@ -101,6 +102,7 @@ void Core_Settings::load(const std::string &filename){
 		spice_spk_kernel = pt.get<std::string>("astrohelion.spice.spk_kernel");
 	}catch(std::exception &e){
 		std::cout << "Error: Could not load setting values from settings file\n";
+		std::cout << e.what() << std::endl;
 		throw e;
 	}
 }//==================================================
@@ -122,6 +124,8 @@ void Core_Settings::save(const std::string &filename){
 		// Write property tree to XML file
 		write_xml(filename, pt);
 	}catch(std::exception &e){
+		std::cout << "Error saving core settings:" << std::endl;
+		std::cout << e.what() << std::endl;
 		throw e;
 	}
 }//==================================================
@@ -157,13 +161,18 @@ void Core_Initializer::runInit(){
 		throw std::exception();
 	}
 
+	// Set settings SPICE filepath to the default location in the user's home directory
+	char spiceFilepath[256];
+	sprintf(spiceFilepath, "%s%s", pw->pw_dir, "/.config/astrohelion/spice/");
+	settings.spice_data_filepath = std::string(spiceFilepath);
+
 	// Define names of settings files
 	const char *defaultSettingsFile = "default_settings.xml";
 	const char *userSettingsFile = "user_settings.xml";
 	const char *bodyDataFile = "body_data.xml";
 
 	// Construct path to directory that contains the settings file(s)
-	char settingsFilepath[128], defaultSettingsFilepath[256], userSettingsFilepath[256];
+	char settingsFilepath[256], defaultSettingsFilepath[256], userSettingsFilepath[256];
 	char bodyDataFilepath[256];
 	switch(OS_TYPE){
 		case OS_tp::windows: 

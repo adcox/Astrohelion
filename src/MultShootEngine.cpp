@@ -726,7 +726,7 @@ void MultShootEngine::solveUpdateEq(MultShootData* pIt, const Eigen::VectorXd* p
 				checkDFSingularities(J);
 				std::string err = eigenCompInfo2Str(luSolver.info());
 				char msg[128];
-				sprintf("MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix\nluSolver -> %s\n", 
+				sprintf(msg, "MultShootEngine::solveUpdateEq: Could not factorize Jacobian matrix\nluSolver -> %s\n", 
 					err.c_str());
 				throw LinAlgException(msg);
 			}

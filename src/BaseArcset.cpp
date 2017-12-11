@@ -2806,7 +2806,7 @@ bool BaseArcset::readVar_NodeExtraParam(matvar_t *pVar, std::string varKey, Save
 		}
 
 		if(pVar->dims[1] != 1){
-			char message[64];
+			char message[128];
 			const char * pVarName = pVar->name ? pVar->name : "NULL";
 			sprintf(message, "BaseArcset::readVar_NodeExtraParam: Incompatible data file: %s width is not %d", pVarName, 1);
 			Mat_VarFree(pVar);
@@ -2854,7 +2854,7 @@ bool BaseArcset::readVar_NodeExtraParamVec(matvar_t *pVar, std::string varKey, s
 		}
 
 		if(pVar->dims[1] != len){
-			char msg[64];
+			char msg[128];
 			const char *varName = pVar->name ? pVar->name : "NULL";
 			sprintf(msg, "BaseArcset::readVar_NodeExtraParamVec: Incompatible data file: %s width is not %zu", varName, len);
 			Mat_VarFree(pVar);

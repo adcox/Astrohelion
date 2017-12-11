@@ -96,9 +96,9 @@ void Core_Settings::load(const std::string &filename){
 
 	try{
 		// Read the setting values from the PTree; if they aren't found, an exception is thrown
-		spice_data_filepath = pt.get<std::string>("Astrohelion.spice.data_filepath");
-		spice_time_kernel = pt.get<std::string>("Astrohelion.spice.time_kernel");
-		spice_spk_kernel = pt.get<std::string>("Astrohelion.spice.spk_kernel");
+		spice_data_filepath = pt.get<std::string>("astrohelion.spice.data_filepath");
+		spice_time_kernel = pt.get<std::string>("astrohelion.spice.time_kernel");
+		spice_spk_kernel = pt.get<std::string>("astrohelion.spice.spk_kernel");
 	}catch(std::exception &e){
 		std::cout << "Error: Could not load setting values from settings file\n";
 		throw e;
@@ -115,9 +115,9 @@ void Core_Settings::save(const std::string &filename){
 	ptree pt;
 
 	// Put spice data filepath in property tre
-	pt.put("Astrohelion.spice.data_filepath", spice_data_filepath);
-	pt.put("Astrohelion.spice.time_kernel", spice_time_kernel);
-	pt.put("Astrohelion.spice.spk_kernel", spice_spk_kernel);
+	pt.put("astrohelion.spice.data_filepath", spice_data_filepath);
+	pt.put("astrohelion.spice.time_kernel", spice_time_kernel);
+	pt.put("astrohelion.spice.spk_kernel", spice_spk_kernel);
 	try{
 		// Write property tree to XML file
 		write_xml(filename, pt);

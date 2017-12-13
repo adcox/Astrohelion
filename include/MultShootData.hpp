@@ -1,10 +1,10 @@
 /**
- *  \file MultShootData.hpp
- *	\brief 
+ *  @file MultShootData.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -43,7 +43,7 @@
 namespace astrohelion{
 
 /**
- *  \brief Describe how time-of-flight data is stored in the free variable vector
+ *  @brief Describe how time-of-flight data is stored in the free variable vector
  */
 enum class MSTOF_tp : int{
 	FIXED = 0,			//!< Times-of-flight are fixed and not part of the free variable vector
@@ -60,7 +60,7 @@ const char* MSTOF_tp_cStr(const MSTOF_tp&);
 std::ostream& operator<<(std::ostream&, const MSTOF_tp&);
 
 /**
- *  \brief The type of free variable being represented in the free-variable vector
+ *  @brief The type of free variable being represented in the free-variable vector
  */
 enum class MSVar_tp : int {EPOCH = 0,		//!< Epoch variable
 							SLACK = 1,		//!< Slack variable (e.g., used in an inequality constraint)
@@ -71,8 +71,8 @@ enum class MSVar_tp : int {EPOCH = 0,		//!< Epoch variable
 							};	
 
 /**
- *  \brief The parent object of the variable
- *  \details "Parent" means that the variable is part of a larger object. For example,
+ *  @brief The parent object of the variable
+ *  @details "Parent" means that the variable is part of a larger object. For example,
  *  a node is the parent of the six state variables and the epoch associated with the node.
  *  Similarly, a segment is the parent of the time-of-flight variable along the segment.
  *  Constraints may own slack variables, and the entire arc may own quantities like total
@@ -84,8 +84,8 @@ enum class MSVarParent_tp : int {ARC = 0,	//!< The entire arc is the parent
 								SEG = 3};	//!< A segment is the parent
 
 /**
- *  \brief Represent a free variable in the free variable map
- *  \details A more complex object is required here to store
+ *  @brief Represent a free variable in the free variable map
+ *  @details A more complex object is required here to store
  *  information such as the variable type and ID.
  */
 struct MSVarMap_Key{
@@ -126,8 +126,8 @@ struct MSVarMap_Key{
 };
 
 /**
- *  \brief Represent a free variable in the free variable vector
- *  \details This object stores information such as the position of
+ *  @brief Represent a free variable in the free variable vector
+ *  @details This object stores information such as the position of
  *  the variable within the free-variable vector, the number of elements
  *  (i.e., rows) required by the variable (many variables are vector quantities).
  *  A parent object and map key are also stored.
@@ -181,16 +181,16 @@ struct MSVarMap_Obj{
 };
 
 /**		
- *	\brief a custom data class to encapsulate data used in each iteration
+ *	@brief a custom data class to encapsulate data used in each iteration
  *	of the corrections process.
  *
  *	This data object can be passed to other functions, allowing us to break 
  *	the master corrections loop into smaller functions without requiring an
  *	obscene amount of arguments to be passed in.
  *	
- *	\author Andrew Cox
- *	\version May 16, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 16, 2016
+ *	@copyright GNU GPL v3.0
  */
 class MultShootData{
 	public:

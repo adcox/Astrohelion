@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel.cpp
- *	\brief Defines behavior for a dynamic model
+ *  @file DynamicsModel.cpp
+ *	@brief Defines behavior for a dynamic model
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -46,25 +46,25 @@
 
 namespace astrohelion{
 /**
- *	\brief Default constructor
- *	\param type the model type
+ *	@brief Default constructor
+ *	@param type the model type
  */
 DynamicsModel::DynamicsModel(){}
 
 /**
- *	\brief Copy constructor
+ *	@brief Copy constructor
  */
 DynamicsModel::DynamicsModel(const DynamicsModel &m){
 	copyMe(m);
 }//===========================================
 
 /**
- *	\brief Deconstructor
+ *	@brief Deconstructor
  */
 DynamicsModel::~DynamicsModel(){}
 
 /**
- *	\brief Copy Operator
+ *	@brief Copy Operator
  */	
 DynamicsModel& DynamicsModel::operator =(const DynamicsModel &m){
 	copyMe(m);
@@ -72,8 +72,8 @@ DynamicsModel& DynamicsModel::operator =(const DynamicsModel &m){
 }//============================================
 
 /**
- *	\brief Copies all data from a dynamic model into this one
- *	\param m another dynamic model
+ *	@brief Copies all data from a dynamic model into this one
+ *	@param m another dynamic model
  */
 void DynamicsModel::copyMe(const DynamicsModel &m){
 	coreDim = m.coreDim;
@@ -81,39 +81,39 @@ void DynamicsModel::copyMe(const DynamicsModel &m){
 }//============================================
 
 /**
- *	\brief Retrieve the number of core states
- *	\return the number of core states
+ *	@brief Retrieve the number of core states
+ *	@return the number of core states
  */
 unsigned int DynamicsModel::getCoreStateSize() const { return coreDim; }
 
 /**
- *	\brief Retrieve the number of extra states stored after the core states and STM elements
- *	\return the number of extra states stored after the core states and STM elements
+ *	@brief Retrieve the number of extra states stored after the core states and STM elements
+ *	@return the number of extra states stored after the core states and STM elements
  */
 unsigned int DynamicsModel::getExtraStateSize() const { return extraDim; }
 
 /**
- *	\brief Determine whether the specified constraint type is supported in this model
- *	\return whether or not the specified constraint type is supported in this model
+ *	@brief Determine whether the specified constraint type is supported in this model
+ *	@return whether or not the specified constraint type is supported in this model
  */
 bool DynamicsModel::supportsCon(Constraint_tp type) const{
 	return std::find(allowedCons.begin(), allowedCons.end(), type) != allowedCons.end();
 }//===================================================
 
 /**
- *	\brief Determine whether the specified event type is supported in this model
- *	\return whether or not the specified event type is supported in this model
+ *	@brief Determine whether the specified event type is supported in this model
+ *	@return whether or not the specified event type is supported in this model
  */
 bool DynamicsModel::supportsEvent(Event_tp type) const{
 	return std::find(allowedEvents.begin(), allowedEvents.end(), type) != allowedEvents.end();
 }//===================================================
 
 /**
- *  \brief Determine whether or not the model supports a specific control law
- *  \details By default, a DynamicsModel does not support any control laws.
+ *  @brief Determine whether or not the model supports a specific control law
+ *  @details By default, a DynamicsModel does not support any control laws.
  * 
- *  \param pLaw Pointer to a control law
- *  \return Whether or not the Dynamics model supports the specified control law
+ *  @param pLaw Pointer to a control law
+ *  @return Whether or not the Dynamics model supports the specified control law
  */
 bool DynamicsModel::supportsControl(const ControlLaw *pLaw) const{
 	if(pLaw){
@@ -126,26 +126,26 @@ bool DynamicsModel::supportsControl(const ControlLaw *pLaw) const{
 }//===================================================
 
 /**
- *  \brief Construct a new control law and allocated it on the stack.
- *  \details Each dynamic model will return a pointer to the specific control
+ *  @brief Construct a new control law and allocated it on the stack.
+ *  @details Each dynamic model will return a pointer to the specific control
  *  law applicable to the system / model
- *  \return A pointer to a control law object. The object has been allocated
+ *  @return A pointer to a control law object. The object has been allocated
  *  on the stack so the delete() function must be employed to free the memory
  */
 ControlLaw* DynamicsModel::createControlLaw() const{ return new ControlLaw; }
 
 /**
- *  \brief Determine the time derivative of the magnitude of a vector from a primary to
+ *  @brief Determine the time derivative of the magnitude of a vector from a primary to
  *  the body of interest, non-dimensional units
- *  \details This derivation assumes the primary of interest is fixed in the frame the
+ *  @details This derivation assumes the primary of interest is fixed in the frame the
  *  spacecraft coordinates are expressed in. If this is not the case (i.e., the primary
  *  moves in the working frame), this function will need to be overridden
  * 
- *  \param Pix Index of the primary
- *  \param t Non-dimensional epoch to compute r-dot at
- *  \param state six-element non-dimensional spacecraft state
- *  \param sys system data object
- *  \return Time derivative of the magnitude of a vector from a primary to the body
+ *  @param Pix Index of the primary
+ *  @param t Non-dimensional epoch to compute r-dot at
+ *  @param state six-element non-dimensional spacecraft state
+ *  @param sys system data object
+ *  @return Time derivative of the magnitude of a vector from a primary to the body
  *  of interest, non-dimensional velocity units
  */
 double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysData *sys) const{
@@ -166,11 +166,11 @@ double DynamicsModel::getRDot(int Pix, double t, const double *state, const SysD
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Create default events for a simulation run
- *  \details These events are intended to prevent numerical issues, e.g., to avoid singularities.
+ *  @brief Create default events for a simulation run
+ *  @details These events are intended to prevent numerical issues, e.g., to avoid singularities.
  * 
- *  \param pSys pointer to system data object
- *  \return A vector of events to use in the simulation
+ *  @param pSys pointer to system data object
+ *  @return A vector of events to use in the simulation
  */
 std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) const{
 	std::vector<Event> events;
@@ -186,16 +186,16 @@ std::vector<Event> DynamicsModel::sim_makeDefaultEvents(const SysData *pSys) con
 }//==================================================
 
 /**
- *  \brief Create a node on the Arcset
+ *  @brief Create a node on the Arcset
  * 
- *  \param node a reference to the node that is being added
- *  \param y pointer to full state data array
- *  \param t current integration time
- *  \param arcset pointer to trajectory in which the data is stored
- *  \param params pointer to a structure that contains parameters used in the integration
- *  \param tp Event type that occured at the Node
+ *  @param node a reference to the node that is being added
+ *  @param y pointer to full state data array
+ *  @param t current integration time
+ *  @param arcset pointer to trajectory in which the data is stored
+ *  @param params pointer to a structure that contains parameters used in the integration
+ *  @param tp Event type that occured at the Node
  *  
- *  \return ID of the node once it is added to the Trajectory
+ *  @return ID of the node once it is added to the Trajectory
  */
 int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* arcset, EOM_ParamStruct *params, Event_tp tp) const{
 	(void) y;
@@ -215,15 +215,15 @@ int DynamicsModel::sim_addNode(Node &node, const double *y, double t, Arcset* ar
 }//====================================================
 
 /**
- *  \brief Add a segment to the Arcset
- *  \details [long description]
+ *  @brief Add a segment to the Arcset
+ *  @details [long description]
  * 
- *  \param seg Reference to the segment to add to the Arcset
- *  \param y pointer to full state data array
- *  \param t current integration time
- *  \param arcset pointer to the Arcset in which the data is stored
- *  \param params pointer to structure that contains parameters used in the integration
- *  \return the ID of the segment once it is added to the arcset
+ *  @param seg Reference to the segment to add to the Arcset
+ *  @param y pointer to full state data array
+ *  @param t current integration time
+ *  @param arcset pointer to the Arcset in which the data is stored
+ *  @param params pointer to structure that contains parameters used in the integration
+ *  @return the ID of the segment once it is added to the arcset
  */
 int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* arcset, EOM_ParamStruct *params) const{
 	(void) y;
@@ -238,15 +238,15 @@ int DynamicsModel::sim_addSeg(Segment &seg, const double *y, double t, Arcset* a
 //------------------------------------------------------------------------------------------------------
 
 /**
- *	\brief Initialize the corrector's design vector with position and velocity states,
+ *	@brief Initialize the corrector's design vector with position and velocity states,
  *	and times-of-flight.
  *
  *	Derived models may replace this function or call it and then append more design 
  * 	variables.
  *
- *	\param it a reference to the corrector's iteration data structure
+ *	@param it a reference to the corrector's iteration data structure
  *	
- *	\throws Exception if equalArcTime is set to true (within the correction engine) and
+ *	@throws Exception if equalArcTime is set to true (within the correction engine) and
  *	the nodeset to be corrected includes segments that are propagated in both forward and
  *	reverse time.
  */
@@ -348,7 +348,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
 }//============================================================
 
 /**
- *	\brief Create continuity constraints for the correction algorithm; this function
+ *	@brief Create continuity constraints for the correction algorithm; this function
  *	creates position and velocity constraints.
  *
  *	Derived models may replace this function or call it and then append more constraints
@@ -356,7 +356,7 @@ void DynamicsModel::multShoot_initDesignVec(MultShootData &it) const{
  *	or mass. This function assumes the state elements at indices 3, 4, and 5 represent
  *	velocity and their continuity is governed by the boolean flags stored in a segment.
  *
- *	\param it a reference to the corrector's iteration data structure
+ *	@param it a reference to the corrector's iteration data structure
  */	
 void DynamicsModel::multShoot_createContCons(MultShootData &it) const{
 	// Create position and velocity constraints
@@ -384,18 +384,18 @@ void DynamicsModel::multShoot_createContCons(MultShootData &it) const{
 }//============================================================
 
 /**
- *	\brief Retrieve the initial conditions for a segment that the correction
+ *	@brief Retrieve the initial conditions for a segment that the correction
  *	engine will integrate.
  *
  *	Derived models may replace this function to change how the initial conditions
  *	are chosen from the design vector.
  *
- *	\param it a reference to the corrector's iteration data structure
- *	\param s the ID of the segment being propagated
- *	\param ic a pointer to the initial state array
- *	\param ctrl0 a pointer to the initial control state array
- *	\param t0 a pointer to a double representing the initial time (epoch)
- *	\param tof a pointer to a double the time-of-flight on the segment.
+ *	@param it a reference to the corrector's iteration data structure
+ *	@param s the ID of the segment being propagated
+ *	@param ic a pointer to the initial state array
+ *	@param ctrl0 a pointer to the initial control state array
+ *	@param t0 a pointer to a double representing the initial time (epoch)
+ *	@param tof a pointer to a double the time-of-flight on the segment.
  */
 void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
 	double *ic, double *ctrl0, double *t0, double *tof) const{
@@ -456,8 +456,8 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
 }//============================================================
 
 /**
- *  \brief Compute the value of a slack variable for an inequality constraint.
- *  \details Computing the value of the slack variable can avoid unneccessary 
+ *  @brief Compute the value of a slack variable for an inequality constraint.
+ *  @details Computing the value of the slack variable can avoid unneccessary 
  *  shooting iterations when the inequality constraint is already met. If the 
  *  inequality constraint is met, the value returned by this function will make
  *  the constraint function evaluate to zero.
@@ -465,12 +465,12 @@ void DynamicsModel::multShoot_getSimICs(const MultShootData &it, int s,
  *  Note: This function should be called after the state variable vector has 
  *  been initialized by the multiple shooting algorithm
  * 
- *  \param it the MultShootData object associated with the multiple shooting process
- *  \param con the inequality constraint for which the slack variable is being computed
+ *  @param it the MultShootData object associated with the multiple shooting process
+ *  @param con the inequality constraint for which the slack variable is being computed
  * 
- *  \return The value of the slack variable that minimizes the constraint function
+ *  @return The value of the slack variable that minimizes the constraint function
  *  without setting the slack variable to zero
- *  \throws Exception if the constraint type does not include a slack variable
+ *  @throws Exception if the constraint type does not include a slack variable
  */
 double DynamicsModel::multShoot_getSlackVarVal(const MultShootData &it, const Constraint& con) const{
 	switch(con.getType()){
@@ -488,7 +488,7 @@ double DynamicsModel::multShoot_getSlackVarVal(const MultShootData &it, const Co
 }//===========================================================
 
 /**
- *	\brief Compute constraint function and partial derivative values for a constraint
+ *	@brief Compute constraint function and partial derivative values for a constraint
  *	
  *	This function provides a framework for most of the constraints available to all models.
  *	Given an iteration data object, a constraint, and the index of that constraint, we can
@@ -498,9 +498,9 @@ double DynamicsModel::multShoot_getSlackVarVal(const MultShootData &it, const Co
  *	developer to ensure any new constraints are implemented in a derived model, and any
  *	existing constraints are treated fully and appropriately by the new, derived model.
  *
- *	\param it a reference to the corrector's iteration data structure
- *	\param con the constraint being applied
- *	\param c the index of the constraint within the total constraint vector (which is, in
+ *	@param it a reference to the corrector's iteration data structure
+ *	@param con the constraint being applied
+ *	@param c the index of the constraint within the total constraint vector (which is, in
  *	turn, stored in the iteration data)
  */	
 void DynamicsModel::multShoot_applyConstraint(MultShootData& it, const Constraint& con, int c) const{
@@ -563,7 +563,7 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData& it, const Constrain
 }//=========================================================
 
 /**
- *	\brief Compute core state continuity constraint values and partial derivatives
+ *	@brief Compute core state continuity constraint values and partial derivatives
  *
  *	This function computes and stores the default core state continuity constraints. The partial 
  *	derivatives of each node with respect to other nodes and integration time are all 
@@ -571,9 +571,9 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData& it, const Constrain
  *
  *	Derived models may replace this function.
  *
- *	\param it a reference to the correctors iteration data structure
- *	\param con the constraint being applied
- *	\param row0 the first row this constraint applies to
+ *	@param it a reference to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
  */
 void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constraint& con, int row0) const{
 	int segID = con.getID();	// get segment ID
@@ -659,7 +659,7 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constrai
 }//====================================================
 
 /**
- *	\brief Compute control state continuity constraint values and partial derivatives
+ *	@brief Compute control state continuity constraint values and partial derivatives
  *
  *	This function computes and stores control state continuity constraints. The partial 
  *	derivatives of each node with respect to other nodes and integration times are all 
@@ -667,9 +667,9 @@ void DynamicsModel::multShoot_targetCont_State(MultShootData& it, const Constrai
  *
  *	Derived models may replace this function.
  *
- *	\param it a reference to the correctors iteration data structure
- *	\param con the constraint being applied
- *	\param row0 the first row this constraint applies to
+ *	@param it a reference to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
  */
 void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constraint& con, int row0) const{
 	int segID = con.getID();	// get segment ID
@@ -749,7 +749,7 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constrain
 }//====================================================
 
 /**
- *  \brief Compute segment state continuity constraint values and partial derivatives.
+ *  @brief Compute segment state continuity constraint values and partial derivatives.
  *  
  *  This function computes and stores the position and velocity continuity constraints for
  *  segment-to-segment links. The partial derivatives of this constraint with respect to
@@ -758,11 +758,11 @@ void DynamicsModel::multShoot_targetCont_Ctrl(MultShootData& it, const Constrain
  *
  *	Derived models may extend or replace this function.
  *
- *	\param it a reference to the correctors iteration data structure
- *	\param con the constraint being applied
- *	\param row0 the first row this constraint applies to
+ *	@param it a reference to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
  *	
- *	\throws Exception if the constraint data is not properly formatted
+ *	@throws Exception if the constraint data is not properly formatted
  */
 void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData& it, const Constraint& con, int row0) const{
 	int segID1 = con.getID();
@@ -883,14 +883,14 @@ void DynamicsModel::multShoot_targetCont_State_Seg(MultShootData& it, const Cons
 }//====================================================
 
 /**
- *	\brief Computes continuity constraints for constraints with the `CONT_EX` type.
+ *	@brief Computes continuity constraints for constraints with the `CONT_EX` type.
  *
  *	In this base model, no behavior is defined for extra constraints. It is intended to enforce
  *	continuity constraints like epoch (time) continuity, mass continuity, etc.
  *
- *	\param it a reference to the correctors iteration data structure
- *	\param con the constraint being applied
- *	\param row0 the first row this constraint applies to
+ *	@param it a reference to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
  */
 void DynamicsModel::multShoot_targetCont_Ex(MultShootData& it, const Constraint& con, int row0) const{
 	// Do absoluately nothing
@@ -900,14 +900,14 @@ void DynamicsModel::multShoot_targetCont_Ex(MultShootData& it, const Constraint&
 }//======================================================
 
 /**
- *	\brief Computes continuity constraints for constraints with the `Constraint_tp::SEG_CONT_EX` type.
+ *	@brief Computes continuity constraints for constraints with the `Constraint_tp::SEG_CONT_EX` type.
  *
  *	In this base model, no behavior is defined for extra constraints. It is intended to enforce
  *	continuity constraints like epoch (time) continuity, mass continuity, etc.
  *
- *	\param it a reference to the correctors iteration data structure
- *	\param con the constraint being applied
- *	\param row0 the first row this constraint applies to
+ *	@param it a reference to the correctors iteration data structure
+ *	@param con the constraint being applied
+ *	@param row0 the first row this constraint applies to
  */
 void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData& it, const Constraint& con, int row0) const{
 	// Do absoluately nothing
@@ -916,14 +916,14 @@ void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData& it, const Constra
 	(void)row0;
 }//======================================================
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::STATE`.
+ *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::STATE`.
  *
  *	This method *should* provide full state constraining for any model; the STM and identity 
  *	matrices are used to relate node states and integrated states.
  *
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con the constraint being applied
- *	\param row0 the index of the row this constraint begins at
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con the constraint being applied
+ *	@param row0 the index of the row this constraint begins at
  */
 void DynamicsModel::multShoot_targetState(MultShootData& it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
@@ -946,11 +946,11 @@ void DynamicsModel::multShoot_targetState(MultShootData& it, const Constraint& c
 }//=================================================
 
 /**
- *  \brief Compute constraint value and partial derivatives of the constraint
+ *  @brief Compute constraint value and partial derivatives of the constraint
  * 
- *  \param it a reference to iteration data object
- *  \param con Constraint object
- *  \param row0 The row of the constraint within the constraint vector
+ *  @param it a reference to iteration data object
+ *  @param con Constraint object
+ *  @param row0 The row of the constraint within the constraint vector
  */
 void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
@@ -1037,16 +1037,16 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 }//=================================================
 
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_ALL`
+ *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_ALL`
  *
  *	This method *should* provide full functionality for any model; only 1's and 0's are applied
  *	to the Jacobian matrix.
  *
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param row0 the index of the row this constraint begins at
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  *	
- *	\throws Exception if the constraint data vector is not properly formatted
+ *	@throws Exception if the constraint data vector is not properly formatted
  */
 void DynamicsModel::multShoot_targetMatchAll(MultShootData& it, const Constraint& con, int row0) const{
 	if(con.getData().size() < 1)
@@ -1078,14 +1078,14 @@ void DynamicsModel::multShoot_targetMatchAll(MultShootData& it, const Constraint
 }//=============================================
 
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_CUST`
+ *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_CUST`
  *
  *	This method *should* provide full functionality for any model; Only 1's and 0's are applied
  *	to the Jacobian matrix.
  *
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param row0 the index of the row this constraint begins at
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  */
 void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, const Constraint& con, int row0) const{
 	int ix = 0;
@@ -1122,7 +1122,7 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, const Constrain
 }//===============================================
 
 /**
- *	\brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::DIST`, 
+ *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::DIST`, 
  *	`Constraint_tp::MIN_DIST`, or `Constraint_tp::MAX_DIST`
  *
  *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
@@ -1130,9 +1130,9 @@ void DynamicsModel::multShoot_targetMatchCust(MultShootData& it, const Constrain
  *	the constraint vector and Jacobian matrix. Nonautonomous models will need to include time
  *	dependencies.
  *
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param c the index of this constraint in the constraint vector object
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param c the index of this constraint in the constraint vector object
  */
 void DynamicsModel::multShoot_targetDist(MultShootData& it, const Constraint& con, int c) const{
 	std::vector<double> conData = con.getData();
@@ -1184,7 +1184,7 @@ void DynamicsModel::multShoot_targetDist(MultShootData& it, const Constraint& co
 }// End of targetDist() =========================================
 
 /**
- *	\brief Compute partials and constraint functions for segments constrained with `Constraint_tp::ENDSEG_DIST`, 
+ *	@brief Compute partials and constraint functions for segments constrained with `Constraint_tp::ENDSEG_DIST`, 
  *	`Constraint_tp::ENDSEG_MIN_DIST`, or `Constraint_tp::ENDSEG_MAX_DIST`
  *
  *	This method *should* provide full functionality for any autonomous model; It calls the getPrimPos() 
@@ -1192,9 +1192,9 @@ void DynamicsModel::multShoot_targetDist(MultShootData& it, const Constraint& co
  *	the constraint vector and Jacobian matrix. Nonautonomous models will need to include time
  *	dependencies.
  *
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param c the index of this constraint in the constraint vector object
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param c the index of this constraint in the constraint vector object
  */
 void DynamicsModel::multShoot_targetDist_endSeg(MultShootData& it, const Constraint& con, int c) const{
 	std::vector<double> conData = con.getData();
@@ -1291,15 +1291,15 @@ void DynamicsModel::multShoot_targetDist_endSeg(MultShootData& it, const Constra
 }// End of targetDist_endSeg() ====================================
 
 /**
- *  \brief Compute the value of the slack variable for inequality distance constraints
- *  \details This function computes a value for the slack variable in an
+ *  @brief Compute the value of the slack variable for inequality distance constraints
+ *  @details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
  *  design, using this value will prevent the multiple shooting algorithm from
  *  searching all over for the propper value.
  * 
- *  \param it the iteration data object for the multiple shooting process
- *  \param con the constraint the slack variable applies to
- *  \return the value of the slack variable
+ *  @param it the iteration data object for the multiple shooting process
+ *  @param con the constraint the slack variable applies to
+ *  @return the value of the slack variable
  */
 double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData& it, const Constraint& con) const{
 	std::vector<double> conData = con.getData();
@@ -1335,15 +1335,15 @@ double DynamicsModel::multShoot_targetDist_compSlackVar(const MultShootData& it,
 }//==========================================================
 
 /**
- *  \brief Compute the value of the slack variable for inequality distance constraints
- *  \details This function computes a value for the slack variable in an
+ *  @brief Compute the value of the slack variable for inequality distance constraints
+ *  @details This function computes a value for the slack variable in an
  *  inequality distance constraint. If the constraint is already met by the initial
  *  design, using this value will prevent the multiple shooting algorithm from
  *  searching all over for the propper value.
  * 
- *  \param it the iteration data object for the multiple shooting process
- *  \param con the constraint the slack variable applies to
- *  \return the value of the slack variable
+ *  @param it the iteration data object for the multiple shooting process
+ *  @param con the constraint the slack variable applies to
+ *  @return the value of the slack variable
  */
 double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootData& it, const Constraint& con) const{
 	std::vector<double> conData = con.getData();
@@ -1377,7 +1377,7 @@ double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootDa
 }//==========================================================
 
 /**
- *	\brief Compute partials and constraints for all nodes constrained with `Constraint_tp::DELTA_V` or
+ *	@brief Compute partials and constraints for all nodes constrained with `Constraint_tp::DELTA_V` or
  *	`MIN_DELTA_V`
  *
  *	Because the delta-V constraint applies to the entire trajectory, the constraint function values
@@ -1388,9 +1388,9 @@ double DynamicsModel::multShoot_targetDist_endSeg_compSlackVar(const MultShootDa
  *	dynamic models should implement a similar copy of this function that computes partials
  *	with respect to their additional design variables.
  *
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con the constraint being applied
- *	\param c the index of the first row for this constraint
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con the constraint being applied
+ *	@param c the index of the first row for this constraint
  */
 void DynamicsModel::multShoot_targetDeltaV(MultShootData& it, const Constraint& con, int c) const{
 
@@ -1484,13 +1484,13 @@ void DynamicsModel::multShoot_targetDeltaV(MultShootData& it, const Constraint& 
 }//==============================================
 
 /**
- *  \brief Compute the slack variable value for a delta-V constraint
- *  \details This function currently returns a hard-coded value of 1e-2
+ *  @brief Compute the slack variable value for a delta-V constraint
+ *  @details This function currently returns a hard-coded value of 1e-2
  * 
- *  \param it a reference to the class containing all the data relevant to the corrections process
- *	\param con the constraint being applied
+ *  @param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con the constraint being applied
  * 
- *  \return Ideal value of the slack variable
+ *  @return Ideal value of the slack variable
  */
 double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData& it, const Constraint& con) const{
 	// double totalDV = 0;
@@ -1516,16 +1516,16 @@ double DynamicsModel::multShoot_targetDeltaV_compSlackVar(const MultShootData& i
 }//====================================================
 
 /**
- *	\brief Compute partials and constraint function values for time-of-flight constraints
+ *	@brief Compute partials and constraint function values for time-of-flight constraints
  *
  *	This method *should* provide full functionality for any model; only 1's and 0's are
  *	used to relate TOFs.
  *	
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param row0 the index of the row this constraint begins at
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  *	
- *	\throws Exception if variable time is set to OFF
+ *	@throws Exception if variable time is set to OFF
  */
 void DynamicsModel::multShoot_targetTOF(MultShootData& it, const Constraint& con, int row0) const{
 	if(to_underlying(it.tofTp) <= 0)
@@ -1574,14 +1574,14 @@ void DynamicsModel::multShoot_targetTOF(MultShootData& it, const Constraint& con
 }//====================================================
 
 /**
- *	\brief Compute partials and constraint function values for apse constraints
+ *	@brief Compute partials and constraint function values for apse constraints
  *
  *	This method *should* provide full functionality for any autonomous model. Non-
  *	autonomous models will need to modify the function to account for epoch time
  *	
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param row0 the index of the row this constraint begins at
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  */
 void DynamicsModel::multShoot_targetApse(MultShootData& it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
@@ -1616,15 +1616,15 @@ void DynamicsModel::multShoot_targetApse(MultShootData& it, const Constraint& co
 }//====================================================
 
 /**
- *	\brief Compute partials and constraint function values for apse constraints
+ *	@brief Compute partials and constraint function values for apse constraints
  *	on segment ends
  *
  *	This method *should* provide full functionality for any autonomous model. Non-
  *	autonomous models will need to modify the function to account for epoch time
  *	
- *	\param it a reference to the class containing all the data relevant to the corrections process
- *	\param con a copy of the constraint object
- *	\param row0 the index of the row this constraint begins at
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con a copy of the constraint object
+ *	@param row0 the index of the row this constraint begins at
  */
 void DynamicsModel::multShoot_targetApse_endSeg(MultShootData& it, const Constraint& con, int row0) const{
 	std::vector<double> conData = con.getData();
@@ -1703,10 +1703,10 @@ void DynamicsModel::multShoot_targetApse_endSeg(MultShootData& it, const Constra
 }//====================================================
 
 /**
- *  \brief Take the final, corrected free variable vector `X` and create an output 
+ *  @brief Take the final, corrected free variable vector `X` and create an output 
  *  nodeset
  *
- *  \param it an iteration data object containing all info from the corrections process
+ *  @param it an iteration data object containing all info from the corrections process
  */
 void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
 

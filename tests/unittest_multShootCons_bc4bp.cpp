@@ -37,13 +37,13 @@ bool stateDiffBelowTol(std::vector<double>, double*, double);
 bool stateDiffBelowTol(std::vector<double>, std::vector<double>, double);
 
 /**
- *  \brief Determine if the difference bewteen two state vectors is less than 
+ *  @brief Determine if the difference bewteen two state vectors is less than 
  *  the desired tolerance
  * 
- *  \param data vector of state values from the corrections process
- *  \param correct array of state values from the constraint
- *  \param tol desired numerical tolerance
- *  \return whether or not `data` and `correct` are equal
+ *  @param data vector of state values from the corrections process
+ *  @param correct array of state values from the constraint
+ *  @param tol desired numerical tolerance
+ *  @return whether or not `data` and `correct` are equal
  *  within the desired tolerance
  */
 bool stateDiffBelowTol(std::vector<double> data, double *correct, double tol){

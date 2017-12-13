@@ -1,5 +1,5 @@
 /**
- * \file Family_PO_cr3bp.hpp
+ * @file Family_PO_cr3bp.hpp
  */
 /*
  *	Astrohelion 
@@ -31,8 +31,8 @@ class SysData_cr3bp;
 
 /**
  *  \ingroup fam cr3bp
- *  \brief Families of orbits specifically in the CR3BP
- *  \details Adds functionality to retrieve orbits using CR3BP-specific
+ *  @brief Families of orbits specifically in the CR3BP
+ *  @details Adds functionality to retrieve orbits using CR3BP-specific
  *  metrics like the Jacobi constant
  */
 class Family_PO_cr3bp : public Family_PO{

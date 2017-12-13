@@ -1,10 +1,10 @@
 /**
- *  \file Arcset.cpp
- *	\brief 
+ *  @file Arcset.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version April 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version April 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -44,49 +44,49 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Create a arcset for a specific system
- *	\param data a pointer to a system data object
+ *	@brief Create a arcset for a specific system
+ *	@param data a pointer to a system data object
  */
 Arcset::Arcset(const SysData *data) : BaseArcset(data) {}
 
 /**
- *	\brief Create a arcset from another arcset
- *	\param t a arcset reference
+ *	@brief Create a arcset from another arcset
+ *	@param t a arcset reference
  */
 Arcset::Arcset(const Arcset &t) : BaseArcset(t) {}
 
 /**
- *	\brief Create a arcset from its base class
- *	\param a an arc data reference
+ *	@brief Create a arcset from its base class
+ *	@param a an arc data reference
  */
 Arcset::Arcset(const BaseArcset &a) : BaseArcset(a) {}
 
 /**
- *  \brief Default destructor
+ *  @brief Default destructor
  */
 Arcset::~Arcset(){}
 
 /**
- *  \brief Create a new arcset object on the stack
- *  \details The `delete` function must be called to 
+ *  @brief Create a new arcset object on the stack
+ *  @details The `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \param sys pointer to a system data object
- *  \return a pointer to the newly created arcset
+ *  @param sys pointer to a system data object
+ *  @return a pointer to the newly created arcset
  */
 baseArcsetPtr Arcset::create( const SysData *sys) const{
 	return baseArcsetPtr(new Arcset(sys));
 }//====================================================
 
 /**
- *  \brief Create a new arcset object on the stack that is a 
+ *  @brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details The `delete` function must be called to 
+ *  @details The `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \return a pointer to the newly cloned arcset
+ *  @return a pointer to the newly cloned arcset
  */
 baseArcsetPtr Arcset::clone() const{
 	return baseArcsetPtr(new Arcset(*this));
@@ -97,14 +97,14 @@ baseArcsetPtr Arcset::clone() const{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Combine two arcsets.
- *  \details This function concatenates two arcset objects. It is assumed
+ *  @brief Combine two arcsets.
+ *  @details This function concatenates two arcset objects. It is assumed
  *  that the `rhs` object occurs after (chronologically) `lhs`
  * 
- *  \param lhs reference to a arcset object
- *  \param rhs reference to a arcset object
+ *  @param lhs reference to a arcset object
+ *  @param rhs reference to a arcset object
  * 
- *  \return the concatenation of lhs + rhs.
+ *  @return the concatenation of lhs + rhs.
  */
 Arcset operator +(const Arcset &lhs, const Arcset &rhs){
 	const Arcset lhs_cpy(lhs);
@@ -117,10 +117,10 @@ Arcset operator +(const Arcset &lhs, const Arcset &rhs){
 }//====================================================
 
 /**
- *  \brief Concatenate this object with another arcset
+ *  @brief Concatenate this object with another arcset
  * 
- *  \param rhs reference to a arcset object
- *  \return the concatenation of this and `rhs`
+ *  @param rhs reference to a arcset object
+ *  @return the concatenation of this and `rhs`
  *  @see operator +()
  */
 Arcset& Arcset::operator +=(const Arcset &rhs){
@@ -134,8 +134,8 @@ Arcset& Arcset::operator +=(const Arcset &rhs){
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
- *	\param id a vector of segment IDs that can have velocity discontinuities
+ *	@brief Allow velocity discontinuities (i.e., delta-Vs) at the specified segments
+ *	@param id a vector of segment IDs that can have velocity discontinuities
  */
 void Arcset::allowDV_at(std::vector<int> id) {
 	for(unsigned int i = 0; i < segs.size(); i++){
@@ -149,7 +149,7 @@ void Arcset::allowDV_at(std::vector<int> id) {
 }//====================================================
 
 /**
- *  \brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
+ *  @brief Allow velocity discontinuities (i.e., delta-Vs) on all segments
  */
 void Arcset::allowDV_all(){
 	for(unsigned int i = 0; i < segs.size(); i++){
@@ -158,7 +158,7 @@ void Arcset::allowDV_all(){
 }//====================================================
 
 /**
- *  \brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
+ *  @brief Allow velocity discontinuities (i.e., delta-Vs) on none of the segments
  */
 void Arcset::allowDV_none(){
 	for(unsigned int i = 0; i < segs.size(); i++){
@@ -167,24 +167,24 @@ void Arcset::allowDV_none(){
 }//====================================================
 
 /**
- *  \brief Insert a node after the specified node at any locations where the
+ *  @brief Insert a node after the specified node at any locations where the
  *  specified event occurs
- *  \details This function <i>does</i> adjust the prior node to ensure that 
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path. A numerical simulation is used to propagate the nonlinear
  *  solution between segments, so the events are defined in the dynamical system
  *  associated with the nodeset.
  * 
- *  \param segID the ID of the segment to add nodes to; this segment will be deleted and
+ *  @param segID the ID of the segment to add nodes to; this segment will be deleted and
  *  replaced by a series of smaller segments (and nodes) if one or more of the input
  *  events occurs
- *  \param evt the event that identifies the node locations. If multiple occurences
+ *  @param evt the event that identifies the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If the event does not occur,
  *  no nodes are inserted
- *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  * 
- *  \return the number of nodes created and inserted into the nodeset.
+ *  @return the number of nodes created and inserted into the nodeset.
  */
 int Arcset::createNodesAtEvent(int segID, Event evt, double minTimeDiff){
 	std::vector<Event> events(1, evt);
@@ -192,26 +192,26 @@ int Arcset::createNodesAtEvent(int segID, Event evt, double minTimeDiff){
 }//====================================================
 
 /**
- *  \brief Insert nodes on the specified segment at locations where the
+ *  @brief Insert nodes on the specified segment at locations where the
  *  specified events occur.
  *  
- *  \details This function <i>does</i> adjust the prior node to ensure that 
+ *  @details This function <i>does</i> adjust the prior node to ensure that 
  *  times of flights and other parameters will lead to a nearly continuous 
  *  integrated path. A numerical simulation is used to propagate the nonlinear
  *  solution between segments, so the events are defined in the dynamical system
  *  associated with the nodeset.
  *  
- *  \param segID the ID of the segment to add nodes to; this segment will be deleted and
+ *  @param segID the ID of the segment to add nodes to; this segment will be deleted and
  *  replaced by a series of smaller segments (and nodes) if one or more of the input
  *  events occurs
- *  \param evts a vector of events that identify the node locations. If multiple occurences
+ *  @param evts a vector of events that identify the node locations. If multiple occurences
  *  are located, multiple nodes will be inserted. If none of the events occur,
  *  no nodes are inserted
- *  \param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
+ *  @param minTimeDiff Minimum time (nondimensional) between nodes; all segments *must* have
  *  times-of-flight greater than or equal to this amount (default is 1e-2)
  *  
- *  \return the number of nodes created and inserted into the nodeset.
- *  \throws Exception if `segID` is out of bounds
+ *  @return the number of nodes created and inserted into the nodeset.
+ *  @throws Exception if `segID` is out of bounds
  */
 int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTimeDiff){
 	if(segIDMap.count(segID) == 0)
@@ -282,10 +282,10 @@ int Arcset::createNodesAtEvents(int segID, std::vector<Event> evts, double minTi
 }//====================================================
 
 /**
- *	\brief Retrieve the time along the arcset at a specific step
- *	\param ix node index; if < 0, it will count backwards from end of arcset
- *	\return the non-dimensional time along the arcset at the specified step
- *	\throws Exception if `ix` is out of bounds
+ *	@brief Retrieve the time along the arcset at a specific step
+ *	@param ix node index; if < 0, it will count backwards from end of arcset
+ *	@return the non-dimensional time along the arcset at the specified step
+ *	@throws Exception if `ix` is out of bounds
  */
 double Arcset::getTimeByIx(int ix) const {
 	return getEpochByIx(ix);
@@ -293,21 +293,21 @@ double Arcset::getTimeByIx(int ix) const {
 
 
 /**
- *  \brief Set the time associated with a node
+ *  @brief Set the time associated with a node
  * 
- *	\param ix node index; if < 0, it will count backwards from end of arcset
- *  \param t time associated with the node
- *  \throws Exception if `ix` is out of bounds
+ *	@param ix node index; if < 0, it will count backwards from end of arcset
+ *  @param t time associated with the node
+ *  @throws Exception if `ix` is out of bounds
  */
 void Arcset::setTimeByIx(int ix, double t){
 	setEpochByIx(ix, t);
 }//====================================================
 
 /**
- *  \brief Set each Segment STM to represent the relationship
+ *  @brief Set each Segment STM to represent the relationship
  *  between the begining (chronologically) of the arcset and
  *  the the end (chronologicay) of each Segment.
- *  \details No checks are made to ensure the arcset is continuous.
+ *  @details No checks are made to ensure the arcset is continuous.
  *  If the arcset is discontinuous the STMs will lose any 
  *  accuracy or meaning past the first (chronological) discontinuity.
  *  
@@ -316,7 +316,7 @@ void Arcset::setTimeByIx(int ix, double t){
  *  the STM for each individual segment (begins at Identity for each 
  *  segment).
  *  
- *  \throws Exception if the multiplication of two consecutive STMs 
+ *  @throws Exception if the multiplication of two consecutive STMs 
  *  is illegal (e.g., if the matrices have different sizes, which
  *  is the case if two segments leverage control laws with different 
  *  numbers of control states)
@@ -353,10 +353,10 @@ void Arcset::setSTMs_cumulative(){
 }//====================================================
 
 /**
- *  \brief Set each Segment STM to represent the evolution of the state
+ *  @brief Set each Segment STM to represent the evolution of the state
  *  vector between the beginning (chronologically) of the Segment and the
  *  end.
- *  \details The individual segment STMs elements are always stored in the
+ *  @details The individual segment STMs elements are always stored in the
  *  Segment state vector
  */
 void Arcset::setSTMs_sequence(){
@@ -377,10 +377,10 @@ void Arcset::setSTMs_sequence(){
 }//====================================================
 
 /**
- *  \brief Shift all time values by a constant amount
- *  \details This can be useful for use with the EM2SE and SE2EM functions
+ *  @brief Shift all time values by a constant amount
+ *  @details This can be useful for use with the EM2SE and SE2EM functions
  * 
- *  \param amount a constant, non-dimensional time shift to apply to 
+ *  @param amount a constant, non-dimensional time shift to apply to 
  *  all time values for points on this trajectory
  */
 void Arcset::shiftAllTimes(double amount){
@@ -398,7 +398,7 @@ void Arcset::shiftAllTimes(double amount){
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Print a useful message describing this arcset to the standard output
+ *	@brief Print a useful message describing this arcset to the standard output
  */
 void Arcset::print() const {
 
@@ -508,8 +508,8 @@ void Arcset::print() const {
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Save the arcset to a file
- *	\param filename the name of the .mat file
+ *	@brief Save the arcset to a file
+ *	@param filename the name of the .mat file
  */
 void Arcset::saveToMat(const char* filename, Save_tp saveTp) const{
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -547,11 +547,11 @@ void Arcset::saveToStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) co
 }//====================================================
 
 /**
- *  \brief Execute commands to save data to a Matlab file
- *  \details This function is called from saveToMat() and should
+ *  @brief Execute commands to save data to a Matlab file
+ *  @details This function is called from saveToMat() and should
  *  be overridden in derived classes as necessary.
  * 
- *  \param pMatFile pointer to an open Matlab file
+ *  @param pMatFile pointer to an open Matlab file
  */
 void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	matvar_t *pLinkTable = createVar_LinkTable(VARNAME_LINKTABLE);
@@ -592,12 +592,12 @@ void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 }//====================================================
 
 /**
- *  \brief Save the arcset as a structure in an array of structures
- *  \details [long description]
+ *  @brief Save the arcset as a structure in an array of structures
+ *  @details [long description]
  * 
- *  \param pStruct pointer to the structure variable (generally, an array of structures)
- *  \param ix index of this arcset within the structure array
- *  \param saveTp Describes how much detail to save
+ *  @param pStruct pointer to the structure variable (generally, an array of structures)
+ *  @param ix index of this arcset within the structure array
+ *  @param saveTp Describes how much detail to save
  */
 void Arcset::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
 	
@@ -649,14 +649,14 @@ void Arcset::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveT
 }//====================================================
 
 /**
- *  \brief Populate data in this trajectory from a matlab file
+ *  @brief Populate data in this trajectory from a matlab file
  * 
- *  \param filepath the path to the matlab data file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param filepath the path to the matlab data file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  *  
- *  \throws Exception if the data file cannot be opened
+ *  @throws Exception if the data file cannot be opened
  */
 void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws){
 
@@ -686,12 +686,12 @@ void Arcset::readFromStruct(matvar_t *pStruct, unsigned int ix, std::vector<Cont
 }//====================================================
 
 /**
- *  \brief Execute commands to read data from a Matlab file
- *  \details This function is called from readFromMat() and should
+ *  @brief Execute commands to read data from a Matlab file
+ *  @details This function is called from readFromMat() and should
  *  be overridden in derived classes as necessary.
  * 
- *  \param pMatFile pointer to an open Matlab file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  *  

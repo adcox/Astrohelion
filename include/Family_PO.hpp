@@ -1,5 +1,5 @@
 /**
- * \file Family_PO.hpp
+ * @file Family_PO.hpp
  */
 /*
  *	Astrohelion 
@@ -35,10 +35,10 @@ namespace astrohelion{
 
 /**
  *  \ingroup fam
- *  \brief [brief description]
- *  \details [long description]
+ *  @brief [brief description]
+ *  @details [long description]
  * 
- *  \param  [description]
+ *  @param  [description]
  */
 class Family_PO : public Family{
 	public:

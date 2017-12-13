@@ -1,10 +1,10 @@
 /**
- *  \file LambertArcEngine.cpp
- *	\brief Generate Lambert Arcs in the 2BP
+ *  @file LambertArcEngine.cpp
+ *	@brief Generate Lambert Arcs in the 2BP
  *
- *	\author Andrew Cox
- *	\version 
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version 
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -41,13 +41,13 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *  \brief Construct a default Lambert Arc engine
+ *  @brief Construct a default Lambert Arc engine
  */
 LambertArcEngine::LambertArcEngine(){}
 
 /**
- *  \brief Copy constructor
- *  \param e reference to another engine object
+ *  @brief Copy constructor
+ *  @param e reference to another engine object
  */
 LambertArcEngine::LambertArcEngine(const LambertArcEngine &e){
 	copyMe(e);
@@ -58,9 +58,9 @@ LambertArcEngine::LambertArcEngine(const LambertArcEngine &e){
 //-----------------------------------------------------
 
 /**
- *  \brief Assignment operator
- *  \param e reference to another Lambert Arc engine object
- *  \return a reference to this engine after the assignment is complete
+ *  @brief Assignment operator
+ *  @param e reference to another Lambert Arc engine object
+ *  @return a reference to this engine after the assignment is complete
  */
 LambertArcEngine& LambertArcEngine::operator =(const LambertArcEngine &e){
 	copyMe(e);
@@ -72,26 +72,26 @@ LambertArcEngine& LambertArcEngine::operator =(const LambertArcEngine &e){
 //-----------------------------------------------------
 
 /**
- *  \brief Set the maximum allowable TOF error, seconds
- *  \details Default value is 1 millisecond
+ *  @brief Set the maximum allowable TOF error, seconds
+ *  @details Default value is 1 millisecond
  * 
- *  \param err maximum allowable TOF error, seconds
+ *  @param err maximum allowable TOF error, seconds
  */
 void LambertArcEngine::setMaxErr_tof(double err){ tof_maxErr = err; }
 
 /**
- *  \brief Set the maximum allowable true anomaly error, radians
- *  \details Default value is 0.001 deg equivalent
+ *  @brief Set the maximum allowable true anomaly error, radians
+ *  @details Default value is 0.001 deg equivalent
  * 
- *  \param err maximum allowable true anomaly error, radians
+ *  @param err maximum allowable true anomaly error, radians
  */
 void LambertArcEngine::setMaxErr_ta(double err){ ta_maxErr = err; }
 
 /**
- *  \brief Set the maximum allowable iterations to find the semi-major axis
- *  \details Default value is 100
+ *  @brief Set the maximum allowable iterations to find the semi-major axis
+ *  @details Default value is 100
  * 
- *  \param its maximum allowable iterations to find the semi-major axis
+ *  @param its maximum allowable iterations to find the semi-major axis
  */
 void LambertArcEngine::setMaxIts(unsigned int its){ maxIts = its; }
 
@@ -100,15 +100,15 @@ void LambertArcEngine::setMaxIts(unsigned int its){ maxIts = its; }
 //-----------------------------------------------------
 
 /**
- *  \brief Generate a lambert arc between two points with a specified time-of-flight and type
- *  \details [long description]
+ *  @brief Generate a lambert arc between two points with a specified time-of-flight and type
+ *  @details [long description]
  * 
- *  \param pSys System data object pointer that describes the two-body problem system
- *  \param r1 3D vector that describes the initial point in space (km)
- *  \param r2 3D vector that describes the final point in space (km)
- *  \param tof time-of-flight between two points (seconds)
- *  \param type Type of the transfer (Type = 1 or Type = 2)
- *  \return A trajectory object that contains a Lambert Arc linking the two points with the
+ *  @param pSys System data object pointer that describes the two-body problem system
+ *  @param r1 3D vector that describes the initial point in space (km)
+ *  @param r2 3D vector that describes the final point in space (km)
+ *  @param tof time-of-flight between two points (seconds)
+ *  @param type Type of the transfer (Type = 1 or Type = 2)
+ *  @return A trajectory object that contains a Lambert Arc linking the two points with the
  *  specified time-of-flight
  */
 Arcset_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double> r1, std::vector<double> r2,
@@ -451,8 +451,8 @@ Arcset_2bp LambertArcEngine::getLambertArc(SysData_2bp *pSys, std::vector<double
 //-----------------------------------------------------
 
 /**
- *  \brief Utility function to copy all attributes of a Lambert engine object into this one
- *  \param e reference to another LambertArcEngine
+ *  @brief Utility function to copy all attributes of a Lambert engine object into this one
+ *  @param e reference to another LambertArcEngine
  */
 void LambertArcEngine::copyMe(const LambertArcEngine &e){
 	Engine::copyBaseEngine(e);
@@ -462,16 +462,16 @@ void LambertArcEngine::copyMe(const LambertArcEngine &e){
 }//====================================================
 
 /**
- *  \brief Reset flags and variables that are set during arc generation
+ *  @brief Reset flags and variables that are set during arc generation
  */
 void LambertArcEngine::cleanEngine(){
 	bIsClean = true;
 }//====================================================
 
 /**
- *  \brief Reset the entire engine, including any parameters
+ *  @brief Reset the entire engine, including any parameters
  *  that were set by the user
- *  \details cleanEngine() is also called by this function
+ *  @details cleanEngine() is also called by this function
  */
 void LambertArcEngine::reset(){
 	if(!bIsClean)

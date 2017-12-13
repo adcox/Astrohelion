@@ -1,10 +1,10 @@
 /**
- * \file PseudoArcEngine.cpp
- * \brief
+ * @file PseudoArcEngine.cpp
+ * @brief
  * 
- * \author Andrew Cox
- * \version October 13, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version October 13, 2017
+ * @copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -50,13 +50,13 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Construct a default pseudo-arclength engine object
+ *  @brief Construct a default pseudo-arclength engine object
  */
 PseudoArcEngine::PseudoArcEngine() : ContinuationEngine(){}
 
 /**
- *  \brief Copy a pseudo-arclength object into this one
- *  \param e reference to another pseudo-arclength engine
+ *  @brief Copy a pseudo-arclength object into this one
+ *  @param e reference to another pseudo-arclength engine
  */
 PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(e){
 	copyMe(e);
@@ -66,10 +66,10 @@ PseudoArcEngine::PseudoArcEngine(const PseudoArcEngine &e) : ContinuationEngine(
 //      Operators
 //-----------------------------------------------------------------------------
 /**
- *  \brief Set this object equal to another
+ *  @brief Set this object equal to another
  * 
- *  \param e reference to another PAC engine
- *  \return a reference to this engine after the copy/assignment
+ *  @param e reference to another PAC engine
+ *  @return a reference to this engine after the copy/assignment
  */
 PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 	copyMe(e);
@@ -81,14 +81,14 @@ PseudoArcEngine& PseudoArcEngine::operator=(const PseudoArcEngine &e){
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Tell the algorithm which nullspace vector to choose in the first
+ *  @brief Tell the algorithm which nullspace vector to choose in the first
  *  iteration if the nullspace is multidimensional.
- *  \details While rare for properly formatted families, a multidimensional
+ *  @details While rare for properly formatted families, a multidimensional
  *  nullspace may occur if the initial guess is precisely a bifurcation between
  *  families. Multidimensional nullspaces may also occur if the constraints are 
  *  not independent or if the Jacobian matrix is poorly scaled.
  * 
- *  \param c which column (index begins at 0) of the nullspace to choose for
+ *  @param c which column (index begins at 0) of the nullspace to choose for
  *  the initial step
  */
 void PseudoArcEngine::setNullspaceCol(unsigned int c){ nullspaceCol = c; }
@@ -98,15 +98,15 @@ void PseudoArcEngine::setNullspaceCol(unsigned int c){ nullspaceCol = c; }
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Use pseudo-arclength continuation to generate a family of symmetric periodic orbits in the CR3BP
- *  \details [long description]
+ *  @brief Use pseudo-arclength continuation to generate a family of symmetric periodic orbits in the CR3BP
+ *  @details [long description]
  * 
- *  \param pFam pointer to a family object to store the orbits in
- *  \param pInitHalfPerGuess pointer to an arcset that represents the half-period arc of the first
+ *  @param pFam pointer to a family object to store the orbits in
+ *  @param pInitHalfPerGuess pointer to an arcset that represents the half-period arc of the first
  *  family member. Any constraints applied to this input guess are ignored and replaced with 
  *  mirror condition constraints
- *  \param mirrorType Describes how the orbit is symmetric
- *  \param initDir a vector that contains one non-zero element that indicates the sign of 
+ *  @param mirrorType Describes how the orbit is symmetric
+ *  @param initDir a vector that contains one non-zero element that indicates the sign of 
  *	the desired step for the family. The index corresponds to the state index. For example,
  *	if I wish the family to continue with a step in the negative z direction for the first node,
  *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
@@ -144,21 +144,21 @@ void PseudoArcEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr
 }//====================================================
 
 /**
- *  \brief The core of the pseudo-arclength continuation algorithm
- *  \details This function is designed to be system- and model-agnostic
+ *  @brief The core of the pseudo-arclength continuation algorithm
+ *  @details This function is designed to be system- and model-agnostic
  * 
- *  \param pInitGuess pointer to an initial guess arcset. This arcset must include all
+ *  @param pInitGuess pointer to an initial guess arcset. This arcset must include all
  *  the necessary constraints to converge on a family member
- *  \param pMember pointer to a storage arcset; can be empty but must be initialized and non-null
- *  \param pTemp pointer to a storage arcset; can be empty but must be initialized and non-null
- *  \param allArcs reference to a vector in which all the converged family members are stored
- *  \param initDir a vector that contains one non-zero element that indicates the sign of 
+ *  @param pMember pointer to a storage arcset; can be empty but must be initialized and non-null
+ *  @param pTemp pointer to a storage arcset; can be empty but must be initialized and non-null
+ *  @param allArcs reference to a vector in which all the converged family members are stored
+ *  @param initDir a vector that contains one non-zero element that indicates the sign of 
  *	the desired step for the family. The index corresponds to the state index. For example,
  *	if I wish the family to continue with a step in the negative z direction for the first node,
  *	I would input a vector of the form {0, 0, -1, 0, 0, 0, ...}. Technically, you can constrain
  * 	a step on any of the free variables, but only one step direction will be considered (the first one
  * 	as the algorithm reads through the vector) 
- * 	\param pEngine a pointer to a multiple shooting engine that will be used as a template for the 
+ * 	@param pEngine a pointer to a multiple shooting engine that will be used as a template for the 
  * 	pseudo-arclength continuation. Note that parameters required for this continuation, i.e. 
  * 	TOFType, will not be overwritten by the input engine. If left as a nullptr, no parameters
  * 	are copied.
@@ -337,20 +337,20 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 }//====================================================
 
 /**
- *	\brief Create a arcset that contains an initial guess for a family member
+ *	@brief Create a arcset that contains an initial guess for a family member
  *	using pseudo arclength continuation
  *
- *	\param pNewMember a pointer to an arcset object in which to store the guess for the
+ *	@param pNewMember a pointer to an arcset object in which to store the guess for the
  *	next family member
- *	\param pTemp a pointer to an arbitrary arcset. This arcset is cleared and overwritten; the 
+ *	@param pTemp a pointer to an arbitrary arcset. This arcset is cleared and overwritten; the 
  *	final contents are not important.
- *	\param convergedFreeVarVec a matrix containing the free variable vector of the previous
+ *	@param convergedFreeVarVec a matrix containing the free variable vector of the previous
  *	(nearest) converged family member
- *	\param N a 1D nullspace vector that lies tangent to the family
- *	\param pFamilyItData pointer to a MultShootData object containing corrections information about the
+ *	@param N a 1D nullspace vector that lies tangent to the family
+ *	@param pFamilyItData pointer to a MultShootData object containing corrections information about the
  *	previous (nearest) converged family member. This data, combined with the converged freeVarVec, is leveraged
  *	to construct the new solution
- *	\param it reference to the iteration data that describes the converged solution
+ *	@param it reference to the iteration data that describes the converged solution
  */
 void PseudoArcEngine::getNextPACGuess(Arcset *pNewMember, Arcset *pTemp, const Eigen::VectorXd &convergedFreeVarVec,
 	const Eigen::VectorXd &N, MultShootData& it){
@@ -396,9 +396,9 @@ void PseudoArcEngine::getNextPACGuess(Arcset *pNewMember, Arcset *pTemp, const E
 }//====================================================
 
 /**
- *  \brief Decrease the step size, if possible
+ *  @brief Decrease the step size, if possible
  *  
- *  \return whether or not the step size was decreased. A return value
+ *  @return whether or not the step size was decreased. A return value
  *  of FALSE indicates that the step size cannot be decreased any further
  */
 bool PseudoArcEngine::decreaseStepSize(){
@@ -417,15 +417,15 @@ bool PseudoArcEngine::decreaseStepSize(){
 }//====================================================
 
 /**
- *  \brief Check to see if the converged solution is valid
+ *  @brief Check to see if the converged solution is valid
  * 
- *  \param it Iteration data from the most recent multiple shooting process
- *  \param convergedFreeVarVec Free variable vector describing the previous 
+ *  @param it Iteration data from the most recent multiple shooting process
+ *  @param convergedFreeVarVec Free variable vector describing the previous 
  *  converged and accepted solution
- *  \param killLoop Whether or not to end the continuation. For example,
+ *  @param killLoop Whether or not to end the continuation. For example,
  *  if the converged solutions have ceased changing then killLoop is set 
  *  to true.
- *  \return whether or not the converged solution is valid
+ *  @return whether or not the converged solution is valid
  */
 bool PseudoArcEngine::checkPACSoln(const MultShootData &it, const Eigen::VectorXd &convergedFreeVarVec,
 	bool& killLoop){
@@ -458,13 +458,13 @@ bool PseudoArcEngine::checkPACSoln(const MultShootData &it, const Eigen::VectorX
 }//====================================================
 
 /**
- *  \brief Check to see if the converged solution is periodic
+ *  @brief Check to see if the converged solution is periodic
  * 
- *  \param pSol Converged solution from the most recent multiple shooting process
- *  \param killLoop Whether or not to end the continuation. For example,
+ *  @param pSol Converged solution from the most recent multiple shooting process
+ *  @param killLoop Whether or not to end the continuation. For example,
  *  if the converged solutions have ceased changing then killLoop is set 
  *  to true.
- *  \return whether or not the converged solution is periodic
+ *  @return whether or not the converged solution is periodic
  */
 bool PseudoArcEngine::checkPACSoln_periodic(const Arcset_periodic *pSol, bool& killLoop){
 
@@ -487,14 +487,14 @@ bool PseudoArcEngine::checkPACSoln_periodic(const Arcset_periodic *pSol, bool& k
 }//====================================================
 
 /**
- *  \brief Choose the nullspace vector as well as the correct sign
- *  \details Use the orientation of the nullspace vector in n-space to 
+ *  @brief Choose the nullspace vector as well as the correct sign
+ *  @details Use the orientation of the nullspace vector in n-space to 
  *  determine the correct sign (i.e., choose the sign that results in the
  *  closest orientation to the previous converged member). Multi-dimensional
  *  nullspaces are not currently handled, though could be via the same logic.
  * 
- *  \param N A matrix that stores each nullspace vector as a column
- *  \return whether or not the selection process was successful. A return value of FALSe
+ *  @param N A matrix that stores each nullspace vector as a column
+ *  @return whether or not the selection process was successful. A return value of FALSe
  *  indicates that the continuation should end
  */
 bool PseudoArcEngine::chooseNullVec(MatrixXRd &N, std::vector<int> initDir, const MatrixXRd &prevN){
@@ -591,8 +591,8 @@ bool PseudoArcEngine::chooseNullVec(MatrixXRd &N, std::vector<int> initDir, cons
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Make a copy of the engine
- *  \param e reference to another engine object to copy into this one
+ *  @brief Make a copy of the engine
+ *  @param e reference to another engine object to copy into this one
  */
 void PseudoArcEngine::copyMe(const PseudoArcEngine &e){
 	ContinuationEngine::copyMe(e);
@@ -601,7 +601,7 @@ void PseudoArcEngine::copyMe(const PseudoArcEngine &e){
 }//====================================================
 
 /**
- *  \brief Reset all parameters, including user-specified options and run-specific iterators
+ *  @brief Reset all parameters, including user-specified options and run-specific iterators
  */
 void PseudoArcEngine::reset(){
 	ContinuationEngine::reset();
@@ -610,8 +610,8 @@ void PseudoArcEngine::reset(){
 }//====================================================
 
 /**
- *  \brief Reset only run-specific iterators
- *  \details User-specified options (e.g., step size limits) are not changed
+ *  @brief Reset only run-specific iterators
+ *  @details User-specified options (e.g., step size limits) are not changed
  */
 void PseudoArcEngine::cleanEngine(){
 	ContinuationEngine::cleanEngine();

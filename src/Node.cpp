@@ -1,10 +1,10 @@
 /**
- *  \file Node.cpp
- *	\brief Stores information about a single node or integration state
+ *  @file Node.cpp
+ *	@brief Stores information about a single node or integration state
  *
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -40,16 +40,16 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 Node::Node(){}
 
 /**
- *  \brief Construct a node object
+ *  @brief Construct a node object
  * 
- *  \param state array of state variables
- *  \param len length of the array
- *  \param epoch epoch associated with this node
+ *  @param state array of state variables
+ *  @param len length of the array
+ *  @param epoch epoch associated with this node
  */
 Node::Node(const double *state, unsigned int len, double epoch){
 	this->state.assign(state, state + len);
@@ -57,10 +57,10 @@ Node::Node(const double *state, unsigned int len, double epoch){
 }//====================================================
 
 /**
- *  \brief Construct a node object
+ *  @brief Construct a node object
  * 
- *  \param state vector of state variables
- *  \param epoch epoch associated with this node
+ *  @param state vector of state variables
+ *  @param epoch epoch associated with this node
  */
 Node::Node(std::vector<double> state, double epoch){
 	this->state = state;
@@ -68,16 +68,16 @@ Node::Node(std::vector<double> state, double epoch){
 }//====================================================
 
 /**
- *  \brief Copy constructor
+ *  @brief Copy constructor
  * 
- *  \param n node object reference
+ *  @param n node object reference
  */
 Node::Node(const Node &n) : Linkable(n){
 	copyMe(n);
 }//====================================================
 
 /**
- *  \brief Destructor
+ *  @brief Destructor
  */
 // Node::~Node(){}
 
@@ -86,9 +86,9 @@ Node::Node(const Node &n) : Linkable(n){
 //-----------------------------------------------------
 
 /**
- *	\brief Assignment operator
- *	\param n a node object reference
- *	\return set this node equal to s and return *this
+ *	@brief Assignment operator
+ *	@param n a node object reference
+ *	@return set this node equal to s and return *this
  */
 Node& Node::operator =(const Node &n){
 	Linkable::operator =(n);
@@ -97,12 +97,12 @@ Node& Node::operator =(const Node &n){
 }//====================================================
 
 /**
- *	\brief Determine if two nodes are identical
+ *	@brief Determine if two nodes are identical
  *
  *	Conditions for identicalness:
  *	* Exact same state vector
  *
- *	\return whether or not two nodes are identical
+ *	@return whether or not two nodes are identical
  */
 bool operator ==(const Node &lhs, const Node &rhs){
 	if(lhs.state.size() != rhs.state.size())
@@ -138,8 +138,8 @@ bool operator ==(const Node &lhs, const Node &rhs){
 }//====================================================
 
 /**
- *	\brief Determine if two nodes are different
- *	\return whether two nodes are different
+ *	@brief Determine if two nodes are different
+ *	@return whether two nodes are different
  *	@see operator==
  */
 bool operator != (const Node &lhs, const Node &rhs){
@@ -151,21 +151,21 @@ bool operator != (const Node &lhs, const Node &rhs){
 //-----------------------------------------------------
 
 /**
- *	\brief Add a constraint to the current set for this node
- *	\param c a new constraint
+ *	@brief Add a constraint to the current set for this node
+ *	@param c a new constraint
  */
 void Node::addConstraint(Constraint c){
 	cons.push_back(c);
 }//====================================================
 
 /**
- *	\brief Clear all constraints associated with this node
+ *	@brief Clear all constraints associated with this node
  */
 void Node::clearConstraints(){ cons.clear(); }
 
 /**
- *	\brief Remove the specified constraint
- *	\param ix the index of the constraint.
+ *	@brief Remove the specified constraint
+ *	@param ix the index of the constraint.
  *	@throw Exception if `ix` is out of bounds
  */
 void Node::removeConstraint(int ix){
@@ -175,35 +175,35 @@ void Node::removeConstraint(int ix){
 }//====================================================
 
 /**
- *	\brief Set the list of constraints for this node
- *	\param constraints a vector of constraints
+ *	@brief Set the list of constraints for this node
+ *	@param constraints a vector of constraints
  */
 void Node::setConstraints(std::vector<Constraint> constraints){
 	cons = constraints;
 }//====================================================
 
 /**
- *	\brief Get all constraints for this node
- *	\return a vector containing all constraints applied to this node
+ *	@brief Get all constraints for this node
+ *	@return a vector containing all constraints applied to this node
  */
 std::vector<Constraint> Node::getConstraints() const{
 	return cons;
 }//====================================================
 
 /**
- *  \brief Retrieve the epoch assocated with this node
- *  \return the epoch associated with this node, units consistent with the parent system
+ *  @brief Retrieve the epoch assocated with this node
+ *  @return the epoch associated with this node, units consistent with the parent system
  */
 double Node::getEpoch() const{ return epoch; }
 
 /**
- *  \brief Retrieve an extra parameter associated with the 
+ *  @brief Retrieve an extra parameter associated with the 
  *  specified key
  * 
- *  \param key A string that identifies an extra parameter
- *  \return the extra parameter value
+ *  @param key A string that identifies an extra parameter
+ *  @return the extra parameter value
  *  
- *  \throws Exception if the key is invalid
+ *  @throws Exception if the key is invalid
  */
 double Node::getExtraParam(std::string key) const {
 	if(extraParam.count(key) > 0){
@@ -214,21 +214,21 @@ double Node::getExtraParam(std::string key) const {
 }//====================================================
 
 /**
- *	\brief Get a vector containing all extra parameters for this node
- *	\return a vector containing all extra parameters for this node
+ *	@brief Get a vector containing all extra parameters for this node
+ *	@return a vector containing all extra parameters for this node
  */
 std::map<std::string, double> Node::getExtraParams() const {
 	return extraParam;
 }//====================================================
 
 /**
- *  \brief Retrieve an extra parameter vector associated with the
+ *  @brief Retrieve an extra parameter vector associated with the
  *  specified key
  * 
- *  \param key String that identifies the extra parameter vector
- *  \return the extra parameter vector
+ *  @param key String that identifies the extra parameter vector
+ *  @return the extra parameter vector
  *  
- *  \throws Exception if the key is invalid
+ *  @throws Exception if the key is invalid
  */
 std::vector<double> Node::getExtraParamVec(std::string key) const{
 	if(extraParamVecs.count(key) > 0){
@@ -239,85 +239,85 @@ std::vector<double> Node::getExtraParamVec(std::string key) const{
 }//====================================================
 
 /**
- *  \brief Retrieve the extra parameter vector map
- *  \return the extra parameter vector map
+ *  @brief Retrieve the extra parameter vector map
+ *  @return the extra parameter vector map
  */
 std::map<std::string, std::vector<double> > Node::getExtraParamVec() const{
 	return extraParamVecs;
 }//====================================================
 
 /**
- *  \brief Retrieve the number of constraints stored by this object
- *  \return the number of constraints stored by this object
+ *  @brief Retrieve the number of constraints stored by this object
+ *  @return the number of constraints stored by this object
  */
 unsigned int Node::getNumCons() const { return cons.size(); }
 
 /**
- *  \brief Retrieve the event type that triggered the creation of this Node
- *  \return the event type that triggered the creation of this Node
+ *  @brief Retrieve the event type that triggered the creation of this Node
+ *  @return the event type that triggered the creation of this Node
  */
 Event_tp Node::getTriggerEvent() const { return triggerEventTp; }
 
 /**
- *	\brief Get the non-dimensional position and velocity state vector
- *	\return the non-dimensional position and velocity state vector
+ *	@brief Get the non-dimensional position and velocity state vector
+ *	@return the non-dimensional position and velocity state vector
  */
 std::vector<double> Node::getState() const { return state; }
 
 /**
- *  \brief Retrieve a constant reference to the state
- *  \details This accessor is useful when computation time is important
- *  \return a constant reference to the state vector
+ *  @brief Retrieve a constant reference to the state
+ *  @details This accessor is useful when computation time is important
+ *  @return a constant reference to the state vector
  */
 const std::vector<double>& Node::getStateRef_const() const{ return state; }
 
 /**
- *  \brief Set the epoch associated with this node
- *  \param e the epoch, units consistent with parent system
+ *  @brief Set the epoch associated with this node
+ *  @param e the epoch, units consistent with parent system
  */
 void Node::setEpoch(double e){ epoch = e; }
 
 /**
- *  \brief Set an extra parameter value
+ *  @brief Set an extra parameter value
  * 
- *  \param key A descriptive key identifying the extra parameter
- *  \param val value of the extra parameter
+ *  @param key A descriptive key identifying the extra parameter
+ *  @param val value of the extra parameter
  */
 void Node::setExtraParam(std::string key, double val){
 	extraParam[key] = val;
 }//====================================================
 
 /**
- *	\brief Replace the extra parameter vector for this node
- *	\param p a new extra paremeter vector
+ *	@brief Replace the extra parameter vector for this node
+ *	@param p a new extra paremeter vector
  */
 void Node::setExtraParams(std::map<std::string, double> p){
 	extraParam = p;
 }//====================================================
 
 /**
- *  \brief Assign a vector to the designated key
+ *  @brief Assign a vector to the designated key
  * 
- *  \param key string that identifies the extra parameter vector
- *  \param vec vector to assign to the key
+ *  @param key string that identifies the extra parameter vector
+ *  @param vec vector to assign to the key
  */
 void Node::setExtraParamVec(std::string key, std::vector<double> vec){
 	extraParamVecs[key] = vec;
 }//====================================================
 
 /**
- *  \brief Assign the entire extraParamVec map
- *  \param p A map that contains keys and extra parameter vectors
+ *  @brief Assign the entire extraParamVec map
+ *  @param p A map that contains keys and extra parameter vectors
  */
 void Node::setExtraParamVec(std::map<std::string, std::vector<double> > p){
 	extraParamVecs = p;
 }//====================================================
 
 /**
- *  \brief Set the ID and also update the ID of any 
+ *  @brief Set the ID and also update the ID of any 
  *  associated constraints
  * 
- *  \param id ID that uniquely identifies the node
+ *  @param id ID that uniquely identifies the node
  */
 void Node::setID(int id){
 	Linkable::setID(id);
@@ -327,25 +327,25 @@ void Node::setID(int id){
 }//====================================================
 
 /**
- *	\brief Set the position-velocity state vector
- *	\param s an array of non-dimensional position
+ *	@brief Set the position-velocity state vector
+ *	@param s an array of non-dimensional position
  *	and velocity states
- *	\param len length of the array
+ *	@param len length of the array
  */
 void Node::setState(const double *s, unsigned int len){
 	state.assign(s, s+len);
 }//====================================================
 
 /**
- *	\brief Set the position-velocity state vector
- *	\param s a vector of non-dimensional position
+ *	@brief Set the position-velocity state vector
+ *	@param s a vector of non-dimensional position
  *	and velocity states
  */
 void Node::setState(std::vector<double> s){ state = s; }
 
 /**
- *  \brief Set the event that triggered the creation of this node
- *  \param tp Event type
+ *  @brief Set the event that triggered the creation of this node
+ *  @param tp Event type
  */
 void Node::setTriggerEvent(Event_tp tp){ triggerEventTp = tp; }
 
@@ -354,8 +354,8 @@ void Node::setTriggerEvent(Event_tp tp){ triggerEventTp = tp; }
 //-----------------------------------------------------
 
 /**
- *	\brief Copy a node into this one
- *	\param n a node reference
+ *	@brief Copy a node into this one
+ *	@param n a node reference
  */
 void Node::copyMe(const Node &n){
 	state = n.state;
@@ -368,7 +368,7 @@ void Node::copyMe(const Node &n){
 }//====================================================
 
 /**
- *  \brief Print a description of the node and its properties
+ *  @brief Print a description of the node and its properties
  */
 void Node::print() const{
 	printf("Node | id = %d\n", ID);

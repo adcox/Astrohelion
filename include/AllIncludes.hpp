@@ -1,7 +1,7 @@
 /**
- *	\file AllIncludes.hpp
+ *	@file AllIncludes.hpp
  *
- *	\brief Provides easy include for all headers in the Core library
+ *	@brief Provides easy include for all headers in the Core library
  */
 
 #include "AsciiOutput.hpp"

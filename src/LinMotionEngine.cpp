@@ -1,10 +1,10 @@
 /**
- *	\file LinMotionEngine.cpp
- *	\brief Uses linear EOMS near libration points to generate trajectories
+ *	@file LinMotionEngine.cpp
+ *	@brief Uses linear EOMS near libration points to generate trajectories
  *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -40,56 +40,56 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Retrieve the number of revolutions to simulate for
+ *	@brief Retrieve the number of revolutions to simulate for
  *
  *	Note that this rev count applies to the in-plane oscillations only; the out-of-plane
  *	motion will most likely have a different period and therefore perform a different
  *	number of revs during the same time period
  *
- *	\return the number of rotatins to simulate for
+ *	@return the number of rotatins to simulate for
  */
 double LinMotionEngine::getNumRevs() const { return revs; }
 
 /**
- *	\brief Retrieve the step size (in non-dimensional units) for the time vector
- *	\return he step size (in non-dimensional units) for the time vector
+ *	@brief Retrieve the step size (in non-dimensional units) for the time vector
+ *	@return he step size (in non-dimensional units) for the time vector
  */
 double LinMotionEngine::getTimeStep() const { return t_step; }
 
 /**
- *	\brief Retrieve the acceptable numerical tolerance for computations
+ *	@brief Retrieve the acceptable numerical tolerance for computations
  *
  *	This tolerance is used to target Lagrange point locations and to determine
  *	where or not numbers are "equal" to zero (or any other value)
- *	\return the acceptable numerical tolerance for computations
+ *	@return the acceptable numerical tolerance for computations
  */
 double LinMotionEngine::getTol() const { return tol; }
 
 /**
- *	\brief Set the number of revolutions to simulate for.
+ *	@brief Set the number of revolutions to simulate for.
  *
  *	The length of one revolutions is determined by the in-plane period, not the
  *	out-of-plane period
- *	\param numRevs number of revolutions
+ *	@param numRevs number of revolutions
  */
 void LinMotionEngine::setNumRevs(double numRevs) { revs = numRevs; }
 
 /**
- *	\brief Set the step size for the time vector
- *	\param dt non-dimensional time step
+ *	@brief Set the step size for the time vector
+ *	@param dt non-dimensional time step
  */
 void LinMotionEngine::setTimeStep(double dt) { t_step = dt; }
 
 /**
- *	\brief set the tolerance to use
- *	\param t tolerance, non-dimensional units
+ *	@brief set the tolerance to use
+ *	@param t tolerance, non-dimensional units
  */
 void LinMotionEngine::setTol(double t){ tol = t; }
 
 /**
- *	\brief get a human-readable string for a motion type
- *	\param type the motion type
- *	\return a human-redable string
+ *	@brief get a human-readable string for a motion type
+ *	@param type the motion type
+ *	@return a human-redable string
  */
 const char* LinMotionEngine::getTypeStr(unsigned int type) const{
 	switch(type){

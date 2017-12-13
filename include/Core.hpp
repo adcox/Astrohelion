@@ -1,7 +1,7 @@
 /** 
- *	\file Core.hpp
+ *	@file Core.hpp
  *
- *	\brief Contains functions and variables that are global for the entire library
+ *	@brief Contains functions and variables that are global for the entire library
  *
  *	Note to end user: You do NOT need to include this header
  *
@@ -85,7 +85,7 @@
 #include <map>
 
 /**
- * \brief A namespace to contain all objects that are part of
+ * @brief A namespace to contain all objects that are part of
  * the Astrohelion library; prevent clashes with other libraries
  */
 namespace astrohelion{
@@ -124,7 +124,7 @@ struct Body_Data{
 }; // END OF BODY_DATA
 
 /**
- *  \brief A structure that contains default settings and functions to load
+ *  @brief A structure that contains default settings and functions to load
  *  settings from an XML file
  */
 class Core_Settings{
@@ -150,7 +150,7 @@ public:
 }; // END OF Core_Settings
 
 /**
- *	\brief a structure that contains functions to initialize and unload 
+ *	@brief a structure that contains functions to initialize and unload 
  *	global library stuff
  */
 class Core_Initializer {
@@ -165,8 +165,8 @@ public:
 };
 
 /**
- *  \brief An object that serves as a parent to all Core objects.
- *  \details This object's sole purpose is to load settings from
+ *  @brief An object that serves as a parent to all Core objects.
+ *  @details This object's sole purpose is to load settings from
  *  an XML file when any of the Core objects are instantiated. Static
  *  objects are used to ensure that only one copy of the initializer
  *  and settings structures are constructed
@@ -177,10 +177,10 @@ public:
 	virtual ~Core();									//!< Default destructor
 
 	/**
-	 *  \brief Initialize the core
-	 *  \details This function wraps a static Core_Initializer object to avoid multiple
+	 *  @brief Initialize the core
+	 *  @details This function wraps a static Core_Initializer object to avoid multiple
 	 *  instances of the initializer in different translation units
-	 *  \return a reference to the initializer
+	 *  @return a reference to the initializer
 	 */
 	Core_Initializer& initializer(){
 		static Core_Initializer initializer;
@@ -188,10 +188,10 @@ public:
 	}
 
 	/**
-	 *  \brief Check to see if the core is initialized
-	 *  \details This function wraps a static boolean object to avoid multiple 
+	 *  @brief Check to see if the core is initialized
+	 *  @details This function wraps a static boolean object to avoid multiple 
 	 *  instances of the variable in different translation units
-	 *  \return whether or not the core is initialized
+	 *  @return whether or not the core is initialized
 	 */
 	bool& bIsInit(){
 		static bool b_isInit;

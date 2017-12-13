@@ -1,10 +1,10 @@
 /**
- *  \file MultShootEngine.hpp
- *	\brief Performs corrections on a nodeset subject to a set of constraints
+ *  @file MultShootEngine.hpp
+ *	@brief Performs corrections on a nodeset subject to a set of constraints
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -54,7 +54,7 @@ class SysData_bc4bp;
 
 /**
  *	\ingroup engine
- *	\brief An engine object to perform corrections, such as multiple shooting.
+ *	@brief An engine object to perform corrections, such as multiple shooting.
  *
  *	### Multiple Shooting Algorithm
  *	The multiple shooting algorithm is initiated by calling the multShoot() function. 
@@ -69,9 +69,9 @@ class SysData_bc4bp;
  *	it may be disadvantageous to scale the variables. In this case, it may be necessary to 
  *	reformulate the problem to shift large variables.
  *	
- *	\author Andrew Cox
- *	\version August 3, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 3, 2015
+ *	@copyright GNU GPL v3.0
  */
 class MultShootEngine : public Core, public Engine{
 	public:

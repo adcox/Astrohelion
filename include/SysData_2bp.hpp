@@ -1,10 +1,10 @@
 /**
- *  \file SysData_2bp.hpp
- *	\brief 
+ *  @file SysData_2bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version August 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,12 +38,12 @@ namespace astrohelion{
 
 /**
  *	\ingroup model 2bp
- *	\brief A derivative class of the SysData object which
+ *	@brief A derivative class of the SysData object which
  *	contains information specific to the 2BP
  *
- *	\author Andrew Cox
- *	\version August 31, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 31, 2015
+ *	@copyright GNU GPL v3.0
  */
 class SysData_2bp : public SysData{
 	public:

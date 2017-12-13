@@ -1,10 +1,10 @@
 /**
- *  \file LinMotionEngine_cr3bp_lt.hpp
- *	\brief 
+ *  @file LinMotionEngine_cr3bp_lt.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,9 +38,9 @@ class ControlLaw_cr3bp_lt;
 
 /**
  *  \ingroup engine
- *  \brief Linear motion engine for the CR3BP-LT
- *  \details [long description]
- *  \return [description]
+ *  @brief Linear motion engine for the CR3BP-LT
+ *  @details [long description]
+ *  @return [description]
  */
 class LinMotionEngine_cr3bp_lt : public LinMotionEngine{
 	public:

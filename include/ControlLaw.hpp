@@ -1,10 +1,10 @@
 /**
- * \file ControlLaw.hpp
- * \brief Control Law header file
+ * @file ControlLaw.hpp
+ * @brief Control Law header file
  * 
- * \author Andrew Cox
- * \version March 3, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version March 3, 2017
+ * @copyright GNU GPL v3.0
  */
  
 /*
@@ -42,7 +42,7 @@ class SysData;
 
 /**
  *  \ingroup model
- *  \brief Stores control law equations and derivatives for flexible applications throughout
+ *  @brief Stores control law equations and derivatives for flexible applications throughout
  *  the astrohelion framework
  */
 class ControlLaw : public Core{

@@ -1,10 +1,10 @@
 /**
- *  \file LambertArcEngine.hpp
- *	\brief Generate Lambert Arcs via a Lambert Solver
+ *  @file LambertArcEngine.hpp
+ *	@brief Generate Lambert Arcs via a Lambert Solver
  *	
- *	\author Andrew Cox
- *	\version September 30, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 30, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -43,11 +43,11 @@ class SysData_2bp;
 
 /**
  *	\ingroup engine
- *	\brief Generate Lambert Arcs in the 2BP
+ *	@brief Generate Lambert Arcs in the 2BP
  *
- *	\author Andrew Cox
- *	\version September 9, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 9, 2016
+ *	@copyright GNU GPL v3.0
  */
 class LambertArcEngine : public Core, public Engine{
 

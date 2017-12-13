@@ -1,10 +1,10 @@
 /**
- * \file NatParamEngine.cpp
- * \brief
+ * @file NatParamEngine.cpp
+ * @brief
  * 
- * \author Andrew Cox
- * \version June 27, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version June 27, 2017
+ * @copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -49,7 +49,7 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 NatParamEngine::NatParamEngine() : ContinuationEngine() {}
 
@@ -70,134 +70,134 @@ NatParamEngine& NatParamEngine::operator=(const NatParamEngine &e){
 //      Set and Get Functions
 //-----------------------------------------------------------------------------
 /**
- *  \brief Get the number of solutions to store in the "curve fit memory"
- *  \details The number of solutions saved informs the least-squares
+ *  @brief Get the number of solutions to store in the "curve fit memory"
+ *  @details The number of solutions saved informs the least-squares
  *  curve-fitting algorithm that improves the performance of the natural 
  *  parameter continuation.
  * 
- *  \return the number of solutions to use when fitting a curve to predict
+ *  @return the number of solutions to use when fitting a curve to predict
  *  the continuation variables
  */
 unsigned int NatParamEngine::getCurveFitMem() const { return curveFitMem; }
 
 /**
- *  \brief Get the number of simple continuation (i.e., no curve fitting)
+ *  @brief Get the number of simple continuation (i.e., no curve fitting)
  *  iterations to perform before switching to curve-fitted solutions
  * 
- *  \return the number of simple continuation iterations to perform
+ *  @return the number of simple continuation iterations to perform
  */
 unsigned int NatParamEngine::getNumSimple() const { return numSimple; }
 
 /**
- *  \brief Get the number of iterations the corrector can take when a
+ *  @brief Get the number of iterations the corrector can take when a
  *  line search is NOT employed
  * 
- *  \return max number of iterations for the corrector
+ *  @return max number of iterations for the corrector
  */
 unsigned int NatParamEngine::getNoSearchMaxIts() const { return noSearchMaxIts; }
 
 /**
- *  \brief Get the number of iterations the corrector can take when a 
+ *  @brief Get the number of iterations the corrector can take when a 
  *  line search IS employed
  * 
- *  \return max number of iterations for the corrector
+ *  @return max number of iterations for the corrector
  */
 unsigned int NatParamEngine::getLineSearchMaxIts() const { return lineSearchMaxIts; }
 
 /**
- *  \brief Get the slope threshold that is the limit between
+ *  @brief Get the slope threshold that is the limit between
  *  two step directions
- *  \details The natural parameter continuation typically leverages 
+ *  @details The natural parameter continuation typically leverages 
  *  several "independent" stepping variables to facilitate continuation 
  *  along a nonlinear contour. When a step in one variable results in
  *  large changes in the other, the stepping variable is changed to 
  *  limit the sensitivity.
  * 
- *  \return slope threshold between stepping strategies
+ *  @return slope threshold between stepping strategies
  */
 double NatParamEngine::getSlopeThresh() const { return slopeThresh; }
 
 /**
- *  \brief Get the step size for simple (no curve-fitting) continuation
- *  \return the step size for simple (no curve-fitting) continuation
+ *  @brief Get the step size for simple (no curve-fitting) continuation
+ *  @return the step size for simple (no curve-fitting) continuation
  */
 double NatParamEngine::getStep_simple() const { return step_simple; }
 
 /**
- *  \brief Get the step size for fitted continuation: variable 1
- *  \return the step size for fitted continuation: variable 1
+ *  @brief Get the step size for fitted continuation: variable 1
+ *  @return the step size for fitted continuation: variable 1
  */
 double NatParamEngine::getStep_fitted_1() const { return step_fitted_1; }
 
 /**
- *  \brief Get the step size for fitted continuation: variable 2
- *  \return the step size for fitted continuation: variable 2
+ *  @brief Get the step size for fitted continuation: variable 2
+ *  @return the step size for fitted continuation: variable 2
  */
 double NatParamEngine::getStep_fitted_2() const { return step_fitted_2; }
 
 /**
- *  \brief Set the number of solutions to store in the "curve fit memory"
- *  \details The number of solutions saved informs the least-squares
+ *  @brief Set the number of solutions to store in the "curve fit memory"
+ *  @details The number of solutions saved informs the least-squares
  *  curve-fitting algorithm that improves the performance of the natural 
  *  parameter continuation.
  * 
- *  \param mem Number of solutions to use when fitting a curve to predict
+ *  @param mem Number of solutions to use when fitting a curve to predict
  *  the continuation variables
  */
 void NatParamEngine::setCurveFitMem(unsigned int mem){ curveFitMem = mem; }
 
 /**
- *  \brief Set the number of simple continuation (i.e., no curve fitting)
+ *  @brief Set the number of simple continuation (i.e., no curve fitting)
  *  iterations to perform before switching to curve-fitted solutions
  * 
- *  \param num the number of simple continuation iterations to perform
+ *  @param num the number of simple continuation iterations to perform
  */
 void NatParamEngine::setNumSimple(unsigned int num){ numSimple = num; }
 
 /**
- *  \brief Set the number of iterations the corrector can take when a
+ *  @brief Set the number of iterations the corrector can take when a
  *  line search is NOT employed
  * 
- *  \param num max number of iterations for the corrector
+ *  @param num max number of iterations for the corrector
  */
 void NatParamEngine::setNoSearchMaxIts(unsigned int num){ noSearchMaxIts = num; }
 
 /**
- *  \brief Set the number of iterations the corrector can take when a 
+ *  @brief Set the number of iterations the corrector can take when a 
  *  line search IS employed
  * 
- *  \param num max number of iterations for the corrector
+ *  @param num max number of iterations for the corrector
  */
 void NatParamEngine::setLineSearchMaxIts(unsigned int num){ lineSearchMaxIts = num; }
 
 /**
- *  \brief Set the slope threshold that is the limit between
+ *  @brief Set the slope threshold that is the limit between
  *  two step directions
- *  \details The natural parameter continuation typically leverages 
+ *  @details The natural parameter continuation typically leverages 
  *  several "independent" stepping variables to facilitate continuation 
  *  along a nonlinear contour. When a step in one variable results in
  *  large changes in the other, the stepping variable is changed to 
  *  limit the sensitivity.
  * 
- *  \param thresh slope threshold between stepping strategies
+ *  @param thresh slope threshold between stepping strategies
  */
 void NatParamEngine::setSlopeThresh(double thresh){ slopeThresh = thresh; }
 
 /**
- *  \brief Set the step size for simple (no curve-fitting) continuation
- *  \param step the step size for simple (no curve-fitting) continuation
+ *  @brief Set the step size for simple (no curve-fitting) continuation
+ *  @param step the step size for simple (no curve-fitting) continuation
  */
 void NatParamEngine::setStep_simple(double step){ step_simple = step; }
 
 /**
- *  \brief Set the step size for fitted continuation: variable 1
- *  \param step the step size for fitted continuation: variable 1
+ *  @brief Set the step size for fitted continuation: variable 1
+ *  @param step the step size for fitted continuation: variable 1
  */
 void NatParamEngine::setStep_fitted_1(double step){ step_fitted_1 = step; }
 
 /**
- *  \brief Set the step size for fitted continuation: variable 2
- *  \param step the step size for fitted continuation: variable 2
+ *  @brief Set the step size for fitted continuation: variable 2
+ *  @param step the step size for fitted continuation: variable 2
  */
 void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
 
@@ -206,17 +206,17 @@ void NatParamEngine::setStep_fitted_2(double step){ step_fitted_2 = step; }
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Use natural parameter continuation to generate a family of periodic orbits in the CR3BP
- *  \details [long description]
+ *  @brief Use natural parameter continuation to generate a family of periodic orbits in the CR3BP
+ *  @details [long description]
  * 
- *  \param pFam pointer to a family in which the results are stored
- *  \param initGuess An initial guess for the first periodic orbit in the family
- *  \param alwaysFixStateVals A vector of initial state values that are always fixed
- *  \param indVarIx a vector containing the indices of the independent variables to be used. You MUST
+ *  @param pFam pointer to a family in which the results are stored
+ *  @param initGuess An initial guess for the first periodic orbit in the family
+ *  @param alwaysFixStateVals A vector of initial state values that are always fixed
+ *  @param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
  *	first in the continuation (using stupid-simple continuation), and the second will be toggled
  *	on later if the slope favors it.
- *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
+ *	@param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
  */
@@ -242,26 +242,26 @@ void NatParamEngine::continuePO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *initG
 }//====================================================
 
 /**
- *	\brief Continue a family of periodic orbits via natural parameter continuation
+ *	@brief Continue a family of periodic orbits via natural parameter continuation
  *	
- * 	\param pFam a pointer to a family object to store family members in; the family MUST have
+ * 	@param pFam a pointer to a family object to store family members in; the family MUST have
  *	defined its system data object
- *	\param init_halfPerGuess a trajectory that is a good initial guess for half of 
+ *	@param init_halfPerGuess a trajectory that is a good initial guess for half of 
  *	the first family member
- *	\param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
+ *	@param mirrorTypes a vector of variables that describe how the family mirrors in the rotating 
  *	reference frame. Each entry corresponds to an independent variable in `indVarIx`
- *	\param indVarIx a vector containing the indices of the independent variables to be used. You MUST
+ *	@param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
  *	first in the continuation (using stupid-simple continuation), and the second will be toggled
  *	on later if the slope favors it.
- *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
+ *	@param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
  *
- *	\throws Exception if `indVarIx` has fewer than two elements
- *	\throws Exception if `mirrorTypes` does not have the same size as `indVarIx`
- *	\throws Exception if the eigenvalues of the monodromy matrix cannot be computed
- *	\throws Exception if one of the indices stored in `indVarIx` or `depVarIx` is
+ *	@throws Exception if `indVarIx` has fewer than two elements
+ *	@throws Exception if `mirrorTypes` does not have the same size as `indVarIx`
+ *	@throws Exception if the eigenvalues of the monodromy matrix cannot be computed
+ *	@throws Exception if one of the indices stored in `indVarIx` or `depVarIx` is
  *	out of range
  */
 void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3bp *init_halfPerGuess,
@@ -413,23 +413,23 @@ void NatParamEngine::continueSymmetricPO_cr3bp(Family_PO *pFam, const Arcset_cr3
 }//==================================================
 
 /**
- *  \brief A general natural parameter continuation algorithm
+ *  @brief A general natural parameter continuation algorithm
  * 
- *  \param pInitGuess pointer to the initial guess. Any constraints applied to this initial arc will 
+ *  @param pInitGuess pointer to the initial guess. Any constraints applied to this initial arc will 
  *  be copied to all future family members and enforced during continuation
- *  \param pInput pointer to an arbitrary arcset object of the same model/system as the initial guess
- *  \param pConverged pointer to an arbitrary arcset object of the same model/system as the initial guess
- *  \param allArcs Storage vector for all converged family members
- *  \param alwaysFixStateVals a vector of initial state values that should always be fixed; a value of NAN indicates
+ *  @param pInput pointer to an arbitrary arcset object of the same model/system as the initial guess
+ *  @param pConverged pointer to an arbitrary arcset object of the same model/system as the initial guess
+ *  @param allArcs Storage vector for all converged family members
+ *  @param alwaysFixStateVals a vector of initial state values that should always be fixed; a value of NAN indicates
  *  that the specified state should not be fixed.
- *  \param indVarIx a vector containing the indices of the independent variables to be used. You MUST
+ *  @param indVarIx a vector containing the indices of the independent variables to be used. You MUST
  *	specify at least two; currently only two can be used. The first index in the vector will be used
  *	first in the continuation (using stupid-simple continuation), and the second will be toggled
  *	on later if the slope favors it.
- *	\param depVarIx a list of state indices telling the algorithm which states should be predicted
+ *	@param depVarIx a list of state indices telling the algorithm which states should be predicted
  *	by a 2nd-order least squares approximation. If left empty, the continuation scheme will use
  *	simple techniques that don't perform very well.
- *	\param pEngineTemplate pointer to a multiple shooter engine that will be used, with
+ *	@param pEngineTemplate pointer to a multiple shooter engine that will be used, with
  *	some modifications, to correct orbits. You might want to control how times-of-flight
  *	are parameterized, whether or not to ignore crashes into the primaries, etc.
  */
@@ -631,11 +631,11 @@ void NatParamEngine::continuePO(const Arcset *pInitGuess, Arcset *pInput, Arcset
 }//====================================================
 
 /**
- *  \brief Decrease the step size
- *  \details The step size is decreased by a factor of <code>stepScaleFactor</code> if
+ *  @brief Decrease the step size
+ *  @details The step size is decreased by a factor of <code>stepScaleFactor</code> if
  *  possible (without going lower than the minimum step size)
  *  
- *  \return Whether or not the step size was decreased. A return value of FALSE indicates that the step
+ *  @return Whether or not the step size was decreased. A return value of FALSE indicates that the step
  *  size is already at the minimum value.
  */
 bool NatParamEngine::decreaseStepSize(){
@@ -668,10 +668,10 @@ bool NatParamEngine::decreaseStepSize(){
 }//====================================================
 
 /**
- *  \brief Increase the step size based on how quickly the previous solution converged
- *  \details the step size is increased by the <code>stepScaleFactor</code> factor.
+ *  @brief Increase the step size based on how quickly the previous solution converged
+ *  @details the step size is increased by the <code>stepScaleFactor</code> factor.
  * 
- *  \param its the number of iterations the shooting algorithm used to converge
+ *  @param its the number of iterations the shooting algorithm used to converge
  *  the previous solution.
  */
 void NatParamEngine::increaseStepSize(unsigned int its){
@@ -691,17 +691,17 @@ void NatParamEngine::increaseStepSize(unsigned int its){
 }//====================================================
 
 /**
- *  \brief Update the initial condition vector and time-of-flight using vanilla natural parameter continuation
+ *  @brief Update the initial condition vector and time-of-flight using vanilla natural parameter continuation
  *  or fitted natural parameter continuation
- *  \details [long description]
+ *  @details [long description]
  * 
- *  \param convSoln the previous converged solution
- *  \param ic reference to the initial condition vector
- *  \param tof reference to the time-of-flight value
- *  \param indVarIx vector of the independent variable indices
- *  \param depVarIx vector of the dependent variable indices
+ *  @param convSoln the previous converged solution
+ *  @param ic reference to the initial condition vector
+ *  @param tof reference to the time-of-flight value
+ *  @param indVarIx vector of the independent variable indices
+ *  @param depVarIx vector of the dependent variable indices
  *  
- *  \return whether or not the update was successful.
+ *  @return whether or not the update was successful.
  */
 bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic, 
 	double& tof, const std::vector<unsigned int>& indVarIx, const std::vector<unsigned int>& depVarIx,
@@ -781,7 +781,7 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic,
 }//====================================================
 
 /**
- *  \brief use least squares to predict new values of variables in a continuation process
+ *  @brief use least squares to predict new values of variables in a continuation process
  *
  *  This function uses a 2nd-order polynomial fit to predict a set of
  *  dependent variables using past relationships between an independent
@@ -797,17 +797,17 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic,
  *  For all these inputs, the "state vector" must take the following form:
  *      [x, y, z, xdot, ydot, zdot, Period, Jacobi Constant]
  *
- *  \param indVarIx the index of the state variable to use as the indpendent variable
- *  \param nextInd The next value of the independent variable
- *  \param depVars a vector specifying the indices of the states that will be
+ *  @param indVarIx the index of the state variable to use as the indpendent variable
+ *  @param nextInd The next value of the independent variable
+ *  @param depVars a vector specifying the indices of the states that will be
  *  dependent variables. The algorithm will predict fugure values for these
  *  variables based on how they have changed with the independent variable.
- *  \param varHistory a vector representing an n x 8 matrix which contains
+ *  @param varHistory a vector representing an n x 8 matrix which contains
  *  information about previous states, period, and JC. n should be at least 
  *  3. If it is larger than MemSize, only the first set of MemSize rows will
  *  be used.
  *
- *  \return an 8-element vector with predictions for the dependent variables.
+ *  @return an 8-element vector with predictions for the dependent variables.
  *  If a particular variable has not been predicted, its place will be kept with
  *  a NAN value.
  *
@@ -817,7 +817,7 @@ bool NatParamEngine::updateIC(const Arcset &convSoln, std::vector<double>& ic,
  *  continuation. indVarIx would be 0 to represent x. We input the value of x
  *  for the next orbit in the family (nextInd) and specify which variables (from
  *  the 8-element "state") we would like to have predicted by least-squares.
- *  \throws Exception if the `varHistory` vector contains fewer than 
+ *  @throws Exception if the `varHistory` vector contains fewer than 
  *  8 elements or if the `depVars` vector has no data
  */
 std::vector<double> NatParamEngine::familyCont_LS(unsigned int indVarIx, double nextInd, std::vector<unsigned int> depVars, std::vector<double> varHistory){
@@ -901,9 +901,9 @@ std::vector<double> NatParamEngine::familyCont_LS(unsigned int indVarIx, double 
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Make a copy of the natural parameter engine
+ *  @brief Make a copy of the natural parameter engine
  * 
- *  \param engine the source of the copy
+ *  @param engine the source of the copy
  */
 void NatParamEngine::copyMe(const NatParamEngine &engine){
 	ContinuationEngine::copyMe(engine);
@@ -923,7 +923,7 @@ void NatParamEngine::copyMe(const NatParamEngine &engine){
 }//====================================================
 
 /**
- *  \brief Reset all continuation parameters
+ *  @brief Reset all continuation parameters
  */
 void NatParamEngine::reset(){
 	ContinuationEngine::reset();
@@ -938,7 +938,7 @@ void NatParamEngine::reset(){
 }//====================================================
 
 /**
- *  \brief Reset any variables specific to an individual continuation process
+ *  @brief Reset any variables specific to an individual continuation process
  */
 void NatParamEngine::cleanEngine(){
 	ContinuationEngine::cleanEngine();

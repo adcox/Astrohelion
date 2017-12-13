@@ -1,10 +1,10 @@
 /**
- *	\file Calculations.hpp
- *	\brief Includes miscellaneous calculation functions
+ *	@file Calculations.hpp
+ *	@brief Includes miscellaneous calculation functions
  *
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -53,7 +53,7 @@ class Arcset_bc4bp;
 class Arcset_cr3bp;
 
 /**
- *	\brief Describes the plane a periodic orbit can be mirrored across
+ *	@brief Describes the plane a periodic orbit can be mirrored across
  */
 enum class Mirror_tp{
 	MIRROR_XZ,		//!< Mirror over the XZ-Plane; x, z, and y-dot can be fixed if desired
@@ -64,7 +64,7 @@ enum class Mirror_tp{
 };
 
 /**
- *	\brief Eigenvalue pair types
+ *	@brief Eigenvalue pair types
  *
  *	Eigenvalues come in three different types of pairs. They will
  *	either be complex, real, or exactly equal to 1.0. Since the 

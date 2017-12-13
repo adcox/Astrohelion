@@ -1,10 +1,10 @@
 /**
- *  \file Segment.cpp
- *	\brief Stores information about how nodes are linked
+ *  @file Segment.cpp
+ *	@brief Stores information about how nodes are linked
  *
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -38,17 +38,17 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 Segment::Segment(){}
 
 /**
- *  \brief Construct a new segment
- * 	\details This constructor creates an STM equal to the 6x6 Identity matrix
- *  \param originID ID associated with the origin node
- *  \param terminusID ID associated with the terminal node (if no terminal node exists, 
+ *  @brief Construct a new segment
+ * 	@details This constructor creates an STM equal to the 6x6 Identity matrix
+ *  @param originID ID associated with the origin node
+ *  @param terminusID ID associated with the terminal node (if no terminal node exists, 
  *  enter a value of NAN)
- *  \param tof time-of-flight along the segment
+ *  @param tof time-of-flight along the segment
  */
 Segment::Segment(int originID, int terminusID, double tof){
 	addLink(originID);
@@ -57,16 +57,16 @@ Segment::Segment(int originID, int terminusID, double tof){
 }//====================================================
 
 /**
- *  \brief Construct a new segment
+ *  @brief Construct a new segment
  *
- *  \param originID ID associated with the origin node
- *  \param terminusID ID associated with the terminal node (if no terminal node exists, 
+ *  @param originID ID associated with the origin node
+ *  @param terminusID ID associated with the terminal node (if no terminal node exists, 
  *  enter a value of NAN)
- *  \param tof time-of-flight along the segment
- *  \param stm_data a row-major order array containing a state transition matrix
+ *  @param tof time-of-flight along the segment
+ *  @param stm_data a row-major order array containing a state transition matrix
  *  associated with this segment
- *  \param len the number of elements in stm_data (should be a perfect square)
- *  \param pLaw pointer to the control law implemented along this segment
+ *  @param len the number of elements in stm_data (should be a perfect square)
+ *  @param pLaw pointer to the control law implemented along this segment
  */
 Segment::Segment(int originID, int terminusID, double tof, const double* stm_data, unsigned int len,
 	ControlLaw* pLaw){
@@ -80,15 +80,15 @@ Segment::Segment(int originID, int terminusID, double tof, const double* stm_dat
 }//====================================================
 
 /**
- *  \brief Copy constructor
- *  \param s segment reference
+ *  @brief Copy constructor
+ *  @param s segment reference
  */
 Segment::Segment(const Segment &s) : Linkable(s){
 	copyMe(s);
 }//====================================================
 
 /**
- *  \brief Destructor
+ *  @brief Destructor
  */
 // Segment::~Segment(){}
 
@@ -97,9 +97,9 @@ Segment::Segment(const Segment &s) : Linkable(s){
 //-----------------------------------------------------
 
 /**
- *	\brief Assignment operator
- *	\param s an arc segment object
- *	\return set this object equal to s and return *this
+ *	@brief Assignment operator
+ *	@param s an arc segment object
+ *	@return set this object equal to s and return *this
  */
 Segment& Segment::operator =(const Segment &s){
 	copyMe(s);
@@ -107,13 +107,13 @@ Segment& Segment::operator =(const Segment &s){
 }//====================================================
 
 /**
- *	\brief Determine if two segments are identical
+ *	@brief Determine if two segments are identical
  *
  *	Conditions for identicalness:
  *	* Same origin, terminus, ID, and time-of-flight
  *	* (Not Active) Exact same constraint vector
  *
- *	\return whether or not two segments are identical
+ *	@return whether or not two segments are identical
  */
 bool operator ==(const Segment &lhs, const Segment &rhs){
 	
@@ -126,8 +126,8 @@ bool operator ==(const Segment &lhs, const Segment &rhs){
 }//====================================================
 
 /**
- *	\brief Determine if two segments are different
- *	\return whether two segments are different
+ *	@brief Determine if two segments are different
+ *	@return whether two segments are different
  *	@see operator==
  */
 bool operator != (const Segment &lhs, const Segment &rhs){
@@ -139,115 +139,115 @@ bool operator != (const Segment &lhs, const Segment &rhs){
 //-----------------------------------------------------
 
 /**
- *	\brief Add a constraint to the current set for this segment
- *	\param c a new constraint
+ *	@brief Add a constraint to the current set for this segment
+ *	@param c a new constraint
  */
 void Segment::addConstraint(Constraint c){
 	cons.push_back(c);
 }//====================================================
 
 /**
- *  \brief Append a state vector to the storage vector
- *  \details The state does not have to be the full state;
+ *  @brief Append a state vector to the storage vector
+ *  @details The state does not have to be the full state;
  *  it is frequently useful to call this function multiple times
  *  with different pieces of the state
  * 
- *  \param q an array of state variables
- *  \param len length of the input array
+ *  @param q an array of state variables
+ *  @param len length of the input array
  */
 void Segment::appendState(const double *q, unsigned int len){
 	states.insert(states.end(), q, q+len);
 }//====================================================
 
 /**
- *  \brief Append a state vector to the storage vector
- *  \details The state does not have to be the full state;
+ *  @brief Append a state vector to the storage vector
+ *  @details The state does not have to be the full state;
  *  it is frequently useful to call this function multiple times
  *  with different pieces of the state
  * 
- *  \param q a vector of state variables
+ *  @param q a vector of state variables
  */
 void Segment::appendState(const std::vector<double> q){
 	states.insert(states.end(), q.begin(), q.end());
 }//====================================================
 
 /**
- *  \brief Append a time value to the storage vector
- *  \param t a time value (nondimensional)
+ *  @brief Append a time value to the storage vector
+ *  @param t a time value (nondimensional)
  */
 void Segment::appendTime(double t){
 	times.push_back(t);
 }//====================================================
 
 /**
- *	\brief Clear all constraints associated with this segment
+ *	@brief Clear all constraints associated with this segment
  */
 void Segment::clearConstraints(){ cons.clear(); }
 
 /**
- *	\brief Get all constraints for this segment
- *	\return a vector containing all constraints applied to this segment
+ *	@brief Get all constraints for this segment
+ *	@return a vector containing all constraints applied to this segment
  */
 std::vector<Constraint> Segment::getConstraints() const{
 	return cons;
 }//====================================================
 
 /**
- *  \brief Retrieve the control law ID associated with this segment
- *  \return the control law ID associated with this segment
+ *  @brief Retrieve the control law ID associated with this segment
+ *  @return the control law ID associated with this segment
  */
 ControlLaw* Segment::getCtrlLaw() const{ return pCtrlLaw; }
 
 /**
- *  \brief Retrieve the number of constraints stored by this object
- *  \return the number of constraints stored by this object
+ *  @brief Retrieve the number of constraints stored by this object
+ *  @return the number of constraints stored by this object
  */
 unsigned int Segment::getNumCons() const { return cons.size(); }
 
 /**
- *  \brief Retrieve the number of times stored in the time vector
- *  \return the number of times stored in the time vector
+ *  @brief Retrieve the number of times stored in the time vector
+ *  @return the number of times stored in the time vector
  */
 unsigned int Segment::getNumTimes() const { return times.size(); }
 
 /**
- *  \brief Retrieve the ID of the origin node (chronologically)
- *  \return the ID of the origin node (chronologically)
+ *  @brief Retrieve the ID of the origin node (chronologically)
+ *  @return the ID of the origin node (chronologically)
  */
 int Segment::getOrigin() const { return links[ORIG_IX]; }
 
 /**
- *  \brief Retrieve a copy of the entire state vector
- *  \details The state vector includes, in row-major order,
+ *  @brief Retrieve a copy of the entire state vector
+ *  @details The state vector includes, in row-major order,
  *  every state along the Segment. Depending on how the propagation
  *  is conducted, there may be as few as two states. The width of
  *  one state (i.e., one row) is available from getStateWidth()
  *  
- *  \return a copy of the entire state vector
+ *  @return a copy of the entire state vector
  */
 std::vector<double> Segment::getStateVector() const{ return states; }
 
 /**
- *  \brief Retrieve the size of one state vector in the array
- *  \details States are stored in row-major order in an array;
+ *  @brief Retrieve the size of one state vector in the array
+ *  @details States are stored in row-major order in an array;
  *  the state width is the number of values in a single state, 
  *  or row, of the array
  * 
- *  \return the number of elements in a single state
+ *  @return the number of elements in a single state
  */
 unsigned int Segment::getStateWidth() const{ return stateWidth; }
 
 /**
- *  \brief Retrieve a state from the storage vector
- *  \details State vectors are stored as rows of a matrix where
+ *  @brief Retrieve a state from the storage vector
+ *  @details State vectors are stored as rows of a matrix where
  *  the storage vector represents the matrix in row-major order.
  *  The length of each row is set/retrieved via setStateWidth() and
  *  getStateWidth()
  * 
- *  \param row Row index, begins at 0. If row < 0, it will count backwards
+ *  @param row Row index, begins at 0. If row < 0, it will count backwards
  *  from the end of the set of states.
  * 
- *  \return A vector containing the desired state values
+ *  @return A vector containing the desired state values
  */
 std::vector<double> Segment::getStateByRow(int row) const{
 	if(stateWidth == 0)
@@ -267,29 +267,29 @@ std::vector<double> Segment::getStateByRow(int row) const{
 }//====================================================
 
 /**
- *  \brief Retrieve the ID of the terminal node (chronologically)
- *  \return the ID of the terminal node (chronologically)
+ *  @brief Retrieve the ID of the terminal node (chronologically)
+ *  @return the ID of the terminal node (chronologically)
  */
 int Segment::getTerminus() const { return links[TERM_IX]; }
 
 /**
- *  \brief Retrieve a copy of the entire time vector.
- *  \details Each time value corresponds to one state stored
+ *  @brief Retrieve a copy of the entire time vector.
+ *  @details Each time value corresponds to one state stored
  *  in the state vector.
  *  
- *  \return a copy of the entire time vector
+ *  @return a copy of the entire time vector
  */
 std::vector<double> Segment::getTimeVector() const { return times; }
 
 /**
- *  \brief Retrieve a time from the segment time vector
- *  \details [long description]
+ *  @brief Retrieve a time from the segment time vector
+ *  @details [long description]
  * 
- *  \param ix index within the time vector; if ix is negative, 
+ *  @param ix index within the time vector; if ix is negative, 
  *  it will count backward from the end of the vector
- *  \return The time value at the specified index
+ *  @return The time value at the specified index
  *  
- *  \throws Exception if the index is out of bounds
+ *  @throws Exception if the index is out of bounds
  */
 double Segment::getTimeByIx(int ix) const{
 	if(ix < 0)
@@ -305,27 +305,27 @@ double Segment::getTimeByIx(int ix) const{
 }//====================================================
 
 /**
- *  \brief Retrieve the time-of-flight along this segment
- *  \return time-of-flight along this segment, units consistent with the parent system
+ *  @brief Retrieve the time-of-flight along this segment
+ *  @return time-of-flight along this segment, units consistent with the parent system
  */
 double Segment::getTOF() const { return tof; }
 
 /**
- *  \brief Retrieve the STM associated with this segment
- *  \return the STM associated with this segment
+ *  @brief Retrieve the STM associated with this segment
+ *  @return the STM associated with this segment
  */
 MatrixXRd Segment::getSTM() const{ return stm; }
 
 /**
- *  \brief Retrieve the STM associated with this segment from the state storage vector
- *  \details Constructs the STM from the state elements stored in the state vector.
+ *  @brief Retrieve the STM associated with this segment from the state storage vector
+ *  @details Constructs the STM from the state elements stored in the state vector.
  *  This STM *always* represents the evolution from the beginning of this specific
  *  segment to the end of the segment, i.e., it is independent of all other segments.
  * 
- *  \param core_dim the number of propagated core states (see DynamicsModel::getCoreStateSize())
- *  \param ctrl_dim the number of propagated control states (see ControlLaw::getNumStates())
+ *  @param core_dim the number of propagated core states (see DynamicsModel::getCoreStateSize())
+ *  @param ctrl_dim the number of propagated control states (see ControlLaw::getNumStates())
  * 
- *  \return a matrix representation of the STM
+ *  @return a matrix representation of the STM
  */
 MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_dim) const {
 	if(stateWidth == 0)
@@ -345,10 +345,10 @@ MatrixXRd Segment::getSTM_fromStates(unsigned int core_dim, unsigned int ctrl_di
 }//====================================================
 
 /**
- *	\brief Retrieve a vector describing which of the velocity states
+ *	@brief Retrieve a vector describing which of the velocity states
  *	should be made continuous with the segment before this one in a nodeset.
  *
- *	\return a 3-element boolean vector. The first element describes
+ *	@return a 3-element boolean vector. The first element describes
  *	whether or not the x-velocity is continuous, the second describes
  *	the y-velocity continuity, etc.
  */
@@ -359,8 +359,8 @@ std::vector<bool> Segment::getVelCon() const {
 }//====================================================
 
 /**
- *	\brief Remove the specified constraint
- *	\param ix the index of the constraint. If the ix < 0, it will
+ *	@brief Remove the specified constraint
+ *	@param ix the index of the constraint. If the ix < 0, it will
  *	count backwards from the end of the set
  */
 void Segment::removeConstraint(int ix){
@@ -371,24 +371,24 @@ void Segment::removeConstraint(int ix){
 }//====================================================
 
 /**
- *	\brief Set the list of constraints for this arc segment
- *	\param constraints a vector of constraints
+ *	@brief Set the list of constraints for this arc segment
+ *	@param constraints a vector of constraints
  */
 void Segment::setConstraints(std::vector<Constraint> constraints){
 	cons = constraints;
 }//====================================================
 
 /**
- *  \brief Set the control law for this segment
- *  \param law a pointer to the control law applied on this segment
+ *  @brief Set the control law for this segment
+ *  @param law a pointer to the control law applied on this segment
  */
 void Segment::setCtrlLaw(ControlLaw *law){ pCtrlLaw = law; }
 
 /**
- *  \brief Set the ID and also update the ID of any 
+ *  @brief Set the ID and also update the ID of any 
  *  associated constraints
  * 
- *  \param id ID that uniquely identifies the node
+ *  @param id ID that uniquely identifies the node
  */
 void Segment::setID(int id){
 	Linkable::setID(id);
@@ -398,47 +398,47 @@ void Segment::setID(int id){
 }//====================================================
 
 /**
- *  \brief Set the ID of the node at the origin (chronologically) of this segment
- *  \param o the ID of the node at the origin (chronologically) of this segment
+ *  @brief Set the ID of the node at the origin (chronologically) of this segment
+ *  @param o the ID of the node at the origin (chronologically) of this segment
  */
 void Segment::setOrigin(int o){ links[ORIG_IX] = o; }
 
 /**
- *  \brief Set the state vector associated with the propagation along this segment
- *  \param v the state vector associated with the propagation along this segment, 
+ *  @brief Set the state vector associated with the propagation along this segment
+ *  @param v the state vector associated with the propagation along this segment, 
  *  in row-major order.
  */
 void Segment::setStateVector(std::vector<double> v){ states = v; }
 
 /**
- *  \brief Specify the size of one state vector in the array
- *  \details States are stored in row-major order in an array;
+ *  @brief Specify the size of one state vector in the array
+ *  @details States are stored in row-major order in an array;
  *  the state width is the number of values in a single state, 
  *  or row, of the array
  * 
- *  \param w the number of elements in a single state
+ *  @param w the number of elements in a single state
  */
 void Segment::setStateWidth(unsigned int w){ stateWidth = w; }
 
 /**
- *	\brief Set the STM for this step
- *	\param m a state transition matrix (non-dim)
+ *	@brief Set the STM for this step
+ *	@param m a state transition matrix (non-dim)
  */
 void Segment::setSTM(MatrixXRd m){ stm = m; }
 
 /**
- *	\brief Set the STM for this step
- *	\param elements an array of stm elements in 
+ *	@brief Set the STM for this step
+ *	@param elements an array of stm elements in 
  *	row-major order.
- *	\param len number of numbers in elements
+ *	@param len number of numbers in elements
  */
 void Segment::setSTM(const double *elements, unsigned int len){
 	stm = Eigen::Map<const MatrixXRd>(elements, std::sqrt(len), std::sqrt(len));
 }//====================================================
 
 /**
- *	\brief Set the STM for this step
- *	\param elements a 36-element vector of STM elements
+ *	@brief Set the STM for this step
+ *	@param elements a 36-element vector of STM elements
  *	(non-dimensional) in row-major order
  */
 void Segment::setSTM(std::vector<double> elements){
@@ -447,25 +447,25 @@ void Segment::setSTM(std::vector<double> elements){
 }//====================================================
 
 /**
- *  \brief Set the ID of the node at the terminus (chronologically) of this segment
- *  \param t the ID of the node at the terminus (chronologically) of this segment
+ *  @brief Set the ID of the node at the terminus (chronologically) of this segment
+ *  @param t the ID of the node at the terminus (chronologically) of this segment
  */
 void Segment::setTerminus(int t){ links[TERM_IX] = t; }
 
 /**
- *  \brief Set the time vector associated with the propagated arc along this segment
- *  \param t he time vector associated with the propagated arc along this segment
+ *  @brief Set the time vector associated with the propagated arc along this segment
+ *  @param t he time vector associated with the propagated arc along this segment
  */
 void Segment::setTimeVector(std::vector<double> t){ times = t; }
 
 /**
- *  \brief Set the TOF along this segment; 
- *  \param t the TOF along this segment, units consistent with the parent system
+ *  @brief Set the TOF along this segment; 
+ *  @param t the TOF along this segment, units consistent with the parent system
  */
 void Segment::setTOF(double t){ tof = t; }
 
 /**
- *	\brief Set all velocity states to be continuous
+ *	@brief Set all velocity states to be continuous
  */
 void Segment::setVel_AllCon(){
 	flags[0] = true;
@@ -474,7 +474,7 @@ void Segment::setVel_AllCon(){
 }//====================================================
 
 /**
- *	\brief Set all velocity states to be discontinuous
+ *	@brief Set all velocity states to be discontinuous
  */
 void Segment::setVel_AllDiscon(){
 	flags[0] = false;
@@ -483,9 +483,9 @@ void Segment::setVel_AllDiscon(){
 }//====================================================
 
 /**
- *	\brief Set the continuity for all three velocity states
+ *	@brief Set the continuity for all three velocity states
  *	between this segment and the previous segment
- *	\param data a three-element boolean array. Each element
+ *	@param data a three-element boolean array. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
  */
@@ -496,9 +496,9 @@ void Segment::setVelCon(const bool data[3]){
 }//====================================================
 
 /**
- *	\brief Set the continuity for all three velocity states
+ *	@brief Set the continuity for all three velocity states
  *	between this segment and the previous segment
- *	\param data a three-element boolean vector. Each element
+ *	@param data a three-element boolean vector. Each element
  *	corresponds to one of the velocity states in the order
  *	[v_x, v_y, v_z]
  *	@throw Exception if `data` has fewer than three elements
@@ -514,13 +514,13 @@ void Segment::setVelCon(std::vector<bool> data){
 }//====================================================
 
 /**
- *	\brief Set the continuity for all three velocity states
+ *	@brief Set the continuity for all three velocity states
  *	between this segment and the previous segment
- *	\param xCon whether or not the x-velocity component should 
+ *	@param xCon whether or not the x-velocity component should 
  *	be continuous with the segment before this one
- *	\param yCon whether or not the y-velocity component should 
+ *	@param yCon whether or not the y-velocity component should 
  *	be continuous with the segment before this one
- *	\param zCon whether or not the z-velocity component should 
+ *	@param zCon whether or not the z-velocity component should 
  *	be continuous with the segment before this one
  */
 void Segment::setVelCon(bool xCon, bool yCon, bool zCon){
@@ -530,10 +530,10 @@ void Segment::setVelCon(bool xCon, bool yCon, bool zCon){
 }//====================================================
 
 /**
- *  \brief Shift all times in the time vector by the 
+ *  @brief Shift all times in the time vector by the 
  *  specified amount
  * 
- *  \param deltaT amount of time to shift by
+ *  @param deltaT amount of time to shift by
  */
 void Segment::shiftAllTimes(double deltaT){
 	for(unsigned int i = 0; i < times.size(); i++)
@@ -545,8 +545,8 @@ void Segment::shiftAllTimes(double deltaT){
 //-----------------------------------------------------
 
  /**
- *	\brief Copy a segment into this one
- *	\param s a segment reference
+ *	@brief Copy a segment into this one
+ *	@param s a segment reference
  */
 void Segment::copyMe(const Segment &s){
 	stm = s.stm;
@@ -561,9 +561,9 @@ void Segment::copyMe(const Segment &s){
 }//====================================================
 
 /**
- *  \brief Compute the time-of-flight along a segment from the data stored
+ *  @brief Compute the time-of-flight along a segment from the data stored
  *  in the times vector
- *  \details If there are fewer than 2 time values in the vector,
+ *  @details If there are fewer than 2 time values in the vector,
  *  the time of flight is set to zero
  */
 void Segment::updateTOF(){
@@ -575,7 +575,7 @@ void Segment::updateTOF(){
 }//====================================================
 
 /**
- *  \brief Print a description of the segment
+ *  @brief Print a description of the segment
  */
 void Segment::print() const{
 	printf("Segment | id = %d\n", ID);

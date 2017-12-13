@@ -1,5 +1,5 @@
 /**
- * \file Arcset_periodic.hpp
+ * @file Arcset_periodic.hpp
  */
 /*
  *	Astrohelion 
@@ -31,11 +31,11 @@ namespace astrohelion{
 
 /**
  *  \ingroup traj
- *  \brief [brief description]
- *  \details [long description]
+ *  @brief [brief description]
+ *  @details [long description]
  * 
- *  \param  [description]
- *  \return [description]
+ *  @param  [description]
+ *  @return [description]
  */
 class Arcset_periodic : public Arcset{
 public:

@@ -1,10 +1,10 @@
 /**
- * \file PseudoArcEngine.hpp
- * \brief
+ * @file PseudoArcEngine.hpp
+ * @brief
  * 
- * \author Andrew Cox
- * \version October 13, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version October 13, 2017
+ * @copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -45,7 +45,7 @@ class MultShootData;
 
 /**
  *  \ingroup engine fam
- *  \brief Pseudo-Arclength Continuation Engine
+ *  @brief Pseudo-Arclength Continuation Engine
  */
 class PseudoArcEngine : public ContinuationEngine{
 public:

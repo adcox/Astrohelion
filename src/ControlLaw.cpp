@@ -1,7 +1,7 @@
 /**
- *  \file ControlLaw.cpp
- *  \author Andrew Cox
- *  \version March 3, 2017
+ *  @file ControlLaw.cpp
+ *  @author Andrew Cox
+ *  @version March 3, 2017
  */
 /*
  *	Astrohelion 
@@ -36,11 +36,11 @@ namespace astrohelion{
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Default constructor
- *  \details [long description]
+ *  @brief Default constructor
+ *  @details [long description]
  * 
- *  \param tp control law type; by default, set to NO_CTRL
- *  \param params vector of parameters used by the control law
+ *  @param tp control law type; by default, set to NO_CTRL
+ *  @param params vector of parameters used by the control law
  */
 ControlLaw::ControlLaw(unsigned int tp, std::vector<double> params){
 	this->lawType = tp;
@@ -54,10 +54,10 @@ ControlLaw::ControlLaw(unsigned int tp, std::vector<double> params){
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Copy constructor
+ *  @brief Copy constructor
  * 
- *  \param law A constant reference to a ControlLaw object
- *  \return Assign this ControlLaw to be equal to the input ControlLaw
+ *  @param law A constant reference to a ControlLaw object
+ *  @return Assign this ControlLaw to be equal to the input ControlLaw
  */
 ControlLaw& ControlLaw::operator =(const ControlLaw &law){
 	copyMe(law);
@@ -65,12 +65,12 @@ ControlLaw& ControlLaw::operator =(const ControlLaw &law){
 }//====================================================
 
 /**
- *  \brief Comparator
+ *  @brief Comparator
  * 
- *  \param lhs reference to left-hand-side ControlLaw
- *  \param rhs reference to right-hand-side ControlLaw
+ *  @param lhs reference to left-hand-side ControlLaw
+ *  @param rhs reference to right-hand-side ControlLaw
  * 
- *  \return Whether or not the two laws are equal
+ *  @return Whether or not the two laws are equal
  */
 bool operator ==(const ControlLaw &lhs, const ControlLaw &rhs){
 	return lhs.lawType == rhs.lawType &&
@@ -78,12 +78,12 @@ bool operator ==(const ControlLaw &lhs, const ControlLaw &rhs){
 }//====================================================
 
 /**
- *  \brief Negative Comparator
+ *  @brief Negative Comparator
  * 
- *  \param lhs reference to left-hand-side ControlLaw
- *  \param rhs reference to right-hand-side ControlLaw
+ *  @param lhs reference to left-hand-side ControlLaw
+ *  @param rhs reference to right-hand-side ControlLaw
  * 
- *  \return Whether or not the two laws are not equal
+ *  @return Whether or not the two laws are not equal
  */
 bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
 	return !(lhs == rhs);
@@ -94,39 +94,39 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the control law ID
- *  \return the control law ID
+ *  @brief Retrieve the control law ID
+ *  @return the control law ID
  */
 unsigned int ControlLaw::getLawType() const{ return lawType; }
 
 /**
- *  \brief Retrieve the name of the law type as a string
- *  \return the name of the law type as a string
+ *  @brief Retrieve the name of the law type as a string
+ *  @return the name of the law type as a string
  */
 std::string ControlLaw::getLawTypeString() const{ return ControlLaw::lawTypeToString(lawType); }
 
 /**
- *  \brief Retrieve the number of control variables that need to be included
+ *  @brief Retrieve the number of control variables that need to be included
  *  in an arcset propagation
- *  \return the number of control variables that need to be included
+ *  @return the number of control variables that need to be included
  *  in an arcset propagation
  */
 unsigned int ControlLaw::getNumStates() const {return numStates; }
 
 /**
- *  \brief Retrieve the number of outputs from the control Law
- *  \return the number of outputs from the control Law
+ *  @brief Retrieve the number of outputs from the control Law
+ *  @return the number of outputs from the control Law
  */
 unsigned int ControlLaw::getNumOutputs() const {return numOutputs; }
 
 /**
- *  \brief Retrieve the value of a parameter at the specified index.
+ *  @brief Retrieve the value of a parameter at the specified index.
  * 
- *  \param ix Index of the parameter. If negative, the index counts
+ *  @param ix Index of the parameter. If negative, the index counts
  *  backwards from the end of the parameter vector, e.g., ix = -2
  *  returns the second-to-last element in params.
- *  \return the value stored in the parameter vector at the specified index.
- *  \throws Exception if the index is out of bounds
+ *  @return the value stored in the parameter vector at the specified index.
+ *  @throws Exception if the index is out of bounds
  */
 double ControlLaw::getParam(int ix) const{
 	int n = static_cast<int>(params.size());
@@ -142,22 +142,22 @@ double ControlLaw::getParam(int ix) const{
 }//====================================================
 
 /**
- *  \brief Retrieve the parameter vector
- *  \return the parameter vector
+ *  @brief Retrieve the parameter vector
+ *  @return the parameter vector
  */
 std::vector<double> ControlLaw::getParams() const { return params; }
 
 /**
- *  \brief Retrieve a constant reference to the parameter vector
- *  \details Leverage this function when accessing parameters in performance-sensitive operations
- *  \return a constant reference to the parameter vector
+ *  @brief Retrieve a constant reference to the parameter vector
+ *  @details Leverage this function when accessing parameters in performance-sensitive operations
+ *  @return a constant reference to the parameter vector
  */
 const std::vector<double>& ControlLaw::getParamsRef_const() const { return params; }
 
 /**
- *  \brief Set the control law type
+ *  @brief Set the control law type
  * 
- *  \param id an ID number identifying the control law type
+ *  @param id an ID number identifying the control law type
  */
 void ControlLaw::setLawType(unsigned int id){
 	lawType = id;
@@ -165,13 +165,13 @@ void ControlLaw::setLawType(unsigned int id){
 }//====================================================
 
 /**
- *  \brief Set the value of a parameter at the specified index.
+ *  @brief Set the value of a parameter at the specified index.
  * 
- *  \param ix Index of the parameter. If negative, the index counts
+ *  @param ix Index of the parameter. If negative, the index counts
  *  backwards from the end of the parameter vector, e.g., ix = -2
  *  returns the second-to-last element in params.
- *  \param val the value to store in the parameter vector at the specified index
- *  \throws Exception if the index is out of bounds
+ *  @param val the value to store in the parameter vector at the specified index
+ *  @throws Exception if the index is out of bounds
  */
 void ControlLaw::setParam(int ix, double val){
 	int n = static_cast<int>(params.size());
@@ -187,19 +187,19 @@ void ControlLaw::setParam(int ix, double val){
 }//====================================================
 
 /**
- *  \brief Set the control law parameters
+ *  @brief Set the control law parameters
  * 
- *  \param params array of parameters
- *  \param len number of elements in the parameter array
+ *  @param params array of parameters
+ *  @param len number of elements in the parameter array
  */
 void ControlLaw::setParams(double *params, unsigned int len){
 	std::copy(params, params+len, this->params.begin());
 }//====================================================
 
 /**
- *  \brief Set the control law parameters
+ *  @brief Set the control law parameters
  * 
- *  \param params vector of parameters
+ *  @param params vector of parameters
  */
 void ControlLaw::setParams(std::vector<double> params){
 	this->params = params;
@@ -210,17 +210,17 @@ void ControlLaw::setParams(std::vector<double> params){
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the output of a control law.
- * 	\details For example, a set of accelerations incorporated into the velocity 
+ *  @brief Retrieve the output of a control law.
+ * 	@details For example, a set of accelerations incorporated into the velocity 
  * 	time derivative EOMs
  * 	
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param output initialized array of zeros in which to store the control law outputs
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param output initialized array of zeros in which to store the control law outputs
+ *  @param len number of elements in the `law` array
  *  
- *  \throws Exception if the control law ID, `lawType`, is not recognized
+ *  @throws Exception if the control law ID, `lawType`, is not recognized
  */
 void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, double *output, unsigned int len) const{
 	switch(lawType){
@@ -238,17 +238,17 @@ void ControlLaw::getLaw_Output(double t, const double *s, const SysData *pSys, d
 }//====================================================
 
 /**
- *  \brief Retrieve the time derivatives of control states (if any exist)
- *  \details The behavior of this function defaults to returning
+ *  @brief Retrieve the time derivatives of control states (if any exist)
+ *  @details The behavior of this function defaults to returning
  *  all zeros for the derivatives, which is accurate for control laws that hold
  *  parameters constant along a control segment. By overriding this function in derived
  *  classes, more specific behavior may be defined.
  * 
- *  \param t nondimensional integration time
- *  \param s integration state vector (from SimEngine / DynamicsModel)
- *  \param pSys pointer to the system data object
- *  \param deriv pointer to an array of zeros in which to store the time-derivative of the control states
- *  \param len number of elements in the derivative array
+ *  @param t nondimensional integration time
+ *  @param s integration state vector (from SimEngine / DynamicsModel)
+ *  @param pSys pointer to the system data object
+ *  @param deriv pointer to an array of zeros in which to store the time-derivative of the control states
+ *  @param len number of elements in the derivative array
  */
 void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSys, double *deriv, unsigned int len) const{
 	switch(lawType){
@@ -265,17 +265,17 @@ void ControlLaw::getLaw_StateDeriv(double t, const double *s, const SysData *pSy
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the control state derivatives with respect to all
+ *  @brief Retrieve the partial derivatives of the control state derivatives with respect to all
  *  states (spacecraft states and control states).
- *  \details If a nontrivial set of control state derivatives exists, these partial derivatives
+ *  @details If a nontrivial set of control state derivatives exists, these partial derivatives
  *  form the bottom set of rows of the A matrix
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the `partials` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -292,18 +292,18 @@ void ControlLaw::getLaw_StateDerivPartials(double t, const double *s, const SysD
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
- *  \details If a nontrivial set of control states exists, these partial derivatives form the right-hand
+ *  @brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ *  @details If a nontrivial set of control states exists, these partial derivatives form the right-hand
  *  block-column of the A matrix for the rows associated with the core spacecraft state EOMs. I.e., these
  *  partial derivatives do not include the partials of the control state derivatives w.r.t. the control states;
  *  those partial derivatives are obtained from getLaw_StateDerivPartials()
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the `partials` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -320,16 +320,16 @@ void ControlLaw::getLaw_EOMPartials(double t, const double *s, const SysData *pS
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the control outputs with respect to state variables
- *  \details Control outputs are leveraged in the EOMs, and the partial derivatives of the control 
+ *  @brief Retrieve the partial derivatives of the control outputs with respect to state variables
+ *  @details Control outputs are leveraged in the EOMs, and the partial derivatives of the control 
  *  outputs w.r.t. state variables are required to form the linear relationship "A matrix."
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials initialized array of zeros in which to store the partial derivatives
  *  of the control outputs
- *  \param len number of elements in the `partials` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	switch(lawType){
@@ -362,8 +362,8 @@ void ControlLaw::print() const{
 }//====================================================
 
 /**
- *  \brief Copy the ControlLaw object
- *  \param law reference to the source controlLaw
+ *  @brief Copy the ControlLaw object
+ *  @param law reference to the source controlLaw
  */
 void ControlLaw::copyMe(const ControlLaw &law){
 	lawType = law.lawType;
@@ -373,8 +373,8 @@ void ControlLaw::copyMe(const ControlLaw &law){
 }//====================================================
 
 /**
- *  \brief Initialize all parameters that depend on the control law type
- *  \details [long description]
+ *  @brief Initialize all parameters that depend on the control law type
+ *  @details [long description]
  */
 void ControlLaw::init(){
 	switch(lawType){
@@ -387,10 +387,10 @@ void ControlLaw::init(){
 }//====================================================
 
 /**
- *  \brief Retrieve a string that represents the law ID
+ *  @brief Retrieve a string that represents the law ID
  * 
- *  \param id control law ID
- *  \return a string that represents the law ID
+ *  @param id control law ID
+ *  @return a string that represents the law ID
  */
 std::string ControlLaw::lawTypeToString(unsigned int id){
 	switch(id){

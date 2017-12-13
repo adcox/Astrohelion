@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel_bc4bp.hpp
- *	\brief 
+ *  @file DynamicsModel_bc4bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -37,7 +37,7 @@ class SysData_bc4bp;
 
 /**
  *	\ingroup model bc4bp
- *	\brief A derivative of the DynamicsModel class, specific to the BCR4BPR
+ *	@brief A derivative of the DynamicsModel class, specific to the BCR4BPR
  *
  *	This dynamic model overrides many of the base class's functions to add
  *	support for epoch-dependencies present in this non-autonomous system.

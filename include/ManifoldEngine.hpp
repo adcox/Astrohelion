@@ -1,10 +1,10 @@
 /**
- * \file ManifoldEngine.hpp
- * \brief Computes manifolds
+ * @file ManifoldEngine.hpp
+ * @brief Computes manifolds
  * 
- * \author Andrew Cox
- * \version April 19, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version April 19, 2017
+ * @copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -44,8 +44,8 @@ class SysData_cr3bp;
 class SysData_cr3bp_lt;
 
 /**
- *	\brief Describes the type of manifold, both stability and direction
- *	\details The value of the type species the number, stability, and direction of the manifold.
+ *	@brief Describes the type of manifold, both stability and direction
+ *	@details The value of the type species the number, stability, and direction of the manifold.
  *	For example, all unstable manifold options are positive values, all stable manifold options are
  *	negative (think reverse time propagation), and the MAN_ALL option is zero. Similarly, selecting 
  *	all unstable manifolds has a value of 1 (all stable is a value of -1)
@@ -61,7 +61,7 @@ enum class Manifold_tp : int{
 };
 
 /**
- *  \brief Describes the type of manifold step-off strategy
+ *  @brief Describes the type of manifold step-off strategy
  */
 enum class Manifold_StepOff_tp{
 	STEP_MATCH_JC,		//!< Step along eigenvector as much as possible but adjust to match the Jacobi constant value of the origin
@@ -71,11 +71,11 @@ enum class Manifold_StepOff_tp{
 
 /**
  *  \ingroup engine
- *  \brief Compute manifolds
+ *  @brief Compute manifolds
  * 
- * 	\author Andrew Cox
- * 	\version April 19, 2017
- * 	\copyright GNU GPL v3.0
+ * 	@author Andrew Cox
+ * 	@version April 19, 2017
+ * 	@copyright GNU GPL v3.0
  */
 class ManifoldEngine : public Core, public Engine{
 public:

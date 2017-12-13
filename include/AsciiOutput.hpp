@@ -1,10 +1,10 @@
 /**
- *	\file AsciiOutput.hpp
- *	\brief This class contains macros for fancy ASCII outputs
+ *	@file AsciiOutput.hpp
+ *	@brief This class contains macros for fancy ASCII outputs
  *
- *	\author Andrew Cox
- *	\version May 15, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 
 /*

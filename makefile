@@ -10,7 +10,8 @@
 
 # Instructions for creating libraries:
 # <http://www.iram.fr/~roche/code/c++/AddNumbers.html>
-
+# <http://www.yolinux.com/TUTORIALS/LibraryArchives-StaticAndDynamic.html>
+# 
 ############################################################
 # Macros for compiling
 ############################################################
@@ -43,6 +44,8 @@ CXX += -std=c++11 -fopenmp
 # CFLAGS += -ggdb -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic
 CFLAGS += -O3 -Wall -Wextra -Weffc++ -Wdisabled-optimization -Wold-style-cast -Wimport -Wmissing-declarations -Wmissing-field-initializers -pedantic -Wno-deprecated-declarations
 COMP := $(CXX) $(CFLAGS)
+# SO_FLAGS are set to blank by default and only used during linux shared library creation
+SO_FLAGS := 
 
 # Library names and locations
 LIBS = gsl gslcblas matio cspice boost_filesystem boost_system
@@ -85,18 +88,25 @@ MKDIR_P = mkdir -p
 ############################################################
 .PHONY: directories
 
-all: directories libs
+all: directories static clean dynamic
 
 directories: $(OBJ)
-	
-libs:
+
+static:
 ifeq ($(UNAME_S), Linux)
-	@echo Making Linux libraries
+	@echo Making Linux static libraries
 	@make libastrohelion.a
-#	@make libastrohelion.so
 else ifeq ($(UNAME_S), Darwin)
-	@echo Making OS X libraries
+	@echo Making Apple OS static libraries
 	@make libastrohelion.a
+endif
+
+dynamic:
+ifeq ($(UNAME_S), Linux)
+	@echo Making Linux dynamic libraries
+	@make libastrohelion.so.1
+else ifeq ($(UNAME_S), Darwin)
+	@echo Making Apple OS dynamic libraries
 	@make libastrohelion.dylib
 endif
 
@@ -110,29 +120,41 @@ check:
 	$(BIN)/nodesetTest
 	$(BIN)/simEngineTest
 
+# Install Astrohelion in the INSTALL_DIR
+#	Step 1: Create the include directory if it doesnot exist
+#	Step 2: Copy the include files to the install include directory
+#	Step 3: (Linux Only) Create symbolic links to the shared library.
+#		Two links are created:
+#			- lib*.so.1 -> lib*.so.1.0 allows run time binding to work
+#			- lib*.so -> lib*.so.1.0 allows naming convention for compile
+#				flag (-lastrohelion) to work
 install:
-ifeq ($(UNAME_S), Linux)
-	@echo Installing Linux libraries and headers
-	# Do stuff to install linux libraries
-else ifeq ($(UNAME_S), Darwin)
-	@echo Installing OS X libraries and headers
 	@if [ ! -d $(SYS_INC_DIR) ]; then mkdir -p $(SYS_INC_DIR); fi
 	cp -r $(INC)/* $(SYS_INC_DIR)
-	# @if [ ! -d $(SYS_INC_EXTERN_DIR) ]; then mkdir -p $(SYS_INC_EXTERN_DIR); fi
-	# cp -r $(INC_EXTERN) $(SYS_INC_EXTERN_DIR)
-	cp $(LIB)/libastrohelion.a /usr/local/lib/
-	cp $(LIB)/libastrohelion.dylib /usr/local/lib/
+ifeq ($(UNAME_S), Linux)
+	ln -sf $(INSTALL_DIR)/lib/libastrohelion.so.1.0 $(INSTALL_DIR)/lib/libastrohelion.so.1
+	ln -sf $(INSTALL_DIR)/lib/libastrohelion.so.1.0 $(INSTALL_DIR)/lib/libastrohelion.so
 endif
 
 docs:
 	doxygen doxy/dox_config
 
+# Create the static library (Linux and Apple OS)
 libastrohelion.a: $(OBJECTS)
 	ar rcs $(LIB)/$@ $^
 
-libastrohelion.so: $(OBJECTS)
-	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) -shared -o $(LIB)/$@
+# Create the dynamic library (Linux)
+# 	Step 1: Create the object code using the SO_FLAGS set to -fPIC.
+# 		This tells the compiler to output position independent code,
+# 		which is required for shared libraries
+# 	Step 2: Create the shared library. We append .0 to the library
+# 		name, so it will be libastrohelion.so.1.0. Other, similar, 
+# 		names are used for symlinks in the `install` step
+libastrohelion.so.1: SO_FLAGS = -fPIC
+libastrohelion.so.1: $(OBJECTS)
+	$(COMP) -shared -Wl,-soname,$@ -o $(LIB)/$@.0 $^ $(LDFLAGS)
 
+# Create the dynamic library (Apple OS)
 libastrohelion.dylib: $(OBJECTS)
 	$(COMP) -I $(INC) -isystem $(INC_EXTERN) $^ $(LDFLAGS) -shared -o $(LIB)/$@
 
@@ -144,15 +166,13 @@ $(OBJ):
 	$(MKDIR_P) $(OBJ)
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(HEADER_DEPS)
-	$(COMP) -I $(INC) -isystem $(INC_EXTERN) -c $< -o $@
+	$(COMP) $(SO_FLAGS) -I $(INC) -isystem $(INC_EXTERN) -c $< -o $@
 
 ############################################################
 ## UTILITY
 ############################################################
 clean:
 	@- $(RM) $(OBJ)/*.o
-
-cleandist: clean
 
 nuke:
 	@- $(RM) $(OBJ)/*.o

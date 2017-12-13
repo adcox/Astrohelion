@@ -1,10 +1,10 @@
 /**
- *  \file Arcset_bc4bp.cpp
- *	\brief 
+ *  @file Arcset_bc4bp.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 1, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 1, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -39,35 +39,35 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	\brief Create an arcset with specified system data
- *	\param pData system data object
+ *	@brief Create an arcset with specified system data
+ *	@param pData system data object
  */
 Arcset_bc4bp::Arcset_bc4bp(const SysData_bc4bp *pData) : Arcset(pData){}
 
 /**
- *	\brief Copy input arcset. 
+ *	@brief Copy input arcset. 
  *
  *	This function calls the base-class copy constructor to
  *	handle copying the generic fields like state and tofs
- *	\param n a arcset
+ *	@param n a arcset
  */
 Arcset_bc4bp::Arcset_bc4bp(const Arcset_bc4bp& n) : Arcset(n) {}
 
 /**
- *	\brief Create a CR3BP arcset from its base class
- *	\param a an arc data reference
+ *	@brief Create a CR3BP arcset from its base class
+ *	@param a an arc data reference
  */
 Arcset_bc4bp::Arcset_bc4bp(const BaseArcset &a) : Arcset(a) {}
 
 /**
- *  \brief Create a new arcset object on the stack
- *  \details the `delete` function must be called to 
+ *  @brief Create a new arcset object on the stack
+ *  @details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \param pSys pointer to a system data object; should be a 
+ *  @param pSys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
- *  \return a pointer to the newly created arcset
+ *  @return a pointer to the newly created arcset
  */
 baseArcsetPtr Arcset_bc4bp::create( const SysData *pSys) const{
 	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp*>(pSys);
@@ -75,13 +75,13 @@ baseArcsetPtr Arcset_bc4bp::create( const SysData *pSys) const{
 }//====================================================
 
 /**
- *  \brief Create a new arcset object on the stack that is a 
+ *  @brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the `delete` function must be called to 
+ *  @details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \return a pointer to the newly cloned arcset
+ *  @return a pointer to the newly cloned arcset
  */
 baseArcsetPtr Arcset_bc4bp::clone() const{
 	return baseArcsetPtr(new Arcset_bc4bp(*this));
@@ -97,7 +97,7 @@ baseArcsetPtr Arcset_bc4bp::clone() const{
 //-----------------------------------------------------
 
 /**
- *	\return the angle between the P1/P2 line and the inertial x-axis, radians
+ *	@return the angle between the P1/P2 line and the inertial x-axis, radians
  */
 double Arcset_bc4bp::getTheta0(){
 	const SysData_bc4bp *bcSys = static_cast<const SysData_bc4bp *>(pSysData);
@@ -105,7 +105,7 @@ double Arcset_bc4bp::getTheta0(){
 }//====================================================
 
 /**
- *	\return the angle between the P2/P3 line (projected into the inertial XY plane)
+ *	@return the angle between the P2/P3 line (projected into the inertial XY plane)
  *	and the inertial x-axis, radians
  */
 double Arcset_bc4bp::getPhi0(){
@@ -114,7 +114,7 @@ double Arcset_bc4bp::getPhi0(){
 }//====================================================
 
 /**
- *	\return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital
+ *	@return the inclination of the P2/P3 orbital plane relative to the P1/P2 orbital
  *	plane, radians
  */
 double Arcset_bc4bp::getGamma(){
@@ -123,11 +123,11 @@ double Arcset_bc4bp::getGamma(){
 }//====================================================
 
 /**
- *	\param ix the index of the dqdT vector to retrieve
- *	\return the i'th 6-element dqdT vector. If ix is negative, the count
+ *	@param ix the index of the dqdT vector to retrieve
+ *	@return the i'th 6-element dqdT vector. If ix is negative, the count
  *	will proceed from the end of the vector, i.e. -1 will return the final time, 
  *	-2 will give the second to last value, etc.
- *	\throws Exception if `ix` is out of bounds
+ *	@throws Exception if `ix` is out of bounds
  */
 std::vector<double> Arcset_bc4bp::get_dqdTByIx(int ix){
 	if(ix < 0)
@@ -140,11 +140,11 @@ std::vector<double> Arcset_bc4bp::get_dqdTByIx(int ix){
 }//====================================================
 
 /**
- *	\brief Set the value of the dqdT vector for the specified step
- *	\param ix the index of the step; if < 0, it will count backwards from the end
- *	\param dqdT a pointer to the dqdT vector; this MUST have at least 6 elements,
+ *	@brief Set the value of the dqdT vector for the specified step
+ *	@param ix the index of the step; if < 0, it will count backwards from the end
+ *	@param dqdT a pointer to the dqdT vector; this MUST have at least 6 elements,
  *	or the function will read unallocated memory.
- *	\throws Exception if `ix` is out of bounds
+ *	@throws Exception if `ix` is out of bounds
  */
 void Arcset_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
 	if(ix < 0)
@@ -158,10 +158,10 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, const double *dqdT){
 }//====================================================
 
 /**
- *	\brief Set the value of the dqdT vector for the specified step
- *	\param ix the index of the step; if < 0, it will count backwards from the end
- *	\param dqdT a vector (6 elements) representing the dqdT vector
- *	\throws Exception if `ix` is out of bounds
+ *	@brief Set the value of the dqdT vector for the specified step
+ *	@param ix the index of the step; if < 0, it will count backwards from the end
+ *	@param dqdT a vector (6 elements) representing the dqdT vector
+ *	@throws Exception if `ix` is out of bounds
  */
 void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 	if(dqdT.size() != 6)
@@ -175,9 +175,9 @@ void Arcset_bc4bp::set_dqdTByIx(int ix, std::vector<double> dqdT){
 //-----------------------------------------------------
 
 /**
- *  \brief Execute commands to save data to a Matlab file
- *  \param pMatFile pointer to an open Matlab file
- *  \param saveTp describes how much data to save
+ *  @brief Execute commands to save data to a Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param saveTp describes how much data to save
  */
 void Arcset_bc4bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds_toFile(pMatFile, saveTp);
@@ -187,11 +187,11 @@ void Arcset_bc4bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 }//====================================================
 
 /**
- *  \brief Execute commands to save data to a structure array
+ *  @brief Execute commands to save data to a structure array
  * 
- *  \param pStruct pointer to a structure array
- *  \param ix index of this arcset within the structure array
- *  \param saveTp Describes how much data to save
+ *  @param pStruct pointer to a structure array
+ *  @param ix index of this arcset within the structure array
+ *  @param saveTp Describes how much data to save
  */
 void Arcset_bc4bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
 	Arcset::saveCmds_toStruct(pStruct, ix, saveTp);
@@ -202,9 +202,9 @@ void Arcset_bc4bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp
 }//====================================================
 
 /**
- *  \brief Execute commands to read data from a Matlab file
- *  \param pMatFile pointer to an open Matlab file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @brief Execute commands to read data from a Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
@@ -218,11 +218,11 @@ void Arcset_bc4bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &
 }//====================================================
 
 /**
- *  \brief Execute commands to read from data from a structure array
+ *  @brief Execute commands to read from data from a structure array
  * 
- *  \param pStruct Pointer to the structure array variable
- *  \param ix index of this arcset within the structure array
- * 	\param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param pStruct Pointer to the structure array variable
+ *  @param ix index of this arcset within the structure array
+ * 	@param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */

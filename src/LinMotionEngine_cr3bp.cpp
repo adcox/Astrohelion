@@ -1,10 +1,10 @@
 /**
- *	\file LinMotionEngine_cr3bp.cpp
- *	\brief Uses linear EOMS near libration points to generate trajectories
+ *	@file LinMotionEngine_cr3bp.cpp
+ *	@brief Uses linear EOMS near libration points to generate trajectories
  *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -41,7 +41,7 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Default, do-nothing constructor
+ *  @brief Default, do-nothing constructor
  */
 LinMotionEngine_cr3bp::LinMotionEngine_cr3bp() : LinMotionEngine(){}
 
@@ -50,25 +50,25 @@ LinMotionEngine_cr3bp::LinMotionEngine_cr3bp() : LinMotionEngine(){}
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Retrieve the ratio between short- and long-period motion near L4 and L5
+ *	@brief Retrieve the ratio between short- and long-period motion near L4 and L5
  *
  *	This ratio is only applied to mixed-period motion simulations
- *	\return the ratio between short- and long-period motion near L4 and L5
+ *	@return the ratio between short- and long-period motion near L4 and L5
  */
 double LinMotionEngine_cr3bp::getMPORatio() const { return nu; }
 
 /**
- *	\brief Set the ratio for short- and long-period L4 and L5 motion
+ *	@brief Set the ratio for short- and long-period L4 and L5 motion
  *
  *	This ratio is only applied to mixed-period simulations
- *	\param ratio the ratio
+ *	@param ratio the ratio
  */
 void LinMotionEngine_cr3bp::setMPORatio(double ratio) { nu = ratio; }
 
 /**
- *	\brief get a human-readable string for a motion type
- *	\param type the motion type
- *	\return a human-redable string
+ *	@brief get a human-readable string for a motion type
+ *	@param type the motion type
+ *	@return a human-redable string
  */
 const char* LinMotionEngine_cr3bp::getTypeStr(unsigned int type) const{
 	switch(type){
@@ -85,19 +85,19 @@ const char* LinMotionEngine_cr3bp::getTypeStr(unsigned int type) const{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Save data from the linear model to an Arcset object
- *  \details [long description]
+ *  @brief Save data from the linear model to an Arcset object
+ *  @details [long description]
  * 
- *  \param model Describes the relevant dynamical model
- *  \param pArc Pointer to the storage arcset
- *  \param t current time on the solution
- *  \param pState current state on the solution
- *  \param nodeCount current number of nodes that have been created
- *  \param eomParams object that stores parameters used to evaluate the nonlinear equations of motion
- *  \param dt time step between nodes
- *  \param t_step step between points on the solution
- *  \param core_dim dimension of the core state
- *  \param full_dim dimension of the full state (core + control + stm + extras)
+ *  @param model Describes the relevant dynamical model
+ *  @param pArc Pointer to the storage arcset
+ *  @param t current time on the solution
+ *  @param pState current state on the solution
+ *  @param nodeCount current number of nodes that have been created
+ *  @param eomParams object that stores parameters used to evaluate the nonlinear equations of motion
+ *  @param dt time step between nodes
+ *  @param t_step step between points on the solution
+ *  @param core_dim dimension of the core state
+ *  @param full_dim dimension of the full state (core + control + stm + extras)
  */
 void LinMotionEngine_cr3bp::storeData(const DynamicsModel *model, Arcset_cr3bp *pArc, const double &t, std::vector<double> *pState,
 	unsigned int &nodeCount, EOM_ParamStruct *eomParams, const double& dt, const double &t_step,
@@ -132,19 +132,19 @@ void LinMotionEngine_cr3bp::storeData(const DynamicsModel *model, Arcset_cr3bp *
 }//====================================================
 
 /**
- *	\brief Compute a linear approximation for a Lissajous orbit
+ *	@brief Compute a linear approximation for a Lissajous orbit
  *
- *	\param L Lagrange point number. Choose 1, 2, or 3
- *	\param Axy in-plane amplitude, non-dimensional units
- *	\param xAmp whether or not Axy describes the x-amplitude; true -> Ax = Axy, false -> Ay = Axy
- *	\param phi starting phase angle for the in-plane motion
- *	\param Az out-of-plane amplitude, non-dimensional units
- *	\param psi starting phase angle for out-of-plane motion
- *	\param pArc pointer to an arcset to store the linear trajectory in
- *	\param numNodes the number of nodes to place around the linear trajectory; 
+ *	@param L Lagrange point number. Choose 1, 2, or 3
+ *	@param Axy in-plane amplitude, non-dimensional units
+ *	@param xAmp whether or not Axy describes the x-amplitude; true -> Ax = Axy, false -> Ay = Axy
+ *	@param phi starting phase angle for the in-plane motion
+ *	@param Az out-of-plane amplitude, non-dimensional units
+ *	@param psi starting phase angle for out-of-plane motion
+ *	@param pArc pointer to an arcset to store the linear trajectory in
+ *	@param numNodes the number of nodes to place around the linear trajectory; 
  *	this is nodes for the entire propagation (period * num revs)
  *	
- *	\throws Exception if `L` is not 1, 2, or 3
+ *	@throws Exception if `L` is not 1, 2, or 3
  */
 void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, double Az, double psi, Arcset_cr3bp* pArc,
 	unsigned int numNodes){
@@ -235,19 +235,19 @@ void LinMotionEngine_cr3bp::getLiss(int L, double Axy, bool xAmp, double phi, do
 
 
 /**
- * 	\brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
  *
  *	This function sets the out-of-plane motion to have zero amplitude
  *
- *	\param L the Lagrange point number [1,5]
- *	\param r0 a three-element vector that specifies the initial position of the arc relative
+ *	@param L the Lagrange point number [1,5]
+ *	@param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
- *	\param type the type of linearized motion desired
- *	\param pArc pointer to an arcset to store the linear trajectory in
- *	\param numNodes the number of nodes to place around the linear trajectory; 
+ *	@param type the type of linearized motion desired
+ *	@param pArc pointer to an arcset to store the linear trajectory in
+ *	@param numNodes the number of nodes to place around the linear trajectory; 
  *	this is nodes for the entire propagation (period * num revs)
  *
- *	\return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	@return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
  */
@@ -256,22 +256,22 @@ void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], unsigned int type, Ar
 }//====================================================
 
 /**
- * 	\brief Construct a trajectory from linear approximations of the CR3BP EOMs
+ * 	@brief Construct a trajectory from linear approximations of the CR3BP EOMs
  *
- *	\param L the Lagrange point number [1,5]
- *	\param r0 a three-element vector that specifies the initial position of the arc relative
+ *	@param L the Lagrange point number [1,5]
+ *	@param r0 a three-element vector that specifies the initial position of the arc relative
  *		to the chosen Lagrange point
- *	\param Az out-of-plane amplitude, in non-dimensional units
- *	\param psi defines the starting elevation angle of the out-of-plane motion, radians
- *	\param type the type of linearized motion desired
- *	\param pArc pointer to an arcset to store the linear trajectory in
- *	\param numNodes the number of nodes to place around the linear trajectory; 
+ *	@param Az out-of-plane amplitude, in non-dimensional units
+ *	@param psi defines the starting elevation angle of the out-of-plane motion, radians
+ *	@param type the type of linearized motion desired
+ *	@param pArc pointer to an arcset to store the linear trajectory in
+ *	@param numNodes the number of nodes to place around the linear trajectory; 
  *	this is nodes for the entire propagation (period * num revs)
  *
- *	\return a trajectory object containing one revolution of the trajectory. Because this motion
+ *	@return a trajectory object containing one revolution of the trajectory. Because this motion
  *	is generated from simplified dynamics, no information about the STM or Jacobi Constant is 
  *	computed. Accelerations are also not computed. These values are all stored as NAN
- *	\throws Exception if the `type` does not correspond with the specified Lagrange
+ *	@throws Exception if the `type` does not correspond with the specified Lagrange
  *	point `L`
  */
 void LinMotionEngine_cr3bp::getLinear(int L, double r0[3], double Az, double psi, unsigned int type, Arcset_cr3bp* pArc,

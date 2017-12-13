@@ -1,10 +1,10 @@
 /**
- *  \file BodyData.hpp
- *	\brief Stores information about a celestial body
+ *  @file BodyData.hpp
+ *	@brief Stores information about a celestial body
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -34,14 +34,14 @@
 namespace astrohelion{
 /**
  *	\ingroup model
- *	\brief The body data object provides a way to store and retrieve information about different
+ *	@brief The body data object provides a way to store and retrieve information about different
  *	celestial bodies. 
  *
  *	This may be supplemented/usurped by calls to SPICE in the future.
  *
- *	\author Andrew Cox
- *	\version May 15, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class BodyData : public Core{
 	public:

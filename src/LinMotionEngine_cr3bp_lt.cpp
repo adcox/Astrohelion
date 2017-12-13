@@ -1,10 +1,10 @@
 /**
- *	\file LinMotionEngine_cr3bp_lt.cpp
- *	\brief Uses linear EOMS near libration points to generate trajectories
+ *	@file LinMotionEngine_cr3bp_lt.cpp
+ *	@brief Uses linear EOMS near libration points to generate trajectories
  *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -45,7 +45,7 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Default, do-nothing constructor
+ *  @brief Default, do-nothing constructor
  */
 LinMotionEngine_cr3bp_lt::LinMotionEngine_cr3bp_lt() : LinMotionEngine(){}
 
@@ -54,20 +54,20 @@ LinMotionEngine_cr3bp_lt::LinMotionEngine_cr3bp_lt() : LinMotionEngine(){}
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Compute the a trajectory in the linear dynamics
- *  \details [long description]
+ *  @brief Compute the a trajectory in the linear dynamics
+ *  @details [long description]
  * 
- *  \param eqPt 3D position vector of the equilibrium solution. This may be obtained 
+ *  @param eqPt 3D position vector of the equilibrium solution. This may be obtained 
  *  from DynamicsModel_cr3bp_lt::getEquilibPt
- *  \param f thrust magnitude (nondimensional) that corresponds to the equilibrium solution
- *  \param alpha thrust pointing angle (in plane, radians) that corresponds to the 
+ *  @param f thrust magnitude (nondimensional) that corresponds to the equilibrium solution
+ *  @param alpha thrust pointing angle (in plane, radians) that corresponds to the 
  *  equilibrium solution
- *  \param x0 Initial variational state (nondimensional, relative to eqPt)
- *  \param motionTp describes the type of motion
- *  \param pArc pointer to an arcset in which to store the linear trajectory
- *  \param pLaw pointer to a control law object; the control used on the linear trajectory is 
+ *  @param x0 Initial variational state (nondimensional, relative to eqPt)
+ *  @param motionTp describes the type of motion
+ *  @param pArc pointer to an arcset in which to store the linear trajectory
+ *  @param pLaw pointer to a control law object; the control used on the linear trajectory is 
  *  stored in this object.
- *  \param numNodes How many nodes to create on the trajectory. Must be >= 2
+ *  @param numNodes How many nodes to create on the trajectory. Must be >= 2
  */
 void LinMotionEngine_cr3bp_lt::getLinear(double eqPt[3], double f, double alpha, double x0[3],
 	unsigned int motionTp, Arcset_cr3bp_lt *pArc, ControlLaw_cr3bp_lt *pLaw, unsigned int numNodes){

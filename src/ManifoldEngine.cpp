@@ -1,10 +1,10 @@
 /**
- *  \file ManifoldEngine.cpp
- *  \brief 
+ *  @file ManifoldEngine.cpp
+ *  @brief 
  *  
- *  \author Andrew Cox
- *  \version May 1, 2017
- *  \copyright GNU GPL v3.0
+ *  @author Andrew Cox
+ *  @version May 1, 2017
+ *  @copyright GNU GPL v3.0
  */
 /*
  *  Astrohelion 
@@ -47,13 +47,13 @@ namespace astrohelion{
 //      *structors
 //-----------------------------------------------------
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 ManifoldEngine::ManifoldEngine(){}
 
 /**
- *  \brief Copy constructor
- *  \param m Reference to another ManifoldEngine object
+ *  @brief Copy constructor
+ *  @param m Reference to another ManifoldEngine object
  */
 ManifoldEngine::ManifoldEngine(const ManifoldEngine &m){
 	copyMe(m);
@@ -64,22 +64,22 @@ ManifoldEngine::ManifoldEngine(const ManifoldEngine &m){
 //-----------------------------------------------------
 
 /**
- *  \brief Retreive the step-off distance, in kilometers
- *  \details The details of the step-off type are dictated by
+ *  @brief Retreive the step-off distance, in kilometers
+ *  @details The details of the step-off type are dictated by
  *  the Manifold_StepOff_tp passed into the manifold generation
  *  algorithm
  * 
- *  \return The step-off distance, kilometers
+ *  @return The step-off distance, kilometers
  */
 double ManifoldEngine::getStepOffDist() const{ return stepOffDist; }
 
 /**
- *  \brief Set the step-off distance, in kilometers
- *  \details The details of the step-off type are dictated by
+ *  @brief Set the step-off distance, in kilometers
+ *  @details The details of the step-off type are dictated by
  *  the Manifold_StepOff_tp passed into the manifold generation
  *  algorithm
  * 
- *  \param dist The step-off distance, kilometers
+ *  @param dist The step-off distance, kilometers
  */
 void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
 
@@ -88,28 +88,28 @@ void ManifoldEngine::setStepOffDist(double dist){ stepOffDist = dist; }
 //-----------------------------------------------------
 
 /**
- *  \brief Compute manifold arcs from a number of points spaced equally around a
+ *  @brief Compute manifold arcs from a number of points spaced equally around a
  *  low-thrust periodic orbit.
- *  \details Make sure that the STMs along the orbit represent the cumulative evolution
+ *  @details Make sure that the STMs along the orbit represent the cumulative evolution
  *  rather than the segment-wise evolution. This characteristic can be guaranteed by calling
  *  setSTMs_sequence() on the Arcset in question.
  *  
- *  \param manifoldType The type of manifolds to generate
- *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
+ *  @param manifoldType The type of manifolds to generate
+ *  @param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
  *  so this function also performs well for nearly periodic segments of quasi-periodic
  *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
- *  \param numMans The number of manifolds to generate
- *  \param tof Time-of-flight along each manifold arc after stepping off the specified orbit. If
+ *  @param numMans The number of manifolds to generate
+ *  @param tof Time-of-flight along each manifold arc after stepping off the specified orbit. If
  *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
  *  node with the initial condition.
- *  \param stepType Describes the method leveraged to step off of the fixed point along the 
+ *  @param stepType Describes the method leveraged to step off of the fixed point along the 
  *  stable or unstable eigenvector
  *  
- *  \return a vector of trajectory objects, one for each manifold arc.
- *  \throws Exception if the eigenvalues cannot be computed, or if only one
+ *  @return a vector of trajectory objects, one for each manifold arc.
+ *  @throws Exception if the eigenvalues cannot be computed, or if only one
  *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
- *  \see computeSingleFromPeriodic()
- *  \see manifoldsFromPOPoint()
+ *  @see computeSingleFromPeriodic()
+ *  @see manifoldsFromPOPoint()
  */
 std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp_lt *pPerOrbit,
     ControlLaw_cr3bp_lt *pLaw, unsigned int numMans, double tof, Manifold_StepOff_tp stepType){
@@ -167,28 +167,28 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::computeSetFromLTPeriodic(Manifold_t
 }//====================================================
 
 /**
- *  \brief Compute manifold arcs from a number of points spaced equally around a
+ *  @brief Compute manifold arcs from a number of points spaced equally around a
  *  periodic orbit.
- *  \details Make sure that the STMs along the orbit represent the cumulative evolution
+ *  @details Make sure that the STMs along the orbit represent the cumulative evolution
  *  rather than the segment-wise evolution. This characteristic can be guaranteed by calling
  *  setSTMs_sequence() on the Arcset in question.
  * 	
- *  \param manifoldType The type of manifolds to generate
- *  \param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
+ *  @param manifoldType The type of manifolds to generate
+ *  @param pPerOrbit A periodic, CR3BP orbit. No checks are made to ensure periodicity,
  *  so this function also performs well for nearly periodic segments of quasi-periodic
  *  arcs. If an arc that is not approximately periodic is input, the behavior may be... strange.
- *  \param numMans The number of manifolds to generate
- *  \param tof Time-of-flight along each manifold arc after stepping off the specified orbit. If
+ *  @param numMans The number of manifolds to generate
+ *  @param tof Time-of-flight along each manifold arc after stepping off the specified orbit. If
  *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
  *  node with the initial condition.
- *  \param stepType Describes the method leveraged to step off of the fixed point along the 
+ *  @param stepType Describes the method leveraged to step off of the fixed point along the 
  *  stable or unstable eigenvector
  *  
- *  \return a vector of trajectory objects, one for each manifold arc.
- *  \throws Exception if the eigenvalues cannot be computed, or if only one
+ *  @return a vector of trajectory objects, one for each manifold arc.
+ *  @throws Exception if the eigenvalues cannot be computed, or if only one
  *  stable or unstable eigenvalue is computed (likely because of an impropper monodromy matrix)
- *  \see computeSingleFromPeriodic()
- *  \see manifoldsFromPOPoint()
+ *  @see computeSingleFromPeriodic()
+ *  @see manifoldsFromPOPoint()
  */
 std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit, unsigned int numMans, double tof,
 	Manifold_StepOff_tp stepType){
@@ -243,22 +243,22 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSetFromPeriodic(Manifold_tp man
 }//====================================================
 
 /**
- *  \brief Compute manifold arc(s) from a single point on a periodic orbit
+ *  @brief Compute manifold arc(s) from a single point on a periodic orbit
  * 
- *  \param manifoldType Type of manifold
- *  \param pPerOrbit Pointer to a periodic orbit; only include one revolution of the orbit in the
+ *  @param manifoldType Type of manifold
+ *  @param pPerOrbit Pointer to a periodic orbit; only include one revolution of the orbit in the
  *  rotating frame.
- *  \param pPerOrbit pointer to the periodic orbit arcset object
- *  \param orbitTOF Specifies the point on the periodic orbit that the manifold should emenate from.
+ *  @param pPerOrbit pointer to the periodic orbit arcset object
+ *  @param orbitTOF Specifies the point on the periodic orbit that the manifold should emenate from.
  *  If the TOF is negative or greater than the period of the periodic orbit, the TOF is adjusted so
  *  that the initial state is propagated for no more than one period of the periodic orbit to avoid
  *  numerical errors.
- *  \param manifoldTOF Amount of time to propagate the manifold arc from the initial state on 
+ *  @param manifoldTOF Amount of time to propagate the manifold arc from the initial state on 
  *  the periodic orbit.
- *  \param stepType Describes how the initial step along the eigenvector is computed
+ *  @param stepType Describes how the initial step along the eigenvector is computed
  *  
- *  \return A manifold arc
- *  \see manifoldsFromPOPoint()
+ *  @return A manifold arc
+ *  @see manifoldsFromPOPoint()
  */
 std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
     double orbitTOF, double manifoldTOF, Manifold_StepOff_tp stepType){
@@ -289,21 +289,21 @@ std::vector<Arcset_cr3bp> ManifoldEngine::computeSingleFromPeriodic(Manifold_tp 
 }//====================================================
 
 /**
- *  \brief Compute manifolds arcs from a point on a periodic orbit (PO)
+ *  @brief Compute manifolds arcs from a point on a periodic orbit (PO)
  * 
- *  \param manifoldType Describes the type of manifold(s) to be computed
- *  \param state The state on the periodic orbit to compute manifold arcs from
- *  \param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
+ *  @param manifoldType Describes the type of manifold(s) to be computed
+ *  @param state The state on the periodic orbit to compute manifold arcs from
+ *  @param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
  *  this is NOT the monodromy matrix (in general).
- *  \param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
- *  \param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
- *  \param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
+ *  @param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
+ *  @param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
+ *  @param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
  *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
  *  node with the initial condition.
- *  \param pSys Pointer to a SysData object consistent with the periodic orbit
- *  \param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
+ *  @param pSys Pointer to a SysData object consistent with the periodic orbit
+ *  @param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
  *  
- *  \return The computed manifold arc(s)
+ *  @return The computed manifold arc(s)
  */
 std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
 	std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, const SysData_cr3bp *pSys, Manifold_StepOff_tp stepType){
@@ -383,21 +383,21 @@ std::vector<Arcset_cr3bp> ManifoldEngine::manifoldsFromPOPoint(Manifold_tp manif
 }//====================================================
 
 /**
- *  \brief Compute manifolds arcs from a point on a low-thrust periodic orbit (LTPO)
+ *  @brief Compute manifolds arcs from a point on a low-thrust periodic orbit (LTPO)
  * 
- *  \param manifoldType Describes the type of manifold(s) to be computed
- *  \param state The state on the periodic orbit to compute manifold arcs from
- *  \param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
+ *  @param manifoldType Describes the type of manifold(s) to be computed
+ *  @param state The state on the periodic orbit to compute manifold arcs from
+ *  @param STM State Transition Matrix from time t0 to time t1; t1 corresponds with <code>state</code>; Note that
  *  this is NOT the monodromy matrix (in general).
- *  \param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
- *  \param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
- *  \param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
+ *  @param eigVals Eigenvalues of the monodromy matrix, Phi(t0+T, t0), where T is the period of the periodic orbit
+ *  @param eigVecs Eigenvectors of the monodromy matrix that correspond to the eigenvalues in <code>eigVals</code>
+ *  @param tof Amount of time (nondimensional) for which to propagate the manifold arc; sign is unimportant. If
  *  tof is set to zero, none of the trajectories will be integrated; each will contain a single
  *  node with the initial condition.
- *  \param pSys Pointer to a SysData object consistent with the periodic orbit
- *  \param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
+ *  @param pSys Pointer to a SysData object consistent with the periodic orbit
+ *  @param stepType Describes how the step is taken away from <code>state</code> along the eigenvector
  *  
- *  \return The computed manifold arc(s)
+ *  @return The computed manifold arc(s)
  */
 std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(Manifold_tp manifoldType, std::vector<double> state, MatrixXRd STM,
     std::vector<cdouble> eigVals, MatrixXRd eigVecs, double tof, const SysData_cr3bp_lt *pSys, ControlLaw_cr3bp_lt *pLaw,
@@ -484,20 +484,20 @@ std::vector<Arcset_cr3bp_lt> ManifoldEngine::manifoldsFromLTPOPoint(Manifold_tp 
 //-----------------------------------------------------
 
 /**
- *  \brief Compute the eigenvector/eigenvalue pair(s) that matches the desired manifold
+ *  @brief Compute the eigenvector/eigenvalue pair(s) that matches the desired manifold
  *  stability from a CR3BP periodic orbit
- *  \details If the stable/unstable subpsace has more than one set of manifolds, the
+ *  @details If the stable/unstable subpsace has more than one set of manifolds, the
  *  algorithm selects the eigenvalue/eigenvector that is most unstable/stable.
  * 
- *  \param manifoldType The type of manifold desired
- *  \param pPerOrbit pointer to a periodic CR3BP orbit. No checks are performed to ensure periodicity;
+ *  @param manifoldType The type of manifold desired
+ *  @param pPerOrbit pointer to a periodic CR3BP orbit. No checks are performed to ensure periodicity;
  *  If the trajectory is not periodic or nearly periodic, you may get unexpected results. It is assumed
  *  that the final STM in the orbit object represents the monodromy matrix.
- *  \param eigVals_final pointer to a vector of doubles; the computed eigenvalue(s) will be stored here
+ *  @param eigVals_final pointer to a vector of doubles; the computed eigenvalue(s) will be stored here
  *  
- *  \return The eigenvector(s) (column) that best matches the criteria
- *  \throws Exception if the eigenvalue computation is unsuccessful
- *  \throws Excpetion if no stable or unstable eigenvalues are identified
+ *  @return The eigenvector(s) (column) that best matches the criteria
+ *  @throws Exception if the eigenvalue computation is unsuccessful
+ *  @throws Excpetion if no stable or unstable eigenvalues are identified
  */
 MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const Arcset_cr3bp *pPerOrbit,
 	std::vector<cdouble> *eigVals_final){
@@ -652,11 +652,11 @@ MatrixXRd ManifoldEngine::eigVecValFromPeriodic(Manifold_tp manifoldType, const 
 }//====================================================
 
 /**
- *  \brief Copy the ManifoldEngine
- *  \details This engine will be made a mirror image of the
+ *  @brief Copy the ManifoldEngine
+ *  @details This engine will be made a mirror image of the
  *  specified engine.
  * 
- *  \param m Reference to another ManifoldEngine object
+ *  @param m Reference to another ManifoldEngine object
  */
 void ManifoldEngine::copyMe(const ManifoldEngine &m){
 	Engine::copyBaseEngine(m);
@@ -664,20 +664,20 @@ void ManifoldEngine::copyMe(const ManifoldEngine &m){
 }//====================================================
 
 /**
- *  \brief Reset all parameters to their default values
+ *  @brief Reset all parameters to their default values
  */
 void ManifoldEngine::reset(){
 	stepOffDist = 20;	// km
 }//====================================================
 
 /**
- *  \brief A comparator for complex, double precision numbers
- *  \details [long description]
+ *  @brief A comparator for complex, double precision numbers
+ *  @details [long description]
  * 
- *  \param lhs a complex number
- *  \param rhs another complex number
+ *  @param lhs a complex number
+ *  @param rhs another complex number
  * 
- *  \return whether or not the magnitude of lhs is less than the magnitude of rhs
+ *  @return whether or not the magnitude of lhs is less than the magnitude of rhs
  */
 bool ManifoldEngine::compareCDouble(cdouble lhs, cdouble rhs){
 	return std::abs(lhs) < std::abs(rhs);

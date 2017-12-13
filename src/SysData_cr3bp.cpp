@@ -1,10 +1,10 @@
 /**
- *	\file SysData_cr3bp.cpp
- *	\brief Derivative of SysData, specific to CR3BP
+ *	@file SysData_cr3bp.cpp
+ *	@brief Derivative of SysData, specific to CR3BP
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -39,7 +39,7 @@
 
 namespace astrohelion{
 /**
- *	\brief Default constructor
+ *	@brief Default constructor
  */
 SysData_cr3bp::SysData_cr3bp() : SysData(){
 	numPrimaries = 2;
@@ -48,9 +48,9 @@ SysData_cr3bp::SysData_cr3bp() : SysData(){
 }//========================================
 
 /**
- *	\brief Create a system data object using data from the two primaries
- *	\param P1 the name of the larger primary
- *	\param P2 the name of the smaller primary; P2 must orbit P1
+ *	@brief Create a system data object using data from the two primaries
+ *	@param P1 the name of the larger primary
+ *	@param P2 the name of the smaller primary; P2 must orbit P1
  */
 SysData_cr3bp::SysData_cr3bp(std::string P1, std::string P2){
 	numPrimaries = 2;
@@ -61,9 +61,9 @@ SysData_cr3bp::SysData_cr3bp(std::string P1, std::string P2){
 }//===================================================
 
 /**
- *  \brief Load the system data object from a Matlab data file
+ *  @brief Load the system data object from a Matlab data file
  * 
- *  \param filepath path to the data file
+ *  @param filepath path to the data file
  */
 SysData_cr3bp::SysData_cr3bp(const char *filepath){
 	// Load the matlab file
@@ -76,14 +76,14 @@ SysData_cr3bp::SysData_cr3bp(const char *filepath){
 }//===================================================
 
 /**
- *  \brief Destructor
+ *  @brief Destructor
  */
 SysData_cr3bp::~SysData_cr3bp(){}
 
 /**
- *	\brief Initialize all data fields using the names of the primaries
- *	\param P1 the name of the larger primary
- *	\param P2 the name of the smaller primary
+ *	@brief Initialize all data fields using the names of the primaries
+ *	@param P1 the name of the larger primary
+ *	@param P2 the name of the smaller primary
  */
 void SysData_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 	BodyData p1Data(P1);
@@ -112,21 +112,21 @@ void SysData_cr3bp::initFromPrimNames(std::string P1, std::string P2){
 }//===================================================
 
 /**
- *	\brief Retrieve the model that governs the motion for this system type
- *	\return the model that governs the motion for this system type
+ *	@brief Retrieve the model that governs the motion for this system type
+ *	@return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_cr3bp::getDynamicsModel() const { return &model; }
 
 /**
- *	\brief Copy constructor
- *	\param d
+ *	@brief Copy constructor
+ *	@param d
  */
 SysData_cr3bp::SysData_cr3bp(const SysData_cr3bp &d) : SysData(d){}
 
 /**
- *	\brief Copy operator; makes a clean copy of a data object into this one
- *	\param d a CR3BP system data object
- *	\return this system data object
+ *	@brief Copy operator; makes a clean copy of a data object into this one
+ *	@param d a CR3BP system data object
+ *	@return this system data object
  */
 SysData_cr3bp& SysData_cr3bp::operator= (const SysData_cr3bp &d){
 	SysData::operator= (d);
@@ -134,22 +134,22 @@ SysData_cr3bp& SysData_cr3bp::operator= (const SysData_cr3bp &d){
 }//===================================================
 
 /**
- *	\return the non-dimensional mass ratio for the system
+ *	@return the non-dimensional mass ratio for the system
  */
 double SysData_cr3bp::getMu() const { return otherParams.at(0); }
 
 /**
- *  \brief Save the system data to a matlab file
+ *  @brief Save the system data to a matlab file
  * 
- *  \param filepath path to the data file
+ *  @param filepath path to the data file
  */
 void SysData_cr3bp::saveToMat(const char *filepath) const{
 	SysData::saveToMat(filepath);
 }//==================================================
 
 /**
- *	\brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
- *	\param matFile a pointer to the .mat file
+ *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	@param matFile a pointer to the .mat file
  */
 void SysData_cr3bp::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
@@ -179,9 +179,9 @@ void SysData_cr3bp::saveToMat(mat_t *matFile) const{
 }//===================================================
 
 /**
- *	\brief Populate data fiels for this data object by reading the primaries'
+ *	@brief Populate data fiels for this data object by reading the primaries'
  *	names from a Mat file
- *	\param matFile a pointer to the Mat file in question
+ *	@param matFile a pointer to the Mat file in question
  */
 void SysData_cr3bp::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);

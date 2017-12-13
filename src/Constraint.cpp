@@ -1,10 +1,10 @@
 /**
- *	\file Constraint.cpp
- *	\brief Data object that stores information about a node constraint
+ *	@file Constraint.cpp
+ *	@brief Data object that stores information about a node constraint
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -37,15 +37,15 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	\brief Construct a constraint
+ *	@brief Construct a constraint
  */
 Constraint::Constraint(){
 	data.clear();
 }//====================================================
 
 /**
- *	\brief Construct a constraint with specified constraint type
- *	\param type constraint type
+ *	@brief Construct a constraint with specified constraint type
+ *	@param type constraint type
  */
 Constraint::Constraint(Constraint_tp type){
 	this->type = type;
@@ -54,10 +54,10 @@ Constraint::Constraint(Constraint_tp type){
 }//====================================================
 
 /**
- *	\brief Construct a constraint with specified constraint type and data values
- *	\param type constraint type
- *	\param id the ID of the object this constriant applies to
- *	\param data data vector (length n)
+ *	@brief Construct a constraint with specified constraint type and data values
+ *	@param type constraint type
+ *	@param id the ID of the object this constriant applies to
+ *	@param data data vector (length n)
  */
 Constraint::Constraint(Constraint_tp type, int id, std::vector<double> data){
 	this->type = type;
@@ -67,11 +67,11 @@ Constraint::Constraint(Constraint_tp type, int id, std::vector<double> data){
 }//====================================================
 
 /**
- *	\brief Construct a constraint with specified constraint type, and data values
- *	\param type constraint type
- *	\param id the ID of the object this constriant applies to
- *	\param data data vector
- *	\param data_len the number of elements in d_len
+ *	@brief Construct a constraint with specified constraint type, and data values
+ *	@param type constraint type
+ *	@param id the ID of the object this constriant applies to
+ *	@param data data vector
+ *	@param data_len the number of elements in d_len
  */
 Constraint::Constraint(Constraint_tp type, int id, const double* data, int data_len){
 	this->type = type;
@@ -81,15 +81,15 @@ Constraint::Constraint(Constraint_tp type, int id, const double* data, int data_
 }//====================================================
 
 /**
- *	\brief Create a copy of the specified constraint
- *	\param c a constraint
+ *	@brief Create a copy of the specified constraint
+ *	@param c a constraint
  */
 Constraint::Constraint(const Constraint& c){
 	copyMe(c);
 }//====================================================
 
 /**
- *	\brief Destructor
+ *	@brief Destructor
  */
 Constraint::~Constraint(){}
 
@@ -98,9 +98,9 @@ Constraint::~Constraint(){}
 //-----------------------------------------------------
 
 /**
- *	\brief Assignment operator
- *	\param c a constraint
- *	\return this constraint, now equal to c
+ *	@brief Assignment operator
+ *	@param c a constraint
+ *	@return this constraint, now equal to c
  */
 Constraint& Constraint::operator =(const Constraint& c){
 	copyMe(c);
@@ -108,12 +108,12 @@ Constraint& Constraint::operator =(const Constraint& c){
 }//====================================================
 
 /**
- *  \brief Compare two constraint objects
+ *  @brief Compare two constraint objects
  * 
- *  \param lhs a constraint object
- *  \param rhs a constraint object
+ *  @param lhs a constraint object
+ *  @param rhs a constraint object
  * 
- *  \return True if the paramters are identical and the data vector
+ *  @return True if the paramters are identical and the data vector
  *  elements match to within a tolerance of 1e-14
  */
 bool operator ==(const Constraint &lhs, const Constraint &rhs){
@@ -135,12 +135,12 @@ bool operator ==(const Constraint &lhs, const Constraint &rhs){
 }//====================================================
 
 /**
- *  \brief Compare to constraint objects
+ *  @brief Compare to constraint objects
  * 
- *  \param lhs a constraint object
- *  \param rhs a constraint object
+ *  @param lhs a constraint object
+ *  @param rhs a constraint object
  * 
- *  \return whether or not lhs and rhs are not equatl
+ *  @return whether or not lhs and rhs are not equatl
  */
 bool operator !=(const Constraint &lhs, const Constraint &rhs){
 	return !(lhs == rhs);
@@ -151,30 +151,30 @@ bool operator !=(const Constraint &lhs, const Constraint &rhs){
 //-----------------------------------------------------
 
 /**
- *  \brief Retrieve the application type for this constraint, i.e., what type of
+ *  @brief Retrieve the application type for this constraint, i.e., what type of
  *  objects it controls and can be applied to
- *  \return the application type
+ *  @return the application type
  */
 ConstraintApp_tp Constraint::getAppType() const{ return appType; }
 
 /**
- *	\return what type of constraint this is
+ *	@return what type of constraint this is
  */
 Constraint_tp Constraint::getType() const { return type; }
 
 /**
- *	\return the ID that identifies the object constrained by this constraint
+ *	@return the ID that identifies the object constrained by this constraint
  */
 int Constraint::getID() const { return id; }
 
 /**
- *	\return the data vector for this constraint
+ *	@return the data vector for this constraint
  */
 std::vector<double> Constraint::getData() const { return data; }
 
 /**
- *  \brief Retrieve the first data value that is not an NAN
- *  \return The value of the first data value. If no data
+ *  @brief Retrieve the first data value that is not an NAN
+ *  @return The value of the first data value. If no data
  *  value is located, NAN is returned.
  *  @see getFirstDataValue(int*)
  */
@@ -184,12 +184,12 @@ double Constraint::getFirstDataValue() const{
 }//====================================================
 
 /**
- *  \brief Retrieve the first data value that is not an NAN
+ *  @brief Retrieve the first data value that is not an NAN
  * 
- *  \param ix The index of the first data value will be
+ *  @param ix The index of the first data value will be
  *  stored in this integer. If no data value is located,
  *  ix will be set to -1.
- *  \return The value of the first data value. If no data
+ *  @return The value of the first data value. If no data
  *  value is located, NAN is returned.
  */
 double Constraint::getFirstDataValue(int *ix) const{
@@ -205,7 +205,7 @@ double Constraint::getFirstDataValue(int *ix) const{
 }//====================================================
 
 /**
- *	\return a count of the constrained states; certain constraint types, 
+ *	@return a count of the constrained states; certain constraint types, 
  *	like Constraint_tp::MATCH_CUST, give the option of constraining a subset of the entire
  *	node.
  */
@@ -218,8 +218,8 @@ int Constraint::countConstrainedStates() const{
 }//====================================================
 
 /**
- *	\brief Set the constraint type
- *	\param t the type
+ *	@brief Set the constraint type
+ *	@param t the type
  */
 void Constraint::setType(Constraint_tp t){
 	type = t;
@@ -227,22 +227,22 @@ void Constraint::setType(Constraint_tp t){
 }//====================================================
 
 /**
- *	\brief Set the object ID this constraint applies to
- *	\param n the ID
+ *	@brief Set the object ID this constraint applies to
+ *	@param n the ID
  */
 void Constraint::setID(int n){ id = n; }
 
 /**
  *	Set the data for this id (should have nodeSize # elements)
- *	\param d the data, dimensions that match node dimensions
+ *	@param d the data, dimensions that match node dimensions
  */
 void Constraint::setData(std::vector<double> d){ data = d; }
 
 /**
- *  \brief Set the data for this constraint
+ *  @brief Set the data for this constraint
  * 
- *  \param dat an array of data values
- *  \param len number of elements in `dat`
+ *  @param dat an array of data values
+ *  @param len number of elements in `dat`
  */
 void Constraint::setData(const double *dat, int len){
 	data.clear();
@@ -254,9 +254,9 @@ void Constraint::setData(const double *dat, int len){
 //-----------------------------------------------------
 
 /**
- *  \brief Copy the constraint
+ *  @brief Copy the constraint
  * 
- *  \param c reference to a constraint object
+ *  @param c reference to a constraint object
  */
 void Constraint::copyMe(const Constraint &c){
 	appType = c.appType;
@@ -266,14 +266,14 @@ void Constraint::copyMe(const Constraint &c){
 }//====================================================
 
 /**
- *  \brief Get a human-redable string representing the constraint type
- *  \return a human-redable string representing the constraint type
+ *  @brief Get a human-redable string representing the constraint type
+ *  @return a human-redable string representing the constraint type
  */
 const char* Constraint::getTypeStr() const{ return getConTypeStr(type); }
 
 /**
- *	\param t a constraint type
- *	\return a human-readable string representing a constraint type
+ *	@param t a constraint type
+ *	@return a human-readable string representing a constraint type
  */
 const char* Constraint::getConTypeStr(Constraint_tp t){
 	switch(t){
@@ -314,8 +314,8 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 }//====================================================
 
 /**
- *  \param t a constraint application type
- *  \return a human-readable string representing an application type
+ *  @param t a constraint application type
+ *  @return a human-readable string representing an application type
  */
 const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
 	switch(t){
@@ -327,7 +327,7 @@ const char* Constraint::getAppTypeStr(ConstraintApp_tp t){
 }//====================================================
 
 /**
- *	\brief Print this constraint and its data to the standard output.
+ *	@brief Print this constraint and its data to the standard output.
  */
 void Constraint::print() const {
 	printf("Constraint:\n  Type: %s\n  Applies to: %s (ID %d)\n  Data: {",
@@ -339,7 +339,7 @@ void Constraint::print() const {
 }//====================================================
 
 /**
- *  \brief Set the application type appropriately based on the constraint type
+ *  @brief Set the application type appropriately based on the constraint type
  */
 void Constraint::setAppType(){
 	switch(type){

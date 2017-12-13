@@ -1,10 +1,10 @@
 /**
- *  \file Core.cpp
- *	\brief Base class for all library objects that can exist independently
+ *  @file Core.cpp
+ *	@brief Base class for all library objects that can exist independently
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 
 
@@ -56,8 +56,8 @@ static char SPICE_ERR_MSG_TYPE[] = "traceback";		// other options: "short" or "n
 //-----------------------------------------------------
 
 /**
- *  \brief Default constructor.
- *  \details Runs an initialization sequence the first time the class is instantiated.
+ *  @brief Default constructor.
+ *  @details Runs an initialization sequence the first time the class is instantiated.
  */
 Core::Core(){
 	if(!bIsInit()){
@@ -67,7 +67,7 @@ Core::Core(){
 }//======================================================
 
 /**
- *  \brief Default destructor; doesn't do anything :)
+ *  @brief Default destructor; doesn't do anything :)
  */
 Core::~Core(){}
 
@@ -78,8 +78,8 @@ Core::~Core(){}
 
 
 /**
- *  \brief Load user settings from the prescribed file
- *  \param filename path to the XML settings file
+ *  @brief Load user settings from the prescribed file
+ *  @param filename path to the XML settings file
  */
 void Core_Settings::load(const std::string &filename){
 	// Create empty property tree object
@@ -108,8 +108,8 @@ void Core_Settings::load(const std::string &filename){
 }//==================================================
 
 /**
- *  \brief Save user settings to the prescribed file
- *  \param filename path to the XML settings file
+ *  @brief Save user settings to the prescribed file
+ *  @param filename path to the XML settings file
  */
 void Core_Settings::save(const std::string &filename){
 	// Create empty property tree object
@@ -137,14 +137,14 @@ void Core_Settings::save(const std::string &filename){
 
 
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 Core_Initializer::Core_Initializer() : settings(){
 	// std::cout << "Constructing Core_Initializer" << std::endl;
 }//================================================
 
 /**
- *	\brief Initialize the library
+ *	@brief Initialize the library
  */
 void Core_Initializer::runInit(){
 	// std::cout << "Initializing Core System" << std::endl;
@@ -335,7 +335,7 @@ void Core_Initializer::runInit(){
 }//================================================
 
 /**
- *	\brief Perform any duties necessary to safely shut down the library
+ *	@brief Perform any duties necessary to safely shut down the library
  */
 Core_Initializer::~Core_Initializer(){
 	// std::cout << "Destructing Core_Initializer; Closing out the Core System" << std::endl;

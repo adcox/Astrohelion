@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel_cr3bp_lt.hpp
- *	\brief Dynamical model for a combined low-thrust CR3BP environment
+ *  @file DynamicsModel_cr3bp_lt.hpp
+ *	@brief Dynamical model for a combined low-thrust CR3BP environment
  *	
- *	\author Andrew Cox
- *	\version March 3, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version March 3, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -36,7 +36,7 @@ class SysData_cr3bp_lt;
 
 /**
  *	\ingroup model cr3bp_lt
- *	\brief Derivative of DynamicsModel, specific to the low-thrust CR3BP
+ *	@brief Derivative of DynamicsModel, specific to the low-thrust CR3BP
  */
 class DynamicsModel_cr3bp_lt : public DynamicsModel_cr3bp{
 public:

@@ -1,10 +1,10 @@
 /**
- * \file ControlLaw_cr3bp_lt.hpp
- * \brief Control Law for CR3BP-LT system header file 
+ * @file ControlLaw_cr3bp_lt.hpp
+ * @brief Control Law for CR3BP-LT system header file 
  * 
- * \author Andrew Cox
- * \version March 3, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version March 3, 2017
+ * @copyright GNU GPL v3.0
  */
  
 /*
@@ -41,8 +41,8 @@ class SysData_cr3bp_lt;
 
 /**
  *  \ingroup model cr3bp_lt
- *  \brief Includes control laws specific to the CR3BP-LT problem
- *  \details As specified in the MathSpec document, the CR3BP-LT equations of motion
+ *  @brief Includes control laws specific to the CR3BP-LT problem
+ *  @details As specified in the MathSpec document, the CR3BP-LT equations of motion
  *  are given by
  *  \f{align*}{
  *  	\vec{a} &= \mathbf{K_v} \vec{f} + \dpd{\Omega}{\vec{r}} + \vec{a}_{lt}, \qquad \vec{a}_lt = \frac{f}{m} \hat{u}\\
@@ -167,7 +167,7 @@ public:
 	//\}
 
 	/**
-	 *  \brief Identify the control law
+	 *  @brief Identify the control law
 	 *  \delails For all of these control laws, the `getLaw()` function
 	 *  returns a 3-dimensional thrust direction unit vector. Similarly, the 
 	 *  `getPartials_State()` function returns 21 derivative values

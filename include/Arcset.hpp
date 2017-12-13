@@ -1,10 +1,10 @@
 /**
- *  \file Arcset.hpp
- *	\brief 
+ *  @file Arcset.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version April 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version April 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -43,19 +43,19 @@ class Arcset;
 
 /**
  *	\ingroup traj
- *	\brief Extends BaseArcset in a few areas.
- *	\details This class is largely unneeded; may replace BaseArcset with Arcset
+ *	@brief Extends BaseArcset in a few areas.
+ *	@details This class is largely unneeded; may replace BaseArcset with Arcset
  *	or visa-versa; there is no need for an extra inheritance layer here
  *
- *	\author Andrew Cox
- *	\version June 9, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version June 9, 2017
+ *	@copyright GNU GPL v3.0
  */
 class Arcset : public BaseArcset{
 
 public:
 	/**
-	 *	\brief Node distribution type
+	 *	@brief Node distribution type
 	 *
 	 *	Specified how nodes are distributed along an integrated trajectory
 	 */

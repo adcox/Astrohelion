@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel.hpp
- *	\brief 
+ *  @file DynamicsModel.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -51,22 +51,22 @@ class MultShootData;
 
 /**
  *  \ingroup model
- *  \brief Container for EOM parameters
- *  \details At the current time, this object stores only the system data object pointer.
+ *  @brief Container for EOM parameters
+ *  @details At the current time, this object stores only the system data object pointer.
  *  Since the GSL functions demand a nullptr pointer and the system data pointers owned by
  *  most objects are const-modified, this object serves as a non-const wrapper for 
  *  the system data pointers.
  *  
- *  \param sys A system data object
- *  \return a reference to this struct
+ *  @param sys A system data object
+ *  @return a reference to this struct
  */
 struct EOM_ParamStruct{
 
 	/**
-	 *  \brief Construct an EOM Parameter structure
+	 *  @brief Construct an EOM Parameter structure
 	 * 
-	 *  \param sys a pointer to a system data object
-	 *  \param law a pointer to a control law object
+	 *  @param sys a pointer to a system data object
+	 *  @param law a pointer to a control law object
 	 */
 	EOM_ParamStruct(const SysData *sys, ControlLaw *law) : pSysData(sys), pCtrlLaw(law) {}
 	
@@ -75,7 +75,7 @@ struct EOM_ParamStruct{
 };
 
 /**
- *	\brief A base class that defines the behavior of a dynamical model and provides
+ *	@brief A base class that defines the behavior of a dynamical model and provides
  *	functions used in simulation and correction algorithms
  *
  *	This class provides the flexibility that allows the engine objects to operate on
@@ -103,27 +103,27 @@ struct EOM_ParamStruct{
  *	list of all constraints the model supports in a corrections environment. 
  *	Derived classes can modify these variables to their needs.
  *
- *	\author Andrew Cox
- *	\version August 3, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 3, 2015
+ *	@copyright GNU GPL v3.0
  */
 class DynamicsModel : public Core{
 
 public:
 	/**
-	 *	\brief A function pointer to an EOM function
-	 *	\details All EOM functions must take this form to work with GSL's 
+	 *	@brief A function pointer to an EOM function
+	 *	@details All EOM functions must take this form to work with GSL's 
 	 *	integrators.
 	 *	
-	 *	\param t time associated with the current integration step; this value is passed
+	 *	@param t time associated with the current integration step; this value is passed
 	 *	in by the integrator
-	 *	\param q full state vector; the dimension of this vector is set by SimEngine
+	 *	@param q full state vector; the dimension of this vector is set by SimEngine
 	 *	and is equal to <code>coreDim + stmStates + extraDim</code>; this vector is passed
 	 *	in by the integrator
-	 *	\param qdot full state derivative vector, same dimension as <code>q</code>. This vector
+	 *	@param qdot full state derivative vector, same dimension as <code>q</code>. This vector
 	 *	must be initialized by the function (i.e., set all values to zero or another value), or
 	 *	invalid memory access will occur within GSL's integration methods
-	 *	\param params a pointer to a set of extra parameters required for integration. All
+	 *	@param params a pointer to a set of extra parameters required for integration. All
 	 *	of the EOM functions in this software take a pointer to a SysData object
 	 *	consistent with the DynamicsModel as this parameter. The parameter set can be modified 
 	 *	between integration steps (i.e., change model parameters), but the ode functions must be reset
@@ -154,7 +154,7 @@ public:
 	 */
 
 	/**
-	 *	\brief Retrieve a pointer to the EOM function that computes derivatives
+	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
 	 *	for only the core states (i.e. simple)
 	 *
 	 *	The EOM function must be a non-member function; we store them in the 
@@ -163,7 +163,7 @@ public:
 	virtual eom_fcn getSimpleEOM_fcn() const = 0;
 
 	/**
-	 *	\brief Retrieve a pointer to the EOM function that computes derivatives
+	 *	@brief Retrieve a pointer to the EOM function that computes derivatives
 	 *	for all states (i.e. full)
 	 *
 	 *	The EOM function must be a non-member function; we store them in the 
@@ -172,24 +172,24 @@ public:
 	virtual eom_fcn getFullEOM_fcn() const = 0;
 
 	/**
-	 *	\brief Compute the positions of all primaries
+	 *	@brief Compute the positions of all primaries
 	 *
-	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
-	 *	\param pSysData object describing the specific system
-	 *	\return an n x 3 vector (row-major order) containing the positions of
+	 *	@param t the time at which the computations occur (only important for non-autonomous systems)
+	 *	@param pSysData object describing the specific system
+	 *	@return an n x 3 vector (row-major order) containing the positions of
 	 *	n primaries; each row is one position vector in non-dimensional units
 	 */
 	virtual std::vector<double> getPrimPos(double t, const SysData *pSysData) const = 0;
 
 	/**
-	 *  \brief Compute the position of a specified primary
-	 *  \details This is the faster alternative to getPrimPos(t, pSysData).
+	 *  @brief Compute the position of a specified primary
+	 *  @details This is the faster alternative to getPrimPos(t, pSysData).
 	 * 
-	 *  \param t Nondimensional time
-	 *  \param pSysData pointer to system data object
-	 *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
+	 *  @param t Nondimensional time
+	 *  @param pSysData pointer to system data object
+	 *  @param pIx Index of the primary; a value of -1 will return the positions of all primaries,
 	 *  in order of largest to smallest mass
-	 *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
+	 *  @param pos An array to store the primary position(s) in with all elements initialized to zero.
 	 *  For a single primary position, the array must have at least three elements allocated. For all 
 	 *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
 	 *  of primaries.
@@ -197,24 +197,24 @@ public:
 	virtual void getPrimPos(double t, const SysData *pSysData, int pIx, double *pos) const = 0;
 
 	/**
-	 *	\brief Compute the velocities of all primaries
+	 *	@brief Compute the velocities of all primaries
 	 *
-	 *	\param t the time at which the computations occur (only important for non-autonomous systems)
-	 *	\param pSysData object describing the specific system
-	 *	\return an n x 3 vector (row-major order) containing the velocities of
+	 *	@param t the time at which the computations occur (only important for non-autonomous systems)
+	 *	@param pSysData object describing the specific system
+	 *	@return an n x 3 vector (row-major order) containing the velocities of
 	 *	n primaries; each row is one velocity vector in non-dimensional units
 	 */
 	virtual std::vector<double> getPrimVel(double t, const SysData *pSysData) const = 0;
 
 	/**
-	 *  \brief Compute the velocity of a specified primary
-	 *  \details This is the faster alternative to getPrimVel(t, pSysData).
+	 *  @brief Compute the velocity of a specified primary
+	 *  @details This is the faster alternative to getPrimVel(t, pSysData).
 	 * 
-	 *  \param t Nondimensional time
-	 *  \param pSysData pointer to system data object
-	 *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
+	 *  @param t Nondimensional time
+	 *  @param pSysData pointer to system data object
+	 *  @param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
 	 *  in order of largest to smallest mass
-	 *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
+	 *  @param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
 	 *  For a single primary velocity, the array must have at least three elements allocated. For all 
 	 *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
 	 *  of primaries.
@@ -224,14 +224,14 @@ public:
 	virtual double getRDot(int, double, const double*, const SysData*) const;
 
 	/**
-	 *  \brief Retrieve the derivative of the state vector
-	 *  \details Evaluate the equations of motion to compute the state time-derivative at 
+	 *  @brief Retrieve the derivative of the state vector
+	 *  @details Evaluate the equations of motion to compute the state time-derivative at 
  	 *  the specified time and state
 	 * 
-	 *  \param t current integration time
-	 *  \param state full state vector
-	 *  \param params EOM parameter structure
-	 *  \return the time-derivative of the state vector
+	 *  @param t current integration time
+	 *  @param state full state vector
+	 *  @param params EOM parameter structure
+	 *  @return the time-derivative of the state vector
 	 */
 	virtual std::vector<double> getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const = 0;
 
@@ -243,8 +243,8 @@ public:
 	 */
 
 	/**
-	 *  \brief Do any model-specific initializations for the MultShootData object
-	 *  \param it a pointer to the MultShootData object for the multiple shooting process
+	 *  @brief Do any model-specific initializations for the MultShootData object
+	 *  @param it a pointer to the MultShootData object for the multiple shooting process
 	 */
 	virtual void multShoot_initIterData(MultShootData &it) const = 0;
 
@@ -255,7 +255,7 @@ public:
 	virtual double multShoot_getSlackVarVal(const MultShootData&, const Constraint&)const ;
 
 	/**
-	 *  \brief Take the final, corrected free variable vector `X` and create an output 
+	 *  @brief Take the final, corrected free variable vector `X` and create an output 
 	 *  nodeset
 	 *
 	 *  If `findEvent` is set to true, the
@@ -264,9 +264,9 @@ public:
 	 *  and other values for the final node; this information will be appended to the extraParameter
 	 *  vector in the final node.
 	 *
-	 *  \param it an iteration data object containing all info from the corrections process
+	 *  @param it an iteration data object containing all info from the corrections process
 	 *  
-	 *  \return a pointer to a nodeset containing the corrected nodes
+	 *  @return a pointer to a nodeset containing the corrected nodes
 	 */
 	virtual void multShoot_createOutput(const MultShootData& it) const;
 	//\}

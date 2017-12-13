@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel_2bp.hpp
- *	\brief 
+ *  @file DynamicsModel_2bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version August 24, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 24, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -36,7 +36,7 @@ class SysData_2bp;
 
 /**
  *	\ingroup model 2bp
- *	\brief Derivative of DynamicsModel, specific to the 2BP
+ *	@brief Derivative of DynamicsModel, specific to the 2BP
  *
  *	The base class's methods provide a good framework for this system,
  *	so only minimal adjustments are needed.

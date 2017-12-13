@@ -1,10 +1,10 @@
 /**
- *  \file Node.hpp
- *	\brief 
+ *  @file Node.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -45,11 +45,11 @@ namespace astrohelion{
 
 /**
  *	\ingroup traj
- *	\brief A single point or state on an arc
+ *	@brief A single point or state on an arc
  *
- *	\author Andrew Cox
- *	\version September 30, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 30, 2016
+ *	@copyright GNU GPL v3.0
  */
 class Node : public Linkable{
 

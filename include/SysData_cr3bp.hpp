@@ -1,10 +1,10 @@
 /**
- *  \file SysData_cr3bp.hpp
- *	\brief 
+ *  @file SysData_cr3bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,12 +38,12 @@ namespace astrohelion{
 
 /**
  *	\ingroup model cr3bp
- *	\brief A derivative class of the SysData object which
+ *	@brief A derivative class of the SysData object which
  *	contains information specific to the CR3BP
  *
- *	\author Andrew Cox
- *	\version May 15, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 15, 2015
+ *	@copyright GNU GPL v3.0
  */
 class SysData_cr3bp : public SysData{
 	public:

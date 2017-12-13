@@ -1,10 +1,10 @@
 /**
- *  \file Segment.hpp
- *	\brief 
+ *  @file Segment.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -43,7 +43,7 @@ namespace astrohelion{
 
 /**
  *	\ingroup traj
- *	\brief Links nodes together to describe the flow of a trajectory
+ *	@brief Links nodes together to describe the flow of a trajectory
  *
  *	Each row of the state vector stores the following information
  *  
@@ -59,9 +59,9 @@ namespace astrohelion{
  *  If simpleIntegration is enabled, the STM and extra states are not included in the
  *  integration and their values in the Segment state array are filled by zeros 
      
- *	\author Andrew Cox
- *	\version May 1, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 1, 2016
+ *	@copyright GNU GPL v3.0
  */
 class Segment : public Linkable{
 

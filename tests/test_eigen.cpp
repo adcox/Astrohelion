@@ -1,5 +1,5 @@
 /**
- *	\brief Test out the Eigen library of functions to make sure it will do what I want
+ *	@brief Test out the Eigen library of functions to make sure it will do what I want
  */
 #include <iostream>
 #include <Eigen/Dense>

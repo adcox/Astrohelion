@@ -1,10 +1,10 @@
 /**
- *  \file Exceptions.hpp
- *	\brief Defines several custom exception classes
+ *  @file Exceptions.hpp
+ *	@brief Defines several custom exception classes
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -34,7 +34,7 @@
 
 namespace astrohelion{
 /**
- *	\brief Base Exception class for all my exceptions
+ *	@brief Base Exception class for all my exceptions
  *
  *	By catching this base class, I catch all custom exceptions
  */
@@ -51,7 +51,7 @@ class Exception : public std::exception{
 };
 
 /**
- *	\brief Exception class for matrices, fired when the dimension of matrices
+ *	@brief Exception class for matrices, fired when the dimension of matrices
  *	makes a function impossible.
  *
  * 	Size mismatch means two matrices cannot be added, subtracted, or multiplied 
@@ -65,7 +65,7 @@ class SizeMismatchException : public Exception, std::runtime_error{
 };
 
 /**
- *	\brief Exception class for numerical methods that attempt to converge on a
+ *	@brief Exception class for numerical methods that attempt to converge on a
  *	solution.
  *
  *	This exception should be thrown when the solution fails to converge (or diverges)
@@ -80,7 +80,7 @@ class DivergeException : public Exception, std::runtime_error{
 };
 
 /** 
- *	\brief Exception class for linear algebra errors
+ *	@brief Exception class for linear algebra errors
  *
  *	This exception should be thrown for cases like trying to factor singular
  *	matrices, taking the deteriminant of a non-square matrix, etc.

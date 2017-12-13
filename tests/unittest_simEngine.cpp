@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_SUITE_END()
 //************************************************************
 BOOST_AUTO_TEST_SUITE(Events)
 /**
- *  \brief Check that an event stops integration in a CR3BP simulation
+ *  @brief Check that an event stops integration in a CR3BP simulation
  */
 BOOST_AUTO_TEST_CASE(CR3BP_Event_Stop){
 	SysData_cr3bp sys("earth", "moon");
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_Stop){
 }//====================================================
 
 /**
- *  \brief Check that an event does not stop integration
+ *  @brief Check that an event does not stop integration
  *  in a CR3BP simulation and that the event is correctly
  *  located in the simulation
  */
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_Event_InALoop){
 }//====================================================
 
 /**
- *  \brief Check that an event stops integration in a BC4BP simulation
+ *  @brief Check that an event stops integration in a BC4BP simulation
  */
 BOOST_AUTO_TEST_CASE(BC4BP_Event_Stop){
 	SysData_bc4bp sys("sun", "earth", "moon");
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(CR3BP_LT_Event_Stop){
 }//====================================================
 
 /**
- *  \brief Check that an event does not stop integration
+ *  @brief Check that an event does not stop integration
  *  in a CR3BP simulation and that the event is correctly
  *  located in the simulation
  */
@@ -503,7 +503,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(EdgeCases)
 
 /**
- *  \brief Check to make sure that data is recorded to a trajectory
+ *  @brief Check to make sure that data is recorded to a trajectory
  *  object even if the GSL integrator crashes mid-run
  */
 BOOST_AUTO_TEST_CASE(DataPreserved){
@@ -549,7 +549,7 @@ BOOST_AUTO_TEST_CASE(DataPreserved_fixedStep){
 }//====================================================
 
 /**
- *  \brief Check to make sure the max computation time constraint
+ *  @brief Check to make sure the max computation time constraint
  *  functions properly
  */
 BOOST_AUTO_TEST_CASE(Timeout){

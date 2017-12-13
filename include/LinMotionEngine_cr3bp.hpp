@@ -1,10 +1,10 @@
 /**
- *  \file LinMotionEngine_cr3bp.hpp
- *	\brief 
+ *  @file LinMotionEngine_cr3bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -41,8 +41,8 @@ struct EOM_ParamStruct;
 
 /**
  *  \ingroup engine
- *  \brief Describe the type of linear motion to construct
- *  \details
+ *  @brief Describe the type of linear motion to construct
+ *  @details
  *  
  *  \todo Add description of the different linearization options
  */
@@ -54,7 +54,7 @@ public:
 };
 
 /**
- *  \brief Construct trajectories in the linearized dynamics of the CR3BP
+ *  @brief Construct trajectories in the linearized dynamics of the CR3BP
  */
 class LinMotionEngine_cr3bp : public LinMotionEngine{
 	public:

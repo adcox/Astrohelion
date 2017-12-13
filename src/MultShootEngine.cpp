@@ -1,10 +1,10 @@
 /**
- *	\file MultShootEngine.cpp
- *	\brief Engine object that applies differential corrections to arcsets
+ *	@file MultShootEngine.cpp
+ *	@brief Engine object that applies differential corrections to arcsets
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -55,26 +55,26 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 MultShootEngine::MultShootEngine(){}
 
 /**
- *	\brief Copy constructor - create this engine by copying the input engine
- *	\param e input correction engine
+ *	@brief Copy constructor - create this engine by copying the input engine
+ *	@param e input correction engine
  */
 MultShootEngine::MultShootEngine(const MultShootEngine &e){
 	copyMe(e);
 }//=======================================================
 
 /**
- *	\brief Destructor
+ *	@brief Destructor
  */
 MultShootEngine::~MultShootEngine(){}
 
 /**
- *	\brief Copy all engine variables
- *	\param e an engine reference
+ *	@brief Copy all engine variables
+ *	@param e an engine reference
  */
 void MultShootEngine::copyMe(const MultShootEngine &e){
 	Engine::copyBaseEngine(e);
@@ -98,10 +98,10 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 //-----------------------------------------------------
 
 /**
- *	\brief Copy operator; make a copy of the input correction engine.
+ *	@brief Copy operator; make a copy of the input correction engine.
  *
- *	\param e
- *	\return this correction engine
+ *	@param e
+ *	@return this correction engine
  */
 MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
 	copyMe(e);
@@ -113,132 +113,132 @@ MultShootEngine& MultShootEngine::operator =(const MultShootEngine &e){
 //-----------------------------------------------------
 
 /**
- *  \brief Retrieve whether or not the engine is locating an event crossing
- *	\return whether or not the algorithm will optimize the process to find an event
+ *  @brief Retrieve whether or not the engine is locating an event crossing
+ *	@return whether or not the algorithm will optimize the process to find an event
  */
 bool MultShootEngine::isFindingEvent() const { return bFindEvent; }
 
 /**
- *  \brief Retreive whether or not the engine will use a full, variable-step
+ *  @brief Retreive whether or not the engine will use a full, variable-step
  *  propagation for the final propagation.
- *  \details By default, this setting is TRUE. For lower computation time, 
+ *  @details By default, this setting is TRUE. For lower computation time, 
  *  set to false via setFullFinalProp().
  *  
- *  \return whether or not the engine will use a full, variable-step
+ *  @return whether or not the engine will use a full, variable-step
  *  propagation for the final propagation
  */
 bool MultShootEngine::doesFullFinalProp() const { return bFullFinalProp; }
 
 /**
- *  \brief Retreive whether or not the engine conducts a line search to choose
+ *  @brief Retreive whether or not the engine conducts a line search to choose
  *  the Newton step size.
- *  \return whether or not the engine conducts a line search to choose
+ *  @return whether or not the engine conducts a line search to choose
  *  the Newton step size.
  */
 bool MultShootEngine::doesLineSearch() const { return bLineSearchAttenFactor; }
 
 /**
- *  \brief Retrieve the maximum permitted error magnitude
- *  \details If the error rises above this value, the corrections processes
+ *  @brief Retrieve the maximum permitted error magnitude
+ *  @details If the error rises above this value, the corrections processes
  *  is deemed diverged and the process will quit.
- *  \return the maximum permitted error magnitude
+ *  @return the maximum permitted error magnitude
  */
 double MultShootEngine::getMaxErr() const{ return maxErr; }
 
 /**
- *  \brief Retrieve the maximum number of iterations to attempt
- *	\return the maximum number of iterations to attempt before giving up
+ *  @brief Retrieve the maximum number of iterations to attempt
+ *	@return the maximum number of iterations to attempt before giving up
  */
 int MultShootEngine::getMaxIts() const { return maxIts; }
 
 /**
- *  \brief Retrieve the enumerated type describing how time-of-flight values
+ *  @brief Retrieve the enumerated type describing how time-of-flight values
  *  are encoded (if at all) in the free variable vector
  *  
- *  \return the time-of-flight type
+ *  @return the time-of-flight type
  */
 MSTOF_tp MultShootEngine::getTOFType() const{ return tofTp; }
 
 /**
- *  \brief Retrieve the minimum error tolerance
- *	\return the minimum error tolerance (non-dimensional units); errors
+ *  @brief Retrieve the minimum error tolerance
+ *	@return the minimum error tolerance (non-dimensional units); errors
  *	less than this value are considered negligible
  */
 double MultShootEngine::getTol() const { return tolF; }
 
 /**
- *  \brief Set whether or not the engine conducts a line search to choose 
+ *  @brief Set whether or not the engine conducts a line search to choose 
  *  the Newton step size.
- *  \details Although the Newton step direction is guaranteed to point toward a 
+ *  @details Although the Newton step direction is guaranteed to point toward a 
  *  decreasing constraint vector, the full step may be too large. By leveraging
  *  a line search, the step size is chosen such that the magnitude of the 
  *  constraint vector decreases. WARNING: This adds many evaluations of expensive
  *  functions and will greatly decrease the speed. The line search is only recommended
  *  for particularly stubborn correction processes.
  * 
- *  \param b 
+ *  @param b 
  */
 void MultShootEngine::setDoLineSearch(bool b){ bLineSearchAttenFactor = b; }
 
 /**
- *  \brief Set whether or not the engine will use a full, variable-step
+ *  @brief Set whether or not the engine will use a full, variable-step
  *  propagation for the final propagation
- *  \details By default, this setting is TRUE. For lower computation time, 
+ *  @details By default, this setting is TRUE. For lower computation time, 
  *  set to false. When set to false, only two points per segment are stored
  *  (the initial and final states), i.e., no intermediate points between nodes
  *  are computed
  * 
- *  \param b whether or not the engine will use a full, variable-step
+ *  @param b whether or not the engine will use a full, variable-step
  *  propagation for the final propagation
  */
 void MultShootEngine::setFullFinalProp(bool b){ bFullFinalProp = b; }
 
 /**
- * \brief Tell the corrector to ignore crash events (or to not to).
- * \details By default, the corrector does monitor crashes and will 
+ * @brief Tell the corrector to ignore crash events (or to not to).
+ * @details By default, the corrector does monitor crashes and will 
  * run into issues if the trajectory being corrected passes through a 
  * primary.
  * 
- * \param b whether or not to ignore crashes (default is false)
+ * @param b whether or not to ignore crashes (default is false)
  */
 void MultShootEngine::setIgnoreCrash(bool b){ bIgnoreCrash = b; }
 
 /**
- *  \brief Tell the corrector to ignore divergence and return the partially
+ *  @brief Tell the corrector to ignore divergence and return the partially
  *  corrected iteration data instead of throwing an exception when divergence
  *  occurs.
  * 
- *  \param b Whether or not to ignore divergance
+ *  @param b Whether or not to ignore divergance
  */
 void MultShootEngine::setIgnoreDiverge(bool b){ bIgnoreDiverge = b;}
 
 /**
- *  \brief Set the maximum permitted error magnitude
- *  \details If the error rises above this value, the corrections processes
+ *  @brief Set the maximum permitted error magnitude
+ *  @details If the error rises above this value, the corrections processes
  *  is deemed diverged and the process will quit.
  *  
- *  \param e the maximum permitted error magnitude
+ *  @param e the maximum permitted error magnitude
  */
 void MultShootEngine::setMaxErr(double e){ maxErr = e; }
 
 /**
- *	\brief Set maximum iterations
- *	\param i the maximum number of iterations to attempt before giving up
+ *	@brief Set maximum iterations
+ *	@param i the maximum number of iterations to attempt before giving up
  */
 void MultShootEngine::setMaxIts(int i){ maxIts = i; }
 
 /**
- *  \brief Set the way times-of-flight are encoded (if at all) in the
+ *  @brief Set the way times-of-flight are encoded (if at all) in the
  *  free variable vector
  * 
- *  \param tp Describes how times-of-flight are encoded in the free
+ *  @param tp Describes how times-of-flight are encoded in the free
  *  variable vector
  */
 void MultShootEngine::setTOFType(MSTOF_tp tp){ tofTp = tp; }
 
 /**
- *	\brief Set the error tolerance
- *	\param d errors below this value will be considered negligible
+ *	@brief Set the error tolerance
+ *	@param d errors below this value will be considered negligible
  */
 void MultShootEngine::setTol(double d){
 	tolF = d;
@@ -248,8 +248,8 @@ void MultShootEngine::setTol(double d){
 }//====================================================
 
 /**
- *	\brief Set the findEven flag
- *	\param b whether or not the algorithm will be looking for an event
+ *	@brief Set the findEven flag
+ *	@param b whether or not the algorithm will be looking for an event
  */
 void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
 
@@ -258,8 +258,8 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
 //-----------------------------------------------------
 
 /**
- *	\brief Correct a generic arcset using multiple shooting
- *	\details This algorithm employs multiple shooting to correct a set of nodes
+ *	@brief Correct a generic arcset using multiple shooting
+ *	@details This algorithm employs multiple shooting to correct a set of nodes
  *	subject to a set of constraints. The nodes and constraints are all stored in the 
  *	input arcset object. 
  *	
@@ -268,12 +268,12 @@ void MultShootEngine::setFindEvent(bool b){ bFindEvent = b; }
  *	by the simulation engine, and the step size is fixed to force the usage of the 
  *	Adams-Bashforth Adams-Moulton method.
  *	
- *	\param pArcIn pointer to the arcset that needs to be corrected
- *	\param pArcOut pointer to the arcset object that will contain the results of
+ *	@param pArcIn pointer to the arcset that needs to be corrected
+ *	@param pArcOut pointer to the arcset object that will contain the results of
  *	the shooting process
- *	\return the iteration data object for this corrections process
- *	\throws DivergeException if the corrections process does not converge
- *	\throws Exception
+ *	@return the iteration data object for this corrections process
+ *	@throws DivergeException if the corrections process does not converge
+ *	@throws Exception
  *	* if the input and output arcsets contain different system data objects
  *	* if the dynamic model associated with the input
  *	arcset does not support one or more of the arcset's constraints
@@ -461,14 +461,14 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 }//==========================================================
 
 /**
- *  \brief Run a multiple shooting algorithm given an MultShootData object
+ *  @brief Run a multiple shooting algorithm given an MultShootData object
  * 
- *  \param it A completely formed MultShootData object that describes a 
+ *  @param it A completely formed MultShootData object that describes a 
  *  multiple shooting problem. These are created from Arcset and its
  *  derivative types by the other implementation of multShoot()
- *  \return A corrected MultShootData object
+ *  @return A corrected MultShootData object
  *  @see multShoot(Arcset*)
- *  \throws DivergeException if the multiple shooting process does not converge
+ *  @throws DivergeException if the multiple shooting process does not converge
  */
 MultShootData MultShootEngine::multShoot(MultShootData it){
 	it.count = 0;
@@ -588,14 +588,14 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 }//=====================================================
 
 /**
- *  \brief Propagate all segments along the arcset
- *  \details Initial conditions and other parameters for each integrated
+ *  @brief Propagate all segments along the arcset
+ *  @details Initial conditions and other parameters for each integrated
  *  arc are obtained from the free variable vector or the input arcset
  * 
- *  \param it reference to the multiple shooting data structure
- *  \param sim reference to a simulalation engine initialized for multiple
+ *  @param it reference to the multiple shooting data structure
+ *  @param sim reference to a simulalation engine initialized for multiple
  *  shooting propagations
- *  \param verbosity how verbose the output should be; the verbosity of the input
+ *  @param verbosity how verbose the output should be; the verbosity of the input
  *  SimEngine object is set separately (i.e., via sim.setVerbosity()) and is not affected
  *  by this input
  */
@@ -672,7 +672,7 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
 }//=====================================================
 
 /**
- *	\brief Apply linear algebra to solve the update equation and obtain an updated free-variable vector
+ *	@brief Apply linear algebra to solve the update equation and obtain an updated free-variable vector
  *
  *	The update equation takes the form
  * 	\f[
@@ -700,12 +700,12 @@ void MultShootEngine::propSegsFromFreeVars(MultShootData& it, SimEngine &sim, Ve
  *	In all cases, errors will be thrown if the Jacobian is singular. This most likely indicates that there has been
  *	a coding error in the corrector, although singular Jacobians do occur when trajectories pass very near primaries.
  *
- *	\param it reference to the MultShootData object associated with the corrections process
- *	\param oldX constant reference to the current (previous) design vector
- *	\param FX constant reference to the current constraint vector
- *	\param newX reference to a vector in which to store the updated design variable vector
+ *	@param it reference to the MultShootData object associated with the corrections process
+ *	@param oldX constant reference to the current (previous) design vector
+ *	@param FX constant reference to the current constraint vector
+ *	@param newX reference to a vector in which to store the updated design variable vector
  *	
- *	\throws LinAlgException if the problem is over constrained (i.e. Jacobian has more rows than columns);
+ *	@throws LinAlgException if the problem is over constrained (i.e. Jacobian has more rows than columns);
  *	\todo This can be updated to use a least-squares solution
  */
 void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& oldX, const Eigen::VectorXd& FX, Eigen::VectorXd& newX){
@@ -807,13 +807,13 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 }// End of solveUpdateEq() ============================
 
 /**
- *  \brief Apply LU and/or QR factorization to solve the update equation
- *  \details LU factorization is attempted first; if this fails, QR factorization
+ *  @brief Apply LU and/or QR factorization to solve the update equation
+ *  @details LU factorization is attempted first; if this fails, QR factorization
  *  is attempted as it can be more robust
  * 
- *  \param J the Jacobian (or Gramm) matrix that needs to be factorized to solve the update equation
- *  \param FX constant reference to the current constraint vector
- *  \param out the solution to the equation J*out = FX
+ *  @param J the Jacobian (or Gramm) matrix that needs to be factorized to solve the update equation
+ *  @param FX constant reference to the current constraint vector
+ *  @param out the solution to the equation J*out = FX
  */
 void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::VectorXd& FX, Eigen::VectorXd &out){
 	// Construct an LU Solver
@@ -856,8 +856,8 @@ void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::Vect
 }//====================================================
 
 /**
- *  \brief Use a line search to scale the Newton step to ensure convergence
- *  \details Leveraging this method vastly improves the convergence behavior
+ *  @brief Use a line search to scale the Newton step to ensure convergence
+ *  @details Leveraging this method vastly improves the convergence behavior
  *  of the standard Newton-Raphson solver by scaling the default Newton step
  *  to ensure that each iteration is closer to the solution than the last. 
  *  
@@ -870,15 +870,15 @@ void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::Vect
  *  the full Newton step and compute a new design vector, which is stored in
  *  the vector that newX references
  * 
- *  \param it reference to the current iteration data object. This stores the current
+ *  @param it reference to the current iteration data object. This stores the current
  *  constraint vector elements, Jacobian matrix elements, and design vector elements, 
  *  among other variables.
- *  \param oldX reference to the previous iteration's design vector
- *  \param oldFX reference to the previous iteration's constraint vector
- *  \param J reference to the Jacobian matrix, in compressed form
- *  \param fullStep reference to the full Newton step computed in solveUpdateEq()
- *  \param newX pointer to a vector to store the new design vector in. 
- *  \param checkLocalMin pointer to a boolean that is set to true if 
+ *  @param oldX reference to the previous iteration's design vector
+ *  @param oldFX reference to the previous iteration's constraint vector
+ *  @param J reference to the Jacobian matrix, in compressed form
+ *  @param fullStep reference to the full Newton step computed in solveUpdateEq()
+ *  @param newX pointer to a vector to store the new design vector in. 
+ *  @param checkLocalMin pointer to a boolean that is set to true if 
  *  X_old and X_new are too close to one another. In a minimization algorithm this usually 
  *  signals convergence and can be ignored. In a root-finding algorithm, this should trigger
  *  additional checks.
@@ -1033,10 +1033,10 @@ void MultShootEngine::chooseStep_LineSearch(MultShootData& it, const Eigen::Vect
 }//====================================================
 
 /**
- *  \brief Checks the Jacobian (DF) matrix for singularities, i.e., rows
+ *  @brief Checks the Jacobian (DF) matrix for singularities, i.e., rows
  *  or columns that contain only zeros
  * 
- *  \param DF Jacobian matrix employed in the correction process
+ *  @param DF Jacobian matrix employed in the correction process
  */
 void MultShootEngine::checkDFSingularities(MatrixXRd DF){
 	if(verbosity == Verbosity_tp::NO_MSG)
@@ -1064,10 +1064,10 @@ void MultShootEngine::checkDFSingularities(MatrixXRd DF){
 }//====================================================
 
 /**
- *  \brief Print out the magnitude of each constraint.
- *  \details This can be useful when debugging to highlight which constraints are unsatisfied
+ *  @brief Print out the magnitude of each constraint.
+ *  @details This can be useful when debugging to highlight which constraints are unsatisfied
  * 
- *  \param it reference to an MultShootData object associated with a corrections process
+ *  @param it reference to an MultShootData object associated with a corrections process
  */
 void MultShootEngine::reportConMags(const MultShootData& it){
 	unsigned int conCount = 0;
@@ -1083,7 +1083,7 @@ void MultShootEngine::reportConMags(const MultShootData& it){
 }//===============================================================
 
 /**
- *	\brief clean up data so that engine can be used again (or deconstructed safely)
+ *	@brief clean up data so that engine can be used again (or deconstructed safely)
  */
 void MultShootEngine::cleanEngine(){
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
@@ -1091,7 +1091,7 @@ void MultShootEngine::cleanEngine(){
 }//====================================================
 
 /**
- *  \brief Reset the multiple shooting engine to the default parameter values
+ *  @brief Reset the multiple shooting engine to the default parameter values
  */
 void MultShootEngine::reset(){
 	if(!bIsClean)
@@ -1111,15 +1111,15 @@ void MultShootEngine::reset(){
 }//====================================================
 
 /**
- *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
- *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  \param pNodeset A arcset with some constraints
- *  \param verbosity Specify how verbose the output is
- *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
+ *  @param pNodeset A arcset with some constraints
+ *  @param verbosity Specify how verbose the output is
+ *  @param writeToFile Whether or not to write .csv or .mat files with relevant information
  *  
- *  \return whether or not the Jacobian matrix is "correct". Issues that result in a return 
+ *  @return whether or not the Jacobian matrix is "correct". Issues that result in a return 
  *  value of FALSE are: The Jacobian is singular (row or column of all zeros), or the differences
  *  between the numerically computed Jacobian and analytical Jacobian are large.
  */
@@ -1129,18 +1129,18 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosit
 }//====================================================
 
 /**
- *  \brief Check the DF matrix for the multiple shooting algorithm using finite differencing
- *  \details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
+ *  @brief Check the DF matrix for the multiple shooting algorithm using finite differencing
+ *  @details This function checks to make sure the Jacobian matrix (i.e. DF) is correct
  *  by computing each partial derivative numerically via forward differencing.
  * 
- *  \param pNodeset A arcset with some constraints
- *  \param engine correction engine object configured with the appropriate settings (i.e.,
+ *  @param pNodeset A arcset with some constraints
+ *  @param engine correction engine object configured with the appropriate settings (i.e.,
  *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
- *  \param verbosity Specify how verbose the output is
- *  \param writeToFile Whether or not to write .csv or .mat files with relevant information
+ *  @param verbosity Specify how verbose the output is
+ *  @param writeToFile Whether or not to write .csv or .mat files with relevant information
  *  
- *  \return whether or not the Jacobian matrix is "correct". Issues that result in a return 
+ *  @return whether or not the Jacobian matrix is "correct". Issues that result in a return 
  *  value of FALSE are: The Jacobian is singular (row or column of all zeros), or the differences
  *  between the numerically computed Jacobian and analytical Jacobian are large.
  */
@@ -1348,10 +1348,10 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
 }//====================================================
 
 /**
- *  \brief Compute the total delta-V along a corrected arcset
+ *  @brief Compute the total delta-V along a corrected arcset
  * 
- *  \param it reference to an MultShootData object associated with a corrections process
- *  \return the total delta-V, units consistent with the arcset's stored velocity states
+ *  @param it reference to an MultShootData object associated with a corrections process
+ *  @return the total delta-V, units consistent with the arcset's stored velocity states
  */
 double MultShootEngine::getTotalDV(const MultShootData& it){
     double total = 0;

@@ -1,10 +1,10 @@
 /**
- *  \file Arcset_periodic.cpp
- *	\brief 
+ *  @file Arcset_periodic.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version October 5, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version October 5, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -50,12 +50,12 @@ Arcset_periodic::~Arcset_periodic() {}
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Compute the eigenvalues and eigenvectors of the monodromy matrix
+ *  @brief Compute the eigenvalues and eigenvectors of the monodromy matrix
  *
- *	\param pVals pointer to a vector of complex doubles to store the eigenvalues in
- *	\param pVecs pointer to a matrix to store the eigenvectors in (as columns)
+ *	@param pVals pointer to a vector of complex doubles to store the eigenvalues in
+ *	@param pVecs pointer to a matrix to store the eigenvectors in (as columns)
  *	
- *	\throws Exception if either input pointer is nullptr
+ *	@throws Exception if either input pointer is nullptr
  */
 void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs){
 	if(pVals == nullptr && pVecs == nullptr)
@@ -86,10 +86,10 @@ void Arcset_periodic::getEigData(std::vector<cdouble> *pVals, MatrixXRcd *pVecs)
 }//====================================================
 
 /**
- *  \brief Retrieve the monodromy matrix for this periodic orbit
- *  \details This sets the STMs stored in the Segment STM matrix to
+ *  @brief Retrieve the monodromy matrix for this periodic orbit
+ *  @details This sets the STMs stored in the Segment STM matrix to
  *  be the cumulative STMs rather than sequential.
- *  \return the monodromy matrix
+ *  @return the monodromy matrix
  */
 MatrixXRd Arcset_periodic::getMonodromy(){
 	setSTMs_cumulative();	// Puts arcset in chronological order if it isn't already and computes the cumulative STMs
@@ -97,32 +97,32 @@ MatrixXRd Arcset_periodic::getMonodromy(){
 }//====================================================
 
 /**
- *  \brief Retrieve the x-amplitude of the orbit
- *  \details the amplitude is the difference between the maximum and minimum extents
- *  \return the x-amplitude of the orbit
+ *  @brief Retrieve the x-amplitude of the orbit
+ *  @details the amplitude is the difference between the maximum and minimum extents
+ *  @return the x-amplitude of the orbit
  */
 double Arcset_periodic::getXAmp() const { return getAmp(0); }
 
 /**
- *  \brief Retrieve the y-amplitude of the orbit
- *  \details the amplitude is the difference between the maximum and minimum extents
- *  \return the y-amplitude of the orbit
+ *  @brief Retrieve the y-amplitude of the orbit
+ *  @details the amplitude is the difference between the maximum and minimum extents
+ *  @return the y-amplitude of the orbit
  */
 double Arcset_periodic::getYAmp() const { return getAmp(1); }
 
 /**
- *  \brief Retrieve the z-amplitude of the orbit
- *  \details the amplitude is the difference between the maximum and minimum extents
- *  \return the z-amplitude of the orbit
+ *  @brief Retrieve the z-amplitude of the orbit
+ *  @details the amplitude is the difference between the maximum and minimum extents
+ *  @return the z-amplitude of the orbit
  */
 double Arcset_periodic::getZAmp() const { return getAmp(2); }
 
 /**
- *  \brief Retrieve the amplitude of the orbit measured across a specific state
- *  \details the amplitude is the difference between the maximum and minimum extents
+ *  @brief Retrieve the amplitude of the orbit measured across a specific state
+ *  @details the amplitude is the difference between the maximum and minimum extents
  * 
- *  \param stateIx the index of the state variable (e.g., x = 0, y = 1, etc.)
- *  \return the amplitude of the oscillation in the specified variable
+ *  @param stateIx the index of the state variable (e.g., x = 0, y = 1, etc.)
+ *  @return the amplitude of the oscillation in the specified variable
  */
 double Arcset_periodic::getAmp(unsigned int stateIx) const{
 

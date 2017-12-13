@@ -1,10 +1,10 @@
 /**
- * \file ControlLaw_cr3bp_lt.hpp
- * \brief Control Law for CR3BP-LT system header file 
+ * @file ControlLaw_cr3bp_lt.hpp
+ * @brief Control Law for CR3BP-LT system header file 
  * 
- * \author Andrew Cox
- * \version March 3, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version March 3, 2017
+ * @copyright GNU GPL v3.0
  */
  
 /*
@@ -43,10 +43,10 @@ namespace astrohelion{
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Construct a default CR3BP low-thrust control law object
+ *  @brief Construct a default CR3BP low-thrust control law object
  *  
- *  \param id Control Law ID
- *  \param params a vector of parameters used by the control law. These parameters 
+ *  @param id Control Law ID
+ *  @param params a vector of parameters used by the control law. These parameters 
  *  are generally thrust (nondimensional) and Specific Impulse (in seconds) for
  *  most control law implementations
  */
@@ -59,8 +59,8 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the name of the law type as a string
- *  \return the name of the law type as a string
+ *  @brief Retrieve the name of the law type as a string
+ *  @return the name of the law type as a string
  */
 std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3bp_lt::lawTypeToString(lawType); }
 
@@ -69,13 +69,13 @@ std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Compute the time derivative of spacecraft mass
- *  \details Computes the quantity \f$ \dot{m} \f$ for the CR3BP-LT equations of motion.
+ *  @brief Compute the time derivative of spacecraft mass
+ *  @details Computes the quantity \f$ \dot{m} \f$ for the CR3BP-LT equations of motion.
  * 
- *  \param t nondimensional time
- *  \param s full state vector (core state, control state, stm, extra)
- *  \param pSys pointer to the system data object
- *  \return the time derivative of spacecraft mass
+ *  @param t nondimensional time
+ *  @param s full state vector (core state, control state, stm, extra)
+ *  @param pSys pointer to the system data object
+ *  @return the time derivative of spacecraft mass
  */
 double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *pSys) const{
 	(void) t;
@@ -106,8 +106,8 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *p
 }//====================================================
 
 /**
- *  \brief Retrieve the output of the control law
- * 	\details A set of outputs are computed according to the specified control law, given
+ *  @brief Retrieve the output of the control law
+ * 	@details A set of outputs are computed according to the specified control law, given
  * 	the input time, state, and system data. These outputs are:
  * 	
  * 		[ a_x, a_y, a_z ]
@@ -115,12 +115,12 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *p
  * 	where a = [a_x, a_y, a_z] is the nondimensional acceleration vector that results from 
  * 	the low-thrust propulsion.
  * 	
- *  \param t time parameter
- *  \param s state vector
- *  \param pSysData system data object
- *  \param output empty, initialized array to store the control law output in. Must be at least
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSysData system data object
+ *  @param output empty, initialized array to store the control law output in. Must be at least
  *  three elements to avoid memory errors.
- *  \param len the number of elements in the `output` array
+ *  @param len the number of elements in the `output` array
  */
 void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData *pSysData,
 	double *output, unsigned int len) const{
@@ -155,15 +155,15 @@ void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the control law with respect to state variables
- *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  @brief Retrieve the partial derivatives of the control law with respect to state variables
+ *  @details A set of partial derivatives of the control law outputs are computed with respect to the 
  *  states at the given time, state, in the specified system
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials empty, initialized array to store the control law derivatives in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials empty, initialized array to store the control law derivatives in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const SysData *pSys, 
 	double *partials, unsigned int len) const{
@@ -198,18 +198,18 @@ void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
- *  \details If a nontrivial set of control states exists, these partial derivatives form the right-hand
+ *  @brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ *  @details If a nontrivial set of control states exists, these partial derivatives form the right-hand
  *  block-column of the A matrix for the rows associated with the core spacecraft state EOMs. I.e., these
  *  partial derivatives do not include the partials of the control state derivatives w.r.t. the control states;
  *  those partial derivatives are obtained from getLaw_StateDerivPartials()
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the `partials` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw_cr3bp_lt::getLaw_EOMPartials(double t, const double *s, const SysData *pSys, double *partials, unsigned int len) const{
 	const SysData_cr3bp_lt *pSysData_lt = static_cast<const SysData_cr3bp_lt *>(pSys);
@@ -236,15 +236,15 @@ void ControlLaw_cr3bp_lt::getLaw_EOMPartials(double t, const double *s, const Sy
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the output of the Jacobi-preserving 2D control laws
- * 	\details A set of outputs are computed according to the specified control law, given
+ *  @brief Retrieve the output of the Jacobi-preserving 2D control laws
+ * 	@details A set of outputs are computed according to the specified control law, given
  * 	the input time, state, and system data.
  * 	
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param law empty, initialized array to store the control law output in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param law empty, initialized array to store the control law output in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
@@ -274,15 +274,15 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 }//====================================================
 
 /**
- *  \brief Retrieve the output of the Jacobi-changing, parallel velocity control laws
- * 	\details A set of outputs are computed according to the specified control law, given
+ *  @brief Retrieve the output of the Jacobi-changing, parallel velocity control laws
+ * 	@details A set of outputs are computed according to the specified control law, given
  * 	the input time, state, and system data.
  * 	
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param law empty, initialized array to store the control law output in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param law empty, initialized array to store the control law output in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
@@ -312,15 +312,15 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
 }//====================================================
 
 /**
- *  \brief Retrieve the output of the general direction, constant thrust control law
- * 	\details A set of outputs are computed according to the specified control law, given
+ *  @brief Retrieve the output of the general direction, constant thrust control law
+ * 	@details A set of outputs are computed according to the specified control law, given
  * 	the input time, state, and system data.
  * 	
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param law empty, initialized array to store the control law output in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param law empty, initialized array to store the control law output in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *law, unsigned int len) const{
@@ -352,15 +352,15 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const S
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve the partial derivatives of the control law output with respect to state variables
- *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  @brief Retrieve the partial derivatives of the control law output with respect to state variables
+ *  @details A set of partial derivatives of the control law outputs are computed with respect to the 
  *  states at the given time, state, in the specified system
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials empty, initialized array to store the control law derivatives in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials empty, initialized array to store the control law derivatives in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
@@ -406,15 +406,15 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the control law output with respect to state variables
- *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  @brief Retrieve the partial derivatives of the control law output with respect to state variables
+ *  @details A set of partial derivatives of the control law outputs are computed with respect to the 
  *  states at the given time, state, in the specified system
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials empty, initialized array to store the control law derivatives in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials empty, initialized array to store the control law derivatives in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
@@ -465,15 +465,15 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the control law output with respect to state variables
- *  \details A set of partial derivatives of the control law outputs are computed with respect to the 
+ *  @brief Retrieve the partial derivatives of the control law output with respect to state variables
+ *  @details A set of partial derivatives of the control law outputs are computed with respect to the 
  *  states at the given time, state, in the specified system
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials empty, initialized array to store the control law derivatives in
- *  \param len number of elements in the `law` array
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials empty, initialized array to store the control law derivatives in
+ *  @param len number of elements in the `law` array
  */
 void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
@@ -514,8 +514,8 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
- *  \details The resulting partials are valid for the following law types
+ *  @brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ *  @details The resulting partials are valid for the following law types
  *  * Law_tp::VAR_F_CONST_C_2D_LEFT
  *  * Law_tp::VAR_F_CONST_C_2D_RIGHT
  *  * Law_tp::VAR_F_PRO_VEL
@@ -524,12 +524,12 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
  *  so the partials are very similar. The partial derivatives when the VAR_F_GENERAL law is employed
  *  are computed in `getEOMPartials_GeneralDir()`.
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the `partials` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw_cr3bp_lt::getEOMPartials_VarF(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
@@ -568,14 +568,14 @@ void ControlLaw_cr3bp_lt::getEOMPartials_VarF(double t, const double *s, const S
 }//====================================================
 
 /**
- *  \brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
+ *  @brief Retrieve the partial derivatives of the core state EOMs with respect to the control states
  * 
- *  \param t time parameter
- *  \param s state vector
- *  \param pSys system data object
- *  \param partials initialized array of zeros in which to store the partial derivatives
+ *  @param t time parameter
+ *  @param s state vector
+ *  @param pSys system data object
+ *  @param partials initialized array of zeros in which to store the partial derivatives
  *  of the control state derivatives
- *  \param len number of elements in the `partials` array
+ *  @param len number of elements in the `partials` array
  */
 void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
@@ -634,8 +634,8 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Initialize the control law
- *  \details This function sets variables that specify the number of control states and
+ *  @brief Initialize the control law
+ *  @details This function sets variables that specify the number of control states and
  *  output states. The base class functionality is called if the law type is not specific
  *  to the this derived class
  */
@@ -668,10 +668,10 @@ void ControlLaw_cr3bp_lt::init(){
 }//====================================================
 
 /**
- *  \brief Retrieve a string that represents the law ID
+ *  @brief Retrieve a string that represents the law ID
  * 
- *  \param id control law ID
- *  \return a string that represents the law ID
+ *  @param id control law ID
+ *  @return a string that represents the law ID
  */
 std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id){
 	switch(id){
@@ -691,24 +691,24 @@ std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id){
 }//====================================================
 
 /**
- *  \brief Convert dimensional thrust to nondimensional thrust in the specified system
+ *  @brief Convert dimensional thrust to nondimensional thrust in the specified system
  * 
- *  \param F dimensional thrust in Newtons
- *  \param pSys pointer to the CR3BP-LT system object
+ *  @param F dimensional thrust in Newtons
+ *  @param pSys pointer to the CR3BP-LT system object
  * 
- *  \return nondimensional thrust
+ *  @return nondimensional thrust
  */
 double ControlLaw_cr3bp_lt::thrust_dim2nondim(double F, SysData_cr3bp_lt *pSys){
 	return F*pSys->getCharT()*pSys->getCharT() / (1000*pSys->getCharL()*pSys->getRefMass());
 }//====================================================
 
 /**
- *  \brief Convert nondimensional thrust to dimensional thrust in the specified system
+ *  @brief Convert nondimensional thrust to dimensional thrust in the specified system
  * 
- *  \param f nondimensional thrust value in the specified system
- *  \param pSys pointer to the CR3BP-LT system object
+ *  @param f nondimensional thrust value in the specified system
+ *  @param pSys pointer to the CR3BP-LT system object
  * 
- *  \return dimensional thrust, in Newtons
+ *  @return dimensional thrust, in Newtons
  */
 double ControlLaw_cr3bp_lt::thrust_nondim2dim(double f, SysData_cr3bp_lt *pSys){
 	return f*1000*pSys->getCharL()*pSys->getRefMass() / (pSys->getCharT()*pSys->getCharT());
@@ -727,15 +727,15 @@ void ControlLaw_cr3bp_lt::print() const{
 }//====================================================
 
 /**
- *  \brief Convert an arcset with an arbitrary set of control laws to leverage
+ *  @brief Convert an arcset with an arbitrary set of control laws to leverage
  *  the specified control law on all segments
- *  \details Not all conversions are valid or well-defined. For those that are, 
+ *  @details Not all conversions are valid or well-defined. For those that are, 
  *  the input arcset is modified to have the propper number of control state variables
  *  in the Segment state vector and the control law objects and parameters are updated 
  *  on all Nodes and Segments.
  * 
- *  \param pArcset pointer to the arcset to convert
- *  \param pLaw pointer to the control law that should be leveraged
+ *  @param pArcset pointer to the arcset to convert
+ *  @param pLaw pointer to the control law that should be leveraged
  */
 void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pLaw){
 	if(pLaw == nullptr)
@@ -752,14 +752,14 @@ void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp
 }//====================================================
 
 /**
- *  \brief Convert all control data from an arcset to control data for the CONST_F_GENERAL
+ *  @brief Convert all control data from an arcset to control data for the CONST_F_GENERAL
  *  law
- *  \details This conversion is well-defined from all of the simplified control laws, i.e.,
+ *  @details This conversion is well-defined from all of the simplified control laws, i.e.,
  *  CONST_F_C_2D_LEFT, CONST_F_C_2D_RIGHT, CONST_F_PRO_VEL, and CONST_F_ANTI_VEL because their directions are
  *  easily computed at each instant in time.
  * 
- *  \param pArcset Pointer to the arcset to be converted
- *  \param pNewLaw Pointer to the CONST_F_GENERAL control law
+ *  @param pArcset Pointer to the arcset to be converted
+ *  @param pNewLaw Pointer to the CONST_F_GENERAL control law
  */
 void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp_lt *pNewLaw){
 	// pNewLaw is guaranteed by the calling function, convertLaws(), to be non-nullptr and have the correct law type
@@ -878,13 +878,13 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 }//====================================================
 
 /**
- *  \brief Convert a vector to spherical coordinates
- *  \details If the input vector has zero length, both angles are set to zero
+ *  @brief Convert a vector to spherical coordinates
+ *  @details If the input vector has zero length, both angles are set to zero
  * 
- *  \param vec A 3D vector
- *  \param inPlane The in-plane angle of the vector; measured from x-axis, rotating about
+ *  @param vec A 3D vector
+ *  @param inPlane The in-plane angle of the vector; measured from x-axis, rotating about
  *  +z-axis
- *  \param outOfPlane The out-of-plane angle of the vector; measured from xy-plane, sign
+ *  @param outOfPlane The out-of-plane angle of the vector; measured from xy-plane, sign
  *  matches sign of z
  */
 void ControlLaw_cr3bp_lt::pointingVecToAngles(Eigen::Vector3d vec, double *inPlane, double *outOfPlane){

@@ -1,10 +1,10 @@
 /**
- *  \file Family.cpp
- *	\brief 
+ *  @file Family.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version October 5, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version October 5, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -70,15 +70,15 @@ void Family::setSortType(FamSort_tp tp){ sortType = tp; }
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Locate places in a data set where a specific value probably exists
+ *	@brief Locate places in a data set where a specific value probably exists
  *
  *	This algorithm will locate both exact matches (within a tolerance) and intersections,
  *	assuming the data is continuous. If an intersection is found, the index of the point
  *	before the intersection is returned.
  *
- *	\param value the value to search for
- *	\param data a pointer to a data set to search in
- *	\return a vector of integers representing the indices of matches
+ *	@param value the value to search for
+ *	@param data a pointer to a data set to search in
+ *	@return a vector of integers representing the indices of matches
  */
 std::vector<unsigned int> Family::findMatches(double value, std::vector<double> *data) const{
 	double numBins = data->size() > 500 ? 100 : (data->size()/5.0);

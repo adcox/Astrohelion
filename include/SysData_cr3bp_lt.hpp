@@ -1,10 +1,10 @@
 /**
- *  \file SysData_cr3bp_lt.hpp
- *	\brief 
+ *  @file SysData_cr3bp_lt.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -36,7 +36,7 @@ namespace astrohelion{
 
 /**
  *	\ingroup model cr3bp_lt
- *	\brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
+ *	@brief System data object for the CR3BP Low Thrust, Velocity-Pointing system
  */
 class SysData_cr3bp_lt : public SysData_cr3bp{
 

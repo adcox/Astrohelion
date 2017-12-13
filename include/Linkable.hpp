@@ -1,10 +1,10 @@
 /**
- *  \file Linkable.hpp
- *	\brief 
+ *  @file Linkable.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -32,12 +32,12 @@
 
 namespace astrohelion{
 	/**
-	 *	\brief A basic object that encapsulates the behavior of nodes and segments that hold
+	 *	@brief A basic object that encapsulates the behavior of nodes and segments that hold
 	 *	information about how they link together
 	 *
-	 *	\author Andrew Cox
-	 *	\version May 1, 2016
-	 *	\copyright GNU GPL v3.0
+	 *	@author Andrew Cox
+	 *	@version May 1, 2016
+	 *	@copyright GNU GPL v3.0
 	 */
 	class Linkable : public Core{
 	public:

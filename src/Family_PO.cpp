@@ -1,10 +1,10 @@
 /**
- *  \file Family_PO.cpp
- *	\brief 
+ *  @file Family_PO.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version October 5, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version October 5, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -58,16 +58,16 @@ Family_PO& Family_PO::operator= (const Family_PO &f){
 }//====================================================
 
 /**
- *  \brief Concatenates two Family_PO objects
- *  \details Performs the operation `combo = lhs + rhs`. The data from 
+ *  @brief Concatenates two Family_PO objects
+ *  @details Performs the operation `combo = lhs + rhs`. The data from 
  *  `lhs` is copied directly into `combo`, thus, the name, sort type,
  *  and match tolerance of `combo` are identical to those of `lhs`
  *  regardless of the values of these parameters in `rhs`. The members,
  *  eigenvalues, and eigenvectors from `rhs` are appended to those of 
  *  `lhs`.
  * 
- *  \param lhs a Family_PO object reference
- *  \param rhs a Family_PO object reference
+ *  @param lhs a Family_PO object reference
+ *  @param rhs a Family_PO object reference
  */
 Family_PO operator+ (const Family_PO &lhs, const Family_PO &rhs){
 	if(*(lhs.pSysData) != *(rhs.pSysData))
@@ -88,8 +88,8 @@ Family_PO operator+ (const Family_PO &lhs, const Family_PO &rhs){
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Add a periodic orbit to the family
- *  \param arc reference to a periodic orbit; a copy is made and
+ *  @brief Add a periodic orbit to the family
+ *  @param arc reference to a periodic orbit; a copy is made and
  *  placed in a storage vector
  */
 void Family_PO::addMember(const Arcset_periodic &arc){
@@ -107,10 +107,10 @@ void Family_PO::addMember(const Arcset_periodic &arc){
 }//====================================================
 
 /**
- *  \brief Retrieve a copy of a family member
+ *  @brief Retrieve a copy of a family member
  * 
- *  \param ix index of the family member within the storage vector
- *  \return a copy of a family member
+ *  @param ix index of the family member within the storage vector
+ *  @return a copy of a family member
  */
 Arcset_periodic Family_PO::getMember(int ix) const{
 	while(ix < 0)
@@ -120,10 +120,10 @@ Arcset_periodic Family_PO::getMember(int ix) const{
 }//====================================================
 
 /**
- *  \brief Retrieve a reference to a family member
+ *  @brief Retrieve a reference to a family member
  * 
- *  \param ix index of the family member within the storage vector
- *  \return a reference to the family member
+ *  @param ix index of the family member within the storage vector
+ *  @return a reference to the family member
  */
 Arcset_periodic& Family_PO::getMemberRef(int ix){
 	while(ix < 0)
@@ -133,12 +133,12 @@ Arcset_periodic& Family_PO::getMemberRef(int ix){
 }//====================================================
 
 /**
- *  \brief Find a family member with a specific value of one of the initial states
+ *  @brief Find a family member with a specific value of one of the initial states
  * 
- *  \param val the value of the initial state at the specified index, nondimensional units
- *  \param stateIx index of the state variable (e.g., x = 0, y = 1, etc.)
+ *  @param val the value of the initial state at the specified index, nondimensional units
+ *  @param stateIx index of the state variable (e.g., x = 0, y = 1, etc.)
  * 
- *  \return A vector of family members that match the criterion
+ *  @return A vector of family members that match the criterion
  */
 std::vector<Arcset_periodic> Family_PO::getMemberByState(double val, unsigned int stateIx) const{
 	const unsigned int core_dim = pSysData->getDynamicsModel()->getCoreStateSize();
@@ -156,10 +156,10 @@ std::vector<Arcset_periodic> Family_PO::getMemberByState(double val, unsigned in
 }//====================================================
 
 /**
- *  \brief Find a family member with the specified time-of-flight
+ *  @brief Find a family member with the specified time-of-flight
  * 
- *  \param tof time-of-flight, nondimensional units
- *  \return a vector of family members with matching times-of-flight
+ *  @param tof time-of-flight, nondimensional units
+ *  @return a vector of family members with matching times-of-flight
  */
 std::vector<Arcset_periodic> Family_PO::getMemberByTOF(double tof) const{
 	std::vector<double> allTOF;
@@ -173,8 +173,8 @@ std::vector<Arcset_periodic> Family_PO::getMemberByTOF(double tof) const{
 }//====================================================
 
 /**
- *  \brief Retrieve the number of periodic orbits in the family
- *  \return the number of periodic orbits in the family
+ *  @brief Retrieve the number of periodic orbits in the family
+ *  @return the number of periodic orbits in the family
  */
 unsigned int Family_PO::getNumMembers() const { return members.size(); }
 
@@ -183,12 +183,12 @@ unsigned int Family_PO::getNumMembers() const { return members.size(); }
 //-----------------------------------------------------------------------------
 
 /**
- *	\brief Locate all bifurcations in the family by analyzing the 
+ *	@brief Locate all bifurcations in the family by analyzing the 
  *	eigenvalues
- *	\details Eigenvalues MUST be sorted, or this will yield completely bogus
+ *	@details Eigenvalues MUST be sorted, or this will yield completely bogus
  *	results
  *	
- *	\return the indices of the family members located close to bifurcations
+ *	@return the indices of the family members located close to bifurcations
  */
 std::vector<unsigned int> Family_PO::findBifurcations(){
 	// Find the eigenvalues that are exactly (in theory) equal to one
@@ -253,8 +253,8 @@ std::vector<unsigned int> Family_PO::findBifurcations(){
 }//====================================================
 
 /**
- *	\brief Sort all members' eigenvalues so they are in the same order.
- *	\details This is necessary before bifurcations can be accurately located.
+ *	@brief Sort all members' eigenvalues so they are in the same order.
+ *	@details This is necessary before bifurcations can be accurately located.
  */
 void Family_PO::sortEigs(){
 	if(memberEigVecs.size() == 0)
@@ -290,8 +290,8 @@ void Family_PO::sortEigs(){
 }//====================================================
 
 /**
- *	\brief Sort the family members by the specified sort variable (in ascending order)
- *	\details The sorting variable is specified by `sortType`; this is the variable
+ *	@brief Sort the family members by the specified sort variable (in ascending order)
+ *	@details The sorting variable is specified by `sortType`; this is the variable
  *	that best describes the natural progression of the family. For example,
  *	Lyapunov orbits can be evolved naturally by varying the x-coordinate of the IC.
  *
@@ -299,7 +299,7 @@ void Family_PO::sortEigs(){
  *	you can retrieve family members. The process will run without sorting, but the results
  *	will likely be wonky.
  *	
- *	\throws Exception if the sorting type is not recognized
+ *	@throws Exception if the sorting type is not recognized
  */
 void Family_PO::sortMembers(){
 	// Don't do any sorting if the sort type is NONE
@@ -360,22 +360,22 @@ void Family_PO::sortMembers(){
 }//====================================================
 
 /**
- *	\brief Locate a family member with a specific attribute
+ *	@brief Locate a family member with a specific attribute
  *	
  *	This function locates a family member or set of members that have a specific value
  *	for one of the variables of interest (e.g. coordinates, Jacobi, TOF). Exact matches
  *	and interpolated matches are returned; interpolated matches are computed using a
  *	differential corrections algorithm.
  *
- *	\param val the value the family member should have
- *	\param data a pointer to a vector containing the set of values to search for matches
+ *	@param val the value the family member should have
+ *	@param data a pointer to a vector containing the set of values to search for matches
  *	in. For example, if the `val` I pass in contains a specific TOF, then 
  *	`data` points to a vector containing the TOFs for the entire family, sorted
  *	according to this family's `sortType`.
- *	\param matchCon a constraint that can be applied in a corrections scheme that will
+ *	@param matchCon a constraint that can be applied in a corrections scheme that will
  *	ensure the corrected trajectory has the desired value for the variable of interest.
  *
- *	\return a vector of matches. If no matches are returned, the vector will be empty.
+ *	@return a vector of matches. If no matches are returned, the vector will be empty.
  */
 std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 	std::vector<double> *data, Constraint matchCon) const{
@@ -436,11 +436,11 @@ std::vector<Arcset_periodic> Family_PO::getMatchingMember(double val,
 }//====================================================
 
 /**
- *  \brief Populate a vector with a single coordinate from the initial state
+ *  @brief Populate a vector with a single coordinate from the initial state
  *  of each family member
  * 
- *  \param coordIx index of the coordinate within the state vector
- *  \param data pointer to the storage vector
+ *  @param coordIx index of the coordinate within the state vector
+ *  @param data pointer to the storage vector
  */
 void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 	if(data){
@@ -456,8 +456,8 @@ void Family_PO::getCoord(unsigned int coordIx, std::vector<double> *data) const{
 }//====================================================
 
 /**
- *  \brief Reverse the order of the family members.
- *  \details Family member data objects, their eigenvalues, and their
+ *  @brief Reverse the order of the family members.
+ *  @details Family member data objects, their eigenvalues, and their
  *  eigenvectors are swapped in-place to reverse the order.
  */
 void Family_PO::reverseOrder(){
@@ -489,13 +489,13 @@ void Family_PO::reverseOrder(){
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Read family data from a Matlab file
+ *  @brief Read family data from a Matlab file
  * 
- *  \param filename path to the file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param filename path to the file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
- *  \param bReconstruct whether or not to reconstruct each arc as it is read from memory.
+ *  @param bReconstruct whether or not to reconstruct each arc as it is read from memory.
  *  "Reconstruction" is the process of propagating each segment to populate the full segment
  *  state history.
  */
@@ -517,8 +517,8 @@ void Family_PO::readFromMat(const char *filename, std::vector<ControlLaw*> &refL
 }//====================================================
 
 /**
- *  \brief Save the family to a Matlab file
- *  \param filename file name (or path)
+ *  @brief Save the family to a Matlab file
+ *  @param filename file name (or path)
  */
 void Family_PO::saveToMat(const char *filename) const{
 	/*	Create a new Matlab MAT file with the given name and optional
@@ -546,11 +546,11 @@ void Family_PO::saveToMat(const char *filename) const{
 }//====================================================
 
 /**
- *	\brief Load eigenvalues from the data file
+ *	@brief Load eigenvalues from the data file
  *
  *	NOTE: the vector of family members MUST be populated before loading the eigenvalues
- *	\param matFile a pointer to the data file in question
- *	\throws Exception if the variable cannot be loaded
+ *	@param matFile a pointer to the data file in question
+ *	@throws Exception if the variable cannot be loaded
  */
 void Family_PO::loadEigVals(mat_t *matFile){
 	matvar_t *matvar = Mat_VarRead(matFile, VARNAME_FAM_EIGVAL);
@@ -588,11 +588,11 @@ void Family_PO::loadEigVals(mat_t *matFile){
 }//=============================================
 
 /**
- *	\brief Load eigenvectors from the data file
+ *	@brief Load eigenvectors from the data file
  *
  *	NOTE: the vector of family members MUST be populated before loading the eigenvectors
- *	\param pMatFile a pointer to the data file in question
- *	\throws Exception if the variable cannot be loaded
+ *	@param pMatFile a pointer to the data file in question
+ *	@throws Exception if the variable cannot be loaded
  */
 void Family_PO::loadEigVecs(mat_t* pMatFile){
 	matvar_t *pMatvar = Mat_VarRead(pMatFile, VARNAME_FAM_EIGVEC);
@@ -640,13 +640,13 @@ void Family_PO::loadEigVecs(mat_t* pMatFile){
 }//====================================================
 
 /**
- *  \brief Load family members from a Matlab file
+ *  @brief Load family members from a Matlab file
  * 
- *  \param pMatFile pointer to the open Matlab file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param pMatFile pointer to the open Matlab file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
- *  \param bReconstruct whether or not to reconstruct each arc as it is read from memory.
+ *  @param bReconstruct whether or not to reconstruct each arc as it is read from memory.
  *  "Reconstruction" is the process of propagating each segment to populate the full segment
  *  state history.
  */
@@ -675,9 +675,9 @@ void Family_PO::loadMembers(mat_t *pMatFile, std::vector<ControlLaw*> &refLaws, 
 }//====================================================
 
 /**
- *  \brief Load miscellaneous family data from a Matlab file
+ *  @brief Load miscellaneous family data from a Matlab file
  * 
- *  \param pMatFile pointer to an open Matlab file
+ *  @param pMatFile pointer to an open Matlab file
  */
 void Family_PO::loadMiscData(mat_t *pMatFile){
 	name = readStringFromMat(pMatFile, VARNAME_NAME, MAT_T_UINT8, MAT_C_CHAR);
@@ -686,10 +686,10 @@ void Family_PO::loadMiscData(mat_t *pMatFile){
 }//====================================================
 
 /**
- *  \brief Save family members to a matlab file
- *  \details Each family member is saved as an entry in a structure array
+ *  @brief Save family members to a matlab file
+ *  @details Each family member is saved as an entry in a structure array
  * 
- *  \param pMatFile pointer to an open Matlab file
+ *  @param pMatFile pointer to an open Matlab file
  */
 void Family_PO::saveMembers(mat_t *pMatFile) const{
 	if(members.size() == 0)
@@ -715,9 +715,9 @@ void Family_PO::saveMembers(mat_t *pMatFile) const{
 }//====================================================
 
 /**
- *	\brief Save eigenvalue data to a mat file
- *	\param pMatFile a pointer to the mat file in question
- *	\throws Exception if a family member does not have six eigenvalues
+ *	@brief Save eigenvalue data to a mat file
+ *	@param pMatFile a pointer to the mat file in question
+ *	@throws Exception if a family member does not have six eigenvalues
  */
 void Family_PO::saveEigVals(mat_t *pMatFile) const{
 	if(members.size() > 0){
@@ -750,8 +750,8 @@ void Family_PO::saveEigVals(mat_t *pMatFile) const{
 }//====================================================
 
 /**
- *	\brief Save eigenvector data to a mat file
- *	\param pMatFile a pointer to the mat file in question
+ *	@brief Save eigenvector data to a mat file
+ *	@param pMatFile a pointer to the mat file in question
  */
 void Family_PO::saveEigVecs(mat_t *pMatFile) const{
 	if(members.size() > 0){
@@ -786,8 +786,8 @@ void Family_PO::saveEigVecs(mat_t *pMatFile) const{
 }//====================================================
 
 /**
- *	\brief Save other useful information to a matlab file
- *	\param pMatFile the destination matlab file
+ *	@brief Save other useful information to a matlab file
+ *	@param pMatFile the destination matlab file
  */
 void Family_PO::saveMiscData(mat_t *pMatFile) const{
 	// sortType
@@ -809,8 +809,8 @@ void Family_PO::saveMiscData(mat_t *pMatFile) const{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Make a copy of the family
- *  \param f reference to the source family
+ *  @brief Make a copy of the family
+ *  @param f reference to the source family
  */
 void Family_PO::copyMe(const Family_PO &f){
 	Family::copyMe(f);

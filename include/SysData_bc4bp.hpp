@@ -1,10 +1,10 @@
 /**
- *  \file SysData_bc4bp.hpp
- *	\brief 
+ *  @file SysData_bc4bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -40,12 +40,12 @@ namespace astrohelion{
 
 /**
  *	\ingroup model bc4bp
- *	\brief This derivative class of the SysData super-class
+ *	@brief This derivative class of the SysData super-class
  *	contains information specific to the BCR4BPR
  *
- *	\author Andrew Cox
- *	\version May 18, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 18, 2015
+ *	@copyright GNU GPL v3.0
  */
 class SysData_bc4bp : public SysData{
 	public:

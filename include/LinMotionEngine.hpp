@@ -1,10 +1,10 @@
 /**
- *  \file LinMotionEngine.hpp
- *	\brief 
+ *  @file LinMotionEngine.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version September 28, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version September 28, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -35,7 +35,7 @@ namespace astrohelion{
 
 /**
  *	\ingroup engine
- *	\brief type of linear motion
+ *	@brief type of linear motion
  *
  *	This type tells the engine what kind of linearization to produce
  */
@@ -49,10 +49,10 @@ public:
 };
 
 /**
- *	\brief An engine that will generate a trajectory in the linearized EOMs
- *	\details This class is merely a shell for the guts that are model-specific
+ *	@brief An engine that will generate a trajectory in the linearized EOMs
+ *	@details This class is merely a shell for the guts that are model-specific
  *	
- *	\see LinMotionEngine_cr3bp
+ *	@see LinMotionEngine_cr3bp
  */
 class LinMotionEngine : public Core, public Engine{
 	public:
@@ -62,12 +62,12 @@ class LinMotionEngine : public Core, public Engine{
 		 */
 
 		/**
-		 *	\brief Default, do-nothing constructor
+		 *	@brief Default, do-nothing constructor
 		 */
 		LinMotionEngine() {}
 
 		/**
-		 *  \brief Default, do-nothing desctructor
+		 *  @brief Default, do-nothing desctructor
 		 */
 		virtual ~LinMotionEngine() {}
 
@@ -91,13 +91,13 @@ class LinMotionEngine : public Core, public Engine{
 		//\}
 		
 	protected:
-		/** \brief step size between points on linear motion trajectory */
+		/** @brief step size between points on linear motion trajectory */
 		double t_step = 0.001;
 
-		/** \brief Number of revolutions to propagate */
+		/** @brief Number of revolutions to propagate */
 		double revs = 1;
 
-		/** \brief tolerance for numerical methods, like locating Lagrange points */
+		/** @brief tolerance for numerical methods, like locating Lagrange points */
 		double tol = 1e-14;
 
 		/**

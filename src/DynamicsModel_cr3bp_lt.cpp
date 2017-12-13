@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel_cr3bp_lt.cpp
- *  \brief Derivative of DynamicsModel, specific to CR3BP-LTVP
+ *  @file DynamicsModel_cr3bp_lt.cpp
+ *  @brief Derivative of DynamicsModel, specific to CR3BP-LTVP
  *  
- *  \author Andrew Cox
- *  \version May 25, 2016
- *  \copyright GNU GPL v3.0
+ *  @author Andrew Cox
+ *  @version May 25, 2016
+ *  @copyright GNU GPL v3.0
  */
  
 /*
@@ -45,7 +45,7 @@
 namespace astrohelion{
 
 /**
- *  \brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
+ *  @brief Construct a CR3BP Low-Thrust, Velocity Pointing Dynamic DynamicsModel
  */
 DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel_cr3bp() {
     coreDim = 7;
@@ -54,14 +54,14 @@ DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt() : DynamicsModel_cr3bp() {
 }//==============================================
 
 /**
- *  \brief Copy Constructor
- *  \param m a model reference
+ *  @brief Copy Constructor
+ *  @param m a model reference
  */ 
 DynamicsModel_cr3bp_lt::DynamicsModel_cr3bp_lt(const DynamicsModel_cr3bp_lt &m) : DynamicsModel_cr3bp(m) {}
 
 /**
- *  \brief Assignment operator
- *  \param m a model reference
+ *  @brief Assignment operator
+ *  @param m a model reference
  */
 DynamicsModel_cr3bp_lt& DynamicsModel_cr3bp_lt::operator =(const DynamicsModel_cr3bp_lt &m){
 	DynamicsModel::operator =(m);
@@ -69,7 +69,7 @@ DynamicsModel_cr3bp_lt& DynamicsModel_cr3bp_lt::operator =(const DynamicsModel_c
 }//==============================================
 
 /**
- *  \brief Retrieve a pointer to the EOM function that computes derivatives
+ *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
 DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getSimpleEOM_fcn() const{
@@ -77,7 +77,7 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getSimpleEOM_fcn() const{
 }//==============================================
 
 /**
- *  \brief Retrieve a pointer to the EOM function that computes derivatives
+ *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
 DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getFullEOM_fcn() const{
@@ -85,14 +85,14 @@ DynamicsModel::eom_fcn DynamicsModel_cr3bp_lt::getFullEOM_fcn() const{
 }//==============================================
 
 /**
- *  \brief Retrieve the state derivative
- *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  @brief Retrieve the state derivative
+ *  @details Evaluate the equations of motion to compute the state time-derivative at 
  *  the specified time and state
  * 
- *  \param t time parameter
- *  \param state state vector
- *  \param params structure containing parameters relevant to the integration
- *  \return the time-derivative of the state vector
+ *  @param t time parameter
+ *  @param state state vector
+ *  @param params structure containing parameters relevant to the integration
+ *  @return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     const unsigned int ctrlDim = params->pCtrlLaw ? params->pCtrlLaw->getNumStates() : 0;
@@ -112,11 +112,11 @@ std::vector<double> DynamicsModel_cr3bp_lt::getStateDeriv(double t, std::vector<
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Create default events for a simulation run
- *  \details These events are intended to prevent numerical issues, e.g., to avoid singularities.
+ *  @brief Create default events for a simulation run
+ *  @details These events are intended to prevent numerical issues, e.g., to avoid singularities.
  * 
- *  \param pSys pointer to system data object
- *  \return A vector of events to use in the simulation
+ *  @param pSys pointer to system data object
+ *  @return A vector of events to use in the simulation
  */
 std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *pSys) const{
     // Create crash events from base dynamics model
@@ -134,8 +134,8 @@ std::vector<Event> DynamicsModel_cr3bp_lt::sim_makeDefaultEvents(const SysData *
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Perform model-specific initializations on the MultShootData object
- *  \param it a reference to the object to be initialized
+ *  @brief Perform model-specific initializations on the MultShootData object
+ *  @param it a reference to the object to be initialized
  */
 void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData& it) const{
     Arcset_cr3bp_lt traj(static_cast<const SysData_cr3bp_lt *>(it.pArcIn->getSysData()));
@@ -147,12 +147,12 @@ void DynamicsModel_cr3bp_lt::multShoot_initIterData(MultShootData& it) const{
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Integrate the equations of motion for the CR3BP LTVP
- *  \param t the current time of the integration
- *  \param s the state vector passed in from the SimEngine. This vector includes
+ *  @brief Integrate the equations of motion for the CR3BP LTVP
+ *  @param t the current time of the integration
+ *  @param s the state vector passed in from the SimEngine. This vector includes
  *  the core states, STM states, extra states, and control states, in that order.
- *  \param sdot the 43-d state derivative vector
- *  \param *params pointer to extra parameters required for integration. For this
+ *  @param sdot the 43-d state derivative vector
+ *  @param *params pointer to extra parameters required for integration. For this
  *  function, the pointer points to an EOM_ParamStruct object
  */
 int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], void *params){
@@ -277,12 +277,12 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 }//===============================================================
 
 /**
- *  \brief Integrate the equations of motion for the CR3BP LTVP without the STM
- *  \param t time at integration step (unused)
- *  \param s the state vector passed in from the SimEngine. This vector includes
+ *  @brief Integrate the equations of motion for the CR3BP LTVP without the STM
+ *  @param t time at integration step (unused)
+ *  @param s the state vector passed in from the SimEngine. This vector includes
  *  the core states and control states, in that order.
- *  \param sdot the state derivative vector
- *  \param params points to an EOM_ParamStruct object
+ *  @param sdot the state derivative vector
+ *  @param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[], void *params){
     EOM_ParamStruct *paramStruct = static_cast<EOM_ParamStruct *>(params);
@@ -324,14 +324,15 @@ int DynamicsModel_cr3bp_lt::simpleEOMs(double t, const double s[], double sdot[]
 }//====================================================
 
 /**
- *  \brief Compute the location of the equilibria given a planar low-thrust vector
- *  \details [long description]
- * 
- *  \param pSys [description]
- *  \param L [description]
- *  \param f [description]
- *  \param tol [description]
- *  \param zac [description]
+ * @brief      Compute the location of the equilibria given a planar low-thrust vector
+ *
+ * @param  pSys  Pointer to the system data object
+ * @param  L     Lagrange point number [1 - 5]
+ * @param  f     Nondimensional thrust magnitude
+ * @param  tol   The tolerance
+ * @param  zac   Pointer to a vector that stores the equilibria as rows of
+ *               values: [alpha, x, y]
+ * @param  verb  The verbosity with which to carry out the numerical processes
  */
 void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, double f,
     double tol, std::vector<double> *zac, Verbosity_tp verb){
@@ -697,20 +698,20 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
 }//====================================================
 
 /**
- *  \brief Construct a new control law and allocated it on the stack.
- *  \details Each dynamic model will return a pointer to the specific control
+ *  @brief Construct a new control law and allocated it on the stack.
+ *  @details Each dynamic model will return a pointer to the specific control
  *  law applicable to the system / model
- *  \return A pointer to a control law object. The object has been allocated
+ *  @return A pointer to a control law object. The object has been allocated
  *  on the stack so the delete() function must be employed to free the memory
  */
 ControlLaw* DynamicsModel_cr3bp_lt::createControlLaw() const{ return new ControlLaw_cr3bp_lt; }
 
 /**
- *  \brief Determine whether or not the model supports a specific control law
- *  \details By default, a DynamicsModel does not support any control laws.
+ *  @brief Determine whether or not the model supports a specific control law
+ *  @details By default, a DynamicsModel does not support any control laws.
  * 
- *  \param pLaw Pointer to a control law
- *  \return Whether or not the Dynamics model supports the specified control law
+ *  @param pLaw Pointer to a control law
+ *  @return Whether or not the Dynamics model supports the specified control law
  */
 bool DynamicsModel_cr3bp_lt::supportsControl(const ControlLaw *pLaw) const{
     // Does support control laws

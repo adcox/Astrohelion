@@ -1,10 +1,10 @@
 /**
- *  \file Arcset_cr3bp.cpp
- *	\brief 
+ *  @file Arcset_cr3bp.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 1, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 1, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -39,35 +39,35 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	\brief Create an arcset with specified system data
- *	\param pData system data object
+ *	@brief Create an arcset with specified system data
+ *	@param pData system data object
  */
 Arcset_cr3bp::Arcset_cr3bp(const SysData_cr3bp *pData) : Arcset(pData){}
 
 /**
- *	\brief Copy input arcset. 
+ *	@brief Copy input arcset. 
  *
  *	This function calls the base-class copy constructor to
  *	handle copying the generic fields like state and tofs
- *	\param n a arcset
+ *	@param n a arcset
  */
 Arcset_cr3bp::Arcset_cr3bp(const Arcset_cr3bp& n) : Arcset(n) {}
 
 /**
- *	\brief Create a CR3BP arcset from its base class
- *	\param a an arc data reference
+ *	@brief Create a CR3BP arcset from its base class
+ *	@param a an arc data reference
  */
 Arcset_cr3bp::Arcset_cr3bp(const BaseArcset &a) : Arcset(a) {}
 
 /**
- *  \brief Create a new arcset object on the stack
- *  \details the `delete` function must be called to 
+ *  @brief Create a new arcset object on the stack
+ *  @details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \param pSys pointer to a system data object; should be a 
+ *  @param pSys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
- *  \return a pointer to the newly created arcset
+ *  @return a pointer to the newly created arcset
  */
 baseArcsetPtr Arcset_cr3bp::create( const SysData *pSys) const{
 	const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp*>(pSys);
@@ -75,13 +75,13 @@ baseArcsetPtr Arcset_cr3bp::create( const SysData *pSys) const{
 }//====================================================
 
 /**
- *  \brief Create a new arcset object on the stack that is a 
+ *  @brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the `delete` function must be called to 
+ *  @details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \return a pointer to the newly cloned arcset
+ *  @return a pointer to the newly cloned arcset
  */
 baseArcsetPtr Arcset_cr3bp::clone() const{
 	return baseArcsetPtr(new Arcset_cr3bp(*this));
@@ -97,11 +97,11 @@ baseArcsetPtr Arcset_cr3bp::clone() const{
 //-----------------------------------------------------
 
 /**
- *  \brief Get the Jacobi constant value associated with a node
+ *  @brief Get the Jacobi constant value associated with a node
  *  with the specified ID
  * 
- *  \param id the ID of a node
- *  \return the Jacobi constant value
+ *  @param id the ID of a node
+ *  @return the Jacobi constant value
  *  @throw Exception if `id` is out of bounds
  */
 double Arcset_cr3bp::getJacobi(int id){
@@ -120,11 +120,11 @@ double Arcset_cr3bp::getJacobi(int id){
 
 
 /**
- *  \brief Get the Jacobi constant value associated with a node
+ *  @brief Get the Jacobi constant value associated with a node
  *  with the specified ID
  * 
- *  \param id the ID of a node
- *  \return the Jacobi constant value
+ *  @param id the ID of a node
+ *  @return the Jacobi constant value
  *  @throw Exception if `id` is out of bounds
  */
 double Arcset_cr3bp::getJacobi_const(int id) const{
@@ -140,14 +140,14 @@ double Arcset_cr3bp::getJacobi_const(int id) const{
 }//====================================================
 
 /**
- *	\brief Retrieve the value of Jacobi's Constant at the specified step
- *	\details If the specified node does not include a precomputed Jacobi
+ *	@brief Retrieve the value of Jacobi's Constant at the specified step
+ *	@details If the specified node does not include a precomputed Jacobi
  *	constant value, the value is computed and stored in the node for
  *	future reference.
  *	
- *	\param ix step index; if < 0, counts backwards from end of trajectory
- *	\return Jacobi at the specified step
- *	\throws Exception if `ix` is out of bounds
+ *	@param ix step index; if < 0, counts backwards from end of trajectory
+ *	@return Jacobi at the specified step
+ *	@throws Exception if `ix` is out of bounds
  */
 double Arcset_cr3bp::getJacobiByIx(int ix){
 	if(ix < 0)
@@ -173,14 +173,14 @@ double Arcset_cr3bp::getJacobiByIx(int ix){
 }//====================================================
 
 /**
- *	\brief Retrieve the value of Jacobi's Constant at the specified step
- *	\details If the specified node does not include a precomputed Jacobi
+ *	@brief Retrieve the value of Jacobi's Constant at the specified step
+ *	@details If the specified node does not include a precomputed Jacobi
  *	constant value, the value is computed but is NOT stored in order
  *	to preserve the constant trajectory object.
  *	
- *	\param ix step index; if < 0, counts backwards from end of trajectory
- *	\return Jacobi at the specified step
- *	\throws Exception if `ix` is out of bounds
+ *	@param ix step index; if < 0, counts backwards from end of trajectory
+ *	@return Jacobi at the specified step
+ *	@throws Exception if `ix` is out of bounds
  */
 double Arcset_cr3bp::getJacobiByIx_const(int ix) const{
 	if(ix < 0)
@@ -204,11 +204,11 @@ double Arcset_cr3bp::getJacobiByIx_const(int ix) const{
 }//====================================================
 
 /**
- *  \brief Set the Jacobi constant value associated with a node
+ *  @brief Set the Jacobi constant value associated with a node
  *  with the specified ID
  * 
- *  \param id the ID of a node
- *  \param jacobi Jacobi constant value
+ *  @param id the ID of a node
+ *  @param jacobi Jacobi constant value
  *  @throw Exception if `id` is out of bounds
  */
 void Arcset_cr3bp::setJacobi(int id, double jacobi){
@@ -219,10 +219,10 @@ void Arcset_cr3bp::setJacobi(int id, double jacobi){
 }//====================================================
 
 /**
- *	\brief Set Jacobi at the specified step
- *	\param ix step index; if < 0, counts backwards from end of trajectory
- *	\param val value of Jacobi
- *	\throws Exception if `ix` is out of bounds
+ *	@brief Set Jacobi at the specified step
+ *	@param ix step index; if < 0, counts backwards from end of trajectory
+ *	@param val value of Jacobi
+ *	@throws Exception if `ix` is out of bounds
  */
 void Arcset_cr3bp::setJacobiByIx(int ix, double val){
 	if(ix < 0)
@@ -239,9 +239,9 @@ void Arcset_cr3bp::setJacobiByIx(int ix, double val){
 //-----------------------------------------------------
 
 /**
- *  \brief Execute commands to save data to a Matlab file
- *  \param pMatFile pointer to an open Matlab file
- *  \param saveTp describes how much data to save
+ *  @brief Execute commands to save data to a Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param saveTp describes how much data to save
  */
 void Arcset_cr3bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds_toFile(pMatFile, saveTp);
@@ -251,11 +251,11 @@ void Arcset_cr3bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 }//====================================================
 
 /**
- *  \brief Execute commands to save data to a structure array
+ *  @brief Execute commands to save data to a structure array
  * 
- *  \param pStruct pointer to a structure array
- *  \param ix index of this arcset within the structure array
- *  \param saveTp Describes how much data to save
+ *  @param pStruct pointer to a structure array
+ *  @param ix index of this arcset within the structure array
+ *  @param saveTp Describes how much data to save
  */
 void Arcset_cr3bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
 	Arcset::saveCmds_toStruct(pStruct, ix, saveTp);
@@ -265,9 +265,9 @@ void Arcset_cr3bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp
 }//====================================================
 
 /**
- *  \brief Execute commands to read data from a Matlab file
- *  \param pMatFile pointer to an open Matlab file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @brief Execute commands to read data from a Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
@@ -279,11 +279,11 @@ void Arcset_cr3bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &
 }//====================================================
 
 /**
- *  \brief Execute commands to read from data from a structure array
+ *  @brief Execute commands to read from data from a structure array
  * 
- *  \param pStruct Pointer to the structure array variable
- *  \param ix index of this arcset within the structure array
- * 	\param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param pStruct Pointer to the structure array variable
+ *  @param ix index of this arcset within the structure array
+ * 	@param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */

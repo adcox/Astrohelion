@@ -1,11 +1,11 @@
 /**
- *	\file BodyData.cpp
+ *	@file BodyData.cpp
  *
- *	\brief Data class that holds data about orbitRad body
+ *	@brief Data class that holds data about orbitRad body
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -44,7 +44,7 @@ namespace astrohelion{
  */
 
 /**
- * \brief Default constructor; sets all fields to 0
+ * @brief Default constructor; sets all fields to 0
  */
 BodyData::BodyData(){
 	bodyRad = 0;
@@ -58,13 +58,13 @@ BodyData::BodyData(){
 }//====================================================
 
 /**
- *  \brief Construct a BodyData object from preloaded data.
- *  \details Data about a body is loaded from a map that pulls data
+ *  @brief Construct a BodyData object from preloaded data.
+ *  @details Data about a body is loaded from a map that pulls data
  *  from the body_data.xml file. This constructor calls SPICE (not thread safe)
  *  to determine the ID associated with the body name
  * 
- *  \param n name of the body or dynamical object (e.g., a system barycenter).
- *  \throws Exception if the body with the specified name does not have a SPICE
+ *  @param n name of the body or dynamical object (e.g., a system barycenter).
+ *  @throws Exception if the body with the specified name does not have a SPICE
  *  ID or if the body has not been loaded
  */
 BodyData::BodyData(std::string n){
@@ -75,24 +75,24 @@ BodyData::BodyData(std::string n){
 }//====================================================
 
 /**
- *  \brief Construct a BodyData object from preloaded data.
- * 	\details This constructor is thread safe and does not call SPICE
+ *  @brief Construct a BodyData object from preloaded data.
+ * 	@details This constructor is thread safe and does not call SPICE
  * 	
- *  \param ID SPICE ID of the body
- *  \throws Exception if the body with the specified ID has not been loaded
+ *  @param ID SPICE ID of the body
+ *  @throws Exception if the body with the specified ID has not been loaded
  */
 BodyData::BodyData(int ID){
 	initFromID(ID);
 }//====================================================
 
 /**
- *  \brief Constructor
- *	\param m mass, kg
- *	\param R mean orbital bodyRad, km
- *	\param r mean bodyRad, km
- *	\param mu gravitational parameter, km^3/s^2
- * 	\param n name of the body
- *	\param p name of the body"s parent
+ *  @brief Constructor
+ *	@param m mass, kg
+ *	@param R mean orbital bodyRad, km
+ *	@param r mean bodyRad, km
+ *	@param mu gravitational parameter, km^3/s^2
+ * 	@param n name of the body
+ *	@param p name of the body"s parent
  */
 BodyData::BodyData(double m, double R, double r, double mu, std::string n, std::string p){
 	mass = m;
@@ -104,10 +104,10 @@ BodyData::BodyData(double m, double R, double r, double mu, std::string n, std::
 }//====================================================
 
 /**
- *  \brief Initialize a body data object from a spice ID
+ *  @brief Initialize a body data object from a spice ID
  * 
- *  \param ID SPICE ID associated with the body
- *  \throws Exception if the body with the specified name does not have a SPICE
+ *  @param ID SPICE ID associated with the body
+ *  @throws Exception if the body with the specified name does not have a SPICE
  *  ID or if the body has not been loaded
  */
 void BodyData::initFromID(int ID){
@@ -131,92 +131,92 @@ void BodyData::initFromID(int ID){
  */
 
 /**
- *	\brief Retrieve the mean bodyRad of the body, km
- *	\return the mean bodyRad of the body, km
+ *	@brief Retrieve the mean bodyRad of the body, km
+ *	@return the mean bodyRad of the body, km
  */
 double BodyData::getBodyRad(){return bodyRad;}
 
 /**
- *	\brief Retrieve the mass of the body, kg
- *	\return the mass of the body, kg
+ *	@brief Retrieve the mass of the body, kg
+ *	@return the mass of the body, kg
  */
 double BodyData::getMass(){return mass;}
 
 /**
- *	\brief Retrieve the gravitational parameter for the body, km^3/s^2
- *	\return the gravitational parameter for the body, km^3/s^2
+ *	@brief Retrieve the gravitational parameter for the body, km^3/s^2
+ *	@return the gravitational parameter for the body, km^3/s^2
  */
 double BodyData::getGravParam(){return gravParam;}
 
 /**
- *	\brief Retrieve
- *	\return the mean orbital bodyRad of this body, km
+ *	@brief Retrieve
+ *	@return the mean orbital bodyRad of this body, km
  */
 double BodyData::getOrbitRad(){return orbitRad;}
 
 /**
- *	\brief Retrieve the minimum fly-by altitude for this body, km
- * 	\return the minimum fly-by altitude for this body, km
+ *	@brief Retrieve the minimum fly-by altitude for this body, km
+ * 	@return the minimum fly-by altitude for this body, km
  */
 double BodyData::getMinFlyBy(){return minFlyByAlt;}
 
 /**
- *	\brief Retrieve the name of the body
- *	\return the name of the body
+ *	@brief Retrieve the name of the body
+ *	@return the name of the body
  */
 std::string BodyData::getName(){return name;}
 
 /**
- *	\brief Retrieve the ID (SPICE or HORIZONS ID) associated with this body
- *	\return the ID associated with this body
+ *	@brief Retrieve the ID (SPICE or HORIZONS ID) associated with this body
+ *	@return the ID associated with this body
  */
 int BodyData::getID(){ return ID; }
 
 /**
- *	\brief Retrieve the name of the parent body
- *	\return the name of the parent body. If there is no parent, "None" is returned
+ *	@brief Retrieve the name of the parent body
+ *	@return the name of the parent body. If there is no parent, "None" is returned
  */
 std::string BodyData::getParent(){return parent;}
 
 /**
- *	\brief Set the mean bodyRad of the body
- *	\param r the bodyRad of the body, km
+ *	@brief Set the mean bodyRad of the body
+ *	@param r the bodyRad of the body, km
  */
 void BodyData::setBodyRad(double r){bodyRad = r;}
 
 /**
- *	\brief Set the mass of the body
- *	\param m the mass of the body, kg
+ *	@brief Set the mass of the body
+ *	@param m the mass of the body, kg
  */
 void BodyData::setMass(double m){mass = m;}
 
 /**
- *	\brief Set the mean orbital bodyRad of the body
- *	\param R the orbital bodyRad of the body, km
+ *	@brief Set the mean orbital bodyRad of the body
+ *	@param R the orbital bodyRad of the body, km
  */
 void BodyData::setOrbitRad(double R){orbitRad = R;}
 
 /**
- *	\brief Set the gravitational parameter of the body
- *	\param mu the gravitational parameter of the body, km^3/s^2
+ *	@brief Set the gravitational parameter of the body
+ *	@param mu the gravitational parameter of the body, km^3/s^2
  */
 void BodyData::setGravParam(double mu){gravParam = mu;}
 
 /**
- *	\brief Set the name of the body
- *	\param s the name the body
+ *	@brief Set the name of the body
+ *	@param s the name the body
  */
 void BodyData::setName(std::string s){name = s;}
 
 /**
- *	\brief Set the mean bodyRad of the body
- *	\param s the name of this body"s parent. For example, Earth"s parent body is the Sun,
+ *	@brief Set the mean bodyRad of the body
+ *	@param s the name of this body"s parent. For example, Earth"s parent body is the Sun,
  *	and the Moon"s parent body is Earth
  */
 void BodyData::setParent(std::string s){parent = s;}
 
 /**
- *  \brief Print out information about the body data object to the
+ *  @brief Print out information about the body data object to the
  *  standard output
  */
 void BodyData::print(){

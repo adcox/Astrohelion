@@ -1,10 +1,10 @@
 /**
- * \file NatParamEngine.hpp
- * \brief
+ * @file NatParamEngine.hpp
+ * @brief
  * 
- * \author Andrew Cox
- * \version June 27, 2017
- * \copyright GNU GPL v3.0
+ * @author Andrew Cox
+ * @version June 27, 2017
+ * @copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -44,7 +44,7 @@ class MultShootEngine;
 
 /**
  *  \ingroup engine fam
- *  \brief Perform natural parameter continuation on various types of structures
+ *  @brief Perform natural parameter continuation on various types of structures
  *  in different models
  */
 class NatParamEngine : public ContinuationEngine{

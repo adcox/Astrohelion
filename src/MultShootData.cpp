@@ -1,11 +1,11 @@
 /**
- *  \file MultShootData.cpp
- *	\brief Contains member functions for several classes that support
+ *  @file MultShootData.cpp
+ *	@brief Contains member functions for several classes that support
  *	multiple shooting data manipulation and transfer
  *
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -44,10 +44,10 @@ namespace astrohelion{
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Convert an MSTOF_tp object to a human-readable string
+ *  @brief Convert an MSTOF_tp object to a human-readable string
  * 
- *  \param tp multiple-shooting TOF type
- *  \return a string representing the TOF type
+ *  @param tp multiple-shooting TOF type
+ *  @return a string representing the TOF type
  */
 const char* MSTOF_tp_cStr(const MSTOF_tp &tp){
 	switch(tp){
@@ -65,14 +65,14 @@ const char* MSTOF_tp_cStr(const MSTOF_tp &tp){
 }//====================================================
 
 /**
- *  \brief Stream operator for MSTOF_tp objects
- *  \details This is required for Boost unit tests with MSTOF_tp
+ *  @brief Stream operator for MSTOF_tp objects
+ *  @details This is required for Boost unit tests with MSTOF_tp
  *  as a data list input
  * 
- *  \param os stream reference
- *  \param tp MSTOF_tp object to output to the stream
+ *  @param os stream reference
+ *  @param tp MSTOF_tp object to output to the stream
  *  
- *  \return a stream reference
+ *  @return a stream reference
  */
 std::ostream& operator<<(std::ostream& os, const MSTOF_tp &tp){
 	os << MSTOF_tp_cStr(tp);
@@ -88,16 +88,16 @@ std::ostream& operator<<(std::ostream& os, const MSTOF_tp &tp){
 //-----------------------------------------------------------------------------
 
 /**
- *  \brief Construct a default Multiple Shooting Variable Map Key object
+ *  @brief Construct a default Multiple Shooting Variable Map Key object
  */
 MSVarMap_Key::MSVarMap_Key(){}
 
 /**
- *  \brief Construct a Multiple Shooting Variable Map Key object
- *  \details [long description]
+ *  @brief Construct a Multiple Shooting Variable Map Key object
+ *  @details [long description]
  * 
- *  \param type Variable type
- *  \param id ID associated with the variable (e.g., Node ID for 
+ *  @param type Variable type
+ *  @param id ID associated with the variable (e.g., Node ID for 
  *  epochs and states, Segment ID for TOF, etc.)
  */
 MSVarMap_Key::MSVarMap_Key(MSVar_tp type, int id){
@@ -106,17 +106,17 @@ MSVarMap_Key::MSVarMap_Key(MSVar_tp type, int id){
 }//================================================
 
 /**
- *  \brief Copy constructory
- *  \param k another MSVarMap_Key object
+ *  @brief Copy constructory
+ *  @param k another MSVarMap_Key object
  */
 MSVarMap_Key::MSVarMap_Key(const MSVarMap_Key &k){ copyMe(k); }
 
 /**
- *  \brief Assignment operator
- *  \details [long description]
+ *  @brief Assignment operator
+ *  @details [long description]
  * 
- *  \param k Another MSVarMap_Key object
- *  \return reference to this object after assignment to the other object
+ *  @param k Another MSVarMap_Key object
+ *  @return reference to this object after assignment to the other object
  */
 MSVarMap_Key& MSVarMap_Key::operator =(const MSVarMap_Key &k){
 	copyMe(k);
@@ -124,14 +124,14 @@ MSVarMap_Key& MSVarMap_Key::operator =(const MSVarMap_Key &k){
 }//================================================
 
 /**
- *  \brief Comparator for map operations
- *  \details Results are arbitrary; used only in internal
+ *  @brief Comparator for map operations
+ *  @details Results are arbitrary; used only in internal
  *  map sorting processes
  * 
- *  \param lhs left-hand-side object reference
- *  \param rhs right-hand-side object reference
+ *  @param lhs left-hand-side object reference
+ *  @param rhs right-hand-side object reference
  * 
- *  \return TRUE if lhs.type < rhs.type or if lhs.type == rhs.type and lhs.id < rhs.id
+ *  @return TRUE if lhs.type < rhs.type or if lhs.type == rhs.type and lhs.id < rhs.id
  */
 bool operator <(const MSVarMap_Key &lhs, const MSVarMap_Key &rhs){
 	bool isLess =  lhs.type < rhs.type || (lhs.type == rhs.type && lhs.id < rhs.id);
@@ -143,8 +143,8 @@ bool operator <(const MSVarMap_Key &lhs, const MSVarMap_Key &rhs){
 }//================================================
 
 /**
- *  \brief Utility function to copy all attributes of one object to another
- *  \param k Reference to another MSVarMap_Key object
+ *  @brief Utility function to copy all attributes of one object to another
+ *  @param k Reference to another MSVarMap_Key object
  */
 void MSVarMap_Key::copyMe(const MSVarMap_Key &k){
 	type = k.type;
@@ -152,11 +152,11 @@ void MSVarMap_Key::copyMe(const MSVarMap_Key &k){
 }//================================================
 
 /**
- *  \brief Retrieve a string to describe the type
- *  \details [long description]
+ *  @brief Retrieve a string to describe the type
+ *  @details [long description]
  * 
- *  \param tp Type associated with a MSVarMap_Key object
- *  \return a string to describe the type
+ *  @param tp Type associated with a MSVarMap_Key object
+ *  @return a string to describe the type
  */
 const char* MSVarMap_Key::type2str(MSVar_tp tp){
 	switch(tp){
@@ -181,13 +181,13 @@ const char* MSVarMap_Key::type2str(MSVar_tp tp){
 
 
 /**
- *  \brief Construct a default Multiple Shooting Variable Map object
+ *  @brief Construct a default Multiple Shooting Variable Map object
  */
 MSVarMap_Obj::MSVarMap_Obj() : key() {}
 
 /**
- *  \brief Construct a Multiple Shooting Variable Map object
- *  \param t Variable type
+ *  @brief Construct a Multiple Shooting Variable Map object
+ *  @param t Variable type
  */
 MSVarMap_Obj::MSVarMap_Obj(MSVar_tp t) : key(){
 	key.type = t;
@@ -195,16 +195,16 @@ MSVarMap_Obj::MSVarMap_Obj(MSVar_tp t) : key(){
 }//================================================
 
 /**
- *  \brief Construct a Multiple Shooting Variable Map object
- *  \details [long description]
+ *  @brief Construct a Multiple Shooting Variable Map object
+ *  @details [long description]
  * 
- *  \param t Variable type
- *  \param row0 index of the first row this object occupies in the free variable vector.
+ *  @param t Variable type
+ *  @param row0 index of the first row this object occupies in the free variable vector.
  *  If row0 is set equal to -1, the variable is not stored in the free variable vector and
  *  is instead stored in the input nodeset (and not varied).
- *  \param id ID associated with the object that stores this object information (e.g.,
+ *  @param id ID associated with the object that stores this object information (e.g.,
  *  a Node ID for state and epoch variables, or a segment ID for a time-of-flight)
- *  \param nRows Number of rows this object occupies in the free variable vector
+ *  @param nRows Number of rows this object occupies in the free variable vector
  */
 MSVarMap_Obj::MSVarMap_Obj(MSVar_tp t, int row0, int id, int nRows) : key(){
 	key.type = t;
@@ -215,14 +215,14 @@ MSVarMap_Obj::MSVarMap_Obj(MSVar_tp t, int row0, int id, int nRows) : key(){
 }//====================================================
 
 /**
- *  \brief Construct a Multiple Shooting Variable Map object
- *  \details [long description]
+ *  @brief Construct a Multiple Shooting Variable Map object
+ *  @details [long description]
  * 
- *  \param k MSVarMap_Key object that stores information about the variable type and ID
- *  \param row0 index of the first row this object occupies in the free variable vector.
+ *  @param k MSVarMap_Key object that stores information about the variable type and ID
+ *  @param row0 index of the first row this object occupies in the free variable vector.
  *  If row0 is set equal to -1, the variable is not stored in the free variable vector and
  *  is instead stored in the input nodeset (and not varied).
- *  \param nRows Number of rows this object occupies in the free variable vector
+ *  @param nRows Number of rows this object occupies in the free variable vector
  */
 MSVarMap_Obj::MSVarMap_Obj(MSVarMap_Key k, int row0, int nRows) : key(k){
 	this->row0 = row0;
@@ -231,17 +231,17 @@ MSVarMap_Obj::MSVarMap_Obj(MSVarMap_Key k, int row0, int nRows) : key(k){
 }//================================================
 
 /**
- *  \brief Copy constructor
- *  \param obj reference to another MSVarMap_Obj object
+ *  @brief Copy constructor
+ *  @param obj reference to another MSVarMap_Obj object
  */
 MSVarMap_Obj::MSVarMap_Obj(const MSVarMap_Obj &obj) : key(){
 	copyMe(obj);
 }//================================================
 
 /**
- *  \brief Assignment operator
- *  \param obj reference to another object
- *  \return a reference to this object after the assignment is completed
+ *  @brief Assignment operator
+ *  @param obj reference to another object
+ *  @return a reference to this object after the assignment is completed
  */
 MSVarMap_Obj& MSVarMap_Obj::operator =(const MSVarMap_Obj &obj){
 	copyMe(obj);
@@ -249,13 +249,13 @@ MSVarMap_Obj& MSVarMap_Obj::operator =(const MSVarMap_Obj &obj){
 }//================================================
 
 /**
- *  \brief Determine whether or not this object matches a specified
+ *  @brief Determine whether or not this object matches a specified
  *  type and ID
  * 
- *  \param t Variable type
- *  \param id Variable ID
+ *  @param t Variable type
+ *  @param id Variable ID
  * 
- *  \return TRUE if this object is associated with a MSVarMap_Key that matches the
+ *  @return TRUE if this object is associated with a MSVarMap_Key that matches the
  *  specified type and ID
  */
 bool MSVarMap_Obj::matches(MSVar_tp t, int id) const{
@@ -263,8 +263,8 @@ bool MSVarMap_Obj::matches(MSVar_tp t, int id) const{
 }//================================================
 
 /**
- *  \brief Initialize the object after construction
- *  \details Set the parent based on key/variable type
+ *  @brief Initialize the object after construction
+ *  @details Set the parent based on key/variable type
  */
 void MSVarMap_Obj::init(){
 	switch(key.type){
@@ -292,8 +292,8 @@ void MSVarMap_Obj::init(){
 }//================================================
 
 /**
- *  \brief Copy all attributes from one object to this one
- *  \param obj reference to another MSVarMap_Obj object
+ *  @brief Copy all attributes from one object to this one
+ *  @param obj reference to another MSVarMap_Obj object
  */
 void MSVarMap_Obj::copyMe(const MSVarMap_Obj &obj){
 	key = obj.key;
@@ -303,9 +303,9 @@ void MSVarMap_Obj::copyMe(const MSVarMap_Obj &obj){
 }//================================================
 
 /**
- *  \brief Retrieve a string that describes the parent type
- *  \param p Parent type
- *  \return a string that describes the parent type
+ *  @brief Retrieve a string that describes the parent type
+ *  @param p Parent type
+ *  @return a string that describes the parent type
  */
 const char* MSVarMap_Obj::parent2str(MSVarParent_tp p){
 	switch(p){
@@ -327,16 +327,16 @@ const char* MSVarMap_Obj::parent2str(MSVarParent_tp p){
 //-----------------------------------------------------
 
 /**
- *  \brief Construct a new MultShootData object
- *  \param set pointer to the nodeset being corrected
+ *  @brief Construct a new MultShootData object
+ *  @param set pointer to the nodeset being corrected
  */
 MultShootData::MultShootData(const Arcset *set) : pArcIn(set){
 	numNodes = set->getNumNodes();
 }//====================================================
 
 /**
- *  \brief Copy constructor
- *  \param it reference to another MultShootData object
+ *  @brief Copy constructor
+ *  @param it reference to another MultShootData object
  */
 MultShootData::MultShootData(const MultShootData &it) : pArcIn(it.pArcIn){
 	copyMe(it);
@@ -347,8 +347,8 @@ MultShootData::MultShootData(const MultShootData &it) : pArcIn(it.pArcIn){
 //-----------------------------------------------------
 
 /**
- *  \brief Assignment operator
- *  \param it reference to another MultShootData object
+ *  @brief Assignment operator
+ *  @param it reference to another MultShootData object
  */
 MultShootData& MultShootData::operator =(const MultShootData &it){
 	copyMe(it);
@@ -360,14 +360,14 @@ MultShootData& MultShootData::operator =(const MultShootData &it){
 //-----------------------------------------------------
 
 /**
- *  \brief Retrieve a free variable map object by type and reference ID
+ *  @brief Retrieve a free variable map object by type and reference ID
  * 
- *  \param type the type of object this map object represents (i.e., EPOCH, SLACK, Constraint_tp::STATE, TOF, TOF_TOTAL)
- *  \param refID the ID of the parent object
+ *  @param type the type of object this map object represents (i.e., EPOCH, SLACK, Constraint_tp::STATE, TOF, TOF_TOTAL)
+ *  @param refID the ID of the parent object
  * 
- *  \return the variable map object that represents the desired variable
+ *  @return the variable map object that represents the desired variable
  *  @see ms_varMap_type
- *  \throws Exception if the object cannot be located
+ *  @throws Exception if the object cannot be located
  */
 MSVarMap_Obj MultShootData::getVarMap_obj(MSVar_tp type, int refID) const{
 	if(freeVarMap.count(MSVarMap_Key(type, refID)) == 0){
@@ -387,8 +387,8 @@ MSVarMap_Obj MultShootData::getVarMap_obj(MSVar_tp type, int refID) const{
 //-----------------------------------------------------
 
 /**
- *  \brief Copy all parameters from one MultShootData object to another
- *  \param it reference to source MultShootData object
+ *  @brief Copy all parameters from one MultShootData object to another
+ *  @param it reference to source MultShootData object
  */
 void MultShootData::copyMe(const MultShootData &it){
 	

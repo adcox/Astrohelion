@@ -1,10 +1,10 @@
 /**
- *  \file Linkable.cpp
- *	\brief A basic object that encapsulates the behavior of objects that link together
+ *  @file Linkable.cpp
+ *	@brief A basic object that encapsulates the behavior of objects that link together
  *
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
  
 /*
@@ -42,21 +42,21 @@ const int Linkable::NUM_LINKS = 2;
 //-----------------------------------------------------
 
 /**
- *  \brief Default constructor
+ *  @brief Default constructor
  */
 Linkable::Linkable(){}
 
 /**
- *  \brief Copy constructor
+ *  @brief Copy constructor
  * 
- *  \param obj reference to a linkable object
+ *  @param obj reference to a linkable object
  */
 Linkable::Linkable(const Linkable &obj){
 	copyMe(obj);
 }//====================================================
 
 /**
- *  \brief Destructor
+ *  @brief Destructor
  */
 Linkable::~Linkable(){}
 
@@ -65,10 +65,10 @@ Linkable::~Linkable(){}
 //-----------------------------------------------------
 
 /**
- *  \brief Assignment operator
+ *  @brief Assignment operator
  * 
- *  \param obj reference to a linkable object
- *  \return reference to a linkable object, now equivalent to the input reference
+ *  @param obj reference to a linkable object
+ *  @return reference to a linkable object, now equivalent to the input reference
  */
 Linkable& Linkable::operator =(const Linkable &obj){
 	copyMe(obj);
@@ -76,12 +76,12 @@ Linkable& Linkable::operator =(const Linkable &obj){
 }//====================================================
 
 /**
- *  \brief Equality comparison
+ *  @brief Equality comparison
  * 
- *  \param lhs 
- *  \param rhs 
+ *  @param lhs 
+ *  @param rhs 
  * 
- *  \return whether or not the two objects are identical
+ *  @return whether or not the two objects are identical
  */
 bool operator ==(const Linkable &lhs, const Linkable &rhs){
 	for(int i = 0; i < Linkable::NUM_LINKS; i++){
@@ -93,12 +93,12 @@ bool operator ==(const Linkable &lhs, const Linkable &rhs){
 }//====================================================
 
 /**
- *  \brief Inequality comparison
+ *  @brief Inequality comparison
  * 
- *  \param lhs 
- *  \param rhs 
+ *  @param lhs 
+ *  @param rhs 
  * 
- *  \return whether or not the two objects are nonidentical
+ *  @return whether or not the two objects are nonidentical
  */
 bool operator !=(const Linkable &lhs, const Linkable &rhs){
 	return !(lhs == rhs);
@@ -109,12 +109,12 @@ bool operator !=(const Linkable &lhs, const Linkable &rhs){
 //-----------------------------------------------------
 
 /**
- *  \brief Add a link from this object to another with the specified ID
- *  \details Only two links are allowed; if both slots are already filled,
+ *  @brief Add a link from this object to another with the specified ID
+ *  @details Only two links are allowed; if both slots are already filled,
  *  an exception is thrown
  * 
- *  \param id the ID of the object that is linked to this object
- *  \throws Exception if two links are already present
+ *  @param id the ID of the object that is linked to this object
+ *  @throws Exception if two links are already present
  */
 void Linkable::addLink(int id){
 	int ix = getLinkIx(INVALID_ID);	// Try to find an empty slot
@@ -126,8 +126,8 @@ void Linkable::addLink(int id){
 }//===========================================
 
 /**
- *  \brief Remove all links from this object to other objects
- *  \details This function resets the array of links
+ *  @brief Remove all links from this object to other objects
+ *  @details This function resets the array of links
  */
 void Linkable::clearLinks(){
 	for(int i = 0; i < NUM_LINKS; i++)
@@ -135,16 +135,16 @@ void Linkable::clearLinks(){
 }//===========================================
 
 /**
- *  \brief Retrieve the ID of this object
- *  \return the ID of this object
+ *  @brief Retrieve the ID of this object
+ *  @return the ID of this object
  */
 int Linkable::getID() const { return ID; }
 
 /**
- *  \brief Locate a particular ID within the link slots associated with this object
+ *  @brief Locate a particular ID within the link slots associated with this object
  * 
- *  \param id the ID to search for
- *  \return the index of the ID within the links[] storage array. A value of 
+ *  @param id the ID to search for
+ *  @return the index of the ID within the links[] storage array. A value of 
  *  Linkable::INVALID_ID is returned if the ID is not located
  */
 int Linkable::getLinkIx(int id) const{	
@@ -159,12 +159,12 @@ int Linkable::getLinkIx(int id) const{
 }//============================================
 
 /**
- *  \brief Retrieve one of the links
+ *  @brief Retrieve one of the links
  * 
- *  \param ix The index of the link, must be in the integer set [0, linkable::NUM_LINKS)
- *  \return the ID stored at the specified index. If the index is out of 
+ *  @param ix The index of the link, must be in the integer set [0, linkable::NUM_LINKS)
+ *  @return the ID stored at the specified index. If the index is out of 
  *  range, an exception is thrown
- *  \throws Exception if `ix` is out of bounds
+ *  @throws Exception if `ix` is out of bounds
  */
 int Linkable::getLink(int ix) const {
 	if(ix >= 0 && ix < NUM_LINKS){
@@ -175,11 +175,11 @@ int Linkable::getLink(int ix) const {
 }//===========================================
 
 /**
- *  \brief Determine whether an object with the specified ID is linked
+ *  @brief Determine whether an object with the specified ID is linked
  *  to this object
  * 
- *  \param id the ID of the object
- *  \return whether or not the object with the specified ID is linked
+ *  @param id the ID of the object
+ *  @return whether or not the object with the specified ID is linked
  *  to this object
  */
 bool Linkable::isLinkedTo(int id) const {
@@ -187,11 +187,11 @@ bool Linkable::isLinkedTo(int id) const {
 }//===========================================
 
 /**
- *  \brief Remove a link to an object with the specified ID.
+ *  @brief Remove a link to an object with the specified ID.
  *  If the object with the specified ID is not linked to this
  *  object, no further action is taken
  * 
- *  \param id the ID of the object to "unlink"
+ *  @param id the ID of the object to "unlink"
  */
 void Linkable::removeLink(int id){
 	int *it = std::find(links, links + NUM_LINKS, id);
@@ -200,23 +200,23 @@ void Linkable::removeLink(int id){
 }//===========================================
 
 /**
- *  \brief Set the ID of this object
- *  \details Note: This should NOT be done after a segment is added to an arcset
+ *  @brief Set the ID of this object
+ *  @details Note: This should NOT be done after a segment is added to an arcset
  * 
- *  \param id the desired ID
+ *  @param id the desired ID
  */
 void Linkable::setID(int id){ ID = id; } 
 
 /**
- *  \brief Set the ID stored in the specified link
+ *  @brief Set the ID stored in the specified link
  * 
- *  \param ix the index of the link within the storage array; must be
+ *  @param ix the index of the link within the storage array; must be
  *  within the integer set [0, linkable::NUM_LINKS). Invalid indices will
  *  result in an exception
- *  \param id the ID to store; you cannot store the same ID twice; an exception
+ *  @param id the ID to store; you cannot store the same ID twice; an exception
  *  will be thrown if you try
- *  \throws Exception if `ix` is out of bounds
- *  \throws Exception if a link already exists to `id`
+ *  @throws Exception if `ix` is out of bounds
+ *  @throws Exception if a link already exists to `id`
  */
 void Linkable::setLink(int ix, int id) {
 	if(ix >= 0 && ix < NUM_LINKS){
@@ -234,9 +234,9 @@ void Linkable::setLink(int ix, int id) {
 //-----------------------------------------------------
 
 /**
- *  \brief Copy all aspects of the reference object into this one
+ *  @brief Copy all aspects of the reference object into this one
  * 
- *  \param L reference to a linkable object
+ *  @param L reference to a linkable object
  */
 void Linkable::copyMe(const Linkable &L){
 	ID = L.ID;

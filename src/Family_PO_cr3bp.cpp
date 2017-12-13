@@ -1,10 +1,10 @@
 /**
- *  \file Family_PO_cr3bp.cpp
- *	\brief 
+ *  @file Family_PO_cr3bp.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version October 18, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version October 18, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 

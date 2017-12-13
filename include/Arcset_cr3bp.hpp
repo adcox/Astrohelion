@@ -1,10 +1,10 @@
 /**
- *  \file Arcset_cr3bp.hpp
- *	\brief 
+ *  @file Arcset_cr3bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 1, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 1, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -36,11 +36,11 @@ class SysData_cr3bp;
 
 /**
  *	\ingroup traj cr3bp
- *	\brief Supplies functions specific to CR3BP arcsets
+ *	@brief Supplies functions specific to CR3BP arcsets
  *
- *	\author Andrew Cox
- *	\version June 9, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version June 9, 2017
+ *	@copyright GNU GPL v3.0
  */
 class Arcset_cr3bp : public Arcset{
 public:

@@ -1,10 +1,10 @@
 /**
- *  \file BaseArcset.hpp
- *	\brief Basic arcset class (abstract)
+ *  @file BaseArcset.hpp
+ *	@brief Basic arcset class (abstract)
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -48,12 +48,12 @@ struct ArcPiece;
 class BaseArcset;
 
 /**
- * \brief Smart pointer to a BaseArcset object
+ * @brief Smart pointer to a BaseArcset object
  */
 typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
 
 /**
- *	\brief Abstract class that provides the framework for trajectories and nodesets
+ *	@brief Abstract class that provides the framework for trajectories and nodesets
  *	
  *	The arcset object specifies default and mandatory behaviors for all derivative
  *	classes (i.e. Arcset and Arcset). All variables and data for an arc or 
@@ -89,9 +89,9 @@ typedef std::shared_ptr<BaseArcset> baseArcsetPtr;
  *	* Access to individual step objects via getStep()
  *	* Access to the system data object pointer that describes the system this arc was integrated in
  *
- *	\author Andrew Cox
- *	\version April 28, 2016
- *	\copyright GNU GPL v3.0	
+ *	@author Andrew Cox
+ *	@version April 28, 2016
+ *	@copyright GNU GPL v3.0	
  */
 class BaseArcset : public Core{
 
@@ -202,7 +202,7 @@ public:
 	void printSegIDMap() const;
 
 	/**
-	 *	\brief Displays a useful messages about the object
+	 *	@brief Displays a useful messages about the object
 	 */
 	virtual void print() const = 0;
 	//\}
@@ -213,15 +213,15 @@ public:
 	 */
 
 	/**
-	 *  \brief Loads the object from a Matlab binary file
-	 *  \param filepath the filepath to the Matlab file
+	 *  @brief Loads the object from a Matlab binary file
+	 *  @param filepath the filepath to the Matlab file
 	 */
 	virtual void readFromMat(const char *filepath, std::vector<ControlLaw*>&) = 0;
 
 	/**
-	 *	\brief Saves the object to a Matlab binary file
-	 *	\param filepath the filepath to the Matlab file
-	 *	\param saveTp describe how much data should be saved
+	 *	@brief Saves the object to a Matlab binary file
+	 *	@param filepath the filepath to the Matlab file
+	 *	@param saveTp describe how much data should be saved
 	 */
 	virtual void saveToMat(const char *filepath, Save_tp saveTp = Save_tp::SAVE_ALL) const = 0;
 
@@ -317,14 +317,14 @@ protected:
 };//END OF BaseArcset//--//--//--//--//--//--//--//--//--//--//--//--//
 
 /**
- *  \brief A structure used to represent nodes and segments.
- *  \details This structure is used when putting the arcset
+ *  @brief A structure used to represent nodes and segments.
+ *  @details This structure is used when putting the arcset
  *  object in chronological order
  */
 struct ArcPiece{
 
 	/**
-	 * \brief Enumerated type to describe the types of objects represented
+	 * @brief Enumerated type to describe the types of objects represented
 	 * by the piece
 	 */
 	enum class Piece_tp {
@@ -336,32 +336,32 @@ struct ArcPiece{
 	int id;			//!< The ID of the object represented by this piece
 
 	/**
-	 *  \brief Constructor
+	 *  @brief Constructor
 	 * 
-	 *  \param tp the type of object represented by this piece
-	 *  \param i the ID of the object represented by this piece
+	 *  @param tp the type of object represented by this piece
+	 *  @param i the ID of the object represented by this piece
 	 */
 	ArcPiece(Piece_tp tp, int i) : type(tp), id(i) {}
 
 	/**
-	 *  \brief Comparison operator
+	 *  @brief Comparison operator
 	 * 
-	 *  \param lhs piece reference
-	 *  \param rhs piece reference
+	 *  @param lhs piece reference
+	 *  @param rhs piece reference
 	 * 
-	 *  \return true if the type and ID of the two pieces match
+	 *  @return true if the type and ID of the two pieces match
 	 */
 	friend bool operator ==(const ArcPiece &lhs, const ArcPiece &rhs){
 		return lhs.type == rhs.type && lhs.id == rhs.id;
 	}//================================================
 
 	/**
-	 *  \brief Comparison operator
+	 *  @brief Comparison operator
 	 * 
-	 *  \param lhs piece reference
-	 *  \param rhs piece reference
+	 *  @param lhs piece reference
+	 *  @param rhs piece reference
 	 * 
-	 *  \return true if the type and ID of the two pieces do NOT match
+	 *  @return true if the type and ID of the two pieces do NOT match
 	 */
 	friend bool operator !=(const ArcPiece &lhs, const ArcPiece &rhs){
 		return !(lhs == rhs);

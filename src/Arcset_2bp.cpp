@@ -1,10 +1,10 @@
 /**
- *  \file Arcset_2bp.cpp
- *	\brief 
+ *  @file Arcset_2bp.cpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 1, 2017
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 1, 2017
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -38,35 +38,35 @@ namespace astrohelion{
 //-----------------------------------------------------
 
 /**
- *	\brief Create an arcset with specified system data
- *	\param pSys system data object
+ *	@brief Create an arcset with specified system data
+ *	@param pSys system data object
  */
 Arcset_2bp::Arcset_2bp(const SysData_2bp *pSys) : Arcset(pSys){}
 
 /**
- *	\brief Copy input arcset. 
+ *	@brief Copy input arcset. 
  *
  *	This function calls the base-class copy constructor to
  *	handle copying the generic fields like state and tofs
- *	\param n a arcset
+ *	@param n a arcset
  */
 Arcset_2bp::Arcset_2bp(const Arcset_2bp& n) : Arcset(n) {}
 
 /**
- *	\brief Create a CR3BP arcset from its base class
- *	\param a an arc data reference
+ *	@brief Create a CR3BP arcset from its base class
+ *	@param a an arc data reference
  */
 Arcset_2bp::Arcset_2bp(const BaseArcset &a) : Arcset(a) {}
 
 /**
- *  \brief Create a new arcset object on the stack
- *  \details the `delete` function must be called to 
+ *  @brief Create a new arcset object on the stack
+ *  @details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \param pSys pointer to a system data object; should be a 
+ *  @param pSys pointer to a system data object; should be a 
  *  CR3BP system as the pointer will be cast to that derived class
- *  \return a pointer to the newly created arcset
+ *  @return a pointer to the newly created arcset
  */
 baseArcsetPtr Arcset_2bp::create( const SysData *pSys) const{
 	const SysData_2bp *bcSys = static_cast<const SysData_2bp*>(pSys);
@@ -74,13 +74,13 @@ baseArcsetPtr Arcset_2bp::create( const SysData *pSys) const{
 }//====================================================
 
 /**
- *  \brief Create a new arcset object on the stack that is a 
+ *  @brief Create a new arcset object on the stack that is a 
  *  duplicate of this object
- *  \details the `delete` function must be called to 
+ *  @details the `delete` function must be called to 
  *  free the memory allocated to this object to avoid 
  *  memory leaks
  * 
- *  \return a pointer to the newly cloned arcset
+ *  @return a pointer to the newly cloned arcset
  */
 baseArcsetPtr Arcset_2bp::clone() const{
 	return baseArcsetPtr(new Arcset_2bp(*this));
@@ -99,9 +99,9 @@ baseArcsetPtr Arcset_2bp::clone() const{
 //-----------------------------------------------------
 
 /**
- *  \brief Execute commands to save data to a Matlab file
- *  \param pMatFile pointer to an open Matlab file
- *  \param saveTp describes how much data to save
+ *  @brief Execute commands to save data to a Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param saveTp describes how much data to save
  */
 void Arcset_2bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 	Arcset::saveCmds_toFile(pMatFile, saveTp);
@@ -120,11 +120,11 @@ void Arcset_2bp::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 }//====================================================
 
 /**
- *  \brief Execute commands to save data to a structure array
+ *  @brief Execute commands to save data to a structure array
  * 
- *  \param pStruct pointer to a structure array
- *  \param ix index of this arcset within the structure array
- *  \param saveTp Describes how much data to save
+ *  @param pStruct pointer to a structure array
+ *  @param ix index of this arcset within the structure array
+ *  @param saveTp Describes how much data to save
  */
 void Arcset_2bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp saveTp) const{
 	Arcset::saveCmds_toStruct(pStruct, ix, saveTp);
@@ -143,9 +143,9 @@ void Arcset_2bp::saveCmds_toStruct(matvar_t *pStruct, unsigned int ix, Save_tp s
 }//====================================================
 
 /**
- *  \brief Execute commands to read data from a Matlab file
- *  \param pMatFile pointer to an open Matlab file
- *  \param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @brief Execute commands to read data from a Matlab file
+ *  @param pMatFile pointer to an open Matlab file
+ *  @param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */
@@ -165,11 +165,11 @@ void Arcset_2bp::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &re
 }//====================================================
 
 /**
- *  \brief Execute commands to read from data from a structure array
+ *  @brief Execute commands to read from data from a structure array
  * 
- *  \param pStruct Pointer to the structure array variable
- *  \param ix index of this arcset within the structure array
- * 	\param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
+ *  @param pStruct Pointer to the structure array variable
+ *  @param ix index of this arcset within the structure array
+ * 	@param refLaws Reference to a vector of ControlLaw pointers. As control laws are read
  *  from the Matlab file, unique control laws are constructed and allocated on the stack.
  *  The user must manually delete the ControlLaw objects to avoid memory leaks.
  */

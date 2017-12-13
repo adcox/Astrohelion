@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel_2bp.cpp
- *  \brief Derivative of DynamicsModel, specific to 2BP
+ *  @file DynamicsModel_2bp.cpp
+ *  @brief Derivative of DynamicsModel, specific to 2BP
  *  
- *  \author Andrew Cox
- *  \version August 24, 2016
- *  \copyright GNU GPL v3.0
+ *  @author Andrew Cox
+ *  @version August 24, 2016
+ *  @copyright GNU GPL v3.0
  */
  
 /*
@@ -46,16 +46,16 @@ namespace astrohelion{
 DynamicsModel_2bp::DynamicsModel_2bp() : DynamicsModel() {}
 
 /**
- *  \brief Copy Constructor
- *  \param m a model reference
+ *  @brief Copy Constructor
+ *  @param m a model reference
  */
 DynamicsModel_2bp::DynamicsModel_2bp(const DynamicsModel_2bp &m) : DynamicsModel(m) {
 
 }//====================================================
 
 /**
- *  \brief Assignment operator
- *  \param m a model reference
+ *  @brief Assignment operator
+ *  @param m a model reference
  */
 DynamicsModel_2bp& DynamicsModel_2bp::operator =(const DynamicsModel_2bp &m){
 	DynamicsModel::operator =(m);
@@ -63,7 +63,7 @@ DynamicsModel_2bp& DynamicsModel_2bp::operator =(const DynamicsModel_2bp &m){
 }//====================================================
 
 /**
- *  \brief Retrieve a pointer to the EOM function that computes derivatives
+ *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for only the core states (i.e. simple)
  */
 DynamicsModel::eom_fcn DynamicsModel_2bp::getSimpleEOM_fcn() const{
@@ -71,7 +71,7 @@ DynamicsModel::eom_fcn DynamicsModel_2bp::getSimpleEOM_fcn() const{
 }//====================================================
 
 /**
- *  \brief Retrieve a pointer to the EOM function that computes derivatives
+ *  @brief Retrieve a pointer to the EOM function that computes derivatives
  *  for all states (i.e. full)
  */
 DynamicsModel::eom_fcn DynamicsModel_2bp::getFullEOM_fcn() const{
@@ -79,12 +79,12 @@ DynamicsModel::eom_fcn DynamicsModel_2bp::getFullEOM_fcn() const{
 }//====================================================
 
 /**
- *  \brief Compute the position of the primary body
+ *  @brief Compute the position of the primary body
  * 
- *  \param t the epoch at which the computations occur (unused for this system)
- *  \param pSysData object describing the specific system (unused for this system)
+ *  @param t the epoch at which the computations occur (unused for this system)
+ *  @param pSysData object describing the specific system (unused for this system)
  * 
- *  \return n x 3 vector (row-major order) containing the positions of
+ *  @return n x 3 vector (row-major order) containing the positions of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysData) const{
@@ -94,14 +94,14 @@ std::vector<double> DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysD
 }//====================================================
 
 /**
- *  \brief Compute the position of a specified primary
- *  \details This is the faster alternative to getPrimPos(t, pSysData).
+ *  @brief Compute the position of a specified primary
+ *  @details This is the faster alternative to getPrimPos(t, pSysData).
  * 
- *  \param t Nondimensional time
- *  \param pSysData pointer to system data object
- *  \param pIx Index of the primary; a value of -1 will return the positions of all primaries,
+ *  @param t Nondimensional time
+ *  @param pSysData pointer to system data object
+ *  @param pIx Index of the primary; a value of -1 will return the positions of all primaries,
  *  in order of largest to smallest mass
- *  \param pos An array to store the primary position(s) in with all elements initialized to zero.
+ *  @param pos An array to store the primary position(s) in with all elements initialized to zero.
  *  For a single primary position, the array must have at least three elements allocated. For all 
  *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
  *  of primaries.
@@ -114,12 +114,12 @@ void DynamicsModel_2bp::getPrimPos(double t, const SysData *pSysData, int pIx, d
 }//====================================================
 
 /**
- *  \brief Compute the velocity of the primary body
+ *  @brief Compute the velocity of the primary body
  * 
- *  \param t the epoch at which the computations occur (unused for this system)
- *  \param pSysData object describing the specific system (unused for this system)
+ *  @param t the epoch at which the computations occur (unused for this system)
+ *  @param pSysData object describing the specific system (unused for this system)
  * 
- *  \return n x 3 vector (row-major order) containing the velocities of
+ *  @return n x 3 vector (row-major order) containing the velocities of
  *  n primaries; each row is one position vector in non-dimensional units
  */
 std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysData) const{
@@ -129,14 +129,14 @@ std::vector<double> DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysD
 }//====================================================
 
 /**
- *  \brief Compute the velocity of a specified primary
- *  \details This is the faster alternative to getPrimVel(t, pSysData).
+ *  @brief Compute the velocity of a specified primary
+ *  @details This is the faster alternative to getPrimVel(t, pSysData).
  * 
- *  \param t Nondimensional time
- *  \param pSysData pointer to system data object
- *  \param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
+ *  @param t Nondimensional time
+ *  @param pSysData pointer to system data object
+ *  @param pIx Index of the primary; a value of -1 will return the velocities of all primaries,
  *  in order of largest to smallest mass
- *  \param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
+ *  @param vel An array to store the primary velocity(s) in with all elements initialized to zero. 
  *  For a single primary velocity, the array must have at least three elements allocated. For all 
  *  primaries (i.e., pIx = -1), the array must have n*3 elements allocated where n is the number 
  *  of primaries.
@@ -148,14 +148,14 @@ void DynamicsModel_2bp::getPrimVel(double t, const SysData *pSysData, int pIx, d
     (void) vel;
 }//====================================================
 /**
- *  \brief Retrieve the state derivative
- *  \details Evaluate the equations of motion to compute the state time-derivative at 
+ *  @brief Retrieve the state derivative
+ *  @details Evaluate the equations of motion to compute the state time-derivative at 
  *  the specified time and state
  * 
- *  \param t time parameter
- *  \param state state vector
- *  \param params structure containing parameters relevant to the integration
- *  \return the time-derivative of the state vector
+ *  @param t time parameter
+ *  @param state state vector
+ *  @param params structure containing parameters relevant to the integration
+ *  @return the time-derivative of the state vector
  */
 std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<double> state, EOM_ParamStruct *params) const{
     const unsigned int ctrlDim = params->pCtrlLaw ? params->pCtrlLaw->getNumStates() : 0;
@@ -181,10 +181,10 @@ std::vector<double> DynamicsModel_2bp::getStateDeriv(double t, std::vector<doubl
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Perform model-specific initializations on the MultShootData object
- *  \details NOT YET IMPLEMENTED
+ *  @brief Perform model-specific initializations on the MultShootData object
+ *  @details NOT YET IMPLEMENTED
  *  
- *  \param it reference to the object to be initialized
+ *  @param it reference to the object to be initialized
  */
 void DynamicsModel_2bp::multShoot_initIterData(MultShootData& it) const{
 	(void)it;
@@ -195,11 +195,11 @@ void DynamicsModel_2bp::multShoot_initIterData(MultShootData& it) const{
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Integrate the equations of motion for the 2BP
- *  \param t time at integration step (unused)
- *  \param s the 42-d state vector
- *  \param sdot the 42-d state derivative vector
- *  \param params points to an EOM_ParamStruct object
+ *  @brief Integrate the equations of motion for the 2BP
+ *  @param t time at integration step (unused)
+ *  @param s the 42-d state vector
+ *  @param sdot the 42-d state derivative vector
+ *  @param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void *params){
 	(void)t;
@@ -240,11 +240,11 @@ int DynamicsModel_2bp::fullEOMs(double t, const double s[], double sdot[], void 
 }//====================================================
 
 /**
- *  \brief Integrate the equations of motion for the 2BP; currently the same as the full EOMs
- *  \param t time at integration step (unused)
- *  \param s the 6-d state vector
- *  \param sdot the 6-d state derivative vector
- *  \param params points to an EOM_ParamStruct object
+ *  @brief Integrate the equations of motion for the 2BP; currently the same as the full EOMs
+ *  @param t time at integration step (unused)
+ *  @param s the 6-d state vector
+ *  @param sdot the 6-d state derivative vector
+ *  @param params points to an EOM_ParamStruct object
  */
 int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], void *params){
 	(void)t;
@@ -267,13 +267,13 @@ int DynamicsModel_2bp::simpleEOMs(double t, const double s[], double sdot[], voi
 }//====================================================
 
 /**
- *  \brief Compute the second derivatives of the potential function
+ *  @brief Compute the second derivatives of the potential function
  *
- *  \param mu the mass parameter of the system, km^3/s^2
- *  \param x coordinate, km
- *  \param y coordinate, km
- *  \param z coordinate, km
- *  \param ddots a pointer to a 6-element double array where the function will store 
+ *  @param mu the mass parameter of the system, km^3/s^2
+ *  @param x coordinate, km
+ *  @param y coordinate, km
+ *  @param z coordinate, km
+ *  @param ddots a pointer to a 6-element double array where the function will store 
  *  values for {Uxx, Uyy, Uzz, Uxy, Uxz, Uyz}. Note that Uyx = Uxy, etc.
  */
 void DynamicsModel_2bp::getUDDots(double mu, double x, double y, double z, double* ddots){

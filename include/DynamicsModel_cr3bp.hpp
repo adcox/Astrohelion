@@ -1,10 +1,10 @@
 /**
- *  \file DynamicsModel_cr3bp.hpp
- *	\brief 
+ *  @file DynamicsModel_cr3bp.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -36,7 +36,7 @@ class SysData_cr3bp;
 
 /**
  *	\ingroup model cr3bp
- *	\brief Derivative of DynamicsModel, specific to the CR3BP
+ *	@brief Derivative of DynamicsModel, specific to the CR3BP
  *
  *	The base class's methods provide a good framework for this system,
  *	so only minimal adjustments are needed. This model adds support for 

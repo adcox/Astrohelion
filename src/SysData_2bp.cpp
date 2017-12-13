@@ -1,10 +1,10 @@
 /**
- *	\file SysData_2bp.cpp
- *	\brief Derivative of SysData, specific to 2BP
+ *	@file SysData_2bp.cpp
+ *	@brief Derivative of SysData, specific to 2BP
  *	
- *	\author Andrew Cox
- *	\version August 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -39,7 +39,7 @@
 
 namespace astrohelion{
 /**
- *	\brief Default constructor
+ *	@brief Default constructor
  */
 SysData_2bp::SysData_2bp() : SysData(){
 	numPrimaries = 1;
@@ -48,8 +48,8 @@ SysData_2bp::SysData_2bp() : SysData(){
 }//========================================
 
 /**
- *	\brief Create a system data object using data from the primary
- *	\param P1 the name of the primary
+ *	@brief Create a system data object using data from the primary
+ *	@param P1 the name of the primary
  */
 SysData_2bp::SysData_2bp(std::string P1){
 	numPrimaries = 1;
@@ -60,9 +60,9 @@ SysData_2bp::SysData_2bp(std::string P1){
 }//===================================================
 
 /**
- *  \brief Load the system data object from a Matlab data file
+ *  @brief Load the system data object from a Matlab data file
  * 
- *  \param filepath path to the data file
+ *  @param filepath path to the data file
  */
 void SysData_2bp::initFromFile(const char *filepath){
 	// Load the matlab file
@@ -75,13 +75,13 @@ void SysData_2bp::initFromFile(const char *filepath){
 }//===================================================
 
 /**
- *  \brief Destructor
+ *  @brief Destructor
  */
 SysData_2bp::~SysData_2bp(){}
 
 /**
- *	\brief Initialize all data fields using the name of the primary
- *	\param P1 the name of the primary
+ *	@brief Initialize all data fields using the name of the primary
+ *	@param P1 the name of the primary
  */
 void SysData_2bp::initFromPrimNames(std::string P1){
 	BodyData p1Data(P1);
@@ -101,21 +101,21 @@ void SysData_2bp::initFromPrimNames(std::string P1){
 }//===================================================
 
 /**
- *	\brief Retrieve the model that governs the motion for this system type
- *	\return the model that governs the motion for this system type
+ *	@brief Retrieve the model that governs the motion for this system type
+ *	@return the model that governs the motion for this system type
  */
 const DynamicsModel* SysData_2bp::getDynamicsModel() const { return &model; }
 
 /**
- *	\brief Copy constructor
- *	\param d
+ *	@brief Copy constructor
+ *	@param d
  */
 SysData_2bp::SysData_2bp(const SysData_2bp &d) : SysData(d){}
 
 /**
- *	\brief Copy operator; makes a clean copy of a data object into this one
- *	\param d a CR3BP system data object
- *	\return this system data object
+ *	@brief Copy operator; makes a clean copy of a data object into this one
+ *	@param d a CR3BP system data object
+ *	@return this system data object
  */
 SysData_2bp& SysData_2bp::operator= (const SysData_2bp &d){
 	SysData::operator= (d);
@@ -123,22 +123,22 @@ SysData_2bp& SysData_2bp::operator= (const SysData_2bp &d){
 }//===================================================
 
 /**
- *	\return the mass parameter (km^3/s^2)
+ *	@return the mass parameter (km^3/s^2)
  */
 double SysData_2bp::getMu() const { return otherParams.at(0); }
 
 /**
- *  \brief Save the system data to a matlab file
+ *  @brief Save the system data to a matlab file
  * 
- *  \param filepath path to the data file
+ *  @param filepath path to the data file
  */
 void SysData_2bp::saveToMat(const char *filepath) const{
 	SysData::saveToMat(filepath);
 }//==================================================
 
 /**
- *	\brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
- *	\param matFile a pointer to the .mat file
+ *	@brief Save system data, like the names of the primaries and the system mass ratio, to a .mat file
+ *	@param matFile a pointer to the .mat file
  */
 void SysData_2bp::saveToMat(mat_t *matFile) const{
 	size_t dims[2] = {1,1};
@@ -162,9 +162,9 @@ void SysData_2bp::saveToMat(mat_t *matFile) const{
 }//===================================================
 
 /**
- *	\brief Populate data fiels for this data object by reading the primaries'
+ *	@brief Populate data fiels for this data object by reading the primaries'
  *	names from a Mat file
- *	\param matFile a pointer to the Mat file in question
+ *	@param matFile a pointer to the Mat file in question
  */
 void SysData_2bp::readFromMat(mat_t *matFile){
 	std::string P1 = astrohelion::readStringFromMat(matFile, "P1", MAT_T_UINT8, MAT_C_CHAR);

@@ -1,10 +1,10 @@
 /**
- *  \file SimEngine.hpp
- *	\brief 
+ *  @file SimEngine.hpp
+ *	@brief 
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -45,16 +45,16 @@ namespace astrohelion{
 class SysData;
 
 /**
- *  \brief DEPRECATED Wrapper object to use GSL EOM functions with Boost integrators
+ *  @brief DEPRECATED Wrapper object to use GSL EOM functions with Boost integrators
  */
 class boost_eom_wrapper{
 	/**
-	 *  \brief Definition of a function that the boost integrators use
+	 *  @brief Definition of a function that the boost integrators use
 	 * 
-	 *  \param t integration time
-	 *  \param q state vector
-	 *  \param qdot state time-derivative vector
-	 *  \param params void pointer that stores parameters relevant to the integration
+	 *  @param t integration time
+	 *  @param q state vector
+	 *  @param qdot state time-derivative vector
+	 *  @param params void pointer that stores parameters relevant to the integration
 	 */
 	typedef int (*eom_fcn)(double t, const double q[], double qdot[], void *params);
 	
@@ -63,23 +63,23 @@ class boost_eom_wrapper{
 
 public:
 	/**
-	 *  \brief DEPRECATED Construct an EOM wrapper for 
-	 *  \details 
+	 *  @brief DEPRECATED Construct an EOM wrapper for 
+	 *  @details 
 	 * 
-	 *  \param f 
-	 *  \param params 
+	 *  @param f 
+	 *  @param params 
 	 */
 	boost_eom_wrapper(eom_fcn f, EOM_ParamStruct *params) : gslFcn(f){
 		eomParams = params;
 	}//================================================
 
 	/**
-	 *  \brief Evaluate the equations of motion.
-	 *  \details This function is called by the Boost integrator. 
+	 *  @brief Evaluate the equations of motion.
+	 *  @details This function is called by the Boost integrator. 
 	 * 
-	 *  \param q Reference to the current state
-	 *  \param qdot Reference to a vector in which the state time-derivative is stored
-	 *  \param t time
+	 *  @param q Reference to the current state
+	 *  @param qdot Reference to a vector in which the state time-derivative is stored
+	 *  @param t time
 	 */
 	void operator() (const std::vector<double> &q, std::vector<double> &qdot, const double t){
 		qdot.assign(q.size(), 0);
@@ -89,9 +89,9 @@ public:
 
 
 /**
- *  \brief DEPRECATED Wrapper object to use already-written functions to save trajectory data from 
+ *  @brief DEPRECATED Wrapper object to use already-written functions to save trajectory data from 
  *  Boost integrators.
- *  \details This wrapper does not handle any event detection or other, more advanced, 
+ *  @details This wrapper does not handle any event detection or other, more advanced, 
  *  observer behaviors.
  *  
  */
@@ -102,23 +102,23 @@ class boost_observer{
 
 public:
 	/**
-	 *  \brief DEPRECATED
+	 *  @brief DEPRECATED
 	 * 
-	 *  \param m 
-	 *  \param t 
-	 *  \param params 
+	 *  @param m 
+	 *  @param t 
+	 *  @param params 
 	 */
 	boost_observer(const DynamicsModel *m, Arcset *t, EOM_ParamStruct *params) : traj(t), model(m){
 		eomParams = params;
 	}//================================================
 
 	/**
-	 *  \brief Observe the propagation.
-	 *  \details This function is called by the Boost integration library after each
+	 *  @brief Observe the propagation.
+	 *  @details This function is called by the Boost integration library after each
 	 *  step. Capabilities such as saving data and event detection should be handled here.
 	 * 
-	 *  \param q reference to the state vector
-	 *  \param t time at the state
+	 *  @param q reference to the state vector
+	 *  @param t time at the state
 	 */
 	void operator() (const std::vector<double> &q, double t){
 		(void) q;
@@ -128,7 +128,7 @@ public:
 };// END OF BOOST_OBSERVER------------------------------------------------------
 
 /**
- *  \brief Classify integrator types
+ *  @brief Classify integrator types
  */
 enum class Integ_tp{
 	RKCK,			//!< Explicit embedded Runge-Kutta Cash-Karp (4,5); variable step propagations
@@ -141,7 +141,7 @@ enum class Integ_tp{
 
 /**
  *	\ingroup engine
- *	\brief Performs numerical integration on any system type and produces an
+ *	@brief Performs numerical integration on any system type and produces an
  *	Arcset object
  *
  *	The simulation engine is the workhorse object for the Core. It
@@ -197,9 +197,9 @@ enum class Integ_tp{
  *	steps are taken where the dynamics are less volatile.
  *	
  *	
- *	\author Andrew Cox
- *	\version June 1, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version June 1, 2015
+ *	@copyright GNU GPL v3.0
  */
 class SimEngine : public Core, public Engine{
 	public:

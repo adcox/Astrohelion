@@ -1,5 +1,5 @@
 /**
- * \file Family.hpp
+ * @file Family.hpp
  */
 /*
  *	Astrohelion 
@@ -36,7 +36,7 @@ class ControlLaw;
 
 /**
  *	\ingroup fam
- *	\brief How to sort members of this family
+ *	@brief How to sort members of this family
  *	
  *	Families typically evolve naturally through one variable, and
  *	it makes sense to analyze trends using this parameter as the 
@@ -59,9 +59,9 @@ enum class FamSort_tp : int{
 
 /**
  *  \ingroup fam
- *  \brief [brief description]
- *  \details [long description]
- *  \return [description]
+ *  @brief [brief description]
+ *  @details [long description]
+ *  @return [description]
  */
 class Family : public Core{
 	public:

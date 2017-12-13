@@ -1,10 +1,10 @@
 /**
- *  \file Constraint.hpp
- *	\brief Contains information about a constraint on a nodeset, node, or segment
+ *  @file Constraint.hpp
+ *	@brief Contains information about a constraint on a nodeset, node, or segment
  *	
- *	\author Andrew Cox
- *	\version May 25, 2016
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version May 25, 2016
+ *	@copyright GNU GPL v3.0
  */
 /*
  *	Astrohelion 
@@ -34,7 +34,7 @@
 
 namespace astrohelion{
 /**
- *	\brief Specify the type of constraint
+ *	@brief Specify the type of constraint
  *
  *	This type tells the correction engine how to interpret and apply the 
  *	information stored in this constraint object.
@@ -249,7 +249,7 @@ enum class Constraint_tp : int{
 };
 
 /**
- *  \brief Describes how a constraint is applied, i.e., what type of object is controlled
+ *  @brief Describes how a constraint is applied, i.e., what type of object is controlled
  *  by the constraint.
  */
 enum class ConstraintApp_tp{
@@ -259,7 +259,7 @@ enum class ConstraintApp_tp{
 };
 		
 /**
- *	\brief Contains information about how a particular node, segment, or arcset
+ *	@brief Contains information about how a particular node, segment, or arcset
  *	should be constrained during a corrections process
  *
  * 	**Adding a New Constraint**
@@ -278,9 +278,9 @@ enum class ConstraintApp_tp{
  *		the default value of the slack variable (if possible) in the relevant
  *		model and update the multShoot_getSlackVarVal() function.
  *
- *	\author Andrew Cox
- *	\version August 3, 2015
- *	\copyright GNU GPL v3.0
+ *	@author Andrew Cox
+ *	@version August 3, 2015
+ *	@copyright GNU GPL v3.0
  */
 class Constraint : public Core{
 	public:

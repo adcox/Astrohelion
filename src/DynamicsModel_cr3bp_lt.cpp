@@ -339,7 +339,7 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
 
     unsigned int maxCount = 20;
     unsigned int maxOuterCount = 10000;
-    double maxDiffAlpha = PI/100.0;
+    double maxDiffAlpha = PI/360.0;
     double minStep_x = f*1e-6;
     double minStep_y = f*1e-6;
     double minStep_alpha = PI/500.0;
@@ -348,13 +348,16 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
     if(L < 1 || L > 5)
         throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: input L value is invalid");
 
+    std::vector<double>& zacRef = *zac;
     if(f == 0){
         zac->assign(3, 0);
-        DynamicsModel_cr3bp::getEquilibPt(pSys, L, tol, &(zac->front()));
+        double LPt[3];
+        DynamicsModel_cr3bp::getEquilibPt(pSys, L, tol, LPt);
+        zacRef[1] = LPt[1];
+        zacRef[2] = LPt[2];
     }else{
         double mu = pSys->getMu();
         double initSol[3] = {0};    //[alpha, x, y]
-        std::vector<double>& zacRef = *zac;
 
         // First, compute location at alpha = 0 (or pi)
         if(L > 3){
@@ -369,7 +372,9 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         initSol[1] = r13*cos(sgn*theta) - mu;
                         initSol[2] = r13*sin(sgn*theta);
                     }else{
-                        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: Did not catch imaginary number in L4/5 at alpha = 0");
+                        char msg[128];
+                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: Did not catch imaginary number in L%d at alpha = 0", L);
+                        throw Exception(msg);
                     }
                 }
             }else{
@@ -386,11 +391,15 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         initSol[1] = r13*cos(sgn*theta) - mu;
                         initSol[2] = r13*sin(sgn*theta);
                     }else{
-                        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: Could not compute initial value for L4/5");
+                        char msg[128];
+                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: Could not compute initial value for L%d", L);
+                        throw Exception(msg);
                     }
                 }else{
                     // This shouldn't happen for "reasonable" values of f
-                    throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: f is too large for analytical solution for L4/5");
+                    char msg[128];
+                    sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: f = %e is too large for analytical solution for L4/5", f);
+                    throw Exception(msg);
                 }
             }
 
@@ -412,18 +421,24 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
                         gamma -= (mu/(gamma*gamma) - (1-mu)/((1-gamma)*(1-gamma)) - gamma - mu + 1 + f) / (-2*mu/pow(gamma, 3) - 2*(1-mu)/pow(1-gamma, 3) - 1);
                         break;
                     case 2:
-                        gamma -= (-mu/(gamma*gamma) - (1-mu)/((1+gamma)*(1+gamma)) + gamma - mu + 1 + f) / (2*mu/pow(gamma, 3) - 2*(1-mu)/pow(1+gamma, 3) + 1);
+                        gamma -= (-mu/(gamma*gamma) - (1-mu)/((1+gamma)*(1+gamma)) + gamma - mu + 1 + f) / (2*mu/pow(gamma, 3) + 2*(1-mu)/pow(1+gamma, 3) + 1);
                         break;
                     case 3:
                         gamma -= (mu/((1+gamma)*(1+gamma)) + (1-mu)/(gamma*gamma) - gamma - mu + f) / (-2*mu/pow(1+gamma, 3) - 2*(1-mu)/pow(gamma, 3) - 1);
                         break;
                     default:
-                        throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: Invalid L number in Newton-Raphson process");
+                    {
+                        char msg[128];
+                        sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: Invalid L = %d in Newton-Raphson process", L);
+                        throw Exception(msg);
+                    }
                 }
             }
 
             if(std::abs(gamma - gamma_prev) > tol){
-                throw Exception("DynamicsModel_cr3bp_lt::getEquilibPt: L1/2/3 Newton process did not converge for alpha = 0");
+                char msg[128];
+                sprintf(msg, "DynamicsModel_cr3bp_lt::getEquilibPt: L%d Newton process did not converge for alpha = 0", L);
+                throw Exception(msg);
             }
 
             if(L < 3){

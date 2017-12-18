@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Astrohelion>
+<astrohelion>
 	<spice>
 		<data_filepath>/builds/adcox/Astrohelion/data/data_SPICE/</data_filepath>
 		<time_kernel>naif0012.tls</time_kernel>
 		<spk_kernel>de430.bsp</spk_kernel>
 	</spice>
-</Astrohelion>
+</astrohelion>

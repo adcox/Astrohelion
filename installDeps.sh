@@ -89,6 +89,7 @@ fi
 wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/$SPK
 wget http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/$TLS
 mkdir -p $SPICE_DIR
+echo "Copying SPICE files to %SPICE_DIR"
 mv $SPK $SPICE_DIR/
 mv $TLS $SPICE_DIR/
 
@@ -102,6 +103,7 @@ rm 3.3.3.tar.gz
 
 ## Configuration Files
 cd ..
+echo "Copying body data to $CONFIG_DIR"
 cp misc/body_data.xml $CONFIG_DIR/body_data.xml
 SETTINGS="$CONFIG_DIR/user_settings.xml"
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > $SETTINGS
@@ -113,4 +115,5 @@ echo "    <spk_kernel>$SPK</spk_kernel>" >> $SETTINGS
 echo "  </spice>" >> $SETTINGS
 echo "</astrohelion>" >> $SETTINGS
 
+echo "Saving settings to $CONFIG_DIR"
 cp $SETTINGS $CONFIG_DIR/default_settings.xml

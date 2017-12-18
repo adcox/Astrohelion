@@ -23,7 +23,7 @@ mkdir -p $INSTALL_DIR
 ## Boost
 if [ ! -f "$INSTALL_DIR/include/boost" ]; then
 	wget https://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.gz
-	tar -xvzf boost_1_62_0.tar.gz >> $LOG
+	tar -xzf boost_1_62_0.tar.gz >> $LOG
 	cd boost_1_62_0
 	echo "Installing BOOST"
 	./bootstrap.sh --prefix=$INSTALL_DIR >> $LOG
@@ -44,7 +44,7 @@ if [ ! -d "%INSTALL_DIR/include/cspice" ]; then
 		wget http://naif.jpl.nasa.gov/pub/naif/toolkit/C/PC_Linux_GCC_64bit/packages/cspice.tar.Z
 	fi
 
-	tar -xvzf cspice.tar.Z >> $LOG
+	tar -xzf cspice.tar.Z >> $LOG
 	cd cspice
 	echo "Installing CSPICE"
 	mkdir -p $INSTALL_DIR/include/cspice
@@ -60,7 +60,7 @@ fi
 ## MatIO
 if [ ! -e "INSTALL_DIR/include/matio.h" ]; then
 	wget https://sourceforge.net/projects/matio/files/matio-1.5.10.tar.gz
-	tar -xvzf matio-* >> $LOG
+	tar -xzf matio-* >> $LOG
 	cd matio-*
 	echo "Installing MATIO"
 	./configure --prefix=$INSTALL_DIR >> $LOG
@@ -73,7 +73,7 @@ fi
 ## GSL
 if [ ! -d "$INSTALL_DIR/include/gsl" ]; then
 	wget http://mirror.nexcess.net/gnu/gsl/gsl-2.2.1.tar.gz
-	tar -xvzf gsl-2.2.1.tar.gz >> $LOG
+	tar -xzf gsl-2.2.1.tar.gz >> $LOG
 	cd gsl-2.2.1
 	echo "Installing GSL"
 	./configure --prefix=$INSTALL_DIR >> $LOG
@@ -100,7 +100,7 @@ fi
 ## Eigen - Header only
 if [ ! -d "$INSTALL_DIR/include/Eigen" ]; then
 	wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz
-	tar -xvzf 3.3.3.tar.gz
+	tar -xzf 3.3.3.tar.gz
 	mv eigen* eigen
 	mv eigen/Eigen $INSTALL_DIR/include/Eigen
 	mv eigen/unsupported $INSTALL_DIR/include/Eigen/unsupported
@@ -112,6 +112,8 @@ cp ../settings.xml /root/.config/astrohelion/user_settings.xml
 cp ../body_data.xml /root/.config/astrohelion/body_data.xml
 
 ## Final print out for debugging purposes
+echo "ls -la /root/.config/astrohelion"
+ls -la /root/.config/astrohelion
 echo "ls -la $INSTALL_DIR"
 ls -la $INSTALL_DIR
 echo "ls -la $INSTALL_DIR/include"

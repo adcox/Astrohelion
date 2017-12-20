@@ -58,7 +58,7 @@ SYS_INC_EXTERN_DIR := $(INSTALL_DIR)/include
 # Options that are platform dependent
 
 ifeq ($(UNAME_S), Linux)
-	LDFLAGS += -L /usr/local/lib
+	LDFLAGS += -L/usr/local/lib
 else ifeq ($(UNAME_S), Darwin)
 	# Do special things for OS X
 endif

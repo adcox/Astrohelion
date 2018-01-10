@@ -164,8 +164,8 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     double mu = pSys->getMu();           // nondimensional mass ratio
 
     // compute distance to primaries and velocity magnitude
-    double d = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
-    double r = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
+    double r13 = sqrt( (s[0]+mu)*(s[0]+mu) + s[1]*s[1] + s[2]*s[2] );
+    double r23 = sqrt( (s[0]-1+mu)*(s[0]-1+mu) + s[1]*s[1] + s[2]*s[2] );
 
     // Retrieve the control law acceleration values
     double control_accel[3] = {0};
@@ -177,9 +177,9 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
     sdot[1] = s[4];
     sdot[2] = s[5];
 
-    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(d,3) - mu*(s[0]-1+mu)/pow(r,3) + control_accel[0];
-    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(d,3) - mu*s[1]/pow(r,3) + control_accel[1];
-    sdot[5] = -(1-mu)*s[2]/pow(d,3) - mu*s[2]/pow(r,3) + control_accel[2];
+    sdot[3] = 2*s[4] + s[0] - (1-mu)*(s[0]+mu)/pow(r13,3) - mu*(s[0]-1+mu)/pow(r23,3) + control_accel[0];
+    sdot[4] = -2*s[3] + s[1] - (1-mu) * s[1]/pow(r13,3) - mu*s[1]/pow(r23,3) + control_accel[1];
+    sdot[5] = -(1-mu)*s[2]/pow(r13,3) - mu*s[2]/pow(r23,3) + control_accel[2];
 
     sdot[6] = law ? law->get_dmdt(t, s, pSys) : 0;
 
@@ -195,38 +195,39 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
 
     
     const unsigned int stmSide = (coreDim + ctrlDim);
-    MatrixXRd A = MatrixXRd::Zero(stmSide, stmSide);
+    std::vector<double> A(stmSide*stmSide, 0);
 
     // Velocity relationships
-    A(0, 3) = 1;    // d/dvx (dx/dt)
-    A(1, 4) = 1;    // d/dvy (dy/dt)
-    A(2, 5) = 1;    // d/dvz (dz/dt)
+    A[0*stmSide + 3] = 1;   // d/dvx (dx/dt)
+    A[1*stmSide + 4] = 1;   // d/dvy (dy/dt)
+    A[2*stmSide + 5] = 1;   // d/dvz (dz/dt)
 
     // Uxx = d/dx (dvx/dt)
-    A(3, 0) = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*pow((s[0] + mu),2)/pow(d,5) + 
-        3*mu*pow((s[0] + mu - 1), 2)/pow(r,5);
+    A[3*stmSide + 0] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*pow((s[0] + mu),2)/pow(r13,5) + 
+        3*mu*pow((s[0] + mu - 1), 2)/pow(r23,5);
     // Uxy = d/dy (dvx/dt)
-    A(3, 1) = 3*(1-mu)*(s[0] + mu)*s[1]/pow(d,5) + 3*mu*(s[0] + mu - 1)*s[1]/pow(r,5);
+    A[3*stmSide + 1] = 3*(1-mu)*(s[0] + mu)*s[1]/pow(r13,5) + 3*mu*(s[0] + mu - 1)*s[1]/pow(r23,5);
     // Uxz = d/dz (dvx/dt)
-    A(3, 2) = 3*(1-mu)*(s[0] + mu)*s[2]/pow(d,5) + 3*mu*(s[0] + mu - 1)*s[2]/pow(r,5);
+    A[3*stmSide + 2] = 3*(1-mu)*(s[0] + mu)*s[2]/pow(r13,5) + 3*mu*(s[0] + mu - 1)*s[2]/pow(r23,5);
 
     // Uyy = d/dy (dvy/dt)
-    A(4, 1) = 1 - (1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*s[1]*s[1]/pow(d,5) + 3*mu*s[1]*s[1]/pow(r,5);
+    A[4*stmSide + 1] = 1 - (1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*s[1]*s[1]/pow(r13,5) + 3*mu*s[1]*s[1]/pow(r23,5);
 
     // Uyz = d/dz (dvy/dt)
-    A(4, 2) = 3*(1-mu)*s[1]*s[2]/pow(d,5) + 3*mu*s[1]*s[2]/pow(r,5);
+    A[4*stmSide + 2] = 3*(1-mu)*s[1]*s[2]/pow(r13,5) + 3*mu*s[1]*s[2]/pow(r23,5);
 
     // Uzz = d/dz (dvz/dt)
-    A(5, 2) = -(1-mu)/pow(d,3) - mu/pow(r,3) + 3*(1-mu)*s[2]*s[2]/pow(d,5) + 3*mu*s[2]*s[2]/pow(r,5);
+    A[5*stmSide + 2] = -(1-mu)/pow(r13,3) - mu/pow(r23,3) + 3*(1-mu)*s[2]*s[2]/pow(r13,5) + 3*mu*s[2]*s[2]/pow(r23,5);
 
     // Symmetry
-    A(4,0) = A(3,1);
-    A(5,0) = A(3,2);
-    A(5,1) = A(4,2);
+    A[4*stmSide + 0] = A[3*stmSide + 1];
+    A[5*stmSide + 0] = A[3*stmSide + 2];
+    A[5*stmSide + 1] = A[4*stmSide + 2];
 
-    A(3, 4) = 2;    // d/dvy (dvx/dt)
-    A(4, 3) = -2;   // d/dvx (dvy/dt)
+    A[3*stmSide + 4] = 2;   // d/dvy (dvx/dt)
+    A[4*stmSide + 3] = -2;   // d/dvx (dvy/dt)
 
+    unsigned int r = 0, c = 0, k = 0;
     if(law){
         // Get partial derivatives of acceleration terms (which are part of EOMS 3, 4, 5) w.r.t. all state variables
         std::vector<double> law_accelPartials(ctrlOutDim*coreDim, 0);
@@ -234,9 +235,9 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
         law->getLaw_OutputPartials(t, s, pSys, &(law_accelPartials.front()), law_accelPartials.size());
 
         // Add the control output partials to the existing partials (control outputs are part of core state EOMs)
-        for(unsigned int r = 3; r < 3+ctrlOutDim; r++){
-            for(unsigned int c = 0; c < coreDim; c++){
-                A(r, c) += law_accelPartials.at((r - 3)*coreDim + c);
+        for(r = 3; r < 3+ctrlOutDim; r++){
+            for(c = 0; c < coreDim; c++){
+                A[r*stmSide + c] += law_accelPartials.at((r - 3)*coreDim + c);
             }
         }
 
@@ -247,31 +248,33 @@ int DynamicsModel_cr3bp_lt::fullEOMs(double t, const double s[], double sdot[], 
             law->getLaw_EOMPartials(t, s, pSys, &(law_eomPartials.front()), law_eomPartials.size());
 
             // Assign the partial derivatives of the time derivatives of the control states w.r.t. all core and control states
-            for(unsigned int r = coreDim; r < coreDim + ctrlDim; r++){
-                for(unsigned int c = 0; c < coreDim + ctrlDim; c++){
-                    A(r, c) = law_stateDerivPartials.at((r - coreDim)*(coreDim + ctrlDim) + c);
+            for(r = coreDim; r < coreDim + ctrlDim; r++){
+                for(c = 0; c < coreDim + ctrlDim; c++){
+                    A[r*stmSide + c] = law_stateDerivPartials.at((r - coreDim)*(coreDim + ctrlDim) + c);
                 }
             }
 
             // Assign the partial derivatives of the EOMs w.r.t. control states
-            for(unsigned int r = 0; r < coreDim; r++){
-                for(unsigned int c = coreDim; c < coreDim + ctrlDim; c++){
-                    A(r, c) = law_eomPartials.at(r*ctrlDim + c - coreDim);
+            for(r = 0; r < coreDim; r++){
+                for(c = coreDim; c < coreDim + ctrlDim; c++){
+                    A[r*stmSide + c] = law_eomPartials.at(r*ctrlDim + c - coreDim);
                 }
             }
         }
     }
 
-    // Turn sub-array into matrix object for math stuffs
-    const MatrixXRd phi = Eigen::Map<const MatrixXRd>(s + coreDim + ctrlDim, stmSide, stmSide);
-
-    // Compute derivative of STM
-    MatrixXRd phiDot(stmSide, stmSide);
-    phiDot.noalias() = A*phi;     // use noalias() to avoid creating an unnecessary temporary matrix in Eigen library
-
-    // Copy the elements of phiDot into the derivative array
-    const double *phiDotData = phiDot.data();
-    std::copy(phiDotData, phiDotData + stmSide*stmSide, sdot + coreDim + ctrlDim);
+    // Do the matrix multiplication Phi_dot = A*Phi to compute
+    // the STM time-derivative.
+    // * Phi element 0 is stored in s[coreDim + ctrlDim], size stmSide*stmSide
+    // * Phi_dot element 0 is stored in the same location, but in the sdot array
+    for(r = 0; r < stmSide; r++){
+        for(c = 0; c < stmSide; c++){
+            sdot[coreDim + ctrlDim + r*stmSide + c] = 0;
+            for(k = 0; k < stmSide; k++){
+                sdot[coreDim + ctrlDim + r*stmSide + c] += A[r*stmSide + k]*s[coreDim + ctrlDim + k*stmSide + c];
+            }
+        }
+    }
 
     return GSL_SUCCESS;
 }//===============================================================

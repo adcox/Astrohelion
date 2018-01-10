@@ -257,7 +257,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 		double f = lawType < 100 ? params[0] : s[7];
 
 		// +1 for RIGHT, -1 for LEFT
-		int sign = lawType == CONST_F_C_2D_RIGHT ? 1 : -1;
+		int sign = (lawType == Law_tp::CONST_F_C_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
 
 		if(len < numOutputs)
 			throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
@@ -294,7 +294,7 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
 		double f = lawType < 100 ? params[0] : s[7];
 
 		// +1 for PRO, -1 for ANTI
-		int sign = lawType == Law_tp::CONST_F_PRO_VEL ? 1 : -1;
+		int sign = (lawType == Law_tp::CONST_F_PRO_VEL || lawType == Law_tp::VAR_F_PRO_VEL) ? 1 : -1;
 
 		if(len < numOutputs)
 			throw Exception("ControlLaw_cr3bp_lt::getLaw_CONST_F_PRO_VEL: law data length must be at least 3!");
@@ -372,7 +372,8 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 			throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Expects len = 21");
 
 		double f = lawType < 100 ? params[0] : s[7];
-		int sign = lawType == CONST_F_C_2D_RIGHT ? 1 : -1;		// +1 for RIGHT, -1 for LEFT
+		// +1 for RIGHT, -1 for LEFT
+		int sign = (lawType == Law_tp::CONST_F_C_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
@@ -425,7 +426,8 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 		if(len != numOutputs*7)
 			throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_AlongVel: Expects len = 21");
 
-		int sign = lawType == Law_tp::CONST_F_PRO_VEL ? 1 : -1;		// +1 for PRO, -1 for ANTI
+		// +1 for PRO, -1 for ANTI
+		int sign = (lawType == Law_tp::CONST_F_PRO_VEL || lawType == Law_tp::VAR_F_PRO_VEL) ? 1 : -1;
 		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
 		double f = lawType < 100 ? params[0] : s[7];
 

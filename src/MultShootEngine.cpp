@@ -1137,7 +1137,8 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, Verbosit
  *  @param engine correction engine object configured with the appropriate settings (i.e.,
  *  equal arc time, etc.). Note that the maxIts, verbosity, and ignoreDiverge
  *  attributes of the engine will be overridden by this function.
- *  @param verbosity Specify how verbose the output is
+ *  @param verbosity Specify how verbose the output is. If set to DEBUG, info about the
+ *  errors will be printed regardless of their size.
  *  @param writeToFile Whether or not to write .csv or .mat files with relevant information
  *  
  *  @return whether or not the Jacobian matrix is "correct". Issues that result in a return 
@@ -1151,6 +1152,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
     corrector.setMaxIts(1);
     corrector.setVerbosity(verbosity < Verbosity_tp::DEBUG ? Verbosity_tp::NO_MSG : Verbosity_tp::ALL_MSG);
     corrector.setIgnoreDiverge(true);
+    corrector.setIgnoreCrash(true);
     corrector.setFullFinalProp(false);
 
     // Run multiple shooter to get X, FX, and DF
@@ -1172,7 +1174,7 @@ bool MultShootEngine::finiteDiff_checkMultShoot(const Arcset *pNodeset, MultShoo
         std::vector<double> pertX = it.X0;      // Copy unperturbed state vetor
         pertX[i] += pertSize;                   // add perturbation
         it.X = pertX;                           // Copy into iteration data
-        MultShootData pertIt = corrector.multShoot(it);     // Correct perturbed state
+        MultShootData pertIt = corrector.multShoot(it);     // Correct perturbred state
         Eigen::VectorXd FX_up = Eigen::Map<Eigen::VectorXd>(&(pertIt.FX[0]), it.totalCons, 1);
 
         // Do another process for opposite direction

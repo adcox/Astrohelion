@@ -16,43 +16,44 @@ int main(int argc, char **argv) {
 	(void) argc;
 	(void) argv;
 
-	MSTOF_tp tofType = MSTOF_tp::VAR_FREE;
-	ControlLaw_cr3bp_lt::Law_tp lawType = ControlLaw_cr3bp_lt::Law_tp::VAR_F_ANTI_VEL;
+	MSTOF_tp tofType = MSTOF_tp::VAR_FIXSIGN;
+	ControlLaw_cr3bp_lt::Law_tp lawType = ControlLaw_cr3bp_lt::Law_tp::VAR_F_PRO_VEL;
 
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {3000}, ctrlState {0.3};
-
-	printf("varF test_continuity, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
-
+	std::vector<double> ltParams {1500}, ctrlState{1e-2};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
+
+	printf("varF test_rmState, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(emL3Lyap_ic, ctrlState, 0, emL3Lyap_T, 2, &halfLyapArcset, &law);
+	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2.0, 3, &halfLyapArcset, &law);
+
+	MultShootEngine corrector;
+	corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+	corrector.setTOFType(tofType);
+	corrector.setTol(1e-11);
+	corrector.setFullFinalProp(false);
+	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+
+	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN, NAN};
+	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
+	halfLyapArcset.addConstraint(stateCon);
+
+	Constraint rmState(Constraint_tp::RM_STATE, 0, nullptr, 0);
+	halfLyapArcset.addConstraint(rmState);
 
 	// Remove final ctrl state; no constraints on final ctrl state, results in column of zeros
 	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
 	halfLyapArcset.addConstraint(rmEndCtrl);
 
-	MultShootEngine corrector;
-	corrector.setVerbosity(Verbosity_tp::SOME_MSG);
-	corrector.setTOFType(tofType);
+	MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::SOME_MSG);
+	halfLyapArcset.saveToMat("data/lt_initGuess.mat");
+	corrector.multShoot(&halfLyapArcset, &correctedSet);
 
-	MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::DEBUG, true);
+	// std::vector<double> finalState = correctedSet.getState(stateCon.getID());
+	// stateDiffBelowTol(finalState, stateConData, 1e-12);
 
-	try{
-		corrector.multShoot(&halfLyapArcset, &correctedSet);
-	}catch(Exception &e){
-		printErr("Error (%s, %s): %s\n", ControlLaw_cr3bp_lt::lawTypeToString(lawType).c_str(),
-			MSTOF_tp_cStr(tofType), e.what());
-		char filename[128];
-		sprintf(filename, "%s_%s_input.mat", ControlLaw_cr3bp_lt::lawTypeToString(lawType).c_str(),
-			MSTOF_tp_cStr(tofType));
-		halfLyapArcset.saveToMat(filename);
-
-		sprintf(filename, "%s_%s_corrected.mat", ControlLaw_cr3bp_lt::lawTypeToString(lawType).c_str(),
-			MSTOF_tp_cStr(tofType));
-		correctedSet.saveToMat(filename);
-	}
+	// correctedSet.saveToMat("data/lt_correctedSet.mat");
 }

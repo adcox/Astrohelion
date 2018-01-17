@@ -43,7 +43,7 @@ namespace astrohelion{
  *  Initialize static variable: Alignment epoch of the Sun-Earth-Moon System
  *  in ephemeris time (seconds past Jan 1, 2000 00:00:00.00 UTC)
  *  
- *  Sun lies in the YZ (near the ienrtial y-axis) plane at 2005 JUN 21 08:31:35
+ *  Sun lies in the YZ (near the inertial y-axis) plane at 2005 JUN 21 08:31:35
  *  Sun-Earth-Moon alignment (near the inertial y-axis) occurs at 2005 JUN 22 04:11:35
  *  Average of these two times is 2005 JUN 21 18:21:36
  */

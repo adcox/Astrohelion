@@ -163,6 +163,7 @@ public:
 	static void convertLaws(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	static double thrust_dim2nondim(double, SysData_cr3bp_lt*);
 	static double thrust_nondim2dim(double, SysData_cr3bp_lt*);
+	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
 	void print() const;
 	//\}
 
@@ -245,7 +246,6 @@ protected:
 	void getEOMPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 	void getEOMPartials_VarF(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 	
-	static void pointingVecToAngles(Eigen::Vector3d, double*, double*);
 	static void convertTo_GeneralConstF(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	//\}
 };

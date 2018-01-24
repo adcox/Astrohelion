@@ -32,6 +32,7 @@
 #include "Arcset_cr3bp_lt.hpp"
 #include "Calculations.hpp"
 #include "ControlLaw.hpp"
+#include "ControlLaw_cr3bp_lt.hpp"
 #include "Event.hpp"
 #include "Exceptions.hpp"
 #include "MultShootData.hpp"
@@ -713,6 +714,42 @@ void DynamicsModel_cr3bp_lt::getEquilibPt(const SysData_cr3bp_lt *pSys, int L, d
             }
         }
     }// End of if/else f == 0
+}//====================================================
+
+/**
+ * @brief Compute the CR3BP-LT Hamiltonian at the specified state and time
+ * 
+ * @param t nondimensional time value associated with the state vector
+ * @param q pointer to the full state (core + control)
+ * @param pSys pointer to the system data object
+ * @param pLaw pointer to the control law object
+ * @return the CR3BP-LT Hamiltonian value at the specified state and time
+ */
+double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, const SysData_cr3bp_lt *pSys, const ControlLaw_cr3bp_lt *pLaw){
+    if(pSys ==  nullptr)
+        throw Exception("DynamicsModel_cr3bp_lt::getHamiltonian: Cannot proceed with SysData = nullptr");
+
+    if(pLaw == nullptr)
+        throw Exception("DynamicsModel_cr3bp_lt::getHamiltonian: Cannot proceed with ControlLaw = nullptr");
+
+    // Get the control law output (acceleration vector)
+    Eigen::Vector3d a;
+    pLaw->getLaw_Output(t, q, pSys, a.data(), 3);
+
+    // Extract the thrust magnitude and pointing angles
+    double f = a.norm();
+    double alpha = 0, beta = 0;
+    ControlLaw_cr3bp_lt::pointingVecToAngles(a, &alpha, &beta);
+
+    // Compute other useful parameters
+    double mu = pSys->getMu();
+    double r13 = sqrt((q[0] + mu)*(q[0] + mu) + q[1]*q[1] + q[2]*q[2]);
+    double r23 = sqrt((q[0] - 1 + mu)*(q[0] -1 + mu) + q[1]*q[1] + q[2]*q[2]);
+
+    // Compute the CR3BP-LT Hamiltonian
+    return 0.5*(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]) - 0.5*(q[0]*q[0] + q[1]*q[1]) -
+        (1-mu)/r13 - mu/r23 - 
+        (f/q[6])*(q[0]*cos(alpha)*cos(beta) + q[1]*sin(alpha)*cos(beta) + q[2]*sin(beta));
 }//====================================================
 
 /**

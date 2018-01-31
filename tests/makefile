@@ -244,6 +244,7 @@ list:
 	@- echo "  arcset"
 	@- echo "  bc4bpDef"
 	@- echo "  cr3bpFam"
+	@- echo "  event"
 	@- echo "  lambertArc"
 	@- echo "  linMotion"
 	@- echo "  manifoldEngine"

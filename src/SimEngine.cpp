@@ -1305,7 +1305,7 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
 
     // Construct a simple arcset from previous states we know work well
     Node n0(&(arcIC.front()), core_dim, t0);
-    eventArcset.addNode(n0);
+    model->sim_addNode(n0, &(arcIC.front()), t0, &eventArcset, eomParams, Event_tp::NONE);
 
     // Determine whether or not we're using an "ENDSEG" type constraint
     bool useEndSeg;
@@ -1327,23 +1327,22 @@ bool SimEngine::locateEvent_multShoot(const double *y, double t, int evtIx, Arcs
     tempSeg.appendState(arcIC);
     tempSeg.appendState(arcFC);
     tempSeg.setStateWidth(arcIC.size());
-    tempSeg.setCtrlLaw(eomParams->pCtrlLaw);
 
     if(useEndSeg){
         // No need to add a terminal node, just add the segment
-        eventArcset.addSeg(tempSeg);
+        model->sim_addSeg(tempSeg, &(arcFC[0]), t0, &eventArcset, eomParams);
 
         // Constrain the end of the segment
         Constraint eventCon(events[evtIx].getConType(), 0, events[evtIx].getConData());
         eventArcset.addConstraint(eventCon);
     }else{
         // Add a final node
-        Node ni(&(arcFC.front()), core_dim, t0+tof);
-        eventArcset.addNode(ni);
+        Node nf(&(arcFC.front()), core_dim, t0+tof);
+        model->sim_addNode(nf, &(arcFC.front()), t0+tof, &eventArcset, eomParams, Event_tp::SIM_TOF);
 
         // Add a segment to link the two
         tempSeg.setTerminus(1);
-        eventArcset.addSeg(tempSeg);
+        model->sim_addSeg(tempSeg, &(arcFC[0]), t0, &eventArcset, eomParams);
 
         // Constrain the final node
         Constraint eventCon(events[evtIx].getConType(), 1, events[evtIx].getConData());

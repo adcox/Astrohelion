@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "Common.hpp"
+#include "EigenDefs.hpp"
 #include "Utilities.hpp"
-
 
 BOOST_AUTO_TEST_CASE(SumInt){
 	int data[] = {1,2,3,4,5};
@@ -128,6 +128,16 @@ BOOST_AUTO_TEST_CASE(To_Underlying){
 
 	BOOST_CHECK(typeid(astrohelion::to_underlying(a::VAL1)) == typeid(int));
 	BOOST_CHECK(typeid(astrohelion::to_underlying(b::VAL2)) == typeid(char));
+}//=================================================
+
+BOOST_AUTO_TEST_CASE(Save_Load_Matrix){
+	using namespace astrohelion;
+
+	std::vector<double> data {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	MatrixXRd A = Eigen::Map<MatrixXRd>(&(data[0]), 2, 5);
+	saveMatrixToFile("temp.mat", "A", data, 2, 5);
+	MatrixXRd B = readMatrixFromMat("temp.mat", "A");
+	BOOST_CHECK_EQUAL(A, B.transpose());
 }//=================================================
 
 

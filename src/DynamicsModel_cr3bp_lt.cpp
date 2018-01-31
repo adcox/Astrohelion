@@ -737,9 +737,9 @@ double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, const S
     pLaw->getLaw_Output(t, q, pSys, a.data(), 3);
 
     // Extract the thrust magnitude and pointing angles
-    double f = a.norm();
-    double alpha = 0, beta = 0;
-    ControlLaw_cr3bp_lt::pointingVecToAngles(a, &alpha, &beta);
+    // double f = a.norm();
+    // double alpha = 0, beta = 0;
+    // ControlLaw_cr3bp_lt::pointingVecToAngles(a, &alpha, &beta);
 
     // Compute other useful parameters
     double mu = pSys->getMu();
@@ -748,8 +748,10 @@ double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, const S
 
     // Compute the CR3BP-LT Hamiltonian
     return 0.5*(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]) - 0.5*(q[0]*q[0] + q[1]*q[1]) -
-        (1-mu)/r13 - mu/r23 - 
-        (f/q[6])*(q[0]*cos(alpha)*cos(beta) + q[1]*sin(alpha)*cos(beta) + q[2]*sin(beta));
+        (1-mu)/r13 - mu/r23 - a(0)*q[0] - a(1)*q[1] - a(2)*q[2];
+    // return 0.5*(q[3]*q[3] + q[4]*q[4] + q[5]*q[5]) - 0.5*(q[0]*q[0] + q[1]*q[1]) -
+    //     (1-mu)/r13 - mu/r23 - 
+    //     (f/q[6])*(q[0]*cos(alpha)*cos(beta) + q[1]*sin(alpha)*cos(beta) + q[2]*sin(beta));
 }//====================================================
 
 /**

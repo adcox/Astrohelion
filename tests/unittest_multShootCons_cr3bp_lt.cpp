@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_SUITE(CR3BP_LT_CONST_F)
 
 BOOST_DATA_TEST_CASE(test_continuity, data::make(constF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {0.3, 1500};
+	std::vector<double> ltParams {sqrt(0.3), 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
@@ -107,7 +107,7 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(constF_lawTypes) * data::make(t
 
 BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(constF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	std::vector<double> ltParams {9e-3, 1500};
+	std::vector<double> ltParams {sqrt(9e-3), 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	//printf("test_stateConstraint, law = %d, tof = %d\n", to_underlying(lawType), to_underlying(tofType));
@@ -135,7 +135,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(constF_lawTypes) * data::m
 
 BOOST_DATA_TEST_CASE(test_endSegCon, data::make(constF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	std::vector<double> ltParams {9e-3, 1500};
+	std::vector<double> ltParams {sqrt(9e-3), 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	//printf("test_endSegCon, law = %d, tof = %d\n", to_underlying(lawType), to_underlying(tofType));
@@ -165,7 +165,7 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(constF_lawTypes) * data::make(to
 
 BOOST_DATA_TEST_CASE(test_rmState, data::make(constF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {0.3, 1500};
+	std::vector<double> ltParams {sqrt(0.3), 1500};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	//printf("test_rmState, law = %d, tof = %d\n", to_underlying(lawType), to_underlying(tofType));
@@ -211,7 +211,7 @@ BOOST_DATA_TEST_CASE(test_continuity, randAlphaGen ^ randBetaGen ^ data::xrange(
 	(void) index;
 
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {0.3, 1500};
+	std::vector<double> ltParams {sqrt(0.3), 1500};
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
 	std::vector<double> thrustAngles {alpha, beta};
 	
@@ -253,7 +253,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, randAlphaGen ^ randBetaGen ^ data::xr
 	(void) index;
 
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	std::vector<double> ltParams {9e-3, 1500};
+	std::vector<double> ltParams {sqrt(9e-3), 1500};
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
 	std::vector<double> thrustAngles {alpha, beta};
 	
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_SUITE(CR3BP_LT_VAR_F)
 
 BOOST_DATA_TEST_CASE(test_continuity, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {3000}, ctrlState {1e-2};
+	std::vector<double> ltParams {3000}, ctrlState {sqrt(1e-2)};
 
 	//printf("varF test_continuity, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
 
@@ -333,7 +333,7 @@ BOOST_DATA_TEST_CASE(test_continuity, data::make(varF_lawTypes) * data::make(tof
 
 BOOST_DATA_TEST_CASE(test_fullContinuity, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {3000}, ctrlState {1e-2};
+	std::vector<double> ltParams {3000}, ctrlState {sqrt(1e-2)};
 
 	//printf("varF test_fullContinuity, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
 
@@ -373,7 +373,7 @@ BOOST_DATA_TEST_CASE(test_fullContinuity, data::make(varF_lawTypes) * data::make
 
 BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	std::vector<double> ltParams {1500}, ctrlState{9e-3};
+	std::vector<double> ltParams {1500}, ctrlState{sqrt(9e-3)};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	//printf("varF test_stateConstraint, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
@@ -406,7 +406,7 @@ BOOST_DATA_TEST_CASE(test_stateConstraint, data::make(varF_lawTypes) * data::mak
 
 BOOST_DATA_TEST_CASE(test_endSegCon, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 500);
-	std::vector<double> ltParams {1500}, ctrlState{9e-3};
+	std::vector<double> ltParams {1500}, ctrlState{sqrt(9e-3)};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	//printf("varF test_endSegCon, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
@@ -437,7 +437,7 @@ BOOST_DATA_TEST_CASE(test_endSegCon, data::make(varF_lawTypes) * data::make(tofT
 
 BOOST_DATA_TEST_CASE(test_rmState, data::make(varF_lawTypes) * data::make(tofTypes), lawType, tofType){
 	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {1500}, ctrlState{1e-2};
+	std::vector<double> ltParams {1500}, ctrlState{sqrt(1e-2)};
 	ControlLaw_cr3bp_lt law(lawType, ltParams);
 
 	//printf("varF test_rmState, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));

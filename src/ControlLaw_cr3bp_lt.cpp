@@ -47,7 +47,7 @@ namespace astrohelion{
  *  
  *  @param id Control Law ID
  *  @param params a vector of parameters used by the control law. These parameters 
- *  are generally thrust (nondimensional) and Specific Impulse (in seconds) for
+ *  are generally sqrt(thrust mag.) (nondimensional) and Specific Impulse (in seconds) for
  *  most control law implementations
  */
 ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> params) : ControlLaw(id, params){
@@ -87,9 +87,9 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *p
 		case Law_tp::CONST_F_ANTI_VEL:
 		case Law_tp::CONST_F_GENERAL:
 			// These laws all store thrust magnitude and Isp as cosntant parameters
-			// params : [f, Isp]
+			// params : [sqrt(f), Isp]
 			// nondimensional mass flow rate; simplified a bit by cancelling some of the constants
-			return -params[0]*pSys->getCharL()/(pSys->getCharT()*params[1]*G_GRAV_0);
+			return -params[0]*params[0]*pSys->getCharL()/(pSys->getCharT()*params[1]*G_GRAV_0);
 		case Law_tp::VAR_F_CONST_C_2D_LEFT:
 		case Law_tp::VAR_F_CONST_C_2D_RIGHT:
 		case Law_tp::VAR_F_PRO_VEL:
@@ -97,9 +97,9 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *p
 		case Law_tp::VAR_F_GENERAL:
 			// These laws all store thrust magnitude as s[7] and Isp as a constant parameter
 			// params: {Isp}
-			// s: {x, y, z, vx, vy, vz, m, f, ...}
+			// s: {x, y, z, vx, vy, vz, m, sqrt(f), ...}
 			assert(pSys->getDynamicsModel()->getCoreStateSize() == 7);
-			return -s[7]*pSys->getCharL()/(pSys->getCharT()*params[0]*G_GRAV_0);
+			return -s[7]*s[7]*pSys->getCharL()/(pSys->getCharT()*params[0]*G_GRAV_0);
 		default:
 			return 0;
 	}
@@ -255,6 +255,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 
 		// Laws with type < 100 are constant thrust, so f is in params; above 100, thrust is a control state
 		double f = lawType < 100 ? params[0] : s[7];
+		f *= f;	// we store sqrt(f), so square it.
 
 		// +1 for RIGHT, -1 for LEFT
 		int sign = (lawType == Law_tp::CONST_F_C_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
@@ -292,6 +293,7 @@ void ControlLaw_cr3bp_lt::getAccel_AlongVel(double t, const double *s, const Sys
 
 		// Laws with type < 100 are constant thrust, so f is in params; above 100, thrust is a control state
 		double f = lawType < 100 ? params[0] : s[7];
+		f *= f;	// we store sqrt(f), so square it.
 
 		// +1 for PRO, -1 for ANTI
 		int sign = (lawType == Law_tp::CONST_F_PRO_VEL || lawType == Law_tp::VAR_F_PRO_VEL) ? 1 : -1;
@@ -329,6 +331,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const S
 
 		// Laws with type < 100 are constant thrust, so f is in params; above 100, thrust is a control state
 		double f = lawType < 100 ? params[0] : s[7];
+		f *= f;	// we store sqrt(f), so square it.
 		double alpha = lawType < 100 ? s[7] : s[8];
 		double beta = lawType < 100 ? s[8] : s[9];
 
@@ -372,16 +375,18 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 			throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D: Expects len = 21");
 
 		double f = lawType < 100 ? params[0] : s[7];
+		f *= f;	// we store sqrt(f), so square it.
+
 		// +1 for RIGHT, -1 for LEFT
 		int sign = (lawType == Law_tp::CONST_F_C_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {}
-		 *		params: {f, Isp}
+		 *		params: {sqrt(f), Isp}
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {f}
+		 *		ctrl: {sqrt(f)}
 		 *		params: {Isp}
 		 *		
 		 *	partials:
@@ -430,14 +435,15 @@ void ControlLaw_cr3bp_lt::getAccelPartials_AlongVel(double t, const double *s, c
 		int sign = (lawType == Law_tp::CONST_F_PRO_VEL || lawType == Law_tp::VAR_F_PRO_VEL) ? 1 : -1;
 		double v = sqrt(s[3]*s[3] + s[4]*s[4] + s[5]*s[5]);
 		double f = lawType < 100 ? params[0] : s[7];
+		f *= f;	// we store sqrt(f), so square it.
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {}
-		 *		params: {f, Isp}
+		 *		params: {sqrt(f), Isp}
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {f}
+		 *		ctrl: {sqrt(f)}
 		 *		params: {Isp}
 		 *		
 		 *	partials:
@@ -486,17 +492,18 @@ void ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir(double t, const double *s,
 			throw Exception("ControlLaw_cr3bp_lt::getAccelPartials_GeneralDir: unexpected array length");
 
 		double f = lawType < 100 ? params[0] : s[7];
+		f *= f;	// we store sqrt(f), so square it.
 		double alpha = lawType < 100 ? s[7] : s[8];
 		double beta = lawType < 100 ? s[8] : s[9];
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {alpha, beta}
-		 *		params: {f, Isp}
+		 *		params: {sqrt(f), Isp}
 		 *		
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {f, alpha, beta}
+		 *		ctrl: {sqrt(f), alpha, beta}
 		 *		params: {Isp}
 		 *		
 		 *	partials:
@@ -548,7 +555,7 @@ void ControlLaw_cr3bp_lt::getEOMPartials_VarF(double t, const double *s, const S
 
 		/*	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {f}
+		 *		ctrl: {sqrt(f)}
 		 *		params: {Isp}
 		 *		
 		 *	partials:
@@ -560,10 +567,10 @@ void ControlLaw_cr3bp_lt::getEOMPartials_VarF(double t, const double *s, const S
 		 *		row 5 = partials of zddot w.r.t. ctrl
 		 *		row 6 = partials of mdot w.r.t. ctrl
 		 */
-		partials[numStates*3 + 0] = a_lt[0]/s[7];	// partial of xddot w.r.t. f
-		partials[numStates*4 + 0] = a_lt[1]/s[7];	// partial of yddot w.r.t. f
-		partials[numStates*5 + 0] = a_lt[2]/s[7];	// partial of zddot w.r.t. f
-		partials[numStates*6 + 0] = -pSys->getCharL()/(params[0]*G_GRAV_0*pSys->getCharT());	// partial of mdot .w.r.t. f (params[0] is Isp)
+		partials[numStates*3 + 0] = 2*a_lt[0]/s[7];	// partial of xddot w.r.t. sqrt(f)
+		partials[numStates*4 + 0] = 2*a_lt[1]/s[7];	// partial of yddot w.r.t. sqrt(f)
+		partials[numStates*5 + 0] = 2*a_lt[2]/s[7];	// partial of zddot w.r.t. sqrt(f)
+		partials[numStates*6 + 0] = -2*s[7]*pSys->getCharL()/(params[0]*G_GRAV_0*pSys->getCharT());	// partial of mdot .w.r.t. sqrt(f) (params[0] is Isp)
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getEOMPartials_VarF: Law type does not match this function");
 	}
@@ -587,18 +594,18 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 		if(len != numStates*7)	// 7 core states
 			throw Exception("ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir: unexpected array length");
 
-		double f = lawType < 100 ? params[0] : s[7];
+		double sq_f = lawType < 100 ? params[0] : s[7];	// sqrt(f)
 		double alpha = lawType < 100 ? s[7] : s[8];
 		double beta = lawType < 100 ? s[8] : s[9];
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
 		 *		ctrl: {alpha, beta}
-		 *		params: {f, Isp}
+		 *		params: {sqrt(f), Isp}
 		 *		
 		 *	VAR_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
-		 *		ctrl: {f, alpha, beta}
+		 *		ctrl: {sqrt(f), alpha, beta}
 		 *		params: {Isp}
 		 *		
 		 *	partials:
@@ -611,17 +618,17 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
 		 *		row 6 = partialx of mdot w.r.t. ctrl
 		 */
 		unsigned int ix_shift = lawType < 100 ? 0 : 1;	// Shift partials over one slot if f is the first control state
-		partials[numStates*3 + ix_shift + 0] = -f/s[6] * cos(beta)*sin(alpha);		// partial of xddot w.r.t. alpha
-		partials[numStates*3 + ix_shift + 1] = -f/s[6] * sin(beta)*cos(alpha);		// partial of xddot w.r.t. beta
-		partials[numStates*4 + ix_shift + 0] = f/s[6] * cos(beta) * cos(alpha);		// partial of yddot w.r.t. alpha
-		partials[numStates*4 + ix_shift + 1] = -f/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
-		partials[numStates*5 + ix_shift + 1] = f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
+		partials[numStates*3 + ix_shift + 0] = -sq_f*sq_f/s[6] * cos(beta)*sin(alpha);		// partial of xddot w.r.t. alpha
+		partials[numStates*3 + ix_shift + 1] = -sq_f*sq_f/s[6] * sin(beta)*cos(alpha);		// partial of xddot w.r.t. beta
+		partials[numStates*4 + ix_shift + 0] = sq_f*sq_f/s[6] * cos(beta) * cos(alpha);		// partial of yddot w.r.t. alpha
+		partials[numStates*4 + ix_shift + 1] = -sq_f*sq_f/s[6] * sin(beta)*sin(alpha);		// partial of yddot w.r.t. beta
+		partials[numStates*5 + ix_shift + 1] = sq_f*sq_f/s[6] * cos(beta);					// partial of zddot w.r.t. beta
 
 		if(lawType == Law_tp::VAR_F_GENERAL){
-			partials[numStates*3 + 0] = cos(beta)*cos(alpha)/s[6];		// partial of xddot w.r.t. f
-			partials[numStates*4 + 0] = cos(beta)*sin(alpha)/s[6];		// partial of yddot w.r.t. f
-			partials[numStates*5 + 0] = sin(beta)/s[6];					// partial of zddot w.r.t. f
-			partials[numStates*6 + 0] = -pSys->getCharL()/(params[0]*G_GRAV_0*pSys->getCharT());	// partial of mdot w.r.t. f (params[0] is Isp)
+			partials[numStates*3 + 0] = 2*sq_f*cos(beta)*cos(alpha)/s[6];		// partial of xddot w.r.t. sqrt(f)
+			partials[numStates*4 + 0] = 2*sq_f*cos(beta)*sin(alpha)/s[6];		// partial of yddot w.r.t. sqrt(f)
+			partials[numStates*5 + 0] = 2*sq_f*sin(beta)/s[6];					// partial of zddot w.r.t. sqrt(f)
+			partials[numStates*6 + 0] = -2*sq_f*pSys->getCharL()/(params[0]*G_GRAV_0*pSys->getCharT());	// partial of mdot w.r.t. sqrt(f) (params[0] is Isp)
 		}
 	}else{
 		printWarn("ControlLaw_cr3bp_lt::getAccel_GeneralDir: Law type is not general direction");

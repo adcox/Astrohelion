@@ -839,7 +839,7 @@ void SimEngine::integrate(const double *ic, const double *ctrl0, const double *s
     // NOTE: STM follows immediately after core and control states; any extras come after the STM
     if(!bSimpleIntegration){
         std::copy(stm0, stm0 + stm_dim, &(fullIC[core_dim + ctrl_dim]));
-    }
+    }        
 
     double *y = &(fullIC.front());      // array of states that is passed to the integrator
 

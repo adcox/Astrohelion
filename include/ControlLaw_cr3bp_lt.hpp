@@ -245,7 +245,7 @@ protected:
 
 	void getEOMPartials_GeneralDir(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
 	void getEOMPartials_VarF(double, const double*, const SysData_cr3bp_lt*, double*, unsigned int) const;
-	
+
 	static void convertTo_GeneralConstF(Arcset_cr3bp_lt*, ControlLaw_cr3bp_lt*);
 	//\}
 };

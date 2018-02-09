@@ -59,7 +59,7 @@ typedef std::complex<int> cint;			//!< A complex integer
 const double G = 6.67384e-20;
 
 /** 1 G acceleration, km/s^2 */
-const double G_GRAV_0 = 9.8065/1000;
+const double G_GRAV_0 = 9.80665/1000;
 
 /** Pi */
 const double PI = 3.14159265358979323846264338327950;

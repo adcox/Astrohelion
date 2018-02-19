@@ -505,6 +505,46 @@ BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Apse_EndSeg, data::make(tofType
 	BOOST_CHECK_SMALL(rdot, 1e-12);
 }//====================================================
 
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Angle, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 7, halfLyapSet);
+
+	std::vector<double> conData {em_lyap_ic[0], 0, 0, PI/3};
+	Constraint angleCon(Constraint_tp::ANGLE, 2, conData);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(angleCon);
+
+	corrector->setTOFType(tofTp);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getState(angleCon.getID());
+	double diff = atan( (finalState[1] - conData[1])/(finalState[0] - conData[0]) ) - conData[3];
+
+	BOOST_CHECK_SMALL(diff, 1e-12);
+}//====================================================
+
+BOOST_DATA_TEST_CASE_F(fixture_EM_Init, CR3BP_EM_Angle_EndSeg, data::make(tofTypes), tofTp){
+	sim->setRevTime(em_lyap_T < 0);
+	sim->runSim_manyNodes(em_lyap_ic, em_lyap_T, 7, halfLyapSet);
+
+	std::vector<double> conData {em_lyap_ic[0], 0, 0, PI/3};
+	Constraint angleCon(Constraint_tp::ENDSEG_ANGLE, 1, conData);
+	halfLyapSet->clearAllConstraints();
+	halfLyapSet->addConstraint(angleCon);
+
+	corrector->setTOFType(tofTp);
+
+	BOOST_CHECK(MultShootEngine::finiteDiff_checkMultShoot(halfLyapSet, *corrector, Verbosity_tp::NO_MSG));
+	BOOST_CHECK_NO_THROW(corrector->multShoot(halfLyapSet, correctedSet));
+
+	std::vector<double> finalState = correctedSet->getSegRef(angleCon.getID()).getStateByRow(-1);
+	double diff = atan( (finalState[1] - conData[1])/(finalState[0] - conData[0]) ) - conData[3];
+
+	BOOST_CHECK_SMALL(diff, 1e-12);
+}//====================================================
+
 BOOST_DATA_TEST_CASE(CR3BP_EM_SegCont_PV, data::make(tofTypes), tofTp){
 	if(tofTp == MSTOF_tp::VAR_EQUALARC)
 		return;

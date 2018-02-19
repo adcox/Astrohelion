@@ -86,4 +86,34 @@ BOOST_DATA_TEST_CASE(CR3BP_APSE, data::make(PIx), p){
 	}
 }//====================================================
 
+BOOST_AUTO_TEST_CASE(CR3BP_ANGLE){
+	SysData_cr3bp sys("earth", "moon");
+	double ic[] = {0.75, 0, 0, 0, -0.4, 0};
+	double tof = 8*PI;
+
+	SimEngine sim;
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.setMakeDefaultEvents(false);
+
+	std::vector<double> data {PI/4};
+	Event evt(Event_tp::ANGLE_PLANE_P1, 0, false, data);
+	sim.addEvent(evt);
+
+	Arcset_cr3bp traj(&sys);
+	sim.runSim(ic, tof, &traj);
+
+	double primPos[3];
+	sys.getDynamicsModel()->getPrimPos(0, &sys, 0, primPos);
+
+	for(unsigned int n = 0; n < traj.getNumNodes(); n++){
+		if(traj.getNodeRefByIx_const(n).getTriggerEvent() == evt.getType()){
+			std::vector<double> q = traj.getStateByIx(n);
+			double diff = atan( (q[1] - primPos[1])/(q[0] - primPos[0]) ) - data[0];
+			// double dist = -sin(data[0])*(q[0] - primPos[0]) + cos(data[0])*(q[1] - primPos[1]);
+
+			BOOST_CHECK_SMALL(diff, sim.getAbsTol());
+		}
+	}
+}//====================================================
+
 BOOST_AUTO_TEST_SUITE_END()

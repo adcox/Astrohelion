@@ -132,6 +132,7 @@ void Event::createEvent(Event_tp t, int dir, bool willStop){
 			initEvent(t, dir, willStop, params);
 			break;
 		}
+		case Event_tp::ANGLE_PLANE_P1:
 		case Event_tp::STATE_PLANE:
 		case Event_tp::JC:
 		case Event_tp::APSE:
@@ -196,6 +197,9 @@ void Event::initEvent(Event_tp t, int dir, bool willStop, std::vector<double> pa
 		case Event_tp::DIST:
 			conType = Constraint_tp::ENDSEG_DIST;
 			break;
+		case Event_tp::ANGLE_PLANE_P1:
+			conType = Constraint_tp::ENDSEG_ANGLE;
+			break;
 		default: 
 			throw Exception("Event::initEvent: Creating event with no type");
 	}
@@ -233,7 +237,7 @@ void Event::initialize(const SysData* pSys){
 				throw Exception("Event::initialize: Parameter vector for STATE_PLANE event has fewer than 2 elements; cannot proceed");
 
 			int ix = static_cast<int>(paramsIn[0]);
-			if(ix < 0 || ix >= core_dim){
+			if(ix < 0 || ix >= static_cast<int>(core_dim)){
 				char msg[128];
 				sprintf(msg, "Event::initialize: ix = %d is out of bounds (min = 0, max = %u)", ix, core_dim);
 				throw Exception(msg);
@@ -267,6 +271,13 @@ void Event::initialize(const SysData* pSys){
 			data.assign(7,NAN);
 			data[6] = paramsIn[0];	// mass = specified value
 			break;
+		case Event_tp::ANGLE_PLANE_P1:
+		{
+			// Get the position of P1, store in first three elements of data
+			// NOTE: Uses a time of t = 0
+			pSysData->getDynamicsModel()->getPrimPos(0, pSysData, 0, &(data[0]));
+			data[3] = paramsIn[0];	// Store angle in fourth element
+		}
 		default: break;	// Do nothing
 	}
 
@@ -408,14 +419,14 @@ void Event::setStopOnEvent(bool s){ bStop = s; }
  *	@brief Determine (roughly) whether or not this event has occured between the
  *	previous trajectory state and the current one.
  *
- *	@param y the current integrated state (6 elements)
- *	@param len number of elements in `y`
- *	@param t non-dimensional time associated with state `y`
+ *	@param q the current integrated state (6 elements)
+ *	@param len number of elements in `q`
+ *	@param t non-dimensional time associated with state `q`
  *	@param tDir direction that time is being propagated: +1 for forward, -1 for negative
  *	@return whether or not the trajectory has passed through this event
  */
-bool Event::crossedEvent(const double* y, unsigned int len, double t, int tDir) const{
-	double newDist = getDist(y, len, t);
+bool Event::crossedEvent(const double* q, unsigned int len, double t, int tDir) const{
+	double newDist = getDist(q, len, t);
 
 	// See if we have crossed (in pos. or neg. direction)
 	if(newDist*dist < 0){ // have different signs
@@ -433,28 +444,28 @@ bool Event::crossedEvent(const double* y, unsigned int len, double t, int tDir) 
  *	the `crossedEvent()` function to determine whether or not 
  *	the integration has crossed the event
  *
- *	@param y the state vector; must have at least the core states
- *	@param len number of elements stored in y
- *	@param t non-dimensional time associated with state `y`
+ *	@param q the state vector; must have at least the core states
+ *	@param len number of elements stored in q
+ *	@param t non-dimensional time associated with state `q`
  */
-void Event::updateDist(const double* y, unsigned int len, double t){	
-	// update the dist variable using information from y
+void Event::updateDist(const double* q, unsigned int len, double t){	
+	// update the dist variable using information from q
 	lastDist = dist;
-	dist = getDist(y, len, t);
+	dist = getDist(q, len, t);
 }//======================================
 
 /**
  *	@brief Compute the distance from the input state to the event
- *	@param y a state vector representing the current integration state
- *	@param len number of elements in y
- *	@param t non-dimensional time associated with state `y`
+ *	@param q a state vector representing the current integration state
+ *	@param len number of elements in q
+ *	@param t non-dimensional time associated with state `q`
  *	
  *	@return the distance
  *	
  *	@throws Exception if the event type associated with this event is not implemented
  *	@throws Exception if the system data pointer has not been initialized via the initialize() function
  */
-double Event::getDist(const double *y, unsigned int len, double t) const{
+double Event::getDist(const double *q, unsigned int len, double t) const{
 	if(!pSysData)
 		throw Exception("Event::getDist: SysData pointer has not been initialized; please call initialize() function.");
 
@@ -469,20 +480,20 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 			d = 1;	// Will never use event location to find these events; they are monitored by the simEngine individually
 			break;
 		case Event_tp::YZ_PLANE:
-			d = y[0] - conData[0];
+			d = q[0] - conData[0];
 			break;
 		case Event_tp::XZ_PLANE:
-			d = y[1] - conData[1];
+			d = q[1] - conData[1];
 			break;
 		case Event_tp::XY_PLANE:
-			d = y[2] - conData[2];
+			d = q[2] - conData[2];
 			break;
 		case Event_tp::STATE_PLANE:
 		{			
 			// Assume that paramsIn[0] has already been checked and validated in initialize()
 			int ix = static_cast<int>(paramsIn[0]);
-			if(len >= ix - 1){
-				d = y[ix] - conData[ix];
+			if(static_cast<int>(len) >= ix - 1){
+				d = q[ix] - conData[ix];
 			}else{
 				throw Exception("Event:getDist: input state is too short for STATE_PLANE event!");
 			}
@@ -494,9 +505,9 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 				double pos[3] = {0};
 				pSysData->getDynamicsModel()->getPrimPos(t, pSysData, static_cast<int>(conData[0]), pos);
 				
-				double dx = y[0] - pos[0];
-				double dy = y[1] - pos[1];
-				double dz = y[2] - pos[2];
+				double dx = q[0] - pos[0];
+				double dy = q[1] - pos[1];
+				double dz = q[2] - pos[2];
 				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			}else{
 				throw Exception("Event::getDist: input state is too short for CRASH event!");
@@ -507,7 +518,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 		{
 			if(len > 5){
 				const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *>(pSysData);
-				d = DynamicsModel_cr3bp::getJacobi(y, crSys->getMu()) - conData[0];
+				d = DynamicsModel_cr3bp::getJacobi(q, crSys->getMu()) - conData[0];
 			}else{
 				throw Exception("Event::getDist: input state is too short for JC event!");
 			}
@@ -517,7 +528,7 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 		{
 			if(len > 5){
 				int Pix = static_cast<int>(conData[0]);
-				d = pSysData->getDynamicsModel()->getRDot(Pix, t, y, pSysData);
+				d = pSysData->getDynamicsModel()->getRDot(Pix, t, q, pSysData);
 			}else{
 				throw Exception("Event::getDist: input state is too short for APSE event!");
 			}
@@ -529,23 +540,34 @@ double Event::getDist(const double *y, unsigned int len, double t) const{
 				double pos[3] = {0};
 				pSysData->getDynamicsModel()->getPrimPos(t, pSysData, static_cast<int>(conData[0]), pos);
 				
-				double dx = y[0] - pos[0];
-				double dy = y[1] - pos[1];
-				double dz = y[2] - pos[2];
+				double dx = q[0] - pos[0];
+				double dy = q[1] - pos[1];
+				double dz = q[2] - pos[2];
 				d = sqrt(dx*dx + dy*dy + dz*dz) - conData[1];
 			}else{
-				throw Exception("Event::getDist: input state is too short DIST event!");
+				throw Exception("Event::getDist: input state is too short for DIST event!");
 			}
 			break;
 		}
 		case Event_tp::MASS:
 			if(len > 6){
-				d = y[6] - conData[6];
+				d = q[6] - conData[6];
 			}else{
-				throw Exception("Event::getDist: input state is too short MASS event!");
+				throw Exception("Event::getDist: input state is too short for MASS event!");
 			}
 
 			break;
+		case Event_tp::ANGLE_PLANE_P1:
+		{
+			// conData stores the location of P1 in the first three elements and the angle in the fourth element
+			if(len > 1){
+				// d is the projection of the point onto the axis perpendicular to the rotated plane
+				d = -sin(conData[3])*(q[0] - conData[0]) + cos(conData[3])*(q[1] - conData[1]);
+			}else{
+				throw Exception("Event:getDist: input state is too share for ANGLE_PLANE_P1 event!");
+			}
+			break;
+		}
 		default:
 			throw Exception("Event::getDist: Event type not implemented");
 	}
@@ -608,6 +630,7 @@ const char* Event::getEventTpStr(Event_tp t){
 		case Event_tp::APSE: return "apse"; break;
 		case Event_tp::DIST: return "distance"; break;
 		case Event_tp::MASS: return "mass"; break;
+		case Event_tp::ANGLE_PLANE_P1: return "Angle w.r.t. P1"; break;
 		default: return "UNDEFINED!"; break;
 	}
 }//====================================================

@@ -399,6 +399,8 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 					throw Exception("MultShootEngine::multShoot: You can only apply ONE delta-V constraint");
 				}
 				break;
+			case Constraint_tp::ANGLE:
+			case Constraint_tp::ENDSEG_ANGLE:
 			case Constraint_tp::APSE:
 			case Constraint_tp::ENDSEG_APSE:
 			case Constraint_tp::JC:

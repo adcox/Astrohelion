@@ -104,9 +104,13 @@ enum class Event_tp : int{
 		 					 *	direction of travel relative to the primary; +1 is away from the primary,
 		 					 *	-1 is towards the primary, and 0 triggers for either.
 		 					 */
-	MASS 			= 9		/*!< occurs when the s/c mass reaches a minimum or maximum amount. The `param`
+	MASS 			= 9,	/*!< occurs when the s/c mass reaches a minimum or maximum amount. The `param`
 						 	*	array should have one element: the nondimensional mass limit (between 0 and 1).
 						 	*/
+	ANGLE_PLANE_P1 	= 10	/*!< Occurs when the s/c reaches a plane normal to the XY-plane, rotated by a 
+							 *	specific angle about P1. The `param` array should have one element: the 
+							 *	angle of the plane relative to the positive x-axis.
+							 */
 };
 
 		

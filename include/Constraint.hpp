@@ -33,6 +33,7 @@
 #include <vector>
 
 namespace astrohelion{
+
 /**
  *	@brief Specify the type of constraint
  *
@@ -103,8 +104,14 @@ enum class Constraint_tp : int{
 				 				 *	seven to be an apse relative to P1, I would set `id` 
 				 				 *	to 7 and set `data` to [0, NAN, NAN, NAN, NAN, NAN]
 				 				 */
+	ANGLE = 12,					/*!< Constrain a node to be located on a plane normal to the XY-plane and 
+								 * rotated by some angle about some point. Place the ID of the node you want 
+								 * to constrain in the `id` variable. In the `data` variable, store the
+								 * rotation base point (x0, y0, z0) and the rotation angle (rad) measured
+								 * relative to the positive x-axis.
+								 */
 	JC = 100, 					/*!< Constrain the node to have a specific Jacobi constant (CR3BP only)
-				 				 * 	Place the ID of the node you want to cosntraint in the `id`
+				 				 * 	Place the ID of the node you want to constrain in the `id`
 				 				 *	variable; `data` holds the value of Jacobi
 				 				 */
 	SP = 200, 					/*!< Constrain the node to intersect the saddle point (BCR4BPR only)
@@ -240,12 +247,20 @@ enum class Constraint_tp : int{
 								 *	this constraint performs best when the constrained segment
 								 *	is the final segment on the trajectory.
 								 */
-	ENDSEG_JC = 705				/*!< Constrain the segment state to have a specific Jacobi constant 
-								 * 	(CR3BP only) Place the ID of the node you want to cosntraint in 
-								 * 	the `id` variable; `data` holds the value of Jacobi.
+	ENDSEG_JC = 705,			/*!< Constrain the end of a segment (not a node) to have a specific 
+								 * 	Jacobi constant (CR3BP only) Place the ID of the segment you want 
+								 * 	to constrain in the `id` variable; `data` holds the value of Jacobi.
 								 * 	Note that this constraint performs best when the constrained segment
 								 * 	is the final segment on the trajectory.
 				 				 */
+	ENDSEG_ANGLE = 706			/*!< Constrain the segment end state to be located on a plane normal
+							  	 * 	to the xy-plane and rotated about a specified point by a specified
+								 *	angle. Place the ID of the segment you want to constrain in the `id`
+								 *	variable; `data` stores the location of the base point and the rotation
+								 *	angle: {x, y, z, angle}, where the angle is measured in radians.
+								 *	Note that this constraint performs best when the constrained segment is
+								 *	the final segment on the trajectory
+								 */
 };
 
 /**
@@ -270,7 +285,7 @@ enum class ConstraintApp_tp{
  * 		any dynamic models you wish
  *	* Define behavior for dealing with those types of constraints in the
  *		dynamic models
- *	* Add the constraint type to the models multShoot_applyConstraint()
+ *	* Add the constraint type to the model's multShoot_applyConstraint()
  *		function so it will be called by the corrector
  *	* Add the constraint type to the corrector initializer so it knows how
  *		many rows the constraint occupies

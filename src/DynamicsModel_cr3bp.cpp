@@ -53,7 +53,10 @@ DynamicsModel_cr3bp::DynamicsModel_cr3bp() : DynamicsModel() {
     allowedCons.push_back(Constraint_tp::JC);
     allowedCons.push_back(Constraint_tp::PSEUDOARC);
     allowedCons.push_back(Constraint_tp::ENDSEG_JC);
+    allowedCons.push_back(Constraint_tp::ANGLE);
+    allowedCons.push_back(Constraint_tp::ENDSEG_ANGLE);
     allowedEvents.push_back(Event_tp::JC);
+    allowedEvents.push_back(Event_tp::ANGLE_PLANE_P1);
 }//==============================================
 
 /**
@@ -221,6 +224,12 @@ void DynamicsModel_cr3bp::multShoot_applyConstraint(MultShootData& it, const Con
     int row0 = it.conRows[c];
 
     switch(con.getType()){
+        case Constraint_tp::ANGLE:
+            multShoot_targetAngle(it, con, row0);
+            break;
+        case Constraint_tp::ENDSEG_ANGLE:
+            multShoot_targetAngle_endSeg(it, con, row0);
+            break;
         case Constraint_tp::JC:
             multShoot_targetJC(it, con, row0);
             break;
@@ -244,6 +253,96 @@ void DynamicsModel_cr3bp::multShoot_initIterData(MultShootData& it) const{
 }//====================================================
 
 /**
+ *  @brief Compute constraint function and partial derivative values for an Angle Constraint
+ * 
+ *  @param it a reference to the corrector's iteration data structure
+ *  @param con the constraint being applied
+ *  @param row0 the row this constraint begins on
+ */
+void DynamicsModel_cr3bp::multShoot_targetAngle(MultShootData &it, const Constraint& con, int row0) const{
+    std::vector<double> conData = con.getData();
+    MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
+
+    if(state_var.row0 == -1){
+        throw Exception("DynamicsModel_cr3bp::multShoot_targetAngle: Cannot constrain "
+            "state that is not in the free variable vector.");
+    }
+
+    // Compute the distance of the node from the plane
+    double nodeState[6];
+    std::copy(&(it.X[state_var.row0]), &(it.X[state_var.row0])+6, nodeState);
+    it.FX[row0] = -sin(conData[3])*(nodeState[0] - conData[0]) + cos(conData[3])*(nodeState[1] - conData[1]);
+
+    // Only a few partials: those w.r.t. nodeStates {x, y}
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+0, -sin(conData[3])));
+    it.DF_elements.push_back(Tripletd(row0, state_var.row0+1, cos(conData[3])));
+}//====================================================
+
+void DynamicsModel_cr3bp::multShoot_targetAngle_endSeg(MultShootData &it, const Constraint& con, int row0) const{
+    std::vector<double> conData = con.getData();
+    int segIx = it.pArcIn->getSegIx(con.getID());
+
+    // Get object representing origin of segment
+    MSVarMap_Obj prevNode_var = it.getVarMap_obj(MSVar_tp::STATE, it.pArcIn->getSegRef_const(con.getID()).getOrigin());
+
+    MSVarMap_Obj tof_var;
+    double timeCoeff = 1;
+    if(to_underlying(it.tofTp) > 0){
+        switch(it.tofTp){
+            case MSTOF_tp::VAR_FREE:
+                tof_var = it.getVarMap_obj(MSVar_tp::TOF, con.getID());
+                break;
+            case MSTOF_tp::VAR_FIXSIGN:
+                tof_var = it.getVarMap_obj(MSVar_tp::TOF, con.getID());
+                timeCoeff = astrohelion::sign(it.pArcIn->getTOF(con.getID()))*2*it.X[tof_var.row0];
+                break;
+            case MSTOF_tp::VAR_EQUALARC:
+                tof_var = it.getVarMap_obj(MSVar_tp::TOF_TOTAL, Linkable::INVALID_ID);
+                timeCoeff = 1.0/(it.pArcIn->getNumSegs());
+                break;
+            default:
+                throw Exception("DynamicsModel::multShoot_targetDist_endSeg: Unhandled time type");
+        }
+    }   
+
+    // Data associated with the previous node and the propagated segment
+    std::vector<double> lastState = it.propSegs[segIx].getStateByIx(-1);
+
+    // Compute distance from plane
+    it.FX[row0] = -sin(conData[3])*(lastState[0] - conData[0]) + cos(conData[3])*(lastState[1] - conData[1]);
+
+    // Partial derivative of constraint w.r.t. propagated node states
+    double dFdq_f[2] = { -sin(conData[3]), cos(conData[3]) };
+
+    // Partials of F w.r.t. previous node state
+    if(prevNode_var.row0 != -1){
+        MatrixXRd stm = it.propSegs[segIx].getSTMByIx(-1);
+        // Do the matrix multiplication with loops to avoid expensive vector allocation
+        double sum;
+        for(unsigned int c = 0; c < 6; c++){
+            sum = 0;
+            for(unsigned int r = 0; r < 2; r++){
+                sum += dFdq_f[r]*stm(r,c);
+            }
+            it.DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
+        }
+    }
+
+    // Partials of F w.r.t. time-of-flight
+    if(to_underlying(it.tofTp) > 0){
+        std::vector<double> lastDeriv = it.propSegs[segIx].getStateDerivByIx(-1);
+
+        // Compute dot product between dFdq_f and final state derivative vector
+        double dp = 0;
+        for(unsigned int r = 0; r < 2; r++){
+            dp += dFdq_f[r]*lastDeriv[r];
+        }
+        it.DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
+    }
+}//====================================================
+
+
+/**
  *  @brief Compute constraint function and partial derivative values for a Jacobi Constraint
  *
  *  @param it a reference to the corrector's iteration data structure
@@ -255,8 +354,10 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint
     MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, con.getID());
     const SysData_cr3bp *crSys = static_cast<const SysData_cr3bp *> (it.pArcIn->getSysData());
 
-    if(state_var.row0 == -1)
-        throw Exception("DynamicsModel_cr3bp::multShoot_targetJC: Cannot constrain state that is not in the free variable vector.");
+    if(state_var.row0 == -1){
+        throw Exception("DynamicsModel_cr3bp::multShoot_targetJC: Cannot constrain state "
+            "that is not in the free variable vector.");
+    }
 
     // Compute the value of Jacobi at this node
     double mu = crSys->getMu();
@@ -287,7 +388,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC(MultShootData& it, const Constraint
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+3, -2*vx));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+4, -2*vy));
     it.DF_elements.push_back(Tripletd(row0, state_var.row0+5, -2*vz));
-}//=============================================
+}//====================================================
 
 /**
  *  @brief Compute constraint function and partial derivative values for a Jacobi Constraint on a Segment propagated state
@@ -345,8 +446,8 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
     double d = sqrt((x + mu)*(x + mu) + y*y + z*z);
     double r = sqrt((x + mu - 1)*(x + mu - 1) + y*y + z*z);
 
-    // Partial derivative of constraint w.r.t. origin node states
-    double dFdq_nf[6] = {
+    // Partial derivative of constraint w.r.t. propagated node states
+    double dFdq_f[6] = {
         (-2*(x + mu)*(1 - mu)/pow(d,3) - 2*(x + mu - 1)*mu/pow(r,3) + 2*x),
         (-2*y*(1 - mu)/pow(d,3) - 2*y*mu/pow(r,3) + 2*y),
         (-2*z*(1 - mu)/pow(d,3) - 2*z*mu/pow(r,3)),
@@ -362,7 +463,7 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
         for(unsigned int c = 0; c < 6; c++){
             sum = 0;
             for(unsigned int r = 0; r < 6; r++){
-                sum += dFdq_nf[r]*stm(r,c);
+                sum += dFdq_f[r]*stm(r,c);
             }
             it.DF_elements.push_back(Tripletd(row0, prevNode_var.row0+c, sum));
         }
@@ -372,14 +473,14 @@ void DynamicsModel_cr3bp::multShoot_targetJC_endSeg(MultShootData& it, const Con
     if(to_underlying(it.tofTp) > 0){
         std::vector<double> lastDeriv = it.propSegs[segIx].getStateDerivByIx(-1);
 
-        // Compute dot product between dFdq_nf and final state derivative vector
+        // Compute dot product between dFdq_f and final state derivative vector
         double dp = 0;
         for(unsigned int r = 0; r < 6; r++){
-            dp += dFdq_nf[r]*lastDeriv[r];
+            dp += dFdq_f[r]*lastDeriv[r];
         }
         it.DF_elements.push_back(Tripletd(row0, tof_var.row0, timeCoeff*dp));
     }
-}//=============================================
+}//====================================================
 
 /**
  *  @brief Compute constraint function and partial derivative values for Pseudo Arc-Length

@@ -294,6 +294,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::SP_MAX_DIST: { return "SP_MAX_DIST"; }
 		case Constraint_tp::TOF_TOTAL: { return "TOF"; }
 		case Constraint_tp::APSE: { return "APSE"; }
+		case Constraint_tp::ANGLE: { return "ANGLE"; }
 		case Constraint_tp::CONT_CTRL: { return "CONTINUOUS CONTROL STATES"; }
 		case Constraint_tp::CONT_PV: { return "CONTINUOUS SEG2NODE_POSITION_VELOCITY"; }
 		case Constraint_tp::CONT_EX: { return "CONTINUOUS SEG2NODE_EXTRA"; }
@@ -309,6 +310,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::ENDSEG_DIST: { return "ENDSEG_DIST"; }
 		case Constraint_tp::ENDSEG_MIN_DIST: { return "ENDSEG_MIN_DIST"; }
 		case Constraint_tp::ENDSEG_MAX_DIST: { return "ENDSEG_MAX_DIST"; }
+		case Constraint_tp::ENDSEG_ANGLE: { return "ENDSEG_ANGLE"; }
 		default: { return "UNDEFINED!"; }
 	}
 }//====================================================

@@ -25,7 +25,7 @@ int main(){
 	// Define low-thrust parameters
 	double f = 1e-2;
 	double Isp = 1500;
-	double alpha = 0;
+	double alpha = PI/3;
 
 	// Create parameters and other data storage objects
 	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
@@ -41,7 +41,7 @@ int main(){
 	// with the specified low-thrust parameters
 	double m = 1;
 	std::vector<double> q0 {};
-	for(unsigned int i = 0; i < member.getNumNodes(); i++){
+	for(unsigned int i = 0; i < member.getNumSegs(); i++){
 		q0 = member.getStateByIx(i);
 		q0.push_back(m);
 		if(i == 0){
@@ -57,6 +57,37 @@ int main(){
 	}
 
 	ltGuess.print();
+	ltGuess.saveToMat("ltGuess.mat");
+
+	// Now, try corrections
+	MultShootEngine shooter;
+	shooter.setDoLineSearch(true);
+	shooter.setMaxIts(200);
+
+	int id0 = ltGuess.getNodeByIx(0).getID();
+	int idf = ltGuess.getNodeByIx(-1).getID();
+
+	std::vector<double> conData{ idf, idf, NAN, idf, idf, NAN, NAN};
+	Constraint periodicityCon(Constraint_tp::MATCH_CUST, id0, conData);
+
+	ltGuess.addConstraint(periodicityCon);
+
+	// // Enforce control continuity on all segment
+	// std::vector<double> ctrlConData {1, 1};
+	// for(unsigned int i = 0; i < ltGuess.getNumSegs(); i++){
+	// 	Constraint con(Constraint_tp::CONT_CTRL, ltGuess.getSegByIx(i).getID(), ctrlConData);
+	// 	ltGuess.addConstraint(con);
+	// }
+
+	Arcset_cr3bp_lt ltConverged(&ltSys);
+	try{
+		shooter.multShoot(&ltGuess, &ltConverged);
+	}catch(DivergeException &e){
+		printErr("Corrector diverged\n");
+	}
+
+	ltConverged.putInChronoOrder();
+	ltConverged.saveToMat("ltConverged.mat");
 
 	// double L4pos[3];
 	// DynamicsModel_cr3bp::getEquilibPt(&ltSys, 4, 1e-6, L4pos);

@@ -3124,7 +3124,8 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 
 		if(numStructs != segs.size()){
 			Mat_VarFree(pVar);
-			throw Exception("BaseArcset::readVar_SegCtrlLaw: Control Law vector has different size than the initialized segment evctor");
+			throw Exception("BaseArcset::readVar_SegCtrlLaw: Control Law vector has different size"
+				" than the initialized segment evctor");
 		}
 
 		if(pVar->class_type == MAT_C_STRUCT && pVar->data_type == MAT_T_STRUCT){
@@ -3156,7 +3157,8 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 										}
 									}else{
 										Mat_VarFree(pVar);
-										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID field has wrong class type or data type");
+										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller ID field has"
+											" wrong class type or data type");
 									}
 									break;
 								}//-----------------------------------
@@ -3178,7 +3180,8 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 										}
 									}else{
 										Mat_VarFree(pVar);
-										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller params field has wrong class type or data type");
+										throw Exception("BaseArcset::readVar_SegCtrlLaw: controller params"
+											" field has wrong class type or data type");
 									}
 									break;
 								}//-----------------------------------
@@ -3192,9 +3195,7 @@ bool BaseArcset::readVar_SegCtrlLaw(matvar_t *pVar, std::vector<ControlLaw*> &re
 						// Allocate a new control law on the stack; by using a function in 
 						// the DynamicsModel, we ensure that the system-specific derived class
 						// is constructed rather than the base class ControlLaw.
-						ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw();
-						newLaw->setLawType(id);
-						newLaw->setParams(params);
+						ControlLaw *newLaw = pSysData->getDynamicsModel()->createControlLaw(id, params);
 
 						// Check to see if the controller has been loaded already
 						bool foundDuplicate = false;

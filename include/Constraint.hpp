@@ -149,7 +149,7 @@ enum class Constraint_tp : int{
 								 *	family member. At the end of the data vector, append a double that represents
 								 *	the continuation step size.
 								 */
-	CONT_CTRL = 500, 			/*!	Constrain a segment to be continuous with its terminal node in
+	CONT_CTRL = 500, 			/*!< Constrain a segment to be continuous with its terminal node in
 								 * 	the specified control states. The `id` value specificies 
 								 * 	the ID of the segment and the `data` field specifies 
 								 * 	which states must be continuous. For example, to constrain the 
@@ -166,7 +166,7 @@ enum class Constraint_tp : int{
 								 * `id` to 4 and `data` to `[1 1 1 1 NAN NAN]`. Values
 								 * of NAN tell the algorithm not to force continuity in that state,
 								 * so in this example y_dot and z_dot are allowed to be discontinous.
-								 * <b>NOTE: These constraints are applied automatically by the corrections
+								 * <b>These constraints are applied automatically by the corrections
 								 * algorithm: DO NOT CREATE THESE.</b>
 								 */
 	CONT_EX = 502,				/*!< Constrain one of the extra parameters stored in a nodeset to be
@@ -175,7 +175,7 @@ enum class Constraint_tp : int{
 								 * parameter in the first data field, i.e. `data[0]`. The specified
 								 * node will then be made continuous with the previous node in the nodeset
 								 * provided it isn't the first one.
-								 * <b>NOTE: These constraints are applied automatically by the corrections
+								 * <b>These constraints are applied automatically by the corrections
 								 * algorithm: DO NOT CREATE THESE.</b>
 								 * 
 								 * **Parameter Indices**

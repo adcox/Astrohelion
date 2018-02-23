@@ -129,10 +129,18 @@ bool DynamicsModel::supportsControl(const ControlLaw *pLaw) const{
  *  @brief Construct a new control law and allocated it on the stack.
  *  @details Each dynamic model will return a pointer to the specific control
  *  law applicable to the system / model
+ *  
+ *  @param id the control law ID
+ *  @param params the parameters that create the control law
+ *  
  *  @return A pointer to a control law object. The object has been allocated
  *  on the stack so the delete() function must be employed to free the memory
  */
-ControlLaw* DynamicsModel::createControlLaw() const{ return new ControlLaw; }
+ControlLaw* DynamicsModel::createControlLaw(unsigned int id,
+	const std::vector<double> &params) const{
+
+	return new ControlLaw(id, params);
+}//====================================================
 
 /**
  *  @brief Determine the time derivative of the magnitude of a vector from a primary to

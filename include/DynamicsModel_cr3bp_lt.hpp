@@ -94,7 +94,7 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	ControlLaw* createControlLaw() const override;
+	ControlLaw* createControlLaw(unsigned int, const std::vector<double> &params) const override;
 	bool supportsControl(const ControlLaw*) const override;
 	//\}
 };

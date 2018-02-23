@@ -676,10 +676,21 @@ void Arcset::readFromMat(const char *filepath, std::vector<ControlLaw*> &refLaws
 	Mat_Close(matfp);
 }//====================================================
 
-void Arcset::readFromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+/**
+ * @brief Read arcset data from an array of structures
+ * 
+ * @param pStruct pointer to the structure array variable loaded from a .mat file
+ * @param ix index of the structure within the array of structures
+ * @param refLaws reference to a vector that contains pointers to the
+ * control laws loaded with the arcset(s)
+ */
+void Arcset::readFromStruct(matvar_t *pStruct, unsigned int ix,
+	std::vector<ControlLaw*> &refLaws){
+
 	if(pStruct == nullptr){
 		Mat_VarFree(pStruct);
-		throw Exception("Arcset::readFromStruct: Could not read contents of pStruct; nullptr");
+		throw Exception("Arcset::readFromStruct: Could not read contents"
+			" of pStruct; nullptr");
 	}else{
 		readCmds_fromStruct(pStruct, ix, refLaws);
 	}
@@ -743,7 +754,8 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 		if(readVar_Constraints(pCons, saveTp)){ Mat_VarFree(pCons); }
 
 	}catch(Exception &e){
-		throw Exception("Arcset:readCmds_fromFile: Deprecated file structure; fix commented-out code to read");
+		throw Exception("Arcset:readCmds_fromFile: Deprecated file structure; fix"
+			" commented-out code to read");
 		// // if file was saved using older style, try slightly different read commands
 		// printErr("Arcset::readCmds_fromFile: Encountered error:\n\t%s\n", e.what());
 		
@@ -769,7 +781,16 @@ void Arcset::readCmds_fromFile(mat_t *pMatFile, std::vector<ControlLaw*> &refLaw
 	}
 }//====================================================
 
-void Arcset::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix, std::vector<ControlLaw*> &refLaws){
+/**
+ * @brief Read arcset data from an array of structures
+ * 
+ * @param pStruct pointer to the structure array variable loaded from a .mat file
+ * @param ix index of the structure within the array of structures
+ * @param refLaws reference to a vector that contains pointers to the
+ * control laws loaded with the arcset(s)
+ */
+void Arcset::readCmds_fromStruct(matvar_t *pStruct, unsigned int ix,
+	std::vector<ControlLaw*> &refLaws){
 
 	matvar_t *pLinkTable = Mat_VarGetStructFieldByName(pStruct, VARNAME_LINKTABLE, ix);
 	if(readVar_LinkTable(pLinkTable)){ Mat_VarFree(pLinkTable); }

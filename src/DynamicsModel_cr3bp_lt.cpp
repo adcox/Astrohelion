@@ -750,10 +750,18 @@ double DynamicsModel_cr3bp_lt::getHamiltonian(double t, const double *q, const S
  *  @brief Construct a new control law and allocated it on the stack.
  *  @details Each dynamic model will return a pointer to the specific control
  *  law applicable to the system / model
+ *  
+ *  @param id the control law ID
+ *  @param params the parameters that create the control law
+ *  
  *  @return A pointer to a control law object. The object has been allocated
  *  on the stack so the delete() function must be employed to free the memory
  */
-ControlLaw* DynamicsModel_cr3bp_lt::createControlLaw() const{ return new ControlLaw_cr3bp_lt; }
+ControlLaw* DynamicsModel_cr3bp_lt::createControlLaw(unsigned int id,
+    const std::vector<double> &params) const{
+
+    return new ControlLaw_cr3bp_lt(id, params);
+}//=====================================================
 
 /**
  *  @brief Determine whether or not the model supports a specific control law

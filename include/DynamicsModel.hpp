@@ -297,7 +297,7 @@ public:
 	 *  \name Utility Functions
 	 *  \{
 	 */
-	virtual ControlLaw* createControlLaw() const;
+	virtual ControlLaw* createControlLaw(unsigned int, const std::vector<double> &params) const;
 	//\}
 protected:
 	unsigned int coreDim = 6;		//!< The number of "core" states; these are computed in the simple EOM function; default is 6; STM is an nxn matrix with n = coreDim

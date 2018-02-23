@@ -8,44 +8,24 @@
 using namespace astrohelion;
 
 int main(int argc, char** argv){
-	(void) argc;
-	(void) argv;
+	double errTol = 1e-14;
+	std::vector<double> ic {0.82575887, 0, 0.08, 0, 0.19369725, 0, 1};
+	std::vector<double> ctrl0 {1.25, 0.1};
 
-	std::vector<double> lawParams{7e-2, 3000};
+	SysData_cr3bp_lt ltData("earth", "moon", 14);
+	std::vector<double> ltParams {0.3, 1500};
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, ltParams);
 
-	// Create system object and control object
-	const SysData_cr3bp_lt sys("earth", "moon", 1);
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::Law_tp::CONST_F_GENERAL, lawParams);
-
-	std::vector<double> q0 {0.7, 0, 0, 0, -0.75, 0, 1};
-	std::vector<double> ctrl0 {3.1, 0};
-
+	Arcset_cr3bp_lt ltSet(&ltData);
 	SimEngine sim;
-	Arcset_cr3bp_lt arc(&sys);
-
-	sim.runSim(q0, ctrl0, 0, 10, &arc, &law);
-
-	// Extract the full state history of the arc
-	std::vector<double> allStates = arc.getSegRefByIx(0).getStateVector();
-	unsigned int w = arc.getSegRefByIx(0).getStateWidth();
-	unsigned int h = allStates.size()/w;
-
-	// Compute initial Hamiltonian
-	double H0 = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(allStates[0]), &sys, &law);
+	sim.setVerbosity(Verbosity_tp::NO_MSG);
+	sim.runSim_manyNodes(ic, ctrl0, 0, 2.8, 5, &ltSet, &control);
 	
-	// Determine the biggest deviation from initial Hamiltonian
-	double max_dH = 0, dH = 0;
-	for(unsigned int i = 0; i < h; i++){
-		printf("state %04u: ", i);
-		for(unsigned int j = 0; j < 9; j++)
-			printf("%f, ", allStates[w*i + j]);
-		printf("\n");
-		
-		dH = DynamicsModel_cr3bp_lt::getHamiltonian(0, &(allStates[w*i]), &sys, &law) - H0;
-		max_dH = std::abs(dH) > std::abs(max_dH) ? dH : max_dH;
-	}
-
-	printf("max dH = %e\n", max_dH);
+	// ltSet.print();
+	ltSet.saveToMat("data/ltSet.mat");
+	Arcset_cr3bp_lt temp(&ltData);
+	std::vector<ControlLaw*> loadedLaws {};
+	temp.readFromMat("data/ltSet.mat", loadedLaws);
 
 	return EXIT_SUCCESS;
 }

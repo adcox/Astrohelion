@@ -51,7 +51,7 @@ public:
 	 *  \name *structors
 	 *  \{
 	 */
-	ControlLaw(unsigned int id = NO_CTRL, std::vector<double> params = {});
+	ControlLaw(unsigned int, const std::vector<double>&);
 	//\}
 
 	/**
@@ -67,6 +67,8 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
+	bool getFlag(int) const;
+	std::vector<bool> getFlags() const;
 	unsigned int getLawType() const;
 	virtual std::string getLawTypeString() const;
 	unsigned int getNumOutputs() const;
@@ -76,9 +78,12 @@ public:
 	const std::vector<double>& getParamsRef_const() const;
 
 	void setLawType(unsigned int);
+	void setFlag(int, bool);
+	void setFlags(const bool*, unsigned int);
+	void setFlags(const std::vector<bool>&);
 	void setParam(int, double);
-	void setParams(double*, unsigned int);
-	void setParams(std::vector<double>);
+	void setParams(const double*, unsigned int);
+	void setParams(const std::vector<double>&);
 	//\}
 
 	/**
@@ -116,6 +121,7 @@ protected:
 	unsigned int numOutputs = 0;		//!< Number of control outputs
 
 	std::vector<double> params {};		//!< Parameters associated with the control law
+	std::vector<bool> flags {};			//!< Flags associated with the control law
 };
 
 }// End of astrohelion namespace

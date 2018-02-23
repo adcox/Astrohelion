@@ -649,15 +649,19 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
  *  to the this derived class
  */
 void ControlLaw_cr3bp_lt::init(){
+	int numParams = 0;
+
 	switch(lawType){
 		case Law_tp::CONST_F_C_2D_LEFT:
 		case Law_tp::CONST_F_C_2D_RIGHT:
 		case Law_tp::CONST_F_PRO_VEL:
 		case Law_tp::CONST_F_ANTI_VEL:
+			numParams = 2;	// {f, Isp}
 			numStates = 0;	// all directions are functions of other state variables; no need for new ones
 			numOutputs = 3;	// {ax, ay, az}
 			break;
 		case Law_tp::CONST_F_GENERAL:
+			numParams = 2;	// {f, Isp}
 			numStates = 2;	// Two angles to represent 3D unit vector
 			numOutputs = 3;	// {ax, ay, az}
 			break;
@@ -665,19 +669,21 @@ void ControlLaw_cr3bp_lt::init(){
 		case Law_tp::VAR_F_CONST_C_2D_RIGHT:
 		case Law_tp::VAR_F_PRO_VEL:
 		case Law_tp::VAR_F_ANTI_VEL:
+			numParams = 1;	// {Isp}
 			numStates = 1;	// {f}; directions are functions of other state variables
 			numOutputs = 3;	// {ax, ay, az}
 			break;
 		case Law_tp::VAR_F_GENERAL:
+			numParams = 1;	// {Isp}
 			numStates = 3;	// {f, alpha, beta}
 			numOutputs = 3;	// {ax, ay, az}
 		default:
 			ControlLaw::init();
 	}
 
-	if(params.size() != numStates){
+	if(params.size() != numParams){
 		char msg[128];
-		sprintf(msg, "ControlLaw_cr3bp_lt::init: Expect %d input params, but received %zu", numStates, params.size());
+		sprintf(msg, "ControlLaw_cr3bp_lt::init: Expect %d input params, but received %zu", numParams, params.size());
 		throw Exception(msg);
 	}
 }//====================================================

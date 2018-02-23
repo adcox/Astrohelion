@@ -674,6 +674,12 @@ void ControlLaw_cr3bp_lt::init(){
 		default:
 			ControlLaw::init();
 	}
+
+	if(params.size() != numStates){
+		char msg[128];
+		sprintf(msg, "ControlLaw_cr3bp_lt::init: Expect %d input params, but received %zu", numStates, params.size());
+		throw Exception(msg);
+	}
 }//====================================================
 
 /**

@@ -7,53 +7,115 @@
 
 using namespace astrohelion;
 
-std::vector<double> emL1Lyap_ic {0.887415132364297, 0, 0, 0, -0.332866299501083, 0, 1};	// EM L1
-std::vector<double> emL3Lyap_ic {-0.628097117249632, 0, 0, 0, -0.87229410151913, 0, 1};	// EM L3
-double emL1Lyap_T = 3.02797;	// EM L1 Period
-double emL3Lyap_T = 6.2238;
+int main(){
+	// Load the L1 Lyapunov family
+	char filename[128];
+	sprintf(filename, "../../data/families/cr3bp_earth-moon/L1_Lyap.mat");
+	printf("Opening %s\n", filename);
+	SysData_cr3bp crSys(filename);
 
-int main(int argc, char **argv) {
-	(void) argc;
-	(void) argv;
+	Family_PO lyapFam(&crSys);
+	std::vector<ControlLaw*> loadedLaws {};
+	lyapFam.readFromMat(filename, loadedLaws);
 
-	MSTOF_tp tofType = MSTOF_tp::VAR_FIXSIGN;
-	ControlLaw_cr3bp_lt::Law_tp lawType = ControlLaw_cr3bp_lt::Law_tp::VAR_F_PRO_VEL;
+	unsigned int ix0 = 50;	// for lawID = 2, f = 1e-2
 
-	SysData_cr3bp_lt sys("earth", "moon", 14);
-	std::vector<double> ltParams {1500}, ctrlState{1e-2};
-	ControlLaw_cr3bp_lt law(lawType, ltParams);
+	Arcset_periodic member = lyapFam.getMember(ix0);
 
-	printf("varF test_rmState, tofType = %d, lawType = %d\n", to_underlying(tofType), to_underlying(lawType));
+	// Define low-thrust parameters
+	double f = 1e-2;
+	double Isp = 1500;
+	double alpha = 0;
 
-	Arcset_cr3bp_lt halfLyapArcset(&sys), correctedSet(&sys);
+	// Create parameters and other data storage objects
+	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
+	std::vector<double> ltParams {f, Isp}, ctrl0 {alpha, 0};
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_F_GENERAL, ltParams);
+	
+	// Create sim engine and storage arcset
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
-	sim.runSim_manyNodes(emL1Lyap_ic, ctrlState, 0, emL1Lyap_T/2.0, 3, &halfLyapArcset, &law);
+	Arcset_cr3bp_lt ltGuess(&ltSys);
 
-	MultShootEngine corrector;
-	corrector.setVerbosity(Verbosity_tp::SOME_MSG);
-	corrector.setTOFType(tofType);
-	corrector.setTol(1e-11);
-	corrector.setFullFinalProp(false);
-	// corrector.setVerbosity(Verbosity_tp::SOME_MSG);
+	// Fill the storage arcset with arcs propagated from the natural Lyapunov nodes
+	// with the specified low-thrust parameters
+	double m = 1;
+	std::vector<double> q0 {};
+	for(unsigned int i = 0; i < member.getNumNodes(); i++){
+		q0 = member.getStateByIx(i);
+		q0.push_back(m);
+		if(i == 0){
+			sim.runSim(q0, ctrl0, 0, member.getTOF(i), &ltGuess, &law);
+			
+		}else{
+			Arcset_cr3bp_lt temp(&ltSys);
+			sim.runSim(q0, ctrl0, 0, member.getTOF(i), &temp, &law);
+			ltGuess.appendSetAtNode(&temp, ltGuess.getNodeByIx(-1).getID(), 0, 0);
+		}
 
-	double stateConData[] = {NAN, 0, NAN, NAN, NAN, NAN, NAN};
-	Constraint stateCon(Constraint_tp::STATE, 2, stateConData, 7);
-	halfLyapArcset.addConstraint(stateCon);
+		m = ltGuess.getStateByIx(-1).back();
+	}
 
-	Constraint rmState(Constraint_tp::RM_STATE, 0, nullptr, 0);
-	halfLyapArcset.addConstraint(rmState);
+	ltGuess.print();
 
-	// Remove final ctrl state; no constraints on final ctrl state, results in column of zeros
-	Constraint rmEndCtrl(Constraint_tp::RM_CTRL, halfLyapArcset.getNodeByIx(-1).getID(), nullptr, 0);
-	halfLyapArcset.addConstraint(rmEndCtrl);
+	// double L4pos[3];
+	// DynamicsModel_cr3bp::getEquilibPt(&ltSys, 4, 1e-6, L4pos);
 
-	MultShootEngine::finiteDiff_checkMultShoot(&halfLyapArcset, corrector, Verbosity_tp::SOME_MSG);
-	halfLyapArcset.saveToMat("data/lt_initGuess.mat");
-	corrector.multShoot(&halfLyapArcset, &correctedSet);
+	// std::vector<double> yVal{lawID == 1 ? L4pos[1] : -L4pos[1]};
+	// Event planeEvt(Event_tp::XZ_PLANE, 0, true, yVal);
 
-	// std::vector<double> finalState = correctedSet.getState(stateCon.getID());
-	// stateDiffBelowTol(finalState, stateConData, 1e-12);
+	// printf("Stop at y = %f\n", yVal[0]);
+	// Arcset_cr3bp_lt temp(&ltSys), newMember(&ltSys);
 
-	// correctedSet.saveToMat("data/lt_correctedSet.mat");
+	// SimEngine sim;
+	// sim.setVerbosity(Verbosity_tp::NO_MSG);
+	// sim.addEvent(planeEvt);
+
+	// sim.runSim(member.getStateByIx(0), member.getTotalTOF(), &temp, loadedLaws[0]);
+
+	// sim.clearEvents();
+	// sim.runSim_manyNodes(temp.getStateByIx(-1), member.getTotalTOF(), 5, &newMember, loadedLaws[0]);
+
+	// std::vector<double> initStateData {NAN, yVal[0], 0, NAN, NAN, 0, 1};
+	// std::vector<double> perData {0, 0, NAN, 0, NAN, NAN};
+
+	// Constraint periodicityCon(Constraint_tp::MATCH_CUST, newMember.getNodeByIx(-1).getID(), perData);
+	// Constraint fixInitState(Constraint_tp::STATE, newMember.getNodeByIx(0).getID(), initStateData);
+
+	// newMember.addConstraint(fixInitState);
+	// newMember.addConstraint(periodicityCon);
+
+	// newMember.saveToMat("data/tempInitGuess.mat");
+
+	// MultShootEngine shooter;
+	// Arcset_cr3bp_lt corrected(&ltSys);
+
+	// try{
+	// 	shooter.multShoot(&newMember, &corrected);
+	// }catch(Exception &e){
+	// 	printErr("%s\n", e.what());
+	// }
+
+	// corrected.saveToMat("data/tempCorrected.mat");
+
+	// PseudoArcEngine pae;
+	// std::vector<Arcset> allArcs;
+	// std::vector<int> initDir {1, 0, 0, 1, -1, 0};
+	// Arcset_cr3bp_lt a1(&ltSys), a2(&ltSys);
+
+	// pae.setNumOrbits(50);
+	// pae.pac(&newMember, &a1, &a2, allArcs, initDir);
+
+	// Family_PO fam(&ltSys);
+	// for(Arcset arc : allArcs)
+	// 	fam.addMember(static_cast<Arcset_cr3bp_lt>(arc));
+
+	// sprintf(filename, "../../data/families_toBeChecked/cr3bp-lt_L4Lyap_f%.1e_Isp3000_law%u.mat", f, lawID);
+	// fam.saveToMat(filename);
+
+	// Free memory
+	for(ControlLaw *p : loadedLaws){
+		delete p;
+		p = nullptr;
+	}
 }

@@ -423,6 +423,7 @@ namespace astrohelion{
 	void saveStringToFile(mat_t*, const char*, std::string, const int);
 	void saveMatrixToFile(const char*, const char*, std::vector<double>, size_t, size_t);
 	void saveMatrixToFile(mat_t*, const char*, std::vector<double>, size_t, size_t);
+	void saveTimestampToFile(mat_t*, const char *varName = VARNAME_TIMESTAMP);
 	void saveVar(mat_t*, matvar_t*, const char*, matio_compression);
 	bool fileExists (const char*);
 	//\}

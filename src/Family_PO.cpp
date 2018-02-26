@@ -540,6 +540,7 @@ void Family_PO::saveToMat(const char *filename) const{
 		saveEigVals(matfp);
 		saveEigVecs(matfp);
 		pSysData->saveToMat(matfp);
+		saveTimestampToFile(matfp);
 	}
 
 	Mat_Close(matfp);

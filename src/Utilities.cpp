@@ -156,7 +156,7 @@ void saveVar(mat_t *matFile, matvar_t *matvar, const char* varName, matio_compre
         Mat_VarWrite(matFile, matvar, comp);
     }
     Mat_VarFree(matvar);
-}//=========================================================
+}//====================================================
 
 /**
  *  @brief Save a single double-precision value to a Matlab file
@@ -173,7 +173,7 @@ void saveDoubleToFile(mat_t *matfp, const char *varName, double data){
     }else{
         printErr("Utilities::saveDoubleToFile: Error creating mat file\n");
     }
-}//========================================================
+}//====================================================
 
 /**
  * @brief Save a matrix of data to a Matlab .mat file
@@ -190,7 +190,7 @@ void saveMatrixToFile(const char* filename, const char* varName, std::vector<dou
     mat_t *matfp = Mat_CreateVer(filename, nullptr, MAT_FT_DEFAULT);
     saveMatrixToFile(matfp, varName, data, rows, cols);
     Mat_Close(matfp);
-}//========================================================
+}//====================================================
 
 /**
  *  @brief Save a matrix of data to an open matlab .mat file
@@ -224,7 +224,7 @@ void saveMatrixToFile(mat_t *matfp, const char *varName, std::vector<double> dat
     }else{
         printErr("Utilities::saveMatrixToFile: Error creating mat file\n");
     }
-}//=========================================================
+}//====================================================
 
 /**
  *  @brief Save a string to an open Matlab data file
@@ -248,7 +248,29 @@ void saveStringToFile(mat_t *matfp, const char *varName, std::string text, const
     // size_t dims[] {1, text.length()};
     // matvar_t *matvar = Mat_VarCreate(varName, MAT_C_CHAR, MAT_T_UINT8, 2, dims, &(text_chars[0]), 0);
     // astrohelion::saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
-}//=========================================================
+}//====================================================
+
+/**
+ * @brief Save a timestamp to a file
+ * @details The timestamp is saved as "hh:mm:ssUTC dd/mm/yyyy"
+ * 
+ * @param matfp pointer to Matlab file
+ * @param varName name of the variable
+ */
+void saveTimestampToFile(mat_t *matfp, const char *varName){
+    time_t timer;
+
+    time(&timer);   // Get the current time
+    struct tm now_utc = *gmtime(&timer);    // Convert current time to UTC
+    char txt_now[23];
+    sprintf(txt_now, "%02d:%02d:%02dUTC %02d/%02d/%4d\0", now_utc.tm_hour,
+        now_utc.tm_min, now_utc.tm_sec, now_utc.tm_mday,
+        now_utc.tm_mon + 1, now_utc.tm_year + 1900);
+
+    size_t dims[] {1, 22};
+    matvar_t *matvar = Mat_VarCreate(varName, MAT_C_CHAR, MAT_T_UINT8, 2, dims, txt_now, 0);
+    saveVar(matfp, matvar, varName, MAT_COMPRESSION_NONE);
+}//====================================================
 
 /**
  *  @brief Read a matrix of doubles from a .mat file

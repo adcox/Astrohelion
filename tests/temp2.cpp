@@ -29,9 +29,10 @@ int main(){
 
 	// Create parameters and other data storage objects
 	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
-	std::vector<double> ltParams {f, Isp}, ctrl0 {alpha, 0};
+	std::vector<double> ltParams {sqrt(f), Isp}, ctrl0 {alpha, 0};
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_F_GENERAL, ltParams);
-	
+	law.setVarMass(false);
+
 	// Create sim engine and storage arcset
 	SimEngine sim;
 	sim.setVerbosity(Verbosity_tp::NO_MSG);
@@ -61,8 +62,8 @@ int main(){
 
 	// Now, try corrections
 	MultShootEngine shooter;
-	shooter.setDoLineSearch(true);
-	shooter.setMaxIts(200);
+	// shooter.setDoLineSearch(true);
+	// shooter.setMaxIts(200);
 
 	int id0 = ltGuess.getNodeByIx(0).getID();
 	int idf = ltGuess.getNodeByIx(-1).getID();

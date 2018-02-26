@@ -589,6 +589,8 @@ void Arcset::saveCmds_toFile(mat_t* pMatFile, Save_tp saveTp) const{
 		saveVar(pMatFile, pCons, VARNAME_CONSTRAINTS, MAT_COMPRESSION_NONE);
 
 	pSysData->saveToMat(pMatFile);
+
+	saveTimestampToFile(pMatFile);
 }//====================================================
 
 /**

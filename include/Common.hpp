@@ -64,6 +64,9 @@ const double G_GRAV_0 = 9.80665/1000;
 /** Pi */
 const double PI = 3.14159265358979323846264338327950;
 
+// Matlab File Name Variables, Administrative
+static const char VARNAME_TIMESTAMP[] = "timestamp";		//!< Matlab file variable name for a timestamp that indicates the veresion
+
 // Matlab File Name Variables for 2BP
 static const char VARNAME_2BP_ENERGY[] = "energy";			//!< Matlab file variable name for 2BP energy data
 static const char VARNAME_ANGMOM[] = "angMom";				//!< Matlab file variable name for angular momentum data
@@ -105,5 +108,10 @@ static const char PARAMKEY_JACOBI[] = "J";					//!< ExtraParam map key for Jacob
 static const char PARAMKEY_SMA[] = "sma";					//!< ExtraParam map key for semimajor axis data
 static const char PARAMKEY_STATE_DERIV[] = "qdot";			//!< ExtraParam map key for state derivative data
 static const char PARAMKEY_STATE_EPOCH_DERIV[] = "dqdT";	//!< ExtraParam map key for state derivative w.r.t. epoch 
+
+
+// Timestamps for file versioning
+static const char T_V1_9 = "19:15:00UTC 02/02/2018";		// Switch all low-thrust magnitudes to store as sqrt(f)
+static const char T_V2_0 = "00:00:00UTC 26/02/2018";		// Introduced timestamps to files
 
 }// END of Astrohelion namespace

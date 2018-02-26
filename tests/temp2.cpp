@@ -31,7 +31,7 @@ int main(){
 	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
 	std::vector<double> ltParams {sqrt(f), Isp}, ctrl0 {alpha, 0};
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_F_GENERAL, ltParams);
-	law.setVarMass(false);
+	// law.setVarMass(false);
 
 	// Create sim engine and storage arcset
 	SimEngine sim;
@@ -57,14 +57,12 @@ int main(){
 		m = ltGuess.getStateByIx(-1).back();
 	}
 
-	ltGuess.print();
-	ltGuess.saveToMat("ltGuess.mat");
-
 	// Now, try corrections
 	MultShootEngine shooter;
 	// shooter.setDoLineSearch(true);
 	// shooter.setMaxIts(200);
 
+	// Periodicity Constraint
 	int id0 = ltGuess.getNodeByIx(0).getID();
 	int idf = ltGuess.getNodeByIx(-1).getID();
 
@@ -73,6 +71,15 @@ int main(){
 
 	ltGuess.addConstraint(periodicityCon);
 
+	// Fix initial state components
+	std::vector<double> n0conData {NAN, NAN, NAN, NAN, NAN, NAN, 1};
+	std::vector<double> ctrl0conData {alpha, 0};
+	Constraint n0con(Constraint_tp::STATE, ltGuess.getNodeByIx(0).getID(), n0conData);
+	// Constraint ctrl0con(Constraint_tp::CTRL, ltGuess.getNodeByIx(0).getID(), ctrl0conData);
+
+	ltGuess.addConstraint(n0con);
+	// ltGuess.addConstraint(ctrl0con);
+
 	// Enforce control continuity on all segment
 	std::vector<double> ctrlConData {1, 1};
 	for(unsigned int i = 0; i < ltGuess.getNumSegs(); i++){
@@ -80,6 +87,9 @@ int main(){
 		ltGuess.addConstraint(con);
 	}
 
+	ltGuess.print();
+	ltGuess.saveToMat("ltGuess.mat");
+	
 	Arcset_cr3bp_lt ltConverged(&ltSys);
 	try{
 		shooter.multShoot(&ltGuess, &ltConverged);

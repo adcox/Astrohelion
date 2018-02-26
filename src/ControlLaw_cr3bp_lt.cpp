@@ -59,22 +59,10 @@ ControlLaw_cr3bp_lt::ControlLaw_cr3bp_lt(unsigned int id, std::vector<double> pa
 //------------------------------------------------------------------------------------------------------
 
 /**
- *  \brief Retrieve value of flag that describes whether or not control law leverages variable mass
- *  \return Whether or not the law is variable mass
- */
-bool ControlLaw_cr3bp_lt::isVarMass() const{ return flags.at(0); }
-
-/**
  *  @brief Retrieve the name of the law type as a string
  *  @return the name of the law type as a string
  */
 std::string ControlLaw_cr3bp_lt::getLawTypeString() const{ return ControlLaw_cr3bp_lt::lawTypeToString(lawType); }
-
-/**
- *  \brief Set the flag that tells the control law to use variable mass
- *  \param bIsVar true for variable mass, false for constant mass (Isp = inf)
- */
-void ControlLaw_cr3bp_lt::setVarMass(bool bIsVar){ flags[0] = bIsVar; }
 
 //------------------------------------------------------------------------------------------------------
 //      Analysis Functions
@@ -91,10 +79,6 @@ void ControlLaw_cr3bp_lt::setVarMass(bool bIsVar){ flags[0] = bIsVar; }
  */
 double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *pSys) const{
 	(void) t;
-
-	if(!flags.empty() && flags[0] == false)
-		return 0;
-
 	
 	switch(lawType){
 		case Law_tp::CONST_F_C_2D_LEFT:
@@ -666,9 +650,6 @@ void ControlLaw_cr3bp_lt::getEOMPartials_GeneralDir(double t, const double *s, c
  */
 void ControlLaw_cr3bp_lt::init(){
 	int numParams = 0;
-
-	// First flag: use variable mass
-	flags = std::vector<bool> {true};
 
 	switch(lawType){
 		case Law_tp::CONST_F_C_2D_LEFT:

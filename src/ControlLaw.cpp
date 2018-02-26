@@ -94,35 +94,6 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
 //------------------------------------------------------------------------------------------------------
 
 /**
- * @brief Retrieve the value of the flag at the specified index
- * 
- * @param ix Index of the flag. If negative, the index counts
- *  backwards from the end of the flag vector, e.g., ix = -2
- *  returns the second-to-last element in flags.
- * @return The value stored in the flag vector at the specified index
- * @throws Exception if the index is out of bounds
- */
-bool ControlLaw::getFlag(int ix) const{
-	int n = static_cast<int>(flags.size());
-	while(ix < n){ ix += n; }
-
-	if(ix >= n){
-		char msg[128];
-		sprintf(msg, "ControlLaw::getFlag: Index ix = %d is larger"
-			" than flags vector (size %d)", ix, n);
-		throw Exception(msg);
-	}
-
-	return flags[ix];
-}//====================================================
-
-/**
- * @brief Retrieve the vector of flags
- * @return the vector of flags
- */
-std::vector<bool> ControlLaw::getFlags() const{ return flags; }
-
-/**
  *  @brief Retrieve the control law ID
  *  @return the control law ID
  */
@@ -183,46 +154,6 @@ std::vector<double> ControlLaw::getParams() const { return params; }
  *  @return a constant reference to the parameter vector
  */
 const std::vector<double>& ControlLaw::getParamsRef_const() const { return params; }
-
-/**
- *  @brief Set the value of a flag at the specified index.
- * 
- *  @param ix Index of the flag. If negative, the index counts
- *  backwards from the end of the flag vector, e.g., ix = -2
- *  returns the second-to-last element in params.
- *  @param val the value to store in the flag vector at the specified index
- *  @throws Exception if the index is out of bounds
- */
-void ControlLaw::setFlag(int ix, bool val){
-	int n = static_cast<int>(flags.size());
-	while(ix < n){ ix += n; }
-
-	if(ix >= n){
-		char msg[128];
-		sprintf(msg, "ControlLaw::getFlag: Index ix = %d is larger"
-			" than flags vector (size %d)", ix, n);
-		throw Exception(msg);
-	}
-
-	flags[ix] = val;
-}//====================================================
-
-/**
- * @brief Set the flags
- * 
- * @param pFlags array of flags
- * @param len length of the array
- */
-void ControlLaw::setFlags(const bool *pFlags, unsigned int len){
-	std::copy(pFlags, pFlags+len, flags.begin());
-}//====================================================
-
-/**
- * @brief Set the flags
- * 
- * @param vFlags reference to vector of flag values
- */
-void ControlLaw::setFlags(const std::vector<bool> &vFlags){ flags = vFlags; }
 
 /**
  *  @brief Set the control law type
@@ -430,13 +361,6 @@ void ControlLaw::print() const{
 			printf(",  ");
 	}
 	printf("}\n");
-	printf("  flags = {");
-	for(unsigned int i = 0; i < flags.size(); i++){
-		printf("%d", flags[i]);
-		if(i < flags.size() - 1)
-			printf(",  ");
-	}
-	printf("}\n");
 }//====================================================
 
 /**
@@ -448,7 +372,6 @@ void ControlLaw::copyMe(const ControlLaw &law){
 	numStates = law.numStates;
 	numOutputs = law.numOutputs;
 	params = law.params;
-	flags = law.flags;
 }//====================================================
 
 /**

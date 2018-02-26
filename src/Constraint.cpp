@@ -295,6 +295,7 @@ const char* Constraint::getConTypeStr(Constraint_tp t){
 		case Constraint_tp::TOF_TOTAL: { return "TOF"; }
 		case Constraint_tp::APSE: { return "APSE"; }
 		case Constraint_tp::ANGLE: { return "ANGLE"; }
+		case Constraint_tp::CTRL: {return "CTRL"; }
 		case Constraint_tp::CONT_CTRL: { return "CONTINUOUS CONTROL STATES"; }
 		case Constraint_tp::CONT_PV: { return "CONTINUOUS SEG2NODE_POSITION_VELOCITY"; }
 		case Constraint_tp::CONT_EX: { return "CONTINUOUS SEG2NODE_EXTRA"; }

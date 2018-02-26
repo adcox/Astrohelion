@@ -46,17 +46,17 @@ enum class Constraint_tp : int{
 								 * with a constraint of this type will result in a thrown exception
 								 */
 	STATE = 1,					/*!< Constrain specific core states to specified numeric values.
-				 			 	 * The `id` value represents the node to constrain,
-				 			 	 * and the `data` vector contains values for each state.
-				 			 	 * to leave a state unconstrained, place a NAN value in the
-				 			 	 * place of that state. 
+				 			 	 * 	The `id` value represents the node to constrain,
+				 			 	 * 	and the `data` vector contains values for each state.
+				 			 	 * 	To leave a state unconstrained, place a NAN value in the
+				 			 	 * 	place of that state. 
 				 			 	 */
 	MATCH_ALL = 2, 				/*!< Make one node match another in all core states.
-				 				 * The `id` value represents the source node, and the
-				 				 * first value in `data` represents the node that will
-				 				 * be matched to the first. Note that, for non-autonomous systems,
-				 				 * the corrector will not attempt to match epoch time because it
-				 				 * doesn't make sense to make two nodes occur at the same time.
+				 				 * 	The `id` value represents the source node, and the
+				 				 * 	first value in `data` represents the node that will
+				 				 * 	be matched to the first. Note that, for non-autonomous systems,
+				 				 * 	the corrector will not attempt to match epoch time because it
+				 				 * 	doesn't make sense to make two nodes occur at the same time.
 								 */
 	MATCH_CUST = 3,				/*!< Make one node match another in the specified core states.
 				 				 *	The `id` value represents the source node; place the
@@ -105,10 +105,16 @@ enum class Constraint_tp : int{
 				 				 *	to 7 and set `data` to [0, NAN, NAN, NAN, NAN, NAN]
 				 				 */
 	ANGLE = 12,					/*!< Constrain a node to be located on a plane normal to the XY-plane and 
-								 * rotated by some angle about some point. Place the ID of the node you want 
-								 * to constrain in the `id` variable. In the `data` variable, store the
-								 * rotation base point (x0, y0, z0) and the rotation angle (rad) measured
-								 * relative to the positive x-axis.
+								 * 	rotated by some angle about some point. Place the ID of the node you want 
+								 * 	to constrain in the `id` variable. In the `data` variable, store the
+								 * 	rotation base point (x0, y0, z0) and the rotation angle (rad) measured
+								 * 	relative to the positive x-axis.
+								 */
+	CTRL = 13,					/*!< Constrain the control state at a node to have the specified values.
+								 *	The `id` value represents the node to constrain,
+				 			 	 * 	and the `data` vector contains values for each control state.
+				 			 	 * 	To leave a state unconstrained, place a NAN value in the
+				 			 	 * 	place of that state.
 								 */
 	JC = 100, 					/*!< Constrain the node to have a specific Jacobi constant (CR3BP only)
 				 				 * 	Place the ID of the node you want to constrain in the `id`

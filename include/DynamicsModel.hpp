@@ -315,6 +315,7 @@ protected:
 		Constraint_tp::DELTA_V,
 		Constraint_tp::TOF_TOTAL,
 		Constraint_tp::APSE,
+		Constraint_tp::CTRL,
 		Constraint_tp::CONT_CTRL,
 		Constraint_tp::CONT_PV,
 		Constraint_tp::CONT_EX,
@@ -349,6 +350,7 @@ protected:
 	 */
 	virtual void multShoot_targetApse(MultShootData&, const Constraint&, int) const;
 	virtual void multShoot_targetApse_endSeg(MultShootData&, const Constraint&, int) const;
+	virtual void multShoot_targetCtrl(MultShootData&, const Constraint&, int) const;
 	virtual void multShoot_targetDeltaV(MultShootData&, const Constraint&, int) const;
 	virtual double multShoot_targetDeltaV_compSlackVar(const MultShootData&, const Constraint&) const;
 	virtual void multShoot_targetDist(MultShootData&, const Constraint&, int) const;

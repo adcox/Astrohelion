@@ -534,6 +534,9 @@ void DynamicsModel::multShoot_applyConstraint(MultShootData& it, const Constrain
 		case Constraint_tp::STATE:
 			multShoot_targetState(it, con, row0);
 			break;
+		case Constraint_tp::CTRL:
+			multShoot_targetCtrl(it, con, row0);
+			break;
 		case Constraint_tp::MATCH_ALL:
 			multShoot_targetMatchAll(it, con, row0);
 			break;
@@ -923,11 +926,11 @@ void DynamicsModel::multShoot_targetCont_Ex_Seg(MultShootData& it, const Constra
 	(void)con;
 	(void)row0;
 }//======================================================
+
 /**
  *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::STATE`.
  *
- *	This method *should* provide full state constraining for any model; the STM and identity 
- *	matrices are used to relate node states and integrated states.
+ *	This method *should* provide full state constraining for any model.
  *
  *	@param it a reference to the class containing all the data relevant to the corrections process
  *	@param con the constraint being applied
@@ -1043,6 +1046,32 @@ void DynamicsModel::multShoot_targetState_endSeg(MultShootData& it, const Constr
 		}
 	}
 }//=================================================
+
+/**
+ *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::CTRL`.
+ *
+ *	This method *should* provide full ctrl state constraining for any model.
+ *
+ *	@param it a reference to the class containing all the data relevant to the corrections process
+ *	@param con the constraint being applied
+ *	@param row0 the index of the row this constraint begins at
+ */
+void DynamicsModel::multShoot_targetCtrl(MultShootData& it, const Constraint& con, int row0) const{
+	std::vector<double> conData = con.getData();
+	MSVarMap_Obj ctrl_var = it.getVarMap_obj(MSVar_tp::CTRL, con.getID());
+
+	if(ctrl_var.row0 == -1)
+		throw Exception("DynamicsModel::multShoot_targetCtrl: Cannot consrain ctrl that is not in the free variable vector.");
+
+	int count = 0;	// Count # rows b/c some may be skipped (NAN)
+	for(unsigned int s = 0; s < con.getData().size(); s++){
+		if(!std::isnan(conData[s])){
+			it.FX[row0+count] = it.X[ctrl_var.row0+s] - conData[s];
+			it.DF_elements.push_back(Tripletd(row0+count, ctrl_var.row0+s, 1.0));
+			count++;
+		}
+	}
+}//====================================================
 
 /**
  *	@brief Compute partials and constraint functions for nodes constrained with `Constraint_tp::MATCH_ALL`

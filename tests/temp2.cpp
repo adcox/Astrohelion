@@ -30,7 +30,7 @@ int main(){
 	// Create parameters and other data storage objects
 	SysData_cr3bp_lt ltSys("earth", "moon", 1);	// Let M0 = 1
 	std::vector<double> ltParams {sqrt(f), Isp}, ctrl0 {alpha, 0};
-	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_F_GENERAL, ltParams);
+	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_MF_GENERAL, ltParams);
 	// law.setVarMass(false);
 
 	// Create sim engine and storage arcset
@@ -89,7 +89,7 @@ int main(){
 
 	ltGuess.print();
 	ltGuess.saveToMat("ltGuess.mat");
-	
+
 	Arcset_cr3bp_lt ltConverged(&ltSys);
 	try{
 		shooter.multShoot(&ltGuess, &ltConverged);

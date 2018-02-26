@@ -172,57 +172,75 @@ public:
 
 	/**
 	 *  @brief Identify the control law
-	 *  \delails For all of these control laws, the `getLaw()` function
+	 *  @delails For all of these control laws, the `getLaw()` function
 	 *  returns a 3-dimensional thrust direction unit vector. Similarly, the 
 	 *  `getPartials_State()` function returns 21 derivative values
 	 *  that relate the thrust direction to the 7 core CR3BP-LT states.
+	 *  
+	 *  Laws are split into categories based on the type value:
+	 *  * 1-99: 		Constant thrust, variable mass
+	 *  * 101 - 199: 	Constant thrust, constant mass
+	 *  * 1001 - 1099: 	Variable thrust, variable mass
+	 *  
+	 *  Procedure for adding a new control law:
+	 *  * Add the type to the enumerated type, `Law_tp`, with full documentation
+	 *  * Add to `init()` and `lawTypeToString()`
+	 *  * Add to `get_dmdt()`
+	 *  * Add to `getLaw_Output()` and any functions called from that switchboard
+	 *  * Add to `getLaw_OutputPartials()` and any functions called from that switchboard
+	 *  * Add to `getLaw_EOMPartials()` and any functions called from that switchboard
 	 */
 	enum Law_tp : unsigned int{
 		CONST_F_C_2D_LEFT = 1,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control,
 									 * thrust left w.r.t. velocity direction. Thrust magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
+									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {} (None)
 									 */
 		CONST_F_C_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, 
 									 * thrust right w.r.t. velocity direction. Thrust magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
+									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {} (None)
 									 */
 		CONST_F_PRO_VEL = 3,		/*!< Thrust along velocity vector (maximum energy increase). Thrust
 									 * 	magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
+									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {} (None)
 									 */
 		CONST_F_ANTI_VEL = 4,		/*!< Thrust along anti-velocity vector (maximum energy decrease). Thrust
 									 * 	magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
+									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {} (None)
 									 */
 		CONST_F_GENERAL = 5,		/*!< Thrust in an arbitrary direction. Thrust magnitude is constant.
-									 * - params: { thrust (nondim), Isp (seconds) }
+									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {alpha (rad), beta (rad)}
 									 */
-		VAR_F_CONST_C_2D_LEFT = 101,/*!< Jacobi-preserving (constant C), two-dimensional (xy-planar) control,
+		CONST_MF_GENERAL = 105,		/*!< Thrust in an arbitrary direction. Thrust magnitude and mass
+									 * are constant.
+									 * - params: {sqrt(thrust) (nondim), Isp (seconds)}
+									 * - ctrlStates: {alpha (rad), beta (rad)}
+									 */
+		VAR_F_CONST_C_2D_LEFT = 1001,/*!< Jacobi-preserving (constant C), two-dimensional (xy-planar) control,
 									 * thrust left w.r.t. velocity direction.
 									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {f (nondim)}
+									 * - ctrlStates: {sqrt(f) (nondim)}
 									 */
-		VAR_F_CONST_C_2D_RIGHT = 102,/*!< Jacobi-preserving (constant C), two-dimensional (xy-planar) control,
+		VAR_F_CONST_C_2D_RIGHT = 1002,/*!< Jacobi-preserving (constant C), two-dimensional (xy-planar) control,
 									 * thrust right w.r.t. velocity direction.
 									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {f (nondim)}
+									 * - ctrlStates: {sqrt(f) (nondim)}
 									 */
-		VAR_F_PRO_VEL = 103,		/*!< Thrust along velocity vector (maximum energy increase).
+		VAR_F_PRO_VEL = 1003,		/*!< Thrust along velocity vector (maximum energy increase).
 									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {f (nondim)}
+									 * - ctrlStates: {sqrt(f) (nondim)}
 									 */
-		VAR_F_ANTI_VEL = 104,		/*!< Thrust along anti-velocity vector (maximum energy decrease).
+		VAR_F_ANTI_VEL = 1004,		/*!< Thrust along anti-velocity vector (maximum energy decrease).
 									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {f (nondim)}
+									 * - ctrlStates: {sqrt(f) (nondim)}
 									 */
-		VAR_F_GENERAL = 105			/*!< Thrust in an arbitrary direction.
+		VAR_F_GENERAL = 1005,		/*!< Thrust in an arbitrary direction.
 									 * - params: {Isp (seconds)}
-									 * - ctrlStates: {f (nondim), alpha (rad), beta (rad)}
+									 * - ctrlStates: {sqrt(f) (nondim), alpha (rad), beta (rad)}
 									 */
 	};
 protected:

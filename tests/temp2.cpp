@@ -72,12 +72,12 @@ int main(){
 
 	ltGuess.addConstraint(periodicityCon);
 
-	// // Enforce control continuity on all segment
-	// std::vector<double> ctrlConData {1, 1};
-	// for(unsigned int i = 0; i < ltGuess.getNumSegs(); i++){
-	// 	Constraint con(Constraint_tp::CONT_CTRL, ltGuess.getSegByIx(i).getID(), ctrlConData);
-	// 	ltGuess.addConstraint(con);
-	// }
+	// Enforce control continuity on all segment
+	std::vector<double> ctrlConData {1, 1};
+	for(unsigned int i = 0; i < ltGuess.getNumSegs(); i++){
+		Constraint con(Constraint_tp::CONT_CTRL, ltGuess.getSegByIx(i).getID(), ctrlConData);
+		ltGuess.addConstraint(con);
+	}
 
 	Arcset_cr3bp_lt ltConverged(&ltSys);
 	try{

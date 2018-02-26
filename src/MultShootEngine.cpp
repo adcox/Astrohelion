@@ -345,6 +345,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 			case Constraint_tp::CONT_CTRL:
 			case Constraint_tp::SEG_CONT_PV:
 			case Constraint_tp::STATE:
+			case Constraint_tp::CTRL:
 			case Constraint_tp::MATCH_CUST:
 			case Constraint_tp::ENDSEG_STATE:
 				addToRows = con.countConstrainedStates();

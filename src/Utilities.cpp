@@ -262,7 +262,7 @@ void saveTimestampToFile(mat_t *matfp, const char *varName){
 
     time(&timer);   // Get the current time
     struct tm now_utc = *gmtime(&timer);    // Convert current time to UTC
-    char txt_now[22];
+    char txt_now[24];
     sprintf(txt_now, "%02d:%02d:%02dUTC %02d/%02d/%4d", now_utc.tm_hour,
         now_utc.tm_min, now_utc.tm_sec, now_utc.tm_mday,
         now_utc.tm_mon + 1, now_utc.tm_year + 1900);

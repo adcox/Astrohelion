@@ -50,7 +50,7 @@ int main(){
 	std::vector<int> initDir {1, 0, 0, 1, -1, 0};
 	Arcset_cr3bp_lt a1(&ltSys), a2(&ltSys);
 
-	pae.setNumOrbits(50);
+	pae.setNumOrbits(5);
 	pae.pac(&member, &a1, &a2, allArcs, initDir);
 
 	Family_PO fam(&ltSys);

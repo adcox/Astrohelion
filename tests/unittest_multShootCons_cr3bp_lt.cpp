@@ -30,8 +30,8 @@ double emL1Lyap_T = 3.02797;	// EM L1 Period
 double emL3Lyap_T = 6.2238;
 
 // All the different control laws to test
-std::vector<ControlLaw_cr3bp_lt::Law_tp> constF_lawTypes = {ControlLaw_cr3bp_lt::Law_tp::CONST_F_C_2D_LEFT,
-	ControlLaw_cr3bp_lt::Law_tp::CONST_F_C_2D_RIGHT, ControlLaw_cr3bp_lt::Law_tp::CONST_F_PRO_VEL, 
+std::vector<ControlLaw_cr3bp_lt::Law_tp> constF_lawTypes = {ControlLaw_cr3bp_lt::Law_tp::CONST_FC_2D_LEFT,
+	ControlLaw_cr3bp_lt::Law_tp::CONST_FC_2D_RIGHT, ControlLaw_cr3bp_lt::Law_tp::CONST_F_PRO_VEL, 
 	ControlLaw_cr3bp_lt::Law_tp::CONST_F_ANTI_VEL};
 
 std::vector<ControlLaw_cr3bp_lt::Law_tp> varF_lawTypes = {ControlLaw_cr3bp_lt::Law_tp::VAR_F_CONST_C_2D_LEFT,

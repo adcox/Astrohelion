@@ -191,12 +191,12 @@ public:
 	 *  * Add to `getLaw_EOMPartials()` and any functions called from that switchboard
 	 */
 	enum Law_tp : unsigned int{
-		CONST_F_C_2D_LEFT = 1,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control,
+		CONST_FC_2D_LEFT = 1,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control,
 									 * thrust left w.r.t. velocity direction. Thrust magnitude is constant.
 									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {} (None)
 									 */
-		CONST_F_C_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, 
+		CONST_FC_2D_RIGHT = 2,		/*!< Jacobi-Preserving (constant C), two-dimensional (xy-planar) control, 
 									 * thrust right w.r.t. velocity direction. Thrust magnitude is constant.
 									 * - params: { sqrt(thrust) (nondim), Isp (seconds) }
 									 * - ctrlStates: {} (None)

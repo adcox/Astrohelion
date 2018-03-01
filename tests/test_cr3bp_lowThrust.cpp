@@ -22,7 +22,7 @@ int main(void){
 	double f = 3.6688;		// (1N, nondim in Earth-Moon)
 	double Isp = 5000;		// sec
 	SysData_cr3bp_lt lowThrustSys("earth", "moon", mass);
-	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_F_C_2D_RIGHT, f, Isp);
+	ControlLaw_cr3bp_lt control(ControlLaw_cr3bp_lt::Law_tp::CONST_FC_2D_RIGHT, f, Isp);
 
 	// SimEngine sim2(lowThrustSys);
 	double ic_lt[] = {0.131231781418776, 0, 0, 0, 2.48142854119997, 0, 1};

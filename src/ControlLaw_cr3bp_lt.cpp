@@ -81,8 +81,8 @@ double ControlLaw_cr3bp_lt::get_dmdt(double t, const double *s, const SysData *p
 	(void) t;
 	
 	switch(lawType){
-		case Law_tp::CONST_F_C_2D_LEFT:
-		case Law_tp::CONST_F_C_2D_RIGHT:
+		case Law_tp::CONST_FC_2D_LEFT:
+		case Law_tp::CONST_FC_2D_RIGHT:
 		case Law_tp::CONST_F_PRO_VEL:
 		case Law_tp::CONST_F_ANTI_VEL:
 		case Law_tp::CONST_F_GENERAL:
@@ -130,11 +130,11 @@ void ControlLaw_cr3bp_lt::getLaw_Output(double t, const double *s, const SysData
 	assert(pSysData_lt->getDynamicsModel()->getCoreStateSize() == 7);
 
 	switch(lawType){
-		case Law_tp::CONST_F_C_2D_LEFT:
+		case Law_tp::CONST_FC_2D_LEFT:
 		case Law_tp::VAR_F_CONST_C_2D_LEFT:
 			getAccel_ConstC_2D(t, s, pSysData_lt, output, len);
 			break;
-		case Law_tp::CONST_F_C_2D_RIGHT:
+		case Law_tp::CONST_FC_2D_RIGHT:
 		case Law_tp::VAR_F_CONST_C_2D_RIGHT:
 			getAccel_ConstC_2D(t, s, pSysData_lt, output, len);
 			break;
@@ -174,11 +174,11 @@ void ControlLaw_cr3bp_lt::getLaw_OutputPartials(double t, const double *s, const
 	assert(pSysData_lt->getDynamicsModel()->getCoreStateSize() == 7);
 
 	switch(lawType){
-		case Law_tp::CONST_F_C_2D_LEFT:
+		case Law_tp::CONST_FC_2D_LEFT:
 		case Law_tp::VAR_F_CONST_C_2D_LEFT:
 			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len);
 			break;
-		case Law_tp::CONST_F_C_2D_RIGHT:
+		case Law_tp::CONST_FC_2D_RIGHT:
 		case Law_tp::VAR_F_CONST_C_2D_RIGHT:
 			getAccelPartials_ConstC_2D(t, s, pSysData_lt, partials, len);
 			break;
@@ -257,7 +257,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 	double *law, unsigned int len) const{
 
 
-	if(	lawType == Law_tp::CONST_F_C_2D_LEFT || lawType == Law_tp::CONST_F_C_2D_RIGHT || 
+	if(	lawType == Law_tp::CONST_FC_2D_LEFT || lawType == Law_tp::CONST_FC_2D_RIGHT || 
 			lawType == Law_tp::VAR_F_CONST_C_2D_LEFT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT){
 
 		// Laws with type < 1000 are constant thrust, so f is in params; above 1000, thrust is a control state
@@ -265,7 +265,7 @@ void ControlLaw_cr3bp_lt::getAccel_ConstC_2D(double t, const double *s, const Sy
 		f *= f;	// we store sqrt(f), so square it.
 
 		// +1 for RIGHT, -1 for LEFT
-		int sign = (lawType == Law_tp::CONST_F_C_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
+		int sign = (lawType == Law_tp::CONST_FC_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
 
 		if(len < numOutputs)
 			throw Exception("ControlLaw_cr3bp_lt::getLaw_ConstC_2D: law data length must be at least 3!");
@@ -377,7 +377,7 @@ void ControlLaw_cr3bp_lt::getAccel_GeneralDir(double t, const double *s, const S
 void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, const SysData_cr3bp_lt *pSys,
 	double *partials, unsigned int len) const{
 
-	if(	lawType == Law_tp::CONST_F_C_2D_LEFT || lawType == Law_tp::CONST_F_C_2D_RIGHT || 
+	if(	lawType == Law_tp::CONST_FC_2D_LEFT || lawType == Law_tp::CONST_FC_2D_RIGHT || 
 			lawType == Law_tp::VAR_F_CONST_C_2D_LEFT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT){
 
 		if(len != numOutputs*7)
@@ -387,7 +387,7 @@ void ControlLaw_cr3bp_lt::getAccelPartials_ConstC_2D(double t, const double *s, 
 		f *= f;	// we store sqrt(f), so square it.
 
 		// +1 for RIGHT, -1 for LEFT
-		int sign = (lawType == Law_tp::CONST_F_C_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
+		int sign = (lawType == Law_tp::CONST_FC_2D_RIGHT || lawType == Law_tp::VAR_F_CONST_C_2D_RIGHT) ? 1 : -1;
 
 		/*	CONST_F laws:
 		 *		s: {x, y, z, vx, vy, vz, m, ... ctrl ... , ... stm ...}
@@ -663,8 +663,8 @@ void ControlLaw_cr3bp_lt::init(){
 	int numParams = 0;
 
 	switch(lawType){
-		case Law_tp::CONST_F_C_2D_LEFT:
-		case Law_tp::CONST_F_C_2D_RIGHT:
+		case Law_tp::CONST_FC_2D_LEFT:
+		case Law_tp::CONST_FC_2D_RIGHT:
 		case Law_tp::CONST_F_PRO_VEL:
 		case Law_tp::CONST_F_ANTI_VEL:
 			numParams = 2;	// {f, Isp}
@@ -708,8 +708,8 @@ void ControlLaw_cr3bp_lt::init(){
  */
 std::string ControlLaw_cr3bp_lt::lawTypeToString(unsigned int id){
 	switch(id){
-		case Law_tp::CONST_F_C_2D_LEFT: return "Const. Thrust, Jacobi-Preserving, 2D, Left";
-		case Law_tp::CONST_F_C_2D_RIGHT: return "Const. Thrust, Jacobi-Preserving, 2D, Right";
+		case Law_tp::CONST_FC_2D_LEFT: return "Const. Thrust, Jacobi-Preserving, 2D, Left";
+		case Law_tp::CONST_FC_2D_RIGHT: return "Const. Thrust, Jacobi-Preserving, 2D, Right";
 		case Law_tp::CONST_F_PRO_VEL: return "Const. Thrust, Prograde Velocity";
 		case Law_tp::CONST_F_ANTI_VEL: return "Const. Thrust, Anti-Velocity";
 		case Law_tp::CONST_F_GENERAL: return "Const. Thrust, General Direction";
@@ -789,7 +789,7 @@ void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp
  *  @brief Convert all control data from an arcset to control data for the CONST_F_GENERAL
  *  law
  *  @details This conversion is well-defined from all of the simplified control laws, i.e.,
- *  CONST_F_C_2D_LEFT, CONST_F_C_2D_RIGHT, CONST_F_PRO_VEL, and CONST_F_ANTI_VEL because their directions are
+ *  CONST_FC_2D_LEFT, CONST_FC_2D_RIGHT, CONST_F_PRO_VEL, and CONST_F_ANTI_VEL because their directions are
  *  easily computed at each instant in time.
  * 
  *  @param pArcset Pointer to the arcset to be converted
@@ -816,8 +816,8 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 		// Make sure we know how to convert
 		bool knownConversion = false;
 		switch(oldLawType){
-			case to_underlying(Law_tp::CONST_F_C_2D_LEFT):
-			case to_underlying(Law_tp::CONST_F_C_2D_RIGHT):
+			case to_underlying(Law_tp::CONST_FC_2D_LEFT):
+			case to_underlying(Law_tp::CONST_FC_2D_RIGHT):
 			case to_underlying(Law_tp::CONST_F_PRO_VEL):
 			case to_underlying(Law_tp::CONST_F_ANTI_VEL):
 			case NO_CTRL:

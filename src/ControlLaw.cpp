@@ -130,7 +130,7 @@ unsigned int ControlLaw::getNumOutputs() const {return numOutputs; }
  */
 double ControlLaw::getParam(int ix) const{
 	int n = static_cast<int>(params.size());
-	while(ix < n){ ix += n; }
+	while(ix < 0){ ix += n; }
 
 	if(ix >= n){
 		char msg[128];
@@ -176,7 +176,7 @@ void ControlLaw::setLawType(unsigned int id){
  */
 void ControlLaw::setParam(int ix, double val){
 	int n = static_cast<int>(params.size());
-	while(ix < n){ ix += n; }
+	while(ix < 0){ ix += n; }
 
 	if(ix >= n){
 		char msg[128];

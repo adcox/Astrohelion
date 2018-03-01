@@ -18,7 +18,7 @@ int main(){
 	std::vector<ControlLaw*> loadedLaws {};
 	lyapFam.readFromMat(filename, loadedLaws);
 
-	unsigned int ix0 = 50;	// for lawID = 2, f = 1e-2
+	unsigned int ix0 = 25;	// for lawID = 2, f = 1e-2
 
 	Arcset_periodic member = lyapFam.getMember(ix0);
 
@@ -75,10 +75,10 @@ int main(){
 	std::vector<double> n0conData {NAN, NAN, NAN, NAN, NAN, NAN, 1};
 	std::vector<double> ctrl0conData {alpha, 0};
 	Constraint n0con(Constraint_tp::STATE, ltGuess.getNodeByIx(0).getID(), n0conData);
-	// Constraint ctrl0con(Constraint_tp::CTRL, ltGuess.getNodeByIx(0).getID(), ctrl0conData);
+	Constraint ctrl0con(Constraint_tp::CTRL, ltGuess.getNodeByIx(0).getID(), ctrl0conData);
 
 	ltGuess.addConstraint(n0con);
-	// ltGuess.addConstraint(ctrl0con);
+	ltGuess.addConstraint(ctrl0con);
 
 	// Enforce control continuity on all segment
 	std::vector<double> ctrlConData {1, 1};

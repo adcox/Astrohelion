@@ -55,14 +55,6 @@ LDFLAGS += -L$(LIB)
 SYS_INC_DIR := $(INSTALL_DIR)/include/astrohelion
 SYS_INC_EXTERN_DIR := $(INSTALL_DIR)/include
 
-# Options that are platform dependent
-
-ifeq ($(UNAME_S), Linux)
-	LDFLAGS += -L/usr/local/lib
-else ifeq ($(UNAME_S), Darwin)
-	# Do special things for OS X
-endif
-
 # Get JUST the filenames, no filepaths, of the source files
 SRC_FILES := $(notdir $(shell find $(SRC)/*.cpp))
 

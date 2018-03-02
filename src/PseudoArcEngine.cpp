@@ -204,7 +204,8 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 		printErr("PseudoArcEngine::pac: Could not converge initial guess!\n");
 		return;
 	}catch(LinAlgException &e){
-		printErr("PseudoArcEngine::pac: There was a linear algebra error when correcting the initial guess...\n");
+		printErr("PseudoArcEngine::pac: There was a linear algebra error "
+			"when correcting the initial guess:\n%s\n", e.what());
 		return;
 	}
 
@@ -268,8 +269,7 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 			}catch(DivergeException &de){
 				// Nothing to do here; continue down the code
 			}catch(LinAlgException &lae){
-				printErr("PseudoArcEngine::pac: There was a linear algebra error...\n");
-				printErr("%s\n", lae.what());
+				printErr("PseudoArcEngine::pac: There was a linear algebra error:\n%s\n", lae.what());
 				endPAC = true;
 				break;
 			}

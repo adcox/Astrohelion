@@ -76,7 +76,7 @@ int main(){
 	int id0 = ltGuess.getNodeByIx(0).getID();
 	int idf = ltGuess.getNodeByIx(-1).getID();
 
-	std::vector<double> conData{ idf, idf, idf, idf, idf, idf, NAN};
+	std::vector<double> conData{ idf, idf, idf, NAN, idf, idf, NAN};
 	Constraint periodicityCon(Constraint_tp::MATCH_CUST, id0, conData);
 
 	ltGuess.addConstraint(periodicityCon);
@@ -105,7 +105,7 @@ int main(){
 
 	ltGuess.print();
 	ltConverged.print();
-	
+
 	PseudoArcEngine pae;
 	std::vector<Arcset> allArcs;
 	std::vector<int> initDir {1, 0, 0, 0, 0, 0};

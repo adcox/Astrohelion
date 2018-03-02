@@ -79,6 +79,7 @@ public:
 	 *  \{
 	 */
 	std::vector<Constraint> getConstraints() const;
+	std::vector<Constraint>& getConsRef();
 	double getEpoch() const;
 	double getExtraParam(std::string) const;
 	std::vector<double> getExtraParamVec(std::string) const;

@@ -146,9 +146,9 @@ bool operator != (const Node &lhs, const Node &rhs){
 	return !(lhs == rhs);
 }//====================================================
 
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 //      Set and Get Functions
-//-----------------------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  *	@brief Add a constraint to the current set for this node
@@ -186,9 +186,13 @@ void Node::setConstraints(std::vector<Constraint> constraints){
  *	@brief Get all constraints for this node
  *	@return a vector containing all constraints applied to this node
  */
-std::vector<Constraint> Node::getConstraints() const{
-	return cons;
-}//====================================================
+std::vector<Constraint> Node::getConstraints() const{ return cons; }
+
+/**
+ * @brief Retrieve a reference to the constraint vector for in-place modifications
+ * @return a reference to the vector containing all consraints applied to this node
+ */
+std::vector<Constraint>& Node::getConsRef() { return cons; }
 
 /**
  *  @brief Retrieve the epoch assocated with this node

@@ -285,8 +285,9 @@ enum class ConstraintApp_tp{
  *
  * 	**Adding a New Constraint**
  * 	* Create a new enumerated type and document it fully
- * 	* Update the getTypStr() function
+ * 	* Update the getTypeStr() function
  * 	* Update the setAppType() function
+ * 	* Update the setDataStoreIDFlag() function
  *	* Add the new constraint type to the list of accepted constraints for
  * 		any dynamic models you wish
  *	* Define behavior for dealing with those types of constraints in the
@@ -334,6 +335,7 @@ class Constraint : public Core{
 		static const char* getAppTypeStr(ConstraintApp_tp);
 		static const char* getConTypeStr(Constraint_tp);
 		std::vector<double> getData() const;
+		bool dataStoresID() const;
 		int getID() const;
 		double getFirstDataValue() const;
 		double getFirstDataValue(int*) const;
@@ -362,8 +364,9 @@ class Constraint : public Core{
 	private:
 		Constraint_tp type = Constraint_tp::NONE;		//!< The type of constraint
 		ConstraintApp_tp appType = ConstraintApp_tp::APP_TO_NODE;	//!< How this constraint is applied
-		int id = 0;						//!< object ID that this constraint applies to
+		int id = 0;								//!< object ID that this constraint applies to
 		std::vector<double> data {};			//!< Data for this constraint
+		bool bDataStoreID = false;				//!< Whether or not this constraint stores Node or Segment IDs in the data vector
 
 		/**
 		 *  \name Utility Functions
@@ -377,6 +380,7 @@ class Constraint : public Core{
 		 *  \{
 		 */
 		void setAppType();
+		void setDataStoreIDFlag();
 		//\}
 };
 

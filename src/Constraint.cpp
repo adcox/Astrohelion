@@ -51,6 +51,7 @@ Constraint::Constraint(Constraint_tp type){
 	this->type = type;
 	data.clear();
 	setAppType();
+	setDataStoreIDFlag();
 }//====================================================
 
 /**
@@ -64,6 +65,7 @@ Constraint::Constraint(Constraint_tp type, int id, std::vector<double> data){
 	this->id = id;
 	this->data = data;
 	setAppType();
+	setDataStoreIDFlag();
 }//====================================================
 
 /**
@@ -78,6 +80,7 @@ Constraint::Constraint(Constraint_tp type, int id, const double* data, int data_
 	this->id = id;
 	this->data.insert(this->data.begin(), data, data + data_len);
 	setAppType();
+	setDataStoreIDFlag();
 }//====================================================
 
 /**
@@ -149,6 +152,14 @@ bool operator !=(const Constraint &lhs, const Constraint &rhs){
 //-----------------------------------------------------
 // 		Set and Get Functions
 //-----------------------------------------------------
+
+/**
+ * @brief Determine if this constraint stores Node or Segment IDs in the
+ * constraint data vector
+ * @return whether or not this constraint stores Node or Segment IDs in the
+ * constraint data vector
+ */
+bool Constraint::dataStoresID() const { return bDataStoreID; }
 
 /**
  *  @brief Retrieve the application type for this constraint, i.e., what type of
@@ -224,6 +235,7 @@ int Constraint::countConstrainedStates() const{
 void Constraint::setType(Constraint_tp t){
 	type = t;
 	setAppType(); 	// Update, if necessary
+	setDataStoreIDFlag();
 }//====================================================
 
 /**
@@ -263,6 +275,7 @@ void Constraint::copyMe(const Constraint &c){
 	type = c.type;
 	id = c.id;
 	data = c.data;
+	bDataStoreID = c.bDataStoreID;
 }//====================================================
 
 /**
@@ -370,4 +383,23 @@ void Constraint::setAppType(){
 			break;
 	}
 }//====================================================
+
+/**
+ * @brief Set the flag that tells other functions whether or not
+ * this constraint stores Node or Segment IDs in the data vector
+ */
+void Constraint::setDataStoreIDFlag(){
+	switch(type){
+		case Constraint_tp::MATCH_ALL:
+		case Constraint_tp::MATCH_CUST:
+			// These constraints store node or segment IDs in the
+			// data vectorand will need to be updated if IDs change
+			bDataStoreID = true;
+			break;
+		default:
+			// Default behavior (set in header) is bDatStoreID = false
+			break;
+	}
+}//====================================================
+
 }// END of Astrohelion namespace

@@ -1750,7 +1750,8 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
     std::vector<int> newNodeIDs;
     newNodeIDs.reserve(it.numNodes);
     
-    for(int n = 0; n < it.numNodes; n++){
+    unsigned int n = 0, s = 0,i = 0;
+    for(n = 0; n < it.numNodes; n++){
         Node node = it.pArcIn->getNodeByIx(n);
 
         MSVarMap_Obj state_var = it.getVarMap_obj(MSVar_tp::STATE, node.getID());
@@ -1772,9 +1773,26 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
         newNodeIDs.push_back(it.pArcOut->addNode(node));
     }
 
+    // Update any constraints that refer nodeIDs in their data vectors
+    for(n = 0; n < it.numNodes; n++){
+    	Node &newNode = it.pArcOut->getNodeRefByIx(n);
+    	std::vector<Constraint>& nodeCons = newNode.getConsRef();
+    	for(Constraint &con : nodeCons){
+    		if(con.dataStoresID()){
+    			std::vector<double> data = con.getData();
+    			for(i = 0; i < data.size(); i++){
+    				if(!std::isnan(data[i])){
+    					data[i] = newNodeIDs[it.pArcIn->getNodeIx(data[i])];
+    				}
+    			}
+    			con.setData(data);
+    		}
+    	}
+    }
+
     double tof;
     int newOrigID, newTermID;
-    for(unsigned int s = 0; s < it.pArcIn->getNumSegs(); s++){
+    for(s = 0; s < it.pArcIn->getNumSegs(); s++){
         Segment seg = it.pArcIn->getSegByIx(s);
 
         if(to_underlying(it.tofTp) > 0){
@@ -1826,7 +1844,7 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
     // Set the epoch of each node based on the time of flight from
     // the first node
     double epoch = NAN;
-    for(unsigned int i = 0; i < order.size(); i++){
+    for(i = 0; i < order.size(); i++){
         if(order[i].type == ArcPiece::Piece_tp::NODE){
             if(std::isnan(epoch)){
                 // Copy the epoch value of the first node
@@ -1861,7 +1879,7 @@ void DynamicsModel::multShoot_createOutput(const MultShootData& it) const{
 
     // it.pArcOut->print();
     std::vector<Constraint> arcCons = it.pArcIn->getArcConstraints();
-    for(unsigned int i = 0; i < arcCons.size(); i++){
+    for(i = 0; i < arcCons.size(); i++){
         it.pArcOut->addConstraint(arcCons[i]);
     }
 }//======================================================

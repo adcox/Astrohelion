@@ -233,7 +233,7 @@ class MultShootData{
 		std::vector<int> slackAssignCon {};			//!< Indices of constraints, index of entry corresponds to a slack variable
 		std::vector<int> conRows {};				//!< Each entry holds the row # for the constraint; i.e. 0th element holds row # for 0th constraint
 
-		int numNodes = 0;							//!< Number of nodes in the entire arcset
+		unsigned int numNodes = 0;							//!< Number of nodes in the entire arcset
 		int count = 0;								//!< Count of number of iterations through corrections process
 
 		int numSlack = 0;							//!< number of slack variables

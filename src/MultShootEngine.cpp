@@ -295,7 +295,7 @@ MultShootData MultShootEngine::multShoot(const Arcset *pArcIn, Arcset *pArcOut){
 	it.tofTp = tofTp;
 	
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Multiple Shooting Algorithm:\n");
-	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  it.numNodes = %d\n", it.numNodes);
+	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  it.numNodes = %zu\n", it.numNodes);
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "  sysType = %s\n", pArcIn->getSysData()->getTypeStr().c_str());
 
 	// Get the model associated with the arcset

@@ -2524,7 +2524,7 @@ matvar_t* BaseArcset::createVar_SegCtrlLaw(Save_tp saveTp, const char *pVarName)
 		
 		// Update values if a control law has been implemented
 		if(pLaw){
-			id = pLaw->getLawType();
+			id = pLaw->getType();
 			numStates = pLaw->getNumStates();
 			params = pLaw->getParams();
 		}

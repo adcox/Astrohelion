@@ -97,7 +97,7 @@ bool operator !=(const ControlLaw &lhs, const ControlLaw &rhs){
  *  @brief Retrieve the control law ID
  *  @return the control law ID
  */
-unsigned int ControlLaw::getLawType() const{ return lawType; }
+unsigned int ControlLaw::getType() const{ return lawType; }
 
 /**
  *  @brief Retrieve the name of the law type as a string

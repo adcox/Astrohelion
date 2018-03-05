@@ -520,7 +520,7 @@ void eigVec_backTrans(unsigned int low, unsigned int hi, const std::vector<doubl
  * 
  *  @return Rearranged indices that describe the correct order of the eigenvalues/vectors
  */
-std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<MatrixXRcd> eigVecs){
+std::vector<unsigned int> sortEig(const std::vector<cdouble> &eigVals, const std::vector<MatrixXRcd> &eigVecs){
     std::vector<unsigned int> sortedIxs(eigVals.size(), 0);
 
     if(eigVals.size() == 0 || eigVecs.size() == 0){
@@ -538,30 +538,40 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
     // Generate all permutations of the indices 0 through 5
     std::vector<unsigned int> vals(nE);
     std::iota(std::begin(vals), std::end(vals), 0); // Fill with 0, 1, ..., nE
-    std::vector<unsigned int> ixPerms = generatePerms<unsigned int>(vals);
-    std::vector<float> cost(ixPerms.size()/nE, 0);
+    const std::vector<unsigned int> ixPerms = generatePerms<unsigned int>(vals);
+
+    // Define a custom OpenMP reduction to find the minimum value while
+    // saving the index of the associated value
+    #pragma omp declare reduction \
+        (minPair:IndexValuePair:omp_out=minVal(omp_out, omp_in)) \
+        initializer(omp_priv = IndexValuePair(0, 1e10))
+
+    IndexValuePair minIxVal(0, 1e10);   // Initilize the IndexValuePair
+    double cost = 0;
 
     // Sort the first set of eigenvalues so that reciprocal pairs occur near one another
     unsigned int s = 0;
+    #pragma omp parallel for firstprivate(cost) reduction(minPair:minIxVal)
     for(unsigned int p = 0; p < ixPerms.size()/nE; p++){
+        cost = 0;
         for(unsigned int i = 0; i < nE/2; i++){
             // Penalize configurations with pairs that are not reciprocal
-            cost[p] += std::abs(1.0 - eigVals[s*nE + ixPerms[p*nE + 2*i]] * eigVals[s*nE + ixPerms[p*nE + 2*i + 1]]);
+            cost += std::abs(1.0 - eigVals[s*nE + ixPerms[p*nE + 2*i]] * eigVals[s*nE + ixPerms[p*nE + 2*i + 1]]);
+        }
+        if(cost < minIxVal.second){
+            minIxVal.first = p;
+            minIxVal.second = cost;
         }
     }
 
-    // Find the minimum cost
-    std::vector<float>::iterator minCostIt = std::min_element(cost.begin(), cost.end());
-    unsigned int minCostIx = minCostIt - cost.begin();
-
     // Sort the eigenvectors and eigenvalues according to the minimum cost permutation
-    // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
+    // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minIxVal.first);
     std::vector<cdouble> prevSortVal(nE,0);
     MatrixXRcd prevSortVec = MatrixXRcd::Zero(nE,nE);
     for(unsigned int i = 0; i < nE; i++){
-        sortedIxs[s*nE + i] = ixPerms[minCostIx*nE + i];
-        prevSortVal[i] = eigVals[s*nE + ixPerms[minCostIx*nE + i]];
-        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minCostIx*nE+i]).normalized();
+        sortedIxs[s*nE + i] = ixPerms[minIxVal.first*nE + i];
+        prevSortVal[i] = eigVals[s*nE + ixPerms[minIxVal.first*nE + i]];
+        prevSortVec.col(i) = eigVecs[s].col(ixPerms[minIxVal.first*nE+i]).normalized();
     }
 
     // printf("[%f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi, %f%+fi]\n",
@@ -571,6 +581,7 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
     //     std::real(eigVals[sortedIxs[s*nE+3]]), std::imag(eigVals[sortedIxs[s*nE+3]]),
     //     std::real(eigVals[sortedIxs[s*nE+4]]), std::imag(eigVals[sortedIxs[s*nE+4]]),
     //     std::real(eigVals[sortedIxs[s*nE+5]]), std::imag(eigVals[sortedIxs[s*nE+5]]));
+
 
     // Analyze all other eigenvalue sets using axioms while maintaining order of the
     // first set of eigenvalues/vectors
@@ -583,26 +594,26 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
             }
         }
 
-        cost.clear();
-        cost.assign(ixPerms.size()/nE, 0);
+        minIxVal = IndexValuePair(0, 1e10);
+        #pragma omp parallel for firstprivate(cost) reduction(minPair:minIxVal)
         for(unsigned int p = 0; p < ixPerms.size()/nE; p++){
             // bool printOut = s < 5 && (ixPerms[nE*p+0] == 0 && ixPerms[nE*p+1] == 1 && ixPerms[nE*p+2] == 2 && ixPerms[nE*p+3] == 3 &&
             //     ixPerms[nE*p+4] == 4 && ixPerms[nE*p+5] == 5);
 
             // if(printOut)
             //     printf("Eigenvalue set %u:\n", s);
-
+            cost = 0;
             for(unsigned int i = 0; i < nE; i++){
                 // Assign cost based on the dot product between this new arrangement
                 // of eigenvectors and the previous arrangement
                 // Ranges from 0 to 1
-                cost[p] += dp_err(i, ixPerms[nE*p + i]);
+                cost += dp_err(i, ixPerms[nE*p + i]);
                 // if(printOut)
                 //     printf("  dp cost %u: %.4e\n", i, dp_err(i, ixPerms[nE*p + i]));
 
                 // Assign cost based on the distance from the previous sorted eigenvalues
                 // Scale to give it more weight than some of the others
-                cost[p] += 50*std::abs( (eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i] );
+                cost += 50*std::abs( (eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i] );
                 // if(printOut)
                 //     printf("  Dist cost %u: %.4e\n", i, 50*std::abs((eigVals[nE*s + ixPerms[nE*p + i]] - prevSortVal[i])/prevSortVal[i]));
 
@@ -612,20 +623,21 @@ std::vector<unsigned int> sortEig(std::vector<cdouble> eigVals, std::vector<Matr
                     cdouble v1 = eigVals[s*nE + ixPerms[p*nE + i-1]];
                     cdouble v2 = eigVals[s*nE + ixPerms[p*nE + i]];
                     double minVal = std::abs(v1) < std::abs(v2) ? std::abs(v1) : std::abs(v2);
-                    cost[p] += std::abs(1.0 - std::abs(v1 * v2) ) / minVal;
+                    cost += std::abs(1.0 - std::abs(v1 * v2) ) / minVal;
                     // if(printOut)
                     //     printf("  Recip cost: %u: %.4e\n", i, sqrt(std::abs(1.0 - std::abs(eigVals[s*nE + ixPerms[p*nE + i-1]] * eigVals[s*nE + ixPerms[p*nE + i]]))));
                 }
             }
-        }
 
-        // Find the minimum cost
-        minCostIt = std::min_element(cost.begin(), cost.end());
-        minCostIx = minCostIt - cost.begin();
+            if(cost < minIxVal.second){
+                minIxVal.first = p;
+                minIxVal.second = cost;
+            }
+        }
 
         // printf("Minimum cost for member %u is %f on permutation %u\n", s, *minCostIt, minCostIx);
         for(unsigned int i = 0; i < nE; i++){
-            sortedIxs[s*nE + i] = ixPerms[minCostIx*nE + i];
+            sortedIxs[s*nE + i] = ixPerms[minIxVal.first*nE + i];
             prevSortVal[i] = eigVals[s*nE + sortedIxs[s*nE + i]];
             prevSortVec.col(i) = eigVecs[s].col(sortedIxs[s*nE + i]).normalized();
         }

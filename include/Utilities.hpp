@@ -42,6 +42,7 @@
 #include <iostream>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace astrohelion{
@@ -389,6 +390,16 @@ namespace astrohelion{
 	    outFile.close();
 	}//================================================
 
+	/**
+	 * @brief Define a type that stores an index and a value
+	 * as a pair. This is used in parallel sorting to return 
+	 * both the minimum value and the associated index. See
+	 * Calculations::sortEig() for an example use case.
+	 */
+	typedef std::pair<unsigned int, double> IndexValuePair;
+
+	
+
 	/** \} */ // END of util group
 
 
@@ -399,6 +410,7 @@ namespace astrohelion{
 	std::string eigenCompInfo2Str(Eigen::ComputationInfo);
 	std::string getNameFromSpiceID(int);
 	SpiceInt getSpiceIDFromName(const char*);
+	IndexValuePair minVal(IndexValuePair, IndexValuePair);
 
 	/**
 	 *  \name Standard Output

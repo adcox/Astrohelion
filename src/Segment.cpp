@@ -581,7 +581,7 @@ void Segment::print() const{
 	printf("Segment | id = %d\n", ID);
 	printf("\tOrigin Node ID: %d, Terminus Node ID: %d\n", getOrigin(), getTerminus());
 	printf("\tTOF = %.4f\n", tof);
-	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->lawTypeToString(pCtrlLaw->getLawType()).c_str() : "NONE");
+	printf("\tControl Law = %s\n", pCtrlLaw ? pCtrlLaw->lawTypeToString(pCtrlLaw->getType()).c_str() : "NONE");
 
 	printf("\tTime Vector: %zu x 1\n", times.size());
 	if(times.size() > 0){

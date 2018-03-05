@@ -67,7 +67,7 @@ public:
 	 *  \name Set and Get Functions
 	 *  \{
 	 */
-	unsigned int getLawType() const;
+	unsigned int getType() const;
 	virtual std::string getLawTypeString() const;
 	unsigned int getNumOutputs() const;
 	unsigned int getNumStates() const;

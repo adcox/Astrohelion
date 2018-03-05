@@ -18,7 +18,7 @@ int main(){
 	std::vector<ControlLaw*> loadedLaws {};
 	lyapFam.readFromMat(filename, loadedLaws);
 
-	unsigned int ix0 = 50;	// for lawID = 2, f = 1e-2
+	unsigned int ix0 = 5;
 
 	Arcset_periodic lyap = lyapFam.getMember(ix0);
 
@@ -45,7 +45,7 @@ int main(){
 	shooter.setTOFType(MSTOF_tp::VAR_EQUALARC);
 	Family_PO fam(&ltSys);
 
-	double alpha = 0;
+	double alpha = PI/3;
 	
 	printf("Converging at alpha = %.2f deg\n", alpha*180/PI);
 
@@ -107,13 +107,17 @@ int main(){
 	std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 	Arcset_cr3bp_lt a1(&ltSys), a2(&ltSys);
 
-	pae.setNumOrbits(500);
+	pae.setNumOrbits(100);
 	pae.pac(&ltConverged, &a1, &a2, allArcs, initDir);
 
 	for(auto arc : allArcs)
 		fam.addMember(arc);
 
-	fam.saveToMat("ltOrbitsAlphaFam.mat");
+	fam.sortEigs();
+
+	sprintf(filename, "L1_Lyap_f%.1e_a%05.1f_law%d.mat", f,
+		alpha*180/PI, law.getType());
+	fam.saveToMat(filename);
 
 	// Free memory
 	for(ControlLaw *p : loadedLaws){

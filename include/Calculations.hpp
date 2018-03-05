@@ -93,7 +93,7 @@ double gregorianToJulian(double, double, double, double, double, double);
 MatrixXRd getMirrorMat(Mirror_tp);
 double getStabilityIndex(std::vector<cdouble>);
 Node interpPointAtTime(const Arcset*, double);
-std::vector<unsigned int> sortEig(std::vector<cdouble>, std::vector<MatrixXRcd>);
+std::vector<unsigned int> sortEig(const std::vector<cdouble>&, const std::vector<MatrixXRcd>&);
 void reconstructArc(const Arcset*, Arcset*);
 /** \} */
 

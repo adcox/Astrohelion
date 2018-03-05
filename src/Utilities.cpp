@@ -592,5 +592,18 @@ std::string eigenCompInfo2Str(Eigen::ComputationInfo ci){
     }
 }//====================================================
 
+/**
+ * @brief Get the IndexValuePair with the minimum value.
+ * @details [long description]
+ * 
+ * @param a an IndexValuePair
+ * @param b an IndexValuePair
+ * 
+ * @return whichever of a or b that has the smaller value
+ */
+IndexValuePair minVal(IndexValuePair a, IndexValuePair b){
+    return a.second < b.second ? a : b;
+}//================================================
+    
 /** \} */ // END of util group
 } // End of astrohelion namespace

@@ -775,7 +775,7 @@ void ControlLaw_cr3bp_lt::convertLaws(Arcset_cr3bp_lt *pArcset, ControlLaw_cr3bp
 	if(pLaw == nullptr)
 		throw Exception("ControlLaw_cr3bp_lt::convertLaws: Input control law is nullptr");
 
-	switch(pLaw->getLawType()){
+	switch(pLaw->getType()){
 		case Law_tp::CONST_F_GENERAL:
 			// call function
 			convertTo_GeneralConstF(pArcset, pLaw);
@@ -811,7 +811,7 @@ void ControlLaw_cr3bp_lt::convertTo_GeneralConstF(Arcset_cr3bp_lt *pArcset, Cont
 		Node &refOrigin = pArcset->getNodeRef(refSeg.getOrigin());
 
 		const ControlLaw *pOldLaw = refSeg.getCtrlLaw();
-		unsigned int oldLawType = pOldLaw ? pOldLaw->getLawType() : NO_CTRL;
+		unsigned int oldLawType = pOldLaw ? pOldLaw->getType() : NO_CTRL;
 
 		// Make sure we know how to convert
 		bool knownConversion = false;

@@ -27,6 +27,10 @@
  */
 #pragma once
 
+#include <Eigen/OrderingMethods>
+#include <Eigen/Sparse>
+#include <Eigen/SparseLU>
+#include <Eigen/SparseQR>
 #include <vector>
 
 #include "Core.hpp"
@@ -110,6 +114,7 @@ class MultShootEngine : public Core, public Engine{
 		void setFindEvent(bool);
 		void setMaxErr(double);
 		void setMaxIts(int);
+		void setSaveEachIt(bool);
 		void setTol(double);
 		void setTOFType(MSTOF_tp);
 		
@@ -139,6 +144,18 @@ class MultShootEngine : public Core, public Engine{
 		/** Describe the way that time is parameterized in the design variable vector */
 		MSTOF_tp tofTp = MSTOF_tp::VAR_FREE;
 
+		/** 
+		 * Flag that indicates whether or not the LU solver has been 
+		 * initialized for the current corrections process
+		 */
+		bool bInitLUSolver = false;
+
+		/** 
+		 * Flag that indicates whether or not the QR solver has been 
+		 * initialized for the current corrections process
+		 */
+		bool bInitQRSolver = false;
+
 		/** Whether or not to conduct final round of propagations with an 
 			integrator that leverages variable step time. When set to TRUE,
 			the output arcset will have Segments with many states. If set to 
@@ -146,6 +163,24 @@ class MultShootEngine : public Core, public Engine{
 			and final state of the propagation. This latter option is best for
 			applications that require speed and efficiency */
 		bool bFullFinalProp = true;
+
+		/** Flag to turn on when this algorithm is being used to locate an event */
+		bool bFindEvent = false;
+
+		/** Flag to turn off crash detection in the simulation engine */
+		bool bIgnoreCrash = false;
+
+		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
+		bool bIgnoreDiverge = false;
+
+		/** Whether or not to use a rough line search to choose the size of the Newton step. Default is false*/
+		bool bLineSearchAttenFactor = false;
+
+		/** Whether or not the LU solver failed */
+		bool bLUFailed = false;
+
+		/** Whether or not to save the solution after each update; useful for debugging */
+		bool bSaveEachIt = false;
 
 		/** Maximum number of iterations before giving up */
 		int maxIts = 20;
@@ -186,17 +221,17 @@ class MultShootEngine : public Core, public Engine{
 		 */
 		double ls_maxStepSize = 1e2;
 
-		/** Flag to turn on when this algorithm is being used to locate an event */
-		bool bFindEvent = false;
+		/**
+		 * Sparse LU Solver to factorize the Jacobian matrix when solving
+		 * the update equation. 
+		 */
+		Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver {};
 
-		/** Flag to turn off crash detection in the simulation engine */
-		bool bIgnoreCrash = false;
-
-		/** Flag to ignore diverge (i.e. don't throw an exception) and return the partially converged iteration data instead */
-		bool bIgnoreDiverge = false;
-
-		/** Whether or not to use a rough line search to choose the size of the Newton step. Default is false*/
-		bool bLineSearchAttenFactor = false;
+		/**
+		 * Sparse QR Solver to factorize the Jacobian matrix when solving
+		 * the update equation.
+		 */
+		Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver {};
 
 		/**
 		 * \name Analysis Functions
@@ -204,9 +239,11 @@ class MultShootEngine : public Core, public Engine{
 		 */
 		void checkDFSingularities(MatrixXRd);
 		void chooseStep_LineSearch(MultShootData&, const Eigen::VectorXd&, const Eigen::VectorXd&, const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&, bool&);
-		void factorizeJacobian(const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&);
+		void factorizeJacobian(const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&, bool);
 		void reportConMags(const MultShootData&);
 		void solveUpdateEq(MultShootData&, const Eigen::VectorXd&, const Eigen::VectorXd&, Eigen::VectorXd&);
+		Eigen::ComputationInfo QR(const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&);
+		Eigen::ComputationInfo LU(const SparseMatXCd&, const Eigen::VectorXd&, Eigen::VectorXd&, bool);
 		//\}
 
 		/**

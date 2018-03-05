@@ -351,7 +351,7 @@ namespace astrohelion{
 	}//================================================
 
 	template<typename T>
-	void toCSV(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> m, const char* filename){
+	void toCSV(const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& m, const char* filename){
 		std::ofstream outFile(filename, std::ios::out);
     
 	    // After this attempt to open a file, we can safely use perror() only  

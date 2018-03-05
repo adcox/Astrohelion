@@ -28,10 +28,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <Eigen/OrderingMethods>
-#include <Eigen/Sparse>
-#include <Eigen/SparseLU>
-#include <Eigen/SparseQR>
 #include <vector>
 
 #include "MultShootEngine.hpp"
@@ -83,10 +79,14 @@ void MultShootEngine::copyMe(const MultShootEngine &e){
 	tolF = e.tolF;
 	tolX = e.tolX;
 	tolA = e.tolA;
+	bInitLUSolver = e.bInitLUSolver;
+	bInitQRSolver = e.bInitQRSolver;
 	bFindEvent = e.bFindEvent;
 	bIgnoreCrash = e.bIgnoreCrash;
 	bIgnoreDiverge = e.bIgnoreDiverge;
 	bFullFinalProp = e.bFullFinalProp;
+	bLUFailed = e.bLUFailed;
+	bSaveEachIt = e.bSaveEachIt;
 	tofTp = e.tofTp;
 	bLineSearchAttenFactor = e.bLineSearchAttenFactor;
 	ls_alpha = e.ls_alpha;
@@ -226,6 +226,15 @@ void MultShootEngine::setMaxErr(double e){ maxErr = e; }
  *	@param i the maximum number of iterations to attempt before giving up
  */
 void MultShootEngine::setMaxIts(int i){ maxIts = i; }
+
+/**
+ * @brief Set the flag to tell the engine whether or not to save each
+ * updated arcset to file
+ * @details Files are saved with the format "multShoot_it####.mat"
+ * 
+ * @param bSave whether or not to save each updated arcset to file
+ */
+void MultShootEngine::setSaveEachIt(bool bSave){ bSaveEachIt = bSave; }
 
 /**
  *  @brief Set the way times-of-flight are encoded (if at all) in the
@@ -528,6 +537,15 @@ MultShootData MultShootEngine::multShoot(MultShootData it){
 
 		// Fill each trajectory object with a propagated arc
 		propSegsFromFreeVars(it, simEngine);
+
+		// Save the updated solution to file (for debugging)
+		if(bSaveEachIt){
+			it.pArcIn->getSysData()->getDynamicsModel()->multShoot_createOutput(it);
+			char filename[24];
+			sprintf(filename, "multShoot_it%04d.mat", it.count+1);
+			it.pArcOut->saveToMat(filename);
+			it.pArcOut->reset();	// Needs to be empty for the next createOutput() call
+		}
 		// waitForUser();
 
 		// Loop through all constraints and compute the constraint values, partials, and
@@ -723,7 +741,6 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 		// Construct the sparse Jacobian matrix
 		SparseMatXCd J(it.totalCons, it.totalFree);
 		J.setFromTriplets(it.DF_elements.begin(), it.DF_elements.end());
-		J.makeCompressed();
 		
 		if(it.totalCons == it.totalFree){	// J is square, use regular inverse
 
@@ -738,7 +755,16 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 			// <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
 
 			// Solve the system Jw = b (In this case, w = fullStep)
-			factorizeJacobian(J, FX, fullStep);
+			J.makeCompressed();
+			factorizeJacobian(J, FX, fullStep, false);
+
+			// For whatever reason, must cast to non-references?
+			// MatrixXRd tempJ(J), tempFX(FX), tempX(oldX), tempStep(fullStep);
+			// astrohelion::toCSV(tempJ, "DF_cpp.csv");
+			// astrohelion::toCSV(tempFX, "FX_cpp.csv");
+			// astrohelion::toCSV(tempX, "X_cpp.csv");
+			// astrohelion::toCSV(tempStep, "dX_cpp.csv");
+			// waitForUser();
 
 		}else{
 			if(it.totalCons < it.totalFree){	// Under-constrained
@@ -759,8 +785,9 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 				// toCSV(oldX, "X_cpp.csv");
 
 				// Solve the system Gw = b
+				G.makeCompressed();
 				Eigen::VectorXd w(G.cols(), 1);
-				factorizeJacobian(G, FX, w);
+				factorizeJacobian(G, FX, w, true);
 				fullStep = JT*w;
 
 				// Alternative Method: SVD
@@ -812,50 +839,108 @@ void MultShootEngine::solveUpdateEq(MultShootData& it, const Eigen::VectorXd& ol
 /**
  *  @brief Apply LU and/or QR factorization to solve the update equation
  *  @details LU factorization is attempted first; if this fails, QR factorization
- *  is attempted as it can be more robust
+ *  is attempted as it can be more robust. The details of the factorization process
+ *  are explained in the Eigen documentation at
+ *  <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
  * 
- *  @param J the Jacobian (or Gramm) matrix that needs to be factorized to solve the update equation
+ *  @param J the Jacobian (or Gramm) matrix that needs to be factorized
+ *  to solve the update equation. J *must* be in compressed form!
+ *  @param FX constant reference to the current constraint vector
+ *  @param out the solution to the equation J*out = FX
+ *  @param bIsSymmetric whether or not the matrix J is symmetric
+ */
+void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::VectorXd& FX,
+	Eigen::VectorXd &out, bool bIsSymmetric){
+
+	Eigen::ComputationInfo info;
+
+	// If the LU solver fails, it is almost definitely because the
+	// Jacobian is poorly scaled. QR performs better w/ poor scaling,
+	// So use QR for the rest of the iterations
+	if(bLUFailed){
+		// use QR
+		info = QR(J, FX, out);
+	}else{
+		// use LU
+		info = LU(J, FX, out, bIsSymmetric);
+
+		// If LU fails, use QR and remember that LU failed
+		if(info != Eigen::Success){
+			bLUFailed = true;
+			printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "LU"
+				" Factorization failed, trying QR factorization to solve update equation.\n");
+			info = QR(J, FX, out);
+		}
+	}
+
+	// Report any errors to the user
+	if(info != Eigen::Success){
+		checkDFSingularities(J);
+		std::string err = eigenCompInfo2Str(info);
+		char msg[256];
+		sprintf(msg, "MultShootEngine::factorizeJacobian: Could not factorize Jacobian matrix.\nEigen error: %s\n", err.c_str());
+		throw LinAlgException(msg);
+	}
+}//====================================================
+
+/**
+ *  @brief Apply QR factorization to solve the update equation
+ *  @details The details of the factorization process
+ *  are explained in the Eigen documentation at
+ *  <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
+ * 
+ *  @param J the Jacobian (or Gramm) matrix that needs to be factorized
+ *  to solve the update equation. J *must* be in compressed form!
  *  @param FX constant reference to the current constraint vector
  *  @param out the solution to the equation J*out = FX
  */
-void MultShootEngine::factorizeJacobian(const SparseMatXCd &J, const Eigen::VectorXd& FX, Eigen::VectorXd &out){
-	// Construct an LU Solver
-	Eigen::SparseLU<SparseMatXCd, Eigen::COLAMDOrdering<int> > luSolver;
-	luSolver.compute(J);
-	if(luSolver.info() != Eigen::Success){
-		// If LU factorization fails, try QR factorization - it tends to be more robust, though slower
-		printVerbColor(verbosity >= Verbosity_tp::SOME_MSG, RED, "LU Factorization failed, trying QR factorization to solve update equation.\n");
-		Eigen::SparseQR<SparseMatXCd, Eigen::COLAMDOrdering<int> > qrSolver;
-		
-		qrSolver.compute(J);
-		if(qrSolver.info() != Eigen::Success){
-			checkDFSingularities(J);
-			std::string err = eigenCompInfo2Str(qrSolver.info());
-			char msg[256];
-			sprintf(msg, "MultShootEngine::factorizeJacobian: Could not factorize Jacobian matrix.\nEigen error: %s\n", err.c_str());
-			throw LinAlgException(msg);
-		}else{
-			// If the QR decomposition was successful, solve the equation
-			out = qrSolver.solve(-FX);
-			if(qrSolver.info() != Eigen::Success){
-				checkDFSingularities(J);
-					std::string err = eigenCompInfo2Str(qrSolver.info());
-					char msg[256];
-					sprintf(msg, "MultShootEngine::factorizeJacobian: Could not solve update equation (Jacobian)\nEigen error: %s\n", err.c_str());
-					throw LinAlgException(msg);
-			}
-		}
-	}else{
-		// If the LU decomposition was successful, solve the equation
-		out = luSolver.solve(-FX);
-		if(luSolver.info() != Eigen::Success){
-			checkDFSingularities(J);
-			std::string err = eigenCompInfo2Str(luSolver.info());
-			char msg[256];
-			sprintf(msg, "MultShootEngine::factorizeJacobian: Could not solve update equation (Gramm)\nEigen error: %s\n", err.c_str());
-			throw LinAlgException(msg);
-		}
+Eigen::ComputationInfo MultShootEngine::QR(const SparseMatXCd &J, const Eigen::VectorXd& FX,
+	Eigen::VectorXd &out){
+
+	// The structure of J is the same for every iteration, so only analyze pattern once
+	if(!bInitQRSolver){
+		qrSolver.analyzePattern(J);
+		bInitQRSolver = true;
 	}
+
+	qrSolver.factorize(J);
+
+	// If factorization was successful, solve the equation
+	if(qrSolver.info() == Eigen::Success)
+		out = qrSolver.solve(-FX);
+
+	return qrSolver.info();
+}//====================================================
+
+/**
+ *  @brief Apply LU factorization to solve the update equation
+ *  @details The details of the factorization process
+ *  are explained in the Eigen documentation at
+ *  <https://eigen.tuxfamily.org/dox/group__TopicSparseSystems.html>
+ * 
+ *  @param J the Jacobian (or Gramm) matrix that needs to be factorized
+ *  to solve the update equation. J *must* be in compressed form!
+ *  @param FX constant reference to the current constraint vector
+ *  @param out the solution to the equation J*out = FX
+ *  @param bIsSymmetric whether or not the matrix J is symmetric
+ */
+Eigen::ComputationInfo MultShootEngine::LU(const SparseMatXCd &J, const Eigen::VectorXd& FX,
+	Eigen::VectorXd &out, bool bIsSymmetric){
+
+	// The structure of J is the same for every iteration, so only analyze pattern once
+	if(!bInitLUSolver){
+		luSolver.analyzePattern(J);
+		luSolver.isSymmetric(bIsSymmetric);
+		bInitLUSolver = true;
+	}
+
+	luSolver.factorize(J);
+
+	// If factorization was successful, solve the equation
+	if(luSolver.info() == Eigen::Success)
+		out = luSolver.solve(-FX);
+
+	return luSolver.info();
 }//====================================================
 
 /**
@@ -1090,6 +1175,11 @@ void MultShootEngine::reportConMags(const MultShootData& it){
  */
 void MultShootEngine::cleanEngine(){
 	astrohelion::printVerb(verbosity >= Verbosity_tp::ALL_MSG, "Cleaning the engine...\n");
+	
+	bInitLUSolver = false;
+	bInitQRSolver = false;
+	bLUFailed = false;
+
 	bIsClean = true;
 }//====================================================
 
@@ -1109,6 +1199,7 @@ void MultShootEngine::reset(){
 	bIgnoreCrash = false;
 	bIgnoreDiverge = false;
 	bFullFinalProp = true;
+	bSaveEachIt = false;
 	ls_alpha = 1e-4;
 	ls_maxStepSize = 100;
 }//====================================================

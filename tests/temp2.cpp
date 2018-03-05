@@ -31,7 +31,6 @@ int main(){
 	std::vector<double> ltParams {sqrt(f), Isp},
 		ctrl0 {0, 0},
 		n0conData {NAN, 0, 0, NAN, NAN, 0, 1},
-		ctrl0conData {0, 0},
 		ctrlConData {1, 1};
 	ControlLaw_cr3bp_lt law(ControlLaw_cr3bp_lt::CONST_MF_GENERAL, ltParams);
 
@@ -42,7 +41,8 @@ int main(){
 
 	// Create Multiple shooting engine
 	MultShootEngine shooter;
-	// shooter.setVerbosity(Verbosity_tp::ALL_MSG);
+	shooter.setVerbosity(Verbosity_tp::ALL_MSG);
+	shooter.setTOFType(MSTOF_tp::VAR_EQUALARC);
 	Family_PO fam(&ltSys);
 
 	double alpha = 0;
@@ -76,7 +76,7 @@ int main(){
 	int id0 = ltGuess.getNodeByIx(0).getID();
 	int idf = ltGuess.getNodeByIx(-1).getID();
 
-	std::vector<double> conData{ idf, idf, idf, NAN, idf, idf, NAN};
+	std::vector<double> conData{ idf, idf, NAN, idf, NAN, NAN, NAN};
 	Constraint periodicityCon(Constraint_tp::MATCH_CUST, id0, conData);
 
 	ltGuess.addConstraint(periodicityCon);
@@ -85,11 +85,7 @@ int main(){
 	Constraint n0con(Constraint_tp::STATE, ltGuess.getNodeByIx(0).getID(), n0conData);
 	ltGuess.addConstraint(n0con);
 
-	// ctrl0conData[0] = alpha;
-	// Constraint ctrl0con(Constraint_tp::CTRL, ltGuess.getNodeByIx(0).getID(), ctrl0conData);
-	// ltGuess.addConstraint(ctrl0con);
-
-	// Enforce control continuity on all segments
+	// Remove control from design vector; always fixed
 	for(unsigned int i = 0; i < ltGuess.getNumNodes(); i++){
 		Constraint con(Constraint_tp::RM_CTRL, ltGuess.getNodeByIx(i).getID(), ctrlConData);
 		ltGuess.addConstraint(con);
@@ -103,15 +99,15 @@ int main(){
 
 	ltConverged.putInChronoOrder();
 
-	ltGuess.print();
-	ltConverged.print();
+	// ltGuess.print();
+	// ltConverged.print();
 
 	PseudoArcEngine pae;
 	std::vector<Arcset> allArcs;
 	std::vector<int> initDir {1, 0, 0, 0, 0, 0};
 	Arcset_cr3bp_lt a1(&ltSys), a2(&ltSys);
 
-	pae.setNumOrbits(5);
+	pae.setNumOrbits(500);
 	pae.pac(&ltConverged, &a1, &a2, allArcs, initDir);
 
 	for(auto arc : allArcs)

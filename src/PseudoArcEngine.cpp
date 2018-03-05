@@ -190,7 +190,7 @@ void PseudoArcEngine::pac(const Arcset *pInitGuess, Arcset *pMember, Arcset *pTe
 	corrector.setTol(tol);
 	corrector.setIgnoreCrash(true);					// Ignore crashes into primary
 	corrector.setFullFinalProp(false);				// Accept minimal information from the corrector
-	corrector.setVerbosity(verbosity);	// Print out convergence details
+	corrector.setVerbosity(verbosity);				// Print out convergence details
 
 	MultShootData familyItData(pInitGuess);		// Initialize data structure to store corrections details
 
